@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (fmt, clippy, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Upload bdld for the Flutter job
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdld-linux
+          path: target/debug/bdld
+
+  flutter:
+    name: Flutter (format, analyze, test)
+    runs-on: ubuntu-latest
+    needs: rust
+    defaults:
+      run:
+        working-directory: apps/studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.0"
+      - uses: actions/download-artifact@v4
+        with:
+          name: bdld-linux
+          path: ${{ github.workspace }}/target/debug
+      - run: chmod +x ${{ github.workspace }}/target/debug/bdld
+      - run: flutter pub get
+      - run: dart format --page-width 100 --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+        env:
+          BDLD_PATH: ${{ github.workspace }}/target/debug/bdld
+
+  proto:
+    name: Protocol (generated Dart up to date)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate protoc_plugin
+      - run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          tmp=$(mktemp -d)
+          protoc -I crates/bdl-protocol/proto --dart_out=$tmp crates/bdl-protocol/proto/bdl/v1/bdl.proto
+          dart format --page-width 100 $tmp >/dev/null
+          diff -r $tmp/bdl apps/studio/lib/protocol/gen/bdl

@@ -1,34 +1,54 @@
-# BDL — Behavior Design Language (engineering implementation)
+# BDL — Behavior Design Language
 
-Engineering implementation of **BDL**, a behavior design language for industrial
-designers in which typed semantic relationships (`?f : Tilt -> Brightness`) are
-first-class design artifacts, an unresolved relationship is a legal state of the
-design, and every designer-facing construct elaborates onto a small formal kernel.
+Engineering implementation of **BDL**, a behavior design language for
+industrial designers: typed semantic relationships (`?dimByTilt : Tilt ->
+Brightness`) are first-class design artifacts, an unresolved relationship is
+a legal state of the design, and every designer-facing construct elaborates
+onto a small formal kernel.
 
-The kernel is fixed by the mechanized development in
-[KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV) (Lean 4, Phases 0–7, no
-`sorry`). This repository builds what that development deliberately did not:
-the elaborator, the tooling, and the execution path.
+The kernel was derived in the Lean 4 development
+[KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV). This repository builds
+what that development deliberately did not: **BDL Studio** (Flutter), the
+**compiler service `bdld`** (Rust), the simulator, the hardware allocator,
+the Rust code generator, the embedded runtime, and deployment tooling. It
+follows the formally developed semantics; it is not itself formally verified.
 
 ## Status
 
-Project initialisation. No code yet — implementation language and delivery form
-are still to be decided (see `docs/03-open-questions.md`).
+Milestone 1 (vertical slice), steps A–F: Studio connects to `bdld`, shows
+compiler/protocol versions, creates concepts and unresolved mappings,
+saves and reopens them crash-safely. Next: the architecture review gate,
+then the checker. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Layout
 
 ```
-docs/
-  01-paper-digest.md     paper summary oriented at implementation (zh)
-  02-kernel-spec.md      exact kernel contract transcribed from the Lean sources (zh)
-  03-open-questions.md   decisions the paper leaves to the implementation (zh)
-reference/
-  paper/                 the paper (Typst PDF + canonical markdown source)
+apps/studio/        Flutter BDL Studio (presentation; semantic truth comes from bdld)
+crates/
+  bdl-model/        stable ids · surface model · revisioned edits · persistence
+  bdl-ir/           Design IR · Reactive Core IR (the kernel's types and terms)
+  bdl-protocol/     protobuf schema · framing · conversions
+  bdl-daemon/       bdld — the compiler service
+runtime/            generated-core runtimes (planned)
+hardware/           board & device descriptions (planned)
+docs/               architecture, formats, pipeline, ADRs, paper digest
+reference/paper/    the BDL paper
+```
+
+## Build
+
+Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`), Flutter 3.47,
+`just`; `protoc` + `protoc-gen-dart` only to regenerate the Dart protocol code.
+
+```bash
+just check          # fmt, clippy, tests, Flutter analyze/test, proto drift
+just studio         # build bdld and run Studio against it (macOS)
+just bdld           # run the daemon on stdio for manual experiments
 ```
 
 ## Reading order
 
-1. `docs/01-paper-digest.md` — what BDL is and what the three layers are
-2. `docs/02-kernel-spec.md` — the definitions the implementation must agree with
-3. `docs/03-open-questions.md` — what has to be decided before writing code
-4. `reference/paper/paper.md` — the paper itself, for anything not covered above
+1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
+2. [docs/adr/](docs/adr/README.md) — decisions
+3. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
+4. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)
