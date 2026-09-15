@@ -64,8 +64,11 @@ crates/
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
   bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
   bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
+  bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
+  bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db)
+  bdl-lsp          LSP adapter only: lsp-server transport · position encoding · lsp-types rendering (→ ide)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
-  bdl-daemon       bdld: session, coordinator, transport, analysis push          (→ protocol, compiler)
+  bdl-daemon       bdld: session (owns the project's IdeHost), coordinator, transport, analysis push (→ protocol, compiler, ide)
 planned:
   bdl-component  supplied Rust component contracts
   bdl-cli        headless front end sharing bdld's implementation
@@ -77,7 +80,8 @@ planned:
 ```
 
 Dependency direction is strict and acyclic: `model → ir → {syntax → elab,
-check → reactive → output} → compiler → protocol → daemon`; `hardware`
+check → reactive → output} → compiler → ide-db → ide → {lsp, daemon}`
+(`protocol` sits between `compiler` and `daemon`); `hardware`
 depends on `model` only (it never sees `Δ`) and `compiler` joins the two;
 `lower → codegen` hang off `exec-ir` and are joined by `compiler`;
 `runtime-core` depends on nothing and is what generated code links
@@ -140,6 +144,18 @@ refuses it if the project has moved on (`edit.stale_revision`). Every
 response and event carries its revision. Studio discards anything older than
 what it already holds. Revisions are strictly monotone for a session — undo
 produces a *new* revision — so staleness is a `<` comparison.
+
+## One language service for both authoring surfaces
+
+Studio (visual) and text editors (textual) are two projections of one
+semantic model and consume one service: `bdl-ide-db` holds the ground
+state (committed snapshot + overlays for unsaved drafts and buffers) and
+produces immutable, stamped `AnalysisSnapshot`s; `bdl-ide` answers
+diagnostics, hover, completion, references, rename, actions and
+invalidation previews in BDL-owned types keyed by `EntityRef`, never by
+text position or node id; `bdl-lsp` and `bdld` are thin adapters at the
+edge. LSP is an adapter, not the architecture (ADR-0017);
+`docs/IDE_SERVICE_ARCHITECTURE.md` is the reference.
 
 ## Refinement vs edit is an engineering asset
 

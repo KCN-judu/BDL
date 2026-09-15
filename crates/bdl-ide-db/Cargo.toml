@@ -1,0 +1,24 @@
+[package]
+name = "bdl-ide-db"
+description = "IDE ground state: committed snapshot + overlays → immutable, revision-stamped AnalysisSnapshot; stable entity references; projection maps; cancellation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-syntax = { workspace = true }
+bdl-elab = { workspace = true }
+bdl-compiler = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,31 @@
+[package]
+name = "bdl-lsp"
+description = "Thin LSP adapter over bdl-ide: JSON-RPC transport, position encoding, LSP type conversion — no language semantics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "bdl-lsp"
+path = "src/main.rs"
+
+[dependencies]
+bdl-ide-db = { workspace = true }
+bdl-ide = { workspace = true }
+bdl-model = { workspace = true }
+lsp-server = { workspace = true }
+lsp-types = { workspace = true }
+crossbeam-channel = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

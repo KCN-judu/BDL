@@ -15,6 +15,8 @@ Layered; determinism is a tested property, not a hope.
 | Golden | corpus design → generated `Cargo.toml`, `src/lib.rs`, `src/bin/host.rs`, `bdl-manifest.json`; generating twice is byte-identical | `crates/bdl-compiler/tests/golden/<case>/` (`BDL_UPDATE_GOLDEN=1` to accept) | in place |
 | Generated-crate build | every corpus core `cargo check`ed as a `no_std` library; host binary built | `crates/bdl-compiler/tests/backend_differential.rs` → `target/bdl-generated/` | in place |
 | Differential | reference evaluator trace == generated-Rust host trace (values, outputs, errors) per corpus case and per seeded random design | `crates/bdl-compiler/tests/backend_differential.rs`, `backend_property.rs` (policy: `docs/CODEGEN_RUST.md`) | in place; highest-value test in the project |
+| IDE service | the acceptance scenarios of the shared language service: unresolved mappings stay queryable, one entity on both surfaces, one diagnostic projected to text and canvas, drafts and buffers as overlays, stale results rejected, cancellation, rename by identity, no panics on garbage | `crates/bdl-ide/tests/acceptance.rs`, `crates/bdl-ide-db/src/*` | in place |
+| LSP end-to-end | a JSON-RPC client over an in-memory connection: initialize, open/change/close, hover, definition, references, prepare/rename, completion, pull diagnostics, symbols, semantic tokens, code actions, custom requests; UTF-16 positions on non-ASCII text; push fallback; project loading | `crates/bdl-lsp/tests/e2e.rs`, `crates/bdl-lsp/src/position.rs` | in place |
 | Flutter | reducer, widget transitions, protocol integration — never screenshots only | | ongoing |
 
 CI (`.github/workflows/ci.yml`): `cargo fmt --check`, `clippy -D warnings`,

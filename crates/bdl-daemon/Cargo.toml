@@ -15,6 +15,7 @@ path = "src/main.rs"
 bdl-model = { workspace = true }
 bdl-protocol = { workspace = true }
 bdl-compiler = { workspace = true }
+bdl-ide = { workspace = true }
 bdl-hardware = { workspace = true }
 bdl-reactive = { workspace = true }
 bdl-diagnostics = { workspace = true }

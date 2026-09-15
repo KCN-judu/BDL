@@ -10,12 +10,19 @@
 //! not rewind the revision, it produces a new revision whose design equals
 //! an earlier one — so a stale analysis result can always be recognised by
 //! a simple `<` comparison.
+//!
+//! The session also owns the project's [`IdeHost`]: the committed snapshot
+//! mirrored as IDE ground state, plus the overlays Studio's definition
+//! drafts live in.  Every commit re-seats the host; a draft is analysed by
+//! taking an immutable snapshot of committed + overlays and asking
+//! `bdl-ide`, never by a side path through the compiler.
 
+use bdl_ide::{draft_verdict, DraftVerdict, IdeHost, QueryError};
 use bdl_model::edit::{apply_edit, EditError, EditOp, EditOutcome};
 use bdl_model::layout::Layout;
 use bdl_model::persist::{self, PersistError};
 use bdl_model::surface::{Design, ProjectSnapshot};
-use bdl_model::Revision;
+use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
 use std::path::{Path, PathBuf};
 
@@ -38,6 +45,8 @@ pub enum SessionError {
     Edit(#[from] EditError),
     #[error(transparent)]
     Persist(#[from] PersistError),
+    #[error(transparent)]
+    Ide(#[from] QueryError),
 }
 
 /// A simulation run, valid for exactly one project revision.
@@ -54,6 +63,8 @@ pub struct OpenProject {
     pub layout: Layout,
     /// Dropped on every commit: a run belongs to the revision it started at.
     pub simulation: Option<SimulationRun>,
+    /// IDE ground state over `current`: committed snapshot + overlays.
+    pub ide: IdeHost,
     /// Designs before the current one, oldest first.
     undo: Vec<Design>,
     /// Designs undone, most recently undone last.
@@ -129,6 +140,7 @@ impl Session {
             root: root.to_path_buf(),
             saved: snapshot.design.clone(),
             saved_layout: layout.clone(),
+            ide: IdeHost::new(snapshot.clone()),
             current: snapshot,
             layout,
             simulation: None,
@@ -166,6 +178,7 @@ impl Session {
         p.undo.push(previous.design);
         p.redo.clear();
         p.simulation = None;
+        p.ide.set_committed(p.current.clone());
         Ok(Committed {
             snapshot: p.current.clone(),
             outcome: Some(applied.outcome),
@@ -181,6 +194,8 @@ impl Session {
         };
         let previous = std::mem::replace(&mut p.current, next);
         p.redo.push(previous.design);
+        p.simulation = None;
+        p.ide.set_committed(p.current.clone());
         Ok(Committed {
             snapshot: p.current.clone(),
             outcome: None,
@@ -196,10 +211,35 @@ impl Session {
         };
         let previous = std::mem::replace(&mut p.current, next);
         p.undo.push(previous.design);
+        p.simulation = None;
+        p.ide.set_committed(p.current.clone());
         Ok(Committed {
             snapshot: p.current.clone(),
             outcome: None,
         })
+    }
+
+    /// The IDE ground state of the open project.
+    pub fn ide(&mut self) -> Result<&mut IdeHost, SessionError> {
+        Ok(&mut self.project_mut()?.ide)
+    }
+
+    /// Studio typed in the definition editor: `source` becomes the draft
+    /// overlay of `mapping` and the compiler's verdict on the resulting
+    /// world is returned.  The project, its revision and its history are
+    /// untouched; the overlay stays until a commit makes it the committed
+    /// definition, the mapping is deleted, or a newer draft replaces it.
+    /// Served by the `AnalyzeDefinitionDraft` request (protocol 0.4).
+    #[allow(dead_code)]
+    pub fn draft_verdict(
+        &mut self,
+        mapping: DeclId,
+        source: &str,
+    ) -> Result<DraftVerdict, SessionError> {
+        let host = self.ide()?;
+        host.set_definition_draft(mapping, source);
+        let snapshot = host.snapshot();
+        Ok(draft_verdict(&snapshot, mapping)?)
     }
 
     pub fn simulation_mut(&mut self) -> Result<&mut Option<SimulationRun>, SessionError> {
@@ -286,6 +326,92 @@ mod tests {
         assert_eq!(p.current.design, c.snapshot.design);
         assert!(p.current.design.mappings[&id].is_unresolved());
         assert_eq!(p.current.revision, Revision::INITIAL);
+    }
+
+    #[test]
+    fn drafts_are_overlays_over_the_committed_revision() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut s = Session::new("test");
+        s.init(dir.path(), "lamp").unwrap();
+        let rep = |d| Some(bdl_model::Representation::Quantity { dim: d });
+        let mk = |name: &str, r| EditOp::CreateConcept {
+            name: name.into(),
+            description: String::new(),
+            representation: r,
+        };
+        let tilt = s
+            .apply(
+                Revision::from_raw(0),
+                &mk("Tilt", rep(bdl_model::Dim::ANGLE)),
+            )
+            .unwrap()
+            .outcome
+            .unwrap()
+            .created_concept
+            .unwrap();
+        let bright = s
+            .apply(
+                Revision::from_raw(1),
+                &mk("Brightness", rep(bdl_model::Dim::ZERO)),
+            )
+            .unwrap()
+            .outcome
+            .unwrap()
+            .created_concept
+            .unwrap();
+        let id = s
+            .apply(
+                Revision::from_raw(2),
+                &EditOp::CreateMapping {
+                    name: "dimByTilt".into(),
+                    description: String::new(),
+                    signature: Signature {
+                        inputs: vec![tilt],
+                        output: bright,
+                    },
+                },
+            )
+            .unwrap()
+            .outcome
+            .unwrap()
+            .created_mapping
+            .unwrap();
+
+        // The draft is judged; the project is not touched.
+        let v = s.draft_verdict(id, "Tilt / 90 deg").unwrap();
+        assert_eq!(v.status, bdl_compiler::MappingStatus::ClockConsistent);
+        assert_eq!(v.stamp.revision, Revision::from_raw(3));
+        let p = s.project().unwrap();
+        assert_eq!(p.current.revision, Revision::from_raw(3));
+        assert!(p.current.design.mappings[&id].is_unresolved());
+        assert_eq!(p.ide.overlays().len(), 1);
+
+        // A newer draft supersedes; its verdict carries a newer stamp.
+        let v2 = s.draft_verdict(id, "Tilt + 1 s").unwrap();
+        assert_eq!(v2.status, bdl_compiler::MappingStatus::Invalid);
+        assert!(v2.stamp > v.stamp);
+        assert!(!v2.diagnostics.is_empty());
+
+        // Committing the draft's text drops the overlay; committing
+        // something else keeps it (the designer's text is not lost).
+        s.apply(
+            Revision::from_raw(3),
+            &EditOp::AttachDefinition {
+                id,
+                definition: bdl_model::Definition::Formula {
+                    source: "Tilt + 1 s".into(),
+                },
+            },
+        )
+        .unwrap();
+        assert!(s.project().unwrap().ide.overlays().is_empty());
+        s.draft_verdict(id, "Tilt / 45 deg").unwrap();
+        s.undo().unwrap();
+        assert_eq!(s.project().unwrap().ide.overlays().len(), 1);
+        assert!(matches!(
+            s.draft_verdict(DeclId::from_raw(99), "1"),
+            Err(SessionError::Ide(QueryError::UnknownEntity { .. }))
+        ));
     }
 
     #[test]

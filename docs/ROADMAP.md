@@ -28,6 +28,15 @@ slice is started before the slice works end-to-end.
 | R | flash via `probe-rs` | |
 | S | telemetry back into Studio | |
 
+## IDE service (shared language-service layer)
+
+| Step | | Status |
+|---|---|---|
+| IDE-1 | `bdl-ide-db` (IdeHost, overlays, EntityRef, projections, stamped snapshots, cancellation), `bdl-ide` (diagnostics, hover/explain, completion, references, rename, actions, edit plans, invalidation preview, symbols, tokens), `bdl-lsp` MVP (hover, definition, references, rename, completion, pull diagnostics, symbols, semantic tokens, code actions); Studio drafts and LSP buffers as overlays; ADR-0017 | ✅ (docs/IDE_SERVICE_ARCHITECTURE.md) |
+| IDE-2 | complete textual parser + textual project loader (persisted textual identities, outputs/clocks/devices syntax, parameter layer DI-30) | |
+| IDE-3 | richer LSP: inlay hints, workspace symbols, explain/Core/Rust virtual documents, formatting, cross-surface actions applying model operations from editors | |
+| IDE-4 | incremental query engine — only if profiling on real projects asks for it (baseline: ~2 ms per full analysis at 400 mappings) | |
+
 ## Explicitly deferred (brief §52)
 
 AI assistant · plugin marketplace · animation polish · cloud sync ·

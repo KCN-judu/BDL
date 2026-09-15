@@ -1,0 +1,25 @@
+[package]
+name = "bdl-ide"
+description = "Semantic IDE queries over an AnalysisSnapshot: diagnostics, hover, explain, completion, references, rename, semantic actions, edit plans, invalidation previews"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-ide-db = { workspace = true }
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-syntax = { workspace = true }
+bdl-elab = { workspace = true }
+bdl-check = { workspace = true }
+bdl-reactive = { workspace = true }
+bdl-output = { workspace = true }
+bdl-compiler = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

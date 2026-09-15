@@ -126,9 +126,13 @@ async fn coordinate(
                     })),
                 };
                 let _ = tx.send(event).await;
-                // The analysis for the very revision just committed.  Cheap
-                // for now; moves to a worker task when it is not.
-                let analysis = bdl_compiler::analyze(&c.snapshot);
+                // The analysis for the very revision just committed, from
+                // the IDE host so `RunAnalysis` shares it.  Cheap for now;
+                // moves to a worker task when it is not.
+                let analysis = match session.ide() {
+                    Ok(host) => host.committed_analysis(),
+                    Err(_) => std::sync::Arc::new(bdl_compiler::analyze(&c.snapshot)),
+                };
                 let ready = pb::ServerMessage {
                     payload: Some(pb::server_message::Payload::Event(pb::Event {
                         payload: Some(pb::event::Payload::AnalysisReady(pb::AnalysisReady {
@@ -222,11 +226,12 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                 Err(e) => (Resp::Error(session_error(&e)), None),
             }
         }
-        Req::RunAnalysis(_) => match session.project() {
-            Ok(p) => {
-                // Analysis runs on a clone of the immutable snapshot and is
-                // tagged with its revision; the client discards stale ones.
-                let analysis = bdl_compiler::analyze(&p.current.clone());
+        Req::RunAnalysis(_) => match session.ide() {
+            Ok(host) => {
+                // The committed snapshot's analysis, cached by the IDE host
+                // per revision and tagged with it; the client discards
+                // stale ones.
+                let analysis = host.committed_analysis();
                 (
                     Resp::Analysis(pb::AnalysisResponse {
                         analysis: Some(convert::analysis_to_pb(&analysis)),
@@ -465,6 +470,10 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::NothingToUndo => error("edit.nothing_to_undo", &e.to_string()),
         SessionError::NothingToRedo => error("edit.nothing_to_redo", &e.to_string()),
         SessionError::Persist(_) => error("project.persist", &e.to_string()),
+        SessionError::Ide(bdl_ide::QueryError::UnknownEntity { .. }) => {
+            error("draft.unknown_mapping", &e.to_string())
+        }
+        SessionError::Ide(_) => error("draft.unavailable", &e.to_string()),
     }
 }
 

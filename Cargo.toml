@@ -18,6 +18,9 @@ members = [
     "crates/bdl-daemon",
     "runtime/bdl-runtime-core",
     "runtime/bdl-runtime-host",
+    "crates/bdl-ide-db",
+    "crates/bdl-ide",
+    "crates/bdl-lsp",
 ]
 
 [workspace.package]
@@ -44,6 +47,8 @@ bdl-runtime-core = { path = "runtime/bdl-runtime-core" }
 bdl-runtime-host = { path = "runtime/bdl-runtime-host" }
 bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-protocol = { path = "crates/bdl-protocol" }
+bdl-ide-db = { path = "crates/bdl-ide-db" }
+bdl-ide = { path = "crates/bdl-ide" }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["float_roundtrip"] }
@@ -62,6 +67,9 @@ tempfile = "3"
 proptest = "1"
 logos = "0.16"
 rowan = "0.17"
+lsp-server = "0.10"
+lsp-types = "0.97"
+crossbeam-channel = "0.5"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
