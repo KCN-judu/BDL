@@ -27,52 +27,47 @@ class HeroMark extends StatelessWidget {
         children: [
           CustomPaint(painter: _TraceFieldPainter(t)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(36, 32, 36, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
+            padding: const EdgeInsets.fromLTRB(32, 32, 36, 30),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Row(
-                  children: [
-                    const CompassMark(size: 44),
-                    const SizedBox(width: 10),
-                    Text(
-                      'BDL',
-                      style: TextStyle(
-                        fontFamily: kHeroFont,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 6,
-                        color: t.accent,
+                // The mark carries the identity (Altium-splash proportion:
+                // the glyph as tall as the whole text block, no lettered
+                // abbreviation beside it).
+                const CompassMark(size: 168),
+                const SizedBox(width: 22),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Behavior\nDesigner',
+                        style: TextStyle(
+                          fontFamily: kHeroFont,
+                          fontSize: 50,
+                          height: 1.0,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                          color: t.textPrimary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Behavior\nDesigner',
-                  style: TextStyle(
-                    fontFamily: kHeroFont,
-                    fontSize: 54,
-                    height: 1.0,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                    color: t.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Product behavior as a design material.',
-                  style: TextStyle(fontSize: 13, color: t.textSecondary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Studio $version',
-                  style: TextStyle(
-                    fontFamily: kHeroFont,
-                    fontSize: 11,
-                    letterSpacing: 1,
-                    color: t.textTertiary,
+                      const SizedBox(height: 12),
+                      Text(
+                        'Product behavior as a design material.',
+                        style: TextStyle(fontSize: 13, color: t.textSecondary),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Studio $version',
+                        style: TextStyle(
+                          fontFamily: kHeroFont,
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          color: t.textTertiary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
