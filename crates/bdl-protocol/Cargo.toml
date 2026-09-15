@@ -12,6 +12,7 @@ bdl-model = { workspace = true }
 bdl-diagnostics = { workspace = true }
 bdl-compiler = { workspace = true }
 bdl-check = { workspace = true }
+bdl-reactive = { workspace = true }
 prost = { workspace = true }
 bytes = { workspace = true }
 serde_json = { workspace = true }

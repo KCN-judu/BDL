@@ -82,6 +82,12 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
                 realization: None,
             },
         );
+        if let Some(c) = m.clock {
+            ir.clocks.insert(m.id, c);
+        }
+    }
+    for c in design.clocks.values() {
+        ir.clock_names.insert(c.id, c.name.clone());
     }
     let mut mappings = BTreeMap::new();
     for m in design.mappings.values() {

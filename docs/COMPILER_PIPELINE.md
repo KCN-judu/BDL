@@ -14,22 +14,33 @@ pipeline does not fail fast.
 | 5 | type checking | `Expr` against `ty_view` + `Θ` | `HasType`, `infer` | **core rules complete, integrated** (`bdl-check::infer`, incl. `delay`/`sync`) |
 | 6 | semantic-construction checking | `mk s` only under grant | `Grant` | **integrated** (`bdl-check::Grant`, checked inside `infer`) |
 | 7 | dimension checking | falls out of 5 via `Prim::ty`; the elaborator reports mismatches with spans first | `q Dim` | **integrated** (no separate pass) |
-| 8 | dependency analysis | `refs` / `inst_refs` graph | `DependsOn`, `InstDependsOn` | planned |
-| 9 | causality | acyclic instantaneous graph, rank | `Causal` | planned |
-| 10 | clock-domain checking | `Clocked` judgment per realization | `Κ`, `Clocked` | planned |
+| 8 | dependency analysis | `refs` / `inst_refs` → `DependencyGraph { all, instantaneous, reverse… }` | `DependsOn`, `InstDependsOn` | **integrated** (`bdl-reactive::graph`) |
+| 9 | causality | Tarjan SCC over the instantaneous graph; Kahn rank + evaluation order | `Causal` | **integrated** (`bdl-reactive::causality`) |
+| 10 | clock-domain checking | `Clocked` judgment per realization, crossings with paths | `Κ`, `Clocked` | **integrated** (`bdl-reactive::clocks`); domains assignable on mappings, no Studio UI yet |
 | 11 | physical-output checking | `DriveWF`, `SingleDriver`, completeness | `β`, `Ω` | planned |
 | 12 | hardware requirement generation | sinks × device kinds → `Requirements` | validation layer | planned (`bdl-hardware`) |
 | 13 | hardware allocation | `solve` / `diagnose` | validation layer | planned |
-| 14 | reactive lowering | Design IR → per-domain step schedule, state cells | `Ev` / `MEv` | planned (`bdl-reactive`) |
+| 14 | reference evaluation / simulation | two-phase tick (read, write) over state cells `(DeclId, path)`; schedules; input traces; traces | `Ev` / `MEv` | **core rules complete, integrated** in bdld (`bdl-reactive::{eval,simulate}`); Studio UI planned |
 | 15 | Rust code generation | Core IR → backend AST → Cargo project + `bdl-manifest.json` | erasure | planned (`bdl-codegen-rust`) |
 
 ## Driver and result
 
 `bdl-compiler::analyze(&ProjectSnapshot) -> ProjectAnalysis` runs passes
-1–7 and returns, tagged with the snapshot's revision: per mapping the
-elaborated `Interface`, a status (`Declared | Open | Invalid | TypeValid`),
-the inferred type and Core term when it checks, and its diagnostics; plus
-all diagnostics in the documented order (entity, span, code, message).
+1–10 and returns, tagged with the snapshot's revision: per mapping the
+elaborated `Interface`, a status on the ladder
+
+```
+Declared → Open → Invalid → TypeValid → TemporallyValid → ClockConsistent
+```
+
+(`TemporallyValid` needs typing and causality; `ClockConsistent` needs
+those and the domain judgment; a mapping on an instantaneous cycle is
+`Invalid` with `reactive.instantaneous_cycle`, a cross-domain read stops at
+`TemporallyValid` with `clock.cross_domain_reference`), the inferred type
+and Core term when it checks, and its diagnostics; plus the dependency
+graph, the causality result (cycles, ranks, evaluation order) and the clock
+result, and all diagnostics in the documented order (entity, span, code,
+message).
 `bdld` answers `RunAnalysis` with it and pushes `AnalysisReady` after every
 committed revision; Studio keeps an analysis only while its revision equals
 the projection's.
@@ -46,6 +57,9 @@ the projection's.
 | `realization.type_mismatch` | elab / check | error |
 | `semantic.unbound_representation` | elab / check | info (the mapping is *open*) |
 | `semantic.construction_not_granted` | check | error |
+| `reactive.instantaneous_cycle` | causality | error |
+| `clock.cross_domain_reference` · `clock.temporal_without_domain` | clocks | error |
+| `simulation.not_causal` · `simulation.missing_input` · `simulation.division_by_zero` · `simulation.non_finite` | simulation (bdld) | error |
 | `type.argument_mismatch` · `type.expected_function` · `type.rep_of_non_semantic` · `type.temporal_*` · `type.unbound_variable` · `type.unknown_declaration` | check | error |
 
 ## Incremental invalidation

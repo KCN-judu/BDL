@@ -12,9 +12,9 @@
 //! [`Invalidation`] record so that incremental analysis is a model, not UI
 //! folklore.
 
-use crate::ids::{DeclId, SemanticId};
+use crate::ids::{ClockId, DeclId, SemanticId};
 use crate::surface::{
-    Concept, Definition, MappingBlock, ProjectSnapshot, Representation, Signature,
+    ClockDomain, Concept, Definition, MappingBlock, ProjectSnapshot, Representation, Signature,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -82,6 +82,23 @@ pub enum EditOp {
     DeleteMapping {
         id: DeclId,
     },
+    CreateClockDomain {
+        name: String,
+    },
+    RenameClockDomain {
+        id: ClockId,
+        name: String,
+    },
+    /// Refused while any mapping is assigned to the domain.
+    DeleteClockDomain {
+        id: ClockId,
+    },
+    /// Assign (or clear) a mapping's domain.  Always an edit: every client's
+    /// domain judgment depends on it.
+    SetMappingClock {
+        id: DeclId,
+        clock: Option<ClockId>,
+    },
 }
 
 /// Whether an edit preserves what dependents previously established.
@@ -126,6 +143,7 @@ pub struct EditOutcome {
     pub origin_decls: BTreeSet<DeclId>,
     pub created_concept: Option<SemanticId>,
     pub created_mapping: Option<DeclId>,
+    pub created_clock: Option<ClockId>,
 }
 
 impl EditOutcome {
@@ -181,6 +199,12 @@ pub enum EditError {
     AlreadyDefined { id: DeclId },
     #[error("mapping {id} has no definition to replace")]
     NotDefined { id: DeclId },
+    #[error("a timing domain named `{name}` already exists")]
+    DuplicateClockName { name: String },
+    #[error("unknown timing domain {id}")]
+    UnknownClock { id: ClockId },
+    #[error("timing domain {id} is still used by {} mapping(s)", used_by.len())]
+    ClockInUse { id: ClockId, used_by: Vec<DeclId> },
 }
 
 /// Apply one edit to a snapshot, producing the next revision.
@@ -275,6 +299,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     description: description.clone(),
                     signature: signature.clone(),
                     definition: None,
+                    clock: None,
                 },
             );
             EditOutcome {
@@ -339,6 +364,62 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                 Invalidation::Reactive,
             ])
             .at(*id)
+        }
+        EditOp::CreateClockDomain { name } => {
+            let name = valid_name(name)?;
+            if design.clocks.values().any(|c| c.name == name) {
+                return Err(EditError::DuplicateClockName { name });
+            }
+            let (id, ids) = design.ids.fresh_clock();
+            design.ids = ids;
+            design.clocks.insert(id, ClockDomain { id, name });
+            EditOutcome {
+                created_clock: Some(id),
+                ..EditOutcome::refinement()
+            }
+        }
+        EditOp::RenameClockDomain { id, name } => {
+            let name = valid_name(name)?;
+            if design
+                .clocks
+                .values()
+                .any(|c| c.id != *id && c.name == name)
+            {
+                return Err(EditError::DuplicateClockName { name });
+            }
+            design
+                .clocks
+                .get_mut(id)
+                .ok_or(EditError::UnknownClock { id: *id })?
+                .name = name;
+            EditOutcome::refinement()
+        }
+        EditOp::DeleteClockDomain { id } => {
+            design
+                .clocks
+                .get(id)
+                .ok_or(EditError::UnknownClock { id: *id })?;
+            let used_by: Vec<DeclId> = design
+                .mappings
+                .values()
+                .filter(|m| m.clock == Some(*id))
+                .map(|m| m.id)
+                .collect();
+            if !used_by.is_empty() {
+                return Err(EditError::ClockInUse { id: *id, used_by });
+            }
+            design.clocks.remove(id);
+            EditOutcome::edit([Invalidation::Clock])
+        }
+        EditOp::SetMappingClock { id, clock } => {
+            if let Some(c) = clock {
+                design
+                    .clocks
+                    .get(c)
+                    .ok_or(EditError::UnknownClock { id: *c })?;
+            }
+            mapping_mut(&mut design, *id)?.clock = *clock;
+            EditOutcome::edit([Invalidation::Clock, Invalidation::Reactive]).at(*id)
         }
     };
     Ok(Applied {

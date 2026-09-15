@@ -84,6 +84,9 @@ pub struct DesignIr {
     pub concepts: BTreeMap<SemanticId, ConceptBinding>,
     pub decls: BTreeMap<DeclId, Declaration>,
     pub clocks: ClockEnv,
+    /// Display names of domains, for diagnostics only.
+    #[serde(default)]
+    pub clock_names: BTreeMap<ClockId, String>,
     pub outputs: BTreeMap<OutputId, OutputSpec>,
     pub drives: DriveEnv,
 }

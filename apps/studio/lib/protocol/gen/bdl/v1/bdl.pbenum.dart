@@ -129,15 +129,25 @@ class MappingStatus extends $pb.ProtobufEnum {
   static const MappingStatus MAPPING_STATUS_TYPE_VALID =
       MappingStatus._(4, _omitEnumNames ? '' : 'MAPPING_STATUS_TYPE_VALID');
 
+  /// Type-valid and on no instantaneous loop: has a value at every activation.
+  static const MappingStatus MAPPING_STATUS_TEMPORALLY_VALID =
+      MappingStatus._(5, _omitEnumNames ? '' : 'MAPPING_STATUS_TEMPORALLY_VALID');
+
+  /// Temporally valid and every read stays in its domain or is transported.
+  static const MappingStatus MAPPING_STATUS_CLOCK_CONSISTENT =
+      MappingStatus._(6, _omitEnumNames ? '' : 'MAPPING_STATUS_CLOCK_CONSISTENT');
+
   static const $core.List<MappingStatus> values = <MappingStatus>[
     MAPPING_STATUS_UNSPECIFIED,
     MAPPING_STATUS_DECLARED,
     MAPPING_STATUS_OPEN,
     MAPPING_STATUS_INVALID,
     MAPPING_STATUS_TYPE_VALID,
+    MAPPING_STATUS_TEMPORALLY_VALID,
+    MAPPING_STATUS_CLOCK_CONSISTENT,
   ];
 
-  static final $core.List<MappingStatus?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 4);
+  static final $core.List<MappingStatus?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 6);
   static MappingStatus? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

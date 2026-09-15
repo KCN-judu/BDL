@@ -35,6 +35,9 @@ enum ClientMessage_Payload {
   subscribeProject,
   shutdown,
   runAnalysis,
+  startSimulation,
+  stepSimulation,
+  resetSimulation,
   notSet
 }
 
@@ -54,6 +57,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     SubscribeProjectRequest? subscribeProject,
     ShutdownRequest? shutdown,
     RunAnalysisRequest? runAnalysis,
+    StartSimulationRequest? startSimulation,
+    StepSimulationRequest? stepSimulation,
+    ResetSimulationRequest? resetSimulation,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -70,6 +76,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (subscribeProject != null) result.subscribeProject = subscribeProject;
     if (shutdown != null) result.shutdown = shutdown;
     if (runAnalysis != null) result.runAnalysis = runAnalysis;
+    if (startSimulation != null) result.startSimulation = startSimulation;
+    if (stepSimulation != null) result.stepSimulation = stepSimulation;
+    if (resetSimulation != null) result.resetSimulation = resetSimulation;
     return result;
   }
 
@@ -96,12 +105,15 @@ class ClientMessage extends $pb.GeneratedMessage {
     20: ClientMessage_Payload.subscribeProject,
     21: ClientMessage_Payload.shutdown,
     22: ClientMessage_Payload.runAnalysis,
+    23: ClientMessage_Payload.startSimulation,
+    24: ClientMessage_Payload.stepSimulation,
+    25: ClientMessage_Payload.resetSimulation,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ClientMessage.$_createMessage)
-    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22])
+    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<HandshakeRequest>(10, _omitFieldNames ? '' : 'handshake',
@@ -128,6 +140,12 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: ShutdownRequest.$_createMessage)
     ..aOM<RunAnalysisRequest>(22, _omitFieldNames ? '' : 'runAnalysis',
         subBuilder: RunAnalysisRequest.$_createMessage)
+    ..aOM<StartSimulationRequest>(23, _omitFieldNames ? '' : 'startSimulation',
+        subBuilder: StartSimulationRequest.$_createMessage)
+    ..aOM<StepSimulationRequest>(24, _omitFieldNames ? '' : 'stepSimulation',
+        subBuilder: StepSimulationRequest.$_createMessage)
+    ..aOM<ResetSimulationRequest>(25, _omitFieldNames ? '' : 'resetSimulation',
+        subBuilder: ResetSimulationRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -163,6 +181,9 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
   @$pb.TagNumber(22)
+  @$pb.TagNumber(23)
+  @$pb.TagNumber(24)
+  @$pb.TagNumber(25)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -177,6 +198,9 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
   @$pb.TagNumber(22)
+  @$pb.TagNumber(23)
+  @$pb.TagNumber(24)
+  @$pb.TagNumber(25)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -330,6 +354,39 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearRunAnalysis() => $_clearField(22);
   @$pb.TagNumber(22)
   RunAnalysisRequest ensureRunAnalysis() => $_ensure(13);
+
+  @$pb.TagNumber(23)
+  StartSimulationRequest get startSimulation => $_getN(14);
+  @$pb.TagNumber(23)
+  set startSimulation(StartSimulationRequest value) => $_setField(23, value);
+  @$pb.TagNumber(23)
+  $core.bool hasStartSimulation() => $_has(14);
+  @$pb.TagNumber(23)
+  void clearStartSimulation() => $_clearField(23);
+  @$pb.TagNumber(23)
+  StartSimulationRequest ensureStartSimulation() => $_ensure(14);
+
+  @$pb.TagNumber(24)
+  StepSimulationRequest get stepSimulation => $_getN(15);
+  @$pb.TagNumber(24)
+  set stepSimulation(StepSimulationRequest value) => $_setField(24, value);
+  @$pb.TagNumber(24)
+  $core.bool hasStepSimulation() => $_has(15);
+  @$pb.TagNumber(24)
+  void clearStepSimulation() => $_clearField(24);
+  @$pb.TagNumber(24)
+  StepSimulationRequest ensureStepSimulation() => $_ensure(15);
+
+  @$pb.TagNumber(25)
+  ResetSimulationRequest get resetSimulation => $_getN(16);
+  @$pb.TagNumber(25)
+  set resetSimulation(ResetSimulationRequest value) => $_setField(25, value);
+  @$pb.TagNumber(25)
+  $core.bool hasResetSimulation() => $_has(16);
+  @$pb.TagNumber(25)
+  void clearResetSimulation() => $_clearField(25);
+  @$pb.TagNumber(25)
+  ResetSimulationRequest ensureResetSimulation() => $_ensure(16);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -417,7 +474,7 @@ class ServerMessage extends $pb.GeneratedMessage {
   Event ensureEvent() => $_ensure(1);
 }
 
-enum Response_Payload { error, handshake, project, editApplied, ack, analysis, notSet }
+enum Response_Payload { error, handshake, project, editApplied, ack, analysis, simulation, notSet }
 
 class Response extends $pb.GeneratedMessage {
   factory Response({
@@ -428,6 +485,7 @@ class Response extends $pb.GeneratedMessage {
     EditApplied? editApplied,
     Ack? ack,
     AnalysisResponse? analysis,
+    SimulationResponse? simulation,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -437,6 +495,7 @@ class Response extends $pb.GeneratedMessage {
     if (editApplied != null) result.editApplied = editApplied;
     if (ack != null) result.ack = ack;
     if (analysis != null) result.analysis = analysis;
+    if (simulation != null) result.simulation = simulation;
     return result;
   }
 
@@ -456,12 +515,13 @@ class Response extends $pb.GeneratedMessage {
     12: Response_Payload.editApplied,
     13: Response_Payload.ack,
     14: Response_Payload.analysis,
+    15: Response_Payload.simulation,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -474,6 +534,8 @@ class Response extends $pb.GeneratedMessage {
     ..aOM<Ack>(13, _omitFieldNames ? '' : 'ack', subBuilder: Ack.$_createMessage)
     ..aOM<AnalysisResponse>(14, _omitFieldNames ? '' : 'analysis',
         subBuilder: AnalysisResponse.$_createMessage)
+    ..aOM<SimulationResponse>(15, _omitFieldNames ? '' : 'simulation',
+        subBuilder: SimulationResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -502,6 +564,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
   @$pb.TagNumber(14)
+  @$pb.TagNumber(15)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -509,6 +572,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
   @$pb.TagNumber(14)
+  @$pb.TagNumber(15)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -585,6 +649,17 @@ class Response extends $pb.GeneratedMessage {
   void clearAnalysis() => $_clearField(14);
   @$pb.TagNumber(14)
   AnalysisResponse ensureAnalysis() => $_ensure(6);
+
+  @$pb.TagNumber(15)
+  SimulationResponse get simulation => $_getN(7);
+  @$pb.TagNumber(15)
+  set simulation(SimulationResponse value) => $_setField(15, value);
+  @$pb.TagNumber(15)
+  $core.bool hasSimulation() => $_has(7);
+  @$pb.TagNumber(15)
+  void clearSimulation() => $_clearField(15);
+  @$pb.TagNumber(15)
+  SimulationResponse ensureSimulation() => $_ensure(7);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -3949,6 +4024,868 @@ class DaemonLog extends $pb.GeneratedMessage {
   void clearMessage() => $_clearField(2);
 }
 
+enum Value_Kind { boolean, count, quantity, semantic, none, some, opaque, notSet }
+
+/// A runtime value in the design's own terms.
+class Value extends $pb.GeneratedMessage {
+  factory Value({
+    $core.bool? boolean,
+    $fixnum.Int64? count,
+    Quantity? quantity,
+    SemanticValue? semantic,
+    Unit? none,
+    Value? some,
+    $core.String? opaque,
+  }) {
+    final result = Value._();
+    if (boolean != null) result.boolean = boolean;
+    if (count != null) result.count = count;
+    if (quantity != null) result.quantity = quantity;
+    if (semantic != null) result.semantic = semantic;
+    if (none != null) result.none = none;
+    if (some != null) result.some = some;
+    if (opaque != null) result.opaque = opaque;
+    return result;
+  }
+
+  Value._();
+
+  factory Value.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Value()..mergeFromBuffer(data, registry);
+  factory Value.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Value()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, Value_Kind> _Value_KindByTag = {
+    1: Value_Kind.boolean,
+    2: Value_Kind.count,
+    3: Value_Kind.quantity,
+    4: Value_Kind.semantic,
+    5: Value_Kind.none,
+    6: Value_Kind.some,
+    7: Value_Kind.opaque,
+    0: Value_Kind.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Value',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: Value.$_createMessage)
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7])
+    ..aOB(1, _omitFieldNames ? '' : 'boolean')
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'count', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<Quantity>(3, _omitFieldNames ? '' : 'quantity', subBuilder: Quantity.$_createMessage)
+    ..aOM<SemanticValue>(4, _omitFieldNames ? '' : 'semantic',
+        subBuilder: SemanticValue.$_createMessage)
+    ..aOM<Unit>(5, _omitFieldNames ? '' : 'none', subBuilder: Unit.$_createMessage)
+    ..aOM<Value>(6, _omitFieldNames ? '' : 'some', subBuilder: Value.$_createMessage)
+    ..aOS(7, _omitFieldNames ? '' : 'opaque')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Value clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Value copyWith(void Function(Value) updates) =>
+      super.copyWith((message) => updates(message as Value)) as Value;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use Value() / Value.new instead')
+  static Value create() => Value._();
+  static $pb.GeneratedMessage $_createMessage() => Value._();
+  @$core.override
+  Value createEmptyInstance() => Value._();
+  @$core.pragma('dart2js:noInline')
+  static Value getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Value>(Value.$_createMessage);
+  static Value? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  Value_Kind whichKind() => _Value_KindByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  void clearKind() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $core.bool get boolean => $_getBF(0);
+  @$pb.TagNumber(1)
+  set boolean($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBoolean() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBoolean() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get count => $_getI64(1);
+  @$pb.TagNumber(2)
+  set count($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCount() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCount() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Quantity get quantity => $_getN(2);
+  @$pb.TagNumber(3)
+  set quantity(Quantity value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasQuantity() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearQuantity() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Quantity ensureQuantity() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  SemanticValue get semantic => $_getN(3);
+  @$pb.TagNumber(4)
+  set semantic(SemanticValue value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSemantic() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSemantic() => $_clearField(4);
+  @$pb.TagNumber(4)
+  SemanticValue ensureSemantic() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  Unit get none => $_getN(4);
+  @$pb.TagNumber(5)
+  set none(Unit value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasNone() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearNone() => $_clearField(5);
+  @$pb.TagNumber(5)
+  Unit ensureNone() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  Value get some => $_getN(5);
+  @$pb.TagNumber(6)
+  set some(Value value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasSome() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearSome() => $_clearField(6);
+  @$pb.TagNumber(6)
+  Value ensureSome() => $_ensure(5);
+
+  /// A function or partially applied primitive: shown, never transported.
+  @$pb.TagNumber(7)
+  $core.String get opaque => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set opaque($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasOpaque() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearOpaque() => $_clearField(7);
+}
+
+class Quantity extends $pb.GeneratedMessage {
+  factory Quantity({
+    Dim? dim,
+    $core.double? value,
+  }) {
+    final result = Quantity._();
+    if (dim != null) result.dim = dim;
+    if (value != null) result.value = value;
+    return result;
+  }
+
+  Quantity._();
+
+  factory Quantity.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Quantity()..mergeFromBuffer(data, registry);
+  factory Quantity.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Quantity()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Quantity',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: Quantity.$_createMessage)
+    ..aOM<Dim>(1, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
+    ..aD(2, _omitFieldNames ? '' : 'value')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Quantity clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Quantity copyWith(void Function(Quantity) updates) =>
+      super.copyWith((message) => updates(message as Quantity)) as Quantity;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use Quantity() / Quantity.new instead')
+  static Quantity create() => Quantity._();
+  static $pb.GeneratedMessage $_createMessage() => Quantity._();
+  @$core.override
+  Quantity createEmptyInstance() => Quantity._();
+  @$core.pragma('dart2js:noInline')
+  static Quantity getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Quantity>(Quantity.$_createMessage);
+  static Quantity? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Dim get dim => $_getN(0);
+  @$pb.TagNumber(1)
+  set dim(Dim value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDim() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDim() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Dim ensureDim() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $core.double get value => $_getN(1);
+  @$pb.TagNumber(2)
+  set value($core.double value) => $_setDouble(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasValue() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearValue() => $_clearField(2);
+}
+
+class SemanticValue extends $pb.GeneratedMessage {
+  factory SemanticValue({
+    $fixnum.Int64? conceptId,
+    Value? repr,
+  }) {
+    final result = SemanticValue._();
+    if (conceptId != null) result.conceptId = conceptId;
+    if (repr != null) result.repr = repr;
+    return result;
+  }
+
+  SemanticValue._();
+
+  factory SemanticValue.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticValue()..mergeFromBuffer(data, registry);
+  factory SemanticValue.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticValue()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SemanticValue',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticValue.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<Value>(2, _omitFieldNames ? '' : 'repr', subBuilder: Value.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticValue clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticValue copyWith(void Function(SemanticValue) updates) =>
+      super.copyWith((message) => updates(message as SemanticValue)) as SemanticValue;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticValue() / SemanticValue.new instead')
+  static SemanticValue create() => SemanticValue._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticValue._();
+  @$core.override
+  SemanticValue createEmptyInstance() => SemanticValue._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticValue getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SemanticValue>(SemanticValue.$_createMessage);
+  static SemanticValue? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get conceptId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set conceptId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConceptId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConceptId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  Value get repr => $_getN(1);
+  @$pb.TagNumber(2)
+  set repr(Value value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRepr() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRepr() => $_clearField(2);
+  @$pb.TagNumber(2)
+  Value ensureRepr() => $_ensure(1);
+}
+
+/// One value for an unresolved declaration at one tick.
+class SimulationInput extends $pb.GeneratedMessage {
+  factory SimulationInput({
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? tick,
+    Value? value,
+  }) {
+    final result = SimulationInput._();
+    if (mappingId != null) result.mappingId = mappingId;
+    if (tick != null) result.tick = tick;
+    if (value != null) result.value = value;
+    return result;
+  }
+
+  SimulationInput._();
+
+  factory SimulationInput.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SimulationInput()..mergeFromBuffer(data, registry);
+  factory SimulationInput.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SimulationInput()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SimulationInput',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SimulationInput.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'tick', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<Value>(3, _omitFieldNames ? '' : 'value', subBuilder: Value.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SimulationInput clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SimulationInput copyWith(void Function(SimulationInput) updates) =>
+      super.copyWith((message) => updates(message as SimulationInput)) as SimulationInput;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SimulationInput() / SimulationInput.new instead')
+  static SimulationInput create() => SimulationInput._();
+  static $pb.GeneratedMessage $_createMessage() => SimulationInput._();
+  @$core.override
+  SimulationInput createEmptyInstance() => SimulationInput._();
+  @$core.pragma('dart2js:noInline')
+  static SimulationInput getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SimulationInput>(SimulationInput.$_createMessage);
+  static SimulationInput? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get mappingId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set mappingId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMappingId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMappingId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get tick => $_getI64(1);
+  @$pb.TagNumber(2)
+  set tick($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTick() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTick() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Value get value => $_getN(2);
+  @$pb.TagNumber(3)
+  set value(Value value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasValue() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearValue() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Value ensureValue() => $_ensure(2);
+}
+
+/// Which domains activate: period 1 = every tick.  Domains not listed never
+/// activate; an empty schedule means every domain every tick.
+class SchedulePeriod extends $pb.GeneratedMessage {
+  factory SchedulePeriod({
+    $fixnum.Int64? clockId,
+    $fixnum.Int64? period,
+  }) {
+    final result = SchedulePeriod._();
+    if (clockId != null) result.clockId = clockId;
+    if (period != null) result.period = period;
+    return result;
+  }
+
+  SchedulePeriod._();
+
+  factory SchedulePeriod.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SchedulePeriod()..mergeFromBuffer(data, registry);
+  factory SchedulePeriod.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SchedulePeriod()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SchedulePeriod',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SchedulePeriod.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'clockId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'period', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SchedulePeriod clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SchedulePeriod copyWith(void Function(SchedulePeriod) updates) =>
+      super.copyWith((message) => updates(message as SchedulePeriod)) as SchedulePeriod;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SchedulePeriod() / SchedulePeriod.new instead')
+  static SchedulePeriod create() => SchedulePeriod._();
+  static $pb.GeneratedMessage $_createMessage() => SchedulePeriod._();
+  @$core.override
+  SchedulePeriod createEmptyInstance() => SchedulePeriod._();
+  @$core.pragma('dart2js:noInline')
+  static SchedulePeriod getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SchedulePeriod>(SchedulePeriod.$_createMessage);
+  static SchedulePeriod? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get clockId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set clockId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasClockId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearClockId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get period => $_getI64(1);
+  @$pb.TagNumber(2)
+  set period($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPeriod() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPeriod() => $_clearField(2);
+}
+
+/// Starts a run against the *current* revision; refused if the design is
+/// not causal.  Inputs may be extended by later StartSimulation calls only by
+/// restarting.
+class StartSimulationRequest extends $pb.GeneratedMessage {
+  factory StartSimulationRequest({
+    $core.Iterable<SimulationInput>? inputs,
+    $core.Iterable<SchedulePeriod>? schedule,
+  }) {
+    final result = StartSimulationRequest._();
+    if (inputs != null) result.inputs.addAll(inputs);
+    if (schedule != null) result.schedule.addAll(schedule);
+    return result;
+  }
+
+  StartSimulationRequest._();
+
+  factory StartSimulationRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      StartSimulationRequest()..mergeFromBuffer(data, registry);
+  factory StartSimulationRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      StartSimulationRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'StartSimulationRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: StartSimulationRequest.$_createMessage)
+    ..pPM<SimulationInput>(1, _omitFieldNames ? '' : 'inputs',
+        subBuilder: SimulationInput.$_createMessage)
+    ..pPM<SchedulePeriod>(2, _omitFieldNames ? '' : 'schedule',
+        subBuilder: SchedulePeriod.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  StartSimulationRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  StartSimulationRequest copyWith(void Function(StartSimulationRequest) updates) =>
+      super.copyWith((message) => updates(message as StartSimulationRequest))
+          as StartSimulationRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use StartSimulationRequest() / StartSimulationRequest.new instead')
+  static StartSimulationRequest create() => StartSimulationRequest._();
+  static $pb.GeneratedMessage $_createMessage() => StartSimulationRequest._();
+  @$core.override
+  StartSimulationRequest createEmptyInstance() => StartSimulationRequest._();
+  @$core.pragma('dart2js:noInline')
+  static StartSimulationRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<StartSimulationRequest>(
+          StartSimulationRequest.$_createMessage);
+  static StartSimulationRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<SimulationInput> get inputs => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<SchedulePeriod> get schedule => $_getList(1);
+}
+
+class StepSimulationRequest extends $pb.GeneratedMessage {
+  factory StepSimulationRequest({
+    $fixnum.Int64? ticks,
+  }) {
+    final result = StepSimulationRequest._();
+    if (ticks != null) result.ticks = ticks;
+    return result;
+  }
+
+  StepSimulationRequest._();
+
+  factory StepSimulationRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      StepSimulationRequest()..mergeFromBuffer(data, registry);
+  factory StepSimulationRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      StepSimulationRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'StepSimulationRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: StepSimulationRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'ticks', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  StepSimulationRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  StepSimulationRequest copyWith(void Function(StepSimulationRequest) updates) =>
+      super.copyWith((message) => updates(message as StepSimulationRequest))
+          as StepSimulationRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use StepSimulationRequest() / StepSimulationRequest.new instead')
+  static StepSimulationRequest create() => StepSimulationRequest._();
+  static $pb.GeneratedMessage $_createMessage() => StepSimulationRequest._();
+  @$core.override
+  StepSimulationRequest createEmptyInstance() => StepSimulationRequest._();
+  @$core.pragma('dart2js:noInline')
+  static StepSimulationRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<StepSimulationRequest>(
+          StepSimulationRequest.$_createMessage);
+  static StepSimulationRequest? _defaultInstance;
+
+  /// Ticks to evaluate; the response carries their samples.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get ticks => $_getI64(0);
+  @$pb.TagNumber(1)
+  set ticks($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTicks() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTicks() => $_clearField(1);
+}
+
+class ResetSimulationRequest extends $pb.GeneratedMessage {
+  factory ResetSimulationRequest() => ResetSimulationRequest._();
+
+  ResetSimulationRequest._();
+
+  factory ResetSimulationRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ResetSimulationRequest()..mergeFromBuffer(data, registry);
+  factory ResetSimulationRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ResetSimulationRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResetSimulationRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ResetSimulationRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResetSimulationRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResetSimulationRequest copyWith(void Function(ResetSimulationRequest) updates) =>
+      super.copyWith((message) => updates(message as ResetSimulationRequest))
+          as ResetSimulationRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ResetSimulationRequest() / ResetSimulationRequest.new instead')
+  static ResetSimulationRequest create() => ResetSimulationRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ResetSimulationRequest._();
+  @$core.override
+  ResetSimulationRequest createEmptyInstance() => ResetSimulationRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ResetSimulationRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ResetSimulationRequest>(
+          ResetSimulationRequest.$_createMessage);
+  static ResetSimulationRequest? _defaultInstance;
+}
+
+class SimulationResponse extends $pb.GeneratedMessage {
+  factory SimulationResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? nextTick,
+    $core.Iterable<TickSample>? samples,
+    Diagnostic? error,
+  }) {
+    final result = SimulationResponse._();
+    if (revision != null) result.revision = revision;
+    if (nextTick != null) result.nextTick = nextTick;
+    if (samples != null) result.samples.addAll(samples);
+    if (error != null) result.error = error;
+    return result;
+  }
+
+  SimulationResponse._();
+
+  factory SimulationResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SimulationResponse()..mergeFromBuffer(data, registry);
+  factory SimulationResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SimulationResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SimulationResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SimulationResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'nextTick', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<TickSample>(3, _omitFieldNames ? '' : 'samples', subBuilder: TickSample.$_createMessage)
+    ..aOM<Diagnostic>(4, _omitFieldNames ? '' : 'error', subBuilder: Diagnostic.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SimulationResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SimulationResponse copyWith(void Function(SimulationResponse) updates) =>
+      super.copyWith((message) => updates(message as SimulationResponse)) as SimulationResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SimulationResponse() / SimulationResponse.new instead')
+  static SimulationResponse create() => SimulationResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SimulationResponse._();
+  @$core.override
+  SimulationResponse createEmptyInstance() => SimulationResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SimulationResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SimulationResponse>(SimulationResponse.$_createMessage);
+  static SimulationResponse? _defaultInstance;
+
+  /// The project revision the simulation runs against.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  /// Next tick to be evaluated.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get nextTick => $_getI64(1);
+  @$pb.TagNumber(2)
+  set nextTick($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasNextTick() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNextTick() => $_clearField(2);
+
+  /// Samples produced by this request (all ticks so far for Start/Reset).
+  @$pb.TagNumber(3)
+  $pb.PbList<TickSample> get samples => $_getList(2);
+
+  /// Set when a tick could not be evaluated (missing input, division by zero…).
+  @$pb.TagNumber(4)
+  Diagnostic get error => $_getN(3);
+  @$pb.TagNumber(4)
+  set error(Diagnostic value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasError() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearError() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Diagnostic ensureError() => $_ensure(3);
+}
+
+class TickSample extends $pb.GeneratedMessage {
+  factory TickSample({
+    $fixnum.Int64? tick,
+    $core.Iterable<$fixnum.Int64>? activeClockIds,
+    $core.Iterable<DeclarationSample>? values,
+  }) {
+    final result = TickSample._();
+    if (tick != null) result.tick = tick;
+    if (activeClockIds != null) result.activeClockIds.addAll(activeClockIds);
+    if (values != null) result.values.addAll(values);
+    return result;
+  }
+
+  TickSample._();
+
+  factory TickSample.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TickSample()..mergeFromBuffer(data, registry);
+  factory TickSample.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TickSample()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'TickSample',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: TickSample.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'tick', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..p<$fixnum.Int64>(2, _omitFieldNames ? '' : 'activeClockIds', $pb.PbFieldType.KU6)
+    ..pPM<DeclarationSample>(3, _omitFieldNames ? '' : 'values',
+        subBuilder: DeclarationSample.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TickSample clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TickSample copyWith(void Function(TickSample) updates) =>
+      super.copyWith((message) => updates(message as TickSample)) as TickSample;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use TickSample() / TickSample.new instead')
+  static TickSample create() => TickSample._();
+  static $pb.GeneratedMessage $_createMessage() => TickSample._();
+  @$core.override
+  TickSample createEmptyInstance() => TickSample._();
+  @$core.pragma('dart2js:noInline')
+  static TickSample getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TickSample>(TickSample.$_createMessage);
+  static TickSample? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get tick => $_getI64(0);
+  @$pb.TagNumber(1)
+  set tick($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTick() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTick() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$fixnum.Int64> get activeClockIds => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<DeclarationSample> get values => $_getList(2);
+}
+
+class DeclarationSample extends $pb.GeneratedMessage {
+  factory DeclarationSample({
+    $fixnum.Int64? mappingId,
+    Value? value,
+    $core.String? rendered,
+  }) {
+    final result = DeclarationSample._();
+    if (mappingId != null) result.mappingId = mappingId;
+    if (value != null) result.value = value;
+    if (rendered != null) result.rendered = rendered;
+    return result;
+  }
+
+  DeclarationSample._();
+
+  factory DeclarationSample.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclarationSample()..mergeFromBuffer(data, registry);
+  factory DeclarationSample.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclarationSample()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DeclarationSample',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DeclarationSample.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<Value>(2, _omitFieldNames ? '' : 'value', subBuilder: Value.$_createMessage)
+    ..aOS(3, _omitFieldNames ? '' : 'rendered')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclarationSample clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclarationSample copyWith(void Function(DeclarationSample) updates) =>
+      super.copyWith((message) => updates(message as DeclarationSample)) as DeclarationSample;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DeclarationSample() / DeclarationSample.new instead')
+  static DeclarationSample create() => DeclarationSample._();
+  static $pb.GeneratedMessage $_createMessage() => DeclarationSample._();
+  @$core.override
+  DeclarationSample createEmptyInstance() => DeclarationSample._();
+  @$core.pragma('dart2js:noInline')
+  static DeclarationSample getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeclarationSample>(DeclarationSample.$_createMessage);
+  static DeclarationSample? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get mappingId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set mappingId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMappingId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMappingId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  Value get value => $_getN(1);
+  @$pb.TagNumber(2)
+  set value(Value value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasValue() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearValue() => $_clearField(2);
+  @$pb.TagNumber(2)
+  Value ensureValue() => $_ensure(1);
+
+  /// Rendered in the design's terms, e.g. "Brightness(0.5)".
+  @$pb.TagNumber(3)
+  $core.String get rendered => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set rendered($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRendered() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRendered() => $_clearField(3);
+}
+
 class RunAnalysisRequest extends $pb.GeneratedMessage {
   factory RunAnalysisRequest() => RunAnalysisRequest._();
 
@@ -4106,11 +5043,19 @@ class ProjectAnalysis extends $pb.GeneratedMessage {
     $fixnum.Int64? revision,
     $core.Iterable<MappingAnalysis>? mappings,
     $core.Iterable<Diagnostic>? diagnostics,
+    $core.bool? causal,
+    $core.bool? clockConsistent,
+    $core.Iterable<DeclarationCycle>? cycles,
+    $core.Iterable<$fixnum.Int64>? evaluationOrder,
   }) {
     final result = ProjectAnalysis._();
     if (revision != null) result.revision = revision;
     if (mappings != null) result.mappings.addAll(mappings);
     if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    if (causal != null) result.causal = causal;
+    if (clockConsistent != null) result.clockConsistent = clockConsistent;
+    if (cycles != null) result.cycles.addAll(cycles);
+    if (evaluationOrder != null) result.evaluationOrder.addAll(evaluationOrder);
     return result;
   }
 
@@ -4132,6 +5077,11 @@ class ProjectAnalysis extends $pb.GeneratedMessage {
         subBuilder: MappingAnalysis.$_createMessage)
     ..pPM<Diagnostic>(3, _omitFieldNames ? '' : 'diagnostics',
         subBuilder: Diagnostic.$_createMessage)
+    ..aOB(4, _omitFieldNames ? '' : 'causal')
+    ..aOB(5, _omitFieldNames ? '' : 'clockConsistent')
+    ..pPM<DeclarationCycle>(6, _omitFieldNames ? '' : 'cycles',
+        subBuilder: DeclarationCycle.$_createMessage)
+    ..p<$fixnum.Int64>(7, _omitFieldNames ? '' : 'evaluationOrder', $pb.PbFieldType.KU6)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -4170,6 +5120,81 @@ class ProjectAnalysis extends $pb.GeneratedMessage {
   /// Every diagnostic, in the documented stable order (entity, span, code).
   @$pb.TagNumber(3)
   $pb.PbList<Diagnostic> get diagnostics => $_getList(2);
+
+  /// Whole-design verdicts of the reactive passes.
+  @$pb.TagNumber(4)
+  $core.bool get causal => $_getBF(3);
+  @$pb.TagNumber(4)
+  set causal($core.bool value) => $_setBool(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasCausal() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearCausal() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.bool get clockConsistent => $_getBF(4);
+  @$pb.TagNumber(5)
+  set clockConsistent($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasClockConsistent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearClockConsistent() => $_clearField(5);
+
+  /// Instantaneous cycles, each as the mapping ids involved.
+  @$pb.TagNumber(6)
+  $pb.PbList<DeclarationCycle> get cycles => $_getList(5);
+
+  /// Evaluation order the causality pass produced (empty when not causal).
+  @$pb.TagNumber(7)
+  $pb.PbList<$fixnum.Int64> get evaluationOrder => $_getList(6);
+}
+
+class DeclarationCycle extends $pb.GeneratedMessage {
+  factory DeclarationCycle({
+    $core.Iterable<$fixnum.Int64>? mappingIds,
+  }) {
+    final result = DeclarationCycle._();
+    if (mappingIds != null) result.mappingIds.addAll(mappingIds);
+    return result;
+  }
+
+  DeclarationCycle._();
+
+  factory DeclarationCycle.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclarationCycle()..mergeFromBuffer(data, registry);
+  factory DeclarationCycle.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclarationCycle()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DeclarationCycle',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DeclarationCycle.$_createMessage)
+    ..p<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingIds', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclarationCycle clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclarationCycle copyWith(void Function(DeclarationCycle) updates) =>
+      super.copyWith((message) => updates(message as DeclarationCycle)) as DeclarationCycle;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DeclarationCycle() / DeclarationCycle.new instead')
+  static DeclarationCycle create() => DeclarationCycle._();
+  static $pb.GeneratedMessage $_createMessage() => DeclarationCycle._();
+  @$core.override
+  DeclarationCycle createEmptyInstance() => DeclarationCycle._();
+  @$core.pragma('dart2js:noInline')
+  static DeclarationCycle getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeclarationCycle>(DeclarationCycle.$_createMessage);
+  static DeclarationCycle? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<$fixnum.Int64> get mappingIds => $_getList(0);
 }
 
 class MappingAnalysis extends $pb.GeneratedMessage {

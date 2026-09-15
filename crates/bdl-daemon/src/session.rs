@@ -16,6 +16,7 @@ use bdl_model::layout::Layout;
 use bdl_model::persist::{self, PersistError};
 use bdl_model::surface::{Design, ProjectSnapshot};
 use bdl_model::Revision;
+use bdl_reactive::Simulation;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
@@ -39,10 +40,20 @@ pub enum SessionError {
     Persist(#[from] PersistError),
 }
 
+/// A simulation run, valid for exactly one project revision.
+pub struct SimulationRun {
+    pub revision: Revision,
+    pub simulation: Simulation,
+    /// Concept names at that revision, for rendering samples.
+    pub concept_names: std::collections::BTreeMap<bdl_model::SemanticId, String>,
+}
+
 pub struct OpenProject {
     pub root: PathBuf,
     pub current: ProjectSnapshot,
     pub layout: Layout,
+    /// Dropped on every commit: a run belongs to the revision it started at.
+    pub simulation: Option<SimulationRun>,
     /// Designs before the current one, oldest first.
     undo: Vec<Design>,
     /// Designs undone, most recently undone last.
@@ -120,6 +131,7 @@ impl Session {
             saved_layout: layout.clone(),
             current: snapshot,
             layout,
+            simulation: None,
             undo: Vec::new(),
             redo: Vec::new(),
         });
@@ -153,6 +165,7 @@ impl Session {
         let previous = std::mem::replace(&mut p.current, applied.snapshot);
         p.undo.push(previous.design);
         p.redo.clear();
+        p.simulation = None;
         Ok(Committed {
             snapshot: p.current.clone(),
             outcome: Some(applied.outcome),
@@ -187,6 +200,10 @@ impl Session {
             snapshot: p.current.clone(),
             outcome: None,
         })
+    }
+
+    pub fn simulation_mut(&mut self) -> Result<&mut Option<SimulationRun>, SessionError> {
+        Ok(&mut self.project_mut()?.simulation)
     }
 
     /// Layout is not semantics: it does not create a revision.

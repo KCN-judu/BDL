@@ -5,10 +5,11 @@
 //! ```
 //!
 //! passes, in order: elaboration (`bdl-elab`: concepts → Θ, signatures →
-//! interfaces, formulas → Core) then checking (`bdl-check`: typing under the
-//! declaration's grant, comparison with the interface).  Dimension checking
-//! is not a pass of its own — it falls out of typing.  Later passes
-//! (dependency, causality, clocks, outputs) slot in after checking.
+//! interfaces, formulas → Core), checking (`bdl-check`: typing under the
+//! declaration's grant, comparison with the interface), then the reactive
+//! passes (`bdl-reactive`: dependency graph, causality, clock domains).
+//! Dimension checking is not a pass of its own — it falls out of typing.
+//! Later passes (outputs, hardware) slot in after clocks.
 //!
 //! The result is tagged with the snapshot's revision so a consumer can
 //! discard it once the project has moved on, and it is deterministic: the
@@ -23,6 +24,10 @@ use bdl_elab::{elaborate_design, RealizationOutcome};
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
 use bdl_model::{DeclId, Revision, SemanticId};
+use bdl_reactive::{
+    analyze_dependencies, check_causality, check_clocks, CausalityAnalysis, ClockAnalysis,
+    DependencyGraph,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -40,6 +45,12 @@ pub enum MappingStatus {
     /// The definition produces what the signature promises; the
     /// realization is typed under the declaration's own grant.
     TypeValid,
+    /// Type-valid, and no instantaneous loop passes through it: it has a
+    /// value at every activation.
+    TemporallyValid,
+    /// Temporally valid, and every value it reads is in its own timing
+    /// domain or transported explicitly.
+    ClockConsistent,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -67,9 +78,12 @@ pub struct ProjectAnalysis {
     pub mappings: BTreeMap<DeclId, MappingAnalysis>,
     /// Every diagnostic of every entity, in the documented order.
     pub diagnostics: Vec<Diagnostic>,
-    /// The Design IR the analysis produced (Θ, Δ; Κ/Ω/β empty until those
-    /// passes exist).
+    /// The Design IR the analysis produced (Θ, Δ, Κ; Ω/β empty until the
+    /// output pass exists).
     pub ir: DesignIr,
+    pub dependencies: DependencyGraph,
+    pub causality: CausalityAnalysis,
+    pub clocks: ClockAnalysis,
 }
 
 impl ProjectAnalysis {
@@ -136,6 +150,32 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
             },
         );
     }
+    // Reactive passes run over the whole design; a declaration in an
+    // instantaneous cycle or reading across domains loses the corresponding
+    // rung of the ladder and carries the diagnostic.
+    let dependencies = analyze_dependencies(&ir);
+    let causality = check_causality(&ir, &dependencies);
+    let clocks = check_clocks(&ir);
+    for (id, m) in mappings.iter_mut() {
+        if m.status != MappingStatus::TypeValid {
+            continue;
+        }
+        let mine = |d: &&Diagnostic| d.entity == Entity::Mapping { id: *id };
+        if causality.in_cycle(*id) {
+            m.status = MappingStatus::Invalid;
+            m.diagnostics
+                .extend(causality.diagnostics.iter().filter(mine).cloned());
+        } else if clocks.ill_clocked.contains(id) {
+            m.status = MappingStatus::TemporallyValid;
+            m.diagnostics
+                .extend(clocks.diagnostics.iter().filter(mine).cloned());
+        } else {
+            m.status = MappingStatus::ClockConsistent;
+        }
+        sort_diagnostics(&mut m.diagnostics);
+    }
+    all.extend(causality.diagnostics.iter().cloned());
+    all.extend(clocks.diagnostics.iter().cloned());
     sort_diagnostics(&mut all);
     ProjectAnalysis {
         revision: snapshot.revision,
@@ -143,6 +183,9 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
         mappings,
         diagnostics: all,
         ir,
+        dependencies,
+        causality,
+        clocks,
     }
 }
 
@@ -268,7 +311,9 @@ mod tests {
         let s2 = attach(&s, id, "Tilt / 90 deg");
         let a2 = analyze(&s2);
         assert_eq!(a2.revision, s2.revision);
-        assert_eq!(a2.mappings[&id].status, MappingStatus::TypeValid);
+        assert_eq!(a2.mappings[&id].status, MappingStatus::ClockConsistent);
+        assert!(a2.causality.valid && a2.clocks.valid);
+        assert_eq!(a2.causality.order, vec![id]);
         assert_eq!(
             a2.mappings[&id].inferred_type.as_ref(),
             Some(&a2.mappings[&id].interface.expected_type)
@@ -334,6 +379,38 @@ mod tests {
         let json = serde_json::to_string(&a).unwrap();
         let back: ProjectAnalysis = serde_json::from_str(&json).unwrap();
         assert_eq!(back, a);
+    }
+
+    #[test]
+    fn cross_domain_read_stops_at_temporally_valid_with_a_clock_diagnostic() {
+        // Two nullary mappings in different domains, the second reading the
+        // first through a Core term (the surface cannot say this yet).
+        let (s, id) = lamp();
+        let s = attach(&s, id, "Tilt / 90 deg");
+        let s = apply_edit(
+            &s,
+            &EditOp::CreateClockDomain {
+                name: "interaction".into(),
+            },
+        )
+        .unwrap()
+        .snapshot;
+        let a = analyze(&s);
+        assert!(a.clocks.valid);
+        // assign the mapping to the domain: still fine (no temporal forms, no crossings)
+        let clock = *s.design.clocks.keys().next().unwrap();
+        let s = apply_edit(
+            &s,
+            &EditOp::SetMappingClock {
+                id,
+                clock: Some(clock),
+            },
+        )
+        .unwrap()
+        .snapshot;
+        let a = analyze(&s);
+        assert_eq!(a.mappings[&id].status, MappingStatus::ClockConsistent);
+        assert_eq!(a.ir.clocks[&id], clock);
     }
 
     proptest::proptest! {

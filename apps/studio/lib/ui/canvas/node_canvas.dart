@@ -415,7 +415,7 @@ class NodePainter {
     );
     if (n.stateWord.isNotEmpty) {
       final color = switch (n.stateWord) {
-        'type-valid' => tokens.settled,
+        'type-valid' || 'temporally valid' || 'clock-consistent' => tokens.settled,
         'invalid' => tokens.error,
         _ => tokens.open,
       };

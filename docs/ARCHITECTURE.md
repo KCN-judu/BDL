@@ -57,11 +57,11 @@ crates/
   bdl-syntax       formula lexer · Pratt parser · spanned surface AST            (→ diagnostics)
   bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core      (→ ir, syntax, check)
   bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
-  bdl-compiler     analyze(snapshot) → revision-tagged ProjectAnalysis           (→ elab, check)
+  bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)
+  bdl-compiler     analyze(snapshot) → revision-tagged ProjectAnalysis           (→ elab, check, reactive)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
   bdl-daemon       bdld: session, coordinator, transport, analysis push          (→ protocol, compiler)
 planned:
-  bdl-reactive   reference interpreter + simulator
   bdl-hardware   requirements · boards · solver · diagnose
   bdl-codegen-rust  Core IR → Rust backend AST → Cargo project + manifest
   bdl-component  supplied Rust component contracts
@@ -71,7 +71,7 @@ runtime/
 ```
 
 Dependency direction is strict and acyclic: `model → ir → {syntax → elab,
-check} → compiler → protocol → daemon`; later `reactive/hardware/codegen`
+check → reactive} → compiler → protocol → daemon`; later `hardware/codegen`
 hang off `compiler`. A crate exists only where a real
 boundary exists; tiny crates are merged rather than kept for the diagram.
 

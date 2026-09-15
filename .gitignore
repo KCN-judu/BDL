@@ -20,3 +20,6 @@ apps/studio/build/
 
 # Local-only working notes (never committed)
 CLAUDE.md
+
+# Local tool state
+.claude/

@@ -286,7 +286,11 @@ fn vertical_slice_steps_1_to_12() {
     };
     let a = a.analysis.unwrap();
     assert_eq!(a.revision, 6);
-    assert_eq!(a.mappings[0].status(), pb::MappingStatus::TypeValid);
+    // a well-typed pure mapping climbs the whole ladder: it is on no loop and
+    // reads across no domain
+    assert_eq!(a.mappings[0].status(), pb::MappingStatus::ClockConsistent);
+    assert!(a.causal && a.clock_consistent);
+    assert_eq!(a.evaluation_order, vec![m.id]);
     assert!(a.diagnostics.is_empty());
     assert!(
         a.mappings[0].core_expr.contains("(rep #0)"),
@@ -298,6 +302,38 @@ fn vertical_slice_steps_1_to_12() {
         "{}",
         a.mappings[0].core_expr
     );
+    // simulate: dimByTilt is a function, so it is simply a closure at every
+    // tick; the reference evaluator runs it once the design is causal
+    let Resp::Simulation(sim) = c.call(
+        Req::StartSimulation(pb::StartSimulationRequest {
+            inputs: vec![],
+            schedule: vec![],
+        }),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(sim.revision, 6);
+    assert_eq!(sim.next_tick, 0);
+    let Resp::Simulation(sim) = c.call(
+        Req::StepSimulation(pb::StepSimulationRequest { ticks: 3 }),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(sim.next_tick, 3);
+    assert_eq!(sim.samples.len(), 3);
+    assert_eq!(sim.samples[2].tick, 2);
+    assert_eq!(sim.samples[0].values[0].rendered, "<function>");
+    assert!(sim.error.is_none());
+    let Resp::Simulation(sim) = c.call(
+        Req::ResetSimulation(pb::ResetSimulationRequest {}),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(sim.next_tick, 0);
+
     // a bad formula → invalid with a spanned, product-language diagnostic
     c.call(
         edit(
@@ -318,6 +354,14 @@ fn vertical_slice_steps_1_to_12() {
     assert_eq!(a.mappings[0].status(), pb::MappingStatus::Invalid);
     let d = &a.diagnostics[0];
     assert_eq!(d.code, "dimension.mismatch");
+    // an edit discards the run: stepping needs a fresh start
+    let Resp::Error(e) = c.call(
+        Req::StepSimulation(pb::StepSimulationRequest { ticks: 1 }),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(e.code, "simulation.not_started");
     assert!(d.message.contains("an angle and a time"));
     assert_eq!(d.span.as_ref().map(|s| (s.start, s.end)), Some((0, 10)));
     // subscribers received an AnalysisReady per committed revision

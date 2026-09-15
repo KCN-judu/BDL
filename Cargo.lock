@@ -94,6 +94,7 @@ dependencies = [
  "bdl-elab",
  "bdl-ir",
  "bdl-model",
+ "bdl-reactive",
  "proptest",
  "serde",
  "serde_json",
@@ -105,8 +106,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bdl-compiler",
+ "bdl-diagnostics",
  "bdl-model",
  "bdl-protocol",
+ "bdl-reactive",
  "bytes",
  "clap",
  "prost",
@@ -168,10 +171,25 @@ dependencies = [
  "bdl-compiler",
  "bdl-diagnostics",
  "bdl-model",
+ "bdl-reactive",
  "bytes",
  "prost",
  "prost-build",
  "protox",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "bdl-reactive"
+version = "0.1.0"
+dependencies = [
+ "bdl-check",
+ "bdl-diagnostics",
+ "bdl-ir",
+ "bdl-model",
+ "proptest",
+ "serde",
  "serde_json",
  "thiserror",
 ]

@@ -331,6 +331,8 @@ String statusWord(pb.MappingStatus s) => switch (s) {
   pb.MappingStatus.MAPPING_STATUS_OPEN => 'open',
   pb.MappingStatus.MAPPING_STATUS_INVALID => 'invalid',
   pb.MappingStatus.MAPPING_STATUS_TYPE_VALID => 'type-valid',
+  pb.MappingStatus.MAPPING_STATUS_TEMPORALLY_VALID => 'temporally valid',
+  pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT => 'clock-consistent',
   _ => '',
 };
 
@@ -339,7 +341,9 @@ String statusWord(pb.MappingStatus s) => switch (s) {
 enum StatusTone { settled, open, error }
 
 StatusTone statusTone(pb.MappingStatus s) => switch (s) {
-  pb.MappingStatus.MAPPING_STATUS_TYPE_VALID => StatusTone.settled,
+  pb.MappingStatus.MAPPING_STATUS_TYPE_VALID ||
+  pb.MappingStatus.MAPPING_STATUS_TEMPORALLY_VALID ||
+  pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT => StatusTone.settled,
   pb.MappingStatus.MAPPING_STATUS_INVALID => StatusTone.error,
   _ => StatusTone.open,
 };

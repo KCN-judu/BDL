@@ -5,7 +5,7 @@
 //! session and handles requests strictly in order.  Nothing else ever
 //! touches the session.
 
-use crate::session::{Committed, Session, SessionError};
+use crate::session::{Committed, Session, SessionError, SimulationRun};
 use crate::COMPILER_VERSION;
 use bdl_protocol::convert::{self, SessionInfo};
 use bdl_protocol::framing;
@@ -236,8 +236,135 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             }
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
+        Req::StartSimulation(r) => (start_simulation(session, &r), None),
+        Req::StepSimulation(r) => (step_simulation(session, r.ticks), None),
+        Req::ResetSimulation(_) => (reset_simulation(session), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
+}
+
+fn start_simulation(session: &mut Session, r: &pb::StartSimulationRequest) -> Resp {
+    let snapshot = match session.project() {
+        Ok(p) => p.current.clone(),
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    let analysis = bdl_compiler::analyze(&snapshot);
+    if !analysis.causality.valid {
+        return Resp::Error(error(
+            "simulation.not_causal",
+            "The design has relationships that depend on each other in the same instant; fix them before simulating.",
+        ));
+    }
+    let mut inputs = bdl_reactive::InputTrace::default();
+    for i in &r.inputs {
+        let Some(v) = &i.value else { continue };
+        match convert::value_from_pb(v) {
+            Ok(v) => inputs.set(bdl_model::DeclId::from_raw(i.mapping_id), i.tick, v),
+            Err(e) => return Resp::Error(error("protocol.invalid_value", &e.to_string())),
+        }
+    }
+    let schedule = if r.schedule.is_empty() {
+        bdl_reactive::Schedule::always(&analysis.ir)
+    } else {
+        bdl_reactive::Schedule {
+            periods: r
+                .schedule
+                .iter()
+                .map(|p| (bdl_model::ClockId::from_raw(p.clock_id), p.period))
+                .collect(),
+        }
+    };
+    let concept_names = analysis
+        .ir
+        .concepts
+        .values()
+        .map(|c| (c.id, c.name.clone()))
+        .collect();
+    match bdl_reactive::Simulation::new(analysis.ir, &analysis.causality, schedule, inputs) {
+        Ok(simulation) => {
+            let run = SimulationRun {
+                revision: snapshot.revision,
+                simulation,
+                concept_names,
+            };
+            let resp = simulation_response(&run, &[], None);
+            if let Ok(slot) = session.simulation_mut() {
+                *slot = Some(run);
+            }
+            resp
+        }
+        Err(e) => Resp::Error(error("simulation.start", &e.to_string())),
+    }
+}
+
+fn step_simulation(session: &mut Session, ticks: u64) -> Resp {
+    let Ok(slot) = session.simulation_mut() else {
+        return Resp::Error(error("session.no_project", "no project is open"));
+    };
+    let Some(run) = slot.as_mut() else {
+        return Resp::Error(error("simulation.not_started", "start a simulation first"));
+    };
+    let from = run.simulation.trace().ticks.len();
+    let mut failure = None;
+    for _ in 0..ticks.max(1) {
+        if let Err(e) = run.simulation.step() {
+            failure = Some(e);
+            break;
+        }
+    }
+    let samples: Vec<bdl_reactive::TickSample> = run.simulation.trace().ticks[from..].to_vec();
+    let error = failure.map(|e| {
+        let (code, decl) = match &e {
+            bdl_reactive::simulate::SimulationError::Runtime(
+                bdl_reactive::eval::RuntimeError::MissingInput { decl, .. },
+            ) => ("simulation.missing_input", Some(*decl)),
+            bdl_reactive::simulate::SimulationError::Runtime(
+                bdl_reactive::eval::RuntimeError::DivisionByZero { decl, .. },
+            ) => ("simulation.division_by_zero", Some(*decl)),
+            bdl_reactive::simulate::SimulationError::Runtime(
+                bdl_reactive::eval::RuntimeError::NonFinite { decl, .. },
+            ) => ("simulation.non_finite", Some(*decl)),
+            _ => ("simulation.runtime", None),
+        };
+        let d = bdl_diagnostics::Diagnostic::error(
+            code,
+            decl.map(|d| bdl_diagnostics::Entity::Mapping { id: d })
+                .unwrap_or(bdl_diagnostics::Entity::Project),
+            e.to_string(),
+        );
+        convert::diagnostic_to_pb(&d)
+    });
+    simulation_response(run, &samples, error)
+}
+
+fn reset_simulation(session: &mut Session) -> Resp {
+    let Ok(slot) = session.simulation_mut() else {
+        return Resp::Error(error("session.no_project", "no project is open"));
+    };
+    let Some(run) = slot.as_mut() else {
+        return Resp::Error(error("simulation.not_started", "start a simulation first"));
+    };
+    run.simulation.reset();
+    simulation_response(run, &[], None)
+}
+
+fn simulation_response(
+    run: &SimulationRun,
+    samples: &[bdl_reactive::TickSample],
+    error: Option<pb::Diagnostic>,
+) -> Resp {
+    let names = run.concept_names.clone();
+    let name =
+        move |id: bdl_model::SemanticId| names.get(&id).cloned().unwrap_or_else(|| id.to_string());
+    Resp::Simulation(pb::SimulationResponse {
+        revision: run.revision.raw(),
+        next_tick: run.simulation.tick(),
+        samples: samples
+            .iter()
+            .map(|t| convert::tick_sample_to_pb(t, &name))
+            .collect(),
+        error,
+    })
 }
 
 fn session_undo(s: &mut Session) -> Result<Committed, SessionError> {
@@ -344,6 +471,9 @@ fn payload_name(p: &Req) -> &'static str {
         Req::SetLayout(_) => "set_layout",
         Req::SubscribeProject(_) => "subscribe_project",
         Req::RunAnalysis(_) => "run_analysis",
+        Req::StartSimulation(_) => "start_simulation",
+        Req::StepSimulation(_) => "step_simulation",
+        Req::ResetSimulation(_) => "reset_simulation",
         Req::Shutdown(_) => "shutdown",
     }
 }

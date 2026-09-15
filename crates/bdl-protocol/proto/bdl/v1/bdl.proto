@@ -39,6 +39,9 @@ message ClientMessage {
     SubscribeProjectRequest subscribe_project = 20;
     ShutdownRequest shutdown = 21;
     RunAnalysisRequest run_analysis = 22;
+    StartSimulationRequest start_simulation = 23;
+    StepSimulationRequest step_simulation = 24;
+    ResetSimulationRequest reset_simulation = 25;
   }
 }
 
@@ -58,6 +61,7 @@ message Response {
     EditApplied edit_applied = 12;
     Ack ack = 13;
     AnalysisResponse analysis = 14;
+    SimulationResponse simulation = 15;
   }
 }
 
@@ -357,6 +361,87 @@ message DaemonLog {
 }
 
 // ---------------------------------------------------------------------------
+// Simulation (the reference evaluator, driven tick by tick)
+// ---------------------------------------------------------------------------
+
+// A runtime value in the design's own terms.
+message Value {
+  oneof kind {
+    bool boolean = 1;
+    uint64 count = 2;
+    Quantity quantity = 3;
+    SemanticValue semantic = 4;
+    Unit none = 5;
+    Value some = 6;
+    // A function or partially applied primitive: shown, never transported.
+    string opaque = 7;
+  }
+}
+
+message Quantity {
+  Dim dim = 1;
+  double value = 2;
+}
+
+message SemanticValue {
+  uint64 concept_id = 1;
+  Value repr = 2;
+}
+
+// One value for an unresolved declaration at one tick.
+message SimulationInput {
+  uint64 mapping_id = 1;
+  uint64 tick = 2;
+  Value value = 3;
+}
+
+// Which domains activate: period 1 = every tick.  Domains not listed never
+// activate; an empty schedule means every domain every tick.
+message SchedulePeriod {
+  uint64 clock_id = 1;
+  uint64 period = 2;
+}
+
+// Starts a run against the *current* revision; refused if the design is
+// not causal.  Inputs may be extended by later StartSimulation calls only by
+// restarting.
+message StartSimulationRequest {
+  repeated SimulationInput inputs = 1;
+  repeated SchedulePeriod schedule = 2;
+}
+
+message StepSimulationRequest {
+  // Ticks to evaluate; the response carries their samples.
+  uint64 ticks = 1;
+}
+
+message ResetSimulationRequest {}
+
+message SimulationResponse {
+  // The project revision the simulation runs against.
+  uint64 revision = 1;
+  // Next tick to be evaluated.
+  uint64 next_tick = 2;
+  // Samples produced by this request (all ticks so far for Start/Reset).
+  repeated TickSample samples = 3;
+  // Set when a tick could not be evaluated (missing input, division by zero…).
+  optional Diagnostic error = 4;
+}
+
+message TickSample {
+  uint64 tick = 1;
+  repeated uint64 active_clock_ids = 2;
+  repeated DeclarationSample values = 3;
+}
+
+message DeclarationSample {
+  uint64 mapping_id = 1;
+  Value value = 2;
+  // Rendered in the design's terms, e.g. "Brightness(0.5)".
+  string rendered = 3;
+}
+
+// ---------------------------------------------------------------------------
 // Analysis (compiler results, revision-tagged; discard when stale)
 // ---------------------------------------------------------------------------
 
@@ -376,6 +461,17 @@ message ProjectAnalysis {
   repeated MappingAnalysis mappings = 2;
   // Every diagnostic, in the documented stable order (entity, span, code).
   repeated Diagnostic diagnostics = 3;
+  // Whole-design verdicts of the reactive passes.
+  bool causal = 4;
+  bool clock_consistent = 5;
+  // Instantaneous cycles, each as the mapping ids involved.
+  repeated DeclarationCycle cycles = 6;
+  // Evaluation order the causality pass produced (empty when not causal).
+  repeated uint64 evaluation_order = 7;
+}
+
+message DeclarationCycle {
+  repeated uint64 mapping_ids = 1;
 }
 
 enum MappingStatus {
@@ -388,6 +484,10 @@ enum MappingStatus {
   MAPPING_STATUS_INVALID = 3;
   // Defined and produces what the signature promises.
   MAPPING_STATUS_TYPE_VALID = 4;
+  // Type-valid and on no instantaneous loop: has a value at every activation.
+  MAPPING_STATUS_TEMPORALLY_VALID = 5;
+  // Temporally valid and every read stays in its domain or is transported.
+  MAPPING_STATUS_CLOCK_CONSISTENT = 6;
 }
 
 message MappingAnalysis {

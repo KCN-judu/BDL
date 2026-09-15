@@ -86,6 +86,8 @@ const MappingStatus$json = {
     {'1': 'MAPPING_STATUS_OPEN', '2': 2},
     {'1': 'MAPPING_STATUS_INVALID', '2': 3},
     {'1': 'MAPPING_STATUS_TYPE_VALID', '2': 4},
+    {'1': 'MAPPING_STATUS_TEMPORALLY_VALID', '2': 5},
+    {'1': 'MAPPING_STATUS_CLOCK_CONSISTENT', '2': 6},
   ],
 };
 
@@ -93,7 +95,9 @@ const MappingStatus$json = {
 final $typed_data.Uint8List mappingStatusDescriptor = $convert
     .base64Decode('Cg1NYXBwaW5nU3RhdHVzEh4KGk1BUFBJTkdfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGwoXTUFQUE'
         'lOR19TVEFUVVNfREVDTEFSRUQQARIXChNNQVBQSU5HX1NUQVRVU19PUEVOEAISGgoWTUFQUElO'
-        'R19TVEFUVVNfSU5WQUxJRBADEh0KGU1BUFBJTkdfU1RBVFVTX1RZUEVfVkFMSUQQBA==');
+        'R19TVEFUVVNfSU5WQUxJRBADEh0KGU1BUFBJTkdfU1RBVFVTX1RZUEVfVkFMSUQQBBIjCh9NQV'
+        'BQSU5HX1NUQVRVU19URU1QT1JBTExZX1ZBTElEEAUSIwofTUFQUElOR19TVEFUVVNfQ0xPQ0tf'
+        'Q09OU0lTVEVOVBAG');
 
 @$core.Deprecated('Use diagnosticSeverityDescriptor instead')
 const DiagnosticSeverity$json = {
@@ -218,6 +222,33 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'runAnalysis'
     },
+    {
+      '1': 'start_simulation',
+      '3': 23,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.StartSimulationRequest',
+      '9': 0,
+      '10': 'startSimulation'
+    },
+    {
+      '1': 'step_simulation',
+      '3': 24,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.StepSimulationRequest',
+      '9': 0,
+      '10': 'stepSimulation'
+    },
+    {
+      '1': 'reset_simulation',
+      '3': 25,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ResetSimulationRequest',
+      '9': 0,
+      '10': 'resetSimulation'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -241,7 +272,11 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'LnYxLlN1YnNjcmliZVByb2plY3RSZXF1ZXN0SABSEHN1YnNjcmliZVByb2plY3QSNQoIc2h1dG'
         'Rvd24YFSABKAsyFy5iZGwudjEuU2h1dGRvd25SZXF1ZXN0SABSCHNodXRkb3duEj8KDHJ1bl9h'
         'bmFseXNpcxgWIAEoCzIaLmJkbC52MS5SdW5BbmFseXNpc1JlcXVlc3RIAFILcnVuQW5hbHlzaX'
-        'NCCQoHcGF5bG9hZA==');
+        'MSSwoQc3RhcnRfc2ltdWxhdGlvbhgXIAEoCzIeLmJkbC52MS5TdGFydFNpbXVsYXRpb25SZXF1'
+        'ZXN0SABSD3N0YXJ0U2ltdWxhdGlvbhJICg9zdGVwX3NpbXVsYXRpb24YGCABKAsyHS5iZGwudj'
+        'EuU3RlcFNpbXVsYXRpb25SZXF1ZXN0SABSDnN0ZXBTaW11bGF0aW9uEksKEHJlc2V0X3NpbXVs'
+        'YXRpb24YGSABKAsyHi5iZGwudjEuUmVzZXRTaW11bGF0aW9uUmVxdWVzdEgAUg9yZXNldFNpbX'
+        'VsYXRpb25CCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -304,6 +339,15 @@ const Response$json = {
       '9': 0,
       '10': 'analysis'
     },
+    {
+      '1': 'simulation',
+      '3': 15,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SimulationResponse',
+      '9': 0,
+      '10': 'simulation'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -318,7 +362,8 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'Byb2plY3RSZXNwb25zZUgAUgdwcm9qZWN0EjgKDGVkaXRfYXBwbGllZBgMIAEoCzITLmJkbC52'
         'MS5FZGl0QXBwbGllZEgAUgtlZGl0QXBwbGllZBIfCgNhY2sYDSABKAsyCy5iZGwudjEuQWNrSA'
         'BSA2FjaxI2CghhbmFseXNpcxgOIAEoCzIYLmJkbC52MS5BbmFseXNpc1Jlc3BvbnNlSABSCGFu'
-        'YWx5c2lzQgkKB3BheWxvYWQ=');
+        'YWx5c2lzEjwKCnNpbXVsYXRpb24YDyABKAsyGi5iZGwudjEuU2ltdWxhdGlvblJlc3BvbnNlSA'
+        'BSCnNpbXVsYXRpb25CCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -1185,6 +1230,194 @@ final $typed_data.Uint8List daemonLogDescriptor = $convert
     .base64Decode('CglEYWVtb25Mb2cSFAoFbGV2ZWwYASABKAlSBWxldmVsEhgKB21lc3NhZ2UYAiABKAlSB21lc3'
         'NhZ2U=');
 
+@$core.Deprecated('Use valueDescriptor instead')
+const Value$json = {
+  '1': 'Value',
+  '2': [
+    {'1': 'boolean', '3': 1, '4': 1, '5': 8, '9': 0, '10': 'boolean'},
+    {'1': 'count', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'count'},
+    {'1': 'quantity', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Quantity', '9': 0, '10': 'quantity'},
+    {
+      '1': 'semantic',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SemanticValue',
+      '9': 0,
+      '10': 'semantic'
+    },
+    {'1': 'none', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'none'},
+    {'1': 'some', '3': 6, '4': 1, '5': 11, '6': '.bdl.v1.Value', '9': 0, '10': 'some'},
+    {'1': 'opaque', '3': 7, '4': 1, '5': 9, '9': 0, '10': 'opaque'},
+  ],
+  '8': [
+    {'1': 'kind'},
+  ],
+};
+
+/// Descriptor for `Value`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List valueDescriptor = $convert
+    .base64Decode('CgVWYWx1ZRIaCgdib29sZWFuGAEgASgISABSB2Jvb2xlYW4SFgoFY291bnQYAiABKARIAFIFY2'
+        '91bnQSLgoIcXVhbnRpdHkYAyABKAsyEC5iZGwudjEuUXVhbnRpdHlIAFIIcXVhbnRpdHkSMwoI'
+        'c2VtYW50aWMYBCABKAsyFS5iZGwudjEuU2VtYW50aWNWYWx1ZUgAUghzZW1hbnRpYxIiCgRub2'
+        '5lGAUgASgLMgwuYmRsLnYxLlVuaXRIAFIEbm9uZRIjCgRzb21lGAYgASgLMg0uYmRsLnYxLlZh'
+        'bHVlSABSBHNvbWUSGAoGb3BhcXVlGAcgASgJSABSBm9wYXF1ZUIGCgRraW5k');
+
+@$core.Deprecated('Use quantityDescriptor instead')
+const Quantity$json = {
+  '1': 'Quantity',
+  '2': [
+    {'1': 'dim', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '10': 'dim'},
+    {'1': 'value', '3': 2, '4': 1, '5': 1, '10': 'value'},
+  ],
+};
+
+/// Descriptor for `Quantity`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List quantityDescriptor = $convert
+    .base64Decode('CghRdWFudGl0eRIdCgNkaW0YASABKAsyCy5iZGwudjEuRGltUgNkaW0SFAoFdmFsdWUYAiABKA'
+        'FSBXZhbHVl');
+
+@$core.Deprecated('Use semanticValueDescriptor instead')
+const SemanticValue$json = {
+  '1': 'SemanticValue',
+  '2': [
+    {'1': 'concept_id', '3': 1, '4': 1, '5': 4, '10': 'conceptId'},
+    {'1': 'repr', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Value', '10': 'repr'},
+  ],
+};
+
+/// Descriptor for `SemanticValue`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticValueDescriptor = $convert
+    .base64Decode('Cg1TZW1hbnRpY1ZhbHVlEh0KCmNvbmNlcHRfaWQYASABKARSCWNvbmNlcHRJZBIhCgRyZXByGA'
+        'IgASgLMg0uYmRsLnYxLlZhbHVlUgRyZXBy');
+
+@$core.Deprecated('Use simulationInputDescriptor instead')
+const SimulationInput$json = {
+  '1': 'SimulationInput',
+  '2': [
+    {'1': 'mapping_id', '3': 1, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'tick', '3': 2, '4': 1, '5': 4, '10': 'tick'},
+    {'1': 'value', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Value', '10': 'value'},
+  ],
+};
+
+/// Descriptor for `SimulationInput`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List simulationInputDescriptor = $convert
+    .base64Decode('Cg9TaW11bGF0aW9uSW5wdXQSHQoKbWFwcGluZ19pZBgBIAEoBFIJbWFwcGluZ0lkEhIKBHRpY2'
+        'sYAiABKARSBHRpY2sSIwoFdmFsdWUYAyABKAsyDS5iZGwudjEuVmFsdWVSBXZhbHVl');
+
+@$core.Deprecated('Use schedulePeriodDescriptor instead')
+const SchedulePeriod$json = {
+  '1': 'SchedulePeriod',
+  '2': [
+    {'1': 'clock_id', '3': 1, '4': 1, '5': 4, '10': 'clockId'},
+    {'1': 'period', '3': 2, '4': 1, '5': 4, '10': 'period'},
+  ],
+};
+
+/// Descriptor for `SchedulePeriod`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List schedulePeriodDescriptor = $convert
+    .base64Decode('Cg5TY2hlZHVsZVBlcmlvZBIZCghjbG9ja19pZBgBIAEoBFIHY2xvY2tJZBIWCgZwZXJpb2QYAi'
+        'ABKARSBnBlcmlvZA==');
+
+@$core.Deprecated('Use startSimulationRequestDescriptor instead')
+const StartSimulationRequest$json = {
+  '1': 'StartSimulationRequest',
+  '2': [
+    {'1': 'inputs', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.SimulationInput', '10': 'inputs'},
+    {'1': 'schedule', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.SchedulePeriod', '10': 'schedule'},
+  ],
+};
+
+/// Descriptor for `StartSimulationRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List startSimulationRequestDescriptor = $convert
+    .base64Decode('ChZTdGFydFNpbXVsYXRpb25SZXF1ZXN0Ei8KBmlucHV0cxgBIAMoCzIXLmJkbC52MS5TaW11bG'
+        'F0aW9uSW5wdXRSBmlucHV0cxIyCghzY2hlZHVsZRgCIAMoCzIWLmJkbC52MS5TY2hlZHVsZVBl'
+        'cmlvZFIIc2NoZWR1bGU=');
+
+@$core.Deprecated('Use stepSimulationRequestDescriptor instead')
+const StepSimulationRequest$json = {
+  '1': 'StepSimulationRequest',
+  '2': [
+    {'1': 'ticks', '3': 1, '4': 1, '5': 4, '10': 'ticks'},
+  ],
+};
+
+/// Descriptor for `StepSimulationRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List stepSimulationRequestDescriptor =
+    $convert.base64Decode('ChVTdGVwU2ltdWxhdGlvblJlcXVlc3QSFAoFdGlja3MYASABKARSBXRpY2tz');
+
+@$core.Deprecated('Use resetSimulationRequestDescriptor instead')
+const ResetSimulationRequest$json = {
+  '1': 'ResetSimulationRequest',
+};
+
+/// Descriptor for `ResetSimulationRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List resetSimulationRequestDescriptor =
+    $convert.base64Decode('ChZSZXNldFNpbXVsYXRpb25SZXF1ZXN0');
+
+@$core.Deprecated('Use simulationResponseDescriptor instead')
+const SimulationResponse$json = {
+  '1': 'SimulationResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'next_tick', '3': 2, '4': 1, '5': 4, '10': 'nextTick'},
+    {'1': 'samples', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.TickSample', '10': 'samples'},
+    {
+      '1': 'error',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Diagnostic',
+      '9': 0,
+      '10': 'error',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_error'},
+  ],
+};
+
+/// Descriptor for `SimulationResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List simulationResponseDescriptor = $convert
+    .base64Decode('ChJTaW11bGF0aW9uUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEhsKCW5leH'
+        'RfdGljaxgCIAEoBFIIbmV4dFRpY2sSLAoHc2FtcGxlcxgDIAMoCzISLmJkbC52MS5UaWNrU2Ft'
+        'cGxlUgdzYW1wbGVzEi0KBWVycm9yGAQgASgLMhIuYmRsLnYxLkRpYWdub3N0aWNIAFIFZXJyb3'
+        'KIAQFCCAoGX2Vycm9y');
+
+@$core.Deprecated('Use tickSampleDescriptor instead')
+const TickSample$json = {
+  '1': 'TickSample',
+  '2': [
+    {'1': 'tick', '3': 1, '4': 1, '5': 4, '10': 'tick'},
+    {'1': 'active_clock_ids', '3': 2, '4': 3, '5': 4, '10': 'activeClockIds'},
+    {'1': 'values', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.DeclarationSample', '10': 'values'},
+  ],
+};
+
+/// Descriptor for `TickSample`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List tickSampleDescriptor = $convert
+    .base64Decode('CgpUaWNrU2FtcGxlEhIKBHRpY2sYASABKARSBHRpY2sSKAoQYWN0aXZlX2Nsb2NrX2lkcxgCIA'
+        'MoBFIOYWN0aXZlQ2xvY2tJZHMSMQoGdmFsdWVzGAMgAygLMhkuYmRsLnYxLkRlY2xhcmF0aW9u'
+        'U2FtcGxlUgZ2YWx1ZXM=');
+
+@$core.Deprecated('Use declarationSampleDescriptor instead')
+const DeclarationSample$json = {
+  '1': 'DeclarationSample',
+  '2': [
+    {'1': 'mapping_id', '3': 1, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Value', '10': 'value'},
+    {'1': 'rendered', '3': 3, '4': 1, '5': 9, '10': 'rendered'},
+  ],
+};
+
+/// Descriptor for `DeclarationSample`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List declarationSampleDescriptor = $convert
+    .base64Decode('ChFEZWNsYXJhdGlvblNhbXBsZRIdCgptYXBwaW5nX2lkGAEgASgEUgltYXBwaW5nSWQSIwoFdm'
+        'FsdWUYAiABKAsyDS5iZGwudjEuVmFsdWVSBXZhbHVlEhoKCHJlbmRlcmVkGAMgASgJUghyZW5k'
+        'ZXJlZA==');
+
 @$core.Deprecated('Use runAnalysisRequestDescriptor instead')
 const RunAnalysisRequest$json = {
   '1': 'RunAnalysisRequest',
@@ -1227,6 +1460,10 @@ const ProjectAnalysis$json = {
     {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
     {'1': 'mappings', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.MappingAnalysis', '10': 'mappings'},
     {'1': 'diagnostics', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+    {'1': 'causal', '3': 4, '4': 1, '5': 8, '10': 'causal'},
+    {'1': 'clock_consistent', '3': 5, '4': 1, '5': 8, '10': 'clockConsistent'},
+    {'1': 'cycles', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.DeclarationCycle', '10': 'cycles'},
+    {'1': 'evaluation_order', '3': 7, '4': 3, '5': 4, '10': 'evaluationOrder'},
   ],
 };
 
@@ -1234,7 +1471,22 @@ const ProjectAnalysis$json = {
 final $typed_data.Uint8List projectAnalysisDescriptor = $convert
     .base64Decode('Cg9Qcm9qZWN0QW5hbHlzaXMSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEjMKCG1hcHBpbm'
         'dzGAIgAygLMhcuYmRsLnYxLk1hcHBpbmdBbmFseXNpc1IIbWFwcGluZ3MSNAoLZGlhZ25vc3Rp'
-        'Y3MYAyADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3M=');
+        'Y3MYAyADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3MSFgoGY2F1c2FsGAQgAS'
+        'gIUgZjYXVzYWwSKQoQY2xvY2tfY29uc2lzdGVudBgFIAEoCFIPY2xvY2tDb25zaXN0ZW50EjAK'
+        'BmN5Y2xlcxgGIAMoCzIYLmJkbC52MS5EZWNsYXJhdGlvbkN5Y2xlUgZjeWNsZXMSKQoQZXZhbH'
+        'VhdGlvbl9vcmRlchgHIAMoBFIPZXZhbHVhdGlvbk9yZGVy');
+
+@$core.Deprecated('Use declarationCycleDescriptor instead')
+const DeclarationCycle$json = {
+  '1': 'DeclarationCycle',
+  '2': [
+    {'1': 'mapping_ids', '3': 1, '4': 3, '5': 4, '10': 'mappingIds'},
+  ],
+};
+
+/// Descriptor for `DeclarationCycle`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List declarationCycleDescriptor =
+    $convert.base64Decode('ChBEZWNsYXJhdGlvbkN5Y2xlEh8KC21hcHBpbmdfaWRzGAEgAygEUgptYXBwaW5nSWRz');
 
 @$core.Deprecated('Use mappingAnalysisDescriptor instead')
 const MappingAnalysis$json = {

@@ -228,6 +228,9 @@ pub fn edit_error_to_pb(e: &EditError) -> pb::Error {
         EditError::ConceptInUse { .. } => "edit.concept_in_use",
         EditError::AlreadyDefined { .. } => "edit.already_defined",
         EditError::NotDefined { .. } => "edit.not_defined",
+        EditError::DuplicateClockName { .. } => "edit.duplicate_clock_name",
+        EditError::UnknownClock { .. } => "edit.unknown_clock",
+        EditError::ClockInUse { .. } => "edit.clock_in_use",
     };
     pb::Error {
         code: code.to_owned(),
@@ -383,6 +386,8 @@ pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis 
                     MappingStatus::Open => pb::MappingStatus::Open,
                     MappingStatus::Invalid => pb::MappingStatus::Invalid,
                     MappingStatus::TypeValid => pb::MappingStatus::TypeValid,
+                    MappingStatus::TemporallyValid => pb::MappingStatus::TemporallyValid,
+                    MappingStatus::ClockConsistent => pb::MappingStatus::ClockConsistent,
                 }
                 .into(),
                 interface: pretty::kernel(&m.interface.expected_type),
@@ -396,6 +401,98 @@ pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis 
             })
             .collect(),
         diagnostics: a.diagnostics.iter().map(diagnostic_to_pb).collect(),
+        causal: a.causality.valid,
+        clock_consistent: a.clocks.valid,
+        cycles: a
+            .causality
+            .cycles
+            .iter()
+            .map(|c| pb::DeclarationCycle {
+                mapping_ids: c.iter().map(|d| d.raw()).collect(),
+            })
+            .collect(),
+        evaluation_order: a.causality.order.iter().map(|d| d.raw()).collect(),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Simulation
+// ---------------------------------------------------------------------------
+
+use bdl_reactive::Value;
+
+pub fn value_to_pb(v: &Value) -> pb::Value {
+    use pb::value::Kind;
+    let kind = match v {
+        Value::Bool { value } => Kind::Boolean(*value),
+        Value::Nat { value } => Kind::Count(*value),
+        Value::Quantity { dim, value } => Kind::Quantity(pb::Quantity {
+            dim: Some(dim_to_pb(*dim)),
+            value: *value,
+        }),
+        Value::Semantic { id, repr } => Kind::Semantic(Box::new(pb::SemanticValue {
+            concept_id: id.raw(),
+            repr: Some(Box::new(value_to_pb(repr))),
+        })),
+        Value::None => Kind::None(pb::Unit {}),
+        Value::Some { value } => Kind::Some(Box::new(value_to_pb(value))),
+        Value::Closure { .. } => Kind::Opaque("<function>".into()),
+        Value::Prim { prim, .. } => Kind::Opaque(format!("<{prim:?}>")),
+    };
+    pb::Value { kind: Some(kind) }
+}
+
+pub fn value_from_pb(v: &pb::Value) -> Result<Value, ConvertError> {
+    use pb::value::Kind;
+    Ok(
+        match v.kind.as_ref().ok_or(ConvertError::Missing("value.kind"))? {
+            Kind::Boolean(b) => Value::Bool { value: *b },
+            Kind::Count(n) => Value::Nat { value: *n },
+            Kind::Quantity(q) => Value::Quantity {
+                dim: dim_from_pb(
+                    q.dim
+                        .as_ref()
+                        .ok_or(ConvertError::Missing("quantity.dim"))?,
+                )?,
+                value: q.value,
+            },
+            Kind::Semantic(s) => Value::Semantic {
+                id: SemanticId::from_raw(s.concept_id),
+                repr: Box::new(value_from_pb(
+                    s.repr
+                        .as_ref()
+                        .ok_or(ConvertError::Missing("semantic.repr"))?,
+                )?),
+            },
+            Kind::None(_) => Value::None,
+            Kind::Some(x) => Value::Some {
+                value: Box::new(value_from_pb(x)?),
+            },
+            Kind::Opaque(_) => {
+                return Err(ConvertError::Missing(
+                    "value: opaque values cannot be supplied",
+                ))
+            }
+        },
+    )
+}
+
+pub fn tick_sample_to_pb(
+    t: &bdl_reactive::TickSample,
+    concept_name: &dyn Fn(SemanticId) -> String,
+) -> pb::TickSample {
+    pb::TickSample {
+        tick: t.tick,
+        active_clock_ids: t.active.iter().map(|c| c.raw()).collect(),
+        values: t
+            .values
+            .iter()
+            .map(|(d, v)| pb::DeclarationSample {
+                mapping_id: d.raw(),
+                value: Some(value_to_pb(v)),
+                rendered: v.render(concept_name),
+            })
+            .collect(),
     }
 }
 

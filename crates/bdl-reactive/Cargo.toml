@@ -1,6 +1,6 @@
 [package]
-name = "bdl-compiler"
-description = "The pipeline driver: analyze(snapshot) → revision-tagged, deterministic ProjectAnalysis"
+name = "bdl-reactive"
+description = "The reactive semantics of BDL, executable: dependency graphs, causality, clock-domain judgment, and the deterministic reference evaluator with simulation state and traces"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,10 +11,9 @@ repository.workspace = true
 bdl-model = { workspace = true }
 bdl-ir = { workspace = true }
 bdl-diagnostics = { workspace = true }
-bdl-elab = { workspace = true }
 bdl-check = { workspace = true }
-bdl-reactive = { workspace = true }
 serde = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }

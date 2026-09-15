@@ -10,7 +10,7 @@
 //! to anything by name: all references are by stable id.
 
 use crate::dim::Dim;
-use crate::ids::{DeclId, IdAllocator, Revision, SemanticId};
+use crate::ids::{ClockId, DeclId, IdAllocator, Revision, SemanticId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -38,6 +38,10 @@ pub struct Design {
     pub name: String,
     pub concepts: BTreeMap<SemanticId, Concept>,
     pub mappings: BTreeMap<DeclId, MappingBlock>,
+    /// Timing domains, by nominal identity ("interaction", "ambient").  A
+    /// domain says which values are updated *together*; never a rate.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub clocks: BTreeMap<ClockId, ClockDomain>,
     pub ids: IdAllocator,
 }
 
@@ -47,6 +51,7 @@ impl Design {
             name: name.into(),
             concepts: BTreeMap::new(),
             mappings: BTreeMap::new(),
+            clocks: BTreeMap::new(),
             ids: IdAllocator::default(),
         }
     }
@@ -65,6 +70,14 @@ impl Design {
             .values()
             .filter(move |m| m.signature.mentions(concept))
     }
+}
+
+/// A timing domain (the kernel's `ClockId`): identity, not rate.  Rates are
+/// deployment/validation data and never enter the design.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ClockDomain {
+    pub id: ClockId,
+    pub name: String,
 }
 
 /// A semantic property: `Tilt`, `Brightness`, `Held`.  Identity is the
@@ -107,6 +120,10 @@ pub struct MappingBlock {
     pub signature: Signature,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub definition: Option<Definition>,
+    /// The domain this relationship updates in; `None` for a pure mapping
+    /// that may serve any domain (the kernel's `Κ d = none`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub clock: Option<ClockId>,
 }
 
 impl MappingBlock {

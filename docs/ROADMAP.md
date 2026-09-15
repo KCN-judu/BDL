@@ -16,8 +16,8 @@ slice is started before the slice works end-to-end.
 | — | **architecture review gate** (brief §63) | ⏳ next |
 | G | type / semantic checking: formula parser, elaboration with rep/mk and units, Core typing, Grant, dimension via typing, diagnostics, `analyze()` in bdld, Studio shows status + diagnostics | ✅ (ADR-0013) |
 | H | incomplete-declaration support (declared / open / invalid / type-valid) | ✅ |
-| I | host simulator with explicit input traces (`bdl-reactive`) | |
-| J | `delay` / hold state, initial values | |
+| I | reference evaluator + simulator: dependency graph, causality, clock judgment, two-phase ticks, state cells, schedules, input traces, traces; bdld Start/Step/Reset | ✅ core (Studio Simulate page planned) |
+| J | `delay` / `sync` state with explicit initial values | ✅ at Core level (surface temporal phrases planned) |
 | K | output binding + single-driver diagnostic | |
 | L | hardware resource allocator (`bdl-hardware`), Nano golden cases | |
 | M | first board description: RP2040 | |

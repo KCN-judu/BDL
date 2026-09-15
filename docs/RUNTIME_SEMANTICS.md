@@ -1,9 +1,46 @@
 # Runtime semantics
 
 How the kernel's tick semantics (`Ev` / `MEv`, BDL_FV `Reactive.lean`,
-`Clock.lean`) become executable Rust. Nothing in this document is
-implemented yet; it fixes the rules the generated core and the runtime
-adapters must obey.
+`Clock.lean`) become executable Rust. The **reference evaluator**
+(`crates/bdl-reactive`) implements these rules today and is the executable
+definition of BDL runtime behaviour; the generated core and the runtime
+adapters (planned) must agree with it tick for tick.
+
+## The reference evaluator (implemented)
+
+* **Values** keep semantic identity and dimension: `Bool`, `Nat`,
+  `Quantity { dim, value }`, `Semantic { id, repr }`, `None`/`Some`,
+  `Closure`, partial `Prim`. A `Tilt` and a `MotorAngle` of equal magnitude
+  are different values.
+* **State cells** are addressed by `StateCellId { decl, path }` — the
+  declaration and the expression path of the `delay`/`sync` inside its
+  realization — so identity survives unrelated edits and re-elaboration.
+* **A tick has two phases.** *Read*: every declaration due this tick is
+  evaluated (lazily, memoised) with temporal forms yielding their cell's
+  committed value, or the initial value if the cell was never written.
+  *Write*: every temporal site whose writing domain is active — the owner's
+  domain for `delay`, `src` for `sync` — evaluates its operand in the same
+  read mode into the *next* state. Nothing is updated in place; reads never
+  see writes of the same tick.
+* **Which declarations run at a tick**: those whose domain is active, plus
+  domain-agnostic ones whenever anything is active (every tick if the
+  design has no domains).
+* **`sync src init e`** reads the cell last written by `src`'s activation
+  strictly before now; two domains active at the same tick see each
+  other's *previous* activations only, so the order a host processes them
+  in is unobservable (`step_in_order` exists to prove it).
+* **Unresolved declarations** are inputs: a value per tick from an
+  `InputTrace`; a missing one is `RuntimeError::MissingInput`, never a default.
+* **Schedules** are outside the design: `Schedule { periods }` activates a
+  domain at ticks divisible by its period. A `ClockId` never implies a rate.
+* **Numerics (DI-15)**: IEEE `f64`. Division by zero and any non-finite
+  result fail the tick with a structured error; equality is exact; traces
+  serialise to JSON numbers.
+* **Traces**: `TickSample { tick, active, values }` per tick; every sample
+  keeps the `DeclId`, and semantic values render in the design's terms
+  (`Brightness(0.5)`).
+
+The rest of this document states what the generated core must preserve.
 
 ## One generated core, two hosts
 
