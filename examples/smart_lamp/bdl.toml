@@ -1,0 +1,3 @@
+schema_version = 1
+name = "smart_lamp"
+compiler_version = "example"
