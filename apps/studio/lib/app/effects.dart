@@ -150,6 +150,18 @@ class ListSemanticActions extends Effect {
   final int generation;
 }
 
+/// The board registry — uncounted.
+class ListTargets extends Effect {
+  const ListTargets();
+}
+
+/// Target-relative analysis of the current revision — uncounted, tagged.
+class AnalyzeDeployment extends Effect {
+  const AnalyzeDeployment({required this.targetId, required this.generation});
+  final String targetId;
+  final int generation;
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

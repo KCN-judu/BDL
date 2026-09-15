@@ -15,6 +15,7 @@ import '../protocol/versions.dart';
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
+import 'pages/deploy_page.dart';
 import 'pages/design_page.dart';
 import 'pages/placeholder_page.dart';
 import 'welcome/welcome_page.dart';
@@ -37,12 +38,7 @@ class StudioShell extends ConsumerWidget {
             'Input traces, logical ticks and value plots arrive with the host simulator '
             '(roadmap step I).',
       ),
-      StudioPage.deploy => const PlaceholderPage(
-        title: 'Deploy',
-        body:
-            'Board selection, resource allocation, build and flash arrive with the '
-            'hardware allocator (roadmap steps L–R).',
-      ),
+      StudioPage.deploy => DeployPage(state: state, dispatch: dispatch),
       StudioPage.monitor => const PlaceholderPage(
         title: 'Monitor',
         body: 'Live values on the canvas arrive with telemetry (roadmap step S).',

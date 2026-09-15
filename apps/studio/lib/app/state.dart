@@ -329,6 +329,63 @@ class HoverState {
   );
 }
 
+/// The Deploy page: which board is being asked about, and the compiler's
+/// target-relative answer.  Never part of the design; the board choice is
+/// an editor preference for the session.
+@immutable
+class DeployState {
+  const DeployState({
+    this.targets = const [],
+    this.targetsLoaded = false,
+    this.targetId,
+    this.analysis,
+    this.pending = false,
+    this.generation = 0,
+    this.error,
+  });
+
+  /// The boards bdld knows, as it lists them.
+  final List<pb.TargetView> targets;
+  final bool targetsLoaded;
+
+  /// The board being asked about; `null` until chosen.
+  final String? targetId;
+
+  /// The last analysis kept — only while its revision is the project's and
+  /// its target is the chosen one; dropped otherwise.
+  final pb.DeploymentAnalysis? analysis;
+  final bool pending;
+
+  /// Request tag; only the latest answer is applied.
+  final int generation;
+
+  /// Why the last analysis could not be made (product language).
+  final String? error;
+
+  pb.TargetView? get target => targets.where((t) => t.id == targetId).firstOrNull;
+
+  DeployState copyWith({
+    List<pb.TargetView>? targets,
+    bool? targetsLoaded,
+    String? targetId,
+    bool clearTarget = false,
+    pb.DeploymentAnalysis? analysis,
+    bool clearAnalysis = false,
+    bool? pending,
+    int? generation,
+    String? error,
+    bool clearError = false,
+  }) => DeployState(
+    targets: targets ?? this.targets,
+    targetsLoaded: targetsLoaded ?? this.targetsLoaded,
+    targetId: clearTarget ? null : (targetId ?? this.targetId),
+    analysis: clearAnalysis ? null : (analysis ?? this.analysis),
+    pending: pending ?? this.pending,
+    generation: generation ?? this.generation,
+    error: clearError ? null : (error ?? this.error),
+  );
+}
+
 @immutable
 class EditorState {
   const EditorState({
@@ -346,6 +403,7 @@ class EditorState {
     this.toolingGeneration = 0,
     this.actions,
     this.queuedEdits = const [],
+    this.deploy = const DeployState(),
   });
 
   final StudioPage page;
@@ -396,6 +454,8 @@ class EditorState {
   /// revision (an edit is always sent against the revision Studio holds).
   final List<pb.EditOp> queuedEdits;
 
+  final DeployState deploy;
+
   EditorState copyWith({
     StudioPage? page,
     Selection? selection,
@@ -416,6 +476,7 @@ class EditorState {
     SemanticActionsState? actions,
     bool clearActions = false,
     List<pb.EditOp>? queuedEdits,
+    DeployState? deploy,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -432,6 +493,7 @@ class EditorState {
       toolingGeneration: toolingGeneration ?? this.toolingGeneration,
       actions: clearActions ? null : (actions ?? this.actions),
       queuedEdits: queuedEdits ?? this.queuedEdits,
+      deploy: deploy ?? this.deploy,
     );
   }
 }

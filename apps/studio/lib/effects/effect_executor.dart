@@ -175,6 +175,36 @@ class EffectExecutor {
           (r) =>
               _dispatch(SemanticActionsReceived(generation: generation, result: r.semanticActions)),
         );
+      case ListTargets():
+        await _call(
+          pb.ClientMessage(listTargets: pb.ListTargetsRequest()),
+          (r) => _dispatch(TargetsReceived(r.targets.targets)),
+          counted: false,
+        );
+      case AnalyzeDeployment(:final targetId, :final generation):
+        final client = _client;
+        if (client == null) {
+          _dispatch(
+            DeploymentFailed(
+              generation: generation,
+              code: 'studio.not_connected',
+              message: 'The compiler service is not connected.',
+            ),
+          );
+          return;
+        }
+        try {
+          final r = await client.request(
+            pb.ClientMessage(analyzeDeployment: pb.AnalyzeDeploymentRequest(targetId: targetId)),
+          );
+          _dispatch(DeploymentReceived(generation: generation, analysis: r.deployment.deployment));
+        } on DaemonError catch (e) {
+          _dispatch(DeploymentFailed(generation: generation, code: e.code, message: e.message));
+        } catch (e) {
+          _dispatch(
+            DeploymentFailed(generation: generation, code: 'studio.transport', message: '$e'),
+          );
+        }
       case DiscardDraft(:final mappingId):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();

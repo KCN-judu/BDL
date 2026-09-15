@@ -355,6 +355,24 @@ class SemanticActionApplied extends UserAction {
   final int? option;
 }
 
+// ---- deployment ------------------------------------------------------------
+
+/// Ask bdld which boards it knows (on first visit to Deploy).
+class TargetsRequested extends UserAction {
+  const TargetsRequested();
+}
+
+/// The designer chose a board; `null` clears the choice.
+class TargetSelected extends UserAction {
+  const TargetSelected(this.targetId);
+  final String? targetId;
+}
+
+/// Ask again for the chosen board at the current revision.
+class DeploymentRequested extends UserAction {
+  const DeploymentRequested();
+}
+
 /// Delete whatever is selected.
 class DeleteSelectionRequested extends UserAction {
   const DeleteSelectionRequested();
@@ -505,6 +523,24 @@ class SemanticActionsReceived extends ResponseAction {
   const SemanticActionsReceived({required this.generation, required this.result});
   final int generation;
   final pb.SemanticActionsResponse result;
+}
+
+class TargetsReceived extends ResponseAction {
+  const TargetsReceived(this.targets);
+  final List<pb.TargetView> targets;
+}
+
+class DeploymentReceived extends ResponseAction {
+  const DeploymentReceived({required this.generation, required this.analysis});
+  final int generation;
+  final pb.DeploymentAnalysis analysis;
+}
+
+class DeploymentFailed extends ResponseAction {
+  const DeploymentFailed({required this.generation, required this.code, required this.message});
+  final int generation;
+  final String code;
+  final String message;
 }
 
 class RecentProjectsLoaded extends ResponseAction {

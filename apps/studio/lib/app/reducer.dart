@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
+import 'deploy.dart';
 import 'drafts.dart';
 import 'effects.dart';
 import 'state.dart';
@@ -329,10 +330,26 @@ Transition reduce(AppState s, AppAction action) {
     HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
     ToolingFailed(:final generation) => toolingFailed(s, generation),
 
-    // ---- editor state ------------------------------------------------------
-    PageSelected(:final page) => Transition(
-      s.copyWith(editor: withoutTooling(s.editor).copyWith(page: page)),
+    // ---- deployment (app/deploy.dart) -----------------------------------------
+    TargetsRequested() => targetsRequested(s),
+    TargetsReceived(:final targets) => targetsReceived(s, targets),
+    TargetSelected(:final targetId) => targetSelected(s, targetId),
+    DeploymentRequested() => deploymentRequested(s),
+    DeploymentReceived(:final generation, :final analysis) => deploymentReceived(
+      s,
+      generation,
+      analysis,
     ),
+    DeploymentFailed(:final generation, :final message) => deploymentFailed(s, generation, message),
+
+    // ---- editor state ------------------------------------------------------
+    PageSelected(:final page) => () {
+      final t = Transition(s.copyWith(editor: withoutTooling(s.editor).copyWith(page: page)));
+      // Deploy needs the board list once; ask on the first visit.
+      if (page != StudioPage.deploy || s.connection is! Connected) return t;
+      final targets = targetsRequested(t.state);
+      return Transition(targets.state, [...t.effects, ...targets.effects]);
+    }(),
     RemoveRecentRequested(:final path) => () {
       final recent = s.recent.where((r) => r.path != path).toList();
       return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
@@ -400,6 +417,7 @@ Transition reduce(AppState s, AppAction action) {
           layout: const {},
           drafts: const {},
           stashedDrafts: _stash(s),
+          deploy: deployWithoutProject(s.editor.deploy).copyWith(targetsLoaded: false),
         ),
       ),
     ),
@@ -422,6 +440,7 @@ Transition reduce(AppState s, AppAction action) {
           clearOutcome: true,
           drafts: const {},
           stashedDrafts: _stash(s),
+          deploy: deployWithoutProject(s.editor.deploy),
         ),
       ),
     ),
@@ -616,10 +635,19 @@ Transition _projectReceived(
         ],
       )
       .thenQueued(fromRequest && sameProject ? outcome : null)
-      .thenActions(changed: !sameProject || incoming.revision != current.revision);
+      .thenActions(changed: !sameProject || incoming.revision != current.revision)
+      .thenDeployment(changed: !sameProject || incoming.revision != current.revision);
 }
 
 extension on Transition {
+  /// A deployment answer is about a revision; a new one drops it and asks
+  /// again for the chosen board.
+  Transition thenDeployment({required bool changed}) {
+    if (!changed) return this;
+    final t = deploymentAfterRevision(state);
+    return Transition(t.state, [...effects, ...t.effects]);
+  }
+
   /// The actions on screen are about a revision; a new one re-asks for
   /// the selection (drafts are unaffected: they carry their own requests).
   Transition thenActions({required bool changed}) {
