@@ -337,6 +337,68 @@ pub fn projection(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Analysis
+// ---------------------------------------------------------------------------
+
+pub fn diagnostic_to_pb(d: &bdl_diagnostics::Diagnostic) -> pb::Diagnostic {
+    use bdl_diagnostics::{Entity, Severity};
+    let severity = match d.severity {
+        Severity::Error => pb::DiagnosticSeverity::Error,
+        Severity::Warning => pb::DiagnosticSeverity::Warning,
+        Severity::Info => pb::DiagnosticSeverity::Info,
+    };
+    let entity = match d.entity {
+        Entity::Project => pb::diagnostic::Entity::Project(pb::Unit {}),
+        Entity::Concept { id } => pb::diagnostic::Entity::ConceptId(id.raw()),
+        Entity::Mapping { id } => pb::diagnostic::Entity::MappingId(id.raw()),
+    };
+    pb::Diagnostic {
+        code: d.code.as_str().to_owned(),
+        severity: severity.into(),
+        entity: Some(entity),
+        span: d.span.map(|s| pb::SourceSpan {
+            start: s.start,
+            end: s.end,
+        }),
+        message: d.message.clone(),
+        explanation: d.explanation.clone(),
+        technical: d.technical.clone(),
+        fixes: d.fixes.clone(),
+    }
+}
+
+pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis {
+    use bdl_check::pretty;
+    use bdl_compiler::MappingStatus;
+    pb::ProjectAnalysis {
+        revision: a.revision.raw(),
+        mappings: a
+            .mappings
+            .values()
+            .map(|m| pb::MappingAnalysis {
+                id: m.id.raw(),
+                status: match m.status {
+                    MappingStatus::Declared => pb::MappingStatus::Declared,
+                    MappingStatus::Open => pb::MappingStatus::Open,
+                    MappingStatus::Invalid => pb::MappingStatus::Invalid,
+                    MappingStatus::TypeValid => pb::MappingStatus::TypeValid,
+                }
+                .into(),
+                interface: pretty::kernel(&m.interface.expected_type),
+                inferred_type: m
+                    .inferred_type
+                    .as_ref()
+                    .map(pretty::kernel)
+                    .unwrap_or_default(),
+                core_expr: m.realization.as_ref().map(pretty::expr).unwrap_or_default(),
+                diagnostics: m.diagnostics.iter().map(diagnostic_to_pb).collect(),
+            })
+            .collect(),
+        diagnostics: a.diagnostics.iter().map(diagnostic_to_pb).collect(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

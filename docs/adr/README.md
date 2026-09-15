@@ -17,3 +17,4 @@ mark superseded. Format: Context · Decision · Consequences.
 | [0010](0010-lean-is-a-specification.md) | The Lean development is a specification, not a dependency |
 | [0011](0011-floats-not-nat.md) | Production numerics are IEEE floats, recorded as a deviation |
 | [0012](0012-studio-ui-references.md) | Studio UI follows Resolve's pages, Blender's node editor, and the macOS HIG |
+| [0013](0013-formula-language-v0.md) | Formula language v0 — names, rep/mk insertion, units, crate split |

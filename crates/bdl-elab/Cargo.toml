@@ -1,0 +1,22 @@
+[package]
+name = "bdl-elab"
+description = "Elaboration: surface model → Design IR (signatures → interfaces, concepts → bindings) and formulas → Core Expr with rep/mk insertion and units"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-syntax = { workspace = true }
+bdl-check = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true

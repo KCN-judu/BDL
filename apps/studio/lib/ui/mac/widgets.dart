@@ -5,6 +5,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import '../canvas/canvas_geometry.dart' show StatusTone, statusTone, statusWord;
 import 'controls.dart';
 import 'theme.dart';
 import 'tokens.dart';
@@ -525,6 +527,100 @@ class StatePill extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The compiler's verdict on a mapping, coloured by tone.
+class StatusPill extends StatelessWidget {
+  const StatusPill({super.key, required this.status});
+  final pb.MappingStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final color = switch (statusTone(status)) {
+      StatusTone.settled => t.settled,
+      StatusTone.open => t.open,
+      StatusTone.error => t.error,
+    };
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          statusWord(status),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color),
+        ),
+      ),
+    );
+  }
+}
+
+/// One compiler diagnostic: severity dot, message, the offending part of the
+/// formula, explanation and fixes.  Kernel detail stays in a tooltip.
+class DiagnosticCard extends StatelessWidget {
+  const DiagnosticCard({super.key, required this.diagnostic, required this.source});
+  final pb.Diagnostic diagnostic;
+  final String source;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final d = diagnostic;
+    final color = switch (d.severity) {
+      pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR => t.error,
+      pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_WARNING => t.open,
+      _ => t.accent,
+    };
+    String? excerpt;
+    if (d.hasSpan() && source.isNotEmpty) {
+      final start = d.span.start.clamp(0, source.length);
+      final end = d.span.end.clamp(start, source.length);
+      if (end > start) excerpt = source.substring(start, end);
+    }
+    final card = Padding(
+      padding: const EdgeInsets.only(bottom: MacMetrics.gap),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: MacMetrics.gap,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Icon(Icons.circle, size: 7, color: color),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MacMetrics.gapTight,
+              children: [
+                Text(d.message, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                if (excerpt != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      excerpt,
+                      style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textPrimary),
+                    ),
+                  ),
+                if (d.explanation.isNotEmpty)
+                  Text(d.explanation, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+                for (final f in d.fixes)
+                  Text(f, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return d.technical.isEmpty ? card : Tooltip(message: '${d.code}\n${d.technical}', child: card);
   }
 }
 

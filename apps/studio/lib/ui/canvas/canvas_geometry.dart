@@ -135,7 +135,11 @@ class HitSocket extends CanvasHit {
 /// Build the scene.  Positions come from [layout]; anything missing is
 /// auto-placed deterministically by id (concepts in column 0, mappings in
 /// column 1) so an untouched project still reads left → right.
-CanvasScene buildScene(pb.ProjectProjection p, Map<NodeRef, Offset> layout) {
+CanvasScene buildScene(
+  pb.ProjectProjection p,
+  Map<NodeRef, Offset> layout, {
+  Map<int, pb.MappingStatus> statuses = const {},
+}) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
   final mappings = [...p.mappings]..sort((a, b) => a.id.compareTo(b.id));
   final bound = {for (final c in concepts) c.id.toInt(): c.hasRepresentation()};
@@ -219,7 +223,9 @@ CanvasScene buildScene(pb.ProjectProjection p, Map<NodeRef, Offset> layout) {
         rect: rect,
         title: m.name,
         subtitle: m.hasDefinition() ? m.definition.formula : 'no definition yet',
-        stateWord: stateWord(m.state),
+        stateWord: statuses.containsKey(m.id.toInt())
+            ? statusWord(statuses[m.id.toInt()]!)
+            : stateWord(m.state),
         sockets: sockets,
         unresolved: !m.hasDefinition(),
         socketLabels: labels,
@@ -317,6 +323,25 @@ String stateWord(pb.AcceptanceState s) => switch (s) {
   pb.AcceptanceState.ACCEPTANCE_STATE_OUTPUT_COMPLETE => 'output-complete',
   pb.AcceptanceState.ACCEPTANCE_STATE_HARDWARE_FEASIBLE => 'hardware-feasible',
   _ => '',
+};
+
+/// The compiler's verdict on a mapping, as the canvas states it.
+String statusWord(pb.MappingStatus s) => switch (s) {
+  pb.MappingStatus.MAPPING_STATUS_DECLARED => 'declared',
+  pb.MappingStatus.MAPPING_STATUS_OPEN => 'open',
+  pb.MappingStatus.MAPPING_STATUS_INVALID => 'invalid',
+  pb.MappingStatus.MAPPING_STATUS_TYPE_VALID => 'type-valid',
+  _ => '',
+};
+
+/// Whether a status word means "settled" (green), "open" (orange) or
+/// "wrong" (red).
+enum StatusTone { settled, open, error }
+
+StatusTone statusTone(pb.MappingStatus s) => switch (s) {
+  pb.MappingStatus.MAPPING_STATUS_TYPE_VALID => StatusTone.settled,
+  pb.MappingStatus.MAPPING_STATUS_INVALID => StatusTone.error,
+  _ => StatusTone.open,
 };
 
 String _conceptName(pb.ProjectProjection p, int id) =>

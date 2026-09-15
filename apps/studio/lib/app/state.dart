@@ -186,6 +186,7 @@ class AppState {
   const AppState({
     this.connection = const Disconnected(),
     this.project,
+    this.analysis,
     this.recent = const [],
     this.editor = const EditorState(),
     this.render = const RenderState(),
@@ -200,15 +201,25 @@ class AppState {
   /// Semantic projection of the open project, owned by the compiler.  `null`
   /// when no project is open.
   final pb.ProjectProjection? project;
+
+  /// The compiler's analysis of [project] — kept only when its revision is
+  /// the project's; `null` while a newer revision is still being analysed.
+  final pb.ProjectAnalysis? analysis;
   final EditorState editor;
   final RenderState render;
 
   int get revision => project?.revision.toInt() ?? -1;
 
+  /// Analysis of one mapping at the current revision, if available.
+  pb.MappingAnalysis? mappingAnalysis(int id) =>
+      analysis?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
+
   AppState copyWith({
     DaemonConnection? connection,
     pb.ProjectProjection? project,
     bool clearProject = false,
+    pb.ProjectAnalysis? analysis,
+    bool clearAnalysis = false,
     List<RecentProject>? recent,
     EditorState? editor,
     RenderState? render,
@@ -216,6 +227,7 @@ class AppState {
     return AppState(
       connection: connection ?? this.connection,
       project: clearProject ? null : (project ?? this.project),
+      analysis: (clearProject || clearAnalysis) ? null : (analysis ?? this.analysis),
       recent: recent ?? this.recent,
       editor: editor ?? this.editor,
       render: render ?? this.render,

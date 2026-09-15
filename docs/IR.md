@@ -7,6 +7,12 @@ Surface Model  ──elaboration──▶  Design IR  ──lowering──▶  R
 
 Flutter JSON is never translated directly into Rust.
 
+## Surface expression AST (`bdl-syntax::ast`)
+
+What the designer typed, with byte spans: `Name | Number{unit?} | Bool |
+Unary | Binary | If`. Produced by a Pratt parser, consumed only by
+`bdl-elab`; never stored, never sent to Studio.
+
 ## Surface Model (`bdl-model::surface`)
 
 Designer-level forms; may be incomplete; may contain constructs the kernel
@@ -38,6 +44,20 @@ Prim ::= lit d n | add d | sub d | mul d₁ d₂ | div d₁ d₂ | lt d | eq d |
 Surface concepts (`previous`, `hold`, `count`, `rise`, contexts, priority,
 blend) do not exist here. This is the alignment point between the formal
 semantics, the reference interpreter, and the code generator.
+
+### Elaboration of a formula (implemented)
+
+`dimByTilt : (Tilt, Held) -> Brightness` with `if Held then Tilt / 90 deg else 0`:
+
+```
+λ(sem#0). λ(sem#3). (mk sem#1
+   (ite[q[1]] (rep #0) (div[rad,rad] (rep #1) 1.5708[rad]) 0[1]))
+```
+
+Inputs are observed with `rep` (innermost binder is the *last* input), the
+result is constructed with `mk` under the declaration's own grant, units are
+scaled literals, and every primitive is dimension-indexed so the checker's
+ordinary application rule enforces dimensions.
 
 ## Deliberate deviations from the Lean development
 

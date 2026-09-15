@@ -21,6 +21,7 @@ AppState connected({pb.ProjectProjection? project}) => AppState(
 );
 
 void main() {
+  analysisTests();
   test('app start asks for a daemon connection exactly once', () {
     final t1 = reduce(const AppState(), const AppStarted());
     expect(t1.state.connection, isA<Connecting>());
@@ -61,7 +62,7 @@ void main() {
 
   test('opening a project subscribes once', () {
     final t = reduce(connected(), ProjectReceived(projection()));
-    expect(t.effects, [isA<SubscribeProject>(), isA<SaveRecentProjects>()]);
+    expect(t.effects, [isA<SubscribeProject>(), isA<RunAnalysis>(), isA<SaveRecentProjects>()]);
     final again = reduce(t.state, ProjectReceived(projection(revision: 1), fromRequest: false));
     expect(again.effects, isEmpty);
     expect(again.state.editor.pendingRequests, 0);
@@ -93,5 +94,33 @@ void main() {
     expect(s.project, isNull);
     expect(s.connection, isA<ConnectionFailed>());
     expect(s.editor.pendingRequests, 0);
+  });
+}
+
+pb.ProjectAnalysis analysis(
+  int revision, {
+  pb.MappingStatus status = pb.MappingStatus.MAPPING_STATUS_TYPE_VALID,
+}) =>
+    pb.ProjectAnalysis(revision: Int64(revision))
+      ..mappings.add(pb.MappingAnalysis(id: Int64(0), status: status));
+
+void analysisTests() {
+  test('analysis is kept only for the revision held; stale or ahead ones are dropped', () {
+    final s = connected(project: projection(revision: 5));
+    final kept = reduce(s, AnalysisReceived(analysis(5))).state;
+    expect(kept.analysis?.revision.toInt(), 5);
+    expect(kept.mappingAnalysis(0)?.status, pb.MappingStatus.MAPPING_STATUS_TYPE_VALID);
+    final stale = reduce(kept, AnalysisReceived(analysis(4))).state;
+    expect(stale.analysis, isNull);
+    final ahead = reduce(kept, AnalysisReceived(analysis(6))).state;
+    expect(ahead.analysis, isNull);
+  });
+
+  test('a new projection drops an analysis of an older revision and opening requests one', () {
+    final s = connected(project: projection(revision: 5)).copyWith(analysis: analysis(5));
+    final t = reduce(s, ProjectReceived(projection(revision: 6), fromRequest: false));
+    expect(t.state.analysis, isNull);
+    final opened = reduce(connected(), ProjectReceived(projection()));
+    expect(opened.effects.whereType<RunAnalysis>().length, 1);
   });
 }

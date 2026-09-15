@@ -13,6 +13,7 @@ struct Client {
     child: Child,
     buf: BytesMut,
     next_id: u64,
+    last_revision: u64,
 }
 
 impl Client {
@@ -28,6 +29,7 @@ impl Client {
             child,
             buf: BytesMut::new(),
             next_id: 1,
+            last_revision: 0,
         }
     }
 
@@ -74,7 +76,17 @@ impl Client {
             match self.next_message().payload.unwrap() {
                 pb::server_message::Payload::Response(r) => {
                     assert_eq!(r.request_id, id);
-                    return r.payload.unwrap();
+                    let payload = r.payload.unwrap();
+                    match &payload {
+                        Resp::Project(p) => {
+                            self.last_revision = p.project.as_ref().unwrap().revision
+                        }
+                        Resp::EditApplied(e) => {
+                            self.last_revision = e.project.as_ref().unwrap().revision
+                        }
+                        _ => {}
+                    }
+                    return payload;
                 }
                 pb::server_message::Payload::Event(e) => events.push(e),
             }
@@ -213,10 +225,135 @@ fn vertical_slice_steps_1_to_12() {
     assert_eq!(m.state(), pb::AcceptanceState::Declared);
     assert!(m.definition.is_none());
 
+    // attach a dimension-correct formula: analysed as type-valid, with the
+    // Core term visible for the explanation view
+    let resp = c.call(
+        edit(
+            3,
+            pb::edit_op::Op::AttachDefinition(pb::AttachDefinition {
+                id: m.id,
+                definition: Some(pb::Definition {
+                    kind: Some(pb::definition::Kind::Formula("Tilt / 90 deg".into())),
+                }),
+            }),
+        ),
+        &mut events,
+    );
+    let Resp::EditApplied(_) = resp else {
+        panic!("{resp:?}")
+    };
+    // Tilt/Brightness have no representation yet → open, not invalid
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    assert_eq!(a.revision, 4);
+    assert_eq!(a.mappings[0].status(), pb::MappingStatus::Open);
+    assert_eq!(a.diagnostics[0].code, "semantic.unbound_representation");
+    assert_eq!(a.diagnostics[0].severity(), pb::DiagnosticSeverity::Info);
+    // bind representations → type-valid
+    for (id, rep) in [
+        (
+            tilt,
+            pb::Representation {
+                kind: Some(pb::representation::Kind::Quantity(pb::Dim {
+                    angle: 1,
+                    ..Default::default()
+                })),
+            },
+        ),
+        (
+            bright,
+            pb::Representation {
+                kind: Some(pb::representation::Kind::Quantity(pb::Dim::default())),
+            },
+        ),
+    ] {
+        let base = c.last_revision;
+        c.call(
+            edit(
+                base,
+                pb::edit_op::Op::SetConceptRepresentation(pb::SetConceptRepresentation {
+                    id,
+                    representation: Some(rep),
+                }),
+            ),
+            &mut events,
+        );
+    }
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    assert_eq!(a.revision, 6);
+    assert_eq!(a.mappings[0].status(), pb::MappingStatus::TypeValid);
+    assert!(a.diagnostics.is_empty());
+    assert!(
+        a.mappings[0].core_expr.contains("(rep #0)"),
+        "{}",
+        a.mappings[0].core_expr
+    );
+    assert!(
+        a.mappings[0].core_expr.contains("mk sem#1"),
+        "{}",
+        a.mappings[0].core_expr
+    );
+    // a bad formula → invalid with a spanned, product-language diagnostic
+    c.call(
+        edit(
+            6,
+            pb::edit_op::Op::ReplaceDefinition(pb::ReplaceDefinition {
+                id: m.id,
+                definition: Some(pb::Definition {
+                    kind: Some(pb::definition::Kind::Formula("Tilt + 1 s".into())),
+                }),
+            }),
+        ),
+        &mut events,
+    );
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    assert_eq!(a.mappings[0].status(), pb::MappingStatus::Invalid);
+    let d = &a.diagnostics[0];
+    assert_eq!(d.code, "dimension.mismatch");
+    assert!(d.message.contains("an angle and a time"));
+    assert_eq!(d.span.as_ref().map(|s| (s.start, s.end)), Some((0, 10)));
+    // subscribers received an AnalysisReady per committed revision
+    let ready: Vec<u64> = events
+        .iter()
+        .filter_map(|e| match &e.payload {
+            Some(pb::event::Payload::AnalysisReady(r)) => {
+                Some(r.analysis.as_ref().unwrap().revision)
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(ready, vec![1, 2, 3, 4, 5, 6, 7]);
+    // restore a valid formula for the persistence checks below
+    c.call(
+        edit(
+            7,
+            pb::edit_op::Op::ReplaceDefinition(pb::ReplaceDefinition {
+                id: m.id,
+                definition: Some(pb::Definition {
+                    kind: Some(pb::definition::Kind::Formula("Tilt / 90 deg".into())),
+                }),
+            }),
+        ),
+        &mut events,
+    );
+    let rev_after_formula = c.last_revision;
+    assert_eq!(
+        rev_after_formula, 8,
+        "revisions: init 0, two concepts, mapping, attach, two representations, replace, restore"
+    );
+
     // duplicate name → designer-readable error with a stable code
     let Resp::Error(e) = c.call(
         edit(
-            3,
+            rev_after_formula,
             pb::edit_op::Op::CreateConcept(pb::CreateConcept {
                 name: "Tilt".into(),
                 ..Default::default()
@@ -226,7 +363,7 @@ fn vertical_slice_steps_1_to_12() {
     ) else {
         panic!()
     };
-    assert_eq!(e.code, "edit.duplicate_concept_name");
+    assert_eq!(e.code, "edit.duplicate_concept_name", "{}", e.message);
     assert!(e.message.contains("Tilt"));
 
     // layout is not a revision
@@ -248,7 +385,7 @@ fn vertical_slice_steps_1_to_12() {
         &mut events,
     );
     let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
-    assert_eq!(p.revision, 3);
+    assert_eq!(p.revision, rev_after_formula);
 
     // save, close, reopen: the unresolved mapping and layout survive
     let p = project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
@@ -264,7 +401,7 @@ fn vertical_slice_steps_1_to_12() {
     assert_eq!(p.concepts.len(), 2);
     assert_eq!(p.mappings.len(), 1);
     assert_eq!(p.mappings[0].name, "dimByTilt");
-    assert_eq!(p.mappings[0].state(), pb::AcceptanceState::Declared);
+    assert_eq!(p.mappings[0].state(), pb::AcceptanceState::Defined);
     assert_eq!(p.mappings[0].id, m.id);
     assert_eq!(p.layout.unwrap().mappings[0].x, 3.0);
 
@@ -278,7 +415,7 @@ fn vertical_slice_steps_1_to_12() {
             _ => None,
         })
         .collect();
-    assert_eq!(seen, vec![1, 2, 3]);
+    assert_eq!(seen, vec![1, 2, 3, 4, 5, 6, 7, 8]);
 
     let Resp::Ack(_) = c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events) else {
         panic!()

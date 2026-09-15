@@ -3,6 +3,11 @@ resolver = "2"
 members = [
     "crates/bdl-model",
     "crates/bdl-ir",
+    "crates/bdl-diagnostics",
+    "crates/bdl-syntax",
+    "crates/bdl-elab",
+    "crates/bdl-check",
+    "crates/bdl-compiler",
     "crates/bdl-protocol",
     "crates/bdl-daemon",
 ]
@@ -17,6 +22,11 @@ repository = "https://github.com/KCN-judu/BDL"
 [workspace.dependencies]
 bdl-model = { path = "crates/bdl-model" }
 bdl-ir = { path = "crates/bdl-ir" }
+bdl-diagnostics = { path = "crates/bdl-diagnostics" }
+bdl-syntax = { path = "crates/bdl-syntax" }
+bdl-elab = { path = "crates/bdl-elab" }
+bdl-check = { path = "crates/bdl-check" }
+bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-protocol = { path = "crates/bdl-protocol" }
 
 serde = { version = "1.0", features = ["derive"] }

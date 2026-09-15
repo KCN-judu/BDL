@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/actions.dart';
 import '../../app/state.dart';
+import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../canvas/node_canvas.dart';
 import '../inspector.dart';
 import '../library.dart';
@@ -33,6 +34,10 @@ class DesignPage extends StatelessWidget {
                   layout: state.editor.layout,
                   selection: state.editor.selection,
                   dispatch: dispatch,
+                  statuses: {
+                    for (final m in state.analysis?.mappings ?? const <pb.MappingAnalysis>[])
+                      m.id.toInt(): m.status,
+                  },
                 ),
         ),
         VerticalDivider(width: 1, color: t.hairline),

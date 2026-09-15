@@ -49,6 +49,7 @@ class Inspector extends StatelessWidget {
           key: ValueKey('m$id'),
           mapping: project.mappings.firstWhere((m) => m.id.toInt() == id),
           concepts: project.concepts,
+          analysis: state.mappingAnalysis(id),
           dispatch: dispatch,
         ),
       };
@@ -313,10 +314,14 @@ class _MappingInspector extends StatelessWidget {
     super.key,
     required this.mapping,
     required this.concepts,
+    required this.analysis,
     required this.dispatch,
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
+
+  /// The compiler's verdict for the current revision; `null` while pending.
+  final pb.MappingAnalysis? analysis;
   final void Function(AppAction) dispatch;
 
   String _name(int id) =>
@@ -357,14 +362,10 @@ class _MappingInspector extends StatelessWidget {
             ),
             FormRow(
               label: 'State',
-              child: StatePill(
-                word: switch (mapping.state) {
-                  pb.AcceptanceState.ACCEPTANCE_STATE_DECLARED => 'declared',
-                  pb.AcceptanceState.ACCEPTANCE_STATE_DEFINED => 'defined',
-                  _ => mapping.state.name.toLowerCase(),
-                },
-                settled: !unresolved,
-              ),
+              child: switch (analysis) {
+                final a? => StatusPill(status: a.status),
+                null => Text('checking', style: TextStyle(fontSize: 11, color: t.textTertiary)),
+              },
             ),
           ],
         ),
@@ -467,6 +468,32 @@ class _MappingInspector extends StatelessWidget {
             ],
           ],
         ),
+        if (analysis case final a? when a.diagnostics.isNotEmpty)
+          InspectorSection(
+            title: 'Compiler',
+            children: [
+              for (final d in a.diagnostics)
+                DiagnosticCard(
+                  diagnostic: d,
+                  source: mapping.hasDefinition() ? mapping.definition.formula : '',
+                ),
+            ],
+          ),
+        if (analysis case final a? when a.coreExpr.isNotEmpty)
+          InspectorSection(
+            title: 'Elaborated',
+            children: [
+              Text(
+                a.coreExpr,
+                style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${a.interface}${a.inferredType.isEmpty ? '' : '   ⊢ ${a.inferredType}'}',
+                style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textTertiary),
+              ),
+            ],
+          ),
         Padding(
           padding: const EdgeInsets.all(12),
           child: Align(

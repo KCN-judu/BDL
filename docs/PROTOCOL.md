@@ -20,7 +20,8 @@ ClientMessage { request_id, oneof payload }   →
 ```
 
 Exactly one `Response` per request. `Event`s are unsolicited and only sent
-after `SubscribeProject`.
+after `SubscribeProject`: `ProjectChanged` then `AnalysisReady` for every
+committed revision.
 
 ## Requests (v0.1)
 
@@ -35,9 +36,10 @@ after `SubscribeProject`.
 | Undo / Redo | EditApplied | new revision, no outcome |
 | SetLayout | Ack | not a revision |
 | SubscribeProject | Ack | then `ProjectChanged` events |
+| RunAnalysis | AnalysisResponse { ProjectAnalysis } | analysis of the current snapshot, tagged with its revision |
 | Shutdown | Ack | |
 
-Planned (ROADMAP): RunAnalysis, RunSimulation, SetDeploymentTarget,
+Planned (ROADMAP): RunSimulation, SetDeploymentTarget,
 SetManualResourceConstraint, GenerateRust, Build, Flash, StartTelemetry.
 
 ## Errors

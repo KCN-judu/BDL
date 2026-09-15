@@ -9,6 +9,9 @@ repository.workspace = true
 
 [dependencies]
 bdl-model = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-compiler = { workspace = true }
+bdl-check = { workspace = true }
 prost = { workspace = true }
 bytes = { workspace = true }
 serde_json = { workspace = true }

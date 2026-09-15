@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../app/actions.dart';
 import '../app/state.dart';
-import 'canvas/canvas_geometry.dart' show stateWord;
+import 'canvas/canvas_geometry.dart' show stateWord, statusWord;
 import 'dialogs.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
@@ -74,7 +74,10 @@ class Library extends StatelessWidget {
                     color: t.conceptColor(m.signature.output.toInt()),
                     hollow: !m.hasDefinition(),
                     title: m.name,
-                    trailing: stateWord(m.state),
+                    trailing: switch (state.mappingAnalysis(m.id.toInt())) {
+                      final a? => statusWord(a.status),
+                      null => stateWord(m.state),
+                    },
                     selected: sel is MappingSelected && sel.id == m.id.toInt(),
                     onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
                   ),

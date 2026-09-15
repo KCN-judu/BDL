@@ -65,7 +65,8 @@ void main() {
           id: Int64(0),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0), Int64(3)], output: Int64(1)),
-          state: pb.AcceptanceState.ACCEPTANCE_STATE_DECLARED,
+          definition: pb.Definition(formula: 'Tilt + 1 s'),
+          state: pb.AcceptanceState.ACCEPTANCE_STATE_DEFINED,
         ),
         pb.MappingView(
           id: Int64(1),
@@ -136,6 +137,32 @@ void main() {
           ),
         ),
         project: project,
+        analysis: pb.ProjectAnalysis(revision: Int64(7))
+          ..mappings.addAll([
+            pb.MappingAnalysis(
+              id: Int64(0),
+              status: pb.MappingStatus.MAPPING_STATUS_INVALID,
+              interface: 'sem#0 → sem#3 → sem#1',
+              diagnostics: [
+                pb.Diagnostic(
+                  code: 'dimension.mismatch',
+                  severity: pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR,
+                  mappingId: Int64(0),
+                  span: pb.SourceSpan(start: 0, end: 10),
+                  message: 'This expression adds values with different physical dimensions: an angle and a time.',
+                  explanation: 'Only quantities of the same dimension can be added, subtracted or compared. Multiplying or dividing combines dimensions.',
+                  technical: '+ : q[rad] → q[rad] → …, found q[s]',
+                ),
+              ],
+            ),
+            pb.MappingAnalysis(
+              id: Int64(1),
+              status: pb.MappingStatus.MAPPING_STATUS_TYPE_VALID,
+              interface: 'sem#2 → sem#1',
+              inferredType: 'sem#2 → sem#1',
+              coreExpr: 'λ(sem#2). (mk sem#1 (ite[q[1]] (lt[K] 313.15[K] (rep #0)) 0.3[1] 1[1]))',
+            ),
+          ]),
         editor: EditorState(
           selection: const MappingSelected(0),
           layout: {

@@ -247,6 +247,14 @@ class PickerUnavailable extends ResponseAction {
   const PickerUnavailable();
 }
 
+/// A compiler analysis arrived (response or pushed event).  Revision-tagged;
+/// the reducer keeps it only if it matches the project it holds.
+class AnalysisReceived extends ResponseAction {
+  const AnalysisReceived(this.analysis, {this.fromRequest = false});
+  final pb.ProjectAnalysis analysis;
+  final bool fromRequest;
+}
+
 class RecentProjectsLoaded extends ResponseAction {
   const RecentProjectsLoaded(this.recent);
   final List<RecentProject> recent;

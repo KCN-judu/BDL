@@ -77,6 +77,41 @@ final $typed_data.Uint8List acceptanceStateDescriptor = $convert
         'BRIkCiBBQ0NFUFRBTkNFX1NUQVRFX09VVFBVVF9DT01QTEVURRAGEiYKIkFDQ0VQVEFOQ0VfU1'
         'RBVEVfSEFSRFdBUkVfRkVBU0lCTEUQBw==');
 
+@$core.Deprecated('Use mappingStatusDescriptor instead')
+const MappingStatus$json = {
+  '1': 'MappingStatus',
+  '2': [
+    {'1': 'MAPPING_STATUS_UNSPECIFIED', '2': 0},
+    {'1': 'MAPPING_STATUS_DECLARED', '2': 1},
+    {'1': 'MAPPING_STATUS_OPEN', '2': 2},
+    {'1': 'MAPPING_STATUS_INVALID', '2': 3},
+    {'1': 'MAPPING_STATUS_TYPE_VALID', '2': 4},
+  ],
+};
+
+/// Descriptor for `MappingStatus`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List mappingStatusDescriptor = $convert
+    .base64Decode('Cg1NYXBwaW5nU3RhdHVzEh4KGk1BUFBJTkdfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGwoXTUFQUE'
+        'lOR19TVEFUVVNfREVDTEFSRUQQARIXChNNQVBQSU5HX1NUQVRVU19PUEVOEAISGgoWTUFQUElO'
+        'R19TVEFUVVNfSU5WQUxJRBADEh0KGU1BUFBJTkdfU1RBVFVTX1RZUEVfVkFMSUQQBA==');
+
+@$core.Deprecated('Use diagnosticSeverityDescriptor instead')
+const DiagnosticSeverity$json = {
+  '1': 'DiagnosticSeverity',
+  '2': [
+    {'1': 'DIAGNOSTIC_SEVERITY_UNSPECIFIED', '2': 0},
+    {'1': 'DIAGNOSTIC_SEVERITY_ERROR', '2': 1},
+    {'1': 'DIAGNOSTIC_SEVERITY_WARNING', '2': 2},
+    {'1': 'DIAGNOSTIC_SEVERITY_INFO', '2': 3},
+  ],
+};
+
+/// Descriptor for `DiagnosticSeverity`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List diagnosticSeverityDescriptor = $convert
+    .base64Decode('ChJEaWFnbm9zdGljU2V2ZXJpdHkSIwofRElBR05PU1RJQ19TRVZFUklUWV9VTlNQRUNJRklFRB'
+        'AAEh0KGURJQUdOT1NUSUNfU0VWRVJJVFlfRVJST1IQARIfChtESUFHTk9TVElDX1NFVkVSSVRZ'
+        'X1dBUk5JTkcQAhIcChhESUFHTk9TVElDX1NFVkVSSVRZX0lORk8QAw==');
+
 @$core.Deprecated('Use clientMessageDescriptor instead')
 const ClientMessage$json = {
   '1': 'ClientMessage',
@@ -174,6 +209,15 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'shutdown'
     },
+    {
+      '1': 'run_analysis',
+      '3': 22,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.RunAnalysisRequest',
+      '9': 0,
+      '10': 'runAnalysis'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -195,8 +239,9 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'UmVkb1JlcXVlc3RIAFIEcmVkbxI5CgpzZXRfbGF5b3V0GBMgASgLMhguYmRsLnYxLlNldExheW'
         '91dFJlcXVlc3RIAFIJc2V0TGF5b3V0Ek4KEXN1YnNjcmliZV9wcm9qZWN0GBQgASgLMh8uYmRs'
         'LnYxLlN1YnNjcmliZVByb2plY3RSZXF1ZXN0SABSEHN1YnNjcmliZVByb2plY3QSNQoIc2h1dG'
-        'Rvd24YFSABKAsyFy5iZGwudjEuU2h1dGRvd25SZXF1ZXN0SABSCHNodXRkb3duQgkKB3BheWxv'
-        'YWQ=');
+        'Rvd24YFSABKAsyFy5iZGwudjEuU2h1dGRvd25SZXF1ZXN0SABSCHNodXRkb3duEj8KDHJ1bl9h'
+        'bmFseXNpcxgWIAEoCzIaLmJkbC52MS5SdW5BbmFseXNpc1JlcXVlc3RIAFILcnVuQW5hbHlzaX'
+        'NCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -250,6 +295,15 @@ const Response$json = {
       '10': 'editApplied'
     },
     {'1': 'ack', '3': 13, '4': 1, '5': 11, '6': '.bdl.v1.Ack', '9': 0, '10': 'ack'},
+    {
+      '1': 'analysis',
+      '3': 14,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.AnalysisResponse',
+      '9': 0,
+      '10': 'analysis'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -263,7 +317,8 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'bmRzaGFrZVJlc3BvbnNlSABSCWhhbmRzaGFrZRIzCgdwcm9qZWN0GAsgASgLMhcuYmRsLnYxLl'
         'Byb2plY3RSZXNwb25zZUgAUgdwcm9qZWN0EjgKDGVkaXRfYXBwbGllZBgMIAEoCzITLmJkbC52'
         'MS5FZGl0QXBwbGllZEgAUgtlZGl0QXBwbGllZBIfCgNhY2sYDSABKAsyCy5iZGwudjEuQWNrSA'
-        'BSA2Fja0IJCgdwYXlsb2Fk');
+        'BSA2FjaxI2CghhbmFseXNpcxgOIAEoCzIYLmJkbC52MS5BbmFseXNpc1Jlc3BvbnNlSABSCGFu'
+        'YWx5c2lzQgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -279,6 +334,15 @@ const Event$json = {
       '10': 'projectChanged'
     },
     {'1': 'log', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.DaemonLog', '9': 0, '10': 'log'},
+    {
+      '1': 'analysis_ready',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.AnalysisReady',
+      '9': 0,
+      '10': 'analysisReady'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -289,7 +353,8 @@ const Event$json = {
 final $typed_data.Uint8List eventDescriptor = $convert
     .base64Decode('CgVFdmVudBJBCg9wcm9qZWN0X2NoYW5nZWQYASABKAsyFi5iZGwudjEuUHJvamVjdENoYW5nZW'
         'RIAFIOcHJvamVjdENoYW5nZWQSJQoDbG9nGAIgASgLMhEuYmRsLnYxLkRhZW1vbkxvZ0gAUgNs'
-        'b2dCCQoHcGF5bG9hZA==');
+        'b2cSPgoOYW5hbHlzaXNfcmVhZHkYAyABKAsyFS5iZGwudjEuQW5hbHlzaXNSZWFkeUgAUg1hbm'
+        'FseXNpc1JlYWR5QgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use ackDescriptor instead')
 const Ack$json = {
@@ -1119,3 +1184,128 @@ const DaemonLog$json = {
 final $typed_data.Uint8List daemonLogDescriptor = $convert
     .base64Decode('CglEYWVtb25Mb2cSFAoFbGV2ZWwYASABKAlSBWxldmVsEhgKB21lc3NhZ2UYAiABKAlSB21lc3'
         'NhZ2U=');
+
+@$core.Deprecated('Use runAnalysisRequestDescriptor instead')
+const RunAnalysisRequest$json = {
+  '1': 'RunAnalysisRequest',
+};
+
+/// Descriptor for `RunAnalysisRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List runAnalysisRequestDescriptor =
+    $convert.base64Decode('ChJSdW5BbmFseXNpc1JlcXVlc3Q=');
+
+@$core.Deprecated('Use analysisResponseDescriptor instead')
+const AnalysisResponse$json = {
+  '1': 'AnalysisResponse',
+  '2': [
+    {'1': 'analysis', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.ProjectAnalysis', '10': 'analysis'},
+  ],
+};
+
+/// Descriptor for `AnalysisResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List analysisResponseDescriptor = $convert
+    .base64Decode('ChBBbmFseXNpc1Jlc3BvbnNlEjMKCGFuYWx5c2lzGAEgASgLMhcuYmRsLnYxLlByb2plY3RBbm'
+        'FseXNpc1IIYW5hbHlzaXM=');
+
+@$core.Deprecated('Use analysisReadyDescriptor instead')
+const AnalysisReady$json = {
+  '1': 'AnalysisReady',
+  '2': [
+    {'1': 'analysis', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.ProjectAnalysis', '10': 'analysis'},
+  ],
+};
+
+/// Descriptor for `AnalysisReady`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List analysisReadyDescriptor = $convert
+    .base64Decode('Cg1BbmFseXNpc1JlYWR5EjMKCGFuYWx5c2lzGAEgASgLMhcuYmRsLnYxLlByb2plY3RBbmFseX'
+        'Npc1IIYW5hbHlzaXM=');
+
+@$core.Deprecated('Use projectAnalysisDescriptor instead')
+const ProjectAnalysis$json = {
+  '1': 'ProjectAnalysis',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mappings', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.MappingAnalysis', '10': 'mappings'},
+    {'1': 'diagnostics', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+  ],
+};
+
+/// Descriptor for `ProjectAnalysis`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List projectAnalysisDescriptor = $convert
+    .base64Decode('Cg9Qcm9qZWN0QW5hbHlzaXMSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEjMKCG1hcHBpbm'
+        'dzGAIgAygLMhcuYmRsLnYxLk1hcHBpbmdBbmFseXNpc1IIbWFwcGluZ3MSNAoLZGlhZ25vc3Rp'
+        'Y3MYAyADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3M=');
+
+@$core.Deprecated('Use mappingAnalysisDescriptor instead')
+const MappingAnalysis$json = {
+  '1': 'MappingAnalysis',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'status', '3': 2, '4': 1, '5': 14, '6': '.bdl.v1.MappingStatus', '10': 'status'},
+    {'1': 'interface', '3': 3, '4': 1, '5': 9, '10': 'interface'},
+    {'1': 'inferred_type', '3': 4, '4': 1, '5': 9, '10': 'inferredType'},
+    {'1': 'core_expr', '3': 5, '4': 1, '5': 9, '10': 'coreExpr'},
+    {'1': 'diagnostics', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+  ],
+};
+
+/// Descriptor for `MappingAnalysis`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List mappingAnalysisDescriptor = $convert
+    .base64Decode('Cg9NYXBwaW5nQW5hbHlzaXMSDgoCaWQYASABKARSAmlkEi0KBnN0YXR1cxgCIAEoDjIVLmJkbC'
+        '52MS5NYXBwaW5nU3RhdHVzUgZzdGF0dXMSHAoJaW50ZXJmYWNlGAMgASgJUglpbnRlcmZhY2US'
+        'IwoNaW5mZXJyZWRfdHlwZRgEIAEoCVIMaW5mZXJyZWRUeXBlEhsKCWNvcmVfZXhwchgFIAEoCV'
+        'IIY29yZUV4cHISNAoLZGlhZ25vc3RpY3MYBiADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlh'
+        'Z25vc3RpY3M=');
+
+@$core.Deprecated('Use sourceSpanDescriptor instead')
+const SourceSpan$json = {
+  '1': 'SourceSpan',
+  '2': [
+    {'1': 'start', '3': 1, '4': 1, '5': 13, '10': 'start'},
+    {'1': 'end', '3': 2, '4': 1, '5': 13, '10': 'end'},
+  ],
+};
+
+/// Descriptor for `SourceSpan`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceSpanDescriptor = $convert
+    .base64Decode('CgpTb3VyY2VTcGFuEhQKBXN0YXJ0GAEgASgNUgVzdGFydBIQCgNlbmQYAiABKA1SA2VuZA==');
+
+@$core.Deprecated('Use diagnosticDescriptor instead')
+const Diagnostic$json = {
+  '1': 'Diagnostic',
+  '2': [
+    {'1': 'code', '3': 1, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'severity', '3': 2, '4': 1, '5': 14, '6': '.bdl.v1.DiagnosticSeverity', '10': 'severity'},
+    {'1': 'project', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'project'},
+    {'1': 'concept_id', '3': 4, '4': 1, '5': 4, '9': 0, '10': 'conceptId'},
+    {'1': 'mapping_id', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'mappingId'},
+    {
+      '1': 'span',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceSpan',
+      '9': 1,
+      '10': 'span',
+      '17': true
+    },
+    {'1': 'message', '3': 7, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 8, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'technical', '3': 9, '4': 1, '5': 9, '10': 'technical'},
+    {'1': 'fixes', '3': 10, '4': 3, '5': 9, '10': 'fixes'},
+  ],
+  '8': [
+    {'1': 'entity'},
+    {'1': '_span'},
+  ],
+};
+
+/// Descriptor for `Diagnostic`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List diagnosticDescriptor = $convert
+    .base64Decode('CgpEaWFnbm9zdGljEhIKBGNvZGUYASABKAlSBGNvZGUSNgoIc2V2ZXJpdHkYAiABKA4yGi5iZG'
+        'wudjEuRGlhZ25vc3RpY1NldmVyaXR5UghzZXZlcml0eRIoCgdwcm9qZWN0GAMgASgLMgwuYmRs'
+        'LnYxLlVuaXRIAFIHcHJvamVjdBIfCgpjb25jZXB0X2lkGAQgASgESABSCWNvbmNlcHRJZBIfCg'
+        'ptYXBwaW5nX2lkGAUgASgESABSCW1hcHBpbmdJZBIrCgRzcGFuGAYgASgLMhIuYmRsLnYxLlNv'
+        'dXJjZVNwYW5IAVIEc3BhbogBARIYCgdtZXNzYWdlGAcgASgJUgdtZXNzYWdlEiAKC2V4cGxhbm'
+        'F0aW9uGAggASgJUgtleHBsYW5hdGlvbhIcCgl0ZWNobmljYWwYCSABKAlSCXRlY2huaWNhbBIU'
+        'CgVmaXhlcxgKIAMoCVIFZml4ZXNCCAoGZW50aXR5QgcKBV9zcGFu');

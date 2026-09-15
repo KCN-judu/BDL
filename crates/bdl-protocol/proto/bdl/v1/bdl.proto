@@ -38,6 +38,7 @@ message ClientMessage {
     SetLayoutRequest set_layout = 19;
     SubscribeProjectRequest subscribe_project = 20;
     ShutdownRequest shutdown = 21;
+    RunAnalysisRequest run_analysis = 22;
   }
 }
 
@@ -56,6 +57,7 @@ message Response {
     ProjectResponse project = 11;
     EditApplied edit_applied = 12;
     Ack ack = 13;
+    AnalysisResponse analysis = 14;
   }
 }
 
@@ -63,6 +65,9 @@ message Event {
   oneof payload {
     ProjectChanged project_changed = 1;
     DaemonLog log = 2;
+    // Pushed to subscribers after every committed revision, following the
+    // ProjectChanged event for the same revision.
+    AnalysisReady analysis_ready = 3;
   }
 }
 
@@ -349,4 +354,75 @@ message ProjectChanged {
 message DaemonLog {
   string level = 1;
   string message = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Analysis (compiler results, revision-tagged; discard when stale)
+// ---------------------------------------------------------------------------
+
+message RunAnalysisRequest {}
+
+message AnalysisResponse {
+  ProjectAnalysis analysis = 1;
+}
+
+message AnalysisReady {
+  ProjectAnalysis analysis = 1;
+}
+
+message ProjectAnalysis {
+  // The revision the analysis was computed for.
+  uint64 revision = 1;
+  repeated MappingAnalysis mappings = 2;
+  // Every diagnostic, in the documented stable order (entity, span, code).
+  repeated Diagnostic diagnostics = 3;
+}
+
+enum MappingStatus {
+  MAPPING_STATUS_UNSPECIFIED = 0;
+  // Named and typed; no definition.
+  MAPPING_STATUS_DECLARED = 1;
+  // Defined, but something it needs is still open (not an error).
+  MAPPING_STATUS_OPEN = 2;
+  // Defined and does not check.
+  MAPPING_STATUS_INVALID = 3;
+  // Defined and produces what the signature promises.
+  MAPPING_STATUS_TYPE_VALID = 4;
+}
+
+message MappingAnalysis {
+  uint64 id = 1;
+  MappingStatus status = 2;
+  // Kernel notation, for the explanation view only.
+  string interface = 3;
+  string inferred_type = 4;
+  string core_expr = 5;
+  repeated Diagnostic diagnostics = 6;
+}
+
+enum DiagnosticSeverity {
+  DIAGNOSTIC_SEVERITY_UNSPECIFIED = 0;
+  DIAGNOSTIC_SEVERITY_ERROR = 1;
+  DIAGNOSTIC_SEVERITY_WARNING = 2;
+  DIAGNOSTIC_SEVERITY_INFO = 3;
+}
+
+message SourceSpan {
+  uint32 start = 1;
+  uint32 end = 2;
+}
+
+message Diagnostic {
+  string code = 1;
+  DiagnosticSeverity severity = 2;
+  oneof entity {
+    Unit project = 3;
+    uint64 concept_id = 4;
+    uint64 mapping_id = 5;
+  }
+  optional SourceSpan span = 6;
+  string message = 7;
+  string explanation = 8;
+  string technical = 9;
+  repeated string fixes = 10;
 }

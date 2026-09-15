@@ -51,13 +51,16 @@ compiler as a *projection*. Studio never holds a second copy of the language.
 
 ```
 crates/
-  bdl-model      stable IDs · surface model · revisioned edits · persistence   (no deps on the rest)
-  bdl-ir         Design IR · Reactive Core IR (the kernel's Ty/Expr/envs)      (→ bdl-model)
-  bdl-protocol   protobuf schema · framing · conversions to/from the model     (→ bdl-model)
-  bdl-daemon     bdld: session, coordinator, transport                         (→ model, protocol)
+  bdl-model        stable IDs · surface model · revisioned edits · persistence   (no deps on the rest)
+  bdl-ir           Design IR · Reactive Core IR (the kernel's Ty/Expr/envs)      (→ bdl-model)
+  bdl-diagnostics  Diagnostic · Span · stable codes · deterministic order        (→ bdl-model)
+  bdl-syntax       formula lexer · Pratt parser · spanned surface AST            (→ diagnostics)
+  bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core      (→ ir, syntax, check)
+  bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
+  bdl-compiler     analyze(snapshot) → revision-tagged ProjectAnalysis           (→ elab, check)
+  bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
+  bdl-daemon       bdld: session, coordinator, transport, analysis push          (→ protocol, compiler)
 planned:
-  bdl-elab       surface → Design IR → Core IR
-  bdl-check      typing · grant · dimensions · causality · clocks · outputs
   bdl-reactive   reference interpreter + simulator
   bdl-hardware   requirements · boards · solver · diagnose
   bdl-codegen-rust  Core IR → Rust backend AST → Cargo project + manifest
@@ -67,8 +70,9 @@ runtime/
   bdl-runtime-core / -host / -embassy
 ```
 
-Dependency direction is strict and acyclic: `model ← ir ← elab ← check ←
-reactive/hardware/codegen ← daemon/cli`. A crate exists only where a real
+Dependency direction is strict and acyclic: `model → ir → {syntax → elab,
+check} → compiler → protocol → daemon`; later `reactive/hardware/codegen`
+hang off `compiler`. A crate exists only where a real
 boundary exists; tiny crates are merged rather than kept for the diagram.
 
 ## The compiler is a pipeline of explicit passes

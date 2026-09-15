@@ -1,0 +1,15 @@
+[package]
+name = "bdl-diagnostics"
+description = "Structured compiler diagnostics shared by every BDL pass: codes, severities, spans, product-language messages"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+serde = { workspace = true }
+
+[lints]
+workspace = true

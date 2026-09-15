@@ -14,8 +14,8 @@ slice is started before the slice works end-to-end.
 | E | crash-safe persistence, save/reopen of an unresolved mapping | ✅ |
 | F | Project manager / welcome screen (hero, Start, Recent) and Concepts + Mapping editor: page shell, node canvas (drag, link, unlink, delete), inspector with full concept/mapping editing, macOS look | ✅ (docs/STUDIO_UI.md) |
 | — | **architecture review gate** (brief §63) | ⏳ next |
-| G | type / semantic checking (`bdl-elab`, `bdl-check`) | |
-| H | incomplete-declaration support in the checker (declared vs defined vs type-valid) | |
+| G | type / semantic checking: formula parser, elaboration with rep/mk and units, Core typing, Grant, dimension via typing, diagnostics, `analyze()` in bdld, Studio shows status + diagnostics | ✅ (ADR-0013) |
+| H | incomplete-declaration support (declared / open / invalid / type-valid) | ✅ |
 | I | host simulator with explicit input traces (`bdl-reactive`) | |
 | J | `delay` / hold state, initial values | |
 | K | output binding + single-driver diagnostic | |

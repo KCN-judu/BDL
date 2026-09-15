@@ -109,4 +109,64 @@ class AcceptanceState extends $pb.ProtobufEnum {
   const AcceptanceState._(super.value, super.name);
 }
 
+class MappingStatus extends $pb.ProtobufEnum {
+  static const MappingStatus MAPPING_STATUS_UNSPECIFIED =
+      MappingStatus._(0, _omitEnumNames ? '' : 'MAPPING_STATUS_UNSPECIFIED');
+
+  /// Named and typed; no definition.
+  static const MappingStatus MAPPING_STATUS_DECLARED =
+      MappingStatus._(1, _omitEnumNames ? '' : 'MAPPING_STATUS_DECLARED');
+
+  /// Defined, but something it needs is still open (not an error).
+  static const MappingStatus MAPPING_STATUS_OPEN =
+      MappingStatus._(2, _omitEnumNames ? '' : 'MAPPING_STATUS_OPEN');
+
+  /// Defined and does not check.
+  static const MappingStatus MAPPING_STATUS_INVALID =
+      MappingStatus._(3, _omitEnumNames ? '' : 'MAPPING_STATUS_INVALID');
+
+  /// Defined and produces what the signature promises.
+  static const MappingStatus MAPPING_STATUS_TYPE_VALID =
+      MappingStatus._(4, _omitEnumNames ? '' : 'MAPPING_STATUS_TYPE_VALID');
+
+  static const $core.List<MappingStatus> values = <MappingStatus>[
+    MAPPING_STATUS_UNSPECIFIED,
+    MAPPING_STATUS_DECLARED,
+    MAPPING_STATUS_OPEN,
+    MAPPING_STATUS_INVALID,
+    MAPPING_STATUS_TYPE_VALID,
+  ];
+
+  static final $core.List<MappingStatus?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 4);
+  static MappingStatus? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const MappingStatus._(super.value, super.name);
+}
+
+class DiagnosticSeverity extends $pb.ProtobufEnum {
+  static const DiagnosticSeverity DIAGNOSTIC_SEVERITY_UNSPECIFIED =
+      DiagnosticSeverity._(0, _omitEnumNames ? '' : 'DIAGNOSTIC_SEVERITY_UNSPECIFIED');
+  static const DiagnosticSeverity DIAGNOSTIC_SEVERITY_ERROR =
+      DiagnosticSeverity._(1, _omitEnumNames ? '' : 'DIAGNOSTIC_SEVERITY_ERROR');
+  static const DiagnosticSeverity DIAGNOSTIC_SEVERITY_WARNING =
+      DiagnosticSeverity._(2, _omitEnumNames ? '' : 'DIAGNOSTIC_SEVERITY_WARNING');
+  static const DiagnosticSeverity DIAGNOSTIC_SEVERITY_INFO =
+      DiagnosticSeverity._(3, _omitEnumNames ? '' : 'DIAGNOSTIC_SEVERITY_INFO');
+
+  static const $core.List<DiagnosticSeverity> values = <DiagnosticSeverity>[
+    DIAGNOSTIC_SEVERITY_UNSPECIFIED,
+    DIAGNOSTIC_SEVERITY_ERROR,
+    DIAGNOSTIC_SEVERITY_WARNING,
+    DIAGNOSTIC_SEVERITY_INFO,
+  ];
+
+  static final $core.List<DiagnosticSeverity?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static DiagnosticSeverity? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const DiagnosticSeverity._(super.value, super.name);
+}
+
 const $core.bool _omitEnumNames = $core.bool.fromEnvironment('protobuf.omit_enum_names');

@@ -126,6 +126,17 @@ async fn coordinate(
                     })),
                 };
                 let _ = tx.send(event).await;
+                // The analysis for the very revision just committed.  Cheap
+                // for now; moves to a worker task when it is not.
+                let analysis = bdl_compiler::analyze(&c.snapshot);
+                let ready = pb::ServerMessage {
+                    payload: Some(pb::server_message::Payload::Event(pb::Event {
+                        payload: Some(pb::event::Payload::AnalysisReady(pb::AnalysisReady {
+                            analysis: Some(convert::analysis_to_pb(&analysis)),
+                        })),
+                    })),
+                };
+                let _ = tx.send(ready).await;
             }
         }
     }
@@ -211,6 +222,20 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                 Err(e) => (Resp::Error(session_error(&e)), None),
             }
         }
+        Req::RunAnalysis(_) => match session.project() {
+            Ok(p) => {
+                // Analysis runs on a clone of the immutable snapshot and is
+                // tagged with its revision; the client discards stale ones.
+                let analysis = bdl_compiler::analyze(&p.current.clone());
+                (
+                    Resp::Analysis(pb::AnalysisResponse {
+                        analysis: Some(convert::analysis_to_pb(&analysis)),
+                    }),
+                    None,
+                )
+            }
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -318,6 +343,7 @@ fn payload_name(p: &Req) -> &'static str {
         Req::Redo(_) => "redo",
         Req::SetLayout(_) => "set_layout",
         Req::SubscribeProject(_) => "subscribe_project",
+        Req::RunAnalysis(_) => "run_analysis",
         Req::Shutdown(_) => "shutdown",
     }
 }

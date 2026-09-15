@@ -34,6 +34,7 @@ enum ClientMessage_Payload {
   setLayout,
   subscribeProject,
   shutdown,
+  runAnalysis,
   notSet
 }
 
@@ -52,6 +53,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     SetLayoutRequest? setLayout,
     SubscribeProjectRequest? subscribeProject,
     ShutdownRequest? shutdown,
+    RunAnalysisRequest? runAnalysis,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -67,6 +69,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (setLayout != null) result.setLayout = setLayout;
     if (subscribeProject != null) result.subscribeProject = subscribeProject;
     if (shutdown != null) result.shutdown = shutdown;
+    if (runAnalysis != null) result.runAnalysis = runAnalysis;
     return result;
   }
 
@@ -92,12 +95,13 @@ class ClientMessage extends $pb.GeneratedMessage {
     19: ClientMessage_Payload.setLayout,
     20: ClientMessage_Payload.subscribeProject,
     21: ClientMessage_Payload.shutdown,
+    22: ClientMessage_Payload.runAnalysis,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ClientMessage.$_createMessage)
-    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<HandshakeRequest>(10, _omitFieldNames ? '' : 'handshake',
@@ -122,6 +126,8 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: SubscribeProjectRequest.$_createMessage)
     ..aOM<ShutdownRequest>(21, _omitFieldNames ? '' : 'shutdown',
         subBuilder: ShutdownRequest.$_createMessage)
+    ..aOM<RunAnalysisRequest>(22, _omitFieldNames ? '' : 'runAnalysis',
+        subBuilder: RunAnalysisRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -156,6 +162,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
+  @$pb.TagNumber(22)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -169,6 +176,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
+  @$pb.TagNumber(22)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -311,6 +319,17 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearShutdown() => $_clearField(21);
   @$pb.TagNumber(21)
   ShutdownRequest ensureShutdown() => $_ensure(12);
+
+  @$pb.TagNumber(22)
+  RunAnalysisRequest get runAnalysis => $_getN(13);
+  @$pb.TagNumber(22)
+  set runAnalysis(RunAnalysisRequest value) => $_setField(22, value);
+  @$pb.TagNumber(22)
+  $core.bool hasRunAnalysis() => $_has(13);
+  @$pb.TagNumber(22)
+  void clearRunAnalysis() => $_clearField(22);
+  @$pb.TagNumber(22)
+  RunAnalysisRequest ensureRunAnalysis() => $_ensure(13);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -398,7 +417,7 @@ class ServerMessage extends $pb.GeneratedMessage {
   Event ensureEvent() => $_ensure(1);
 }
 
-enum Response_Payload { error, handshake, project, editApplied, ack, notSet }
+enum Response_Payload { error, handshake, project, editApplied, ack, analysis, notSet }
 
 class Response extends $pb.GeneratedMessage {
   factory Response({
@@ -408,6 +427,7 @@ class Response extends $pb.GeneratedMessage {
     ProjectResponse? project,
     EditApplied? editApplied,
     Ack? ack,
+    AnalysisResponse? analysis,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -416,6 +436,7 @@ class Response extends $pb.GeneratedMessage {
     if (project != null) result.project = project;
     if (editApplied != null) result.editApplied = editApplied;
     if (ack != null) result.ack = ack;
+    if (analysis != null) result.analysis = analysis;
     return result;
   }
 
@@ -434,12 +455,13 @@ class Response extends $pb.GeneratedMessage {
     11: Response_Payload.project,
     12: Response_Payload.editApplied,
     13: Response_Payload.ack,
+    14: Response_Payload.analysis,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13])
+    ..oo(0, [2, 10, 11, 12, 13, 14])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -450,6 +472,8 @@ class Response extends $pb.GeneratedMessage {
     ..aOM<EditApplied>(12, _omitFieldNames ? '' : 'editApplied',
         subBuilder: EditApplied.$_createMessage)
     ..aOM<Ack>(13, _omitFieldNames ? '' : 'ack', subBuilder: Ack.$_createMessage)
+    ..aOM<AnalysisResponse>(14, _omitFieldNames ? '' : 'analysis',
+        subBuilder: AnalysisResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -477,12 +501,14 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -548,18 +574,31 @@ class Response extends $pb.GeneratedMessage {
   void clearAck() => $_clearField(13);
   @$pb.TagNumber(13)
   Ack ensureAck() => $_ensure(5);
+
+  @$pb.TagNumber(14)
+  AnalysisResponse get analysis => $_getN(6);
+  @$pb.TagNumber(14)
+  set analysis(AnalysisResponse value) => $_setField(14, value);
+  @$pb.TagNumber(14)
+  $core.bool hasAnalysis() => $_has(6);
+  @$pb.TagNumber(14)
+  void clearAnalysis() => $_clearField(14);
+  @$pb.TagNumber(14)
+  AnalysisResponse ensureAnalysis() => $_ensure(6);
 }
 
-enum Event_Payload { projectChanged, log, notSet }
+enum Event_Payload { projectChanged, log, analysisReady, notSet }
 
 class Event extends $pb.GeneratedMessage {
   factory Event({
     ProjectChanged? projectChanged,
     DaemonLog? log,
+    AnalysisReady? analysisReady,
   }) {
     final result = Event._();
     if (projectChanged != null) result.projectChanged = projectChanged;
     if (log != null) result.log = log;
+    if (analysisReady != null) result.analysisReady = analysisReady;
     return result;
   }
 
@@ -575,15 +614,18 @@ class Event extends $pb.GeneratedMessage {
   static const $core.Map<$core.int, Event_Payload> _Event_PayloadByTag = {
     1: Event_Payload.projectChanged,
     2: Event_Payload.log,
+    3: Event_Payload.analysisReady,
     0: Event_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Event',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Event.$_createMessage)
-    ..oo(0, [1, 2])
+    ..oo(0, [1, 2, 3])
     ..aOM<ProjectChanged>(1, _omitFieldNames ? '' : 'projectChanged',
         subBuilder: ProjectChanged.$_createMessage)
     ..aOM<DaemonLog>(2, _omitFieldNames ? '' : 'log', subBuilder: DaemonLog.$_createMessage)
+    ..aOM<AnalysisReady>(3, _omitFieldNames ? '' : 'analysisReady',
+        subBuilder: AnalysisReady.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -608,9 +650,11 @@ class Event extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
   Event_Payload whichPayload() => _Event_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -634,6 +678,19 @@ class Event extends $pb.GeneratedMessage {
   void clearLog() => $_clearField(2);
   @$pb.TagNumber(2)
   DaemonLog ensureLog() => $_ensure(1);
+
+  /// Pushed to subscribers after every committed revision, following the
+  /// ProjectChanged event for the same revision.
+  @$pb.TagNumber(3)
+  AnalysisReady get analysisReady => $_getN(2);
+  @$pb.TagNumber(3)
+  set analysisReady(AnalysisReady value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAnalysisReady() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAnalysisReady() => $_clearField(3);
+  @$pb.TagNumber(3)
+  AnalysisReady ensureAnalysisReady() => $_ensure(2);
 }
 
 class Ack extends $pb.GeneratedMessage {
@@ -3890,6 +3947,587 @@ class DaemonLog extends $pb.GeneratedMessage {
   $core.bool hasMessage() => $_has(1);
   @$pb.TagNumber(2)
   void clearMessage() => $_clearField(2);
+}
+
+class RunAnalysisRequest extends $pb.GeneratedMessage {
+  factory RunAnalysisRequest() => RunAnalysisRequest._();
+
+  RunAnalysisRequest._();
+
+  factory RunAnalysisRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RunAnalysisRequest()..mergeFromBuffer(data, registry);
+  factory RunAnalysisRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RunAnalysisRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'RunAnalysisRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: RunAnalysisRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RunAnalysisRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RunAnalysisRequest copyWith(void Function(RunAnalysisRequest) updates) =>
+      super.copyWith((message) => updates(message as RunAnalysisRequest)) as RunAnalysisRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use RunAnalysisRequest() / RunAnalysisRequest.new instead')
+  static RunAnalysisRequest create() => RunAnalysisRequest._();
+  static $pb.GeneratedMessage $_createMessage() => RunAnalysisRequest._();
+  @$core.override
+  RunAnalysisRequest createEmptyInstance() => RunAnalysisRequest._();
+  @$core.pragma('dart2js:noInline')
+  static RunAnalysisRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RunAnalysisRequest>(RunAnalysisRequest.$_createMessage);
+  static RunAnalysisRequest? _defaultInstance;
+}
+
+class AnalysisResponse extends $pb.GeneratedMessage {
+  factory AnalysisResponse({
+    ProjectAnalysis? analysis,
+  }) {
+    final result = AnalysisResponse._();
+    if (analysis != null) result.analysis = analysis;
+    return result;
+  }
+
+  AnalysisResponse._();
+
+  factory AnalysisResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalysisResponse()..mergeFromBuffer(data, registry);
+  factory AnalysisResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalysisResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'AnalysisResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: AnalysisResponse.$_createMessage)
+    ..aOM<ProjectAnalysis>(1, _omitFieldNames ? '' : 'analysis',
+        subBuilder: ProjectAnalysis.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalysisResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalysisResponse copyWith(void Function(AnalysisResponse) updates) =>
+      super.copyWith((message) => updates(message as AnalysisResponse)) as AnalysisResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use AnalysisResponse() / AnalysisResponse.new instead')
+  static AnalysisResponse create() => AnalysisResponse._();
+  static $pb.GeneratedMessage $_createMessage() => AnalysisResponse._();
+  @$core.override
+  AnalysisResponse createEmptyInstance() => AnalysisResponse._();
+  @$core.pragma('dart2js:noInline')
+  static AnalysisResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AnalysisResponse>(AnalysisResponse.$_createMessage);
+  static AnalysisResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  ProjectAnalysis get analysis => $_getN(0);
+  @$pb.TagNumber(1)
+  set analysis(ProjectAnalysis value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAnalysis() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAnalysis() => $_clearField(1);
+  @$pb.TagNumber(1)
+  ProjectAnalysis ensureAnalysis() => $_ensure(0);
+}
+
+class AnalysisReady extends $pb.GeneratedMessage {
+  factory AnalysisReady({
+    ProjectAnalysis? analysis,
+  }) {
+    final result = AnalysisReady._();
+    if (analysis != null) result.analysis = analysis;
+    return result;
+  }
+
+  AnalysisReady._();
+
+  factory AnalysisReady.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalysisReady()..mergeFromBuffer(data, registry);
+  factory AnalysisReady.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalysisReady()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'AnalysisReady',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: AnalysisReady.$_createMessage)
+    ..aOM<ProjectAnalysis>(1, _omitFieldNames ? '' : 'analysis',
+        subBuilder: ProjectAnalysis.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalysisReady clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalysisReady copyWith(void Function(AnalysisReady) updates) =>
+      super.copyWith((message) => updates(message as AnalysisReady)) as AnalysisReady;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use AnalysisReady() / AnalysisReady.new instead')
+  static AnalysisReady create() => AnalysisReady._();
+  static $pb.GeneratedMessage $_createMessage() => AnalysisReady._();
+  @$core.override
+  AnalysisReady createEmptyInstance() => AnalysisReady._();
+  @$core.pragma('dart2js:noInline')
+  static AnalysisReady getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AnalysisReady>(AnalysisReady.$_createMessage);
+  static AnalysisReady? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  ProjectAnalysis get analysis => $_getN(0);
+  @$pb.TagNumber(1)
+  set analysis(ProjectAnalysis value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAnalysis() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAnalysis() => $_clearField(1);
+  @$pb.TagNumber(1)
+  ProjectAnalysis ensureAnalysis() => $_ensure(0);
+}
+
+class ProjectAnalysis extends $pb.GeneratedMessage {
+  factory ProjectAnalysis({
+    $fixnum.Int64? revision,
+    $core.Iterable<MappingAnalysis>? mappings,
+    $core.Iterable<Diagnostic>? diagnostics,
+  }) {
+    final result = ProjectAnalysis._();
+    if (revision != null) result.revision = revision;
+    if (mappings != null) result.mappings.addAll(mappings);
+    if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    return result;
+  }
+
+  ProjectAnalysis._();
+
+  factory ProjectAnalysis.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ProjectAnalysis()..mergeFromBuffer(data, registry);
+  factory ProjectAnalysis.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ProjectAnalysis()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ProjectAnalysis',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ProjectAnalysis.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<MappingAnalysis>(2, _omitFieldNames ? '' : 'mappings',
+        subBuilder: MappingAnalysis.$_createMessage)
+    ..pPM<Diagnostic>(3, _omitFieldNames ? '' : 'diagnostics',
+        subBuilder: Diagnostic.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectAnalysis clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectAnalysis copyWith(void Function(ProjectAnalysis) updates) =>
+      super.copyWith((message) => updates(message as ProjectAnalysis)) as ProjectAnalysis;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ProjectAnalysis() / ProjectAnalysis.new instead')
+  static ProjectAnalysis create() => ProjectAnalysis._();
+  static $pb.GeneratedMessage $_createMessage() => ProjectAnalysis._();
+  @$core.override
+  ProjectAnalysis createEmptyInstance() => ProjectAnalysis._();
+  @$core.pragma('dart2js:noInline')
+  static ProjectAnalysis getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProjectAnalysis>(ProjectAnalysis.$_createMessage);
+  static ProjectAnalysis? _defaultInstance;
+
+  /// The revision the analysis was computed for.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<MappingAnalysis> get mappings => $_getList(1);
+
+  /// Every diagnostic, in the documented stable order (entity, span, code).
+  @$pb.TagNumber(3)
+  $pb.PbList<Diagnostic> get diagnostics => $_getList(2);
+}
+
+class MappingAnalysis extends $pb.GeneratedMessage {
+  factory MappingAnalysis({
+    $fixnum.Int64? id,
+    MappingStatus? status,
+    $core.String? interface,
+    $core.String? inferredType,
+    $core.String? coreExpr,
+    $core.Iterable<Diagnostic>? diagnostics,
+  }) {
+    final result = MappingAnalysis._();
+    if (id != null) result.id = id;
+    if (status != null) result.status = status;
+    if (interface != null) result.interface = interface;
+    if (inferredType != null) result.inferredType = inferredType;
+    if (coreExpr != null) result.coreExpr = coreExpr;
+    if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    return result;
+  }
+
+  MappingAnalysis._();
+
+  factory MappingAnalysis.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MappingAnalysis()..mergeFromBuffer(data, registry);
+  factory MappingAnalysis.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MappingAnalysis()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MappingAnalysis',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: MappingAnalysis.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aE<MappingStatus>(2, _omitFieldNames ? '' : 'status', enumValues: MappingStatus.values)
+    ..aOS(3, _omitFieldNames ? '' : 'interface')
+    ..aOS(4, _omitFieldNames ? '' : 'inferredType')
+    ..aOS(5, _omitFieldNames ? '' : 'coreExpr')
+    ..pPM<Diagnostic>(6, _omitFieldNames ? '' : 'diagnostics',
+        subBuilder: Diagnostic.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MappingAnalysis clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MappingAnalysis copyWith(void Function(MappingAnalysis) updates) =>
+      super.copyWith((message) => updates(message as MappingAnalysis)) as MappingAnalysis;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use MappingAnalysis() / MappingAnalysis.new instead')
+  static MappingAnalysis create() => MappingAnalysis._();
+  static $pb.GeneratedMessage $_createMessage() => MappingAnalysis._();
+  @$core.override
+  MappingAnalysis createEmptyInstance() => MappingAnalysis._();
+  @$core.pragma('dart2js:noInline')
+  static MappingAnalysis getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MappingAnalysis>(MappingAnalysis.$_createMessage);
+  static MappingAnalysis? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  MappingStatus get status => $_getN(1);
+  @$pb.TagNumber(2)
+  set status(MappingStatus value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasStatus() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearStatus() => $_clearField(2);
+
+  /// Kernel notation, for the explanation view only.
+  @$pb.TagNumber(3)
+  $core.String get interface => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set interface($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasInterface() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearInterface() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get inferredType => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set inferredType($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasInferredType() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearInferredType() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get coreExpr => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set coreExpr($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCoreExpr() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearCoreExpr() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<Diagnostic> get diagnostics => $_getList(5);
+}
+
+class SourceSpan extends $pb.GeneratedMessage {
+  factory SourceSpan({
+    $core.int? start,
+    $core.int? end,
+  }) {
+    final result = SourceSpan._();
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    return result;
+  }
+
+  SourceSpan._();
+
+  factory SourceSpan.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceSpan()..mergeFromBuffer(data, registry);
+  factory SourceSpan.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceSpan()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceSpan',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceSpan.$_createMessage)
+    ..aI(1, _omitFieldNames ? '' : 'start', fieldType: $pb.PbFieldType.OU3)
+    ..aI(2, _omitFieldNames ? '' : 'end', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceSpan clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceSpan copyWith(void Function(SourceSpan) updates) =>
+      super.copyWith((message) => updates(message as SourceSpan)) as SourceSpan;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceSpan() / SourceSpan.new instead')
+  static SourceSpan create() => SourceSpan._();
+  static $pb.GeneratedMessage $_createMessage() => SourceSpan._();
+  @$core.override
+  SourceSpan createEmptyInstance() => SourceSpan._();
+  @$core.pragma('dart2js:noInline')
+  static SourceSpan getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceSpan>(SourceSpan.$_createMessage);
+  static SourceSpan? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get start => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set start($core.int value) => $_setUnsignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStart() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStart() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get end => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set end($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEnd() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEnd() => $_clearField(2);
+}
+
+enum Diagnostic_Entity { project, conceptId, mappingId, notSet }
+
+class Diagnostic extends $pb.GeneratedMessage {
+  factory Diagnostic({
+    $core.String? code,
+    DiagnosticSeverity? severity,
+    Unit? project,
+    $fixnum.Int64? conceptId,
+    $fixnum.Int64? mappingId,
+    SourceSpan? span,
+    $core.String? message,
+    $core.String? explanation,
+    $core.String? technical,
+    $core.Iterable<$core.String>? fixes,
+  }) {
+    final result = Diagnostic._();
+    if (code != null) result.code = code;
+    if (severity != null) result.severity = severity;
+    if (project != null) result.project = project;
+    if (conceptId != null) result.conceptId = conceptId;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (span != null) result.span = span;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    if (technical != null) result.technical = technical;
+    if (fixes != null) result.fixes.addAll(fixes);
+    return result;
+  }
+
+  Diagnostic._();
+
+  factory Diagnostic.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Diagnostic()..mergeFromBuffer(data, registry);
+  factory Diagnostic.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Diagnostic()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, Diagnostic_Entity> _Diagnostic_EntityByTag = {
+    3: Diagnostic_Entity.project,
+    4: Diagnostic_Entity.conceptId,
+    5: Diagnostic_Entity.mappingId,
+    0: Diagnostic_Entity.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Diagnostic',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: Diagnostic.$_createMessage)
+    ..oo(0, [3, 4, 5])
+    ..aOS(1, _omitFieldNames ? '' : 'code')
+    ..aE<DiagnosticSeverity>(2, _omitFieldNames ? '' : 'severity',
+        enumValues: DiagnosticSeverity.values)
+    ..aOM<Unit>(3, _omitFieldNames ? '' : 'project', subBuilder: Unit.$_createMessage)
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<SourceSpan>(6, _omitFieldNames ? '' : 'span', subBuilder: SourceSpan.$_createMessage)
+    ..aOS(7, _omitFieldNames ? '' : 'message')
+    ..aOS(8, _omitFieldNames ? '' : 'explanation')
+    ..aOS(9, _omitFieldNames ? '' : 'technical')
+    ..pPS(10, _omitFieldNames ? '' : 'fixes')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Diagnostic clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Diagnostic copyWith(void Function(Diagnostic) updates) =>
+      super.copyWith((message) => updates(message as Diagnostic)) as Diagnostic;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use Diagnostic() / Diagnostic.new instead')
+  static Diagnostic create() => Diagnostic._();
+  static $pb.GeneratedMessage $_createMessage() => Diagnostic._();
+  @$core.override
+  Diagnostic createEmptyInstance() => Diagnostic._();
+  @$core.pragma('dart2js:noInline')
+  static Diagnostic getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<Diagnostic>(Diagnostic.$_createMessage);
+  static Diagnostic? _defaultInstance;
+
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  Diagnostic_Entity whichEntity() => _Diagnostic_EntityByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  void clearEntity() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $core.String get code => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set code($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCode() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCode() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  DiagnosticSeverity get severity => $_getN(1);
+  @$pb.TagNumber(2)
+  set severity(DiagnosticSeverity value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSeverity() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSeverity() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Unit get project => $_getN(2);
+  @$pb.TagNumber(3)
+  set project(Unit value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasProject() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearProject() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Unit ensureProject() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get conceptId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set conceptId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasConceptId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearConceptId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get mappingId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set mappingId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasMappingId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMappingId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  SourceSpan get span => $_getN(5);
+  @$pb.TagNumber(6)
+  set span(SourceSpan value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasSpan() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearSpan() => $_clearField(6);
+  @$pb.TagNumber(6)
+  SourceSpan ensureSpan() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  $core.String get message => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set message($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasMessage() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearMessage() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get explanation => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set explanation($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasExplanation() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearExplanation() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.String get technical => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set technical($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasTechnical() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearTechnical() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<$core.String> get fixes => $_getList(9);
 }
 
 const $core.bool _omitFieldNames = $core.bool.fromEnvironment('protobuf.omit_field_names');

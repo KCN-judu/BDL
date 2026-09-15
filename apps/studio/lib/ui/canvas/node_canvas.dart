@@ -22,12 +22,17 @@ class NodeCanvas extends StatefulWidget {
     required this.layout,
     required this.selection,
     required this.dispatch,
+    this.statuses = const {},
   });
 
   final pb.ProjectProjection project;
   final Map<NodeRef, Offset> layout;
   final Selection selection;
   final void Function(AppAction) dispatch;
+
+  /// Compiler verdicts per mapping id, when an analysis of this revision
+  /// exists.
+  final Map<int, pb.MappingStatus> statuses;
 
   @override
   State<NodeCanvas> createState() => _NodeCanvasState();
@@ -64,7 +69,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   Map<NodeRef, Offset> get _effectiveLayout {
     if (_draggingNode == null) return widget.layout;
-    final scene = buildScene(widget.project, widget.layout);
+    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
     final base =
         widget.layout[_draggingNode!] ??
         scene.nodes.firstWhere((n) => n.ref == _draggingNode).rect.topLeft;
@@ -85,7 +90,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   void _onHover(PointerHoverEvent e) {
-    final scene = buildScene(widget.project, _effectiveLayout);
+    final scene = buildScene(widget.project, _effectiveLayout, statuses: widget.statuses);
     final hit = hitTest(scene, _toScene(e.localPosition));
     final (NodeRef? node, SocketRef? socket) = switch (hit) {
       HitSocket(:final socket, :final node) => (node.ref, socket.ref),
@@ -102,7 +107,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   void _onPanStart(DragStartDetails d) {
     _focus.requestFocus();
-    final scene = buildScene(widget.project, widget.layout);
+    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
     final p = _toScene(d.localPosition);
     switch (hitTest(scene, p)) {
       case HitSocket(:final socket):
@@ -139,7 +144,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _onPanEnd(DragEndDetails d) {
     final link = _linkDrag;
     if (link != null) {
-      final scene = buildScene(widget.project, widget.layout);
+      final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
       final target = dropTarget(scene, link.from, link.current);
       if (target != null) {
         _makeLink(link.from, target.ref);
@@ -178,7 +183,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   };
 
   void _frameAll(Size viewport) {
-    final scene = buildScene(widget.project, widget.layout);
+    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
     final b = scene.bounds.inflate(40);
     final zoom = (viewport.width / b.width).clamp(0.25, 1.0).clamp(0.0, viewport.height / b.height);
     setState(() {
@@ -193,7 +198,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final scene = buildScene(widget.project, _effectiveLayout);
+    final scene = buildScene(widget.project, _effectiveLayout, statuses: widget.statuses);
     final selected = switch (widget.selection) {
       ConceptSelected(:final id) => NodeRef.concept(id),
       MappingSelected(:final id) => NodeRef.mapping(id),
@@ -409,7 +414,11 @@ class NodePainter {
       maxWidth: n.rect.width - 70,
     );
     if (n.stateWord.isNotEmpty) {
-      final color = n.unresolved || n.stateWord == 'open' ? tokens.open : tokens.settled;
+      final color = switch (n.stateWord) {
+        'type-valid' => tokens.settled,
+        'invalid' => tokens.error,
+        _ => tokens.open,
+      };
       _text(
         canvas,
         n.stateWord,

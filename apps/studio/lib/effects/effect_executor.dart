@@ -87,6 +87,12 @@ class EffectExecutor {
           ),
           _onEditApplied,
         );
+      case RunAnalysis():
+        await _call(
+          pb.ClientMessage(runAnalysis: pb.RunAnalysisRequest()),
+          (r) => _dispatch(AnalysisReceived(r.analysis.analysis)),
+          counted: false,
+        );
       case SetLayout(:final layout):
         // Layout is not a revision and is not counted as pending.
         await _call(
@@ -155,6 +161,8 @@ class EffectExecutor {
             fromRequest: false,
           ),
         );
+      case pb.Event_Payload.analysisReady:
+        _dispatch(AnalysisReceived(event.analysisReady.analysis));
       case pb.Event_Payload.log:
         _dispatch(DaemonLogged('[${event.log.level}] ${event.log.message}'));
       case pb.Event_Payload.notSet:

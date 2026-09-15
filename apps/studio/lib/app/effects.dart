@@ -66,6 +66,10 @@ class ApplyEdit extends Effect {
   final pb.EditOp op;
 }
 
+class RunAnalysis extends Effect {
+  const RunAnalysis();
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

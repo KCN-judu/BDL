@@ -172,6 +172,19 @@ Transition reduce(AppState s, AppAction action) {
       return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
     }(),
     RecentProjectsLoaded(:final recent) => Transition(s.copyWith(recent: recent)),
+    AnalysisReceived(:final analysis, :final fromRequest) => () {
+      final pending = fromRequest ? _dec(s) : s.editor.pendingRequests;
+      // Keep only an analysis of the revision we hold; older ones are stale,
+      // newer ones mean a projection is on its way and will bring its own.
+      final keep = s.project != null && analysis.revision == s.project!.revision;
+      return Transition(
+        s.copyWith(
+          analysis: keep ? analysis : null,
+          clearAnalysis: !keep,
+          editor: s.editor.copyWith(pendingRequests: pending),
+        ),
+      );
+    }(),
     PickerUnavailable() => Transition(
       s.copyWith(
         editor: s.editor.copyWith(
@@ -327,10 +340,12 @@ Transition _projectReceived(
   final stored = layoutFromPb(incoming.layout);
   final layout = sameProject ? {...stored, ...s.editor.layout} : stored;
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
+  final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
   return Transition(
     s.copyWith(
       project: incoming,
       recent: recent,
+      clearAnalysis: !analysisStillValid,
       editor: s.editor.copyWith(
         pendingRequests: pending,
         selection: selection,
@@ -338,9 +353,12 @@ Transition _projectReceived(
         lastOutcome: outcome,
       ),
     ),
-    // A freshly opened project needs a subscription for pushed changes and
-    // goes to the top of the recent list.
-    sameProject ? const [] : [const SubscribeProject(), SaveRecentProjects(recent)],
+    // A freshly opened project needs a subscription for pushed changes, an
+    // analysis of what was just opened, and goes to the top of Recent.
+    // After an edit the daemon pushes AnalysisReady on its own.
+    sameProject
+        ? const []
+        : [const SubscribeProject(), const RunAnalysis(), SaveRecentProjects(recent)],
   );
 }
 
