@@ -10,3 +10,10 @@ build/
 __pycache__/
 *.pyc
 .env
+
+# Rust
+target/
+
+# Flutter (app-level .gitignore handles the rest)
+apps/studio/.dart_tool/
+apps/studio/build/

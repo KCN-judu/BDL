@@ -1,0 +1,18 @@
+[package]
+name = "bdl-ir"
+description = "BDL intermediate representations: Design IR and the Reactive Core IR (the kernel's types and terms)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

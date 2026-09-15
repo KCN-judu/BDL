@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/bdl-model",
+    "crates/bdl-ir",
+    "crates/bdl-protocol",
+    "crates/bdl-daemon",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/KCN-judu/BDL"
+
+[workspace.dependencies]
+bdl-model = { path = "crates/bdl-model" }
+bdl-ir = { path = "crates/bdl-ir" }
+bdl-protocol = { path = "crates/bdl-protocol" }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+toml = "0.9"
+prost = "0.14"
+prost-build = "0.14"
+protox = "0.9"
+bytes = "1"
+tokio = { version = "1.53", features = ["rt-multi-thread", "io-std", "io-util", "sync", "macros", "process"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+tempfile = "3"
+proptest = "1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
