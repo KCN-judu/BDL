@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import '../concept_library_panel.dart' show ConceptTemplateDrag, categoryLabel;
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
 
@@ -25,6 +26,10 @@ class NodeCanvas extends StatefulWidget {
     required this.dispatch,
     this.statuses = const {},
     this.outputStates = const {},
+    this.templates = const [],
+    this.recentTemplates = const [],
+    this.renaming,
+    this.canInsert = true,
   });
 
   final pb.ProjectProjection project;
@@ -38,6 +43,17 @@ class NodeCanvas extends StatefulWidget {
 
   /// The output pass per sink id, when an analysis of this revision exists.
   final Map<int, pb.OutputState> outputStates;
+
+  /// The concept templates the right-click menu offers, and the recently
+  /// used ones (most recent first).
+  final List<pb.ConceptTemplateView> templates;
+  final List<String> recentTemplates;
+
+  /// The node whose name is open for inline editing, if any.
+  final NodeRef? renaming;
+
+  /// False while an insertion is awaiting the daemon.
+  final bool canInsert;
 
   @override
   State<NodeCanvas> createState() => _NodeCanvasState();
@@ -78,6 +94,102 @@ class _NodeCanvasState extends State<NodeCanvas> {
     statuses: widget.statuses,
     outputStates: widget.outputStates,
   );
+
+  final MenuController _menu = MenuController();
+
+  /// Where the context menu was opened, in scene coordinates, so an
+  /// insertion from it lands there.
+  Offset _menuScene = Offset.zero;
+  NodeRef? _menuNode;
+
+  /// Top-left of a new concept node centred on a scene point.
+  static Offset nodeOriginFor(Offset scenePoint) =>
+      scenePoint - const Offset(NodeMetrics.conceptWidth / 2, NodeMetrics.headerHeight / 2);
+
+  void _insert(String templateId, Offset scenePoint) {
+    widget.dispatch(
+      InsertConceptTemplateRequested(templateId, position: nodeOriginFor(scenePoint)),
+    );
+  }
+
+  void _onSecondaryTapDown(TapDownDetails d) {
+    _focus.requestFocus();
+    final p = _toScene(d.localPosition);
+    final node = switch (hitTest(_scene(widget.layout), p)) {
+      HitNode(:final node) => node.ref,
+      HitSocket(:final node) => node.ref,
+      HitNothing() => null,
+    };
+    if (node != null) widget.dispatch(SelectionChanged(_select(node)));
+    setState(() {
+      _menuScene = p;
+      _menuNode = node;
+    });
+    _menu.open(position: d.localPosition);
+  }
+
+  void _onDoubleTapDown(TapDownDetails d) {
+    if (hitTest(_scene(widget.layout), _toScene(d.localPosition)) case HitNode(:final node)) {
+      if (node.ref.kind != NodeKind.output) widget.dispatch(InlineRenameStarted(node.ref));
+    }
+  }
+
+  /// The contextual menu (docs/STUDIO_UI.md §2): what can be done here,
+  /// and the compact quick-insert tree — Recent, by role, the three most
+  /// common categories, then the Library tab for the rest.
+  List<Widget> _menuItems(BuildContext context) {
+    final node = _menuNode;
+    final all = widget.templates;
+    final byId = {for (final t in all) t.id: t};
+    MenuItemButton item(pb.ConceptTemplateView t) => MenuItemButton(
+      onPressed: widget.canInsert ? () => _insert(t.id, _menuScene) : null,
+      child: Text(t.displayName),
+    );
+    List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
+    final recent = [for (final id in widget.recentTemplates) ?byId[id]];
+    final environment = all.where((t) => t.category == 'environment');
+    final motion = all.where((t) => t.category == 'motion');
+    final human = all.where((t) => t.category == 'human');
+    final inputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_OUTPUT);
+    final outputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_INPUT);
+    return [
+      if (node != null) ...[
+        if (node.kind != NodeKind.output)
+          MenuItemButton(
+            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
+            child: const Text('Rename'),
+          ),
+        MenuItemButton(
+          onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+          child: const Text('Delete'),
+        ),
+        const Divider(height: 8),
+      ],
+      SubmenuButton(
+        menuChildren: [
+          if (recent.isNotEmpty) ...[
+            SubmenuButton(menuChildren: group(recent), child: const Text('Recent')),
+            const Divider(height: 8),
+          ],
+          SubmenuButton(menuChildren: group(inputs), child: const Text('Input')),
+          SubmenuButton(menuChildren: group(outputs), child: const Text('Output')),
+          const Divider(height: 8),
+          SubmenuButton(
+            menuChildren: group(environment),
+            child: Text(categoryLabel('environment')),
+          ),
+          SubmenuButton(menuChildren: group(motion), child: Text(categoryLabel('motion'))),
+          SubmenuButton(menuChildren: group(human), child: Text(categoryLabel('human'))),
+          const Divider(height: 8),
+          MenuItemButton(
+            onPressed: () => widget.dispatch(const SidebarTabSelected(SidebarTab.library)),
+            child: const Text('More…'),
+          ),
+        ],
+        child: const Text('Add Concept'),
+      ),
+    ];
+  }
 
   Map<NodeRef, Offset> get _effectiveLayout {
     if (_draggingNode == null) return widget.layout;
@@ -263,46 +375,90 @@ class _NodeCanvasState extends State<NodeCanvas> {
             }
             return KeyEventResult.ignored;
           },
-          child: Listener(
-            onPointerSignal: _onPointerSignal,
-            onPointerHover: _onHover,
-            child: MouseRegion(
-              // Over a socket the link cannot reach, the pointer says so
-              // before the drop: the typing rule is refused, not diagnosed.
-              cursor: _linkDrag != null && _hoverSocket != null
-                  ? (canLink(_linkDrag!.from, _hoverSocket!)
-                        ? SystemMouseCursors.precise
-                        : SystemMouseCursors.forbidden)
-                  : _hoverSocket != null
-                  ? SystemMouseCursors.precise
-                  : _hoverNode != null
-                  ? SystemMouseCursors.grab
-                  : SystemMouseCursors.basic,
-              onExit: (_) => setState(() {
-                _hoverNode = null;
-                _hoverSocket = null;
-              }),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onPanStart: _onPanStart,
-                onPanUpdate: _onPanUpdate,
-                onPanEnd: _onPanEnd,
-                child: ClipRect(
-                  child: CustomPaint(
-                    painter: _CanvasPainter(
-                      scene: scene,
-                      tokens: t,
-                      pan: _pan,
-                      zoom: _zoom,
-                      selected: selected,
-                      hovered: _hoverNode,
-                      hoveredSocket: _hoverSocket,
-                      linkDrag: _linkDrag,
-                      dropOk: _linkDrag == null
-                          ? null
-                          : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+          child: DragTarget<ConceptTemplateDrag>(
+            onWillAcceptWithDetails: (_) => widget.canInsert,
+            onAcceptWithDetails: (d) {
+              final box = context.findRenderObject() as RenderBox?;
+              if (box == null) return;
+              _insert(d.data.templateId, _toScene(box.globalToLocal(d.offset)));
+            },
+            builder: (context, candidates, _) => MenuAnchor(
+              controller: _menu,
+              consumeOutsideTap: true,
+              menuChildren: _menuItems(context),
+              child: Listener(
+                onPointerSignal: _onPointerSignal,
+                onPointerHover: _onHover,
+                child: MouseRegion(
+                  // Over a socket the link cannot reach, the pointer says so
+                  // before the drop: the typing rule is refused, not diagnosed.
+                  cursor: _linkDrag != null && _hoverSocket != null
+                      ? (canLink(_linkDrag!.from, _hoverSocket!)
+                            ? SystemMouseCursors.precise
+                            : SystemMouseCursors.forbidden)
+                      : _hoverSocket != null
+                      ? SystemMouseCursors.precise
+                      : _hoverNode != null
+                      ? SystemMouseCursors.grab
+                      : SystemMouseCursors.basic,
+                  onExit: (_) => setState(() {
+                    _hoverNode = null;
+                    _hoverSocket = null;
+                  }),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onPanStart: _onPanStart,
+                    onPanUpdate: _onPanUpdate,
+                    onPanEnd: _onPanEnd,
+                    onSecondaryTapDown: _onSecondaryTapDown,
+                    onDoubleTapDown: _onDoubleTapDown,
+                    child: ClipRect(
+                      child: Stack(
+                        children: [
+                          CustomPaint(
+                            painter: _CanvasPainter(
+                              scene: scene,
+                              tokens: t,
+                              pan: _pan,
+                              zoom: _zoom,
+                              selected: selected,
+                              hovered: _hoverNode,
+                              hoveredSocket: _hoverSocket,
+                              linkDrag: _linkDrag,
+                              dropOk: _linkDrag == null
+                                  ? null
+                                  : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+                            ),
+                            size: Size.infinite,
+                          ),
+                          if (candidates.isNotEmpty)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: t.accent, width: 2),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (widget.renaming case final node?)
+                            for (final shape in scene.nodes.where((n) => n.ref == node))
+                              _InlineRename(
+                                key: ValueKey(node),
+                                rect: Rect.fromLTWH(
+                                  shape.rect.left * _zoom + _pan.dx,
+                                  shape.rect.top * _zoom + _pan.dy,
+                                  shape.rect.width * _zoom,
+                                  NodeMetrics.headerHeight * _zoom,
+                                ),
+                                zoom: _zoom,
+                                initial: shape.title,
+                                onDone: (name) =>
+                                    widget.dispatch(InlineRenameFinished(node, name: name)),
+                              ),
+                        ],
+                      ),
                     ),
-                    size: Size.infinite,
                   ),
                 ),
               ),
@@ -310,6 +466,98 @@ class _NodeCanvasState extends State<NodeCanvas> {
           ),
         );
       },
+    );
+  }
+}
+
+/// The name field over a node's header (Finder's new-folder behaviour):
+/// the whole name selected, Return commits, Esc keeps the current name,
+/// leaving the field commits what was typed.
+class _InlineRename extends StatefulWidget {
+  const _InlineRename({
+    super.key,
+    required this.rect,
+    required this.zoom,
+    required this.initial,
+    required this.onDone,
+  });
+  final Rect rect;
+  final double zoom;
+  final String initial;
+
+  /// `null` means "keep the current name".
+  final void Function(String? name) onDone;
+
+  @override
+  State<_InlineRename> createState() => _InlineRenameState();
+}
+
+class _InlineRenameState extends State<_InlineRename> {
+  late final TextEditingController _controller = TextEditingController(text: widget.initial)
+    ..selection = TextSelection(baseOffset: 0, extentOffset: widget.initial.length);
+  final FocusNode _focus = FocusNode(debugLabel: 'inline rename');
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _finish(_controller.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _finish(String? name) {
+    if (_done) return;
+    _done = true;
+    widget.onDone(name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Positioned.fromRect(
+      rect: widget.rect.deflate(3),
+      child: Focus(
+        onKeyEvent: (_, e) {
+          if (e is KeyDownEvent && e.logicalKey == LogicalKeyboardKey.escape) {
+            _finish(null);
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: TextField(
+          controller: _controller,
+          focusNode: _focus,
+          autofocus: true,
+          style: TextStyle(
+            fontSize: 12.5 * widget.zoom,
+            fontWeight: FontWeight.w600,
+            color: t.textPrimary,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: t.content,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: t.accent),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: t.accent),
+            ),
+          ),
+          onSubmitted: _finish,
+        ),
+      ),
     );
   }
 }

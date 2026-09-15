@@ -759,6 +759,60 @@ pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis 
 // ---------------------------------------------------------------------------
 // Deployment
 // ---------------------------------------------------------------------------
+// Concept libraries
+// ---------------------------------------------------------------------------
+
+pub fn role_hint_to_pb(r: bdl_library::RoleHint) -> pb::RoleHint {
+    match r {
+        bdl_library::RoleHint::Input => pb::RoleHint::Input,
+        bdl_library::RoleHint::Output => pb::RoleHint::Output,
+        bdl_library::RoleHint::Either => pb::RoleHint::Either,
+    }
+}
+
+pub fn concept_template_view(t: &bdl_library::ConceptTemplate) -> pb::ConceptTemplateView {
+    pb::ConceptTemplateView {
+        id: t.id.clone(),
+        display_name: t.display_name.clone(),
+        default_name: t.default_name.clone(),
+        description: t.description.clone(),
+        category: t.category.clone(),
+        role_hint: role_hint_to_pb(t.role_hint).into(),
+        representation: t.representation().map(representation_to_pb),
+        type_name: t.type_name().unwrap_or("").to_owned(),
+        unit: t.unit_symbol().to_owned(),
+        keywords: t.keywords.clone(),
+        icon: t.icon.clone(),
+    }
+}
+
+pub fn concept_library_view(l: &bdl_library::Library) -> pb::ConceptLibraryView {
+    pb::ConceptLibraryView {
+        id: l.info.id.clone(),
+        name: l.info.name.clone(),
+        schema_version: l.info.schema_version,
+        version: l.info.version.clone(),
+        templates: l.templates().iter().map(concept_template_view).collect(),
+    }
+}
+
+/// Every library served plus the shared quantity vocabulary.
+pub fn concept_templates_response(set: &bdl_library::LibrarySet) -> pb::ConceptTemplatesResponse {
+    pb::ConceptTemplatesResponse {
+        libraries: set.libraries().iter().map(concept_library_view).collect(),
+        quantities: bdl_model::quantity::QUANTITIES
+            .iter()
+            .map(|q| pb::QuantityView {
+                id: q.id.to_owned(),
+                type_name: q.type_name.to_owned(),
+                unit: q.unit.to_owned(),
+                dim: Some(dim_to_pb(q.dim)),
+            })
+            .collect(),
+    }
+}
+
+// ---------------------------------------------------------------------------
 
 pub fn target_view(id: &str, hw: &bdl_hardware::Hardware) -> pb::TargetView {
     let t = bdl_hardware::boards::describe(hw);

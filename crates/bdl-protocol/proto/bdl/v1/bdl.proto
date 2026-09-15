@@ -50,6 +50,8 @@ message ClientMessage {
     HoverDefinitionDraftRequest hover_definition_draft = 31;
     HoverEntityRequest hover_entity = 32;
     ListSemanticActionsRequest list_semantic_actions = 33;
+    ListConceptTemplatesRequest list_concept_templates = 40;
+    InstantiateConceptTemplateRequest instantiate_concept_template = 41;
   }
 }
 
@@ -76,6 +78,7 @@ message Response {
     DraftCompletionResponse draft_completion = 19;
     DraftHoverResponse draft_hover = 20;
     SemanticActionsResponse semantic_actions = 21;
+    ConceptTemplatesResponse concept_templates = 30;
   }
 }
 
@@ -888,6 +891,78 @@ message ActionChoiceView {
 message HoverDetail {
   string label = 1;
   string value = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Concept libraries (authoring vocabulary; never semantic identity)
+// ---------------------------------------------------------------------------
+
+// The concept libraries the daemon serves (the Standard Concept Library
+// today; team/project/package libraries later), plus the shared quantity
+// vocabulary Studio's unit picker and the library rows both read.
+// Independent of any project: may be asked before one is open.
+message ListConceptTemplatesRequest {}
+
+message ConceptTemplatesResponse {
+  repeated ConceptLibraryView libraries = 1;
+  repeated QuantityView quantities = 2;
+}
+
+message ConceptLibraryView {
+  // Library identity (`std`); template ids are prefixed by it.
+  string id = 1;
+  string name = 2;
+  uint32 schema_version = 3;
+  string version = 4;
+  repeated ConceptTemplateView templates = 5;
+}
+
+enum RoleHint {
+  ROLE_HINT_UNSPECIFIED = 0;
+  ROLE_HINT_INPUT = 1;
+  ROLE_HINT_OUTPUT = 2;
+  ROLE_HINT_EITHER = 3;
+}
+
+// A template for creating an ordinary Concept.  Every field but `id` is a
+// default the designer may change after instantiation; `id` is a library
+// identity, never a SemanticId.
+message ConceptTemplateView {
+  string id = 1;
+  string display_name = 2;
+  string default_name = 3;
+  string description = 4;
+  string category = 5;
+  RoleHint role_hint = 6;
+  // Absent for a template that leaves the representation to be decided.
+  optional Representation representation = 7;
+  // The textual type name of the representation (`Illuminance`), for
+  // previews; empty when open.
+  string type_name = 8;
+  // The suggested unit symbol (`lx`); empty when none.
+  string unit = 9;
+  repeated string keywords = 10;
+  // A generic presentation hint (`temperature`, `motor`); never semantic.
+  string icon = 11;
+}
+
+// One named quantity of the shared vocabulary (`bdl_model::quantity`).
+message QuantityView {
+  string id = 1;
+  string type_name = 2;
+  string unit = 3;
+  Dim dim = 4;
+}
+
+// The one instantiation operation: the daemon builds the CreateConcept
+// edit from the template's defaults (with a name that is free in the
+// project, or `name` when given) and applies it like ApplyEdit.  Answered
+// with EditApplied; `edit.stale_revision` if the project moved on,
+// `library.unknown_template` if the id is not served.
+message InstantiateConceptTemplateRequest {
+  uint64 base_revision = 1;
+  string template_id = 2;
+  optional string name = 3;
 }
 
 // ---------------------------------------------------------------------------

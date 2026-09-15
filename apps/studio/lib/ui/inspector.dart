@@ -51,6 +51,7 @@ class Inspector extends StatelessWidget {
           producers: project.mappings.where((m) => m.signature.output.toInt() == id).toList(),
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
+          presets: unitPresetsFrom(state.library?.quantities ?? const []),
           dispatch: dispatch,
         ),
         MappingSelected(:final id) => _MappingInspector(
@@ -221,12 +222,16 @@ class _ConceptInspector extends StatelessWidget {
     required this.producers,
     required this.revision,
     required this.outcome,
+    required this.presets,
     required this.dispatch,
   });
   final pb.ConceptView concept;
   final List<pb.MappingView> readers;
   final List<pb.MappingView> producers;
   final int revision;
+
+  /// The unit picker's quantities (the daemon's shared vocabulary).
+  final List<UnitPreset> presets;
 
   /// The last change, for its formal classification in Explain.
   final pb.EditOutcome? outcome;
@@ -267,6 +272,7 @@ class _ConceptInspector extends StatelessWidget {
           children: [
             _ValueEditor(
               current: bound ? concept.representation : null,
+              presets: presets,
               onChanged: (r) =>
                   dispatch(SetConceptRepresentationRequested(id: id, representation: r)),
             ),
@@ -343,15 +349,16 @@ String _tyNotation(pb.Representation r) => switch (r.whichKind()) {
 /// The value form, in the same words and order as the creation sheet:
 /// Quantity / On–off / Count / Decide later, then a quantity's unit.
 class _ValueEditor extends StatelessWidget {
-  const _ValueEditor({required this.current, required this.onChanged});
+  const _ValueEditor({required this.current, required this.presets, required this.onChanged});
   final pb.Representation? current;
+  final List<UnitPreset> presets;
   final void Function(pb.Representation?) onChanged;
 
   @override
   Widget build(BuildContext context) {
     final kind = current?.whichKind() ?? pb.Representation_Kind.notSet;
     final dim = kind == pb.Representation_Kind.quantity ? current!.quantity : null;
-    final preset = dim == null ? null : unitPresetFor(dim);
+    final preset = dim == null ? null : unitPresetFor(presets, dim);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -378,7 +385,7 @@ class _ValueEditor extends StatelessWidget {
               value: preset,
               // a dimension outside the presets is still shown, as its symbol
               hint: dim == null ? null : dimLabel(dim),
-              items: unitPresets,
+              items: presets,
               labelOf: (p) => p.name,
               detailOf: (p) => p.symbol,
               onChanged: (p) => onChanged(pb.Representation(quantity: p.dim)),

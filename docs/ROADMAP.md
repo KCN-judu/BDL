@@ -37,6 +37,14 @@ slice is started before the slice works end-to-end.
 | IDE-3 | richer LSP: inlay hints, workspace symbols, explain/Core/Rust virtual documents, formatting, cross-surface actions applying model operations from editors | |
 | IDE-4 | incremental query engine — only if profiling on real projects asks for it (baseline: ~2 ms per full analysis at 400 mappings) | |
 
+## Standard Concept Library
+
+| Step | | Status |
+|---|---|---|
+| LIB-1 | `library/std/concepts.toml` (36 templates, schema 1, library 0.1), `bdl-library` (load, validate, search, one instantiation), shared quantity vocabulary in `bdl-model`, protocol 0.5 (`ListConceptTemplates`, `InstantiateConceptTemplate`), Studio Library tab + right-click quick insert + drag-and-drop + create-then-rename, textual completion of templates | ✅ (docs/STANDARD_CONCEPT_LIBRARY.md) |
+| LIB-2 | team / project / package libraries (discovery rule over `Library::from_toml`), template icons | |
+| LIB-3 | device library, separate: device packages that *provide* concepts and generate requirements | |
+
 ## Explicitly deferred (brief §52)
 
 AI assistant · plugin marketplace · animation polish · cloud sync ·

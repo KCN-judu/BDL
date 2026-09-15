@@ -18,6 +18,7 @@ members = [
     "crates/bdl-daemon",
     "runtime/bdl-runtime-core",
     "runtime/bdl-runtime-host",
+    "crates/bdl-library",
     "crates/bdl-ide-db",
     "crates/bdl-ide",
     "crates/bdl-lsp",
@@ -47,6 +48,7 @@ bdl-runtime-core = { path = "runtime/bdl-runtime-core" }
 bdl-runtime-host = { path = "runtime/bdl-runtime-host" }
 bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-protocol = { path = "crates/bdl-protocol" }
+bdl-library = { path = "crates/bdl-library" }
 bdl-ide-db = { path = "crates/bdl-ide-db" }
 bdl-ide = { path = "crates/bdl-ide" }
 

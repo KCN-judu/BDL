@@ -8,13 +8,51 @@ import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/concept_glyphs.dart';
+import 'concept_library_panel.dart';
 import 'dialogs.dart';
 import 'mac/widgets.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
+import 'units.dart';
 
+/// Left sidebar, two tabs: **Project** — the project's objects by kind —
+/// and **Library** — the concept libraries to insert from
+/// (`concept_library_panel.dart`).
 class Library extends StatelessWidget {
   const Library({super.key, required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Container(
+      color: t.sidebar,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(MacMetrics.gap, MacMetrics.gap, MacMetrics.gap, 0),
+            child: MacSegmented<SidebarTab>(
+              value: state.editor.sidebar,
+              options: const {SidebarTab.project: 'Project', SidebarTab.library: 'Library'},
+              onChanged: (tab) => dispatch(SidebarTabSelected(tab)),
+            ),
+          ),
+          Expanded(
+            child: switch (state.editor.sidebar) {
+              SidebarTab.project => _ProjectObjects(state: state, dispatch: dispatch),
+              SidebarTab.library => ConceptLibraryPanel(state: state, dispatch: dispatch),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectObjects extends StatelessWidget {
+  const _ProjectObjects({required this.state, required this.dispatch});
   final AppState state;
   final void Function(AppAction) dispatch;
 
@@ -33,7 +71,10 @@ class Library extends StatelessWidget {
                 _Section(
                   title: 'Concepts',
                   onAdd: () async {
-                    final r = await showNewConceptSheet(context);
+                    final r = await showNewConceptSheet(
+                      context,
+                      presets: unitPresetsFrom(state.library?.quantities ?? const []),
+                    );
                     if (r != null) {
                       dispatch(
                         CreateConceptRequested(

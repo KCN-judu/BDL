@@ -272,6 +272,27 @@ class ActionApplicability extends $pb.ProtobufEnum {
   const ActionApplicability._(super.value, super.name);
 }
 
+class RoleHint extends $pb.ProtobufEnum {
+  static const RoleHint ROLE_HINT_UNSPECIFIED =
+      RoleHint._(0, _omitEnumNames ? '' : 'ROLE_HINT_UNSPECIFIED');
+  static const RoleHint ROLE_HINT_INPUT = RoleHint._(1, _omitEnumNames ? '' : 'ROLE_HINT_INPUT');
+  static const RoleHint ROLE_HINT_OUTPUT = RoleHint._(2, _omitEnumNames ? '' : 'ROLE_HINT_OUTPUT');
+  static const RoleHint ROLE_HINT_EITHER = RoleHint._(3, _omitEnumNames ? '' : 'ROLE_HINT_EITHER');
+
+  static const $core.List<RoleHint> values = <RoleHint>[
+    ROLE_HINT_UNSPECIFIED,
+    ROLE_HINT_INPUT,
+    ROLE_HINT_OUTPUT,
+    ROLE_HINT_EITHER,
+  ];
+
+  static final $core.List<RoleHint?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static RoleHint? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const RoleHint._(super.value, super.name);
+}
+
 class DeploymentStatus extends $pb.ProtobufEnum {
   static const DeploymentStatus DEPLOYMENT_STATUS_UNSPECIFIED =
       DeploymentStatus._(0, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_UNSPECIFIED');

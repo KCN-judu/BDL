@@ -205,6 +205,78 @@ void main() {
         );
       }
 
+      // The Library tab with a search, and a concept just inserted from it:
+      // selected, its name open for editing on the canvas.
+      final library = state.copyWith(
+        library: pb.ConceptTemplatesResponse(
+          libraries: [
+            pb.ConceptLibraryView(
+              id: 'std',
+              name: 'BDL Standard Concept Library',
+              schemaVersion: 1,
+              version: '0.1',
+              templates: [
+                for (final (cat, name, rep, unit, role) in [
+                  ('environment', 'Temperature', pb.Dim(temperature: 1), 'K', 1),
+                  (
+                    'environment',
+                    'Ambient Light',
+                    pb.Dim(luminous: 1, angle: 2, length: -2),
+                    'lx',
+                    1,
+                  ),
+                  ('environment', 'Humidity', pb.Dim(), '', 1),
+                  ('motion', 'Tilt', pb.Dim(angle: 1), 'deg', 1),
+                  ('motion', 'Distance', pb.Dim(length: 1), 'm', 1),
+                  ('actuation', 'Motor Speed', pb.Dim(), '', 2),
+                  ('actuation', 'Motor Angle', pb.Dim(angle: 1), 'deg', 2),
+                  ('actuation', 'Heater Power', pb.Dim(), '', 2),
+                ])
+                  pb.ConceptTemplateView(
+                    id: 'std.$cat.${name.toLowerCase().replaceAll(' ', '_')}',
+                    displayName: name,
+                    defaultName: name.replaceAll(' ', ''),
+                    description: 'How $name is measured.',
+                    category: cat,
+                    roleHint: pb.RoleHint.valueOf(role)!,
+                    representation: pb.Representation(quantity: rep),
+                    unit: unit,
+                  ),
+                pb.ConceptTemplateView(
+                  id: 'std.human.button_pressed',
+                  displayName: 'Button Pressed',
+                  defaultName: 'ButtonPressed',
+                  description: 'Whether a button is held down.',
+                  category: 'human',
+                  roleHint: pb.RoleHint.ROLE_HINT_INPUT,
+                  representation: pb.Representation(boolean: pb.Unit()),
+                ),
+              ],
+            ),
+          ],
+        ),
+        editor: state.editor.copyWith(
+          sidebar: SidebarTab.library,
+          librarySearch: 'mo',
+          selection: const ConceptSelected(2),
+          renaming: const NodeRef.concept(2),
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [appStoreProvider.overrideWith(() => _FixedStore(library))],
+          child: MaterialApp(theme: macTheme(brightness), home: const StudioShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (dir != null) {
+        await expectLater(
+          find.byType(StudioShell),
+          matchesGoldenFile('$dir/library_${brightness.name}.png'),
+        );
+      }
+
       // The definition editor with a dirty, checked draft over the invalid
       // committed definition: verdict line, unsaved marker, Revert / Save.
       final drafting = state.copyWith(

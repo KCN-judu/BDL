@@ -1136,3 +1136,115 @@ fn definition_drafts_over_stdio() {
     c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
     assert!(c.child.wait().unwrap().success());
 }
+
+#[test]
+fn concept_templates_over_stdio() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut events = Vec::new();
+    let mut c = Client::spawn();
+    c.call(
+        Req::Handshake(pb::HandshakeRequest {
+            client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+            client_name: "e2e".into(),
+            client_version: "0".into(),
+        }),
+        &mut events,
+    );
+
+    // The library is served before any project is open, and it is the
+    // embedded standard library, template for template.
+    let listed = match c.call(
+        Req::ListConceptTemplates(pb::ListConceptTemplatesRequest {}),
+        &mut events,
+    ) {
+        Resp::ConceptTemplates(t) => t,
+        other => panic!("expected templates, got {other:?}"),
+    };
+    let std = bdl_library::Library::standard();
+    assert_eq!(listed.libraries.len(), 1);
+    assert_eq!(listed.libraries[0].id, "std");
+    assert_eq!(listed.libraries[0].version, std.info.version);
+    let served: Vec<&str> = listed.libraries[0]
+        .templates
+        .iter()
+        .map(|t| t.id.as_str())
+        .collect();
+    let embedded: Vec<&str> = std.templates().iter().map(|t| t.id.as_str()).collect();
+    assert_eq!(served, embedded);
+    let light = listed.libraries[0]
+        .templates
+        .iter()
+        .find(|t| t.id == "std.environment.ambient_light")
+        .unwrap();
+    assert_eq!(light.type_name, "Illuminance");
+    assert_eq!(light.unit, "lx");
+    assert_eq!(light.role_hint(), pb::RoleHint::Input);
+    assert!(listed
+        .quantities
+        .iter()
+        .any(|q| q.type_name == "Illuminance"));
+
+    // Instantiating twice yields two concepts with distinct ids and free
+    // names; both carry the template's defaults independently.
+    project(c.call(
+        Req::InitProject(pb::InitProjectRequest {
+            root_path: root.to_string_lossy().into(),
+            name: "lamp".into(),
+        }),
+        &mut events,
+    ));
+    let mut ids = Vec::new();
+    for _ in 0..2 {
+        let base = c.last_revision;
+        let applied = match c.call(
+            Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+                base_revision: base,
+                template_id: "std.environment.temperature".into(),
+                name: None,
+            }),
+            &mut events,
+        ) {
+            Resp::EditApplied(e) => e,
+            other => panic!("instantiate failed: {other:?}"),
+        };
+        ids.push(applied.outcome.unwrap().created_concept.unwrap());
+    }
+    assert_ne!(ids[0], ids[1]);
+    let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
+    let names: Vec<&str> = p.concepts.iter().map(|x| x.name.as_str()).collect();
+    assert_eq!(names, vec!["Temperature", "Temperature2"]);
+    for x in &p.concepts {
+        match &x.representation.as_ref().unwrap().kind {
+            Some(pb::representation::Kind::Quantity(d)) => assert_eq!(d.temperature, 1),
+            other => panic!("expected a temperature, got {other:?}"),
+        }
+    }
+
+    // A chosen name and an unknown template.
+    let base = c.last_revision;
+    let named = match c.call(
+        Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+            base_revision: base,
+            template_id: "std.environment.temperature".into(),
+            name: Some("OvenTemperature".into()),
+        }),
+        &mut events,
+    ) {
+        Resp::EditApplied(e) => e.project.unwrap(),
+        other => panic!("instantiate failed: {other:?}"),
+    };
+    assert!(named.concepts.iter().any(|x| x.name == "OvenTemperature"));
+    match c.call(
+        Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+            base_revision: c.last_revision,
+            template_id: "std.nope".into(),
+            name: None,
+        }),
+        &mut events,
+    ) {
+        Resp::Error(e) => assert_eq!(e.code, "library.unknown_template"),
+        other => panic!("expected an error, got {other:?}"),
+    }
+    c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
+}

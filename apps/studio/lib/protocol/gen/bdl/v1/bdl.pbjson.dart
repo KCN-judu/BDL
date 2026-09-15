@@ -172,6 +172,22 @@ final $typed_data.Uint8List actionApplicabilityDescriptor = $convert
         'VEEAASHgoaQUNUSU9OX0FQUExJQ0FCSUxJVFlfUkVBRFkQARIlCiFBQ1RJT05fQVBQTElDQUJJ'
         'TElUWV9ORUVEU19DSE9JQ0UQAhIgChxBQ1RJT05fQVBQTElDQUJJTElUWV9CTE9DS0VEEAM=');
 
+@$core.Deprecated('Use roleHintDescriptor instead')
+const RoleHint$json = {
+  '1': 'RoleHint',
+  '2': [
+    {'1': 'ROLE_HINT_UNSPECIFIED', '2': 0},
+    {'1': 'ROLE_HINT_INPUT', '2': 1},
+    {'1': 'ROLE_HINT_OUTPUT', '2': 2},
+    {'1': 'ROLE_HINT_EITHER', '2': 3},
+  ],
+};
+
+/// Descriptor for `RoleHint`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List roleHintDescriptor = $convert
+    .base64Decode('CghSb2xlSGludBIZChVST0xFX0hJTlRfVU5TUEVDSUZJRUQQABITCg9ST0xFX0hJTlRfSU5QVV'
+        'QQARIUChBST0xFX0hJTlRfT1VUUFVUEAISFAoQUk9MRV9ISU5UX0VJVEhFUhAD');
+
 @$core.Deprecated('Use deploymentStatusDescriptor instead')
 const DeploymentStatus$json = {
   '1': 'DeploymentStatus',
@@ -420,6 +436,24 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'listSemanticActions'
     },
+    {
+      '1': 'list_concept_templates',
+      '3': 40,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListConceptTemplatesRequest',
+      '9': 0,
+      '10': 'listConceptTemplates'
+    },
+    {
+      '1': 'instantiate_concept_template',
+      '3': 41,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.InstantiateConceptTemplateRequest',
+      '9': 0,
+      '10': 'instantiateConceptTemplate'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -459,7 +493,11 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'ZXJEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSFGhvdmVyRGVmaW5pdGlvbkRyYWZ0Ej8KDGhvdm'
         'VyX2VudGl0eRggIAEoCzIaLmJkbC52MS5Ib3ZlckVudGl0eVJlcXVlc3RIAFILaG92ZXJFbnRp'
         'dHkSWAoVbGlzdF9zZW1hbnRpY19hY3Rpb25zGCEgASgLMiIuYmRsLnYxLkxpc3RTZW1hbnRpY0'
-        'FjdGlvbnNSZXF1ZXN0SABSE2xpc3RTZW1hbnRpY0FjdGlvbnNCCQoHcGF5bG9hZA==');
+        'FjdGlvbnNSZXF1ZXN0SABSE2xpc3RTZW1hbnRpY0FjdGlvbnMSWwoWbGlzdF9jb25jZXB0X3Rl'
+        'bXBsYXRlcxgoIAEoCzIjLmJkbC52MS5MaXN0Q29uY2VwdFRlbXBsYXRlc1JlcXVlc3RIAFIUbG'
+        'lzdENvbmNlcHRUZW1wbGF0ZXMSbQocaW5zdGFudGlhdGVfY29uY2VwdF90ZW1wbGF0ZRgpIAEo'
+        'CzIpLmJkbC52MS5JbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZVJlcXVlc3RIAFIaaW5zdGFudG'
+        'lhdGVDb25jZXB0VGVtcGxhdGVCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -585,6 +623,15 @@ const Response$json = {
       '9': 0,
       '10': 'semanticActions'
     },
+    {
+      '1': 'concept_templates',
+      '3': 30,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ConceptTemplatesResponse',
+      '9': 0,
+      '10': 'conceptTemplates'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -607,7 +654,9 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'Rpb24YEyABKAsyHy5iZGwudjEuRHJhZnRDb21wbGV0aW9uUmVzcG9uc2VIAFIPZHJhZnRDb21w'
         'bGV0aW9uEj0KC2RyYWZ0X2hvdmVyGBQgASgLMhouYmRsLnYxLkRyYWZ0SG92ZXJSZXNwb25zZU'
         'gAUgpkcmFmdEhvdmVyEkwKEHNlbWFudGljX2FjdGlvbnMYFSABKAsyHy5iZGwudjEuU2VtYW50'
-        'aWNBY3Rpb25zUmVzcG9uc2VIAFIPc2VtYW50aWNBY3Rpb25zQgkKB3BheWxvYWQ=');
+        'aWNBY3Rpb25zUmVzcG9uc2VIAFIPc2VtYW50aWNBY3Rpb25zEk8KEWNvbmNlcHRfdGVtcGxhdG'
+        'VzGB4gASgLMiAuYmRsLnYxLkNvbmNlcHRUZW1wbGF0ZXNSZXNwb25zZUgAUhBjb25jZXB0VGVt'
+        'cGxhdGVzQgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -2685,6 +2734,139 @@ const HoverDetail$json = {
 final $typed_data.Uint8List hoverDetailDescriptor = $convert
     .base64Decode('CgtIb3ZlckRldGFpbBIUCgVsYWJlbBgBIAEoCVIFbGFiZWwSFAoFdmFsdWUYAiABKAlSBXZhbH'
         'Vl');
+
+@$core.Deprecated('Use listConceptTemplatesRequestDescriptor instead')
+const ListConceptTemplatesRequest$json = {
+  '1': 'ListConceptTemplatesRequest',
+};
+
+/// Descriptor for `ListConceptTemplatesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listConceptTemplatesRequestDescriptor =
+    $convert.base64Decode('ChtMaXN0Q29uY2VwdFRlbXBsYXRlc1JlcXVlc3Q=');
+
+@$core.Deprecated('Use conceptTemplatesResponseDescriptor instead')
+const ConceptTemplatesResponse$json = {
+  '1': 'ConceptTemplatesResponse',
+  '2': [
+    {
+      '1': 'libraries',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ConceptLibraryView',
+      '10': 'libraries'
+    },
+    {'1': 'quantities', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.QuantityView', '10': 'quantities'},
+  ],
+};
+
+/// Descriptor for `ConceptTemplatesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List conceptTemplatesResponseDescriptor = $convert
+    .base64Decode('ChhDb25jZXB0VGVtcGxhdGVzUmVzcG9uc2USOAoJbGlicmFyaWVzGAEgAygLMhouYmRsLnYxLk'
+        'NvbmNlcHRMaWJyYXJ5Vmlld1IJbGlicmFyaWVzEjQKCnF1YW50aXRpZXMYAiADKAsyFC5iZGwu'
+        'djEuUXVhbnRpdHlWaWV3UgpxdWFudGl0aWVz');
+
+@$core.Deprecated('Use conceptLibraryViewDescriptor instead')
+const ConceptLibraryView$json = {
+  '1': 'ConceptLibraryView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'schema_version', '3': 3, '4': 1, '5': 13, '10': 'schemaVersion'},
+    {'1': 'version', '3': 4, '4': 1, '5': 9, '10': 'version'},
+    {
+      '1': 'templates',
+      '3': 5,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ConceptTemplateView',
+      '10': 'templates'
+    },
+  ],
+};
+
+/// Descriptor for `ConceptLibraryView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List conceptLibraryViewDescriptor = $convert
+    .base64Decode('ChJDb25jZXB0TGlicmFyeVZpZXcSDgoCaWQYASABKAlSAmlkEhIKBG5hbWUYAiABKAlSBG5hbW'
+        'USJQoOc2NoZW1hX3ZlcnNpb24YAyABKA1SDXNjaGVtYVZlcnNpb24SGAoHdmVyc2lvbhgEIAEo'
+        'CVIHdmVyc2lvbhI5Cgl0ZW1wbGF0ZXMYBSADKAsyGy5iZGwudjEuQ29uY2VwdFRlbXBsYXRlVm'
+        'lld1IJdGVtcGxhdGVz');
+
+@$core.Deprecated('Use conceptTemplateViewDescriptor instead')
+const ConceptTemplateView$json = {
+  '1': 'ConceptTemplateView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'display_name', '3': 2, '4': 1, '5': 9, '10': 'displayName'},
+    {'1': 'default_name', '3': 3, '4': 1, '5': 9, '10': 'defaultName'},
+    {'1': 'description', '3': 4, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'category', '3': 5, '4': 1, '5': 9, '10': 'category'},
+    {'1': 'role_hint', '3': 6, '4': 1, '5': 14, '6': '.bdl.v1.RoleHint', '10': 'roleHint'},
+    {
+      '1': 'representation',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Representation',
+      '9': 0,
+      '10': 'representation',
+      '17': true
+    },
+    {'1': 'type_name', '3': 8, '4': 1, '5': 9, '10': 'typeName'},
+    {'1': 'unit', '3': 9, '4': 1, '5': 9, '10': 'unit'},
+    {'1': 'keywords', '3': 10, '4': 3, '5': 9, '10': 'keywords'},
+    {'1': 'icon', '3': 11, '4': 1, '5': 9, '10': 'icon'},
+  ],
+  '8': [
+    {'1': '_representation'},
+  ],
+};
+
+/// Descriptor for `ConceptTemplateView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List conceptTemplateViewDescriptor = $convert
+    .base64Decode('ChNDb25jZXB0VGVtcGxhdGVWaWV3Eg4KAmlkGAEgASgJUgJpZBIhCgxkaXNwbGF5X25hbWUYAi'
+        'ABKAlSC2Rpc3BsYXlOYW1lEiEKDGRlZmF1bHRfbmFtZRgDIAEoCVILZGVmYXVsdE5hbWUSIAoL'
+        'ZGVzY3JpcHRpb24YBCABKAlSC2Rlc2NyaXB0aW9uEhoKCGNhdGVnb3J5GAUgASgJUghjYXRlZ2'
+        '9yeRItCglyb2xlX2hpbnQYBiABKA4yEC5iZGwudjEuUm9sZUhpbnRSCHJvbGVIaW50EkMKDnJl'
+        'cHJlc2VudGF0aW9uGAcgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0aW9uSABSDnJlcHJlc2VudG'
+        'F0aW9uiAEBEhsKCXR5cGVfbmFtZRgIIAEoCVIIdHlwZU5hbWUSEgoEdW5pdBgJIAEoCVIEdW5p'
+        'dBIaCghrZXl3b3JkcxgKIAMoCVIIa2V5d29yZHMSEgoEaWNvbhgLIAEoCVIEaWNvbkIRCg9fcm'
+        'VwcmVzZW50YXRpb24=');
+
+@$core.Deprecated('Use quantityViewDescriptor instead')
+const QuantityView$json = {
+  '1': 'QuantityView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'type_name', '3': 2, '4': 1, '5': 9, '10': 'typeName'},
+    {'1': 'unit', '3': 3, '4': 1, '5': 9, '10': 'unit'},
+    {'1': 'dim', '3': 4, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '10': 'dim'},
+  ],
+};
+
+/// Descriptor for `QuantityView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List quantityViewDescriptor = $convert
+    .base64Decode('CgxRdWFudGl0eVZpZXcSDgoCaWQYASABKAlSAmlkEhsKCXR5cGVfbmFtZRgCIAEoCVIIdHlwZU'
+        '5hbWUSEgoEdW5pdBgDIAEoCVIEdW5pdBIdCgNkaW0YBCABKAsyCy5iZGwudjEuRGltUgNkaW0=');
+
+@$core.Deprecated('Use instantiateConceptTemplateRequestDescriptor instead')
+const InstantiateConceptTemplateRequest$json = {
+  '1': 'InstantiateConceptTemplateRequest',
+  '2': [
+    {'1': 'base_revision', '3': 1, '4': 1, '5': 4, '10': 'baseRevision'},
+    {'1': 'template_id', '3': 2, '4': 1, '5': 9, '10': 'templateId'},
+    {'1': 'name', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'name', '17': true},
+  ],
+  '8': [
+    {'1': '_name'},
+  ],
+};
+
+/// Descriptor for `InstantiateConceptTemplateRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List instantiateConceptTemplateRequestDescriptor = $convert
+    .base64Decode('CiFJbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZVJlcXVlc3QSIwoNYmFzZV9yZXZpc2lvbhgBIA'
+        'EoBFIMYmFzZVJldmlzaW9uEh8KC3RlbXBsYXRlX2lkGAIgASgJUgp0ZW1wbGF0ZUlkEhcKBG5h'
+        'bWUYAyABKAlIAFIEbmFtZYgBAUIHCgVfbmFtZQ==');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {

@@ -97,6 +97,88 @@ pub const UNITS: &[UnitDef] = &[
         dim: Dim::AMOUNT,
         factor: 1.0,
     },
+    // Derived units, dimensions from the shared quantity vocabulary
+    // (`bdl_model::quantity`): one symbol per quantity that has one.
+    UnitDef {
+        name: "Hz",
+        dim: Dim {
+            time: -1,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "N",
+        dim: Dim {
+            mass: 1,
+            length: 1,
+            time: -2,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "Pa",
+        dim: Dim {
+            mass: 1,
+            length: -1,
+            time: -2,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "kPa",
+        dim: Dim {
+            mass: 1,
+            length: -1,
+            time: -2,
+            ..Dim::ZERO
+        },
+        factor: 1000.0,
+    },
+    UnitDef {
+        name: "W",
+        dim: Dim {
+            mass: 1,
+            length: 2,
+            time: -3,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "V",
+        dim: Dim {
+            mass: 1,
+            length: 2,
+            time: -3,
+            current: -1,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "mV",
+        dim: Dim {
+            mass: 1,
+            length: 2,
+            time: -3,
+            current: -1,
+            ..Dim::ZERO
+        },
+        factor: 0.001,
+    },
+    UnitDef {
+        name: "lx",
+        dim: Dim {
+            luminous: 1,
+            angle: 2,
+            length: -2,
+            ..Dim::ZERO
+        },
+        factor: 1.0,
+    },
 ];
 
 pub fn lookup(name: &str) -> Option<&'static UnitDef> {
@@ -105,4 +187,27 @@ pub fn lookup(name: &str) -> Option<&'static UnitDef> {
 
 pub fn names() -> Vec<&'static str> {
     UNITS.iter().map(|u| u.name).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_unit_measures_a_named_quantity() {
+        for u in UNITS {
+            assert!(
+                bdl_model::quantity::by_dim(u.dim).is_some(),
+                "unit `{}` has a dimension no quantity names",
+                u.name
+            );
+        }
+        for q in bdl_model::quantity::QUANTITIES {
+            if q.unit.is_empty() || q.unit.contains('/') || q.unit.contains('·') {
+                continue;
+            }
+            let u = lookup(q.unit).unwrap_or_else(|| panic!("no unit `{}`", q.unit));
+            assert_eq!(u.dim, q.dim, "unit `{}` vs quantity `{}`", q.unit, q.id);
+        }
+    }
 }

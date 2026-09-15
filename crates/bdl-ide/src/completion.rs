@@ -39,6 +39,10 @@ pub enum CompletionKind {
     /// A representation name in a `concept … :` position.
     Representation,
     Mapping,
+    /// A Standard Concept Library template: accepting it writes an
+    /// ordinary declaration (`AmbientLight : Illuminance`); `template`
+    /// carries the library id for clients that show provenance.
+    Template,
 }
 
 /// What the compiler expects at the completion point, when it knows.
@@ -86,6 +90,10 @@ pub struct SemanticCompletion {
     pub relevance: u8,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub documentation: Option<String>,
+    /// The library template this completion instantiates, for
+    /// [`CompletionKind::Template`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub template: Option<String>,
 }
 
 const KEYWORDS: &[&str] = &["if", "then", "else", "true", "false"];
@@ -191,6 +199,7 @@ fn formula_completions(
             replace,
             insert: concept.name.clone(),
             relevance,
+            template: None,
             documentation: Some(format!(
                 "input of `{}`{}",
                 block.name,
@@ -251,6 +260,7 @@ fn formula_completions(
                 } else {
                     "relationship without inputs: its current value".to_string()
                 }),
+                template: None,
             });
         }
         for (name, doc) in [
@@ -269,6 +279,7 @@ fn formula_completions(
                 insert: format!("{name}("),
                 relevance: 15,
                 documentation: Some(doc.to_string()),
+                template: None,
             });
         }
     }
@@ -291,6 +302,7 @@ fn formula_completions(
             replace,
             insert: u.name.to_owned(),
             relevance,
+            template: None,
             documentation: Some(format!("unit of {}", pretty::describe_dim(u.dim))),
         });
     }
@@ -318,6 +330,7 @@ fn formula_completions(
                 insert: (*k).to_owned(),
                 relevance,
                 documentation: None,
+                template: None,
             });
         }
     }
@@ -368,25 +381,59 @@ fn document_completions(
     let line = &source[line_start..replace.start as usize];
     let mut out = Vec::new();
 
+    // `concept Amb|` → Standard Concept Library templates, from the same
+    // data Studio's library panel reads.  Accepting one writes ordinary
+    // syntax; nothing about the template stays in the source.
+    let trimmed = line.trim_start();
+    if !line.contains(':') && trimmed.starts_with("concept") && trimmed.len() > "concept".len() {
+        let names_taken: Vec<&str> = snapshot
+            .index()
+            .entities_of_kind(EntityKind::Concept)
+            .map(|(_, n)| n)
+            .collect();
+        for t in bdl_library::LibrarySet::standard().templates() {
+            let by_name = matches(&t.default_name) || matches(&t.display_name);
+            let by_keyword = !prefix.is_empty()
+                && t.keywords.iter().any(|k| {
+                    k.to_ascii_lowercase()
+                        .starts_with(&prefix.to_ascii_lowercase())
+                });
+            if !(by_name || by_keyword) {
+                continue;
+            }
+            let insert = match t.type_name() {
+                Some(ty) => format!("{} : {}", t.default_name, ty),
+                None => t.default_name.clone(),
+            };
+            out.push(SemanticCompletion {
+                label: insert.clone(),
+                kind: CompletionKind::Template,
+                entity: None,
+                resulting_type: Some(ExpectedType::of(t.representation()).describe()),
+                replace,
+                insert,
+                // A name already in the project ranks below the rest: the
+                // designer probably means a second, differently named one.
+                relevance: if names_taken.contains(&t.default_name.as_str()) {
+                    30
+                } else if by_name {
+                    60
+                } else {
+                    40
+                },
+                documentation: Some(format!("{} — {}", t.display_name, t.description)),
+                template: Some(t.id.clone()),
+            });
+        }
+        return out;
+    }
     // `concept X : |` → representation names; `mapping f : |`, after `->`
     // → concept names.
     let in_type_position = line.contains(':') || line.trim_end().ends_with("->");
     if in_type_position {
         let is_concept_decl = line.trim_start().starts_with("concept");
         if is_concept_decl {
-            for name in [
-                "Scalar",
-                "Bool",
-                "Count",
-                "Angle",
-                "Length",
-                "Time",
-                "Mass",
-                "Current",
-                "Temperature",
-                "Amount",
-                "Luminous",
-            ] {
+            for name in bdl_ide_db::textual::representation_names() {
                 if matches(name) {
                     out.push(SemanticCompletion {
                         label: name.into(),
@@ -398,6 +445,7 @@ fn document_completions(
                         insert: name.into(),
                         relevance: 50,
                         documentation: None,
+                        template: None,
                     });
                 }
             }
@@ -417,6 +465,7 @@ fn document_completions(
                         insert: name.to_owned(),
                         relevance: 50,
                         documentation: None,
+                        template: None,
                     });
                 }
             }
@@ -436,6 +485,7 @@ fn document_completions(
                     insert: format!("{k} "),
                     relevance: 50,
                     documentation: None,
+                    template: None,
                 });
             }
         }

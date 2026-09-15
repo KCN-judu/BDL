@@ -42,6 +42,10 @@ class DesignPage extends StatelessWidget {
                     for (final o in state.analysis?.outputs ?? const <pb.OutputAnalysis>[])
                       o.id.toInt(): o.state,
                   },
+                  templates: state.templates.toList(),
+                  recentTemplates: state.editor.recentTemplates,
+                  renaming: state.editor.renaming,
+                  canInsert: state.editor.pendingInsert == null,
                 ),
         ),
         VerticalDivider(width: 1, color: t.hairline),

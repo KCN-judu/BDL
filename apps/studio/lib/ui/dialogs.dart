@@ -109,18 +109,19 @@ Future<String?> showPathSheet(BuildContext context, {required String title}) {
 
 typedef NewConceptResult = ({String name, String description, pb.Representation? representation});
 
-Future<NewConceptResult?> showNewConceptSheet(BuildContext context) {
+Future<NewConceptResult?> showNewConceptSheet(BuildContext context, {List<UnitPreset>? presets}) {
   return showMacSheet<NewConceptResult>(
     context,
     title: 'New concept',
     subtitle: 'Something the product senses, decides or shows.',
-    content: const _NewConceptForm(),
+    content: _NewConceptForm(presets: presets ?? builtinUnitPresets),
     actions: const [],
   );
 }
 
 class _NewConceptForm extends StatefulWidget {
-  const _NewConceptForm();
+  const _NewConceptForm({required this.presets});
+  final List<UnitPreset> presets;
 
   @override
   State<_NewConceptForm> createState() => _NewConceptFormState();
@@ -132,7 +133,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
   final _name = TextEditingController();
   final _description = TextEditingController();
   _Kind _kind = _Kind.open;
-  UnitPreset _unit = unitPresets.first;
+  late UnitPreset _unit = widget.presets.first;
 
   pb.Representation? get _representation => switch (_kind) {
     _Kind.open => null,
@@ -195,7 +196,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
             label: 'Unit',
             child: MacDropdown<UnitPreset>(
               value: _unit,
-              items: unitPresets,
+              items: widget.presets,
               labelOf: (p) => p.name,
               // the unit symbol sits in its own column, secondary colour
               detailOf: (p) => p.symbol,

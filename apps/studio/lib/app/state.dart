@@ -386,6 +386,24 @@ class DeployState {
   );
 }
 
+/// What the left sidebar shows: the project's own objects, or the concept
+/// libraries to insert from.
+enum SidebarTab { project, library }
+
+/// An insertion from a concept template that the daemon has not answered
+/// yet.  When the projection with the created concept arrives, the node is
+/// placed at [position] (or auto-placed), selected, and its name opened for
+/// editing — the create-then-rename flow.
+@immutable
+class PendingInsert {
+  const PendingInsert({required this.templateId, this.position});
+  final String templateId;
+
+  /// Scene position of the drop / right-click; `null` for a keyboard or
+  /// panel insertion (auto-placed).
+  final Offset? position;
+}
+
 @immutable
 class EditorState {
   const EditorState({
@@ -404,6 +422,11 @@ class EditorState {
     this.actions,
     this.queuedEdits = const [],
     this.deploy = const DeployState(),
+    this.sidebar = SidebarTab.project,
+    this.librarySearch = '',
+    this.recentTemplates = const [],
+    this.pendingInsert,
+    this.renaming,
   });
 
   final StudioPage page;
@@ -455,6 +478,23 @@ class EditorState {
   final List<pb.EditOp> queuedEdits;
 
   final DeployState deploy;
+  final SidebarTab sidebar;
+
+  /// The library panel's search text.  Authoring convenience, never
+  /// semantic resolution.
+  final String librarySearch;
+
+  /// Recently inserted concept templates, most recent first (at most
+  /// [maxRecentTemplates]).  A Studio preference; never project state.
+  final List<String> recentTemplates;
+
+  /// A template insertion awaiting the daemon's answer.
+  final PendingInsert? pendingInsert;
+
+  /// The node whose name is being edited inline on the canvas.
+  final NodeRef? renaming;
+
+  static const int maxRecentTemplates = 6;
 
   EditorState copyWith({
     StudioPage? page,
@@ -477,6 +517,13 @@ class EditorState {
     bool clearActions = false,
     List<pb.EditOp>? queuedEdits,
     DeployState? deploy,
+    SidebarTab? sidebar,
+    String? librarySearch,
+    List<String>? recentTemplates,
+    PendingInsert? pendingInsert,
+    bool clearPendingInsert = false,
+    NodeRef? renaming,
+    bool clearRenaming = false,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -494,6 +541,11 @@ class EditorState {
       actions: clearActions ? null : (actions ?? this.actions),
       queuedEdits: queuedEdits ?? this.queuedEdits,
       deploy: deploy ?? this.deploy,
+      sidebar: sidebar ?? this.sidebar,
+      librarySearch: librarySearch ?? this.librarySearch,
+      recentTemplates: recentTemplates ?? this.recentTemplates,
+      pendingInsert: clearPendingInsert ? null : (pendingInsert ?? this.pendingInsert),
+      renaming: clearRenaming ? null : (renaming ?? this.renaming),
     );
   }
 }
@@ -525,6 +577,7 @@ class AppState {
     this.project,
     this.analysis,
     this.recent = const [],
+    this.library,
     this.editor = const EditorState(),
     this.render = const RenderState(),
   });
@@ -542,10 +595,22 @@ class AppState {
   /// The compiler's analysis of [project] — kept only when its revision is
   /// the project's; `null` while a newer revision is still being analysed.
   final pb.ProjectAnalysis? analysis;
+
+  /// The concept libraries the daemon serves (the Standard Concept Library
+  /// and, later, others) plus the shared quantity vocabulary.  Authoring
+  /// vocabulary, independent of any project; `null` until the daemon
+  /// answered.
+  final pb.ConceptTemplatesResponse? library;
   final EditorState editor;
   final RenderState render;
 
   int get revision => project?.revision.toInt() ?? -1;
+
+  /// Every template of every served library, in library order.
+  Iterable<pb.ConceptTemplateView> get templates =>
+      library?.libraries.expand((l) => l.templates) ?? const Iterable.empty();
+
+  pb.ConceptTemplateView? template(String id) => templates.where((t) => t.id == id).firstOrNull;
 
   /// Analysis of one mapping at the current revision, if available.
   pb.MappingAnalysis? mappingAnalysis(int id) =>
@@ -586,6 +651,7 @@ class AppState {
     pb.ProjectAnalysis? analysis,
     bool clearAnalysis = false,
     List<RecentProject>? recent,
+    pb.ConceptTemplatesResponse? library,
     EditorState? editor,
     RenderState? render,
   }) {
@@ -594,6 +660,7 @@ class AppState {
       project: clearProject ? null : (project ?? this.project),
       analysis: (clearProject || clearAnalysis) ? null : (analysis ?? this.analysis),
       recent: recent ?? this.recent,
+      library: library ?? this.library,
       editor: editor ?? this.editor,
       render: render ?? this.render,
     );

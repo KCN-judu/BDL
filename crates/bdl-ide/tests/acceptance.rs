@@ -617,3 +617,63 @@ fn queries_never_panic_on_missing_or_malformed_input() {
     let v = draft_verdict(&snap, lamp.dim_by_tilt).expect("a malformed draft still gets a verdict");
     assert!(!v.parse_ok);
 }
+
+// ---- standard concept library --------------------------------------------------
+
+#[test]
+fn every_library_template_is_a_textual_completion_from_the_same_data() {
+    let mut host = IdeHost::empty("lamp");
+    let uri = DocumentUri::new("file:///new.bdl");
+    let (doc, _) = host.set_text_document(&uri, "concept A");
+    let snap = host.snapshot();
+    let items = completion(
+        &snap,
+        &CompletionContext::Document {
+            document: doc,
+            offset: 9,
+        },
+    );
+    // `concept A|`: every template whose name or keyword starts with `a`,
+    // as ordinary declarations.
+    let lib = bdl_library::Library::standard();
+    let offered: Vec<&str> = items.iter().filter_map(|i| i.template.as_deref()).collect();
+    for t in lib.templates() {
+        let by_name = t.default_name.to_lowercase().starts_with('a')
+            || t.display_name.to_lowercase().starts_with('a');
+        let by_keyword = t.keywords.iter().any(|k| k.to_lowercase().starts_with('a'));
+        assert_eq!(
+            offered.contains(&t.id.as_str()),
+            by_name || by_keyword,
+            "{}",
+            t.id
+        );
+    }
+    let light = items
+        .iter()
+        .find(|i| i.template.as_deref() == Some("std.environment.ambient_light"))
+        .expect("ambient light offered");
+    assert_eq!(light.kind, CompletionKind::Template);
+    assert_eq!(light.insert, "AmbientLight : Illuminance");
+    assert_eq!(light.replace, TextRange::new(8, 9));
+    assert!(light
+        .documentation
+        .as_deref()
+        .is_some_and(|d| d.contains("Ambient Light")));
+
+    // With no prefix, everything is offered — the whole library is one
+    // list on both surfaces.
+    let (doc2, _) = host.set_text_document(&uri, "concept ");
+    let snap = host.snapshot();
+    let all = completion(
+        &snap,
+        &CompletionContext::Document {
+            document: doc2,
+            offset: 8,
+        },
+    );
+    let offered: std::collections::BTreeSet<&str> =
+        all.iter().filter_map(|i| i.template.as_deref()).collect();
+    let expected: std::collections::BTreeSet<&str> =
+        lib.templates().iter().map(|t| t.id.as_str()).collect();
+    assert_eq!(offered, expected);
+}

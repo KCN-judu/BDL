@@ -30,7 +30,7 @@ use crate::entity::{EntityRef, EntityRole};
 use crate::projection::{ProjectionAnchor, ProjectionMap};
 use crate::text::{DocumentId, TextRange};
 use bdl_model::surface::{Concept, Definition, Design, MappingBlock, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{DeclId, SemanticId};
 use bdl_syntax::ast::{self, AstNode};
 use bdl_syntax::{parse_module, SyntaxError};
 use serde::{Deserialize, Serialize};
@@ -190,8 +190,14 @@ impl Binder<'_> {
                             code: "binding.unknown_representation".into(),
                             range,
                             message: format!(
-                                "`{}` is not a representation; write Scalar, Bool, Count, Angle, Length, Time, Mass, Current, Temperature, Amount or Luminous.",
-                                t.text().trim()
+                                "`{}` is not a representation; write Bool, Count or a quantity such as {}.",
+                                t.text().trim(),
+                                bdl_model::quantity::QUANTITIES
+                                    .iter()
+                                    .take(4)
+                                    .map(|q| q.type_name)
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
                             ),
                             entity: None,
                             open: false,
@@ -445,51 +451,37 @@ fn named_type(t: &ast::Type) -> Option<ast::NamedType> {
     }
 }
 
+/// The representation a textual type name stands for: `Bool`, `Count`, or
+/// a named quantity from the shared vocabulary (`bdl_model::quantity`).
 pub fn representation_named(name: &str) -> Option<Representation> {
     Some(match name {
-        "Scalar" => Representation::Quantity { dim: Dim::ZERO },
         "Bool" | "Boolean" => Representation::Boolean,
         "Count" | "Nat" => Representation::Count,
-        "Angle" => Representation::Quantity { dim: Dim::ANGLE },
-        "Length" => Representation::Quantity { dim: Dim::LENGTH },
-        "Time" => Representation::Quantity { dim: Dim::TIME },
-        "Mass" => Representation::Quantity { dim: Dim::MASS },
-        "Current" => Representation::Quantity { dim: Dim::CURRENT },
-        "Temperature" => Representation::Quantity {
-            dim: Dim::TEMPERATURE,
+        _ => Representation::Quantity {
+            dim: bdl_model::quantity::by_type_name(name)?.dim,
         },
-        "Amount" => Representation::Quantity { dim: Dim::AMOUNT },
-        "Luminous" => Representation::Quantity { dim: Dim::LUMINOUS },
-        _ => return None,
     })
 }
 
 /// The textual spelling of a representation, inverse of
-/// [`representation_named`] for the named dimensions; other dimensions
-/// have no textual spelling yet and render as `Scalar` with a comment.
+/// [`representation_named`] for named quantities; a dimension no quantity
+/// names renders as `Scalar` with a comment, since the syntax has no
+/// dimension literals yet.
 pub fn representation_name(r: Representation) -> String {
     match r {
         Representation::Boolean => "Bool".into(),
         Representation::Count => "Count".into(),
-        Representation::Quantity { dim } => {
-            let named = [
-                (Dim::ZERO, "Scalar"),
-                (Dim::ANGLE, "Angle"),
-                (Dim::LENGTH, "Length"),
-                (Dim::TIME, "Time"),
-                (Dim::MASS, "Mass"),
-                (Dim::CURRENT, "Current"),
-                (Dim::TEMPERATURE, "Temperature"),
-                (Dim::AMOUNT, "Amount"),
-                (Dim::LUMINOUS, "Luminous"),
-            ];
-            named
-                .iter()
-                .find(|(d, _)| *d == dim)
-                .map(|(_, n)| (*n).to_owned())
-                .unwrap_or_else(|| "Scalar /* unnamed dimension */".into())
-        }
+        Representation::Quantity { dim } => bdl_model::quantity::by_dim(dim)
+            .map(|q| q.type_name.to_owned())
+            .unwrap_or_else(|| "Scalar /* unnamed dimension */".into()),
     }
+}
+
+/// The type names the textual surface accepts in `concept X : …`.
+pub fn representation_names() -> Vec<&'static str> {
+    let mut names = vec!["Bool", "Count"];
+    names.extend(bdl_model::quantity::QUANTITIES.iter().map(|q| q.type_name));
+    names
 }
 
 /// Render the concepts and mappings of a design as a canonical `.bdl`
@@ -540,6 +532,7 @@ pub fn render_module(design: &Design) -> String {
 mod tests {
     use super::*;
     use bdl_model::surface::Design;
+    use bdl_model::Dim;
 
     #[test]
     fn binds_by_name_to_committed_ids_and_allocates_fresh_ones() {

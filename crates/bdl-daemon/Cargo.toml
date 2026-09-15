@@ -16,6 +16,7 @@ bdl-model = { workspace = true }
 bdl-protocol = { workspace = true }
 bdl-compiler = { workspace = true }
 bdl-ide = { workspace = true }
+bdl-library = { workspace = true }
 bdl-ide-db = { workspace = true }
 bdl-hardware = { workspace = true }
 bdl-reactive = { workspace = true }
@@ -31,6 +32,7 @@ thiserror = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
+bdl-library = { workspace = true }
 tempfile = { workspace = true }
 
 [lints]

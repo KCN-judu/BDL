@@ -575,7 +575,7 @@ Core IR
 
 | textual construct | surface model | kernel |
 |---|---|---|
-| `concept C : R` | `Concept { name, representation }` | `Θ C = some R` |
+| `concept C : R` — `R` is `Bool`, `Count`, or a quantity name from the shared vocabulary (`bdl_model::quantity`: `Scalar`, `Angle`, `Length`, `Time`, `Mass`, `Current`, `Temperature`, `Amount`, `Luminous`, `Speed`, `Acceleration`, `AngularVelocity`, `Frequency`, `Force`, `Pressure`, `Torque`, `Power`, `Voltage`, `Illuminance`) | `Concept { name, representation }` | `Θ C = some R` |
 | `concept C` | `Concept { representation: None }` | `Θ C = none` (open) |
 | `mapping f : A -> B -> C` | `MappingBlock { signature: (A, B) -> C }` | `DesignDecl` with `expectedType = sem A → sem B → sem C` |
 | no definition | `definition: None` | unresolved declaration — a legal state |

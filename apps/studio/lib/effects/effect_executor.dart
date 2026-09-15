@@ -105,6 +105,22 @@ class EffectExecutor {
           ),
           _onEditApplied,
         );
+      case ListConceptTemplates():
+        await _call(
+          pb.ClientMessage(listConceptTemplates: pb.ListConceptTemplatesRequest()),
+          (r) => _dispatch(ConceptTemplatesReceived(r.conceptTemplates)),
+          counted: false,
+        );
+      case InstantiateConceptTemplate(:final baseRevision, :final templateId):
+        await _call(
+          pb.ClientMessage(
+            instantiateConceptTemplate: pb.InstantiateConceptTemplateRequest(
+              baseRevision: Int64(baseRevision),
+              templateId: templateId,
+            ),
+          ),
+          _onEditApplied,
+        );
       case RunAnalysis():
         await _call(
           pb.ClientMessage(runAnalysis: pb.RunAnalysisRequest()),

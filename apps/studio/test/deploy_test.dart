@@ -105,7 +105,11 @@ String? _findBdld() {
 Widget page(AppState s, void Function(AppAction) d) => MaterialApp(
   theme: macTheme(Brightness.light),
   home: Scaffold(
-    body: SizedBox(width: 900, height: 700, child: DeployPage(state: s, dispatch: d)),
+    body: SizedBox(
+      width: 900,
+      height: 700,
+      child: DeployPage(state: s, dispatch: d),
+    ),
   ),
 );
 

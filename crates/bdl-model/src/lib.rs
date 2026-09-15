@@ -5,7 +5,8 @@
 //! * [`ids`] — strongly typed stable identities (`SemanticId`, `DeclId`, …).
 //!   Identity is never a display name.
 //! * [`dim`] — physical dimensions as exponent vectors (the `q Dim` of the
-//!   kernel).
+//!   kernel); [`quantity`] — the named quantities a designer writes
+//!   (`Angle`, `Illuminance`), each with its dimension and canonical unit.
 //! * [`surface`] — the designer-level *surface model*: concepts, mapping
 //!   blocks, their signatures and optional definitions.  It may be
 //!   incomplete; an unresolved mapping is an ordinary mapping with
@@ -25,6 +26,7 @@ pub mod edit;
 pub mod ids;
 pub mod layout;
 pub mod persist;
+pub mod quantity;
 pub mod surface;
 
 pub use dim::Dim;

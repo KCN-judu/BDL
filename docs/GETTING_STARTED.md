@@ -78,6 +78,7 @@ crates/
   bdl-lower/            DesignIr → ExecIr: clock/state/input/output slots, lambda inlining, evaluation order
   bdl-codegen-rust/     ExecIr → owned Rust AST → no_std core crate + host bridge + manifest (docs/CODEGEN_RUST.md)
   bdl-compiler/         analyze(snapshot) → ProjectAnalysis; compile(snapshot, options) → CompileArtifact
+  bdl-library/          concept libraries: templates → ordinary concepts (docs/STANDARD_CONCEPT_LIBRARY.md)
   bdl-ide-db/           IDE ground state: host, overlays, entity refs, projections, snapshots (docs/IDE_SERVICE_ARCHITECTURE.md)
   bdl-ide/              semantic IDE queries: diagnostics, hover, completion, references, rename, actions
   bdl-lsp/              the LSP adapter (bdl-lsp binary over stdio)

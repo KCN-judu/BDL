@@ -383,8 +383,49 @@ Transition reduce(AppState s, AppAction action) {
       ),
     ),
     SelectionChanged(:final selection) => _selected(
-      s.copyWith(editor: withoutTooling(s.editor).copyWith(selection: selection)),
+      s.copyWith(
+        editor: withoutTooling(s.editor).copyWith(selection: selection, clearRenaming: true),
+      ),
     ),
+
+    // ---- concept library ---------------------------------------------------
+    InsertConceptTemplateRequested(:final templateId, :final position) => _whenProject(s, () {
+      if (s.editor.pendingInsert != null) return Transition(s);
+      final pending = _pending(s);
+      return Transition(
+        pending.copyWith(
+          editor: pending.editor.copyWith(
+            pendingInsert: PendingInsert(templateId: templateId, position: position),
+            recentTemplates: rememberTemplate(s.editor.recentTemplates, templateId),
+            clearRenaming: true,
+          ),
+        ),
+        [InstantiateConceptTemplate(baseRevision: s.revision, templateId: templateId)],
+      );
+    }),
+    SidebarTabSelected(:final tab) => Transition(
+      s.copyWith(editor: s.editor.copyWith(sidebar: tab)),
+    ),
+    LibrarySearchChanged(:final query) => Transition(
+      s.copyWith(editor: s.editor.copyWith(librarySearch: query)),
+    ),
+    InlineRenameStarted(:final node) => _whenProject(
+      s,
+      () => Transition(
+        s.copyWith(
+          editor: s.editor.copyWith(
+            selection: switch (node.kind) {
+              NodeKind.concept => ConceptSelected(node.id),
+              NodeKind.mapping => MappingSelected(node.id),
+              NodeKind.output => OutputSelected(node.id),
+            },
+            renaming: node,
+          ),
+        ),
+      ),
+    ),
+    InlineRenameFinished(:final node, :final name) => _inlineRenameFinished(s, node, name),
+    ConceptTemplatesReceived(:final library) => Transition(s.copyWith(library: library)),
     NodeMoved(:final node, :final position) => _whenProject(s, () {
       final layout = {...s.editor.layout, node: position};
       return Transition(s.copyWith(editor: s.editor.copyWith(layout: layout)), [
@@ -403,6 +444,8 @@ Transition reduce(AppState s, AppAction action) {
                 '${handshake.protocolVersion.major}.x, Studio does not',
               ),
       ),
+      // The concept libraries are the daemon's; ask once per connection.
+      [if (handshake.compatible) const ListConceptTemplates()],
     ),
     DaemonConnectionFailed(:final reason) => Transition(
       s.copyWith(connection: ConnectionFailed(reason)),
@@ -451,6 +494,7 @@ Transition reduce(AppState s, AppAction action) {
       s.copyWith(
         editor: s.editor.copyWith(
           pendingRequests: _dec(s),
+          clearPendingInsert: true,
           lastError: UserFacingError(code: code, message: message, details: details),
           drafts: draftsAfterFailedRequest(s.editor.drafts, message),
           // a failed step ends its plan; nothing after it is sent blindly
@@ -508,6 +552,46 @@ pb.EditOp _setSignature(int id, List<int> inputs, int output) => pb.EditOp(
     signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),
   ),
 );
+
+/// The inline editor closed.  A changed name is an ordinary rename edit;
+/// an unchanged or empty one changes nothing (the default name stays).
+Transition _inlineRenameFinished(AppState s, NodeRef node, String? name) {
+  final cleared = s.copyWith(editor: s.editor.copyWith(clearRenaming: true));
+  final wanted = name?.trim();
+  if (wanted == null || wanted.isEmpty) return Transition(cleared);
+  final current = switch (node.kind) {
+    NodeKind.concept => s.project?.concepts.where((c) => c.id.toInt() == node.id).firstOrNull?.name,
+    NodeKind.mapping => s.mapping(node.id)?.name,
+    NodeKind.output => s.project?.outputs.where((o) => o.id.toInt() == node.id).firstOrNull?.name,
+  };
+  if (current == null || current == wanted) return Transition(cleared);
+  return switch (node.kind) {
+    NodeKind.concept => sendEdit(
+      cleared,
+      pb.EditOp(
+        renameConcept: pb.RenameConcept(id: Int64(node.id), name: wanted),
+      ),
+    ),
+    NodeKind.mapping => sendEdit(
+      cleared,
+      pb.EditOp(
+        renameMapping: pb.RenameMapping(id: Int64(node.id), name: wanted),
+      ),
+    ),
+    NodeKind.output => sendEdit(
+      cleared,
+      pb.EditOp(
+        renameOutput: pb.RenameOutput(id: Int64(node.id), name: wanted),
+      ),
+    ),
+  };
+}
+
+/// Move [templateId] to the front of the recent list, capped.
+List<String> rememberTemplate(List<String> recent, String templateId) => [
+  templateId,
+  ...recent.where((t) => t != templateId).take(EditorState.maxRecentTemplates - 1),
+];
 
 /// Every semantic edit is sent against the revision Studio currently holds;
 /// the daemon refuses it if the project has moved on.  No effect when
@@ -588,13 +672,29 @@ Transition _projectReceived(
   if (sameProject && incoming.revision < current.revision) {
     return Transition(s.copyWith(editor: s.editor.copyWith(pendingRequests: pending)));
   }
-  final selection = _selectionStillValid(s.editor.selection, incoming)
-      ? s.editor.selection
-      : const NoSelection();
   // Layout: the daemon's copy is authoritative on open; afterwards Studio is
   // the author and only merges in positions it does not know yet.
   final stored = layoutFromPb(incoming.layout);
-  final layout = sameProject ? {...stored, ...s.editor.layout} : stored;
+  var layout = sameProject ? {...stored, ...s.editor.layout} : stored;
+  // Create-then-rename: the concept a template insertion created lands
+  // where the designer pointed, is selected, and opens for naming.
+  final insert = s.editor.pendingInsert;
+  final created =
+      fromRequest && sameProject && insert != null && outcome != null && outcome.hasCreatedConcept()
+      ? NodeRef.concept(outcome.createdConcept.toInt())
+      : null;
+  final dropped = created == null ? null : insert?.position;
+  final placed = dropped != null;
+  if (created != null && dropped != null) layout = {...layout, created: dropped};
+  final selection = created != null
+      ? ConceptSelected(created.id)
+      : _selectionStillValid(s.editor.selection, incoming)
+      ? s.editor.selection
+      : const NoSelection();
+  // An inline rename survives pushed projections (the daemon echoes every
+  // commit) as long as its node still exists.
+  final renaming = created ?? s.editor.renaming;
+  final renamingValid = renaming != null && _nodeExists(renaming, incoming);
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
   // Drafts: rebased on every new revision; restored from the stash when a
@@ -620,6 +720,9 @@ Transition _projectReceived(
             lastOutcome: outcome,
             drafts: drafts.drafts,
             stashedDrafts: sameProject ? stashed : ({...stashed}..remove(incoming.rootPath)),
+            clearPendingInsert: fromRequest,
+            renaming: renamingValid ? renaming : null,
+            clearRenaming: !renamingValid,
           ),
         ),
         // A freshly opened project needs a subscription for pushed changes, an
@@ -631,6 +734,7 @@ Transition _projectReceived(
             const RunAnalysis(),
             SaveRecentProjects(recent),
           ],
+          if (placed) SetLayout(layoutToPb(layout)),
           ...drafts.effects,
         ],
       )
@@ -679,6 +783,12 @@ extension on Transition {
     return Transition(sent.state, [...effects, ...sent.effects]);
   }
 }
+
+bool _nodeExists(NodeRef node, pb.ProjectProjection p) => switch (node.kind) {
+  NodeKind.concept => p.concepts.any((c) => c.id.toInt() == node.id),
+  NodeKind.mapping => p.mappings.any((m) => m.id.toInt() == node.id),
+  NodeKind.output => p.outputs.any((o) => o.id.toInt() == node.id),
+};
 
 bool _selectionStillValid(Selection sel, pb.ProjectProjection p) => switch (sel) {
   NoSelection() => true,

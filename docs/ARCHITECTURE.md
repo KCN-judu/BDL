@@ -51,7 +51,7 @@ compiler as a *projection*. Studio never holds a second copy of the language.
 
 ```
 crates/
-  bdl-model        stable IDs · surface model · revisioned edits · persistence   (no deps on the rest)
+  bdl-model        stable IDs · surface model · revisioned edits · persistence · quantity vocabulary (no deps on the rest)
   bdl-ir           Design IR · Reactive Core IR (the kernel's Ty/Expr/envs)      (→ bdl-model)
   bdl-diagnostics  Diagnostic · Span · stable codes · deterministic order        (→ bdl-model)
   bdl-syntax       Logos lexer · event parser (RD + Pratt) · Rowan CST · typed AST · lowering (→ diagnostics)
@@ -64,10 +64,11 @@ crates/
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
   bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
   bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
+  bdl-library      concept libraries: data-driven templates (library/std/concepts.toml) that instantiate ordinary concepts via CreateConcept; search; multi-library set (→ model, elab)
   bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
-  bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db)
+  bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion (incl. library templates) · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db, library)
   bdl-lsp          LSP adapter only: lsp-server transport · position encoding · lsp-types rendering (→ ide)
-  bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
+  bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler, library)
   bdl-daemon       bdld: session (owns the project's IdeHost), coordinator, transport, analysis push (→ protocol, compiler, ide)
 planned:
   bdl-component  supplied Rust component contracts

@@ -1,0 +1,448 @@
+# BDL Standard Concept Library — shared authoring vocabulary.
+#
+# Every entry is a TEMPLATE for creating an ordinary Concept: instantiating
+# it produces a CreateConcept edit with these defaults and a fresh
+# SemanticId.  Two instantiations are two distinct concepts.  Nothing here
+# is a kernel type, a device, or a global identity; a project never depends
+# on this file after the concept exists (docs/STANDARD_CONCEPT_LIBRARY.md).
+#
+# representation: { quantity = "<quantity id>" } — from the shared quantity
+# vocabulary (bdl_model::quantity), "boolean", "count", or "open" (decide
+# later).  unit: a symbol from the shared unit table (bdl-elab), shown as
+# the default; the dimension is the quantity's, never the unit's.
+# role_hint: input | output | either — authoring/discovery only.
+
+[library]
+id = "std"
+name = "BDL Standard Concept Library"
+schema_version = 1
+version = "0.1"
+
+# ---- environment ----------------------------------------------------------
+
+[[template]]
+id = "std.environment.temperature"
+display_name = "Temperature"
+default_name = "Temperature"
+description = "How warm something is: the air, a room, a motor."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temp", "thermal", "heat", "warm", "cold", "K", "°C", "celsius"]
+icon = "temperature"
+
+[[template]]
+id = "std.environment.ambient_light"
+display_name = "Ambient Light"
+default_name = "AmbientLight"
+description = "How much light falls on the product from its surroundings."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "illuminance" }
+unit = "lx"
+keywords = ["light", "lux", "brightness", "daylight", "dark", "photocell"]
+icon = "light"
+
+[[template]]
+id = "std.environment.humidity"
+display_name = "Humidity"
+default_name = "Humidity"
+description = "Relative humidity of the air, 0 (dry) to 1 (saturated)."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["moisture", "damp", "rh", "relative humidity", "%"]
+icon = "humidity"
+
+[[template]]
+id = "std.environment.air_pressure"
+display_name = "Air Pressure"
+default_name = "AirPressure"
+description = "Atmospheric pressure; falls with altitude, moves with weather."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "pressure" }
+unit = "Pa"
+keywords = ["barometer", "atmospheric", "altitude", "weather", "hPa", "kPa"]
+icon = "pressure"
+
+[[template]]
+id = "std.environment.sound_level"
+display_name = "Sound Level"
+default_name = "SoundLevel"
+description = "How loud the surroundings are, as a level from 0 (silence) to 1."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["noise", "loud", "microphone", "audio", "dB", "volume"]
+icon = "sound"
+
+# ---- human interaction ----------------------------------------------------
+
+[[template]]
+id = "std.human.button_pressed"
+display_name = "Button Pressed"
+default_name = "ButtonPressed"
+description = "Whether a button is being held down right now."
+category = "human"
+role_hint = "input"
+representation = "boolean"
+keywords = ["button", "press", "push", "click", "key", "held"]
+icon = "button"
+
+[[template]]
+id = "std.human.touch"
+display_name = "Touch"
+default_name = "Touch"
+description = "Whether a surface is being touched."
+category = "human"
+role_hint = "input"
+representation = "boolean"
+keywords = ["touch", "contact", "capacitive", "tap", "finger"]
+icon = "touch"
+
+[[template]]
+id = "std.human.switch_state"
+display_name = "Switch State"
+default_name = "SwitchState"
+description = "Whether a toggle switch is on."
+category = "human"
+role_hint = "input"
+representation = "boolean"
+keywords = ["switch", "toggle", "on", "off", "enabled"]
+icon = "switch"
+
+[[template]]
+id = "std.human.dial_position"
+display_name = "Dial Position"
+default_name = "DialPosition"
+description = "How far a knob has been turned."
+category = "human"
+role_hint = "input"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["dial", "knob", "rotary", "potentiometer", "turn"]
+icon = "dial"
+
+[[template]]
+id = "std.human.slider_position"
+display_name = "Slider Position"
+default_name = "SliderPosition"
+description = "Where a slider sits between its two ends, 0 to 1."
+category = "human"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["slider", "fader", "level", "position", "potentiometer"]
+icon = "slider"
+
+# ---- geometry and motion --------------------------------------------------
+
+[[template]]
+id = "std.motion.distance"
+display_name = "Distance"
+default_name = "Distance"
+description = "How far away something is."
+category = "motion"
+role_hint = "input"
+representation = { quantity = "length" }
+unit = "m"
+keywords = ["range", "proximity", "far", "near", "ultrasonic", "lidar", "cm", "mm"]
+icon = "distance"
+
+[[template]]
+id = "std.motion.position"
+display_name = "Position"
+default_name = "Position"
+description = "Where something is along one axis."
+category = "motion"
+role_hint = "either"
+representation = { quantity = "length" }
+unit = "m"
+keywords = ["location", "axis", "offset", "displacement", "mm"]
+icon = "position"
+
+[[template]]
+id = "std.motion.angle"
+display_name = "Angle"
+default_name = "Angle"
+description = "How far something is rotated."
+category = "motion"
+role_hint = "either"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["rotation", "degrees", "radians", "heading", "bearing"]
+icon = "angle"
+
+[[template]]
+id = "std.motion.tilt"
+display_name = "Tilt"
+default_name = "Tilt"
+description = "How far something leans from level."
+category = "motion"
+role_hint = "input"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["lean", "incline", "pitch", "roll", "level", "accelerometer"]
+icon = "tilt"
+
+[[template]]
+id = "std.motion.speed"
+display_name = "Speed"
+default_name = "Speed"
+description = "How fast something moves."
+category = "motion"
+role_hint = "either"
+representation = { quantity = "speed" }
+keywords = ["velocity", "fast", "slow", "m/s", "km/h", "rate"]
+icon = "speed"
+
+[[template]]
+id = "std.motion.acceleration"
+display_name = "Acceleration"
+default_name = "Acceleration"
+description = "How quickly speed is changing; a shock or a bump is a spike here."
+category = "motion"
+role_hint = "input"
+representation = { quantity = "acceleration" }
+keywords = ["accelerometer", "shock", "bump", "g", "m/s²", "impact"]
+icon = "acceleration"
+
+[[template]]
+id = "std.motion.angular_velocity"
+display_name = "Angular Velocity"
+default_name = "AngularVelocity"
+description = "How fast something is turning."
+category = "motion"
+role_hint = "input"
+representation = { quantity = "angular_velocity" }
+keywords = ["gyro", "gyroscope", "spin", "rotation rate", "rad/s", "rpm", "yaw rate"]
+icon = "rotation"
+
+[[template]]
+id = "std.motion.orientation"
+display_name = "Orientation"
+default_name = "Orientation"
+description = "Which way something faces, as a heading."
+category = "motion"
+role_hint = "input"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["heading", "compass", "yaw", "facing", "magnetometer"]
+icon = "compass"
+
+# ---- mechanical -----------------------------------------------------------
+
+[[template]]
+id = "std.mechanical.force"
+display_name = "Force"
+default_name = "Force"
+description = "How hard something pushes or pulls."
+category = "mechanical"
+role_hint = "input"
+representation = { quantity = "force" }
+unit = "N"
+keywords = ["load", "push", "pull", "weight", "newton", "load cell"]
+icon = "force"
+
+[[template]]
+id = "std.mechanical.pressure"
+display_name = "Pressure"
+default_name = "Pressure"
+description = "Force over an area: a tyre, a pipe, a grip."
+category = "mechanical"
+role_hint = "input"
+representation = { quantity = "pressure" }
+unit = "Pa"
+keywords = ["psi", "bar", "kPa", "pneumatic", "hydraulic", "tyre", "grip"]
+icon = "pressure"
+
+[[template]]
+id = "std.mechanical.torque"
+display_name = "Torque"
+default_name = "Torque"
+description = "Turning force on a shaft."
+category = "mechanical"
+role_hint = "either"
+representation = { quantity = "torque" }
+keywords = ["twist", "moment", "shaft", "N·m", "Nm"]
+icon = "torque"
+
+# ---- electrical and system ------------------------------------------------
+
+[[template]]
+id = "std.electrical.voltage"
+display_name = "Voltage"
+default_name = "Voltage"
+description = "Electrical potential at a point: a rail, a cell, a sense line."
+category = "electrical"
+role_hint = "input"
+representation = { quantity = "voltage" }
+unit = "V"
+keywords = ["volt", "potential", "rail", "supply", "mV", "adc"]
+icon = "electrical"
+
+[[template]]
+id = "std.electrical.current"
+display_name = "Current"
+default_name = "Current"
+description = "Electrical current through a path."
+category = "electrical"
+role_hint = "input"
+representation = { quantity = "current" }
+unit = "A"
+keywords = ["amp", "ampere", "mA", "draw", "load", "shunt"]
+icon = "electrical"
+
+[[template]]
+id = "std.electrical.battery_level"
+display_name = "Battery Level"
+default_name = "BatteryLevel"
+description = "How full the battery is, 0 (empty) to 1 (full)."
+category = "electrical"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["battery", "charge", "soc", "fuel gauge", "%", "low battery"]
+icon = "battery"
+
+# ---- visual and display ---------------------------------------------------
+
+[[template]]
+id = "std.output.brightness"
+display_name = "Brightness"
+default_name = "Brightness"
+description = "How bright a light should be, 0 (off) to 1 (full)."
+category = "visual"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["light", "led", "lamp", "dim", "level", "pwm", "intensity"]
+icon = "light"
+
+[[template]]
+id = "std.output.color"
+display_name = "Color"
+default_name = "Color"
+description = "Which colour a light shows, as a hue around the wheel."
+category = "visual"
+role_hint = "output"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["colour", "hue", "rgb", "led", "tint"]
+icon = "color"
+
+[[template]]
+id = "std.output.display_value"
+display_name = "Display Value"
+default_name = "DisplayValue"
+description = "A number shown on a display."
+category = "visual"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["display", "screen", "readout", "digits", "show"]
+icon = "display"
+
+# ---- actuation ------------------------------------------------------------
+
+[[template]]
+id = "std.actuator.motor_speed"
+display_name = "Motor Speed"
+default_name = "MotorSpeed"
+description = "How fast a motor should turn, as a share of its full speed, −1 to 1."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["motor", "drive", "pwm", "rpm", "throttle", "h-bridge"]
+icon = "motor"
+
+[[template]]
+id = "std.actuator.motor_angle"
+display_name = "Motor Angle"
+default_name = "MotorAngle"
+description = "The angle a motor or stepper should hold."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["motor", "stepper", "position", "rotation", "target"]
+icon = "motor"
+
+[[template]]
+id = "std.actuator.servo_position"
+display_name = "Servo Position"
+default_name = "ServoPosition"
+description = "The angle a servo arm should move to."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["servo", "arm", "sg90", "pwm", "angle"]
+icon = "servo"
+
+[[template]]
+id = "std.actuator.vibration_intensity"
+display_name = "Vibration Intensity"
+default_name = "VibrationIntensity"
+description = "How strongly a haptic motor should buzz, 0 to 1."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["haptic", "buzz", "rumble", "vibrate", "motor"]
+icon = "vibration"
+
+[[template]]
+id = "std.actuator.heater_power"
+display_name = "Heater Power"
+default_name = "HeaterPower"
+description = "How much a heater should be on, 0 to 1."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["heat", "heater", "element", "warm", "pwm", "duty"]
+icon = "heat"
+
+[[template]]
+id = "std.actuator.fan_speed"
+display_name = "Fan Speed"
+default_name = "FanSpeed"
+description = "How fast a fan should run, 0 (off) to 1 (full)."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["fan", "cooling", "blower", "pwm", "airflow"]
+icon = "fan"
+
+[[template]]
+id = "std.actuator.valve_opening"
+display_name = "Valve Opening"
+default_name = "ValveOpening"
+description = "How far a valve is open, 0 (closed) to 1 (fully open)."
+category = "actuation"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["valve", "flow", "open", "closed", "solenoid"]
+icon = "valve"
+
+# ---- audio ----------------------------------------------------------------
+
+[[template]]
+id = "std.audio.volume"
+display_name = "Volume"
+default_name = "Volume"
+description = "How loud the product should play, 0 (silent) to 1 (full)."
+category = "audio"
+role_hint = "output"
+representation = { quantity = "scalar" }
+keywords = ["loudness", "speaker", "gain", "mute", "audio"]
+icon = "sound"
+
+[[template]]
+id = "std.audio.pitch"
+display_name = "Pitch"
+default_name = "Pitch"
+description = "The frequency of a tone to play."
+category = "audio"
+role_hint = "output"
+representation = { quantity = "frequency" }
+unit = "Hz"
+keywords = ["tone", "note", "frequency", "buzzer", "beep", "Hz"]
+icon = "sound"

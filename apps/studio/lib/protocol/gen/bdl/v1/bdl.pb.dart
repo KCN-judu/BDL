@@ -46,6 +46,8 @@ enum ClientMessage_Payload {
   hoverDefinitionDraft,
   hoverEntity,
   listSemanticActions,
+  listConceptTemplates,
+  instantiateConceptTemplate,
   notSet
 }
 
@@ -76,6 +78,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     HoverDefinitionDraftRequest? hoverDefinitionDraft,
     HoverEntityRequest? hoverEntity,
     ListSemanticActionsRequest? listSemanticActions,
+    ListConceptTemplatesRequest? listConceptTemplates,
+    InstantiateConceptTemplateRequest? instantiateConceptTemplate,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -103,6 +107,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (hoverDefinitionDraft != null) result.hoverDefinitionDraft = hoverDefinitionDraft;
     if (hoverEntity != null) result.hoverEntity = hoverEntity;
     if (listSemanticActions != null) result.listSemanticActions = listSemanticActions;
+    if (listConceptTemplates != null) result.listConceptTemplates = listConceptTemplates;
+    if (instantiateConceptTemplate != null)
+      result.instantiateConceptTemplate = instantiateConceptTemplate;
     return result;
   }
 
@@ -140,6 +147,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     31: ClientMessage_Payload.hoverDefinitionDraft,
     32: ClientMessage_Payload.hoverEntity,
     33: ClientMessage_Payload.listSemanticActions,
+    40: ClientMessage_Payload.listConceptTemplates,
+    41: ClientMessage_Payload.instantiateConceptTemplate,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -169,7 +178,9 @@ class ClientMessage extends $pb.GeneratedMessage {
       30,
       31,
       32,
-      33
+      33,
+      40,
+      41
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -219,6 +230,11 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: HoverEntityRequest.$_createMessage)
     ..aOM<ListSemanticActionsRequest>(33, _omitFieldNames ? '' : 'listSemanticActions',
         subBuilder: ListSemanticActionsRequest.$_createMessage)
+    ..aOM<ListConceptTemplatesRequest>(40, _omitFieldNames ? '' : 'listConceptTemplates',
+        subBuilder: ListConceptTemplatesRequest.$_createMessage)
+    ..aOM<InstantiateConceptTemplateRequest>(
+        41, _omitFieldNames ? '' : 'instantiateConceptTemplate',
+        subBuilder: InstantiateConceptTemplateRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -265,6 +281,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(31)
   @$pb.TagNumber(32)
   @$pb.TagNumber(33)
+  @$pb.TagNumber(40)
+  @$pb.TagNumber(41)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -290,6 +308,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(31)
   @$pb.TagNumber(32)
   @$pb.TagNumber(33)
+  @$pb.TagNumber(40)
+  @$pb.TagNumber(41)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -564,6 +584,28 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearListSemanticActions() => $_clearField(33);
   @$pb.TagNumber(33)
   ListSemanticActionsRequest ensureListSemanticActions() => $_ensure(24);
+
+  @$pb.TagNumber(40)
+  ListConceptTemplatesRequest get listConceptTemplates => $_getN(25);
+  @$pb.TagNumber(40)
+  set listConceptTemplates(ListConceptTemplatesRequest value) => $_setField(40, value);
+  @$pb.TagNumber(40)
+  $core.bool hasListConceptTemplates() => $_has(25);
+  @$pb.TagNumber(40)
+  void clearListConceptTemplates() => $_clearField(40);
+  @$pb.TagNumber(40)
+  ListConceptTemplatesRequest ensureListConceptTemplates() => $_ensure(25);
+
+  @$pb.TagNumber(41)
+  InstantiateConceptTemplateRequest get instantiateConceptTemplate => $_getN(26);
+  @$pb.TagNumber(41)
+  set instantiateConceptTemplate(InstantiateConceptTemplateRequest value) => $_setField(41, value);
+  @$pb.TagNumber(41)
+  $core.bool hasInstantiateConceptTemplate() => $_has(26);
+  @$pb.TagNumber(41)
+  void clearInstantiateConceptTemplate() => $_clearField(41);
+  @$pb.TagNumber(41)
+  InstantiateConceptTemplateRequest ensureInstantiateConceptTemplate() => $_ensure(26);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -665,6 +707,7 @@ enum Response_Payload {
   draftCompletion,
   draftHover,
   semanticActions,
+  conceptTemplates,
   notSet
 }
 
@@ -684,6 +727,7 @@ class Response extends $pb.GeneratedMessage {
     DraftCompletionResponse? draftCompletion,
     DraftHoverResponse? draftHover,
     SemanticActionsResponse? semanticActions,
+    ConceptTemplatesResponse? conceptTemplates,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -700,6 +744,7 @@ class Response extends $pb.GeneratedMessage {
     if (draftCompletion != null) result.draftCompletion = draftCompletion;
     if (draftHover != null) result.draftHover = draftHover;
     if (semanticActions != null) result.semanticActions = semanticActions;
+    if (conceptTemplates != null) result.conceptTemplates = conceptTemplates;
     return result;
   }
 
@@ -726,12 +771,13 @@ class Response extends $pb.GeneratedMessage {
     19: Response_Payload.draftCompletion,
     20: Response_Payload.draftHover,
     21: Response_Payload.semanticActions,
+    30: Response_Payload.conceptTemplates,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -758,6 +804,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: DraftHoverResponse.$_createMessage)
     ..aOM<SemanticActionsResponse>(21, _omitFieldNames ? '' : 'semanticActions',
         subBuilder: SemanticActionsResponse.$_createMessage)
+    ..aOM<ConceptTemplatesResponse>(30, _omitFieldNames ? '' : 'conceptTemplates',
+        subBuilder: ConceptTemplatesResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -793,6 +841,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
+  @$pb.TagNumber(30)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -807,6 +856,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
   @$pb.TagNumber(21)
+  @$pb.TagNumber(30)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -960,6 +1010,17 @@ class Response extends $pb.GeneratedMessage {
   void clearSemanticActions() => $_clearField(21);
   @$pb.TagNumber(21)
   SemanticActionsResponse ensureSemanticActions() => $_ensure(13);
+
+  @$pb.TagNumber(30)
+  ConceptTemplatesResponse get conceptTemplates => $_getN(14);
+  @$pb.TagNumber(30)
+  set conceptTemplates(ConceptTemplatesResponse value) => $_setField(30, value);
+  @$pb.TagNumber(30)
+  $core.bool hasConceptTemplates() => $_has(14);
+  @$pb.TagNumber(30)
+  void clearConceptTemplates() => $_clearField(30);
+  @$pb.TagNumber(30)
+  ConceptTemplatesResponse ensureConceptTemplates() => $_ensure(14);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -9562,6 +9623,569 @@ class HoverDetail extends $pb.GeneratedMessage {
   $core.bool hasValue() => $_has(1);
   @$pb.TagNumber(2)
   void clearValue() => $_clearField(2);
+}
+
+/// The concept libraries the daemon serves (the Standard Concept Library
+/// today; team/project/package libraries later), plus the shared quantity
+/// vocabulary Studio's unit picker and the library rows both read.
+/// Independent of any project: may be asked before one is open.
+class ListConceptTemplatesRequest extends $pb.GeneratedMessage {
+  factory ListConceptTemplatesRequest() => ListConceptTemplatesRequest._();
+
+  ListConceptTemplatesRequest._();
+
+  factory ListConceptTemplatesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListConceptTemplatesRequest()..mergeFromBuffer(data, registry);
+  factory ListConceptTemplatesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListConceptTemplatesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListConceptTemplatesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListConceptTemplatesRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListConceptTemplatesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListConceptTemplatesRequest copyWith(void Function(ListConceptTemplatesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListConceptTemplatesRequest))
+          as ListConceptTemplatesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListConceptTemplatesRequest() / ListConceptTemplatesRequest.new instead')
+  static ListConceptTemplatesRequest create() => ListConceptTemplatesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListConceptTemplatesRequest._();
+  @$core.override
+  ListConceptTemplatesRequest createEmptyInstance() => ListConceptTemplatesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListConceptTemplatesRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListConceptTemplatesRequest>(
+          ListConceptTemplatesRequest.$_createMessage);
+  static ListConceptTemplatesRequest? _defaultInstance;
+}
+
+class ConceptTemplatesResponse extends $pb.GeneratedMessage {
+  factory ConceptTemplatesResponse({
+    $core.Iterable<ConceptLibraryView>? libraries,
+    $core.Iterable<QuantityView>? quantities,
+  }) {
+    final result = ConceptTemplatesResponse._();
+    if (libraries != null) result.libraries.addAll(libraries);
+    if (quantities != null) result.quantities.addAll(quantities);
+    return result;
+  }
+
+  ConceptTemplatesResponse._();
+
+  factory ConceptTemplatesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptTemplatesResponse()..mergeFromBuffer(data, registry);
+  factory ConceptTemplatesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptTemplatesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ConceptTemplatesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ConceptTemplatesResponse.$_createMessage)
+    ..pPM<ConceptLibraryView>(1, _omitFieldNames ? '' : 'libraries',
+        subBuilder: ConceptLibraryView.$_createMessage)
+    ..pPM<QuantityView>(2, _omitFieldNames ? '' : 'quantities',
+        subBuilder: QuantityView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptTemplatesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptTemplatesResponse copyWith(void Function(ConceptTemplatesResponse) updates) =>
+      super.copyWith((message) => updates(message as ConceptTemplatesResponse))
+          as ConceptTemplatesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ConceptTemplatesResponse() / ConceptTemplatesResponse.new instead')
+  static ConceptTemplatesResponse create() => ConceptTemplatesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => ConceptTemplatesResponse._();
+  @$core.override
+  ConceptTemplatesResponse createEmptyInstance() => ConceptTemplatesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static ConceptTemplatesResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ConceptTemplatesResponse>(
+          ConceptTemplatesResponse.$_createMessage);
+  static ConceptTemplatesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<ConceptLibraryView> get libraries => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<QuantityView> get quantities => $_getList(1);
+}
+
+class ConceptLibraryView extends $pb.GeneratedMessage {
+  factory ConceptLibraryView({
+    $core.String? id,
+    $core.String? name,
+    $core.int? schemaVersion,
+    $core.String? version,
+    $core.Iterable<ConceptTemplateView>? templates,
+  }) {
+    final result = ConceptLibraryView._();
+    if (id != null) result.id = id;
+    if (name != null) result.name = name;
+    if (schemaVersion != null) result.schemaVersion = schemaVersion;
+    if (version != null) result.version = version;
+    if (templates != null) result.templates.addAll(templates);
+    return result;
+  }
+
+  ConceptLibraryView._();
+
+  factory ConceptLibraryView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptLibraryView()..mergeFromBuffer(data, registry);
+  factory ConceptLibraryView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptLibraryView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ConceptLibraryView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ConceptLibraryView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aI(3, _omitFieldNames ? '' : 'schemaVersion', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(4, _omitFieldNames ? '' : 'version')
+    ..pPM<ConceptTemplateView>(5, _omitFieldNames ? '' : 'templates',
+        subBuilder: ConceptTemplateView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptLibraryView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptLibraryView copyWith(void Function(ConceptLibraryView) updates) =>
+      super.copyWith((message) => updates(message as ConceptLibraryView)) as ConceptLibraryView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ConceptLibraryView() / ConceptLibraryView.new instead')
+  static ConceptLibraryView create() => ConceptLibraryView._();
+  static $pb.GeneratedMessage $_createMessage() => ConceptLibraryView._();
+  @$core.override
+  ConceptLibraryView createEmptyInstance() => ConceptLibraryView._();
+  @$core.pragma('dart2js:noInline')
+  static ConceptLibraryView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ConceptLibraryView>(ConceptLibraryView.$_createMessage);
+  static ConceptLibraryView? _defaultInstance;
+
+  /// Library identity (`std`); template ids are prefixed by it.
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get schemaVersion => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set schemaVersion($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSchemaVersion() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSchemaVersion() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get version => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set version($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasVersion() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearVersion() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<ConceptTemplateView> get templates => $_getList(4);
+}
+
+/// A template for creating an ordinary Concept.  Every field but `id` is a
+/// default the designer may change after instantiation; `id` is a library
+/// identity, never a SemanticId.
+class ConceptTemplateView extends $pb.GeneratedMessage {
+  factory ConceptTemplateView({
+    $core.String? id,
+    $core.String? displayName,
+    $core.String? defaultName,
+    $core.String? description,
+    $core.String? category,
+    RoleHint? roleHint,
+    Representation? representation,
+    $core.String? typeName,
+    $core.String? unit,
+    $core.Iterable<$core.String>? keywords,
+    $core.String? icon,
+  }) {
+    final result = ConceptTemplateView._();
+    if (id != null) result.id = id;
+    if (displayName != null) result.displayName = displayName;
+    if (defaultName != null) result.defaultName = defaultName;
+    if (description != null) result.description = description;
+    if (category != null) result.category = category;
+    if (roleHint != null) result.roleHint = roleHint;
+    if (representation != null) result.representation = representation;
+    if (typeName != null) result.typeName = typeName;
+    if (unit != null) result.unit = unit;
+    if (keywords != null) result.keywords.addAll(keywords);
+    if (icon != null) result.icon = icon;
+    return result;
+  }
+
+  ConceptTemplateView._();
+
+  factory ConceptTemplateView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptTemplateView()..mergeFromBuffer(data, registry);
+  factory ConceptTemplateView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConceptTemplateView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ConceptTemplateView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ConceptTemplateView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'displayName')
+    ..aOS(3, _omitFieldNames ? '' : 'defaultName')
+    ..aOS(4, _omitFieldNames ? '' : 'description')
+    ..aOS(5, _omitFieldNames ? '' : 'category')
+    ..aE<RoleHint>(6, _omitFieldNames ? '' : 'roleHint', enumValues: RoleHint.values)
+    ..aOM<Representation>(7, _omitFieldNames ? '' : 'representation',
+        subBuilder: Representation.$_createMessage)
+    ..aOS(8, _omitFieldNames ? '' : 'typeName')
+    ..aOS(9, _omitFieldNames ? '' : 'unit')
+    ..pPS(10, _omitFieldNames ? '' : 'keywords')
+    ..aOS(11, _omitFieldNames ? '' : 'icon')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptTemplateView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConceptTemplateView copyWith(void Function(ConceptTemplateView) updates) =>
+      super.copyWith((message) => updates(message as ConceptTemplateView)) as ConceptTemplateView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ConceptTemplateView() / ConceptTemplateView.new instead')
+  static ConceptTemplateView create() => ConceptTemplateView._();
+  static $pb.GeneratedMessage $_createMessage() => ConceptTemplateView._();
+  @$core.override
+  ConceptTemplateView createEmptyInstance() => ConceptTemplateView._();
+  @$core.pragma('dart2js:noInline')
+  static ConceptTemplateView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ConceptTemplateView>(ConceptTemplateView.$_createMessage);
+  static ConceptTemplateView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get displayName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set displayName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDisplayName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDisplayName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get defaultName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set defaultName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDefaultName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDefaultName() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get description => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set description($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDescription() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDescription() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get category => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set category($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCategory() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearCategory() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  RoleHint get roleHint => $_getN(5);
+  @$pb.TagNumber(6)
+  set roleHint(RoleHint value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasRoleHint() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearRoleHint() => $_clearField(6);
+
+  /// Absent for a template that leaves the representation to be decided.
+  @$pb.TagNumber(7)
+  Representation get representation => $_getN(6);
+  @$pb.TagNumber(7)
+  set representation(Representation value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasRepresentation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearRepresentation() => $_clearField(7);
+  @$pb.TagNumber(7)
+  Representation ensureRepresentation() => $_ensure(6);
+
+  /// The textual type name of the representation (`Illuminance`), for
+  /// previews; empty when open.
+  @$pb.TagNumber(8)
+  $core.String get typeName => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set typeName($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasTypeName() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearTypeName() => $_clearField(8);
+
+  /// The suggested unit symbol (`lx`); empty when none.
+  @$pb.TagNumber(9)
+  $core.String get unit => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set unit($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasUnit() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearUnit() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<$core.String> get keywords => $_getList(9);
+
+  /// A generic presentation hint (`temperature`, `motor`); never semantic.
+  @$pb.TagNumber(11)
+  $core.String get icon => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set icon($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasIcon() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearIcon() => $_clearField(11);
+}
+
+/// One named quantity of the shared vocabulary (`bdl_model::quantity`).
+class QuantityView extends $pb.GeneratedMessage {
+  factory QuantityView({
+    $core.String? id,
+    $core.String? typeName,
+    $core.String? unit,
+    Dim? dim,
+  }) {
+    final result = QuantityView._();
+    if (id != null) result.id = id;
+    if (typeName != null) result.typeName = typeName;
+    if (unit != null) result.unit = unit;
+    if (dim != null) result.dim = dim;
+    return result;
+  }
+
+  QuantityView._();
+
+  factory QuantityView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      QuantityView()..mergeFromBuffer(data, registry);
+  factory QuantityView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      QuantityView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'QuantityView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: QuantityView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'typeName')
+    ..aOS(3, _omitFieldNames ? '' : 'unit')
+    ..aOM<Dim>(4, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QuantityView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QuantityView copyWith(void Function(QuantityView) updates) =>
+      super.copyWith((message) => updates(message as QuantityView)) as QuantityView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use QuantityView() / QuantityView.new instead')
+  static QuantityView create() => QuantityView._();
+  static $pb.GeneratedMessage $_createMessage() => QuantityView._();
+  @$core.override
+  QuantityView createEmptyInstance() => QuantityView._();
+  @$core.pragma('dart2js:noInline')
+  static QuantityView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<QuantityView>(QuantityView.$_createMessage);
+  static QuantityView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get typeName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set typeName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTypeName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTypeName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get unit => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set unit($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasUnit() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUnit() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  Dim get dim => $_getN(3);
+  @$pb.TagNumber(4)
+  set dim(Dim value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDim() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDim() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Dim ensureDim() => $_ensure(3);
+}
+
+/// The one instantiation operation: the daemon builds the CreateConcept
+/// edit from the template's defaults (with a name that is free in the
+/// project, or `name` when given) and applies it like ApplyEdit.  Answered
+/// with EditApplied; `edit.stale_revision` if the project moved on,
+/// `library.unknown_template` if the id is not served.
+class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
+  factory InstantiateConceptTemplateRequest({
+    $fixnum.Int64? baseRevision,
+    $core.String? templateId,
+    $core.String? name,
+  }) {
+    final result = InstantiateConceptTemplateRequest._();
+    if (baseRevision != null) result.baseRevision = baseRevision;
+    if (templateId != null) result.templateId = templateId;
+    if (name != null) result.name = name;
+    return result;
+  }
+
+  InstantiateConceptTemplateRequest._();
+
+  factory InstantiateConceptTemplateRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InstantiateConceptTemplateRequest()..mergeFromBuffer(data, registry);
+  factory InstantiateConceptTemplateRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InstantiateConceptTemplateRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'InstantiateConceptTemplateRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: InstantiateConceptTemplateRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'baseRevision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'templateId')
+    ..aOS(3, _omitFieldNames ? '' : 'name')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InstantiateConceptTemplateRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InstantiateConceptTemplateRequest copyWith(
+          void Function(InstantiateConceptTemplateRequest) updates) =>
+      super.copyWith((message) => updates(message as InstantiateConceptTemplateRequest))
+          as InstantiateConceptTemplateRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated(
+      'Use InstantiateConceptTemplateRequest() / InstantiateConceptTemplateRequest.new instead')
+  static InstantiateConceptTemplateRequest create() => InstantiateConceptTemplateRequest._();
+  static $pb.GeneratedMessage $_createMessage() => InstantiateConceptTemplateRequest._();
+  @$core.override
+  InstantiateConceptTemplateRequest createEmptyInstance() => InstantiateConceptTemplateRequest._();
+  @$core.pragma('dart2js:noInline')
+  static InstantiateConceptTemplateRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<InstantiateConceptTemplateRequest>(
+          InstantiateConceptTemplateRequest.$_createMessage);
+  static InstantiateConceptTemplateRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get baseRevision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set baseRevision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBaseRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBaseRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get templateId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set templateId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTemplateId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTemplateId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get name => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set name($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearName() => $_clearField(3);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

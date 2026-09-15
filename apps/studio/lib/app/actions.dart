@@ -77,6 +77,42 @@ class CreateConceptRequested extends UserAction {
   final pb.Representation? representation;
 }
 
+/// Insert a concept from a library template (right-click menu, a drag from
+/// the Library panel, or its row): one request to the daemon, which
+/// creates an ordinary concept with the template's defaults.  [position]
+/// is where the node lands (scene coordinates); `null` auto-places.  Both
+/// entry points dispatch exactly this.
+class InsertConceptTemplateRequested extends UserAction {
+  const InsertConceptTemplateRequested(this.templateId, {this.position});
+  final String templateId;
+  final Offset? position;
+}
+
+class SidebarTabSelected extends UserAction {
+  const SidebarTabSelected(this.tab);
+  final SidebarTab tab;
+}
+
+class LibrarySearchChanged extends UserAction {
+  const LibrarySearchChanged(this.query);
+  final String query;
+}
+
+/// Open a node's name for editing on the canvas (double-click the header,
+/// or right after an insertion).
+class InlineRenameStarted extends UserAction {
+  const InlineRenameStarted(this.node);
+  final NodeRef node;
+}
+
+/// The inline name editor closed: with a new name (a rename edit is sent)
+/// or without one (Esc; the default name stays).
+class InlineRenameFinished extends UserAction {
+  const InlineRenameFinished(this.node, {this.name});
+  final NodeRef node;
+  final String? name;
+}
+
 class CreateMappingRequested extends UserAction {
   const CreateMappingRequested({required this.name, required this.inputs, required this.output});
   final String name;
@@ -541,6 +577,12 @@ class DeploymentFailed extends ResponseAction {
   final int generation;
   final String code;
   final String message;
+}
+
+/// The daemon's concept libraries arrived (asked once per connection).
+class ConceptTemplatesReceived extends ResponseAction {
+  const ConceptTemplatesReceived(this.library);
+  final pb.ConceptTemplatesResponse library;
 }
 
 class RecentProjectsLoaded extends ResponseAction {

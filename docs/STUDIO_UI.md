@@ -159,7 +159,8 @@ never as a modal.
 | ⌘F | find node by name | Ctrl-F |
 | double-click node header | rename inline | — |
 | H | collapse selected nodes | H |
-| right-click | context menu (rename, attach definition, delete, explain) | RMB |
+| right-click | context menu: Rename · Delete over a node; **Add Concept ▸** Recent / Input / Output / Environment / Geometry & motion / Human interaction / More… (docs/STANDARD_CONCEPT_LIBRARY.md) | RMB |
+| drop a Library row | insert that concept template at the drop point | — |
 
 Dragging a node over a link does **not** auto-insert it (Blender's auto
 attach); BDL links are typed by concept, and silent insertion would be a
@@ -170,6 +171,24 @@ semantic edit. Muting nodes (M) has no BDL meaning and is not offered.
 Edges are dependency, not execution order. Drawing order does not set
 output priority. Node position is layout only (ADR-0003). No node type
 exists per arithmetic operator — formulas live in the inspector.
+
+### Create-then-rename (concept templates)
+
+Inserting a concept template — from the right-click menu, a drag from the
+Library tab, or the tab's rows — is one request (`InstantiateConceptTemplate`);
+when the projection with the new concept arrives, the node lands where the
+pointer was (layout, never a revision), is selected, and its name opens
+for editing on the canvas with the default name selected: Return commits
+a rename edit, Esc keeps the default, leaving the field commits what was
+typed (Finder's new-folder behaviour). Add *Temperature*, type
+*MotorTemperature*, keep designing — no sheet for routine insertion.
+
+The sidebar has two tabs: **Project** (the project's objects, "+" per
+section) and **Library** (search, categories, rows with a grey socket
+glyph — filled when the template chooses a representation, hollow for
+*decide later*; the unit or kind word in the right column; the description
+on hover). Recent templates in the menu are a Studio preference, never
+project state.
 
 ## 3. Look and feel (macOS)
 

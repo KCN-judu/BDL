@@ -66,6 +66,19 @@ class ApplyEdit extends Effect {
   final pb.EditOp op;
 }
 
+/// Ask the daemon for its concept libraries.  Not counted as pending.
+class ListConceptTemplates extends Effect {
+  const ListConceptTemplates();
+}
+
+/// The one instantiation request: the daemon builds and applies the
+/// `CreateConcept` from the template's defaults.  Answered like an edit.
+class InstantiateConceptTemplate extends Effect {
+  const InstantiateConceptTemplate({required this.baseRevision, required this.templateId});
+  final int baseRevision;
+  final String templateId;
+}
+
 class RunAnalysis extends Effect {
   const RunAnalysis();
 }

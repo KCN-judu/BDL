@@ -129,6 +129,7 @@ dependencies = [
  "bdl-hardware",
  "bdl-ide",
  "bdl-ide-db",
+ "bdl-library",
  "bdl-model",
  "bdl-protocol",
  "bdl-reactive",
@@ -197,6 +198,7 @@ dependencies = [
  "bdl-elab",
  "bdl-ide-db",
  "bdl-ir",
+ "bdl-library",
  "bdl-model",
  "bdl-output",
  "bdl-reactive",
@@ -227,6 +229,18 @@ dependencies = [
  "bdl-model",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "bdl-library"
+version = "0.1.0"
+dependencies = [
+ "bdl-elab",
+ "bdl-model",
+ "serde",
+ "tempfile",
+ "thiserror",
+ "toml",
 ]
 
 [[package]]
@@ -292,6 +306,7 @@ dependencies = [
  "bdl-compiler",
  "bdl-diagnostics",
  "bdl-hardware",
+ "bdl-library",
  "bdl-model",
  "bdl-output",
  "bdl-reactive",

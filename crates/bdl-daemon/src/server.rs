@@ -265,6 +265,11 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
         Req::HoverEntity(r) => (hover_entity(session, &r), None),
         Req::ListSemanticActions(r) => (list_semantic_actions(session, &r), None),
+        Req::ListConceptTemplates(_) => (
+            Resp::ConceptTemplates(convert::concept_templates_response(libraries())),
+            None,
+        ),
+        Req::InstantiateConceptTemplate(r) => instantiate_concept_template(session, &r),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -426,6 +431,47 @@ fn hover_to_pb(h: bdl_ide::SemanticHover, revision: u64) -> pb::DraftHoverRespon
 }
 
 /// The everyday card for a canvas node or a library row.
+/// The concept libraries this daemon serves.  The Standard Concept Library
+/// is embedded; team/project/package libraries are a loader away
+/// (`docs/STANDARD_CONCEPT_LIBRARY.md`).
+fn libraries() -> &'static bdl_library::LibrarySet {
+    static LIBRARIES: std::sync::OnceLock<bdl_library::LibrarySet> = std::sync::OnceLock::new();
+    LIBRARIES.get_or_init(bdl_library::LibrarySet::standard)
+}
+
+/// The one instantiation operation: a template becomes an ordinary
+/// `CreateConcept` with the template's defaults and a free name, applied
+/// exactly like `ApplyEdit`.  The resulting concept records nothing about
+/// the template.
+fn instantiate_concept_template(
+    session: &mut Session,
+    r: &pb::InstantiateConceptTemplateRequest,
+) -> (Resp, Option<Committed>) {
+    let Some(template) = libraries().get(&r.template_id) else {
+        return (
+            Resp::Error(error(
+                "library.unknown_template",
+                &format!("no concept template `{}` is served", r.template_id),
+            )),
+            None,
+        );
+    };
+    let op = match session.project() {
+        Ok(p) => bdl_library::instantiate(&p.current.design, template, r.name.as_deref()),
+        Err(e) => return (Resp::Error(session_error(&e)), None),
+    };
+    match session.apply(bdl_model::Revision::from_raw(r.base_revision), &op) {
+        Ok(c) => {
+            let resp = Resp::EditApplied(pb::EditApplied {
+                project: Some(project_of(session)),
+                outcome: c.outcome.as_ref().map(convert::outcome_to_pb),
+            });
+            (resp, Some(c))
+        }
+        Err(e) => (Resp::Error(session_error(&e)), None),
+    }
+}
+
 fn hover_entity(session: &mut Session, r: &pb::HoverEntityRequest) -> Resp {
     if let Err(e) = draft_revision(session, r.revision) {
         return Resp::Error(e);
@@ -829,6 +875,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::HoverDefinitionDraft(_) => "hover_definition_draft",
         Req::HoverEntity(_) => "hover_entity",
         Req::ListSemanticActions(_) => "list_semantic_actions",
+        Req::ListConceptTemplates(_) => "list_concept_templates",
+        Req::InstantiateConceptTemplate(_) => "instantiate_concept_template",
         Req::Shutdown(_) => "shutdown",
     }
 }

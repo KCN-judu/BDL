@@ -138,9 +138,19 @@ pub fn completion_item(c: &SemanticCompletion, index: &LineIndex) -> CompletionI
         CompletionKind::Keyword => CompletionItemKind::KEYWORD,
         CompletionKind::Concept | CompletionKind::Representation => CompletionItemKind::CLASS,
         CompletionKind::Mapping => CompletionItemKind::FUNCTION,
+        // A library template writes a plain declaration; the item is a
+        // class with the library named beside it, not a snippet.
+        CompletionKind::Template => CompletionItemKind::CLASS,
     };
     CompletionItem {
         label: c.label.clone(),
+        label_details: c
+            .template
+            .as_ref()
+            .map(|id| lsp_types::CompletionItemLabelDetails {
+                detail: None,
+                description: id.split('.').next().map(str::to_owned),
+            }),
         kind: Some(kind),
         detail: c.resulting_type.clone(),
         documentation: c

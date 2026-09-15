@@ -236,6 +236,11 @@ input name; insert an explicit sync (blocked, with the reason: no surface
 phrase yet, DI-3/DI-17). **Meaning-changing fixes are never applied
 implicitly**; `NeedsChoice` exists precisely so the tool does not guess.
 
+Completion in a `concept …` position also offers the Standard Concept
+Library's templates (`CompletionKind::Template`, from `bdl-library` — the
+same data Studio's Library tab shows), writing ordinary declarations such
+as `AmbientLight : Illuminance`; see `docs/STANDARD_CONCEPT_LIBRARY.md`.
+
 ## Rename and references by identity
 
 `references(EntityRef)` reads the entity index — the mappings whose
