@@ -44,6 +44,7 @@ message ClientMessage {
     ResetSimulationRequest reset_simulation = 25;
     ListTargetsRequest list_targets = 26;
     AnalyzeDeploymentRequest analyze_deployment = 27;
+    AnalyzeDefinitionDraftRequest analyze_definition_draft = 28;
   }
 }
 
@@ -66,6 +67,7 @@ message Response {
     SimulationResponse simulation = 15;
     TargetsResponse targets = 16;
     DeploymentResponse deployment = 17;
+    DefinitionDraftAnalysis definition_draft = 18;
   }
 }
 
@@ -701,6 +703,34 @@ message Diagnostic {
   string explanation = 8;
   string technical = 9;
   repeated string fixes = 10;
+}
+
+// ---------------------------------------------------------------------------
+// Definition drafts (read-only: a candidate definition checked, not committed)
+// ---------------------------------------------------------------------------
+
+// Analyse `source` as if it were the definition of `mapping_id` at
+// `revision`, without committing anything.  Refused with
+// `draft.stale_revision` if the project has moved on and
+// `draft.unknown_mapping` if the mapping does not exist at that revision.
+// `generation` is a client-chosen tag echoed back unchanged so the client
+// can drop responses that a newer draft has superseded.
+message AnalyzeDefinitionDraftRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  uint64 generation = 3;
+  string source = 4;
+}
+
+message DefinitionDraftAnalysis {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  uint64 generation = 3;
+  // False when the source did not parse; the diagnostics say where.
+  bool parse_ok = 4;
+  // The same verdict a committed definition gets; diagnostic spans index
+  // the draft source of the request, not any committed source.
+  MappingAnalysis analysis = 5;
 }
 
 // ---------------------------------------------------------------------------

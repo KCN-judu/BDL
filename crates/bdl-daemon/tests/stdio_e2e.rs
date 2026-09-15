@@ -710,3 +710,190 @@ fn outputs_and_deployment_over_stdio() {
     };
     assert!(c.child.wait().unwrap().success());
 }
+
+/// A definition draft is checked by the same pipeline as a commit, tagged
+/// with the revision it was checked against, and never touches the project.
+#[test]
+fn definition_drafts_over_stdio() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut events = Vec::new();
+    let mut c = Client::spawn();
+    c.call(
+        Req::Handshake(pb::HandshakeRequest {
+            client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+            client_name: "e2e".into(),
+            client_version: "0".into(),
+        }),
+        &mut events,
+    );
+    project(c.call(
+        Req::InitProject(pb::InitProjectRequest {
+            root_path: root.to_string_lossy().into(),
+            name: "lamp".into(),
+        }),
+        &mut events,
+    ));
+    fn apply(c: &mut Client, events: &mut Vec<pb::Event>, op: pb::edit_op::Op) -> pb::EditApplied {
+        let base = c.last_revision;
+        match c.call(edit(base, op), events) {
+            Resp::EditApplied(e) => e,
+            other => panic!("edit failed: {other:?}"),
+        }
+    }
+    fn quantity(dim: pb::Dim) -> Option<pb::Representation> {
+        Some(pb::Representation {
+            kind: Some(pb::representation::Kind::Quantity(dim)),
+        })
+    }
+    let tilt = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Tilt".into(),
+            description: String::new(),
+            representation: quantity(pb::Dim {
+                angle: 1,
+                ..Default::default()
+            }),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_concept
+    .unwrap();
+    let brightness = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Brightness".into(),
+            description: String::new(),
+            representation: quantity(pb::Dim::default()),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_concept
+    .unwrap();
+    let mapping = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "dimByTilt".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![tilt],
+                output: brightness,
+            }),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_mapping
+    .unwrap();
+    let revision = c.last_revision;
+
+    let draft =
+        |c: &mut Client, events: &mut Vec<pb::Event>, rev: u64, id: u64, gen: u64, src: &str| {
+            c.call(
+                Req::AnalyzeDefinitionDraft(pb::AnalyzeDefinitionDraftRequest {
+                    revision: rev,
+                    mapping_id: id,
+                    generation: gen,
+                    source: src.into(),
+                }),
+                events,
+            )
+        };
+
+    // valid draft: the full ladder, echoed generation and revision
+    let Resp::DefinitionDraft(d) =
+        draft(&mut c, &mut events, revision, mapping, 7, "Tilt / 90 deg")
+    else {
+        panic!("expected a draft analysis")
+    };
+    assert_eq!(d.revision, revision);
+    assert_eq!(d.mapping_id, mapping);
+    assert_eq!(d.generation, 7);
+    assert!(d.parse_ok);
+    let a = d.analysis.unwrap();
+    assert_eq!(a.status(), pb::MappingStatus::ClockConsistent);
+    assert!(a.diagnostics.is_empty());
+    assert!(!a.core_expr.is_empty());
+
+    // invalid draft: the dimension diagnostic with a span into the draft source
+    let src = "Tilt + 1 s";
+    let Resp::DefinitionDraft(d) = draft(&mut c, &mut events, revision, mapping, 8, src) else {
+        panic!("expected a draft analysis")
+    };
+    let a = d.analysis.unwrap();
+    assert_eq!(a.status(), pb::MappingStatus::Invalid);
+    let dim = a
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "dimension.mismatch")
+        .expect("dimension diagnostic");
+    let span = dim.span.unwrap();
+    assert_eq!(&src[span.start as usize..span.end as usize], src);
+
+    // syntax error: parse_ok false, still a normal response
+    let Resp::DefinitionDraft(d) = draft(&mut c, &mut events, revision, mapping, 9, "Tilt /")
+    else {
+        panic!("expected a draft analysis")
+    };
+    assert!(!d.parse_ok);
+    assert_eq!(d.analysis.unwrap().status(), pb::MappingStatus::Invalid);
+
+    // stale revision and unknown mapping are refused with stable codes
+    let Resp::Error(e) = draft(&mut c, &mut events, revision - 1, mapping, 10, "1") else {
+        panic!("expected an error")
+    };
+    assert_eq!(e.code, "draft.stale_revision");
+    let Resp::Error(e) = draft(&mut c, &mut events, revision, 999, 11, "1") else {
+        panic!("expected an error")
+    };
+    assert_eq!(e.code, "draft.unknown_mapping");
+
+    // nothing was committed: same revision, still unresolved, nothing to undo
+    let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
+    assert_eq!(p.revision, revision);
+    assert!(p.mappings[0].definition.is_none());
+    assert!(events.iter().all(|e| !matches!(
+        e.payload,
+        Some(pb::event::Payload::ProjectChanged(_)) | Some(pb::event::Payload::AnalysisReady(_))
+    )));
+
+    // committing the draft, saving and reopening keeps the source exactly
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::AttachDefinition(pb::AttachDefinition {
+            id: mapping,
+            definition: Some(pb::Definition {
+                kind: Some(pb::definition::Kind::Formula("Tilt / 90 deg".into())),
+            }),
+        }),
+    );
+    project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
+    let p = project(c.call(
+        Req::OpenProject(pb::OpenProjectRequest {
+            root_path: root.to_string_lossy().into(),
+        }),
+        &mut events,
+    ));
+    assert_eq!(
+        p.mappings[0].definition.as_ref().unwrap().kind,
+        Some(pb::definition::Kind::Formula("Tilt / 90 deg".into()))
+    );
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!("expected an analysis")
+    };
+    assert_eq!(
+        a.analysis.unwrap().mappings[0].status(),
+        pb::MappingStatus::ClockConsistent
+    );
+
+    c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
+    assert!(c.child.wait().unwrap().success());
+}

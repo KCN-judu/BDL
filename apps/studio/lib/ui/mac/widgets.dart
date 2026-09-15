@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../canvas/canvas_geometry.dart' show StatusTone, statusTone, statusWord;
+import '../source_span.dart';
 import 'controls.dart';
 import 'theme.dart';
 import 'tokens.dart';
@@ -563,9 +564,18 @@ class StatusPill extends StatelessWidget {
 /// One compiler diagnostic: severity dot, message, the offending part of the
 /// formula, explanation and fixes.  Kernel detail stays in a tooltip.
 class DiagnosticCard extends StatelessWidget {
-  const DiagnosticCard({super.key, required this.diagnostic, required this.source});
+  const DiagnosticCard({
+    super.key,
+    required this.diagnostic,
+    required this.source,
+    this.showMessage = true,
+  });
   final pb.Diagnostic diagnostic;
   final String source;
+
+  /// False when the message is already the line above (the editor's status
+  /// line); the card then carries only the excerpt, explanation and fixes.
+  final bool showMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -576,11 +586,12 @@ class DiagnosticCard extends StatelessWidget {
       pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_WARNING => t.open,
       _ => t.accent,
     };
+    // Spans are byte ranges into the formula; the excerpt must not split a
+    // character (source_span.dart).
     String? excerpt;
     if (d.hasSpan() && source.isNotEmpty) {
-      final start = d.span.start.clamp(0, source.length);
-      final end = d.span.end.clamp(start, source.length);
-      if (end > start) excerpt = source.substring(start, end);
+      final e = excerptOf(source, d.span.start, d.span.end);
+      if (e.isNotEmpty) excerpt = e;
     }
     final card = Padding(
       padding: const EdgeInsets.only(bottom: MacMetrics.gap),
@@ -588,16 +599,21 @@ class DiagnosticCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: MacMetrics.gap,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Icon(Icons.circle, size: 7, color: color),
-          ),
+          // A continuation of the line above keeps its indent, not its dot.
+          if (showMessage)
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Icon(Icons.circle, size: 7, color: color),
+            )
+          else
+            const SizedBox(width: 7),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: MacMetrics.gapTight,
               children: [
-                Text(d.message, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                if (showMessage)
+                  Text(d.message, style: TextStyle(fontSize: 12, color: t.textPrimary)),
                 if (excerpt != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

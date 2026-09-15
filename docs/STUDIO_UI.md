@@ -235,12 +235,39 @@ Every operation is an `EditOp` the compiler already accepts:
 | Concept | name (inline), description, representation (none / quantity + unit / boolean / count) | Rename, SetDescription, SetRepresentation | refinement; **rebinding** a representation is an edit and the inspector says so |
 | Concept | Delete | DeleteConcept | refused while used; banner names the users |
 | Mapping | name, description, inputs (add/remove concept), output | Rename, SetDescription, SetSignature | signature change is an edit; inspector shows "will reopen validation of dependents" |
-| Mapping | definition: attach formula / replace / detach | AttachDefinition, ReplaceDefinition | attach is a refinement; replace/detach is an edit |
+| Mapping | definition: the definition editor (§4a) — *Add definition* / *Save definition* / *Revert* / *Detach definition* | AttachDefinition, ReplaceDefinition (chosen by the reducer from the committed state, never by the widget) | add is a refinement; save (replace) and detach are edits |
 | Mapping | Delete | DeleteMapping | edit |
 
 The inspector shows the refinement/edit classification the compiler
 returns (`EditOutcome.kind`) as a one-line note after each change, so the
 paper's distinction is visible where the designer acts.
+
+### 4a. The definition editor
+
+The formula field is not a text box wired to an `EditOp`; it is an
+authoring surface over the compiler's verdict (`lib/ui/definition_editor.dart`,
+docs/STUDIO_COMPILER_INTEGRATION.md). Studio owns the draft — its text,
+base revision, generation — and the compiler judges it as the designer
+types (`AnalyzeDefinitionDraft`, debounced 150 ms, read-only). The project
+changes only on *Add definition* (no committed definition) / *Save
+definition* (there is one), or *Detach definition*.
+
+What is shown, in rank order: one status line under the field (dot for
+tone, words for meaning: *Checking…*, *Valid definition*, *Tilt has no
+representation yet.*, the first error's message, *Not saved: …*); the
+offending spans underlined in the field, each repeated as a diagnostic row
+with excerpt, explanation and fixes; the names in scope as the field's
+hint (*expression over Tilt, Held*); *unsaved* in the section header and
+*Revert* beside the primary button while draft and committed differ; and,
+when the committed definition changed under a dirty draft, a notice with
+*Reload* / *Keep mine* — never a silent overwrite. Open is orange and
+worded as what is still to decide; only *Invalid* is red.
+
+Keys in the field: ⌘S and ⌘↩ save the definition while it is dirty (⌘S
+otherwise saves the project); Esc reverts; Return inserts a line. The
+canvas draws committed state only; the status line counts *N unsaved
+definitions*. Closing a project stashes dirty drafts by path and reopening
+restores them — no modal.
 
 ## 5. Sheets teach by showing, not by example text
 
@@ -314,4 +341,5 @@ as *refused*: Studio shows a banner explaining it and the Start list gains
 
 Contexts, outputs, transports and clock boundaries on the canvas;
 simulate/deploy/monitor content; native menu bar; drag-and-drop from the
-library; inline formula editor. Each lands with its compiler pass.
+library; draft indication on the canvas. Each lands with its compiler
+pass (docs/STUDIO_COMPILER_INTEGRATION.md §3 places them).

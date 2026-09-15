@@ -193,13 +193,17 @@ class _MacButtonState extends State<MacButton> {
                     ]
                   : null,
             ),
-            alignment: Alignment.center,
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: primary ? FontWeight.w600 : FontWeight.w400,
-                color: fg,
+            // Sized to the label (≥ 72 pt), never to the space offered: a
+            // push button in a stretching column or a wrap stays a button.
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: primary ? FontWeight.w600 : FontWeight.w400,
+                  color: fg,
+                ),
               ),
             ),
           ),

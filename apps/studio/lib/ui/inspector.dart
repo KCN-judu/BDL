@@ -9,7 +9,7 @@ import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel;
-import 'mac/controls.dart';
+import 'definition_editor.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'units.dart';
@@ -51,6 +51,7 @@ class Inspector extends StatelessWidget {
           mapping: project.mappings.firstWhere((m) => m.id.toInt() == id),
           concepts: project.concepts,
           analysis: state.mappingAnalysis(id),
+          draft: state.draft(id),
           dispatch: dispatch,
         ),
       };
@@ -305,6 +306,7 @@ class _MappingInspector extends StatelessWidget {
     required this.mapping,
     required this.concepts,
     required this.analysis,
+    required this.draft,
     required this.dispatch,
   });
   final pb.MappingView mapping;
@@ -312,6 +314,9 @@ class _MappingInspector extends StatelessWidget {
 
   /// The compiler's verdict for the current revision; `null` while pending.
   final pb.MappingAnalysis? analysis;
+
+  /// Studio's uncommitted definition text for this mapping, if any.
+  final DefinitionDraft? draft;
   final void Function(AppAction) dispatch;
 
   String _name(int id) =>
@@ -323,7 +328,11 @@ class _MappingInspector extends StatelessWidget {
     final id = mapping.id.toInt();
     final inputs = mapping.signature.inputs.map((i) => i.toInt()).toList();
     final output = mapping.signature.output.toInt();
-    final unresolved = !mapping.hasDefinition();
+    final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
+    // Formula-local diagnostics are shown by the editor, under the text they
+    // point into; what remains here is about the mapping's place in the
+    // design (causality, domains, outputs).
+    final broader = analysis?.diagnostics.where((d) => !d.hasSpan()).toList() ?? const [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -410,63 +419,25 @@ class _MappingInspector extends StatelessWidget {
         ),
         InspectorSection(
           title: 'Definition',
+          trailing: draft != null && draft!.dirtyAgainst(committed)
+              ? Text('unsaved', style: TextStyle(fontSize: 10, color: t.open))
+              : null,
           children: [
-            if (unresolved) ...[
-              Text(
-                'No definition yet. This is a legal state: other relationships may already '
-                'depend on the signature.',
-                style: TextStyle(fontSize: 11, color: t.textSecondary),
-              ),
-              const SizedBox(height: 8),
-              CommitTextField(
-                value: '',
-                hint: inputs.isEmpty
-                    ? 'expression with no inputs'
-                    : 'expression over ${inputs.map(_name).join(', ')}',
-                maxLines: 3,
-                commitLabel: 'Attach',
-                onCommit: (v) {
-                  if (v.trim().isNotEmpty) {
-                    dispatch(AttachFormulaRequested(mappingId: id, source: v.trim()));
-                  }
-                },
-              ),
-            ] else ...[
-              CommitTextField(
-                value: mapping.definition.formula,
-                maxLines: 4,
-                monospace: true,
-                onCommit: (v) => dispatch(ReplaceDefinitionRequested(mappingId: id, source: v)),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  MacButton(
-                    label: 'Detach definition',
-                    onPressed: () =>
-                        dispatch(ReplaceDefinitionRequested(mappingId: id, source: null)),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Replacing or detaching is an edit.',
-                      style: TextStyle(fontSize: 11, color: t.textSecondary),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            DefinitionEditor(
+              mappingId: id,
+              committed: committed,
+              draft: draft,
+              committedAnalysis: analysis,
+              inputNames: inputs.map(_name).toList(),
+              dispatch: dispatch,
+            ),
           ],
         ),
-        if (analysis case final a? when a.diagnostics.isNotEmpty)
+        if (broader.isNotEmpty)
           InspectorSection(
             title: 'Compiler',
             children: [
-              for (final d in a.diagnostics)
-                DiagnosticCard(
-                  diagnostic: d,
-                  source: mapping.hasDefinition() ? mapping.definition.formula : '',
-                ),
+              for (final d in broader) DiagnosticCard(diagnostic: d, source: committed ?? ''),
             ],
           ),
         if (analysis case final a? when a.coreExpr.isNotEmpty)

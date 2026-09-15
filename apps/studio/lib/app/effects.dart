@@ -70,6 +70,23 @@ class RunAnalysis extends Effect {
   const RunAnalysis();
 }
 
+/// Ask the compiler about an uncommitted definition.  Read-only for the
+/// project; not counted as a pending request.  The executor debounces
+/// these per mapping (`EffectExecutor.draftDebounce`), so only the last of
+/// a burst is sent.
+class AnalyzeDraft extends Effect {
+  const AnalyzeDraft({
+    required this.revision,
+    required this.mappingId,
+    required this.generation,
+    required this.source,
+  });
+  final int revision;
+  final int mappingId;
+  final int generation;
+  final String source;
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

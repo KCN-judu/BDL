@@ -323,6 +323,15 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'analyzeDeployment'
     },
+    {
+      '1': 'analyze_definition_draft',
+      '3': 28,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.AnalyzeDefinitionDraftRequest',
+      '9': 0,
+      '10': 'analyzeDefinitionDraft'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -352,7 +361,9 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'YXRpb24YGSABKAsyHi5iZGwudjEuUmVzZXRTaW11bGF0aW9uUmVxdWVzdEgAUg9yZXNldFNpbX'
         'VsYXRpb24SPwoMbGlzdF90YXJnZXRzGBogASgLMhouYmRsLnYxLkxpc3RUYXJnZXRzUmVxdWVz'
         'dEgAUgtsaXN0VGFyZ2V0cxJRChJhbmFseXplX2RlcGxveW1lbnQYGyABKAsyIC5iZGwudjEuQW'
-        '5hbHl6ZURlcGxveW1lbnRSZXF1ZXN0SABSEWFuYWx5emVEZXBsb3ltZW50QgkKB3BheWxvYWQ=');
+        '5hbHl6ZURlcGxveW1lbnRSZXF1ZXN0SABSEWFuYWx5emVEZXBsb3ltZW50EmEKGGFuYWx5emVf'
+        'ZGVmaW5pdGlvbl9kcmFmdBgcIAEoCzIlLmJkbC52MS5BbmFseXplRGVmaW5pdGlvbkRyYWZ0Um'
+        'VxdWVzdEgAUhZhbmFseXplRGVmaW5pdGlvbkRyYWZ0QgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -442,6 +453,15 @@ const Response$json = {
       '9': 0,
       '10': 'deployment'
     },
+    {
+      '1': 'definition_draft',
+      '3': 18,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DefinitionDraftAnalysis',
+      '9': 0,
+      '10': 'definitionDraft'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -459,7 +479,8 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'YWx5c2lzEjwKCnNpbXVsYXRpb24YDyABKAsyGi5iZGwudjEuU2ltdWxhdGlvblJlc3BvbnNlSA'
         'BSCnNpbXVsYXRpb24SMwoHdGFyZ2V0cxgQIAEoCzIXLmJkbC52MS5UYXJnZXRzUmVzcG9uc2VI'
         'AFIHdGFyZ2V0cxI8CgpkZXBsb3ltZW50GBEgASgLMhouYmRsLnYxLkRlcGxveW1lbnRSZXNwb2'
-        '5zZUgAUgpkZXBsb3ltZW50QgkKB3BheWxvYWQ=');
+        '5zZUgAUgpkZXBsb3ltZW50EkwKEGRlZmluaXRpb25fZHJhZnQYEiABKAsyHy5iZGwudjEuRGVm'
+        'aW5pdGlvbkRyYWZ0QW5hbHlzaXNIAFIPZGVmaW5pdGlvbkRyYWZ0QgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -2229,6 +2250,42 @@ final $typed_data.Uint8List diagnosticDescriptor = $convert
         'dXJjZVNwYW5IAVIEc3BhbogBARIYCgdtZXNzYWdlGAcgASgJUgdtZXNzYWdlEiAKC2V4cGxhbm'
         'F0aW9uGAggASgJUgtleHBsYW5hdGlvbhIcCgl0ZWNobmljYWwYCSABKAlSCXRlY2huaWNhbBIU'
         'CgVmaXhlcxgKIAMoCVIFZml4ZXNCCAoGZW50aXR5QgcKBV9zcGFu');
+
+@$core.Deprecated('Use analyzeDefinitionDraftRequestDescriptor instead')
+const AnalyzeDefinitionDraftRequest$json = {
+  '1': 'AnalyzeDefinitionDraftRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'generation', '3': 3, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'source', '3': 4, '4': 1, '5': 9, '10': 'source'},
+  ],
+};
+
+/// Descriptor for `AnalyzeDefinitionDraftRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List analyzeDefinitionDraftRequestDescriptor = $convert
+    .base64Decode('Ch1BbmFseXplRGVmaW5pdGlvbkRyYWZ0UmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aX'
+        'Npb24SHQoKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEh4KCmdlbmVyYXRpb24YAyABKARS'
+        'CmdlbmVyYXRpb24SFgoGc291cmNlGAQgASgJUgZzb3VyY2U=');
+
+@$core.Deprecated('Use definitionDraftAnalysisDescriptor instead')
+const DefinitionDraftAnalysis$json = {
+  '1': 'DefinitionDraftAnalysis',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'generation', '3': 3, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'parse_ok', '3': 4, '4': 1, '5': 8, '10': 'parseOk'},
+    {'1': 'analysis', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.MappingAnalysis', '10': 'analysis'},
+  ],
+};
+
+/// Descriptor for `DefinitionDraftAnalysis`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List definitionDraftAnalysisDescriptor = $convert
+    .base64Decode('ChdEZWZpbml0aW9uRHJhZnRBbmFseXNpcxIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHQ'
+        'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEh4KCmdlbmVyYXRpb24YAyABKARSCmdlbmVy'
+        'YXRpb24SGQoIcGFyc2Vfb2sYBCABKAhSB3BhcnNlT2sSMwoIYW5hbHlzaXMYBSABKAsyFy5iZG'
+        'wudjEuTWFwcGluZ0FuYWx5c2lzUghhbmFseXNpcw==');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {

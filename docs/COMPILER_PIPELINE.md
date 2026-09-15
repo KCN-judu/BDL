@@ -48,6 +48,15 @@ message).
 committed revision; Studio keeps an analysis only while its revision equals
 the projection's.
 
+An *uncommitted* candidate definition gets the same verdict a commit
+would: `bdl-ide-db` composes the committed snapshot with the draft overlay
+into an effective design and runs this same `analyze` over it
+(`bdl_ide::draft_verdict`; docs/IDE_SERVICE_ARCHITECTURE.md), so there is
+one pipeline and one truth for drafts and definitions alike. Nothing is
+mutated and no revision is produced; `bdld` exposes it as
+`AnalyzeDefinitionDraft` (docs/PROTOCOL.md) and Studio's definition editor
+asks it as the designer types (docs/STUDIO_COMPILER_INTEGRATION.md).
+
 The output pass adds `outputs: OutputAnalysis`, `open_outputs` (surface
 outputs still without a domain — neither driven nor missing) and one
 whole-design flag, `output_complete = executable ∧ open_outputs = ∅`.

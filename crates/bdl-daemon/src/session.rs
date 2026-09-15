@@ -230,7 +230,6 @@ impl Session {
     /// untouched; the overlay stays until a commit makes it the committed
     /// definition, the mapping is deleted, or a newer draft replaces it.
     /// Served by the `AnalyzeDefinitionDraft` request (protocol 0.4).
-    #[allow(dead_code)]
     pub fn draft_verdict(
         &mut self,
         mapping: DeclId,

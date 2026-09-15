@@ -51,6 +51,21 @@ void main() {
     expect(on.state.editor.pendingRequests, 1);
   });
 
+  test('a new concept carries the kind chosen in the sheet', () {
+    final t = reduce(
+      connected(project: projection()),
+      CreateConceptRequested(
+        name: 'Light',
+        representation: pb.Representation(quantity: pb.Dim(luminous: 1)),
+      ),
+    );
+    final op = (t.effects.single as ApplyEdit).op.createConcept;
+    expect(op.hasRepresentation(), isTrue);
+    expect(op.representation.quantity.luminous, 1);
+    final open = reduce(connected(project: projection()), const CreateConceptRequested(name: 'X'));
+    expect((open.effects.single as ApplyEdit).op.createConcept.hasRepresentation(), isFalse);
+  });
+
   test('stale projections are discarded, newer ones accepted', () {
     final s = connected(project: projection(revision: 5));
     final stale = reduce(s, ProjectReceived(projection(revision: 3)));

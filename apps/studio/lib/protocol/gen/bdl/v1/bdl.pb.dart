@@ -40,6 +40,7 @@ enum ClientMessage_Payload {
   resetSimulation,
   listTargets,
   analyzeDeployment,
+  analyzeDefinitionDraft,
   notSet
 }
 
@@ -64,6 +65,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     ResetSimulationRequest? resetSimulation,
     ListTargetsRequest? listTargets,
     AnalyzeDeploymentRequest? analyzeDeployment,
+    AnalyzeDefinitionDraftRequest? analyzeDefinitionDraft,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -85,6 +87,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (resetSimulation != null) result.resetSimulation = resetSimulation;
     if (listTargets != null) result.listTargets = listTargets;
     if (analyzeDeployment != null) result.analyzeDeployment = analyzeDeployment;
+    if (analyzeDefinitionDraft != null) result.analyzeDefinitionDraft = analyzeDefinitionDraft;
     return result;
   }
 
@@ -116,12 +119,13 @@ class ClientMessage extends $pb.GeneratedMessage {
     25: ClientMessage_Payload.resetSimulation,
     26: ClientMessage_Payload.listTargets,
     27: ClientMessage_Payload.analyzeDeployment,
+    28: ClientMessage_Payload.analyzeDefinitionDraft,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ClientMessage.$_createMessage)
-    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27])
+    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<HandshakeRequest>(10, _omitFieldNames ? '' : 'handshake',
@@ -158,6 +162,8 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: ListTargetsRequest.$_createMessage)
     ..aOM<AnalyzeDeploymentRequest>(27, _omitFieldNames ? '' : 'analyzeDeployment',
         subBuilder: AnalyzeDeploymentRequest.$_createMessage)
+    ..aOM<AnalyzeDefinitionDraftRequest>(28, _omitFieldNames ? '' : 'analyzeDefinitionDraft',
+        subBuilder: AnalyzeDefinitionDraftRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -198,6 +204,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(25)
   @$pb.TagNumber(26)
   @$pb.TagNumber(27)
+  @$pb.TagNumber(28)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -217,6 +224,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(25)
   @$pb.TagNumber(26)
   @$pb.TagNumber(27)
+  @$pb.TagNumber(28)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -425,6 +433,17 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearAnalyzeDeployment() => $_clearField(27);
   @$pb.TagNumber(27)
   AnalyzeDeploymentRequest ensureAnalyzeDeployment() => $_ensure(18);
+
+  @$pb.TagNumber(28)
+  AnalyzeDefinitionDraftRequest get analyzeDefinitionDraft => $_getN(19);
+  @$pb.TagNumber(28)
+  set analyzeDefinitionDraft(AnalyzeDefinitionDraftRequest value) => $_setField(28, value);
+  @$pb.TagNumber(28)
+  $core.bool hasAnalyzeDefinitionDraft() => $_has(19);
+  @$pb.TagNumber(28)
+  void clearAnalyzeDefinitionDraft() => $_clearField(28);
+  @$pb.TagNumber(28)
+  AnalyzeDefinitionDraftRequest ensureAnalyzeDefinitionDraft() => $_ensure(19);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -522,6 +541,7 @@ enum Response_Payload {
   simulation,
   targets,
   deployment,
+  definitionDraft,
   notSet
 }
 
@@ -537,6 +557,7 @@ class Response extends $pb.GeneratedMessage {
     SimulationResponse? simulation,
     TargetsResponse? targets,
     DeploymentResponse? deployment,
+    DefinitionDraftAnalysis? definitionDraft,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -549,6 +570,7 @@ class Response extends $pb.GeneratedMessage {
     if (simulation != null) result.simulation = simulation;
     if (targets != null) result.targets = targets;
     if (deployment != null) result.deployment = deployment;
+    if (definitionDraft != null) result.definitionDraft = definitionDraft;
     return result;
   }
 
@@ -571,12 +593,13 @@ class Response extends $pb.GeneratedMessage {
     15: Response_Payload.simulation,
     16: Response_Payload.targets,
     17: Response_Payload.deployment,
+    18: Response_Payload.definitionDraft,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -595,6 +618,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: TargetsResponse.$_createMessage)
     ..aOM<DeploymentResponse>(17, _omitFieldNames ? '' : 'deployment',
         subBuilder: DeploymentResponse.$_createMessage)
+    ..aOM<DefinitionDraftAnalysis>(18, _omitFieldNames ? '' : 'definitionDraft',
+        subBuilder: DefinitionDraftAnalysis.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -626,6 +651,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -636,6 +662,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -745,6 +772,17 @@ class Response extends $pb.GeneratedMessage {
   void clearDeployment() => $_clearField(17);
   @$pb.TagNumber(17)
   DeploymentResponse ensureDeployment() => $_ensure(9);
+
+  @$pb.TagNumber(18)
+  DefinitionDraftAnalysis get definitionDraft => $_getN(10);
+  @$pb.TagNumber(18)
+  set definitionDraft(DefinitionDraftAnalysis value) => $_setField(18, value);
+  @$pb.TagNumber(18)
+  $core.bool hasDefinitionDraft() => $_has(10);
+  @$pb.TagNumber(18)
+  void clearDefinitionDraft() => $_clearField(18);
+  @$pb.TagNumber(18)
+  DefinitionDraftAnalysis ensureDefinitionDraft() => $_ensure(10);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -7777,6 +7815,223 @@ class Diagnostic extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(10)
   $pb.PbList<$core.String> get fixes => $_getList(9);
+}
+
+/// Analyse `source` as if it were the definition of `mapping_id` at
+/// `revision`, without committing anything.  Refused with
+/// `draft.stale_revision` if the project has moved on and
+/// `draft.unknown_mapping` if the mapping does not exist at that revision.
+/// `generation` is a client-chosen tag echoed back unchanged so the client
+/// can drop responses that a newer draft has superseded.
+class AnalyzeDefinitionDraftRequest extends $pb.GeneratedMessage {
+  factory AnalyzeDefinitionDraftRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? generation,
+    $core.String? source,
+  }) {
+    final result = AnalyzeDefinitionDraftRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (generation != null) result.generation = generation;
+    if (source != null) result.source = source;
+    return result;
+  }
+
+  AnalyzeDefinitionDraftRequest._();
+
+  factory AnalyzeDefinitionDraftRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalyzeDefinitionDraftRequest()..mergeFromBuffer(data, registry);
+  factory AnalyzeDefinitionDraftRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AnalyzeDefinitionDraftRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'AnalyzeDefinitionDraftRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: AnalyzeDefinitionDraftRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(4, _omitFieldNames ? '' : 'source')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalyzeDefinitionDraftRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AnalyzeDefinitionDraftRequest copyWith(void Function(AnalyzeDefinitionDraftRequest) updates) =>
+      super.copyWith((message) => updates(message as AnalyzeDefinitionDraftRequest))
+          as AnalyzeDefinitionDraftRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core
+      .Deprecated('Use AnalyzeDefinitionDraftRequest() / AnalyzeDefinitionDraftRequest.new instead')
+  static AnalyzeDefinitionDraftRequest create() => AnalyzeDefinitionDraftRequest._();
+  static $pb.GeneratedMessage $_createMessage() => AnalyzeDefinitionDraftRequest._();
+  @$core.override
+  AnalyzeDefinitionDraftRequest createEmptyInstance() => AnalyzeDefinitionDraftRequest._();
+  @$core.pragma('dart2js:noInline')
+  static AnalyzeDefinitionDraftRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<AnalyzeDefinitionDraftRequest>(
+          AnalyzeDefinitionDraftRequest.$_createMessage);
+  static AnalyzeDefinitionDraftRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get generation => $_getI64(2);
+  @$pb.TagNumber(3)
+  set generation($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasGeneration() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearGeneration() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get source => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set source($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSource() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSource() => $_clearField(4);
+}
+
+class DefinitionDraftAnalysis extends $pb.GeneratedMessage {
+  factory DefinitionDraftAnalysis({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? generation,
+    $core.bool? parseOk,
+    MappingAnalysis? analysis,
+  }) {
+    final result = DefinitionDraftAnalysis._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (generation != null) result.generation = generation;
+    if (parseOk != null) result.parseOk = parseOk;
+    if (analysis != null) result.analysis = analysis;
+    return result;
+  }
+
+  DefinitionDraftAnalysis._();
+
+  factory DefinitionDraftAnalysis.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DefinitionDraftAnalysis()..mergeFromBuffer(data, registry);
+  factory DefinitionDraftAnalysis.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DefinitionDraftAnalysis()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DefinitionDraftAnalysis',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DefinitionDraftAnalysis.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(4, _omitFieldNames ? '' : 'parseOk')
+    ..aOM<MappingAnalysis>(5, _omitFieldNames ? '' : 'analysis',
+        subBuilder: MappingAnalysis.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DefinitionDraftAnalysis clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DefinitionDraftAnalysis copyWith(void Function(DefinitionDraftAnalysis) updates) =>
+      super.copyWith((message) => updates(message as DefinitionDraftAnalysis))
+          as DefinitionDraftAnalysis;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DefinitionDraftAnalysis() / DefinitionDraftAnalysis.new instead')
+  static DefinitionDraftAnalysis create() => DefinitionDraftAnalysis._();
+  static $pb.GeneratedMessage $_createMessage() => DefinitionDraftAnalysis._();
+  @$core.override
+  DefinitionDraftAnalysis createEmptyInstance() => DefinitionDraftAnalysis._();
+  @$core.pragma('dart2js:noInline')
+  static DefinitionDraftAnalysis getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DefinitionDraftAnalysis>(
+          DefinitionDraftAnalysis.$_createMessage);
+  static DefinitionDraftAnalysis? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get generation => $_getI64(2);
+  @$pb.TagNumber(3)
+  set generation($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasGeneration() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearGeneration() => $_clearField(3);
+
+  /// False when the source did not parse; the diagnostics say where.
+  @$pb.TagNumber(4)
+  $core.bool get parseOk => $_getBF(3);
+  @$pb.TagNumber(4)
+  set parseOk($core.bool value) => $_setBool(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasParseOk() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearParseOk() => $_clearField(4);
+
+  /// The same verdict a committed definition gets; diagnostic spans index
+  /// the draft source of the request, not any committed source.
+  @$pb.TagNumber(5)
+  MappingAnalysis get analysis => $_getN(4);
+  @$pb.TagNumber(5)
+  set analysis(MappingAnalysis value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAnalysis() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAnalysis() => $_clearField(5);
+  @$pb.TagNumber(5)
+  MappingAnalysis ensureAnalysis() => $_ensure(4);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

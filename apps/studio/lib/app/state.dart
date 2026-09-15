@@ -105,6 +105,126 @@ class MappingSelected extends Selection {
   final int id;
 }
 
+/// How far the compiler has got with a draft's current source.
+enum DraftCheck {
+  /// The source changed since the last verdict; a check is debounced or in
+  /// flight.  Nothing is known about this exact text yet.
+  checking,
+
+  /// [DefinitionDraft.analysis] is the compiler's verdict for exactly this
+  /// source at exactly [DefinitionDraft.baseRevision].
+  checked,
+
+  /// The compiler could not be asked (daemon gone, transport failure).  The
+  /// source is kept; there is simply no verdict.
+  unavailable,
+}
+
+/// An uncommitted candidate definition for one mapping.
+///
+/// The *committed* definition lives in the projection; this is Studio's own
+/// editing state and survives every projection or analysis push.  It is
+/// dropped only on purpose: a confirmed commit, an explicit revert or
+/// reload, the mapping's deletion, or a project close (where dirty drafts
+/// are stashed by project path and restored on reopen).
+@immutable
+class DefinitionDraft {
+  const DefinitionDraft({
+    required this.mappingId,
+    required this.baseRevision,
+    required this.baseDefinition,
+    required this.source,
+    this.generation = 0,
+    this.check = DraftCheck.checking,
+    this.checkError,
+    this.analysis,
+    this.parseOk = true,
+    this.conflict = false,
+    this.pendingCommit,
+    this.commitError,
+  });
+
+  final int mappingId;
+
+  /// The project revision the draft was last (re)based on.  Every new
+  /// revision rebases the draft and asks the compiler again.
+  final int baseRevision;
+
+  /// The committed formula the draft started from at [baseRevision]
+  /// (`null` when the mapping had none).  Lets a later projection tell
+  /// "the definition changed under this draft" from "something else did".
+  final String? baseDefinition;
+
+  /// What the designer has typed.  Never lost by a push.
+  final String source;
+
+  /// Monotonic per draft; each source change bumps it and only a verdict
+  /// carrying the latest generation is accepted (out-of-order responses
+  /// cannot overwrite newer state).
+  final int generation;
+
+  final DraftCheck check;
+
+  /// Why the check is [DraftCheck.unavailable], in product language.
+  final String? checkError;
+
+  /// The compiler's verdict for [source] at [baseRevision], when
+  /// [check] is [DraftCheck.checked].
+  final pb.MappingAnalysis? analysis;
+
+  /// False when [analysis] says the source did not parse.
+  final bool parseOk;
+
+  /// The committed definition changed while this draft was dirty.  Neither
+  /// side is overwritten; the designer chooses (reload or keep).
+  final bool conflict;
+
+  /// The source sent in a commit that has not been answered yet; cleared
+  /// when the projection confirms it or the request fails.
+  final String? pendingCommit;
+
+  /// The last commit's failure, shown next to the editor; cleared on the
+  /// next source change or commit.
+  final String? commitError;
+
+  /// True when the source differs from the definition committed now.
+  bool dirtyAgainst(String? committed) => source != (committed ?? '');
+
+  DefinitionDraft copyWith({
+    int? baseRevision,
+    String? baseDefinition,
+    bool clearBaseDefinition = false,
+    String? source,
+    int? generation,
+    DraftCheck? check,
+    String? checkError,
+    bool clearCheckError = false,
+    pb.MappingAnalysis? analysis,
+    bool clearAnalysis = false,
+    bool? parseOk,
+    bool? conflict,
+    String? pendingCommit,
+    bool clearPendingCommit = false,
+    String? commitError,
+    bool clearCommitError = false,
+  }) {
+    return DefinitionDraft(
+      mappingId: mappingId,
+      baseRevision: baseRevision ?? this.baseRevision,
+      baseDefinition: clearBaseDefinition ? null : (baseDefinition ?? this.baseDefinition),
+      source: source ?? this.source,
+      generation: generation ?? this.generation,
+      check: check ?? this.check,
+      checkError: clearCheckError ? null : (checkError ?? this.checkError),
+      analysis: clearAnalysis ? null : (analysis ?? this.analysis),
+      parseOk: parseOk ?? this.parseOk,
+      conflict: conflict ?? this.conflict,
+      pendingCommit: clearPendingCommit ? null : (pendingCommit ?? this.pendingCommit),
+      commitError: clearCommitError ? null : (commitError ?? this.commitError),
+    );
+  }
+}
+
 @immutable
 class EditorState {
   const EditorState({
@@ -115,6 +235,8 @@ class EditorState {
     this.lastError,
     this.lastOutcome,
     this.pickerUnavailable = false,
+    this.drafts = const {},
+    this.stashedDrafts = const {},
   });
 
   final StudioPage page;
@@ -138,6 +260,16 @@ class EditorState {
   /// sandboxed host); the welcome screen then offers typing a path.
   final bool pickerUnavailable;
 
+  /// Definition drafts of the open project, by mapping id.  A draft exists
+  /// only while the designer's text differs from what is committed (or a
+  /// commit is being confirmed).
+  final Map<int, DefinitionDraft> drafts;
+
+  /// Dirty drafts of projects that were closed, by project path, restored
+  /// when that project is opened again.  Nothing typed is discarded by a
+  /// close; no modal asks.
+  final Map<String, Map<int, DefinitionDraft>> stashedDrafts;
+
   EditorState copyWith({
     StudioPage? page,
     Selection? selection,
@@ -148,6 +280,8 @@ class EditorState {
     pb.EditOutcome? lastOutcome,
     bool clearOutcome = false,
     bool? pickerUnavailable,
+    Map<int, DefinitionDraft>? drafts,
+    Map<String, Map<int, DefinitionDraft>>? stashedDrafts,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -157,6 +291,8 @@ class EditorState {
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastOutcome: clearOutcome ? null : (lastOutcome ?? this.lastOutcome),
       pickerUnavailable: pickerUnavailable ?? this.pickerUnavailable,
+      drafts: drafts ?? this.drafts,
+      stashedDrafts: stashedDrafts ?? this.stashedDrafts,
     );
   }
 }
@@ -213,6 +349,16 @@ class AppState {
   /// Analysis of one mapping at the current revision, if available.
   pb.MappingAnalysis? mappingAnalysis(int id) =>
       analysis?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
+
+  pb.MappingView? mapping(int id) => project?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
+
+  /// The committed formula of a mapping, `null` when it has none.
+  String? committedDefinition(int id) {
+    final m = mapping(id);
+    return m != null && m.hasDefinition() ? m.definition.formula : null;
+  }
+
+  DefinitionDraft? draft(int id) => editor.drafts[id];
 
   AppState copyWith({
     DaemonConnection? connection,

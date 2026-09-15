@@ -22,7 +22,20 @@ class DaemonError implements Exception {
   String toString() => '$code: $message';
 }
 
-class DaemonClient {
+/// What the effect executor needs from a daemon connection.  `DaemonClient`
+/// is the real one over a child process; tests substitute a fake.
+abstract interface class DaemonLink {
+  Stream<pb.Event> get events;
+  Stream<String> get stderrLines;
+  Future<int> get exitCode;
+
+  /// Send one request; resolves with the response payload or throws
+  /// [DaemonError] when the daemon answered with an error.
+  Future<pb.Response> request(pb.ClientMessage message);
+  Future<void> shutdown();
+}
+
+class DaemonClient implements DaemonLink {
   DaemonClient._(this._process, this.executable);
 
   final Process _process;
@@ -34,8 +47,11 @@ class DaemonClient {
   final Completer<int> _exit = Completer();
   int _nextId = 1;
 
+  @override
   Stream<pb.Event> get events => _events.stream;
+  @override
   Stream<String> get stderrLines => _stderr.stream;
+  @override
   Future<int> get exitCode => _exit.future;
 
   static Future<DaemonClient> spawn(String executable) async {
@@ -78,8 +94,7 @@ class DaemonClient {
     _stderr.close();
   }
 
-  /// Send one request; resolves with the response payload or throws
-  /// [DaemonError] when the daemon answered with an error.
+  @override
   Future<pb.Response> request(pb.ClientMessage message) {
     final id = _nextId++;
     message.requestId = Int64(id);
@@ -94,6 +109,7 @@ class DaemonClient {
     });
   }
 
+  @override
   Future<void> shutdown() async {
     try {
       await request(pb.ClientMessage(shutdown: pb.ShutdownRequest()))

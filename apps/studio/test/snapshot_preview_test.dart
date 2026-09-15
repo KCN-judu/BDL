@@ -190,6 +190,41 @@ void main() {
           matchesGoldenFile('$dir/shell_${brightness.name}.png'),
         );
       }
+
+      // The definition editor with a dirty, checked draft over the invalid
+      // committed definition: verdict line, unsaved marker, Revert / Save.
+      final drafting = state.copyWith(
+        editor: state.editor.copyWith(
+          drafts: {
+            0: DefinitionDraft(
+              mappingId: 0,
+              baseRevision: 7,
+              baseDefinition: 'Tilt + 1 s',
+              source: 'Tilt / 90 deg',
+              generation: 3,
+              check: DraftCheck.checked,
+              analysis: pb.MappingAnalysis(
+                id: Int64(0),
+                status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
+              ),
+            ),
+          },
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [appStoreProvider.overrideWith(() => _FixedStore(drafting))],
+          child: MaterialApp(theme: macTheme(brightness), home: const StudioShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (dir != null) {
+        await expectLater(
+          find.byType(StudioShell),
+          matchesGoldenFile('$dir/shell_draft_${brightness.name}.png'),
+        );
+      }
     }
   }, skip: dir == null);
 }

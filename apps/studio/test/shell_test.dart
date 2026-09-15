@@ -77,4 +77,42 @@ void main() {
     expect(find.text('Delete dimByTilt'), findsOneWidget);
     expect(find.text('Deploy'), findsOneWidget);
   });
+
+  testWidgets('status line names unsaved drafts and whole-design verdicts', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final project = pb.ProjectProjection(revision: Int64(3), name: 'lamp', rootPath: '/p')
+      ..concepts.add(pb.ConceptView(id: Int64(0), name: 'Tilt'))
+      ..mappings.add(
+        pb.MappingView(
+          id: Int64(0),
+          name: 'dimByTilt',
+          signature: pb.Signature(inputs: [Int64(0)], output: Int64(0)),
+        ),
+      );
+    final state = AppState(
+      connection: Connected(
+        executable: 'bdld',
+        handshake: pb.HandshakeResponse(compatible: true, protocolVersion: pb.Version()),
+      ),
+      project: project,
+      analysis: pb.ProjectAnalysis(
+        revision: Int64(3),
+        causal: false,
+        clockConsistent: true,
+        outputComplete: false,
+      ),
+      editor: const EditorState(
+        drafts: {
+          0: DefinitionDraft(mappingId: 0, baseRevision: 3, baseDefinition: null, source: 'Tilt'),
+        },
+      ),
+    );
+    await tester.pumpWidget(_app(state));
+    expect(find.text('1 unsaved definition'), findsOneWidget);
+    expect(find.text('not causal'), findsOneWidget);
+    expect(find.text('outputs incomplete'), findsOneWidget);
+    expect(find.text('reads across domains'), findsNothing);
+  });
 }

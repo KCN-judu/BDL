@@ -20,16 +20,34 @@ import 'recent_store.dart';
 
 typedef Dispatch = void Function(AppAction action);
 
+/// How long the executor waits after the last keystroke before asking the
+/// compiler about a draft.  Short enough to feel immediate, long enough
+/// that a burst of typing costs one request.  Commits never wait on it.
+const Duration kDraftDebounce = Duration(milliseconds: 150);
+
+typedef SpawnDaemon = Future<DaemonLink> Function(String executable);
+
 class EffectExecutor {
-  EffectExecutor(this._dispatch, {String Function()? locate, RecentStore? recent})
-    : _locate = locate ?? locateDaemon,
-      _recent = recent ?? RecentStore();
+  EffectExecutor(
+    this._dispatch, {
+    String Function()? locate,
+    RecentStore? recent,
+    SpawnDaemon? spawn,
+    this.draftDebounce = kDraftDebounce,
+  }) : _locate = locate ?? locateDaemon,
+       _recent = recent ?? RecentStore(),
+       _spawn = spawn ?? DaemonClient.spawn;
 
   final Dispatch _dispatch;
   final String Function() _locate;
   final RecentStore _recent;
-  DaemonClient? _client;
+  final SpawnDaemon _spawn;
+  final Duration draftDebounce;
+  DaemonLink? _client;
   final List<StreamSubscription<Object?>> _subs = [];
+
+  /// One pending (debounced) draft check per mapping; a newer one replaces it.
+  final Map<int, Timer> _draftTimers = {};
 
   Future<void> run(Effect effect) async {
     switch (effect) {
@@ -93,6 +111,12 @@ class EffectExecutor {
           (r) => _dispatch(AnalysisReceived(r.analysis.analysis)),
           counted: false,
         );
+      case AnalyzeDraft(:final revision, :final mappingId, :final generation, :final source):
+        _draftTimers.remove(mappingId)?.cancel();
+        _draftTimers[mappingId] = Timer(draftDebounce, () {
+          _draftTimers.remove(mappingId);
+          _analyzeDraft(revision, mappingId, generation, source);
+        });
       case SetLayout(:final layout):
         // Layout is not a revision and is not counted as pending.
         await _call(
@@ -104,6 +128,55 @@ class EffectExecutor {
         await _call(pb.ClientMessage(undo: pb.UndoRequest()), _onEditApplied);
       case Redo():
         await _call(pb.ClientMessage(redo: pb.RedoRequest()), _onEditApplied);
+    }
+  }
+
+  /// Read-only and uncounted: the app is not "busy" while a draft is
+  /// checked.  Every outcome is tagged with the generation it answers so the
+  /// reducer can drop what a newer draft has superseded.
+  Future<void> _analyzeDraft(int revision, int mappingId, int generation, String source) async {
+    final client = _client;
+    if (client == null) {
+      _dispatch(
+        DraftAnalysisFailed(
+          mappingId: mappingId,
+          generation: generation,
+          code: 'studio.not_connected',
+          message: 'The compiler service is not connected.',
+        ),
+      );
+      return;
+    }
+    try {
+      final r = await client.request(
+        pb.ClientMessage(
+          analyzeDefinitionDraft: pb.AnalyzeDefinitionDraftRequest(
+            revision: Int64(revision),
+            mappingId: Int64(mappingId),
+            generation: Int64(generation),
+            source: source,
+          ),
+        ),
+      );
+      _dispatch(DraftAnalysisReceived(r.definitionDraft));
+    } on DaemonError catch (e) {
+      _dispatch(
+        DraftAnalysisFailed(
+          mappingId: mappingId,
+          generation: generation,
+          code: e.code,
+          message: e.message,
+        ),
+      );
+    } catch (e) {
+      _dispatch(
+        DraftAnalysisFailed(
+          mappingId: mappingId,
+          generation: generation,
+          code: 'studio.transport',
+          message: 'The compiler service could not be reached: $e',
+        ),
+      );
     }
   }
 
@@ -130,7 +203,7 @@ class EffectExecutor {
     await dispose();
     final executable = _locate();
     try {
-      final client = await DaemonClient.spawn(executable);
+      final client = await _spawn(executable);
       _client = client;
       _subs.add(client.events.listen(_onEvent));
       _subs.add(client.stderrLines.listen((l) => _dispatch(DaemonLogged(l))));
@@ -216,6 +289,10 @@ class EffectExecutor {
   }
 
   Future<void> dispose() async {
+    for (final t in _draftTimers.values) {
+      t.cancel();
+    }
+    _draftTimers.clear();
     for (final s in _subs) {
       await s.cancel();
     }

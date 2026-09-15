@@ -254,7 +254,43 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             None,
         ),
         Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r.target_id), None),
+        Req::AnalyzeDefinitionDraft(r) => (analyze_definition_draft(session, &r), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
+    }
+}
+
+/// A candidate definition checked against the current snapshot and never
+/// committed: the project, its revision and its undo history are untouched.
+///
+/// The draft is an *overlay* on the session's IDE host: the request
+/// updates it, an immutable snapshot of committed + overlays is taken, and
+/// `bdl-ide` returns the stamped verdict — the same path a text editor's
+/// unsaved buffer takes (`docs/IDE_SERVICE_ARCHITECTURE.md`).
+fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraftRequest) -> Resp {
+    let revision = match session.project() {
+        Ok(p) => p.current.revision,
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    if revision.raw() != r.revision {
+        return Resp::Error(error(
+            "draft.stale_revision",
+            &format!(
+                "draft targets revision {} but the project is at {}",
+                r.revision,
+                revision.raw()
+            ),
+        ));
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.draft_verdict(id, &r.source) {
+        Ok(v) => Resp::DefinitionDraft(pb::DefinitionDraftAnalysis {
+            revision: v.stamp.revision.raw(),
+            mapping_id: r.mapping_id,
+            generation: r.generation,
+            parse_ok: v.parse_ok,
+            analysis: Some(convert::mapping_analysis_to_pb(&v.analysis)),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
     }
 }
 
@@ -514,6 +550,7 @@ fn payload_name(p: &Req) -> &'static str {
         Req::ResetSimulation(_) => "reset_simulation",
         Req::ListTargets(_) => "list_targets",
         Req::AnalyzeDeployment(_) => "analyze_deployment",
+        Req::AnalyzeDefinitionDraft(_) => "analyze_definition_draft",
         Req::Shutdown(_) => "shutdown",
     }
 }

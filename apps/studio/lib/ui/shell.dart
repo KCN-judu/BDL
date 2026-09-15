@@ -208,6 +208,29 @@ class _StatusLine extends StatelessWidget {
           Text('$undefined declared without definition', style: small.copyWith(color: t.open)),
         );
       }
+      // Unsaved definition drafts: Studio's, not the project's dirty flag.
+      final drafts = state.editor.drafts.values
+          .where((d) => d.dirtyAgainst(state.committedDefinition(d.mappingId)))
+          .length;
+      if (drafts > 0) {
+        facts.add(
+          Text(
+            drafts == 1 ? '1 unsaved definition' : '$drafts unsaved definitions',
+            style: small.copyWith(color: t.open),
+          ),
+        );
+      }
+      // Whole-design verdicts of the reactive and output passes, when the
+      // analysis is the one for this revision (docs/STUDIO_COMPILER_INTEGRATION.md).
+      if (state.analysis case final a? when a.revision == p.revision) {
+        if (!a.causal) facts.add(Text('not causal', style: small.copyWith(color: t.error)));
+        if (!a.clockConsistent) {
+          facts.add(Text('reads across domains', style: small.copyWith(color: t.error)));
+        }
+        if (!a.outputComplete) {
+          facts.add(Text('outputs incomplete', style: small.copyWith(color: t.open)));
+        }
+      }
     }
 
     final (Color dot, List<Widget> connCells) = switch (conn) {
@@ -231,7 +254,12 @@ class _StatusLine extends StatelessWidget {
         spacing: MacMetrics.gapGroup,
         children: [
           Expanded(
-            child: Row(spacing: MacMetrics.gapGroup, children: facts),
+            // Facts never wrap; when the window is too narrow for them all,
+            // the row scrolls rather than clips or overflows.
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(spacing: MacMetrics.gapGroup, children: facts),
+            ),
           ),
           if (state.editor.pendingRequests > 0)
             const SizedBox(

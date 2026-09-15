@@ -20,7 +20,6 @@ bdl-exec-ir = { workspace = true }
 bdl-lower = { workspace = true }
 bdl-codegen-rust = { workspace = true }
 serde = { workspace = true }
-thiserror = { workspace = true }
 
 [dev-dependencies]
 bdl-runtime-host = { workspace = true }

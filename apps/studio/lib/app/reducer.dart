@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
+import 'drafts.dart';
 import 'effects.dart';
 import 'state.dart';
 
@@ -59,10 +60,14 @@ Transition reduce(AppState s, AppAction action) {
     ),
 
     // ---- concepts ----------------------------------------------------------
-    CreateConceptRequested(:final name, :final description) => _edit(
+    CreateConceptRequested(:final name, :final description, :final representation) => _edit(
       s,
       pb.EditOp(
-        createConcept: pb.CreateConcept(name: name, description: description),
+        createConcept: pb.CreateConcept(
+          name: name,
+          description: description,
+          representation: representation,
+        ),
       ),
     ),
     RenameConceptRequested(:final id, :final name) => _edit(
@@ -117,28 +122,30 @@ Transition reduce(AppState s, AppAction action) {
       s,
       _setSignature(id, inputs, output),
     ),
-    AttachFormulaRequested(:final mappingId, :final source) => _edit(
-      s,
-      pb.EditOp(
-        attachDefinition: pb.AttachDefinition(
-          id: Int64(mappingId),
-          definition: pb.Definition(formula: source),
-        ),
-      ),
-    ),
-    ReplaceDefinitionRequested(:final mappingId, :final source) => _edit(
-      s,
-      pb.EditOp(
-        replaceDefinition: pb.ReplaceDefinition(
-          id: Int64(mappingId),
-          definition: source == null ? null : pb.Definition(formula: source),
-        ),
-      ),
-    ),
     DeleteMappingRequested(:final id) => _edit(
       s,
       pb.EditOp(deleteMapping: pb.DeleteMapping(id: Int64(id))),
     ),
+
+    // ---- definition drafts (app/drafts.dart) --------------------------------
+    DefinitionDraftChanged(:final mappingId, :final source) => _whenProject(
+      s,
+      () => draftChanged(s, mappingId, source),
+    ),
+    DefinitionDraftReverted(:final mappingId) ||
+    DefinitionDraftReloaded(:final mappingId) => draftDropped(s, mappingId),
+    DefinitionDraftKept(:final mappingId) => draftKept(s, mappingId),
+    CommitDefinitionRequested(:final mappingId) => _whenProject(
+      s,
+      () => commitDefinition(s, mappingId),
+    ),
+    DetachDefinitionRequested(:final mappingId) => _whenProject(
+      s,
+      () => detachDefinition(s, mappingId),
+    ),
+    DraftAnalysisReceived(:final result) => draftAnalysisReceived(s, result),
+    DraftAnalysisFailed(:final mappingId, :final generation, :final code, :final message) =>
+      draftAnalysisFailed(s, mappingId, generation, code, message),
     DeleteSelectionRequested() => switch (s.editor.selection) {
       NoSelection() => Transition(s),
       ConceptSelected(:final id) => reduce(s, DeleteConceptRequested(id)),
@@ -232,6 +239,8 @@ Transition reduce(AppState s, AppAction action) {
           pendingRequests: 0,
           selection: const NoSelection(),
           layout: const {},
+          drafts: const {},
+          stashedDrafts: _stash(s),
         ),
       ),
     ),
@@ -252,6 +261,8 @@ Transition reduce(AppState s, AppAction action) {
           selection: const NoSelection(),
           layout: const {},
           clearOutcome: true,
+          drafts: const {},
+          stashedDrafts: _stash(s),
         ),
       ),
     ),
@@ -263,6 +274,7 @@ Transition reduce(AppState s, AppAction action) {
         editor: s.editor.copyWith(
           pendingRequests: _dec(s),
           lastError: UserFacingError(code: code, message: message, details: details),
+          drafts: draftsAfterFailedRequest(s.editor.drafts, message),
         ),
       ),
     ),
@@ -308,9 +320,27 @@ pb.EditOp _setSignature(int id, List<int> inputs, int output) => pb.EditOp(
 );
 
 /// Every semantic edit is sent against the revision Studio currently holds;
-/// the daemon refuses it if the project has moved on.
-Transition _edit(AppState s, pb.EditOp op) =>
+/// the daemon refuses it if the project has moved on.  No effect when
+/// disconnected or without a project.
+Transition sendEdit(AppState s, pb.EditOp op) =>
     _whenProject(s, () => Transition(_pending(s), [ApplyEdit(baseRevision: s.revision, op: op)]));
+
+Transition _edit(AppState s, pb.EditOp op) => sendEdit(s, op);
+
+/// Dirty drafts of the project being closed, filed under its path so a
+/// reopen restores them.
+Map<String, Map<int, DefinitionDraft>> _stash(AppState s) {
+  final root = s.project?.rootPath;
+  if (root == null) return s.editor.stashedDrafts;
+  final dirty = dirtyDrafts(s);
+  final next = {...s.editor.stashedDrafts};
+  if (dirty.isEmpty) {
+    next.remove(root);
+  } else {
+    next[root] = dirty;
+  }
+  return next;
+}
 
 AppState _pending(AppState s) =>
     s.copyWith(editor: s.editor.copyWith(pendingRequests: s.editor.pendingRequests + 1));
@@ -341,6 +371,14 @@ Transition _projectReceived(
   final layout = sameProject ? {...stored, ...s.editor.layout} : stored;
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
+  // Drafts: rebased on every new revision; restored from the stash when a
+  // project is (re)opened.  Same revision (a save) changes nothing.
+  final stashed = s.editor.stashedDrafts;
+  final ({Map<int, DefinitionDraft> drafts, List<Effect> effects}) drafts = !sameProject
+      ? rebaseDrafts(stashed[incoming.rootPath] ?? const {}, incoming)
+      : incoming.revision == current.revision
+      ? (drafts: s.editor.drafts, effects: const <Effect>[])
+      : rebaseDrafts(s.editor.drafts, incoming);
   return Transition(
     s.copyWith(
       project: incoming,
@@ -351,14 +389,21 @@ Transition _projectReceived(
         selection: selection,
         layout: layout,
         lastOutcome: outcome,
+        drafts: drafts.drafts,
+        stashedDrafts: sameProject ? stashed : ({...stashed}..remove(incoming.rootPath)),
       ),
     ),
     // A freshly opened project needs a subscription for pushed changes, an
     // analysis of what was just opened, and goes to the top of Recent.
     // After an edit the daemon pushes AnalysisReady on its own.
-    sameProject
-        ? const []
-        : [const SubscribeProject(), const RunAnalysis(), SaveRecentProjects(recent)],
+    [
+      if (!sameProject) ...[
+        const SubscribeProject(),
+        const RunAnalysis(),
+        SaveRecentProjects(recent),
+      ],
+      ...drafts.effects,
+    ],
   );
 }
 

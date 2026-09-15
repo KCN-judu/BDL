@@ -519,35 +519,35 @@ pub fn diagnostic_to_pb(d: &bdl_diagnostics::Diagnostic) -> pb::Diagnostic {
     }
 }
 
-pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis {
+pub fn mapping_analysis_to_pb(m: &bdl_compiler::MappingAnalysis) -> pb::MappingAnalysis {
     use bdl_check::pretty;
     use bdl_compiler::MappingStatus;
+    pb::MappingAnalysis {
+        id: m.id.raw(),
+        status: match m.status {
+            MappingStatus::Declared => pb::MappingStatus::Declared,
+            MappingStatus::Open => pb::MappingStatus::Open,
+            MappingStatus::Invalid => pb::MappingStatus::Invalid,
+            MappingStatus::TypeValid => pb::MappingStatus::TypeValid,
+            MappingStatus::TemporallyValid => pb::MappingStatus::TemporallyValid,
+            MappingStatus::ClockConsistent => pb::MappingStatus::ClockConsistent,
+        }
+        .into(),
+        interface: pretty::kernel(&m.interface.expected_type),
+        inferred_type: m
+            .inferred_type
+            .as_ref()
+            .map(pretty::kernel)
+            .unwrap_or_default(),
+        core_expr: m.realization.as_ref().map(pretty::expr).unwrap_or_default(),
+        diagnostics: m.diagnostics.iter().map(diagnostic_to_pb).collect(),
+    }
+}
+
+pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis {
     pb::ProjectAnalysis {
         revision: a.revision.raw(),
-        mappings: a
-            .mappings
-            .values()
-            .map(|m| pb::MappingAnalysis {
-                id: m.id.raw(),
-                status: match m.status {
-                    MappingStatus::Declared => pb::MappingStatus::Declared,
-                    MappingStatus::Open => pb::MappingStatus::Open,
-                    MappingStatus::Invalid => pb::MappingStatus::Invalid,
-                    MappingStatus::TypeValid => pb::MappingStatus::TypeValid,
-                    MappingStatus::TemporallyValid => pb::MappingStatus::TemporallyValid,
-                    MappingStatus::ClockConsistent => pb::MappingStatus::ClockConsistent,
-                }
-                .into(),
-                interface: pretty::kernel(&m.interface.expected_type),
-                inferred_type: m
-                    .inferred_type
-                    .as_ref()
-                    .map(pretty::kernel)
-                    .unwrap_or_default(),
-                core_expr: m.realization.as_ref().map(pretty::expr).unwrap_or_default(),
-                diagnostics: m.diagnostics.iter().map(diagnostic_to_pb).collect(),
-            })
-            .collect(),
+        mappings: a.mappings.values().map(mapping_analysis_to_pb).collect(),
         diagnostics: a.diagnostics.iter().map(diagnostic_to_pb).collect(),
         causal: a.causality.valid,
         clock_consistent: a.clocks.valid,

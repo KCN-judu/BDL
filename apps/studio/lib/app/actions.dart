@@ -84,10 +84,48 @@ class CreateMappingRequested extends UserAction {
   final int output;
 }
 
-class AttachFormulaRequested extends UserAction {
-  const AttachFormulaRequested({required this.mappingId, required this.source});
+// ---- definition drafts -----------------------------------------------------
+//
+// The formula editor edits a draft owned by Studio; the project changes only
+// on [CommitDefinitionRequested] / [DetachDefinitionRequested].
+
+/// The designer typed in the definition editor.
+class DefinitionDraftChanged extends UserAction {
+  const DefinitionDraftChanged({required this.mappingId, required this.source});
   final int mappingId;
   final String source;
+}
+
+/// Discard the draft; the editor shows the committed definition again.
+class DefinitionDraftReverted extends UserAction {
+  const DefinitionDraftReverted(this.mappingId);
+  final int mappingId;
+}
+
+/// After a conflict: take the definition committed meanwhile, drop the draft.
+class DefinitionDraftReloaded extends UserAction {
+  const DefinitionDraftReloaded(this.mappingId);
+  final int mappingId;
+}
+
+/// After a conflict: keep the draft, rebase it on the current revision.
+class DefinitionDraftKept extends UserAction {
+  const DefinitionDraftKept(this.mappingId);
+  final int mappingId;
+}
+
+/// Commit the draft: attach when the mapping has no definition, replace
+/// when it has one — chosen from the committed projection, never by the
+/// widget.
+class CommitDefinitionRequested extends UserAction {
+  const CommitDefinitionRequested(this.mappingId);
+  final int mappingId;
+}
+
+/// Remove the committed definition; the mapping becomes unresolved again.
+class DetachDefinitionRequested extends UserAction {
+  const DetachDefinitionRequested(this.mappingId);
+  final int mappingId;
 }
 
 class PageSelected extends UserAction {
@@ -139,13 +177,6 @@ class SetMappingSignatureRequested extends UserAction {
   final int id;
   final List<int> inputs;
   final int output;
-}
-
-/// `source == null` detaches the definition.
-class ReplaceDefinitionRequested extends UserAction {
-  const ReplaceDefinitionRequested({required this.mappingId, required this.source});
-  final int mappingId;
-  final String? source;
 }
 
 class DeleteMappingRequested extends UserAction {
@@ -253,6 +284,29 @@ class AnalysisReceived extends ResponseAction {
   const AnalysisReceived(this.analysis, {this.fromRequest = false});
   final pb.ProjectAnalysis analysis;
   final bool fromRequest;
+}
+
+/// The compiler's verdict on a draft.  Tagged with revision, mapping and
+/// generation; the reducer keeps it only if all three still match.
+class DraftAnalysisReceived extends ResponseAction {
+  const DraftAnalysisReceived(this.result);
+  final pb.DefinitionDraftAnalysis result;
+}
+
+/// A draft check could not be completed.  `draft.stale_revision` means a
+/// newer projection is on its way and will re-ask; anything else leaves the
+/// draft unchecked (never discarded).
+class DraftAnalysisFailed extends ResponseAction {
+  const DraftAnalysisFailed({
+    required this.mappingId,
+    required this.generation,
+    required this.code,
+    required this.message,
+  });
+  final int mappingId;
+  final int generation;
+  final String code;
+  final String message;
 }
 
 class RecentProjectsLoaded extends ResponseAction {
