@@ -10,7 +10,7 @@ pipeline does not fail fast.
 | 1 | load / parse | files → `ProjectSnapshot` | — | done (`bdl-model::persist`) |
 | 2 | identity resolution | surface → ids resolved (names never used as refs) | `SemanticId`, `DeclId` | done by construction (model refers by id) |
 | 3 | signature / interface resolution | `Signature` over concepts → `Interface { expected_type, commitments }` | `DeclInterface` | **integrated** (`bdl-elab::elaborate_interface`; commitments empty) |
-| 4 | surface elaboration | formula → `Expr` (`λ…mk B (… rep xᵢ …)`), units → scaled literals | grant, `rep`/`mk` | **partial**: formulas integrated (`bdl-syntax` + `bdl-elab::formula`); curves, examples, components, temporal phrases, contexts planned |
+| 4 | surface elaboration | formula → `Expr` (`λ…mk B (… rep xᵢ …)`), units → scaled literals | grant, `rep`/`mk` | **partial**: formulas integrated (`bdl-syntax` lossless parser + lowering, `bdl-elab::formula`); textual files parse (`docs/TEXTUAL_SYNTAX.md`) but have no loader yet; calls/`match`/blocks parse and are reported `formula.unsupported`; curves, examples, components, temporal phrases, contexts planned |
 | 5 | type checking | `Expr` against `ty_view` + `Θ` | `HasType`, `infer` | **core rules complete, integrated** (`bdl-check::infer`, incl. `delay`/`sync`) |
 | 6 | semantic-construction checking | `mk s` only under grant | `Grant` | **integrated** (`bdl-check::Grant`, checked inside `infer`) |
 | 7 | dimension checking | falls out of 5 via `Prim::ty`; the elaborator reports mismatches with spans first | `q Dim` | **integrated** (no separate pass) |
@@ -80,7 +80,8 @@ not a minimal unsat core (DI-21). `bdld` exposes it as `AnalyzeDeployment
 
 | Code | Pass | Severity |
 |---|---|---|
-| `formula.parse.unexpected_token` | parse | error |
+| `formula.parse.unexpected_token` (one per syntax error; `technical` carries the `syntax.*` code, `fixes` the parser's hint) | parse | error |
+| `formula.number.too_large` · `formula.unsupported` (call, `match`, block in a formula) | elab | error |
 | `formula.name.unknown` · `formula.name.ambiguous` · `formula.name.not_an_input` | elab | error |
 | `formula.unit.unknown` | elab | error |
 | `type.operand_kind` · `type.branch_mismatch` | elab | error |

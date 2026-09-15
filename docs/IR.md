@@ -7,11 +7,20 @@ Surface Model  ──elaboration──▶  Design IR  ──lowering──▶  R
 
 Flutter JSON is never translated directly into Rust.
 
-## Surface expression AST (`bdl-syntax::ast`)
+## Textual syntax (`bdl-syntax`)
 
-What the designer typed, with byte spans: `Name | Number{unit?} | Bool |
-Unary | Binary | If`. Produced by a Pratt parser, consumed only by
-`bdl-elab`; never stored, never sent to Studio.
+```
+source ──Logos──▶ tokens ──event parser──▶ Rowan CST ──ast──▶ typed views ──lower──▶ surface tree
+```
+
+The CST is lossless (every token, comment and error region; `text() ==
+source`) and is what editor tooling reads. The *surface tree*
+(`bdl-syntax::lower`) is what the compiler reads: `SurfaceModule` of
+concept / mapping / enum items, and `SurfaceExpr` — `Name | Number{literal,
+unit?} | Bool | Unary | Binary | If | Call | Match | Block` — with byte
+spans and **exact** literals (`NumberLiteral` is the spelling; `f64` is
+made only in `bdl-elab`, DI-18). Consumed by `bdl-elab`; never stored,
+never sent to Studio. Grammar and precedence: `docs/TEXTUAL_SYNTAX.md`.
 
 ## Surface Model (`bdl-model::surface`)
 

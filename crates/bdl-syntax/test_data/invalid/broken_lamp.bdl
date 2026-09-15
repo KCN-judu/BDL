@@ -1,0 +1,10 @@
+concept Tilt : Angle
+
+mapping broken : Tilt -> Brightness
+broken(tilt =
+  if tilt < 10 deg < 20 deg then
+    foo(tilt
+  else
+    0
+
+concept Later : Scalar

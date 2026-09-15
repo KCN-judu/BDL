@@ -1,0 +1,74 @@
+Module@0..89
+  ConceptDecl@0..20
+    KwConcept@0..7 "concept"
+    Whitespace@7..8 " "
+    Name@8..12
+      Ident@8..12 "Tilt"
+    Whitespace@12..13 " "
+    Colon@13..14 ":"
+    Whitespace@14..15 " "
+    NamedType@15..20
+      NameRef@15..20
+        Ident@15..20 "Angle"
+  Whitespace@20..21 "\n"
+  MappingDecl@21..72
+    KwMapping@21..28 "mapping"
+    Whitespace@28..29 " "
+    Name@29..30
+      Ident@29..30 "f"
+    Whitespace@30..31 " "
+    Colon@31..32 ":"
+    Whitespace@32..33 " "
+    FunctionType@33..45
+      NamedType@33..37
+        NameRef@33..37
+          Ident@33..37 "Tilt"
+      Whitespace@37..38 " "
+      Arrow@38..40 "->"
+      Whitespace@40..41 " "
+      NamedType@41..45
+        NameRef@41..45
+          Ident@41..45 "Tilt"
+    Whitespace@45..46 "\n"
+    MappingDef@46..72
+      NameRef@46..47
+        Ident@46..47 "f"
+      ParamList@47..50
+        LParen@47..48 "("
+        IdentPattern@48..49
+          Name@48..49
+            Ident@48..49 "x"
+        RParen@49..50 ")"
+      Whitespace@50..51 " "
+      Eq@51..52 "="
+      Whitespace@52..53 " "
+      NameExpr@53..54
+        NameRef@53..54
+          Ident@53..54 "x"
+      Whitespace@54..55 " "
+      ErrorNode@55..57
+        Error@55..57 "§"
+      Whitespace@57..58 " "
+      ErrorNode@58..72
+        Number@58..59 "2"
+        Whitespace@59..60 " "
+        Error@60..61 "&"
+        Whitespace@61..62 " "
+        Number@62..63 "3"
+        Whitespace@63..64 " "
+        Error@64..65 "@"
+        Whitespace@65..66 " "
+        KwOutput@66..72 "output"
+  Whitespace@72..73 "\n"
+  BlockComment@73..89 "/* never closed\n"
+error 55..57 syntax.invalid_character: `§` cannot appear in BDL source
+  found `§`
+error 58..59 syntax.unexpected: expected an operator or the next declaration after this definition
+  found the number `2`
+error 60..61 syntax.invalid_character: `&` cannot appear in BDL source
+  found `&`
+error 64..65 syntax.invalid_character: `@` cannot appear in BDL source
+  found `@`
+error 73..89 syntax.unterminated_comment: this `/*` comment is never closed
+  found the end of the source
+lowered: 1 concept(s), 1 mapping(s), 0 enum(s)

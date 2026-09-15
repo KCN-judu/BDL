@@ -1,0 +1,4 @@
+concept Tilt : Angle
+mapping f : Tilt -> Tilt
+f(x) = x § 2 & 3 @ output
+/* never closed

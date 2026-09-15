@@ -1,0 +1,7 @@
+enum Mode { A, B(C
+mapping f : Option<A -> B
+f(x) = g(x, {
+  let y = x
+  y
+
+concept Tail

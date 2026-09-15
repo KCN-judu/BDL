@@ -15,7 +15,7 @@ use bdl_diagnostics::{Diagnostic, Entity, Span};
 use bdl_ir::{DesignIr, Expr, Prim, Scalar, Ty};
 use bdl_model::surface::{Design, MappingBlock};
 use bdl_model::{DeclId, Dim, SemanticId};
-use bdl_syntax::{parse, BinaryOp, ExprKind, SurfaceExpr, UnaryOp};
+use bdl_syntax::{BinaryOp, ExprKind, SurfaceExpr, UnaryOp};
 use std::collections::BTreeMap;
 
 /// A successfully elaborated realization.
@@ -77,16 +77,23 @@ pub fn elaborate_formula(
     source: &str,
 ) -> Result<Realized, Vec<Diagnostic>> {
     let entity = Entity::Mapping { id: mapping.id };
-    let surface = match parse(source) {
+    let surface = match bdl_syntax::formula(source) {
         Ok(e) => e,
-        Err(e) => {
-            return Err(vec![Diagnostic::error(
-                "formula.parse.unexpected_token",
-                entity,
-                e.message,
-            )
-            .at(e.span)
-            .technical(format!("found {}", e.found))])
+        Err(errors) => {
+            return Err(errors
+                .into_iter()
+                .map(|e| {
+                    let technical = format!("{}: {}", e.code.as_str(), e.technical());
+                    let mut d =
+                        Diagnostic::error("formula.parse.unexpected_token", entity, e.message)
+                            .at(e.span)
+                            .technical(technical);
+                    if let Some(hint) = e.hint {
+                        d = d.fix(hint);
+                    }
+                    d
+                })
+                .collect())
         }
     };
 
@@ -207,29 +214,67 @@ impl Elab<'_> {
         self.record(path, e.span);
         match &e.kind {
             ExprKind::Bool(b) => (Expr::BoolLit { value: *b }, STy::Bool),
-            ExprKind::Number { value, unit, .. } => match unit {
-                None => (self.lit(Dim::ZERO, *value), STy::Q(Dim::ZERO)),
-                Some(u) => match units::lookup(&u.name) {
-                    Some(def) => (self.lit(def.dim, value * def.factor), STy::Q(def.dim)),
-                    None => {
-                        self.diags.push(
-                            Diagnostic::error(
-                                "formula.unit.unknown",
-                                self.entity(),
-                                format!("`{}` is not a unit.", u.name),
-                            )
-                            .at(u.span)
-                            .fix(format!("Units available: {}.", units::names().join(", "))),
-                        );
-                        (self.lit(Dim::ZERO, 0.0), STy::Error)
-                    }
-                },
-            },
+            ExprKind::Number { literal, unit } => {
+                // The syntax keeps the exact spelling; the machine number is
+                // made here, at the elaboration boundary (DI-1, ADR-0011).
+                // The exact/symbolic numeric layer will take over this
+                // conversion; until then `f64` is the runtime representation.
+                let Some(value) = literal.to_f64() else {
+                    self.diags.push(
+                        Diagnostic::error(
+                            "formula.number.too_large",
+                            self.entity(),
+                            format!(
+                                "`{}` is too large a number to compute with.",
+                                literal.as_str()
+                            ),
+                        )
+                        .at(e.span),
+                    );
+                    return (self.lit(Dim::ZERO, 0.0), STy::Error);
+                };
+                match unit {
+                    None => (self.lit(Dim::ZERO, value), STy::Q(Dim::ZERO)),
+                    Some(u) => match units::lookup(&u.name) {
+                        Some(def) => (self.lit(def.dim, value * def.factor), STy::Q(def.dim)),
+                        None => {
+                            self.diags.push(
+                                Diagnostic::error(
+                                    "formula.unit.unknown",
+                                    self.entity(),
+                                    format!("`{}` is not a unit.", u.name),
+                                )
+                                .at(u.span)
+                                .fix(format!("Units available: {}.", units::names().join(", "))),
+                            );
+                            (self.lit(Dim::ZERO, 0.0), STy::Error)
+                        }
+                    },
+                }
+            }
             ExprKind::Name(name) => self.name(name, e.span),
             ExprKind::Unary { op, expr } => self.unary(*op, expr, e.span, path),
             ExprKind::Binary { op, lhs, rhs } => self.binary(*op, lhs, rhs, e.span, path),
             ExprKind::If { cond, then, els } => self.if_(cond, then, els, e.span, path),
+            // Parsed by the textual syntax; elaboration of these forms is the
+            // next surface milestone (DI-17 for calls).
+            ExprKind::Call { .. } => self.unsupported("a call", e.span),
+            ExprKind::Match { .. } => self.unsupported("`match`", e.span),
+            ExprKind::Block { .. } => self.unsupported("a block", e.span),
         }
+    }
+
+    fn unsupported(&mut self, what: &str, span: Span) -> (Expr, STy) {
+        self.diags.push(
+            Diagnostic::error(
+                "formula.unsupported",
+                self.entity(),
+                format!("{what} cannot be used in a formula yet."),
+            )
+            .at(span)
+            .explain("Formulas currently combine the mapping's inputs with arithmetic, comparisons, `&&`, `||`, `!` and `if`."),
+        );
+        (self.lit(Dim::ZERO, 0.0), STy::Error)
     }
 
     fn name(&mut self, name: &str, span: Span) -> (Expr, STy) {

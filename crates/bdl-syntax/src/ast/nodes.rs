@@ -1,0 +1,652 @@
+//! The node wrappers, one per `SyntaxKind` node, plus the enums that group
+//! them (`Item`, `Type`, `Expr`, `Pattern`).
+
+use super::support::{ast_enum, ast_node, child, children, first_token_of, nth_child, token};
+use super::{AstNode, AstToken};
+use crate::kind::SyntaxKind;
+use crate::syntax::{SyntaxNode, SyntaxToken};
+
+// ---- roots -----------------------------------------------------------------
+
+ast_node!(
+    /// A whole source file: `Item*`.
+    Module,
+    Module
+);
+ast_node!(
+    /// The expression-only entry point (canvas formula field).
+    Formula,
+    Formula
+);
+
+impl Module {
+    pub fn items(&self) -> impl Iterator<Item = Item> {
+        children(&self.0)
+    }
+    pub fn concepts(&self) -> impl Iterator<Item = ConceptDecl> {
+        children(&self.0)
+    }
+    pub fn mappings(&self) -> impl Iterator<Item = MappingDecl> {
+        children(&self.0)
+    }
+    pub fn enums(&self) -> impl Iterator<Item = EnumDecl> {
+        children(&self.0)
+    }
+}
+
+impl Formula {
+    pub fn expr(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+// ---- names -----------------------------------------------------------------
+
+ast_node!(
+    /// A definition-site identifier.
+    Name,
+    Name
+);
+ast_node!(
+    /// A reference-site identifier.
+    NameRef,
+    NameRef
+);
+
+impl Name {
+    pub fn ident(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Ident)
+            .or_else(|| self.0.first_token().filter(|t| t.kind().is_keyword()))
+    }
+    pub fn as_str(&self) -> String {
+        self.ident()
+            .map(|t| t.text().to_owned())
+            .unwrap_or_default()
+    }
+}
+
+impl NameRef {
+    pub fn ident(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Ident)
+            .or_else(|| self.0.first_token().filter(|t| t.kind().is_keyword()))
+    }
+    pub fn as_str(&self) -> String {
+        self.ident()
+            .map(|t| t.text().to_owned())
+            .unwrap_or_default()
+    }
+}
+
+// ---- items -----------------------------------------------------------------
+
+ast_enum!(
+    /// A top-level declaration.
+    Item {
+        Concept(ConceptDecl),
+        Mapping(MappingDecl),
+        Enum(EnumDecl),
+    }
+);
+
+ast_node!(
+    /// `concept Name (: Type)?`
+    ConceptDecl,
+    ConceptDecl
+);
+ast_node!(
+    /// `mapping Name : Type MappingDef?`
+    MappingDecl,
+    MappingDecl
+);
+ast_node!(
+    /// `name(params) = expr`
+    MappingDef,
+    MappingDef
+);
+ast_node!(
+    /// `enum Name<T…> { variants }`
+    EnumDecl,
+    EnumDecl
+);
+ast_node!(EnumVariant, EnumVariant);
+ast_node!(TypeParamList, TypeParamList);
+ast_node!(ParamList, ParamList);
+
+impl ConceptDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    /// The representation type after `:`; `None` for an open concept.
+    pub fn representation(&self) -> Option<Type> {
+        child(&self.0)
+    }
+}
+
+impl MappingDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    /// The type after `:`.
+    pub fn signature(&self) -> Option<Type> {
+        child(&self.0)
+    }
+    pub fn definition(&self) -> Option<MappingDef> {
+        child(&self.0)
+    }
+}
+
+impl MappingDef {
+    /// The name repeated before the parameters.
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+    pub fn param_list(&self) -> Option<ParamList> {
+        child(&self.0)
+    }
+    pub fn params(&self) -> impl Iterator<Item = Pattern> {
+        self.param_list().into_iter().flat_map(|l| l.params())
+    }
+    pub fn body(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+impl ParamList {
+    pub fn params(&self) -> impl Iterator<Item = Pattern> {
+        children(&self.0)
+    }
+}
+
+impl EnumDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn type_params(&self) -> impl Iterator<Item = Name> {
+        child::<TypeParamList>(&self.0)
+            .into_iter()
+            .flat_map(|l| children::<Name>(l.syntax()))
+    }
+    pub fn variants(&self) -> impl Iterator<Item = EnumVariant> {
+        children(&self.0)
+    }
+}
+
+impl EnumVariant {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    /// Field types of `Variant(A, B)`; empty for a nullary variant.
+    pub fn fields(&self) -> impl Iterator<Item = Type> {
+        child::<TypeList>(&self.0)
+            .into_iter()
+            .flat_map(|l| l.types())
+    }
+}
+
+// ---- types -----------------------------------------------------------------
+
+ast_enum!(
+    /// A type expression.
+    Type {
+        Named(NamedType),
+        Function(FunctionType),
+        Paren(ParenType),
+    }
+);
+
+ast_node!(
+    /// `Name` or `Name<Args>`
+    NamedType,
+    NamedType
+);
+ast_node!(
+    /// `A -> B` (right-associative)
+    FunctionType,
+    FunctionType
+);
+ast_node!(ParenType, ParenType);
+ast_node!(TypeArgList, TypeArgList);
+ast_node!(TypeList, TypeList);
+
+impl NamedType {
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+    pub fn type_args(&self) -> impl Iterator<Item = Type> {
+        child::<TypeArgList>(&self.0)
+            .into_iter()
+            .flat_map(|l| children::<Type>(l.syntax()))
+    }
+    pub fn has_type_args(&self) -> bool {
+        child::<TypeArgList>(&self.0).is_some()
+    }
+}
+
+impl FunctionType {
+    pub fn domain(&self) -> Option<Type> {
+        nth_child(&self.0, 0)
+    }
+    pub fn codomain(&self) -> Option<Type> {
+        nth_child(&self.0, 1)
+    }
+}
+
+impl ParenType {
+    pub fn inner(&self) -> Option<Type> {
+        child(&self.0)
+    }
+}
+
+impl TypeList {
+    pub fn types(&self) -> impl Iterator<Item = Type> {
+        children(&self.0)
+    }
+}
+
+impl Type {
+    /// `A -> B -> C` as `([A, B], C)`; a non-function type is `([], T)`.
+    pub fn uncurry(&self) -> (Vec<Type>, Type) {
+        let mut inputs = Vec::new();
+        let mut current = self.clone();
+        while let Type::Function(f) = &current {
+            let Some(cod) = f.codomain() else { break };
+            if let Some(dom) = f.domain() {
+                inputs.push(dom);
+            }
+            current = cod;
+        }
+        (inputs, current)
+    }
+}
+
+// ---- expressions -----------------------------------------------------------
+
+ast_enum!(
+    /// An expression.
+    Expr {
+        Name(NameExpr),
+        Literal(LiteralExpr),
+        Paren(ParenExpr),
+        Call(CallExpr),
+        Unary(UnaryExpr),
+        Binary(BinaryExpr),
+        If(IfExpr),
+        Match(MatchExpr),
+        Block(BlockExpr),
+    }
+);
+
+ast_node!(NameExpr, NameExpr);
+ast_node!(
+    /// A number (with optional unit) or `true`/`false`.
+    LiteralExpr,
+    LiteralExpr
+);
+ast_node!(UnitSuffix, UnitSuffix);
+ast_node!(ParenExpr, ParenExpr);
+ast_node!(
+    /// `callee(args)`
+    CallExpr,
+    CallExpr
+);
+ast_node!(ArgList, ArgList);
+ast_node!(UnaryExpr, UnaryExpr);
+ast_node!(BinaryExpr, BinaryExpr);
+ast_node!(IfExpr, IfExpr);
+ast_node!(MatchExpr, MatchExpr);
+ast_node!(MatchArmList, MatchArmList);
+ast_node!(MatchArm, MatchArm);
+ast_node!(BlockExpr, BlockExpr);
+ast_node!(LetStmt, LetStmt);
+
+impl NameExpr {
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+}
+
+/// The spelling of a number literal; never a machine number
+/// (`docs/TEXTUAL_SYNTAX.md` §2.3).
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct NumberToken(SyntaxToken);
+
+impl AstToken for NumberToken {
+    fn cast(token: SyntaxToken) -> Option<Self> {
+        (token.kind() == SyntaxKind::Number).then_some(NumberToken(token))
+    }
+    fn syntax(&self) -> &SyntaxToken {
+        &self.0
+    }
+}
+
+impl NumberToken {
+    pub fn literal(&self) -> crate::literal::NumberLiteral {
+        crate::literal::NumberLiteral::new(self.text())
+    }
+}
+
+/// What a `LiteralExpr` is.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LiteralKind {
+    Number(NumberToken),
+    Bool(bool),
+}
+
+impl LiteralExpr {
+    pub fn kind(&self) -> Option<LiteralKind> {
+        if let Some(n) = first_token_of::<NumberToken>(&self.0) {
+            return Some(LiteralKind::Number(n));
+        }
+        if token(&self.0, SyntaxKind::KwTrue).is_some() {
+            return Some(LiteralKind::Bool(true));
+        }
+        if token(&self.0, SyntaxKind::KwFalse).is_some() {
+            return Some(LiteralKind::Bool(false));
+        }
+        None
+    }
+    pub fn number(&self) -> Option<NumberToken> {
+        first_token_of(&self.0)
+    }
+    pub fn unit(&self) -> Option<UnitSuffix> {
+        child(&self.0)
+    }
+}
+
+impl UnitSuffix {
+    pub fn ident(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Ident)
+    }
+    pub fn as_str(&self) -> String {
+        self.ident()
+            .map(|t| t.text().to_owned())
+            .unwrap_or_default()
+    }
+}
+
+impl ParenExpr {
+    pub fn inner(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+impl CallExpr {
+    pub fn callee(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+    pub fn arg_list(&self) -> Option<ArgList> {
+        child(&self.0)
+    }
+    pub fn arguments(&self) -> impl Iterator<Item = Expr> {
+        self.arg_list().into_iter().flat_map(|l| l.args())
+    }
+}
+
+impl ArgList {
+    pub fn args(&self) -> impl Iterator<Item = Expr> {
+        children(&self.0)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum UnaryOp {
+    Not,
+    Neg,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Lt,
+    Le,
+    Gt,
+    Ge,
+    Eq,
+    Ne,
+    And,
+    Or,
+}
+
+impl BinaryOp {
+    pub fn from_kind(kind: SyntaxKind) -> Option<BinaryOp> {
+        Some(match kind {
+            SyntaxKind::Plus => BinaryOp::Add,
+            SyntaxKind::Minus => BinaryOp::Sub,
+            SyntaxKind::Star => BinaryOp::Mul,
+            SyntaxKind::Slash => BinaryOp::Div,
+            SyntaxKind::Lt => BinaryOp::Lt,
+            SyntaxKind::Le => BinaryOp::Le,
+            SyntaxKind::Gt => BinaryOp::Gt,
+            SyntaxKind::Ge => BinaryOp::Ge,
+            SyntaxKind::EqEq => BinaryOp::Eq,
+            SyntaxKind::Ne => BinaryOp::Ne,
+            SyntaxKind::AndAnd => BinaryOp::And,
+            SyntaxKind::OrOr => BinaryOp::Or,
+            _ => return None,
+        })
+    }
+
+    pub fn symbol(self) -> &'static str {
+        match self {
+            BinaryOp::Add => "+",
+            BinaryOp::Sub => "-",
+            BinaryOp::Mul => "*",
+            BinaryOp::Div => "/",
+            BinaryOp::Lt => "<",
+            BinaryOp::Le => "<=",
+            BinaryOp::Gt => ">",
+            BinaryOp::Ge => ">=",
+            BinaryOp::Eq => "==",
+            BinaryOp::Ne => "!=",
+            BinaryOp::And => "&&",
+            BinaryOp::Or => "||",
+        }
+    }
+
+    pub fn is_comparison(self) -> bool {
+        matches!(
+            self,
+            BinaryOp::Lt | BinaryOp::Le | BinaryOp::Gt | BinaryOp::Ge | BinaryOp::Eq | BinaryOp::Ne
+        )
+    }
+}
+
+impl UnaryExpr {
+    pub fn op_token(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|el| el.into_token())
+            .find(|t| matches!(t.kind(), SyntaxKind::Bang | SyntaxKind::Minus))
+    }
+    pub fn op(&self) -> Option<UnaryOp> {
+        self.op_token().map(|t| match t.kind() {
+            SyntaxKind::Bang => UnaryOp::Not,
+            _ => UnaryOp::Neg,
+        })
+    }
+    pub fn operand(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+impl BinaryExpr {
+    pub fn op_token(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|el| el.into_token())
+            .find(|t| BinaryOp::from_kind(t.kind()).is_some())
+    }
+    pub fn op(&self) -> Option<BinaryOp> {
+        self.op_token().and_then(|t| BinaryOp::from_kind(t.kind()))
+    }
+    pub fn lhs(&self) -> Option<Expr> {
+        nth_child(&self.0, 0)
+    }
+    pub fn rhs(&self) -> Option<Expr> {
+        nth_child(&self.0, 1)
+    }
+}
+
+impl IfExpr {
+    /// The first expression after `kw` and before the next keyword, so a
+    /// missing branch in a malformed `if` does not shift the others.
+    fn section(&self, kw: SyntaxKind) -> Option<Expr> {
+        let mut inside = false;
+        for el in self.0.children_with_tokens() {
+            match el {
+                rowan::NodeOrToken::Token(t) if t.kind() == kw => inside = true,
+                rowan::NodeOrToken::Token(t)
+                    if matches!(t.kind(), SyntaxKind::KwThen | SyntaxKind::KwElse) =>
+                {
+                    if inside {
+                        return None;
+                    }
+                }
+                rowan::NodeOrToken::Node(n) if inside => {
+                    if let Some(e) = Expr::cast(n) {
+                        return Some(e);
+                    }
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+    pub fn condition(&self) -> Option<Expr> {
+        self.section(SyntaxKind::KwIf)
+    }
+    pub fn then_branch(&self) -> Option<Expr> {
+        self.section(SyntaxKind::KwThen)
+    }
+    pub fn else_branch(&self) -> Option<Expr> {
+        self.section(SyntaxKind::KwElse)
+    }
+}
+
+impl MatchExpr {
+    pub fn scrutinee(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+    pub fn arm_list(&self) -> Option<MatchArmList> {
+        child(&self.0)
+    }
+    pub fn arms(&self) -> impl Iterator<Item = MatchArm> {
+        self.arm_list().into_iter().flat_map(|l| l.arms())
+    }
+}
+
+impl MatchArmList {
+    pub fn arms(&self) -> impl Iterator<Item = MatchArm> {
+        children(&self.0)
+    }
+}
+
+impl MatchArm {
+    pub fn pattern(&self) -> Option<Pattern> {
+        child(&self.0)
+    }
+    pub fn body(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+    pub fn has_trailing_comma(&self) -> bool {
+        token(&self.0, SyntaxKind::Comma).is_some()
+    }
+}
+
+impl BlockExpr {
+    pub fn lets(&self) -> impl Iterator<Item = LetStmt> {
+        children(&self.0)
+    }
+    /// The final expression, whose value is the block's.
+    pub fn tail(&self) -> Option<Expr> {
+        children::<Expr>(&self.0).last()
+    }
+}
+
+impl LetStmt {
+    pub fn pattern(&self) -> Option<Pattern> {
+        child(&self.0)
+    }
+    pub fn value(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+// ---- patterns --------------------------------------------------------------
+
+ast_enum!(
+    /// A pattern (`docs/TEXTUAL_SYNTAX.md` §4.4).
+    Pattern {
+        Wildcard(WildcardPattern),
+        Ident(IdentPattern),
+        Literal(LiteralPattern),
+        Constructor(ConstructorPattern),
+    }
+);
+
+ast_node!(WildcardPattern, WildcardPattern);
+ast_node!(
+    /// A bare name: a binding or a nullary constructor, decided by name
+    /// resolution (§8.1).
+    IdentPattern,
+    IdentPattern
+);
+ast_node!(LiteralPattern, LiteralPattern);
+ast_node!(
+    /// `Name(patterns)`
+    ConstructorPattern,
+    ConstructorPattern
+);
+ast_node!(PatternList, PatternList);
+
+impl IdentPattern {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+}
+
+/// What a `LiteralPattern` matches.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LiteralPatternKind {
+    Bool(bool),
+    /// `negative` when written with a leading `-`.
+    Number {
+        negative: bool,
+        number: NumberToken,
+    },
+}
+
+impl LiteralPattern {
+    pub fn kind(&self) -> Option<LiteralPatternKind> {
+        if token(&self.0, SyntaxKind::KwTrue).is_some() {
+            return Some(LiteralPatternKind::Bool(true));
+        }
+        if token(&self.0, SyntaxKind::KwFalse).is_some() {
+            return Some(LiteralPatternKind::Bool(false));
+        }
+        let number = first_token_of::<NumberToken>(&self.0)?;
+        Some(LiteralPatternKind::Number {
+            negative: token(&self.0, SyntaxKind::Minus).is_some(),
+            number,
+        })
+    }
+}
+
+impl ConstructorPattern {
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+    pub fn fields(&self) -> impl Iterator<Item = Pattern> {
+        child::<PatternList>(&self.0)
+            .into_iter()
+            .flat_map(|l| children::<Pattern>(l.syntax()))
+    }
+}
+
+/// Every descendant node of type `N`, in source order.
+pub fn descendants<N: AstNode>(node: &SyntaxNode) -> impl Iterator<Item = N> {
+    node.descendants().filter_map(N::cast)
+}

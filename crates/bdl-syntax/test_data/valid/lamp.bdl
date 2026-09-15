@@ -1,0 +1,16 @@
+// Lamp behaviour
+
+concept Tilt : Angle
+concept Brightness : Scalar
+concept Held : Bool
+
+mapping dimByTilt : Tilt -> Brightness
+dimByTilt(tilt) =
+  clamp(tilt / (90 deg), 0, 1)
+
+mapping chooseBrightness : Held -> Tilt -> Brightness
+chooseBrightness(held, tilt) =
+  if held then
+    dimByTilt(tilt)
+  else
+    0

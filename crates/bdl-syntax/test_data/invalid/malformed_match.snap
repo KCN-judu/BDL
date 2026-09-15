@@ -1,0 +1,130 @@
+Module@0..196
+  MappingDecl@0..171
+    KwMapping@0..7 "mapping"
+    Whitespace@7..8 " "
+    Name@8..15
+      Ident@8..15 "resolve"
+    Whitespace@15..16 " "
+    Colon@16..17 ":"
+    Whitespace@17..18 " "
+    FunctionType@18..40
+      NamedType@18..26
+        NameRef@18..26
+          Ident@18..26 "LampMode"
+      Whitespace@26..27 " "
+      Arrow@27..29 "->"
+      Whitespace@29..30 " "
+      NamedType@30..40
+        NameRef@30..40
+          Ident@30..40 "Brightness"
+    Whitespace@40..41 "\n"
+    MappingDef@41..171
+      NameRef@41..48
+        Ident@41..48 "resolve"
+      ParamList@48..54
+        LParen@48..49 "("
+        IdentPattern@49..53
+          Name@49..53
+            Ident@49..53 "mode"
+        RParen@53..54 ")"
+      Whitespace@54..55 " "
+      Eq@55..56 "="
+      Whitespace@56..59 "\n  "
+      MatchExpr@59..171
+        KwMatch@59..64 "match"
+        Whitespace@64..65 " "
+        NameExpr@65..69
+          NameRef@65..69
+            Ident@65..69 "mode"
+        Whitespace@69..70 " "
+        MatchArmList@70..171
+          LBrace@70..71 "{"
+          Whitespace@71..76 "\n    "
+          MatchArm@76..84
+            IdentPattern@76..79
+              Name@76..79
+                Ident@76..79 "Off"
+            Whitespace@79..80 " "
+            FatArrow@80..82 "=>"
+            Whitespace@82..83 " "
+            LiteralExpr@83..84
+              Number@83..84 "0"
+          Whitespace@84..89 "\n    "
+          MatchArm@89..118
+            IdentPattern@89..98
+              Name@89..98
+                Ident@89..98 "Automatic"
+            Whitespace@98..99 " "
+            FatArrow@99..101 "=>"
+            Whitespace@101..102 " "
+            CallExpr@102..117
+              NameExpr@102..111
+                NameRef@102..111
+                  Ident@102..111 "dimByTilt"
+              ArgList@111..117
+                LParen@111..112 "("
+                NameExpr@112..116
+                  NameRef@112..116
+                    Ident@112..116 "tilt"
+                RParen@116..117 ")"
+            Comma@117..118 ","
+          Whitespace@118..123 "\n    "
+          MatchArm@123..143
+            ConstructorPattern@123..136
+              NameRef@123..129
+                Ident@123..129 "Manual"
+              PatternList@129..136
+                LParen@129..130 "("
+                IdentPattern@130..135
+                  Name@130..135
+                    Ident@130..135 "value"
+                RParen@135..136 ")"
+            Whitespace@136..137 " "
+            NameExpr@137..142
+              NameRef@137..142
+                Ident@137..142 "value"
+            Comma@142..143 ","
+          Whitespace@143..148 "\n    "
+          MatchArm@148..153
+            FatArrow@148..150 "=>"
+            Whitespace@150..151 " "
+            LiteralExpr@151..152
+              Number@151..152 "1"
+            Comma@152..153 ","
+          Whitespace@153..158 "\n    "
+          MatchArm@158..167
+            LiteralPattern@158..161
+              Number@158..161 "1.5"
+            Whitespace@161..162 " "
+            FatArrow@162..164 "=>"
+            Whitespace@164..165 " "
+            LiteralExpr@165..166
+              Number@165..166 "2"
+            Comma@166..167 ","
+          Whitespace@167..170 "\n  "
+          RBrace@170..171 "}"
+  Whitespace@171..173 "\n\n"
+  ConceptDecl@173..195
+    KwConcept@173..180 "concept"
+    Whitespace@180..181 " "
+    Name@181..186
+      Ident@181..186 "After"
+    Whitespace@186..187 " "
+    Colon@187..188 ":"
+    Whitespace@188..189 " "
+    NamedType@189..195
+      NameRef@189..195
+        Ident@189..195 "Scalar"
+  Whitespace@195..196 "\n"
+error 89..98 syntax.unexpected: expected an operator or `,` after this match arm
+  found the name `Automatic`
+  hint: If `Automatic` is meant as a unit: a unit can only follow a number, as in `90 Automatic`. Write the quantity as a multiplication, e.g. `x * (1 Automatic)`.
+error 137..142 syntax.expected: expected `=>` after the pattern
+  expected `=>`, found the name `value`
+error 148..150 syntax.expected: expected a pattern before `=>`
+  found `=>`
+  hint: A match arm is `pattern => expression,`; use `_` to match anything.
+error 158..161 syntax.literal_pattern: only whole numbers can be matched, not `1.5`
+  found the number `1.5`
+  hint: Match on a whole number, or compare with `<` in an `if` instead.
+lowered: 1 concept(s), 0 mapping(s), 0 enum(s)

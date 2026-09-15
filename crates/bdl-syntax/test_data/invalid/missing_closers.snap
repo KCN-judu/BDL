@@ -1,0 +1,109 @@
+Module@0..89
+  EnumDecl@0..18
+    KwEnum@0..4 "enum"
+    Whitespace@4..5 " "
+    Name@5..9
+      Ident@5..9 "Mode"
+    Whitespace@9..10 " "
+    LBrace@10..11 "{"
+    Whitespace@11..12 " "
+    EnumVariant@12..13
+      Name@12..13
+        Ident@12..13 "A"
+    Comma@13..14 ","
+    Whitespace@14..15 " "
+    EnumVariant@15..18
+      Name@15..16
+        Ident@15..16 "B"
+      TypeList@16..18
+        LParen@16..17 "("
+        NamedType@17..18
+          NameRef@17..18
+            Ident@17..18 "C"
+  Whitespace@18..19 "\n"
+  MappingDecl@19..74
+    KwMapping@19..26 "mapping"
+    Whitespace@26..27 " "
+    Name@27..28
+      Ident@27..28 "f"
+    Whitespace@28..29 " "
+    Colon@29..30 ":"
+    Whitespace@30..31 " "
+    NamedType@31..44
+      NameRef@31..37
+        Ident@31..37 "Option"
+      TypeArgList@37..44
+        Lt@37..38 "<"
+        FunctionType@38..44
+          NamedType@38..39
+            NameRef@38..39
+              Ident@38..39 "A"
+          Whitespace@39..40 " "
+          Arrow@40..42 "->"
+          Whitespace@42..43 " "
+          NamedType@43..44
+            NameRef@43..44
+              Ident@43..44 "B"
+    Whitespace@44..45 "\n"
+    MappingDef@45..74
+      NameRef@45..46
+        Ident@45..46 "f"
+      ParamList@46..49
+        LParen@46..47 "("
+        IdentPattern@47..48
+          Name@47..48
+            Ident@47..48 "x"
+        RParen@48..49 ")"
+      Whitespace@49..50 " "
+      Eq@50..51 "="
+      Whitespace@51..52 " "
+      CallExpr@52..74
+        NameExpr@52..53
+          NameRef@52..53
+            Ident@52..53 "g"
+        ArgList@53..74
+          LParen@53..54 "("
+          NameExpr@54..55
+            NameRef@54..55
+              Ident@54..55 "x"
+          Comma@55..56 ","
+          Whitespace@56..57 " "
+          BlockExpr@57..74
+            LBrace@57..58 "{"
+            Whitespace@58..61 "\n  "
+            LetStmt@61..70
+              KwLet@61..64 "let"
+              Whitespace@64..65 " "
+              IdentPattern@65..66
+                Name@65..66
+                  Ident@65..66 "y"
+              Whitespace@66..67 " "
+              Eq@67..68 "="
+              Whitespace@68..69 " "
+              NameExpr@69..70
+                NameRef@69..70
+                  Ident@69..70 "x"
+            Whitespace@70..73 "\n  "
+            NameExpr@73..74
+              NameRef@73..74
+                Ident@73..74 "y"
+  Whitespace@74..76 "\n\n"
+  ConceptDecl@76..88
+    KwConcept@76..83 "concept"
+    Whitespace@83..84 " "
+    Name@84..88
+      Ident@84..88 "Tail"
+  Whitespace@88..89 "\n"
+error 19..26 syntax.expected: expected `)` to close the variant's fields
+  expected `)` or `,`, found `mapping`
+error 19..26 syntax.expected: expected `}` to close the enum
+  expected `}`, found `mapping`
+error 45..46 syntax.expected: expected `>` to close the type arguments
+  expected `>` or `,`, found the name `f`
+error 73..74 syntax.expected: expected `;` to end this `let`
+  expected `;`, found the name `y`
+error 76..83 syntax.expected: expected `}` to close this block
+  expected `}`, found `concept`
+error 76..83 syntax.expected: expected `)` to close this call
+  expected `)` or `,`, found `concept`
+lowered: 1 concept(s), 1 mapping(s), 1 enum(s)

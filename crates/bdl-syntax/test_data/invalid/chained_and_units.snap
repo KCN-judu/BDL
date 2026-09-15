@@ -1,0 +1,123 @@
+Module@0..122
+  MappingDecl@0..57
+    KwMapping@0..7 "mapping"
+    Whitespace@7..8 " "
+    Name@8..9
+      Ident@8..9 "f"
+    Whitespace@9..10 " "
+    Colon@10..11 ":"
+    Whitespace@11..12 " "
+    FunctionType@12..24
+      NamedType@12..16
+        NameRef@12..16
+          Ident@12..16 "Tilt"
+      Whitespace@16..17 " "
+      Arrow@17..19 "->"
+      Whitespace@19..20 " "
+      NamedType@20..24
+        NameRef@20..24
+          Ident@20..24 "Bool"
+    Whitespace@24..25 "\n"
+    MappingDef@25..57
+      NameRef@25..26
+        Ident@25..26 "f"
+      ParamList@26..29
+        LParen@26..27 "("
+        IdentPattern@27..28
+          Name@27..28
+            Ident@27..28 "x"
+        RParen@28..29 ")"
+      Whitespace@29..30 " "
+      Eq@30..31 "="
+      Whitespace@31..32 " "
+      BinaryExpr@32..57
+        BinaryExpr@32..49
+          BinaryExpr@32..41
+            NameExpr@32..33
+              NameRef@32..33
+                Ident@32..33 "x"
+            Whitespace@33..34 " "
+            Lt@34..35 "<"
+            Whitespace@35..36 " "
+            LiteralExpr@36..41
+              Number@36..37 "1"
+              Whitespace@37..38 " "
+              UnitSuffix@38..41
+                Ident@38..41 "deg"
+          Whitespace@41..42 " "
+          Lt@42..43 "<"
+          Whitespace@43..44 " "
+          LiteralExpr@44..49
+            Number@44..45 "2"
+            Whitespace@45..46 " "
+            UnitSuffix@46..49
+              Ident@46..49 "deg"
+        Whitespace@49..50 " "
+        EqEq@50..52 "=="
+        Whitespace@52..53 " "
+        LiteralExpr@53..57
+          KwTrue@53..57 "true"
+  Whitespace@57..59 "\n\n"
+  MappingDecl@59..106
+    KwMapping@59..66 "mapping"
+    Whitespace@66..67 " "
+    Name@67..68
+      Ident@67..68 "g"
+    Whitespace@68..69 " "
+    Colon@69..70 ":"
+    Whitespace@70..71 " "
+    FunctionType@71..83
+      NamedType@71..75
+        NameRef@71..75
+          Ident@71..75 "Tilt"
+      Whitespace@75..76 " "
+      Arrow@76..78 "->"
+      Whitespace@78..79 " "
+      NamedType@79..83
+        NameRef@79..83
+          Ident@79..83 "Tilt"
+    Whitespace@83..84 "\n"
+    MappingDef@84..106
+      NameRef@84..85
+        Ident@84..85 "g"
+      ParamList@85..88
+        LParen@85..86 "("
+        IdentPattern@86..87
+          Name@86..87
+            Ident@86..87 "x"
+        RParen@87..88 ")"
+      Whitespace@88..89 " "
+      Eq@89..90 "="
+      Whitespace@90..91 " "
+      NameExpr@91..92
+        NameRef@91..92
+          Ident@91..92 "x"
+      Whitespace@92..93 " "
+      ErrorNode@93..106
+        Ident@93..96 "deg"
+        Whitespace@96..97 " "
+        Plus@97..98 "+"
+        Whitespace@98..99 " "
+        Ident@99..100 "f"
+        LParen@100..101 "("
+        Ident@101..102 "x"
+        RParen@102..103 ")"
+        Whitespace@103..104 " "
+        Ident@104..106 "mm"
+  Whitespace@106..108 "\n\n"
+  ConceptDecl@108..121
+    KwConcept@108..115 "concept"
+    Whitespace@115..116 " "
+    Name@116..121
+      Ident@116..121 "Later"
+  Whitespace@121..122 "\n"
+error 42..43 syntax.chained_comparison: comparisons cannot be chained
+  found a second comparison
+  hint: Compare in two steps joined with `&&`, as in `a < b && b < c`; use parentheses if the result of a comparison really is what you compare.
+error 50..52 syntax.chained_comparison: comparisons cannot be chained
+  found a second comparison
+  hint: Compare in two steps joined with `&&`, as in `a < b && b < c`; use parentheses if the result of a comparison really is what you compare.
+error 93..96 syntax.unexpected: expected an operator or the next declaration after this definition
+  found the name `deg`
+  hint: If `deg` is meant as a unit: a unit can only follow a number, as in `90 deg`. Write the quantity as a multiplication, e.g. `x * (1 deg)`.
+lowered: 1 concept(s), 2 mapping(s), 0 enum(s)

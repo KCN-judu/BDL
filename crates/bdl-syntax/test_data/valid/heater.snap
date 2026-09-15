@@ -1,0 +1,509 @@
+Module@0..1031
+  BlockComment@0..146 "/* The heater in the lamp's base: a safety condition that competes with\n   the interaction for one output, combined upstream of the drive edge. */"
+  Whitespace@146..148 "\n\n"
+  ConceptDecl@148..181
+    KwConcept@148..155 "concept"
+    Whitespace@155..156 " "
+    Name@156..167
+      Ident@156..167 "Temperature"
+    Whitespace@167..168 " "
+    Colon@168..169 ":"
+    Whitespace@169..170 " "
+    NamedType@170..181
+      NameRef@170..181
+        Ident@170..181 "Temperature"
+  Whitespace@181..182 "\n"
+  ConceptDecl@182..211
+    KwConcept@182..189 "concept"
+    Whitespace@189..190 " "
+    Name@190..202
+      Ident@190..202 "HeaterDemand"
+    Whitespace@202..203 " "
+    Colon@203..204 ":"
+    Whitespace@204..205 " "
+    NamedType@205..211
+      NameRef@205..211
+        Ident@205..211 "Scalar"
+  Whitespace@211..212 "\n"
+  ConceptDecl@212..231
+    KwConcept@212..219 "concept"
+    Whitespace@219..220 " "
+    Name@220..224
+      Ident@220..224 "Warm"
+    Whitespace@224..225 " "
+    Colon@225..226 ":"
+    Whitespace@226..227 " "
+    NamedType@227..231
+      NameRef@227..231
+        Ident@227..231 "Bool"
+  Whitespace@231..232 "\n"
+  ConceptDecl@232..255
+    KwConcept@232..239 "concept"
+    Whitespace@239..240 " "
+    Name@240..248
+      Ident@240..248 "Critical"
+    Whitespace@248..249 " "
+    Colon@249..250 ":"
+    Whitespace@250..251 " "
+    NamedType@251..255
+      NameRef@251..255
+        Ident@251..255 "Bool"
+  Whitespace@255..257 "\n\n"
+  ConceptDecl@257..330
+    LineComment@257..316 "// Open concepts are legal: the representation comes later."
+    Whitespace@316..317 "\n"
+    KwConcept@317..324 "concept"
+    Whitespace@324..325 " "
+    Name@325..330
+      Ident@325..330 "Pulse"
+  Whitespace@330..332 "\n\n"
+  MappingDecl@332..386
+    KwMapping@332..339 "mapping"
+    Whitespace@339..340 " "
+    Name@340..344
+      Ident@340..344 "warm"
+    Whitespace@344..345 " "
+    Colon@345..346 ":"
+    Whitespace@346..347 " "
+    FunctionType@347..366
+      NamedType@347..358
+        NameRef@347..358
+          Ident@347..358 "Temperature"
+      Whitespace@358..359 " "
+      Arrow@359..361 "->"
+      Whitespace@361..362 " "
+      NamedType@362..366
+        NameRef@362..366
+          Ident@362..366 "Warm"
+    Whitespace@366..367 "\n"
+    MappingDef@367..386
+      NameRef@367..371
+        Ident@367..371 "warm"
+      ParamList@371..374
+        LParen@371..372 "("
+        IdentPattern@372..373
+          Name@372..373
+            Ident@372..373 "t"
+        RParen@373..374 ")"
+      Whitespace@374..375 " "
+      Eq@375..376 "="
+      Whitespace@376..377 " "
+      BinaryExpr@377..386
+        NameExpr@377..378
+          NameRef@377..378
+            Ident@377..378 "t"
+        Whitespace@378..379 " "
+        Gt@379..380 ">"
+        Whitespace@380..381 " "
+        LiteralExpr@381..386
+          Number@381..384 "315"
+          Whitespace@384..385 " "
+          UnitSuffix@385..386
+            Ident@385..386 "K"
+  Whitespace@386..388 "\n\n"
+  MappingDecl@388..469
+    KwMapping@388..395 "mapping"
+    Whitespace@395..396 " "
+    Name@396..404
+      Ident@396..404 "critical"
+    Whitespace@404..405 " "
+    Colon@405..406 ":"
+    Whitespace@406..407 " "
+    FunctionType@407..430
+      NamedType@407..418
+        NameRef@407..418
+          Ident@407..418 "Temperature"
+      Whitespace@418..419 " "
+      Arrow@419..421 "->"
+      Whitespace@421..422 " "
+      NamedType@422..430
+        NameRef@422..430
+          Ident@422..430 "Critical"
+    Whitespace@430..431 "\n"
+    MappingDef@431..469
+      NameRef@431..439
+        Ident@431..439 "critical"
+      ParamList@439..442
+        LParen@439..440 "("
+        IdentPattern@440..441
+          Name@440..441
+            Ident@440..441 "t"
+        RParen@441..442 ")"
+      Whitespace@442..443 " "
+      Eq@443..444 "="
+      Whitespace@444..445 " "
+      BinaryExpr@445..469
+        BinaryExpr@445..455
+          NameExpr@445..446
+            NameRef@445..446
+              Ident@445..446 "t"
+          Whitespace@446..447 " "
+          Ge@447..449 ">="
+          Whitespace@449..450 " "
+          LiteralExpr@450..455
+            Number@450..453 "335"
+            Whitespace@453..454 " "
+            UnitSuffix@454..455
+              Ident@454..455 "K"
+        Whitespace@455..456 " "
+        AndAnd@456..458 "&&"
+        Whitespace@458..459 " "
+        UnaryExpr@459..469
+          Bang@459..460 "!"
+          ParenExpr@460..469
+            LParen@460..461 "("
+            BinaryExpr@461..468
+              NameExpr@461..462
+                NameRef@461..462
+                  Ident@461..462 "t"
+              Whitespace@462..463 " "
+              Lt@463..464 "<"
+              Whitespace@464..465 " "
+              LiteralExpr@465..468
+                Number@465..466 "0"
+                Whitespace@466..467 " "
+                UnitSuffix@467..468
+                  Ident@467..468 "K"
+            RParen@468..469 ")"
+  Whitespace@469..471 "\n\n"
+  MappingDecl@471..703
+    LineComment@471..512 "// The single final driver of the heater."
+    Whitespace@512..513 "\n"
+    KwMapping@513..520 "mapping"
+    Whitespace@520..521 " "
+    Name@521..533
+      Ident@521..533 "heaterTarget"
+    Whitespace@533..534 " "
+    Colon@534..535 ":"
+    Whitespace@535..536 " "
+    FunctionType@536..576
+      NamedType@536..544
+        NameRef@536..544
+          Ident@536..544 "Critical"
+      Whitespace@544..545 " "
+      Arrow@545..547 "->"
+      Whitespace@547..548 " "
+      FunctionType@548..576
+        NamedType@548..560
+          NameRef@548..560
+            Ident@548..560 "HeaterDemand"
+        Whitespace@560..561 " "
+        Arrow@561..563 "->"
+        Whitespace@563..564 " "
+        NamedType@564..576
+          NameRef@564..576
+            Ident@564..576 "HeaterDemand"
+    Whitespace@576..577 "\n"
+    MappingDef@577..703
+      NameRef@577..589
+        Ident@577..589 "heaterTarget"
+      ParamList@589..607
+        LParen@589..590 "("
+        IdentPattern@590..598
+          Name@590..598
+            Ident@590..598 "critical"
+        Comma@598..599 ","
+        Whitespace@599..600 " "
+        IdentPattern@600..606
+          Name@600..606
+            Ident@600..606 "demand"
+        RParen@606..607 ")"
+      Whitespace@607..608 " "
+      Eq@608..609 "="
+      Whitespace@609..610 " "
+      BlockExpr@610..703
+        LBrace@610..611 "{"
+        Whitespace@611..614 "\n  "
+        LetStmt@614..656
+          KwLet@614..617 "let"
+          Whitespace@617..618 " "
+          IdentPattern@618..622
+            Name@618..622
+              Ident@618..622 "safe"
+          Whitespace@622..623 " "
+          Eq@623..624 "="
+          Whitespace@624..625 " "
+          IfExpr@625..655
+            KwIf@625..627 "if"
+            Whitespace@627..628 " "
+            NameExpr@628..636
+              NameRef@628..636
+                Ident@628..636 "critical"
+            Whitespace@636..637 " "
+            KwThen@637..641 "then"
+            Whitespace@641..642 " "
+            LiteralExpr@642..643
+              Number@642..643 "0"
+            Whitespace@643..644 " "
+            KwElse@644..648 "else"
+            Whitespace@648..649 " "
+            NameExpr@649..655
+              NameRef@649..655
+                Ident@649..655 "demand"
+          Semi@655..656 ";"
+        Whitespace@656..659 "\n  "
+        LetStmt@659..691
+          KwLet@659..662 "let"
+          Whitespace@662..663 " "
+          IdentPattern@663..670
+            Name@663..670
+              Ident@663..670 "bounded"
+          Whitespace@670..671 " "
+          Eq@671..672 "="
+          Whitespace@672..673 " "
+          CallExpr@673..690
+            NameExpr@673..678
+              NameRef@673..678
+                Ident@673..678 "clamp"
+            ArgList@678..690
+              LParen@678..679 "("
+              NameExpr@679..683
+                NameRef@679..683
+                  Ident@679..683 "safe"
+              Comma@683..684 ","
+              Whitespace@684..685 " "
+              LiteralExpr@685..686
+                Number@685..686 "0"
+              Comma@686..687 ","
+              Whitespace@687..688 " "
+              LiteralExpr@688..689
+                Number@688..689 "1"
+              RParen@689..690 ")"
+          Semi@690..691 ";"
+        Whitespace@691..694 "\n  "
+        NameExpr@694..701
+          NameRef@694..701
+            Ident@694..701 "bounded"
+        Whitespace@701..702 "\n"
+        RBrace@702..703 "}"
+  Whitespace@703..705 "\n\n"
+  EnumDecl@705..758
+    KwEnum@705..709 "enum"
+    Whitespace@709..710 " "
+    Name@710..717
+      Ident@710..717 "Reading"
+    TypeParamList@717..720
+      Lt@717..718 "<"
+      Name@718..719
+        Ident@718..719 "T"
+      Gt@719..720 ">"
+    Whitespace@720..721 " "
+    LBrace@721..722 "{"
+    Whitespace@722..725 "\n  "
+    EnumVariant@725..746
+      Name@725..730
+        Ident@725..730 "Fresh"
+      TypeList@730..746
+        LParen@730..731 "("
+        NamedType@731..732
+          NameRef@731..732
+            Ident@731..732 "T"
+        Comma@732..733 ","
+        Whitespace@733..734 " "
+        NamedType@734..745
+          NameRef@734..745
+            Ident@734..745 "Temperature"
+        RParen@745..746 ")"
+    Comma@746..747 ","
+    Whitespace@747..750 "\n  "
+    EnumVariant@750..755
+      Name@750..755
+        Ident@750..755 "Stale"
+    Comma@755..756 ","
+    Whitespace@756..757 "\n"
+    RBrace@757..758 "}"
+  Whitespace@758..760 "\n\n"
+  MappingDecl@760..882
+    KwMapping@760..767 "mapping"
+    Whitespace@767..768 " "
+    Name@768..774
+      Ident@768..774 "latest"
+    Whitespace@774..775 " "
+    Colon@775..776 ":"
+    Whitespace@776..777 " "
+    FunctionType@777..814
+      NamedType@777..798
+        NameRef@777..784
+          Ident@777..784 "Reading"
+        TypeArgList@784..798
+          Lt@784..785 "<"
+          NamedType@785..797
+            NameRef@785..797
+              Ident@785..797 "HeaterDemand"
+          Gt@797..798 ">"
+      Whitespace@798..799 " "
+      Arrow@799..801 "->"
+      Whitespace@801..802 " "
+      NamedType@802..814
+        NameRef@802..814
+          Ident@802..814 "HeaterDemand"
+    Whitespace@814..815 "\n"
+    MappingDef@815..882
+      NameRef@815..821
+        Ident@815..821 "latest"
+      ParamList@821..824
+        LParen@821..822 "("
+        IdentPattern@822..823
+          Name@822..823
+            Ident@822..823 "r"
+        RParen@823..824 ")"
+      Whitespace@824..825 " "
+      Eq@825..826 "="
+      Whitespace@826..829 "\n  "
+      MatchExpr@829..882
+        KwMatch@829..834 "match"
+        Whitespace@834..835 " "
+        NameExpr@835..836
+          NameRef@835..836
+            Ident@835..836 "r"
+        Whitespace@836..837 " "
+        MatchArmList@837..882
+          LBrace@837..838 "{"
+          Whitespace@838..843 "\n    "
+          MatchArm@843..860
+            ConstructorPattern@843..854
+              NameRef@843..848
+                Ident@843..848 "Fresh"
+              PatternList@848..854
+                LParen@848..849 "("
+                IdentPattern@849..850
+                  Name@849..850
+                    Ident@849..850 "d"
+                Comma@850..851 ","
+                Whitespace@851..852 " "
+                WildcardPattern@852..853
+                  Underscore@852..853 "_"
+                RParen@853..854 ")"
+            Whitespace@854..855 " "
+            FatArrow@855..857 "=>"
+            Whitespace@857..858 " "
+            NameExpr@858..859
+              NameRef@858..859
+                Ident@858..859 "d"
+            Comma@859..860 ","
+          Whitespace@860..865 "\n    "
+          MatchArm@865..878
+            IdentPattern@865..870
+              Name@865..870
+                Ident@865..870 "Stale"
+            Whitespace@870..871 " "
+            FatArrow@871..873 "=>"
+            Whitespace@873..874 " "
+            LiteralExpr@874..877
+              Number@874..877 "0.5"
+            Comma@877..878 ","
+          Whitespace@878..881 "\n  "
+          RBrace@881..882 "}"
+  Whitespace@882..884 "\n\n"
+  MappingDecl@884..959
+    KwMapping@884..891 "mapping"
+    Whitespace@891..892 " "
+    Name@892..896
+      Ident@892..896 "rate"
+    Whitespace@896..897 " "
+    Colon@897..898 ":"
+    Whitespace@898..899 " "
+    FunctionType@899..920
+      NamedType@899..910
+        NameRef@899..910
+          Ident@899..910 "Temperature"
+      Whitespace@910..911 " "
+      Arrow@911..913 "->"
+      Whitespace@913..914 " "
+      NamedType@914..920
+        NameRef@914..920
+          Ident@914..920 "Scalar"
+    Whitespace@920..921 "\n"
+    MappingDef@921..959
+      NameRef@921..925
+        Ident@921..925 "rate"
+      ParamList@925..928
+        LParen@925..926 "("
+        IdentPattern@926..927
+          Name@926..927
+            Ident@926..927 "t"
+        RParen@927..928 ")"
+      Whitespace@928..929 " "
+      Eq@929..930 "="
+      Whitespace@930..931 " "
+      BinaryExpr@931..959
+        BinaryExpr@931..952
+          ParenExpr@931..942
+            LParen@931..932 "("
+            BinaryExpr@932..941
+              NameExpr@932..933
+                NameRef@932..933
+                  Ident@932..933 "t"
+              Whitespace@933..934 " "
+              Minus@934..935 "-"
+              Whitespace@935..936 " "
+              LiteralExpr@936..941
+                Number@936..939 "293"
+                Whitespace@939..940 " "
+                UnitSuffix@940..941
+                  Ident@940..941 "K"
+            RParen@941..942 ")"
+          Whitespace@942..943 " "
+          Slash@943..944 "/"
+          Whitespace@944..945 " "
+          ParenExpr@945..952
+            LParen@945..946 "("
+            LiteralExpr@946..951
+              Number@946..949 "2.5"
+              Whitespace@949..950 " "
+              UnitSuffix@950..951
+                Ident@950..951 "s"
+            RParen@951..952 ")"
+        Whitespace@952..953 " "
+        Star@953..954 "*"
+        Whitespace@954..955 " "
+        LiteralExpr@955..959
+          Number@955..959 "1e-3"
+  Whitespace@959..961 "\n\n"
+  MappingDecl@961..1030
+    KwMapping@961..968 "mapping"
+    Whitespace@968..969 " "
+    Name@969..972
+      Ident@969..972 "sig"
+    Whitespace@972..973 " "
+    Colon@973..974 ":"
+    Whitespace@974..975 " "
+    FunctionType@975..1030
+      ParenType@975..996
+        LParen@975..976 "("
+        FunctionType@976..995
+          NamedType@976..987
+            NameRef@976..987
+              Ident@976..987 "Temperature"
+          Whitespace@987..988 " "
+          Arrow@988..990 "->"
+          Whitespace@990..991 " "
+          NamedType@991..995
+            NameRef@991..995
+              Ident@991..995 "Warm"
+        RParen@995..996 ")"
+      Whitespace@996..997 " "
+      Arrow@997..999 "->"
+      Whitespace@999..1000 " "
+      NamedType@1000..1030
+        NameRef@1000..1006
+          Ident@1000..1006 "Option"
+        TypeArgList@1006..1030
+          Lt@1006..1007 "<"
+          NamedType@1007..1029
+            NameRef@1007..1013
+              Ident@1007..1013 "Result"
+            TypeArgList@1013..1029
+              Lt@1013..1014 "<"
+              NamedType@1014..1018
+                NameRef@1014..1018
+                  Ident@1014..1018 "Warm"
+              Comma@1018..1019 ","
+              Whitespace@1019..1020 " "
+              NamedType@1020..1028
+                NameRef@1020..1028
+                  Ident@1020..1028 "Critical"
+              Gt@1028..1029 ">"
+          Gt@1029..1030 ">"
+  Whitespace@1030..1031 "\n"
+lowered: 5 concept(s), 6 mapping(s), 1 enum(s)

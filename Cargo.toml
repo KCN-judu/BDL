@@ -50,6 +50,8 @@ clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 tempfile = "3"
 proptest = "1"
+logos = "0.16"
+rowan = "0.17"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -1,0 +1,13 @@
+enum LampMode {
+  Off,
+  Automatic,
+  Manual(Brightness),
+}
+
+mapping resolve : LampMode -> Tilt -> Brightness
+resolve(mode, tilt) =
+  match mode {
+    Off => 0,
+    Automatic => dimByTilt(tilt),
+    Manual(value) => value,
+  }

@@ -1,6 +1,6 @@
 [package]
 name = "bdl-syntax"
-description = "BDL formula language: lexer, parser, and surface AST with source spans"
+description = "BDL textual syntax: Logos lexer, event-based recursive-descent/Pratt parser, lossless Rowan CST, typed AST, lowering to the surface tree"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,6 +10,8 @@ repository.workspace = true
 [dependencies]
 bdl-diagnostics = { workspace = true }
 serde = { workspace = true }
+logos = { workspace = true }
+rowan = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }

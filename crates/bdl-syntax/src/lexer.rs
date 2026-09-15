@@ -1,209 +1,273 @@
-//! Tokens with byte spans.  Never panics; unknown characters become
-//! [`TokenKind::Error`] tokens the parser reports.
+//! Logos lexer.  Every byte of the source belongs to exactly one token
+//! (trivia and error tokens included), so the token texts concatenate back
+//! to the source.  Never panics: unknown characters become
+//! [`SyntaxKind::Error`] tokens covering one whole UTF-8 character.
+//!
+//! Numbers are *spelled*, not valued: a [`SyntaxKind::Number`] token is its
+//! text, and nothing here converts it (`docs/TEXTUAL_SYNTAX.md` §2.3).
 
+use crate::kind::SyntaxKind;
+use crate::syntax::{SyntaxError, SyntaxErrorCode};
 use bdl_diagnostics::Span;
+use logos::Logos;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token {
-    pub kind: TokenKind,
+    pub kind: SyntaxKind,
     pub span: Span,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum TokenKind {
-    Ident(String),
-    Number {
-        text: String,
-        value: f64,
-    },
-    If,
-    Then,
-    Else,
-    True,
-    False,
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Lt,
-    Le,
-    Gt,
-    Ge,
-    EqEq,
-    Ne,
-    AndAnd,
-    OrOr,
-    Bang,
+impl Token {
+    pub fn text<'a>(&self, src: &'a str) -> &'a str {
+        // Logos spans are char-aligned; a defensive `get` keeps this total.
+        src.get(self.span.start as usize..self.span.end as usize)
+            .unwrap_or("")
+    }
+}
+
+/// The lexer's own token classes; keywords are split off from `Ident`
+/// afterwards so that the ident regex is the single authority on what an
+/// identifier looks like.
+#[derive(Logos, Debug, PartialEq)]
+enum Raw {
+    #[regex(r"[ \t\r\n\f]+")]
+    Whitespace,
+    #[token("//", line_comment)]
+    LineComment,
+    /// `true` when terminated by `*/`.
+    #[token("/*", block_comment)]
+    BlockComment(bool),
+    #[regex(r"[A-Za-z_][A-Za-z0-9_]*")]
+    Ident,
+    #[regex(r"[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?|\.[0-9]+([eE][+-]?[0-9]+)?")]
+    Number,
+    #[token("(")]
     LParen,
+    #[token(")")]
     RParen,
-    /// An unrecognised character (or a lone `&`, `|`, `=`).
-    Error(String),
-    Eof,
+    #[token("{")]
+    LBrace,
+    #[token("}")]
+    RBrace,
+    #[token("<")]
+    Lt,
+    #[token(">")]
+    Gt,
+    #[token("<=")]
+    Le,
+    #[token(">=")]
+    Ge,
+    #[token("==")]
+    EqEq,
+    #[token("!=")]
+    Ne,
+    #[token(":")]
+    Colon,
+    #[token(",")]
+    Comma,
+    #[token(";")]
+    Semi,
+    #[token("=")]
+    Eq,
+    #[token("->")]
+    Arrow,
+    #[token("=>")]
+    FatArrow,
+    #[token("+")]
+    Plus,
+    #[token("-")]
+    Minus,
+    #[token("*")]
+    Star,
+    #[token("/")]
+    Slash,
+    #[token("!")]
+    Bang,
+    #[token("&&")]
+    AndAnd,
+    #[token("||")]
+    OrOr,
 }
 
-impl TokenKind {
-    pub fn describe(&self) -> String {
-        match self {
-            TokenKind::Ident(n) => format!("name `{n}`"),
-            TokenKind::Number { text, .. } => format!("number `{text}`"),
-            TokenKind::If => "`if`".into(),
-            TokenKind::Then => "`then`".into(),
-            TokenKind::Else => "`else`".into(),
-            TokenKind::True => "`true`".into(),
-            TokenKind::False => "`false`".into(),
-            TokenKind::Plus => "`+`".into(),
-            TokenKind::Minus => "`-`".into(),
-            TokenKind::Star => "`*`".into(),
-            TokenKind::Slash => "`/`".into(),
-            TokenKind::Lt => "`<`".into(),
-            TokenKind::Le => "`<=`".into(),
-            TokenKind::Gt => "`>`".into(),
-            TokenKind::Ge => "`>=`".into(),
-            TokenKind::EqEq => "`==`".into(),
-            TokenKind::Ne => "`!=`".into(),
-            TokenKind::AndAnd => "`&&`".into(),
-            TokenKind::OrOr => "`||`".into(),
-            TokenKind::Bang => "`!`".into(),
-            TokenKind::LParen => "`(`".into(),
-            TokenKind::RParen => "`)`".into(),
-            TokenKind::Error(s) => format!("`{s}`"),
-            TokenKind::Eof => "end of formula".into(),
+fn line_comment(lex: &mut logos::Lexer<Raw>) {
+    let rest = lex.remainder();
+    lex.bump(rest.find('\n').unwrap_or(rest.len()));
+}
+
+fn block_comment(lex: &mut logos::Lexer<Raw>) -> bool {
+    let rest = lex.remainder();
+    match rest.find("*/") {
+        Some(i) => {
+            lex.bump(i + 2);
+            true
+        }
+        None => {
+            lex.bump(rest.len());
+            false
         }
     }
 }
 
-pub fn lex(src: &str) -> Vec<Token> {
-    let bytes = src.as_bytes();
-    let mut out = Vec::new();
-    let mut i = 0usize;
-    let at = |i: usize| bytes.get(i).copied();
-    while i < bytes.len() {
-        let c = bytes[i];
-        if c.is_ascii_whitespace() {
-            i += 1;
-            continue;
-        }
-        let start = i;
-        let kind = if c.is_ascii_alphabetic() || c == b'_' {
-            while i < bytes.len() && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_') {
-                i += 1;
-            }
-            match &src[start..i] {
-                "if" => TokenKind::If,
-                "then" => TokenKind::Then,
-                "else" => TokenKind::Else,
-                "true" => TokenKind::True,
-                "false" => TokenKind::False,
-                s => TokenKind::Ident(s.to_owned()),
-            }
-        } else if c.is_ascii_digit() || (c == b'.' && at(i + 1).is_some_and(|d| d.is_ascii_digit()))
-        {
-            while i < bytes.len() && bytes[i].is_ascii_digit() {
-                i += 1;
-            }
-            if at(i) == Some(b'.') && at(i + 1).is_some_and(|d| d.is_ascii_digit()) {
-                i += 1;
-                while i < bytes.len() && bytes[i].is_ascii_digit() {
-                    i += 1;
+/// Tokenise `src` completely.  The result never contains `Eof`; the parser
+/// synthesises it.  Lexical diagnostics (invalid characters, unterminated
+/// comments) are returned alongside so the parser can merge them.
+pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
+    let mut tokens = Vec::new();
+    let mut errors = Vec::new();
+    let mut lexer = Raw::lexer(src);
+    while let Some(item) = lexer.next() {
+        let range = lexer.span();
+        let span = Span::new(range.start as u32, range.end as u32);
+        let text = &src[range.clone()];
+        let kind = match item {
+            Ok(Raw::Whitespace) => SyntaxKind::Whitespace,
+            Ok(Raw::LineComment) => SyntaxKind::LineComment,
+            Ok(Raw::BlockComment(terminated)) => {
+                if !terminated {
+                    errors.push(SyntaxError::new(
+                        SyntaxErrorCode::UnterminatedComment,
+                        span,
+                        "this `/*` comment is never closed",
+                        "the end of the source",
+                    ));
                 }
+                SyntaxKind::BlockComment
             }
-            if matches!(at(i), Some(b'e' | b'E'))
-                && (at(i + 1).is_some_and(|d| d.is_ascii_digit())
-                    || (matches!(at(i + 1), Some(b'+' | b'-'))
-                        && at(i + 2).is_some_and(|d| d.is_ascii_digit())))
-            {
-                i += 2;
-                while i < bytes.len() && bytes[i].is_ascii_digit() {
-                    i += 1;
-                }
+            Ok(Raw::Ident) => match text {
+                "_" => SyntaxKind::Underscore,
+                t => SyntaxKind::from_keyword(t).unwrap_or(SyntaxKind::Ident),
+            },
+            Ok(Raw::Number) => SyntaxKind::Number,
+            Ok(Raw::LParen) => SyntaxKind::LParen,
+            Ok(Raw::RParen) => SyntaxKind::RParen,
+            Ok(Raw::LBrace) => SyntaxKind::LBrace,
+            Ok(Raw::RBrace) => SyntaxKind::RBrace,
+            Ok(Raw::Lt) => SyntaxKind::Lt,
+            Ok(Raw::Gt) => SyntaxKind::Gt,
+            Ok(Raw::Le) => SyntaxKind::Le,
+            Ok(Raw::Ge) => SyntaxKind::Ge,
+            Ok(Raw::EqEq) => SyntaxKind::EqEq,
+            Ok(Raw::Ne) => SyntaxKind::Ne,
+            Ok(Raw::Colon) => SyntaxKind::Colon,
+            Ok(Raw::Comma) => SyntaxKind::Comma,
+            Ok(Raw::Semi) => SyntaxKind::Semi,
+            Ok(Raw::Eq) => SyntaxKind::Eq,
+            Ok(Raw::Arrow) => SyntaxKind::Arrow,
+            Ok(Raw::FatArrow) => SyntaxKind::FatArrow,
+            Ok(Raw::Plus) => SyntaxKind::Plus,
+            Ok(Raw::Minus) => SyntaxKind::Minus,
+            Ok(Raw::Star) => SyntaxKind::Star,
+            Ok(Raw::Slash) => SyntaxKind::Slash,
+            Ok(Raw::Bang) => SyntaxKind::Bang,
+            Ok(Raw::AndAnd) => SyntaxKind::AndAnd,
+            Ok(Raw::OrOr) => SyntaxKind::OrOr,
+            Err(()) => {
+                errors.push(SyntaxError::new(
+                    SyntaxErrorCode::InvalidCharacter,
+                    span,
+                    format!("`{text}` cannot appear in BDL source"),
+                    format!("`{text}`"),
+                ));
+                SyntaxKind::Error
             }
-            let text = &src[start..i];
-            match text.parse::<f64>() {
-                Ok(value) if value.is_finite() => TokenKind::Number {
-                    text: text.to_owned(),
-                    value,
-                },
-                _ => TokenKind::Error(text.to_owned()),
-            }
-        } else {
-            let two = |b: u8| at(i + 1) == Some(b);
-            let (kind, len) = match c {
-                b'+' => (TokenKind::Plus, 1),
-                b'-' => (TokenKind::Minus, 1),
-                b'*' => (TokenKind::Star, 1),
-                b'/' => (TokenKind::Slash, 1),
-                b'(' => (TokenKind::LParen, 1),
-                b')' => (TokenKind::RParen, 1),
-                b'<' if two(b'=') => (TokenKind::Le, 2),
-                b'<' => (TokenKind::Lt, 1),
-                b'>' if two(b'=') => (TokenKind::Ge, 2),
-                b'>' => (TokenKind::Gt, 1),
-                b'=' if two(b'=') => (TokenKind::EqEq, 2),
-                b'!' if two(b'=') => (TokenKind::Ne, 2),
-                b'!' => (TokenKind::Bang, 1),
-                b'&' if two(b'&') => (TokenKind::AndAnd, 2),
-                b'|' if two(b'|') => (TokenKind::OrOr, 2),
-                _ => {
-                    // one whole UTF-8 character
-                    let ch = src[start..].chars().next().map(char::len_utf8).unwrap_or(1);
-                    (TokenKind::Error(src[start..start + ch].to_owned()), ch)
-                }
-            };
-            i += len;
-            kind
         };
-        out.push(Token {
-            kind,
-            span: Span::new(start as u32, i as u32),
-        });
+        tokens.push(Token { kind, span });
     }
-    out.push(Token {
-        kind: TokenKind::Eof,
-        span: Span::new(bytes.len() as u32, bytes.len() as u32),
-    });
-    out
+    (tokens, errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use SyntaxKind::*;
 
-    fn kinds(s: &str) -> Vec<TokenKind> {
-        lex(s).into_iter().map(|t| t.kind).collect()
+    fn kinds(s: &str) -> Vec<SyntaxKind> {
+        lex(s).0.into_iter().map(|t| t.kind).collect()
+    }
+
+    fn texts(s: &str) -> Vec<String> {
+        lex(s).0.iter().map(|t| t.text(s).to_owned()).collect()
     }
 
     #[test]
-    fn operators_and_keywords() {
+    fn longest_match_for_compound_operators() {
         assert_eq!(
-            kinds("a<=b && !c || d != e"),
+            kinds("a->b=>c==d!=e<=f>=g&&h||i"),
             vec![
-                TokenKind::Ident("a".into()),
-                TokenKind::Le,
-                TokenKind::Ident("b".into()),
-                TokenKind::AndAnd,
-                TokenKind::Bang,
-                TokenKind::Ident("c".into()),
-                TokenKind::OrOr,
-                TokenKind::Ident("d".into()),
-                TokenKind::Ne,
-                TokenKind::Ident("e".into()),
-                TokenKind::Eof
+                Ident, Arrow, Ident, FatArrow, Ident, EqEq, Ident, Ne, Ident, Le, Ident, Ge, Ident,
+                AndAnd, Ident, OrOr, Ident
             ]
+        );
+        assert_eq!(kinds("a- >b"), vec![Ident, Minus, Whitespace, Gt, Ident]);
+        assert_eq!(kinds("=>="), vec![FatArrow, Eq]);
+        assert_eq!(kinds(">>"), vec![Gt, Gt]);
+    }
+
+    #[test]
+    fn keywords_underscore_and_identifiers() {
+        assert_eq!(
+            kinds("concept mapping enum match let if then else true false"),
+            vec![
+                KwConcept, Whitespace, KwMapping, Whitespace, KwEnum, Whitespace, KwMatch,
+                Whitespace, KwLet, Whitespace, KwIf, Whitespace, KwThen, Whitespace, KwElse,
+                Whitespace, KwTrue, Whitespace, KwFalse
+            ]
+        );
+        assert_eq!(
+            kinds("_ _x iffy context"),
+            vec![Underscore, Whitespace, Ident, Whitespace, Ident, Whitespace, KwContext]
         );
     }
 
     #[test]
-    fn numbers() {
-        assert!(matches!(&kinds("1.5e3")[0], TokenKind::Number { value, .. } if *value == 1500.0));
-        assert!(matches!(&kinds(".5")[0], TokenKind::Number { value, .. } if *value == 0.5));
-        assert!(matches!(&kinds("2")[0], TokenKind::Number { value, .. } if *value == 2.0));
+    fn numbers_are_spelled_not_valued() {
+        assert_eq!(
+            texts("1.5e3 .5 2 0.1 1e999"),
+            vec!["1.5e3", " ", ".5", " ", "2", " ", "0.1", " ", "1e999"]
+        );
+        assert_eq!(kinds("1."), vec![Number, Error]);
+        assert_eq!(kinds("1e"), vec![Number, Ident]);
+        assert_eq!(kinds("90deg"), vec![Number, Ident]);
+    }
+
+    #[test]
+    fn comments_are_tokens() {
+        assert_eq!(
+            kinds("a // c\nb"),
+            vec![Ident, Whitespace, LineComment, Whitespace, Ident]
+        );
+        assert_eq!(texts("/* a **/ x"), vec!["/* a **/", " ", "x"]);
+        let (t, e) = lex("/* open");
+        assert_eq!(t[0].kind, BlockComment);
+        assert_eq!(e[0].code, SyntaxErrorCode::UnterminatedComment);
     }
 
     #[test]
     fn unknown_characters_are_error_tokens_with_utf8_spans() {
-        let t = lex("a § b");
-        assert!(matches!(&t[1].kind, TokenKind::Error(s) if s == "§"));
-        assert_eq!(t[1].span, Span::new(2, 4));
-        assert_eq!(t[2].span, Span::new(5, 6));
+        let (t, e) = lex("a § b");
+        assert_eq!(t[2].kind, Error);
+        assert_eq!(t[2].span, Span::new(2, 4));
+        assert_eq!(t[4].span, Span::new(5, 6));
+        assert_eq!(e[0].message, "`§` cannot appear in BDL source");
+        assert_eq!(
+            kinds("a & b"),
+            vec![Ident, Whitespace, Error, Whitespace, Ident]
+        );
+        assert_eq!(texts("x😀y"), vec!["x", "😀", "y"]);
+    }
+
+    #[test]
+    fn tokens_cover_the_source() {
+        for s in [
+            "",
+            "a",
+            "a § b\n/* x */ 1.5 deg -> => \t",
+            "😀😀",
+            "/* open",
+        ] {
+            let (t, _) = lex(s);
+            let joined: String = t.iter().map(|t| t.text(s)).collect();
+            assert_eq!(joined, s);
+        }
     }
 }

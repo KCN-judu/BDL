@@ -54,7 +54,7 @@ crates/
   bdl-model        stable IDs · surface model · revisioned edits · persistence   (no deps on the rest)
   bdl-ir           Design IR · Reactive Core IR (the kernel's Ty/Expr/envs)      (→ bdl-model)
   bdl-diagnostics  Diagnostic · Span · stable codes · deterministic order        (→ bdl-model)
-  bdl-syntax       formula lexer · Pratt parser · spanned surface AST            (→ diagnostics)
+  bdl-syntax       Logos lexer · event parser (RD + Pratt) · Rowan CST · typed AST · lowering (→ diagnostics)
   bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core      (→ ir, syntax, check)
   bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
   bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)

@@ -20,7 +20,10 @@ brightness : Brightness   := dimByTilt tilt
 
 ## 1. Parse (`bdl-syntax`)
 
-`Tilt / 90 deg` → `Binary { Div, Name("Tilt") @0..4, Number { 90, unit deg } @7..13 } @0..13`.
+`Tilt / 90 deg` → lossless CST `Formula(BinaryExpr(NameExpr Tilt, Slash,
+LiteralExpr(Number "90", UnitSuffix deg)))`, lowered to `Binary { Div,
+Name("Tilt") @0..4, Number { literal "90", unit deg } @7..13 } @0..13`. The
+literal is still the text `"90"`; the `f64` is made in the next step.
 
 ## 2. Elaborate (`bdl-elab`)
 

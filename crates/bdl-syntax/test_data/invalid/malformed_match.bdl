@@ -1,0 +1,11 @@
+mapping resolve : LampMode -> Brightness
+resolve(mode) =
+  match mode {
+    Off => 0
+    Automatic => dimByTilt(tilt),
+    Manual(value) value,
+    => 1,
+    1.5 => 2,
+  }
+
+concept After : Scalar

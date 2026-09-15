@@ -1,0 +1,105 @@
+Module@0..155
+  ConceptDecl@0..20
+    KwConcept@0..7 "concept"
+    Whitespace@7..8 " "
+    Name@8..12
+      Ident@8..12 "Tilt"
+    Whitespace@12..13 " "
+    Colon@13..14 ":"
+    Whitespace@14..15 " "
+    NamedType@15..20
+      NameRef@15..20
+        Ident@15..20 "Angle"
+  Whitespace@20..22 "\n\n"
+  MappingDecl@22..130
+    KwMapping@22..29 "mapping"
+    Whitespace@29..30 " "
+    Name@30..36
+      Ident@30..36 "broken"
+    Whitespace@36..37 " "
+    Colon@37..38 ":"
+    Whitespace@38..39 " "
+    FunctionType@39..57
+      NamedType@39..43
+        NameRef@39..43
+          Ident@39..43 "Tilt"
+      Whitespace@43..44 " "
+      Arrow@44..46 "->"
+      Whitespace@46..47 " "
+      NamedType@47..57
+        NameRef@47..57
+          Ident@47..57 "Brightness"
+    Whitespace@57..58 "\n"
+    MappingDef@58..130
+      NameRef@58..64
+        Ident@58..64 "broken"
+      ParamList@64..69
+        LParen@64..65 "("
+        IdentPattern@65..69
+          Name@65..69
+            Ident@65..69 "tilt"
+      Whitespace@69..70 " "
+      Eq@70..71 "="
+      Whitespace@71..74 "\n  "
+      IfExpr@74..130
+        KwIf@74..76 "if"
+        Whitespace@76..77 " "
+        BinaryExpr@77..99
+          BinaryExpr@77..90
+            NameExpr@77..81
+              NameRef@77..81
+                Ident@77..81 "tilt"
+            Whitespace@81..82 " "
+            Lt@82..83 "<"
+            Whitespace@83..84 " "
+            LiteralExpr@84..90
+              Number@84..86 "10"
+              Whitespace@86..87 " "
+              UnitSuffix@87..90
+                Ident@87..90 "deg"
+          Whitespace@90..91 " "
+          Lt@91..92 "<"
+          Whitespace@92..93 " "
+          LiteralExpr@93..99
+            Number@93..95 "20"
+            Whitespace@95..96 " "
+            UnitSuffix@96..99
+              Ident@96..99 "deg"
+        Whitespace@99..100 " "
+        KwThen@100..104 "then"
+        Whitespace@104..109 "\n    "
+        CallExpr@109..117
+          NameExpr@109..112
+            NameRef@109..112
+              Ident@109..112 "foo"
+          ArgList@112..117
+            LParen@112..113 "("
+            NameExpr@113..117
+              NameRef@113..117
+                Ident@113..117 "tilt"
+        Whitespace@117..120 "\n  "
+        KwElse@120..124 "else"
+        Whitespace@124..129 "\n    "
+        LiteralExpr@129..130
+          Number@129..130 "0"
+  Whitespace@130..132 "\n\n"
+  ConceptDecl@132..154
+    KwConcept@132..139 "concept"
+    Whitespace@139..140 " "
+    Name@140..145
+      Ident@140..145 "Later"
+    Whitespace@145..146 " "
+    Colon@146..147 ":"
+    Whitespace@147..148 " "
+    NamedType@148..154
+      NameRef@148..154
+        Ident@148..154 "Scalar"
+  Whitespace@154..155 "\n"
+error 70..71 syntax.expected: expected `)` to close the parameter list
+  expected `)` or `,`, found `=`
+error 91..92 syntax.chained_comparison: comparisons cannot be chained
+  found a second comparison
+  hint: Compare in two steps joined with `&&`, as in `a < b && b < c`; use parentheses if the result of a comparison really is what you compare.
+error 120..124 syntax.expected: expected `)` to close this call
+  expected `)` or `,`, found `else`
+lowered: 2 concept(s), 1 mapping(s), 0 enum(s)

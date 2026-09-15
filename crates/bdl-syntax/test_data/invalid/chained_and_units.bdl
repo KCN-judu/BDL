@@ -1,0 +1,7 @@
+mapping f : Tilt -> Bool
+f(x) = x < 1 deg < 2 deg == true
+
+mapping g : Tilt -> Tilt
+g(x) = x deg + f(x) mm
+
+concept Later

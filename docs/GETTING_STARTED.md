@@ -68,7 +68,7 @@ crates/
   bdl-model/            stable ids · surface model · apply_edit · persistence      (foundation)
   bdl-ir/               kernel types Ty/Expr/Prim · Design IR (Θ Δ Κ Ω β)
   bdl-diagnostics/      Diagnostic, Span, codes (shared by every pass)
-  bdl-syntax/           formula lexer, parser, surface AST
+  bdl-syntax/           textual syntax: lexer, parser, lossless CST, typed AST, lowering (docs/TEXTUAL_SYNTAX.md)
   bdl-elab/             signature → Interface; formula → Core Expr (rep/mk insertion, units)
   bdl-check/            Core typing, Grant, declaration checking
   bdl-reactive/         dependency graph, causality, clocks, reference evaluator, simulation

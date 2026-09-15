@@ -1,0 +1,41 @@
+/* The heater in the lamp's base: a safety condition that competes with
+   the interaction for one output, combined upstream of the drive edge. */
+
+concept Temperature : Temperature
+concept HeaterDemand : Scalar
+concept Warm : Bool
+concept Critical : Bool
+
+// Open concepts are legal: the representation comes later.
+concept Pulse
+
+mapping warm : Temperature -> Warm
+warm(t) = t > 315 K
+
+mapping critical : Temperature -> Critical
+critical(t) = t >= 335 K && !(t < 0 K)
+
+// The single final driver of the heater.
+mapping heaterTarget : Critical -> HeaterDemand -> HeaterDemand
+heaterTarget(critical, demand) = {
+  let safe = if critical then 0 else demand;
+  let bounded = clamp(safe, 0, 1);
+  bounded
+}
+
+enum Reading<T> {
+  Fresh(T, Temperature),
+  Stale,
+}
+
+mapping latest : Reading<HeaterDemand> -> HeaterDemand
+latest(r) =
+  match r {
+    Fresh(d, _) => d,
+    Stale => 0.5,
+  }
+
+mapping rate : Temperature -> Scalar
+rate(t) = (t - 293 K) / (2.5 s) * 1e-3
+
+mapping sig : (Temperature -> Warm) -> Option<Result<Warm, Critical>>
