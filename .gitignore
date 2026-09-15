@@ -17,3 +17,6 @@ target/
 # Flutter (app-level .gitignore handles the rest)
 apps/studio/.dart_tool/
 apps/studio/build/
+
+# Local-only working notes (never committed)
+CLAUDE.md
