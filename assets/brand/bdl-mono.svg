@@ -1,11 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <path d="M 191.9,224.2 A 158.1 158.1 0 0 0 169.8,151.0" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
-  <polygon points="87.0,24.3 116.6,103.7 138.4,93.6 97.0,19.7" fill="currentColor"/>
-  <polygon points="116.6,103.7 176.3,214.8 184.5,211.0 138.4,93.6" fill="currentColor"/>
-  <polygon points="176.3,214.8 191.1,238.4 192.9,237.6 184.5,211.0" fill="currentColor"/>
-  <polygon points="118.5,92.4 44.6,211.6 49.5,215.1 136.5,105.0" fill="currentColor"/>
-  <polygon points="44.6,211.6 33.6,231.7 34.4,232.3 49.5,215.1" fill="currentColor"/>
-  <circle cx="127.5" cy="98.7" r="19" fill="currentColor"/>
-  <circle cx="127.5" cy="98.7" r="6" fill="none"/>
-  <circle cx="92.0" cy="22.0" r="12" fill="currentColor"/>
+  <polygon points="140.0,18.0 140.0,212.0 150.0,242.0 160.0,212.0 160.0,18.0" fill="currentColor"/>
+  <rect x="135.0" y="18" width="30" height="30" fill="currentColor"/>
+  <polygon points="142.9,98.5 64.5,200.9 78.7,211.9 157.1,109.5" fill="currentColor"/>
+  <polygon points="64.5,200.9 61.3,205.1 52.0,232.0 75.6,216.0 78.7,211.9" fill="currentColor"/>
+  <rect x="132.0" y="86.0" width="36" height="36" fill="currentColor"/>
 </svg>

@@ -2,15 +2,18 @@
 
 ## The mark
 
-A drafting compass in the constructivist manner — flat colour blocks, no
-outlines, one diagonal — whose stalk, pencil leg and needle leg form a **λ**:
-the hinge sits partway down the long stroke, exactly where lambda's short
-stroke branches. The compass is the designer's instrument; the lambda is
-the language's. The blue stroke is the circle the pencil has just begun.
+A drafting compass reduced to straight lines, in the constructivist
+manner: flat colour blocks, no outlines, no curves. The head stays
+upright; stalk and needle leg are **one vertical bar**, the pencil leg is
+the **one diagonal**. Bars have parallel edges and come to a point with a
+short chamfer; the knob and hinge are square blocks. Nothing is tilted to
+make a letter — the **λ** (a long stroke with a branch) is simply what a
+compass in use looks like. The compass is the designer's instrument; the
+lambda is the language's.
 
 ```
 bdl-mark.svg   transparent, full colour          — documents, hero, README
-bdl-icon.svg   cream tile + pale red disc        — app icon (macOS/Windows)
+bdl-icon.svg   cream tile                        — app icon (macOS/Windows)
 bdl-mono.svg   currentColor                      — toolbars, small sizes
 png/           rasters exported from bdl-icon.svg
 gen_logo.py    the single source: geometry → all three SVGs
@@ -27,7 +30,7 @@ painter together.
 | black | `#141414` | legs, knob |
 | red | `#E5322D` | hinge, pencil lead |
 | cream | `#F2EBDD` | tile, hinge pin |
-| blue | `#2B5DD1` | the drawn arc |
+| blue | `#2B5DD1` | reserved (accent in UI) |
 
 ## Regenerate
 
