@@ -73,8 +73,8 @@ contexts → outputs → domains → board → observe):
 | Page | Centre | Left | Right | Answers |
 |---|---|---|---|---|
 | **Design** | node canvas | library (concepts, mappings, contexts, outputs, components) | inspector of the selection | what the product does |
-| **Simulate** | trace timeline / value plots | input traces | probe inspector | what it does over time |
-| **Deploy** | board picture + allocation table | boards, device kinds | requirement / conflict inspector | whether it fits, build & flash |
+| **Simulate** | the trace as a table (tick, active domains, one column per relationship without inputs and per driven output), Step / Step ×10 / Reset; value plots later | inputs as controls by value form; a period per timing domain | — (the failure line stands in for a probe inspector) | what it does over time |
+| **Deploy** | one verdict *for this board*, the placement device → requirement → pin, the dead end in the solver's terms; a board picture later | boards from bdld; devices, edited in place | — | whether it fits |
 | **Monitor** | the same canvas with live values | telemetry sessions | probe inspector | what it is doing right now |
 
 Resolve's page bar can hide labels (icons only) and hide pages; we keep
@@ -463,7 +463,8 @@ as *refused*: Studio shows a banner explaining it and the Start list gains
 
 ## 9. Non-goals for this iteration
 
-Contexts, outputs, transports and clock boundaries on the canvas;
-simulate/deploy/monitor content; native menu bar; drag-and-drop from the
-library; draft indication on the canvas. Each lands with its compiler
-pass (docs/STUDIO_COMPILER_INTEGRATION.md §3 places them).
+Contexts, transports and clock boundaries as canvas regions (a domain is a
+word on the node today); cycles drawn on the canvas; value plots and a
+board picture (both pages start as tables); monitor content; native menu
+bar; drag-and-drop from the library; draft indication on the canvas.
+docs/STUDIO_COMPILER_INTEGRATION.md §3 places each.

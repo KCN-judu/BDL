@@ -134,15 +134,28 @@ is the lever, not a Dart-side shortcut.
 | Esc | revert a dirty draft |
 | Return | a new line (formulas may span lines) |
 
-### Completion and hover: the API path
+### Completion and hover
 
 `CompleteDefinitionDraft` and `HoverDefinitionDraft` (docs/PROTOCOL.md)
 serve `bdl_ide::completion` and `entity_at_formula` + `hover` over the same
-overlay snapshot, tested end to end over stdio. Studio does not consume
-them yet: a completion pop-up and hover cards in the field are UI work
-(keyboard navigation, dismissal, placement) deferred from this milestone.
-No name, unit or keyword list exists in Dart, and none will — the pop-up
-will render what the service returns.
+overlay snapshot. The field consumes both (`definition_editor.dart`):
+
+* ⌃Space opens the pop-up; while it is open every keystroke re-asks at the
+  caret's byte offset (the service filters by prefix — Studio never does);
+  ↑/↓ move, Enter/Tab accept by replacing the service's byte range with
+  its insert text, Esc closes (a second Esc reverts the draft). Rows are
+  the service's order — relevance, then label — with kind and resulting
+  type; never re-sorted. Candidates: inputs, other relationships (a call
+  to complete when they have inputs), units after a number, keywords,
+  `delay(…)` / `sync(…)` in a relationship without inputs.
+* A 250 ms dwell over a name asks for its card: title, value form,
+  status, details, the description — never a Core term (that is Explain).
+  Canvas and library entities can ask `HoverEntity` for the same card.
+* Both carry a generation; only the latest answer at the held revision is
+  applied, and a new revision or a selection change drops them.
+  Measured: ~2 ms per round trip (`formula_e2e_test.dart`).
+
+No name, unit or keyword table exists in Dart.
 
 ### Source spans
 
@@ -184,32 +197,48 @@ path).
 | Compiler capability | bdl-ide | Protocol | Studio state | UI exposed | Regression tested |
 |---|---|---|---|---|---|
 | Formula draft (non-mutating candidate) | `draft_verdict` over a `MappingDefinitionDraft` overlay; `clear_definition_draft`; `set_committed` pruning | `AnalyzeDefinitionDraft` / `DefinitionDraftAnalysis`, `DiscardDefinitionDraft` (0.4) | `DefinitionDraft` per mapping | definition editor: status line, underlined spans, diagnostic rows, Add/Save/Revert/Detach, conflict notice | Rust: session unit, stdio e2e, `surface_equivalence`; Dart: reducer, effects (fake daemon), widget, e2e against `bdld` |
-| Formula parse / elaboration / typing with spans | lifted to `SemanticDiagnostic` (`diagnostics`, `lift_for_mapping`) | `MappingAnalysis.diagnostics[].span` | `analysis`, `drafts[].analysis` | editor rows + underlines; committed span-less ones in *Compiler* | stdio e2e (spans exact), Dart e2e |
+| Formula parse / elaboration / typing with spans; relationship references, application, `delay`/`sync` (DI-17) | lifted to `SemanticDiagnostic` | `MappingAnalysis.diagnostics[].span` | `analysis`, `drafts[].analysis` | editor rows + underlines; committed span-less ones in *Compiler* | stdio e2e (spans exact), Dart e2e, `surface_to_backend` (surface → Core → evaluator → generated core) |
 | Dimensions, nominal types, `Grant` | same | `dimension.mismatch`, `realization.*`, `semantic.*` | same | editor / Compiler section | Dart e2e (invalid → corrected), `surface_equivalence` |
-| Open ≠ error | `SemanticSeverity::Open`; `EntityStatus::Open` | `DIAGNOSTIC_SEVERITY_INFO` + `MAPPING_STATUS_OPEN` | same | orange wording *Tilt has no representation yet.* | stdio e2e (open case), widget test, `surface_equivalence` |
-| `MappingStatus` ladder to `ClockConsistent` | `hover` status, `explain` | `MappingAnalysis.status` | `analysis` | inspector *State* pill, canvas node status, editor verdict | shell, widget |
-| Completion (inputs, units, keywords, type-directed) | `completion(Formula { mapping, offset })` | `CompleteDefinitionDraft` / `DraftCompletionResponse` | **none** | **none** (pop-up deferred) | stdio e2e |
-| Hover / explain | `entity_at_formula`, `hover`, `explain` | `HoverDefinitionDraft` / `DraftHoverResponse` (hover only) | **none** | **none** (cards deferred) | stdio e2e |
-| Revisioned edits, stale refusal, edit classification | `preview_change` (invalidation preview) | `ApplyEdit`, `edit.stale_revision`, `EditOutcome` | `pendingRequests`, `lastError`, `lastOutcome` | banner; *Last change*; editor keeps the draft | reducer, Dart e2e (refused commit) |
-| Causality (cycles, evaluation order) | lifted diagnostics; `explain` dependencies | `causal`, `cycles[]`, `evaluation_order[]` | `analysis` | status line *not causal*; per-mapping row in *Compiler*; cycles **not drawn** | shell |
-| Clock domains | lifted diagnostics; `explain` clock | `clock_consistent`, `clock.*`, `ClockView`, clock edit ops | `analysis`, `project.clocks` | status line *reads across domains*; **no domain editing or regions** | shell |
-| Physical outputs | one `output.multiple_drivers` per sink; `explain` output relation | `OutputView`, `OutputAnalysis`, output edit ops | `project.outputs`, `analysis.outputs` | status line *outputs incomplete*; **no output nodes / drive links / editing** | shell |
-| Simulation | — (bdld only) | `Start/Step/ResetSimulation` | **none** | **none** (Simulate page placeholder) | Rust only |
+| Open ≠ error | `SemanticSeverity::Open`; `EntityStatus::Open` | `DIAGNOSTIC_SEVERITY_INFO` + `MAPPING_STATUS_OPEN` | same | orange wording *Tilt has no representation yet.*; dashed sinks | stdio e2e (open case), widget tests, `surface_equivalence` |
+| `MappingStatus` ladder to `ClockConsistent` | `hover` status, `explain` | `MappingAnalysis.status` | `analysis` | canvas object state (dashed, red mark), inspector, editor verdict | shell, widget |
+| Completion (inputs, relationships, units, keywords, memory forms; type-directed) | `completion(Formula { mapping, offset })` | `CompleteDefinitionDraft` / `DraftCompletionResponse` | `CompletionState` (generation, offset, items, selection) | pop-up under the field: ⌃Space, ↑/↓, Enter/Tab, Esc; re-asked per keystroke | reducer (2,1,3 → 3; service order kept), widget, e2e against bdld (input, unit after number, non-ASCII offsets) |
+| Hover | `entity_at_formula` + `hover`; `hover(entity)` | `HoverDefinitionDraft`, `HoverEntity` / `DraftHoverResponse` | `HoverState` (generation, offset or entity, card) | card under the field after a 250 ms dwell; entity cards for nodes/rows through the same action | reducer, widget, e2e (concept and mapping cards; the effective world includes the draft) |
+| Explain | `explain` | **none** | — | the inspector's *Explain* disclosure shows the protocol's technical fields (ids, interface, Core term, invalidation); `bdl_ide::explain` (dependencies, grant, clock, output relation) **not yet served** | — |
+| Revisioned edits, stale refusal, edit classification | `preview_change` | `ApplyEdit`, `edit.stale_revision`, `EditOutcome` | `pendingRequests`, `lastError`, `lastOutcome` | banner; *Last change*; editor keeps the draft | reducer, Dart e2e (refused commit) |
+| Causality (cycles, evaluation order) | lifted diagnostics; `explain` dependencies | `causal`, `cycles[]`, `evaluation_order[]` | `analysis` | status line *not causal*; per-mapping row in *Relationship*; Simulate refuses with *The design contains an instantaneous cycle.*; cycles **not drawn on the canvas** | shell, simulation widget |
+| Clock domains | lifted diagnostics; `explain` clock; `clock.move_*` fixes | `ClockView`, clock edit ops, `clock.*` | `project.clocks` | library: create, rename in place, delete while unused; mapping/output *Updates in* pop-up (pure = any domain); the domain as a quiet word on the node; `clock.*` findings under *Timing*; `sync(domain, init, e)` in formulas; Simulate: period per domain; status line *reads across domains*; **no domain regions on the canvas** | reducer, widget, e2e (design_e2e), simulation e2e (sync) |
+| Sync as an explicit action | `clock.cross_domain_reference` → *Insert explicit sync* is **Blocked** (`actions.rs`: "no phrase yet") — now that `sync(domain, init, e)` exists the action can plan a draft-text edit; **not done** | via `ListSemanticActions` | `SemanticActionsState` | listed under *Fixes* as blocked with its reason | outputs_test (blocked rendering) |
+| Physical outputs | one `output.multiple_drivers` per sink; `explain`; `detach_driver`, `connect_driver`, `create_combination`, `choose_clock` fixes | `OutputView`, `OutputAnalysis`, output edit ops, `Layout.outputs` | `project.outputs`, `analysis.outputs`, `OutputSelected` | canvas sink nodes (boundary bar, dashed while open/undriven, red word when contested), drive links (drag to connect, drag away to disconnect), library, output inspector (accepts, domain, required, driver, claimants, connect/disconnect), mapping *Drives*; status line *outputs incomplete* | reducer, geometry, widget, e2e (undriven → connect via fix → complete; contested → detach via fix) |
+| Simulation | — (bdld's reference evaluator) | `Start/Step/ResetSimulation` (unchanged) | `SimulationState`: authored input trace, current values, periods, samples, generation | Simulate page: input controls by value form, period per domain, Step / Step ×10 / Reset, trace table (tick, active domains, values, driven outputs), failures in product words | reducer, widget, e2e against bdld (lamp 0/⅓/⅔/1, delay, two-domain sync), `smart_lamp_e2e` |
+| Semantic actions / edit plans | `actions_for` (diagnostics concerning the entity) + `actions_at` (context) | `ListSemanticActions` / `SemanticActionsResponse` (applicability, options, edits as `EditOp`s, invalidation) | `SemanticActionsState`; `queuedEdits` for multi-step plans | *Fixes* section in the mapping and output inspectors: ready → button, needs a choice → pop-up of the service's options, blocked → reason; applied as revisioned edits one confirmed revision at a time | reducer, widget, e2e (connect-driver choice, detach-driver ready) |
+| References / navigation by identity | `references`, `definition_of` | **none** (LSP only) | **none** | **none** | bdl-ide acceptance |
 | Deployment analysis | — (bdld only) | `AnalyzeDeployment { target_id, revision? }` → `DeploymentAnalysis` with the read model (0.5): `status`, `design_ready`, `deployable`, `missing[]`, `rows[]`, `blocker` (docs/DEPLOYMENT_READ_MODEL.md) | `DeployState` (target, result, revision) | Deploy page (`deploy_page.dart`): target pop-up, status, per-device rows, dead end — **built on fields 4–9 and re-deriving labels client-side; migrating it to `rows`/`missing`/`blocker` is the next step** | Rust: `deploy_e2e.rs` (10-case matrix), compiler unit, protocol conversion; Dart: `deploy_test.dart` |
 | Target list | — | `ListTargets` → `TargetView { id, display_name, description, family, resource_count, capabilities[] }` (0.5) | `DeployState.targets` | Deploy page target pop-up (shows `name`; `description`/`family`/capability summary not yet shown) | Rust e2e + conversion test |
 | Hardware assignment, pins, dead ends | — | `DeviceView` (kind, output, fixed pins, requirement table), device edit ops; `AssignmentRow`/`Blocker` in the read model | `project.devices`, `DeployState` | Deploy page device rows and pin table | Rust e2e |
 | Semantic actions / edit plans (rename by identity, fixes) | `SemanticAction`, `SemanticEditPlan`, `plan_rename` | **none** (LSP only: rename, codeAction) | **none** | **none** | bdl-ide acceptance |
 | References / navigation by identity | `references`, `definition_of` | **none** (LSP only) | **none** | **none** | bdl-ide acceptance |
 
-### Placement decided for the gaps (not implemented here)
+### Timing (local, debug build)
+
+| Round trip | Measured |
+|---|---|
+| draft verdict (edit → state), incl. 30 ms test debounce | 36–37 ms (≈ 6 ms without) |
+| completion | ~2 ms |
+| hover | ~2 ms |
+| one simulation step = restart with the trace so far + step | ~1–4 ms; four steps 4–15 ms |
+| deployment analysis | < 1 ms |
+
+### What remains, and where it goes
 
 | Fact | Home |
 |---|---|
-| instantaneous cycles, evaluation order | canvas (the cycle's links emphasised); order in the Simulate page |
-| clock domains and cross-domain reads | canvas regions (containment) + inspector *Domain* pop-up per mapping/output |
-| outputs and drive links | canvas: a distinct silhouette for a sink, links from drivers; inspector for accepts/domain/required |
-| deployment status, target, assignment, dead end | Deploy page: target pop-up (`TargetView`), `deployable` / `design_ready` / `status` as one verdict, `missing[]` as the to-do list, `rows[]` as the table, `blocker` as the explanation — all by name, from the read model |
-| simulation values | Simulate page + values on sockets |
+| instantaneous cycles | canvas (the cycle's links emphasised); today the Compiler row and the Simulate refusal |
+| clock domains as regions | canvas containment; today a word per node and the inspector pop-up |
+| sync as a fix | `clock.cross_domain_reference` → a `DraftText` plan inserting `sync(domain, init, …)` now that the surface has the phrase; the Fixes section already renders any plan the service returns |
+| Explain | a `bdl/explain`-style request serving `bdl_ide::explain`; the disclosure exists |
+| deployment read model (0.5) | the Deploy page should read `rows[]` / `missing[]` / `blocker` instead of re-deriving from fields 4–9 |
+| simulation values on the canvas | Monitor/Simulate: values on sockets, from the same `TickSample`s |
+| hover on relationship names inside formulas | `entity_at_formula` indexes concept names only; extend the index to `Lookup::Mapping` |
 
 ## 4. Non-goals of this milestone
 
@@ -219,10 +248,13 @@ path).
 * Rich highlighting beyond wavy underlines (no gutter). The
   controller-based approach can grow into that without changing the state
   model.
-* Completion pop-up and hover cards in the field: the service and the
-  protocol requests exist and are tested; the UI is the next step.
 * Per-request attribution of `RequestFailed`: the protocol answers by
   request id inside the client, but the reducer sees one stream. A draft
   awaiting confirmation takes the message; with two commits in flight for
   two mappings (impossible from the UI: each mapping has one field) the
   attribution could be wrong.
+* The simulation restarts the run for every step rather than extending the
+  daemon's input trace: no protocol change, and the trace is Studio's own.
+  An append-only `inputs` on `StepSimulation` would save the restart if
+  runs grow long.
+* The board choice is a session preference, not project data.

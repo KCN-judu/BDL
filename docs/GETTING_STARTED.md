@@ -55,6 +55,13 @@ concepts `Tilt` (Quantity, angle) and `Brightness` (Quantity,
 dimensionless) → add mapping `dimByTilt` reading Tilt, producing Brightness
 → select it, attach a formula in the inspector → Save.
 
+Or open `examples/smart_lamp` (Open Project…): a finished design — tilt
+and ambient light in, a required Light Output driven by
+`adaptBrightness(dimByTilt(tilt), ambient)`, a PWM device — then walk
+Design → Simulate (set the tilt, step) → Deploy (choose a board, see the
+PWM line placed). `crates/bdl-compiler/tests/examples.rs` keeps it
+faithful.
+
 ## 5. Repository map
 
 ```
