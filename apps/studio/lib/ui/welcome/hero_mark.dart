@@ -8,6 +8,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../brand/compass_mark.dart';
 import '../mac/tokens.dart';
 
 const String kHeroFont = 'ChakraPetch';
@@ -31,17 +32,23 @@ class HeroMark extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  'BDL',
-                  style: TextStyle(
-                    fontFamily: kHeroFont,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 6,
-                    color: t.accent,
-                  ),
+                Row(
+                  children: [
+                    const CompassMark(size: 44),
+                    const SizedBox(width: 10),
+                    Text(
+                      'BDL',
+                      style: TextStyle(
+                        fontFamily: kHeroFont,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 6,
+                        color: t.accent,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
                 Text(
                   'Behavior\nDesigner',
                   style: TextStyle(
