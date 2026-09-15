@@ -26,55 +26,84 @@ class HeroMark extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           CustomPaint(painter: _TraceFieldPainter(t)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(32, 32, 36, 30),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // The mark carries the identity (Altium-splash proportion:
-                // the glyph as tall as the whole text block, no lettered
-                // abbreviation beside it).
-                const CompassMark(size: 168),
-                const SizedBox(width: 22),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Behavior\nDesigner',
-                        style: TextStyle(
-                          fontFamily: kHeroFont,
-                          fontSize: 50,
-                          height: 1.0,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                          color: t.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Product behavior as a design material.',
-                        style: TextStyle(fontSize: 13, color: t.textSecondary),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Studio $version',
-                        style: TextStyle(
-                          fontFamily: kHeroFont,
-                          fontSize: 11,
-                          letterSpacing: 1,
-                          color: t.textTertiary,
-                        ),
-                      ),
-                    ],
+          // The lock-up is authored at one size and scaled uniformly to the
+          // space available, so the wordmark never wraps and the mark keeps
+          // its splash proportion at every window size.
+          LayoutBuilder(
+            builder: (context, c) => Padding(
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 26),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                // The lock-up may take 85 % of the width and 50 % of the height;
+                // it scales both ways within that box.
+                child: SizedBox(
+                  width: (c.maxWidth - 56) * 0.85,
+                  height: (c.maxHeight - 54) * 0.5,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    alignment: Alignment.bottomLeft,
+                    child: _LockUp(version: version, tokens: t),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Mark + wordmark + tagline at their designed size (about 470 × 170).
+class _LockUp extends StatelessWidget {
+  const _LockUp({required this.version, required this.tokens});
+  final String version;
+  final MacTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const CompassMark(size: 168),
+        const SizedBox(width: 22),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Behavior\nDesigner',
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: kHeroFont,
+                fontSize: 50,
+                height: 1.0,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                color: t.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Product behavior as a design material.',
+              softWrap: false,
+              style: TextStyle(fontSize: 13, color: t.textSecondary),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Studio $version',
+              style: TextStyle(
+                fontFamily: kHeroFont,
+                fontSize: 11,
+                letterSpacing: 1,
+                color: t.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -26,32 +26,55 @@ class WelcomePage extends StatelessWidget {
     return Container(
       color: t.window,
       alignment: Alignment.center,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1040, maxHeight: 620),
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Row(
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // Wide: hero + Start on the left, Recent on the right.
+          // Narrow (< 760 pt): one column, Recent below.
+          final wide = c.maxWidth >= 760;
+          final pad = c.maxWidth < 600 ? 20.0 : 40.0;
+          final left = Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                flex: 11,
-                child: Column(
+              // The hero keeps a fixed aspect ratio and fills the column.
+              AspectRatio(aspectRatio: 1.15, child: HeroMark(version: kStudioVersion)),
+              const SizedBox(height: 24),
+              _Start(connected: connected, dispatch: dispatch),
+            ],
+          );
+          final recent = _Recent(state: state, dispatch: dispatch);
+          if (wide) {
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1360, maxHeight: 820),
+              child: Padding(
+                padding: EdgeInsets.all(pad),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: HeroMark(version: kStudioVersion)),
-                    const SizedBox(height: 24),
-                    _Start(connected: connected, dispatch: dispatch),
+                    Expanded(flex: 11, child: SingleChildScrollView(child: left)),
+                    SizedBox(width: pad),
+                    Expanded(flex: 9, child: recent),
                   ],
                 ),
               ),
-              const SizedBox(width: 40),
-              Expanded(
-                flex: 9,
-                child: _Recent(state: state, dispatch: dispatch),
+            );
+          }
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(pad),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  left,
+                  const SizedBox(height: 28),
+                  SizedBox(height: 260, child: recent),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "dev.bdl" "\0"
-            VALUE "FileDescription", "bdl_studio" "\0"
+            VALUE "FileDescription", "BDL Studio" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "bdl_studio" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 dev.bdl. All rights reserved." "\0"
             VALUE "OriginalFilename", "bdl_studio.exe" "\0"
-            VALUE "ProductName", "bdl_studio" "\0"
+            VALUE "ProductName", "BDL Studio" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
