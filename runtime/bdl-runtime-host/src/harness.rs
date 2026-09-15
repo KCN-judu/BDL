@@ -99,11 +99,27 @@ impl Cargo {
         self.run_ok(&["check", "--quiet", "--lib"])
     }
 
-    /// Build the `host` binary.
+    /// The package name from the crate's `Cargo.toml` (`name = "…"` in
+    /// `[package]`), which also names its host binary `<package>-host`.
+    pub fn package_name(&self) -> Result<String, HarnessError> {
+        let manifest = std::fs::read_to_string(self.crate_dir.join("Cargo.toml"))?;
+        manifest
+            .lines()
+            .map(str::trim)
+            .find_map(|l| {
+                l.strip_prefix("name = \"")
+                    .and_then(|r| r.strip_suffix('"'))
+            })
+            .map(str::to_owned)
+            .ok_or_else(|| HarnessError::Trace("Cargo.toml has no package name".into()))
+    }
+
+    /// Build the `<package>-host` binary.
     pub fn build_host(&self) -> Result<PathBuf, HarnessError> {
-        self.run_ok(&["build", "--quiet", "--features", "host", "--bin", "host"])?;
-        let name = std::env::consts::EXE_SUFFIX;
-        Ok(self.target_dir.join("debug").join(format!("host{name}")))
+        let bin = format!("{}-host", self.package_name()?);
+        self.run_ok(&["build", "--quiet", "--features", "host", "--bin", &bin])?;
+        let suffix = std::env::consts::EXE_SUFFIX;
+        Ok(self.target_dir.join("debug").join(format!("{bin}{suffix}")))
     }
 
     /// Build if needed and run one request through the host binary.

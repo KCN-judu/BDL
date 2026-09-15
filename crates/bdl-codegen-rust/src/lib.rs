@@ -110,8 +110,10 @@ fn cargo_toml(package: &str, o: &CodegenOptions) -> String {
          [lib]\n\
          path = \"src/lib.rs\"\n\
          \n\
+         # Named after the package so several generated crates can share one\n\
+         # target directory without their host binaries overwriting each other.\n\
          [[bin]]\n\
-         name = \"host\"\n\
+         name = \"{package}-host\"\n\
          path = \"src/bin/host.rs\"\n\
          required-features = [\"host\"]\n\
          \n\

@@ -11,8 +11,10 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
+# Named after the package so several generated crates can share one
+# target directory without their host binaries overwriting each other.
 [[bin]]
-name = "host"
+name = "bdl_design_semantic-host"
 path = "src/bin/host.rs"
 required-features = ["host"]
 
