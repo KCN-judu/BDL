@@ -21,8 +21,9 @@ STALK = 60.0                # hinge -> knob centre, along the right leg's line
 W = 20.0                    # bar width (parallel edges)
 KNOB = 30.0                 # knob square side
 HINGE = 36.0                # hinge square side
-LEAD = 0.80                 # fraction of the pencil leg after which it is red
+LEAD_LEN = 42.0             # length of the red lead, measured from the tip
 CHAMFER = 1.5               # tip chamfer length, in bar widths
+assert LEAD_LEN > CHAMFER * W + 4, "the lead must contain the whole chamfer or the polygon folds"
 
 def add(a, b): return (a[0]+b[0], a[1]+b[1])
 def sub(a, b): return (a[0]-b[0], a[1]-b[1])
@@ -56,9 +57,10 @@ def svg(variant):
     parts = []
     if variant == "icon":
         parts.append(f'<rect width="256" height="256" rx="56" fill="{CREAM}"/>')
-    # long stroke: knob -> pencil leg (black), then the red lead with its tip
-    lead_start = lerp(H, PENCIL_TIP, LEAD)
-    parts.append(f'<polygon points="{pts(bar(KNOB_C, lead_start, W))}" fill="{black}"/>')
+    # long stroke: knob -> pencil tip as one black chamfered bar, then the red
+    # lead painted over its end (no abutting edges, hence no seams)
+    lead_start = lerp(PENCIL_TIP, H, LEAD_LEN / LEG)
+    parts.append(f'<polygon points="{pts(bar(KNOB_C, PENCIL_TIP, W, tip_at_b=True))}" fill="{black}"/>')
     parts.append(f'<polygon points="{pts(bar(lead_start, PENCIL_TIP, W, tip_at_b=True))}" fill="{red}"/>')
     # needle leg
     parts.append(f'<polygon points="{pts(bar(H, NEEDLE_TIP, W, tip_at_b=True))}" fill="{black}"/>')

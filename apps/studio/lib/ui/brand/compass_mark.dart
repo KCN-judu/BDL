@@ -50,7 +50,7 @@ class _CompassPainter extends CustomPainter {
   static const double _w = 20;
   static const double _knob = 30;
   static const double _hinge = 36;
-  static const double _lead = 0.80;
+  static const double _leadLen = 42; // > _chamfer * _w, so the lead contains the chamfer
   static const double _chamfer = 1.5;
 
   static final Offset _dr = Offset(math.sin(_theta), math.cos(_theta));
@@ -104,8 +104,9 @@ class _CompassPainter extends CustomPainter {
         fill..color = BrandColors.cream,
       );
     }
-    final leadStart = _h + (_pencilTip - _h) * _lead;
-    canvas.drawPath(_bar(_knobC, leadStart, _w), fill..color = black);
+    // one black chamfered bar, the red lead painted over its end: no seams
+    final leadStart = _pencilTip + (_h - _pencilTip) * (_leadLen / _leg);
+    canvas.drawPath(_bar(_knobC, _pencilTip, _w, tipAtB: true), fill..color = black);
     canvas.drawPath(_bar(leadStart, _pencilTip, _w, tipAtB: true), fill..color = red);
     canvas.drawPath(_bar(_h, _needleTip, _w, tipAtB: true), fill..color = black);
     canvas.drawPath(_square(_knobC, _knob, _dr), fill..color = black);
