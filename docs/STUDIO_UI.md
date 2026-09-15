@@ -82,47 +82,63 @@ labels by default and allow ⌘1–⌘4. The page bar's left button is the
 project manager (open/new/recent), the right is project settings — as in
 Resolve. Nothing on the page bar is a compiler badge.
 
-The **status line** (Resolve's Fusion status bar) shows the revision, a
-count summary, the hovered/selected object's state in one phrase, and the
-daemon connection. Errors from requests appear as a banner above the page
-content, never as a modal.
+The **status line** (Resolve's Fusion status bar) leads with the document
+state (*Saved* / *Edited*), then a count summary (concepts, mappings, how
+many are not yet defined, how many definitions do not check) and the
+compiler connection (*Compiler 0.1.0*; the protocol version only when it
+mismatches). The revision counter is not a designer fact and lives in
+Explain. Errors from requests appear as a banner above the page content,
+never as a modal.
 
 ## 2. Node canvas (Blender)
 
 ### Anatomy
 
 ```
+   ●────[ Tilt ]────●                       concept: one row — name, in-socket, out-socket
+
         ┌─────────────────────────┐
-        │ ▸ dimByTilt      declared│   header: collapse toggle · title · state word
-   ●────┤ Tilt                     │   input socket (left), coloured by concept
-        │                Brightness├────●   output socket (right)
-        │ f(θ) = clamp(…)          │   body: definition summary / properties
+        │ dimByTilt        declared│   header: title · the one state word (only while declared)
+   ●────┤ Tilt                     │   input socket per read concept (left), hue = identity
+   ◆────┤ Held          Brightness ├────●   output socket (right)
+        │ ● clamp(0.2 + 0.8·θ/60°) │   definition region: summary line; red mark = does not check
         └─────────────────────────┘
 ```
 
-* **Header colour** = category: concept (grey-blue), mapping (blue), context
-  (violet), output (amber), transport (teal). Muted, low-saturation, with
-  the title in 13 pt semibold.
+* **Header colour** = category: concept (grey-blue, the whole one-row
+  object), mapping (blue strip), context (violet), output (amber),
+  transport (teal). Muted, low-saturation, with the title in 12.5 pt
+  semibold. Identity hues are the only saturated marks on the canvas.
 * **Socket colour = semantic identity.** In Blender a socket's colour is its
   data type; in BDL the type that matters is the nominal concept, so each
   concept gets a stable hue derived from its `SemanticId` (deterministic,
-  never from the name). A link is only accepted between sockets of the
-  same concept — the canvas shows the nominal typing rule without a
-  diagnostic. Representation kind, when bound, changes the socket *shape*:
-  quantity ○, boolean ◇, count □; unbound concept: hollow ring.
-* **Concept node**: title = concept name, one output socket "value" on the
-  right (values of this concept flow out), one input socket on the left
-  (a mapping producing this concept connects here). A concept whose
-  representation is not yet chosen shows a hollow socket and the word
-  *open* in the header.
-* **Mapping node**: one input socket per signature input (labelled), one
-  output socket. Body shows the definition summary or *no definition yet*;
-  the state word is the paper's workspace state (`declared`, `defined`,
-  `type-valid`, …). An unresolved mapping is drawn with a dashed outline —
-  distinct, never red.
+  never from the name; lightness chosen per hue so every identity clears
+  3:1 against the canvas in both appearances). A link is only accepted
+  between sockets of the same concept — the canvas shows the nominal typing
+  rule without a diagnostic: while a link is dragged every compatible
+  socket gains a faint halo, the one under the pointer a strong halo, and
+  an incompatible socket shows the forbidden cursor.
+* **Socket shape = value form.** Quantity ○, on–off ◇, count □; a concept
+  whose value form is not chosen yet is a hollow ring. The same glyph, drawn
+  by the same code, appears in the library, in chips, toggles and pop-ups.
+  No type words are written beside a socket anywhere.
+* **Concept node**: a single row — the name, an input socket on the left (a
+  mapping producing this concept connects here) and an output socket on
+  the right (values of this concept flow out). Nothing else: what it
+  measures and what it means are the inspector's.
+* **Mapping node**: one input socket per read concept (labelled), one output
+  socket, and a definition region below the sockets. The region holds the
+  definition's summary line, or nothing while declared. A definition the
+  compiler cannot accept gets a **red mark at the definition line** — where
+  the problem lives — and no word in the header. A declared mapping is
+  drawn with a dashed outline and the word *declared*; dashed survives
+  selection (accent changes the colour, never the meaning). Never red.
 * **Links** are cubic Béziers from an output socket (right edge) to an
   input socket (left edge), tangents horizontal, colour of the concept,
   2 px, selected links thicker. Data flows left → right.
+* **Empty canvas**: one tertiary line naming the first step (add a concept
+  from the Library). Painted nodes expose semantics in product language for
+  assistive technology.
 
 ### Interaction (Blender's, on a Mac)
 
@@ -228,19 +244,36 @@ one gutter) are the two ways to lay out facts; string concatenation is not.
 
 ## 4. Editing model (what the inspector must expose)
 
-Every operation is an `EditOp` the compiler already accepts:
+Every operation is an `EditOp` the compiler already accepts. The inspector
+is organised by what the designer means, not by the model's fields:
 
-| Object | Inspector fields | Op | Kind |
-|---|---|---|---|
-| Concept | name (inline), description, representation (none / quantity + unit / boolean / count) | Rename, SetDescription, SetRepresentation | refinement; **rebinding** a representation is an edit and the inspector says so |
-| Concept | Delete | DeleteConcept | refused while used; banner names the users |
-| Mapping | name, description, inputs (add/remove concept), output | Rename, SetDescription, SetSignature | signature change is an edit; inspector shows "will reopen validation of dependents" |
-| Mapping | definition: the definition editor (§4a) — *Add definition* / *Save definition* / *Revert* / *Detach definition* | AttachDefinition, ReplaceDefinition (chosen by the reducer from the committed state, never by the widget) | add is a refinement; save (replace) and detach are edits |
-| Mapping | Delete | DeleteMapping | edit |
+| Object | Section | Fields (designer words) | Op | Kind |
+|---|---|---|---|---|
+| Concept | **Meaning** | Name, Meaning | Rename, SetDescription | refinement |
+| Concept | **Value** | Quantity / On–off / Count / Decide later; Unit (angle, length, … with the symbol in its own column) | SetRepresentation | choosing is a refinement; **changing a chosen value form** is an edit, and the section says which relationships it re-checks |
+| Concept | **Relationships** | Produced by, Used by — names as links that select the mapping | — | — |
+| Concept | Delete <name> | disabled while used, with the users named *at rest* under the button | DeleteConcept | — |
+| Mapping | **Meaning** | Name, Meaning | Rename, SetDescription | refinement |
+| Mapping | **Reads** | chips with the socket glyph, removable; a pop-up to add | SetSignature | edit |
+| Mapping | **Produces** | pop-up with the socket glyph | SetSignature | edit |
+| Mapping | **Relationship** | the definition editor (§4a) — *Add definition* / *Save definition* / *Revert* / *Detach definition*; header word *declared* while empty, *unsaved* while a draft differs; findings about the mapping’s place in the design attached under the editor in product language | AttachDefinition, ReplaceDefinition (chosen by the reducer from the committed state, never by the widget) | add is a refinement; save (replace) and detach are edits |
+| Mapping | Delete <name> | — | DeleteMapping | edit |
+| both | **Explain** (collapsed) | `SemanticId` / `DeclId`, `Θ` / `Interface`, inferred type, core term, status enum, diagnostic codes and technical detail, revision, the last change's kind and invalidation categories | — | level 3 only |
 
-The inspector shows the refinement/edit classification the compiler
-returns (`EditOutcome.kind`) as a one-line note after each change, so the
-paper's distinction is visible where the designer acts.
+No static explanatory paragraphs: a sentence appears only when it is
+about *this* object *now* ("Changing this re-checks dimByTilt, warmPulse";
+"Checked once Temperature's value is decided").
+
+**Last change** (below the inspector) states the consequence as a sentence
+about other objects: *Nothing else needs rechecking.* for a refinement;
+*This change affects dimByTilt, warmPulse — they will be checked again.*
+for an edit, the names being links (from `EditOutcome.origin_decls`). The
+words *refinement* / *edit* and the `Invalidation` categories are in Explain.
+
+Words never shown at levels 1–2: `SemanticId`, `DeclId`, `Ty`, `q Dim`,
+`Grant`, `Interface`, `realization`, `invalidation`, `Clocked`,
+`SingleDriver`, `DriveEnv`, `RequirementId`, `solver`, `protocol`,
+`revision`, and any enum name.
 
 ### 4a. The definition editor
 
@@ -278,13 +311,18 @@ repeats the paper and tells the designer nothing about what the field
 the entries will become (`NodePreview`, painted by the same `NodePainter`
 as the canvas):
 
-* **New concept**: Name · Kind (Quantity / On–off / Count / Decide later) ·
-  Unit (when quantity) · Meaning. The preview's socket fills when a
-  kind is chosen and stays hollow with *open* when it is not; a one-line
-  caption under the preview states what that socket means. The socket is
-  grey because its colour is the identity the compiler will allocate.
-* **New mapping**: Name · Reads (concept toggles drawn as their sockets, in
-  their colours) · Produces. The preview is the mapping node with those
+* **New concept**: Name · Value (Quantity / On–off / Count / Decide later) ·
+  Unit (when quantity; the same table as the inspector) · Meaning. The
+  preview's socket takes the chosen shape (○ ◇ □) and stays a hollow ring
+  while the value is undecided; a one-line caption under the preview names
+  that mark and what it means. The socket is grey because its colour is the
+  identity the compiler will allocate.
+* **New mapping**: Name · Reads (concept toggles drawn with their socket
+  glyphs, in their colours) · Produces. **Produces has no default** — the
+  pop-up reads *choose*, the preview's output socket is a hollow neutral
+  ring, and Create stays disabled until a concept is chosen; a mapping that
+  "produces" the first concept in the list would otherwise be created
+  without anyone deciding so. The preview is the mapping node with those
   input sockets, dashed, *declared* — the state it will be in.
 
 Text fields (`MacTextField`): hairline, 5 pt radius, 24 pt; focus = 1 px
@@ -340,7 +378,7 @@ the next level only as detail behind the first, never as a duplicate badge.
 | Level | Answers | May use | May not use |
 |---|---|---|---|
 | **1 Canvas** | what does the product do; what depends on what; what is still open; where does behaviour become physical | object silhouette, socket shape, socket hue, links, grouping, containment, line style, the object's own state; one state word where a word is unavoidable | type labels, ids, compiler words, badges, counts |
-| **2 Inspector** | what does the selected object mean; what can I change; what will the change affect | designer vocabulary: *Meaning, Value, Measures, Reads, Produces, Relationship, Used by, Produced by, affects, checked again*; diagnostics in product language attached to the field they concern | `SemanticId`, `DeclId`, `Ty`, `Grant`, `Interface`, `realization`, `invalidation`, `Clocked`, `SingleDriver`, `DriveEnv`, `solver`, `protocol`, `revision`, enum names |
+| **2 Inspector** | what does the selected object mean; what can I change; what will the change affect | designer vocabulary: *Meaning, Value, Unit, Reads, Produces, Relationship, Used by, Produced by, affects, checked again*; diagnostics in product language attached to the field they concern | `SemanticId`, `DeclId`, `Ty`, `Grant`, `Interface`, `realization`, `invalidation`, `Clocked`, `SingleDriver`, `DriveEnv`, `solver`, `protocol`, `revision`, enum names |
 | **3 Explain** | why was this accepted or refused; what did the surface form elaborate into; which rule applies | all of the above, kernel notation, Core IR, diagnostic codes, technical details, revision | — |
 
 Level 3 is one collapsed disclosure, **Explain**, at the end of the
@@ -355,7 +393,7 @@ lands. "Canvas" is level 1, "Inspector" level 2, "Explain" level 3.
 | Semantic fact | Internal representation | Canvas | Inspector wording | Explain wording | |
 |---|---|---|---|---|---|
 | semantic identity | `SemanticId` | socket and link **hue** from the id, identical on every page; the name at every socket | the name; never a number | `SemanticId 3` | now |
-| representation | `Θ s = q d / bool / nat` | socket **shape**: ○ quantity, ◇ on–off, □ count | Value: Quantity / On–off / Count · Measures: Angle, Length, … with the unit in its own column | `Θ(3) = q[rad]` | now |
+| representation | `Θ s = q d / bool / nat` | socket **shape**: ○ quantity, ◇ on–off, □ count | Value: Quantity / On–off / Count · Unit: angle, length, … with the symbol in its own column | `Θ(3) = q[rad]` | now |
 | representation not chosen | `Θ s = none` | **hollow** socket ring | Value: Decide later; "relationships can already use it" | `Θ(3) = none` | now |
 | unresolved declaration | `realization = none` | **dashed** outline, empty definition region, header word *declared* | Relationship: empty field + Attach | `Δ(d).realization = none` | now |
 | mapping relationship | `Signature { inputs, output }` → `Interface` | one input socket per read concept on the left, one output socket on the right, links in the concepts' hues | Reads · Produces (chips and pop-up carry the socket glyph) | `Interface: sem#0 → sem#3 → sem#1` | now |
@@ -376,6 +414,25 @@ Rules the matrix implies: hue is identity and nothing else; shape is
 representation and nothing else; dashed is *declared* and nothing else; a red
 mark means *wrong now* and never *not yet*; the accent is selection, focus and
 the default button. Adding an encoding adds a row here.
+
+### What Studio reads, and what it still needs from the read model
+
+Studio computes nothing semantic (ADR-0001). Everything above is read off
+`ProjectProjection`, `ProjectAnalysis` and `EditOutcome`. Two facts it
+shows today are derived structurally from the projection, not judged:
+which mappings read or produce a concept (from signatures), and which read
+concept of an `OPEN` mapping still has no value form (from `Θ`). Facts the
+UI wants and the protocol does not yet carry — to be added by the compiler
+side, never invented in Dart:
+
+| Needed for | Field | Today |
+|---|---|---|
+| "This change affects *A*, *B*" for signature edits and detaches | dependents (by `DeclId`) in `EditOutcome`, not only the origin | `origin_decls` names the origin; a mapping edit lists only itself |
+| concept-level findings under the Value section | `Diagnostic.entity = concept_id` populated by the checker | shape exists, unused |
+| the ladder rungs beyond *type-valid* on the mapping node | `MappingStatus` extended (temporally valid, clock-consistent) or a separate per-rung projection | four statuses |
+| contexts, outputs, clock domains, transports on the canvas | their projections (`ContextView`, `OutputView`, `DomainView`, drive edges, `sync` sites with initial values) | none |
+| values at sockets (Simulate, Monitor) | per-`DeclId`, per-activation samples with units | none |
+| board picture and leads (Deploy) | `Assignment` and `Explanation` projections keyed by requirement and resource | none |
 
 ## 8. When the OS dialog cannot be shown
 
