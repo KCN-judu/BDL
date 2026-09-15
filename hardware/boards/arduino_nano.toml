@@ -1,4 +1,7 @@
 name = "arduino_nano"
+display_name = "Arduino Nano"
+description = "ATmega328P: 6 PWM pins on 3 timers, 2 external interrupts, one I²C bus, one SPI unit, one UART"
+family = "avr"
 shareable = [
     "i2c_sda",
     "i2c_scl",

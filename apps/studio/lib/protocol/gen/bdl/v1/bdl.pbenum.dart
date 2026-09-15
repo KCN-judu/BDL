@@ -299,4 +299,47 @@ class DeploymentStatus extends $pb.ProtobufEnum {
   const DeploymentStatus._(super.value, super.name);
 }
 
+class MissingKind extends $pb.ProtobufEnum {
+  static const MissingKind MISSING_KIND_UNSPECIFIED =
+      MissingKind._(0, _omitEnumNames ? '' : 'MISSING_KIND_UNSPECIFIED');
+
+  /// Semantic (about the design itself).
+  static const MissingKind MISSING_KIND_RELATIONSHIP_NOT_CHECKING =
+      MissingKind._(1, _omitEnumNames ? '' : 'MISSING_KIND_RELATIONSHIP_NOT_CHECKING');
+  static const MissingKind MISSING_KIND_NOT_CAUSAL =
+      MissingKind._(2, _omitEnumNames ? '' : 'MISSING_KIND_NOT_CAUSAL');
+  static const MissingKind MISSING_KIND_NOT_CLOCK_CONSISTENT =
+      MissingKind._(3, _omitEnumNames ? '' : 'MISSING_KIND_NOT_CLOCK_CONSISTENT');
+  static const MissingKind MISSING_KIND_OUTPUT_NO_DOMAIN =
+      MissingKind._(4, _omitEnumNames ? '' : 'MISSING_KIND_OUTPUT_NO_DOMAIN');
+  static const MissingKind MISSING_KIND_OUTPUT_NO_DRIVER =
+      MissingKind._(5, _omitEnumNames ? '' : 'MISSING_KIND_OUTPUT_NO_DRIVER');
+  static const MissingKind MISSING_KIND_OUTPUT_CONNECTION_INVALID =
+      MissingKind._(6, _omitEnumNames ? '' : 'MISSING_KIND_OUTPUT_CONNECTION_INVALID');
+
+  /// Deployment configuration (about devices on this target).
+  static const MissingKind MISSING_KIND_OUTPUT_NO_DEVICE =
+      MissingKind._(7, _omitEnumNames ? '' : 'MISSING_KIND_OUTPUT_NO_DEVICE');
+  static const MissingKind MISSING_KIND_DEVICE_NO_OUTPUT =
+      MissingKind._(8, _omitEnumNames ? '' : 'MISSING_KIND_DEVICE_NO_OUTPUT');
+
+  static const $core.List<MissingKind> values = <MissingKind>[
+    MISSING_KIND_UNSPECIFIED,
+    MISSING_KIND_RELATIONSHIP_NOT_CHECKING,
+    MISSING_KIND_NOT_CAUSAL,
+    MISSING_KIND_NOT_CLOCK_CONSISTENT,
+    MISSING_KIND_OUTPUT_NO_DOMAIN,
+    MISSING_KIND_OUTPUT_NO_DRIVER,
+    MISSING_KIND_OUTPUT_CONNECTION_INVALID,
+    MISSING_KIND_OUTPUT_NO_DEVICE,
+    MISSING_KIND_DEVICE_NO_OUTPUT,
+  ];
+
+  static final $core.List<MissingKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 8);
+  static MissingKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const MissingKind._(super.value, super.name);
+}
+
 const $core.bool _omitEnumNames = $core.bool.fromEnvironment('protobuf.omit_enum_names');

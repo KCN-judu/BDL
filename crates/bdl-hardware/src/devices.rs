@@ -120,6 +120,18 @@ pub fn requirements_for_all<'a>(
     ordered.values().flat_map(|d| requirements_for(d)).collect()
 }
 
+/// Designer-facing wording for a device kind.
+pub fn device_kind_label(kind: DeviceKind) -> &'static str {
+    match kind {
+        DeviceKind::PwmChannel => "PWM channel",
+        DeviceKind::DigitalOutput => "digital output",
+        DeviceKind::HBridgeChannel => "H-bridge channel",
+        DeviceKind::I2cSensor => "I²C sensor",
+        DeviceKind::QuadratureEncoder => "quadrature encoder",
+        DeviceKind::Uart => "UART link",
+    }
+}
+
 /// The per-index labels of a kind, for editors offering manual pins.
 pub fn requirement_labels(kind: DeviceKind) -> Vec<(u16, Capability, &'static str)> {
     needs(kind)

@@ -55,7 +55,16 @@ interrupt is INT1.
 `Hardware` is plain serde data; `hardware/boards/<name>.toml` is its TOML
 form (`arduino_nano.toml`, `big_board.toml` are generated from
 `bdl-hardware::boards` and checked in; the round-trip test fails when they
-drift). No Rust source fragments live here. A *separate* platform mapping
+drift — `BDL_WRITE_BOARDS=1 cargo test -p bdl-hardware` regenerates).
+Besides the resources, a board carries chooser metadata the solver never
+reads — `display_name`, `description`, `family` — and
+`boards::describe(&hw)` derives a `TargetDescriptor` (id, wording,
+resource count, per-capability counts and shareability) for
+`ListTargets`. `Capability::label()`, `Hardware::describe_resource(id)`
+(*D3: digital in, digital out, PWM (timer 2), interrupt*) and
+`devices::device_kind_label(kind)` are the designer-facing wording used by
+the Deploy read model (docs/DEPLOYMENT_READ_MODEL.md). No Rust source
+fragments live here. A *separate* platform mapping
 (`hardware/platforms/<board>.toml`, planned) answers "logical resource GP15
 → HAL expression `p.PIN_15`". The registry (`boards::registry`) is what
 `ListTargets` reports; loading boards from the directory at runtime is the

@@ -22,6 +22,9 @@ pub fn arduino_nano() -> Hardware {
     let dio = [DigitalIn, DigitalOut];
     Hardware {
         name: "arduino_nano".into(),
+        display_name: "Arduino Nano".into(),
+        description: "ATmega328P: 6 PWM pins on 3 timers, 2 external interrupts, one I²C bus, one SPI unit, one UART".into(),
+        family: "avr".into(),
         resources: vec![
             res("D0", &[DigitalIn, DigitalOut, UartRx], &[(UartRx, 0)]),
             res("D1", &[DigitalIn, DigitalOut, UartTx], &[(UartTx, 0)]),
@@ -72,6 +75,10 @@ pub fn big_board() -> Hardware {
     use Capability::*;
     let mut hw = arduino_nano();
     hw.name = "big_board".into();
+    hw.display_name = "Big board (mock)".into();
+    hw.description =
+        "The Nano plus six more PWM pins on three more timers; a test target, not a product".into();
+    hw.family = "mock".into();
     for (pin, timer) in [
         ("D40", 3),
         ("D41", 3),
@@ -96,6 +103,34 @@ pub fn registry() -> BTreeMap<String, Hardware> {
 
 pub fn by_name(name: &str) -> Option<Hardware> {
     registry().remove(name)
+}
+
+/// What a target chooser shows: identity, wording and a capability
+/// summary — never the resources themselves.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct TargetDescriptor {
+    pub id: String,
+    pub display_name: String,
+    pub description: String,
+    pub family: String,
+    pub resource_count: usize,
+    pub capabilities: Vec<crate::model::CapabilitySummary>,
+}
+
+pub fn describe(hw: &Hardware) -> TargetDescriptor {
+    TargetDescriptor {
+        id: hw.name.clone(),
+        display_name: hw.display().to_string(),
+        description: hw.description.clone(),
+        family: hw.family.clone(),
+        resource_count: hw.resources.len(),
+        capabilities: hw.capability_summary(),
+    }
+}
+
+/// Every built-in target's descriptor, in id order.
+pub fn targets() -> Vec<TargetDescriptor> {
+    registry().values().map(describe).collect()
 }
 
 /// Sanity: every unit-bearing capability is one the resource has.

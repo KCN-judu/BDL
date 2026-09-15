@@ -30,7 +30,12 @@
 #![forbid(unsafe_code)]
 
 pub mod backend;
+pub mod deploy_report;
 pub use backend::{compile, compile_design_ir, readiness, CompileArtifact, CompileOptions};
+pub use deploy_report::{
+    deployment_report, AssignmentRow, Blocker, BlockerKind, DeploymentReport, MissingItem,
+    MissingKind,
+};
 
 use bdl_check::{check_realization, pretty, TypeErrorKind};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity, Severity};
@@ -549,7 +554,7 @@ fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagno
 mod tests {
     use super::*;
     use bdl_model::edit::{apply_edit, EditOp};
-    use bdl_model::surface::{Definition, Design, Representation, Signature};
+    use bdl_model::surface::{Definition, Design, DeviceKind, Representation, Signature};
     use bdl_model::Dim;
 
     fn lamp() -> (ProjectSnapshot, DeclId) {
@@ -957,6 +962,9 @@ mod tests {
         let nano = bdl_hardware::boards::arduino_nano();
         let gpio_only = Hardware {
             name: "gpio_only".into(),
+            display_name: String::new(),
+            description: String::new(),
+            family: String::new(),
             resources: vec![bdl_hardware::Resource {
                 id: bdl_hardware::ResourceId::new("P0"),
                 capabilities: [bdl_hardware::Capability::DigitalOut].into_iter().collect(),
@@ -1044,5 +1052,222 @@ mod tests {
         let d = analyze_deployment(&s, &nano);
         assert_eq!(d.status, DeploymentStatus::Infeasible);
         assert!(d.diagnostics[0].message.contains("D4 cannot carry lamp"));
+    }
+
+    // ---- the Deploy read model ----------------------------------------------
+
+    fn report(s: &ProjectSnapshot, hw: &Hardware) -> DeploymentReport {
+        let a = analyze(s);
+        let d = analyze_deployment(s, hw);
+        deployment_report(s, &a, &d, hw)
+    }
+
+    #[test]
+    fn report_names_what_is_missing_before_anything_is_bound() {
+        use deploy_report::MissingKind::*;
+        let (s, id, out, _) = lamp_with_output();
+        let nano = bdl_hardware::boards::arduino_nano();
+        // driven, no device: deployment incomplete, design ready
+        let s1 = edit(
+            &s,
+            EditOp::SetMappingDrive {
+                id,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let r = report(&s1, &nano);
+        assert!(r.design_ready && !r.deployable);
+        assert_eq!(r.status, DeploymentStatus::Incomplete);
+        assert_eq!(
+            r.missing.iter().map(|m| m.kind).collect::<Vec<_>>(),
+            vec![OutputNoDevice]
+        );
+        assert_eq!(r.missing[0].output_name.as_deref(), Some("light"));
+        assert_eq!(r.missing[0].message, "light has no device on Arduino Nano.");
+        assert!(r.rows.is_empty() && r.blocker.is_none());
+        assert_eq!(r.target.display_name, "Arduino Nano");
+        // undriven, with a device: the device fits, the design is not ready
+        let a = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "lamp".into(),
+                kind: DeviceKind::PwmChannel,
+                output: Some(out),
+            },
+        );
+        let r = report(&a.snapshot, &nano);
+        assert_eq!(
+            r.status,
+            DeploymentStatus::Feasible,
+            "target-relative status is unchanged by semantics"
+        );
+        assert!(!r.design_ready && !r.deployable);
+        assert_eq!(
+            r.missing.iter().map(|m| m.kind).collect::<Vec<_>>(),
+            vec![OutputNoDriver]
+        );
+        assert_eq!(r.rows.len(), 1);
+        assert_eq!(
+            r.rows[0].resource.as_ref().map(|x| x.0.as_str()),
+            Some("D3")
+        );
+        // an unbound device and an open output are both listed, semantic first
+        let b = edit(
+            &a.snapshot,
+            EditOp::CreateDevice {
+                name: "spare".into(),
+                kind: DeviceKind::DigitalOutput,
+                output: None,
+            },
+        );
+        let b = edit(
+            &b.snapshot,
+            EditOp::SetOutputClock {
+                id: out,
+                clock: None,
+            },
+        )
+        .snapshot;
+        let r = report(&b, &nano);
+        assert_eq!(
+            r.missing.iter().map(|m| m.kind).collect::<Vec<_>>(),
+            vec![OutputNoDomain, DeviceNoOutput]
+        );
+        assert!(r.missing[0].kind.is_semantic() && !r.missing[1].kind.is_semantic());
+        assert_eq!(r.missing[1].device_name.as_deref(), Some("spare"));
+        // an invalid relationship is named
+        let (s2, unary) = lamp();
+        let s2 = attach(&s2, unary, "Tilt + 1 s");
+        let r = report(&s2, &nano);
+        assert_eq!(r.missing[0].kind, RelationshipNotChecking);
+        assert_eq!(r.missing[0].mapping_name.as_deref(), Some("dimByTilt"));
+        assert_eq!(r.missing[0].message, "dimByTilt does not check.");
+    }
+
+    #[test]
+    fn report_rows_and_blocker_are_usable_without_solver_internals() {
+        let (s, id, out, _) = lamp_with_output();
+        let s = edit(
+            &s,
+            EditOp::SetMappingDrive {
+                id,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let a = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "drive".into(),
+                kind: DeviceKind::HBridgeChannel,
+                output: Some(out),
+            },
+        );
+        let dev = a.outcome.created_device.unwrap();
+        let s = a.snapshot;
+        let nano = bdl_hardware::boards::arduino_nano();
+        let r = report(&s, &nano);
+        assert!(r.deployable && r.missing.is_empty());
+        let rows: Vec<String> = r
+            .rows
+            .iter()
+            .map(|x| {
+                format!(
+                    "{} | {} | {} | {} | {} | {}",
+                    x.output_name.as_deref().unwrap_or("-"),
+                    x.device_name,
+                    x.device_kind_label,
+                    x.requirement_label,
+                    x.capability_label,
+                    x.resource.as_ref().map(|r| r.0.as_str()).unwrap_or("-")
+                )
+            })
+            .collect();
+        assert_eq!(
+            rows,
+            vec![
+                "light | drive | H-bridge channel | PWM | PWM | D3",
+                "light | drive | H-bridge channel | direction | digital out | D0",
+            ]
+        );
+        assert_eq!(
+            r.rows[0].resource_label.as_deref(),
+            Some("D3: digital in, digital out, PWM (timer 2), interrupt")
+        );
+        assert!(r.rows.iter().all(|x| x.fixed.is_none()));
+        // deterministic
+        assert_eq!(r, report(&s, &nano));
+        let json = serde_json::to_string(&r).unwrap();
+        assert_eq!(serde_json::from_str::<DeploymentReport>(&json).unwrap(), r);
+        // a fixed pin that cannot do PWM: the blocker names the pin, the device, the role
+        let s2 = edit(
+            &s,
+            EditOp::SetDevicePin {
+                id: dev,
+                index: 0,
+                resource: Some("D4".into()),
+            },
+        )
+        .snapshot;
+        let r = report(&s2, &nano);
+        assert_eq!(r.status, DeploymentStatus::Infeasible);
+        assert!(r.design_ready && !r.deployable);
+        let b = r.blocker.as_ref().unwrap();
+        assert_eq!(
+            (
+                b.device_name.as_str(),
+                b.requirement_label.as_str(),
+                b.capability_label.as_str()
+            ),
+            ("drive", "PWM", "PWM")
+        );
+        assert_eq!(
+            b.kind,
+            BlockerKind::FixedUnavailable {
+                pin: bdl_hardware::ResourceId::new("D4")
+            }
+        );
+        assert_eq!(b.message, "D4 cannot carry drive PWM on arduino_nano.");
+        assert!(r.rows.iter().all(|x| x.resource.is_none()));
+        assert_eq!(r.rows[0].fixed.as_ref().map(|x| x.0.as_str()), Some("D4"));
+        // PWM exhaustion: seven channels, the blocked candidates name their holders
+        let mut s3 = s.clone();
+        for n in 1..=6 {
+            s3 = edit(
+                &s3,
+                EditOp::CreateDevice {
+                    name: format!("L{n}"),
+                    kind: DeviceKind::PwmChannel,
+                    output: None,
+                },
+            )
+            .snapshot;
+        }
+        let r = report(&s3, &nano);
+        assert_eq!(r.status, DeploymentStatus::Infeasible);
+        let b = r.blocker.as_ref().unwrap();
+        let BlockerKind::Blocked { candidates } = &b.kind else {
+            panic!("{:?}", b.kind)
+        };
+        assert_eq!(candidates.len(), 6);
+        assert!(candidates
+            .iter()
+            .all(|c| !c.held_by_device_name.is_empty() && !c.resource_label.is_empty()));
+        assert!(b
+            .message
+            .starts_with("No free pin on arduino_nano can carry"));
+        // the same design fits the bigger board (the six extra channels are
+        // bound to no output, so the configuration is incomplete, not infeasible)
+        let big = report(&s3, &bdl_hardware::boards::big_board());
+        assert_eq!(big.status, DeploymentStatus::Incomplete);
+        assert!(big.blocker.is_none() && big.rows.iter().all(|x| x.resource.is_some()));
+        assert_eq!(
+            big.missing
+                .iter()
+                .filter(|m| m.kind == deploy_report::MissingKind::DeviceNoOutput)
+                .count(),
+            6
+        );
     }
 }

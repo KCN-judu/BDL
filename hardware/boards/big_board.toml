@@ -1,4 +1,7 @@
 name = "big_board"
+display_name = "Big board (mock)"
+description = "The Nano plus six more PWM pins on three more timers; a test target, not a product"
+family = "mock"
 shareable = [
     "i2c_sda",
     "i2c_scl",

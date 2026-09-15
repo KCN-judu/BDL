@@ -205,6 +205,9 @@ fn unit_relations_same_and_distinct() {
 fn unsupported_capability_is_a_clear_dead_end() {
     let hw = Hardware {
         name: "gpio_only".into(),
+        display_name: String::new(),
+        description: String::new(),
+        family: String::new(),
         resources: vec![Resource {
             id: rid("P0"),
             capabilities: [Capability::DigitalOut].into_iter().collect(),
@@ -264,14 +267,11 @@ fn boards_round_trip_through_toml_and_match_the_checked_in_files() {
             env!("CARGO_MANIFEST_DIR"),
             hw.name
         );
+        let write = std::env::var("BDL_WRITE_BOARDS").is_ok();
         match std::fs::read_to_string(&path) {
-            Ok(on_disk) => assert_eq!(
-                on_disk, text,
-                "{path} is stale: run the test with BDL_WRITE_BOARDS=1"
-            ),
-            Err(_) if std::env::var("BDL_WRITE_BOARDS").is_ok() => {
-                std::fs::write(&path, &text).unwrap()
-            }
+            Ok(on_disk) if on_disk == text => {}
+            Ok(_) | Err(_) if write => std::fs::write(&path, &text).unwrap(),
+            Ok(_) => panic!("{path} is stale: run the test with BDL_WRITE_BOARDS=1"),
             Err(e) => panic!("{path}: {e} (set BDL_WRITE_BOARDS=1 to generate)"),
         }
     }
@@ -300,6 +300,9 @@ mod props {
             )
             .prop_map(move |rs| Hardware {
                 name: "gen".into(),
+                display_name: String::new(),
+                description: String::new(),
+                family: String::new(),
                 resources: rs
                     .into_iter()
                     .enumerate()

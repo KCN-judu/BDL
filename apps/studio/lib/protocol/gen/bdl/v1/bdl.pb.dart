@@ -9650,16 +9650,25 @@ class TargetsResponse extends $pb.GeneratedMessage {
   $pb.PbList<TargetView> get targets => $_getList(0);
 }
 
+/// What a target chooser shows.  `id` is opaque: never parse it for meaning.
 class TargetView extends $pb.GeneratedMessage {
   factory TargetView({
     $core.String? id,
     $core.String? name,
     $core.int? resourceCount,
+    $core.String? displayName,
+    $core.String? description,
+    $core.String? family,
+    $core.Iterable<CapabilitySummary>? capabilities,
   }) {
     final result = TargetView._();
     if (id != null) result.id = id;
     if (name != null) result.name = name;
     if (resourceCount != null) result.resourceCount = resourceCount;
+    if (displayName != null) result.displayName = displayName;
+    if (description != null) result.description = description;
+    if (family != null) result.family = family;
+    if (capabilities != null) result.capabilities.addAll(capabilities);
     return result;
   }
 
@@ -9678,6 +9687,11 @@ class TargetView extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'id')
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..aI(3, _omitFieldNames ? '' : 'resourceCount', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(4, _omitFieldNames ? '' : 'displayName')
+    ..aOS(5, _omitFieldNames ? '' : 'description')
+    ..aOS(6, _omitFieldNames ? '' : 'family')
+    ..pPM<CapabilitySummary>(7, _omitFieldNames ? '' : 'capabilities',
+        subBuilder: CapabilitySummary.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9710,6 +9724,7 @@ class TargetView extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearId() => $_clearField(1);
 
+  /// Same as `display_name` (kept for 0.3 clients).
   @$pb.TagNumber(2)
   $core.String get name => $_getSZ(1);
   @$pb.TagNumber(2)
@@ -9727,14 +9742,142 @@ class TargetView extends $pb.GeneratedMessage {
   $core.bool hasResourceCount() => $_has(2);
   @$pb.TagNumber(3)
   void clearResourceCount() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get displayName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set displayName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDisplayName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDisplayName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get description => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set description($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDescription() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDescription() => $_clearField(5);
+
+  /// Board/platform family, e.g. "avr", "rp2040", "mock".
+  @$pb.TagNumber(6)
+  $core.String get family => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set family($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasFamily() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearFamily() => $_clearField(6);
+
+  /// How many resources offer each capability; capabilities the target
+  /// lacks are absent.
+  @$pb.TagNumber(7)
+  $pb.PbList<CapabilitySummary> get capabilities => $_getList(6);
+}
+
+class CapabilitySummary extends $pb.GeneratedMessage {
+  factory CapabilitySummary({
+    $core.String? capability,
+    $core.String? label,
+    $core.int? resourceCount,
+    $core.bool? shareable,
+  }) {
+    final result = CapabilitySummary._();
+    if (capability != null) result.capability = capability;
+    if (label != null) result.label = label;
+    if (resourceCount != null) result.resourceCount = resourceCount;
+    if (shareable != null) result.shareable = shareable;
+    return result;
+  }
+
+  CapabilitySummary._();
+
+  factory CapabilitySummary.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CapabilitySummary()..mergeFromBuffer(data, registry);
+  factory CapabilitySummary.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CapabilitySummary()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CapabilitySummary',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CapabilitySummary.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'capability')
+    ..aOS(2, _omitFieldNames ? '' : 'label')
+    ..aI(3, _omitFieldNames ? '' : 'resourceCount', fieldType: $pb.PbFieldType.OU3)
+    ..aOB(4, _omitFieldNames ? '' : 'shareable')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CapabilitySummary clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CapabilitySummary copyWith(void Function(CapabilitySummary) updates) =>
+      super.copyWith((message) => updates(message as CapabilitySummary)) as CapabilitySummary;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CapabilitySummary() / CapabilitySummary.new instead')
+  static CapabilitySummary create() => CapabilitySummary._();
+  static $pb.GeneratedMessage $_createMessage() => CapabilitySummary._();
+  @$core.override
+  CapabilitySummary createEmptyInstance() => CapabilitySummary._();
+  @$core.pragma('dart2js:noInline')
+  static CapabilitySummary getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CapabilitySummary>(CapabilitySummary.$_createMessage);
+  static CapabilitySummary? _defaultInstance;
+
+  /// Stable capability name, e.g. "pwm".
+  @$pb.TagNumber(1)
+  $core.String get capability => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set capability($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCapability() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCapability() => $_clearField(1);
+
+  /// Designer-facing wording, e.g. "PWM".
+  @$pb.TagNumber(2)
+  $core.String get label => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set label($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLabel() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLabel() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get resourceCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set resourceCount($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasResourceCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearResourceCount() => $_clearField(3);
+
+  /// Several requirements may share one resource for this capability (buses).
+  @$pb.TagNumber(4)
+  $core.bool get shareable => $_getBF(3);
+  @$pb.TagNumber(4)
+  set shareable($core.bool value) => $_setBool(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasShareable() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearShareable() => $_clearField(4);
 }
 
 class AnalyzeDeploymentRequest extends $pb.GeneratedMessage {
   factory AnalyzeDeploymentRequest({
     $core.String? targetId,
+    $fixnum.Int64? revision,
   }) {
     final result = AnalyzeDeploymentRequest._();
     if (targetId != null) result.targetId = targetId;
+    if (revision != null) result.revision = revision;
     return result;
   }
 
@@ -9752,6 +9895,8 @@ class AnalyzeDeploymentRequest extends $pb.GeneratedMessage {
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: AnalyzeDeploymentRequest.$_createMessage)
     ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9784,6 +9929,18 @@ class AnalyzeDeploymentRequest extends $pb.GeneratedMessage {
   $core.bool hasTargetId() => $_has(0);
   @$pb.TagNumber(1)
   void clearTargetId() => $_clearField(1);
+
+  /// When set, the request is refused with `deploy.stale_revision` unless
+  /// it equals the project's current revision — so a client never gets a
+  /// result for a project it no longer holds.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get revision => $_getI64(1);
+  @$pb.TagNumber(2)
+  set revision($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRevision() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRevision() => $_clearField(2);
 }
 
 class DeploymentResponse extends $pb.GeneratedMessage {
@@ -9843,6 +10000,11 @@ class DeploymentResponse extends $pb.GeneratedMessage {
   DeploymentAnalysis ensureDeployment() => $_ensure(0);
 }
 
+/// Two layers in one message.  Fields 1–9 are the analysis as computed
+/// (requirements, placement, dead end by stable ids).  Fields 10–15 are
+/// the read model a frontend renders from directly — names, labels, what
+/// is missing, the blocker — composed from the semantic analysis and the
+/// deployment analysis at the daemon (docs/DEPLOYMENT_READ_MODEL.md).
 class DeploymentAnalysis extends $pb.GeneratedMessage {
   factory DeploymentAnalysis({
     $fixnum.Int64? revision,
@@ -9854,6 +10016,12 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     $core.Iterable<$fixnum.Int64>? unboundDevices,
     $core.Iterable<$fixnum.Int64>? unrealisedOutputs,
     $core.Iterable<Diagnostic>? diagnostics,
+    $core.String? targetDisplayName,
+    $core.bool? designReady,
+    $core.bool? deployable,
+    $core.Iterable<MissingItem>? missing,
+    $core.Iterable<AssignmentRow>? rows,
+    Blocker? blocker,
   }) {
     final result = DeploymentAnalysis._();
     if (revision != null) result.revision = revision;
@@ -9865,6 +10033,12 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     if (unboundDevices != null) result.unboundDevices.addAll(unboundDevices);
     if (unrealisedOutputs != null) result.unrealisedOutputs.addAll(unrealisedOutputs);
     if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    if (targetDisplayName != null) result.targetDisplayName = targetDisplayName;
+    if (designReady != null) result.designReady = designReady;
+    if (deployable != null) result.deployable = deployable;
+    if (missing != null) result.missing.addAll(missing);
+    if (rows != null) result.rows.addAll(rows);
+    if (blocker != null) result.blocker = blocker;
     return result;
   }
 
@@ -9892,6 +10066,14 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     ..p<$fixnum.Int64>(8, _omitFieldNames ? '' : 'unrealisedOutputs', $pb.PbFieldType.KU6)
     ..pPM<Diagnostic>(9, _omitFieldNames ? '' : 'diagnostics',
         subBuilder: Diagnostic.$_createMessage)
+    ..aOS(10, _omitFieldNames ? '' : 'targetDisplayName')
+    ..aOB(11, _omitFieldNames ? '' : 'designReady')
+    ..aOB(12, _omitFieldNames ? '' : 'deployable')
+    ..pPM<MissingItem>(13, _omitFieldNames ? '' : 'missing',
+        subBuilder: MissingItem.$_createMessage)
+    ..pPM<AssignmentRow>(14, _omitFieldNames ? '' : 'rows',
+        subBuilder: AssignmentRow.$_createMessage)
+    ..aOM<Blocker>(15, _omitFieldNames ? '' : 'blocker', subBuilder: Blocker.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9914,6 +10096,7 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
       $pb.GeneratedMessage.$_defaultFor<DeploymentAnalysis>(DeploymentAnalysis.$_createMessage);
   static DeploymentAnalysis? _defaultInstance;
 
+  /// The project revision this describes; discard when it moves on.
   @$pb.TagNumber(1)
   $fixnum.Int64 get revision => $_getI64(0);
   @$pb.TagNumber(1)
@@ -9923,6 +10106,7 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearRevision() => $_clearField(1);
 
+  /// Target id (opaque).
   @$pb.TagNumber(2)
   $core.String get target => $_getSZ(1);
   @$pb.TagNumber(2)
@@ -9932,6 +10116,8 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearTarget() => $_clearField(2);
 
+  /// Target-relative: do the bound devices fit?  Feasible / Infeasible /
+  /// Incomplete (a device without an output or an output without a device).
   @$pb.TagNumber(3)
   DeploymentStatus get status => $_getN(2);
   @$pb.TagNumber(3)
@@ -9944,7 +10130,7 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $pb.PbList<RequirementView> get requirements => $_getList(3);
 
-  /// The witness, when feasible: one placement per requirement.
+  /// The witness, when a placement exists: one placement per requirement.
   @$pb.TagNumber(5)
   $pb.PbList<Placement> get assignment => $_getList(4);
 
@@ -9967,6 +10153,780 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(9)
   $pb.PbList<Diagnostic> get diagnostics => $_getList(8);
+
+  /// ---- read model ----
+  @$pb.TagNumber(10)
+  $core.String get targetDisplayName => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set targetDisplayName($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasTargetDisplayName() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearTargetDisplayName() => $_clearField(10);
+
+  /// Target-independent: every relationship checks, the design is causal
+  /// and clock-consistent, and its outputs are complete.
+  @$pb.TagNumber(11)
+  $core.bool get designReady => $_getBF(10);
+  @$pb.TagNumber(11)
+  set designReady($core.bool value) => $_setBool(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasDesignReady() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearDesignReady() => $_clearField(11);
+
+  /// `design_ready && status == FEASIBLE`.
+  @$pb.TagNumber(12)
+  $core.bool get deployable => $_getBF(11);
+  @$pb.TagNumber(12)
+  set deployable($core.bool value) => $_setBool(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasDeployable() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearDeployable() => $_clearField(12);
+
+  /// What is still missing, semantic items first; empty when deployable.
+  @$pb.TagNumber(13)
+  $pb.PbList<MissingItem> get missing => $_getList(12);
+
+  /// One row per requirement in (output, device, index) order; resource
+  /// columns filled when a placement exists.
+  @$pb.TagNumber(14)
+  $pb.PbList<AssignmentRow> get rows => $_getList(13);
+
+  /// When infeasible: the first dead end, named.  Not a minimal core.
+  @$pb.TagNumber(15)
+  Blocker get blocker => $_getN(14);
+  @$pb.TagNumber(15)
+  set blocker(Blocker value) => $_setField(15, value);
+  @$pb.TagNumber(15)
+  $core.bool hasBlocker() => $_has(14);
+  @$pb.TagNumber(15)
+  void clearBlocker() => $_clearField(15);
+  @$pb.TagNumber(15)
+  Blocker ensureBlocker() => $_ensure(14);
+}
+
+class MissingItem extends $pb.GeneratedMessage {
+  factory MissingItem({
+    MissingKind? kind,
+    $fixnum.Int64? outputId,
+    $core.String? outputName,
+    $fixnum.Int64? deviceId,
+    $core.String? deviceName,
+    $fixnum.Int64? mappingId,
+    $core.String? mappingName,
+    $core.String? message,
+    $core.String? explanation,
+  }) {
+    final result = MissingItem._();
+    if (kind != null) result.kind = kind;
+    if (outputId != null) result.outputId = outputId;
+    if (outputName != null) result.outputName = outputName;
+    if (deviceId != null) result.deviceId = deviceId;
+    if (deviceName != null) result.deviceName = deviceName;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (mappingName != null) result.mappingName = mappingName;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    return result;
+  }
+
+  MissingItem._();
+
+  factory MissingItem.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MissingItem()..mergeFromBuffer(data, registry);
+  factory MissingItem.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MissingItem()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MissingItem',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: MissingItem.$_createMessage)
+    ..aE<MissingKind>(1, _omitFieldNames ? '' : 'kind', enumValues: MissingKind.values)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'outputId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'outputName')
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(5, _omitFieldNames ? '' : 'deviceName')
+    ..a<$fixnum.Int64>(6, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(7, _omitFieldNames ? '' : 'mappingName')
+    ..aOS(8, _omitFieldNames ? '' : 'message')
+    ..aOS(9, _omitFieldNames ? '' : 'explanation')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MissingItem clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MissingItem copyWith(void Function(MissingItem) updates) =>
+      super.copyWith((message) => updates(message as MissingItem)) as MissingItem;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use MissingItem() / MissingItem.new instead')
+  static MissingItem create() => MissingItem._();
+  static $pb.GeneratedMessage $_createMessage() => MissingItem._();
+  @$core.override
+  MissingItem createEmptyInstance() => MissingItem._();
+  @$core.pragma('dart2js:noInline')
+  static MissingItem getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MissingItem>(MissingItem.$_createMessage);
+  static MissingItem? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  MissingKind get kind => $_getN(0);
+  @$pb.TagNumber(1)
+  set kind(MissingKind value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasKind() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearKind() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get outputId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set outputId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasOutputId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearOutputId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get outputName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set outputName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasOutputName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearOutputName() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get deviceId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set deviceId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDeviceId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDeviceId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get deviceName => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set deviceName($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDeviceName() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDeviceName() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get mappingId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set mappingId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasMappingId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMappingId() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get mappingName => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set mappingName($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasMappingName() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearMappingName() => $_clearField(7);
+
+  /// Product language; `explanation` says why it matters and what to do.
+  @$pb.TagNumber(8)
+  $core.String get message => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set message($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasMessage() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearMessage() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.String get explanation => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set explanation($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasExplanation() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearExplanation() => $_clearField(9);
+}
+
+class AssignmentRow extends $pb.GeneratedMessage {
+  factory AssignmentRow({
+    $fixnum.Int64? outputId,
+    $core.String? outputName,
+    $fixnum.Int64? deviceId,
+    $core.String? deviceName,
+    DeviceKind? deviceKind,
+    $core.String? deviceKindLabel,
+    $core.int? requirementIndex,
+    $core.String? requirementLabel,
+    $core.String? capability,
+    $core.String? capabilityLabel,
+    $core.String? fixed,
+    $core.String? resource,
+    $core.String? resourceLabel,
+  }) {
+    final result = AssignmentRow._();
+    if (outputId != null) result.outputId = outputId;
+    if (outputName != null) result.outputName = outputName;
+    if (deviceId != null) result.deviceId = deviceId;
+    if (deviceName != null) result.deviceName = deviceName;
+    if (deviceKind != null) result.deviceKind = deviceKind;
+    if (deviceKindLabel != null) result.deviceKindLabel = deviceKindLabel;
+    if (requirementIndex != null) result.requirementIndex = requirementIndex;
+    if (requirementLabel != null) result.requirementLabel = requirementLabel;
+    if (capability != null) result.capability = capability;
+    if (capabilityLabel != null) result.capabilityLabel = capabilityLabel;
+    if (fixed != null) result.fixed = fixed;
+    if (resource != null) result.resource = resource;
+    if (resourceLabel != null) result.resourceLabel = resourceLabel;
+    return result;
+  }
+
+  AssignmentRow._();
+
+  factory AssignmentRow.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AssignmentRow()..mergeFromBuffer(data, registry);
+  factory AssignmentRow.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AssignmentRow()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'AssignmentRow',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: AssignmentRow.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'outputId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'outputName')
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(4, _omitFieldNames ? '' : 'deviceName')
+    ..aE<DeviceKind>(5, _omitFieldNames ? '' : 'deviceKind', enumValues: DeviceKind.values)
+    ..aOS(6, _omitFieldNames ? '' : 'deviceKindLabel')
+    ..aI(7, _omitFieldNames ? '' : 'requirementIndex', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(8, _omitFieldNames ? '' : 'requirementLabel')
+    ..aOS(9, _omitFieldNames ? '' : 'capability')
+    ..aOS(10, _omitFieldNames ? '' : 'capabilityLabel')
+    ..aOS(11, _omitFieldNames ? '' : 'fixed')
+    ..aOS(12, _omitFieldNames ? '' : 'resource')
+    ..aOS(13, _omitFieldNames ? '' : 'resourceLabel')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssignmentRow clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssignmentRow copyWith(void Function(AssignmentRow) updates) =>
+      super.copyWith((message) => updates(message as AssignmentRow)) as AssignmentRow;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use AssignmentRow() / AssignmentRow.new instead')
+  static AssignmentRow create() => AssignmentRow._();
+  static $pb.GeneratedMessage $_createMessage() => AssignmentRow._();
+  @$core.override
+  AssignmentRow createEmptyInstance() => AssignmentRow._();
+  @$core.pragma('dart2js:noInline')
+  static AssignmentRow getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AssignmentRow>(AssignmentRow.$_createMessage);
+  static AssignmentRow? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get outputId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set outputId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasOutputId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearOutputId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get outputName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set outputName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasOutputName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearOutputName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get deviceId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set deviceId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDeviceId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDeviceId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get deviceName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set deviceName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDeviceName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDeviceName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  DeviceKind get deviceKind => $_getN(4);
+  @$pb.TagNumber(5)
+  set deviceKind(DeviceKind value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDeviceKind() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDeviceKind() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get deviceKindLabel => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set deviceKindLabel($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasDeviceKindLabel() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearDeviceKindLabel() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.int get requirementIndex => $_getIZ(6);
+  @$pb.TagNumber(7)
+  set requirementIndex($core.int value) => $_setUnsignedInt32(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasRequirementIndex() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearRequirementIndex() => $_clearField(7);
+
+  /// The requirement's role on the device: "PWM", "direction", "SDA".
+  @$pb.TagNumber(8)
+  $core.String get requirementLabel => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set requirementLabel($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasRequirementLabel() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearRequirementLabel() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.String get capability => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set capability($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasCapability() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearCapability() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $core.String get capabilityLabel => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set capabilityLabel($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasCapabilityLabel() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearCapabilityLabel() => $_clearField(10);
+
+  /// Chosen by hand, if any.
+  @$pb.TagNumber(11)
+  $core.String get fixed => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set fixed($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasFixed() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearFixed() => $_clearField(11);
+
+  /// The resource carrying it; absent when no placement exists.
+  @$pb.TagNumber(12)
+  $core.String get resource => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set resource($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasResource() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearResource() => $_clearField(12);
+
+  /// The resource in the target's terms: "D3: digital in, digital out, PWM (timer 2), interrupt".
+  @$pb.TagNumber(13)
+  $core.String get resourceLabel => $_getSZ(12);
+  @$pb.TagNumber(13)
+  set resourceLabel($core.String value) => $_setString(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasResourceLabel() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearResourceLabel() => $_clearField(13);
+}
+
+enum Blocker_Kind { noCapableResource, fixedUnavailable, blocked, notSet }
+
+class Blocker extends $pb.GeneratedMessage {
+  factory Blocker({
+    $fixnum.Int64? deviceId,
+    $core.String? deviceName,
+    $core.int? requirementIndex,
+    $core.String? requirementLabel,
+    $core.String? capability,
+    $core.String? capabilityLabel,
+    Unit? noCapableResource,
+    $core.String? fixedUnavailable,
+    BlockerCandidates? blocked,
+    $core.String? message,
+    $core.String? explanation,
+  }) {
+    final result = Blocker._();
+    if (deviceId != null) result.deviceId = deviceId;
+    if (deviceName != null) result.deviceName = deviceName;
+    if (requirementIndex != null) result.requirementIndex = requirementIndex;
+    if (requirementLabel != null) result.requirementLabel = requirementLabel;
+    if (capability != null) result.capability = capability;
+    if (capabilityLabel != null) result.capabilityLabel = capabilityLabel;
+    if (noCapableResource != null) result.noCapableResource = noCapableResource;
+    if (fixedUnavailable != null) result.fixedUnavailable = fixedUnavailable;
+    if (blocked != null) result.blocked = blocked;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    return result;
+  }
+
+  Blocker._();
+
+  factory Blocker.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Blocker()..mergeFromBuffer(data, registry);
+  factory Blocker.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Blocker()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, Blocker_Kind> _Blocker_KindByTag = {
+    7: Blocker_Kind.noCapableResource,
+    8: Blocker_Kind.fixedUnavailable,
+    9: Blocker_Kind.blocked,
+    0: Blocker_Kind.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Blocker',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: Blocker.$_createMessage)
+    ..oo(0, [7, 8, 9])
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'deviceName')
+    ..aI(3, _omitFieldNames ? '' : 'requirementIndex', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(4, _omitFieldNames ? '' : 'requirementLabel')
+    ..aOS(5, _omitFieldNames ? '' : 'capability')
+    ..aOS(6, _omitFieldNames ? '' : 'capabilityLabel')
+    ..aOM<Unit>(7, _omitFieldNames ? '' : 'noCapableResource', subBuilder: Unit.$_createMessage)
+    ..aOS(8, _omitFieldNames ? '' : 'fixedUnavailable')
+    ..aOM<BlockerCandidates>(9, _omitFieldNames ? '' : 'blocked',
+        subBuilder: BlockerCandidates.$_createMessage)
+    ..aOS(10, _omitFieldNames ? '' : 'message')
+    ..aOS(11, _omitFieldNames ? '' : 'explanation')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Blocker clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Blocker copyWith(void Function(Blocker) updates) =>
+      super.copyWith((message) => updates(message as Blocker)) as Blocker;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use Blocker() / Blocker.new instead')
+  static Blocker create() => Blocker._();
+  static $pb.GeneratedMessage $_createMessage() => Blocker._();
+  @$core.override
+  Blocker createEmptyInstance() => Blocker._();
+  @$core.pragma('dart2js:noInline')
+  static Blocker getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Blocker>(Blocker.$_createMessage);
+  static Blocker? _defaultInstance;
+
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  Blocker_Kind whichKind() => _Blocker_KindByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  void clearKind() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get deviceId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set deviceId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDeviceId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDeviceId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get deviceName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set deviceName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDeviceName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDeviceName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get requirementIndex => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set requirementIndex($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRequirementIndex() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRequirementIndex() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get requirementLabel => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set requirementLabel($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasRequirementLabel() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearRequirementLabel() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get capability => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set capability($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCapability() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearCapability() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get capabilityLabel => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set capabilityLabel($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasCapabilityLabel() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearCapabilityLabel() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  Unit get noCapableResource => $_getN(6);
+  @$pb.TagNumber(7)
+  set noCapableResource(Unit value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasNoCapableResource() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearNoCapableResource() => $_clearField(7);
+  @$pb.TagNumber(7)
+  Unit ensureNoCapableResource() => $_ensure(6);
+
+  /// The pin chosen by hand is not on the target or lacks the capability.
+  @$pb.TagNumber(8)
+  $core.String get fixedUnavailable => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set fixedUnavailable($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasFixedUnavailable() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearFixedUnavailable() => $_clearField(8);
+
+  /// Every capable pin is taken (or would violate a shared-unit relation).
+  @$pb.TagNumber(9)
+  BlockerCandidates get blocked => $_getN(8);
+  @$pb.TagNumber(9)
+  set blocked(BlockerCandidates value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasBlocked() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearBlocked() => $_clearField(9);
+  @$pb.TagNumber(9)
+  BlockerCandidates ensureBlocked() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  $core.String get message => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set message($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasMessage() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearMessage() => $_clearField(10);
+
+  @$pb.TagNumber(11)
+  $core.String get explanation => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set explanation($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasExplanation() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearExplanation() => $_clearField(11);
+}
+
+class BlockerCandidates extends $pb.GeneratedMessage {
+  factory BlockerCandidates({
+    $core.Iterable<BlockerCandidate>? candidates,
+  }) {
+    final result = BlockerCandidates._();
+    if (candidates != null) result.candidates.addAll(candidates);
+    return result;
+  }
+
+  BlockerCandidates._();
+
+  factory BlockerCandidates.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BlockerCandidates()..mergeFromBuffer(data, registry);
+  factory BlockerCandidates.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BlockerCandidates()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BlockerCandidates',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BlockerCandidates.$_createMessage)
+    ..pPM<BlockerCandidate>(1, _omitFieldNames ? '' : 'candidates',
+        subBuilder: BlockerCandidate.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BlockerCandidates clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BlockerCandidates copyWith(void Function(BlockerCandidates) updates) =>
+      super.copyWith((message) => updates(message as BlockerCandidates)) as BlockerCandidates;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BlockerCandidates() / BlockerCandidates.new instead')
+  static BlockerCandidates create() => BlockerCandidates._();
+  static $pb.GeneratedMessage $_createMessage() => BlockerCandidates._();
+  @$core.override
+  BlockerCandidates createEmptyInstance() => BlockerCandidates._();
+  @$core.pragma('dart2js:noInline')
+  static BlockerCandidates getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BlockerCandidates>(BlockerCandidates.$_createMessage);
+  static BlockerCandidates? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<BlockerCandidate> get candidates => $_getList(0);
+}
+
+class BlockerCandidate extends $pb.GeneratedMessage {
+  factory BlockerCandidate({
+    $core.String? resource,
+    $core.String? resourceLabel,
+    $fixnum.Int64? heldByDeviceId,
+    $core.String? heldByDeviceName,
+    $core.int? heldByRequirementIndex,
+    $core.String? heldByRequirementLabel,
+  }) {
+    final result = BlockerCandidate._();
+    if (resource != null) result.resource = resource;
+    if (resourceLabel != null) result.resourceLabel = resourceLabel;
+    if (heldByDeviceId != null) result.heldByDeviceId = heldByDeviceId;
+    if (heldByDeviceName != null) result.heldByDeviceName = heldByDeviceName;
+    if (heldByRequirementIndex != null) result.heldByRequirementIndex = heldByRequirementIndex;
+    if (heldByRequirementLabel != null) result.heldByRequirementLabel = heldByRequirementLabel;
+    return result;
+  }
+
+  BlockerCandidate._();
+
+  factory BlockerCandidate.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BlockerCandidate()..mergeFromBuffer(data, registry);
+  factory BlockerCandidate.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BlockerCandidate()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BlockerCandidate',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BlockerCandidate.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'resource')
+    ..aOS(2, _omitFieldNames ? '' : 'resourceLabel')
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'heldByDeviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(4, _omitFieldNames ? '' : 'heldByDeviceName')
+    ..aI(5, _omitFieldNames ? '' : 'heldByRequirementIndex', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(6, _omitFieldNames ? '' : 'heldByRequirementLabel')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BlockerCandidate clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BlockerCandidate copyWith(void Function(BlockerCandidate) updates) =>
+      super.copyWith((message) => updates(message as BlockerCandidate)) as BlockerCandidate;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BlockerCandidate() / BlockerCandidate.new instead')
+  static BlockerCandidate create() => BlockerCandidate._();
+  static $pb.GeneratedMessage $_createMessage() => BlockerCandidate._();
+  @$core.override
+  BlockerCandidate createEmptyInstance() => BlockerCandidate._();
+  @$core.pragma('dart2js:noInline')
+  static BlockerCandidate getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BlockerCandidate>(BlockerCandidate.$_createMessage);
+  static BlockerCandidate? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get resource => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set resource($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasResource() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearResource() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get resourceLabel => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set resourceLabel($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasResourceLabel() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearResourceLabel() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get heldByDeviceId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set heldByDeviceId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasHeldByDeviceId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearHeldByDeviceId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get heldByDeviceName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set heldByDeviceName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasHeldByDeviceName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearHeldByDeviceName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get heldByRequirementIndex => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set heldByRequirementIndex($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasHeldByRequirementIndex() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearHeldByRequirementIndex() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get heldByRequirementLabel => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set heldByRequirementLabel($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasHeldByRequirementLabel() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearHeldByRequirementLabel() => $_clearField(6);
 }
 
 class RequirementView extends $pb.GeneratedMessage {

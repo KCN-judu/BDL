@@ -26,6 +26,37 @@ pub enum Capability {
 }
 
 impl Capability {
+    /// Designer-facing wording.
+    pub fn label(self) -> &'static str {
+        match self {
+            Capability::DigitalIn => "digital in",
+            Capability::DigitalOut => "digital out",
+            Capability::Pwm => "PWM",
+            Capability::AnalogIn => "analog in",
+            Capability::Interrupt => "interrupt",
+            Capability::I2cSda => "I²C SDA",
+            Capability::I2cScl => "I²C SCL",
+            Capability::SpiMosi => "SPI MOSI",
+            Capability::SpiMiso => "SPI MISO",
+            Capability::SpiSck => "SPI SCK",
+            Capability::SpiSs => "SPI SS",
+            Capability::UartTx => "UART TX",
+            Capability::UartRx => "UART RX",
+        }
+    }
+    /// What the unit behind this capability is called on a board.
+    pub fn unit_noun(self) -> &'static str {
+        match self {
+            Capability::Pwm => "timer",
+            Capability::Interrupt => "INT",
+            Capability::I2cSda | Capability::I2cScl => "I²C unit",
+            Capability::SpiMosi | Capability::SpiMiso | Capability::SpiSck | Capability::SpiSs => {
+                "SPI unit"
+            }
+            Capability::UartTx | Capability::UartRx => "UART unit",
+            Capability::DigitalIn | Capability::DigitalOut | Capability::AnalogIn => "unit",
+        }
+    }
     /// The stable snake_case name (the serde form), for wire messages and
     /// board files.
     pub fn as_str(self) -> &'static str {
@@ -84,13 +115,72 @@ impl Resource {
 /// share on one resource (bus lines); everything else is exclusive.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Hardware {
+    /// Stable target id (`arduino_nano`); never shown as-is.
     pub name: String,
+    /// Descriptive metadata for a target chooser; never consulted by the
+    /// solver.
+    #[serde(default)]
+    pub display_name: String,
+    #[serde(default)]
+    pub description: String,
+    /// Board/platform family (`avr`, `rp2040`, …).
+    #[serde(default)]
+    pub family: String,
     pub resources: Vec<Resource>,
     #[serde(default)]
     pub shareable: BTreeSet<Capability>,
 }
 
+/// How many resources of a target offer one capability.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CapabilitySummary {
+    pub capability: Capability,
+    pub resource_count: usize,
+    pub shareable: bool,
+}
+
 impl Hardware {
+    /// The name to show designers: `display_name`, else the id.
+    pub fn display(&self) -> &str {
+        if self.display_name.is_empty() {
+            &self.name
+        } else {
+            &self.display_name
+        }
+    }
+    /// Per capability, how many resources offer it; in `Capability` order,
+    /// absent capabilities omitted.
+    pub fn capability_summary(&self) -> Vec<CapabilitySummary> {
+        let mut counts: BTreeMap<Capability, usize> = BTreeMap::new();
+        for r in &self.resources {
+            for c in &r.capabilities {
+                *counts.entry(*c).or_default() += 1;
+            }
+        }
+        counts
+            .into_iter()
+            .map(|(capability, resource_count)| CapabilitySummary {
+                capability,
+                resource_count,
+                shareable: self.is_shareable(capability),
+            })
+            .collect()
+    }
+    /// A designer-readable description of one resource: its id and what
+    /// it can do, with the unit behind each unit-bearing capability
+    /// (`D3: PWM (timer 2), interrupt (unit 1), digital in, digital out`).
+    pub fn describe_resource(&self, r: &ResourceId) -> Option<String> {
+        let res = self.find(r)?;
+        let parts: Vec<String> = res
+            .capabilities
+            .iter()
+            .map(|c| match res.units.get(c) {
+                Some(u) => format!("{} ({} {})", c.label(), c.unit_noun(), u.0),
+                None => c.label().to_string(),
+            })
+            .collect();
+        Some(format!("{}: {}", r.0, parts.join(", ")))
+    }
     pub fn find(&self, r: &ResourceId) -> Option<&Resource> {
         self.resources.iter().find(|x| &x.id == r)
     }

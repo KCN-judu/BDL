@@ -189,6 +189,32 @@ final $typed_data.Uint8List deploymentStatusDescriptor = $convert
         'oaREVQTE9ZTUVOVF9TVEFUVVNfRkVBU0lCTEUQARIgChxERVBMT1lNRU5UX1NUQVRVU19JTkZF'
         'QVNJQkxFEAISIAocREVQTE9ZTUVOVF9TVEFUVVNfSU5DT01QTEVURRAD');
 
+@$core.Deprecated('Use missingKindDescriptor instead')
+const MissingKind$json = {
+  '1': 'MissingKind',
+  '2': [
+    {'1': 'MISSING_KIND_UNSPECIFIED', '2': 0},
+    {'1': 'MISSING_KIND_RELATIONSHIP_NOT_CHECKING', '2': 1},
+    {'1': 'MISSING_KIND_NOT_CAUSAL', '2': 2},
+    {'1': 'MISSING_KIND_NOT_CLOCK_CONSISTENT', '2': 3},
+    {'1': 'MISSING_KIND_OUTPUT_NO_DOMAIN', '2': 4},
+    {'1': 'MISSING_KIND_OUTPUT_NO_DRIVER', '2': 5},
+    {'1': 'MISSING_KIND_OUTPUT_CONNECTION_INVALID', '2': 6},
+    {'1': 'MISSING_KIND_OUTPUT_NO_DEVICE', '2': 7},
+    {'1': 'MISSING_KIND_DEVICE_NO_OUTPUT', '2': 8},
+  ],
+};
+
+/// Descriptor for `MissingKind`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List missingKindDescriptor = $convert
+    .base64Decode('CgtNaXNzaW5nS2luZBIcChhNSVNTSU5HX0tJTkRfVU5TUEVDSUZJRUQQABIqCiZNSVNTSU5HX0'
+        'tJTkRfUkVMQVRJT05TSElQX05PVF9DSEVDS0lORxABEhsKF01JU1NJTkdfS0lORF9OT1RfQ0FV'
+        'U0FMEAISJQohTUlTU0lOR19LSU5EX05PVF9DTE9DS19DT05TSVNURU5UEAMSIQodTUlTU0lOR1'
+        '9LSU5EX09VVFBVVF9OT19ET01BSU4QBBIhCh1NSVNTSU5HX0tJTkRfT1VUUFVUX05PX0RSSVZF'
+        'UhAFEioKJk1JU1NJTkdfS0lORF9PVVRQVVRfQ09OTkVDVElPTl9JTlZBTElEEAYSIQodTUlTU0'
+        'lOR19LSU5EX09VVFBVVF9OT19ERVZJQ0UQBxIhCh1NSVNTSU5HX0tJTkRfREVWSUNFX05PX09V'
+        'VFBVVBAI');
+
 @$core.Deprecated('Use clientMessageDescriptor instead')
 const ClientMessage$json = {
   '1': 'ClientMessage',
@@ -2689,26 +2715,61 @@ const TargetView$json = {
     {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     {'1': 'resource_count', '3': 3, '4': 1, '5': 13, '10': 'resourceCount'},
+    {'1': 'display_name', '3': 4, '4': 1, '5': 9, '10': 'displayName'},
+    {'1': 'description', '3': 5, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'family', '3': 6, '4': 1, '5': 9, '10': 'family'},
+    {
+      '1': 'capabilities',
+      '3': 7,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.CapabilitySummary',
+      '10': 'capabilities'
+    },
   ],
 };
 
 /// Descriptor for `TargetView`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List targetViewDescriptor = $convert
     .base64Decode('CgpUYXJnZXRWaWV3Eg4KAmlkGAEgASgJUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEiUKDnJlc2'
-        '91cmNlX2NvdW50GAMgASgNUg1yZXNvdXJjZUNvdW50');
+        '91cmNlX2NvdW50GAMgASgNUg1yZXNvdXJjZUNvdW50EiEKDGRpc3BsYXlfbmFtZRgEIAEoCVIL'
+        'ZGlzcGxheU5hbWUSIAoLZGVzY3JpcHRpb24YBSABKAlSC2Rlc2NyaXB0aW9uEhYKBmZhbWlseR'
+        'gGIAEoCVIGZmFtaWx5Ej0KDGNhcGFiaWxpdGllcxgHIAMoCzIZLmJkbC52MS5DYXBhYmlsaXR5'
+        'U3VtbWFyeVIMY2FwYWJpbGl0aWVz');
+
+@$core.Deprecated('Use capabilitySummaryDescriptor instead')
+const CapabilitySummary$json = {
+  '1': 'CapabilitySummary',
+  '2': [
+    {'1': 'capability', '3': 1, '4': 1, '5': 9, '10': 'capability'},
+    {'1': 'label', '3': 2, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'resource_count', '3': 3, '4': 1, '5': 13, '10': 'resourceCount'},
+    {'1': 'shareable', '3': 4, '4': 1, '5': 8, '10': 'shareable'},
+  ],
+};
+
+/// Descriptor for `CapabilitySummary`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List capabilitySummaryDescriptor = $convert
+    .base64Decode('ChFDYXBhYmlsaXR5U3VtbWFyeRIeCgpjYXBhYmlsaXR5GAEgASgJUgpjYXBhYmlsaXR5EhQKBW'
+        'xhYmVsGAIgASgJUgVsYWJlbBIlCg5yZXNvdXJjZV9jb3VudBgDIAEoDVINcmVzb3VyY2VDb3Vu'
+        'dBIcCglzaGFyZWFibGUYBCABKAhSCXNoYXJlYWJsZQ==');
 
 @$core.Deprecated('Use analyzeDeploymentRequestDescriptor instead')
 const AnalyzeDeploymentRequest$json = {
   '1': 'AnalyzeDeploymentRequest',
   '2': [
     {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'revision', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'revision', '17': true},
+  ],
+  '8': [
+    {'1': '_revision'},
   ],
 };
 
 /// Descriptor for `AnalyzeDeploymentRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List analyzeDeploymentRequestDescriptor = $convert
-    .base64Decode('ChhBbmFseXplRGVwbG95bWVudFJlcXVlc3QSGwoJdGFyZ2V0X2lkGAEgASgJUgh0YXJnZXRJZA'
-        '==');
+    .base64Decode('ChhBbmFseXplRGVwbG95bWVudFJlcXVlc3QSGwoJdGFyZ2V0X2lkGAEgASgJUgh0YXJnZXRJZB'
+        'IfCghyZXZpc2lvbhgCIAEoBEgAUghyZXZpc2lvbogBAUILCglfcmV2aXNpb24=');
 
 @$core.Deprecated('Use deploymentResponseDescriptor instead')
 const DeploymentResponse$json = {
@@ -2759,9 +2820,25 @@ const DeploymentAnalysis$json = {
     {'1': 'unbound_devices', '3': 7, '4': 3, '5': 4, '10': 'unboundDevices'},
     {'1': 'unrealised_outputs', '3': 8, '4': 3, '5': 4, '10': 'unrealisedOutputs'},
     {'1': 'diagnostics', '3': 9, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+    {'1': 'target_display_name', '3': 10, '4': 1, '5': 9, '10': 'targetDisplayName'},
+    {'1': 'design_ready', '3': 11, '4': 1, '5': 8, '10': 'designReady'},
+    {'1': 'deployable', '3': 12, '4': 1, '5': 8, '10': 'deployable'},
+    {'1': 'missing', '3': 13, '4': 3, '5': 11, '6': '.bdl.v1.MissingItem', '10': 'missing'},
+    {'1': 'rows', '3': 14, '4': 3, '5': 11, '6': '.bdl.v1.AssignmentRow', '10': 'rows'},
+    {
+      '1': 'blocker',
+      '3': 15,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Blocker',
+      '9': 1,
+      '10': 'blocker',
+      '17': true
+    },
   ],
   '8': [
     {'1': '_dead_end'},
+    {'1': '_blocker'},
   ],
 };
 
@@ -2774,7 +2851,174 @@ final $typed_data.Uint8List deploymentAnalysisDescriptor = $convert
         'Ugphc3NpZ25tZW50Ei8KCGRlYWRfZW5kGAYgASgLMg8uYmRsLnYxLkRlYWRFbmRIAFIHZGVhZE'
         'VuZIgBARInCg91bmJvdW5kX2RldmljZXMYByADKARSDnVuYm91bmREZXZpY2VzEi0KEnVucmVh'
         'bGlzZWRfb3V0cHV0cxgIIAMoBFIRdW5yZWFsaXNlZE91dHB1dHMSNAoLZGlhZ25vc3RpY3MYCS'
-        'ADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3NCCwoJX2RlYWRfZW5k');
+        'ADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3MSLgoTdGFyZ2V0X2Rpc3BsYXlf'
+        'bmFtZRgKIAEoCVIRdGFyZ2V0RGlzcGxheU5hbWUSIQoMZGVzaWduX3JlYWR5GAsgASgIUgtkZX'
+        'NpZ25SZWFkeRIeCgpkZXBsb3lhYmxlGAwgASgIUgpkZXBsb3lhYmxlEi0KB21pc3NpbmcYDSAD'
+        'KAsyEy5iZGwudjEuTWlzc2luZ0l0ZW1SB21pc3NpbmcSKQoEcm93cxgOIAMoCzIVLmJkbC52MS'
+        '5Bc3NpZ25tZW50Um93UgRyb3dzEi4KB2Jsb2NrZXIYDyABKAsyDy5iZGwudjEuQmxvY2tlckgB'
+        'UgdibG9ja2VyiAEBQgsKCV9kZWFkX2VuZEIKCghfYmxvY2tlcg==');
+
+@$core.Deprecated('Use missingItemDescriptor instead')
+const MissingItem$json = {
+  '1': 'MissingItem',
+  '2': [
+    {'1': 'kind', '3': 1, '4': 1, '5': 14, '6': '.bdl.v1.MissingKind', '10': 'kind'},
+    {'1': 'output_id', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'outputId', '17': true},
+    {'1': 'output_name', '3': 3, '4': 1, '5': 9, '10': 'outputName'},
+    {'1': 'device_id', '3': 4, '4': 1, '5': 4, '9': 1, '10': 'deviceId', '17': true},
+    {'1': 'device_name', '3': 5, '4': 1, '5': 9, '10': 'deviceName'},
+    {'1': 'mapping_id', '3': 6, '4': 1, '5': 4, '9': 2, '10': 'mappingId', '17': true},
+    {'1': 'mapping_name', '3': 7, '4': 1, '5': 9, '10': 'mappingName'},
+    {'1': 'message', '3': 8, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 9, '4': 1, '5': 9, '10': 'explanation'},
+  ],
+  '8': [
+    {'1': '_output_id'},
+    {'1': '_device_id'},
+    {'1': '_mapping_id'},
+  ],
+};
+
+/// Descriptor for `MissingItem`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List missingItemDescriptor = $convert
+    .base64Decode('CgtNaXNzaW5nSXRlbRInCgRraW5kGAEgASgOMhMuYmRsLnYxLk1pc3NpbmdLaW5kUgRraW5kEi'
+        'AKCW91dHB1dF9pZBgCIAEoBEgAUghvdXRwdXRJZIgBARIfCgtvdXRwdXRfbmFtZRgDIAEoCVIK'
+        'b3V0cHV0TmFtZRIgCglkZXZpY2VfaWQYBCABKARIAVIIZGV2aWNlSWSIAQESHwoLZGV2aWNlX2'
+        '5hbWUYBSABKAlSCmRldmljZU5hbWUSIgoKbWFwcGluZ19pZBgGIAEoBEgCUgltYXBwaW5nSWSI'
+        'AQESIQoMbWFwcGluZ19uYW1lGAcgASgJUgttYXBwaW5nTmFtZRIYCgdtZXNzYWdlGAggASgJUg'
+        'dtZXNzYWdlEiAKC2V4cGxhbmF0aW9uGAkgASgJUgtleHBsYW5hdGlvbkIMCgpfb3V0cHV0X2lk'
+        'QgwKCl9kZXZpY2VfaWRCDQoLX21hcHBpbmdfaWQ=');
+
+@$core.Deprecated('Use assignmentRowDescriptor instead')
+const AssignmentRow$json = {
+  '1': 'AssignmentRow',
+  '2': [
+    {'1': 'output_id', '3': 1, '4': 1, '5': 4, '9': 0, '10': 'outputId', '17': true},
+    {'1': 'output_name', '3': 2, '4': 1, '5': 9, '10': 'outputName'},
+    {'1': 'device_id', '3': 3, '4': 1, '5': 4, '10': 'deviceId'},
+    {'1': 'device_name', '3': 4, '4': 1, '5': 9, '10': 'deviceName'},
+    {'1': 'device_kind', '3': 5, '4': 1, '5': 14, '6': '.bdl.v1.DeviceKind', '10': 'deviceKind'},
+    {'1': 'device_kind_label', '3': 6, '4': 1, '5': 9, '10': 'deviceKindLabel'},
+    {'1': 'requirement_index', '3': 7, '4': 1, '5': 13, '10': 'requirementIndex'},
+    {'1': 'requirement_label', '3': 8, '4': 1, '5': 9, '10': 'requirementLabel'},
+    {'1': 'capability', '3': 9, '4': 1, '5': 9, '10': 'capability'},
+    {'1': 'capability_label', '3': 10, '4': 1, '5': 9, '10': 'capabilityLabel'},
+    {'1': 'fixed', '3': 11, '4': 1, '5': 9, '9': 1, '10': 'fixed', '17': true},
+    {'1': 'resource', '3': 12, '4': 1, '5': 9, '9': 2, '10': 'resource', '17': true},
+    {'1': 'resource_label', '3': 13, '4': 1, '5': 9, '9': 3, '10': 'resourceLabel', '17': true},
+  ],
+  '8': [
+    {'1': '_output_id'},
+    {'1': '_fixed'},
+    {'1': '_resource'},
+    {'1': '_resource_label'},
+  ],
+};
+
+/// Descriptor for `AssignmentRow`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List assignmentRowDescriptor = $convert
+    .base64Decode('Cg1Bc3NpZ25tZW50Um93EiAKCW91dHB1dF9pZBgBIAEoBEgAUghvdXRwdXRJZIgBARIfCgtvdX'
+        'RwdXRfbmFtZRgCIAEoCVIKb3V0cHV0TmFtZRIbCglkZXZpY2VfaWQYAyABKARSCGRldmljZUlk'
+        'Eh8KC2RldmljZV9uYW1lGAQgASgJUgpkZXZpY2VOYW1lEjMKC2RldmljZV9raW5kGAUgASgOMh'
+        'IuYmRsLnYxLkRldmljZUtpbmRSCmRldmljZUtpbmQSKgoRZGV2aWNlX2tpbmRfbGFiZWwYBiAB'
+        'KAlSD2RldmljZUtpbmRMYWJlbBIrChFyZXF1aXJlbWVudF9pbmRleBgHIAEoDVIQcmVxdWlyZW'
+        '1lbnRJbmRleBIrChFyZXF1aXJlbWVudF9sYWJlbBgIIAEoCVIQcmVxdWlyZW1lbnRMYWJlbBIe'
+        'CgpjYXBhYmlsaXR5GAkgASgJUgpjYXBhYmlsaXR5EikKEGNhcGFiaWxpdHlfbGFiZWwYCiABKA'
+        'lSD2NhcGFiaWxpdHlMYWJlbBIZCgVmaXhlZBgLIAEoCUgBUgVmaXhlZIgBARIfCghyZXNvdXJj'
+        'ZRgMIAEoCUgCUghyZXNvdXJjZYgBARIqCg5yZXNvdXJjZV9sYWJlbBgNIAEoCUgDUg1yZXNvdX'
+        'JjZUxhYmVsiAEBQgwKCl9vdXRwdXRfaWRCCAoGX2ZpeGVkQgsKCV9yZXNvdXJjZUIRCg9fcmVz'
+        'b3VyY2VfbGFiZWw=');
+
+@$core.Deprecated('Use blockerDescriptor instead')
+const Blocker$json = {
+  '1': 'Blocker',
+  '2': [
+    {'1': 'device_id', '3': 1, '4': 1, '5': 4, '10': 'deviceId'},
+    {'1': 'device_name', '3': 2, '4': 1, '5': 9, '10': 'deviceName'},
+    {'1': 'requirement_index', '3': 3, '4': 1, '5': 13, '10': 'requirementIndex'},
+    {'1': 'requirement_label', '3': 4, '4': 1, '5': 9, '10': 'requirementLabel'},
+    {'1': 'capability', '3': 5, '4': 1, '5': 9, '10': 'capability'},
+    {'1': 'capability_label', '3': 6, '4': 1, '5': 9, '10': 'capabilityLabel'},
+    {
+      '1': 'no_capable_resource',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Unit',
+      '9': 0,
+      '10': 'noCapableResource'
+    },
+    {'1': 'fixed_unavailable', '3': 8, '4': 1, '5': 9, '9': 0, '10': 'fixedUnavailable'},
+    {
+      '1': 'blocked',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BlockerCandidates',
+      '9': 0,
+      '10': 'blocked'
+    },
+    {'1': 'message', '3': 10, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 11, '4': 1, '5': 9, '10': 'explanation'},
+  ],
+  '8': [
+    {'1': 'kind'},
+  ],
+};
+
+/// Descriptor for `Blocker`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List blockerDescriptor = $convert
+    .base64Decode('CgdCbG9ja2VyEhsKCWRldmljZV9pZBgBIAEoBFIIZGV2aWNlSWQSHwoLZGV2aWNlX25hbWUYAi'
+        'ABKAlSCmRldmljZU5hbWUSKwoRcmVxdWlyZW1lbnRfaW5kZXgYAyABKA1SEHJlcXVpcmVtZW50'
+        'SW5kZXgSKwoRcmVxdWlyZW1lbnRfbGFiZWwYBCABKAlSEHJlcXVpcmVtZW50TGFiZWwSHgoKY2'
+        'FwYWJpbGl0eRgFIAEoCVIKY2FwYWJpbGl0eRIpChBjYXBhYmlsaXR5X2xhYmVsGAYgASgJUg9j'
+        'YXBhYmlsaXR5TGFiZWwSPgoTbm9fY2FwYWJsZV9yZXNvdXJjZRgHIAEoCzIMLmJkbC52MS5Vbm'
+        'l0SABSEW5vQ2FwYWJsZVJlc291cmNlEi0KEWZpeGVkX3VuYXZhaWxhYmxlGAggASgJSABSEGZp'
+        'eGVkVW5hdmFpbGFibGUSNQoHYmxvY2tlZBgJIAEoCzIZLmJkbC52MS5CbG9ja2VyQ2FuZGlkYX'
+        'Rlc0gAUgdibG9ja2VkEhgKB21lc3NhZ2UYCiABKAlSB21lc3NhZ2USIAoLZXhwbGFuYXRpb24Y'
+        'CyABKAlSC2V4cGxhbmF0aW9uQgYKBGtpbmQ=');
+
+@$core.Deprecated('Use blockerCandidatesDescriptor instead')
+const BlockerCandidates$json = {
+  '1': 'BlockerCandidates',
+  '2': [
+    {
+      '1': 'candidates',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.BlockerCandidate',
+      '10': 'candidates'
+    },
+  ],
+};
+
+/// Descriptor for `BlockerCandidates`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List blockerCandidatesDescriptor = $convert
+    .base64Decode('ChFCbG9ja2VyQ2FuZGlkYXRlcxI4CgpjYW5kaWRhdGVzGAEgAygLMhguYmRsLnYxLkJsb2NrZX'
+        'JDYW5kaWRhdGVSCmNhbmRpZGF0ZXM=');
+
+@$core.Deprecated('Use blockerCandidateDescriptor instead')
+const BlockerCandidate$json = {
+  '1': 'BlockerCandidate',
+  '2': [
+    {'1': 'resource', '3': 1, '4': 1, '5': 9, '10': 'resource'},
+    {'1': 'resource_label', '3': 2, '4': 1, '5': 9, '10': 'resourceLabel'},
+    {'1': 'held_by_device_id', '3': 3, '4': 1, '5': 4, '10': 'heldByDeviceId'},
+    {'1': 'held_by_device_name', '3': 4, '4': 1, '5': 9, '10': 'heldByDeviceName'},
+    {'1': 'held_by_requirement_index', '3': 5, '4': 1, '5': 13, '10': 'heldByRequirementIndex'},
+    {'1': 'held_by_requirement_label', '3': 6, '4': 1, '5': 9, '10': 'heldByRequirementLabel'},
+  ],
+};
+
+/// Descriptor for `BlockerCandidate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List blockerCandidateDescriptor = $convert
+    .base64Decode('ChBCbG9ja2VyQ2FuZGlkYXRlEhoKCHJlc291cmNlGAEgASgJUghyZXNvdXJjZRIlCg5yZXNvdX'
+        'JjZV9sYWJlbBgCIAEoCVINcmVzb3VyY2VMYWJlbBIpChFoZWxkX2J5X2RldmljZV9pZBgDIAEo'
+        'BFIOaGVsZEJ5RGV2aWNlSWQSLQoTaGVsZF9ieV9kZXZpY2VfbmFtZRgEIAEoCVIQaGVsZEJ5RG'
+        'V2aWNlTmFtZRI5ChloZWxkX2J5X3JlcXVpcmVtZW50X2luZGV4GAUgASgNUhZoZWxkQnlSZXF1'
+        'aXJlbWVudEluZGV4EjkKGWhlbGRfYnlfcmVxdWlyZW1lbnRfbGFiZWwYBiABKAlSFmhlbGRCeV'
+        'JlcXVpcmVtZW50TGFiZWw=');
 
 @$core.Deprecated('Use requirementViewDescriptor instead')
 const RequirementView$json = {

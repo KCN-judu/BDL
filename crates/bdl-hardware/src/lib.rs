@@ -23,7 +23,7 @@ pub mod model;
 pub mod solve;
 
 pub use model::{
-    Capability, GroupId, Hardware, Requirement, RequirementId, Resource, ResourceId, UnitId,
-    UnitRel,
+    Capability, CapabilitySummary, GroupId, Hardware, Requirement, RequirementId, Resource,
+    ResourceId, UnitId, UnitRel,
 };
 pub use solve::{diagnose, solve, validate, Assignment, DeadEnd, DeadEndReason, Violation};

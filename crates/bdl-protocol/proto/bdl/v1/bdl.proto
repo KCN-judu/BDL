@@ -900,15 +900,38 @@ message TargetsResponse {
   repeated TargetView targets = 1;
 }
 
+// What a target chooser shows.  `id` is opaque: never parse it for meaning.
 message TargetView {
   // Registry id, e.g. "arduino_nano".
   string id = 1;
+  // Same as `display_name` (kept for 0.3 clients).
   string name = 2;
   uint32 resource_count = 3;
+  string display_name = 4;
+  string description = 5;
+  // Board/platform family, e.g. "avr", "rp2040", "mock".
+  string family = 6;
+  // How many resources offer each capability; capabilities the target
+  // lacks are absent.
+  repeated CapabilitySummary capabilities = 7;
+}
+
+message CapabilitySummary {
+  // Stable capability name, e.g. "pwm".
+  string capability = 1;
+  // Designer-facing wording, e.g. "PWM".
+  string label = 2;
+  uint32 resource_count = 3;
+  // Several requirements may share one resource for this capability (buses).
+  bool shareable = 4;
 }
 
 message AnalyzeDeploymentRequest {
   string target_id = 1;
+  // When set, the request is refused with `deploy.stale_revision` unless
+  // it equals the project's current revision — so a client never gets a
+  // result for a project it no longer holds.
+  optional uint64 revision = 2;
 }
 
 enum DeploymentStatus {
@@ -923,17 +946,119 @@ message DeploymentResponse {
   DeploymentAnalysis deployment = 1;
 }
 
+// Two layers in one message.  Fields 1–9 are the analysis as computed
+// (requirements, placement, dead end by stable ids).  Fields 10–15 are
+// the read model a frontend renders from directly — names, labels, what
+// is missing, the blocker — composed from the semantic analysis and the
+// deployment analysis at the daemon (docs/DEPLOYMENT_READ_MODEL.md).
 message DeploymentAnalysis {
+  // The project revision this describes; discard when it moves on.
   uint64 revision = 1;
+  // Target id (opaque).
   string target = 2;
+  // Target-relative: do the bound devices fit?  Feasible / Infeasible /
+  // Incomplete (a device without an output or an output without a device).
   DeploymentStatus status = 3;
   repeated RequirementView requirements = 4;
-  // The witness, when feasible: one placement per requirement.
+  // The witness, when a placement exists: one placement per requirement.
   repeated Placement assignment = 5;
   optional DeadEnd dead_end = 6;
   repeated uint64 unbound_devices = 7;
   repeated uint64 unrealised_outputs = 8;
   repeated Diagnostic diagnostics = 9;
+
+  // ---- read model ----
+  string target_display_name = 10;
+  // Target-independent: every relationship checks, the design is causal
+  // and clock-consistent, and its outputs are complete.
+  bool design_ready = 11;
+  // `design_ready && status == FEASIBLE`.
+  bool deployable = 12;
+  // What is still missing, semantic items first; empty when deployable.
+  repeated MissingItem missing = 13;
+  // One row per requirement in (output, device, index) order; resource
+  // columns filled when a placement exists.
+  repeated AssignmentRow rows = 14;
+  // When infeasible: the first dead end, named.  Not a minimal core.
+  optional Blocker blocker = 15;
+}
+
+enum MissingKind {
+  MISSING_KIND_UNSPECIFIED = 0;
+  // Semantic (about the design itself).
+  MISSING_KIND_RELATIONSHIP_NOT_CHECKING = 1;
+  MISSING_KIND_NOT_CAUSAL = 2;
+  MISSING_KIND_NOT_CLOCK_CONSISTENT = 3;
+  MISSING_KIND_OUTPUT_NO_DOMAIN = 4;
+  MISSING_KIND_OUTPUT_NO_DRIVER = 5;
+  MISSING_KIND_OUTPUT_CONNECTION_INVALID = 6;
+  // Deployment configuration (about devices on this target).
+  MISSING_KIND_OUTPUT_NO_DEVICE = 7;
+  MISSING_KIND_DEVICE_NO_OUTPUT = 8;
+}
+
+message MissingItem {
+  MissingKind kind = 1;
+  optional uint64 output_id = 2;
+  string output_name = 3;
+  optional uint64 device_id = 4;
+  string device_name = 5;
+  optional uint64 mapping_id = 6;
+  string mapping_name = 7;
+  // Product language; `explanation` says why it matters and what to do.
+  string message = 8;
+  string explanation = 9;
+}
+
+message AssignmentRow {
+  optional uint64 output_id = 1;
+  string output_name = 2;
+  uint64 device_id = 3;
+  string device_name = 4;
+  DeviceKind device_kind = 5;
+  string device_kind_label = 6;
+  uint32 requirement_index = 7;
+  // The requirement's role on the device: "PWM", "direction", "SDA".
+  string requirement_label = 8;
+  string capability = 9;
+  string capability_label = 10;
+  // Chosen by hand, if any.
+  optional string fixed = 11;
+  // The resource carrying it; absent when no placement exists.
+  optional string resource = 12;
+  // The resource in the target's terms: "D3: digital in, digital out, PWM (timer 2), interrupt".
+  optional string resource_label = 13;
+}
+
+message Blocker {
+  uint64 device_id = 1;
+  string device_name = 2;
+  uint32 requirement_index = 3;
+  string requirement_label = 4;
+  string capability = 5;
+  string capability_label = 6;
+  oneof kind {
+    Unit no_capable_resource = 7;
+    // The pin chosen by hand is not on the target or lacks the capability.
+    string fixed_unavailable = 8;
+    // Every capable pin is taken (or would violate a shared-unit relation).
+    BlockerCandidates blocked = 9;
+  }
+  string message = 10;
+  string explanation = 11;
+}
+
+message BlockerCandidates {
+  repeated BlockerCandidate candidates = 1;
+}
+
+message BlockerCandidate {
+  string resource = 1;
+  string resource_label = 2;
+  uint64 held_by_device_id = 3;
+  string held_by_device_name = 4;
+  uint32 held_by_requirement_index = 5;
+  string held_by_requirement_label = 6;
 }
 
 message RequirementView {

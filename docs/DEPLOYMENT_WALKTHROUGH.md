@@ -149,6 +149,18 @@ The dead end is *a* conflict under one placement order, not a minimal
 unsatisfiable core (DI-21); the model has no electrical constraints, so
 `Feasible` means "pins can be allocated" (DI-22).
 
+## 6a. What Studio is handed
+
+`bdld` answers `AnalyzeDeployment` with the analysis above *and* a read
+model composed from it and the semantic analysis
+(`bdl_compiler::deployment_report`, docs/DEPLOYMENT_READ_MODEL.md): for
+§5, `deployable = true` and two `rows` — *motor · drive · H-bridge channel
+· PWM · D3: digital in, digital out, PWM (timer 2), interrupt* and *… ·
+direction · digital out · D0: …*; for §6, `status = Infeasible`,
+`design_ready = true`, and a `blocker` — *drive · PWM · fixed_unavailable
+D4 · "D4 cannot carry drive PWM on arduino_nano."*. Nothing in it needs
+the solver's vocabulary to render.
+
 ## 7. Stopping early is fine
 
 Each of these is a valid, saveable design: `cruise` declared with no

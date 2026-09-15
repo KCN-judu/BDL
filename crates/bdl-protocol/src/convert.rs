@@ -761,11 +761,148 @@ pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis 
 // ---------------------------------------------------------------------------
 
 pub fn target_view(id: &str, hw: &bdl_hardware::Hardware) -> pb::TargetView {
+    let t = bdl_hardware::boards::describe(hw);
     pb::TargetView {
         id: id.into(),
-        name: hw.name.clone(),
-        resource_count: u32::try_from(hw.resources.len()).unwrap_or(u32::MAX),
+        name: t.display_name.clone(),
+        resource_count: u32::try_from(t.resource_count).unwrap_or(u32::MAX),
+        display_name: t.display_name,
+        description: t.description,
+        family: t.family,
+        capabilities: t
+            .capabilities
+            .iter()
+            .map(|c| pb::CapabilitySummary {
+                capability: c.capability.as_str().into(),
+                label: c.capability.label().into(),
+                resource_count: u32::try_from(c.resource_count).unwrap_or(u32::MAX),
+                shareable: c.shareable,
+            })
+            .collect(),
     }
+}
+
+/// The read-model fields of a deployment message, from a composed report.
+pub fn report_to_pb(r: &bdl_compiler::DeploymentReport) -> pb::DeploymentAnalysis {
+    use bdl_compiler::{BlockerKind, MissingKind};
+    let mut m = pb::DeploymentAnalysis {
+        revision: r.revision.raw(),
+        target: r.target.id.clone(),
+        target_display_name: r.target.display_name.clone(),
+        design_ready: r.design_ready,
+        deployable: r.deployable,
+        ..Default::default()
+    };
+    m.set_status(deployment_status_to_pb(r.status));
+    m.missing = r
+        .missing
+        .iter()
+        .map(|x| {
+            let mut item = pb::MissingItem {
+                output_id: x.output.map(|o| o.raw()),
+                output_name: x.output_name.clone().unwrap_or_default(),
+                device_id: x.device.map(|d| d.raw()),
+                device_name: x.device_name.clone().unwrap_or_default(),
+                mapping_id: x.mapping.map(|d| d.raw()),
+                mapping_name: x.mapping_name.clone().unwrap_or_default(),
+                message: x.message.clone(),
+                explanation: x.explanation.clone(),
+                ..Default::default()
+            };
+            item.set_kind(match x.kind {
+                MissingKind::RelationshipNotChecking => pb::MissingKind::RelationshipNotChecking,
+                MissingKind::NotCausal => pb::MissingKind::NotCausal,
+                MissingKind::NotClockConsistent => pb::MissingKind::NotClockConsistent,
+                MissingKind::OutputNoDomain => pb::MissingKind::OutputNoDomain,
+                MissingKind::OutputNoDriver => pb::MissingKind::OutputNoDriver,
+                MissingKind::OutputConnectionInvalid => pb::MissingKind::OutputConnectionInvalid,
+                MissingKind::OutputNoDevice => pb::MissingKind::OutputNoDevice,
+                MissingKind::DeviceNoOutput => pb::MissingKind::DeviceNoOutput,
+            });
+            item
+        })
+        .collect();
+    m.rows = r
+        .rows
+        .iter()
+        .map(|x| {
+            let mut row = pb::AssignmentRow {
+                output_id: x.output.map(|o| o.raw()),
+                output_name: x.output_name.clone().unwrap_or_default(),
+                device_id: x.device.raw(),
+                device_name: x.device_name.clone(),
+                device_kind_label: x.device_kind_label.clone(),
+                requirement_index: u32::from(x.requirement_index),
+                requirement_label: x.requirement_label.clone(),
+                capability: x.capability.as_str().into(),
+                capability_label: x.capability_label.clone(),
+                fixed: x.fixed.as_ref().map(|f| f.0.clone()),
+                resource: x.resource.as_ref().map(|f| f.0.clone()),
+                resource_label: x.resource_label.clone(),
+                ..Default::default()
+            };
+            row.set_device_kind(device_kind_to_pb(x.device_kind));
+            row
+        })
+        .collect();
+    m.blocker = r.blocker.as_ref().map(|b| pb::Blocker {
+        device_id: b.device.raw(),
+        device_name: b.device_name.clone(),
+        requirement_index: u32::from(b.requirement_index),
+        requirement_label: b.requirement_label.clone(),
+        capability: b.capability.as_str().into(),
+        capability_label: b.capability_label.clone(),
+        kind: Some(match &b.kind {
+            BlockerKind::NoCapableResource => pb::blocker::Kind::NoCapableResource(pb::Unit {}),
+            BlockerKind::FixedUnavailable { pin } => {
+                pb::blocker::Kind::FixedUnavailable(pin.0.clone())
+            }
+            BlockerKind::Blocked { candidates } => {
+                pb::blocker::Kind::Blocked(pb::BlockerCandidates {
+                    candidates: candidates
+                        .iter()
+                        .map(|c| pb::BlockerCandidate {
+                            resource: c.resource.0.clone(),
+                            resource_label: c.resource_label.clone(),
+                            held_by_device_id: c.held_by_device.raw(),
+                            held_by_device_name: c.held_by_device_name.clone(),
+                            held_by_requirement_index: u32::from(c.held_by_requirement_index),
+                            held_by_requirement_label: c.held_by_requirement_label.clone(),
+                        })
+                        .collect(),
+                })
+            }
+        }),
+        message: b.message.clone(),
+        explanation: b.explanation.clone(),
+    });
+    m.diagnostics = r.diagnostics.iter().map(diagnostic_to_pb).collect();
+    m
+}
+
+fn deployment_status_to_pb(s: bdl_compiler::DeploymentStatus) -> pb::DeploymentStatus {
+    use bdl_compiler::DeploymentStatus;
+    match s {
+        DeploymentStatus::Feasible => pb::DeploymentStatus::Feasible,
+        DeploymentStatus::Infeasible => pb::DeploymentStatus::Infeasible,
+        DeploymentStatus::Incomplete => pb::DeploymentStatus::Incomplete,
+    }
+}
+
+/// Both layers: the analysis as computed plus the composed read model.
+pub fn deployment_with_report_to_pb(
+    d: &bdl_compiler::DeploymentAnalysis,
+    r: &bdl_compiler::DeploymentReport,
+) -> pb::DeploymentAnalysis {
+    let mut m = deployment_to_pb(d);
+    let report = report_to_pb(r);
+    m.target_display_name = report.target_display_name;
+    m.design_ready = report.design_ready;
+    m.deployable = report.deployable;
+    m.missing = report.missing;
+    m.rows = report.rows;
+    m.blocker = report.blocker;
+    m
 }
 
 fn placement(id: bdl_hardware::RequirementId, r: &bdl_hardware::ResourceId) -> pb::Placement {
@@ -777,17 +914,11 @@ fn placement(id: bdl_hardware::RequirementId, r: &bdl_hardware::ResourceId) -> p
 }
 
 pub fn deployment_to_pb(d: &bdl_compiler::DeploymentAnalysis) -> pb::DeploymentAnalysis {
-    use bdl_compiler::DeploymentStatus;
     use bdl_hardware::DeadEndReason;
     pb::DeploymentAnalysis {
         revision: d.revision.raw(),
         target: d.target.clone(),
-        status: match d.status {
-            DeploymentStatus::Feasible => pb::DeploymentStatus::Feasible,
-            DeploymentStatus::Infeasible => pb::DeploymentStatus::Infeasible,
-            DeploymentStatus::Incomplete => pb::DeploymentStatus::Incomplete,
-        }
-        .into(),
+        status: deployment_status_to_pb(d.status).into(),
         requirements: d
             .requirements
             .iter()
@@ -833,6 +964,7 @@ pub fn deployment_to_pb(d: &bdl_compiler::DeploymentAnalysis) -> pb::DeploymentA
         unbound_devices: d.unbound_devices.iter().map(|x| x.raw()).collect(),
         unrealised_outputs: d.unrealised_outputs.iter().map(|x| x.raw()).collect(),
         diagnostics: d.diagnostics.iter().map(diagnostic_to_pb).collect(),
+        ..Default::default()
     }
 }
 
@@ -975,9 +1107,7 @@ mod tests {
             },
             EditOp::AttachDefinition {
                 id: decl(4),
-                definition: Definition::Formula {
-                    source: "1".into(),
-                },
+                definition: Definition::Formula { source: "1".into() },
             },
             EditOp::ReplaceDefinition {
                 id: decl(4),
@@ -1134,6 +1264,235 @@ mod tests {
                 ..Default::default()
             }),
             Err(ConvertError::DimOutOfRange)
+        );
+    }
+
+    // ---- deployment read model ------------------------------------------
+
+    #[test]
+    fn target_view_carries_the_chooser_fields() {
+        let hw = bdl_hardware::boards::arduino_nano();
+        let t = target_view("arduino_nano", &hw);
+        assert_eq!(
+            (
+                t.id.as_str(),
+                t.display_name.as_str(),
+                t.name.as_str(),
+                t.family.as_str()
+            ),
+            ("arduino_nano", "Arduino Nano", "Arduino Nano", "avr")
+        );
+        assert_eq!(t.resource_count, 22);
+        let pwm = t
+            .capabilities
+            .iter()
+            .find(|c| c.capability == "pwm")
+            .unwrap();
+        assert_eq!(
+            (pwm.label.as_str(), pwm.resource_count, pwm.shareable),
+            ("PWM", 6, false)
+        );
+        assert!(
+            t.capabilities
+                .iter()
+                .find(|c| c.capability == "i2c_scl")
+                .unwrap()
+                .shareable
+        );
+        assert!(t.capabilities.iter().all(|c| !c.label.is_empty()));
+    }
+
+    #[test]
+    fn every_read_model_variant_reaches_the_wire() {
+        use bdl_compiler::deploy_report::*;
+        use bdl_compiler::DeploymentStatus;
+        use bdl_hardware::{Capability, ResourceId};
+        use bdl_model::surface::DeviceKind;
+        let rid = |s: &str| ResourceId::new(s);
+        let item = |kind: MissingKind| MissingItem {
+            kind,
+            output: Some(OutputId::from_raw(4)),
+            output_name: Some("motor".into()),
+            device: Some(DeviceId::from_raw(2)),
+            device_name: Some("drive".into()),
+            mapping: Some(DeclId::from_raw(7)),
+            mapping_name: Some("cruise".into()),
+            message: "m".into(),
+            explanation: "e".into(),
+        };
+        let kinds = [
+            MissingKind::RelationshipNotChecking,
+            MissingKind::NotCausal,
+            MissingKind::NotClockConsistent,
+            MissingKind::OutputNoDomain,
+            MissingKind::OutputNoDriver,
+            MissingKind::OutputConnectionInvalid,
+            MissingKind::OutputNoDevice,
+            MissingKind::DeviceNoOutput,
+        ];
+        let mut report = DeploymentReport {
+            revision: bdl_model::Revision::default(),
+            target: bdl_hardware::boards::describe(&bdl_hardware::boards::big_board()),
+            status: DeploymentStatus::Infeasible,
+            design_ready: true,
+            deployable: false,
+            missing: kinds.iter().map(|k| item(*k)).collect(),
+            rows: vec![AssignmentRow {
+                output: Some(OutputId::from_raw(4)),
+                output_name: Some("motor".into()),
+                device: DeviceId::from_raw(2),
+                device_name: "drive".into(),
+                device_kind: DeviceKind::HBridgeChannel,
+                device_kind_label: "H-bridge channel".into(),
+                requirement_index: 1,
+                requirement_label: "direction".into(),
+                capability: Capability::DigitalOut,
+                capability_label: "digital out".into(),
+                fixed: Some(rid("D4")),
+                resource: Some(rid("D4")),
+                resource_label: Some("D4: digital in, digital out".into()),
+            }],
+            blocker: Some(Blocker {
+                device: DeviceId::from_raw(9),
+                device_name: "L7".into(),
+                requirement_index: 0,
+                requirement_label: "PWM".into(),
+                capability: Capability::Pwm,
+                capability_label: "PWM".into(),
+                kind: BlockerKind::Blocked {
+                    candidates: vec![BlockedCandidate {
+                        resource: rid("D3"),
+                        resource_label: "D3: …".into(),
+                        held_by_device: DeviceId::from_raw(3),
+                        held_by_device_name: "L1".into(),
+                        held_by_requirement_index: 0,
+                        held_by_requirement_label: "PWM".into(),
+                    }],
+                },
+                message: "No free pin".into(),
+                explanation: "Every pin…".into(),
+            }),
+            diagnostics: vec![],
+        };
+        let m = report_to_pb(&report);
+        assert_eq!(m.status(), pb::DeploymentStatus::Infeasible);
+        assert_eq!(m.target, "big_board");
+        assert_eq!(m.target_display_name, "Big board (mock)");
+        assert!(m.design_ready && !m.deployable);
+        let wire_kinds: Vec<pb::MissingKind> = m.missing.iter().map(|x| x.kind()).collect();
+        assert_eq!(
+            wire_kinds,
+            [
+                pb::MissingKind::RelationshipNotChecking,
+                pb::MissingKind::NotCausal,
+                pb::MissingKind::NotClockConsistent,
+                pb::MissingKind::OutputNoDomain,
+                pb::MissingKind::OutputNoDriver,
+                pb::MissingKind::OutputConnectionInvalid,
+                pb::MissingKind::OutputNoDevice,
+                pb::MissingKind::DeviceNoOutput,
+            ]
+        );
+        assert!(wire_kinds
+            .iter()
+            .all(|k| *k != pb::MissingKind::Unspecified));
+        let x = &m.missing[0];
+        assert_eq!(
+            (
+                x.output_id,
+                x.output_name.as_str(),
+                x.device_id,
+                x.device_name.as_str(),
+                x.mapping_id,
+                x.mapping_name.as_str()
+            ),
+            (Some(4), "motor", Some(2), "drive", Some(7), "cruise")
+        );
+        let r = &m.rows[0];
+        assert_eq!(r.device_kind(), pb::DeviceKind::HBridgeChannel);
+        assert_eq!(
+            (
+                r.output_id,
+                r.output_name.as_str(),
+                r.device_id,
+                r.device_name.as_str(),
+                r.device_kind_label.as_str()
+            ),
+            (Some(4), "motor", 2, "drive", "H-bridge channel")
+        );
+        assert_eq!(
+            (
+                r.requirement_index,
+                r.requirement_label.as_str(),
+                r.capability.as_str(),
+                r.capability_label.as_str()
+            ),
+            (1, "direction", "digital_out", "digital out")
+        );
+        assert_eq!(
+            (
+                r.fixed.as_deref(),
+                r.resource.as_deref(),
+                r.resource_label.as_deref()
+            ),
+            (Some("D4"), Some("D4"), Some("D4: digital in, digital out"))
+        );
+        let b = m.blocker.as_ref().unwrap();
+        assert_eq!(
+            (
+                b.device_id,
+                b.device_name.as_str(),
+                b.requirement_index,
+                b.requirement_label.as_str(),
+                b.capability.as_str(),
+                b.capability_label.as_str()
+            ),
+            (9, "L7", 0, "PWM", "pwm", "PWM")
+        );
+        let Some(pb::blocker::Kind::Blocked(c)) = &b.kind else {
+            panic!()
+        };
+        let c = &c.candidates[0];
+        assert_eq!(
+            (
+                c.resource.as_str(),
+                c.resource_label.as_str(),
+                c.held_by_device_id,
+                c.held_by_device_name.as_str(),
+                c.held_by_requirement_index,
+                c.held_by_requirement_label.as_str()
+            ),
+            ("D3", "D3: …", 3, "L1", 0, "PWM")
+        );
+        assert_eq!(
+            (b.message.as_str(), b.explanation.as_str()),
+            ("No free pin", "Every pin…")
+        );
+        // the other blocker kinds
+        report.blocker.as_mut().unwrap().kind = BlockerKind::NoCapableResource;
+        assert_eq!(
+            report_to_pb(&report).blocker.unwrap().kind,
+            Some(pb::blocker::Kind::NoCapableResource(pb::Unit {}))
+        );
+        report.blocker.as_mut().unwrap().kind = BlockerKind::FixedUnavailable { pin: rid("D9") };
+        assert_eq!(
+            report_to_pb(&report).blocker.unwrap().kind,
+            Some(pb::blocker::Kind::FixedUnavailable("D9".into()))
+        );
+        // feasible: no blocker, rows without fixed pins, optional fields absent
+        report.status = DeploymentStatus::Feasible;
+        report.deployable = true;
+        report.blocker = None;
+        report.missing.clear();
+        report.rows[0].fixed = None;
+        report.rows[0].output = None;
+        report.rows[0].output_name = None;
+        let m = report_to_pb(&report);
+        assert!(m.deployable && m.blocker.is_none() && m.missing.is_empty());
+        assert!(
+            m.rows[0].fixed.is_none()
+                && m.rows[0].output_id.is_none()
+                && m.rows[0].output_name.is_empty()
         );
     }
 }

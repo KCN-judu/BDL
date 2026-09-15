@@ -124,6 +124,7 @@ persistence edges.
 | change the wire format | `docs/PROTOCOL.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto` |
 | decide something the paper left open | `docs/DESIGN_ISSUES.md` — record it there, never silently in code |
 | follow a design to a board | `docs/DEPLOYMENT_WALKTHROUGH.md`, `docs/HARDWARE_MODEL.md`, `crates/bdl-output`, `crates/bdl-hardware` |
+| build a Deploy surface | `docs/DEPLOYMENT_READ_MODEL.md`, `crates/bdl-compiler/src/deploy_report.rs`, `crates/bdl-daemon/tests/deploy_e2e.rs` |
 | generate and run Rust from a design | `docs/EXECUTABLE_IR.md`, `docs/CODEGEN_RUST.md`, `crates/bdl-compiler/tests/backend_differential.rs` |
 | see what is next | `docs/ROADMAP.md` |
 

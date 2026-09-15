@@ -253,7 +253,7 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             }),
             None,
         ),
-        Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r.target_id), None),
+        Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r), None),
         Req::AnalyzeDefinitionDraft(r) => (analyze_definition_draft(session, &r), None),
         Req::DiscardDefinitionDraft(r) => {
             match session.discard_draft(bdl_model::DeclId::from_raw(r.mapping_id)) {
@@ -553,20 +553,36 @@ fn action_to_pb(a: &bdl_ide::SemanticAction) -> pb::SemanticActionView {
 
 /// Deployment is target-relative and never cached with the project: the
 /// same revision is analysed afresh for every target asked for.
-fn analyze_deployment(session: &Session, target_id: &str) -> Resp {
+fn analyze_deployment(session: &Session, r: &pb::AnalyzeDeploymentRequest) -> Resp {
     let snapshot = match session.project() {
         Ok(p) => p.current.clone(),
         Err(e) => return Resp::Error(session_error(&e)),
     };
-    let Some(target) = bdl_hardware::boards::by_name(target_id) else {
+    if let Some(rev) = r.revision {
+        if rev != snapshot.revision.raw() {
+            return Resp::Error(error(
+                "deploy.stale_revision",
+                &format!(
+                    "The project has moved on (asked about revision {rev}, now {}).",
+                    snapshot.revision.raw()
+                ),
+            ));
+        }
+    }
+    let Some(target) = bdl_hardware::boards::by_name(&r.target_id) else {
         return Resp::Error(error(
             "deploy.unknown_target",
-            &format!("No target named {target_id}."),
+            &format!("No target named {}.", r.target_id),
         ));
     };
+    // The semantic analysis is target-independent and computed as for
+    // RunAnalysis; the deployment analysis is target-relative; the read
+    // model joins them without feeding either back.
+    let analysis = bdl_compiler::analyze(&snapshot);
     let d = bdl_compiler::analyze_deployment(&snapshot, &target);
+    let report = bdl_compiler::deployment_report(&snapshot, &analysis, &d, &target);
     Resp::Deployment(pb::DeploymentResponse {
-        deployment: Some(convert::deployment_to_pb(&d)),
+        deployment: Some(convert::deployment_with_report_to_pb(&d, &report)),
     })
 }
 

@@ -719,6 +719,7 @@ fn outputs_and_deployment_over_stdio() {
     let deploy = |c: &mut Client, events: &mut Vec<pb::Event>, target: &str| match c.call(
         Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
             target_id: target.into(),
+            revision: None,
         }),
         events,
     ) {
@@ -734,6 +735,7 @@ fn outputs_and_deployment_over_stdio() {
     let Resp::Error(e) = c.call(
         Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
             target_id: "toaster".into(),
+            revision: None,
         }),
         &mut events,
     ) else {

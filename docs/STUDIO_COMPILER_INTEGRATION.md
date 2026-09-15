@@ -195,9 +195,9 @@ path).
 | Clock domains | lifted diagnostics; `explain` clock | `clock_consistent`, `clock.*`, `ClockView`, clock edit ops | `analysis`, `project.clocks` | status line *reads across domains*; **no domain editing or regions** | shell |
 | Physical outputs | one `output.multiple_drivers` per sink; `explain` output relation | `OutputView`, `OutputAnalysis`, output edit ops | `project.outputs`, `analysis.outputs` | status line *outputs incomplete*; **no output nodes / drive links / editing** | shell |
 | Simulation | — (bdld only) | `Start/Step/ResetSimulation` | **none** | **none** (Simulate page placeholder) | Rust only |
-| Deployment analysis | — (bdld only) | `AnalyzeDeployment` | **none** | **none** (Deploy page placeholder) | Rust only |
-| Target list | — | `ListTargets` | **none** | **none** | Rust only |
-| Hardware assignment, pins, dead ends | — | `DeviceView`, device edit ops, `DeploymentAnalysis` | **none** | **none** | Rust only |
+| Deployment analysis | — (bdld only) | `AnalyzeDeployment { target_id, revision? }` → `DeploymentAnalysis` with the read model (0.5): `status`, `design_ready`, `deployable`, `missing[]`, `rows[]`, `blocker` (docs/DEPLOYMENT_READ_MODEL.md) | `DeployState` (target, result, revision) | Deploy page (`deploy_page.dart`): target pop-up, status, per-device rows, dead end — **built on fields 4–9 and re-deriving labels client-side; migrating it to `rows`/`missing`/`blocker` is the next step** | Rust: `deploy_e2e.rs` (10-case matrix), compiler unit, protocol conversion; Dart: `deploy_test.dart` |
+| Target list | — | `ListTargets` → `TargetView { id, display_name, description, family, resource_count, capabilities[] }` (0.5) | `DeployState.targets` | Deploy page target pop-up (shows `name`; `description`/`family`/capability summary not yet shown) | Rust e2e + conversion test |
+| Hardware assignment, pins, dead ends | — | `DeviceView` (kind, output, fixed pins, requirement table), device edit ops; `AssignmentRow`/`Blocker` in the read model | `project.devices`, `DeployState` | Deploy page device rows and pin table | Rust e2e |
 | Semantic actions / edit plans (rename by identity, fixes) | `SemanticAction`, `SemanticEditPlan`, `plan_rename` | **none** (LSP only: rename, codeAction) | **none** | **none** | bdl-ide acceptance |
 | References / navigation by identity | `references`, `definition_of` | **none** (LSP only) | **none** | **none** | bdl-ide acceptance |
 
@@ -208,7 +208,7 @@ path).
 | instantaneous cycles, evaluation order | canvas (the cycle's links emphasised); order in the Simulate page |
 | clock domains and cross-domain reads | canvas regions (containment) + inspector *Domain* pop-up per mapping/output |
 | outputs and drive links | canvas: a distinct silhouette for a sink, links from drivers; inspector for accepts/domain/required |
-| deployment status, target, assignment, dead end | Deploy page: target pop-up, per-output → device → requirement → resource table, the blocker named |
+| deployment status, target, assignment, dead end | Deploy page: target pop-up (`TargetView`), `deployable` / `design_ready` / `status` as one verdict, `missing[]` as the to-do list, `rows[]` as the table, `blocker` as the explanation — all by name, from the read model |
 | simulation values | Simulate page + values on sockets |
 
 ## 4. Non-goals of this milestone
