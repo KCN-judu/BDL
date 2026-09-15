@@ -263,8 +263,9 @@ when the committed definition changed under a dirty draft, a notice with
 *Reload* / *Keep mine* — never a silent overwrite. Open is orange and
 worded as what is still to decide; only *Invalid* is red.
 
-Keys in the field: ⌘S and ⌘↩ save the definition while it is dirty (⌘S
-otherwise saves the project); Esc reverts; Return inserts a line. The
+Keys in the field: ⌘↩ saves the definition while it is dirty; ⌘S keeps
+its meaning, *Save project*, and never commits a draft; Esc reverts;
+Return inserts a line. The
 canvas draws committed state only; the status line counts *N unsaved
 definitions*. Closing a project stashes dirty drafts by path and reopening
 restores them — no modal.

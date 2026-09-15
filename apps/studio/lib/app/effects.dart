@@ -87,6 +87,15 @@ class AnalyzeDraft extends Effect {
   final String source;
 }
 
+/// The draft is gone (revert, reload, detach, or the text returned to the
+/// committed definition): tell the daemon so the overlay goes with it and
+/// every later query, on every surface, sees the committed definition.
+/// Read-only for the project; not counted.
+class DiscardDraft extends Effect {
+  const DiscardDraft(this.mappingId);
+  final int mappingId;
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

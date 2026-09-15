@@ -16,12 +16,13 @@ import 'reducer.dart' show Transition, sendEdit;
 import 'state.dart';
 
 /// The designer typed.  The draft exists while the text differs from the
-/// committed definition; typing the committed text back dissolves it.
+/// committed definition; typing the committed text back dissolves it (and
+/// its overlay).
 Transition draftChanged(AppState s, int id, String source) {
   if (s.mapping(id) == null) return Transition(s);
   final committed = s.committedDefinition(id);
   final existing = s.draft(id);
-  if (source == (committed ?? '')) return Transition(_withoutDraft(s, id));
+  if (source == (committed ?? '')) return draftDropped(s, id);
   final generation = (existing?.generation ?? 0) + 1;
   final base =
       existing ??
@@ -42,7 +43,10 @@ Transition draftChanged(AppState s, int id, String source) {
   return Transition(_withDraft(s, draft), _checkEffects(s.revision, draft));
 }
 
-Transition draftDropped(AppState s, int id) => Transition(_withoutDraft(s, id));
+/// Drop the draft on purpose (revert, reload); the daemon's overlay is
+/// discarded with it so the two never disagree about what is being judged.
+Transition draftDropped(AppState s, int id) =>
+    s.draft(id) == null ? Transition(s) : Transition(_withoutDraft(s, id), [DiscardDraft(id)]);
 
 /// After a conflict, keep the draft: it is now based on what is committed.
 Transition draftKept(AppState s, int id) {
@@ -94,7 +98,10 @@ Transition detachDefinition(AppState s, int id) {
   if (m == null || !m.hasDefinition()) return Transition(s);
   final t = sendEdit(s, pb.EditOp(replaceDefinition: pb.ReplaceDefinition(id: Int64(id))));
   if (t.effects.isEmpty) return t;
-  return Transition(_withoutDraft(t.state, id), t.effects);
+  return Transition(_withoutDraft(t.state, id), [
+    if (s.draft(id) != null) DiscardDraft(id),
+    ...t.effects,
+  ]);
 }
 
 /// A verdict is kept only for the draft's latest generation at the held

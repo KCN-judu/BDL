@@ -30,7 +30,7 @@ DefinitionDraftAnalysis { revision, mapping_id, generation, parse_ok, MappingAna
    ▼
 status line + underlined spans + diagnostic rows under the field
 
-designer presses Add definition / Save definition (⌘S, ⌘↩)
+designer presses Add definition / Save definition (⌘↩)
    │  CommitDefinitionRequested — exactly one ApplyEdit; Attach when the
    │  committed projection has no definition, Replace when it has one;
    │  draft kept with pendingCommit until the projection confirms
@@ -68,8 +68,22 @@ awaits confirmation.
 | `RequestFailed` while `pendingCommit` is set | `pendingCommit` cleared, `commitError` set, text kept |
 | `DraftAnalysisFailed` with `draft.stale_revision` | ignored: the projection that follows re-asks |
 | any other `DraftAnalysisFailed` | `check = unavailable`, text kept |
-| Revert (Esc), Reload, Detach | dropped on purpose |
+| Revert (Esc), Reload, Detach, text typed back to the committed definition | dropped on purpose, with `DiscardDefinitionDraft` so the daemon's overlay goes too |
 | project close, daemon exit | dirty drafts stashed by project path; restored (rebased, conflict-checked) when that project is opened again — no modal, nothing typed is discarded |
+
+### One overlay, two cleanup moments
+
+`IdeHost` owns the overlay and prunes it itself when a commit makes it
+redundant (committed text == draft text) or orphaned (mapping deleted).
+Studio's local draft dissolves under the same rule when the confirming
+projection arrives — the two agree by construction, and the Rust rule is
+the one that matters for other clients. The one cleanup only Studio knows
+about is the designer *abandoning* a draft (Revert, Reload, Detach, or
+typing the committed text back); for that Studio sends
+`DiscardDefinitionDraft`, and the executor cancels any check still
+debounced for the mapping so it cannot resurrect the overlay. Without
+this, a reverted draft would stay the mapping's *effective* definition for
+every later hover, completion or LSP query.
 
 ### Attach vs replace
 
@@ -115,9 +129,20 @@ is the lever, not a Dart-side shortcut.
 
 | Key | In the definition field |
 |---|---|
-| ⌘S, ⌘↩ | save the definition while dirty; ⌘S falls through to *Save project* otherwise |
+| ⌘↩ | save the definition while dirty (*Add definition* / *Save definition*) |
+| ⌘S | unchanged: *Save project*; never commits a draft — a dirty definition and an unsaved project are different states |
 | Esc | revert a dirty draft |
 | Return | a new line (formulas may span lines) |
+
+### Completion and hover: the API path
+
+`CompleteDefinitionDraft` and `HoverDefinitionDraft` (docs/PROTOCOL.md)
+serve `bdl_ide::completion` and `entity_at_formula` + `hover` over the same
+overlay snapshot, tested end to end over stdio. Studio does not consume
+them yet: a completion pop-up and hover cards in the field are UI work
+(keyboard navigation, dismissal, placement) deferred from this milestone.
+No name, unit or keyword list exists in Dart, and none will — the pop-up
+will render what the service returns.
 
 ### Source spans
 
@@ -156,21 +181,25 @@ path).
 
 ## 3. Integration matrix
 
-| Compiler capability | Protocol | Studio state | UI surfaced | Tested |
-|---|---|---|---|---|
-| Revisioned edits, stale-revision refusal | `ApplyEdit`, `edit.stale_revision` | `pendingRequests`, `lastError` | banner; the definition editor keeps the draft | reducer, e2e |
-| Formula parse + elaboration + typing, spans | `MappingAnalysis.diagnostics[].span` | `analysis`, `drafts[].analysis` | editor status line, underlines, diagnostic rows | e2e (spans exact) |
-| Draft analysis (non-mutating) | `AnalyzeDefinitionDraft` / `DefinitionDraftAnalysis` (0.4) | `DefinitionDraft` | editor | Rust session unit + stdio e2e, Dart reducer/effects/widget/e2e |
-| `MappingStatus` ladder to `ClockConsistent` | `MappingAnalysis.status` | `analysis` | inspector *State* pill; canvas node status; editor verdict | shell, editor |
-| Nominal semantic types, `Grant` | diagnostics `semantic.*`, `realization.*` | `analysis` | editor / Compiler section rows | e2e (Open case) |
-| Dimensions | `dimension.mismatch` with span | `analysis` | editor | e2e |
-| Causality (cycles, evaluation order) | `causal`, `cycles[]`, `evaluation_order[]`, `reactive.instantaneous_cycle` | `analysis` | status line *not causal*; per-mapping diagnostic in the Compiler section; cycles and order **not drawn on the canvas** | shell (status line) |
-| Clock domains | `clock_consistent`, `clock.*` diagnostics; `ClockView`, `MappingView.clock_id`; clock edit ops | `analysis`, `project.clocks` | status line *reads across domains*; per-mapping diagnostic; **no domain editing, no domain regions on the canvas** | shell |
-| Physical outputs | `OutputView`, `OutputAnalysis`, `open_outputs`, `output_complete`; output edit ops | `project.outputs`, `analysis.outputs` | status line *outputs incomplete*; driver faults as mapping diagnostics; **no output nodes, no drive links, no output editing** | shell |
-| Deployment analysis, targets | `ListTargets`, `AnalyzeDeployment` | **none** | **none** (Deploy page is a placeholder) | — |
-| Device bindings, pins, conflicts | `DeviceView`, device edit ops, `DeploymentAnalysis.dead_end` | **none** | **none** | — |
-| Simulation | `Start/Step/ResetSimulation` | **none** | **none** (Simulate page is a placeholder) | — |
-| Edit classification (refinement / edit, invalidations) | `EditOutcome` | `lastOutcome` | inspector *Last change* | — |
+| Compiler capability | bdl-ide | Protocol | Studio state | UI exposed | Regression tested |
+|---|---|---|---|---|---|
+| Formula draft (non-mutating candidate) | `draft_verdict` over a `MappingDefinitionDraft` overlay; `clear_definition_draft`; `set_committed` pruning | `AnalyzeDefinitionDraft` / `DefinitionDraftAnalysis`, `DiscardDefinitionDraft` (0.4) | `DefinitionDraft` per mapping | definition editor: status line, underlined spans, diagnostic rows, Add/Save/Revert/Detach, conflict notice | Rust: session unit, stdio e2e, `surface_equivalence`; Dart: reducer, effects (fake daemon), widget, e2e against `bdld` |
+| Formula parse / elaboration / typing with spans | lifted to `SemanticDiagnostic` (`diagnostics`, `lift_for_mapping`) | `MappingAnalysis.diagnostics[].span` | `analysis`, `drafts[].analysis` | editor rows + underlines; committed span-less ones in *Compiler* | stdio e2e (spans exact), Dart e2e |
+| Dimensions, nominal types, `Grant` | same | `dimension.mismatch`, `realization.*`, `semantic.*` | same | editor / Compiler section | Dart e2e (invalid → corrected), `surface_equivalence` |
+| Open ≠ error | `SemanticSeverity::Open`; `EntityStatus::Open` | `DIAGNOSTIC_SEVERITY_INFO` + `MAPPING_STATUS_OPEN` | same | orange wording *Tilt has no representation yet.* | stdio e2e (open case), widget test, `surface_equivalence` |
+| `MappingStatus` ladder to `ClockConsistent` | `hover` status, `explain` | `MappingAnalysis.status` | `analysis` | inspector *State* pill, canvas node status, editor verdict | shell, widget |
+| Completion (inputs, units, keywords, type-directed) | `completion(Formula { mapping, offset })` | `CompleteDefinitionDraft` / `DraftCompletionResponse` | **none** | **none** (pop-up deferred) | stdio e2e |
+| Hover / explain | `entity_at_formula`, `hover`, `explain` | `HoverDefinitionDraft` / `DraftHoverResponse` (hover only) | **none** | **none** (cards deferred) | stdio e2e |
+| Revisioned edits, stale refusal, edit classification | `preview_change` (invalidation preview) | `ApplyEdit`, `edit.stale_revision`, `EditOutcome` | `pendingRequests`, `lastError`, `lastOutcome` | banner; *Last change*; editor keeps the draft | reducer, Dart e2e (refused commit) |
+| Causality (cycles, evaluation order) | lifted diagnostics; `explain` dependencies | `causal`, `cycles[]`, `evaluation_order[]` | `analysis` | status line *not causal*; per-mapping row in *Compiler*; cycles **not drawn** | shell |
+| Clock domains | lifted diagnostics; `explain` clock | `clock_consistent`, `clock.*`, `ClockView`, clock edit ops | `analysis`, `project.clocks` | status line *reads across domains*; **no domain editing or regions** | shell |
+| Physical outputs | one `output.multiple_drivers` per sink; `explain` output relation | `OutputView`, `OutputAnalysis`, output edit ops | `project.outputs`, `analysis.outputs` | status line *outputs incomplete*; **no output nodes / drive links / editing** | shell |
+| Simulation | — (bdld only) | `Start/Step/ResetSimulation` | **none** | **none** (Simulate page placeholder) | Rust only |
+| Deployment analysis | — (bdld only) | `AnalyzeDeployment` | **none** | **none** (Deploy page placeholder) | Rust only |
+| Target list | — | `ListTargets` | **none** | **none** | Rust only |
+| Hardware assignment, pins, dead ends | — | `DeviceView`, device edit ops, `DeploymentAnalysis` | **none** | **none** | Rust only |
+| Semantic actions / edit plans (rename by identity, fixes) | `SemanticAction`, `SemanticEditPlan`, `plan_rename` | **none** (LSP only: rename, codeAction) | **none** | **none** | bdl-ide acceptance |
+| References / navigation by identity | `references`, `definition_of` | **none** (LSP only) | **none** | **none** | bdl-ide acceptance |
 
 ### Placement decided for the gaps (not implemented here)
 
@@ -187,9 +216,11 @@ path).
 * No draft indication on the canvas: the canvas draws committed state only
   (a dirty draft must not make an unresolved mapping look defined). The
   status line's *N unsaved definitions* is the whole-app cue.
-* Rich highlighting beyond wavy underlines (no gutter, no hover
-  explanations in the field). The controller-based approach can grow into
-  that without changing the state model.
+* Rich highlighting beyond wavy underlines (no gutter). The
+  controller-based approach can grow into that without changing the state
+  model.
+* Completion pop-up and hover cards in the field: the service and the
+  protocol requests exist and are tested; the UI is the next step.
 * Per-request attribution of `RequestFailed`: the protocol answers by
   request id inside the client, but the reducer sees one stream. A draft
   awaiting confirmation takes the message; with two commits in flight for

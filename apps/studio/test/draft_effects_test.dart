@@ -164,6 +164,23 @@ void main() {
     await store.dispose();
   });
 
+  test('revert discards the overlay and cancels a check still debounced', () async {
+    final daemon = FakeDaemon((m) {
+      if (m.hasHandshake()) return okHandshake();
+      if (m.hasAnalyzeDefinitionDraft()) return draftOk(m.analyzeDefinitionDraft);
+      return pb.Response(ack: pb.Ack());
+    });
+    final store = await connectedStore(daemon);
+    store.dispatch(const DefinitionDraftChanged(mappingId: dim, source: 'Tilt'));
+    store.dispatch(const DefinitionDraftReverted(dim));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(store.state.draft(dim), isNull);
+    final kinds = daemon.requests.map((m) => m.whichPayload()).toList();
+    expect(kinds, [pb.ClientMessage_Payload.discardDefinitionDraft]);
+    expect(daemon.requests.single.discardDefinitionDraft.mappingId.toInt(), dim);
+    await store.dispose();
+  });
+
   test('the daemon exiting stashes the draft; the source survives', () async {
     final daemon = FakeDaemon((m) {
       if (m.hasHandshake()) return okHandshake();

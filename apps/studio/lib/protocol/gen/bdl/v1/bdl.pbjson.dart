@@ -332,6 +332,33 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'analyzeDefinitionDraft'
     },
+    {
+      '1': 'discard_definition_draft',
+      '3': 29,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DiscardDefinitionDraftRequest',
+      '9': 0,
+      '10': 'discardDefinitionDraft'
+    },
+    {
+      '1': 'complete_definition_draft',
+      '3': 30,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.CompleteDefinitionDraftRequest',
+      '9': 0,
+      '10': 'completeDefinitionDraft'
+    },
+    {
+      '1': 'hover_definition_draft',
+      '3': 31,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.HoverDefinitionDraftRequest',
+      '9': 0,
+      '10': 'hoverDefinitionDraft'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -363,7 +390,13 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'dEgAUgtsaXN0VGFyZ2V0cxJRChJhbmFseXplX2RlcGxveW1lbnQYGyABKAsyIC5iZGwudjEuQW'
         '5hbHl6ZURlcGxveW1lbnRSZXF1ZXN0SABSEWFuYWx5emVEZXBsb3ltZW50EmEKGGFuYWx5emVf'
         'ZGVmaW5pdGlvbl9kcmFmdBgcIAEoCzIlLmJkbC52MS5BbmFseXplRGVmaW5pdGlvbkRyYWZ0Um'
-        'VxdWVzdEgAUhZhbmFseXplRGVmaW5pdGlvbkRyYWZ0QgkKB3BheWxvYWQ=');
+        'VxdWVzdEgAUhZhbmFseXplRGVmaW5pdGlvbkRyYWZ0EmEKGGRpc2NhcmRfZGVmaW5pdGlvbl9k'
+        'cmFmdBgdIAEoCzIlLmJkbC52MS5EaXNjYXJkRGVmaW5pdGlvbkRyYWZ0UmVxdWVzdEgAUhZkaX'
+        'NjYXJkRGVmaW5pdGlvbkRyYWZ0EmQKGWNvbXBsZXRlX2RlZmluaXRpb25fZHJhZnQYHiABKAsy'
+        'Ji5iZGwudjEuQ29tcGxldGVEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSF2NvbXBsZXRlRGVmaW'
+        '5pdGlvbkRyYWZ0ElsKFmhvdmVyX2RlZmluaXRpb25fZHJhZnQYHyABKAsyIy5iZGwudjEuSG92'
+        'ZXJEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSFGhvdmVyRGVmaW5pdGlvbkRyYWZ0QgkKB3BheW'
+        'xvYWQ=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -462,6 +495,24 @@ const Response$json = {
       '9': 0,
       '10': 'definitionDraft'
     },
+    {
+      '1': 'draft_completion',
+      '3': 19,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DraftCompletionResponse',
+      '9': 0,
+      '10': 'draftCompletion'
+    },
+    {
+      '1': 'draft_hover',
+      '3': 20,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DraftHoverResponse',
+      '9': 0,
+      '10': 'draftHover'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -480,7 +531,10 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'BSCnNpbXVsYXRpb24SMwoHdGFyZ2V0cxgQIAEoCzIXLmJkbC52MS5UYXJnZXRzUmVzcG9uc2VI'
         'AFIHdGFyZ2V0cxI8CgpkZXBsb3ltZW50GBEgASgLMhouYmRsLnYxLkRlcGxveW1lbnRSZXNwb2'
         '5zZUgAUgpkZXBsb3ltZW50EkwKEGRlZmluaXRpb25fZHJhZnQYEiABKAsyHy5iZGwudjEuRGVm'
-        'aW5pdGlvbkRyYWZ0QW5hbHlzaXNIAFIPZGVmaW5pdGlvbkRyYWZ0QgkKB3BheWxvYWQ=');
+        'aW5pdGlvbkRyYWZ0QW5hbHlzaXNIAFIPZGVmaW5pdGlvbkRyYWZ0EkwKEGRyYWZ0X2NvbXBsZX'
+        'Rpb24YEyABKAsyHy5iZGwudjEuRHJhZnRDb21wbGV0aW9uUmVzcG9uc2VIAFIPZHJhZnRDb21w'
+        'bGV0aW9uEj0KC2RyYWZ0X2hvdmVyGBQgASgLMhouYmRsLnYxLkRyYWZ0SG92ZXJSZXNwb25zZU'
+        'gAUgpkcmFmdEhvdmVyQgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -2286,6 +2340,146 @@ final $typed_data.Uint8List definitionDraftAnalysisDescriptor = $convert
         'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEh4KCmdlbmVyYXRpb24YAyABKARSCmdlbmVy'
         'YXRpb24SGQoIcGFyc2Vfb2sYBCABKAhSB3BhcnNlT2sSMwoIYW5hbHlzaXMYBSABKAsyFy5iZG'
         'wudjEuTWFwcGluZ0FuYWx5c2lzUghhbmFseXNpcw==');
+
+@$core.Deprecated('Use discardDefinitionDraftRequestDescriptor instead')
+const DiscardDefinitionDraftRequest$json = {
+  '1': 'DiscardDefinitionDraftRequest',
+  '2': [
+    {'1': 'mapping_id', '3': 1, '4': 1, '5': 4, '10': 'mappingId'},
+  ],
+};
+
+/// Descriptor for `DiscardDefinitionDraftRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List discardDefinitionDraftRequestDescriptor = $convert
+    .base64Decode('Ch1EaXNjYXJkRGVmaW5pdGlvbkRyYWZ0UmVxdWVzdBIdCgptYXBwaW5nX2lkGAEgASgEUgltYX'
+        'BwaW5nSWQ=');
+
+@$core.Deprecated('Use completeDefinitionDraftRequestDescriptor instead')
+const CompleteDefinitionDraftRequest$json = {
+  '1': 'CompleteDefinitionDraftRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'offset', '3': 4, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `CompleteDefinitionDraftRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List completeDefinitionDraftRequestDescriptor = $convert
+    .base64Decode('Ch5Db21wbGV0ZURlZmluaXRpb25EcmFmdFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldm'
+        'lzaW9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNv'
+        'dXJjZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldA==');
+
+@$core.Deprecated('Use draftCompletionResponseDescriptor instead')
+const DraftCompletionResponse$json = {
+  '1': 'DraftCompletionResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'items', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.DraftCompletionItem', '10': 'items'},
+  ],
+};
+
+/// Descriptor for `DraftCompletionResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List draftCompletionResponseDescriptor = $convert
+    .base64Decode('ChdEcmFmdENvbXBsZXRpb25SZXNwb25zZRIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHQ'
+        'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEjEKBWl0ZW1zGAMgAygLMhsuYmRsLnYxLkRy'
+        'YWZ0Q29tcGxldGlvbkl0ZW1SBWl0ZW1z');
+
+@$core.Deprecated('Use draftCompletionItemDescriptor instead')
+const DraftCompletionItem$json = {
+  '1': 'DraftCompletionItem',
+  '2': [
+    {'1': 'label', '3': 1, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'kind', '3': 2, '4': 1, '5': 9, '10': 'kind'},
+    {'1': 'replace_start', '3': 3, '4': 1, '5': 13, '10': 'replaceStart'},
+    {'1': 'replace_end', '3': 4, '4': 1, '5': 13, '10': 'replaceEnd'},
+    {'1': 'insert', '3': 5, '4': 1, '5': 9, '10': 'insert'},
+    {'1': 'resulting_type', '3': 6, '4': 1, '5': 9, '10': 'resultingType'},
+    {'1': 'documentation', '3': 7, '4': 1, '5': 9, '10': 'documentation'},
+    {'1': 'relevance', '3': 8, '4': 1, '5': 13, '10': 'relevance'},
+  ],
+};
+
+/// Descriptor for `DraftCompletionItem`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List draftCompletionItemDescriptor = $convert
+    .base64Decode('ChNEcmFmdENvbXBsZXRpb25JdGVtEhQKBWxhYmVsGAEgASgJUgVsYWJlbBISCgRraW5kGAIgAS'
+        'gJUgRraW5kEiMKDXJlcGxhY2Vfc3RhcnQYAyABKA1SDHJlcGxhY2VTdGFydBIfCgtyZXBsYWNl'
+        'X2VuZBgEIAEoDVIKcmVwbGFjZUVuZBIWCgZpbnNlcnQYBSABKAlSBmluc2VydBIlCg5yZXN1bH'
+        'RpbmdfdHlwZRgGIAEoCVINcmVzdWx0aW5nVHlwZRIkCg1kb2N1bWVudGF0aW9uGAcgASgJUg1k'
+        'b2N1bWVudGF0aW9uEhwKCXJlbGV2YW5jZRgIIAEoDVIJcmVsZXZhbmNl');
+
+@$core.Deprecated('Use hoverDefinitionDraftRequestDescriptor instead')
+const HoverDefinitionDraftRequest$json = {
+  '1': 'HoverDefinitionDraftRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'offset', '3': 4, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `HoverDefinitionDraftRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List hoverDefinitionDraftRequestDescriptor = $convert
+    .base64Decode('ChtIb3ZlckRlZmluaXRpb25EcmFmdFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW'
+        '9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNvdXJj'
+        'ZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldA==');
+
+@$core.Deprecated('Use draftHoverResponseDescriptor instead')
+const DraftHoverResponse$json = {
+  '1': 'DraftHoverResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'found', '3': 3, '4': 1, '5': 8, '10': 'found'},
+    {
+      '1': 'span',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceSpan',
+      '9': 0,
+      '10': 'span',
+      '17': true
+    },
+    {'1': 'concept_id', '3': 5, '4': 1, '5': 4, '9': 1, '10': 'conceptId', '17': true},
+    {'1': 'title', '3': 6, '4': 1, '5': 9, '10': 'title'},
+    {'1': 'representation', '3': 7, '4': 1, '5': 9, '10': 'representation'},
+    {'1': 'status', '3': 8, '4': 1, '5': 9, '10': 'status'},
+    {'1': 'details', '3': 9, '4': 3, '5': 11, '6': '.bdl.v1.HoverDetail', '10': 'details'},
+    {'1': 'explanation', '3': 10, '4': 1, '5': 9, '10': 'explanation'},
+  ],
+  '8': [
+    {'1': '_span'},
+    {'1': '_concept_id'},
+  ],
+};
+
+/// Descriptor for `DraftHoverResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List draftHoverResponseDescriptor = $convert
+    .base64Decode('ChJEcmFmdEhvdmVyUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh0KCm1hcH'
+        'BpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIUCgVmb3VuZBgDIAEoCFIFZm91bmQSKwoEc3BhbhgE'
+        'IAEoCzISLmJkbC52MS5Tb3VyY2VTcGFuSABSBHNwYW6IAQESIgoKY29uY2VwdF9pZBgFIAEoBE'
+        'gBUgljb25jZXB0SWSIAQESFAoFdGl0bGUYBiABKAlSBXRpdGxlEiYKDnJlcHJlc2VudGF0aW9u'
+        'GAcgASgJUg5yZXByZXNlbnRhdGlvbhIWCgZzdGF0dXMYCCABKAlSBnN0YXR1cxItCgdkZXRhaW'
+        'xzGAkgAygLMhMuYmRsLnYxLkhvdmVyRGV0YWlsUgdkZXRhaWxzEiAKC2V4cGxhbmF0aW9uGAog'
+        'ASgJUgtleHBsYW5hdGlvbkIHCgVfc3BhbkINCgtfY29uY2VwdF9pZA==');
+
+@$core.Deprecated('Use hoverDetailDescriptor instead')
+const HoverDetail$json = {
+  '1': 'HoverDetail',
+  '2': [
+    {'1': 'label', '3': 1, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'value', '3': 2, '4': 1, '5': 9, '10': 'value'},
+  ],
+};
+
+/// Descriptor for `HoverDetail`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List hoverDetailDescriptor = $convert
+    .base64Decode('CgtIb3ZlckRldGFpbBIUCgVsYWJlbBgBIAEoCVIFbGFiZWwSFAoFdmFsdWUYAiABKAlSBXZhbH'
+        'Vl');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {

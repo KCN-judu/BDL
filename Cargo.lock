@@ -128,6 +128,7 @@ dependencies = [
  "bdl-diagnostics",
  "bdl-hardware",
  "bdl-ide",
+ "bdl-ide-db",
  "bdl-model",
  "bdl-protocol",
  "bdl-reactive",

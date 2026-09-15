@@ -296,14 +296,32 @@ type  ──▶  DefinitionDraftChanged (Studio state, generation++)
       ──▶  Studio keeps it iff generation == draft.generation && revision == held revision
 save  ──▶  ApplyEdit { AttachDefinition | ReplaceDefinition }   (one ordinary edit)
       ──▶  session.apply → host.set_committed → the redundant draft overlay is dropped
+revert / reload / detach / text back to committed
+      ──▶  DiscardDefinitionDraft { mapping_id }  →  host.clear_definition_draft
+complete / hover in the field
+      ──▶  CompleteDefinitionDraft | HoverDefinitionDraft { revision, mapping_id, source, offset }
+              = same overlay + snapshot; bdl_ide::completion / entity_at_formula + hover
 ```
 
 The project is untouched while the designer types; the compiler is the
-only judge; the overlay clears only when the commit lands. Studio keeps
-presentation only — no parser, no type checker, no dimension logic in
-Dart. `bdld`'s `RunAnalysis` and `AnalysisReady` also read the host's
-cached committed analysis, so the committed verdict is computed once per
-revision.
+only judge; the overlay clears when the commit lands (`set_committed`
+prunes a draft equal to the committed text or orphaned by a deletion) or
+when Studio says the draft is gone (`DiscardDefinitionDraft`), so a
+reverted draft never lingers as the effective definition for a later LSP
+or hover query. Every draft query is one request scoped to the mapping's
+overlay key (`begin_request(CancelScope::Overlay)` → `snapshot_cancellable`
+→ `end_request`): setting the overlay cancels the previous request for the
+same mapping; the coordinator is serial today, so the token never trips
+mid-flight, and the client's generation check remains the correctness
+backstop. Studio keeps presentation only — no parser, no type checker, no
+dimension logic in Dart. `bdld`'s `RunAnalysis` and `AnalysisReady` also
+read the host's cached committed analysis, so the committed verdict is
+computed once per revision.
+
+`crates/bdl-ide/tests/surface_equivalence.rs` holds the two surfaces to
+one verdict: the same formula as a `MappingDefinitionDraft` overlay and
+inside a `TextDocument` overlay yields the same semantic diagnostics
+(code, severity, entity, role) and the same ladder status.
 
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.

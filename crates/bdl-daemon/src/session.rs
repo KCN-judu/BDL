@@ -17,7 +17,12 @@
 //! taking an immutable snapshot of committed + overlays and asking
 //! `bdl-ide`, never by a side path through the compiler.
 
-use bdl_ide::{draft_verdict, DraftVerdict, IdeHost, QueryError};
+use bdl_ide::{
+    completion, draft_verdict, entity_at_formula, hover, AnalysisSnapshot, CompletionContext,
+    DraftVerdict, EntityRef, IdeHost, OverlayKey, QueryError, SemanticCompletion, SemanticHover,
+    TextRange,
+};
+use bdl_ide_db::CancelScope;
 use bdl_model::edit::{apply_edit, EditError, EditOp, EditOutcome};
 use bdl_model::layout::Layout;
 use bdl_model::persist::{self, PersistError};
@@ -235,10 +240,80 @@ impl Session {
         mapping: DeclId,
         source: &str,
     ) -> Result<DraftVerdict, SessionError> {
+        let snapshot = self.draft_snapshot(mapping, source)?;
+        Ok(draft_verdict(&snapshot, mapping)?)
+    }
+
+    /// Set the draft overlay and take the snapshot of the resulting world,
+    /// as one request scoped to that overlay: setting the overlay cancels
+    /// whatever earlier request was still composing for the same mapping,
+    /// and this request's own token is polled between the composition
+    /// phases.  The coordinator is serial today, so the token is never
+    /// tripped mid-flight; the wiring is what a worker pool will need.
+    fn draft_snapshot(
+        &mut self,
+        mapping: DeclId,
+        source: &str,
+    ) -> Result<std::sync::Arc<AnalysisSnapshot>, SessionError> {
         let host = self.ide()?;
         host.set_definition_draft(mapping, source);
-        let snapshot = host.snapshot();
-        Ok(draft_verdict(&snapshot, mapping)?)
+        let (request, token) =
+            host.begin_request(CancelScope::Overlay(OverlayKey::MappingDefinition {
+                mapping,
+            }));
+        let snapshot = host.snapshot_cancellable(&token);
+        host.end_request(request);
+        Ok(snapshot.map_err(QueryError::from)?)
+    }
+
+    /// The draft is gone (revert, reload, detach): later queries on every
+    /// surface see the committed definition again.  True if there was one.
+    pub fn discard_draft(&mut self, mapping: DeclId) -> Result<bool, SessionError> {
+        Ok(self.ide()?.clear_definition_draft(mapping))
+    }
+
+    /// Completion candidates at a byte offset into the draft.
+    pub fn draft_completion(
+        &mut self,
+        mapping: DeclId,
+        source: &str,
+        offset: u32,
+    ) -> Result<Vec<SemanticCompletion>, SessionError> {
+        let snapshot = self.draft_snapshot(mapping, source)?;
+        if !snapshot.effective().design.mappings.contains_key(&mapping) {
+            return Err(QueryError::UnknownEntity {
+                entity: EntityRef::Mapping(mapping),
+            }
+            .into());
+        }
+        Ok(completion(
+            &snapshot,
+            &CompletionContext::Formula { mapping, offset },
+        ))
+    }
+
+    /// The concept named at a byte offset into the draft, explained by the
+    /// IDE service; `None` when nothing semantic is under the cursor.
+    pub fn draft_hover(
+        &mut self,
+        mapping: DeclId,
+        source: &str,
+        offset: u32,
+    ) -> Result<Option<(TextRange, SemanticHover)>, SessionError> {
+        let snapshot = self.draft_snapshot(mapping, source)?;
+        if !snapshot.effective().design.mappings.contains_key(&mapping) {
+            return Err(QueryError::UnknownEntity {
+                entity: EntityRef::Mapping(mapping),
+            }
+            .into());
+        }
+        let Some((range, _)) = snapshot.index().formula_name_at(mapping, offset) else {
+            return Ok(None);
+        };
+        let Some(entity) = entity_at_formula(&snapshot, mapping, offset) else {
+            return Ok(None);
+        };
+        Ok(hover(&snapshot, entity).map(|h| (range, h)))
     }
 
     pub fn simulation_mut(&mut self) -> Result<&mut Option<SimulationRun>, SessionError> {

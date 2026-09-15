@@ -353,7 +353,7 @@ void main() {
     expect(h.state.draft(dim), isNull);
   });
 
-  testWidgets('⌘S saves a dirty definition, Esc reverts it', (t) async {
+  testWidgets('⌘↩ saves a dirty definition, Esc reverts it, ⌘S is left to the project', (t) async {
     final h = await pump(t, connected(lamp()));
     await t.tap(field);
     await t.enterText(field, 'Tilt / 90 deg');
@@ -367,6 +367,13 @@ void main() {
     await t.pump();
     await t.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
     await t.sendKeyEvent(LogicalKeyboardKey.keyS);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await t.pump();
+    expect(h.effects.whereType<ApplyEdit>(), isEmpty, reason: '⌘S never commits a draft');
+    expect(h.state.draft(dim)!.source, 'Tilt / 90 deg');
+
+    await t.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.enter);
     await t.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
     await t.pump();
     expect(h.effects.whereType<ApplyEdit>().single.op.hasAttachDefinition(), isTrue);

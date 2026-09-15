@@ -41,6 +41,9 @@ enum ClientMessage_Payload {
   listTargets,
   analyzeDeployment,
   analyzeDefinitionDraft,
+  discardDefinitionDraft,
+  completeDefinitionDraft,
+  hoverDefinitionDraft,
   notSet
 }
 
@@ -66,6 +69,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     ListTargetsRequest? listTargets,
     AnalyzeDeploymentRequest? analyzeDeployment,
     AnalyzeDefinitionDraftRequest? analyzeDefinitionDraft,
+    DiscardDefinitionDraftRequest? discardDefinitionDraft,
+    CompleteDefinitionDraftRequest? completeDefinitionDraft,
+    HoverDefinitionDraftRequest? hoverDefinitionDraft,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -88,6 +94,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (listTargets != null) result.listTargets = listTargets;
     if (analyzeDeployment != null) result.analyzeDeployment = analyzeDeployment;
     if (analyzeDefinitionDraft != null) result.analyzeDefinitionDraft = analyzeDefinitionDraft;
+    if (discardDefinitionDraft != null) result.discardDefinitionDraft = discardDefinitionDraft;
+    if (completeDefinitionDraft != null) result.completeDefinitionDraft = completeDefinitionDraft;
+    if (hoverDefinitionDraft != null) result.hoverDefinitionDraft = hoverDefinitionDraft;
     return result;
   }
 
@@ -120,12 +129,16 @@ class ClientMessage extends $pb.GeneratedMessage {
     26: ClientMessage_Payload.listTargets,
     27: ClientMessage_Payload.analyzeDeployment,
     28: ClientMessage_Payload.analyzeDefinitionDraft,
+    29: ClientMessage_Payload.discardDefinitionDraft,
+    30: ClientMessage_Payload.completeDefinitionDraft,
+    31: ClientMessage_Payload.hoverDefinitionDraft,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ClientMessage.$_createMessage)
-    ..oo(0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28])
+    ..oo(
+        0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<HandshakeRequest>(10, _omitFieldNames ? '' : 'handshake',
@@ -164,6 +177,12 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: AnalyzeDeploymentRequest.$_createMessage)
     ..aOM<AnalyzeDefinitionDraftRequest>(28, _omitFieldNames ? '' : 'analyzeDefinitionDraft',
         subBuilder: AnalyzeDefinitionDraftRequest.$_createMessage)
+    ..aOM<DiscardDefinitionDraftRequest>(29, _omitFieldNames ? '' : 'discardDefinitionDraft',
+        subBuilder: DiscardDefinitionDraftRequest.$_createMessage)
+    ..aOM<CompleteDefinitionDraftRequest>(30, _omitFieldNames ? '' : 'completeDefinitionDraft',
+        subBuilder: CompleteDefinitionDraftRequest.$_createMessage)
+    ..aOM<HoverDefinitionDraftRequest>(31, _omitFieldNames ? '' : 'hoverDefinitionDraft',
+        subBuilder: HoverDefinitionDraftRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -205,6 +224,9 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(26)
   @$pb.TagNumber(27)
   @$pb.TagNumber(28)
+  @$pb.TagNumber(29)
+  @$pb.TagNumber(30)
+  @$pb.TagNumber(31)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -225,6 +247,9 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(26)
   @$pb.TagNumber(27)
   @$pb.TagNumber(28)
+  @$pb.TagNumber(29)
+  @$pb.TagNumber(30)
+  @$pb.TagNumber(31)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -444,6 +469,39 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearAnalyzeDefinitionDraft() => $_clearField(28);
   @$pb.TagNumber(28)
   AnalyzeDefinitionDraftRequest ensureAnalyzeDefinitionDraft() => $_ensure(19);
+
+  @$pb.TagNumber(29)
+  DiscardDefinitionDraftRequest get discardDefinitionDraft => $_getN(20);
+  @$pb.TagNumber(29)
+  set discardDefinitionDraft(DiscardDefinitionDraftRequest value) => $_setField(29, value);
+  @$pb.TagNumber(29)
+  $core.bool hasDiscardDefinitionDraft() => $_has(20);
+  @$pb.TagNumber(29)
+  void clearDiscardDefinitionDraft() => $_clearField(29);
+  @$pb.TagNumber(29)
+  DiscardDefinitionDraftRequest ensureDiscardDefinitionDraft() => $_ensure(20);
+
+  @$pb.TagNumber(30)
+  CompleteDefinitionDraftRequest get completeDefinitionDraft => $_getN(21);
+  @$pb.TagNumber(30)
+  set completeDefinitionDraft(CompleteDefinitionDraftRequest value) => $_setField(30, value);
+  @$pb.TagNumber(30)
+  $core.bool hasCompleteDefinitionDraft() => $_has(21);
+  @$pb.TagNumber(30)
+  void clearCompleteDefinitionDraft() => $_clearField(30);
+  @$pb.TagNumber(30)
+  CompleteDefinitionDraftRequest ensureCompleteDefinitionDraft() => $_ensure(21);
+
+  @$pb.TagNumber(31)
+  HoverDefinitionDraftRequest get hoverDefinitionDraft => $_getN(22);
+  @$pb.TagNumber(31)
+  set hoverDefinitionDraft(HoverDefinitionDraftRequest value) => $_setField(31, value);
+  @$pb.TagNumber(31)
+  $core.bool hasHoverDefinitionDraft() => $_has(22);
+  @$pb.TagNumber(31)
+  void clearHoverDefinitionDraft() => $_clearField(31);
+  @$pb.TagNumber(31)
+  HoverDefinitionDraftRequest ensureHoverDefinitionDraft() => $_ensure(22);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -542,6 +600,8 @@ enum Response_Payload {
   targets,
   deployment,
   definitionDraft,
+  draftCompletion,
+  draftHover,
   notSet
 }
 
@@ -558,6 +618,8 @@ class Response extends $pb.GeneratedMessage {
     TargetsResponse? targets,
     DeploymentResponse? deployment,
     DefinitionDraftAnalysis? definitionDraft,
+    DraftCompletionResponse? draftCompletion,
+    DraftHoverResponse? draftHover,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -571,6 +633,8 @@ class Response extends $pb.GeneratedMessage {
     if (targets != null) result.targets = targets;
     if (deployment != null) result.deployment = deployment;
     if (definitionDraft != null) result.definitionDraft = definitionDraft;
+    if (draftCompletion != null) result.draftCompletion = draftCompletion;
+    if (draftHover != null) result.draftHover = draftHover;
     return result;
   }
 
@@ -594,12 +658,14 @@ class Response extends $pb.GeneratedMessage {
     16: Response_Payload.targets,
     17: Response_Payload.deployment,
     18: Response_Payload.definitionDraft,
+    19: Response_Payload.draftCompletion,
+    20: Response_Payload.draftHover,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -620,6 +686,10 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: DeploymentResponse.$_createMessage)
     ..aOM<DefinitionDraftAnalysis>(18, _omitFieldNames ? '' : 'definitionDraft',
         subBuilder: DefinitionDraftAnalysis.$_createMessage)
+    ..aOM<DraftCompletionResponse>(19, _omitFieldNames ? '' : 'draftCompletion',
+        subBuilder: DraftCompletionResponse.$_createMessage)
+    ..aOM<DraftHoverResponse>(20, _omitFieldNames ? '' : 'draftHover',
+        subBuilder: DraftHoverResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -652,6 +722,8 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
   @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -663,6 +735,8 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
   @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -783,6 +857,28 @@ class Response extends $pb.GeneratedMessage {
   void clearDefinitionDraft() => $_clearField(18);
   @$pb.TagNumber(18)
   DefinitionDraftAnalysis ensureDefinitionDraft() => $_ensure(10);
+
+  @$pb.TagNumber(19)
+  DraftCompletionResponse get draftCompletion => $_getN(11);
+  @$pb.TagNumber(19)
+  set draftCompletion(DraftCompletionResponse value) => $_setField(19, value);
+  @$pb.TagNumber(19)
+  $core.bool hasDraftCompletion() => $_has(11);
+  @$pb.TagNumber(19)
+  void clearDraftCompletion() => $_clearField(19);
+  @$pb.TagNumber(19)
+  DraftCompletionResponse ensureDraftCompletion() => $_ensure(11);
+
+  @$pb.TagNumber(20)
+  DraftHoverResponse get draftHover => $_getN(12);
+  @$pb.TagNumber(20)
+  set draftHover(DraftHoverResponse value) => $_setField(20, value);
+  @$pb.TagNumber(20)
+  $core.bool hasDraftHover() => $_has(12);
+  @$pb.TagNumber(20)
+  void clearDraftHover() => $_clearField(20);
+  @$pb.TagNumber(20)
+  DraftHoverResponse ensureDraftHover() => $_ensure(12);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -8032,6 +8128,714 @@ class DefinitionDraftAnalysis extends $pb.GeneratedMessage {
   void clearAnalysis() => $_clearField(5);
   @$pb.TagNumber(5)
   MappingAnalysis ensureAnalysis() => $_ensure(4);
+}
+
+/// The draft is gone (revert, reload, detach): the mapping's effective
+/// definition is the committed one again for every later query, on every
+/// surface.  Ack, also when there was no draft.
+class DiscardDefinitionDraftRequest extends $pb.GeneratedMessage {
+  factory DiscardDefinitionDraftRequest({
+    $fixnum.Int64? mappingId,
+  }) {
+    final result = DiscardDefinitionDraftRequest._();
+    if (mappingId != null) result.mappingId = mappingId;
+    return result;
+  }
+
+  DiscardDefinitionDraftRequest._();
+
+  factory DiscardDefinitionDraftRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DiscardDefinitionDraftRequest()..mergeFromBuffer(data, registry);
+  factory DiscardDefinitionDraftRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DiscardDefinitionDraftRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DiscardDefinitionDraftRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DiscardDefinitionDraftRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DiscardDefinitionDraftRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DiscardDefinitionDraftRequest copyWith(void Function(DiscardDefinitionDraftRequest) updates) =>
+      super.copyWith((message) => updates(message as DiscardDefinitionDraftRequest))
+          as DiscardDefinitionDraftRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core
+      .Deprecated('Use DiscardDefinitionDraftRequest() / DiscardDefinitionDraftRequest.new instead')
+  static DiscardDefinitionDraftRequest create() => DiscardDefinitionDraftRequest._();
+  static $pb.GeneratedMessage $_createMessage() => DiscardDefinitionDraftRequest._();
+  @$core.override
+  DiscardDefinitionDraftRequest createEmptyInstance() => DiscardDefinitionDraftRequest._();
+  @$core.pragma('dart2js:noInline')
+  static DiscardDefinitionDraftRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DiscardDefinitionDraftRequest>(
+          DiscardDefinitionDraftRequest.$_createMessage);
+  static DiscardDefinitionDraftRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get mappingId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set mappingId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMappingId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMappingId() => $_clearField(1);
+}
+
+/// Completion inside the draft at a byte `offset` into `source`.  Sets the
+/// draft overlay to `source` first (so the candidates are for exactly this
+/// text), then asks the IDE service.  Same refusals as
+/// AnalyzeDefinitionDraft; an empty list is a normal answer.
+class CompleteDefinitionDraftRequest extends $pb.GeneratedMessage {
+  factory CompleteDefinitionDraftRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+    $core.int? offset,
+  }) {
+    final result = CompleteDefinitionDraftRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  CompleteDefinitionDraftRequest._();
+
+  factory CompleteDefinitionDraftRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CompleteDefinitionDraftRequest()..mergeFromBuffer(data, registry);
+  factory CompleteDefinitionDraftRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CompleteDefinitionDraftRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CompleteDefinitionDraftRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CompleteDefinitionDraftRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..aI(4, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CompleteDefinitionDraftRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CompleteDefinitionDraftRequest copyWith(void Function(CompleteDefinitionDraftRequest) updates) =>
+      super.copyWith((message) => updates(message as CompleteDefinitionDraftRequest))
+          as CompleteDefinitionDraftRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated(
+      'Use CompleteDefinitionDraftRequest() / CompleteDefinitionDraftRequest.new instead')
+  static CompleteDefinitionDraftRequest create() => CompleteDefinitionDraftRequest._();
+  static $pb.GeneratedMessage $_createMessage() => CompleteDefinitionDraftRequest._();
+  @$core.override
+  CompleteDefinitionDraftRequest createEmptyInstance() => CompleteDefinitionDraftRequest._();
+  @$core.pragma('dart2js:noInline')
+  static CompleteDefinitionDraftRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CompleteDefinitionDraftRequest>(
+          CompleteDefinitionDraftRequest.$_createMessage);
+  static CompleteDefinitionDraftRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get offset => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set offset($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasOffset() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOffset() => $_clearField(4);
+}
+
+class DraftCompletionResponse extends $pb.GeneratedMessage {
+  factory DraftCompletionResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.Iterable<DraftCompletionItem>? items,
+  }) {
+    final result = DraftCompletionResponse._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (items != null) result.items.addAll(items);
+    return result;
+  }
+
+  DraftCompletionResponse._();
+
+  factory DraftCompletionResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftCompletionResponse()..mergeFromBuffer(data, registry);
+  factory DraftCompletionResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftCompletionResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DraftCompletionResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DraftCompletionResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<DraftCompletionItem>(3, _omitFieldNames ? '' : 'items',
+        subBuilder: DraftCompletionItem.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftCompletionResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftCompletionResponse copyWith(void Function(DraftCompletionResponse) updates) =>
+      super.copyWith((message) => updates(message as DraftCompletionResponse))
+          as DraftCompletionResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DraftCompletionResponse() / DraftCompletionResponse.new instead')
+  static DraftCompletionResponse create() => DraftCompletionResponse._();
+  static $pb.GeneratedMessage $_createMessage() => DraftCompletionResponse._();
+  @$core.override
+  DraftCompletionResponse createEmptyInstance() => DraftCompletionResponse._();
+  @$core.pragma('dart2js:noInline')
+  static DraftCompletionResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DraftCompletionResponse>(
+          DraftCompletionResponse.$_createMessage);
+  static DraftCompletionResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<DraftCompletionItem> get items => $_getList(2);
+}
+
+class DraftCompletionItem extends $pb.GeneratedMessage {
+  factory DraftCompletionItem({
+    $core.String? label,
+    $core.String? kind,
+    $core.int? replaceStart,
+    $core.int? replaceEnd,
+    $core.String? insert,
+    $core.String? resultingType,
+    $core.String? documentation,
+    $core.int? relevance,
+  }) {
+    final result = DraftCompletionItem._();
+    if (label != null) result.label = label;
+    if (kind != null) result.kind = kind;
+    if (replaceStart != null) result.replaceStart = replaceStart;
+    if (replaceEnd != null) result.replaceEnd = replaceEnd;
+    if (insert != null) result.insert = insert;
+    if (resultingType != null) result.resultingType = resultingType;
+    if (documentation != null) result.documentation = documentation;
+    if (relevance != null) result.relevance = relevance;
+    return result;
+  }
+
+  DraftCompletionItem._();
+
+  factory DraftCompletionItem.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftCompletionItem()..mergeFromBuffer(data, registry);
+  factory DraftCompletionItem.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftCompletionItem()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DraftCompletionItem',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DraftCompletionItem.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'label')
+    ..aOS(2, _omitFieldNames ? '' : 'kind')
+    ..aI(3, _omitFieldNames ? '' : 'replaceStart', fieldType: $pb.PbFieldType.OU3)
+    ..aI(4, _omitFieldNames ? '' : 'replaceEnd', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(5, _omitFieldNames ? '' : 'insert')
+    ..aOS(6, _omitFieldNames ? '' : 'resultingType')
+    ..aOS(7, _omitFieldNames ? '' : 'documentation')
+    ..aI(8, _omitFieldNames ? '' : 'relevance', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftCompletionItem clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftCompletionItem copyWith(void Function(DraftCompletionItem) updates) =>
+      super.copyWith((message) => updates(message as DraftCompletionItem)) as DraftCompletionItem;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DraftCompletionItem() / DraftCompletionItem.new instead')
+  static DraftCompletionItem create() => DraftCompletionItem._();
+  static $pb.GeneratedMessage $_createMessage() => DraftCompletionItem._();
+  @$core.override
+  DraftCompletionItem createEmptyInstance() => DraftCompletionItem._();
+  @$core.pragma('dart2js:noInline')
+  static DraftCompletionItem getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DraftCompletionItem>(DraftCompletionItem.$_createMessage);
+  static DraftCompletionItem? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get label => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set label($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasLabel() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLabel() => $_clearField(1);
+
+  /// "input", "unit", "keyword", "concept", "representation", "mapping".
+  @$pb.TagNumber(2)
+  $core.String get kind => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set kind($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKind() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKind() => $_clearField(2);
+
+  /// Replace the byte range [replace_start, replace_end) of the source
+  /// with `insert`.
+  @$pb.TagNumber(3)
+  $core.int get replaceStart => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set replaceStart($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasReplaceStart() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearReplaceStart() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get replaceEnd => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set replaceEnd($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasReplaceEnd() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearReplaceEnd() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get insert => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set insert($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasInsert() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearInsert() => $_clearField(5);
+
+  /// Product-language type of the completed expression, when known.
+  @$pb.TagNumber(6)
+  $core.String get resultingType => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set resultingType($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasResultingType() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearResultingType() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get documentation => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set documentation($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasDocumentation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearDocumentation() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.int get relevance => $_getIZ(7);
+  @$pb.TagNumber(8)
+  set relevance($core.int value) => $_setUnsignedInt32(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasRelevance() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearRelevance() => $_clearField(8);
+}
+
+/// The concept under a byte `offset` into the draft `source`, as the IDE
+/// service explains it.  `found` is false when nothing semantic is there.
+class HoverDefinitionDraftRequest extends $pb.GeneratedMessage {
+  factory HoverDefinitionDraftRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+    $core.int? offset,
+  }) {
+    final result = HoverDefinitionDraftRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  HoverDefinitionDraftRequest._();
+
+  factory HoverDefinitionDraftRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverDefinitionDraftRequest()..mergeFromBuffer(data, registry);
+  factory HoverDefinitionDraftRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverDefinitionDraftRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'HoverDefinitionDraftRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: HoverDefinitionDraftRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..aI(4, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverDefinitionDraftRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverDefinitionDraftRequest copyWith(void Function(HoverDefinitionDraftRequest) updates) =>
+      super.copyWith((message) => updates(message as HoverDefinitionDraftRequest))
+          as HoverDefinitionDraftRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use HoverDefinitionDraftRequest() / HoverDefinitionDraftRequest.new instead')
+  static HoverDefinitionDraftRequest create() => HoverDefinitionDraftRequest._();
+  static $pb.GeneratedMessage $_createMessage() => HoverDefinitionDraftRequest._();
+  @$core.override
+  HoverDefinitionDraftRequest createEmptyInstance() => HoverDefinitionDraftRequest._();
+  @$core.pragma('dart2js:noInline')
+  static HoverDefinitionDraftRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<HoverDefinitionDraftRequest>(
+          HoverDefinitionDraftRequest.$_createMessage);
+  static HoverDefinitionDraftRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get offset => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set offset($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasOffset() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOffset() => $_clearField(4);
+}
+
+class DraftHoverResponse extends $pb.GeneratedMessage {
+  factory DraftHoverResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.bool? found,
+    SourceSpan? span,
+    $fixnum.Int64? conceptId,
+    $core.String? title,
+    $core.String? representation,
+    $core.String? status,
+    $core.Iterable<HoverDetail>? details,
+    $core.String? explanation,
+  }) {
+    final result = DraftHoverResponse._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (found != null) result.found = found;
+    if (span != null) result.span = span;
+    if (conceptId != null) result.conceptId = conceptId;
+    if (title != null) result.title = title;
+    if (representation != null) result.representation = representation;
+    if (status != null) result.status = status;
+    if (details != null) result.details.addAll(details);
+    if (explanation != null) result.explanation = explanation;
+    return result;
+  }
+
+  DraftHoverResponse._();
+
+  factory DraftHoverResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftHoverResponse()..mergeFromBuffer(data, registry);
+  factory DraftHoverResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DraftHoverResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DraftHoverResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DraftHoverResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(3, _omitFieldNames ? '' : 'found')
+    ..aOM<SourceSpan>(4, _omitFieldNames ? '' : 'span', subBuilder: SourceSpan.$_createMessage)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(6, _omitFieldNames ? '' : 'title')
+    ..aOS(7, _omitFieldNames ? '' : 'representation')
+    ..aOS(8, _omitFieldNames ? '' : 'status')
+    ..pPM<HoverDetail>(9, _omitFieldNames ? '' : 'details', subBuilder: HoverDetail.$_createMessage)
+    ..aOS(10, _omitFieldNames ? '' : 'explanation')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftHoverResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DraftHoverResponse copyWith(void Function(DraftHoverResponse) updates) =>
+      super.copyWith((message) => updates(message as DraftHoverResponse)) as DraftHoverResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DraftHoverResponse() / DraftHoverResponse.new instead')
+  static DraftHoverResponse create() => DraftHoverResponse._();
+  static $pb.GeneratedMessage $_createMessage() => DraftHoverResponse._();
+  @$core.override
+  DraftHoverResponse createEmptyInstance() => DraftHoverResponse._();
+  @$core.pragma('dart2js:noInline')
+  static DraftHoverResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DraftHoverResponse>(DraftHoverResponse.$_createMessage);
+  static DraftHoverResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get found => $_getBF(2);
+  @$pb.TagNumber(3)
+  set found($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasFound() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearFound() => $_clearField(3);
+
+  /// The byte range of the name under the cursor.
+  @$pb.TagNumber(4)
+  SourceSpan get span => $_getN(3);
+  @$pb.TagNumber(4)
+  set span(SourceSpan value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSpan() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSpan() => $_clearField(4);
+  @$pb.TagNumber(4)
+  SourceSpan ensureSpan() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get conceptId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set conceptId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasConceptId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearConceptId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get title => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set title($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasTitle() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearTitle() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get representation => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set representation($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasRepresentation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearRepresentation() => $_clearField(7);
+
+  /// "declared", "open", "defined", … (bdl-ide EntityStatus, product words).
+  @$pb.TagNumber(8)
+  $core.String get status => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set status($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasStatus() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearStatus() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $pb.PbList<HoverDetail> get details => $_getList(8);
+
+  @$pb.TagNumber(10)
+  $core.String get explanation => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set explanation($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasExplanation() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearExplanation() => $_clearField(10);
+}
+
+class HoverDetail extends $pb.GeneratedMessage {
+  factory HoverDetail({
+    $core.String? label,
+    $core.String? value,
+  }) {
+    final result = HoverDetail._();
+    if (label != null) result.label = label;
+    if (value != null) result.value = value;
+    return result;
+  }
+
+  HoverDetail._();
+
+  factory HoverDetail.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverDetail()..mergeFromBuffer(data, registry);
+  factory HoverDetail.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverDetail()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'HoverDetail',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: HoverDetail.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'label')
+    ..aOS(2, _omitFieldNames ? '' : 'value')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverDetail clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverDetail copyWith(void Function(HoverDetail) updates) =>
+      super.copyWith((message) => updates(message as HoverDetail)) as HoverDetail;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use HoverDetail() / HoverDetail.new instead')
+  static HoverDetail create() => HoverDetail._();
+  static $pb.GeneratedMessage $_createMessage() => HoverDetail._();
+  @$core.override
+  HoverDetail createEmptyInstance() => HoverDetail._();
+  @$core.pragma('dart2js:noInline')
+  static HoverDetail getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<HoverDetail>(HoverDetail.$_createMessage);
+  static HoverDetail? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get label => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set label($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasLabel() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLabel() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get value => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set value($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasValue() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearValue() => $_clearField(2);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

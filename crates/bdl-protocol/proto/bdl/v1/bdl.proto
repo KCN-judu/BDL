@@ -45,6 +45,9 @@ message ClientMessage {
     ListTargetsRequest list_targets = 26;
     AnalyzeDeploymentRequest analyze_deployment = 27;
     AnalyzeDefinitionDraftRequest analyze_definition_draft = 28;
+    DiscardDefinitionDraftRequest discard_definition_draft = 29;
+    CompleteDefinitionDraftRequest complete_definition_draft = 30;
+    HoverDefinitionDraftRequest hover_definition_draft = 31;
   }
 }
 
@@ -68,6 +71,8 @@ message Response {
     TargetsResponse targets = 16;
     DeploymentResponse deployment = 17;
     DefinitionDraftAnalysis definition_draft = 18;
+    DraftCompletionResponse draft_completion = 19;
+    DraftHoverResponse draft_hover = 20;
   }
 }
 
@@ -731,6 +736,74 @@ message DefinitionDraftAnalysis {
   // The same verdict a committed definition gets; diagnostic spans index
   // the draft source of the request, not any committed source.
   MappingAnalysis analysis = 5;
+}
+
+// The draft is gone (revert, reload, detach): the mapping's effective
+// definition is the committed one again for every later query, on every
+// surface.  Ack, also when there was no draft.
+message DiscardDefinitionDraftRequest {
+  uint64 mapping_id = 1;
+}
+
+// Completion inside the draft at a byte `offset` into `source`.  Sets the
+// draft overlay to `source` first (so the candidates are for exactly this
+// text), then asks the IDE service.  Same refusals as
+// AnalyzeDefinitionDraft; an empty list is a normal answer.
+message CompleteDefinitionDraftRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
+  uint32 offset = 4;
+}
+
+message DraftCompletionResponse {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  repeated DraftCompletionItem items = 3;
+}
+
+message DraftCompletionItem {
+  string label = 1;
+  // "input", "unit", "keyword", "concept", "representation", "mapping".
+  string kind = 2;
+  // Replace the byte range [replace_start, replace_end) of the source
+  // with `insert`.
+  uint32 replace_start = 3;
+  uint32 replace_end = 4;
+  string insert = 5;
+  // Product-language type of the completed expression, when known.
+  string resulting_type = 6;
+  string documentation = 7;
+  uint32 relevance = 8;
+}
+
+// The concept under a byte `offset` into the draft `source`, as the IDE
+// service explains it.  `found` is false when nothing semantic is there.
+message HoverDefinitionDraftRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
+  uint32 offset = 4;
+}
+
+message DraftHoverResponse {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  bool found = 3;
+  // The byte range of the name under the cursor.
+  optional SourceSpan span = 4;
+  optional uint64 concept_id = 5;
+  string title = 6;
+  string representation = 7;
+  // "declared", "open", "defined", … (bdl-ide EntityStatus, product words).
+  string status = 8;
+  repeated HoverDetail details = 9;
+  string explanation = 10;
+}
+
+message HoverDetail {
+  string label = 1;
+  string value = 2;
 }
 
 // ---------------------------------------------------------------------------

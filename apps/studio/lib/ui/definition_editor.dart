@@ -17,10 +17,10 @@
 /// 5. a conflict — the committed definition moved under a dirty draft —
 ///    as a notice with the two ways out, never a silent overwrite.
 ///
-/// Keyboard (documented in docs/STUDIO_UI.md §4a): ⌘S and ⌘↩ save the
-/// definition while it is dirty (⌘S falls through to *Save project* when it
-/// is not); Esc reverts a dirty draft.  Ordinary text-editing shortcuts are
-/// untouched; Return inserts a line.
+/// Keyboard (documented in docs/STUDIO_UI.md §4a): ⌘↩ saves the definition
+/// while it is dirty; ⌘S keeps its meaning (*Save project*) and never
+/// commits a draft; Esc reverts a dirty draft.  Ordinary text-editing
+/// shortcuts are untouched; Return inserts a line.
 library;
 
 import 'package:flutter/material.dart';
@@ -262,10 +262,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
 
     return CallbackShortcuts(
       bindings: {
-        if (m.canCommit) ...{
-          const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _commit,
-          const SingleActivator(LogicalKeyboardKey.enter, meta: true): _commit,
-        },
+        if (m.canCommit) const SingleActivator(LogicalKeyboardKey.enter, meta: true): _commit,
         if (m.canRevert) const SingleActivator(LogicalKeyboardKey.escape): _revert,
       },
       child: Column(
@@ -332,7 +329,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
                 MacButton.primary(
                   label: m.commitLabel,
                   onPressed: m.canCommit ? _commit : null,
-                  tooltip: m.canCommit ? '⌘S' : null,
+                  tooltip: m.canCommit ? '⌘↩' : null,
                 ),
               ],
             ),

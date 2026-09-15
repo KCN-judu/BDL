@@ -410,23 +410,32 @@ void main() {
       expect(type(s, 'Tilt').draft(dim)!.commitError, isNull);
     });
 
-    test('revert drops the draft without touching the project', () {
+    test('revert drops the draft and its overlay without touching the project', () {
       final t = reduce(
         type(connected(lamp(definition: 'a')), 'b'),
         const DefinitionDraftReverted(dim),
       );
       expect(t.state.draft(dim), isNull);
-      expect(t.effects, isEmpty);
+      expect(t.effects.single, isA<DiscardDraft>());
+      expect((t.effects.single as DiscardDraft).mappingId, dim);
+      expect(t.effects.whereType<ApplyEdit>(), isEmpty);
+      // reload after a conflict is the same act
+      final reload = reduce(
+        type(connected(lamp(definition: 'a')), 'b'),
+        const DefinitionDraftReloaded(dim),
+      );
+      expect(reload.effects.single, isA<DiscardDraft>());
     });
   });
 
   group('detach', () {
-    test('sends one replace-with-nothing and resets the draft', () {
+    test('sends one replace-with-nothing and resets the draft and its overlay', () {
       final t = reduce(
         type(connected(lamp(definition: 'a')), 'b'),
         const DetachDefinitionRequested(dim),
       );
-      final op = (t.effects.single as ApplyEdit).op;
+      expect(t.effects.whereType<DiscardDraft>(), hasLength(1));
+      final op = t.effects.whereType<ApplyEdit>().single.op;
       expect(op.hasReplaceDefinition(), isTrue);
       expect(op.replaceDefinition.hasDefinition(), isFalse);
       expect(t.state.draft(dim), isNull);
@@ -436,8 +445,10 @@ void main() {
       expect(s.editor.drafts, isEmpty);
     });
 
-    test('is a no-op for a mapping without a definition', () {
+    test('is a no-op without a definition; nothing to discard without a draft', () {
       expect(reduce(connected(lamp()), const DetachDefinitionRequested(dim)).effects, isEmpty);
+      final clean = reduce(connected(lamp(definition: 'a')), const DetachDefinitionRequested(dim));
+      expect(clean.effects.single, isA<ApplyEdit>());
     });
   });
 

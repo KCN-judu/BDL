@@ -117,6 +117,16 @@ class EffectExecutor {
           _draftTimers.remove(mappingId);
           _analyzeDraft(revision, mappingId, generation, source);
         });
+      case DiscardDraft(:final mappingId):
+        // A check still debounced for this draft would resurrect the overlay.
+        _draftTimers.remove(mappingId)?.cancel();
+        await _call(
+          pb.ClientMessage(
+            discardDefinitionDraft: pb.DiscardDefinitionDraftRequest(mappingId: Int64(mappingId)),
+          ),
+          (_) {},
+          counted: false,
+        );
       case SetLayout(:final layout):
         // Layout is not a revision and is not counted as pending.
         await _call(

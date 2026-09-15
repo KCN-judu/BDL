@@ -844,6 +844,149 @@ fn definition_drafts_over_stdio() {
     assert!(!d.parse_ok);
     assert_eq!(d.analysis.unwrap().status(), pb::MappingStatus::Invalid);
 
+    // completion and hover run over the same overlay: inputs and units are
+    // offered, and the concept under the cursor is explained by bdl-ide
+    let Resp::DraftCompletion(comp) = c.call(
+        Req::CompleteDefinitionDraft(pb::CompleteDefinitionDraftRequest {
+            revision,
+            mapping_id: mapping,
+            source: "Ti".into(),
+            offset: 2,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected completions")
+    };
+    assert_eq!(comp.revision, revision);
+    let tilt_item = comp
+        .items
+        .iter()
+        .find(|i| i.label == "Tilt")
+        .expect("the input Tilt is offered");
+    assert_eq!(tilt_item.kind, "input");
+    assert_eq!((tilt_item.replace_start, tilt_item.replace_end), (0, 2));
+    let Resp::DraftHover(h) = c.call(
+        Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            revision,
+            mapping_id: mapping,
+            source: "Tilt / 90 deg".into(),
+            offset: 1,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a hover")
+    };
+    assert!(h.found);
+    assert_eq!(h.concept_id, Some(tilt));
+    assert_eq!(h.title, "Tilt");
+    assert_eq!(h.span.unwrap(), pb::SourceSpan { start: 0, end: 4 });
+    let Resp::DraftHover(none) = c.call(
+        Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            revision,
+            mapping_id: mapping,
+            source: "Tilt / 90 deg".into(),
+            offset: 8,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a hover")
+    };
+    assert!(!none.found, "a number is not an entity");
+
+    // an open draft: a concept without a representation is Open, not an error
+    let warmth = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Warmth".into(),
+            description: String::new(),
+            representation: None,
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_concept
+    .unwrap();
+    let open_mapping = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "byWarmth".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![warmth],
+                output: brightness,
+            }),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_mapping
+    .unwrap();
+    let revision = c.last_revision;
+    let Resp::DefinitionDraft(d) = draft(
+        &mut c,
+        &mut events,
+        revision,
+        open_mapping,
+        12,
+        "Warmth / 2",
+    ) else {
+        panic!("expected a draft analysis")
+    };
+    assert!(d.parse_ok);
+    let a = d.analysis.unwrap();
+    assert_eq!(a.status(), pb::MappingStatus::Open);
+    assert!(a
+        .diagnostics
+        .iter()
+        .all(|d| d.severity() != pb::DiagnosticSeverity::Error));
+    assert!(a
+        .diagnostics
+        .iter()
+        .any(|d| d.code == "semantic.unbound_representation"));
+
+    // discarding the draft: the mapping is judged by its committed
+    // definition again (none: Declared) — and discarding twice is fine
+    c.call(
+        Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            mapping_id: open_mapping,
+        }),
+        &mut events,
+    );
+    let Resp::Ack(_) = c.call(
+        Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            mapping_id: open_mapping,
+        }),
+        &mut events,
+    ) else {
+        panic!("discard is idempotent")
+    };
+    let Resp::DraftHover(h) = c.call(
+        Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            revision,
+            mapping_id: mapping,
+            source: "Tilt".into(),
+            offset: 0,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a hover")
+    };
+    assert!(h.found);
+
+    // deleting the mapping prunes its overlay: a later draft for it is refused
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::DeleteMapping(pb::DeleteMapping { id: open_mapping }),
+    );
+    let revision = c.last_revision;
+    let Resp::Error(e) = draft(&mut c, &mut events, revision, open_mapping, 13, "1") else {
+        panic!("expected an error")
+    };
+    assert_eq!(e.code, "draft.unknown_mapping");
+
     // stale revision and unknown mapping are refused with stable codes
     let Resp::Error(e) = draft(&mut c, &mut events, revision - 1, mapping, 10, "1") else {
         panic!("expected an error")
@@ -892,6 +1035,28 @@ fn definition_drafts_over_stdio() {
     assert_eq!(
         a.analysis.unwrap().mappings[0].status(),
         pb::MappingStatus::ClockConsistent
+    );
+    // no phantom overlay survives a reopen: hovering the committed text
+    // without setting a draft would need one, and there is none — a fresh
+    // draft is what the request sets, and it is judged from scratch
+    let Resp::DefinitionDraft(d) = draft(&mut c, &mut events, p.revision, mapping, 1, "Tilt +")
+    else {
+        panic!("expected a draft analysis")
+    };
+    assert!(!d.parse_ok);
+    c.call(
+        Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            mapping_id: mapping,
+        }),
+        &mut events,
+    );
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!("expected an analysis")
+    };
+    assert_eq!(
+        a.analysis.unwrap().mappings[0].status(),
+        pb::MappingStatus::ClockConsistent,
+        "the committed analysis never sees drafts"
     );
 
     c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);

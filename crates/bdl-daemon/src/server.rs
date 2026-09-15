@@ -255,6 +255,14 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         ),
         Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r.target_id), None),
         Req::AnalyzeDefinitionDraft(r) => (analyze_definition_draft(session, &r), None),
+        Req::DiscardDefinitionDraft(r) => {
+            match session.discard_draft(bdl_model::DeclId::from_raw(r.mapping_id)) {
+                Ok(_) => (Resp::Ack(pb::Ack {}), None),
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
+        Req::CompleteDefinitionDraft(r) => (complete_definition_draft(session, &r), None),
+        Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -267,19 +275,8 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
 /// `bdl-ide` returns the stamped verdict — the same path a text editor's
 /// unsaved buffer takes (`docs/IDE_SERVICE_ARCHITECTURE.md`).
 fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraftRequest) -> Resp {
-    let revision = match session.project() {
-        Ok(p) => p.current.revision,
-        Err(e) => return Resp::Error(session_error(&e)),
-    };
-    if revision.raw() != r.revision {
-        return Resp::Error(error(
-            "draft.stale_revision",
-            &format!(
-                "draft targets revision {} but the project is at {}",
-                r.revision,
-                revision.raw()
-            ),
-        ));
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
     }
     let id = bdl_model::DeclId::from_raw(r.mapping_id);
     match session.draft_verdict(id, &r.source) {
@@ -289,6 +286,94 @@ fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraf
             generation: r.generation,
             parse_ok: v.parse_ok,
             analysis: Some(convert::mapping_analysis_to_pb(&v.analysis)),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+/// The current revision, or the stale-revision refusal every draft query
+/// shares: a draft is judged against the world the client believes it is
+/// in, and the projection that follows a change re-asks.
+fn draft_revision(session: &Session, requested: u64) -> Result<(), pb::Error> {
+    let revision = match session.project() {
+        Ok(p) => p.current.revision.raw(),
+        Err(e) => return Err(session_error(&e)),
+    };
+    if revision != requested {
+        return Err(error(
+            "draft.stale_revision",
+            &format!("draft targets revision {requested} but the project is at {revision}"),
+        ));
+    }
+    Ok(())
+}
+
+fn complete_definition_draft(
+    session: &mut Session,
+    r: &pb::CompleteDefinitionDraftRequest,
+) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.draft_completion(id, &r.source, r.offset) {
+        Ok(items) => Resp::DraftCompletion(pb::DraftCompletionResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            items: items
+                .iter()
+                .map(|c| pb::DraftCompletionItem {
+                    label: c.label.clone(),
+                    kind: format!("{:?}", c.kind).to_lowercase(),
+                    replace_start: c.replace.start,
+                    replace_end: c.replace.end,
+                    insert: c.insert.clone(),
+                    resulting_type: c.resulting_type.clone().unwrap_or_default(),
+                    documentation: c.documentation.clone().unwrap_or_default(),
+                    relevance: u32::from(c.relevance),
+                })
+                .collect(),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn hover_definition_draft(session: &mut Session, r: &pb::HoverDefinitionDraftRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.draft_hover(id, &r.source, r.offset) {
+        Ok(None) => Resp::DraftHover(pb::DraftHoverResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            found: false,
+            ..Default::default()
+        }),
+        Ok(Some((range, h))) => Resp::DraftHover(pb::DraftHoverResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            found: true,
+            span: Some(pb::SourceSpan {
+                start: range.start,
+                end: range.end,
+            }),
+            concept_id: match h.entity {
+                bdl_ide::EntityRef::Concept(c) => Some(c.raw()),
+                _ => None,
+            },
+            title: h.title,
+            representation: h.representation.unwrap_or_default(),
+            status: h.status.label().to_owned(),
+            details: h
+                .details
+                .iter()
+                .map(|d| pb::HoverDetail {
+                    label: d.label.clone(),
+                    value: d.value.clone(),
+                })
+                .collect(),
+            explanation: h.explanation.unwrap_or_default(),
         }),
         Err(e) => Resp::Error(session_error(&e)),
     }
@@ -551,6 +636,9 @@ fn payload_name(p: &Req) -> &'static str {
         Req::ListTargets(_) => "list_targets",
         Req::AnalyzeDeployment(_) => "analyze_deployment",
         Req::AnalyzeDefinitionDraft(_) => "analyze_definition_draft",
+        Req::DiscardDefinitionDraft(_) => "discard_definition_draft",
+        Req::CompleteDefinitionDraft(_) => "complete_definition_draft",
+        Req::HoverDefinitionDraft(_) => "hover_definition_draft",
         Req::Shutdown(_) => "shutdown",
     }
 }
