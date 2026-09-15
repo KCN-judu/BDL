@@ -1,0 +1,352 @@
+// BDL Studio <-> bdld protocol, version 0.1.
+//
+// Transport-independent.  Messages are exchanged as length-prefixed frames
+// (see crates/bdl-protocol/src/framing.rs); the transport is a child-process
+// stdio pair in v0.1.
+//
+// Rules:
+//   * every request carries a client-chosen `request_id`; the daemon answers
+//     with exactly one Response bearing the same id;
+//   * events are unsolicited and carry the project revision they describe;
+//   * the client MUST discard any response/event whose revision is older
+//     than the revision it already holds;
+//   * Flutter never derives semantic truth from these messages — it renders
+//     the projection the daemon sends.
+//
+// Field numbers are append-only.  Breaking changes bump `PROTOCOL_VERSION`.
+
+syntax = "proto3";
+
+package bdl.v1;
+
+// ---------------------------------------------------------------------------
+// Envelope
+// ---------------------------------------------------------------------------
+
+message ClientMessage {
+  uint64 request_id = 1;
+  oneof payload {
+    HandshakeRequest handshake = 10;
+    OpenProjectRequest open_project = 11;
+    InitProjectRequest init_project = 12;
+    SaveProjectRequest save_project = 13;
+    CloseProjectRequest close_project = 14;
+    GetProjectRequest get_project = 15;
+    ApplyEditRequest apply_edit = 16;
+    UndoRequest undo = 17;
+    RedoRequest redo = 18;
+    SetLayoutRequest set_layout = 19;
+    SubscribeProjectRequest subscribe_project = 20;
+    ShutdownRequest shutdown = 21;
+  }
+}
+
+message ServerMessage {
+  oneof payload {
+    Response response = 1;
+    Event event = 2;
+  }
+}
+
+message Response {
+  uint64 request_id = 1;
+  oneof payload {
+    Error error = 2;
+    HandshakeResponse handshake = 10;
+    ProjectResponse project = 11;
+    EditApplied edit_applied = 12;
+    Ack ack = 13;
+  }
+}
+
+message Event {
+  oneof payload {
+    ProjectChanged project_changed = 1;
+    DaemonLog log = 2;
+  }
+}
+
+message Ack {}
+
+// A structured failure of one request.  `code` is a stable machine-readable
+// identifier (e.g. "edit.duplicate_concept_name"); `message` is designer
+// readable; `details_json` carries the typed error for the expert view.
+message Error {
+  string code = 1;
+  string message = 2;
+  string details_json = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Handshake
+// ---------------------------------------------------------------------------
+
+message Version {
+  uint32 major = 1;
+  uint32 minor = 2;
+  uint32 patch = 3;
+}
+
+message HandshakeRequest {
+  Version client_protocol_version = 1;
+  string client_name = 2;
+  string client_version = 3;
+}
+
+message HandshakeResponse {
+  Version protocol_version = 1;
+  string compiler_version = 2;
+  string daemon_name = 3;
+  // True when the daemon accepts the client's protocol version.
+  bool compatible = 4;
+}
+
+// ---------------------------------------------------------------------------
+// Project lifecycle
+// ---------------------------------------------------------------------------
+
+message OpenProjectRequest {
+  string root_path = 1;
+}
+
+message InitProjectRequest {
+  string root_path = 1;
+  string name = 2;
+}
+
+message SaveProjectRequest {}
+
+message CloseProjectRequest {}
+
+message GetProjectRequest {}
+
+message SubscribeProjectRequest {}
+
+message ShutdownRequest {}
+
+message ProjectResponse {
+  ProjectProjection project = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Edits
+// ---------------------------------------------------------------------------
+
+message ApplyEditRequest {
+  // Revision the client believes it is editing.  The daemon refuses the edit
+  // if the project has moved on (code "edit.stale_revision").
+  uint64 base_revision = 1;
+  EditOp op = 2;
+}
+
+message UndoRequest {}
+message RedoRequest {}
+
+message EditApplied {
+  ProjectProjection project = 1;
+  EditOutcome outcome = 2;
+}
+
+message EditOp {
+  oneof op {
+    CreateConcept create_concept = 1;
+    RenameConcept rename_concept = 2;
+    SetConceptDescription set_concept_description = 3;
+    SetConceptRepresentation set_concept_representation = 4;
+    DeleteConcept delete_concept = 5;
+    CreateMapping create_mapping = 6;
+    RenameMapping rename_mapping = 7;
+    SetMappingDescription set_mapping_description = 8;
+    SetMappingSignature set_mapping_signature = 9;
+    AttachDefinition attach_definition = 10;
+    ReplaceDefinition replace_definition = 11;
+    DeleteMapping delete_mapping = 12;
+  }
+}
+
+message CreateConcept {
+  string name = 1;
+  string description = 2;
+  optional Representation representation = 3;
+}
+message RenameConcept {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetConceptDescription {
+  uint64 id = 1;
+  string description = 2;
+}
+message SetConceptRepresentation {
+  uint64 id = 1;
+  optional Representation representation = 2;
+}
+message DeleteConcept {
+  uint64 id = 1;
+}
+message CreateMapping {
+  string name = 1;
+  string description = 2;
+  Signature signature = 3;
+}
+message RenameMapping {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetMappingDescription {
+  uint64 id = 1;
+  string description = 2;
+}
+message SetMappingSignature {
+  uint64 id = 1;
+  Signature signature = 2;
+}
+message AttachDefinition {
+  uint64 id = 1;
+  Definition definition = 2;
+}
+message ReplaceDefinition {
+  uint64 id = 1;
+  // Absent = detach.
+  optional Definition definition = 2;
+}
+message DeleteMapping {
+  uint64 id = 1;
+}
+
+enum EditKind {
+  EDIT_KIND_UNSPECIFIED = 0;
+  EDIT_KIND_REFINEMENT = 1;
+  EDIT_KIND_EDIT = 2;
+}
+
+enum Invalidation {
+  INVALIDATION_UNSPECIFIED = 0;
+  INVALIDATION_INTERFACE = 1;
+  INVALIDATION_REALIZATION = 2;
+  INVALIDATION_SEMANTIC = 3;
+  INVALIDATION_REACTIVE = 4;
+  INVALIDATION_CLOCK = 5;
+  INVALIDATION_OUTPUT = 6;
+  INVALIDATION_DEPLOYMENT = 7;
+}
+
+message EditOutcome {
+  EditKind kind = 1;
+  repeated Invalidation invalidates = 2;
+  repeated uint64 origin_decls = 3;
+  optional uint64 created_concept = 4;
+  optional uint64 created_mapping = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Project projection (read model for rendering)
+// ---------------------------------------------------------------------------
+
+message ProjectProjection {
+  uint64 revision = 1;
+  string name = 2;
+  string root_path = 3;
+  repeated ConceptView concepts = 4;
+  repeated MappingView mappings = 5;
+  Layout layout = 6;
+  bool can_undo = 7;
+  bool can_redo = 8;
+  bool dirty = 9;
+}
+
+message ConceptView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  optional Representation representation = 4;
+}
+
+message MappingView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  Signature signature = 4;
+  optional Definition definition = 5;
+  AcceptanceState state = 6;
+}
+
+// The workspace states of the paper's interaction model.  Only the first two
+// are produced before the checker exists; the rest are reserved.
+enum AcceptanceState {
+  ACCEPTANCE_STATE_UNSPECIFIED = 0;
+  ACCEPTANCE_STATE_DECLARED = 1;
+  ACCEPTANCE_STATE_DEFINED = 2;
+  ACCEPTANCE_STATE_TYPE_VALID = 3;
+  ACCEPTANCE_STATE_TEMPORALLY_VALID = 4;
+  ACCEPTANCE_STATE_CLOCK_CONSISTENT = 5;
+  ACCEPTANCE_STATE_OUTPUT_COMPLETE = 6;
+  ACCEPTANCE_STATE_HARDWARE_FEASIBLE = 7;
+}
+
+message Signature {
+  repeated uint64 inputs = 1;
+  uint64 output = 2;
+}
+
+message Definition {
+  oneof kind {
+    string formula = 1;
+  }
+}
+
+message Representation {
+  oneof kind {
+    Dim quantity = 1;
+    Unit boolean = 2;
+    Unit count = 3;
+  }
+}
+
+message Unit {}
+
+message Dim {
+  sint32 length = 1;
+  sint32 mass = 2;
+  sint32 time = 3;
+  sint32 current = 4;
+  sint32 temperature = 5;
+  sint32 amount = 6;
+  sint32 luminous = 7;
+  sint32 angle = 8;
+}
+
+// ---------------------------------------------------------------------------
+// Layout (not semantics)
+// ---------------------------------------------------------------------------
+
+message Layout {
+  repeated NodePosition concepts = 1;
+  repeated NodePosition mappings = 2;
+}
+
+message NodePosition {
+  uint64 id = 1;
+  double x = 2;
+  double y = 3;
+}
+
+message SetLayoutRequest {
+  Layout layout = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+
+// Sent to subscribers after every committed revision.  v0.1 sends the full
+// projection; deltas are a planned protocol change (docs/PROTOCOL.md).
+message ProjectChanged {
+  ProjectProjection project = 1;
+  optional EditOutcome outcome = 2;
+}
+
+message DaemonLog {
+  string level = 1;
+  string message = 2;
+}

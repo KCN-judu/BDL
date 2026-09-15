@@ -1,0 +1,22 @@
+[package]
+name = "bdl-protocol"
+description = "Typed, versioned Studio <-> bdld protocol: protobuf messages, framing, and conversions to the project model"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+prost = { workspace = true }
+bytes = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }
+protox = { workspace = true }
+
+[lints]
+workspace = true
