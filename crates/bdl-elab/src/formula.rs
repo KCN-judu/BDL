@@ -48,15 +48,16 @@ impl STy {
     fn describe(&self) -> String {
         match self {
             STy::Q(d) => pretty::describe_dim(*d),
-            STy::Bool => "true or false".into(),
-            STy::Nat => "a count".into(),
-            STy::Error => "an erroneous value".into(),
+            STy::Bool => "true or false".to_string(),
+            STy::Nat => "a count".to_string(),
+            STy::Error => "an erroneous value".to_string(),
         }
     }
 }
 
 struct Elab<'a> {
     design: &'a Design,
+    ir: &'a DesignIr,
     mapping: &'a MappingBlock,
     env: InputEnv,
     /// Representation type of each input, `None` when unbound.
@@ -105,6 +106,7 @@ pub fn elaborate_formula(
         .collect();
     let mut el = Elab {
         design,
+        ir,
         mapping,
         env,
         input_tys,
@@ -252,16 +254,368 @@ impl Elab<'_> {
                     },
                 }
             }
-            ExprKind::Name(name) => self.name(name, e.span),
+            ExprKind::Name(name) => self.name(name, e.span, path),
             ExprKind::Unary { op, expr } => self.unary(*op, expr, e.span, path),
             ExprKind::Binary { op, lhs, rhs } => self.binary(*op, lhs, rhs, e.span, path),
             ExprKind::If { cond, then, els } => self.if_(cond, then, els, e.span, path),
-            // Parsed by the textual syntax; elaboration of these forms is the
-            // next surface milestone (DI-17 for calls).
-            ExprKind::Call { .. } => self.unsupported("a call", e.span),
+            ExprKind::Call { callee, args } => self.call(callee, args, e.span, path),
+            // Parsed by the textual syntax; `match` and blocks need a kernel
+            // extension mirrored in Lean first (DI-19).
             ExprKind::Match { .. } => self.unsupported("`match`", e.span),
             ExprKind::Block { .. } => self.unsupported("a block", e.span),
         }
+    }
+
+    /// The representation type of a concept's value, or the unbound
+    /// diagnostic (an *open* state, not an error).
+    fn rep_ty(&mut self, concept: SemanticId, span: Span, role: &str) -> STy {
+        match self.ir.representation_of(concept).and_then(STy::of) {
+            Some(ty) => ty,
+            None => {
+                let d = self.unbound(concept, span, role);
+                self.diags.push(d);
+                STy::Error
+            }
+        }
+    }
+
+    /// A surface expression that must denote a *semantic value* — an input,
+    /// a relationship without inputs, or a relationship applied to such
+    /// values.  Returns the Core term (typed `sem C`) and `C`.  Anything
+    /// else is refused: a formula may compute over representations, but a
+    /// concept value is only made by the relationship whose signature
+    /// announces it (the grant).
+    fn sem_value(&mut self, e: &SurfaceExpr, path: &mut ExprPath) -> Option<(Expr, SemanticId)> {
+        self.record(path, e.span);
+        match &e.kind {
+            ExprKind::Name(name) => match self.env.resolve(self.design, name) {
+                Lookup::Input(i) => {
+                    let n = self.mapping.signature.inputs.len();
+                    let index = (n - 1 - i) as u32;
+                    Some((Expr::Var { index }, self.mapping.signature.inputs[i]))
+                }
+                Lookup::Mapping(id) => {
+                    let m = &self.design.mappings[&id];
+                    if !m.signature.inputs.is_empty() {
+                        self.needs_arguments(m, e.span);
+                        return None;
+                    }
+                    Some((Expr::decl(id), m.signature.output))
+                }
+                _ => {
+                    // The value-position diagnostics apply (unknown, not an input…).
+                    self.name(name, e.span, path);
+                    None
+                }
+            },
+            ExprKind::Call { callee, args } => self.call_sem(callee, args, e.span, path),
+            _ => {
+                self.diags.push(
+                    Diagnostic::error(
+                        "formula.call.argument",
+                        self.entity(),
+                        "Only a concept's value can be passed to a relationship: an input, or another relationship's value.".to_string(),
+                    )
+                    .at(e.span)
+                    .explain("A relationship reads concept values; a computed number has no concept until the relationship that produces it makes one."),
+                );
+                None
+            }
+        }
+    }
+
+    fn needs_arguments(&mut self, m: &MappingBlock, span: Span) {
+        let params: Vec<String> = m
+            .signature
+            .inputs
+            .iter()
+            .map(|c| self.concept_name(*c))
+            .collect();
+        self.diags.push(
+            Diagnostic::error(
+                "formula.mapping.needs_arguments",
+                self.entity(),
+                format!(
+                    "{} reads {}; give it those values.",
+                    m.name,
+                    params.join(", ")
+                ),
+            )
+            .at(span)
+            .fix(format!("Write {}({}).", m.name, params.join(", "))),
+        );
+    }
+
+    /// `f(a₁, …, aₙ)` where `f` is a relationship: `app (… (app (declRef f) a₁) …) aₙ`,
+    /// typed `sem B`.  Argument i sits at path `[0]ⁿ⁻¹⁻ⁱ ++ [1]` from the
+    /// chain's root.
+    fn call_sem(
+        &mut self,
+        callee: &SurfaceExpr,
+        args: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+    ) -> Option<(Expr, SemanticId)> {
+        let ExprKind::Name(name) = &callee.kind else {
+            self.diags.push(
+                Diagnostic::error(
+                    "formula.call.not_a_relationship",
+                    self.entity(),
+                    "Only a relationship can be applied.".to_string(),
+                )
+                .at(callee.span),
+            );
+            return None;
+        };
+        let id = match self.env.resolve(self.design, name) {
+            Lookup::Mapping(id) => id,
+            Lookup::Input(_) | Lookup::NotAnInput(..) => {
+                self.diags.push(
+                    Diagnostic::error(
+                        "formula.call.not_a_relationship",
+                        self.entity(),
+                        format!("{name} is a concept, not a relationship; it cannot be applied."),
+                    )
+                    .at(callee.span),
+                );
+                return None;
+            }
+            _ => {
+                let relationships: Vec<&str> = self
+                    .design
+                    .mappings
+                    .values()
+                    .map(|m| m.name.as_str())
+                    .collect();
+                self.diags.push(
+                    Diagnostic::error(
+                        "formula.name.unknown",
+                        self.entity(),
+                        format!("`{name}` is not a relationship of this design."),
+                    )
+                    .at(callee.span)
+                    .fix(if relationships.is_empty() {
+                        "This design has no other relationship yet.".to_string()
+                    } else {
+                        format!("Relationships: {}.", relationships.join(", "))
+                    }),
+                );
+                return None;
+            }
+        };
+        let m = &self.design.mappings[&id];
+        let params = m.signature.inputs.clone();
+        let output = m.signature.output;
+        let mname = m.name.clone();
+        if params.len() != args.len() {
+            let names: Vec<String> = params.iter().map(|c| self.concept_name(*c)).collect();
+            self.diags.push(
+                Diagnostic::error(
+                    "formula.call.arity",
+                    self.entity(),
+                    format!(
+                        "{mname} reads {} value{} ({}), but {} {} given here.",
+                        params.len(),
+                        if params.len() == 1 { "" } else { "s" },
+                        names.join(", "),
+                        args.len(),
+                        if args.len() == 1 { "is" } else { "are" }
+                    ),
+                )
+                .at(span),
+            );
+            return None;
+        }
+        let n = args.len();
+        let mut ok = true;
+        let mut terms = Vec::with_capacity(n);
+        for (i, (arg, expected)) in args.iter().zip(params.iter()).enumerate() {
+            let depth = n - 1 - i;
+            path.extend(std::iter::repeat_n(0, depth));
+            path.push(1);
+            let value = self.sem_value(arg, path);
+            path.truncate(path.len() - depth - 1);
+            match value {
+                Some((term, concept)) => {
+                    if concept != *expected {
+                        let (want, got) =
+                            (self.concept_name(*expected), self.concept_name(concept));
+                        self.diags.push(
+                            Diagnostic::error(
+                                "formula.call.argument_type",
+                                self.entity(),
+                                format!("{mname} reads {want} here, but this is {got}."),
+                            )
+                            .at(arg.span)
+                            .explain("Concepts are identities: a value of one concept is never a value of another, whatever its representation."),
+                        );
+                        ok = false;
+                    }
+                    terms.push(term);
+                }
+                None => ok = false,
+            }
+        }
+        if !ok {
+            return None;
+        }
+        path.extend(std::iter::repeat_n(0, n));
+        self.record(path, callee.span);
+        path.truncate(path.len() - n);
+        Some((Expr::apps(Expr::decl(id), terms), output))
+    }
+
+    /// A call in value position: a relationship applied (its result's
+    /// representation, through `rep`), or one of the two temporal forms.
+    fn call(
+        &mut self,
+        callee: &SurfaceExpr,
+        args: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+    ) -> (Expr, STy) {
+        if let ExprKind::Name(name) = &callee.kind {
+            match name.as_str() {
+                "delay" => return self.temporal(false, args, span, path),
+                "sync" => return self.temporal(true, args, span, path),
+                _ => {}
+            }
+        }
+        // rep (chain) — the chain at [0]
+        path.push(0);
+        let value = self.call_sem(callee, args, span, path);
+        path.pop();
+        match value {
+            Some((term, concept)) => {
+                let ty = self.rep_ty(concept, span, "applies a relationship that produces");
+                (Expr::rep(term), ty)
+            }
+            None => (self.lit(Dim::ZERO, 0.0), STy::Error),
+        }
+    }
+
+    /// `delay(init, e)` and `sync(domain, init, e)`: the kernel's own memory
+    /// forms, reachable only from a relationship without inputs (memory
+    /// belongs to a relationship, not to a formula argument).
+    fn temporal(
+        &mut self,
+        sync: bool,
+        args: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+    ) -> (Expr, STy) {
+        let word = if sync { "sync" } else { "delay" };
+        let expected = if sync { 3 } else { 2 };
+        if args.len() != expected {
+            self.diags.push(
+                Diagnostic::error(
+                    "formula.temporal.arity",
+                    self.entity(),
+                    if sync {
+                        "`sync` takes a timing domain, an initial value and the value to observe: sync(domain, init, value).".to_string()
+                    } else {
+                        "`delay` takes an initial value and the value to remember: delay(init, value).".to_string()
+                    },
+                )
+                .at(span),
+            );
+            return (self.lit(Dim::ZERO, 0.0), STy::Error);
+        }
+        if !self.mapping.signature.inputs.is_empty() {
+            self.diags.push(
+                Diagnostic::error(
+                    "formula.temporal.under_inputs",
+                    self.entity(),
+                    format!("`{word}` can only be used in a relationship without inputs."),
+                )
+                .at(span)
+                .explain("Memory belongs to a relationship as a whole — a value per activation — not to a formula over its inputs. Read the inputs through relationships without inputs and remember there."),
+            );
+            return (self.lit(Dim::ZERO, 0.0), STy::Error);
+        }
+        let src = if sync {
+            let domain = &args[0];
+            let ExprKind::Name(dname) = &domain.kind else {
+                self.diags.push(
+                    Diagnostic::error(
+                        "formula.sync.unknown_domain",
+                        self.entity(),
+                        "The first argument of `sync` must name a timing domain.".to_string(),
+                    )
+                    .at(domain.span),
+                );
+                return (self.lit(Dim::ZERO, 0.0), STy::Error);
+            };
+            match self.design.clocks.values().find(|c| &c.name == dname) {
+                Some(c) => Some(c.id),
+                None => {
+                    let known: Vec<&str> = self
+                        .design
+                        .clocks
+                        .values()
+                        .map(|c| c.name.as_str())
+                        .collect();
+                    self.diags.push(
+                        Diagnostic::error(
+                            "formula.sync.unknown_domain",
+                            self.entity(),
+                            format!("`{dname}` is not a timing domain of this design."),
+                        )
+                        .at(domain.span)
+                        .fix(if known.is_empty() {
+                            "Create a timing domain first.".to_string()
+                        } else {
+                            format!("Timing domains: {}.", known.join(", "))
+                        }),
+                    );
+                    return (self.lit(Dim::ZERO, 0.0), STy::Error);
+                }
+            }
+        } else {
+            None
+        };
+        let (init, value) = if sync {
+            (&args[1], &args[2])
+        } else {
+            (&args[0], &args[1])
+        };
+        // Delay { init, e } / Sync { src, init, e }: init at [0], e at [1]
+        path.push(0);
+        let (ie, it) = self.expr(init, path);
+        path.pop();
+        path.push(1);
+        let (ve, vt) = self.expr(value, path);
+        path.pop();
+        if it == STy::Error || vt == STy::Error {
+            return (ie, STy::Error);
+        }
+        if it != vt {
+            self.diags.push(
+                Diagnostic::error(
+                    "type.temporal_mismatch",
+                    self.entity(),
+                    format!(
+                        "The initial value is {} but the remembered value is {}.",
+                        it.describe(),
+                        vt.describe()
+                    ),
+                )
+                .at(span),
+            );
+            return (ie, STy::Error);
+        }
+        let term = match src {
+            None => Expr::Delay {
+                init: Box::new(ie),
+                e: Box::new(ve),
+            },
+            Some(src) => Expr::Sync {
+                src,
+                init: Box::new(ie),
+                e: Box::new(ve),
+            },
+        };
+        (term, vt)
     }
 
     fn unsupported(&mut self, what: &str, span: Span) -> (Expr, STy) {
@@ -272,14 +626,32 @@ impl Elab<'_> {
                 format!("{what} cannot be used in a formula yet."),
             )
             .at(span)
-            .explain("Formulas currently combine the mapping's inputs with arithmetic, comparisons, `&&`, `||`, `!` and `if`."),
+            .explain("Formulas combine the mapping's inputs and other relationships' values with arithmetic, comparisons, `&&`, `||`, `!`, `if`, `delay` and `sync`."),
         );
         (self.lit(Dim::ZERO, 0.0), STy::Error)
     }
 
-    fn name(&mut self, name: &str, span: Span) -> (Expr, STy) {
+    fn name(&mut self, name: &str, span: Span, path: &mut ExprPath) -> (Expr, STy) {
         let n = self.mapping.signature.inputs.len();
         match self.env.resolve(self.design, name) {
+            Lookup::Mapping(id) => {
+                let m = &self.design.mappings[&id];
+                if !m.signature.inputs.is_empty() {
+                    self.needs_arguments(m, span);
+                    return (self.lit(Dim::ZERO, 0.0), STy::Error);
+                }
+                // rep (declRef m) — the reference at [0]
+                let output = m.signature.output;
+                path.push(0);
+                self.record(path, span);
+                path.pop();
+                let ty = self.rep_ty(
+                    output,
+                    span,
+                    "reads the value of a relationship that produces",
+                );
+                (Expr::rep(Expr::decl(id)), ty)
+            }
             Lookup::Input(i) => {
                 // input i is bound by the (n-1-i)-th innermost lambda
                 let index = (n - 1 - i) as u32;
@@ -320,6 +692,21 @@ impl Elab<'_> {
             }
             Lookup::Unknown => {
                 let available = self.env.names();
+                let relationships: Vec<&str> = self
+                    .design
+                    .mappings
+                    .values()
+                    .filter(|m| m.id != self.mapping.id)
+                    .map(|m| m.name.as_str())
+                    .collect();
+                let mut fix = if available.is_empty() {
+                    "This mapping reads nothing; connect a concept to it first.".to_string()
+                } else {
+                    format!("Available: {}.", available.join(", "))
+                };
+                if !relationships.is_empty() {
+                    fix.push_str(&format!(" Relationships: {}.", relationships.join(", ")));
+                }
                 self.diags.push(
                     Diagnostic::error(
                         "formula.name.unknown",
@@ -327,11 +714,7 @@ impl Elab<'_> {
                         format!("`{name}` is not something this mapping reads."),
                     )
                     .at(span)
-                    .fix(if available.is_empty() {
-                        "This mapping reads nothing; connect a concept to it first.".to_string()
-                    } else {
-                        format!("Available: {}.", available.join(", "))
-                    }),
+                    .fix(fix),
                 );
                 (self.lit(Dim::ZERO, 0.0), STy::Error)
             }

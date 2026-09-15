@@ -12,11 +12,14 @@ concept Tilt        representation = quantity, angle          (sem#0 : q[rad])
 concept Brightness  representation = quantity, dimensionless  (sem#1 : q[1])
 mapping dimByTilt : Tilt -> Brightness   formula  Tilt / 90 deg
 ```
-Plus, at Core level (the surface cannot say this yet, DI-17):
+Plus, since DI-17 closed, in the surface itself:
 ```
-tilt       : Tilt         unresolved      → an input
-brightness : Brightness   := dimByTilt tilt
+mapping tilt : Tilt          no definition, in interaction    → an input
+mapping brightness : Brightness  formula  dimByTilt(tilt), in interaction
 ```
+(`crates/bdl-compiler/tests/surface_to_backend.rs` runs exactly this
+design from the surface through the reference evaluator and the generated
+core.)
 
 ## 1. Parse (`bdl-syntax`)
 

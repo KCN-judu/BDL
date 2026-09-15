@@ -203,6 +203,76 @@ fn formula_completions(
         });
     }
 
+    // Other relationships (DI-17): a value when it has no inputs, a call to
+    // complete when it has some.  The mapping's own name is not offered
+    // (an instantaneous self-reference is a cycle; memory uses `delay`).
+    if !unit_position {
+        for m in design.mappings.values() {
+            if m.id == mapping || !matches(&m.name) {
+                continue;
+            }
+            let ty = ExpectedType::of(
+                design
+                    .concepts
+                    .get(&m.signature.output)
+                    .and_then(|c| c.representation),
+            );
+            let callable = !m.signature.inputs.is_empty();
+            let params: Vec<String> = m
+                .signature
+                .inputs
+                .iter()
+                .map(|c| {
+                    design
+                        .concepts
+                        .get(c)
+                        .map(|c| c.name.clone())
+                        .unwrap_or_default()
+                })
+                .collect();
+            out.push(SemanticCompletion {
+                label: if callable {
+                    format!("{}({})", m.name, params.join(", "))
+                } else {
+                    m.name.clone()
+                },
+                kind: CompletionKind::Mapping,
+                entity: Some(EntityRef::Mapping(m.id)),
+                resulting_type: Some(ty.describe()),
+                replace,
+                insert: if callable {
+                    format!("{}(", m.name)
+                } else {
+                    m.name.clone()
+                },
+                relevance: rank(&expected, &ty).saturating_sub(5),
+                documentation: Some(if callable {
+                    format!("relationship: reads {}", params.join(", "))
+                } else {
+                    "relationship without inputs: its current value".to_string()
+                }),
+            });
+        }
+        for (name, doc) in [
+            ("delay", "delay(init, value): the value at the previous activation; init at the first"),
+            ("sync", "sync(domain, init, value): the value at the source domain's last activation strictly before now"),
+        ] {
+            if !matches(name) || !block.signature.inputs.is_empty() {
+                continue;
+            }
+            out.push(SemanticCompletion {
+                label: format!("{name}(…)"),
+                kind: CompletionKind::Keyword,
+                entity: None,
+                resulting_type: None,
+                replace,
+                insert: format!("{name}("),
+                relevance: 15,
+                documentation: Some(doc.to_string()),
+            });
+        }
+    }
+
     for u in bdl_elab::units::UNITS {
         if !matches(u.name) {
             continue;

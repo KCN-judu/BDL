@@ -581,7 +581,9 @@ Core IR
 | no definition | `definition: None` | unresolved declaration — a legal state |
 | `f(a, b) = e` | `Definition::Formula` | realization `λa.λb. mk C (…)` |
 | `90 deg` | number `90` with unit `deg` | scaled dimensioned literal (linear units only, DI-7) |
-| `f(x)` | call | `app (declRef f) x` (DI-17: elaboration support pending) |
+| `f(x)` | call of a relationship on concept values (an input or a relationship without inputs) | `rep (app (declRef f) x)` in value position (DI-17, closed) |
+| `g` (a relationship without inputs, named) | reference | `rep (declRef g)` |
+| `delay(init, e)` · `sync(domain, init, e)` | memory, only in a relationship without inputs | `Delay { init, e }` · `Sync { src, init, e }` |
 | `enum`, `match`, constructors, blocks, `let` | not yet in the surface model | not in the kernel — syntax only in this milestone |
 
 Rules the syntax layer keeps out of itself: `SemanticId`, `DeclId`,
