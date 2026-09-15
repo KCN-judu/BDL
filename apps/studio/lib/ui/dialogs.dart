@@ -14,11 +14,11 @@ import 'package:flutter/material.dart';
 
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
-import 'canvas/canvas_geometry.dart' show dimLabel;
 import 'canvas/node_canvas.dart' show NodePreview;
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
+import 'units.dart';
 
 // ---------------------------------------------------------------------------
 // Sheet chrome
@@ -129,23 +129,11 @@ class _NewConceptFormState extends State<_NewConceptForm> {
   final _name = TextEditingController();
   final _description = TextEditingController();
   _Kind _kind = _Kind.open;
-  String _dim = 'dimensionless';
-
-  static final dims = <String, pb.Dim>{
-    'dimensionless': pb.Dim(),
-    'angle': pb.Dim(angle: 1),
-    'length': pb.Dim(length: 1),
-    'time': pb.Dim(time: 1),
-    'temperature': pb.Dim(temperature: 1),
-    'mass': pb.Dim(mass: 1),
-    'current': pb.Dim(current: 1),
-    'angular rate': pb.Dim(angle: 1, time: -1),
-    'speed': pb.Dim(length: 1, time: -1),
-  };
+  UnitPreset _unit = unitPresets.first;
 
   pb.Representation? get _representation => switch (_kind) {
     _Kind.open => null,
-    _Kind.quantity => pb.Representation(quantity: dims[_dim]!),
+    _Kind.quantity => pb.Representation(quantity: _unit.dim),
     _Kind.boolean => pb.Representation(boolean: pb.Unit()),
     _Kind.count => pb.Representation(count: pb.Unit()),
   };
@@ -201,14 +189,14 @@ class _NewConceptFormState extends State<_NewConceptForm> {
         ),
         if (_kind == _Kind.quantity)
           FormRow(
-            label: 'Dimension',
-            child: MacDropdown<String>(
-              value: _dim,
-              items: dims.keys.toList(),
-              labelOf: (k) => k,
+            label: 'Unit',
+            child: MacDropdown<UnitPreset>(
+              value: _unit,
+              items: unitPresets,
+              labelOf: (p) => p.name,
               // the unit symbol sits in its own column, secondary colour
-              detailOf: (k) => dimLabel(dims[k]!),
-              onChanged: (k) => setState(() => _dim = k),
+              detailOf: (p) => p.symbol,
+              onChanged: (p) => setState(() => _unit = p),
             ),
           ),
         FormRow(
@@ -229,7 +217,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
           _Kind.open =>
             'Open socket: the kind can be chosen later; relationships can already use it.',
           _Kind.quantity =>
-            'Filled socket: a measured value. Its dimension is checked in every formula.',
+            'Filled socket: a measured value. Its unit is checked in every formula.',
           _Kind.boolean => 'Filled socket: true or false — activates contexts, gates behaviour.',
           _Kind.count => 'Filled socket: a whole number — occurrences, steps, items.',
         }, style: TextStyle(fontSize: 11, color: t.textSecondary)),

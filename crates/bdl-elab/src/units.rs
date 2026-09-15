@@ -87,6 +87,16 @@ pub const UNITS: &[UnitDef] = &[
         dim: Dim::TEMPERATURE,
         factor: 1.0,
     },
+    UnitDef {
+        name: "cd",
+        dim: Dim::LUMINOUS,
+        factor: 1.0,
+    },
+    UnitDef {
+        name: "mol",
+        dim: Dim::AMOUNT,
+        factor: 1.0,
+    },
 ];
 
 pub fn lookup(name: &str) -> Option<&'static UnitDef> {

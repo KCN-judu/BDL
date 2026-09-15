@@ -232,7 +232,7 @@ Every operation is an `EditOp` the compiler already accepts:
 
 | Object | Inspector fields | Op | Kind |
 |---|---|---|---|
-| Concept | name (inline), description, representation (none / quantity + dimension / boolean / count) | Rename, SetDescription, SetRepresentation | refinement; **rebinding** a representation is an edit and the inspector says so |
+| Concept | name (inline), description, representation (none / quantity + unit / boolean / count) | Rename, SetDescription, SetRepresentation | refinement; **rebinding** a representation is an edit and the inspector says so |
 | Concept | Delete | DeleteConcept | refused while used; banner names the users |
 | Mapping | name, description, inputs (add/remove concept), output | Rename, SetDescription, SetSignature | signature change is an edit; inspector shows "will reopen validation of dependents" |
 | Mapping | definition: attach formula / replace / detach | AttachDefinition, ReplaceDefinition | attach is a refinement; replace/detach is an edit |
@@ -251,7 +251,7 @@ the entries will become (`NodePreview`, painted by the same `NodePainter`
 as the canvas):
 
 * **New concept**: Name · Kind (Quantity / On–off / Count / Decide later) ·
-  Dimension (when quantity) · Meaning. The preview's socket fills when a
+  Unit (when quantity) · Meaning. The preview's socket fills when a
   kind is chosen and stays hollow with *open* when it is not; a one-line
   caption under the preview states what that socket means. The socket is
   grey because its colour is the identity the compiler will allocate.

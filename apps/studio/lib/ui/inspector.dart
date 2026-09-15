@@ -12,6 +12,7 @@ import 'canvas/canvas_geometry.dart' show dimLabel;
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
+import 'units.dart';
 
 class Inspector extends StatelessWidget {
   const Inspector({super.key, required this.state, required this.dispatch});
@@ -244,31 +245,17 @@ class _ConceptInspector extends StatelessWidget {
   }
 }
 
-/// Representation chooser: none / quantity (+ dimension preset) / boolean / count.
+/// Representation chooser: none / quantity (+ unit preset) / boolean / count.
 class _RepresentationEditor extends StatelessWidget {
   const _RepresentationEditor({required this.current, required this.onChanged});
   final pb.Representation? current;
   final void Function(pb.Representation?) onChanged;
 
-  static final _dims = <String, pb.Dim>{
-    'dimensionless': pb.Dim(),
-    'angle (rad)': pb.Dim(angle: 1),
-    'length (m)': pb.Dim(length: 1),
-    'time (s)': pb.Dim(time: 1),
-    'temperature (K)': pb.Dim(temperature: 1),
-    'mass (kg)': pb.Dim(mass: 1),
-    'current (A)': pb.Dim(current: 1),
-    'angular rate (rad/s)': pb.Dim(angle: 1, time: -1),
-    'speed (m/s)': pb.Dim(length: 1, time: -1),
-  };
-
   @override
   Widget build(BuildContext context) {
     final kind = current?.whichKind() ?? pb.Representation_Kind.notSet;
     final dim = kind == pb.Representation_Kind.quantity ? current!.quantity : null;
-    final preset = dim == null
-        ? null
-        : _dims.entries.where((e) => e.value == dim).map((e) => e.key).firstOrNull ?? dimLabel(dim);
+    final preset = dim == null ? null : unitPresetFor(dim);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -291,12 +278,15 @@ class _RepresentationEditor extends StatelessWidget {
         if (kind == pb.Representation_Kind.quantity) ...[
           const SizedBox(height: 8),
           FormRow(
-            label: 'Dimension',
-            child: MacDropdown<String>(
-              value: _dims.containsKey(preset) ? preset : null,
-              hint: preset ?? 'choose',
-              items: _dims.keys.toList(),
-              onChanged: (k) => onChanged(pb.Representation(quantity: _dims[k]!)),
+            label: 'Unit',
+            child: MacDropdown<UnitPreset>(
+              value: preset,
+              // a dimension outside the presets is still shown, as its symbol
+              hint: dim == null ? null : dimLabel(dim),
+              items: unitPresets,
+              labelOf: (p) => p.name,
+              detailOf: (p) => p.symbol,
+              onChanged: (p) => onChanged(pb.Representation(quantity: p.dim)),
             ),
           ),
         ],
