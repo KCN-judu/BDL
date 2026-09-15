@@ -171,10 +171,13 @@ class _Banner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
       child: Row(
         children: [
-          Icon(Icons.error_outline, size: 16, color: t.error),
+          // The machine code is the explanation layer's: behind the icon.
+          Tooltip(
+            message: error.code,
+            child: Icon(Icons.error_outline, size: 16, color: t.error),
+          ),
           const SizedBox(width: 8),
           Expanded(child: Text(error.message)),
-          Text(error.code, style: TextStyle(fontSize: 10, color: t.textTertiary)),
           const SizedBox(width: 8),
           TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
         ],
