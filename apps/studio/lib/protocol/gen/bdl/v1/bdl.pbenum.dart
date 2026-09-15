@@ -241,6 +241,37 @@ class DiagnosticSeverity extends $pb.ProtobufEnum {
   const DiagnosticSeverity._(super.value, super.name);
 }
 
+class ActionApplicability extends $pb.ProtobufEnum {
+  static const ActionApplicability ACTION_APPLICABILITY_UNSPECIFIED =
+      ActionApplicability._(0, _omitEnumNames ? '' : 'ACTION_APPLICABILITY_UNSPECIFIED');
+
+  /// `edits` can be applied as they are.
+  static const ActionApplicability ACTION_APPLICABILITY_READY =
+      ActionApplicability._(1, _omitEnumNames ? '' : 'ACTION_APPLICABILITY_READY');
+
+  /// The designer picks one of `options`; the tool never guesses.
+  static const ActionApplicability ACTION_APPLICABILITY_NEEDS_CHOICE =
+      ActionApplicability._(2, _omitEnumNames ? '' : 'ACTION_APPLICABILITY_NEEDS_CHOICE');
+
+  /// The language cannot express the fix yet; `reason` says why.
+  static const ActionApplicability ACTION_APPLICABILITY_BLOCKED =
+      ActionApplicability._(3, _omitEnumNames ? '' : 'ACTION_APPLICABILITY_BLOCKED');
+
+  static const $core.List<ActionApplicability> values = <ActionApplicability>[
+    ACTION_APPLICABILITY_UNSPECIFIED,
+    ACTION_APPLICABILITY_READY,
+    ACTION_APPLICABILITY_NEEDS_CHOICE,
+    ACTION_APPLICABILITY_BLOCKED,
+  ];
+
+  static final $core.List<ActionApplicability?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static ActionApplicability? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const ActionApplicability._(super.value, super.name);
+}
+
 class DeploymentStatus extends $pb.ProtobufEnum {
   static const DeploymentStatus DEPLOYMENT_STATUS_UNSPECIFIED =
       DeploymentStatus._(0, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_UNSPECIFIED');

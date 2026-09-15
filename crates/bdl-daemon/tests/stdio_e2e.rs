@@ -424,6 +424,7 @@ fn vertical_slice_steps_1_to_12() {
                     x: 3.0,
                     y: 4.0,
                 }],
+                outputs: vec![],
             }),
         }),
         &mut events,
@@ -585,6 +586,77 @@ fn outputs_and_deployment_over_stdio() {
             .any(|d| d.code == "output.missing_driver"
                 && d.severity() == pb::DiagnosticSeverity::Info)
     );
+
+    // the everyday card for an entity, and the fixes bdl-ide offers for it
+    let entity = |kind: pb::entity_ref::Kind| pb::EntityRef { kind: Some(kind) };
+    let Resp::DraftHover(h) = c.call(
+        Req::HoverEntity(pb::HoverEntityRequest {
+            revision: c.last_revision,
+            entity: Some(entity(pb::entity_ref::Kind::MappingId(level))),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a hover")
+    };
+    assert!(h.found);
+    assert_eq!(h.title, "cruise");
+    assert_eq!(h.signature, "mapping cruise : Speed");
+    assert_eq!(h.mapping_id, level);
+    assert!(!h.status.is_empty());
+    let Resp::DraftHover(none) = c.call(
+        Req::HoverEntity(pb::HoverEntityRequest {
+            revision: c.last_revision,
+            entity: Some(entity(pb::entity_ref::Kind::MappingId(999))),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a hover")
+    };
+    assert!(!none.found);
+    let Resp::SemanticActions(acts) = c.call(
+        Req::ListSemanticActions(pb::ListSemanticActionsRequest {
+            revision: c.last_revision,
+            entity: Some(entity(pb::entity_ref::Kind::OutputId(motor))),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected actions")
+    };
+    // the undriven sink offers "connect a driver" as a choice among the
+    // mappings that could drive it, never a guess
+    let connect = acts
+        .actions
+        .iter()
+        .find(|a| a.addresses.iter().any(|c| c == "output.missing_driver"))
+        .expect("a fix for the missing driver");
+    assert_eq!(
+        connect.applicability(),
+        pb::ActionApplicability::NeedsChoice
+    );
+    assert!(connect
+        .options
+        .iter()
+        .any(|o| o
+            .edit
+            .as_ref()
+            .unwrap()
+            .op
+            .as_ref()
+            .is_some_and(|op| matches!(
+                op,
+                pb::edit_op::Op::SetMappingDrive(d) if d.id == level && d.output_id == Some(motor)
+            ))));
+    // a stale revision is refused like every other read of the world
+    let Resp::Error(e) = c.call(
+        Req::ListSemanticActions(pb::ListSemanticActionsRequest {
+            revision: c.last_revision - 1,
+            entity: Some(entity(pb::entity_ref::Kind::OutputId(motor))),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a refusal")
+    };
+    assert_eq!(e.code, "draft.stale_revision");
 
     let applied = apply(
         &mut c,

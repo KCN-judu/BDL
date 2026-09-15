@@ -155,6 +155,23 @@ final $typed_data.Uint8List diagnosticSeverityDescriptor = $convert
         'AAEh0KGURJQUdOT1NUSUNfU0VWRVJJVFlfRVJST1IQARIfChtESUFHTk9TVElDX1NFVkVSSVRZ'
         'X1dBUk5JTkcQAhIcChhESUFHTk9TVElDX1NFVkVSSVRZX0lORk8QAw==');
 
+@$core.Deprecated('Use actionApplicabilityDescriptor instead')
+const ActionApplicability$json = {
+  '1': 'ActionApplicability',
+  '2': [
+    {'1': 'ACTION_APPLICABILITY_UNSPECIFIED', '2': 0},
+    {'1': 'ACTION_APPLICABILITY_READY', '2': 1},
+    {'1': 'ACTION_APPLICABILITY_NEEDS_CHOICE', '2': 2},
+    {'1': 'ACTION_APPLICABILITY_BLOCKED', '2': 3},
+  ],
+};
+
+/// Descriptor for `ActionApplicability`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List actionApplicabilityDescriptor = $convert
+    .base64Decode('ChNBY3Rpb25BcHBsaWNhYmlsaXR5EiQKIEFDVElPTl9BUFBMSUNBQklMSVRZX1VOU1BFQ0lGSU'
+        'VEEAASHgoaQUNUSU9OX0FQUExJQ0FCSUxJVFlfUkVBRFkQARIlCiFBQ1RJT05fQVBQTElDQUJJ'
+        'TElUWV9ORUVEU19DSE9JQ0UQAhIgChxBQ1RJT05fQVBQTElDQUJJTElUWV9CTE9DS0VEEAM=');
+
 @$core.Deprecated('Use deploymentStatusDescriptor instead')
 const DeploymentStatus$json = {
   '1': 'DeploymentStatus',
@@ -359,6 +376,24 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'hoverDefinitionDraft'
     },
+    {
+      '1': 'hover_entity',
+      '3': 32,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.HoverEntityRequest',
+      '9': 0,
+      '10': 'hoverEntity'
+    },
+    {
+      '1': 'list_semantic_actions',
+      '3': 33,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListSemanticActionsRequest',
+      '9': 0,
+      '10': 'listSemanticActions'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -395,8 +430,10 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'NjYXJkRGVmaW5pdGlvbkRyYWZ0EmQKGWNvbXBsZXRlX2RlZmluaXRpb25fZHJhZnQYHiABKAsy'
         'Ji5iZGwudjEuQ29tcGxldGVEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSF2NvbXBsZXRlRGVmaW'
         '5pdGlvbkRyYWZ0ElsKFmhvdmVyX2RlZmluaXRpb25fZHJhZnQYHyABKAsyIy5iZGwudjEuSG92'
-        'ZXJEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSFGhvdmVyRGVmaW5pdGlvbkRyYWZ0QgkKB3BheW'
-        'xvYWQ=');
+        'ZXJEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSFGhvdmVyRGVmaW5pdGlvbkRyYWZ0Ej8KDGhvdm'
+        'VyX2VudGl0eRggIAEoCzIaLmJkbC52MS5Ib3ZlckVudGl0eVJlcXVlc3RIAFILaG92ZXJFbnRp'
+        'dHkSWAoVbGlzdF9zZW1hbnRpY19hY3Rpb25zGCEgASgLMiIuYmRsLnYxLkxpc3RTZW1hbnRpY0'
+        'FjdGlvbnNSZXF1ZXN0SABSE2xpc3RTZW1hbnRpY0FjdGlvbnNCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -513,6 +550,15 @@ const Response$json = {
       '9': 0,
       '10': 'draftHover'
     },
+    {
+      '1': 'semantic_actions',
+      '3': 21,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SemanticActionsResponse',
+      '9': 0,
+      '10': 'semanticActions'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -534,7 +580,8 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'aW5pdGlvbkRyYWZ0QW5hbHlzaXNIAFIPZGVmaW5pdGlvbkRyYWZ0EkwKEGRyYWZ0X2NvbXBsZX'
         'Rpb24YEyABKAsyHy5iZGwudjEuRHJhZnRDb21wbGV0aW9uUmVzcG9uc2VIAFIPZHJhZnRDb21w'
         'bGV0aW9uEj0KC2RyYWZ0X2hvdmVyGBQgASgLMhouYmRsLnYxLkRyYWZ0SG92ZXJSZXNwb25zZU'
-        'gAUgpkcmFmdEhvdmVyQgkKB3BheWxvYWQ=');
+        'gAUgpkcmFmdEhvdmVyEkwKEHNlbWFudGljX2FjdGlvbnMYFSABKAsyHy5iZGwudjEuU2VtYW50'
+        'aWNBY3Rpb25zUmVzcG9uc2VIAFIPc2VtYW50aWNBY3Rpb25zQgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -1871,13 +1918,15 @@ const Layout$json = {
   '2': [
     {'1': 'concepts', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'concepts'},
     {'1': 'mappings', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'mappings'},
+    {'1': 'outputs', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'outputs'},
   ],
 };
 
 /// Descriptor for `Layout`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List layoutDescriptor = $convert
     .base64Decode('CgZMYXlvdXQSMAoIY29uY2VwdHMYASADKAsyFC5iZGwudjEuTm9kZVBvc2l0aW9uUghjb25jZX'
-        'B0cxIwCghtYXBwaW5ncxgCIAMoCzIULmJkbC52MS5Ob2RlUG9zaXRpb25SCG1hcHBpbmdz');
+        'B0cxIwCghtYXBwaW5ncxgCIAMoCzIULmJkbC52MS5Ob2RlUG9zaXRpb25SCG1hcHBpbmdzEi4K'
+        'B291dHB1dHMYAyADKAsyFC5iZGwudjEuTm9kZVBvc2l0aW9uUgdvdXRwdXRz');
 
 @$core.Deprecated('Use nodePositionDescriptor instead')
 const NodePosition$json = {
@@ -2450,10 +2499,23 @@ const DraftHoverResponse$json = {
     {'1': 'status', '3': 8, '4': 1, '5': 9, '10': 'status'},
     {'1': 'details', '3': 9, '4': 3, '5': 11, '6': '.bdl.v1.HoverDetail', '10': 'details'},
     {'1': 'explanation', '3': 10, '4': 1, '5': 9, '10': 'explanation'},
+    {
+      '1': 'entity',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.EntityRef',
+      '9': 2,
+      '10': 'entity',
+      '17': true
+    },
+    {'1': 'signature', '3': 12, '4': 1, '5': 9, '10': 'signature'},
+    {'1': 'open', '3': 13, '4': 1, '5': 8, '10': 'open'},
   ],
   '8': [
     {'1': '_span'},
     {'1': '_concept_id'},
+    {'1': '_entity'},
   ],
 };
 
@@ -2465,7 +2527,124 @@ final $typed_data.Uint8List draftHoverResponseDescriptor = $convert
         'gBUgljb25jZXB0SWSIAQESFAoFdGl0bGUYBiABKAlSBXRpdGxlEiYKDnJlcHJlc2VudGF0aW9u'
         'GAcgASgJUg5yZXByZXNlbnRhdGlvbhIWCgZzdGF0dXMYCCABKAlSBnN0YXR1cxItCgdkZXRhaW'
         'xzGAkgAygLMhMuYmRsLnYxLkhvdmVyRGV0YWlsUgdkZXRhaWxzEiAKC2V4cGxhbmF0aW9uGAog'
-        'ASgJUgtleHBsYW5hdGlvbkIHCgVfc3BhbkINCgtfY29uY2VwdF9pZA==');
+        'ASgJUgtleHBsYW5hdGlvbhIuCgZlbnRpdHkYCyABKAsyES5iZGwudjEuRW50aXR5UmVmSAJSBm'
+        'VudGl0eYgBARIcCglzaWduYXR1cmUYDCABKAlSCXNpZ25hdHVyZRISCgRvcGVuGA0gASgIUgRv'
+        'cGVuQgcKBV9zcGFuQg0KC19jb25jZXB0X2lkQgkKB19lbnRpdHk=');
+
+@$core.Deprecated('Use entityRefDescriptor instead')
+const EntityRef$json = {
+  '1': 'EntityRef',
+  '2': [
+    {'1': 'project', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'project'},
+    {'1': 'concept_id', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'conceptId'},
+    {'1': 'mapping_id', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'mappingId'},
+    {'1': 'clock_id', '3': 4, '4': 1, '5': 4, '9': 0, '10': 'clockId'},
+    {'1': 'output_id', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'outputId'},
+    {'1': 'device_id', '3': 6, '4': 1, '5': 4, '9': 0, '10': 'deviceId'},
+  ],
+  '8': [
+    {'1': 'kind'},
+  ],
+};
+
+/// Descriptor for `EntityRef`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List entityRefDescriptor = $convert
+    .base64Decode('CglFbnRpdHlSZWYSKAoHcHJvamVjdBgBIAEoCzIMLmJkbC52MS5Vbml0SABSB3Byb2plY3QSHw'
+        'oKY29uY2VwdF9pZBgCIAEoBEgAUgljb25jZXB0SWQSHwoKbWFwcGluZ19pZBgDIAEoBEgAUglt'
+        'YXBwaW5nSWQSGwoIY2xvY2tfaWQYBCABKARIAFIHY2xvY2tJZBIdCglvdXRwdXRfaWQYBSABKA'
+        'RIAFIIb3V0cHV0SWQSHQoJZGV2aWNlX2lkGAYgASgESABSCGRldmljZUlkQgYKBGtpbmQ=');
+
+@$core.Deprecated('Use hoverEntityRequestDescriptor instead')
+const HoverEntityRequest$json = {
+  '1': 'HoverEntityRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'entity', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.EntityRef', '10': 'entity'},
+  ],
+};
+
+/// Descriptor for `HoverEntityRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List hoverEntityRequestDescriptor = $convert
+    .base64Decode('ChJIb3ZlckVudGl0eVJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEikKBmVudG'
+        'l0eRgCIAEoCzIRLmJkbC52MS5FbnRpdHlSZWZSBmVudGl0eQ==');
+
+@$core.Deprecated('Use listSemanticActionsRequestDescriptor instead')
+const ListSemanticActionsRequest$json = {
+  '1': 'ListSemanticActionsRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'entity', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.EntityRef', '10': 'entity'},
+  ],
+};
+
+/// Descriptor for `ListSemanticActionsRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listSemanticActionsRequestDescriptor = $convert
+    .base64Decode('ChpMaXN0U2VtYW50aWNBY3Rpb25zUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb2'
+        '4SKQoGZW50aXR5GAIgASgLMhEuYmRsLnYxLkVudGl0eVJlZlIGZW50aXR5');
+
+@$core.Deprecated('Use semanticActionsResponseDescriptor instead')
+const SemanticActionsResponse$json = {
+  '1': 'SemanticActionsResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'entity', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.EntityRef', '10': 'entity'},
+    {'1': 'actions', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.SemanticActionView', '10': 'actions'},
+  ],
+};
+
+/// Descriptor for `SemanticActionsResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticActionsResponseDescriptor = $convert
+    .base64Decode('ChdTZW1hbnRpY0FjdGlvbnNSZXNwb25zZRIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SKQ'
+        'oGZW50aXR5GAIgASgLMhEuYmRsLnYxLkVudGl0eVJlZlIGZW50aXR5EjQKB2FjdGlvbnMYAyAD'
+        'KAsyGi5iZGwudjEuU2VtYW50aWNBY3Rpb25WaWV3UgdhY3Rpb25z');
+
+@$core.Deprecated('Use semanticActionViewDescriptor instead')
+const SemanticActionView$json = {
+  '1': 'SemanticActionView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'title', '3': 2, '4': 1, '5': 9, '10': 'title'},
+    {'1': 'kind', '3': 3, '4': 1, '5': 9, '10': 'kind'},
+    {
+      '1': 'applicability',
+      '3': 4,
+      '4': 1,
+      '5': 14,
+      '6': '.bdl.v1.ActionApplicability',
+      '10': 'applicability'
+    },
+    {'1': 'reason', '3': 5, '4': 1, '5': 9, '10': 'reason'},
+    {'1': 'options', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.ActionChoiceView', '10': 'options'},
+    {'1': 'explanation', '3': 7, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'edits', '3': 8, '4': 3, '5': 11, '6': '.bdl.v1.EditOp', '10': 'edits'},
+    {'1': 'addresses', '3': 9, '4': 3, '5': 9, '10': 'addresses'},
+    {'1': 'invalidation', '3': 10, '4': 1, '5': 9, '10': 'invalidation'},
+  ],
+};
+
+/// Descriptor for `SemanticActionView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticActionViewDescriptor = $convert
+    .base64Decode('ChJTZW1hbnRpY0FjdGlvblZpZXcSDgoCaWQYASABKAlSAmlkEhQKBXRpdGxlGAIgASgJUgV0aX'
+        'RsZRISCgRraW5kGAMgASgJUgRraW5kEkEKDWFwcGxpY2FiaWxpdHkYBCABKA4yGy5iZGwudjEu'
+        'QWN0aW9uQXBwbGljYWJpbGl0eVINYXBwbGljYWJpbGl0eRIWCgZyZWFzb24YBSABKAlSBnJlYX'
+        'NvbhIyCgdvcHRpb25zGAYgAygLMhguYmRsLnYxLkFjdGlvbkNob2ljZVZpZXdSB29wdGlvbnMS'
+        'IAoLZXhwbGFuYXRpb24YByABKAlSC2V4cGxhbmF0aW9uEiQKBWVkaXRzGAggAygLMg4uYmRsLn'
+        'YxLkVkaXRPcFIFZWRpdHMSHAoJYWRkcmVzc2VzGAkgAygJUglhZGRyZXNzZXMSIgoMaW52YWxp'
+        'ZGF0aW9uGAogASgJUgxpbnZhbGlkYXRpb24=');
+
+@$core.Deprecated('Use actionChoiceViewDescriptor instead')
+const ActionChoiceView$json = {
+  '1': 'ActionChoiceView',
+  '2': [
+    {'1': 'label', '3': 1, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'edit', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.EditOp', '10': 'edit'},
+  ],
+};
+
+/// Descriptor for `ActionChoiceView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List actionChoiceViewDescriptor = $convert
+    .base64Decode('ChBBY3Rpb25DaG9pY2VWaWV3EhQKBWxhYmVsGAEgASgJUgVsYWJlbBIiCgRlZGl0GAIgASgLMg'
+        '4uYmRsLnYxLkVkaXRPcFIEZWRpdA==');
 
 @$core.Deprecated('Use hoverDetailDescriptor instead')
 const HoverDetail$json = {

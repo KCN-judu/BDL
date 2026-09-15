@@ -44,6 +44,8 @@ enum ClientMessage_Payload {
   discardDefinitionDraft,
   completeDefinitionDraft,
   hoverDefinitionDraft,
+  hoverEntity,
+  listSemanticActions,
   notSet
 }
 
@@ -72,6 +74,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     DiscardDefinitionDraftRequest? discardDefinitionDraft,
     CompleteDefinitionDraftRequest? completeDefinitionDraft,
     HoverDefinitionDraftRequest? hoverDefinitionDraft,
+    HoverEntityRequest? hoverEntity,
+    ListSemanticActionsRequest? listSemanticActions,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -97,6 +101,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (discardDefinitionDraft != null) result.discardDefinitionDraft = discardDefinitionDraft;
     if (completeDefinitionDraft != null) result.completeDefinitionDraft = completeDefinitionDraft;
     if (hoverDefinitionDraft != null) result.hoverDefinitionDraft = hoverDefinitionDraft;
+    if (hoverEntity != null) result.hoverEntity = hoverEntity;
+    if (listSemanticActions != null) result.listSemanticActions = listSemanticActions;
     return result;
   }
 
@@ -132,13 +138,39 @@ class ClientMessage extends $pb.GeneratedMessage {
     29: ClientMessage_Payload.discardDefinitionDraft,
     30: ClientMessage_Payload.completeDefinitionDraft,
     31: ClientMessage_Payload.hoverDefinitionDraft,
+    32: ClientMessage_Payload.hoverEntity,
+    33: ClientMessage_Payload.listSemanticActions,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ClientMessage.$_createMessage)
-    ..oo(
-        0, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31])
+    ..oo(0, [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+    ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<HandshakeRequest>(10, _omitFieldNames ? '' : 'handshake',
@@ -183,6 +215,10 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: CompleteDefinitionDraftRequest.$_createMessage)
     ..aOM<HoverDefinitionDraftRequest>(31, _omitFieldNames ? '' : 'hoverDefinitionDraft',
         subBuilder: HoverDefinitionDraftRequest.$_createMessage)
+    ..aOM<HoverEntityRequest>(32, _omitFieldNames ? '' : 'hoverEntity',
+        subBuilder: HoverEntityRequest.$_createMessage)
+    ..aOM<ListSemanticActionsRequest>(33, _omitFieldNames ? '' : 'listSemanticActions',
+        subBuilder: ListSemanticActionsRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -227,6 +263,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(29)
   @$pb.TagNumber(30)
   @$pb.TagNumber(31)
+  @$pb.TagNumber(32)
+  @$pb.TagNumber(33)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -250,6 +288,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(29)
   @$pb.TagNumber(30)
   @$pb.TagNumber(31)
+  @$pb.TagNumber(32)
+  @$pb.TagNumber(33)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -502,6 +542,28 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearHoverDefinitionDraft() => $_clearField(31);
   @$pb.TagNumber(31)
   HoverDefinitionDraftRequest ensureHoverDefinitionDraft() => $_ensure(22);
+
+  @$pb.TagNumber(32)
+  HoverEntityRequest get hoverEntity => $_getN(23);
+  @$pb.TagNumber(32)
+  set hoverEntity(HoverEntityRequest value) => $_setField(32, value);
+  @$pb.TagNumber(32)
+  $core.bool hasHoverEntity() => $_has(23);
+  @$pb.TagNumber(32)
+  void clearHoverEntity() => $_clearField(32);
+  @$pb.TagNumber(32)
+  HoverEntityRequest ensureHoverEntity() => $_ensure(23);
+
+  @$pb.TagNumber(33)
+  ListSemanticActionsRequest get listSemanticActions => $_getN(24);
+  @$pb.TagNumber(33)
+  set listSemanticActions(ListSemanticActionsRequest value) => $_setField(33, value);
+  @$pb.TagNumber(33)
+  $core.bool hasListSemanticActions() => $_has(24);
+  @$pb.TagNumber(33)
+  void clearListSemanticActions() => $_clearField(33);
+  @$pb.TagNumber(33)
+  ListSemanticActionsRequest ensureListSemanticActions() => $_ensure(24);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -602,6 +664,7 @@ enum Response_Payload {
   definitionDraft,
   draftCompletion,
   draftHover,
+  semanticActions,
   notSet
 }
 
@@ -620,6 +683,7 @@ class Response extends $pb.GeneratedMessage {
     DefinitionDraftAnalysis? definitionDraft,
     DraftCompletionResponse? draftCompletion,
     DraftHoverResponse? draftHover,
+    SemanticActionsResponse? semanticActions,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -635,6 +699,7 @@ class Response extends $pb.GeneratedMessage {
     if (definitionDraft != null) result.definitionDraft = definitionDraft;
     if (draftCompletion != null) result.draftCompletion = draftCompletion;
     if (draftHover != null) result.draftHover = draftHover;
+    if (semanticActions != null) result.semanticActions = semanticActions;
     return result;
   }
 
@@ -660,12 +725,13 @@ class Response extends $pb.GeneratedMessage {
     18: Response_Payload.definitionDraft,
     19: Response_Payload.draftCompletion,
     20: Response_Payload.draftHover,
+    21: Response_Payload.semanticActions,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -690,6 +756,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: DraftCompletionResponse.$_createMessage)
     ..aOM<DraftHoverResponse>(20, _omitFieldNames ? '' : 'draftHover',
         subBuilder: DraftHoverResponse.$_createMessage)
+    ..aOM<SemanticActionsResponse>(21, _omitFieldNames ? '' : 'semanticActions',
+        subBuilder: SemanticActionsResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -724,6 +792,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(18)
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
+  @$pb.TagNumber(21)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -737,6 +806,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(18)
   @$pb.TagNumber(19)
   @$pb.TagNumber(20)
+  @$pb.TagNumber(21)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -879,6 +949,17 @@ class Response extends $pb.GeneratedMessage {
   void clearDraftHover() => $_clearField(20);
   @$pb.TagNumber(20)
   DraftHoverResponse ensureDraftHover() => $_ensure(12);
+
+  @$pb.TagNumber(21)
+  SemanticActionsResponse get semanticActions => $_getN(13);
+  @$pb.TagNumber(21)
+  set semanticActions(SemanticActionsResponse value) => $_setField(21, value);
+  @$pb.TagNumber(21)
+  $core.bool hasSemanticActions() => $_has(13);
+  @$pb.TagNumber(21)
+  void clearSemanticActions() => $_clearField(21);
+  @$pb.TagNumber(21)
+  SemanticActionsResponse ensureSemanticActions() => $_ensure(13);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -5939,10 +6020,12 @@ class Layout extends $pb.GeneratedMessage {
   factory Layout({
     $core.Iterable<NodePosition>? concepts,
     $core.Iterable<NodePosition>? mappings,
+    $core.Iterable<NodePosition>? outputs,
   }) {
     final result = Layout._();
     if (concepts != null) result.concepts.addAll(concepts);
     if (mappings != null) result.mappings.addAll(mappings);
+    if (outputs != null) result.outputs.addAll(outputs);
     return result;
   }
 
@@ -5961,6 +6044,8 @@ class Layout extends $pb.GeneratedMessage {
     ..pPM<NodePosition>(1, _omitFieldNames ? '' : 'concepts',
         subBuilder: NodePosition.$_createMessage)
     ..pPM<NodePosition>(2, _omitFieldNames ? '' : 'mappings',
+        subBuilder: NodePosition.$_createMessage)
+    ..pPM<NodePosition>(3, _omitFieldNames ? '' : 'outputs',
         subBuilder: NodePosition.$_createMessage)
     ..hasRequiredFields = false;
 
@@ -5989,6 +6074,9 @@ class Layout extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(2)
   $pb.PbList<NodePosition> get mappings => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<NodePosition> get outputs => $_getList(2);
 }
 
 class NodePosition extends $pb.GeneratedMessage {
@@ -8621,6 +8709,9 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     $core.String? status,
     $core.Iterable<HoverDetail>? details,
     $core.String? explanation,
+    EntityRef? entity,
+    $core.String? signature,
+    $core.bool? open,
   }) {
     final result = DraftHoverResponse._();
     if (revision != null) result.revision = revision;
@@ -8633,6 +8724,9 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     if (status != null) result.status = status;
     if (details != null) result.details.addAll(details);
     if (explanation != null) result.explanation = explanation;
+    if (entity != null) result.entity = entity;
+    if (signature != null) result.signature = signature;
+    if (open != null) result.open = open;
     return result;
   }
 
@@ -8661,6 +8755,9 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     ..aOS(8, _omitFieldNames ? '' : 'status')
     ..pPM<HoverDetail>(9, _omitFieldNames ? '' : 'details', subBuilder: HoverDetail.$_createMessage)
     ..aOS(10, _omitFieldNames ? '' : 'explanation')
+    ..aOM<EntityRef>(11, _omitFieldNames ? '' : 'entity', subBuilder: EntityRef.$_createMessage)
+    ..aOS(12, _omitFieldNames ? '' : 'signature')
+    ..aOB(13, _omitFieldNames ? '' : 'open')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -8770,6 +8867,635 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
   $core.bool hasExplanation() => $_has(9);
   @$pb.TagNumber(10)
   void clearExplanation() => $_clearField(10);
+
+  /// Set by HoverEntity for entities other than concepts.
+  @$pb.TagNumber(11)
+  EntityRef get entity => $_getN(10);
+  @$pb.TagNumber(11)
+  set entity(EntityRef value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasEntity() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearEntity() => $_clearField(11);
+  @$pb.TagNumber(11)
+  EntityRef ensureEntity() => $_ensure(10);
+
+  /// The surface signature (`dimByTilt : Tilt -> Brightness`), when the
+  /// entity has one.
+  @$pb.TagNumber(12)
+  $core.String get signature => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set signature($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasSignature() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearSignature() => $_clearField(12);
+
+  /// Whether the status is one of the open (undecided) states rather than
+  /// a settled or a wrong one.
+  @$pb.TagNumber(13)
+  $core.bool get open => $_getBF(12);
+  @$pb.TagNumber(13)
+  set open($core.bool value) => $_setBool(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasOpen() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearOpen() => $_clearField(13);
+}
+
+enum EntityRef_Kind { project, conceptId, mappingId, clockId, outputId, deviceId, notSet }
+
+/// A stable entity of the design, by identity (never by name).
+class EntityRef extends $pb.GeneratedMessage {
+  factory EntityRef({
+    Unit? project,
+    $fixnum.Int64? conceptId,
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? clockId,
+    $fixnum.Int64? outputId,
+    $fixnum.Int64? deviceId,
+  }) {
+    final result = EntityRef._();
+    if (project != null) result.project = project;
+    if (conceptId != null) result.conceptId = conceptId;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (clockId != null) result.clockId = clockId;
+    if (outputId != null) result.outputId = outputId;
+    if (deviceId != null) result.deviceId = deviceId;
+    return result;
+  }
+
+  EntityRef._();
+
+  factory EntityRef.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      EntityRef()..mergeFromBuffer(data, registry);
+  factory EntityRef.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      EntityRef()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, EntityRef_Kind> _EntityRef_KindByTag = {
+    1: EntityRef_Kind.project,
+    2: EntityRef_Kind.conceptId,
+    3: EntityRef_Kind.mappingId,
+    4: EntityRef_Kind.clockId,
+    5: EntityRef_Kind.outputId,
+    6: EntityRef_Kind.deviceId,
+    0: EntityRef_Kind.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'EntityRef',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: EntityRef.$_createMessage)
+    ..oo(0, [1, 2, 3, 4, 5, 6])
+    ..aOM<Unit>(1, _omitFieldNames ? '' : 'project', subBuilder: Unit.$_createMessage)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'clockId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'outputId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(6, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  EntityRef clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  EntityRef copyWith(void Function(EntityRef) updates) =>
+      super.copyWith((message) => updates(message as EntityRef)) as EntityRef;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use EntityRef() / EntityRef.new instead')
+  static EntityRef create() => EntityRef._();
+  static $pb.GeneratedMessage $_createMessage() => EntityRef._();
+  @$core.override
+  EntityRef createEmptyInstance() => EntityRef._();
+  @$core.pragma('dart2js:noInline')
+  static EntityRef getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<EntityRef>(EntityRef.$_createMessage);
+  static EntityRef? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  EntityRef_Kind whichKind() => _EntityRef_KindByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  void clearKind() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  Unit get project => $_getN(0);
+  @$pb.TagNumber(1)
+  set project(Unit value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasProject() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearProject() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Unit ensureProject() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get conceptId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set conceptId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasConceptId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearConceptId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get mappingId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set mappingId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMappingId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMappingId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get clockId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set clockId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasClockId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearClockId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get outputId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set outputId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOutputId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOutputId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get deviceId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set deviceId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasDeviceId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearDeviceId() => $_clearField(6);
+}
+
+/// The everyday hover card for any entity (a canvas node, a library row):
+/// the same DraftHoverResponse as a formula hover, with `entity` set.
+/// `found` is false when the entity does not exist at `revision`.
+class HoverEntityRequest extends $pb.GeneratedMessage {
+  factory HoverEntityRequest({
+    $fixnum.Int64? revision,
+    EntityRef? entity,
+  }) {
+    final result = HoverEntityRequest._();
+    if (revision != null) result.revision = revision;
+    if (entity != null) result.entity = entity;
+    return result;
+  }
+
+  HoverEntityRequest._();
+
+  factory HoverEntityRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverEntityRequest()..mergeFromBuffer(data, registry);
+  factory HoverEntityRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      HoverEntityRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'HoverEntityRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: HoverEntityRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<EntityRef>(2, _omitFieldNames ? '' : 'entity', subBuilder: EntityRef.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverEntityRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  HoverEntityRequest copyWith(void Function(HoverEntityRequest) updates) =>
+      super.copyWith((message) => updates(message as HoverEntityRequest)) as HoverEntityRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use HoverEntityRequest() / HoverEntityRequest.new instead')
+  static HoverEntityRequest create() => HoverEntityRequest._();
+  static $pb.GeneratedMessage $_createMessage() => HoverEntityRequest._();
+  @$core.override
+  HoverEntityRequest createEmptyInstance() => HoverEntityRequest._();
+  @$core.pragma('dart2js:noInline')
+  static HoverEntityRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<HoverEntityRequest>(HoverEntityRequest.$_createMessage);
+  static HoverEntityRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  EntityRef get entity => $_getN(1);
+  @$pb.TagNumber(2)
+  set entity(EntityRef value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEntity() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEntity() => $_clearField(2);
+  @$pb.TagNumber(2)
+  EntityRef ensureEntity() => $_ensure(1);
+}
+
+/// The actions bdl-ide offers for an entity: the fixes for its diagnostics
+/// plus its context actions.  Read-only; applying one is an ordinary
+/// ApplyEdit of the plan's edits, sent by the client against the revision
+/// it holds.
+class ListSemanticActionsRequest extends $pb.GeneratedMessage {
+  factory ListSemanticActionsRequest({
+    $fixnum.Int64? revision,
+    EntityRef? entity,
+  }) {
+    final result = ListSemanticActionsRequest._();
+    if (revision != null) result.revision = revision;
+    if (entity != null) result.entity = entity;
+    return result;
+  }
+
+  ListSemanticActionsRequest._();
+
+  factory ListSemanticActionsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListSemanticActionsRequest()..mergeFromBuffer(data, registry);
+  factory ListSemanticActionsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListSemanticActionsRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListSemanticActionsRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListSemanticActionsRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<EntityRef>(2, _omitFieldNames ? '' : 'entity', subBuilder: EntityRef.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListSemanticActionsRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListSemanticActionsRequest copyWith(void Function(ListSemanticActionsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListSemanticActionsRequest))
+          as ListSemanticActionsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListSemanticActionsRequest() / ListSemanticActionsRequest.new instead')
+  static ListSemanticActionsRequest create() => ListSemanticActionsRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListSemanticActionsRequest._();
+  @$core.override
+  ListSemanticActionsRequest createEmptyInstance() => ListSemanticActionsRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListSemanticActionsRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListSemanticActionsRequest>(
+          ListSemanticActionsRequest.$_createMessage);
+  static ListSemanticActionsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  EntityRef get entity => $_getN(1);
+  @$pb.TagNumber(2)
+  set entity(EntityRef value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEntity() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEntity() => $_clearField(2);
+  @$pb.TagNumber(2)
+  EntityRef ensureEntity() => $_ensure(1);
+}
+
+class SemanticActionsResponse extends $pb.GeneratedMessage {
+  factory SemanticActionsResponse({
+    $fixnum.Int64? revision,
+    EntityRef? entity,
+    $core.Iterable<SemanticActionView>? actions,
+  }) {
+    final result = SemanticActionsResponse._();
+    if (revision != null) result.revision = revision;
+    if (entity != null) result.entity = entity;
+    if (actions != null) result.actions.addAll(actions);
+    return result;
+  }
+
+  SemanticActionsResponse._();
+
+  factory SemanticActionsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticActionsResponse()..mergeFromBuffer(data, registry);
+  factory SemanticActionsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticActionsResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SemanticActionsResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticActionsResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<EntityRef>(2, _omitFieldNames ? '' : 'entity', subBuilder: EntityRef.$_createMessage)
+    ..pPM<SemanticActionView>(3, _omitFieldNames ? '' : 'actions',
+        subBuilder: SemanticActionView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticActionsResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticActionsResponse copyWith(void Function(SemanticActionsResponse) updates) =>
+      super.copyWith((message) => updates(message as SemanticActionsResponse))
+          as SemanticActionsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticActionsResponse() / SemanticActionsResponse.new instead')
+  static SemanticActionsResponse create() => SemanticActionsResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticActionsResponse._();
+  @$core.override
+  SemanticActionsResponse createEmptyInstance() => SemanticActionsResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticActionsResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SemanticActionsResponse>(
+          SemanticActionsResponse.$_createMessage);
+  static SemanticActionsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  EntityRef get entity => $_getN(1);
+  @$pb.TagNumber(2)
+  set entity(EntityRef value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEntity() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEntity() => $_clearField(2);
+  @$pb.TagNumber(2)
+  EntityRef ensureEntity() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<SemanticActionView> get actions => $_getList(2);
+}
+
+class SemanticActionView extends $pb.GeneratedMessage {
+  factory SemanticActionView({
+    $core.String? id,
+    $core.String? title,
+    $core.String? kind,
+    ActionApplicability? applicability,
+    $core.String? reason,
+    $core.Iterable<ActionChoiceView>? options,
+    $core.String? explanation,
+    $core.Iterable<EditOp>? edits,
+    $core.Iterable<$core.String>? addresses,
+    $core.String? invalidation,
+  }) {
+    final result = SemanticActionView._();
+    if (id != null) result.id = id;
+    if (title != null) result.title = title;
+    if (kind != null) result.kind = kind;
+    if (applicability != null) result.applicability = applicability;
+    if (reason != null) result.reason = reason;
+    if (options != null) result.options.addAll(options);
+    if (explanation != null) result.explanation = explanation;
+    if (edits != null) result.edits.addAll(edits);
+    if (addresses != null) result.addresses.addAll(addresses);
+    if (invalidation != null) result.invalidation = invalidation;
+    return result;
+  }
+
+  SemanticActionView._();
+
+  factory SemanticActionView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticActionView()..mergeFromBuffer(data, registry);
+  factory SemanticActionView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticActionView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SemanticActionView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticActionView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'title')
+    ..aOS(3, _omitFieldNames ? '' : 'kind')
+    ..aE<ActionApplicability>(4, _omitFieldNames ? '' : 'applicability',
+        enumValues: ActionApplicability.values)
+    ..aOS(5, _omitFieldNames ? '' : 'reason')
+    ..pPM<ActionChoiceView>(6, _omitFieldNames ? '' : 'options',
+        subBuilder: ActionChoiceView.$_createMessage)
+    ..aOS(7, _omitFieldNames ? '' : 'explanation')
+    ..pPM<EditOp>(8, _omitFieldNames ? '' : 'edits', subBuilder: EditOp.$_createMessage)
+    ..pPS(9, _omitFieldNames ? '' : 'addresses')
+    ..aOS(10, _omitFieldNames ? '' : 'invalidation')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticActionView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticActionView copyWith(void Function(SemanticActionView) updates) =>
+      super.copyWith((message) => updates(message as SemanticActionView)) as SemanticActionView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticActionView() / SemanticActionView.new instead')
+  static SemanticActionView create() => SemanticActionView._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticActionView._();
+  @$core.override
+  SemanticActionView createEmptyInstance() => SemanticActionView._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticActionView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SemanticActionView>(SemanticActionView.$_createMessage);
+  static SemanticActionView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get title => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set title($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTitle() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTitle() => $_clearField(2);
+
+  /// "quick_fix" or "refactor".
+  @$pb.TagNumber(3)
+  $core.String get kind => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set kind($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasKind() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearKind() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  ActionApplicability get applicability => $_getN(3);
+  @$pb.TagNumber(4)
+  set applicability(ActionApplicability value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasApplicability() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearApplicability() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get reason => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set reason($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasReason() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearReason() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<ActionChoiceView> get options => $_getList(5);
+
+  @$pb.TagNumber(7)
+  $core.String get explanation => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set explanation($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasExplanation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearExplanation() => $_clearField(7);
+
+  /// The model edits of a ready plan, in order.  Text/draft edits of a
+  /// plan are not carried here (the LSP applies those).
+  @$pb.TagNumber(8)
+  $pb.PbList<EditOp> get edits => $_getList(7);
+
+  /// Diagnostic codes the action addresses.
+  @$pb.TagNumber(9)
+  $pb.PbList<$core.String> get addresses => $_getList(8);
+
+  /// Product-language summary of what the plan would reopen.
+  @$pb.TagNumber(10)
+  $core.String get invalidation => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set invalidation($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasInvalidation() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearInvalidation() => $_clearField(10);
+}
+
+class ActionChoiceView extends $pb.GeneratedMessage {
+  factory ActionChoiceView({
+    $core.String? label,
+    EditOp? edit,
+  }) {
+    final result = ActionChoiceView._();
+    if (label != null) result.label = label;
+    if (edit != null) result.edit = edit;
+    return result;
+  }
+
+  ActionChoiceView._();
+
+  factory ActionChoiceView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ActionChoiceView()..mergeFromBuffer(data, registry);
+  factory ActionChoiceView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ActionChoiceView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ActionChoiceView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ActionChoiceView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'label')
+    ..aOM<EditOp>(2, _omitFieldNames ? '' : 'edit', subBuilder: EditOp.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ActionChoiceView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ActionChoiceView copyWith(void Function(ActionChoiceView) updates) =>
+      super.copyWith((message) => updates(message as ActionChoiceView)) as ActionChoiceView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ActionChoiceView() / ActionChoiceView.new instead')
+  static ActionChoiceView create() => ActionChoiceView._();
+  static $pb.GeneratedMessage $_createMessage() => ActionChoiceView._();
+  @$core.override
+  ActionChoiceView createEmptyInstance() => ActionChoiceView._();
+  @$core.pragma('dart2js:noInline')
+  static ActionChoiceView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ActionChoiceView>(ActionChoiceView.$_createMessage);
+  static ActionChoiceView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get label => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set label($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasLabel() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLabel() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  EditOp get edit => $_getN(1);
+  @$pb.TagNumber(2)
+  set edit(EditOp value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEdit() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEdit() => $_clearField(2);
+  @$pb.TagNumber(2)
+  EditOp ensureEdit() => $_ensure(1);
 }
 
 class HoverDetail extends $pb.GeneratedMessage {

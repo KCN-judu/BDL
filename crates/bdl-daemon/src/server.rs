@@ -263,6 +263,8 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         }
         Req::CompleteDefinitionDraft(r) => (complete_definition_draft(session, &r), None),
         Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
+        Req::HoverEntity(r) => (hover_entity(session, &r), None),
+        Req::ListSemanticActions(r) => (list_semantic_actions(session, &r), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -351,31 +353,201 @@ fn hover_definition_draft(session: &mut Session, r: &pb::HoverDefinitionDraftReq
             ..Default::default()
         }),
         Ok(Some((range, h))) => Resp::DraftHover(pb::DraftHoverResponse {
-            revision: r.revision,
             mapping_id: r.mapping_id,
-            found: true,
             span: Some(pb::SourceSpan {
                 start: range.start,
                 end: range.end,
             }),
-            concept_id: match h.entity {
-                bdl_ide::EntityRef::Concept(c) => Some(c.raw()),
-                _ => None,
-            },
-            title: h.title,
-            representation: h.representation.unwrap_or_default(),
-            status: h.status.label().to_owned(),
-            details: h
-                .details
-                .iter()
-                .map(|d| pb::HoverDetail {
-                    label: d.label.clone(),
-                    value: d.value.clone(),
-                })
-                .collect(),
-            explanation: h.explanation.unwrap_or_default(),
+            ..hover_to_pb(h, r.revision)
         }),
         Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn entity_from_pb(e: Option<&pb::EntityRef>) -> Result<bdl_ide::EntityRef, pb::Error> {
+    use pb::entity_ref::Kind;
+    let kind = e
+        .and_then(|e| e.kind.as_ref())
+        .ok_or_else(|| error("protocol.missing_field", "entity is required"))?;
+    Ok(match kind {
+        Kind::Project(_) => bdl_ide::EntityRef::Project,
+        Kind::ConceptId(id) => bdl_ide::EntityRef::Concept(bdl_model::SemanticId::from_raw(*id)),
+        Kind::MappingId(id) => bdl_ide::EntityRef::Mapping(bdl_model::DeclId::from_raw(*id)),
+        Kind::ClockId(id) => bdl_ide::EntityRef::Clock(bdl_model::ClockId::from_raw(*id)),
+        Kind::OutputId(id) => bdl_ide::EntityRef::Output(bdl_model::OutputId::from_raw(*id)),
+        Kind::DeviceId(id) => bdl_ide::EntityRef::Device(bdl_model::DeviceId::from_raw(*id)),
+    })
+}
+
+fn entity_to_pb(e: bdl_ide::EntityRef) -> pb::EntityRef {
+    use pb::entity_ref::Kind;
+    pb::EntityRef {
+        kind: Some(match e {
+            bdl_ide::EntityRef::Project => Kind::Project(pb::Unit {}),
+            bdl_ide::EntityRef::Concept(c) => Kind::ConceptId(c.raw()),
+            bdl_ide::EntityRef::Mapping(m) => Kind::MappingId(m.raw()),
+            bdl_ide::EntityRef::Clock(c) => Kind::ClockId(c.raw()),
+            bdl_ide::EntityRef::Output(o) => Kind::OutputId(o.raw()),
+            bdl_ide::EntityRef::Device(d) => Kind::DeviceId(d.raw()),
+            bdl_ide::EntityRef::Requirement { device, .. } => Kind::DeviceId(device.raw()),
+        }),
+    }
+}
+
+fn hover_to_pb(h: bdl_ide::SemanticHover, revision: u64) -> pb::DraftHoverResponse {
+    pb::DraftHoverResponse {
+        revision,
+        found: true,
+        concept_id: match h.entity {
+            bdl_ide::EntityRef::Concept(c) => Some(c.raw()),
+            _ => None,
+        },
+        mapping_id: match h.entity {
+            bdl_ide::EntityRef::Mapping(m) => m.raw(),
+            _ => 0,
+        },
+        entity: Some(entity_to_pb(h.entity)),
+        title: h.title,
+        signature: h.signature.unwrap_or_default(),
+        representation: h.representation.unwrap_or_default(),
+        status: h.status.label().to_owned(),
+        open: h.status.is_open(),
+        details: h
+            .details
+            .iter()
+            .map(|d| pb::HoverDetail {
+                label: d.label.clone(),
+                value: d.value.clone(),
+            })
+            .collect(),
+        explanation: h.explanation.unwrap_or_default(),
+        ..Default::default()
+    }
+}
+
+/// The everyday card for a canvas node or a library row.
+fn hover_entity(session: &mut Session, r: &pb::HoverEntityRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let entity = match entity_from_pb(r.entity.as_ref()) {
+        Ok(e) => e,
+        Err(e) => return Resp::Error(e),
+    };
+    let snapshot = match session.ide_snapshot() {
+        Ok(s) => s,
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    match bdl_ide::hover(&snapshot, entity) {
+        Some(h) => Resp::DraftHover(hover_to_pb(h, r.revision)),
+        None => Resp::DraftHover(pb::DraftHoverResponse {
+            revision: r.revision,
+            found: false,
+            entity: Some(entity_to_pb(entity)),
+            ..Default::default()
+        }),
+    }
+}
+
+/// The fixes for an entity's diagnostics plus its context actions, as
+/// bdl-ide offers them.  Ready plans carry their model edits; the client
+/// applies them as ordinary revisioned edits.
+fn list_semantic_actions(session: &mut Session, r: &pb::ListSemanticActionsRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let entity = match entity_from_pb(r.entity.as_ref()) {
+        Ok(e) => e,
+        Err(e) => return Resp::Error(e),
+    };
+    let snapshot = match session.ide_snapshot() {
+        Ok(s) => s,
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    let mut actions = Vec::new();
+    let mut seen = std::collections::BTreeSet::new();
+    let scope = match entity {
+        bdl_ide::EntityRef::Project => bdl_ide::DiagnosticScope::Project,
+        e => bdl_ide::DiagnosticScope::Entity(e),
+    };
+    for d in &bdl_ide::diagnostics(&snapshot, scope).items {
+        for a in bdl_ide::actions_for(&snapshot, d) {
+            if seen.insert(a.id.clone()) {
+                actions.push(a);
+            }
+        }
+    }
+    for a in bdl_ide::actions_at(&snapshot, entity) {
+        if seen.insert(a.id.clone()) {
+            actions.push(a);
+        }
+    }
+    Resp::SemanticActions(pb::SemanticActionsResponse {
+        revision: r.revision,
+        entity: Some(entity_to_pb(entity)),
+        actions: actions.iter().map(action_to_pb).collect(),
+    })
+}
+
+fn action_to_pb(a: &bdl_ide::SemanticAction) -> pb::SemanticActionView {
+    use bdl_ide::{ActionKind, Applicability, SemanticOperation};
+    let (applicability, reason, options) = match &a.applicability {
+        Applicability::Ready => (pb::ActionApplicability::Ready, String::new(), Vec::new()),
+        Applicability::NeedsChoice { options } => (
+            pb::ActionApplicability::NeedsChoice,
+            String::new(),
+            options
+                .iter()
+                .map(|c| pb::ActionChoiceView {
+                    label: c.label.clone(),
+                    edit: Some(convert::edit_op_to_pb(&c.edit)),
+                })
+                .collect(),
+        ),
+        Applicability::Blocked { reason } => {
+            (pb::ActionApplicability::Blocked, reason.clone(), Vec::new())
+        }
+    };
+    let edits = a
+        .plan
+        .iter()
+        .flat_map(|p| p.operations.iter())
+        .filter_map(|op| match op {
+            SemanticOperation::Model { edit } => Some(convert::edit_op_to_pb(edit)),
+            _ => None,
+        })
+        .collect();
+    let invalidation = a
+        .plan
+        .as_ref()
+        .map(|p| {
+            if p.invalidation.is_refinement() {
+                "a refinement: nothing established elsewhere is reopened".to_owned()
+            } else {
+                let facts: Vec<String> = p
+                    .invalidation
+                    .categories
+                    .iter()
+                    .map(|f| format!("{f:?}").to_lowercase())
+                    .collect();
+                format!("an edit: reopens {}", facts.join(", "))
+            }
+        })
+        .unwrap_or_default();
+    pb::SemanticActionView {
+        id: a.id.to_string(),
+        title: a.title.clone(),
+        kind: match a.kind {
+            ActionKind::QuickFix => "quick_fix".into(),
+            ActionKind::Refactor => "refactor".into(),
+        },
+        applicability: applicability.into(),
+        reason,
+        options,
+        explanation: a.explanation.clone(),
+        edits,
+        addresses: a.addresses.clone(),
+        invalidation,
     }
 }
 
@@ -639,6 +811,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::DiscardDefinitionDraft(_) => "discard_definition_draft",
         Req::CompleteDefinitionDraft(_) => "complete_definition_draft",
         Req::HoverDefinitionDraft(_) => "hover_definition_draft",
+        Req::HoverEntity(_) => "hover_entity",
+        Req::ListSemanticActions(_) => "list_semantic_actions",
         Req::Shutdown(_) => "shutdown",
     }
 }

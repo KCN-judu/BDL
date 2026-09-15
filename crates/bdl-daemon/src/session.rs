@@ -316,6 +316,12 @@ impl Session {
         Ok(hover(&snapshot, entity).map(|h| (range, h)))
     }
 
+    /// The current world's snapshot (committed + whatever overlays exist),
+    /// for entity queries that set no overlay of their own.
+    pub fn ide_snapshot(&mut self) -> Result<std::sync::Arc<AnalysisSnapshot>, SessionError> {
+        Ok(self.ide()?.snapshot())
+    }
+
     pub fn simulation_mut(&mut self) -> Result<&mut Option<SimulationRun>, SessionError> {
         Ok(&mut self.project_mut()?.simulation)
     }

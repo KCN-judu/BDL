@@ -4,7 +4,7 @@
 //! by stable entity id, so that moving a node never touches the design and a
 //! design can be opened by a tool that has no canvas at all.
 
-use crate::ids::{DeclId, SemanticId};
+use crate::ids::{DeclId, OutputId, SemanticId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -20,4 +20,7 @@ pub struct Layout {
     pub concepts: BTreeMap<SemanticId, Point>,
     #[serde(default)]
     pub mappings: BTreeMap<DeclId, Point>,
+    /// Physical outputs are canvas nodes too (sinks at the right edge).
+    #[serde(default)]
+    pub outputs: BTreeMap<OutputId, Point>,
 }

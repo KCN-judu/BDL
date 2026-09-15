@@ -255,6 +255,151 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
     )
 }
 
+/// The inverse of [`edit_op_from_pb`]; every variant round-trips.
+pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
+    use pb::edit_op::Op;
+    let o = match op {
+        EditOp::CreateConcept {
+            name,
+            description,
+            representation,
+        } => Op::CreateConcept(pb::CreateConcept {
+            name: name.clone(),
+            description: description.clone(),
+            representation: representation.map(representation_to_pb),
+        }),
+        EditOp::RenameConcept { id, name } => Op::RenameConcept(pb::RenameConcept {
+            id: id.raw(),
+            name: name.clone(),
+        }),
+        EditOp::SetConceptDescription { id, description } => {
+            Op::SetConceptDescription(pb::SetConceptDescription {
+                id: id.raw(),
+                description: description.clone(),
+            })
+        }
+        EditOp::SetConceptRepresentation { id, representation } => {
+            Op::SetConceptRepresentation(pb::SetConceptRepresentation {
+                id: id.raw(),
+                representation: representation.map(representation_to_pb),
+            })
+        }
+        EditOp::DeleteConcept { id } => Op::DeleteConcept(pb::DeleteConcept { id: id.raw() }),
+        EditOp::CreateMapping {
+            name,
+            description,
+            signature,
+        } => Op::CreateMapping(pb::CreateMapping {
+            name: name.clone(),
+            description: description.clone(),
+            signature: Some(signature_to_pb(signature)),
+        }),
+        EditOp::RenameMapping { id, name } => Op::RenameMapping(pb::RenameMapping {
+            id: id.raw(),
+            name: name.clone(),
+        }),
+        EditOp::SetMappingDescription { id, description } => {
+            Op::SetMappingDescription(pb::SetMappingDescription {
+                id: id.raw(),
+                description: description.clone(),
+            })
+        }
+        EditOp::SetMappingSignature { id, signature } => {
+            Op::SetMappingSignature(pb::SetMappingSignature {
+                id: id.raw(),
+                signature: Some(signature_to_pb(signature)),
+            })
+        }
+        EditOp::AttachDefinition { id, definition } => Op::AttachDefinition(pb::AttachDefinition {
+            id: id.raw(),
+            definition: Some(definition_to_pb(definition)),
+        }),
+        EditOp::ReplaceDefinition { id, definition } => {
+            Op::ReplaceDefinition(pb::ReplaceDefinition {
+                id: id.raw(),
+                definition: definition.as_ref().map(definition_to_pb),
+            })
+        }
+        EditOp::DeleteMapping { id } => Op::DeleteMapping(pb::DeleteMapping { id: id.raw() }),
+        EditOp::CreateClockDomain { name } => {
+            Op::CreateClockDomain(pb::CreateClockDomain { name: name.clone() })
+        }
+        EditOp::RenameClockDomain { id, name } => Op::RenameClockDomain(pb::RenameClockDomain {
+            id: id.raw(),
+            name: name.clone(),
+        }),
+        EditOp::DeleteClockDomain { id } => {
+            Op::DeleteClockDomain(pb::DeleteClockDomain { id: id.raw() })
+        }
+        EditOp::SetMappingClock { id, clock } => Op::SetMappingClock(pb::SetMappingClock {
+            id: id.raw(),
+            clock_id: clock.map(|c| c.raw()),
+        }),
+        EditOp::CreateOutput {
+            name,
+            description,
+            accepts,
+            clock,
+        } => Op::CreateOutput(pb::CreateOutput {
+            name: name.clone(),
+            description: description.clone(),
+            accepts: accepts.raw(),
+            clock_id: clock.map(|c| c.raw()),
+        }),
+        EditOp::RenameOutput { id, name } => Op::RenameOutput(pb::RenameOutput {
+            id: id.raw(),
+            name: name.clone(),
+        }),
+        EditOp::SetOutputAccepts { id, accepts } => Op::SetOutputAccepts(pb::SetOutputAccepts {
+            id: id.raw(),
+            accepts: accepts.raw(),
+        }),
+        EditOp::SetOutputClock { id, clock } => Op::SetOutputClock(pb::SetOutputClock {
+            id: id.raw(),
+            clock_id: clock.map(|c| c.raw()),
+        }),
+        EditOp::SetOutputRequired { id, required } => {
+            Op::SetOutputRequired(pb::SetOutputRequired {
+                id: id.raw(),
+                required: *required,
+            })
+        }
+        EditOp::DeleteOutput { id } => Op::DeleteOutput(pb::DeleteOutput { id: id.raw() }),
+        EditOp::SetMappingDrive { id, output } => Op::SetMappingDrive(pb::SetMappingDrive {
+            id: id.raw(),
+            output_id: output.map(|o| o.raw()),
+        }),
+        EditOp::CreateDevice { name, kind, output } => Op::CreateDevice(pb::CreateDevice {
+            name: name.clone(),
+            kind: device_kind_to_pb(*kind).into(),
+            output_id: output.map(|o| o.raw()),
+        }),
+        EditOp::RenameDevice { id, name } => Op::RenameDevice(pb::RenameDevice {
+            id: id.raw(),
+            name: name.clone(),
+        }),
+        EditOp::SetDeviceKind { id, kind } => Op::SetDeviceKind(pb::SetDeviceKind {
+            id: id.raw(),
+            kind: device_kind_to_pb(*kind).into(),
+        }),
+        EditOp::SetDeviceOutput { id, output } => Op::SetDeviceOutput(pb::SetDeviceOutput {
+            id: id.raw(),
+            output_id: output.map(|o| o.raw()),
+        }),
+        EditOp::SetDevicePin {
+            id,
+            index,
+            resource,
+        } => Op::SetDevicePin(pb::SetDevicePin {
+            id: id.raw(),
+            index: u32::from(*index),
+            resource: resource.clone(),
+        }),
+        EditOp::DeleteDevice { id } => Op::DeleteDevice(pb::DeleteDevice { id: id.raw() }),
+    };
+    pb::EditOp { op: Some(o) }
+}
+
 pub fn device_kind_to_pb(k: DeviceKind) -> pb::DeviceKind {
     match k {
         DeviceKind::PwmChannel => pb::DeviceKind::PwmChannel,
@@ -363,6 +508,15 @@ pub fn layout_to_pb(l: &Layout) -> pb::Layout {
                 y: p.y,
             })
             .collect(),
+        outputs: l
+            .outputs
+            .iter()
+            .map(|(id, p)| pb::NodePosition {
+                id: id.raw(),
+                x: p.x,
+                y: p.y,
+            })
+            .collect(),
     }
 }
 
@@ -377,6 +531,11 @@ pub fn layout_from_pb(l: &pb::Layout) -> Layout {
             .mappings
             .iter()
             .map(|n| (DeclId::from_raw(n.id), Point { x: n.x, y: n.y }))
+            .collect(),
+        outputs: l
+            .outputs
+            .iter()
+            .map(|n| (OutputId::from_raw(n.id), Point { x: n.x, y: n.y }))
             .collect(),
     }
 }
@@ -762,6 +921,137 @@ pub fn tick_sample_to_pb(
 mod tests {
     use super::*;
     use bdl_model::surface::Design;
+
+    #[test]
+    fn every_edit_op_round_trips_through_pb() {
+        use bdl_model::surface::DeviceKind;
+        let sem = SemanticId::from_raw;
+        let decl = DeclId::from_raw;
+        let clock = ClockId::from_raw;
+        let output = OutputId::from_raw;
+        let device = DeviceId::from_raw;
+        let rep = Some(Representation::Quantity { dim: Dim::ANGLE });
+        let ops = vec![
+            EditOp::CreateConcept {
+                name: "Tilt".into(),
+                description: "lean".into(),
+                representation: rep,
+            },
+            EditOp::RenameConcept {
+                id: sem(1),
+                name: "Lean".into(),
+            },
+            EditOp::SetConceptDescription {
+                id: sem(1),
+                description: "x".into(),
+            },
+            EditOp::SetConceptRepresentation {
+                id: sem(1),
+                representation: None,
+            },
+            EditOp::DeleteConcept { id: sem(1) },
+            EditOp::CreateMapping {
+                name: "m".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![sem(1), sem(2)],
+                    output: sem(3),
+                },
+            },
+            EditOp::RenameMapping {
+                id: decl(4),
+                name: "n".into(),
+            },
+            EditOp::SetMappingDescription {
+                id: decl(4),
+                description: "d".into(),
+            },
+            EditOp::SetMappingSignature {
+                id: decl(4),
+                signature: Signature {
+                    inputs: vec![],
+                    output: sem(3),
+                },
+            },
+            EditOp::AttachDefinition {
+                id: decl(4),
+                definition: Definition::Formula {
+                    source: "1".into(),
+                },
+            },
+            EditOp::ReplaceDefinition {
+                id: decl(4),
+                definition: None,
+            },
+            EditOp::DeleteMapping { id: decl(4) },
+            EditOp::CreateClockDomain {
+                name: "main".into(),
+            },
+            EditOp::RenameClockDomain {
+                id: clock(5),
+                name: "ui".into(),
+            },
+            EditOp::DeleteClockDomain { id: clock(5) },
+            EditOp::SetMappingClock {
+                id: decl(4),
+                clock: Some(clock(5)),
+            },
+            EditOp::CreateOutput {
+                name: "motor".into(),
+                description: String::new(),
+                accepts: sem(3),
+                clock: None,
+            },
+            EditOp::RenameOutput {
+                id: output(6),
+                name: "o".into(),
+            },
+            EditOp::SetOutputAccepts {
+                id: output(6),
+                accepts: sem(2),
+            },
+            EditOp::SetOutputClock {
+                id: output(6),
+                clock: Some(clock(5)),
+            },
+            EditOp::SetOutputRequired {
+                id: output(6),
+                required: true,
+            },
+            EditOp::DeleteOutput { id: output(6) },
+            EditOp::SetMappingDrive {
+                id: decl(4),
+                output: Some(output(6)),
+            },
+            EditOp::CreateDevice {
+                name: "drive".into(),
+                kind: DeviceKind::HBridgeChannel,
+                output: Some(output(6)),
+            },
+            EditOp::RenameDevice {
+                id: device(7),
+                name: "d".into(),
+            },
+            EditOp::SetDeviceKind {
+                id: device(7),
+                kind: DeviceKind::PwmChannel,
+            },
+            EditOp::SetDeviceOutput {
+                id: device(7),
+                output: None,
+            },
+            EditOp::SetDevicePin {
+                id: device(7),
+                index: 1,
+                resource: Some("D3".into()),
+            },
+            EditOp::DeleteDevice { id: device(7) },
+        ];
+        for op in ops {
+            let back = edit_op_from_pb(&edit_op_to_pb(&op)).unwrap();
+            assert_eq!(back, op);
+        }
+    }
 
     #[test]
     fn edit_op_round_trip_for_create_mapping() {

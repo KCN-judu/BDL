@@ -48,6 +48,8 @@ message ClientMessage {
     DiscardDefinitionDraftRequest discard_definition_draft = 29;
     CompleteDefinitionDraftRequest complete_definition_draft = 30;
     HoverDefinitionDraftRequest hover_definition_draft = 31;
+    HoverEntityRequest hover_entity = 32;
+    ListSemanticActionsRequest list_semantic_actions = 33;
   }
 }
 
@@ -73,6 +75,7 @@ message Response {
     DefinitionDraftAnalysis definition_draft = 18;
     DraftCompletionResponse draft_completion = 19;
     DraftHoverResponse draft_hover = 20;
+    SemanticActionsResponse semantic_actions = 21;
   }
 }
 
@@ -491,6 +494,7 @@ message Dim {
 message Layout {
   repeated NodePosition concepts = 1;
   repeated NodePosition mappings = 2;
+  repeated NodePosition outputs = 3;
 }
 
 message NodePosition {
@@ -799,6 +803,86 @@ message DraftHoverResponse {
   string status = 8;
   repeated HoverDetail details = 9;
   string explanation = 10;
+  // Set by HoverEntity for entities other than concepts.
+  optional EntityRef entity = 11;
+  // The surface signature (`dimByTilt : Tilt -> Brightness`), when the
+  // entity has one.
+  string signature = 12;
+  // Whether the status is one of the open (undecided) states rather than
+  // a settled or a wrong one.
+  bool open = 13;
+}
+
+// A stable entity of the design, by identity (never by name).
+message EntityRef {
+  oneof kind {
+    Unit project = 1;
+    uint64 concept_id = 2;
+    uint64 mapping_id = 3;
+    uint64 clock_id = 4;
+    uint64 output_id = 5;
+    uint64 device_id = 6;
+  }
+}
+
+// The everyday hover card for any entity (a canvas node, a library row):
+// the same DraftHoverResponse as a formula hover, with `entity` set.
+// `found` is false when the entity does not exist at `revision`.
+message HoverEntityRequest {
+  uint64 revision = 1;
+  EntityRef entity = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Semantic actions (bdl-ide: explicit, meaning-changing fixes, never silent)
+// ---------------------------------------------------------------------------
+
+// The actions bdl-ide offers for an entity: the fixes for its diagnostics
+// plus its context actions.  Read-only; applying one is an ordinary
+// ApplyEdit of the plan's edits, sent by the client against the revision
+// it holds.
+message ListSemanticActionsRequest {
+  uint64 revision = 1;
+  EntityRef entity = 2;
+}
+
+message SemanticActionsResponse {
+  uint64 revision = 1;
+  EntityRef entity = 2;
+  repeated SemanticActionView actions = 3;
+}
+
+enum ActionApplicability {
+  ACTION_APPLICABILITY_UNSPECIFIED = 0;
+  // `edits` can be applied as they are.
+  ACTION_APPLICABILITY_READY = 1;
+  // The designer picks one of `options`; the tool never guesses.
+  ACTION_APPLICABILITY_NEEDS_CHOICE = 2;
+  // The language cannot express the fix yet; `reason` says why.
+  ACTION_APPLICABILITY_BLOCKED = 3;
+}
+
+message SemanticActionView {
+  string id = 1;
+  string title = 2;
+  // "quick_fix" or "refactor".
+  string kind = 3;
+  ActionApplicability applicability = 4;
+  string reason = 5;
+  repeated ActionChoiceView options = 6;
+  string explanation = 7;
+  // The model edits of a ready plan, in order.  Text/draft edits of a
+  // plan are not carried here (the LSP applies those).
+  repeated EditOp edits = 8;
+  // Diagnostic codes the action addresses.
+  repeated string addresses = 9;
+  // Product-language summary of what the plan would reopen.
+  string invalidation = 10;
+}
+
+message ActionChoiceView {
+  string label = 1;
+  EditOp edit = 2;
 }
 
 message HoverDetail {
