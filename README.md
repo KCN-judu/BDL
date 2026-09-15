@@ -52,6 +52,8 @@ just bdld           # run the daemon on stdio for manual experiments
 
 ## Reading order
 
+0. [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — how to enter the project (toolchain, map, run, reading order by task)
+
 1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
 2. [docs/adr/](docs/adr/README.md) — decisions
 3. [docs/STUDIO_UI.md](docs/STUDIO_UI.md) — what Studio looks like and why (Resolve · Blender · macOS)
