@@ -15,6 +15,7 @@ import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'pages/design_page.dart';
 import 'pages/placeholder_page.dart';
+import 'welcome/welcome_page.dart';
 
 class StudioShell extends ConsumerWidget {
   const StudioShell({super.key});
@@ -67,24 +68,38 @@ class StudioShell extends ConsumerWidget {
         autofocus: true,
         child: Scaffold(
           backgroundColor: t.window,
-          body: Column(
-            children: [
-              _Toolbar(state: state, dispatch: dispatch),
-              Divider(color: t.hairline),
-              if (state.editor.lastError case final err?)
-                _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
-              Expanded(child: page),
-              Divider(color: t.hairline),
-              _StatusLine(state: state),
-              Divider(color: t.hairline),
-              _PageBar(
-                current: state.editor.page,
-                projectOpen: project != null,
-                connected: state.connection is Connected,
-                dispatch: dispatch,
-              ),
-            ],
-          ),
+          // Two screens, as in Resolve: the project manager until a project
+          // is open, then the page workspace.
+          body: project == null
+              ? Column(
+                  children: [
+                    if (state.editor.lastError case final err?)
+                      _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
+                    Expanded(
+                      child: WelcomePage(state: state, dispatch: dispatch),
+                    ),
+                    Divider(color: t.hairline),
+                    _StatusLine(state: state),
+                  ],
+                )
+              : Column(
+                  children: [
+                    _Toolbar(state: state, dispatch: dispatch),
+                    Divider(color: t.hairline),
+                    if (state.editor.lastError case final err?)
+                      _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
+                    Expanded(child: page),
+                    Divider(color: t.hairline),
+                    _StatusLine(state: state),
+                    Divider(color: t.hairline),
+                    _PageBar(
+                      current: state.editor.page,
+                      projectOpen: true,
+                      connected: state.connection is Connected,
+                      dispatch: dispatch,
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -248,7 +263,11 @@ class _PageBar extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 8),
-          _ProjectMenu(enabled: connected && !projectOpen, dispatch: dispatch),
+          ToolbarButton(
+            icon: Icons.grid_view_outlined,
+            tooltip: 'Project manager (closes this project)',
+            onPressed: projectOpen ? () => dispatch(const CloseProjectRequested()) : null,
+          ),
           const Spacer(),
           for (final (page, icon, label) in _pages)
             _PageButton(
@@ -306,41 +325,6 @@ class _PageButton extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Resolve's project manager (⊞), reduced to what exists: open or create,
-/// each through the OS's own picker.
-class _ProjectMenu extends StatelessWidget {
-  const _ProjectMenu({required this.enabled, required this.dispatch});
-  final bool enabled;
-  final void Function(AppAction) dispatch;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    return PopupMenuButton<String>(
-      enabled: enabled,
-      tooltip: 'Projects',
-      position: PopupMenuPosition.over,
-      color: t.content,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-        side: BorderSide(color: t.hairline),
-      ),
-      itemBuilder: (_) => [
-        PopupMenuItem(value: 'open', height: 26, child: Text('Open Project…  ${shortcut('O')}')),
-        PopupMenuItem(value: 'new', height: 26, child: Text('New Project…  ${shortcut('N')}')),
-      ],
-      onSelected: (v) => dispatch(
-        v == 'open' ? const OpenProjectPickRequested() : const NewProjectPickRequested(),
-      ),
-      icon: Icon(
-        Icons.grid_view_outlined,
-        size: 18,
-        color: enabled ? t.textSecondary : t.textTertiary,
       ),
     );
   }

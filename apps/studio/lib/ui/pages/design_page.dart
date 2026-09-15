@@ -5,7 +5,6 @@ import '../../app/state.dart';
 import '../canvas/node_canvas.dart';
 import '../inspector.dart';
 import '../library.dart';
-import '../../platform/desktop.dart';
 import '../mac/tokens.dart';
 
 /// Design page: library · node canvas · inspector (Fusion-page arrangement).
@@ -57,7 +56,7 @@ class _Empty extends StatelessWidget {
       color: t.canvas,
       alignment: Alignment.center,
       child: Text(
-        'No project open.\nUse the project manager (⊞) in the page bar, or ${shortcut('O')} / ${shortcut('N')}.',
+        'No project open.',
         textAlign: TextAlign.center,
         style: TextStyle(color: t.textTertiary),
       ),

@@ -167,6 +167,11 @@ Transition reduce(AppState s, AppAction action) {
 
     // ---- editor state ------------------------------------------------------
     PageSelected(:final page) => Transition(s.copyWith(editor: s.editor.copyWith(page: page))),
+    RemoveRecentRequested(:final path) => () {
+      final recent = s.recent.where((r) => r.path != path).toList();
+      return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
+    }(),
+    RecentProjectsLoaded(:final recent) => Transition(s.copyWith(recent: recent)),
     SelectionChanged(:final selection) => Transition(
       s.copyWith(editor: s.editor.copyWith(selection: selection)),
     ),
@@ -243,7 +248,18 @@ Transition reduce(AppState s, AppAction action) {
 
 Transition _connect(AppState s) {
   if (s.connection is Connecting) return Transition(s);
-  return Transition(s.copyWith(connection: const Connecting('')), const [ConnectDaemon()]);
+  return Transition(s.copyWith(connection: const Connecting('')), const [
+    ConnectDaemon(),
+    LoadRecentProjects(),
+  ]);
+}
+
+const int _maxRecent = 12;
+
+/// Newest first, de-duplicated by path, capped.
+List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p) {
+  final entry = RecentProject(path: p.rootPath, name: p.name, lastOpened: DateTime.now());
+  return [entry, ...recent.where((r) => r.path != p.rootPath)].take(_maxRecent).toList();
 }
 
 Transition _whenConnected(AppState s, Transition Function() then) =>
@@ -296,9 +312,11 @@ Transition _projectReceived(
   // the author and only merges in positions it does not know yet.
   final stored = layoutFromPb(incoming.layout);
   final layout = sameProject ? {...stored, ...s.editor.layout} : stored;
+  final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   return Transition(
     s.copyWith(
       project: incoming,
+      recent: recent,
       editor: s.editor.copyWith(
         pendingRequests: pending,
         selection: selection,
@@ -306,8 +324,9 @@ Transition _projectReceived(
         lastOutcome: outcome,
       ),
     ),
-    // A freshly opened project needs a subscription for pushed changes.
-    sameProject ? const [] : const [SubscribeProject()],
+    // A freshly opened project needs a subscription for pushed changes and
+    // goes to the top of the recent list.
+    sameProject ? const [] : [const SubscribeProject(), SaveRecentProjects(recent)],
   );
 }
 

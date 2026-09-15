@@ -29,6 +29,15 @@ void main() {
         ..addFont(Future.value(ByteData.sublistView(font.readAsBytesSync())));
       await loader.load();
     }
+    final chakra = FontLoader('ChakraPetch');
+    for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold']) {
+      chakra.addFont(
+        Future.value(
+          ByteData.sublistView(File('assets/fonts/ChakraPetch-$w.ttf').readAsBytesSync()),
+        ),
+      );
+    }
+    await chakra.load();
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -79,6 +88,43 @@ void main() {
         ],
       );
     for (final brightness in [Brightness.light, Brightness.dark]) {
+      final welcome = AppState(
+        connection: Connected(
+          executable: 'bdld',
+          handshake: pb.HandshakeResponse(
+            compatible: true,
+            compilerVersion: '0.1.0',
+            protocolVersion: pb.Version(major: 0, minor: 1, patch: 0),
+          ),
+        ),
+        recent: [
+          RecentProject(
+            path: '/Users/kcn/Projects/lamp',
+            name: 'lamp',
+            lastOpened: DateTime.now().subtract(const Duration(hours: 2)),
+          ),
+          RecentProject(
+            path: '/Users/kcn/Projects/rover',
+            name: 'rover',
+            lastOpened: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+          RecentProject(path: '/Volumes/old/cup', name: 'cup', lastOpened: DateTime(2026, 7, 2)),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appStoreProvider.overrideWith(() => _FixedStore(welcome))],
+          child: MaterialApp(theme: macTheme(brightness), home: const StudioShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (dir != null) {
+        await expectLater(
+          find.byType(StudioShell),
+          matchesGoldenFile('$dir/welcome_${brightness.name}.png'),
+        );
+      }
+
       final state = AppState(
         connection: Connected(
           executable: 'bdld',

@@ -36,6 +36,30 @@ class NodeRef {
   String toString() => '${kind.name}#$id';
 }
 
+/// A project the user opened before.  App-level preference, not project data.
+@immutable
+class RecentProject {
+  const RecentProject({required this.path, required this.name, required this.lastOpened});
+  final String path;
+  final String name;
+  final DateTime lastOpened;
+
+  Map<String, Object> toJson() => {
+    'path': path,
+    'name': name,
+    'last_opened': lastOpened.toUtc().toIso8601String(),
+  };
+
+  static RecentProject? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final path = json['path'];
+    final name = json['name'];
+    final when = DateTime.tryParse(json['last_opened']?.toString() ?? '');
+    if (path is! String || name is! String || when == null) return null;
+    return RecentProject(path: path, name: name, lastOpened: when);
+  }
+}
+
 @immutable
 sealed class DaemonConnection {
   const DaemonConnection();
@@ -155,11 +179,16 @@ class AppState {
   const AppState({
     this.connection = const Disconnected(),
     this.project,
+    this.recent = const [],
     this.editor = const EditorState(),
     this.render = const RenderState(),
   });
 
   final DaemonConnection connection;
+
+  /// Recently opened projects, newest first (app preference, persisted by
+  /// the effect executor).
+  final List<RecentProject> recent;
 
   /// Semantic projection of the open project, owned by the compiler.  `null`
   /// when no project is open.
@@ -173,12 +202,14 @@ class AppState {
     DaemonConnection? connection,
     pb.ProjectProjection? project,
     bool clearProject = false,
+    List<RecentProject>? recent,
     EditorState? editor,
     RenderState? render,
   }) {
     return AppState(
       connection: connection ?? this.connection,
       project: clearProject ? null : (project ?? this.project),
+      recent: recent ?? this.recent,
       editor: editor ?? this.editor,
       render: render ?? this.render,
     );

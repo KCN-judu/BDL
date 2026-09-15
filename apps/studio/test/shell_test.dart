@@ -38,8 +38,10 @@ void main() {
     await tester.pumpWidget(_app(state));
     expect(find.textContaining('bdld 9.9.9'), findsOneWidget);
     expect(find.textContaining('protocol 0.1.0'), findsOneWidget);
-    expect(find.text('Design'), findsOneWidget);
-    expect(find.text('Deploy'), findsOneWidget);
+    // no project: the project manager (welcome) is shown, not the workspace
+    expect(find.text('Behavior\nDesigner'), findsOneWidget);
+    expect(find.text('Open Project…'), findsOneWidget);
+    expect(find.text('Deploy'), findsNothing);
   });
 
   testWidgets('open project renders library rows and the canvas', (tester) async {
@@ -73,5 +75,6 @@ void main() {
     expect(find.textContaining('1 declared without definition'), findsOneWidget);
     // inspector shows the mapping's editable name and the delete action
     expect(find.text('Delete dimByTilt'), findsOneWidget);
+    expect(find.text('Deploy'), findsOneWidget);
   });
 }

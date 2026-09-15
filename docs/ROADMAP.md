@@ -12,7 +12,7 @@ slice is started before the slice works end-to-end.
 | C | protocol schema | ✅ `bdl-protocol` (0.1.0) |
 | D | `bdld` process + Flutter connection, handshake, versions in the status bar | ✅ |
 | E | crash-safe persistence, save/reopen of an unresolved mapping | ✅ |
-| F | Concepts + Mapping editor: page shell, node canvas (drag, link, unlink, delete), inspector with full concept/mapping editing, macOS look | ✅ (docs/STUDIO_UI.md) |
+| F | Project manager / welcome screen (hero, Start, Recent) and Concepts + Mapping editor: page shell, node canvas (drag, link, unlink, delete), inspector with full concept/mapping editing, macOS look | ✅ (docs/STUDIO_UI.md) |
 | — | **architecture review gate** (brief §63) | ⏳ next |
 | G | type / semantic checking (`bdl-elab`, `bdl-check`) | |
 | H | incomplete-declaration support in the checker (declared vs defined vs type-valid) | |

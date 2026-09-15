@@ -16,14 +16,18 @@ import '../daemon/daemon_client.dart';
 import '../daemon/daemon_locator.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../protocol/versions.dart';
+import 'recent_store.dart';
 
 typedef Dispatch = void Function(AppAction action);
 
 class EffectExecutor {
-  EffectExecutor(this._dispatch, {String Function()? locate}) : _locate = locate ?? locateDaemon;
+  EffectExecutor(this._dispatch, {String Function()? locate, RecentStore? recent})
+    : _locate = locate ?? locateDaemon,
+      _recent = recent ?? RecentStore();
 
   final Dispatch _dispatch;
   final String Function() _locate;
+  final RecentStore _recent;
   DaemonClient? _client;
   final List<StreamSubscription<Object?>> _subs = [];
 
@@ -31,6 +35,14 @@ class EffectExecutor {
     switch (effect) {
       case ConnectDaemon():
         await _connect();
+      case LoadRecentProjects():
+        _dispatch(RecentProjectsLoaded(await _recent.load()));
+      case SaveRecentProjects(:final recent):
+        try {
+          await _recent.save(recent);
+        } catch (e) {
+          _dispatch(DaemonLogged('could not save recent projects: $e'));
+        }
       case PickProjectToOpen():
         final dir = await fs.getDirectoryPath(confirmButtonText: 'Open Project');
         if (dir != null) _dispatch(OpenProjectRequested(dir));

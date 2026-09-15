@@ -1,0 +1,270 @@
+/// The launcher shown when no project is open — DaVinci's Project Manager,
+/// laid out like VS Code's welcome page: hero and Start on the left,
+/// Recent on the right.  Presentation only.
+library;
+
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+import '../../app/actions.dart';
+import '../../app/state.dart';
+import '../../platform/desktop.dart';
+import '../../protocol/versions.dart';
+import '../mac/tokens.dart';
+import 'hero_mark.dart';
+
+class WelcomePage extends StatelessWidget {
+  const WelcomePage({super.key, required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final connected = state.connection is Connected;
+    return Container(
+      color: t.window,
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1040, maxHeight: 620),
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 11,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: HeroMark(version: kStudioVersion)),
+                    const SizedBox(height: 24),
+                    _Start(connected: connected, dispatch: dispatch),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 40),
+              Expanded(
+                flex: 9,
+                child: _Recent(state: state, dispatch: dispatch),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Start extends StatelessWidget {
+  const _Start({required this.connected, required this.dispatch});
+  final bool connected;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Start', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        _StartLink(
+          icon: Icons.add_box_outlined,
+          label: 'New Project…',
+          shortcutLabel: shortcut('N'),
+          enabled: connected,
+          onTap: () => dispatch(const NewProjectPickRequested()),
+        ),
+        _StartLink(
+          icon: Icons.folder_open_outlined,
+          label: 'Open Project…',
+          shortcutLabel: shortcut('O'),
+          enabled: connected,
+          onTap: () => dispatch(const OpenProjectPickRequested()),
+        ),
+        if (!connected)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Waiting for the compiler service (bdld) — see the status line.',
+              style: TextStyle(fontSize: 11, color: t.textTertiary),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _StartLink extends StatelessWidget {
+  const _StartLink({
+    required this.icon,
+    required this.label,
+    required this.shortcutLabel,
+    required this.enabled,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String shortcutLabel;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final color = enabled ? t.accent : t.textTertiary;
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(5),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(fontSize: 13, color: color)),
+            const SizedBox(width: 10),
+            Text(shortcutLabel, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Recent extends StatelessWidget {
+  const _Recent({required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final connected = state.connection is Connected;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Recent', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Expanded(
+          child: state.recent.isEmpty
+              ? Text(
+                  'Projects you open will appear here.',
+                  style: TextStyle(fontSize: 12, color: t.textTertiary),
+                )
+              : ListView(
+                  children: [
+                    for (final r in state.recent)
+                      _RecentRow(
+                        project: r,
+                        enabled: connected,
+                        onOpen: () => dispatch(OpenProjectRequested(r.path)),
+                        onRemove: () => dispatch(RemoveRecentRequested(r.path)),
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentRow extends StatefulWidget {
+  const _RecentRow({
+    required this.project,
+    required this.enabled,
+    required this.onOpen,
+    required this.onRemove,
+  });
+  final RecentProject project;
+  final bool enabled;
+  final VoidCallback onOpen;
+  final VoidCallback onRemove;
+
+  @override
+  State<_RecentRow> createState() => _RecentRowState();
+}
+
+class _RecentRowState extends State<_RecentRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final r = widget.project;
+    final missing = !Directory(r.path).existsSync();
+    final canOpen = widget.enabled && !missing;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: InkWell(
+        onTap: canOpen ? widget.onOpen : null,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hover ? t.controlHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                missing ? Icons.folder_off_outlined : Icons.folder_outlined,
+                size: 18,
+                color: missing ? t.textTertiary : t.accent,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: missing ? t.textTertiary : t.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      missing ? '${r.path}  ·  not found' : r.path,
+                      style: TextStyle(fontSize: 11, color: t.textTertiary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (_hover)
+                IconButton(
+                  icon: const Icon(Icons.close, size: 14),
+                  tooltip: 'Remove from Recent',
+                  onPressed: widget.onRemove,
+                  constraints: const BoxConstraints.tightFor(width: 22, height: 22),
+                )
+              else
+                Text(
+                  relativeTime(r.lastOpened),
+                  style: TextStyle(fontSize: 11, color: t.textTertiary),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "just now", "3 h ago", "yesterday", "5 d ago", "2026-08-01".
+String relativeTime(DateTime when, {DateTime? now}) {
+  final d = (now ?? DateTime.now()).difference(when);
+  if (d.inMinutes < 1) return 'just now';
+  if (d.inHours < 1) return '${d.inMinutes} min ago';
+  if (d.inDays < 1) return '${d.inHours} h ago';
+  if (d.inDays == 1) return 'yesterday';
+  if (d.inDays < 30) return '${d.inDays} d ago';
+  final local = when.toLocal();
+  return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+}

@@ -5,6 +5,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'state.dart';
 
 @immutable
 sealed class Effect {
@@ -13,6 +14,15 @@ sealed class Effect {
 
 class ConnectDaemon extends Effect {
   const ConnectDaemon();
+}
+
+class LoadRecentProjects extends Effect {
+  const LoadRecentProjects();
+}
+
+class SaveRecentProjects extends Effect {
+  const SaveRecentProjects(this.recent);
+  final List<RecentProject> recent;
 }
 
 /// Show the OS folder picker; the executor dispatches `OpenProjectRequested`

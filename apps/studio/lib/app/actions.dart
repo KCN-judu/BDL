@@ -185,6 +185,11 @@ class UnlinkMappingInput extends UserAction {
   final int conceptId;
 }
 
+class RemoveRecentRequested extends UserAction {
+  const RemoveRecentRequested(this.path);
+  final String path;
+}
+
 class SelectionChanged extends UserAction {
   const SelectionChanged(this.selection);
   final Selection selection;
@@ -233,6 +238,11 @@ class ProjectReceived extends ResponseAction {
   /// True when this answers a request Studio sent (and counted as pending);
   /// false for unsolicited `ProjectChanged` events.
   final bool fromRequest;
+}
+
+class RecentProjectsLoaded extends ResponseAction {
+  const RecentProjectsLoaded(this.recent);
+  final List<RecentProject> recent;
 }
 
 class ProjectClosed extends ResponseAction {

@@ -13,6 +13,42 @@ Sources: DaVinci Resolve 18 Reference Manual ch. 1 ("Switching Among Pages",
 Blender Manual, *Interface › Controls › Nodes › Parts / Editing / Selecting*;
 Apple HIG, *Typography* (macOS text styles) and *Designing for macOS*.
 
+## 0. Two screens (DaVinci)
+
+Resolve opens on the **Project Manager** and only shows the page workspace
+once a project is open. Studio does the same: with no project, the window
+is the launcher below; opening or creating a project replaces it with the
+workspace of §1; ⊞ in the page bar closes the project and returns.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│    ┌──────────────────────────┐    Recent                                │
+│    │ ╲  ╱   ╲    ╱  ╲   BDL   │    ▸ lamp     ~/Projects/lamp   2 h ago  │
+│    │  ╲╱  ╱  ╲  ╱    ╲        │    ▸ rover    ~/Projects/rover  yesterday│
+│    │ Behavior                 │    ▸ cup      /Volumes/old/cup  not found│
+│    │ Designer                 │                                          │
+│    │ Product behavior as a    │                                          │
+│    │ design material.  0.1.0  │                                          │
+│    └──────────────────────────┘                                          │
+│    Start                                                                 │
+│    ⊕ New Project…  ⌘N                                                   │
+│    ▭ Open Project… ⌘O                                                   │
+├──────────────────────────────────────────────────────────────────────────┤
+│ no project                                        bdld 0.1.0 · protocol  │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Laid out like VS Code's welcome page (Start on the left, Recent on the
+right) rather than Resolve's thumbnail grid — BDL projects have no
+thumbnail yet. **Hero**: the wordmark *Behavior Designer* set in Chakra
+Petch (a square sans with 45° chamfered corners, SIL OFL, bundled) over a
+field of 45°-routed traces drawn deterministically — PCB routing is the
+one visual idiom that belongs to both halves of the product. Recent
+projects are an app preference (`recent.json` in the per-user application
+support directory), never project data; missing directories are shown
+greyed with *not found* and can be removed on hover.
+
 ## 1. Window structure (DaVinci)
 
 ```

@@ -24,7 +24,7 @@ void main() {
   test('app start asks for a daemon connection exactly once', () {
     final t1 = reduce(const AppState(), const AppStarted());
     expect(t1.state.connection, isA<Connecting>());
-    expect(t1.effects, [isA<ConnectDaemon>()]);
+    expect(t1.effects, [isA<ConnectDaemon>(), isA<LoadRecentProjects>()]);
     final t2 = reduce(t1.state, const ConnectRequested());
     expect(t2.effects, isEmpty);
   });
@@ -61,7 +61,7 @@ void main() {
 
   test('opening a project subscribes once', () {
     final t = reduce(connected(), ProjectReceived(projection()));
-    expect(t.effects, [isA<SubscribeProject>()]);
+    expect(t.effects, [isA<SubscribeProject>(), isA<SaveRecentProjects>()]);
     final again = reduce(t.state, ProjectReceived(projection(revision: 1), fromRequest: false));
     expect(again.effects, isEmpty);
     expect(again.state.editor.pendingRequests, 0);
