@@ -163,6 +163,23 @@ class ListSemanticActions extends Effect {
   final int generation;
 }
 
+/// Run the reference evaluator on bdld: start a run at the current
+/// revision with the whole input trace and schedule, then step [ticks].
+/// Sequential and uncounted; answered by `SimulationReceived` /
+/// `SimulationFailed` tagged with [generation].
+class RunSimulation extends Effect {
+  const RunSimulation({
+    required this.inputs,
+    required this.schedule,
+    required this.ticks,
+    required this.generation,
+  });
+  final List<pb.SimulationInput> inputs;
+  final List<pb.SchedulePeriod> schedule;
+  final int ticks;
+  final int generation;
+}
+
 /// The board registry — uncounted.
 class ListTargets extends Effect {
   const ListTargets();

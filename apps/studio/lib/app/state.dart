@@ -404,6 +404,82 @@ class PendingInsert {
   final Offset? position;
 }
 
+/// The Simulate page: Studio's input trace and schedule (UI state), and the
+/// evaluator's trace for the revision on screen.  A run belongs to one
+/// revision; any commit drops it.  Nothing here evaluates anything.
+@immutable
+class SimulationState {
+  const SimulationState({
+    this.revision,
+    this.nextTick = 0,
+    this.samples = const [],
+    this.inputs = const {},
+    this.current = const {},
+    this.periods = const {},
+    this.pending = false,
+    this.generation = 0,
+    this.error,
+    this.failure,
+  });
+
+  /// The revision the samples were produced for; `null` when there is no run.
+  final int? revision;
+
+  /// The next global tick to evaluate.
+  final int nextTick;
+
+  /// Every tick evaluated so far, in order, as bdld rendered them.
+  final List<pb.TickSample> samples;
+
+  /// The input trace Studio authored: per unresolved mapping, the value
+  /// fed at each tick evaluated so far.
+  final Map<int, Map<int, pb.Value>> inputs;
+
+  /// The value each input takes at the ticks about to be evaluated.
+  final Map<int, pb.Value> current;
+
+  /// Activation period per timing domain (1 = every tick); domains absent
+  /// here activate every tick.  A period, not a rate.
+  final Map<int, int> periods;
+  final bool pending;
+  final int generation;
+
+  /// The evaluator's structured failure at the last step, if any.
+  final pb.Diagnostic? error;
+
+  /// A refusal or transport failure (product language).
+  final String? failure;
+
+  bool get hasRun => revision != null && samples.isNotEmpty;
+
+  SimulationState copyWith({
+    int? revision,
+    bool clearRun = false,
+    int? nextTick,
+    List<pb.TickSample>? samples,
+    Map<int, Map<int, pb.Value>>? inputs,
+    Map<int, pb.Value>? current,
+    Map<int, int>? periods,
+    bool? pending,
+    int? generation,
+    pb.Diagnostic? error,
+    bool clearError = false,
+    String? failure,
+    bool clearFailure = false,
+  }) => SimulationState(
+    revision: clearRun ? null : (revision ?? this.revision),
+    nextTick: clearRun ? 0 : (nextTick ?? this.nextTick),
+    samples: clearRun ? const [] : (samples ?? this.samples),
+    inputs: inputs ?? this.inputs,
+    current: current ?? this.current,
+    periods: periods ?? this.periods,
+    pending: pending ?? this.pending,
+    generation: generation ?? this.generation,
+    error: clearError || clearRun ? null : (error ?? this.error),
+    failure: clearFailure || clearRun ? null : (failure ?? this.failure),
+  );
+}
+
 @immutable
 class EditorState {
   const EditorState({
@@ -422,6 +498,7 @@ class EditorState {
     this.actions,
     this.queuedEdits = const [],
     this.deploy = const DeployState(),
+    this.simulation = const SimulationState(),
     this.sidebar = SidebarTab.project,
     this.librarySearch = '',
     this.recentTemplates = const [],
@@ -478,6 +555,7 @@ class EditorState {
   final List<pb.EditOp> queuedEdits;
 
   final DeployState deploy;
+  final SimulationState simulation;
   final SidebarTab sidebar;
 
   /// The library panel's search text.  Authoring convenience, never
@@ -517,6 +595,7 @@ class EditorState {
     bool clearActions = false,
     List<pb.EditOp>? queuedEdits,
     DeployState? deploy,
+    SimulationState? simulation,
     SidebarTab? sidebar,
     String? librarySearch,
     List<String>? recentTemplates,
@@ -541,6 +620,7 @@ class EditorState {
       actions: clearActions ? null : (actions ?? this.actions),
       queuedEdits: queuedEdits ?? this.queuedEdits,
       deploy: deploy ?? this.deploy,
+      simulation: simulation ?? this.simulation,
       sidebar: sidebar ?? this.sidebar,
       librarySearch: librarySearch ?? this.librarySearch,
       recentTemplates: recentTemplates ?? this.recentTemplates,

@@ -17,6 +17,7 @@ import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'pages/deploy_page.dart';
 import 'pages/design_page.dart';
+import 'pages/simulate_page.dart';
 import 'pages/placeholder_page.dart';
 import 'welcome/welcome_page.dart';
 
@@ -32,12 +33,7 @@ class StudioShell extends ConsumerWidget {
 
     final page = switch (state.editor.page) {
       StudioPage.design => DesignPage(state: state, dispatch: dispatch),
-      StudioPage.simulate => const PlaceholderPage(
-        title: 'Simulate',
-        body:
-            'Input traces, logical ticks and value plots arrive with the host simulator '
-            '(roadmap step I).',
-      ),
+      StudioPage.simulate => SimulatePage(state: state, dispatch: dispatch),
       StudioPage.deploy => DeployPage(state: state, dispatch: dispatch),
       StudioPage.monitor => const PlaceholderPage(
         title: 'Monitor',
@@ -245,6 +241,23 @@ class _StatusLine extends StatelessWidget {
         if (!a.outputComplete) {
           facts.add(Text('outputs incomplete', style: small.copyWith(color: t.open)));
         }
+      }
+      // Deployment is target-relative: named with its board, never folded
+      // into the design's own state.
+      final deploy = state.editor.deploy;
+      if (deploy.analysis case final d? when d.revision == p.revision) {
+        final board = deploy.target?.name ?? d.target;
+        facts.add(switch (d.status) {
+          pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE => Text(
+            'feasible on $board',
+            style: small.copyWith(color: t.settled),
+          ),
+          pb.DeploymentStatus.DEPLOYMENT_STATUS_INFEASIBLE => Text(
+            'not feasible on $board',
+            style: small.copyWith(color: t.error),
+          ),
+          _ => Text('incomplete on $board', style: small.copyWith(color: t.open)),
+        });
       }
     }
 

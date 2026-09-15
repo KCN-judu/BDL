@@ -16,6 +16,7 @@ class _FixedStore extends AppStore {
 }
 
 Widget _app(AppState state) => ProviderScope(
+  key: UniqueKey(),
   overrides: [appStoreProvider.overrideWith(() => _FixedStore(state))],
   child: MaterialApp(theme: macTheme(Brightness.light), home: const StudioShell()),
 );
@@ -116,5 +117,24 @@ void main() {
     expect(find.text('not causal'), findsOneWidget);
     expect(find.text('outputs incomplete'), findsOneWidget);
     expect(find.text('reads across domains'), findsNothing);
+
+    // a deployment verdict is named with its board and only for this revision
+    final deployed = state.copyWith(
+      editor: state.editor.copyWith(
+        deploy: DeployState(
+          targets: [pb.TargetView(id: 'big_board', name: 'Big Board')],
+          targetsLoaded: true,
+          targetId: 'big_board',
+          analysis: pb.DeploymentAnalysis(
+            revision: Int64(3),
+            target: 'big_board',
+            status: pb.DeploymentStatus.DEPLOYMENT_STATUS_INFEASIBLE,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(_app(deployed));
+    expect(find.text('not feasible on Big Board'), findsOneWidget);
+    expect(find.textContaining('invalid'), findsNothing);
   });
 }

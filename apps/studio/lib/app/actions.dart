@@ -391,6 +391,34 @@ class SemanticActionApplied extends UserAction {
   final int? option;
 }
 
+// ---- simulation ------------------------------------------------------------
+
+/// The value an input takes from the next evaluated tick on.
+class SimulationInputChanged extends UserAction {
+  const SimulationInputChanged({required this.mappingId, required this.value});
+  final int mappingId;
+  final pb.Value value;
+}
+
+/// The activation period of a domain (applies to the whole run: the run
+/// is re-created from tick 0 with the new schedule).
+class SimulationPeriodChanged extends UserAction {
+  const SimulationPeriodChanged({required this.clockId, required this.period});
+  final int clockId;
+  final int period;
+}
+
+/// Evaluate [ticks] more global ticks with the current inputs.
+class SimulationStepRequested extends UserAction {
+  const SimulationStepRequested([this.ticks = 1]);
+  final int ticks;
+}
+
+/// Back to tick 0; the input trace is kept for editing.
+class SimulationResetRequested extends UserAction {
+  const SimulationResetRequested();
+}
+
 // ---- deployment ------------------------------------------------------------
 
 /// Ask bdld which boards it knows (on first visit to Deploy).
@@ -559,6 +587,19 @@ class SemanticActionsReceived extends ResponseAction {
   const SemanticActionsReceived({required this.generation, required this.result});
   final int generation;
   final pb.SemanticActionsResponse result;
+}
+
+class SimulationReceived extends ResponseAction {
+  const SimulationReceived({required this.generation, required this.response});
+  final int generation;
+  final pb.SimulationResponse response;
+}
+
+class SimulationFailed extends ResponseAction {
+  const SimulationFailed({required this.generation, required this.code, required this.message});
+  final int generation;
+  final String code;
+  final String message;
 }
 
 class TargetsReceived extends ResponseAction {

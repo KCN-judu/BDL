@@ -191,6 +191,42 @@ class EffectExecutor {
           (r) =>
               _dispatch(SemanticActionsReceived(generation: generation, result: r.semanticActions)),
         );
+      case RunSimulation(:final inputs, :final schedule, :final ticks, :final generation):
+        final client = _client;
+        if (client == null) {
+          _dispatch(
+            SimulationFailed(
+              generation: generation,
+              code: 'studio.not_connected',
+              message: 'The compiler service is not connected.',
+            ),
+          );
+          return;
+        }
+        try {
+          // A run's inputs are fixed at its start: re-create it with the
+          // whole trace, then step to the wanted tick.  Sequential, never
+          // merged with another step.
+          final started = await client.request(
+            pb.ClientMessage(
+              startSimulation: pb.StartSimulationRequest(inputs: inputs, schedule: schedule),
+            ),
+          );
+          if (ticks == 0) {
+            _dispatch(SimulationReceived(generation: generation, response: started.simulation));
+            return;
+          }
+          final stepped = await client.request(
+            pb.ClientMessage(stepSimulation: pb.StepSimulationRequest(ticks: Int64(ticks))),
+          );
+          _dispatch(SimulationReceived(generation: generation, response: stepped.simulation));
+        } on DaemonError catch (e) {
+          _dispatch(SimulationFailed(generation: generation, code: e.code, message: e.message));
+        } catch (e) {
+          _dispatch(
+            SimulationFailed(generation: generation, code: 'studio.transport', message: '$e'),
+          );
+        }
       case ListTargets():
         await _call(
           pb.ClientMessage(listTargets: pb.ListTargetsRequest()),

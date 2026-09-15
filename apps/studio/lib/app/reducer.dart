@@ -14,6 +14,7 @@ import 'actions.dart';
 import 'deploy.dart';
 import 'drafts.dart';
 import 'effects.dart';
+import 'simulation.dart';
 import 'state.dart';
 import 'tooling.dart';
 
@@ -330,6 +331,29 @@ Transition reduce(AppState s, AppAction action) {
     HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
     ToolingFailed(:final generation) => toolingFailed(s, generation),
 
+    // ---- simulation (app/simulation.dart) ---------------------------------------
+    SimulationInputChanged(:final mappingId, :final value) => simulationInputChanged(
+      s,
+      mappingId,
+      value,
+    ),
+    SimulationPeriodChanged(:final clockId, :final period) => simulationPeriodChanged(
+      s,
+      clockId,
+      period,
+    ),
+    SimulationStepRequested(:final ticks) => _whenProject(
+      s,
+      () => simulationStepRequested(s, ticks),
+    ),
+    SimulationResetRequested() => simulationResetRequested(s),
+    SimulationReceived(:final generation, :final response) => simulationReceived(
+      s,
+      generation,
+      response,
+    ),
+    SimulationFailed(:final generation, :final message) => simulationFailed(s, generation, message),
+
     // ---- deployment (app/deploy.dart) -----------------------------------------
     TargetsRequested() => targetsRequested(s),
     TargetsReceived(:final targets) => targetsReceived(s, targets),
@@ -461,6 +485,7 @@ Transition reduce(AppState s, AppAction action) {
           drafts: const {},
           stashedDrafts: _stash(s),
           deploy: deployWithoutProject(s.editor.deploy).copyWith(targetsLoaded: false),
+          simulation: const SimulationState(),
         ),
       ),
     ),
@@ -484,6 +509,7 @@ Transition reduce(AppState s, AppAction action) {
           drafts: const {},
           stashedDrafts: _stash(s),
           deploy: deployWithoutProject(s.editor.deploy),
+          simulation: const SimulationState(),
         ),
       ),
     ),
@@ -707,7 +733,8 @@ Transition _projectReceived(
       : rebaseDrafts(s.editor.drafts, incoming);
   final editor = sameProject && incoming.revision == current.revision
       ? s.editor
-      : withoutTooling(s.editor);
+      : withoutTooling(s.editor)
+            .copyWith(simulation: simulationAfterRevision(s.editor.simulation, incoming));
   return Transition(
         s.copyWith(
           project: incoming,
