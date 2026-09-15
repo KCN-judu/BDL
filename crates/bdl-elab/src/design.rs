@@ -119,7 +119,7 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
             None => (RealizationOutcome::Unresolved, Vec::new()),
             Some(Definition::Formula { source }) => match elaborate_formula(design, &ir, m, source)
             {
-                Ok(r) => (RealizationOutcome::Elaborated(r), Vec::new()),
+                Ok((r, warnings)) => (RealizationOutcome::Elaborated(r), warnings),
                 Err(d) => (RealizationOutcome::Failed, d),
             },
         };

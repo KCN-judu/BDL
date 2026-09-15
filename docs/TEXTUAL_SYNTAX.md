@@ -581,10 +581,37 @@ Core IR
 | no definition | `definition: None` | unresolved declaration — a legal state |
 | `f(a, b) = e` | `Definition::Formula` | realization `λa.λb. mk C (…)` |
 | `90 deg` | number `90` with unit `deg` | scaled dimensioned literal (linear units only, DI-7) |
-| `f(x)` | call of a relationship on concept values (an input or a relationship without inputs) | `rep (app (declRef f) x)` in value position (DI-17, closed) |
-| `g` (a relationship without inputs, named) | reference | `rep (declRef g)` |
-| `delay(init, e)` · `sync(domain, init, e)` | memory, only in a relationship without inputs | `Delay { init, e }` · `Sync { src, init, e }` |
-| `enum`, `match`, constructors, blocks, `let` | not yet in the surface model | not in the kernel — syntax only in this milestone |
+| `f(x)` | call of a relationship | `app (declRef f) x`; arguments are semantic values (an input, a relationship's value), never bare numbers |
+| `level` (relationship without inputs) | reference | `declRef level` |
+| `{ let x = v; e }` | block | `app (λx:τ. e) v` — a beta-redex; lowering makes it a `Let` |
+| `if c then a else b` | conditional | `ite c a b` (strict: both branches are evaluated, DI-26) |
+| `Some(e)`, `None` | option constructors | `some e`, `none`; the payload is a representation value |
+| `match s { Some(x) => a, None => b }` | match | `app (λs. ite (isSome s) (app (λx. a) (getD s d)) b) s` — the scrutinee is bound once, tests are `isSome` / `eq` / the Boolean, bindings are `getD` projections |
+| `delay(init, v)`, `sync(domain, init, v)` | memory | `delay init v`, `sync domain init v` — legal only outside every binder |
+| `enum`, constructor patterns other than `Some`/`None` | not in the surface model | not in the kernel (no sum types) — syntax only; `formula.constructor.unknown` (DI-19) |
+
+### 11.1 Implementation support matrix
+
+| construct | syntactically accepted | semantically elaborated | backend executable |
+|---|---|---|---|
+| names, literals, units, `+ - * /`, comparisons, `&& \|\| !` | yes | yes | yes |
+| `if … then … else` | yes | yes | yes (strict) |
+| `f(a, …)` with semantic arguments; `level` | yes | yes (`formula.call.*` diagnostics) | yes — inlined, no closures |
+| `{ let x = …; e }`, nested, shadowing | yes | yes (lexical; a `let` may shadow an input or an outer `let`) | yes (`Let`) |
+| `Some(e)` / `None` | yes | yes (`None` takes its payload type from a sibling branch or arm; `formula.option.undetermined` otherwise) | yes |
+| `match` on Bool, Option (nested), dimensionless numbers, a semantic value through its representation | yes | yes, with conservative exhaustiveness (`formula.match.non_exhaustive`) and unreachable-arm warnings | yes |
+| `_`, name, `true`/`false`, whole-number, `Some(p)`, `None` patterns | yes | yes; duplicate binders refused | yes |
+| number patterns on counts | yes | no — `formula.unsupported` (no `nat` equality, DI-12) | — |
+| `delay` / `sync` in a `let` value, a scrutinee, an `if` branch | yes | yes | yes — one state cell per written form |
+| `delay` / `sync` in a block's result, an arm, a formula with inputs | yes | no — `formula.temporal.under_binder` / `under_inputs` | — |
+| `enum` items, other constructors | yes (CST, lowering) | no — `formula.constructor.unknown` (DI-19) | — |
+| a relationship as a value, `f(x)(y)`, calling an input | yes | no — `formula.mapping.needs_arguments`, `formula.call.not_a_relationship` (the higher-order boundary, DI-24, is closed at the surface) | — |
+
+The formula field in Studio and a `.bdl` file's definition bodies go
+through the same elaborator (`bdl-elab::formula`), so this matrix holds
+for both; textual parameter names are still not a binding layer (DI-30),
+so a body names the concept (`Tilt`), not the parameter (`tilt`), unless
+the two spell the same (case-insensitively).
 
 Rules the syntax layer keeps out of itself: `SemanticId`, `DeclId`,
 grants, dimensions, clocks, causality, hardware. The tree records what was
