@@ -1,0 +1,20 @@
+[package]
+name = "bdl-exec-ir"
+description = "Backend-neutral executable IR: first-order expressions over explicit clock, input, state and output slots, in evaluation order; with a reference interpreter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-reactive = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

@@ -86,20 +86,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "bdl-compiler"
+name = "bdl-codegen-rust"
 version = "0.1.0"
 dependencies = [
  "bdl-check",
  "bdl-diagnostics",
+ "bdl-exec-ir",
+ "bdl-ir",
+ "bdl-model",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "bdl-compiler"
+version = "0.1.0"
+dependencies = [
+ "bdl-check",
+ "bdl-codegen-rust",
+ "bdl-diagnostics",
  "bdl-elab",
+ "bdl-exec-ir",
  "bdl-hardware",
  "bdl-ir",
+ "bdl-lower",
  "bdl-model",
  "bdl-output",
  "bdl-reactive",
+ "bdl-runtime-host",
  "proptest",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -146,6 +164,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bdl-exec-ir"
+version = "0.1.0"
+dependencies = [
+ "bdl-ir",
+ "bdl-model",
+ "bdl-reactive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bdl-hardware"
 version = "0.1.0"
 dependencies = [
@@ -163,6 +192,19 @@ version = "0.1.0"
 dependencies = [
  "bdl-model",
  "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "bdl-lower"
+version = "0.1.0"
+dependencies = [
+ "bdl-check",
+ "bdl-diagnostics",
+ "bdl-exec-ir",
+ "bdl-ir",
+ "bdl-model",
+ "bdl-reactive",
  "serde_json",
 ]
 
@@ -221,6 +263,19 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "bdl-runtime-core"
+version = "0.1.0"
+
+[[package]]
+name = "bdl-runtime-host"
+version = "0.1.0"
+dependencies = [
+ "bdl-runtime-core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

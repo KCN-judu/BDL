@@ -1,0 +1,13 @@
+[package]
+name = "bdl-runtime-core"
+description = "no_std runtime vocabulary shared by every generated BDL semantic core: active domains, checked numerics, structured runtime errors"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

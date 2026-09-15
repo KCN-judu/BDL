@@ -1,0 +1,71 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "arith",
+  "package": "bdl_design_arith",
+  "exec_ir_version": 1,
+  "has_domains": true,
+  "clocks": [
+    {
+      "slot": 0,
+      "clock_id": 0,
+      "name": "main",
+      "symbol": "CLOCK_0"
+    }
+  ],
+  "concepts": [],
+  "inputs": [],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "area",
+      "ty": "q[m^2]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "speed",
+      "ty": "q[m·s^-1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "poly",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 3,
+      "decl_id": 3,
+      "symbol": "decl_3",
+      "name": "count",
+      "ty": "nat",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [],
+  "outputs": [],
+  "functions": []
+}

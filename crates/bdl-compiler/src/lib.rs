@@ -29,6 +29,9 @@
 
 #![forbid(unsafe_code)]
 
+pub mod backend;
+pub use backend::{compile, compile_design_ir, readiness, CompileArtifact, CompileOptions};
+
 use bdl_check::{check_realization, pretty, TypeErrorKind};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity, Severity};
 use bdl_elab::{elaborate_design, RealizationOutcome};
@@ -119,7 +122,71 @@ impl ProjectAnalysis {
 /// Run every implemented pass over one immutable snapshot.
 pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
     let elab = elaborate_design(&snapshot.design);
-    let ir = elab.ir;
+    let design = &snapshot.design;
+    let required: BTreeSet<OutputId> = design
+        .outputs
+        .values()
+        .filter(|o| o.required && o.clock.is_some())
+        .map(|o| o.id)
+        .collect();
+    let open_outputs: BTreeMap<OutputId, String> = design
+        .outputs
+        .values()
+        .filter(|o| o.clock.is_none())
+        .map(|o| (o.id, o.name.clone()))
+        .collect();
+    let mappings = elab
+        .mappings
+        .into_iter()
+        .map(|(id, m)| (id, (m.interface, m.outcome, m.diagnostics)))
+        .collect();
+    analyze_ir(
+        snapshot.revision,
+        elab.ir,
+        mappings,
+        &required,
+        &open_outputs,
+    )
+}
+
+/// Run the passes after elaboration over a Design IR built directly — for
+/// tests and tools that construct Core terms the surface cannot express
+/// yet (DI-17).  Every realized declaration counts as elaborated; every
+/// output in `Ω` is required.
+pub fn analyze_design_ir(ir: DesignIr) -> ProjectAnalysis {
+    let mappings = ir
+        .decls
+        .values()
+        .map(|d| {
+            let outcome = match &d.realization {
+                None => RealizationOutcome::Unresolved,
+                Some(e) => RealizationOutcome::Elaborated(bdl_elab::Realized {
+                    expr: e.clone(),
+                    spans: BTreeMap::new(),
+                }),
+            };
+            (d.id, (d.interface.clone(), outcome, Vec::new()))
+        })
+        .collect();
+    let required: BTreeSet<OutputId> = ir.outputs.keys().copied().collect();
+    analyze_ir(
+        Revision::default(),
+        ir,
+        mappings,
+        &required,
+        &BTreeMap::new(),
+    )
+}
+
+type ElabMappings = BTreeMap<DeclId, (Interface, RealizationOutcome, Vec<Diagnostic>)>;
+
+fn analyze_ir(
+    revision: Revision,
+    ir: DesignIr,
+    elab_mappings: ElabMappings,
+    required: &BTreeSet<OutputId>,
+    open_outputs: &BTreeMap<OutputId, String>,
+) -> ProjectAnalysis {
     let mut all = Vec::new();
 
     let concepts = ir
@@ -137,9 +204,9 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
         .collect();
 
     let mut mappings = BTreeMap::new();
-    for (id, m) in elab.mappings {
-        let mut diagnostics = m.diagnostics;
-        let (status, inferred_type, realization) = match m.outcome {
+    for (id, (interface, outcome, diagnostics)) in elab_mappings {
+        let mut diagnostics = diagnostics;
+        let (status, inferred_type, realization) = match outcome {
             RealizationOutcome::Unresolved => (MappingStatus::Declared, None, None),
             RealizationOutcome::Failed => {
                 let status = if diagnostics.iter().any(Diagnostic::is_error) {
@@ -166,7 +233,7 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
             id,
             MappingAnalysis {
                 id,
-                interface: m.interface,
+                interface,
                 status,
                 inferred_type,
                 realization,
@@ -202,20 +269,7 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
     all.extend(clocks.diagnostics.iter().cloned());
 
     // Output pass.  Which sinks are required is a surface decision.
-    let design = &snapshot.design;
-    let required: BTreeSet<OutputId> = design
-        .outputs
-        .values()
-        .filter(|o| o.required && o.clock.is_some())
-        .map(|o| o.id)
-        .collect();
-    let open_outputs: BTreeSet<OutputId> = design
-        .outputs
-        .values()
-        .filter(|o| o.clock.is_none())
-        .map(|o| o.id)
-        .collect();
-    let outputs = check_outputs(&ir, &required);
+    let outputs = check_outputs(&ir, required);
     for (id, m) in mappings.iter_mut() {
         let mine: Vec<Diagnostic> = outputs
             .diagnostics
@@ -233,12 +287,7 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
         sort_diagnostics(&mut m.diagnostics);
     }
     all.extend(outputs.diagnostics.iter().cloned());
-    for o in &open_outputs {
-        let name = design
-            .outputs
-            .get(o)
-            .map(|x| x.name.as_str())
-            .unwrap_or("?");
+    for (o, name) in open_outputs {
         all.push(
             Diagnostic::info(
                 "output.clock_unset",
@@ -250,9 +299,10 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
         );
     }
     let output_complete = outputs.executable && open_outputs.is_empty();
+    let open_outputs: BTreeSet<OutputId> = open_outputs.keys().copied().collect();
     sort_diagnostics(&mut all);
     ProjectAnalysis {
-        revision: snapshot.revision,
+        revision,
         concepts,
         mappings,
         diagnostics: all,

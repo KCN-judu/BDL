@@ -21,8 +21,8 @@ slice is started before the slice works end-to-end.
 | K | output binding + single-driver diagnostic: nominal `PhysicalOutput`, `DriveWF` (exact type + domain), `SingleDriver`, partial validity vs executable completeness, `output_complete` | ✅ `bdl-output` (Studio Deploy page planned) |
 | L | hardware resource allocator (`bdl-hardware`): capability model, device → requirements, deterministic sound+complete solver, dead-end diagnosis, Nano golden cases, `analyze_deployment` + `AnalyzeDeployment`/`ListTargets` in bdld | ✅ (ADR-0015) |
 | M | board descriptions as data: `hardware/boards/arduino_nano.toml`, `big_board.toml` generated + round-tripped | ✅ (RP2040 board file and runtime loading of `hardware/boards/` next) |
-| N | Rust code generation via a backend AST + `bdl-manifest.json` | |
-| O | `no_std` generated core, host execution == interpreter (differential test) | |
+| N | Rust code generation via a backend AST + `bdl-manifest.json`: executable IR (`bdl-exec-ir`), reactive lowering (`bdl-lower`), owned Rust AST + printer (`bdl-codegen-rust`), readiness check, `compile()` | ✅ (ADR-0016) |
+| O | `no_std` generated core, host execution == interpreter: `runtime/bdl-runtime-core`, `runtime/bdl-runtime-host`, corpus + golden + property differential tests, every generated crate `cargo check`ed and run | ✅ |
 | P | first Embassy runtime adapter | |
 | Q | `cargo check` / build orchestration in `bdld` with structured events | |
 | R | flash via `probe-rs` | |

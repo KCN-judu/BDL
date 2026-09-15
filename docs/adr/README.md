@@ -20,3 +20,4 @@ mark superseded. Format: Context · Decision · Consequences.
 | [0013](0013-formula-language-v0.md) | Formula language v0 — names, rep/mk insertion, units, crate split |
 | [0014](0014-textual-syntax-infrastructure.md) | Textual syntax infrastructure — Logos, hand-written event parser, Rowan |
 | [0015](0015-deployment-analysis-is-target-relative.md) | Deployment analysis is a separate, target-relative function; outputs are not a mapping status |
+| [0016](0016-generated-rust-is-an-implementation-of-the-reference-evaluator.md) | Generated Rust is an implementation of the reference evaluator — explicit executable IR, owned AST, differential tests |

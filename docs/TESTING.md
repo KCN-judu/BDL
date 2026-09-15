@@ -11,9 +11,10 @@ Layered; determinism is a tested property, not a hope.
 | Flutter widget | shell status line, library/canvas/inspector with an open project | `apps/studio/test/shell_test.dart` | in place |
 | Dart unit | canvas geometry: scene, auto-placement, hit testing, typed drop targets | `apps/studio/test/canvas_geometry_test.dart` | in place |
 | Render preview | renders the shell with the real system font to PNG (`SNAP_DIR=… flutter test --update-goldens test/snapshot_preview_test.dart`, or `just studio-snap`) — for looking, not asserting | `apps/studio/test/snapshot_preview_test.dart` | in place (opt-in) |
-| Property | solver output satisfies constraints; evaluator stability; codegen stability; refinement preserves public projections | `proptest` | planned with each subsystem |
-| Golden | project → diagnostics / IR / generated Rust / trace | `tests/golden/` | planned |
-| Differential | reference interpreter trace == generated-Rust host trace == Lean fixtures where practical | `tests/differential/` | planned; highest-value test in the project |
+| Property | solver soundness and agreement with brute force; evaluator order-independence; reference == exec-IR interpreter over generated designs; a seeded batch compiled and run | `proptest` in `bdl-hardware`, `bdl-reactive`, `bdl-compiler/tests/backend_property.rs` | in place |
+| Golden | corpus design → generated `Cargo.toml`, `src/lib.rs`, `src/bin/host.rs`, `bdl-manifest.json`; generating twice is byte-identical | `crates/bdl-compiler/tests/golden/<case>/` (`BDL_UPDATE_GOLDEN=1` to accept) | in place |
+| Generated-crate build | every corpus core `cargo check`ed as a `no_std` library; host binary built | `crates/bdl-compiler/tests/backend_differential.rs` → `target/bdl-generated/` | in place |
+| Differential | reference evaluator trace == generated-Rust host trace (values, outputs, errors) per corpus case and per seeded random design | `crates/bdl-compiler/tests/backend_differential.rs`, `backend_property.rs` (policy: `docs/CODEGEN_RUST.md`) | in place; highest-value test in the project |
 | Flutter | reducer, widget transitions, protocol integration — never screenshots only | | ongoing |
 
 CI (`.github/workflows/ci.yml`): `cargo fmt --check`, `clippy -D warnings`,
@@ -27,5 +28,9 @@ Locally: `just check`.
 
 * `BTreeMap` everywhere in the model; projections are ordered lists.
 * No random ids; ids come from the persisted allocator.
-* Hardware solving (when it lands) iterates in documented order; codegen
-  output is byte-stable for the same project + compiler version.
+* Hardware solving iterates in documented order; codegen output is
+  byte-stable for the same design + compiler version (golden files).
+* Generated crates are written under `target/bdl-generated/<case>/` and
+  built with one shared `CARGO_TARGET_DIR` (`target/bdl-generated/target`)
+  so the runtime crates compile once; the tests spawn `cargo`, so they are
+  slower than the rest (≈20 s cold) and need no network.

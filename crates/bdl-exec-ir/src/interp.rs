@@ -1,0 +1,240 @@
+//! An interpreter for the executable IR, structured exactly like the
+//! generated `step`: read phase in plan order, write phase in cell order,
+//! commit.  It speaks the reference evaluator's `Value` and `RuntimeError`
+//! so a trace can be compared with the reference by `==`.
+
+use crate::{Activation, ClockSlot, DeclKind, ExecExpr, ExecIr, LocalId, PrimOp};
+use bdl_model::DeclId;
+use bdl_reactive::eval::RuntimeError;
+use bdl_reactive::Value;
+use std::collections::BTreeMap;
+
+/// Committed cell values, `None` until first written.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct CellState {
+    pub cells: Vec<Option<Value>>,
+}
+
+impl CellState {
+    pub fn init(ir: &ExecIr) -> CellState {
+        CellState {
+            cells: vec![None; ir.cells.len()],
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct TickResult {
+    pub next: CellState,
+    /// Per declaration in plan order; `None` when not due this tick.
+    pub values: Vec<Option<Value>>,
+    /// Per output slot; `None` when the driver was not due.
+    pub outputs: Vec<Option<Value>>,
+}
+
+/// One global tick.  `inputs` is indexed by input slot.
+pub fn step(
+    ir: &ExecIr,
+    tick: u64,
+    active: &[ClockSlot],
+    state: &CellState,
+    inputs: &[Option<Value>],
+) -> Result<TickResult, RuntimeError> {
+    let mut values: Vec<Option<Value>> = vec![None; ir.decls.len()];
+    for d in &ir.decls {
+        if !ir.due(d.activation, active) {
+            continue;
+        }
+        let v = match &d.kind {
+            DeclKind::Input { slot } => inputs
+                .get(slot.0 as usize)
+                .cloned()
+                .flatten()
+                .ok_or(RuntimeError::MissingInput { decl: d.id, tick })?,
+            DeclKind::Computed { body } => {
+                let mut cx = Cx {
+                    owner: d.id,
+                    tick,
+                    prev: state,
+                    values: &values,
+                    locals: BTreeMap::new(),
+                };
+                cx.eval(body)?
+            }
+        };
+        values[d.index.0 as usize] = Some(v);
+    }
+    let mut next = state.clone();
+    for cell in &ir.cells {
+        if !active.contains(&cell.writer) {
+            continue;
+        }
+        let owner = ir.decl(cell.owner).map(|d| d.id).ok_or_else(|| {
+            RuntimeError::Internal(format!("cell owner {:?} missing", cell.owner))
+        })?;
+        let mut cx = Cx {
+            owner,
+            tick,
+            prev: state,
+            values: &values,
+            locals: BTreeMap::new(),
+        };
+        let v = cx.eval(&cell.operand)?;
+        next.cells[cell.slot.0 as usize] = Some(v);
+    }
+    let outputs = ir
+        .outputs
+        .iter()
+        .map(|o| values[o.driver.0 as usize].clone())
+        .collect();
+    Ok(TickResult {
+        next,
+        values,
+        outputs,
+    })
+}
+
+struct Cx<'a> {
+    owner: DeclId,
+    tick: u64,
+    prev: &'a CellState,
+    values: &'a [Option<Value>],
+    locals: BTreeMap<LocalId, Value>,
+}
+
+impl Cx<'_> {
+    fn internal(&self, msg: String) -> RuntimeError {
+        RuntimeError::Internal(msg)
+    }
+
+    fn eval(&mut self, e: &ExecExpr) -> Result<Value, RuntimeError> {
+        Ok(match e {
+            ExecExpr::Bool { value } => Value::Bool { value: *value },
+            ExecExpr::Nat { value } => Value::Nat { value: *value },
+            ExecExpr::Quantity { dim, value } => Value::q(*dim, value.0),
+            ExecExpr::Local { id } => self
+                .locals
+                .get(id)
+                .cloned()
+                .ok_or_else(|| self.internal(format!("unbound local {id:?}")))?,
+            ExecExpr::Let { local, value, body } => {
+                let v = self.eval(value)?;
+                self.locals.insert(*local, v);
+                self.eval(body)?
+            }
+            ExecExpr::ReadDecl { decl } => self
+                .values
+                .get(decl.0 as usize)
+                .cloned()
+                .flatten()
+                .ok_or_else(|| self.internal(format!("decl {decl:?} read before evaluation")))?,
+            ExecExpr::Wrap { sem, e } => Value::sem(*sem, self.eval(e)?),
+            ExecExpr::Unwrap { e } => match self.eval(e)? {
+                Value::Semantic { repr, .. } => *repr,
+                other => return Err(self.internal(format!("rep of non-semantic {other:?}"))),
+            },
+            ExecExpr::ReadCell { slot, init } => match self.prev.cells.get(slot.0 as usize) {
+                Some(Some(v)) => v.clone(),
+                Some(None) => self.eval(init)?,
+                None => return Err(self.internal(format!("state slot {slot:?} out of range"))),
+            },
+            ExecExpr::Prim { op, args } => {
+                // Strict: every argument first, left to right.
+                let mut vs = Vec::with_capacity(args.len());
+                for a in args {
+                    vs.push(self.eval(a)?);
+                }
+                self.apply(op, vs)?
+            }
+        })
+    }
+
+    fn apply(&self, op: &PrimOp, args: Vec<Value>) -> Result<Value, RuntimeError> {
+        let (owner, tick) = (self.owner, self.tick);
+        let q = |v: &Value| {
+            v.as_quantity()
+                .ok_or_else(|| RuntimeError::Internal(format!("expected a quantity, got {v:?}")))
+        };
+        let b = |v: &Value| {
+            v.as_bool()
+                .ok_or_else(|| RuntimeError::Internal(format!("expected a boolean, got {v:?}")))
+        };
+        let finite = |dim, x: f64, op: &str| {
+            if x.is_finite() {
+                Ok(Value::q(dim, x))
+            } else {
+                Err(RuntimeError::NonFinite {
+                    decl: owner,
+                    tick,
+                    op: op.to_owned(),
+                })
+            }
+        };
+        Ok(match (op, args.as_slice()) {
+            (PrimOp::Add { dim }, [a, c]) => finite(*dim, q(a)?.1 + q(c)?.1, "add")?,
+            (PrimOp::Sub { dim }, [a, c]) => finite(*dim, q(a)?.1 - q(c)?.1, "sub")?,
+            (PrimOp::Mul { d1, d2 }, [a, c]) => finite(*d1 + *d2, q(a)?.1 * q(c)?.1, "mul")?,
+            (PrimOp::Div { d1, d2 }, [a, c]) => {
+                let (x, y) = (q(a)?.1, q(c)?.1);
+                if y == 0.0 {
+                    return Err(RuntimeError::DivisionByZero { decl: owner, tick });
+                }
+                finite(*d1 - *d2, x / y, "div")?
+            }
+            (PrimOp::Lt, [a, c]) => Value::boolean(q(a)?.1 < q(c)?.1),
+            (PrimOp::Eq, [a, c]) => Value::boolean(q(a)?.1 == q(c)?.1),
+            (PrimOp::Not, [a]) => Value::boolean(!b(a)?),
+            (PrimOp::And, [a, c]) => Value::boolean(b(a)? && b(c)?),
+            (PrimOp::Or, [a, c]) => Value::boolean(b(a)? || b(c)?),
+            (PrimOp::Ite { .. }, [c, x, y]) => {
+                if b(c)? {
+                    x.clone()
+                } else {
+                    y.clone()
+                }
+            }
+            (PrimOp::None { .. }, []) => Value::None,
+            (PrimOp::Some { .. }, [x]) => Value::some(x.clone()),
+            (PrimOp::IsSome { .. }, [x]) => Value::boolean(matches!(x, Value::Some { .. })),
+            (PrimOp::GetD { .. }, [x, dflt]) => match x {
+                Value::Some { value } => (**value).clone(),
+                _ => dflt.clone(),
+            },
+            _ => {
+                return Err(RuntimeError::Internal(format!(
+                    "ill-shaped primitive application {op:?} {args:?}"
+                )))
+            }
+        })
+    }
+}
+
+/// Convenience: run a whole schedule.  `active_at(tick)` gives the active
+/// slots, `inputs_at(tick)` the input slot values.  Stops at the first
+/// error, which is returned with its tick.
+#[allow(clippy::type_complexity)]
+pub fn run(
+    ir: &ExecIr,
+    ticks: u64,
+    active_at: &dyn Fn(u64) -> Vec<ClockSlot>,
+    inputs_at: &dyn Fn(u64) -> Vec<Option<Value>>,
+) -> (Vec<TickResult>, Option<(u64, RuntimeError)>) {
+    let mut state = CellState::init(ir);
+    let mut out = Vec::new();
+    for t in 0..ticks {
+        match step(ir, t, &active_at(t), &state, &inputs_at(t)) {
+            Ok(r) => {
+                state = r.next.clone();
+                out.push(r);
+            }
+            Err(e) => return (out, Some((t, e))),
+        }
+    }
+    (out, None)
+}
+
+/// Whether `activation` runs at a tick with `active` slots — re-exported
+/// for hosts that build traces.
+pub fn is_due(ir: &ExecIr, activation: Activation, active: &[ClockSlot]) -> bool {
+    ir.due(activation, active)
+}

@@ -10,9 +10,14 @@ members = [
     "crates/bdl-reactive",
     "crates/bdl-output",
     "crates/bdl-hardware",
+    "crates/bdl-exec-ir",
+    "crates/bdl-lower",
+    "crates/bdl-codegen-rust",
     "crates/bdl-compiler",
     "crates/bdl-protocol",
     "crates/bdl-daemon",
+    "runtime/bdl-runtime-core",
+    "runtime/bdl-runtime-host",
 ]
 
 [workspace.package]
@@ -32,11 +37,16 @@ bdl-check = { path = "crates/bdl-check" }
 bdl-reactive = { path = "crates/bdl-reactive" }
 bdl-output = { path = "crates/bdl-output" }
 bdl-hardware = { path = "crates/bdl-hardware" }
+bdl-exec-ir = { path = "crates/bdl-exec-ir" }
+bdl-lower = { path = "crates/bdl-lower" }
+bdl-codegen-rust = { path = "crates/bdl-codegen-rust" }
+bdl-runtime-core = { path = "runtime/bdl-runtime-core" }
+bdl-runtime-host = { path = "runtime/bdl-runtime-host" }
 bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-protocol = { path = "crates/bdl-protocol" }
 
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
 thiserror = "2.0"
 toml = "0.9"
 prost = "0.14"

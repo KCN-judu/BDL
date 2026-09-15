@@ -1,0 +1,38 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "no_domains",
+  "package": "bdl_design_no_domains",
+  "exec_ir_version": 1,
+  "has_domains": false,
+  "clocks": [],
+  "concepts": [],
+  "inputs": [],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "one",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "agnostic"
+      },
+      "input_slot": null
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "two",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "agnostic"
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [],
+  "outputs": [],
+  "functions": []
+}

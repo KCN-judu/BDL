@@ -1,0 +1,20 @@
+[package]
+name = "bdl-codegen-rust"
+description = "Executable IR → a small owned Rust AST → deterministic source: the generated no_std semantic core, its host bridge, Cargo manifest and bdl-manifest.json"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-check = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-exec-ir = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

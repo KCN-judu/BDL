@@ -74,13 +74,18 @@ crates/
   bdl-reactive/         dependency graph, causality, clocks, reference evaluator, simulation
   bdl-output/           physical outputs: DriveWF, SingleDriver, completeness (docs/DEPLOYMENT_WALKTHROUGH.md)
   bdl-hardware/         capability model, device → requirements, boards, finite solver + diagnose
-  bdl-compiler/         analyze(snapshot) → ProjectAnalysis (revision-tagged, deterministic)
+  bdl-exec-ir/          executable IR (slots, first-order expressions, plan) + interpreter (docs/EXECUTABLE_IR.md)
+  bdl-lower/            DesignIr → ExecIr: clock/state/input/output slots, lambda inlining, evaluation order
+  bdl-codegen-rust/     ExecIr → owned Rust AST → no_std core crate + host bridge + manifest (docs/CODEGEN_RUST.md)
+  bdl-compiler/         analyze(snapshot) → ProjectAnalysis; compile(snapshot, options) → CompileArtifact
   bdl-protocol/         bdl.proto · framing · conversions
   bdl-daemon/           bdld: session, coordinator, transport
 assets/brand/           the compass-λ mark (generator, SVGs, icons)
 docs/                   architecture, formats, pipeline, IR, protocol, ADRs, design issues
 reference/paper/        the paper (PDF + markdown source)
-hardware/ runtime/      reserved (planned)
+hardware/boards/        board descriptions as data
+runtime/bdl-runtime-core  no_std vocabulary every generated core links against
+runtime/bdl-runtime-host  std harness: run generated programs, JSON traces, cargo driver
 ```
 
 Dependency direction (acyclic, enforced by Cargo):
@@ -116,6 +121,7 @@ persistence edges.
 | change the wire format | `docs/PROTOCOL.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto` |
 | decide something the paper left open | `docs/DESIGN_ISSUES.md` — record it there, never silently in code |
 | follow a design to a board | `docs/DEPLOYMENT_WALKTHROUGH.md`, `docs/HARDWARE_MODEL.md`, `crates/bdl-output`, `crates/bdl-hardware` |
+| generate and run Rust from a design | `docs/EXECUTABLE_IR.md`, `docs/CODEGEN_RUST.md`, `crates/bdl-compiler/tests/backend_differential.rs` |
 | see what is next | `docs/ROADMAP.md` |
 
 ## 8. Conventions that are checked

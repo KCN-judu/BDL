@@ -1,0 +1,16 @@
+[package]
+name = "bdl-runtime-host"
+description = "Host harness for generated BDL programs: dynamic values, JSON run requests/traces over stdio, and a cargo driver for building and running generated crates"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-runtime-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

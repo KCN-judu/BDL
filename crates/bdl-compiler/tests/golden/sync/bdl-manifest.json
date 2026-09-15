@@ -1,0 +1,90 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "sync",
+  "package": "bdl_design_sync",
+  "exec_ir_version": 1,
+  "has_domains": true,
+  "clocks": [
+    {
+      "slot": 0,
+      "clock_id": 0,
+      "name": "fast",
+      "symbol": "CLOCK_0"
+    },
+    {
+      "slot": 1,
+      "clock_id": 1,
+      "name": "slow",
+      "symbol": "CLOCK_1"
+    }
+  ],
+  "concepts": [],
+  "inputs": [
+    {
+      "slot": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "x",
+      "ty": "q[1]"
+    }
+  ],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "x",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": 0
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "y",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 1
+      },
+      "input_slot": null
+    },
+    {
+      "index": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "z",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [
+    {
+      "slot": 0,
+      "symbol": "cell_0",
+      "decl_id": 1,
+      "path": [],
+      "writer_clock_slot": 0,
+      "ty": "q[1]"
+    },
+    {
+      "slot": 1,
+      "symbol": "cell_1",
+      "decl_id": 2,
+      "path": [],
+      "writer_clock_slot": 1,
+      "ty": "q[1]"
+    }
+  ],
+  "outputs": [],
+  "functions": []
+}

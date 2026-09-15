@@ -60,22 +60,40 @@ crates/
   bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)
   bdl-output       DriveWF · SingleDriver · CompleteOutputs · output_values       (→ ir, reactive)
   bdl-hardware     Capability/Resource/Hardware · device → requirements · boards · solve/diagnose (→ model)
-  bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis (→ elab, check, reactive, output, hardware)
+  bdl-exec-ir      executable IR: slots, first-order expressions, evaluation plan; interpreter (→ ir, reactive)
+  bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
+  bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
+  bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
   bdl-daemon       bdld: session, coordinator, transport, analysis push          (→ protocol, compiler)
 planned:
-  bdl-codegen-rust  Core IR → Rust backend AST → Cargo project + manifest
   bdl-component  supplied Rust component contracts
   bdl-cli        headless front end sharing bdld's implementation
 runtime/
-  bdl-runtime-core / -host / -embassy
+  bdl-runtime-core   no_std vocabulary of every generated core: ActiveDomains, ClockSlot, RuntimeError, checked numerics (no deps)
+  bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver (→ runtime-core)
+planned:
+  bdl-runtime-embassy  first platform adapter
 ```
 
 Dependency direction is strict and acyclic: `model → ir → {syntax → elab,
 check → reactive → output} → compiler → protocol → daemon`; `hardware`
 depends on `model` only (it never sees `Δ`) and `compiler` joins the two;
-later `codegen` hangs off `compiler`. A crate exists only where a real
-boundary exists; tiny crates are merged rather than kept for the diagram.
+`lower → codegen` hang off `exec-ir` and are joined by `compiler`;
+`runtime-core` depends on nothing and is what generated code links
+against. A crate exists only where a real boundary exists; tiny crates are
+merged rather than kept for the diagram.
+
+## The generated core is an implementation of the reference evaluator
+
+`bdl-reactive::eval` is the executable definition of BDL runtime
+behaviour; generated Rust (`bdl-lower` + `bdl-codegen-rust`) is an
+implementation of it that lowers representation — dense slots, static
+structs, `f64` fields, inlined lambdas — and may not change meaning. The
+two are kept independent and compared trace for trace (ADR-0016,
+`docs/CODEGEN_RUST.md`). The core is target-independent and knows no
+board: the platform adapter that binds `DeploymentAnalysis`'s assignment
+to peripherals is a later, separate artefact.
 
 ## The compiler is a pipeline of explicit passes
 

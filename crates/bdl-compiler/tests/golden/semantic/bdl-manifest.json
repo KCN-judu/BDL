@@ -1,0 +1,99 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "semantic",
+  "package": "bdl_design_semantic",
+  "exec_ir_version": 1,
+  "has_domains": true,
+  "clocks": [
+    {
+      "slot": 0,
+      "clock_id": 0,
+      "name": "clk#0",
+      "symbol": "CLOCK_0"
+    }
+  ],
+  "concepts": [
+    {
+      "semantic_id": 0,
+      "name": "Tilt",
+      "symbol": "Sem0",
+      "representation": "q[rad]"
+    },
+    {
+      "semantic_id": 1,
+      "name": "Held",
+      "symbol": "Sem1",
+      "representation": "bool"
+    }
+  ],
+  "inputs": [
+    {
+      "slot": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "tilt",
+      "ty": "sem#0"
+    },
+    {
+      "slot": 1,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "held",
+      "ty": "sem#1"
+    }
+  ],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "tilt",
+      "ty": "sem#0",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": 0
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "steep",
+      "ty": "sem#1",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "held",
+      "ty": "sem#1",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": 1
+    },
+    {
+      "index": 3,
+      "decl_id": 3,
+      "symbol": "decl_3",
+      "name": "both",
+      "ty": "bool",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [],
+  "outputs": [],
+  "functions": []
+}

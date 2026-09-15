@@ -21,12 +21,15 @@ pipeline does not fail fast.
 | 12 | hardware requirement generation | `DeviceBinding` (kind, fixed pins) → `Vec<Requirement>` with stable `RequirementId { device, index }` | validation layer `Requirement` | **integrated** (`bdl-hardware::devices`); part of `analyze_deployment` |
 | 13 | hardware allocation | `(Hardware, [Requirement])` → `Option<Assignment>`, else `DeadEnd` | `solve` / `diagnose` (sound + complete DFS) | **integrated** (`bdl-hardware::solve`); part of `analyze_deployment`, never of `analyze` |
 | 14 | reference evaluation / simulation | two-phase tick (read, write) over state cells `(DeclId, path)`; schedules; input traces; traces | `Ev` / `MEv` | **core rules complete, integrated** in bdld (`bdl-reactive::{eval,simulate}`); Studio UI planned |
-| 15 | Rust code generation | Core IR → backend AST → Cargo project + `bdl-manifest.json` | erasure | planned (`bdl-codegen-rust`) |
+| 15 | backend readiness | `ProjectAnalysis` → ready, or `backend.not_ready` listing every unmet condition | — | **integrated** (`bdl-compiler::readiness`) |
+| 16 | reactive lowering | `DesignIr` + validated drive edges → `ExecIr` (clock/state/input/output slots, inlined lambdas, evaluation order) | erasure of binders; `StateCellId → StateSlot` | **integrated** (`bdl-lower`; `docs/EXECUTABLE_IR.md`) |
+| 17 | Rust code generation | `ExecIr` → owned Rust AST → `no_std` core + host bridge + `Cargo.toml` + `bdl-manifest.json` | implementation correspondence | **integrated** (`bdl-codegen-rust`; `docs/CODEGEN_RUST.md`); platform adapter planned |
 
 ## Driver and result
 
 `bdl-compiler::analyze(&ProjectSnapshot) -> ProjectAnalysis` runs passes
-1–11 and returns, tagged with the snapshot's revision: per mapping the
+1–11 (`analyze_design_ir` the same over a Design IR built directly) and
+returns, tagged with the snapshot's revision: per mapping the
 elaborated `Interface`, a status on the ladder
 
 ```
@@ -55,6 +58,23 @@ the output's state says `Undriven | Driven | IllFormed | Conflict`. The
 `MappingStatus` enum is unchanged — `OutputComplete` is a property of the
 design, `HardwareFeasible` of a (design, target) pair, and neither is a
 rung a single mapping can climb.
+
+### Code generation is a third
+
+```
+compile(&ProjectSnapshot, &CompileOptions) -> CompileArtifact
+    { analysis, exec_ir?, generated?: GeneratedCrate { files, manifest }, diagnostics }
+```
+
+runs `analyze`, then passes 15–17: readiness on the authoritative
+analysis (nothing is re-checked downstream), lowering, generation.
+`CompileOptions::require_complete` adds `output_complete` to readiness
+for firmware-oriented artefacts. The result is deterministic byte for
+byte; `bdl-manifest.json` maps every generated symbol and slot back to
+its `DeclId` / `StateCellId` / `OutputId` / `ClockId`. The generated core
+is target-independent and is proven against the reference evaluator by
+differential tests (`docs/CODEGEN_RUST.md`); deployment feasibility is
+not a readiness condition here.
 
 ### Deployment is a second function
 
@@ -96,6 +116,9 @@ not a minimal unsat core (DI-21). `bdld` exposes it as `AnalyzeDeployment
 | `output.missing_driver` (required sink undriven) · `output.clock_unset` (open output) | outputs | info (the design is partial, not wrong) |
 | `deploy.infeasible` | deployment | error (project; target-relative) |
 | `deploy.device_unbound` · `deploy.output_unrealised` | deployment | info |
+| `backend.not_ready` (one, listing every unmet condition) | readiness | error (project) |
+| `backend.unsupported_higher_order` (a relationship as a value, a partial application, a function-typed input) | lowering | error (on the mapping) |
+| `backend.internal_lowering` (an invariant analysis should have established is missing; a compiler bug) | lowering / codegen | error |
 | `type.argument_mismatch` · `type.expected_function` · `type.rep_of_non_semantic` · `type.temporal_*` · `type.unbound_variable` · `type.unknown_declaration` | check | error |
 
 ## Incremental invalidation

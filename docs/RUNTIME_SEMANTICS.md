@@ -40,19 +40,26 @@ adapters (planned) must agree with it tick for tick.
   keeps the `DeclId`, and semantic values render in the design's terms
   (`Brightness(0.5)`).
 
-The rest of this document states what the generated core must preserve.
+The rest of this document states what the generated core must preserve —
+and, since the backend milestone, does: `bdl-lower` + `bdl-codegen-rust`
+produce a `no_std` core whose `step` is the two-phase tick above with
+dense slots (`docs/EXECUTABLE_IR.md`, `docs/CODEGEN_RUST.md`), and
+differential tests hold it to this evaluator trace for trace.
 
 ## One generated core, two hosts
 
 ```
-              bdl-generated-core (no_std)
-                 ↑              ↑
-     host simulation        firmware (Embassy adapter first)
+              generated core (no_std; runtime/bdl-runtime-core vocabulary)
+                 ↑                          ↑
+     host bridge (runtime/bdl-runtime-host)   firmware (Embassy adapter, planned)
 ```
 
 Only the input provider, the clock activation source, the output adapter and
 the telemetry transport differ. The simulator does **not** get a separate
-interpretation; a reference interpreter exists for differential testing.
+interpretation; the reference evaluator exists for differential testing
+and stays the oracle. Today the host bridge feeds a JSON run request
+(active clock slots and input slots per tick) and returns every
+declaration's value, every output and the first structured error.
 
 ## Declarations are not tasks
 
@@ -72,9 +79,12 @@ BDL meaning never depends on executor task order.
 ## Synchronous state: previous/next
 
 `delay init e` reads the *previous* activation's state and writes the next;
-it never observes an update made earlier in the same logical tick. A
-double buffer (`prev` / `next`) is the initial implementation. Every delay
-carries its explicit initial value; there is no implicit zero.
+it never observes an update made earlier in the same logical tick. The
+generated `step` copies the committed `Cells` into `next`, reads only
+`prev`, writes only `next`, and assigns `state.cells = next` at the end —
+not at all on error. Every delay carries its explicit initial value (a
+cell is `Option<T>`, `None` until first written, and reads `init`
+evaluated now while `None`); there is no implicit zero.
 
 ## Clock domains and `sync`: strictly before
 
@@ -83,7 +93,10 @@ activation strictly before the current tick; `init` if there was none. It
 never invokes `step_src` recursively. When two domains are ready at the same
 physical instant, each observes only the other's previously committed
 activation — the scheduler's order is unobservable, exactly as in the formal
-model. `delay` is `sync` at the own domain.
+model. `delay` is `sync` at the own domain. In generated code a `sync`
+cell's writer is the *source* domain's slot: it is written when `src` is
+active, read when the owner is due, and a tick in which both are active
+sees the value committed by the previous tick.
 
 ## Physical outputs: evaluate, then commit
 
@@ -101,16 +114,22 @@ first-wins / last-wins / task-priority rule.
 ## Numerics
 
 The formal model computes over `Nat`. The generated core computes over IEEE
-floats (`f32` on device, `f64` on host unless configured). Floating-point
+`f64`, exactly as the reference evaluator (DI-15): division by an exact
+zero and any non-finite primitive result fail the tick with a structured
+error; `bdl-runtime-core::num` is the one place that policy lives on the
+generated side. `f32` on device is a future, separately recorded
+deviation, not something the backend does today (DI-28). Floating-point
 non-associativity means symbolic normalization may not silently rewrite
-formulas; any rewrite records a numeric obligation (DESIGN_ISSUES DI-1).
+formulas; any rewrite records a numeric obligation (DESIGN_ISSUES DI-1);
+the backend performs no rewrite.
 
 ## Semantic newtypes
 
-Generated Rust keeps `struct Tilt(f32)`, `struct Brightness(f32)` at
-boundaries — supplied components, public APIs, device bindings, host
-integration — so the Rust compiler catches category mistakes there. Internal
-generated code may erase wrappers where proven safe.
+Generated Rust keeps one newtype per concept — `pub struct Sem0(pub f64)`
+for `Tilt`, named by stable id — everywhere a value is carried (inputs,
+declaration values, cells, outputs), so the Rust compiler catches category
+mistakes at every boundary. Internal generated code may erase wrappers
+where proven safe, later; today it never does.
 
 ## Telemetry
 

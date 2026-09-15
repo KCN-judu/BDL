@@ -1,8 +1,8 @@
 # Intermediate representations
 
 ```
-Surface Model  ──elaboration──▶  Design IR  ──lowering──▶  Reactive Core IR  ──codegen──▶  Rust backend AST
-(bdl-model)                      (bdl-ir)                  (bdl-ir)                       (bdl-codegen-rust)
+Surface Model ──elaboration──▶ Design IR (Θ Δ Κ Ω β over Reactive Core IR) ──reactive lowering──▶ Executable IR ──codegen──▶ Rust AST ──print──▶ crate
+(bdl-model)                    (bdl-ir)                                      (bdl-lower → bdl-exec-ir)         (bdl-codegen-rust)
 ```
 
 Flutter JSON is never translated directly into Rust.
@@ -76,6 +76,15 @@ Inputs are observed with `rep` (innermost binder is the *last* input), the
 result is constructed with `mk` under the declaration's own grant, units are
 scaled literals, and every primitive is dimension-indexed so the checker's
 ordinary application rule enforces dimensions.
+
+## Executable IR (`bdl-exec-ir`) and the Rust AST (`bdl-codegen-rust::ast`)
+
+After analysis, `bdl-lower` turns a checked Design IR into a plan with
+dense clock/input/state/output slots, first-order expressions (lambdas
+inlined) and an evaluation order — `docs/EXECUTABLE_IR.md`. The Rust
+backend prints it through a small owned AST — `docs/CODEGEN_RUST.md`.
+Neither is a semantic layer: the reference evaluator over the Design IR
+remains the definition, and the differential tests hold the rest to it.
 
 ## Deliberate deviations from the Lean development
 

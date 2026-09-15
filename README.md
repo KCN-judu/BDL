@@ -60,3 +60,4 @@ just bdld           # run the daemon on stdio for manual experiments
 4. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
 5. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)
 6. [docs/EXECUTION_WALKTHROUGH.md](docs/EXECUTION_WALKTHROUGH.md) · [docs/DEPLOYMENT_WALKTHROUGH.md](docs/DEPLOYMENT_WALKTHROUGH.md) — one value through a tick; one design out to a pin
+7. [docs/EXECUTABLE_IR.md](docs/EXECUTABLE_IR.md) · [docs/CODEGEN_RUST.md](docs/CODEGEN_RUST.md) — from a checked design to a `no_std` Rust core, and how it is held to the reference evaluator

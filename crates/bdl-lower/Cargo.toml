@@ -1,0 +1,22 @@
+[package]
+name = "bdl-lower"
+description = "Reactive lowering: Design IR (Θ Δ Κ Ω β) → executable IR with explicit slots, first-order expressions and an evaluation plan"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-check = { workspace = true }
+bdl-reactive = { workspace = true }
+bdl-exec-ir = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[lints]
+workspace = true
