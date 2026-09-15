@@ -9,9 +9,11 @@ stalk.  Two line directions only.  Pure geometry -> SVG."""
 import math
 
 BLACK = "#141414"
+WHITE = "#F4F4F2"           # body colour on dark backgrounds
 RED = "#E5322D"
 CREAM = "#F2EBDD"
 BLUE = "#2B5DD1"
+DARK_PIN = "#1E1E1E"        # hinge pin on dark backgrounds (reads as a hole)
 
 # ---- geometry (viewBox 0 0 256 256) ---------------------------------------
 H = (128.0, 102.0)          # hinge
@@ -53,26 +55,35 @@ def square(c, side, d):
             add(add(c, mul(d, -h)), mul(n, -h)), add(add(c, mul(d, -h)), mul(n, h))]
 
 def svg(variant):
-    black, red = (BLACK, RED) if variant != "mono" else ("currentColor", "currentColor")
+    """variant: 'light' (black body, for light themes), 'dark' (white body,
+    for dark themes), 'icon' (black body on a cream tile), 'mono'
+    (currentColor)."""
+    body, red, pin = {
+        "light": (BLACK, RED, CREAM),
+        "dark": (WHITE, RED, DARK_PIN),
+        "icon": (BLACK, RED, CREAM),
+        "mono": ("currentColor", "currentColor", None),
+    }[variant]
     parts = []
     if variant == "icon":
         parts.append(f'<rect width="256" height="256" rx="56" fill="{CREAM}"/>')
     # long stroke: knob -> pencil tip as one black chamfered bar, then the red
     # lead painted over its end (no abutting edges, hence no seams)
     lead_start = lerp(PENCIL_TIP, H, LEAD_LEN / LEG)
-    parts.append(f'<polygon points="{pts(bar(KNOB_C, PENCIL_TIP, W, tip_at_b=True))}" fill="{black}"/>')
+    parts.append(f'<polygon points="{pts(bar(KNOB_C, PENCIL_TIP, W, tip_at_b=True))}" fill="{body}"/>')
     parts.append(f'<polygon points="{pts(bar(lead_start, PENCIL_TIP, W, tip_at_b=True))}" fill="{red}"/>')
     # needle leg
-    parts.append(f'<polygon points="{pts(bar(H, NEEDLE_TIP, W, tip_at_b=True))}" fill="{black}"/>')
+    parts.append(f'<polygon points="{pts(bar(H, NEEDLE_TIP, W, tip_at_b=True))}" fill="{body}"/>')
     # knob and hinge blocks, aligned with the long stroke
-    parts.append(f'<polygon points="{pts(square(KNOB_C, KNOB, DR))}" fill="{black}"/>')
+    parts.append(f'<polygon points="{pts(square(KNOB_C, KNOB, DR))}" fill="{body}"/>')
     parts.append(f'<polygon points="{pts(square(H, HINGE, DR))}" fill="{red}"/>')
-    if variant != "mono":
-        parts.append(f'<polygon points="{pts(square(H, 10, DR))}" fill="{CREAM}"/>')
+    if pin is not None:
+        parts.append(f'<polygon points="{pts(square(H, 10, DR))}" fill="{pin}"/>')
     body = "\n  ".join(parts)
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">\n  {body}\n</svg>\n'
 
-for v in ("mark", "icon", "mono"):
-    with open(f"bdl-{v}.svg", "w") as f:
+for v in ("light", "dark", "icon", "mono"):
+    name = {"light": "bdl-mark-light", "dark": "bdl-mark-dark", "icon": "bdl-icon", "mono": "bdl-mono"}[v]
+    with open(f"{name}.svg", "w") as f:
         f.write(svg(v))
 print("ok", PENCIL_TIP, NEEDLE_TIP, KNOB_C)

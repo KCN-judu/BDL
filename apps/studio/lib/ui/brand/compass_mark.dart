@@ -12,35 +12,46 @@ import 'package:flutter/material.dart';
 
 abstract final class BrandColors {
   static const black = Color(0xFF141414);
+  static const white = Color(0xFFF4F4F2);
   static const red = Color(0xFFE5322D);
   static const cream = Color(0xFFF2EBDD);
   static const blue = Color(0xFF2B5DD1);
+  static const darkPin = Color(0xFF1E1E1E);
 }
 
+/// The mark in the theme's version: black body on light themes, white body
+/// on dark ones (the red blocks stay red).  Pass [monochrome] for a
+/// single-colour toolbar glyph, or [tile] for the app-icon variant.
 class CompassMark extends StatelessWidget {
-  const CompassMark({super.key, this.size = 64, this.tile = false, this.monochrome});
+  const CompassMark({super.key, this.size = 64, this.tile = false, this.monochrome, this.dark});
 
   final double size;
 
-  /// Draw the cream tile behind the compass (the app-icon variant).
+  /// Draw the cream tile behind the compass (the app-icon variant; always
+  /// the black body).
   final bool tile;
 
   /// Single-colour variant (for toolbars); ignores the palette.
   final Color? monochrome;
 
+  /// Force the dark-theme (white body) version; defaults to the theme.
+  final bool? dark;
+
   @override
   Widget build(BuildContext context) {
+    final onDark = dark ?? Theme.of(context).brightness == Brightness.dark;
     return CustomPaint(
       size: Size.square(size),
-      painter: _CompassPainter(tile: tile, mono: monochrome),
+      painter: _CompassPainter(tile: tile, mono: monochrome, dark: onDark && !tile),
     );
   }
 }
 
 class _CompassPainter extends CustomPainter {
-  _CompassPainter({required this.tile, required this.mono});
+  _CompassPainter({required this.tile, required this.mono, required this.dark});
   final bool tile;
   final Color? mono;
+  final bool dark;
 
   // viewBox 0 0 256 256 — identical numbers to gen_logo.py
   static const Offset _h = Offset(128, 102);
@@ -94,8 +105,9 @@ class _CompassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 256);
-    final black = mono ?? BrandColors.black;
+    final body = mono ?? (dark ? BrandColors.white : BrandColors.black);
     final red = mono ?? BrandColors.red;
+    final pin = dark ? BrandColors.darkPin : BrandColors.cream;
     final fill = Paint()..style = PaintingStyle.fill;
 
     if (tile) {
@@ -106,14 +118,15 @@ class _CompassPainter extends CustomPainter {
     }
     // one black chamfered bar, the red lead painted over its end: no seams
     final leadStart = _pencilTip + (_h - _pencilTip) * (_leadLen / _leg);
-    canvas.drawPath(_bar(_knobC, _pencilTip, _w, tipAtB: true), fill..color = black);
+    canvas.drawPath(_bar(_knobC, _pencilTip, _w, tipAtB: true), fill..color = body);
     canvas.drawPath(_bar(leadStart, _pencilTip, _w, tipAtB: true), fill..color = red);
-    canvas.drawPath(_bar(_h, _needleTip, _w, tipAtB: true), fill..color = black);
-    canvas.drawPath(_square(_knobC, _knob, _dr), fill..color = black);
+    canvas.drawPath(_bar(_h, _needleTip, _w, tipAtB: true), fill..color = body);
+    canvas.drawPath(_square(_knobC, _knob, _dr), fill..color = body);
     canvas.drawPath(_square(_h, _hinge, _dr), fill..color = red);
-    if (mono == null) canvas.drawPath(_square(_h, 10, _dr), fill..color = BrandColors.cream);
+    if (mono == null) canvas.drawPath(_square(_h, 10, _dr), fill..color = pin);
   }
 
   @override
-  bool shouldRepaint(_CompassPainter old) => old.tile != tile || old.mono != mono;
+  bool shouldRepaint(_CompassPainter old) =>
+      old.tile != tile || old.mono != mono || old.dark != dark;
 }
