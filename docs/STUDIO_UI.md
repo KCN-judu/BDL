@@ -330,6 +330,53 @@ hover never conveys information that is not also visible at rest, and the
 focus ring is the only place the accent appears on a control that is not
 selected or primary.
 
+## 7. Three information levels and the semantic UI matrix
+
+The semantics of a design are shown as *structure* first, explained in
+*prose* second, and named in *formal vocabulary* only on demand. Every
+semantic fact is designed for exactly one primary level; a fact may echo at
+the next level only as detail behind the first, never as a duplicate badge.
+
+| Level | Answers | May use | May not use |
+|---|---|---|---|
+| **1 Canvas** | what does the product do; what depends on what; what is still open; where does behaviour become physical | object silhouette, socket shape, socket hue, links, grouping, containment, line style, the object's own state; one state word where a word is unavoidable | type labels, ids, compiler words, badges, counts |
+| **2 Inspector** | what does the selected object mean; what can I change; what will the change affect | designer vocabulary: *Meaning, Value, Measures, Reads, Produces, Relationship, Used by, Produced by, affects, checked again*; diagnostics in product language attached to the field they concern | `SemanticId`, `DeclId`, `Ty`, `Grant`, `Interface`, `realization`, `invalidation`, `Clocked`, `SingleDriver`, `DriveEnv`, `solver`, `protocol`, `revision`, enum names |
+| **3 Explain** | why was this accepted or refused; what did the surface form elaborate into; which rule applies | all of the above, kernel notation, Core IR, diagnostic codes, technical details, revision | — |
+
+Level 3 is one collapsed disclosure, **Explain**, at the end of the
+inspector, and the technical part of a diagnostic. It is never open by
+default and nothing in levels 1–2 depends on it.
+
+### The matrix
+
+*now* = implemented; *spec* = agreed here, drawn when its compiler pass
+lands. "Canvas" is level 1, "Inspector" level 2, "Explain" level 3.
+
+| Semantic fact | Internal representation | Canvas | Inspector wording | Explain wording | |
+|---|---|---|---|---|---|
+| semantic identity | `SemanticId` | socket and link **hue** from the id, identical on every page; the name at every socket | the name; never a number | `SemanticId 3` | now |
+| representation | `Θ s = q d / bool / nat` | socket **shape**: ○ quantity, ◇ on–off, □ count | Value: Quantity / On–off / Count · Measures: Angle, Length, … with the unit in its own column | `Θ(3) = q[rad]` | now |
+| representation not chosen | `Θ s = none` | **hollow** socket ring | Value: Decide later; "relationships can already use it" | `Θ(3) = none` | now |
+| unresolved declaration | `realization = none` | **dashed** outline, empty definition region, header word *declared* | Relationship: empty field + Attach | `Δ(d).realization = none` | now |
+| mapping relationship | `Signature { inputs, output }` → `Interface` | one input socket per read concept on the left, one output socket on the right, links in the concepts' hues | Reads · Produces (chips and pop-up carry the socket glyph) | `Interface: sem#0 → sem#3 → sem#1` | now |
+| semantic construction | `mk s` under `Grant.of τ` | a link forms only between sockets of one hue; the output socket is the produced concept | Produces | `Grant permits mk sem#1 in this realization` | now (grant is invisible by design) |
+| dimension mismatch | `Prim.ty` fails | a **red mark at the formula line** on the node, nothing in the header | under the formula: "This adds an angle and a time." + fixes | `+ : q[rad] → q[rad] → …, found q[s]`, code | now |
+| waiting on an open value | `MappingStatus.OPEN` | solid node whose read socket is hollow | under the formula: "Checked once *Temperature*'s value is decided." | status enum | now |
+| temporal state | `delay init e` | **register mark** on the link that crosses a tick, initial value beside it | "Remembers *Held*, starting at *no*" | `delay false (declRef d)` | spec |
+| clock / domain | `Κ d = some c` | **lane**: labelled background region; domain-free mappings outside | "Updates with *interaction* (50 Hz)" | `Κ(d) = c₀`, `Clocked` | spec |
+| cross-domain observation | `sync src init e` | **gate** on the link at the lane edge with the initial value; a crossing without a gate is broken at the boundary | "Observes the latest *Temperature*, starting at 20 °C" | `sync c₁ 293.15 (declRef d)` | spec |
+| physical output | `OutputId`, `OutputSpec { accepts, clock }` | **terminal node** in the right-most column: flat right edge, one input socket, device name | Output: accepts (Value), updates with, device, final target | `Ω(o) = ⟨q[1], c₀⟩` | spec |
+| output conflict | `SingleDriver β` fails | the second path **cannot converge**: the socket refuses the drop and names the current target; two existing targets are drawn meeting a red gap before the output | "*Light* already has a final target, *dimByTilt*. Combine the values before the output." | `β d₁ = β d₂ = o` | spec |
+| hardware feasibility | `solve` result | Deploy: board picture; each requirement a lead to a pin; an unsatisfied one has no lead | "Needs 7 PWM; this board has 6: D3 M1, D5 M2, …" | `Explanation::Blocked { blockers }` | spec |
+| deployment allocation | `Assignment` | lead from requirement to pin; pinned ones marked | Light → PWM → GP15 | resource ids | spec |
+| runtime value | telemetry by `DeclId` + activation | **number at the socket**, unit column; ◇ filled/empty; stale fades | Tilt 31.4° · Held yes | `DeclId 4 @ activation 1203` | spec |
+| change consequence | `EditOutcome { kind, invalidates }` | — | "Nothing else needs rechecking." or "This change affects *dimByTilt*, *warmPulse*; they will be checked again." | `refinement` / `edit`, `Invalidation::{…}` | now |
+
+Rules the matrix implies: hue is identity and nothing else; shape is
+representation and nothing else; dashed is *declared* and nothing else; a red
+mark means *wrong now* and never *not yet*; the accent is selection, focus and
+the default button. Adding an encoding adds a row here.
+
 ## 8. When the OS dialog cannot be shown
 
 `file_selector` dialogs are hosted by macOS's view-bridge, which refuses
