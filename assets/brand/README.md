@@ -3,11 +3,12 @@
 ## The mark
 
 A drafting compass reduced to straight lines, in the constructivist
-manner: flat colour blocks, no outlines, no curves. The head stays
-upright; stalk and needle leg are **one vertical bar**, the pencil leg is
-the **one diagonal**. Bars have parallel edges and come to a point with a
-short chamfer; the knob and hinge are square blocks. Nothing is tilted to
-make a letter — the **λ** (a long stroke with a branch) is simply what a
+manner: flat colour blocks, no outlines, no curves. Two legs of **equal
+length**, opened symmetrically so the **tips sit on one horizontal line**;
+the stalk continues the right leg upward, so the whole instrument leans.
+Bars have parallel edges and come to a point with a short chamfer; the
+knob and hinge are square blocks aligned with the stalk. Two line
+directions only. The **λ** — a long stroke with a branch — is what a
 compass in use looks like. The compass is the designer's instrument; the
 lambda is the language's.
 

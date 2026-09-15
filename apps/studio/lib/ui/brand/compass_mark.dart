@@ -1,9 +1,12 @@
 /// The BDL language mark, painted from the same geometry as
 /// `assets/brand/gen_logo.py`: a drafting compass reduced to straight
-/// lines — an upright head, one vertical bar (stalk and needle leg), one
-/// diagonal (pencil leg), parallel edges, chamfered tips.  The λ is what
-/// remains.  Vector code, crisp at any size, no SVG runtime.
+/// lines — two equal legs opened symmetrically (tips level), the stalk
+/// continuing the right leg so the instrument leans into a λ.  Parallel
+/// edges, chamfered tips, square blocks aligned with the stalk.  Vector
+/// code, crisp at any size, no SVG runtime.
 library;
+
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -40,15 +43,21 @@ class _CompassPainter extends CustomPainter {
   final Color? mono;
 
   // viewBox 0 0 256 256 — identical numbers to gen_logo.py
-  static const double _x = 150;
+  static const Offset _h = Offset(128, 102);
+  static final double _theta = 24 * math.pi / 180;
+  static const double _leg = 138;
+  static const double _stalk = 60;
   static const double _w = 20;
-  static const Rect _knob = Rect.fromLTWH(_x - 15, 18, 30, 30);
-  static const Offset _hinge = Offset(_x, 104);
-  static const double _hingeSide = 36;
-  static const Offset _needleTip = Offset(_x, 242);
-  static const Offset _pencilTip = Offset(52, 232);
+  static const double _knob = 30;
+  static const double _hinge = 36;
   static const double _lead = 0.80;
   static const double _chamfer = 1.5;
+
+  static final Offset _dr = Offset(math.sin(_theta), math.cos(_theta));
+  static final Offset _dl = Offset(-math.sin(_theta), math.cos(_theta));
+  static final Offset _pencilTip = _h + _dr * _leg;
+  static final Offset _needleTip = _h + _dl * _leg;
+  static final Offset _knobC = _h - _dr * _stalk;
 
   static Path _bar(Offset a, Offset b, double w, {bool tipAtB = false}) {
     final d = (b - a) / (b - a).distance;
@@ -70,6 +79,18 @@ class _CompassPainter extends CustomPainter {
       ..close();
   }
 
+  /// Square centred at [c] with one axis along [d].
+  static Path _square(Offset c, double side, Offset d) {
+    final n = Offset(-d.dy, d.dx);
+    final h = side / 2;
+    final corners = [c + d * h + n * h, c + d * h - n * h, c - d * h - n * h, c - d * h + n * h];
+    final p = Path()..moveTo(corners[0].dx, corners[0].dy);
+    for (final k in corners.skip(1)) {
+      p.lineTo(k.dx, k.dy);
+    }
+    return p..close();
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 256);
@@ -83,22 +104,13 @@ class _CompassPainter extends CustomPainter {
         fill..color = BrandColors.cream,
       );
     }
-
-    canvas.drawPath(_bar(Offset(_x, _knob.top), _needleTip, _w, tipAtB: true), fill..color = black);
-    canvas.drawRect(_knob, fill..color = black);
-    final leadStart = _hinge + (_pencilTip - _hinge) * _lead;
-    canvas.drawPath(_bar(_hinge, leadStart, _w - 2), fill..color = black);
-    canvas.drawPath(_bar(leadStart, _pencilTip, _w - 2, tipAtB: true), fill..color = red);
-    canvas.drawRect(
-      Rect.fromCenter(center: _hinge, width: _hingeSide, height: _hingeSide),
-      fill..color = red,
-    );
-    if (mono == null) {
-      canvas.drawRect(
-        Rect.fromCenter(center: _hinge, width: 10, height: 10),
-        fill..color = BrandColors.cream,
-      );
-    }
+    final leadStart = _h + (_pencilTip - _h) * _lead;
+    canvas.drawPath(_bar(_knobC, leadStart, _w), fill..color = black);
+    canvas.drawPath(_bar(leadStart, _pencilTip, _w, tipAtB: true), fill..color = red);
+    canvas.drawPath(_bar(_h, _needleTip, _w, tipAtB: true), fill..color = black);
+    canvas.drawPath(_square(_knobC, _knob, _dr), fill..color = black);
+    canvas.drawPath(_square(_h, _hinge, _dr), fill..color = red);
+    if (mono == null) canvas.drawPath(_square(_h, 10, _dr), fill..color = BrandColors.cream);
   }
 
   @override
