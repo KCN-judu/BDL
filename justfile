@@ -1,10 +1,14 @@
 # BDL monorepo task runner.  `just` lists recipes.
 
 set shell := ["zsh", "-cu"]
+# On Windows, recipes run under Git Bash (ships with Git for Windows).
+set windows-shell := ["bash", "-cu"]
 
 flutter := env_var_or_default("FLUTTER", "flutter")
 protoc  := env_var_or_default("PROTOC", "protoc")
 studio  := "apps/studio"
+device  := if os() == "macos" { "macos" } else if os() == "windows" { "windows" } else { "linux" }
+bdld    := if os() == "windows" { "bdld.exe" } else { "bdld" }
 
 default:
     @just --list
@@ -64,9 +68,9 @@ studio-snap out="/tmp/bdl-snap":
     cd {{studio}} && SNAP_DIR={{out}} {{flutter}} test --update-goldens test/snapshot_preview_test.dart
     @echo "wrote {{out}}/shell_light.png and shell_dark.png"
 
-# Build bdld, then run Studio against it.
+# Build bdld, then run Studio against it (macOS, Windows or Linux desktop).
 studio: build
-    cd {{studio}} && {{flutter}} run -d macos --dart-define=BDLD_PATH=$(pwd)/../../target/debug/bdld
+    cd {{studio}} && {{flutter}} run -d {{device}} --dart-define=BDLD_PATH=$(pwd)/../../target/debug/{{bdld}}
 
 # ---- Everything -----------------------------------------------------------
 

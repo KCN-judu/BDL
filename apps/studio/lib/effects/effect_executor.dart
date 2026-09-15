@@ -6,7 +6,9 @@ library;
 
 import 'dart:async';
 
+import 'package:file_selector/file_selector.dart' as fs;
 import 'package:fixnum/fixnum.dart';
+import 'package:path/path.dart' as p;
 
 import '../app/actions.dart';
 import '../app/effects.dart';
@@ -29,6 +31,21 @@ class EffectExecutor {
     switch (effect) {
       case ConnectDaemon():
         await _connect();
+      case PickProjectToOpen():
+        final dir = await fs.getDirectoryPath(confirmButtonText: 'Open Project');
+        if (dir != null) _dispatch(OpenProjectRequested(dir));
+      case PickNewProjectLocation():
+        // A save dialog names the new project directory — the native idiom
+        // for creating a document on both macOS and Windows.
+        final loc = await fs.getSaveLocation(
+          suggestedName: 'Untitled Project',
+          confirmButtonText: 'Create Project',
+        );
+        if (loc != null) {
+          _dispatch(
+            NewProjectRequested(rootPath: loc.path, name: p.basenameWithoutExtension(loc.path)),
+          );
+        }
       case OpenProject(:final rootPath):
         await _project(pb.ClientMessage(openProject: pb.OpenProjectRequest(rootPath: rootPath)));
       case InitProject(:final rootPath, :final name):

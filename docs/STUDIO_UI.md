@@ -137,12 +137,31 @@ exists per arithmetic operator — formulas live in the inspector.
 * Layout: sidebar 220 pt, inspector 280 pt, both resizable and hideable
   (⌥⌘S / ⌥⌘I); 8 pt grid; list rows 22–24 pt; inspector as a form of
   right-aligned labels and left-aligned fields.
-* Dialogs: sheets attached to the window for new/open project, with
+* Dialogs: open/new project go through the **OS's own pickers**
+  (`file_selector`: folder picker to open, save dialog to name a new project
+  directory — the native "create a document" idiom on both macOS and
+  Windows). Object-creation sheets are attached to the window with
   Cancel/primary on the right; destructive actions confirm with the
   destructive button named ("Delete *Tilt*"), never "OK".
 * Keyboard: full ⌘ shortcut set in a native menu bar (File, Edit, Design,
   View, Window, Help) — planned; Flutter's `PlatformMenuBar` on macOS.
 * Motion: 150 ms ease for selection and panel toggles; none for data.
+
+### Windows and macOS
+
+One design, platform *details* adapt (`lib/platform/desktop.dart`):
+
+| | macOS | Windows |
+|---|---|---|
+| font | SF Pro via the system font | Segoe UI (fallback chain) |
+| primary modifier | ⌘ | Ctrl |
+| toolbar | gap for traffic lights | none |
+| pickers | NSOpenPanel / NSSavePanel | IFileDialog |
+| daemon | `bdld` beside the app or `$BDLD_PATH` | `bdld.exe` |
+| menus | native menu bar (planned, `PlatformMenuBar`) | in-window menu (planned) |
+
+Colours, spacing, controls and the canvas are identical; nothing Material
+(ripples, FAB, snackbars) appears on either.
 
 ## 4. Editing model (what the inspector must expose)
 

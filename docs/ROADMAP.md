@@ -38,7 +38,6 @@ marketplace · custom debugger.
 ## Known v0.1 simplifications to revisit
 
 * `ProjectChanged` sends the full projection; deltas planned (PROTOCOL.md).
-* Project dialogs take a typed path; a native file picker needs platform
-  plugins (CocoaPods on macOS) and is deferred.
 * Revision/undo history is session-only; a persisted edit log is planned.
 * Second embedded target (ESP32-S3) after RP2040 to prove HAL independence.
+* Native menu bar (`PlatformMenuBar` on macOS, in-window on Windows).

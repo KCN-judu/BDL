@@ -15,6 +15,18 @@ class ConnectDaemon extends Effect {
   const ConnectDaemon();
 }
 
+/// Show the OS folder picker; the executor dispatches `OpenProjectRequested`
+/// with the choice, or nothing when cancelled.
+class PickProjectToOpen extends Effect {
+  const PickProjectToOpen();
+}
+
+/// Show the OS save dialog to choose where a new project directory goes;
+/// the executor dispatches `NewProjectRequested(rootPath, name)`.
+class PickNewProjectLocation extends Effect {
+  const PickNewProjectLocation();
+}
+
 class OpenProject extends Effect {
   const OpenProject(this.rootPath);
   final String rootPath;

@@ -1,10 +1,9 @@
-/// Sheets and dialogs.  Text-field paths for now: a native file picker needs
-/// platform plugins and v0.1 keeps the desktop build plugin-free.
+/// Sheets for creating objects.  Project open/new go through the OS's own
+/// pickers (`file_selector`), see `effects/effect_executor.dart`.
 library;
 
 import 'package:flutter/material.dart';
 
-import '../app/actions.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
@@ -23,64 +22,6 @@ Future<T?> _sheet<T>(
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       actions: actions,
     ),
-  );
-}
-
-/// Project manager (Resolve's ⊞): new or open.
-Future<void> showProjectManager(BuildContext context, void Function(AppAction) dispatch) async {
-  final path = TextEditingController();
-  final name = TextEditingController(text: 'lamp');
-  var mode = 'open';
-  await _sheet<void>(
-    context,
-    title: 'Projects',
-    content: StatefulBuilder(
-      builder: (ctx, setState) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MacSegmented<String>(
-            value: mode,
-            options: const {'open': 'Open existing', 'new': 'Create new'},
-            onChanged: (m) => setState(() => mode = m),
-          ),
-          const SizedBox(height: 12),
-          FormRow(
-            label: 'Folder',
-            child: TextField(
-              controller: path,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: mode == 'open'
-                    ? '/path/to/project (contains bdl.toml)'
-                    : '/path/to/new/project',
-              ),
-            ),
-          ),
-          if (mode == 'new')
-            FormRow(
-              label: 'Name',
-              child: TextField(controller: name),
-            ),
-        ],
-      ),
-    ),
-    actions: [
-      OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-      FilledButton(
-        onPressed: () {
-          final p = path.text.trim();
-          if (p.isEmpty) return;
-          Navigator.pop(context);
-          if (mode == 'open') {
-            dispatch(OpenProjectRequested(p));
-          } else {
-            dispatch(NewProjectRequested(rootPath: p, name: name.text.trim()));
-          }
-        },
-        child: Text(mode == 'open' ? 'Open' : 'Create'),
-      ),
-    ],
   );
 }
 

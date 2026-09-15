@@ -9,8 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../app/store.dart';
+import '../platform/desktop.dart';
 import '../protocol/versions.dart';
-import 'dialogs.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'pages/design_page.dart';
@@ -107,7 +107,7 @@ class _Toolbar extends StatelessWidget {
       child: Row(
         children: [
           // Room for the macOS traffic lights when the title bar is hidden later.
-          const SizedBox(width: 64),
+          if (isMacOS) const SizedBox(width: 64),
           Text(p == null ? 'BDL Studio' : p.name, style: Theme.of(context).textTheme.titleMedium),
           if (p != null && p.dirty)
             Padding(
@@ -117,12 +117,12 @@ class _Toolbar extends StatelessWidget {
           const Spacer(),
           ToolbarButton(
             icon: Icons.undo,
-            tooltip: 'Undo (⌘Z)',
+            tooltip: 'Undo (${shortcut('Z')})',
             onPressed: p?.canUndo == true ? () => dispatch(const UndoRequested()) : null,
           ),
           ToolbarButton(
             icon: Icons.redo,
-            tooltip: 'Redo (⇧⌘Z)',
+            tooltip: 'Redo (${shortcut('Z', shift: true)})',
             onPressed: p?.canRedo == true ? () => dispatch(const RedoRequested()) : null,
           ),
           const SizedBox(width: 12),
@@ -248,13 +248,7 @@ class _PageBar extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 8),
-          ToolbarButton(
-            icon: Icons.grid_view_outlined,
-            tooltip: 'Project manager',
-            onPressed: connected && !projectOpen
-                ? () => showProjectManager(context, dispatch)
-                : null,
-          ),
+          _ProjectMenu(enabled: connected && !projectOpen, dispatch: dispatch),
           const Spacer(),
           for (final (page, icon, label) in _pages)
             _PageButton(
@@ -312,6 +306,41 @@ class _PageButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Resolve's project manager (⊞), reduced to what exists: open or create,
+/// each through the OS's own picker.
+class _ProjectMenu extends StatelessWidget {
+  const _ProjectMenu({required this.enabled, required this.dispatch});
+  final bool enabled;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return PopupMenuButton<String>(
+      enabled: enabled,
+      tooltip: 'Projects',
+      position: PopupMenuPosition.over,
+      color: t.content,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: BorderSide(color: t.hairline),
+      ),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'open', height: 26, child: Text('Open Project…  ${shortcut('O')}')),
+        PopupMenuItem(value: 'new', height: 26, child: Text('New Project…  ${shortcut('N')}')),
+      ],
+      onSelected: (v) => dispatch(
+        v == 'open' ? const OpenProjectPickRequested() : const NewProjectPickRequested(),
+      ),
+      icon: Icon(
+        Icons.grid_view_outlined,
+        size: 18,
+        color: enabled ? t.textSecondary : t.textTertiary,
       ),
     );
   }

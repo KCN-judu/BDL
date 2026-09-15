@@ -28,6 +28,14 @@ Transition reduce(AppState s, AppAction action) {
     AppStarted() || ConnectRequested() => _connect(s),
 
     // ---- project lifecycle -------------------------------------------------
+    OpenProjectPickRequested() => _whenConnected(
+      s,
+      () => s.project == null ? Transition(s, const [PickProjectToOpen()]) : Transition(s),
+    ),
+    NewProjectPickRequested() => _whenConnected(
+      s,
+      () => s.project == null ? Transition(s, const [PickNewProjectLocation()]) : Transition(s),
+    ),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
       () => Transition(_pending(s), [OpenProject(rootPath)]),

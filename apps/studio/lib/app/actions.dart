@@ -33,6 +33,16 @@ class ConnectRequested extends UserAction {
   const ConnectRequested();
 }
 
+/// User chose "Open Project…": ask the OS for a folder.
+class OpenProjectPickRequested extends UserAction {
+  const OpenProjectPickRequested();
+}
+
+/// User chose "New Project…": ask the OS where to create it.
+class NewProjectPickRequested extends UserAction {
+  const NewProjectPickRequested();
+}
+
 class OpenProjectRequested extends UserAction {
   const OpenProjectRequested(this.rootPath);
   final String rootPath;

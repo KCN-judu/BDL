@@ -135,6 +135,13 @@ Specific Hardware Validation; ADR-0006).
 
 ## Platform notes
 
+* **Targets**: macOS and Windows are first-class (CI builds both); Linux
+  desktop builds as a by-product. One design; details adapt
+  (`apps/studio/lib/platform/desktop.dart`, STUDIO_UI.md §3).
+* **Plugins**: macOS plugins are linked through Swift Package Manager
+  (Flutter ≥ 3.24), so CocoaPods is not required. Windows plugins build
+  with the CMake toolchain. Only first-party plugins (`file_selector`) are
+  used so far.
 * **macOS**: Studio is not App-Sandboxed (`macos/Runner/*.entitlements`). It
   spawns `bdld` and reads/writes project directories the user chooses; the
   sandbox would confine both. Revisit before any App Store distribution.

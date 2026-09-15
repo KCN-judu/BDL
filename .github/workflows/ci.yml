@@ -53,6 +53,29 @@ jobs:
         env:
           BDLD_PATH: ${{ github.workspace }}/target/debug/bdld
 
+  windows:
+    name: Windows (Rust tests, Studio build)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.4"
+      - run: flutter pub get
+        working-directory: apps/studio
+      - run: flutter test
+        working-directory: apps/studio
+        env:
+          BDLD_PATH: ${{ github.workspace }}\target\debug\bdld.exe
+      - run: flutter build windows --debug
+        working-directory: apps/studio
+
   proto:
     name: Protocol (generated Dart up to date)
     runs-on: ubuntu-latest
