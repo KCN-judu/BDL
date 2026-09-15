@@ -117,6 +117,52 @@ class EffectExecutor {
           _draftTimers.remove(mappingId);
           _analyzeDraft(revision, mappingId, generation, source);
         });
+      case CompleteDraft(
+        :final revision,
+        :final mappingId,
+        :final source,
+        :final offset,
+        :final generation,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            completeDefinitionDraft: pb.CompleteDefinitionDraftRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              source: source,
+              offset: offset,
+            ),
+          ),
+          (r) => _dispatch(CompletionReceived(generation: generation, result: r.draftCompletion)),
+        );
+      case HoverDraft(
+        :final revision,
+        :final mappingId,
+        :final source,
+        :final offset,
+        :final generation,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            hoverDefinitionDraft: pb.HoverDefinitionDraftRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              source: source,
+              offset: offset,
+            ),
+          ),
+          (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
+        );
+      case HoverEntity(:final revision, :final entity, :final generation):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            hoverEntity: pb.HoverEntityRequest(revision: Int64(revision), entity: entity),
+          ),
+          (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
+        );
       case DiscardDraft(:final mappingId):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();
@@ -138,6 +184,23 @@ class EffectExecutor {
         await _call(pb.ClientMessage(undo: pb.UndoRequest()), _onEditApplied);
       case Redo():
         await _call(pb.ClientMessage(redo: pb.RedoRequest()), _onEditApplied);
+    }
+  }
+
+  /// Completion and hover: uncounted, answered by generation; a failure
+  /// (stale revision, daemon gone) only means no pop-up or card.
+  Future<void> _tooling(int generation, pb.ClientMessage m, void Function(pb.Response) onOk) async {
+    final client = _client;
+    if (client == null) {
+      _dispatch(ToolingFailed(generation: generation, code: 'studio.not_connected', message: ''));
+      return;
+    }
+    try {
+      onOk(await client.request(m));
+    } on DaemonError catch (e) {
+      _dispatch(ToolingFailed(generation: generation, code: e.code, message: e.message));
+    } catch (e) {
+      _dispatch(ToolingFailed(generation: generation, code: 'studio.transport', message: '$e'));
     }
   }
 

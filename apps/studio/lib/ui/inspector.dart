@@ -52,6 +52,8 @@ class Inspector extends StatelessWidget {
           concepts: project.concepts,
           analysis: state.mappingAnalysis(id),
           draft: state.draft(id),
+          completion: state.editor.completion?.mappingId == id ? state.editor.completion : null,
+          hover: state.editor.hover?.mappingId == id ? state.editor.hover : null,
           dispatch: dispatch,
         ),
       };
@@ -307,6 +309,8 @@ class _MappingInspector extends StatelessWidget {
     required this.concepts,
     required this.analysis,
     required this.draft,
+    required this.completion,
+    required this.hover,
     required this.dispatch,
   });
   final pb.MappingView mapping;
@@ -317,6 +321,8 @@ class _MappingInspector extends StatelessWidget {
 
   /// Studio's uncommitted definition text for this mapping, if any.
   final DefinitionDraft? draft;
+  final CompletionState? completion;
+  final HoverState? hover;
   final void Function(AppAction) dispatch;
 
   String _name(int id) =>
@@ -429,6 +435,8 @@ class _MappingInspector extends StatelessWidget {
               draft: draft,
               committedAnalysis: analysis,
               inputNames: inputs.map(_name).toList(),
+              completion: completion,
+              hover: hover,
               dispatch: dispatch,
             ),
           ],

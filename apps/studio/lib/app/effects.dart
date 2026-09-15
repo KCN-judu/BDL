@@ -96,6 +96,48 @@ class DiscardDraft extends Effect {
   final int mappingId;
 }
 
+/// Completion candidates from the IDE service, over the draft overlay.
+/// Uncounted; answered by `CompletionReceived` / `ToolingFailed` tagged
+/// with [generation].
+class CompleteDraft extends Effect {
+  const CompleteDraft({
+    required this.revision,
+    required this.mappingId,
+    required this.source,
+    required this.offset,
+    required this.generation,
+  });
+  final int revision;
+  final int mappingId;
+  final String source;
+  final int offset;
+  final int generation;
+}
+
+/// The hover card for a formula name (draft overlay) — uncounted.
+class HoverDraft extends Effect {
+  const HoverDraft({
+    required this.revision,
+    required this.mappingId,
+    required this.source,
+    required this.offset,
+    required this.generation,
+  });
+  final int revision;
+  final int mappingId;
+  final String source;
+  final int offset;
+  final int generation;
+}
+
+/// The hover card for an entity — uncounted.
+class HoverEntity extends Effect {
+  const HoverEntity({required this.revision, required this.entity, required this.generation});
+  final int revision;
+  final pb.EntityRef entity;
+  final int generation;
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

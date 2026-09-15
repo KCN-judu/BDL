@@ -20,6 +20,7 @@ import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -241,6 +242,96 @@ void main() {
     },
     skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false,
   );
+
+  test('completion and hover come from bdl-ide, offsets in bytes, stale answers dropped', () async {
+    await project();
+    try {
+      final id = mappingId();
+      Future<CompletionState> complete(String source, int offset) async {
+        store.dispatch(CompletionRequested(mappingId: id, source: source, offset: offset));
+        final s = await store.until((s) => s.editor.completion?.pending == false);
+        return s.editor.completion!;
+      }
+
+      final t0 = DateTime.now();
+      var c = await complete('Ti', 2);
+      // ignore: avoid_print
+      print('completion round trip: ${DateTime.now().difference(t0).inMilliseconds} ms');
+      final tiltItem = c.items.firstWhere((i) => i.label == 'Tilt');
+      expect(tiltItem.kind, 'input');
+      expect((tiltItem.replaceStart, tiltItem.replaceEnd), (0, 2));
+      expect(c.items.first.label, 'Tilt', reason: 'the service ranks the input first');
+
+      // a unit after a number
+      c = await complete('Tilt / 90 d', 11);
+      expect(c.items.any((i) => i.label == 'deg' && i.kind == 'unit'), isTrue);
+      expect(c.items.first.kind, 'unit', reason: 'units rank first after a number');
+
+      // an invalid partial source is fine
+      c = await complete('Tilt / ', 7);
+      expect(c.items, isNotEmpty);
+
+      // a non-ASCII prefix: the service's range is in bytes and lands on `Ti`
+      c = await complete('2 × Ti', 7);
+      final after = c.items.firstWhere((i) => i.label == 'Tilt');
+      expect((after.replaceStart, after.replaceEnd), (5, 7));
+
+      // two requests back to back: only the newest generation is shown
+      store.dispatch(CompletionRequested(mappingId: id, source: 'T', offset: 1));
+      store.dispatch(CompletionRequested(mappingId: id, source: 'Ti', offset: 2));
+      final g = store.state.editor.completion!.generation;
+      final s = await store.until((s) => s.editor.completion?.pending == false);
+      expect(s.editor.completion!.generation, g);
+      expect(s.editor.completion!.offset, 2);
+
+      // hover on the concept in the formula (the field's text is the draft)
+      store.dispatch(DefinitionDraftChanged(mappingId: id, source: 'Tilt / 90 deg'));
+      await checked();
+      final h0 = DateTime.now();
+      store.dispatch(FormulaHoverRequested(mappingId: id, source: 'Tilt / 90 deg', offset: 1));
+      var hs = await store.until((s) => s.editor.hover?.card != null);
+      // ignore: avoid_print
+      print('hover round trip: ${DateTime.now().difference(h0).inMilliseconds} ms');
+      var card = hs.editor.hover!.card!;
+      expect(card.found, isTrue);
+      expect(card.title, 'Tilt');
+      expect(card.conceptId.toInt(), conceptId('Tilt'));
+      expect(card.representation, isNotEmpty);
+      expect(card.span.start, 0);
+      expect(card.span.end, 4);
+      // nothing under a number
+      store.dispatch(FormulaHoverRequested(mappingId: id, source: 'Tilt / 90 deg', offset: 8));
+      hs = await store.until((s) => s.editor.hover?.card != null && s.editor.hover!.offset == 8);
+      expect(hs.editor.hover!.card!.found, isFalse);
+      // after the draft text changes, the hover is about the new text
+      store.dispatch(DefinitionDraftChanged(mappingId: id, source: '1 + Tilt'));
+      await checked();
+      store.dispatch(FormulaHoverRequested(mappingId: id, source: '1 + Tilt', offset: 5));
+      hs = await store.until((s) => s.editor.hover?.card != null && s.editor.hover!.offset == 5);
+      expect(hs.editor.hover!.card!.title, 'Tilt');
+      expect(hs.editor.hover!.card!.span.start, 4);
+
+      // hover on the mapping itself (a canvas node)
+      store.dispatch(EntityHoverRequested(pb.EntityRef(mappingId: Int64(id))));
+      hs = await store.until((s) => s.editor.hover?.card != null && s.editor.hover!.entity != null);
+      card = hs.editor.hover!.card!;
+      expect(card.title, 'dimByTilt');
+      expect(card.signature, 'mapping dimByTilt : Tilt -> Brightness');
+      // the card describes the effective world: the last hovered text,
+      // `1 + Tilt`, is the mapping's draft there and does not check
+      expect(card.open, isFalse);
+      expect(card.status, contains('does not check'));
+      // discarding the draft: declared again, an open state
+      store.dispatch(DefinitionDraftReverted(id));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      store.dispatch(const EntityHoverRequested(null));
+      store.dispatch(EntityHoverRequested(pb.EntityRef(mappingId: Int64(id))));
+      hs = await store.until((s) => s.editor.hover?.card != null && s.editor.hover!.entity != null);
+      expect(hs.editor.hover!.card!.open, isTrue, reason: 'declared, no definition');
+    } finally {
+      await teardown();
+    }
+  }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
 
   test('detach returns the mapping to unresolved; a refused commit keeps the draft', () async {
     await project();

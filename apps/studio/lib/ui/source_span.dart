@@ -32,3 +32,9 @@ String excerptOf(String source, int byteStart, int byteEnd) {
   final r = codeUnitRange(source, byteStart, byteEnd);
   return r.isCollapsed ? '' : source.substring(r.start, r.end);
 }
+
+/// The byte offset of code-unit offset [codeUnit] in [source] (clamped).
+int byteOffsetOf(String source, int codeUnit) {
+  final end = codeUnit.clamp(0, source.length);
+  return utf8.encode(source.substring(0, end)).length;
+}

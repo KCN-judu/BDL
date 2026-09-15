@@ -225,6 +225,76 @@ class DefinitionDraft {
   }
 }
 
+/// A completion pop-up over the definition field: the service's candidates
+/// for one (mapping, source, byte offset), newest request wins.
+@immutable
+class CompletionState {
+  const CompletionState({
+    required this.mappingId,
+    required this.generation,
+    required this.source,
+    required this.offset,
+    this.items = const [],
+    this.selected = 0,
+    this.pending = true,
+  });
+  final int mappingId;
+
+  /// Request tag; a response with another generation is ignored.
+  final int generation;
+
+  /// The text and byte offset the candidates are for.
+  final String source;
+  final int offset;
+
+  /// In the service's order (relevance, then label) — never re-sorted here.
+  final List<pb.DraftCompletionItem> items;
+  final int selected;
+  final bool pending;
+
+  CompletionState copyWith({
+    int? generation,
+    String? source,
+    int? offset,
+    List<pb.DraftCompletionItem>? items,
+    int? selected,
+    bool? pending,
+  }) => CompletionState(
+    mappingId: mappingId,
+    generation: generation ?? this.generation,
+    source: source ?? this.source,
+    offset: offset ?? this.offset,
+    items: items ?? this.items,
+    selected: selected ?? this.selected,
+    pending: pending ?? this.pending,
+  );
+}
+
+/// A hover card over a formula name (or, from the canvas, over an entity).
+@immutable
+class HoverState {
+  const HoverState({required this.generation, this.mappingId, this.offset, this.entity, this.card});
+  final int generation;
+
+  /// Formula hover: the mapping whose draft text is hovered, at a byte offset.
+  final int? mappingId;
+  final int? offset;
+
+  /// Entity hover (canvas / library rows).
+  final pb.EntityRef? entity;
+
+  /// The service's card, once it arrived; `null` while pending.
+  final pb.DraftHoverResponse? card;
+
+  HoverState copyWith({pb.DraftHoverResponse? card}) => HoverState(
+    generation: generation,
+    mappingId: mappingId,
+    offset: offset,
+    entity: entity,
+    card: card ?? this.card,
+  );
+}
+
 @immutable
 class EditorState {
   const EditorState({
@@ -237,6 +307,9 @@ class EditorState {
     this.pickerUnavailable = false,
     this.drafts = const {},
     this.stashedDrafts = const {},
+    this.completion,
+    this.hover,
+    this.toolingGeneration = 0,
   });
 
   final StudioPage page;
@@ -270,6 +343,16 @@ class EditorState {
   /// close; no modal asks.
   final Map<String, Map<int, DefinitionDraft>> stashedDrafts;
 
+  /// The open completion pop-up, if any (one at a time: the focused field).
+  final CompletionState? completion;
+
+  /// The hover card being shown or fetched, if any.
+  final HoverState? hover;
+
+  /// Monotonic tag for completion and hover requests; only the latest
+  /// answer of each is applied.
+  final int toolingGeneration;
+
   EditorState copyWith({
     StudioPage? page,
     Selection? selection,
@@ -282,6 +365,11 @@ class EditorState {
     bool? pickerUnavailable,
     Map<int, DefinitionDraft>? drafts,
     Map<String, Map<int, DefinitionDraft>>? stashedDrafts,
+    CompletionState? completion,
+    bool clearCompletion = false,
+    HoverState? hover,
+    bool clearHover = false,
+    int? toolingGeneration,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -293,6 +381,9 @@ class EditorState {
       pickerUnavailable: pickerUnavailable ?? this.pickerUnavailable,
       drafts: drafts ?? this.drafts,
       stashedDrafts: stashedDrafts ?? this.stashedDrafts,
+      completion: clearCompletion ? null : (completion ?? this.completion),
+      hover: clearHover ? null : (hover ?? this.hover),
+      toolingGeneration: toolingGeneration ?? this.toolingGeneration,
     );
   }
 }

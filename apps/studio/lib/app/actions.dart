@@ -128,6 +128,46 @@ class DetachDefinitionRequested extends UserAction {
   final int mappingId;
 }
 
+// ---- semantic tooling in the definition field -------------------------------
+
+/// Ask for completion at a byte [offset] into [source] (⌃Space, or typing
+/// while the pop-up is open).
+class CompletionRequested extends UserAction {
+  const CompletionRequested({required this.mappingId, required this.source, required this.offset});
+  final int mappingId;
+  final String source;
+  final int offset;
+}
+
+class CompletionDismissed extends UserAction {
+  const CompletionDismissed();
+}
+
+/// Move the selection by [delta] rows (wraps).
+class CompletionMoved extends UserAction {
+  const CompletionMoved(this.delta);
+  final int delta;
+}
+
+/// Hover a name in the definition field of [mappingId] at a byte [offset]
+/// into [source]; `null` offset ends the hover.
+class FormulaHoverRequested extends UserAction {
+  const FormulaHoverRequested({
+    required this.mappingId,
+    required this.source,
+    required this.offset,
+  });
+  final int mappingId;
+  final String source;
+  final int? offset;
+}
+
+/// Hover an entity (a canvas node, a library row); `null` ends the hover.
+class EntityHoverRequested extends UserAction {
+  const EntityHoverRequested(this.entity);
+  final pb.EntityRef? entity;
+}
+
 class PageSelected extends UserAction {
   const PageSelected(this.page);
   final StudioPage page;
@@ -304,6 +344,27 @@ class DraftAnalysisFailed extends ResponseAction {
     required this.message,
   });
   final int mappingId;
+  final int generation;
+  final String code;
+  final String message;
+}
+
+class CompletionReceived extends ResponseAction {
+  const CompletionReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.DraftCompletionResponse result;
+}
+
+class HoverReceived extends ResponseAction {
+  const HoverReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.DraftHoverResponse result;
+}
+
+/// A tooling request (completion, hover) failed; the pop-up or card just
+/// does not appear.  Never a banner.
+class ToolingFailed extends ResponseAction {
+  const ToolingFailed({required this.generation, required this.code, required this.message});
   final int generation;
   final String code;
   final String message;

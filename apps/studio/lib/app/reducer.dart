@@ -14,6 +14,7 @@ import 'actions.dart';
 import 'drafts.dart';
 import 'effects.dart';
 import 'state.dart';
+import 'tooling.dart';
 
 @immutable
 class Transition {
@@ -172,8 +173,34 @@ Transition reduce(AppState s, AppAction action) {
       return _edit(s, _setSignature(mappingId, inputs, m.signature.output.toInt()));
     }),
 
+    // ---- semantic tooling (app/tooling.dart) --------------------------------
+    CompletionRequested(:final mappingId, :final source, :final offset) => completionRequested(
+      s,
+      mappingId,
+      source,
+      offset,
+    ),
+    CompletionDismissed() => completionDismissed(s),
+    CompletionMoved(:final delta) => completionMoved(s, delta),
+    FormulaHoverRequested(:final mappingId, :final source, :final offset) => formulaHoverRequested(
+      s,
+      mappingId,
+      source,
+      offset,
+    ),
+    EntityHoverRequested(:final entity) => entityHoverRequested(s, entity),
+    CompletionReceived(:final generation, :final result) => completionReceived(
+      s,
+      generation,
+      result,
+    ),
+    HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
+    ToolingFailed(:final generation) => toolingFailed(s, generation),
+
     // ---- editor state ------------------------------------------------------
-    PageSelected(:final page) => Transition(s.copyWith(editor: s.editor.copyWith(page: page))),
+    PageSelected(:final page) => Transition(
+      s.copyWith(editor: withoutTooling(s.editor).copyWith(page: page)),
+    ),
     RemoveRecentRequested(:final path) => () {
       final recent = s.recent.where((r) => r.path != path).toList();
       return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
@@ -207,7 +234,7 @@ Transition reduce(AppState s, AppAction action) {
       ),
     ),
     SelectionChanged(:final selection) => Transition(
-      s.copyWith(editor: s.editor.copyWith(selection: selection)),
+      s.copyWith(editor: withoutTooling(s.editor).copyWith(selection: selection)),
     ),
     NodeMoved(:final node, :final position) => _whenProject(s, () {
       final layout = {...s.editor.layout, node: position};
@@ -379,12 +406,15 @@ Transition _projectReceived(
       : incoming.revision == current.revision
       ? (drafts: s.editor.drafts, effects: const <Effect>[])
       : rebaseDrafts(s.editor.drafts, incoming);
+  final editor = sameProject && incoming.revision == current.revision
+      ? s.editor
+      : withoutTooling(s.editor);
   return Transition(
     s.copyWith(
       project: incoming,
       recent: recent,
       clearAnalysis: !analysisStillValid,
-      editor: s.editor.copyWith(
+      editor: editor.copyWith(
         pendingRequests: pending,
         selection: selection,
         layout: layout,

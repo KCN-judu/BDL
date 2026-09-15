@@ -23,7 +23,10 @@
 /// shortcuts are untouched; Return inserts a line.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../app/actions.dart';
@@ -190,6 +193,8 @@ class DefinitionEditor extends StatefulWidget {
     required this.committedAnalysis,
     required this.inputNames,
     required this.dispatch,
+    this.completion,
+    this.hover,
   });
 
   final int mappingId;
@@ -200,6 +205,12 @@ class DefinitionEditor extends StatefulWidget {
   final pb.MappingAnalysis? committedAnalysis;
   final List<String> inputNames;
   final void Function(AppAction) dispatch;
+
+  /// The open completion pop-up, when it belongs to this field.
+  final CompletionState? completion;
+
+  /// The hover card, when it belongs to this field.
+  final HoverState? hover;
 
   @override
   State<DefinitionEditor> createState() => _DefinitionEditorState();
@@ -231,6 +242,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
 
   @override
   void dispose() {
+    _hoverTimer?.cancel();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
@@ -238,6 +250,95 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
 
   void _commit() => widget.dispatch(CommitDefinitionRequested(widget.mappingId));
   void _revert() => widget.dispatch(DefinitionDraftReverted(widget.mappingId));
+
+  // ---- completion --------------------------------------------------------
+
+  bool get _completionOpen => widget.completion != null;
+
+  int get _caretBytes => byteOffsetOf(_controller.text, _controller.selection.baseOffset);
+
+  void _requestCompletion() => widget.dispatch(
+    CompletionRequested(mappingId: widget.mappingId, source: _controller.text, offset: _caretBytes),
+  );
+
+  void _onChanged(String v) {
+    widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: v));
+    // With the pop-up open, every keystroke re-asks at the new caret: the
+    // service filters by prefix, Studio never does.
+    if (_completionOpen) _requestCompletion();
+  }
+
+  /// Replace the service's byte range with its insert text; the caret
+  /// lands after it.  The candidate's semantics are not consulted.
+  void _accept() {
+    final c = widget.completion;
+    if (c == null || c.items.isEmpty) return;
+    final item = c.items[c.selected.clamp(0, c.items.length - 1)];
+    final text = _controller.text;
+    final range = codeUnitRange(text, item.replaceStart, item.replaceEnd);
+    final next = text.replaceRange(range.start, range.end, item.insert);
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: range.start + item.insert.length),
+    );
+    widget.dispatch(const CompletionDismissed());
+    widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: next));
+  }
+
+  // ---- hover -------------------------------------------------------------
+
+  Timer? _hoverTimer;
+  int? _hoverBytes;
+
+  /// The byte offset under the pointer, through the field's render object.
+  int? _offsetAt(Offset global) {
+    RenderEditable? editable;
+    void visit(RenderObject r) {
+      if (editable != null) return;
+      if (r is RenderEditable) {
+        editable = r;
+      } else {
+        r.visitChildren(visit);
+      }
+    }
+
+    final root = context.findRenderObject();
+    if (root == null) return null;
+    visit(root);
+    final e = editable;
+    if (e == null || !e.hasSize) return null;
+    final local = e.globalToLocal(global);
+    if (!(Offset.zero & e.size).contains(local)) return null;
+    final position = e.getPositionForPoint(global);
+    return byteOffsetOf(_controller.text, position.offset);
+  }
+
+  void _onHover(PointerHoverEvent e) {
+    final bytes = _offsetAt(e.position);
+    if (bytes == _hoverBytes) return;
+    _hoverBytes = bytes;
+    _hoverTimer?.cancel();
+    if (bytes == null) {
+      _endHover();
+      return;
+    }
+    // A short dwell, so sweeping the pointer across the text asks once.
+    _hoverTimer = Timer(const Duration(milliseconds: 250), () {
+      widget.dispatch(
+        FormulaHoverRequested(mappingId: widget.mappingId, source: _controller.text, offset: bytes),
+      );
+    });
+  }
+
+  void _endHover() {
+    _hoverTimer?.cancel();
+    _hoverBytes = null;
+    if (widget.hover != null) {
+      widget.dispatch(
+        FormulaHoverRequested(mappingId: widget.mappingId, source: _controller.text, offset: null),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -260,24 +361,55 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
       VerdictTone.error => t.error,
     };
 
+    final completion = widget.completion;
+    final card = widget.hover?.card;
+
     return CallbackShortcuts(
       bindings: {
+        // The pop-up takes the navigation keys only while it is open; Esc
+        // then closes it rather than reverting the draft.
+        if (_completionOpen) ...{
+          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+              widget.dispatch(const CompletionMoved(1)),
+          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+              widget.dispatch(const CompletionMoved(-1)),
+          const SingleActivator(LogicalKeyboardKey.enter): _accept,
+          const SingleActivator(LogicalKeyboardKey.tab): _accept,
+          const SingleActivator(LogicalKeyboardKey.escape): () =>
+              widget.dispatch(const CompletionDismissed()),
+        } else ...{
+          if (m.canRevert) const SingleActivator(LogicalKeyboardKey.escape): _revert,
+        },
+        const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
         if (m.canCommit) const SingleActivator(LogicalKeyboardKey.enter, meta: true): _commit,
-        if (m.canRevert) const SingleActivator(LogicalKeyboardKey.escape): _revert,
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MacTextField(
-            key: const ValueKey('definition-field'),
-            controller: _controller,
-            focusNode: _focus,
-            maxLines: 4,
-            monospace: true,
-            hint: m.hint,
-            onChanged: (v) =>
-                widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: v)),
+          Listener(
+            onPointerHover: _onHover,
+            child: MouseRegion(
+              onExit: (_) => _endHover(),
+              child: MacTextField(
+                key: const ValueKey('definition-field'),
+                controller: _controller,
+                focusNode: _focus,
+                maxLines: 4,
+                monospace: true,
+                hint: m.hint,
+                onChanged: _onChanged,
+              ),
+            ),
           ),
+          if (completion != null && (completion.items.isNotEmpty || completion.pending))
+            _CompletionPopup(
+              completion: completion,
+              onPick: (i) {
+                widget.dispatch(CompletionMoved(i - completion.selected));
+                _accept();
+              },
+            ),
+          if (card != null && card.found) _HoverCard(card: card),
           const SizedBox(height: MacMetrics.gapTight),
           if (m.conflict)
             _ConflictNotice(
@@ -417,6 +549,155 @@ class _ConflictNotice extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The service's candidates, in the service's order.  Rows: the label
+/// (monospace, what will be inserted), its kind, the resulting type in a
+/// secondary column.  Selection is the accent tint; the selected row also
+/// carries a ▸ so it survives without colour.
+class _CompletionPopup extends StatelessWidget {
+  const _CompletionPopup({required this.completion, required this.onPick});
+  final CompletionState completion;
+  final void Function(int index) onPick;
+
+  static const double rowHeight = 22;
+  static const int visibleRows = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final items = completion.items;
+    return Container(
+      key: const ValueKey('completion-popup'),
+      margin: const EdgeInsets.only(top: MacMetrics.gapTight),
+      constraints: const BoxConstraints(maxHeight: rowHeight * visibleRows + 2),
+      decoration: BoxDecoration(
+        color: t.content,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: t.hairline),
+      ),
+      child: items.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text('Looking…', style: TextStyle(fontSize: 11, color: t.textTertiary)),
+            )
+          : ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemExtent: rowHeight,
+              itemCount: items.length,
+              itemBuilder: (context, i) {
+                final item = items[i];
+                final selected = i == completion.selected;
+                return MouseRegion(
+                  cursor: SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onPick(i),
+                    child: Container(
+                      color: selected ? t.selection : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Row(
+                        spacing: MacMetrics.gap,
+                        children: [
+                          SizedBox(
+                            width: 8,
+                            child: Text(
+                              selected ? '▸' : '',
+                              style: TextStyle(fontSize: 10, color: t.textSecondary),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Menlo',
+                                color: t.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Text(item.kind, style: TextStyle(fontSize: 10, color: t.textTertiary)),
+                          if (item.resultingType.isNotEmpty)
+                            SizedBox(
+                              width: 72,
+                              child: Text(
+                                item.resultingType,
+                                textAlign: TextAlign.right,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10, color: t.textSecondary),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+/// The everyday meaning of the name under the pointer, as the service
+/// states it: title, what kind of value, its status, a few details.  No
+/// Core term here — that is Explain's job.
+class _HoverCard extends StatelessWidget {
+  const _HoverCard({required this.card});
+  final pb.DraftHoverResponse card;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Container(
+      key: const ValueKey('hover-card'),
+      margin: const EdgeInsets.only(top: MacMetrics.gapTight),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      decoration: BoxDecoration(
+        color: t.content,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: t.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: MacMetrics.gapTight,
+        children: [
+          Text(
+            card.title,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+          ),
+          if (card.signature.isNotEmpty)
+            Text(
+              card.signature,
+              style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary),
+            ),
+          if (card.representation.isNotEmpty)
+            Text(card.representation, style: TextStyle(fontSize: 11, color: t.textPrimary)),
+          Text(
+            card.status,
+            style: TextStyle(fontSize: 11, color: card.open ? t.open : t.textSecondary),
+          ),
+          for (final d in card.details)
+            Row(
+              spacing: MacMetrics.gap,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: Text(d.label, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+                ),
+                Expanded(
+                  child: Text(d.value, style: TextStyle(fontSize: 11, color: t.textPrimary)),
+                ),
+              ],
+            ),
+          if (card.explanation.isNotEmpty)
+            Text(card.explanation, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+        ],
+      ),
     );
   }
 }
