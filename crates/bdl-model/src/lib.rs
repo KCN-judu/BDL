@@ -29,7 +29,7 @@ pub mod surface;
 
 pub use dim::Dim;
 pub use edit::{apply_edit, Applied, EditError, EditKind, EditOp, EditOutcome, Invalidation};
-pub use ids::{ClockId, DeclId, OutputId, Revision, SemanticId};
+pub use ids::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
 pub use surface::{
     Concept, Definition, Design, MappingBlock, ProjectSnapshot, Representation, Signature,
 };

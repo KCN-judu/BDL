@@ -466,3 +466,247 @@ fn vertical_slice_steps_1_to_12() {
     };
     assert!(c.child.wait().unwrap().success());
 }
+
+/// Outputs, devices and target-relative deployment over the wire.
+#[test]
+fn outputs_and_deployment_over_stdio() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("rover");
+    let mut events = Vec::new();
+    let mut c = Client::spawn();
+    c.call(
+        Req::Handshake(pb::HandshakeRequest {
+            client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+            client_name: "e2e".into(),
+            client_version: "0".into(),
+        }),
+        &mut events,
+    );
+    project(c.call(
+        Req::InitProject(pb::InitProjectRequest {
+            root_path: root.to_string_lossy().into(),
+            name: "rover".into(),
+        }),
+        &mut events,
+    ));
+    fn apply(c: &mut Client, events: &mut Vec<pb::Event>, op: pb::edit_op::Op) -> pb::EditApplied {
+        let base = c.last_revision;
+        match c.call(edit(base, op), events) {
+            Resp::EditApplied(e) => e,
+            other => panic!("edit failed: {other:?}"),
+        }
+    }
+    let speed = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Speed".into(),
+            description: String::new(),
+            representation: Some(pb::Representation {
+                kind: Some(pb::representation::Kind::Quantity(pb::Dim::default())),
+            }),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_concept
+    .unwrap();
+    let level = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "cruise".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![],
+                output: speed,
+            }),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_mapping
+    .unwrap();
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::AttachDefinition(pb::AttachDefinition {
+            id: level,
+            definition: Some(pb::Definition {
+                kind: Some(pb::definition::Kind::Formula("0.5".into())),
+            }),
+        }),
+    );
+    let main = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateClockDomain(pb::CreateClockDomain {
+            name: "main".into(),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_clock
+    .unwrap();
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetMappingClock(pb::SetMappingClock {
+            id: level,
+            clock_id: Some(main),
+        }),
+    );
+    let motor = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateOutput(pb::CreateOutput {
+            name: "motor".into(),
+            description: String::new(),
+            accepts: speed,
+            clock_id: Some(main),
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_output
+    .unwrap();
+
+    // undriven: the design is not complete, and says so without an error
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    assert!(!a.output_complete);
+    assert_eq!(a.outputs.len(), 1);
+    assert_eq!(a.outputs[0].state(), pb::OutputState::Undriven);
+    assert!(
+        a.diagnostics
+            .iter()
+            .any(|d| d.code == "output.missing_driver"
+                && d.severity() == pb::DiagnosticSeverity::Info)
+    );
+
+    let applied = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetMappingDrive(pb::SetMappingDrive {
+            id: level,
+            output_id: Some(motor),
+        }),
+    );
+    let p = applied.project.unwrap();
+    assert_eq!(p.outputs.len(), 1);
+    assert_eq!(p.outputs[0].name, "motor");
+    assert_eq!(p.clocks[0].name, "main");
+    assert_eq!(p.mappings[0].drives_output_id, Some(motor));
+    assert_eq!(p.mappings[0].clock_id, Some(main));
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    assert!(a.output_complete, "{:?}", a.diagnostics);
+    assert_eq!(a.outputs[0].state(), pb::OutputState::Driven);
+    assert_eq!(a.outputs[0].driver, Some(level));
+
+    // deleting a driven output is refused with a structured error
+    let base = c.last_revision;
+    let Resp::Error(e) = c.call(
+        edit(
+            base,
+            pb::edit_op::Op::DeleteOutput(pb::DeleteOutput { id: motor }),
+        ),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(e.code, "edit.output_in_use");
+
+    // a device realises the output; its pin table comes from the kind
+    let dev = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateDevice(pb::CreateDevice {
+            name: "drive".into(),
+            kind: pb::DeviceKind::HBridgeChannel.into(),
+            output_id: Some(motor),
+        }),
+    );
+    let device = dev.outcome.unwrap().created_device.unwrap();
+    let dv = &dev.project.unwrap().devices[0];
+    assert_eq!(dv.kind(), pb::DeviceKind::HBridgeChannel);
+    assert_eq!(dv.requirements.len(), 2);
+    assert_eq!(dv.requirements[0].capability, "pwm");
+    assert_eq!(dv.requirements[1].capability, "digital_out");
+
+    let Resp::Targets(t) = c.call(Req::ListTargets(pb::ListTargetsRequest {}), &mut events) else {
+        panic!()
+    };
+    let ids: Vec<&str> = t.targets.iter().map(|t| t.id.as_str()).collect();
+    assert_eq!(ids, ["arduino_nano", "big_board"]);
+
+    let deploy = |c: &mut Client, events: &mut Vec<pb::Event>, target: &str| match c.call(
+        Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
+            target_id: target.into(),
+        }),
+        events,
+    ) {
+        Resp::Deployment(d) => d.deployment.unwrap(),
+        other => panic!("{other:?}"),
+    };
+    let d = deploy(&mut c, &mut events, "arduino_nano");
+    assert_eq!(d.status(), pb::DeploymentStatus::Feasible);
+    assert_eq!(d.revision, c.last_revision);
+    assert_eq!(d.assignment.len(), 2);
+    assert_eq!(d.assignment[0].resource, "D3");
+    assert!(d.diagnostics.is_empty());
+    let Resp::Error(e) = c.call(
+        Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
+            target_id: "toaster".into(),
+        }),
+        &mut events,
+    ) else {
+        panic!()
+    };
+    assert_eq!(e.code, "deploy.unknown_target");
+
+    // pin the PWM line by hand to a pin that cannot do PWM: infeasible on
+    // the Nano, with the reason, while the semantic analysis is unchanged
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetDevicePin(pb::SetDevicePin {
+            id: device,
+            index: 0,
+            resource: Some("D4".into()),
+        }),
+    );
+    let d = deploy(&mut c, &mut events, "arduino_nano");
+    assert_eq!(d.status(), pb::DeploymentStatus::Infeasible);
+    let dead = d.dead_end.unwrap();
+    assert_eq!(
+        dead.reason,
+        Some(pb::dead_end::Reason::FixedUnavailable("D4".into()))
+    );
+    assert_eq!(d.diagnostics[0].code, "deploy.infeasible");
+    assert!(d.diagnostics[0].message.contains("D4 cannot carry drive"));
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
+        panic!()
+    };
+    assert!(a.analysis.unwrap().output_complete);
+
+    // the whole thing survives a save/reopen
+    project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
+    let p = project(c.call(
+        Req::OpenProject(pb::OpenProjectRequest {
+            root_path: root.to_string_lossy().into(),
+        }),
+        &mut events,
+    ));
+    assert_eq!(p.devices[0].fixed_pins[0].resource, "D4");
+    assert_eq!(p.outputs[0].clock_id, Some(main));
+    let Resp::Ack(_) = c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events) else {
+        panic!()
+    };
+    assert!(c.child.wait().unwrap().success());
+}

@@ -42,6 +42,8 @@ message ClientMessage {
     StartSimulationRequest start_simulation = 23;
     StepSimulationRequest step_simulation = 24;
     ResetSimulationRequest reset_simulation = 25;
+    ListTargetsRequest list_targets = 26;
+    AnalyzeDeploymentRequest analyze_deployment = 27;
   }
 }
 
@@ -62,6 +64,8 @@ message Response {
     Ack ack = 13;
     AnalysisResponse analysis = 14;
     SimulationResponse simulation = 15;
+    TargetsResponse targets = 16;
+    DeploymentResponse deployment = 17;
   }
 }
 
@@ -170,6 +174,23 @@ message EditOp {
     AttachDefinition attach_definition = 10;
     ReplaceDefinition replace_definition = 11;
     DeleteMapping delete_mapping = 12;
+    CreateClockDomain create_clock_domain = 13;
+    RenameClockDomain rename_clock_domain = 14;
+    DeleteClockDomain delete_clock_domain = 15;
+    SetMappingClock set_mapping_clock = 16;
+    CreateOutput create_output = 17;
+    RenameOutput rename_output = 18;
+    SetOutputAccepts set_output_accepts = 19;
+    SetOutputClock set_output_clock = 20;
+    SetOutputRequired set_output_required = 21;
+    DeleteOutput delete_output = 22;
+    SetMappingDrive set_mapping_drive = 23;
+    CreateDevice create_device = 24;
+    RenameDevice rename_device = 25;
+    SetDeviceKind set_device_kind = 26;
+    SetDeviceOutput set_device_output = 27;
+    SetDevicePin set_device_pin = 28;
+    DeleteDevice delete_device = 29;
   }
 }
 
@@ -222,6 +243,92 @@ message ReplaceDefinition {
 message DeleteMapping {
   uint64 id = 1;
 }
+message CreateClockDomain {
+  string name = 1;
+}
+message RenameClockDomain {
+  uint64 id = 1;
+  string name = 2;
+}
+// Refused while a mapping or an output is in the domain.
+message DeleteClockDomain {
+  uint64 id = 1;
+}
+message SetMappingClock {
+  uint64 id = 1;
+  optional uint64 clock_id = 2;
+}
+message CreateOutput {
+  string name = 1;
+  string description = 2;
+  // The concept the sink accepts.
+  uint64 accepts = 3;
+  optional uint64 clock_id = 4;
+}
+message RenameOutput {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetOutputAccepts {
+  uint64 id = 1;
+  uint64 accepts = 2;
+}
+message SetOutputClock {
+  uint64 id = 1;
+  optional uint64 clock_id = 2;
+}
+message SetOutputRequired {
+  uint64 id = 1;
+  bool required = 2;
+}
+// Refused while a mapping drives the sink or a device realises it.
+message DeleteOutput {
+  uint64 id = 1;
+}
+// Connect (or disconnect) a mapping to the output it commits to.
+message SetMappingDrive {
+  uint64 id = 1;
+  optional uint64 output_id = 2;
+}
+message CreateDevice {
+  string name = 1;
+  DeviceKind kind = 2;
+  optional uint64 output_id = 3;
+}
+message RenameDevice {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetDeviceKind {
+  uint64 id = 1;
+  DeviceKind kind = 2;
+}
+message SetDeviceOutput {
+  uint64 id = 1;
+  optional uint64 output_id = 2;
+}
+// Pin one of the device's requirements (by its index in the kind's list)
+// to a named board resource, or release it.
+message SetDevicePin {
+  uint64 id = 1;
+  uint32 index = 2;
+  optional string resource = 3;
+}
+message DeleteDevice {
+  uint64 id = 1;
+}
+
+// What a device binding needs from the board is derived from its kind
+// (docs/HARDWARE_MODEL.md); the kind is the whole of what the surface says.
+enum DeviceKind {
+  DEVICE_KIND_UNSPECIFIED = 0;
+  DEVICE_KIND_PWM_CHANNEL = 1;
+  DEVICE_KIND_DIGITAL_OUTPUT = 2;
+  DEVICE_KIND_H_BRIDGE_CHANNEL = 3;
+  DEVICE_KIND_I2C_SENSOR = 4;
+  DEVICE_KIND_QUADRATURE_ENCODER = 5;
+  DEVICE_KIND_UART = 6;
+}
 
 enum EditKind {
   EDIT_KIND_UNSPECIFIED = 0;
@@ -246,6 +353,9 @@ message EditOutcome {
   repeated uint64 origin_decls = 3;
   optional uint64 created_concept = 4;
   optional uint64 created_mapping = 5;
+  optional uint64 created_clock = 6;
+  optional uint64 created_output = 7;
+  optional uint64 created_device = 8;
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +372,46 @@ message ProjectProjection {
   bool can_undo = 7;
   bool can_redo = 8;
   bool dirty = 9;
+  repeated ClockView clocks = 10;
+  repeated OutputView outputs = 11;
+  repeated DeviceView devices = 12;
+}
+
+message ClockView {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message OutputView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  uint64 accepts = 4;
+  optional uint64 clock_id = 5;
+  bool required = 6;
+}
+
+message DeviceView {
+  uint64 id = 1;
+  string name = 2;
+  DeviceKind kind = 3;
+  optional uint64 output_id = 4;
+  // Manual pin choices by requirement index.
+  repeated DevicePin fixed_pins = 5;
+  // The requirements this kind implies, for the editor's pin table.
+  repeated RequirementLabel requirements = 6;
+}
+
+message DevicePin {
+  uint32 index = 1;
+  string resource = 2;
+}
+
+message RequirementLabel {
+  uint32 index = 1;
+  // Capability name, e.g. "pwm", "digital_out", "i2c_sda".
+  string capability = 2;
+  string label = 3;
 }
 
 message ConceptView {
@@ -278,6 +428,8 @@ message MappingView {
   Signature signature = 4;
   optional Definition definition = 5;
   AcceptanceState state = 6;
+  optional uint64 clock_id = 7;
+  optional uint64 drives_output_id = 8;
 }
 
 // The workspace states of the paper's interaction model.  Only the first two
@@ -468,6 +620,30 @@ message ProjectAnalysis {
   repeated DeclarationCycle cycles = 6;
   // Evaluation order the causality pass produced (empty when not causal).
   repeated uint64 evaluation_order = 7;
+  // Output pass: every sink with a domain and where it stands.
+  repeated OutputAnalysis outputs = 8;
+  // Surface outputs still without a domain (neither driven nor missing).
+  repeated uint64 open_outputs = 9;
+  // Every drive edge well formed, one driver per sink, every required
+  // sink driven, no output open.
+  bool output_complete = 10;
+}
+
+enum OutputState {
+  OUTPUT_STATE_UNSPECIFIED = 0;
+  OUTPUT_STATE_UNDRIVEN = 1;
+  OUTPUT_STATE_DRIVEN = 2;
+  OUTPUT_STATE_ILL_FORMED = 3;
+  OUTPUT_STATE_CONFLICT = 4;
+}
+
+message OutputAnalysis {
+  uint64 id = 1;
+  OutputState state = 2;
+  // The single well-formed driver, when driven.
+  optional uint64 driver = 3;
+  // Every mapping that claims the sink (well formed or not).
+  repeated uint64 claimants = 4;
 }
 
 message DeclarationCycle {
@@ -525,4 +701,87 @@ message Diagnostic {
   string explanation = 8;
   string technical = 9;
   repeated string fixes = 10;
+}
+
+// ---------------------------------------------------------------------------
+// Deployment (target-relative; never part of the semantic analysis)
+// ---------------------------------------------------------------------------
+
+message ListTargetsRequest {}
+
+message TargetsResponse {
+  repeated TargetView targets = 1;
+}
+
+message TargetView {
+  // Registry id, e.g. "arduino_nano".
+  string id = 1;
+  string name = 2;
+  uint32 resource_count = 3;
+}
+
+message AnalyzeDeploymentRequest {
+  string target_id = 1;
+}
+
+enum DeploymentStatus {
+  DEPLOYMENT_STATUS_UNSPECIFIED = 0;
+  DEPLOYMENT_STATUS_FEASIBLE = 1;
+  DEPLOYMENT_STATUS_INFEASIBLE = 2;
+  // Placement succeeds but an output has no device, or a device no output.
+  DEPLOYMENT_STATUS_INCOMPLETE = 3;
+}
+
+message DeploymentResponse {
+  DeploymentAnalysis deployment = 1;
+}
+
+message DeploymentAnalysis {
+  uint64 revision = 1;
+  string target = 2;
+  DeploymentStatus status = 3;
+  repeated RequirementView requirements = 4;
+  // The witness, when feasible: one placement per requirement.
+  repeated Placement assignment = 5;
+  optional DeadEnd dead_end = 6;
+  repeated uint64 unbound_devices = 7;
+  repeated uint64 unrealised_outputs = 8;
+  repeated Diagnostic diagnostics = 9;
+}
+
+message RequirementView {
+  uint64 device_id = 1;
+  uint32 index = 2;
+  string capability = 3;
+  optional string fixed = 4;
+  string label = 5;
+}
+
+message Placement {
+  uint64 device_id = 1;
+  uint32 index = 2;
+  string resource = 3;
+}
+
+// One explanation of infeasibility: the first requirement greedy placement
+// could not place, and what blocked each candidate.  Not a minimal core.
+message DeadEnd {
+  uint64 device_id = 1;
+  uint32 index = 2;
+  oneof reason {
+    Unit no_capable_resource = 3;
+    string fixed_unavailable = 4;
+    BlockedCandidates blocked = 5;
+  }
+  repeated Placement placed = 6;
+}
+
+message BlockedCandidates {
+  repeated BlockedCandidate candidates = 1;
+}
+
+message BlockedCandidate {
+  string resource = 1;
+  uint64 held_by_device_id = 2;
+  uint32 held_by_index = 3;
 }

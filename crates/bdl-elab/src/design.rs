@@ -7,7 +7,7 @@
 
 use crate::formula::{elaborate_formula, Realized};
 use bdl_diagnostics::Diagnostic;
-use bdl_ir::{ConceptBinding, Declaration, DesignIr, Interface, Ty};
+use bdl_ir::{ConceptBinding, Declaration, DesignIr, Interface, OutputSpec, Ty};
 use bdl_model::surface::{Definition, Design, MappingBlock, Representation};
 use bdl_model::DeclId;
 use std::collections::BTreeMap;
@@ -88,6 +88,29 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
     }
     for c in design.clocks.values() {
         ir.clock_names.insert(c.id, c.name.clone());
+    }
+    // Outputs: `OutputSpec` needs a domain; an output without one is open
+    // (not yet a kernel output) and stays out of `Δ.outputs`.  Every drive
+    // edge is recorded as authored — `DriveWF` is what rejects one whose
+    // sink is open or does not fit, and the output pass says so.
+    for o in design.outputs.values() {
+        ir.output_names.insert(o.id, o.name.clone());
+        if let Some(clock) = o.clock {
+            ir.outputs.insert(
+                o.id,
+                OutputSpec {
+                    id: o.id,
+                    name: o.name.clone(),
+                    accepts: Ty::sem(o.accepts),
+                    clock,
+                },
+            );
+        }
+    }
+    for m in design.mappings.values() {
+        if let Some(o) = m.drives {
+            ir.drives.insert(m.id, o);
+        }
     }
     let mut mappings = BTreeMap::new();
     for m in design.mappings.values() {

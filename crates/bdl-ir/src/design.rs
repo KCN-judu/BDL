@@ -88,6 +88,10 @@ pub struct DesignIr {
     #[serde(default)]
     pub clock_names: BTreeMap<ClockId, String>,
     pub outputs: BTreeMap<OutputId, OutputSpec>,
+    /// Display names of every surface output, including the open ones that
+    /// have no `OutputSpec` yet; for diagnostics only.
+    #[serde(default)]
+    pub output_names: BTreeMap<OutputId, String>,
     pub drives: DriveEnv,
 }
 

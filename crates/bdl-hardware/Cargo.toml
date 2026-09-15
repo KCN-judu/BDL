@@ -1,0 +1,21 @@
+[package]
+name = "bdl-hardware"
+description = "Target-specific hardware validation: capabilities, resources with per-capability units, requirements with unit relations, a sound and complete finite allocation solver, first-dead-end diagnosis, device requirement generation, board data"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

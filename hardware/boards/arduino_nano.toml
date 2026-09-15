@@ -1,0 +1,213 @@
+name = "arduino_nano"
+shareable = [
+    "i2c_sda",
+    "i2c_scl",
+]
+
+[[resources]]
+id = "D0"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "uart_rx",
+]
+
+[resources.units]
+uart_rx = 0
+
+[[resources]]
+id = "D1"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "uart_tx",
+]
+
+[resources.units]
+uart_tx = 0
+
+[[resources]]
+id = "D2"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "interrupt",
+]
+
+[[resources]]
+id = "D3"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+]
+
+[resources.units]
+pwm = 2
+
+[[resources]]
+id = "D4"
+capabilities = [
+    "digital_in",
+    "digital_out",
+]
+
+[[resources]]
+id = "D5"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+]
+
+[resources.units]
+pwm = 0
+
+[[resources]]
+id = "D6"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+]
+
+[resources.units]
+pwm = 0
+
+[[resources]]
+id = "D7"
+capabilities = [
+    "digital_in",
+    "digital_out",
+]
+
+[[resources]]
+id = "D8"
+capabilities = [
+    "digital_in",
+    "digital_out",
+]
+
+[[resources]]
+id = "D9"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+]
+
+[resources.units]
+pwm = 1
+
+[[resources]]
+id = "D10"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "spi_ss",
+]
+
+[resources.units]
+pwm = 1
+spi_ss = 0
+
+[[resources]]
+id = "D11"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 2
+spi_mosi = 0
+
+[[resources]]
+id = "D12"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "spi_miso",
+]
+
+[resources.units]
+spi_miso = 0
+
+[[resources]]
+id = "D13"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "spi_sck",
+]
+
+[resources.units]
+spi_sck = 0
+
+[[resources]]
+id = "A0"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+]
+
+[[resources]]
+id = "A1"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+]
+
+[[resources]]
+id = "A2"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+]
+
+[[resources]]
+id = "A3"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+]
+
+[[resources]]
+id = "A4"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+    "i2c_sda",
+]
+
+[resources.units]
+i2c_sda = 0
+
+[[resources]]
+id = "A5"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "analog_in",
+    "i2c_scl",
+]
+
+[resources.units]
+i2c_scl = 0
+
+[[resources]]
+id = "A6"
+capabilities = ["analog_in"]
+
+[[resources]]
+id = "A7"
+capabilities = ["analog_in"]

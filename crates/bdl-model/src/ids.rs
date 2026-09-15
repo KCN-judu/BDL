@@ -62,6 +62,13 @@ stable_id!(
     OutputId,
     "out#"
 );
+stable_id!(
+    /// Identity of a device binding — the deployment-layer object that says
+    /// what kind of hardware realises a sink (or feeds a sensor) and
+    /// generates its resource requirements.
+    DeviceId,
+    "dev#"
+);
 
 /// Monotone project revision.  Every edit produces the next revision; every
 /// asynchronous analysis result carries the revision it was computed for so
@@ -100,6 +107,8 @@ pub struct IdAllocator {
     next_decl: u64,
     next_clock: u64,
     next_output: u64,
+    #[serde(default)]
+    next_device: u64,
 }
 
 impl IdAllocator {
@@ -143,6 +152,17 @@ impl IdAllocator {
             id,
             IdAllocator {
                 next_output: self.next_output + 1,
+                ..self.clone()
+            },
+        )
+    }
+    #[must_use]
+    pub fn fresh_device(&self) -> (DeviceId, IdAllocator) {
+        let id = DeviceId(self.next_device);
+        (
+            id,
+            IdAllocator {
+                next_device: self.next_device + 1,
                 ..self.clone()
             },
         )

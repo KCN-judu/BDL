@@ -18,9 +18,9 @@ slice is started before the slice works end-to-end.
 | H | incomplete-declaration support (declared / open / invalid / type-valid) | ✅ |
 | I | reference evaluator + simulator: dependency graph, causality, clock judgment, two-phase ticks, state cells, schedules, input traces, traces; bdld Start/Step/Reset | ✅ core (Studio Simulate page planned) |
 | J | `delay` / `sync` state with explicit initial values | ✅ at Core level (surface temporal phrases planned) |
-| K | output binding + single-driver diagnostic | |
-| L | hardware resource allocator (`bdl-hardware`), Nano golden cases | |
-| M | first board description: RP2040 | |
+| K | output binding + single-driver diagnostic: nominal `PhysicalOutput`, `DriveWF` (exact type + domain), `SingleDriver`, partial validity vs executable completeness, `output_complete` | ✅ `bdl-output` (Studio Deploy page planned) |
+| L | hardware resource allocator (`bdl-hardware`): capability model, device → requirements, deterministic sound+complete solver, dead-end diagnosis, Nano golden cases, `analyze_deployment` + `AnalyzeDeployment`/`ListTargets` in bdld | ✅ (ADR-0015) |
+| M | board descriptions as data: `hardware/boards/arduino_nano.toml`, `big_board.toml` generated + round-tripped | ✅ (RP2040 board file and runtime loading of `hardware/boards/` next) |
 | N | Rust code generation via a backend AST + `bdl-manifest.json` | |
 | O | `no_std` generated core, host execution == interpreter (differential test) | |
 | P | first Embassy runtime adapter | |

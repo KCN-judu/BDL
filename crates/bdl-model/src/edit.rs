@@ -12,12 +12,13 @@
 //! [`Invalidation`] record so that incremental analysis is a model, not UI
 //! folklore.
 
-use crate::ids::{ClockId, DeclId, SemanticId};
+use crate::ids::{ClockId, DeclId, DeviceId, OutputId, SemanticId};
 use crate::surface::{
-    ClockDomain, Concept, Definition, MappingBlock, ProjectSnapshot, Representation, Signature,
+    ClockDomain, Concept, Definition, DeviceBinding, DeviceKind, MappingBlock, PhysicalOutput,
+    ProjectSnapshot, Representation, Signature,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// A semantic edit operation.  Serializable so the protocol, undo history
 /// and future project logs all speak the same vocabulary.
@@ -99,6 +100,69 @@ pub enum EditOp {
         id: DeclId,
         clock: Option<ClockId>,
     },
+    CreateOutput {
+        name: String,
+        #[serde(default)]
+        description: String,
+        accepts: SemanticId,
+        #[serde(default)]
+        clock: Option<ClockId>,
+    },
+    RenameOutput {
+        id: OutputId,
+        name: String,
+    },
+    /// Changing what a sink accepts or when it updates invalidates its driver.
+    SetOutputAccepts {
+        id: OutputId,
+        accepts: SemanticId,
+    },
+    SetOutputClock {
+        id: OutputId,
+        clock: Option<ClockId>,
+    },
+    SetOutputRequired {
+        id: OutputId,
+        required: bool,
+    },
+    /// Refused while a mapping drives the sink or a device realises it.
+    DeleteOutput {
+        id: OutputId,
+    },
+    /// Bind a mapping as the final driver of a sink (`Some`, a refinement
+    /// when the mapping drove nothing) or detach it (`None`, an edit).
+    SetMappingDrive {
+        id: DeclId,
+        output: Option<OutputId>,
+    },
+    CreateDevice {
+        name: String,
+        kind: DeviceKind,
+        #[serde(default)]
+        output: Option<OutputId>,
+    },
+    RenameDevice {
+        id: DeviceId,
+        name: String,
+    },
+    SetDeviceKind {
+        id: DeviceId,
+        kind: DeviceKind,
+    },
+    SetDeviceOutput {
+        id: DeviceId,
+        output: Option<OutputId>,
+    },
+    /// Pin one of the device's requirements to a named board resource, or
+    /// release it.  A deployment constraint, never a design change.
+    SetDevicePin {
+        id: DeviceId,
+        index: u16,
+        resource: Option<String>,
+    },
+    DeleteDevice {
+        id: DeviceId,
+    },
 }
 
 /// Whether an edit preserves what dependents previously established.
@@ -144,6 +208,8 @@ pub struct EditOutcome {
     pub created_concept: Option<SemanticId>,
     pub created_mapping: Option<DeclId>,
     pub created_clock: Option<ClockId>,
+    pub created_output: Option<OutputId>,
+    pub created_device: Option<DeviceId>,
 }
 
 impl EditOutcome {
@@ -205,6 +271,20 @@ pub enum EditError {
     UnknownClock { id: ClockId },
     #[error("timing domain {id} is still used by {} mapping(s)", used_by.len())]
     ClockInUse { id: ClockId, used_by: Vec<DeclId> },
+    #[error("an output named `{name}` already exists")]
+    DuplicateOutputName { name: String },
+    #[error("unknown output {id}")]
+    UnknownOutput { id: OutputId },
+    #[error("output {id} is still driven by {} mapping(s) or realised by {} device(s)", drivers.len(), devices.len())]
+    OutputInUse {
+        id: OutputId,
+        drivers: Vec<DeclId>,
+        devices: Vec<DeviceId>,
+    },
+    #[error("a device named `{name}` already exists")]
+    DuplicateDeviceName { name: String },
+    #[error("unknown device {id}")]
+    UnknownDevice { id: DeviceId },
 }
 
 /// Apply one edit to a snapshot, producing the next revision.
@@ -300,6 +380,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     signature: signature.clone(),
                     definition: None,
                     clock: None,
+                    drives: None,
                 },
             );
             EditOutcome {
@@ -421,6 +502,204 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
             mapping_mut(&mut design, *id)?.clock = *clock;
             EditOutcome::edit([Invalidation::Clock, Invalidation::Reactive]).at(*id)
         }
+        EditOp::CreateOutput {
+            name,
+            description,
+            accepts,
+            clock,
+        } => {
+            let name = valid_name(name)?;
+            if design.outputs.values().any(|o| o.name == name) {
+                return Err(EditError::DuplicateOutputName { name });
+            }
+            design
+                .concepts
+                .get(accepts)
+                .ok_or(EditError::UnknownConcept { id: *accepts })?;
+            if let Some(c) = clock {
+                design
+                    .clocks
+                    .get(c)
+                    .ok_or(EditError::UnknownClock { id: *c })?;
+            }
+            let (id, ids) = design.ids.fresh_output();
+            design.ids = ids;
+            design.outputs.insert(
+                id,
+                PhysicalOutput {
+                    id,
+                    name,
+                    description: description.clone(),
+                    accepts: *accepts,
+                    clock: *clock,
+                    required: true,
+                },
+            );
+            EditOutcome {
+                created_output: Some(id),
+                ..EditOutcome::refinement()
+            }
+        }
+        EditOp::RenameOutput { id, name } => {
+            let name = valid_name(name)?;
+            if design
+                .outputs
+                .values()
+                .any(|o| o.id != *id && o.name == name)
+            {
+                return Err(EditError::DuplicateOutputName { name });
+            }
+            output_mut(&mut design, *id)?.name = name;
+            EditOutcome::refinement()
+        }
+        EditOp::SetOutputAccepts { id, accepts } => {
+            design
+                .concepts
+                .get(accepts)
+                .ok_or(EditError::UnknownConcept { id: *accepts })?;
+            output_mut(&mut design, *id)?.accepts = *accepts;
+            let drivers: Vec<DeclId> = design.drivers_of(*id).map(|m| m.id).collect();
+            let mut o = EditOutcome::edit([Invalidation::Output]);
+            o.origin_decls.extend(drivers);
+            o
+        }
+        EditOp::SetOutputClock { id, clock } => {
+            if let Some(c) = clock {
+                design
+                    .clocks
+                    .get(c)
+                    .ok_or(EditError::UnknownClock { id: *c })?;
+            }
+            let out = output_mut(&mut design, *id)?;
+            let was_set = out.clock.is_some();
+            out.clock = *clock;
+            let drivers: Vec<DeclId> = design.drivers_of(*id).map(|m| m.id).collect();
+            if was_set {
+                let mut o = EditOutcome::edit([Invalidation::Output, Invalidation::Clock]);
+                o.origin_decls.extend(drivers);
+                o
+            } else {
+                EditOutcome::refinement().touching(Invalidation::Output)
+            }
+        }
+        EditOp::SetOutputRequired { id, required } => {
+            output_mut(&mut design, *id)?.required = *required;
+            EditOutcome::refinement().touching(Invalidation::Output)
+        }
+        EditOp::DeleteOutput { id } => {
+            output_mut(&mut design, *id)?;
+            let drivers: Vec<DeclId> = design.drivers_of(*id).map(|m| m.id).collect();
+            let devices: Vec<DeviceId> = design
+                .devices
+                .values()
+                .filter(|d| d.output == Some(*id))
+                .map(|d| d.id)
+                .collect();
+            if !drivers.is_empty() || !devices.is_empty() {
+                return Err(EditError::OutputInUse {
+                    id: *id,
+                    drivers,
+                    devices,
+                });
+            }
+            design.outputs.remove(id);
+            EditOutcome::edit([Invalidation::Output, Invalidation::Deployment])
+        }
+        EditOp::SetMappingDrive { id, output } => {
+            if let Some(o) = output {
+                design
+                    .outputs
+                    .get(o)
+                    .ok_or(EditError::UnknownOutput { id: *o })?;
+            }
+            let m = mapping_mut(&mut design, *id)?;
+            let had = m.drives.is_some();
+            m.drives = *output;
+            if had {
+                EditOutcome::edit([Invalidation::Output]).at(*id)
+            } else {
+                EditOutcome::refinement()
+                    .touching(Invalidation::Output)
+                    .at(*id)
+            }
+        }
+        EditOp::CreateDevice { name, kind, output } => {
+            let name = valid_name(name)?;
+            if design.devices.values().any(|d| d.name == name) {
+                return Err(EditError::DuplicateDeviceName { name });
+            }
+            if let Some(o) = output {
+                design
+                    .outputs
+                    .get(o)
+                    .ok_or(EditError::UnknownOutput { id: *o })?;
+            }
+            let (id, ids) = design.ids.fresh_device();
+            design.ids = ids;
+            design.devices.insert(
+                id,
+                DeviceBinding {
+                    id,
+                    name,
+                    kind: *kind,
+                    output: *output,
+                    fixed_pins: BTreeMap::new(),
+                },
+            );
+            EditOutcome {
+                created_device: Some(id),
+                ..EditOutcome::refinement().touching(Invalidation::Deployment)
+            }
+        }
+        EditOp::RenameDevice { id, name } => {
+            let name = valid_name(name)?;
+            if design
+                .devices
+                .values()
+                .any(|d| d.id != *id && d.name == name)
+            {
+                return Err(EditError::DuplicateDeviceName { name });
+            }
+            device_mut(&mut design, *id)?.name = name;
+            EditOutcome::refinement()
+        }
+        EditOp::SetDeviceKind { id, kind } => {
+            let d = device_mut(&mut design, *id)?;
+            d.kind = *kind;
+            d.fixed_pins.clear();
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::SetDeviceOutput { id, output } => {
+            if let Some(o) = output {
+                design
+                    .outputs
+                    .get(o)
+                    .ok_or(EditError::UnknownOutput { id: *o })?;
+            }
+            device_mut(&mut design, *id)?.output = *output;
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::SetDevicePin {
+            id,
+            index,
+            resource,
+        } => {
+            let d = device_mut(&mut design, *id)?;
+            match resource {
+                Some(r) => {
+                    d.fixed_pins.insert(*index, r.clone());
+                }
+                None => {
+                    d.fixed_pins.remove(index);
+                }
+            }
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::DeleteDevice { id } => {
+            device_mut(&mut design, *id)?;
+            design.devices.remove(id);
+            EditOutcome::edit([Invalidation::Deployment])
+        }
     };
     Ok(Applied {
         snapshot: ProjectSnapshot {
@@ -458,6 +737,26 @@ fn mapping_mut(
         .mappings
         .get_mut(&id)
         .ok_or(EditError::UnknownMapping { id })
+}
+
+fn output_mut(
+    design: &mut crate::surface::Design,
+    id: OutputId,
+) -> Result<&mut PhysicalOutput, EditError> {
+    design
+        .outputs
+        .get_mut(&id)
+        .ok_or(EditError::UnknownOutput { id })
+}
+
+fn device_mut(
+    design: &mut crate::surface::Design,
+    id: DeviceId,
+) -> Result<&mut DeviceBinding, EditError> {
+    design
+        .devices
+        .get_mut(&id)
+        .ok_or(EditError::UnknownDevice { id })
 }
 
 fn check_signature(design: &crate::surface::Design, sig: &Signature) -> Result<(), EditError> {

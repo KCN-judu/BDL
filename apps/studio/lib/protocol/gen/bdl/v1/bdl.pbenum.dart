@@ -14,6 +14,41 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
+/// What a device binding needs from the board is derived from its kind
+/// (docs/HARDWARE_MODEL.md); the kind is the whole of what the surface says.
+class DeviceKind extends $pb.ProtobufEnum {
+  static const DeviceKind DEVICE_KIND_UNSPECIFIED =
+      DeviceKind._(0, _omitEnumNames ? '' : 'DEVICE_KIND_UNSPECIFIED');
+  static const DeviceKind DEVICE_KIND_PWM_CHANNEL =
+      DeviceKind._(1, _omitEnumNames ? '' : 'DEVICE_KIND_PWM_CHANNEL');
+  static const DeviceKind DEVICE_KIND_DIGITAL_OUTPUT =
+      DeviceKind._(2, _omitEnumNames ? '' : 'DEVICE_KIND_DIGITAL_OUTPUT');
+  static const DeviceKind DEVICE_KIND_H_BRIDGE_CHANNEL =
+      DeviceKind._(3, _omitEnumNames ? '' : 'DEVICE_KIND_H_BRIDGE_CHANNEL');
+  static const DeviceKind DEVICE_KIND_I2C_SENSOR =
+      DeviceKind._(4, _omitEnumNames ? '' : 'DEVICE_KIND_I2C_SENSOR');
+  static const DeviceKind DEVICE_KIND_QUADRATURE_ENCODER =
+      DeviceKind._(5, _omitEnumNames ? '' : 'DEVICE_KIND_QUADRATURE_ENCODER');
+  static const DeviceKind DEVICE_KIND_UART =
+      DeviceKind._(6, _omitEnumNames ? '' : 'DEVICE_KIND_UART');
+
+  static const $core.List<DeviceKind> values = <DeviceKind>[
+    DEVICE_KIND_UNSPECIFIED,
+    DEVICE_KIND_PWM_CHANNEL,
+    DEVICE_KIND_DIGITAL_OUTPUT,
+    DEVICE_KIND_H_BRIDGE_CHANNEL,
+    DEVICE_KIND_I2C_SENSOR,
+    DEVICE_KIND_QUADRATURE_ENCODER,
+    DEVICE_KIND_UART,
+  ];
+
+  static final $core.List<DeviceKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 6);
+  static DeviceKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const DeviceKind._(super.value, super.name);
+}
+
 class EditKind extends $pb.ProtobufEnum {
   static const EditKind EDIT_KIND_UNSPECIFIED =
       EditKind._(0, _omitEnumNames ? '' : 'EDIT_KIND_UNSPECIFIED');
@@ -109,6 +144,33 @@ class AcceptanceState extends $pb.ProtobufEnum {
   const AcceptanceState._(super.value, super.name);
 }
 
+class OutputState extends $pb.ProtobufEnum {
+  static const OutputState OUTPUT_STATE_UNSPECIFIED =
+      OutputState._(0, _omitEnumNames ? '' : 'OUTPUT_STATE_UNSPECIFIED');
+  static const OutputState OUTPUT_STATE_UNDRIVEN =
+      OutputState._(1, _omitEnumNames ? '' : 'OUTPUT_STATE_UNDRIVEN');
+  static const OutputState OUTPUT_STATE_DRIVEN =
+      OutputState._(2, _omitEnumNames ? '' : 'OUTPUT_STATE_DRIVEN');
+  static const OutputState OUTPUT_STATE_ILL_FORMED =
+      OutputState._(3, _omitEnumNames ? '' : 'OUTPUT_STATE_ILL_FORMED');
+  static const OutputState OUTPUT_STATE_CONFLICT =
+      OutputState._(4, _omitEnumNames ? '' : 'OUTPUT_STATE_CONFLICT');
+
+  static const $core.List<OutputState> values = <OutputState>[
+    OUTPUT_STATE_UNSPECIFIED,
+    OUTPUT_STATE_UNDRIVEN,
+    OUTPUT_STATE_DRIVEN,
+    OUTPUT_STATE_ILL_FORMED,
+    OUTPUT_STATE_CONFLICT,
+  ];
+
+  static final $core.List<OutputState?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 4);
+  static OutputState? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const OutputState._(super.value, super.name);
+}
+
 class MappingStatus extends $pb.ProtobufEnum {
   static const MappingStatus MAPPING_STATUS_UNSPECIFIED =
       MappingStatus._(0, _omitEnumNames ? '' : 'MAPPING_STATUS_UNSPECIFIED');
@@ -177,6 +239,33 @@ class DiagnosticSeverity extends $pb.ProtobufEnum {
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
   const DiagnosticSeverity._(super.value, super.name);
+}
+
+class DeploymentStatus extends $pb.ProtobufEnum {
+  static const DeploymentStatus DEPLOYMENT_STATUS_UNSPECIFIED =
+      DeploymentStatus._(0, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_UNSPECIFIED');
+  static const DeploymentStatus DEPLOYMENT_STATUS_FEASIBLE =
+      DeploymentStatus._(1, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_FEASIBLE');
+  static const DeploymentStatus DEPLOYMENT_STATUS_INFEASIBLE =
+      DeploymentStatus._(2, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_INFEASIBLE');
+
+  /// Placement succeeds but an output has no device, or a device no output.
+  static const DeploymentStatus DEPLOYMENT_STATUS_INCOMPLETE =
+      DeploymentStatus._(3, _omitEnumNames ? '' : 'DEPLOYMENT_STATUS_INCOMPLETE');
+
+  static const $core.List<DeploymentStatus> values = <DeploymentStatus>[
+    DEPLOYMENT_STATUS_UNSPECIFIED,
+    DEPLOYMENT_STATUS_FEASIBLE,
+    DEPLOYMENT_STATUS_INFEASIBLE,
+    DEPLOYMENT_STATUS_INCOMPLETE,
+  ];
+
+  static final $core.List<DeploymentStatus?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static DeploymentStatus? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const DeploymentStatus._(super.value, super.name);
 }
 
 const $core.bool _omitEnumNames = $core.bool.fromEnvironment('protobuf.omit_enum_names');

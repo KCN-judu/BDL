@@ -58,11 +58,12 @@ crates/
   bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core      (→ ir, syntax, check)
   bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
   bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)
-  bdl-compiler     analyze(snapshot) → revision-tagged ProjectAnalysis           (→ elab, check, reactive)
+  bdl-output       DriveWF · SingleDriver · CompleteOutputs · output_values       (→ ir, reactive)
+  bdl-hardware     Capability/Resource/Hardware · device → requirements · boards · solve/diagnose (→ model)
+  bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis (→ elab, check, reactive, output, hardware)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler)
   bdl-daemon       bdld: session, coordinator, transport, analysis push          (→ protocol, compiler)
 planned:
-  bdl-hardware   requirements · boards · solver · diagnose
   bdl-codegen-rust  Core IR → Rust backend AST → Cargo project + manifest
   bdl-component  supplied Rust component contracts
   bdl-cli        headless front end sharing bdld's implementation
@@ -71,8 +72,9 @@ runtime/
 ```
 
 Dependency direction is strict and acyclic: `model → ir → {syntax → elab,
-check → reactive} → compiler → protocol → daemon`; later `hardware/codegen`
-hang off `compiler`. A crate exists only where a real
+check → reactive → output} → compiler → protocol → daemon`; `hardware`
+depends on `model` only (it never sees `Δ`) and `compiler` joins the two;
+later `codegen` hangs off `compiler`. A crate exists only where a real
 boundary exists; tiny crates are merged rather than kept for the diagram.
 
 ## The compiler is a pipeline of explicit passes
@@ -135,7 +137,12 @@ categories; it is a model, not UI folklore.
 A project can be typed, causal, clock-consistent and output-complete and
 still not fit the chosen board. Board selection reruns deployment analysis
 only, and the workspace reports the two in different places (paper §Target-
-Specific Hardware Validation; ADR-0006).
+Specific Hardware Validation; ADR-0006). In code this is two functions:
+`analyze(snapshot)` never takes a target; `analyze_deployment(snapshot,
+target)` never touches `Ty`, `Grant`, causality, clocks or the evaluator
+(ADR-0015). The same `OutputId` bound to a PWM channel on one board and a
+digital output on another has identical semantic analysis and different
+deployment analyses — and that is a test.
 
 ## Platform notes
 

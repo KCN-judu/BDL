@@ -1,51 +1,100 @@
 # Hardware model
 
 The Phase-7 validation layer of the paper, kept independent of any HAL.
+Implemented in `crates/bdl-hardware` (model, devices, boards, solver) and
+driven by `bdl-compiler::analyze_deployment`.
 
 ## Pipeline
 
 ```
-OutputId  →  DeviceKind  →  Requirements  →  solve(board)  →  Assignment
-                                                  ↓ (none)
-                                              diagnose → Explanation
+OutputId  →  DeviceBinding{kind, fixed_pins}  →  Requirements  →  solve(board)  →  Assignment
+                                                                       ↓ (none)
+                                                                   diagnose → DeadEnd
 ```
 
 The design (`Δ, Κ, Ω, β`) is never an argument of the solver. Swapping the
-board re-solves the same requirements with the design untouched.
+board re-solves the same requirements with the design untouched. Hardware
+allocation may not change `Ty`, `HasType`, `Grant`, causality, clocks, the
+evaluator or a mapping's meaning — it decides only whether the behaviour
+can be realised on a target (ADR-0006, ADR-0015).
+
+## Model (`bdl-hardware::model`)
+
+```
+Capability   digital_in digital_out pwm analog_in interrupt i2c_sda i2c_scl
+             spi_mosi spi_miso spi_sck spi_ss uart_tx uart_rx        (opaque to the solver)
+ResourceId   "D3", "A4", …                                          (board-local name)
+Resource     { id, capabilities: set, units: Capability → UnitId }   (the timer/peripheral behind each capability)
+Hardware     { name, resources: [Resource], shareable: set<Capability> }
+Requirement  { id: RequirementId{device, index}, capability,
+               fixed: Option<ResourceId>, group: Option<(GroupId, Same | Distinct)>, label }
+Assignment   RequirementId → ResourceId
+```
+
+`RequirementId { device, index }` is the device binding's stable id plus
+the index in its kind's requirement list: independent of solver traversal,
+stable under unrelated edits, and the key of `DeviceBinding.fixed_pins`.
+Changing a device's *kind* re-indexes its requirements (DI-23).
+
+Constraints, exactly the Lean development's:
+
+* `ReqOK r a` — `a` has `r.capability`, and `r.fixed` (if any) is `a`.
+* `Compatible (r₁,a₁) (r₂,a₂)` — if `a₁ = a₂` then both requirements need
+  the same capability and that capability is board-shareable; if both are
+  in the same group, `Same` ⇒ `unit_of(a₁) = unit_of(a₂)`, `Distinct` ⇒
+  they differ.
+* `ValidFor` = every requirement assigned, `ReqOK` each, `Compatible` all
+  pairs. `validate` lists every violation of a candidate assignment.
+
+Sharing is per capability: A4 carries two I2C sensors' SDA lines but only
+one digital output. Units are per capability too: D3's PWM is timer 2, its
+interrupt is INT1.
 
 ## Boards are declarative data
 
-`hardware/boards/<board>.toml` (schema versioned) states, per resource:
-capabilities, per-capability *unit* (the timer or peripheral behind it),
-and the board-wide sharing policy (buses shareable, everything else
-exclusive). Example vocabulary:
-
-```
-digitalIn digitalOut pwm analogIn interrupt i2cSDA i2cSCL spiMOSI spiMISO spiSCK spiSS uartTX uartRX
-```
-
-No Rust source fragments live here. A *separate* platform mapping
+`Hardware` is plain serde data; `hardware/boards/<name>.toml` is its TOML
+form (`arduino_nano.toml`, `big_board.toml` are generated from
+`bdl-hardware::boards` and checked in; the round-trip test fails when they
+drift). No Rust source fragments live here. A *separate* platform mapping
 (`hardware/platforms/<board>.toml`, planned) answers "logical resource GP15
-→ HAL expression `p.PIN_15`".
+→ HAL expression `p.PIN_15`". The registry (`boards::registry`) is what
+`ListTargets` reports; loading boards from the directory at runtime is the
+next step.
 
-## Devices generate requirements
+## Devices generate requirements (`bdl-hardware::devices`)
 
-`hardware/devices/<kind>.toml`: an H-bridge channel needs `pwm` +
-`digitalOut`; an I2C sensor needs `i2cSDA` + `i2cSCL` on the *same* unit; a
-quadrature encoder needs two `interrupt` lines; a UART needs `uartTX` +
-`uartRX` on the same unit. A requirement may be pinned to a fixed resource
-(manual pin choice) — a deployment constraint, not a design change.
+The surface says only a `DeviceKind`; requirements are derived
+mechanically, in a fixed order, and the solver never learns what an IMU is:
 
-## Solver
+| Kind | Requirements (index: capability) | Relation |
+|---|---|---|
+| `PwmChannel` | 0: pwm | |
+| `DigitalOutput` | 0: digital_out | |
+| `HBridgeChannel` | 0: pwm, 1: digital_out | |
+| `I2cSensor` | 0: i2c_sda, 1: i2c_scl | Same unit |
+| `QuadratureEncoder` | 0: interrupt, 1: interrupt | |
+| `Uart` | 0: uart_tx, 1: uart_rx | Same unit |
+
+`DeviceBinding.fixed_pins[index] = "D3"` pins one requirement to a named
+resource (manual pin choice) — a deployment constraint, not a design
+change; an unknown or incapable name is a `FixedUnavailable` dead end, not
+an edit error.
+
+## Solver (`bdl-hardware::solve`)
 
 Unary + binary constraints ⇒ validity is prefix-closed ⇒ exhaustive DFS with
-pairwise pruning is sound and complete (proved in Lean). The Rust port must:
+pairwise pruning is sound and complete (proved in Lean; the Rust port is
+*tested* against a brute-force oracle on generated small cases, not
+verified). Determinism: requirements are ordered by fewest candidates
+first, ties by `RequirementId`; candidates by `ResourceId`; the same
+`(Hardware, [Requirement])` always yields the same `Assignment`.
 
-* iterate resources and requirements in a documented stable order so the
-  assignment is deterministic;
-* report `Explanation::{NoCapableResource, Blocked { blockers }}` as *a*
-  dead end under greedy placement, meaningful only after `solve` returned
-  none — not a minimal unsat core.
+`diagnose` reports *a* dead end under greedy placement in that order —
+`DeadEnd { requirement, reason: NoCapableResource | FixedUnavailable{fixed}
+| Blocked{candidates: [(resource, held_by)]}, placed }` — meaningful only
+after `solve` returned none. It is not a minimal unsatisfiable subset
+(DI-21). Numeric/electrical constraints (current, voltage, timing) are out
+of scope (DI-22).
 
 ## Golden cases from the formal development
 
@@ -58,8 +107,14 @@ examples even though the first firmware target is RP2040:
 * 4 × PWM on distinct timers: UNSAT (three timers)
 * two I2C sensors on A4/A5: SAT (bus sharing); two PWM pinned to one pin: refused
 
+All five are tests in `crates/bdl-hardware/tests/solver.rs`; the Nano case
+resolves to exactly that structure.
+
 ## Feasibility is not typing
 
 Board changes and manual pins invalidate `Deployment` only. Feasibility is
 target-relative evidence, re-established from scratch, never merged with the
-refinement-surviving evidence of the checker.
+refinement-surviving evidence of the checker. `DeploymentAnalysis` is
+computed per `(revision, target)`, is never cached with the project, and
+carries the status `Feasible | Infeasible | Incomplete` beside — never
+inside — `MappingStatus` (docs/COMPILER_PIPELINE.md).

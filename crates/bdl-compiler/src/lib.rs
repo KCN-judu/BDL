@@ -9,7 +9,18 @@
 //! declaration's grant, comparison with the interface), then the reactive
 //! passes (`bdl-reactive`: dependency graph, causality, clock domains).
 //! Dimension checking is not a pass of its own — it falls out of typing.
-//! Later passes (outputs, hardware) slot in after clocks.
+//! After clocks, the output pass (`bdl-output`: every drive edge well formed,
+//! one driver per sink, completeness against the required sinks).
+//!
+//! Deployment is a second, separate function:
+//!
+//! ```text
+//! analyze_deployment(&ProjectSnapshot, &Hardware) → DeploymentAnalysis
+//! ```
+//!
+//! Semantic analysis never consults a target; deployment analysis is
+//! target-relative and is recomputed per target.  A design is not "invalid"
+//! because a board is too small — it is infeasible *on that board*.
 //!
 //! The result is tagged with the snapshot's revision so a consumer can
 //! discard it once the project has moved on, and it is deterministic: the
@@ -21,15 +32,20 @@
 use bdl_check::{check_realization, pretty, TypeErrorKind};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity, Severity};
 use bdl_elab::{elaborate_design, RealizationOutcome};
+use bdl_hardware::{
+    devices::requirements_for_all, diagnose, solve, validate, Assignment, DeadEnd, DeadEndReason,
+    Hardware, Requirement,
+};
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
-use bdl_model::{DeclId, Revision, SemanticId};
+use bdl_model::{DeclId, OutputId, Revision, SemanticId};
+use bdl_output::{check_outputs, OutputAnalysis};
 use bdl_reactive::{
     analyze_dependencies, check_causality, check_clocks, CausalityAnalysis, ClockAnalysis,
     DependencyGraph,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// The paper's workspace states, as far as this slice can establish them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -78,12 +94,20 @@ pub struct ProjectAnalysis {
     pub mappings: BTreeMap<DeclId, MappingAnalysis>,
     /// Every diagnostic of every entity, in the documented order.
     pub diagnostics: Vec<Diagnostic>,
-    /// The Design IR the analysis produced (Θ, Δ, Κ; Ω/β empty until the
-    /// output pass exists).
+    /// The Design IR the analysis produced (Θ, Δ, Κ, Ω, β).
     pub ir: DesignIr,
     pub dependencies: DependencyGraph,
     pub causality: CausalityAnalysis,
     pub clocks: ClockAnalysis,
+    /// `DriveWF`, `SingleDriver`, `CompleteOutputs` over the outputs that
+    /// have a domain.
+    pub outputs: OutputAnalysis,
+    /// Surface outputs still without a timing domain: not yet sinks the
+    /// kernel can see, so neither driven nor missing.
+    pub open_outputs: BTreeSet<OutputId>,
+    /// Every drive edge well formed, one driver per sink, every required
+    /// sink driven, and no output open: the design commits to the world.
+    pub output_complete: bool,
 }
 
 impl ProjectAnalysis {
@@ -176,6 +200,56 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
     }
     all.extend(causality.diagnostics.iter().cloned());
     all.extend(clocks.diagnostics.iter().cloned());
+
+    // Output pass.  Which sinks are required is a surface decision.
+    let design = &snapshot.design;
+    let required: BTreeSet<OutputId> = design
+        .outputs
+        .values()
+        .filter(|o| o.required && o.clock.is_some())
+        .map(|o| o.id)
+        .collect();
+    let open_outputs: BTreeSet<OutputId> = design
+        .outputs
+        .values()
+        .filter(|o| o.clock.is_none())
+        .map(|o| o.id)
+        .collect();
+    let outputs = check_outputs(&ir, &required);
+    for (id, m) in mappings.iter_mut() {
+        let mine: Vec<Diagnostic> = outputs
+            .diagnostics
+            .iter()
+            .filter(|d| d.entity == Entity::Mapping { id: *id })
+            .cloned()
+            .collect();
+        if mine.is_empty() {
+            continue;
+        }
+        // A drive edge that is ill formed or contested is a fault of the
+        // mapping's connection, not of its definition: the ladder is
+        // untouched, the diagnostics travel with the mapping.
+        m.diagnostics.extend(mine);
+        sort_diagnostics(&mut m.diagnostics);
+    }
+    all.extend(outputs.diagnostics.iter().cloned());
+    for o in &open_outputs {
+        let name = design
+            .outputs
+            .get(o)
+            .map(|x| x.name.as_str())
+            .unwrap_or("?");
+        all.push(
+            Diagnostic::info(
+                "output.clock_unset",
+                Entity::Project,
+                format!("{name} has no timing domain yet."),
+            )
+            .explain("An output commits a value at each activation of a domain; say which one.")
+            .technical(format!("Ω {o} = none")),
+        );
+    }
+    let output_complete = outputs.executable && open_outputs.is_empty();
     sort_diagnostics(&mut all);
     ProjectAnalysis {
         revision: snapshot.revision,
@@ -186,6 +260,180 @@ pub fn analyze(snapshot: &ProjectSnapshot) -> ProjectAnalysis {
         dependencies,
         causality,
         clocks,
+        outputs,
+        open_outputs,
+        output_complete,
+    }
+}
+
+// ---- deployment -----------------------------------------------------------
+
+/// Whether the device bindings fit one target.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeploymentStatus {
+    /// Every requirement is placed and every output with a domain is
+    /// realised by a bound device; `assignment` is a witness.
+    Feasible,
+    /// No assignment exists; `dead_end` is one explanation.
+    Infeasible,
+    /// What is bound fits, but the binding is not finished: an output has
+    /// no device on this target, or a device is bound to no output.  Not
+    /// an error — a design may stop here.
+    Incomplete,
+}
+
+/// Target-relative result.  Independent of the semantic analysis: it reads
+/// only the device bindings, so it is meaningful for a design that is still
+/// open — and equally meaningless as a statement about the design's
+/// correctness.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeploymentAnalysis {
+    pub revision: Revision,
+    pub target: String,
+    pub status: DeploymentStatus,
+    /// Every requirement derived from every device, in device order.
+    pub requirements: Vec<Requirement>,
+    /// The witness, when feasible.  Deterministic for a given
+    /// (snapshot, target).
+    pub assignment: Option<Assignment>,
+    pub dead_end: Option<DeadEnd>,
+    /// Devices bound to no output, or to an output that no longer exists:
+    /// still placed, but not yet part of the design's commitment.
+    pub unbound_devices: BTreeSet<bdl_model::DeviceId>,
+    /// Outputs with a domain that no device realises on this target.
+    pub unrealised_outputs: BTreeSet<OutputId>,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+/// Run the hardware pass for one target.  Pure and deterministic.
+pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> DeploymentAnalysis {
+    let design = &snapshot.design;
+    let requirements = requirements_for_all(design.devices.values());
+    let mut diagnostics = Vec::new();
+    let device_name = |id: bdl_model::DeviceId| {
+        design
+            .devices
+            .get(&id)
+            .map(|d| d.name.clone())
+            .unwrap_or_else(|| id.to_string())
+    };
+    let req_label = |id: bdl_hardware::RequirementId| {
+        requirements
+            .iter()
+            .find(|r| r.id == id)
+            .map(|r| r.label.clone())
+            .unwrap_or_else(|| device_name(id.device))
+    };
+
+    let unbound_devices: BTreeSet<_> = design
+        .devices
+        .values()
+        .filter(|d| d.output.is_none_or(|o| !design.outputs.contains_key(&o)))
+        .map(|d| d.id)
+        .collect();
+    let realised: BTreeSet<OutputId> = design.devices.values().filter_map(|d| d.output).collect();
+    let unrealised_outputs: BTreeSet<OutputId> = design
+        .outputs
+        .values()
+        .filter(|o| o.clock.is_some() && !realised.contains(&o.id))
+        .map(|o| o.id)
+        .collect();
+    for d in &unbound_devices {
+        diagnostics.push(
+            Diagnostic::info(
+                "deploy.device_unbound",
+                Entity::Project,
+                format!("{} is not connected to any output.", device_name(*d)),
+            )
+            .explain(
+                "A device realises exactly one output on the board; choose which one this is for.",
+            )
+            .technical(format!("device {d} output = none")),
+        );
+    }
+    for o in &unrealised_outputs {
+        let name = design
+            .outputs
+            .get(o)
+            .map(|x| x.name.as_str())
+            .unwrap_or("?");
+        diagnostics.push(
+            Diagnostic::info(
+                "deploy.output_unrealised",
+                Entity::Project,
+                format!("{name} has no device on {}.", target.name),
+            )
+            .explain("Add the device that carries this output on the board.")
+            .technical(format!("no DeviceBinding for output {o}")),
+        );
+    }
+
+    let assignment = solve(target, &requirements);
+    let (status, dead_end) = match &assignment {
+        Some(a) => {
+            debug_assert!(validate(target, &requirements, a).is_empty());
+            if unbound_devices.is_empty() && unrealised_outputs.is_empty() {
+                (DeploymentStatus::Feasible, None)
+            } else {
+                (DeploymentStatus::Incomplete, None)
+            }
+        }
+        None => {
+            let dead = diagnose(target, &requirements);
+            if let Some(dead) = &dead {
+                diagnostics.push(dead_end_diagnostic(target, dead, &req_label, &device_name));
+            }
+            (DeploymentStatus::Infeasible, dead)
+        }
+    };
+    sort_diagnostics(&mut diagnostics);
+    DeploymentAnalysis {
+        revision: snapshot.revision,
+        target: target.name.clone(),
+        status,
+        requirements,
+        assignment,
+        dead_end,
+        unbound_devices,
+        unrealised_outputs,
+        diagnostics,
+    }
+}
+
+fn dead_end_diagnostic(
+    target: &Hardware,
+    dead: &DeadEnd,
+    req_label: &dyn Fn(bdl_hardware::RequirementId) -> String,
+    device_name: &dyn Fn(bdl_model::DeviceId) -> String,
+) -> Diagnostic {
+    let what = req_label(dead.requirement);
+    let who = device_name(dead.requirement.device);
+    let board = &target.name;
+    let d = |msg: String| Diagnostic::error("deploy.infeasible", Entity::Project, msg);
+    match &dead.reason {
+        DeadEndReason::NoCapableResource => d(format!("{board} has nothing that can carry {what}."))
+            .explain(format!("No pin on {board} offers what {who} needs here. Choose a target that has it, or a different device."))
+            .technical(format!("no resource with capability for {:?}", dead.requirement)),
+        DeadEndReason::FixedUnavailable { fixed } => d(format!("{} cannot carry {what} on {board}.", fixed.0))
+            .explain(format!("The pin chosen by hand for {who} is not on this board or lacks the needed function. Pick another pin, or let the placement choose."))
+            .technical(format!("fixed {} fails ReqOK for {:?}", fixed.0, dead.requirement)),
+        DeadEndReason::Blocked { candidates } => {
+            let holders: Vec<String> = candidates
+                .iter()
+                .map(|(r, by)| format!("{} ({})", r.0, req_label(*by)))
+                .collect();
+            d(format!("No free pin on {board} can carry {what}."))
+                .explain(format!(
+                    "Every pin that could serve {who} is already needed by something else: {}. Use fewer devices of this kind, free a pin by moving another device, or choose a larger target. Counting pins is not enough — some pins serve several functions and can be used for only one.",
+                    holders.join(", ")
+                ))
+                .technical(format!(
+                    "dead end at {:?} after placing {}; one conflict under solver order, not a minimal core",
+                    dead.requirement,
+                    dead.placed.len()
+                ))
+        }
     }
 }
 
@@ -420,5 +668,331 @@ mod tests {
             let s = attach(&s, id, &src);
             let _ = analyze(&s);
         }
+    }
+
+    // ---- outputs and deployment ------------------------------------------
+
+    fn edit(s: &ProjectSnapshot, op: EditOp) -> bdl_model::edit::Applied {
+        apply_edit(s, &op).unwrap()
+    }
+
+    /// The lamp with a domain `main`, a nullary `level : () -> Brightness`
+    /// in it, and an output `light : Brightness` in `main`.  Only a
+    /// relationship without inputs has the type of a value (DI-20), so only
+    /// it can drive an output.
+    fn lamp_with_output() -> (ProjectSnapshot, DeclId, OutputId, bdl_model::ClockId) {
+        let (s, unary) = lamp();
+        let brightness = s.design.mappings[&unary].signature.output;
+        let a = edit(
+            &s,
+            EditOp::CreateMapping {
+                name: "level".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: brightness,
+                },
+            },
+        );
+        let id = a.outcome.created_mapping.unwrap();
+        let s = attach(&a.snapshot, id, "0.5");
+        let a = edit(
+            &s,
+            EditOp::CreateClockDomain {
+                name: "main".into(),
+            },
+        );
+        let clock = a.outcome.created_clock.unwrap();
+        let a = edit(
+            &a.snapshot,
+            EditOp::SetMappingClock {
+                id,
+                clock: Some(clock),
+            },
+        );
+        let a = edit(
+            &a.snapshot,
+            EditOp::CreateOutput {
+                name: "light".into(),
+                description: String::new(),
+                accepts: brightness,
+                clock: Some(clock),
+            },
+        );
+        let out = a.outcome.created_output.unwrap();
+        (a.snapshot, id, out, clock)
+    }
+
+    #[test]
+    fn output_ladder_undriven_driven_conflict() {
+        let (s, id, out, clock) = lamp_with_output();
+        let a = analyze(&s);
+        assert_eq!(a.outputs.states[&out], bdl_output::OutputState::Undriven);
+        assert!(a.outputs.partial_wf && !a.outputs.executable && !a.output_complete);
+        assert!(a
+            .diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "output.missing_driver" && !d.is_error()));
+        assert_eq!(a.mappings[&id].status, MappingStatus::ClockConsistent);
+
+        let s = edit(
+            &s,
+            EditOp::SetMappingDrive {
+                id,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let a = analyze(&s);
+        assert_eq!(a.outputs.states[&out], bdl_output::OutputState::Driven);
+        assert!(a.output_complete, "{:?}", a.diagnostics);
+        assert_eq!(a.ir.drives[&id], out);
+        assert!(a.diagnostics.is_empty());
+
+        // a second driver: conflict, no policy, both mappings carry it
+        let brightness = s.design.mappings[&id].signature.output;
+        let b = edit(
+            &s,
+            EditOp::CreateMapping {
+                name: "pulse".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: brightness,
+                },
+            },
+        );
+        let other = b.outcome.created_mapping.unwrap();
+        let s2 = attach(&b.snapshot, other, "1");
+        let s2 = edit(
+            &s2,
+            EditOp::SetMappingClock {
+                id: other,
+                clock: Some(clock),
+            },
+        )
+        .snapshot;
+        let s2 = edit(
+            &s2,
+            EditOp::SetMappingDrive {
+                id: other,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let a = analyze(&s2);
+        assert_eq!(a.outputs.states[&out], bdl_output::OutputState::Conflict);
+        assert!(!a.outputs.partial_wf && !a.output_complete);
+        for m in [id, other] {
+            assert_eq!(
+                a.mappings[&m].status,
+                MappingStatus::ClockConsistent,
+                "the ladder is untouched"
+            );
+            assert!(a.mappings[&m]
+                .diagnostics
+                .iter()
+                .any(|d| d.code.as_str() == "output.multiple_drivers"));
+        }
+        // a wrong-domain driver is an ill-formed edge, an error, on the driver
+        let s3 = edit(&s, EditOp::SetMappingClock { id, clock: None }).snapshot;
+        let a = analyze(&s3);
+        assert_eq!(a.outputs.states[&out], bdl_output::OutputState::IllFormed);
+        assert!(a.mappings[&id]
+            .diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "output.clock_mismatch" && d.is_error()));
+        // a relationship with inputs is a function, not a value: DI-20
+        let unary = *s.design.mappings.keys().next().unwrap();
+        assert_ne!(unary, id);
+        let s4 = edit(&s, EditOp::SetMappingDrive { id, output: None }).snapshot;
+        let s4 = edit(
+            &s4,
+            EditOp::SetMappingClock {
+                id: unary,
+                clock: Some(clock),
+            },
+        )
+        .snapshot;
+        let s4 = edit(
+            &s4,
+            EditOp::SetMappingDrive {
+                id: unary,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let a = analyze(&s4);
+        assert_eq!(a.outputs.states[&out], bdl_output::OutputState::IllFormed);
+        let d = a.mappings[&unary]
+            .diagnostics
+            .iter()
+            .find(|d| d.code.as_str() == "output.type_mismatch")
+            .unwrap();
+        assert!(d
+            .explanation
+            .contains("A relationship with inputs is not a value"));
+    }
+
+    #[test]
+    fn an_output_without_a_domain_is_open_not_missing() {
+        let (s, id, out, _) = lamp_with_output();
+        let s = edit(
+            &s,
+            EditOp::SetOutputClock {
+                id: out,
+                clock: None,
+            },
+        )
+        .snapshot;
+        let s = edit(
+            &s,
+            EditOp::SetMappingDrive {
+                id,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let a = analyze(&s);
+        assert!(a.open_outputs.contains(&out));
+        assert!(!a.ir.outputs.contains_key(&out));
+        assert!(a.outputs.missing_required.is_empty());
+        assert!(!a.output_complete);
+        assert!(a.diagnostics.iter().all(|d| !d.is_error()));
+        assert!(a
+            .diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "output.clock_unset" && d.message.contains("light")));
+    }
+
+    #[test]
+    fn deployment_is_target_relative_and_separate_from_semantics() {
+        let (s, id, out, _) = lamp_with_output();
+        let s = edit(
+            &s,
+            EditOp::SetMappingDrive {
+                id,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        // the same output realised by different device kinds on two targets
+        let pwm = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "lamp".into(),
+                kind: bdl_model::surface::DeviceKind::PwmChannel,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let dig = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "lamp".into(),
+                kind: bdl_model::surface::DeviceKind::DigitalOutput,
+                output: Some(out),
+            },
+        )
+        .snapshot;
+        let sem_pwm = analyze(&pwm);
+        let sem_dig = analyze(&dig);
+        assert_eq!(
+            sem_pwm.outputs, sem_dig.outputs,
+            "semantic output analysis ignores devices"
+        );
+        assert_eq!(sem_pwm.ir, sem_dig.ir);
+        assert!(sem_pwm.output_complete);
+
+        let nano = bdl_hardware::boards::arduino_nano();
+        let gpio_only = Hardware {
+            name: "gpio_only".into(),
+            resources: vec![bdl_hardware::Resource {
+                id: bdl_hardware::ResourceId::new("P0"),
+                capabilities: [bdl_hardware::Capability::DigitalOut].into_iter().collect(),
+                units: BTreeMap::new(),
+            }],
+            shareable: BTreeSet::new(),
+        };
+        let d = analyze_deployment(&pwm, &nano);
+        assert_eq!(d.status, DeploymentStatus::Feasible);
+        assert_eq!(
+            d.assignment.as_ref().unwrap().values().next().unwrap().0,
+            "D3"
+        );
+        assert!(d.diagnostics.is_empty());
+        let d = analyze_deployment(&pwm, &gpio_only);
+        assert_eq!(d.status, DeploymentStatus::Infeasible);
+        assert_eq!(
+            d.dead_end.as_ref().unwrap().reason,
+            DeadEndReason::NoCapableResource
+        );
+        assert_eq!(d.diagnostics[0].code.as_str(), "deploy.infeasible");
+        assert!(d.diagnostics[0]
+            .message
+            .contains("gpio_only has nothing that can carry lamp"));
+        let d = analyze_deployment(&dig, &gpio_only);
+        assert_eq!(d.status, DeploymentStatus::Feasible);
+        // determinism
+        assert_eq!(
+            analyze_deployment(&pwm, &nano),
+            analyze_deployment(&pwm, &nano)
+        );
+        let json = serde_json::to_string(&analyze_deployment(&pwm, &nano)).unwrap();
+        let back: DeploymentAnalysis = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, analyze_deployment(&pwm, &nano));
+    }
+
+    #[test]
+    fn deployment_reports_unbound_devices_and_unrealised_outputs() {
+        let (s, _, out, _) = lamp_with_output();
+        let s = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "spare".into(),
+                kind: bdl_model::surface::DeviceKind::DigitalOutput,
+                output: None,
+            },
+        )
+        .snapshot;
+        let d = analyze_deployment(&s, &bdl_hardware::boards::arduino_nano());
+        assert_eq!(d.status, DeploymentStatus::Incomplete);
+        assert_eq!(d.unbound_devices.len(), 1);
+        assert_eq!(d.unrealised_outputs, [out].into_iter().collect());
+        let codes: Vec<&str> = d.diagnostics.iter().map(|d| d.code.as_str()).collect();
+        assert_eq!(codes, ["deploy.device_unbound", "deploy.output_unrealised"]);
+        assert!(d.diagnostics.iter().all(|d| !d.is_error()));
+    }
+
+    #[test]
+    fn a_manual_pin_can_make_a_feasible_design_infeasible() {
+        let (s, _, out, _) = lamp_with_output();
+        let a = edit(
+            &s,
+            EditOp::CreateDevice {
+                name: "lamp".into(),
+                kind: bdl_model::surface::DeviceKind::PwmChannel,
+                output: Some(out),
+            },
+        );
+        let dev = a.outcome.created_device.unwrap();
+        let s = a.snapshot;
+        let nano = bdl_hardware::boards::arduino_nano();
+        assert_eq!(
+            analyze_deployment(&s, &nano).status,
+            DeploymentStatus::Feasible
+        );
+        let s = edit(
+            &s,
+            EditOp::SetDevicePin {
+                id: dev,
+                index: 0,
+                resource: Some("D4".into()),
+            },
+        )
+        .snapshot;
+        let d = analyze_deployment(&s, &nano);
+        assert_eq!(d.status, DeploymentStatus::Infeasible);
+        assert!(d.diagnostics[0].message.contains("D4 cannot carry lamp"));
     }
 }

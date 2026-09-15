@@ -1,6 +1,6 @@
 [package]
-name = "bdl-compiler"
-description = "The pipeline driver: analyze(snapshot) → revision-tagged, deterministic ProjectAnalysis"
+name = "bdl-output"
+description = "Physical outputs: drive-edge well-formedness (exact type, exact clock), the single-driver discipline, completeness, and output samples from simulation traces"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,16 +11,9 @@ repository.workspace = true
 bdl-model = { workspace = true }
 bdl-ir = { workspace = true }
 bdl-diagnostics = { workspace = true }
-bdl-elab = { workspace = true }
 bdl-check = { workspace = true }
 bdl-reactive = { workspace = true }
-bdl-output = { workspace = true }
-bdl-hardware = { workspace = true }
 serde = { workspace = true }
-
-[dev-dependencies]
-proptest = { workspace = true }
-serde_json = { workspace = true }
 
 [lints]
 workspace = true

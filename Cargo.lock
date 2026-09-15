@@ -92,8 +92,10 @@ dependencies = [
  "bdl-check",
  "bdl-diagnostics",
  "bdl-elab",
+ "bdl-hardware",
  "bdl-ir",
  "bdl-model",
+ "bdl-output",
  "bdl-reactive",
  "proptest",
  "serde",
@@ -107,6 +109,7 @@ dependencies = [
  "anyhow",
  "bdl-compiler",
  "bdl-diagnostics",
+ "bdl-hardware",
  "bdl-model",
  "bdl-protocol",
  "bdl-reactive",
@@ -143,6 +146,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bdl-hardware"
+version = "0.1.0"
+dependencies = [
+ "bdl-model",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
 name = "bdl-ir"
 version = "0.1.0"
 dependencies = [
@@ -164,13 +179,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bdl-output"
+version = "0.1.0"
+dependencies = [
+ "bdl-check",
+ "bdl-diagnostics",
+ "bdl-ir",
+ "bdl-model",
+ "bdl-reactive",
+ "serde",
+]
+
+[[package]]
 name = "bdl-protocol"
 version = "0.1.0"
 dependencies = [
  "bdl-check",
  "bdl-compiler",
  "bdl-diagnostics",
+ "bdl-hardware",
  "bdl-model",
+ "bdl-output",
  "bdl-reactive",
  "bytes",
  "prost",

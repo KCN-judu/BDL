@@ -10,7 +10,7 @@
 //! to anything by name: all references are by stable id.
 
 use crate::dim::Dim;
-use crate::ids::{ClockId, DeclId, IdAllocator, Revision, SemanticId};
+use crate::ids::{ClockId, DeclId, DeviceId, IdAllocator, OutputId, Revision, SemanticId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -42,6 +42,13 @@ pub struct Design {
     /// domain says which values are updated *together*; never a rate.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub clocks: BTreeMap<ClockId, ClockDomain>,
+    /// Physical sinks: nominal resources the product finally drives.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub outputs: BTreeMap<OutputId, PhysicalOutput>,
+    /// Deployment layer: what kind of hardware realises a sink or feeds the
+    /// product.  Never consulted by semantic analysis.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub devices: BTreeMap<DeviceId, DeviceBinding>,
     pub ids: IdAllocator,
 }
 
@@ -52,6 +59,8 @@ impl Design {
             concepts: BTreeMap::new(),
             mappings: BTreeMap::new(),
             clocks: BTreeMap::new(),
+            outputs: BTreeMap::new(),
+            devices: BTreeMap::new(),
             ids: IdAllocator::default(),
         }
     }
@@ -62,6 +71,13 @@ impl Design {
 
     pub fn mapping(&self, id: DeclId) -> Option<&MappingBlock> {
         self.mappings.get(&id)
+    }
+
+    /// Mappings that drive `output` (at most one in a well-formed design).
+    pub fn drivers_of(&self, output: OutputId) -> impl Iterator<Item = &MappingBlock> {
+        self.mappings
+            .values()
+            .filter(move |m| m.drives == Some(output))
     }
 
     /// Mappings whose signature mentions `concept` (as input or output).
@@ -78,6 +94,68 @@ impl Design {
 pub struct ClockDomain {
     pub id: ClockId,
     pub name: String,
+}
+
+/// A physical sink (the kernel's `OutputSpec` plus surface facts).  "The
+/// light" is a resource; "the desired brightness" is a value: the two are
+/// different sorts.  A sink accepts one concept and lives in one timing
+/// domain; a driver must produce exactly that concept in exactly that domain.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PhysicalOutput {
+    pub id: OutputId,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// The concept this sink accepts (`OutputSpec.accepts = sem concept`).
+    pub accepts: SemanticId,
+    /// The domain the sink updates in; `None` while still open.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub clock: Option<ClockId>,
+    /// Whether an executable design must drive this sink.
+    #[serde(default = "default_true")]
+    pub required: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+/// A kind of hardware, described by what it needs from a board.  The
+/// allocation solver never sees these names, only the requirements they
+/// generate (`bdl-hardware::devices`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeviceKind {
+    /// One PWM line (a dimmable light, a servo signal).
+    PwmChannel,
+    /// One digital output line (a relay, a switched load).
+    DigitalOutput,
+    /// An H-bridge motor channel: one PWM line and one direction line.
+    HBridgeChannel,
+    /// A sensor on the I2C bus: SDA and SCL on the same peripheral unit.
+    I2cSensor,
+    /// A quadrature encoder: two interrupt-capable lines.
+    QuadratureEncoder,
+    /// A serial link: TX and RX on the same UART unit.
+    Uart,
+}
+
+/// Deployment-layer binding of hardware to the design: which device kind
+/// realises a sink (or feeds the product, for sensors), and any pins the
+/// designer fixed by hand.  Fixed pins are named board-relatively and
+/// resolved against the target at deployment.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeviceBinding {
+    pub id: DeviceId,
+    pub name: String,
+    pub kind: DeviceKind,
+    /// The sink this device realises; `None` for sensors and other devices
+    /// that feed the design.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output: Option<OutputId>,
+    /// Manual pin choices, by the device's local requirement index.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub fixed_pins: BTreeMap<u16, String>,
 }
 
 /// A semantic property: `Tilt`, `Brightness`, `Held`.  Identity is the
@@ -124,6 +202,10 @@ pub struct MappingBlock {
     /// that may serve any domain (the kernel's `Κ d = none`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clock: Option<ClockId>,
+    /// The drive edge (`β d`): the sink this declaration is the final
+    /// driver of.  Write-once as a refinement; retargeting is an edit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub drives: Option<OutputId>,
 }
 
 impl MappingBlock {

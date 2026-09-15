@@ -239,8 +239,37 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         Req::StartSimulation(r) => (start_simulation(session, &r), None),
         Req::StepSimulation(r) => (step_simulation(session, r.ticks), None),
         Req::ResetSimulation(_) => (reset_simulation(session), None),
+        Req::ListTargets(_) => (
+            Resp::Targets(pb::TargetsResponse {
+                targets: bdl_hardware::boards::registry()
+                    .iter()
+                    .map(|(id, hw)| convert::target_view(id, hw))
+                    .collect(),
+            }),
+            None,
+        ),
+        Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r.target_id), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
+}
+
+/// Deployment is target-relative and never cached with the project: the
+/// same revision is analysed afresh for every target asked for.
+fn analyze_deployment(session: &Session, target_id: &str) -> Resp {
+    let snapshot = match session.project() {
+        Ok(p) => p.current.clone(),
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    let Some(target) = bdl_hardware::boards::by_name(target_id) else {
+        return Resp::Error(error(
+            "deploy.unknown_target",
+            &format!("No target named {target_id}."),
+        ));
+    };
+    let d = bdl_compiler::analyze_deployment(&snapshot, &target);
+    Resp::Deployment(pb::DeploymentResponse {
+        deployment: Some(convert::deployment_to_pb(&d)),
+    })
 }
 
 fn start_simulation(session: &mut Session, r: &pb::StartSimulationRequest) -> Resp {
@@ -474,6 +503,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::StartSimulation(_) => "start_simulation",
         Req::StepSimulation(_) => "step_simulation",
         Req::ResetSimulation(_) => "reset_simulation",
+        Req::ListTargets(_) => "list_targets",
+        Req::AnalyzeDeployment(_) => "analyze_deployment",
         Req::Shutdown(_) => "shutdown",
     }
 }

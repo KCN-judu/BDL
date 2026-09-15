@@ -71,6 +71,9 @@ crates/
   bdl-syntax/           formula lexer, parser, surface AST
   bdl-elab/             signature → Interface; formula → Core Expr (rep/mk insertion, units)
   bdl-check/            Core typing, Grant, declaration checking
+  bdl-reactive/         dependency graph, causality, clocks, reference evaluator, simulation
+  bdl-output/           physical outputs: DriveWF, SingleDriver, completeness (docs/DEPLOYMENT_WALKTHROUGH.md)
+  bdl-hardware/         capability model, device → requirements, boards, finite solver + diagnose
   bdl-compiler/         analyze(snapshot) → ProjectAnalysis (revision-tagged, deterministic)
   bdl-protocol/         bdl.proto · framing · conversions
   bdl-daemon/           bdld: session, coordinator, transport
@@ -112,6 +115,7 @@ persistence edges.
 | touch the editor | `docs/STUDIO_UI.md` (design system + interaction standard), `apps/studio/lib/app/reducer.dart` |
 | change the wire format | `docs/PROTOCOL.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto` |
 | decide something the paper left open | `docs/DESIGN_ISSUES.md` — record it there, never silently in code |
+| follow a design to a board | `docs/DEPLOYMENT_WALKTHROUGH.md`, `docs/HARDWARE_MODEL.md`, `crates/bdl-output`, `crates/bdl-hardware` |
 | see what is next | `docs/ROADMAP.md` |
 
 ## 8. Conventions that are checked

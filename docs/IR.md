@@ -17,8 +17,10 @@ Unary | Binary | If`. Produced by a Pratt parser, consumed only by
 
 Designer-level forms; may be incomplete; may contain constructs the kernel
 does not have. Today: `Concept { representation? }`, `MappingBlock
-{ signature, definition? }`, `Definition::Formula`. Planned: curves, example
-sets, temporal modifiers, contexts, supplied components, device kinds, units.
+{ signature, definition?, clock?, drives? }`, `Definition::Formula`,
+`ClockDomain`, `PhysicalOutput { accepts: SemanticId, clock?, required }`,
+`DeviceBinding { kind: DeviceKind, output?, fixed_pins }`. Planned: curves,
+example sets, temporal modifiers, contexts, supplied components, units.
 
 ## Design IR (`bdl-ir::design`)
 
@@ -30,6 +32,13 @@ The kernel's environments, faithfully: `(Θ, Δ, Κ, Ω, β)` —
 * `OutputSpec { accepts, clock }` — `Ω`; `DriveEnv = BTreeMap<DeclId, OutputId>` — `β`
 
 `DesignIr::ty_view` is the only projection typing may consult.
+
+Elaboration fills `Ω` from every surface output *that has a domain*
+(`accepts = sem concept`); an output without one is open and absent from
+`Ω`. Every authored drive edge goes into `β` as is — `DriveWF` is what
+rejects an edge whose sink is open or does not fit, and the output pass
+reports it (`bdl-output`). `clock_names` / `output_names` are display
+names for diagnostics only, never consulted by any judgment.
 
 ## Reactive Core IR (`bdl-ir::expr`, `bdl-ir::ty`)
 

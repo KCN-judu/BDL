@@ -17,16 +17,16 @@ pipeline does not fail fast.
 | 8 | dependency analysis | `refs` / `inst_refs` → `DependencyGraph { all, instantaneous, reverse… }` | `DependsOn`, `InstDependsOn` | **integrated** (`bdl-reactive::graph`) |
 | 9 | causality | Tarjan SCC over the instantaneous graph; Kahn rank + evaluation order | `Causal` | **integrated** (`bdl-reactive::causality`) |
 | 10 | clock-domain checking | `Clocked` judgment per realization, crossings with paths | `Κ`, `Clocked` | **integrated** (`bdl-reactive::clocks`); domains assignable on mappings, no Studio UI yet |
-| 11 | physical-output checking | `DriveWF`, `SingleDriver`, completeness | `β`, `Ω` | planned |
-| 12 | hardware requirement generation | sinks × device kinds → `Requirements` | validation layer | planned (`bdl-hardware`) |
-| 13 | hardware allocation | `solve` / `diagnose` | validation layer | planned |
+| 11 | physical-output checking | `Ω`, `β` → `OutputAnalysis { valid_bindings, faults, conflicts, missing_required, states, partial_wf, executable }` | `DriveWF`, `SingleDriver`, `CompleteOutputs` | **integrated** (`bdl-output::check_outputs`); part of `analyze` |
+| 12 | hardware requirement generation | `DeviceBinding` (kind, fixed pins) → `Vec<Requirement>` with stable `RequirementId { device, index }` | validation layer `Requirement` | **integrated** (`bdl-hardware::devices`); part of `analyze_deployment` |
+| 13 | hardware allocation | `(Hardware, [Requirement])` → `Option<Assignment>`, else `DeadEnd` | `solve` / `diagnose` (sound + complete DFS) | **integrated** (`bdl-hardware::solve`); part of `analyze_deployment`, never of `analyze` |
 | 14 | reference evaluation / simulation | two-phase tick (read, write) over state cells `(DeclId, path)`; schedules; input traces; traces | `Ev` / `MEv` | **core rules complete, integrated** in bdld (`bdl-reactive::{eval,simulate}`); Studio UI planned |
 | 15 | Rust code generation | Core IR → backend AST → Cargo project + `bdl-manifest.json` | erasure | planned (`bdl-codegen-rust`) |
 
 ## Driver and result
 
 `bdl-compiler::analyze(&ProjectSnapshot) -> ProjectAnalysis` runs passes
-1–10 and returns, tagged with the snapshot's revision: per mapping the
+1–11 and returns, tagged with the snapshot's revision: per mapping the
 elaborated `Interface`, a status on the ladder
 
 ```
@@ -45,6 +45,37 @@ message).
 committed revision; Studio keeps an analysis only while its revision equals
 the projection's.
 
+The output pass adds `outputs: OutputAnalysis`, `open_outputs` (surface
+outputs still without a domain — neither driven nor missing) and one
+whole-design flag, `output_complete = executable ∧ open_outputs = ∅`.
+Output faults are faults of a *connection*, not of a definition: they do
+not move a mapping down the ladder (a mapping stays `ClockConsistent` while
+its drive edge is contested); the diagnostic travels with the mapping and
+the output's state says `Undriven | Driven | IllFormed | Conflict`. The
+`MappingStatus` enum is unchanged — `OutputComplete` is a property of the
+design, `HardwareFeasible` of a (design, target) pair, and neither is a
+rung a single mapping can climb.
+
+### Deployment is a second function
+
+```
+analyze_deployment(&ProjectSnapshot, &Hardware) -> DeploymentAnalysis
+    { revision, target, status: Feasible | Infeasible | Incomplete,
+      requirements, assignment?, dead_end?, unbound_devices,
+      unrealised_outputs, diagnostics }
+```
+
+runs passes 12–13 for one target. It reads only the device bindings, so it
+never changes the semantic analysis and the semantic analysis never depends
+on whichever board was last selected. `Incomplete` means what is bound
+fits but the binding is not finished (an output with a domain has no
+device, or a device no output) — a design may stop there. `Infeasible`
+carries one `DeadEnd`: the first requirement greedy placement could not
+place, with what blocked each candidate — one conflict under solver order,
+not a minimal unsat core (DI-21). `bdld` exposes it as `AnalyzeDeployment
+{ target_id }` and lists targets with `ListTargets`; see
+`docs/DEPLOYMENT_WALKTHROUGH.md`.
+
 ## Diagnostic codes (v0)
 
 | Code | Pass | Severity |
@@ -60,6 +91,10 @@ the projection's.
 | `reactive.instantaneous_cycle` | causality | error |
 | `clock.cross_domain_reference` · `clock.temporal_without_domain` | clocks | error |
 | `simulation.not_causal` · `simulation.missing_input` · `simulation.division_by_zero` · `simulation.non_finite` | simulation (bdld) | error |
+| `output.type_mismatch` · `output.clock_mismatch` · `output.multiple_drivers` | outputs | error (on the driver) |
+| `output.missing_driver` (required sink undriven) · `output.clock_unset` (open output) | outputs | info (the design is partial, not wrong) |
+| `deploy.infeasible` | deployment | error (project; target-relative) |
+| `deploy.device_unbound` · `deploy.output_unrealised` | deployment | info |
 | `type.argument_mismatch` · `type.expected_function` · `type.rep_of_non_semantic` · `type.temporal_*` · `type.unbound_variable` · `type.unknown_declaration` | check | error |
 
 ## Incremental invalidation
@@ -72,9 +107,9 @@ Analyses declare which categories they depend on:
 | attach/replace formula body | Realization, Reactive (that decl) | public type, downstream typing |
 | change signature | Interface, Semantic (+Realization if defined) | — |
 | rebind concept representation | Semantic, Realization (users of the concept) | — |
-| assign/change clock (later) | Clock | typing |
-| retarget output (later) | Output | typing, clocks |
-| change board / fixed pin (later) | Deployment only | everything semantic |
+| assign/change clock | Clock | typing |
+| create/retarget/delete output, connect a driver, change what a sink accepts or its domain | Output | typing, clocks |
+| create/rebind/delete device, change its kind or a fixed pin, change board | Deployment only | everything semantic |
 
 ## Diagnostics
 

@@ -8,6 +8,8 @@ members = [
     "crates/bdl-elab",
     "crates/bdl-check",
     "crates/bdl-reactive",
+    "crates/bdl-output",
+    "crates/bdl-hardware",
     "crates/bdl-compiler",
     "crates/bdl-protocol",
     "crates/bdl-daemon",
@@ -28,6 +30,8 @@ bdl-syntax = { path = "crates/bdl-syntax" }
 bdl-elab = { path = "crates/bdl-elab" }
 bdl-check = { path = "crates/bdl-check" }
 bdl-reactive = { path = "crates/bdl-reactive" }
+bdl-output = { path = "crates/bdl-output" }
+bdl-hardware = { path = "crates/bdl-hardware" }
 bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-protocol = { path = "crates/bdl-protocol" }
 

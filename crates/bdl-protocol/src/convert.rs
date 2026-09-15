@@ -7,13 +7,16 @@
 use crate::pb;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::layout::{Layout, Point};
-use bdl_model::surface::{Definition, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::surface::{Definition, DeviceKind, ProjectSnapshot, Representation, Signature};
+use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, SemanticId};
+use bdl_output::OutputState;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum ConvertError {
     #[error("missing field `{0}`")]
     Missing(&'static str),
+    #[error("invalid value for `{0}`")]
+    Invalid(&'static str),
     #[error("dimension exponent out of range")]
     DimOutOfRange,
 }
@@ -116,6 +119,9 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
     use pb::edit_op::Op;
     let sem = SemanticId::from_raw;
     let decl = DeclId::from_raw;
+    let clock = ClockId::from_raw;
+    let output = OutputId::from_raw;
+    let device = DeviceId::from_raw;
     Ok(
         match op.op.as_ref().ok_or(ConvertError::Missing("edit_op.op"))? {
             Op::CreateConcept(m) => EditOp::CreateConcept {
@@ -182,8 +188,94 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
                 definition: m.definition.as_ref().map(definition_from_pb).transpose()?,
             },
             Op::DeleteMapping(m) => EditOp::DeleteMapping { id: decl(m.id) },
+            Op::CreateClockDomain(m) => EditOp::CreateClockDomain {
+                name: m.name.clone(),
+            },
+            Op::RenameClockDomain(m) => EditOp::RenameClockDomain {
+                id: clock(m.id),
+                name: m.name.clone(),
+            },
+            Op::DeleteClockDomain(m) => EditOp::DeleteClockDomain { id: clock(m.id) },
+            Op::SetMappingClock(m) => EditOp::SetMappingClock {
+                id: decl(m.id),
+                clock: m.clock_id.map(clock),
+            },
+            Op::CreateOutput(m) => EditOp::CreateOutput {
+                name: m.name.clone(),
+                description: m.description.clone(),
+                accepts: sem(m.accepts),
+                clock: m.clock_id.map(clock),
+            },
+            Op::RenameOutput(m) => EditOp::RenameOutput {
+                id: output(m.id),
+                name: m.name.clone(),
+            },
+            Op::SetOutputAccepts(m) => EditOp::SetOutputAccepts {
+                id: output(m.id),
+                accepts: sem(m.accepts),
+            },
+            Op::SetOutputClock(m) => EditOp::SetOutputClock {
+                id: output(m.id),
+                clock: m.clock_id.map(clock),
+            },
+            Op::SetOutputRequired(m) => EditOp::SetOutputRequired {
+                id: output(m.id),
+                required: m.required,
+            },
+            Op::DeleteOutput(m) => EditOp::DeleteOutput { id: output(m.id) },
+            Op::SetMappingDrive(m) => EditOp::SetMappingDrive {
+                id: decl(m.id),
+                output: m.output_id.map(output),
+            },
+            Op::CreateDevice(m) => EditOp::CreateDevice {
+                name: m.name.clone(),
+                kind: device_kind_from_pb(m.kind())?,
+                output: m.output_id.map(output),
+            },
+            Op::RenameDevice(m) => EditOp::RenameDevice {
+                id: device(m.id),
+                name: m.name.clone(),
+            },
+            Op::SetDeviceKind(m) => EditOp::SetDeviceKind {
+                id: device(m.id),
+                kind: device_kind_from_pb(m.kind())?,
+            },
+            Op::SetDeviceOutput(m) => EditOp::SetDeviceOutput {
+                id: device(m.id),
+                output: m.output_id.map(output),
+            },
+            Op::SetDevicePin(m) => EditOp::SetDevicePin {
+                id: device(m.id),
+                index: u16::try_from(m.index)
+                    .map_err(|_| ConvertError::Invalid("set_device_pin.index"))?,
+                resource: m.resource.clone(),
+            },
+            Op::DeleteDevice(m) => EditOp::DeleteDevice { id: device(m.id) },
         },
     )
+}
+
+pub fn device_kind_to_pb(k: DeviceKind) -> pb::DeviceKind {
+    match k {
+        DeviceKind::PwmChannel => pb::DeviceKind::PwmChannel,
+        DeviceKind::DigitalOutput => pb::DeviceKind::DigitalOutput,
+        DeviceKind::HBridgeChannel => pb::DeviceKind::HBridgeChannel,
+        DeviceKind::I2cSensor => pb::DeviceKind::I2cSensor,
+        DeviceKind::QuadratureEncoder => pb::DeviceKind::QuadratureEncoder,
+        DeviceKind::Uart => pb::DeviceKind::Uart,
+    }
+}
+
+pub fn device_kind_from_pb(k: pb::DeviceKind) -> Result<DeviceKind, ConvertError> {
+    Ok(match k {
+        pb::DeviceKind::PwmChannel => DeviceKind::PwmChannel,
+        pb::DeviceKind::DigitalOutput => DeviceKind::DigitalOutput,
+        pb::DeviceKind::HBridgeChannel => DeviceKind::HBridgeChannel,
+        pb::DeviceKind::I2cSensor => DeviceKind::I2cSensor,
+        pb::DeviceKind::QuadratureEncoder => DeviceKind::QuadratureEncoder,
+        pb::DeviceKind::Uart => DeviceKind::Uart,
+        pb::DeviceKind::Unspecified => return Err(ConvertError::Invalid("device_kind")),
+    })
 }
 
 pub fn outcome_to_pb(o: &EditOutcome) -> pb::EditOutcome {
@@ -213,6 +305,9 @@ pub fn outcome_to_pb(o: &EditOutcome) -> pb::EditOutcome {
         origin_decls: o.origin_decls.iter().map(|d| d.raw()).collect(),
         created_concept: o.created_concept.map(|c| c.raw()),
         created_mapping: o.created_mapping.map(|m| m.raw()),
+        created_clock: o.created_clock.map(|c| c.raw()),
+        created_output: o.created_output.map(|c| c.raw()),
+        created_device: o.created_device.map(|c| c.raw()),
     }
 }
 
@@ -231,6 +326,11 @@ pub fn edit_error_to_pb(e: &EditError) -> pb::Error {
         EditError::DuplicateClockName { .. } => "edit.duplicate_clock_name",
         EditError::UnknownClock { .. } => "edit.unknown_clock",
         EditError::ClockInUse { .. } => "edit.clock_in_use",
+        EditError::DuplicateOutputName { .. } => "edit.duplicate_output_name",
+        EditError::UnknownOutput { .. } => "edit.unknown_output",
+        EditError::OutputInUse { .. } => "edit.output_in_use",
+        EditError::DuplicateDeviceName { .. } => "edit.duplicate_device_name",
+        EditError::UnknownDevice { .. } => "edit.unknown_device",
     };
     pb::Error {
         code: code.to_owned(),
@@ -331,12 +431,60 @@ pub fn projection(
                     pb::AcceptanceState::Defined
                 }
                 .into(),
+                clock_id: m.clock.map(|c| c.raw()),
+                drives_output_id: m.drives.map(|o| o.raw()),
             })
             .collect(),
         layout: Some(layout_to_pb(layout)),
         can_undo: info.can_undo,
         can_redo: info.can_redo,
         dirty: info.dirty,
+        clocks: design
+            .clocks
+            .values()
+            .map(|c| pb::ClockView {
+                id: c.id.raw(),
+                name: c.name.clone(),
+            })
+            .collect(),
+        outputs: design
+            .outputs
+            .values()
+            .map(|o| pb::OutputView {
+                id: o.id.raw(),
+                name: o.name.clone(),
+                description: o.description.clone(),
+                accepts: o.accepts.raw(),
+                clock_id: o.clock.map(|c| c.raw()),
+                required: o.required,
+            })
+            .collect(),
+        devices: design
+            .devices
+            .values()
+            .map(|d| pb::DeviceView {
+                id: d.id.raw(),
+                name: d.name.clone(),
+                kind: device_kind_to_pb(d.kind).into(),
+                output_id: d.output.map(|o| o.raw()),
+                fixed_pins: d
+                    .fixed_pins
+                    .iter()
+                    .map(|(i, r)| pb::DevicePin {
+                        index: u32::from(*i),
+                        resource: r.clone(),
+                    })
+                    .collect(),
+                requirements: bdl_hardware::devices::requirement_labels(d.kind)
+                    .into_iter()
+                    .map(|(i, cap, label)| pb::RequirementLabel {
+                        index: u32::from(i),
+                        capability: cap.as_str().into(),
+                        label: label.into(),
+                    })
+                    .collect(),
+            })
+            .collect(),
     }
 }
 
@@ -412,6 +560,120 @@ pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis 
             })
             .collect(),
         evaluation_order: a.causality.order.iter().map(|d| d.raw()).collect(),
+        outputs: a
+            .outputs
+            .states
+            .iter()
+            .map(|(o, st)| {
+                let claimants: Vec<u64> =
+                    a.ir.drives
+                        .iter()
+                        .filter(|(_, sink)| *sink == o)
+                        .map(|(d, _)| d.raw())
+                        .collect();
+                let driver = a
+                    .outputs
+                    .valid_bindings
+                    .iter()
+                    .find(|(_, sink)| *sink == o)
+                    .map(|(d, _)| d.raw())
+                    .filter(|_| *st == OutputState::Driven);
+                pb::OutputAnalysis {
+                    id: o.raw(),
+                    state: match st {
+                        OutputState::Undriven => pb::OutputState::Undriven,
+                        OutputState::Driven => pb::OutputState::Driven,
+                        OutputState::IllFormed => pb::OutputState::IllFormed,
+                        OutputState::Conflict => pb::OutputState::Conflict,
+                    }
+                    .into(),
+                    driver,
+                    claimants,
+                }
+            })
+            .collect(),
+        open_outputs: a.open_outputs.iter().map(|o| o.raw()).collect(),
+        output_complete: a.output_complete,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Deployment
+// ---------------------------------------------------------------------------
+
+pub fn target_view(id: &str, hw: &bdl_hardware::Hardware) -> pb::TargetView {
+    pb::TargetView {
+        id: id.into(),
+        name: hw.name.clone(),
+        resource_count: u32::try_from(hw.resources.len()).unwrap_or(u32::MAX),
+    }
+}
+
+fn placement(id: bdl_hardware::RequirementId, r: &bdl_hardware::ResourceId) -> pb::Placement {
+    pb::Placement {
+        device_id: id.device.raw(),
+        index: u32::from(id.index),
+        resource: r.0.clone(),
+    }
+}
+
+pub fn deployment_to_pb(d: &bdl_compiler::DeploymentAnalysis) -> pb::DeploymentAnalysis {
+    use bdl_compiler::DeploymentStatus;
+    use bdl_hardware::DeadEndReason;
+    pb::DeploymentAnalysis {
+        revision: d.revision.raw(),
+        target: d.target.clone(),
+        status: match d.status {
+            DeploymentStatus::Feasible => pb::DeploymentStatus::Feasible,
+            DeploymentStatus::Infeasible => pb::DeploymentStatus::Infeasible,
+            DeploymentStatus::Incomplete => pb::DeploymentStatus::Incomplete,
+        }
+        .into(),
+        requirements: d
+            .requirements
+            .iter()
+            .map(|r| pb::RequirementView {
+                device_id: r.id.device.raw(),
+                index: u32::from(r.id.index),
+                capability: r.capability.as_str().into(),
+                fixed: r.fixed.as_ref().map(|f| f.0.clone()),
+                label: r.label.clone(),
+            })
+            .collect(),
+        assignment: d
+            .assignment
+            .iter()
+            .flatten()
+            .map(|(id, r)| placement(*id, r))
+            .collect(),
+        dead_end: d.dead_end.as_ref().map(|e| pb::DeadEnd {
+            device_id: e.requirement.device.raw(),
+            index: u32::from(e.requirement.index),
+            reason: Some(match &e.reason {
+                DeadEndReason::NoCapableResource => {
+                    pb::dead_end::Reason::NoCapableResource(pb::Unit {})
+                }
+                DeadEndReason::FixedUnavailable { fixed } => {
+                    pb::dead_end::Reason::FixedUnavailable(fixed.0.clone())
+                }
+                DeadEndReason::Blocked { candidates } => {
+                    pb::dead_end::Reason::Blocked(pb::BlockedCandidates {
+                        candidates: candidates
+                            .iter()
+                            .map(|(r, by)| pb::BlockedCandidate {
+                                resource: r.0.clone(),
+                                held_by_device_id: by.device.raw(),
+                                held_by_index: u32::from(by.index),
+                            })
+                            .collect(),
+                    })
+                }
+            }),
+            placed: e.placed.iter().map(|(id, r)| placement(*id, r)).collect(),
+        }),
+        unbound_devices: d.unbound_devices.iter().map(|x| x.raw()).collect(),
+        unrealised_outputs: d.unrealised_outputs.iter().map(|x| x.raw()).collect(),
+        diagnostics: d.diagnostics.iter().map(diagnostic_to_pb).collect(),
     }
 }
 
