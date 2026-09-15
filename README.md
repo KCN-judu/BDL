@@ -37,7 +37,8 @@ reference/paper/    the BDL paper
 
 ## Build
 
-Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`), Flutter 3.47,
+Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`, which also pulls
+`rustfmt`, `clippy`, `rust-analyzer` and `rust-src` via rustup), Flutter 3.47,
 `just`; `protoc` + `protoc-gen-dart` only to regenerate the Dart protocol code.
 
 ```bash
