@@ -163,6 +163,18 @@ class EffectExecutor {
           ),
           (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
         );
+      case ListSemanticActions(:final revision, :final entity, :final generation):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            listSemanticActions: pb.ListSemanticActionsRequest(
+              revision: Int64(revision),
+              entity: entity,
+            ),
+          ),
+          (r) =>
+              _dispatch(SemanticActionsReceived(generation: generation, result: r.semanticActions)),
+        );
       case DiscardDraft(:final mappingId):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();

@@ -174,3 +174,75 @@ class ConceptChip extends StatelessWidget {
     );
   }
 }
+
+/// A physical output in a list: the sink's boundary bar and its state —
+/// dashed while open or undriven, solid when driven, a red mark when
+/// contested or ill-formed.
+class OutputGlyph extends StatelessWidget {
+  const OutputGlyph({super.key, required this.state, required this.open, this.size = 12});
+  final pb.OutputState? state;
+  final bool open;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final wrong =
+        state == pb.OutputState.OUTPUT_STATE_CONFLICT ||
+        state == pb.OutputState.OUTPUT_STATE_ILL_FORMED;
+    final incomplete = open || state == null || state == pb.OutputState.OUTPUT_STATE_UNDRIVEN;
+    return SizedBox(
+      width: size + 4,
+      height: size,
+      child: CustomPaint(
+        painter: _OutputGlyphPainter(
+          border: wrong ? t.error : (incomplete ? t.textTertiary : t.textSecondary),
+          bar: wrong ? t.error : t.textSecondary,
+          dashed: incomplete && !wrong,
+        ),
+      ),
+    );
+  }
+}
+
+class _OutputGlyphPainter extends CustomPainter {
+  _OutputGlyphPainter({required this.border, required this.bar, required this.dashed});
+  final Color border;
+  final Color bar;
+  final bool dashed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0.5, 0.5, size.width - 3, size.height - 1),
+      const Radius.circular(2),
+    );
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = border;
+    if (dashed) {
+      final path = Path()..addRRect(r);
+      for (final m in path.computeMetrics()) {
+        var d = 0.0;
+        while (d < m.length) {
+          canvas.drawPath(m.extractPath(d, d + 2), outline);
+          d += 4;
+        }
+      }
+    } else {
+      canvas.drawRRect(r, outline);
+    }
+    canvas.drawLine(
+      Offset(size.width - 1, 1),
+      Offset(size.width - 1, size.height - 1),
+      Paint()
+        ..color = bar
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_OutputGlyphPainter old) =>
+      old.border != border || old.bar != bar || old.dashed != dashed;
+}

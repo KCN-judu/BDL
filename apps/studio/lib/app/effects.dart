@@ -138,6 +138,18 @@ class HoverEntity extends Effect {
   final int generation;
 }
 
+/// The service's semantic actions for an entity — uncounted.
+class ListSemanticActions extends Effect {
+  const ListSemanticActions({
+    required this.revision,
+    required this.entity,
+    required this.generation,
+  });
+  final int revision;
+  final pb.EntityRef entity;
+  final int generation;
+}
+
 class SetLayout extends Effect {
   const SetLayout(this.layout);
   final pb.Layout layout;

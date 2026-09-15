@@ -16,6 +16,7 @@ import 'definition_editor.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
+import 'semantic_actions.dart';
 import 'units.dart';
 
 class Inspector extends StatelessWidget {
@@ -36,7 +37,10 @@ class Inspector extends StatelessWidget {
       body = switch (sel) {
         NoSelection() => Padding(
           padding: const EdgeInsets.all(12),
-          child: Text('Select a concept or a mapping.', style: TextStyle(color: t.textTertiary)),
+          child: Text(
+            'Select a concept, a mapping or an output.',
+            style: TextStyle(color: t.textTertiary),
+          ),
         ),
         ConceptSelected(:final id) => _ConceptInspector(
           key: ValueKey('c$id'),
@@ -59,6 +63,15 @@ class Inspector extends StatelessWidget {
           hover: state.editor.hover?.mappingId == id ? state.editor.hover : null,
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
+          clocks: project.clocks,
+          outputs: project.outputs,
+          actions: state.editor.actions,
+          dispatch: dispatch,
+        ),
+        OutputSelected(:final id) => _OutputInspector(
+          key: ValueKey('o$id'),
+          output: project.outputs.firstWhere((o) => o.id.toInt() == id),
+          state: state,
           dispatch: dispatch,
         ),
       };
@@ -394,10 +407,16 @@ class _MappingInspector extends StatelessWidget {
     required this.hover,
     required this.revision,
     required this.outcome,
+    required this.clocks,
+    required this.outputs,
+    required this.actions,
     required this.dispatch,
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
+  final List<pb.ClockView> clocks;
+  final List<pb.OutputView> outputs;
+  final SemanticActionsState? actions;
 
   /// The compiler's verdict for the current revision; `null` while pending.
   final pb.MappingAnalysis? analysis;
@@ -425,7 +444,21 @@ class _MappingInspector extends StatelessWidget {
     final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
     final a = analysis;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
-    final broader = a?.diagnostics.where((d) => !d.hasSpan()).toList() ?? const [];
+    // Findings without a span, by where they belong: timing ones under
+    // *Updates in*, drive ones under *Drives*, the rest (causality) with the
+    // relationship itself.
+    final spanless = a?.diagnostics.where((d) => !d.hasSpan()).toList() ?? const <pb.Diagnostic>[];
+    final timingIssues = spanless.where((d) => d.code.startsWith('clock.')).toList();
+    final driveIssues = spanless.where((d) => d.code.startsWith('output.')).toList();
+    final broader = spanless
+        .where((d) => !d.code.startsWith('clock.') && !d.code.startsWith('output.'))
+        .toList();
+    final clockId = mapping.hasClockId() ? mapping.clockId.toInt() : null;
+    final drives = mapping.hasDrivesOutputId() ? mapping.drivesOutputId.toInt() : null;
+    String clockName(int c) =>
+        clocks.where((x) => x.id.toInt() == c).map((x) => x.name).firstOrNull ?? '?';
+    String outputName(int o) =>
+        outputs.where((x) => x.id.toInt() == o).map((x) => x.name).firstOrNull ?? '?';
 
     // Reads whose value form is still open: the reason a definition cannot
     // be checked yet.  Read off the projection, not computed.
@@ -542,6 +575,65 @@ class _MappingInspector extends StatelessWidget {
               ),
           ],
         ),
+        InspectorSection(
+          title: 'Timing',
+          children: [
+            FormRow(
+              label: 'Updates in',
+              child: MacDropdown<int>(
+                value: clockId ?? -1,
+                items: [-1, for (final c in clocks) c.id.toInt()],
+                labelOf: (c) => c < 0 ? 'any domain' : clockName(c),
+                detailOf: (c) => c < 0 ? 'pure' : '',
+                onChanged: (c) =>
+                    dispatch(SetMappingClockRequested(mappingId: id, clockId: c < 0 ? null : c)),
+              ),
+            ),
+            Text(
+              clockId == null
+                  ? 'A relationship in no domain is pure: it is evaluated wherever it is read.'
+                  : 'Evaluated at each activation of ${clockName(clockId)}; a value read from '
+                        'another domain needs an explicit transport.',
+              style: small,
+            ),
+            for (final d in timingIssues)
+              Padding(
+                padding: const EdgeInsets.only(top: MacMetrics.gap),
+                child: DiagnosticCard(diagnostic: d, source: ''),
+              ),
+          ],
+        ),
+        InspectorSection(
+          title: 'Drives',
+          children: [
+            FormRow(
+              label: 'Output',
+              child: MacDropdown<int>(
+                value: drives ?? -1,
+                items: [-1, for (final o in outputs) o.id.toInt()],
+                labelOf: (o) => o < 0 ? 'nothing' : outputName(o),
+                onChanged: (o) =>
+                    dispatch(SetMappingDriveRequested(mappingId: id, outputId: o < 0 ? null : o)),
+              ),
+            ),
+            Text(
+              drives == null
+                  ? inputs.isEmpty
+                        ? 'This value can commit to a physical output.'
+                        : 'Only a relationship without inputs can drive an output: connect the '
+                              'one that combines the sources.'
+                  : 'Each activation commits this value to ${outputName(drives)}. One driver per '
+                        'output: a second one is a conflict, never a priority.',
+              style: small,
+            ),
+            for (final d in driveIssues)
+              Padding(
+                padding: const EdgeInsets.only(top: MacMetrics.gap),
+                child: DiagnosticCard(diagnostic: d, source: ''),
+              ),
+          ],
+        ),
+        FixList(actions: actions, dispatch: dispatch),
         Padding(
           padding: const EdgeInsets.all(12),
           child: Align(
@@ -556,6 +648,8 @@ class _MappingInspector extends StatelessWidget {
           title: 'Explain',
           children: [
             ExplainLine('DeclId ${mapping.id}'),
+            if (clockId != null) ExplainLine('Κ = ClockId $clockId (${clockName(clockId)})'),
+            if (drives != null) ExplainLine('β: drives OutputId $drives (${outputName(drives)})'),
             ExplainLine(
               'Interface: ${a?.interface.isNotEmpty == true ? a!.interface : '${inputs.map((i) => 'sem#$i').join(' → ')}${inputs.isEmpty ? '' : ' → '}sem#$output'}',
             ),
@@ -569,6 +663,221 @@ class _MappingInspector extends StatelessWidget {
               ExplainLine('status: ${declared ? 'declared' : 'pending analysis'}'),
             ExplainLine('revision $revision'),
             if (outcome case final o?) ExplainLine(_outcomeNotation(o)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Physical output
+// ---------------------------------------------------------------------------
+
+/// A physical output is the boundary to the world: what value it accepts,
+/// when it updates, whether the design must drive it, and who drives it.
+/// The output pass's verdict is shown as the sink's state; every claimant
+/// is listed so a conflict is local and obvious, never arbitrated.
+class _OutputInspector extends StatelessWidget {
+  const _OutputInspector({
+    super.key,
+    required this.output,
+    required this.state,
+    required this.dispatch,
+  });
+  final pb.OutputView output;
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final p = state.project!;
+    final id = output.id.toInt();
+    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final a = state.outputAnalysis(id);
+    final clockId = output.hasClockId() ? output.clockId.toInt() : null;
+    pb.ConceptView? concept(int c) => p.concepts.where((x) => x.id.toInt() == c).firstOrNull;
+    String conceptName(int c) => concept(c)?.name ?? '?';
+    String mappingName(int m) =>
+        p.mappings.where((x) => x.id.toInt() == m).map((x) => x.name).firstOrNull ?? '?';
+    final claimants = [
+      for (final m in p.mappings)
+        if (m.hasDrivesOutputId() && m.drivesOutputId.toInt() == id) m,
+    ];
+    final driver = a != null && a.hasDriver() ? a.driver.toInt() : null;
+    // Faults of the drive edges are reported on the drivers; they belong
+    // here too, where the sink is looked at.
+    final driveIssues = [
+      for (final m in claimants)
+        ...?state
+            .mappingAnalysis(m.id.toInt())
+            ?.diagnostics
+            .where((d) => d.code.startsWith('output.')),
+    ];
+    final (String stateText, Color stateColor) = clockId == null
+        ? (
+            'No timing domain yet: not part of the design\'s commitment until one is chosen.',
+            t.open,
+          )
+        : switch (a?.state) {
+            pb.OutputState.OUTPUT_STATE_DRIVEN => ('Driven by ${mappingName(driver!)}.', t.settled),
+            pb.OutputState.OUTPUT_STATE_UNDRIVEN => (
+              output.required
+                  ? 'Undriven — the design is incomplete without a driver.'
+                  : 'Undriven.',
+              t.open,
+            ),
+            pb.OutputState.OUTPUT_STATE_CONFLICT => (
+              '${output.name} already has a final target: ${claimants.map((m) => m.name).join(' and ')} both claim it.',
+              t.error,
+            ),
+            pb.OutputState.OUTPUT_STATE_ILL_FORMED => (
+              'The connection does not fit: see the driver\'s findings below.',
+              t.error,
+            ),
+            _ => ('Checking…', t.textTertiary),
+          };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InspectorSection(
+          title: 'Output',
+          trailing: Text(output.required ? 'required' : 'optional', style: small),
+          children: [
+            FormRow(
+              label: 'Name',
+              child: CommitTextField(
+                value: output.name,
+                onCommit: (v) => dispatch(RenameOutputRequested(id: id, name: v)),
+              ),
+            ),
+            FormRow(
+              label: 'Accepts',
+              child: MacDropdown<int>(
+                value: output.accepts.toInt(),
+                items: [for (final c in p.concepts) c.id.toInt()],
+                labelOf: conceptName,
+                leadingOf: (c) => SocketGlyph.of(concept(c)!, t, size: 11),
+                onChanged: (c) => dispatch(SetOutputAcceptsRequested(id: id, accepts: c)),
+              ),
+            ),
+            FormRow(
+              label: 'Updates in',
+              child: MacDropdown<int>(
+                value: clockId ?? -1,
+                items: [-1, for (final c in p.clocks) c.id.toInt()],
+                labelOf: (c) => c < 0 ? 'no domain yet' : state.clockName(c) ?? '?',
+                onChanged: (c) =>
+                    dispatch(SetOutputClockRequested(id: id, clockId: c < 0 ? null : c)),
+              ),
+            ),
+            FormRow(
+              label: 'Required',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  spacing: MacMetrics.gap,
+                  children: [
+                    Checkbox(
+                      value: output.required,
+                      onChanged: (v) =>
+                          dispatch(SetOutputRequiredRequested(id: id, required: v ?? false)),
+                    ),
+                    Expanded(
+                      child: Text('the design is incomplete until this is driven', style: small),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        InspectorSection(
+          title: 'Driver',
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MacMetrics.gap,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Icon(Icons.circle, size: 7, color: stateColor),
+                ),
+                Expanded(
+                  child: Text(
+                    stateText,
+                    key: const ValueKey('output-state'),
+                    style: TextStyle(fontSize: 11, color: stateColor),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: MacMetrics.gap),
+            for (final m in claimants)
+              Row(
+                children: [
+                  Expanded(
+                    child: MacLink(
+                      label: m.name,
+                      onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
+                    ),
+                  ),
+                  MacLink(
+                    label: 'disconnect',
+                    onTap: () =>
+                        dispatch(SetMappingDriveRequested(mappingId: m.id.toInt(), outputId: null)),
+                  ),
+                ],
+              ),
+            FormRow(
+              label: 'Connect',
+              child: MacDropdown<int>(
+                value: null,
+                hint: 'a relationship…',
+                items: [
+                  for (final m in p.mappings)
+                    if (!claimants.contains(m)) m.id.toInt(),
+                ],
+                labelOf: mappingName,
+                detailOf: (m) =>
+                    p.mappings.firstWhere((x) => x.id.toInt() == m).signature.inputs.isEmpty
+                    ? ''
+                    : 'has inputs',
+                onChanged: (m) => dispatch(SetMappingDriveRequested(mappingId: m, outputId: id)),
+              ),
+            ),
+            for (final d in driveIssues)
+              Padding(
+                padding: const EdgeInsets.only(top: MacMetrics.gap),
+                child: DiagnosticCard(diagnostic: d, source: ''),
+              ),
+          ],
+        ),
+        FixList(actions: state.editor.actions, dispatch: dispatch),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: DestructiveButton(
+              label: 'Delete ${output.name}',
+              enabled: claimants.isEmpty,
+              tooltip: claimants.isEmpty
+                  ? null
+                  : 'Still driven by ${claimants.map((m) => m.name).join(', ')}',
+              onPressed: () => dispatch(DeleteOutputRequested(id)),
+            ),
+          ),
+        ),
+        MacDisclosure(
+          title: 'Explain',
+          children: [
+            ExplainLine('OutputId ${output.id}'),
+            ExplainLine('Ω accepts = sem#${output.accepts}'),
+            ExplainLine(clockId == null ? 'Ω clock = none (open)' : 'Ω clock = ClockId $clockId'),
+            if (a != null) ExplainLine('state: ${a.state.name.toLowerCase()}'),
+            for (final m in claimants) ExplainLine('β ${m.id} → ${output.id}'),
           ],
         ),
       ],

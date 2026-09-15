@@ -468,7 +468,7 @@ fn list_semantic_actions(session: &mut Session, r: &pb::ListSemanticActionsReque
     let mut seen = std::collections::BTreeSet::new();
     let scope = match entity {
         bdl_ide::EntityRef::Project => bdl_ide::DiagnosticScope::Project,
-        e => bdl_ide::DiagnosticScope::Entity(e),
+        e => bdl_ide::DiagnosticScope::Concerning(e),
     };
     for d in &bdl_ide::diagnostics(&snapshot, scope).items {
         for a in bdl_ide::actions_for(&snapshot, d) {

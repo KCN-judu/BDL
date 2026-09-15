@@ -18,6 +18,8 @@ library;
 
 import 'dart:ui';
 
+import 'package:fixnum/fixnum.dart';
+
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
@@ -84,6 +86,10 @@ class SocketShape {
   bool get bound => kind != SocketKind.open;
 }
 
+/// Where a physical output stands, as the output pass says (an open sink
+/// — no domain yet — is not a kernel output at all).
+enum SinkState { open, undriven, driven, illFormed, contested }
+
 class NodeShape {
   const NodeShape({
     required this.ref,
@@ -94,11 +100,24 @@ class NodeShape {
     this.declared = false,
     this.wrong = false,
     this.socketLabels = const {},
+    this.timing = '',
+    this.required = false,
+    this.sink,
   });
   final NodeRef ref;
   final Rect rect;
   final String title;
   final List<SocketShape> sockets;
+
+  /// The timing domain the node updates in ('' when agnostic or open): a
+  /// quiet word at the right of the body, never a badge.
+  final String timing;
+
+  /// A physical output the design must drive.
+  final bool required;
+
+  /// For an output node: its state in the output pass.
+  final SinkState? sink;
 
   /// One-line summary of a mapping's definition; `null` when there is none
   /// (the definition region stays empty) and for concepts.
@@ -180,11 +199,15 @@ CanvasScene buildScene(
   pb.ProjectProjection p,
   Map<NodeRef, Offset> layout, {
   Map<int, pb.MappingStatus> statuses = const {},
+  Map<int, pb.OutputState> outputStates = const {},
 }) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
   final mappings = [...p.mappings]..sort((a, b) => a.id.compareTo(b.id));
+  final outputs = [...p.outputs]..sort((a, b) => a.id.compareTo(b.id));
   final kinds = {for (final c in concepts) c.id.toInt(): socketKind(c)};
   SocketKind kindOf(int id) => kinds[id] ?? SocketKind.open;
+  String clockName(Int64 id) =>
+      p.clocks.where((c) => c.id == id).map((c) => c.name).firstOrNull ?? '';
 
   final nodes = <NodeShape>[];
   final socketByRef = <SocketRef, SocketShape>{};
@@ -254,6 +277,53 @@ CanvasScene buildScene(
         wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
         socketLabels: labels,
+        timing: m.hasClockId() ? clockName(m.clockId) : '',
+      ),
+    );
+  }
+
+  // Physical outputs: sinks in a third column.  One socket on the left,
+  // typed by the concept the sink accepts, no output socket — to the right
+  // is the world.
+  row = 0;
+  for (final o in outputs) {
+    final ref = NodeRef.output(o.id.toInt());
+    final pos =
+        layout[ref] ??
+        NodeMetrics.origin + Offset(NodeMetrics.columnGap * 2, row * NodeMetrics.rowGap);
+    row++;
+    final rect = Rect.fromLTWH(
+      pos.dx,
+      pos.dy,
+      NodeMetrics.conceptWidth,
+      NodeMetrics.headerHeight + NodeMetrics.rowHeight,
+    );
+    final accepts = o.accepts.toInt();
+    final inRef = SocketRef(node: ref, side: SocketSide.input, concept: accepts);
+    final socket = SocketShape._(
+      Offset(rect.left, rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2),
+      inRef,
+      kindOf(accepts),
+    );
+    socketByRef[inRef] = socket;
+    final sink = !o.hasClockId()
+        ? SinkState.open
+        : switch (outputStates[o.id.toInt()]) {
+            pb.OutputState.OUTPUT_STATE_DRIVEN => SinkState.driven,
+            pb.OutputState.OUTPUT_STATE_ILL_FORMED => SinkState.illFormed,
+            pb.OutputState.OUTPUT_STATE_CONFLICT => SinkState.contested,
+            _ => SinkState.undriven,
+          };
+    nodes.add(
+      NodeShape(
+        ref: ref,
+        rect: rect,
+        title: o.name,
+        sockets: [socket],
+        socketLabels: {inRef: _conceptName(p, accepts)},
+        timing: o.hasClockId() ? clockName(o.clockId) : '',
+        required: o.required,
+        sink: sink,
       ),
     );
   }
@@ -301,6 +371,28 @@ CanvasScene buildScene(
         ),
       );
     }
+    // The drive edge, as authored: mapping.out → sink.  Whether it is well
+    // formed is the output pass's verdict, shown on the sink.
+    if (m.hasDrivesOutputId()) {
+      final sink = outputs.where((o) => o.id == m.drivesOutputId).firstOrNull;
+      final to = sink == null
+          ? null
+          : socketByRef[SocketRef(
+              node: NodeRef.output(sink.id.toInt()),
+              side: SocketSide.input,
+              concept: sink.accepts.toInt(),
+            )];
+      if (from != null && to != null) {
+        links.add(
+          LinkShape(
+            from: from.ref,
+            to: to.ref,
+            concept: outId,
+            path: linkPath(from.center, to.center),
+          ),
+        );
+      }
+    }
   }
 
   return CanvasScene(nodes: nodes, links: links);
@@ -331,8 +423,14 @@ CanvasHit hitTest(CanvasScene scene, Offset point) {
 
 /// Whether a link may run between two sockets: same concept, opposite
 /// side, different node.  The nominal typing rule, as a gesture constraint.
-bool canLink(SocketRef from, SocketRef to) =>
-    to.node != from.node && to.side != from.side && to.concept == from.concept;
+/// A sink takes only a mapping's output: a concept cannot drive the world
+/// by itself, and nothing reads from a sink.
+bool canLink(SocketRef from, SocketRef to) {
+  if (to.node == from.node || to.side == from.side || to.concept != from.concept) return false;
+  final kinds = {from.node.kind, to.node.kind};
+  if (kinds.contains(NodeKind.output)) return kinds.contains(NodeKind.mapping);
+  return true;
+}
 
 /// The socket a dragged link may legally be dropped on.  Typing by identity,
 /// made visible.

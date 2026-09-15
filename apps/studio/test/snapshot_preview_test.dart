@@ -74,8 +74,20 @@ void main() {
           signature: pb.Signature(inputs: [Int64(2)], output: Int64(1)),
           definition: pb.Definition(formula: 'ite(Temperature > 40K, 0.3, 1)'),
           state: pb.AcceptanceState.ACCEPTANCE_STATE_DEFINED,
+          clockId: Int64(0),
+          drivesOutputId: Int64(0),
         ),
       ])
+      ..clocks.add(pb.ClockView(id: Int64(0), name: 'interaction'))
+      ..outputs.add(
+        pb.OutputView(
+          id: Int64(0),
+          name: 'Light Output',
+          accepts: Int64(1),
+          clockId: Int64(0),
+          required: true,
+        ),
+      )
       ..layout = pb.Layout(
         concepts: [
           pb.NodePosition(id: Int64(0), x: 60, y: 80),
@@ -87,6 +99,7 @@ void main() {
           pb.NodePosition(id: Int64(0), x: 380, y: 100),
           pb.NodePosition(id: Int64(1), x: 380, y: 300),
         ],
+        outputs: [pb.NodePosition(id: Int64(0), x: 720, y: 320)],
       );
     for (final brightness in [Brightness.light, Brightness.dark]) {
       final welcome = AppState(
@@ -172,6 +185,7 @@ void main() {
             const NodeRef.concept(1): const Offset(720, 160),
             const NodeRef.mapping(0): const Offset(380, 100),
             const NodeRef.mapping(1): const Offset(380, 300),
+            const NodeRef.output(0): const Offset(720, 320),
           },
           lastOutcome: pb.EditOutcome(kind: pb.EditKind.EDIT_KIND_REFINEMENT),
         ),

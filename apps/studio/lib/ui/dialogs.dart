@@ -437,3 +437,190 @@ class _PreviewBox extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// New timing domain / new output
+// ---------------------------------------------------------------------------
+
+/// A timing domain is a name for *when* things happen — never a rate.
+Future<String?> showNewClockSheet(BuildContext context, List<pb.ClockView> existing) {
+  return showMacSheet<String>(
+    context,
+    title: 'New timing domain',
+    subtitle:
+        'When a group of relationships and outputs update together. A name, not a rate: how '
+        'often it activates is decided when the design runs.',
+    content: _NewClockForm(existing: existing),
+    actions: const [],
+    width: 440,
+  );
+}
+
+class _NewClockForm extends StatefulWidget {
+  const _NewClockForm({required this.existing});
+  final List<pb.ClockView> existing;
+  @override
+  State<_NewClockForm> createState() => _NewClockFormState();
+}
+
+class _NewClockFormState extends State<_NewClockForm> {
+  final _name = TextEditingController();
+
+  bool get _taken => widget.existing.any((c) => c.name == _name.text.trim());
+
+  void _submit() {
+    final name = _name.text.trim();
+    if (name.isEmpty || _taken) return;
+    Navigator.pop(context, name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final name = _name.text.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FormRow(
+          label: 'Name',
+          child: MacTextField(
+            controller: _name,
+            autofocus: true,
+            hint: 'interaction, ambient, …',
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _submit(),
+          ),
+        ),
+        if (_taken)
+          Text(
+            'A domain named $name already exists.',
+            style: TextStyle(fontSize: 11, color: t.open),
+          ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            const SizedBox(width: 8),
+            MacButton.primary(label: 'Create', onPressed: name.isEmpty || _taken ? null : _submit),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+typedef NewOutputResult = ({String name, int accepts, int? clockId, bool required});
+
+/// A physical output: the boundary where a value leaves the design.
+Future<NewOutputResult?> showNewOutputSheet(
+  BuildContext context,
+  List<pb.ConceptView> concepts,
+  List<pb.ClockView> clocks,
+) {
+  return showMacSheet<NewOutputResult>(
+    context,
+    title: 'New output',
+    subtitle: 'Where a value leaves the design for the world: a light, a motor, a display.',
+    content: _NewOutputForm(concepts: concepts, clocks: clocks),
+    actions: const [],
+    width: 480,
+  );
+}
+
+class _NewOutputForm extends StatefulWidget {
+  const _NewOutputForm({required this.concepts, required this.clocks});
+  final List<pb.ConceptView> concepts;
+  final List<pb.ClockView> clocks;
+  @override
+  State<_NewOutputForm> createState() => _NewOutputFormState();
+}
+
+class _NewOutputFormState extends State<_NewOutputForm> {
+  final _name = TextEditingController();
+  int? _accepts;
+  int? _clock;
+  bool _required = true;
+
+  void _submit() {
+    final name = _name.text.trim();
+    final accepts = _accepts;
+    if (name.isEmpty || accepts == null) return;
+    Navigator.pop(context, (name: name, accepts: accepts, clockId: _clock, required: _required));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final name = _name.text.trim();
+    pb.ConceptView concept(int id) => widget.concepts.firstWhere((c) => c.id.toInt() == id);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FormRow(
+          label: 'Name',
+          child: MacTextField(
+            controller: _name,
+            autofocus: true,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _submit(),
+          ),
+        ),
+        FormRow(
+          label: 'Accepts',
+          child: MacDropdown<int>(
+            value: _accepts,
+            hint: 'the concept this output takes',
+            items: [for (final c in widget.concepts) c.id.toInt()],
+            labelOf: (c) => concept(c).name,
+            leadingOf: (c) => SocketGlyph.of(concept(c), t, size: 11),
+            onChanged: (c) => setState(() => _accepts = c),
+          ),
+        ),
+        FormRow(
+          label: 'Updates in',
+          child: MacDropdown<int>(
+            value: _clock ?? -1,
+            items: [-1, for (final c in widget.clocks) c.id.toInt()],
+            labelOf: (c) =>
+                c < 0 ? 'decide later' : widget.clocks.firstWhere((x) => x.id.toInt() == c).name,
+            onChanged: (c) => setState(() => _clock = c < 0 ? null : c),
+          ),
+        ),
+        FormRow(
+          label: 'Required',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              spacing: MacMetrics.gap,
+              children: [
+                Checkbox(
+                  value: _required,
+                  onChanged: (v) => setState(() => _required = v ?? false),
+                ),
+                Expanded(
+                  child: Text(
+                    'the design is incomplete until something drives it',
+                    style: TextStyle(fontSize: 11, color: t.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            const SizedBox(width: 8),
+            MacButton.primary(
+              label: 'Create',
+              onPressed: name.isEmpty || _accepts == null ? null : _submit,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

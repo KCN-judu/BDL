@@ -151,7 +151,139 @@ Transition reduce(AppState s, AppAction action) {
       NoSelection() => Transition(s),
       ConceptSelected(:final id) => reduce(s, DeleteConceptRequested(id)),
       MappingSelected(:final id) => reduce(s, DeleteMappingRequested(id)),
+      OutputSelected(:final id) => reduce(s, DeleteOutputRequested(id)),
     },
+
+    // ---- timing domains ---------------------------------------------------
+    CreateClockDomainRequested(:final name) => _edit(
+      s,
+      pb.EditOp(createClockDomain: pb.CreateClockDomain(name: name)),
+    ),
+    RenameClockDomainRequested(:final id, :final name) => _edit(
+      s,
+      pb.EditOp(
+        renameClockDomain: pb.RenameClockDomain(id: Int64(id), name: name),
+      ),
+    ),
+    DeleteClockDomainRequested(:final id) => _edit(
+      s,
+      pb.EditOp(deleteClockDomain: pb.DeleteClockDomain(id: Int64(id))),
+    ),
+    SetMappingClockRequested(:final mappingId, :final clockId) => _edit(
+      s,
+      pb.EditOp(
+        setMappingClock: pb.SetMappingClock(
+          id: Int64(mappingId),
+          clockId: clockId == null ? null : Int64(clockId),
+        ),
+      ),
+    ),
+
+    // ---- physical outputs -------------------------------------------------
+    CreateOutputRequested(
+      :final name,
+      :final description,
+      :final accepts,
+      :final clockId,
+      :final required,
+    ) =>
+      _createOutput(s, name, description, accepts, clockId, required),
+    RenameOutputRequested(:final id, :final name) => _edit(
+      s,
+      pb.EditOp(
+        renameOutput: pb.RenameOutput(id: Int64(id), name: name),
+      ),
+    ),
+    SetOutputAcceptsRequested(:final id, :final accepts) => _edit(
+      s,
+      pb.EditOp(
+        setOutputAccepts: pb.SetOutputAccepts(id: Int64(id), accepts: Int64(accepts)),
+      ),
+    ),
+    SetOutputClockRequested(:final id, :final clockId) => _edit(
+      s,
+      pb.EditOp(
+        setOutputClock: pb.SetOutputClock(
+          id: Int64(id),
+          clockId: clockId == null ? null : Int64(clockId),
+        ),
+      ),
+    ),
+    SetOutputRequiredRequested(:final id, :final required) => _edit(
+      s,
+      pb.EditOp(
+        setOutputRequired: pb.SetOutputRequired(id: Int64(id), required: required),
+      ),
+    ),
+    DeleteOutputRequested(:final id) => _edit(
+      s,
+      pb.EditOp(deleteOutput: pb.DeleteOutput(id: Int64(id))),
+    ),
+    SetMappingDriveRequested(:final mappingId, :final outputId) => _edit(
+      s,
+      pb.EditOp(
+        setMappingDrive: pb.SetMappingDrive(
+          id: Int64(mappingId),
+          outputId: outputId == null ? null : Int64(outputId),
+        ),
+      ),
+    ),
+
+    // ---- devices -------------------------------------------------------------
+    CreateDeviceRequested(:final name, :final kind, :final outputId) => _edit(
+      s,
+      pb.EditOp(
+        createDevice: pb.CreateDevice(
+          name: name,
+          kind: kind,
+          outputId: outputId == null ? null : Int64(outputId),
+        ),
+      ),
+    ),
+    RenameDeviceRequested(:final id, :final name) => _edit(
+      s,
+      pb.EditOp(
+        renameDevice: pb.RenameDevice(id: Int64(id), name: name),
+      ),
+    ),
+    SetDeviceKindRequested(:final id, :final kind) => _edit(
+      s,
+      pb.EditOp(
+        setDeviceKind: pb.SetDeviceKind(id: Int64(id), kind: kind),
+      ),
+    ),
+    SetDeviceOutputRequested(:final id, :final outputId) => _edit(
+      s,
+      pb.EditOp(
+        setDeviceOutput: pb.SetDeviceOutput(
+          id: Int64(id),
+          outputId: outputId == null ? null : Int64(outputId),
+        ),
+      ),
+    ),
+    SetDevicePinRequested(:final id, :final index, :final resource) => _edit(
+      s,
+      pb.EditOp(
+        setDevicePin: pb.SetDevicePin(id: Int64(id), index: index, resource: resource),
+      ),
+    ),
+    DeleteDeviceRequested(:final id) => _edit(
+      s,
+      pb.EditOp(deleteDevice: pb.DeleteDevice(id: Int64(id))),
+    ),
+
+    // ---- semantic actions (app/tooling.dart) ---------------------------------
+    SemanticActionsRequested(:final entity) => semanticActionsRequested(s, entity),
+    SemanticActionsReceived(:final generation, :final result) => semanticActionsReceived(
+      s,
+      generation,
+      result,
+    ),
+    SemanticActionApplied(:final actionId, :final option) => semanticActionApplied(
+      s,
+      actionId,
+      option,
+    ),
 
     // ---- canvas links (typed by concept identity) --------------------------
     LinkConceptToMappingInput(:final conceptId, :final mappingId) => _withMapping(s, mappingId, (
@@ -233,7 +365,7 @@ Transition reduce(AppState s, AppAction action) {
         ),
       ),
     ),
-    SelectionChanged(:final selection) => Transition(
+    SelectionChanged(:final selection) => _selected(
       s.copyWith(editor: withoutTooling(s.editor).copyWith(selection: selection)),
     ),
     NodeMoved(:final node, :final position) => _whenProject(s, () {
@@ -302,6 +434,8 @@ Transition reduce(AppState s, AppAction action) {
           pendingRequests: _dec(s),
           lastError: UserFacingError(code: code, message: message, details: details),
           drafts: draftsAfterFailedRequest(s.editor.drafts, message),
+          // a failed step ends its plan; nothing after it is sent blindly
+          queuedEdits: const [],
         ),
       ),
     ),
@@ -326,6 +460,16 @@ const int _maxRecent = 12;
 List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p) {
   final entry = RecentProject(path: p.rootPath, name: p.name, lastOpened: DateTime.now());
   return [entry, ...recent.where((r) => r.path != p.rootPath)].take(_maxRecent).toList();
+}
+
+/// After a selection (or a new revision under one): ask the service which
+/// fixes it offers for the selected object.
+Transition _selected(AppState s) {
+  final entity = s.selectedEntity;
+  if (entity == null) {
+    return Transition(s.copyWith(editor: s.editor.copyWith(clearActions: true)));
+  }
+  return semanticActionsRequested(s, entity);
 }
 
 Transition _whenConnected(AppState s, Transition Function() then) =>
@@ -353,6 +497,42 @@ Transition sendEdit(AppState s, pb.EditOp op) =>
     _whenProject(s, () => Transition(_pending(s), [ApplyEdit(baseRevision: s.revision, op: op)]));
 
 Transition _edit(AppState s, pb.EditOp op) => sendEdit(s, op);
+
+Transition _createOutput(
+  AppState s,
+  String name,
+  String description,
+  int accepts,
+  int? clockId,
+  bool required,
+) {
+  // Two facts the model keeps as two ops: create, then mark required.  The
+  // second is queued for the confirming revision.
+  final t = _edit(
+    s,
+    pb.EditOp(
+      createOutput: pb.CreateOutput(
+        name: name,
+        description: description,
+        accepts: Int64(accepts),
+        clockId: clockId == null ? null : Int64(clockId),
+      ),
+    ),
+  );
+  if (!required || t.effects.isEmpty) return t;
+  return Transition(
+    t.state.copyWith(
+      editor: t.state.editor.copyWith(queuedEdits: [...t.state.editor.queuedEdits, _markRequired]),
+    ),
+    t.effects,
+  );
+}
+
+/// A queued edit that needs the id the previous step created: resolved
+/// from the outcome when the confirming projection arrives.
+final pb.EditOp _markRequired = pb.EditOp(
+  setOutputRequired: pb.SetOutputRequired(id: Int64(-1), required: true),
+);
 
 /// Dirty drafts of the project being closed, filed under its path so a
 /// reopen restores them.
@@ -410,37 +590,73 @@ Transition _projectReceived(
       ? s.editor
       : withoutTooling(s.editor);
   return Transition(
-    s.copyWith(
-      project: incoming,
-      recent: recent,
-      clearAnalysis: !analysisStillValid,
-      editor: editor.copyWith(
-        pendingRequests: pending,
-        selection: selection,
-        layout: layout,
-        lastOutcome: outcome,
-        drafts: drafts.drafts,
-        stashedDrafts: sameProject ? stashed : ({...stashed}..remove(incoming.rootPath)),
-      ),
-    ),
-    // A freshly opened project needs a subscription for pushed changes, an
-    // analysis of what was just opened, and goes to the top of Recent.
-    // After an edit the daemon pushes AnalysisReady on its own.
-    [
-      if (!sameProject) ...[
-        const SubscribeProject(),
-        const RunAnalysis(),
-        SaveRecentProjects(recent),
-      ],
-      ...drafts.effects,
-    ],
-  );
+        s.copyWith(
+          project: incoming,
+          recent: recent,
+          clearAnalysis: !analysisStillValid,
+          editor: editor.copyWith(
+            pendingRequests: pending,
+            selection: selection,
+            layout: layout,
+            lastOutcome: outcome,
+            drafts: drafts.drafts,
+            stashedDrafts: sameProject ? stashed : ({...stashed}..remove(incoming.rootPath)),
+          ),
+        ),
+        // A freshly opened project needs a subscription for pushed changes, an
+        // analysis of what was just opened, and goes to the top of Recent.
+        // After an edit the daemon pushes AnalysisReady on its own.
+        [
+          if (!sameProject) ...[
+            const SubscribeProject(),
+            const RunAnalysis(),
+            SaveRecentProjects(recent),
+          ],
+          ...drafts.effects,
+        ],
+      )
+      .thenQueued(fromRequest && sameProject ? outcome : null)
+      .thenActions(changed: !sameProject || incoming.revision != current.revision);
+}
+
+extension on Transition {
+  /// The actions on screen are about a revision; a new one re-asks for
+  /// the selection (drafts are unaffected: they carry their own requests).
+  Transition thenActions({required bool changed}) {
+    if (!changed) return this;
+    final t = _selected(state);
+    return Transition(t.state, [...effects, ...t.effects]);
+  }
+
+  /// A multi-step plan sends its next edit once the previous one is
+  /// confirmed, against the revision just received.  A queued edit whose
+  /// id is the created entity of the previous step is resolved here.
+  Transition thenQueued(pb.EditOutcome? outcome) {
+    final queue = state.editor.queuedEdits;
+    if (queue.isEmpty || state.project == null || outcome == null) return this;
+    var next = queue.first;
+    if (next.hasSetOutputRequired() && next.setOutputRequired.id.toInt() < 0) {
+      if (!outcome.hasCreatedOutput()) {
+        return Transition(
+          state.copyWith(editor: state.editor.copyWith(queuedEdits: const [])),
+          effects,
+        );
+      }
+      next = pb.EditOp(
+        setOutputRequired: pb.SetOutputRequired(id: outcome.createdOutput, required: true),
+      );
+    }
+    final rest = queue.sublist(1);
+    final sent = sendEdit(state.copyWith(editor: state.editor.copyWith(queuedEdits: rest)), next);
+    return Transition(sent.state, [...effects, ...sent.effects]);
+  }
 }
 
 bool _selectionStillValid(Selection sel, pb.ProjectProjection p) => switch (sel) {
   NoSelection() => true,
   ConceptSelected(:final id) => p.concepts.any((c) => c.id.toInt() == id),
   MappingSelected(:final id) => p.mappings.any((m) => m.id.toInt() == id),
+  OutputSelected(:final id) => p.outputs.any((o) => o.id.toInt() == id),
 };
 
 List<String> _appendLog(List<String> log, String line) {
@@ -451,6 +667,7 @@ List<String> _appendLog(List<String> log, String line) {
 Map<NodeRef, Offset> layoutFromPb(pb.Layout l) => {
   for (final n in l.concepts) NodeRef.concept(n.id.toInt()): Offset(n.x, n.y),
   for (final n in l.mappings) NodeRef.mapping(n.id.toInt()): Offset(n.x, n.y),
+  for (final n in l.outputs) NodeRef.output(n.id.toInt()): Offset(n.x, n.y),
 };
 
 pb.Layout layoutToPb(Map<NodeRef, Offset> layout) {
@@ -465,6 +682,10 @@ pb.Layout layoutToPb(Map<NodeRef, Offset> layout) {
     mappings: [
       for (final e in entries)
         if (e.key.kind == NodeKind.mapping) pos(e),
+    ],
+    outputs: [
+      for (final e in entries)
+        if (e.key.kind == NodeKind.output) pos(e),
     ],
   );
 }

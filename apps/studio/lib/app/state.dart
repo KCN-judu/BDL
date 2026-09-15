@@ -10,6 +10,7 @@ library;
 
 import 'dart:ui' show Offset;
 
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -17,7 +18,7 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 /// The workflow pages, in workflow order (docs/STUDIO_UI.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
-enum NodeKind { concept, mapping }
+enum NodeKind { concept, mapping, output }
 
 /// A node on the canvas, identified by kind + stable id.
 @immutable
@@ -25,6 +26,7 @@ class NodeRef {
   const NodeRef(this.kind, this.id);
   const NodeRef.concept(int id) : this(NodeKind.concept, id);
   const NodeRef.mapping(int id) : this(NodeKind.mapping, id);
+  const NodeRef.output(int id) : this(NodeKind.output, id);
   final NodeKind kind;
   final int id;
 
@@ -103,6 +105,38 @@ class ConceptSelected extends Selection {
 class MappingSelected extends Selection {
   const MappingSelected(this.id);
   final int id;
+}
+
+class OutputSelected extends Selection {
+  const OutputSelected(this.id);
+  final int id;
+}
+
+/// The semantic actions the service offers for one entity at one revision:
+/// the fixes for its diagnostics and its context actions.
+@immutable
+class SemanticActionsState {
+  const SemanticActionsState({
+    required this.entity,
+    required this.revision,
+    required this.generation,
+    this.actions = const [],
+    this.pending = true,
+  });
+  final pb.EntityRef entity;
+  final int revision;
+  final int generation;
+  final List<pb.SemanticActionView> actions;
+  final bool pending;
+
+  SemanticActionsState copyWith({List<pb.SemanticActionView>? actions, bool? pending}) =>
+      SemanticActionsState(
+        entity: entity,
+        revision: revision,
+        generation: generation,
+        actions: actions ?? this.actions,
+        pending: pending ?? this.pending,
+      );
 }
 
 /// How far the compiler has got with a draft's current source.
@@ -310,6 +344,8 @@ class EditorState {
     this.completion,
     this.hover,
     this.toolingGeneration = 0,
+    this.actions,
+    this.queuedEdits = const [],
   });
 
   final StudioPage page;
@@ -349,9 +385,16 @@ class EditorState {
   /// The hover card being shown or fetched, if any.
   final HoverState? hover;
 
-  /// Monotonic tag for completion and hover requests; only the latest
-  /// answer of each is applied.
+  /// Monotonic tag for completion, hover and action requests; only the
+  /// latest answer of each is applied.
   final int toolingGeneration;
+
+  /// The service's actions for the selected entity, if asked.
+  final SemanticActionsState? actions;
+
+  /// Model edits of a multi-step plan still to send, one per confirmed
+  /// revision (an edit is always sent against the revision Studio holds).
+  final List<pb.EditOp> queuedEdits;
 
   EditorState copyWith({
     StudioPage? page,
@@ -370,6 +413,9 @@ class EditorState {
     HoverState? hover,
     bool clearHover = false,
     int? toolingGeneration,
+    SemanticActionsState? actions,
+    bool clearActions = false,
+    List<pb.EditOp>? queuedEdits,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -384,6 +430,8 @@ class EditorState {
       completion: clearCompletion ? null : (completion ?? this.completion),
       hover: clearHover ? null : (hover ?? this.hover),
       toolingGeneration: toolingGeneration ?? this.toolingGeneration,
+      actions: clearActions ? null : (actions ?? this.actions),
+      queuedEdits: queuedEdits ?? this.queuedEdits,
     );
   }
 }
@@ -450,6 +498,24 @@ class AppState {
   }
 
   DefinitionDraft? draft(int id) => editor.drafts[id];
+
+  pb.OutputView? output(int id) => project?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
+
+  pb.ClockView? clock(int id) => project?.clocks.where((c) => c.id.toInt() == id).firstOrNull;
+
+  String? clockName(int? id) => id == null ? null : clock(id)?.name;
+
+  /// The output pass verdict for one sink at the current revision.
+  pb.OutputAnalysis? outputAnalysis(int id) =>
+      analysis?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
+
+  /// The selected entity, by identity, for service queries.
+  pb.EntityRef? get selectedEntity => switch (editor.selection) {
+    NoSelection() => null,
+    ConceptSelected(:final id) => pb.EntityRef(conceptId: Int64(id)),
+    MappingSelected(:final id) => pb.EntityRef(mappingId: Int64(id)),
+    OutputSelected(:final id) => pb.EntityRef(outputId: Int64(id)),
+  };
 
   AppState copyWith({
     DaemonConnection? connection,

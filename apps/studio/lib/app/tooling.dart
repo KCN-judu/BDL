@@ -9,7 +9,7 @@ library;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'effects.dart';
-import 'reducer.dart' show Transition;
+import 'reducer.dart' show Transition, sendEdit;
 import 'state.dart';
 
 Transition completionRequested(AppState s, int mappingId, String source, int offset) {
@@ -149,3 +149,59 @@ Transition toolingFailed(AppState s, int generation) {
 EditorState withoutTooling(EditorState e) => e.completion == null && e.hover == null
     ? e
     : e.copyWith(clearCompletion: true, clearHover: true);
+
+// ---- semantic actions --------------------------------------------------------
+
+Transition semanticActionsRequested(AppState s, pb.EntityRef entity) {
+  if (s.project == null) return Transition(s);
+  final a = s.editor.actions;
+  if (a != null && a.entity == entity && a.revision == s.revision) return Transition(s);
+  final generation = s.editor.toolingGeneration + 1;
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(
+        actions: SemanticActionsState(entity: entity, revision: s.revision, generation: generation),
+        toolingGeneration: generation,
+      ),
+    ),
+    [ListSemanticActions(revision: s.revision, entity: entity, generation: generation)],
+  );
+}
+
+Transition semanticActionsReceived(AppState s, int generation, pb.SemanticActionsResponse r) {
+  final a = s.editor.actions;
+  if (a == null || generation != a.generation || r.revision.toInt() != s.revision) {
+    return Transition(s);
+  }
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(actions: a.copyWith(actions: r.actions, pending: false)),
+    ),
+  );
+}
+
+/// Apply an action: the first model edit now, the rest queued for the
+/// confirming revisions.  A blocked action, or a choice not made, applies
+/// nothing.
+Transition semanticActionApplied(AppState s, String actionId, int? option) {
+  final a = s.editor.actions;
+  final action = a?.actions.where((x) => x.id == actionId).firstOrNull;
+  if (a == null || action == null || a.revision != s.revision) return Transition(s);
+  final List<pb.EditOp> edits = switch (action.applicability) {
+    pb.ActionApplicability.ACTION_APPLICABILITY_READY => action.edits,
+    pb.ActionApplicability.ACTION_APPLICABILITY_NEEDS_CHOICE =>
+      option != null && option >= 0 && option < action.options.length
+          ? [action.options[option].edit]
+          : const [],
+    _ => const [],
+  };
+  if (edits.isEmpty) return Transition(s);
+  final t = sendEdit(s, edits.first);
+  if (t.effects.isEmpty) return t;
+  return Transition(
+    t.state.copyWith(
+      editor: t.state.editor.copyWith(queuedEdits: edits.sublist(1), clearActions: true),
+    ),
+    t.effects,
+  );
+}

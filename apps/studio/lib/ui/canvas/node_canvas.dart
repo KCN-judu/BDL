@@ -24,6 +24,7 @@ class NodeCanvas extends StatefulWidget {
     required this.selection,
     required this.dispatch,
     this.statuses = const {},
+    this.outputStates = const {},
   });
 
   final pb.ProjectProjection project;
@@ -34,6 +35,9 @@ class NodeCanvas extends StatefulWidget {
   /// Compiler verdicts per mapping id, when an analysis of this revision
   /// exists.
   final Map<int, pb.MappingStatus> statuses;
+
+  /// The output pass per sink id, when an analysis of this revision exists.
+  final Map<int, pb.OutputState> outputStates;
 
   @override
   State<NodeCanvas> createState() => _NodeCanvasState();
@@ -68,9 +72,16 @@ class _NodeCanvasState extends State<NodeCanvas> {
     super.dispose();
   }
 
+  CanvasScene _scene(Map<NodeRef, Offset> layout) => buildScene(
+    widget.project,
+    layout,
+    statuses: widget.statuses,
+    outputStates: widget.outputStates,
+  );
+
   Map<NodeRef, Offset> get _effectiveLayout {
     if (_draggingNode == null) return widget.layout;
-    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
+    final scene = _scene(widget.layout);
     final base =
         widget.layout[_draggingNode!] ??
         scene.nodes.firstWhere((n) => n.ref == _draggingNode).rect.topLeft;
@@ -91,7 +102,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   void _onHover(PointerHoverEvent e) {
-    final scene = buildScene(widget.project, _effectiveLayout, statuses: widget.statuses);
+    final scene = _scene(_effectiveLayout);
     final hit = hitTest(scene, _toScene(e.localPosition));
     final (NodeRef? node, SocketRef? socket) = switch (hit) {
       HitSocket(:final socket, :final node) => (node.ref, socket.ref),
@@ -108,7 +119,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   void _onPanStart(DragStartDetails d) {
     _focus.requestFocus();
-    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
+    final scene = _scene(widget.layout);
     final p = _toScene(d.localPosition);
     switch (hitTest(scene, p)) {
       case HitSocket(:final socket):
@@ -137,10 +148,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         _linkDrag!.current = p;
         // Hover is not reported while a button is down; track the socket
         // under the dragged link end so the cursor can refuse an illegal one.
-        final hit = hitTest(
-          buildScene(widget.project, widget.layout, statuses: widget.statuses),
-          p,
-        );
+        final hit = hitTest(_scene(widget.layout), p);
         _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
       } else if (_draggingNode != null) {
         _dragDelta += d.delta / _zoom;
@@ -153,14 +161,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _onPanEnd(DragEndDetails d) {
     final link = _linkDrag;
     if (link != null) {
-      final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
+      final scene = _scene(widget.layout);
       final target = dropTarget(scene, link.from, link.current);
       if (target != null) {
         _makeLink(link.from, target.ref);
       } else if (link.fromConnectedInput && hitTest(scene, link.current) is HitNothing) {
-        widget.dispatch(
-          UnlinkMappingInput(mappingId: link.from.node.id, conceptId: link.from.concept),
-        );
+        _unlink(scene, link.from);
       }
     }
     final node = _draggingNode;
@@ -176,23 +182,42 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   /// A link is always output → input in data-flow terms, whichever end was
-  /// dragged first.
+  /// dragged first.  Into a sink it is a drive: the mapping commits to the
+  /// world there.
   void _makeLink(SocketRef a, SocketRef b) {
     final (out, inp) = a.side == SocketSide.output ? (a, b) : (b, a);
     if (out.node.kind == NodeKind.concept && inp.node.kind == NodeKind.mapping) {
       widget.dispatch(LinkConceptToMappingInput(conceptId: out.concept, mappingId: inp.node.id));
     } else if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.concept) {
       widget.dispatch(LinkMappingOutputToConcept(mappingId: out.node.id, conceptId: inp.concept));
+    } else if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.output) {
+      widget.dispatch(SetMappingDriveRequested(mappingId: out.node.id, outputId: inp.node.id));
+    }
+  }
+
+  /// Dragging a connected input away into empty space disconnects it: a
+  /// mapping's read, or a sink's driver (the mapping stops driving).
+  void _unlink(CanvasScene scene, SocketRef input) {
+    switch (input.node.kind) {
+      case NodeKind.mapping:
+        widget.dispatch(UnlinkMappingInput(mappingId: input.node.id, conceptId: input.concept));
+      case NodeKind.output:
+        for (final l in scene.links.where((l) => l.to == input)) {
+          widget.dispatch(SetMappingDriveRequested(mappingId: l.from.node.id, outputId: null));
+        }
+      case NodeKind.concept:
+        break;
     }
   }
 
   Selection _select(NodeRef ref) => switch (ref.kind) {
     NodeKind.concept => ConceptSelected(ref.id),
     NodeKind.mapping => MappingSelected(ref.id),
+    NodeKind.output => OutputSelected(ref.id),
   };
 
   void _frameAll(Size viewport) {
-    final scene = buildScene(widget.project, widget.layout, statuses: widget.statuses);
+    final scene = _scene(widget.layout);
     final b = scene.bounds.inflate(40);
     final zoom = (viewport.width / b.width).clamp(0.25, 1.0).clamp(0.0, viewport.height / b.height);
     setState(() {
@@ -207,10 +232,11 @@ class _NodeCanvasState extends State<NodeCanvas> {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final scene = buildScene(widget.project, _effectiveLayout, statuses: widget.statuses);
+    final scene = _scene(_effectiveLayout);
     final selected = switch (widget.selection) {
       ConceptSelected(:final id) => NodeRef.concept(id),
       MappingSelected(:final id) => NodeRef.mapping(id),
+      OutputSelected(:final id) => NodeRef.output(id),
       NoSelection() => null,
     };
 
@@ -423,6 +449,18 @@ class _CanvasPainter extends CustomPainter {
             ? 'definition does not check'
             : 'defined';
         return '${n.title}, relationship, reads $reads, produces $produces, $state';
+      case NodeKind.output:
+        final accepts = n.socketLabels.values.join(', ');
+        final state = switch (n.sink) {
+          SinkState.open => 'no timing domain yet',
+          SinkState.undriven => 'undriven',
+          SinkState.driven => 'driven',
+          SinkState.illFormed => 'driven by an ill-formed connection',
+          SinkState.contested => 'contested by several drivers',
+          null => '',
+        };
+        return '${n.title}, physical output, accepts $accepts, '
+            '${n.required ? 'required' : 'optional'}, $state';
     }
   }
 
@@ -487,10 +525,12 @@ class NodePainter {
     );
     canvas.drawRRect(rrect, Paint()..color = tokens.content);
 
-    // Category tint: the whole concept object, the mapping's header strip.
+    // Category tint: the whole concept object, the mapping's header strip,
+    // a warmer strip for the physical boundary.
     final headerColor = switch (n.ref.kind) {
       NodeKind.concept => tokens.isDark ? const Color(0xFF3A4556) : const Color(0xFFDCE3EE),
       NodeKind.mapping => tokens.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5),
+      NodeKind.output => tokens.isDark ? const Color(0xFF4A4030) : const Color(0xFFEFE3CF),
     };
     canvas.save();
     canvas.clipRRect(rrect);
@@ -510,10 +550,25 @@ class NodePainter {
           : n.declared
           ? tokens.textTertiary
           : tokens.hairline;
-    if (n.declared) {
-      _dashedRRect(canvas, rrect, outline);
+    // An undriven or open sink is incomplete, not wrong: dashed like a
+    // declared mapping.
+    final dashed = n.declared || n.sink == SinkState.open || n.sink == SinkState.undriven;
+    if (dashed) {
+      _dashedRRect(canvas, rrect, outline..color = selected ? tokens.accent : tokens.textTertiary);
     } else {
       canvas.drawRRect(rrect, outline);
+    }
+    // The physical boundary: a solid bar on the sink's right edge — to the
+    // right of it is the world, and nothing reads from there.
+    if (n.ref.kind == NodeKind.output) {
+      canvas.drawLine(
+        n.rect.topRight + const Offset(-1, NodeMetrics.cornerRadius),
+        n.rect.bottomRight + const Offset(-1, -NodeMetrics.cornerRadius),
+        Paint()
+          ..color = selected ? tokens.accent : tokens.textSecondary
+          ..strokeWidth = 3
+          ..strokeCap = StrokeCap.round,
+      );
     }
 
     _text(
@@ -525,14 +580,42 @@ class NodePainter {
       tokens.textPrimary,
       maxWidth: n.rect.width - (n.declared ? 78 : 24),
     );
-    if (n.declared) {
+    // The header's right word is object state in words only where the
+    // geometry cannot carry it: a declared mapping, an open or contested
+    // sink, a required sink.
+    final headerWord = n.declared
+        ? 'declared'
+        : switch (n.sink) {
+            SinkState.open => 'no domain',
+            SinkState.contested => 'contested',
+            SinkState.illFormed => 'ill-formed',
+            _ => n.required ? 'required' : '',
+          };
+    if (headerWord.isNotEmpty) {
       _text(
         canvas,
-        'declared',
+        headerWord,
         n.header.topRight + const Offset(-10, 8),
         FontWeight.w400,
         10,
-        tokens.textSecondary,
+        n.sink == SinkState.contested || n.sink == SinkState.illFormed
+            ? tokens.error
+            : tokens.textSecondary,
+        alignRight: true,
+      );
+    }
+    // The timing domain, quietly, at the body's right edge.
+    if (n.timing.isNotEmpty) {
+      final at = n.ref.kind == NodeKind.mapping
+          ? n.definitionRegion.topRight + const Offset(-10, 5)
+          : n.rect.bottomRight + const Offset(-12, -NodeMetrics.rowHeight + 5);
+      _text(
+        canvas,
+        '↻ ${n.timing}',
+        at,
+        FontWeight.w400,
+        10,
+        tokens.textTertiary,
         alignRight: true,
       );
     }
@@ -590,7 +673,7 @@ class NodePainter {
           FontWeight.w400,
           11,
           n.wrong ? tokens.textPrimary : tokens.textSecondary,
-          maxWidth: region.right - 10 - left,
+          maxWidth: region.right - 10 - left - (n.timing.isEmpty ? 0 : 64),
         );
       }
     }

@@ -224,6 +224,137 @@ class DeleteMappingRequested extends UserAction {
   final int id;
 }
 
+// ---- timing domains, outputs, devices ---------------------------------------
+
+class CreateClockDomainRequested extends UserAction {
+  const CreateClockDomainRequested(this.name);
+  final String name;
+}
+
+class RenameClockDomainRequested extends UserAction {
+  const RenameClockDomainRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class DeleteClockDomainRequested extends UserAction {
+  const DeleteClockDomainRequested(this.id);
+  final int id;
+}
+
+/// `clockId == null` makes the mapping domain-agnostic (pure).
+class SetMappingClockRequested extends UserAction {
+  const SetMappingClockRequested({required this.mappingId, required this.clockId});
+  final int mappingId;
+  final int? clockId;
+}
+
+class CreateOutputRequested extends UserAction {
+  const CreateOutputRequested({
+    required this.name,
+    required this.accepts,
+    this.description = '',
+    this.clockId,
+    this.required = false,
+  });
+  final String name;
+  final String description;
+  final int accepts;
+  final int? clockId;
+  final bool required;
+}
+
+class RenameOutputRequested extends UserAction {
+  const RenameOutputRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetOutputAcceptsRequested extends UserAction {
+  const SetOutputAcceptsRequested({required this.id, required this.accepts});
+  final int id;
+  final int accepts;
+}
+
+class SetOutputClockRequested extends UserAction {
+  const SetOutputClockRequested({required this.id, required this.clockId});
+  final int id;
+  final int? clockId;
+}
+
+class SetOutputRequiredRequested extends UserAction {
+  const SetOutputRequiredRequested({required this.id, required this.required});
+  final int id;
+  final bool required;
+}
+
+class DeleteOutputRequested extends UserAction {
+  const DeleteOutputRequested(this.id);
+  final int id;
+}
+
+/// Connect a mapping as the driver of an output, or (`outputId == null`)
+/// disconnect it from whatever it drives.
+class SetMappingDriveRequested extends UserAction {
+  const SetMappingDriveRequested({required this.mappingId, required this.outputId});
+  final int mappingId;
+  final int? outputId;
+}
+
+class CreateDeviceRequested extends UserAction {
+  const CreateDeviceRequested({required this.name, required this.kind, this.outputId});
+  final String name;
+  final pb.DeviceKind kind;
+  final int? outputId;
+}
+
+class RenameDeviceRequested extends UserAction {
+  const RenameDeviceRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetDeviceKindRequested extends UserAction {
+  const SetDeviceKindRequested({required this.id, required this.kind});
+  final int id;
+  final pb.DeviceKind kind;
+}
+
+class SetDeviceOutputRequested extends UserAction {
+  const SetDeviceOutputRequested({required this.id, required this.outputId});
+  final int id;
+  final int? outputId;
+}
+
+class SetDevicePinRequested extends UserAction {
+  const SetDevicePinRequested({required this.id, required this.index, required this.resource});
+  final int id;
+  final int index;
+  final String? resource;
+}
+
+class DeleteDeviceRequested extends UserAction {
+  const DeleteDeviceRequested(this.id);
+  final int id;
+}
+
+// ---- semantic actions ---------------------------------------------------------
+
+/// Ask the service which fixes and context actions it offers for the
+/// selected entity.
+class SemanticActionsRequested extends UserAction {
+  const SemanticActionsRequested(this.entity);
+  final pb.EntityRef entity;
+}
+
+/// Apply a ready action's model edits (one revisioned edit each, in order),
+/// or the chosen option of a needs-choice action.
+class SemanticActionApplied extends UserAction {
+  const SemanticActionApplied({required this.actionId, this.option});
+  final String actionId;
+  final int? option;
+}
+
 /// Delete whatever is selected.
 class DeleteSelectionRequested extends UserAction {
   const DeleteSelectionRequested();
@@ -368,6 +499,12 @@ class ToolingFailed extends ResponseAction {
   final int generation;
   final String code;
   final String message;
+}
+
+class SemanticActionsReceived extends ResponseAction {
+  const SemanticActionsReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.SemanticActionsResponse result;
 }
 
 class RecentProjectsLoaded extends ResponseAction {

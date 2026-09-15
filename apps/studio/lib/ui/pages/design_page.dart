@@ -38,6 +38,10 @@ class DesignPage extends StatelessWidget {
                     for (final m in state.analysis?.mappings ?? const <pb.MappingAnalysis>[])
                       m.id.toInt(): m.status,
                   },
+                  outputStates: {
+                    for (final o in state.analysis?.outputs ?? const <pb.OutputAnalysis>[])
+                      o.id.toInt(): o.state,
+                  },
                 ),
         ),
         VerticalDivider(width: 1, color: t.hairline),
