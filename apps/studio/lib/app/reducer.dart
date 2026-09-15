@@ -172,6 +172,20 @@ Transition reduce(AppState s, AppAction action) {
       return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
     }(),
     RecentProjectsLoaded(:final recent) => Transition(s.copyWith(recent: recent)),
+    PickerUnavailable() => Transition(
+      s.copyWith(
+        editor: s.editor.copyWith(
+          pickerUnavailable: true,
+          lastError: const UserFacingError(
+            code: 'studio.picker_unavailable',
+            message:
+                'The system file dialog could not be shown. This happens when Studio is '
+                'launched from a sandboxed host (an embedded terminal, for example). '
+                'Launch it from Finder or Terminal, or enter a path below.',
+          ),
+        ),
+      ),
+    ),
     SelectionChanged(:final selection) => Transition(
       s.copyWith(editor: s.editor.copyWith(selection: selection)),
     ),

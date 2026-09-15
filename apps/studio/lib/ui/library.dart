@@ -8,6 +8,7 @@ import '../app/actions.dart';
 import '../app/state.dart';
 import 'canvas/canvas_geometry.dart' show stateWord;
 import 'dialogs.dart';
+import 'mac/interactive.dart';
 import 'mac/tokens.dart';
 
 class Library extends StatelessWidget {
@@ -121,16 +122,12 @@ class _Row extends StatelessWidget {
     final t = MacTokens.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: InkWell(
+      child: MacInteractive(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(5),
-        child: Container(
+        selected: selected,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: SizedBox(
           height: MacMetrics.rowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: selected ? t.selection : null,
-            borderRadius: BorderRadius.circular(5),
-          ),
           child: Row(
             children: [
               Container(
@@ -144,8 +141,9 @@ class _Row extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(child: Text(title, overflow: TextOverflow.ellipsis)),
-              if (trailing != null)
-                Text(trailing!, style: TextStyle(fontSize: 10, color: t.textTertiary)),
+              ?trailing == null
+                  ? null
+                  : Text(trailing!, style: TextStyle(fontSize: 10, color: t.textTertiary)),
             ],
           ),
         ),

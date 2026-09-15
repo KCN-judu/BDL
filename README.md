@@ -45,7 +45,8 @@ Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`, which also pulls
 
 ```bash
 just check          # fmt, clippy, tests, Flutter analyze/test, proto drift
-just studio         # build bdld and run Studio against it (macOS)
+just studio         # build bdld and run Studio against it (run from Terminal/Finder-launched
+                    # shells: macOS refuses file dialogs to children of sandboxed hosts)
 just bdld           # run the daemon on stdio for manual experiments
 ```
 

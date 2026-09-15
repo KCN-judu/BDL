@@ -114,6 +114,7 @@ class EditorState {
     this.pendingRequests = 0,
     this.lastError,
     this.lastOutcome,
+    this.pickerUnavailable = false,
   });
 
   final StudioPage page;
@@ -133,6 +134,10 @@ class EditorState {
   /// the inspector so the paper's distinction is visible where one acts.
   final pb.EditOutcome? lastOutcome;
 
+  /// The OS file dialog could not be shown (e.g. Studio launched from a
+  /// sandboxed host); the welcome screen then offers typing a path.
+  final bool pickerUnavailable;
+
   EditorState copyWith({
     StudioPage? page,
     Selection? selection,
@@ -142,6 +147,7 @@ class EditorState {
     bool clearError = false,
     pb.EditOutcome? lastOutcome,
     bool clearOutcome = false,
+    bool? pickerUnavailable,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -150,6 +156,7 @@ class EditorState {
       pendingRequests: pendingRequests ?? this.pendingRequests,
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastOutcome: clearOutcome ? null : (lastOutcome ?? this.lastOutcome),
+      pickerUnavailable: pickerUnavailable ?? this.pickerUnavailable,
     );
   }
 }

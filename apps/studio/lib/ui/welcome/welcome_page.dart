@@ -11,6 +11,8 @@ import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../platform/desktop.dart';
 import '../../protocol/versions.dart';
+import '../dialogs.dart';
+import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import 'hero_mark.dart';
 
@@ -39,7 +41,11 @@ class WelcomePage extends StatelessWidget {
               // The hero keeps a fixed aspect ratio and fills the column.
               AspectRatio(aspectRatio: 1.15, child: HeroMark(version: kStudioVersion)),
               const SizedBox(height: 24),
-              _Start(connected: connected, dispatch: dispatch),
+              _Start(
+                connected: connected,
+                dispatch: dispatch,
+                pathFallback: state.editor.pickerUnavailable,
+              ),
             ],
           );
           final recent = _Recent(state: state, dispatch: dispatch);
@@ -81,9 +87,12 @@ class WelcomePage extends StatelessWidget {
 }
 
 class _Start extends StatelessWidget {
-  const _Start({required this.connected, required this.dispatch});
+  const _Start({required this.connected, required this.dispatch, this.pathFallback = false});
   final bool connected;
   final void Function(AppAction) dispatch;
+
+  /// Offer typed paths when the OS dialog cannot be shown.
+  final bool pathFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -93,20 +102,44 @@ class _Start extends StatelessWidget {
       children: [
         Text('Start', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
-        _StartLink(
+        MacLink(
           icon: Icons.add_box_outlined,
           label: 'New Project…',
-          shortcutLabel: shortcut('N'),
+          shortcut: shortcut('N'),
           enabled: connected,
           onTap: () => dispatch(const NewProjectPickRequested()),
         ),
-        _StartLink(
+        MacLink(
           icon: Icons.folder_open_outlined,
           label: 'Open Project…',
-          shortcutLabel: shortcut('O'),
+          shortcut: shortcut('O'),
           enabled: connected,
           onTap: () => dispatch(const OpenProjectPickRequested()),
         ),
+        if (pathFallback) ...[
+          MacLink(
+            icon: Icons.keyboard_outlined,
+            label: 'Open by path…',
+            enabled: connected,
+            onTap: () async {
+              final path = await showPathSheet(context, title: 'Open project by path');
+              if (path != null && path.isNotEmpty) dispatch(OpenProjectRequested(path));
+            },
+          ),
+          MacLink(
+            icon: Icons.keyboard_outlined,
+            label: 'New at path…',
+            enabled: connected,
+            onTap: () async {
+              final path = await showPathSheet(context, title: 'Create project at path');
+              if (path != null && path.isNotEmpty) {
+                dispatch(
+                  NewProjectRequested(rootPath: path, name: path.split(RegExp(r'[/\\]')).last),
+                );
+              }
+            },
+          ),
+        ],
         if (!connected)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -116,43 +149,6 @@ class _Start extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _StartLink extends StatelessWidget {
-  const _StartLink({
-    required this.icon,
-    required this.label,
-    required this.shortcutLabel,
-    required this.enabled,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final String shortcutLabel;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final color = enabled ? t.accent : t.textTertiary;
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(5),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(fontSize: 13, color: color)),
-            const SizedBox(width: 10),
-            Text(shortcutLabel, style: TextStyle(fontSize: 11, color: t.textTertiary)),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -219,62 +215,50 @@ class _RecentRowState extends State<_RecentRow> {
     final r = widget.project;
     final missing = !Directory(r.path).existsSync();
     final canOpen = widget.enabled && !missing;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: InkWell(
-        onTap: canOpen ? widget.onOpen : null,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: _hover ? t.controlHover : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+    return MacInteractive(
+      onTap: canOpen ? widget.onOpen : null,
+      radius: 6,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      onHoverChanged: (v) => setState(() => _hover = v),
+      child: Row(
+        children: [
+          Icon(
+            missing ? Icons.folder_off_outlined : Icons.folder_outlined,
+            size: 18,
+            color: missing ? t.textTertiary : t.accent,
           ),
-          child: Row(
-            children: [
-              Icon(
-                missing ? Icons.folder_off_outlined : Icons.folder_outlined,
-                size: 18,
-                color: missing ? t.textTertiary : t.accent,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.name,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: missing ? t.textTertiary : t.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      missing ? '${r.path}  ·  not found' : r.path,
-                      style: TextStyle(fontSize: 11, color: t.textTertiary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (_hover)
-                IconButton(
-                  icon: const Icon(Icons.close, size: 14),
-                  tooltip: 'Remove from Recent',
-                  onPressed: widget.onRemove,
-                  constraints: const BoxConstraints.tightFor(width: 22, height: 22),
-                )
-              else
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  relativeTime(r.lastOpened),
-                  style: TextStyle(fontSize: 11, color: t.textTertiary),
+                  r.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: missing ? t.textTertiary : t.textPrimary,
+                  ),
                 ),
-            ],
+                Text(
+                  missing ? '${r.path}  ·  not found' : r.path,
+                  style: TextStyle(fontSize: 11, color: t.textTertiary),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          if (_hover || missing)
+            IconButton(
+              icon: const Icon(Icons.close, size: 14),
+              tooltip: 'Remove from Recent',
+              onPressed: widget.onRemove,
+              constraints: const BoxConstraints.tightFor(width: 22, height: 22),
+            )
+          else
+            Text(relativeTime(r.lastOpened), style: TextStyle(fontSize: 11, color: t.textTertiary)),
+        ],
       ),
     );
   }

@@ -30,6 +30,7 @@ ThemeData macTheme(Brightness brightness) {
   );
   final text = base.textTheme.apply(bodyColor: t.textPrimary, displayColor: t.textPrimary);
   const body = 13.0;
+  final states = MacStates(t);
   return base.copyWith(
     extensions: [t],
     textTheme: text.copyWith(
@@ -78,23 +79,34 @@ ThemeData macTheme(Brightness brightness) {
       labelStyle: TextStyle(fontSize: 11, color: t.textSecondary),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(0, MacMetrics.controlHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        textStyle: const TextStyle(fontSize: body, fontWeight: FontWeight.w500),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      ),
+      style:
+          FilledButton.styleFrom(
+            minimumSize: const Size(0, MacMetrics.controlHeight),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            textStyle: const TextStyle(fontSize: body, fontWeight: FontWeight.w500),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+            animationDuration: MacStates.duration,
+          ).copyWith(
+            overlayColor: states.overlay(onAccent: true),
+            side: states.focusRing(),
+            mouseCursor: states.cursor,
+          ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, MacMetrics.controlHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        foregroundColor: t.textPrimary,
-        backgroundColor: t.control,
-        side: BorderSide(color: t.hairline),
-        textStyle: const TextStyle(fontSize: body),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            minimumSize: const Size(0, MacMetrics.controlHeight),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            foregroundColor: t.textPrimary,
+            backgroundColor: t.control,
+            textStyle: const TextStyle(fontSize: body),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+            animationDuration: MacStates.duration,
+          ).copyWith(
+            overlayColor: states.overlay(),
+            side: states.focusRing(rest: BorderSide(color: t.hairline)),
+            mouseCursor: states.cursor,
+          ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
@@ -102,7 +114,8 @@ ThemeData macTheme(Brightness brightness) {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         foregroundColor: t.accent,
         textStyle: const TextStyle(fontSize: body),
-      ),
+        animationDuration: MacStates.duration,
+      ).copyWith(overlayColor: states.overlay(), mouseCursor: states.cursor),
     ),
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
@@ -110,8 +123,47 @@ ThemeData macTheme(Brightness brightness) {
         minimumSize: const Size(28, 28),
         padding: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      ),
+        animationDuration: MacStates.duration,
+      ).copyWith(overlayColor: states.overlay(), mouseCursor: states.cursor),
     ),
+    sliderTheme: SliderThemeData(
+      trackHeight: 4,
+      activeTrackColor: t.accent,
+      inactiveTrackColor: t.hairline,
+      thumbColor: t.control,
+      overlayColor: t.accent.withValues(alpha: 0.12),
+      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, elevation: 1),
+    ),
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected) ? t.accent : t.control,
+      ),
+      checkColor: const WidgetStatePropertyAll(Colors.white),
+      side: BorderSide(color: t.hairline),
+      overlayColor: states.overlay(),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+      visualDensity: VisualDensity.compact,
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      trackColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected) ? t.accent : t.hairline,
+      ),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      overlayColor: states.overlay(),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: t.content,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: BorderSide(color: t.hairline),
+      ),
+      textStyle: TextStyle(fontSize: body, color: t.textPrimary),
+      menuPadding: const EdgeInsets.symmetric(vertical: 4),
+    ),
+    focusColor: t.accent.withValues(alpha: 0.25),
     listTileTheme: ListTileThemeData(
       dense: true,
       minVerticalPadding: 2,
@@ -138,4 +190,55 @@ ThemeData macTheme(Brightness brightness) {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
     ),
   );
+}
+
+/// The interaction-state standard (docs/STUDIO_UI.md §6), as
+/// `WidgetStateProperty`s every control theme shares:
+///
+/// | state    | effect                                     |
+/// |----------|--------------------------------------------|
+/// | hover    | overlay 6 % (black on light, white on dark) |
+/// | pressed  | overlay 12 %                               |
+/// | focused  | 2 px accent ring (keyboard focus only)     |
+/// | disabled | 40 % opacity, no hover                     |
+/// | motion   | 120 ms ease-out                            |
+class MacStates {
+  const MacStates(this.t);
+  final MacTokens t;
+
+  static const Duration duration = Duration(milliseconds: 120);
+  static const Curve curve = Curves.easeOut;
+  static const double hoverAlpha = 0.06;
+  static const double pressedAlpha = 0.12;
+  static const double disabledOpacity = 0.4;
+
+  Color get _ink => t.isDark ? Colors.white : Colors.black;
+
+  /// Hover/pressed overlays.  On an accent-filled control the overlay is
+  /// white so it lightens instead of muddying.
+  WidgetStateProperty<Color?> overlay({bool onAccent = false}) {
+    final ink = onAccent ? Colors.white : _ink;
+    return WidgetStateProperty.resolveWith((s) {
+      if (s.contains(WidgetState.disabled)) return null;
+      if (s.contains(WidgetState.pressed)) return ink.withValues(alpha: pressedAlpha);
+      if (s.contains(WidgetState.hovered)) return ink.withValues(alpha: hoverAlpha);
+      return null;
+    });
+  }
+
+  /// Keyboard-focus ring; pointer clicks do not show it.
+  WidgetStateProperty<BorderSide?> focusRing({BorderSide? rest}) =>
+      WidgetStateProperty.resolveWith((s) {
+        if (s.contains(WidgetState.focused)) return BorderSide(color: t.accent, width: 2);
+        return rest;
+      });
+
+  /// Arrow everywhere (macOS), except a hand on text links (see `MacLink`).
+  WidgetStateProperty<MouseCursor> get cursor => WidgetStateProperty.resolveWith(
+    (s) => s.contains(WidgetState.disabled) ? SystemMouseCursors.basic : SystemMouseCursors.basic,
+  );
+
+  /// Background for hoverable rows and links.
+  Color rowHover() => _ink.withValues(alpha: hoverAlpha);
+  Color rowPressed() => _ink.withValues(alpha: pressedAlpha);
 }

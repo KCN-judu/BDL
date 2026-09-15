@@ -44,14 +44,16 @@ class EffectExecutor {
           _dispatch(DaemonLogged('could not save recent projects: $e'));
         }
       case PickProjectToOpen():
-        final dir = await fs.getDirectoryPath(confirmButtonText: 'Open Project');
+        final dir = await _picker(() => fs.getDirectoryPath(confirmButtonText: 'Open Project'));
         if (dir != null) _dispatch(OpenProjectRequested(dir));
       case PickNewProjectLocation():
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
-        final loc = await fs.getSaveLocation(
-          suggestedName: 'Untitled Project',
-          confirmButtonText: 'Create Project',
+        final loc = await _picker(
+          () => fs.getSaveLocation(
+            suggestedName: 'Untitled Project',
+            confirmButtonText: 'Create Project',
+          ),
         );
         if (loc != null) {
           _dispatch(
@@ -97,6 +99,25 @@ class EffectExecutor {
       case Redo():
         await _call(pb.ClientMessage(redo: pb.RedoRequest()), _onEditApplied);
     }
+  }
+
+  /// Run an OS picker.  A `null` that comes back faster than a person could
+  /// dismiss a dialog means the dialog was never shown (the view-bridge
+  /// refuses children of sandboxed hosts); report that instead of silence.
+  Future<T?> _picker<T>(Future<T?> Function() show) async {
+    final started = DateTime.now();
+    T? result;
+    try {
+      result = await show();
+    } catch (e) {
+      _dispatch(const PickerUnavailable());
+      _dispatch(DaemonLogged('file dialog failed: $e'));
+      return null;
+    }
+    if (result == null && DateTime.now().difference(started) < const Duration(milliseconds: 400)) {
+      _dispatch(const PickerUnavailable());
+    }
+    return result;
   }
 
   Future<void> _connect() async {

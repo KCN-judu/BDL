@@ -215,7 +215,53 @@ The inspector shows the refinement/edit classification the compiler
 returns (`EditOutcome.kind`) as a one-line note after each change, so the
 paper's distinction is visible where the designer acts.
 
-## 5. Non-goals for this iteration
+## 6. Interaction states — the one standard
+
+Every control in Studio answers hover, press, keyboard focus and disabled
+the same way. Implemented once: `MacStates` in `lib/ui/mac/theme.dart`
+feeds every Material control theme; `MacInteractive` / `MacLink` in
+`lib/ui/mac/interactive.dart` cover rows, links and chips; the canvas
+painter applies the same rules to nodes and sockets.
+
+| State | Treatment | Numbers |
+|---|---|---|
+| **hover** | a flat overlay of the ink colour on the control's own surface; on accent-filled controls the overlay is white so it lightens | 6 % |
+| **pressed** | the same overlay, stronger | 12 % |
+| **focused** (keyboard only) | 2 pt accent ring; pointer clicks never show it | `accent`, 2 pt |
+| **selected** | accent at 20–25 % as the row/segment background; the text stays primary | `selection` token |
+| **disabled** | 40 % opacity, no hover, arrow cursor | 0.4 |
+| **motion** | one ease-out, everywhere; nothing animates data | 120 ms |
+
+Per control family:
+
+| Family | Rest | Hover | Pressed | Cursor |
+|---|---|---|---|---|
+| text link (`MacLink`) | accent text, no underline | hover pill behind the text | stronger pill | hand |
+| list row (`MacInteractive`) | transparent | hover pill | stronger pill | arrow |
+| push / outlined / icon button | hairline or accent fill | overlay | overlay | arrow (macOS convention) |
+| segmented control | selected segment raised on `control` | unselected segment gets the hover overlay | — | arrow |
+| pop-up (dropdown) | `control` + hairline | `controlHover` | menu opens | arrow |
+| text field | `control` + hairline | — | — | I-beam; focus = 2 pt accent border |
+| checkbox / switch / slider | Material shapes recoloured to tokens | overlay halo | halo | arrow |
+| canvas node | hairline outline | outline in secondary text colour | — | grab |
+| canvas socket | filled/hollow by binding | 4 pt halo in the concept colour | drop target: stronger halo | crosshair |
+| destructive button | outlined, red text | overlay | overlay | arrow |
+
+Rules that keep it one system: no ripples, no elevation change on hover, no
+colour change of text on hover except links (which are already accent),
+hover never conveys information that is not also visible at rest, and the
+focus ring is the only place the accent appears on a control that is not
+selected or primary.
+
+## 7. When the OS dialog cannot be shown
+
+`file_selector` dialogs are hosted by macOS's view-bridge, which refuses
+children of sandboxed hosts (Studio launched from an embedded terminal, for
+example). A `null` returned faster than a person could cancel is treated
+as *refused*: Studio shows a banner explaining it and the Start list gains
+*Open by path…* / *New at path…* as a typed fallback.
+
+## 8. Non-goals for this iteration
 
 Contexts, outputs, transports and clock boundaries on the canvas;
 simulate/deploy/monitor content; native menu bar; drag-and-drop from the

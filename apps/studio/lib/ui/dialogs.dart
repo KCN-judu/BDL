@@ -25,6 +25,31 @@ Future<T?> _sheet<T>(
   );
 }
 
+/// Typed-path fallback, used only when the OS dialog is unavailable.
+Future<String?> showPathSheet(BuildContext context, {required String title}) {
+  final path = TextEditingController();
+  return _sheet<String>(
+    context,
+    title: title,
+    content: FormRow(
+      label: 'Folder',
+      child: TextField(
+        controller: path,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: '/absolute/path/to/project'),
+        onSubmitted: (v) => Navigator.pop(context, v.trim()),
+      ),
+    ),
+    actions: [
+      OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, path.text.trim()),
+        child: const Text('OK'),
+      ),
+    ],
+  );
+}
+
 Future<String?> showNameSheet(BuildContext context, {required String title, String hint = ''}) {
   final name = TextEditingController();
   return _sheet<String>(

@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'theme.dart';
 import 'tokens.dart';
 
 /// Finder-style section header: 11 pt semibold, secondary colour.
@@ -202,10 +203,12 @@ class MacSegmented<T> extends StatelessWidget {
         children: [
           for (final e in options.entries)
             Expanded(
-              child: GestureDetector(
+              child: _Segment(
+                selected: e.key == value,
                 onTap: () => onChanged(e.key),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
+                  duration: MacStates.duration,
+                  curve: MacStates.curve,
                   decoration: BoxDecoration(
                     color: e.key == value ? t.control : Colors.transparent,
                     borderRadius: BorderRadius.circular(4),
@@ -232,6 +235,47 @@ class MacSegmented<T> extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _Segment extends StatefulWidget {
+  const _Segment({required this.selected, required this.onTap, required this.child});
+  final bool selected;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  State<_Segment> createState() => _SegmentState();
+}
+
+class _SegmentState extends State<_Segment> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            widget.child,
+            if (_hover && !widget.selected)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: MacStates(t).rowHover(),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -276,34 +320,60 @@ class MacDropdown<T> extends StatelessWidget {
           ),
       ],
       onSelected: onChanged,
-      child: Container(
-        height: MacMetrics.controlHeight,
-        padding: EdgeInsets.only(left: compact ? 6 : 8, right: 4),
-        decoration: BoxDecoration(
-          color: t.control,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: t.hairline),
-        ),
-        child: Row(
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
-          children: [
-            if (!compact)
-              Expanded(
-                child: Text(
-                  value == null ? (hint ?? '') : label(value as T),
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: value == null ? t.textTertiary : t.textPrimary,
+      child: _Hoverable(
+        builder: (hover) => AnimatedContainer(
+          duration: MacStates.duration,
+          curve: MacStates.curve,
+          height: MacMetrics.controlHeight,
+          padding: EdgeInsets.only(left: compact ? 6 : 8, right: 4),
+          decoration: BoxDecoration(
+            color: hover ? t.controlHover : t.control,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: t.hairline),
+          ),
+          child: Row(
+            mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+            children: [
+              if (!compact)
+                Expanded(
+                  child: Text(
+                    value == null ? (hint ?? '') : label(value as T),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: value == null ? t.textTertiary : t.textPrimary,
+                    ),
                   ),
-                ),
-              )
-            else
-              Text(hint ?? '', style: TextStyle(fontSize: 13, color: t.textSecondary)),
-            Icon(Icons.unfold_more, size: 14, color: t.textSecondary),
-          ],
+                )
+              else
+                Text(hint ?? '', style: TextStyle(fontSize: 13, color: t.textSecondary)),
+              Icon(Icons.unfold_more, size: 14, color: t.textSecondary),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Hover tracking for controls that draw their own background.
+class _Hoverable extends StatefulWidget {
+  const _Hoverable({required this.builder});
+  final Widget Function(bool hover) builder;
+
+  @override
+  State<_Hoverable> createState() => _HoverableState();
+}
+
+class _HoverableState extends State<_Hoverable> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: widget.builder(_hover),
     );
   }
 }

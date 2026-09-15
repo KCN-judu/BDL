@@ -240,6 +240,12 @@ class ProjectReceived extends ResponseAction {
   final bool fromRequest;
 }
 
+/// The OS picker returned instantly with nothing — it was refused, not
+/// cancelled (view-bridge failure under a sandboxed host).
+class PickerUnavailable extends ResponseAction {
+  const PickerUnavailable();
+}
+
 class RecentProjectsLoaded extends ResponseAction {
   const RecentProjectsLoaded(this.recent);
   final List<RecentProject> recent;

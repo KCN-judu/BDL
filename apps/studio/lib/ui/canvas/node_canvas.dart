@@ -52,6 +52,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
   Offset _dragDelta = Offset.zero;
   _LinkDrag? _linkDrag;
   bool _panning = false;
+  NodeRef? _hoverNode;
+  SocketRef? _hoverSocket;
   final FocusNode _focus = FocusNode(debugLabel: 'canvas');
 
   @override
@@ -78,6 +80,22 @@ class _NodeCanvasState extends State<NodeCanvas> {
       setState(() {
         _zoom = (_zoom * factor).clamp(0.25, 3.0);
         _pan = e.localPosition - before * _zoom;
+      });
+    }
+  }
+
+  void _onHover(PointerHoverEvent e) {
+    final scene = buildScene(widget.project, _effectiveLayout);
+    final hit = hitTest(scene, _toScene(e.localPosition));
+    final (NodeRef? node, SocketRef? socket) = switch (hit) {
+      HitSocket(:final socket, :final node) => (node.ref, socket.ref),
+      HitNode(:final node) => (node.ref, null),
+      HitNothing() => (null, null),
+    };
+    if (node != _hoverNode || socket != _hoverSocket) {
+      setState(() {
+        _hoverNode = node;
+        _hoverSocket = socket;
       });
     }
   }
@@ -207,25 +225,39 @@ class _NodeCanvasState extends State<NodeCanvas> {
           },
           child: Listener(
             onPointerSignal: _onPointerSignal,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanStart: _onPanStart,
-              onPanUpdate: _onPanUpdate,
-              onPanEnd: _onPanEnd,
-              child: ClipRect(
-                child: CustomPaint(
-                  painter: _CanvasPainter(
-                    scene: scene,
-                    tokens: t,
-                    pan: _pan,
-                    zoom: _zoom,
-                    selected: selected,
-                    linkDrag: _linkDrag,
-                    dropOk: _linkDrag == null
-                        ? null
-                        : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+            onPointerHover: _onHover,
+            child: MouseRegion(
+              cursor: _hoverSocket != null
+                  ? SystemMouseCursors.precise
+                  : _hoverNode != null
+                  ? SystemMouseCursors.grab
+                  : SystemMouseCursors.basic,
+              onExit: (_) => setState(() {
+                _hoverNode = null;
+                _hoverSocket = null;
+              }),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanStart: _onPanStart,
+                onPanUpdate: _onPanUpdate,
+                onPanEnd: _onPanEnd,
+                child: ClipRect(
+                  child: CustomPaint(
+                    painter: _CanvasPainter(
+                      scene: scene,
+                      tokens: t,
+                      pan: _pan,
+                      zoom: _zoom,
+                      selected: selected,
+                      hovered: _hoverNode,
+                      hoveredSocket: _hoverSocket,
+                      linkDrag: _linkDrag,
+                      dropOk: _linkDrag == null
+                          ? null
+                          : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+                    ),
+                    size: Size.infinite,
                   ),
-                  size: Size.infinite,
                 ),
               ),
             ),
@@ -243,6 +275,8 @@ class _CanvasPainter extends CustomPainter {
     required this.pan,
     required this.zoom,
     required this.selected,
+    required this.hovered,
+    required this.hoveredSocket,
     required this.linkDrag,
     required this.dropOk,
   });
@@ -252,6 +286,8 @@ class _CanvasPainter extends CustomPainter {
   final Offset pan;
   final double zoom;
   final NodeRef? selected;
+  final NodeRef? hovered;
+  final SocketRef? hoveredSocket;
   final _LinkDrag? linkDrag;
   final SocketRef? dropOk;
 
@@ -285,7 +321,7 @@ class _CanvasPainter extends CustomPainter {
       );
     }
     for (final n in scene.nodes) {
-      _node(canvas, n, n.ref == selected);
+      _node(canvas, n, n.ref == selected, n.ref == hovered);
     }
     canvas.restore();
   }
@@ -307,7 +343,7 @@ class _CanvasPainter extends CustomPainter {
     }
   }
 
-  void _node(Canvas canvas, NodeShape n, bool isSelected) {
+  void _node(Canvas canvas, NodeShape n, bool isSelected, bool isHovered) {
     final rrect = RRect.fromRectAndRadius(n.rect, const Radius.circular(NodeMetrics.cornerRadius));
     canvas.drawRRect(
       rrect.shift(const Offset(0, 1)),
@@ -327,10 +363,15 @@ class _CanvasPainter extends CustomPainter {
     canvas.drawRect(n.header, Paint()..color = headerColor);
     canvas.restore();
 
+    // Hover: the outline firms up (secondary text colour); selection: accent.
     final outline = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = isSelected ? 2 : 1
-      ..color = isSelected ? tokens.accent : tokens.hairline;
+      ..color = isSelected
+          ? tokens.accent
+          : isHovered
+          ? tokens.textSecondary
+          : tokens.hairline;
     if (n.unresolved && !isSelected) {
       _dashedRRect(canvas, rrect, outline..color = tokens.textTertiary);
     } else {
