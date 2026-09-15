@@ -1,0 +1,23 @@
+name: bdl_studio
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  fixnum: ^1.1.1
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  path: ^1.9.1
+  protobuf: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
