@@ -90,9 +90,27 @@ class MacTokens extends ThemeExtension<MacTokens> {
   /// Stable hue per semantic identity: socket and link colour *is* the
   /// nominal type (docs/STUDIO_UI.md §2).  Golden-angle spacing keeps
   /// neighbouring ids visually distinct.
+  ///
+  /// Lightness is chosen per hue so every identity clears the 3:1
+  /// non-text contrast floor against the canvas in both appearances — a
+  /// fixed HSL lightness leaves yellows and cyans at ~2:1 on the light
+  /// canvas.  Deterministic: the same id always gets the same colour.
   Color conceptColor(int id) {
     final hue = (id * 137.508) % 360.0;
-    return HSLColor.fromAHSL(1, hue, 0.55, isDark ? 0.62 : 0.48).toColor();
+    var l = isDark ? 0.62 : 0.48;
+    for (var i = 0; i < 20; i++) {
+      final c = HSLColor.fromAHSL(1, hue, 0.55, l).toColor();
+      final ratio = _contrast(c.computeLuminance(), canvas.computeLuminance());
+      if (ratio >= 3.4) return c;
+      l += isDark ? 0.02 : -0.02;
+    }
+    return HSLColor.fromAHSL(1, hue, 0.55, l).toColor();
+  }
+
+  static double _contrast(double a, double b) {
+    final hi = a > b ? a : b;
+    final lo = a > b ? b : a;
+    return (hi + 0.05) / (lo + 0.05);
   }
 
   @override

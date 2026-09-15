@@ -2,9 +2,18 @@
 /// and what is under a point.  No widgets, no state — a function of the
 /// projection and the layout, so it is unit-testable and deterministic.
 ///
-/// Node anatomy follows Blender (docs/STUDIO_UI.md §2): header with title
-/// and state word, input sockets down the left edge, output socket on the
-/// right, body below.  Data flows left → right.
+/// Node anatomy follows Blender (docs/STUDIO_UI.md §2).  A concept is a
+/// single-row object: its name, an input socket (what produces it) on the
+/// left and an output socket (what reads it) on the right.  A mapping has a
+/// header with title and state word, one input socket per read concept, the
+/// output socket on the right, and a definition region below.  Data flows
+/// left → right.
+///
+/// Semantics are carried by the geometry, not by words (STUDIO_UI.md §7):
+/// socket hue is identity, socket *shape* is the concept's value form, a
+/// hollow ring means the form is not chosen yet, a dashed outline means
+/// declared-not-defined, and a red mark at the definition line means the
+/// definition does not check.
 library;
 
 import 'dart:ui';
@@ -14,6 +23,7 @@ import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
 abstract final class NodeMetrics {
   static const double conceptWidth = 168;
+  static const double conceptHeight = 26;
   static const double mappingWidth = 200;
   static const double headerHeight = 26;
   static const double rowHeight = 22;
@@ -50,13 +60,28 @@ class SocketRef {
   int get hashCode => Object.hash(node, side, concept, index);
 }
 
+/// The value form of the concept a socket carries — drawn as the socket's
+/// shape: ○ quantity, ◇ on–off, □ count; a hollow ring while undecided.
+enum SocketKind { open, quantity, onOff, count }
+
+SocketKind socketKind(pb.ConceptView c) {
+  if (!c.hasRepresentation()) return SocketKind.open;
+  return switch (c.representation.whichKind()) {
+    pb.Representation_Kind.quantity => SocketKind.quantity,
+    pb.Representation_Kind.boolean => SocketKind.onOff,
+    pb.Representation_Kind.count => SocketKind.count,
+    pb.Representation_Kind.notSet => SocketKind.open,
+  };
+}
+
 class SocketShape {
-  const SocketShape._(this.center, this.ref, this.bound);
+  const SocketShape._(this.center, this.ref, this.kind);
   final Offset center;
   final SocketRef ref;
+  final SocketKind kind;
 
-  /// Whether the concept's representation is bound (hollow ring otherwise).
-  final bool bound;
+  /// Whether the concept's value form is chosen (hollow ring otherwise).
+  bool get bound => kind != SocketKind.open;
 }
 
 class NodeShape {
@@ -64,24 +89,40 @@ class NodeShape {
     required this.ref,
     required this.rect,
     required this.title,
-    required this.subtitle,
-    required this.stateWord,
     required this.sockets,
-    required this.unresolved,
+    this.definition,
+    this.declared = false,
+    this.wrong = false,
     this.socketLabels = const {},
   });
   final NodeRef ref;
   final Rect rect;
   final String title;
-  final String subtitle;
-  final String stateWord;
   final List<SocketShape> sockets;
-  final bool unresolved;
 
-  /// Label drawn next to each socket (mapping inputs).
+  /// One-line summary of a mapping's definition; `null` when there is none
+  /// (the definition region stays empty) and for concepts.
+  final String? definition;
+
+  /// Declared, not yet defined: dashed outline, the word *declared*.  A
+  /// legal state, never an error.
+  final bool declared;
+
+  /// The definition does not check: a red mark at the definition line.
+  final bool wrong;
+
+  /// Label drawn next to each socket (mapping inputs and output).
   final Map<SocketRef, String> socketLabels;
 
   Rect get header => Rect.fromLTWH(rect.left, rect.top, rect.width, NodeMetrics.headerHeight);
+
+  /// The definition region of a mapping (below the socket rows).
+  Rect get definitionRegion => Rect.fromLTWH(
+    rect.left,
+    rect.bottom - NodeMetrics.bodyHeight,
+    rect.width,
+    NodeMetrics.bodyHeight,
+  );
 }
 
 class LinkShape {
@@ -142,7 +183,8 @@ CanvasScene buildScene(
 }) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
   final mappings = [...p.mappings]..sort((a, b) => a.id.compareTo(b.id));
-  final bound = {for (final c in concepts) c.id.toInt(): c.hasRepresentation()};
+  final kinds = {for (final c in concepts) c.id.toInt(): socketKind(c)};
+  SocketKind kindOf(int id) => kinds[id] ?? SocketKind.open;
 
   final nodes = <NodeShape>[];
   final socketByRef = <SocketRef, SocketShape>{};
@@ -152,34 +194,19 @@ CanvasScene buildScene(
     final ref = NodeRef.concept(c.id.toInt());
     final pos = layout[ref] ?? NodeMetrics.origin + Offset(0, row * NodeMetrics.rowGap);
     row++;
-    final rect = Rect.fromLTWH(
-      pos.dx,
-      pos.dy,
-      NodeMetrics.conceptWidth,
-      NodeMetrics.headerHeight + NodeMetrics.rowHeight,
-    );
-    final y = rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2;
+    final rect = Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.conceptWidth, NodeMetrics.conceptHeight);
+    final y = rect.center.dy;
     final id = c.id.toInt();
     final inRef = SocketRef(node: ref, side: SocketSide.input, concept: id);
     final outRef = SocketRef(node: ref, side: SocketSide.output, concept: id);
     final sockets = [
-      SocketShape._(Offset(rect.left, y), inRef, bound[id] ?? false),
-      SocketShape._(Offset(rect.right, y), outRef, bound[id] ?? false),
+      SocketShape._(Offset(rect.left, y), inRef, kindOf(id)),
+      SocketShape._(Offset(rect.right, y), outRef, kindOf(id)),
     ];
     for (final s in sockets) {
       socketByRef[s.ref] = s;
     }
-    nodes.add(
-      NodeShape(
-        ref: ref,
-        rect: rect,
-        title: c.name,
-        subtitle: _representationLabel(c),
-        stateWord: c.hasRepresentation() ? '' : 'open',
-        sockets: sockets,
-        unresolved: false,
-      ),
-    );
+    nodes.add(NodeShape(ref: ref, rect: rect, title: c.name, sockets: sockets));
   }
 
   row = 0;
@@ -202,7 +229,7 @@ CanvasScene buildScene(
     for (var i = 0; i < inputs.length; i++) {
       final y = rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight * (i + 0.5);
       final r = SocketRef(node: ref, side: SocketSide.input, concept: inputs[i], index: i);
-      final s = SocketShape._(Offset(rect.left, y), r, bound[inputs[i]] ?? false);
+      final s = SocketShape._(Offset(rect.left, y), r, kindOf(inputs[i]));
       sockets.add(s);
       socketByRef[r] = s;
       labels[r] = _conceptName(p, inputs[i]);
@@ -212,7 +239,7 @@ CanvasScene buildScene(
     final out = SocketShape._(
       Offset(rect.right, rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2),
       outRef,
-      bound[outId] ?? false,
+      kindOf(outId),
     );
     sockets.add(out);
     socketByRef[outRef] = out;
@@ -222,12 +249,10 @@ CanvasScene buildScene(
         ref: ref,
         rect: rect,
         title: m.name,
-        subtitle: m.hasDefinition() ? m.definition.formula : 'no definition yet',
-        stateWord: statuses.containsKey(m.id.toInt())
-            ? statusWord(statuses[m.id.toInt()]!)
-            : stateWord(m.state),
+        definition: m.hasDefinition() ? m.definition.formula : null,
+        declared: !m.hasDefinition(),
+        wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
-        unresolved: !m.hasDefinition(),
         socketLabels: labels,
       ),
     );
@@ -304,15 +329,26 @@ CanvasHit hitTest(CanvasScene scene, Offset point) {
   return const HitNothing();
 }
 
-/// The socket a dragged link may legally be dropped on: same concept,
-/// opposite side, different node.  Typing by identity, made visible.
+/// Whether a link may run between two sockets: same concept, opposite
+/// side, different node.  The nominal typing rule, as a gesture constraint.
+bool canLink(SocketRef from, SocketRef to) =>
+    to.node != from.node && to.side != from.side && to.concept == from.concept;
+
+/// The socket a dragged link may legally be dropped on.  Typing by identity,
+/// made visible.
 SocketShape? dropTarget(CanvasScene scene, SocketRef from, Offset point) {
   final hit = hitTest(scene, point);
   if (hit is! HitSocket) return null;
-  final s = hit.socket.ref;
-  if (s.node == from.node || s.side == from.side || s.concept != from.concept) return null;
-  return hit.socket;
+  return canLink(from, hit.socket.ref) ? hit.socket : null;
 }
+
+/// Every socket a link from [from] could land on — shown with a halo while
+/// dragging so the rule is seen before the drop.
+Set<SocketRef> compatibleSockets(CanvasScene scene, SocketRef from) => {
+  for (final n in scene.nodes)
+    for (final s in n.sockets)
+      if (canLink(from, s.ref)) s.ref,
+};
 
 String stateWord(pb.AcceptanceState s) => switch (s) {
   pb.AcceptanceState.ACCEPTANCE_STATE_DECLARED => 'declared',
@@ -325,7 +361,8 @@ String stateWord(pb.AcceptanceState s) => switch (s) {
   _ => '',
 };
 
-/// The compiler's verdict on a mapping, as the canvas states it.
+/// The compiler's verdict on a mapping, as a word — Explain layer only; the
+/// canvas shows it as object state (dashed, hollow socket, red mark).
 String statusWord(pb.MappingStatus s) => switch (s) {
   pb.MappingStatus.MAPPING_STATUS_DECLARED => 'declared',
   pb.MappingStatus.MAPPING_STATUS_OPEN => 'open',
@@ -350,17 +387,6 @@ StatusTone statusTone(pb.MappingStatus s) => switch (s) {
 
 String _conceptName(pb.ProjectProjection p, int id) =>
     p.concepts.where((c) => c.id.toInt() == id).map((c) => c.name).firstOrNull ?? '?';
-
-String _representationLabel(pb.ConceptView c) {
-  if (!c.hasRepresentation()) return 'representation not chosen';
-  final r = c.representation;
-  return switch (r.whichKind()) {
-    pb.Representation_Kind.quantity => 'quantity ${dimLabel(r.quantity)}',
-    pb.Representation_Kind.boolean => 'boolean',
-    pb.Representation_Kind.count => 'count',
-    pb.Representation_Kind.notSet => 'representation not chosen',
-  };
-}
 
 /// `m·s⁻²`-style label for a dimension; `1` when dimensionless.
 String dimLabel(pb.Dim d) {

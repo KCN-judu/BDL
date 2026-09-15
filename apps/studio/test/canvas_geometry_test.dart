@@ -65,13 +65,66 @@ void main() {
     expect(dropTarget(scene, out.ref, mapping.sockets.first.center), isNull);
   });
 
-  test('bound representation fills the socket; open concepts are hollow', () {
+  test('socket shape is the value form; an undecided one is a hollow ring', () {
+    final p = lamp()
+      ..concepts.add(
+        pb.ConceptView(
+          id: Int64(2),
+          name: 'Held',
+          representation: pb.Representation(boolean: pb.Unit()),
+        ),
+      )
+      ..concepts.add(
+        pb.ConceptView(
+          id: Int64(3),
+          name: 'Presses',
+          representation: pb.Representation(count: pb.Unit()),
+        ),
+      );
+    final scene = buildScene(p, const {});
+    NodeShape node(int id) => scene.nodes.firstWhere((n) => n.ref == NodeRef.concept(id));
+    expect(node(0).sockets.every((s) => s.kind == SocketKind.quantity && s.bound), isTrue);
+    expect(node(1).sockets.every((s) => s.kind == SocketKind.open && !s.bound), isTrue);
+    expect(node(2).sockets.every((s) => s.kind == SocketKind.onOff), isTrue);
+    expect(node(3).sockets.every((s) => s.kind == SocketKind.count), isTrue);
+    // the mapping's input socket carries the concept's form too
+    final mapping = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
+    expect(mapping.sockets.first.kind, SocketKind.quantity);
+    // a concept is one row: no type words, nothing but name and sockets
+    expect(node(0).rect.height, NodeMetrics.conceptHeight);
+    expect(node(0).definition, isNull);
+  });
+
+  test('declared is dashed and empty; a definition that does not check is marked', () {
+    final scene = buildScene(lamp(), const {});
+    final declared = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
+    expect(declared.declared, isTrue);
+    expect(declared.definition, isNull);
+    expect(declared.wrong, isFalse);
+
+    final defined = lamp()..mappings.first.definition = pb.Definition(formula: 'Tilt + 1 s');
+    final checked = buildScene(
+      defined,
+      const {},
+      statuses: {0: pb.MappingStatus.MAPPING_STATUS_INVALID},
+    );
+    final m = checked.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
+    expect(m.declared, isFalse);
+    expect(m.definition, 'Tilt + 1 s');
+    expect(m.wrong, isTrue);
+  });
+
+  test('compatible sockets: same identity, other side, other node', () {
     final scene = buildScene(lamp(), const {});
     final tilt = scene.nodes.firstWhere((n) => n.ref == const NodeRef.concept(0));
-    final bright = scene.nodes.firstWhere((n) => n.ref == const NodeRef.concept(1));
-    expect(tilt.sockets.every((s) => s.bound), isTrue);
-    expect(bright.sockets.every((s) => !s.bound), isTrue);
-    expect(bright.stateWord, 'open');
+    final out = tilt.sockets.firstWhere((s) => s.ref.side == SocketSide.output);
+    final targets = compatibleSockets(scene, out.ref);
+    expect(targets.length, 1);
+    final t = targets.single;
+    expect(t.node, const NodeRef.mapping(0));
+    expect(t.side, SocketSide.input);
+    expect(t.concept, 0);
+    expect(canLink(out.ref, tilt.sockets.first.ref), isFalse);
   });
 
   test('dimension labels', () {

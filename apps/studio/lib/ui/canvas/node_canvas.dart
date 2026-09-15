@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsProperties;
 import 'package:flutter/services.dart';
 
 import '../../app/actions.dart';
@@ -132,7 +133,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _onPanUpdate(DragUpdateDetails d) {
     setState(() {
       if (_linkDrag != null) {
-        _linkDrag!.current = _toScene(d.localPosition);
+        final p = _toScene(d.localPosition);
+        _linkDrag!.current = p;
+        // Hover is not reported while a button is down; track the socket
+        // under the dragged link end so the cursor can refuse an illegal one.
+        final hit = hitTest(
+          buildScene(widget.project, widget.layout, statuses: widget.statuses),
+          p,
+        );
+        _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
       } else if (_draggingNode != null) {
         _dragDelta += d.delta / _zoom;
       } else if (_panning) {
@@ -232,7 +241,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
             onPointerSignal: _onPointerSignal,
             onPointerHover: _onHover,
             child: MouseRegion(
-              cursor: _hoverSocket != null
+              // Over a socket the link cannot reach, the pointer says so
+              // before the drop: the typing rule is refused, not diagnosed.
+              cursor: _linkDrag != null && _hoverSocket != null
+                  ? (canLink(_linkDrag!.from, _hoverSocket!)
+                        ? SystemMouseCursors.precise
+                        : SystemMouseCursors.forbidden)
+                  : _hoverSocket != null
                   ? SystemMouseCursors.precise
                   : _hoverNode != null
                   ? SystemMouseCursors.grab
@@ -325,11 +340,90 @@ class _CanvasPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
-    final painter = NodePainter(tokens, hoveredSocket: hoveredSocket, dropOk: dropOk);
+    final painter = NodePainter(
+      tokens,
+      hoveredSocket: hoveredSocket,
+      dropOk: dropOk,
+      compatible: drag == null ? const {} : compatibleSockets(scene, drag.from),
+    );
     for (final n in scene.nodes) {
       painter.node(canvas, n, selected: n.ref == selected, hovered: n.ref == hovered);
     }
     canvas.restore();
+
+    // An empty design names its first step (the canvas is the entry point).
+    if (scene.nodes.isEmpty) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: 'Add a concept from the Library to start',
+          style: TextStyle(
+            fontFamily: '.AppleSystemUIFont',
+            fontSize: 13,
+            color: tokens.textTertiary,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset((size.width - tp.width) / 2, (size.height - tp.height) / 2));
+    }
+  }
+
+  /// One semantics node per canvas node, in reading order, labelled in
+  /// product language — the painted graph is otherwise invisible to
+  /// assistive technology.
+  @override
+  SemanticsBuilderCallback get semanticsBuilder => (size) {
+    final nodes = [...scene.nodes]
+      ..sort((a, b) {
+        final dx = a.rect.left.compareTo(b.rect.left);
+        return dx != 0 ? dx : a.rect.top.compareTo(b.rect.top);
+      });
+    return [
+      for (final n in nodes)
+        CustomPainterSemantics(
+          rect: Rect.fromLTWH(
+            n.rect.left * zoom + pan.dx,
+            n.rect.top * zoom + pan.dy,
+            n.rect.width * zoom,
+            n.rect.height * zoom,
+          ),
+          properties: SemanticsProperties(
+            label: _describe(n),
+            textDirection: TextDirection.ltr,
+            selected: n.ref == selected,
+            button: true,
+          ),
+        ),
+    ];
+  };
+
+  String _describe(NodeShape n) {
+    switch (n.ref.kind) {
+      case NodeKind.concept:
+        final kind = n.sockets.first.kind;
+        final form = switch (kind) {
+          SocketKind.open => 'value not decided',
+          SocketKind.quantity => 'a quantity',
+          SocketKind.onOff => 'on or off',
+          SocketKind.count => 'a count',
+        };
+        return '${n.title}, concept, $form';
+      case NodeKind.mapping:
+        final reads = n.sockets
+            .where((s) => s.ref.side == SocketSide.input)
+            .map((s) => n.socketLabels[s.ref] ?? '')
+            .join(', ');
+        final produces = n.sockets
+            .where((s) => s.ref.side == SocketSide.output)
+            .map((s) => n.socketLabels[s.ref] ?? '')
+            .join(', ');
+        final state = n.declared
+            ? 'declared, not yet defined'
+            : n.wrong
+            ? 'definition does not check'
+            : 'defined';
+        return '${n.title}, relationship, reads $reads, produces $produces, $state';
+    }
   }
 
   void _grid(Canvas canvas, Size size) {
@@ -353,14 +447,30 @@ class _CanvasPainter extends CustomPainter {
   bool shouldRepaint(_CanvasPainter old) => true;
 }
 
-/// Paints one node the way the canvas does — shared with previews so a
-/// node in a sheet looks exactly like the node it will become.
+/// Paints one node the way the canvas does — shared with previews, chips
+/// and library rows so a concept looks the same wherever it appears.
+///
+/// What the geometry means (STUDIO_UI.md §7): socket hue = identity, socket
+/// shape = value form (○ quantity, ◇ on–off, □ count, hollow ring while
+/// undecided), dashed outline = declared-not-defined, a red mark at the
+/// definition line = the definition does not check.  No other state is
+/// written on the node.
 class NodePainter {
-  NodePainter(this.tokens, {this.hoveredSocket, this.dropOk, Color Function(int)? conceptColor})
-    : conceptColor = conceptColor ?? tokens.conceptColor;
+  NodePainter(
+    this.tokens, {
+    this.hoveredSocket,
+    this.dropOk,
+    this.compatible = const {},
+    Color Function(int)? conceptColor,
+  }) : conceptColor = conceptColor ?? tokens.conceptColor;
   final MacTokens tokens;
   final SocketRef? hoveredSocket;
   final SocketRef? dropOk;
+
+  /// While a link is being dragged: every socket it could legally land on
+  /// (same identity, opposite side, other node).  Drawn with a faint halo
+  /// so the typing rule is visible before the drop, not after.
+  final Set<SocketRef> compatible;
 
   /// Socket/link colour per concept id.  Previews of a concept that does
   /// not exist yet pass a neutral colour: its real hue is decided by the
@@ -368,8 +478,6 @@ class NodePainter {
   final Color Function(int) conceptColor;
 
   void node(Canvas canvas, NodeShape n, {bool selected = false, bool hovered = false}) {
-    final isSelected = selected;
-    final isHovered = hovered;
     final rrect = RRect.fromRectAndRadius(n.rect, const Radius.circular(NodeMetrics.cornerRadius));
     canvas.drawRRect(
       rrect.shift(const Offset(0, 1)),
@@ -379,7 +487,7 @@ class NodePainter {
     );
     canvas.drawRRect(rrect, Paint()..color = tokens.content);
 
-    // Header strip coloured by category.
+    // Category tint: the whole concept object, the mapping's header strip.
     final headerColor = switch (n.ref.kind) {
       NodeKind.concept => tokens.isDark ? const Color(0xFF3A4556) : const Color(0xFFDCE3EE),
       NodeKind.mapping => tokens.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5),
@@ -389,17 +497,21 @@ class NodePainter {
     canvas.drawRect(n.header, Paint()..color = headerColor);
     canvas.restore();
 
-    // Hover: the outline firms up (secondary text colour); selection: accent.
+    // Outline: hairline at rest, secondary on hover, accent when selected.
+    // Declared stays dashed in every state — selection changes the colour,
+    // never the meaning.
     final outline = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 2 : 1
-      ..color = isSelected
+      ..strokeWidth = selected ? 2 : 1
+      ..color = selected
           ? tokens.accent
-          : isHovered
+          : hovered
           ? tokens.textSecondary
+          : n.declared
+          ? tokens.textTertiary
           : tokens.hairline;
-    if (n.unresolved && !isSelected) {
-      _dashedRRect(canvas, rrect, outline..color = tokens.textTertiary);
+    if (n.declared) {
+      _dashedRRect(canvas, rrect, outline);
     } else {
       canvas.drawRRect(rrect, outline);
     }
@@ -407,51 +519,26 @@ class NodePainter {
     _text(
       canvas,
       n.title,
-      n.header.topLeft + const Offset(10, 6),
+      n.header.topLeft + const Offset(12, 6),
       FontWeight.w600,
       12.5,
       tokens.textPrimary,
-      maxWidth: n.rect.width - 70,
+      maxWidth: n.rect.width - (n.declared ? 78 : 24),
     );
-    if (n.stateWord.isNotEmpty) {
-      final color = switch (n.stateWord) {
-        'type-valid' || 'temporally valid' || 'clock-consistent' => tokens.settled,
-        'invalid' => tokens.error,
-        _ => tokens.open,
-      };
+    if (n.declared) {
       _text(
         canvas,
-        n.stateWord,
-        n.header.topRight + const Offset(-8, 8),
-        FontWeight.w500,
+        'declared',
+        n.header.topRight + const Offset(-10, 8),
+        FontWeight.w400,
         10,
-        color,
+        tokens.textSecondary,
         alignRight: true,
       );
     }
 
     for (final s in n.sockets) {
-      final color = conceptColor(s.ref.concept);
-      final highlight = dropOk == s.ref;
-      if (highlight) {
-        canvas.drawCircle(
-          s.center,
-          NodeMetrics.socketRadius + 4,
-          Paint()..color = color.withValues(alpha: 0.35),
-        );
-      }
-      canvas.drawCircle(s.center, NodeMetrics.socketRadius, Paint()..color = tokens.content);
-      if (s.bound) {
-        canvas.drawCircle(s.center, NodeMetrics.socketRadius, Paint()..color = color);
-      }
-      canvas.drawCircle(
-        s.center,
-        NodeMetrics.socketRadius,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..color = s.bound ? tokens.content.withValues(alpha: 0.9) : color,
-      );
+      socket(canvas, s.center, s.kind, conceptColor(s.ref.concept), ref: s.ref);
       final label = n.socketLabels[s.ref];
       if (label != null) {
         if (s.ref.side == SocketSide.input) {
@@ -479,34 +566,79 @@ class NodePainter {
       }
     }
 
-    // Body line (definition / representation).
-    final bodyTop = n.rect.bottom - NodeMetrics.bodyHeight;
+    // Definition region: the summary line, or nothing while declared.  A
+    // definition that does not check gets the red mark here — where the
+    // problem lives — and nowhere else on the node.
     if (n.ref.kind == NodeKind.mapping) {
+      final region = n.definitionRegion;
       canvas.drawLine(
-        Offset(n.rect.left + 1, bodyTop),
-        Offset(n.rect.right - 1, bodyTop),
+        region.topLeft + const Offset(1, 0),
+        region.topRight + const Offset(-1, 0),
         Paint()..color = tokens.hairline,
       );
-      _text(
-        canvas,
-        n.subtitle,
-        Offset(n.rect.left + 10, bodyTop + 5),
-        FontWeight.w400,
-        11,
-        n.unresolved ? tokens.textTertiary : tokens.textSecondary,
-        maxWidth: n.rect.width - 20,
-        italic: n.unresolved,
-      );
-    } else {
-      _text(
-        canvas,
-        n.subtitle,
-        Offset(n.rect.left + 14, n.header.bottom + 4),
-        FontWeight.w400,
-        10.5,
-        tokens.textTertiary,
-        maxWidth: n.rect.width - 28,
-      );
+      final definition = n.definition;
+      if (definition != null) {
+        var left = region.left + 10;
+        if (n.wrong) {
+          canvas.drawCircle(Offset(left + 3, region.center.dy), 3, Paint()..color = tokens.error);
+          left += 12;
+        }
+        _text(
+          canvas,
+          definition,
+          Offset(left, region.top + 5),
+          FontWeight.w400,
+          11,
+          n.wrong ? tokens.textPrimary : tokens.textSecondary,
+          maxWidth: region.right - 10 - left,
+        );
+      }
+    }
+  }
+
+  /// One socket: shape by value form, hue by identity.  Reused by every
+  /// widget that shows a concept (library rows, chips, toggles) so the mark
+  /// is learned once.
+  void socket(Canvas canvas, Offset c, SocketKind kind, Color color, {SocketRef? ref}) {
+    const r = NodeMetrics.socketRadius;
+    if (ref != null) {
+      if (dropOk == ref) {
+        canvas.drawCircle(c, r + 4, Paint()..color = color.withValues(alpha: 0.35));
+      } else if (compatible.contains(ref)) {
+        canvas.drawCircle(c, r + 3, Paint()..color = color.withValues(alpha: 0.16));
+      }
+    }
+    final path = socketPath(c, kind, r);
+    canvas.drawPath(path, Paint()..color = tokens.content);
+    if (kind != SocketKind.open) {
+      canvas.drawPath(path, Paint()..color = color);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = kind == SocketKind.open ? color : tokens.content.withValues(alpha: 0.9),
+    );
+  }
+
+  /// The socket outline for a value form, centred on [c] with radius [r].
+  static Path socketPath(Offset c, SocketKind kind, double r) {
+    switch (kind) {
+      case SocketKind.open:
+      case SocketKind.quantity:
+        return Path()..addOval(Rect.fromCircle(center: c, radius: r));
+      case SocketKind.onOff:
+        final d = r * 1.25;
+        return Path()
+          ..moveTo(c.dx, c.dy - d)
+          ..lineTo(c.dx + d, c.dy)
+          ..lineTo(c.dx, c.dy + d)
+          ..lineTo(c.dx - d, c.dy)
+          ..close();
+      case SocketKind.count:
+        final h = r * 0.92;
+        return Path()..addRect(Rect.fromCenter(center: c, width: 2 * h, height: 2 * h));
     }
   }
 
