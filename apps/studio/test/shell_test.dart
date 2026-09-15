@@ -21,7 +21,9 @@ Widget _app(AppState state) => ProviderScope(
 );
 
 void main() {
-  testWidgets('status line shows compiler and protocol versions when connected', (tester) async {
+  testWidgets('status line shows the compiler version, not the protocol, when compatible', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -36,8 +38,8 @@ void main() {
       ),
     );
     await tester.pumpWidget(_app(state));
-    expect(find.textContaining('bdld 9.9.9'), findsOneWidget);
-    expect(find.textContaining('protocol 0.1.0'), findsOneWidget);
+    expect(find.textContaining('Compiler 9.9.9'), findsOneWidget);
+    expect(find.textContaining('protocol 0.1.0'), findsNothing);
     // no project: the project manager (welcome) is shown, not the workspace
     expect(find.text('Behavior\nDesigner'), findsOneWidget);
     expect(find.text('Open Project…'), findsOneWidget);
@@ -72,7 +74,7 @@ void main() {
     await tester.pumpWidget(_app(state));
     expect(find.text('Tilt'), findsWidgets);
     expect(find.text('dimByTilt'), findsWidgets);
-    expect(find.text('1 declared without definition'), findsOneWidget);
+    expect(find.text('1 not yet defined'), findsOneWidget);
     // inspector shows the mapping's editable name and the delete action
     expect(find.text('Delete dimByTilt'), findsOneWidget);
     expect(find.text('Deploy'), findsOneWidget);

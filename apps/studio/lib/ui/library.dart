@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 
 import '../app/actions.dart';
 import '../app/state.dart';
-import 'canvas/canvas_geometry.dart' show stateWord, statusWord;
+import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'canvas/concept_glyphs.dart';
 import 'dialogs.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
@@ -45,10 +46,8 @@ class Library extends StatelessWidget {
                 ),
                 for (final c in p.concepts)
                   _Row(
-                    color: t.conceptColor(c.id.toInt()),
-                    hollow: !c.hasRepresentation(),
+                    glyph: SocketGlyph.of(c, t),
                     title: c.name,
-                    trailing: c.hasRepresentation() ? null : 'open',
                     selected: sel is ConceptSelected && sel.id == c.id.toInt(),
                     onTap: () => dispatch(SelectionChanged(ConceptSelected(c.id.toInt()))),
                   ),
@@ -71,13 +70,13 @@ class Library extends StatelessWidget {
                 ),
                 for (final m in p.mappings)
                   _Row(
-                    color: t.conceptColor(m.signature.output.toInt()),
-                    hollow: !m.hasDefinition(),
+                    glyph: MappingGlyph(
+                      declared: !m.hasDefinition(),
+                      wrong:
+                          state.mappingAnalysis(m.id.toInt())?.status ==
+                          pb.MappingStatus.MAPPING_STATUS_INVALID,
+                    ),
                     title: m.name,
-                    trailing: switch (state.mappingAnalysis(m.id.toInt())) {
-                      final a? => statusWord(a.status),
-                      null => stateWord(m.state),
-                    },
                     selected: sel is MappingSelected && sel.id == m.id.toInt(),
                     onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
                   ),
@@ -110,25 +109,23 @@ class _Section extends StatelessWidget {
   }
 }
 
+/// One object in the library: its glyph (the same mark as on the canvas)
+/// and its name.  State is in the glyph — hollow, dashed, red mark — not in
+/// a trailing word.
 class _Row extends StatelessWidget {
   const _Row({
-    required this.color,
-    required this.hollow,
+    required this.glyph,
     required this.title,
     required this.selected,
     required this.onTap,
-    this.trailing,
   });
-  final Color color;
-  final bool hollow;
+  final Widget glyph;
   final String title;
-  final String? trailing;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: MacInteractive(
@@ -138,21 +135,10 @@ class _Row extends StatelessWidget {
         child: SizedBox(
           height: MacMetrics.rowHeight,
           child: Row(
+            spacing: MacMetrics.gap,
             children: [
-              Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: hollow ? Colors.transparent : color,
-                  border: Border.all(color: color, width: 1.5),
-                ),
-              ),
-              const SizedBox(width: 8),
+              SizedBox(width: 14, child: Center(child: glyph)),
               Expanded(child: Text(title, overflow: TextOverflow.ellipsis)),
-              ?trailing == null
-                  ? null
-                  : Text(trailing!, style: TextStyle(fontSize: 10, color: t.textTertiary)),
             ],
           ),
         ),

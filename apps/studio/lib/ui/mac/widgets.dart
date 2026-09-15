@@ -6,9 +6,9 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
-import '../canvas/canvas_geometry.dart' show StatusTone, statusTone, statusWord;
 import '../source_span.dart';
 import 'controls.dart';
+import 'interactive.dart';
 import 'theme.dart';
 import 'tokens.dart';
 
@@ -206,9 +206,16 @@ class MacSegmented<T> extends StatelessWidget {
         children: [
           for (final e in options.entries)
             Expanded(
-              child: _Segment(
-                selected: e.key == value,
-                onTap: () => onChanged(e.key),
+              // Segments share the width in proportion to their labels (a
+              // long label never wraps), and each is a real control:
+              // focusable, Space/Return selects, the standard hover and
+              // focus treatments.
+              flex: e.value.length + 6,
+              child: MacInteractive(
+                radius: 4,
+                onTap: () {
+                  if (e.key != value) onChanged(e.key);
+                },
                 child: AnimatedContainer(
                   duration: MacStates.duration,
                   curve: MacStates.curve,
@@ -243,47 +250,6 @@ class MacSegmented<T> extends StatelessWidget {
   }
 }
 
-class _Segment extends StatefulWidget {
-  const _Segment({required this.selected, required this.onTap, required this.child});
-  final bool selected;
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  State<_Segment> createState() => _SegmentState();
-}
-
-class _SegmentState extends State<_Segment> {
-  bool _hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            widget.child,
-            if (_hover && !widget.selected)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: MacStates(t).rowHover(),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// NSPopUpButton look-alike.
 class MacDropdown<T> extends StatelessWidget {
   const MacDropdown({
@@ -293,6 +259,7 @@ class MacDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.labelOf,
     this.detailOf,
+    this.leadingOf,
     this.hint,
     this.compact = false,
   });
@@ -300,6 +267,10 @@ class MacDropdown<T> extends StatelessWidget {
   final List<T> items;
   final void Function(T) onChanged;
   final String Function(T)? labelOf;
+
+  /// A mark before the label (a concept's socket glyph), in the menu and on
+  /// the closed control.
+  final Widget Function(T)? leadingOf;
 
   /// A secondary fact shown in its own right-hand column (a unit, a count).
   final String Function(T)? detailOf;
@@ -327,7 +298,19 @@ class MacDropdown<T> extends StatelessWidget {
               spacing: MacMetrics.gutter,
               children: [
                 Expanded(
-                  child: Text(label(i), style: TextStyle(fontSize: 13, color: t.textPrimary)),
+                  child: Row(
+                    spacing: MacMetrics.gap,
+                    children: [
+                      ?leadingOf?.call(i),
+                      Expanded(
+                        child: Text(
+                          label(i),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, color: t.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 ?detailOf == null
                     ? null
@@ -359,6 +342,11 @@ class MacDropdown<T> extends StatelessWidget {
             mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
             children: [
               if (!compact) ...[
+                if (value != null && leadingOf != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: MacMetrics.gap),
+                    child: leadingOf!(value as T),
+                  ),
                 Expanded(
                   child: Text(
                     value == null ? (hint ?? '') : label(value as T),
@@ -468,99 +456,6 @@ class MacColumn {
 /// Tabular figures for numbers that sit in columns.
 const List<FontFeature> kTabularFigures = [FontFeature.tabularFigures()];
 
-class ConceptChip extends StatelessWidget {
-  const ConceptChip({super.key, required this.label, required this.color, this.onRemove});
-  final String label;
-  final Color color;
-  final VoidCallback? onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    return Container(
-      height: MacMetrics.controlHeight,
-      padding: const EdgeInsets.only(left: 6, right: 2),
-      decoration: BoxDecoration(
-        color: t.control,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: t.hairline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, size: 8, color: color),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(fontSize: 12, color: t.textPrimary)),
-          if (onRemove != null)
-            IconButton(
-              icon: const Icon(Icons.close, size: 12),
-              onPressed: onRemove,
-              constraints: const BoxConstraints.tightFor(width: 18, height: 18),
-              padding: EdgeInsets.zero,
-              tooltip: 'Remove',
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class StatePill extends StatelessWidget {
-  const StatePill({super.key, required this.word, required this.settled});
-  final String word;
-  final bool settled;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final color = settled ? t.settled : t.open;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          word,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color),
-        ),
-      ),
-    );
-  }
-}
-
-/// The compiler's verdict on a mapping, coloured by tone.
-class StatusPill extends StatelessWidget {
-  const StatusPill({super.key, required this.status});
-  final pb.MappingStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final color = switch (statusTone(status)) {
-      StatusTone.settled => t.settled,
-      StatusTone.open => t.open,
-      StatusTone.error => t.error,
-    };
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          statusWord(status),
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color),
-        ),
-      ),
-    );
-  }
-}
-
 /// One compiler diagnostic: severity dot, message, the offending part of the
 /// formula, explanation and fixes.  Kernel detail stays in a tooltip.
 class DiagnosticCard extends StatelessWidget {
@@ -637,6 +532,83 @@ class DiagnosticCard extends StatelessWidget {
       ),
     );
     return d.technical.isEmpty ? card : Tooltip(message: '${d.code}\n${d.technical}', child: card);
+  }
+}
+
+/// A collapsed section with a disclosure triangle (macOS inspectors).  Used
+/// for the Explain layer: closed by default, nothing above it depends on it.
+class MacDisclosure extends StatefulWidget {
+  const MacDisclosure({
+    super.key,
+    required this.title,
+    required this.children,
+    this.initiallyOpen = false,
+  });
+  final String title;
+  final List<Widget> children;
+  final bool initiallyOpen;
+
+  @override
+  State<MacDisclosure> createState() => _MacDisclosureState();
+}
+
+class _MacDisclosureState extends State<MacDisclosure> {
+  late bool _open = widget.initiallyOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MacInteractive(
+            onTap: () => setState(() => _open = !_open),
+            radius: 0,
+            padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+            child: Row(
+              spacing: MacMetrics.gapTight,
+              children: [
+                AnimatedRotation(
+                  turns: _open ? 0.25 : 0,
+                  duration: MacStates.duration,
+                  curve: MacStates.curve,
+                  child: Icon(Icons.arrow_right, size: 16, color: t.textSecondary),
+                ),
+                Text(widget.title, style: Theme.of(context).textTheme.titleSmall),
+              ],
+            ),
+          ),
+          if (_open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: MacMetrics.gapTight,
+                children: widget.children,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One line of the Explain layer: a formal fact in kernel notation.
+class ExplainLine extends StatelessWidget {
+  const ExplainLine(this.text, {super.key});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return SelectableText(
+      text,
+      style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary, height: 1.35),
+    );
   }
 }
 

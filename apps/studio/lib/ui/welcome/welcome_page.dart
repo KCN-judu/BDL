@@ -145,7 +145,7 @@ class _Start extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Waiting for the compiler service (bdld) — see the status line.',
+              'Waiting for the compiler. The status line shows the connection.',
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
           ),

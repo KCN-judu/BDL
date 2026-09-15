@@ -14,8 +14,11 @@ import 'package:flutter/material.dart';
 
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'canvas/concept_glyphs.dart';
 import 'canvas/node_canvas.dart' show NodePreview;
 import 'mac/controls.dart';
+import 'mac/interactive.dart';
+import 'mac/theme.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'units.dart';
@@ -175,7 +178,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
           ),
         ),
         FormRow(
-          label: 'Kind',
+          label: 'Value',
           child: MacSegmented<_Kind>(
             value: _kind,
             options: const {
@@ -213,13 +216,14 @@ class _NewConceptFormState extends State<_NewConceptForm> {
           ),
         ),
         const SizedBox(height: 4),
+        // The caption names the mark the designer will meet on the canvas.
         Text(switch (_kind) {
           _Kind.open =>
-            'Open socket: the kind can be chosen later; relationships can already use it.',
+            'Hollow ring: the value can be decided later; relationships can already use it.',
           _Kind.quantity =>
-            'Filled socket: a measured value. Its unit is checked in every formula.',
-          _Kind.boolean => 'Filled socket: true or false — activates contexts, gates behaviour.',
-          _Kind.count => 'Filled socket: a whole number — occurrences, steps, items.',
+            'Round socket: a measured quantity. Its unit is checked in every formula.',
+          _Kind.boolean => 'Diamond socket: on or off — activates contexts, gates behaviour.',
+          _Kind.count => 'Square socket: a whole number — occurrences, steps, items.',
         }, style: TextStyle(fontSize: 11, color: t.textSecondary)),
         const SizedBox(height: 18),
         Row(
@@ -263,12 +267,21 @@ class _NewMappingForm extends StatefulWidget {
 class _NewMappingFormState extends State<_NewMappingForm> {
   final _name = TextEditingController();
   final _inputs = <int>[];
-  late int _output = widget.concepts.first.id.toInt();
+
+  /// What the mapping produces — a choice, never a silent default: a
+  /// mapping that "produces" the first concept in the list would be created
+  /// without anyone deciding so.
+  int? _output;
+
+  /// Stands in for the not-yet-chosen output in the preview: a hollow,
+  /// neutral socket with no name.
+  static const _unchosen = 1 << 40;
 
   void _submit() {
     final name = _name.text.trim();
-    if (name.isEmpty) return;
-    Navigator.pop(context, (name: name, inputs: List<int>.of(_inputs), output: _output));
+    final output = _output;
+    if (name.isEmpty || output == null) return;
+    Navigator.pop(context, (name: name, inputs: List<int>.of(_inputs), output: output));
   }
 
   @override
@@ -277,11 +290,15 @@ class _NewMappingFormState extends State<_NewMappingForm> {
     final name = _name.text.trim();
     final preview = pb.ProjectProjection(name: 'preview')
       ..concepts.addAll(widget.concepts)
+      ..concepts.add(pb.ConceptView(id: Int64(_unchosen), name: ''))
       ..mappings.add(
         pb.MappingView(
           id: Int64(0),
           name: name.isEmpty ? 'Name' : name,
-          signature: pb.Signature(inputs: _inputs.map(Int64.new), output: Int64(_output)),
+          signature: pb.Signature(
+            inputs: _inputs.map(Int64.new),
+            output: Int64(_output ?? _unchosen),
+          ),
           state: pb.AcceptanceState.ACCEPTANCE_STATE_DECLARED,
         ),
       );
@@ -319,8 +336,11 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           label: 'Produces',
           child: MacDropdown<int>(
             value: _output,
+            hint: 'choose',
             items: [for (final c in widget.concepts) c.id.toInt()],
             labelOf: (id) => widget.concepts.firstWhere((c) => c.id.toInt() == id).name,
+            leadingOf: (id) =>
+                SocketGlyph.of(widget.concepts.firstWhere((c) => c.id.toInt() == id), t, size: 11),
             onChanged: (v) => setState(() => _output = v),
           ),
         ),
@@ -330,12 +350,15 @@ class _NewMappingFormState extends State<_NewMappingForm> {
             projection: preview,
             node: const NodeRef.mapping(0),
             height: 72 + 22.0 * (_inputs.isEmpty ? 0 : _inputs.length - 1),
+            neutralConcepts: const {_unchosen},
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Dashed: declared, not yet defined. Attach a formula, curve or component from the '
-          'inspector whenever you are ready.',
+          _output == null
+              ? 'Choose what it produces: the output socket takes that concept’s colour and shape.'
+              : 'Dashed: declared, not yet defined. Attach a formula from the inspector whenever '
+                    'you are ready.',
           style: TextStyle(fontSize: 11, color: t.textSecondary),
         ),
         const SizedBox(height: 18),
@@ -344,7 +367,10 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           children: [
             MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
             const SizedBox(width: 8),
-            MacButton.primary(label: 'Create', onPressed: name.isEmpty ? null : _submit),
+            MacButton.primary(
+              label: 'Create',
+              onPressed: name.isEmpty || _output == null ? null : _submit,
+            ),
           ],
         ),
       ],
@@ -352,8 +378,9 @@ class _NewMappingFormState extends State<_NewMappingForm> {
   }
 }
 
-/// A concept as a toggle: its socket dot in its colour, filled when chosen —
-/// the same visual it has on the canvas.
+/// A concept as a toggle: its socket glyph — the same mark it has on the
+/// canvas — and its name.  A chip filled in the concept's hue means *read by
+/// this mapping*.  A real control: focusable, Space toggles.
 class _ConceptToggle extends StatelessWidget {
   const _ConceptToggle({required this.concept, required this.selected, required this.onChanged});
   final pb.ConceptView concept;
@@ -364,32 +391,29 @@ class _ConceptToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final color = t.conceptColor(concept.id.toInt());
-    return GestureDetector(
-      onTap: () => onChanged(!selected),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        height: MacMetrics.controlHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.16) : t.control,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: selected ? color : t.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: selected ? color : Colors.transparent,
-                border: Border.all(color: color, width: 1.5),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(concept.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
-          ],
+    return Semantics(
+      toggled: selected,
+      label: 'read ${concept.name}',
+      child: MacInteractive(
+        onTap: () => onChanged(!selected),
+        child: AnimatedContainer(
+          duration: MacStates.duration,
+          curve: MacStates.curve,
+          height: MacMetrics.controlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: 0.16) : t.control,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: selected ? color : t.hairline),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [
+              SocketGlyph.of(concept, t, size: 11),
+              Text(concept.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+            ],
+          ),
         ),
       ),
     );

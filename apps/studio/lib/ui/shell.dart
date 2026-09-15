@@ -10,6 +10,7 @@ import '../app/actions.dart';
 import '../app/state.dart';
 import '../app/store.dart';
 import '../platform/desktop.dart';
+import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../protocol/versions.dart';
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
@@ -127,8 +128,8 @@ class _Toolbar extends StatelessWidget {
           Text(p == null ? 'BDL Studio' : p.name, style: Theme.of(context).textTheme.titleMedium),
           if (p != null && p.dirty)
             Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: Text('— Edited', style: TextStyle(color: t.textTertiary)),
+              padding: const EdgeInsets.only(left: MacMetrics.gap),
+              child: Text('Edited', style: TextStyle(color: t.textTertiary)),
             ),
           const Spacer(),
           ToolbarButton(
@@ -194,18 +195,33 @@ class _StatusLine extends StatelessWidget {
     final small = TextStyle(fontSize: 11, color: t.textSecondary, fontFeatures: kTabularFigures);
     final dim = TextStyle(fontSize: 11, color: t.textTertiary);
 
-    // Facts are cells separated by whitespace, never by punctuation.
+    // Facts are cells separated by whitespace, never by punctuation.  The
+    // leading cell is what a glance is for: is my work saved.  Counts are an
+    // overview of what the canvas already shows; the compiler's revision
+    // counter and protocol version are not designer facts (Explain has the
+    // revision).
     final facts = <Widget>[];
     if (p == null) {
       facts.add(Text('No project', style: small));
     } else {
-      final undefined = p.mappings.where((m) => !m.hasDefinition()).length;
-      facts.add(Text('r${p.revision}', style: small));
+      final declared = p.mappings.where((m) => !m.hasDefinition()).length;
+      final wrong =
+          state.analysis?.mappings
+              .where((m) => m.status == pb.MappingStatus.MAPPING_STATUS_INVALID)
+              .length ??
+          0;
+      facts.add(Text(p.dirty ? 'Edited' : 'Saved', style: small));
       facts.add(_Fact(count: p.concepts.length, noun: 'concept', style: small));
       facts.add(_Fact(count: p.mappings.length, noun: 'mapping', style: small));
-      if (undefined > 0) {
+      if (declared > 0) {
+        facts.add(Text('$declared not yet defined', style: small.copyWith(color: t.open)));
+      }
+      if (wrong > 0) {
         facts.add(
-          Text('$undefined declared without definition', style: small.copyWith(color: t.open)),
+          Text(
+            wrong == 1 ? '1 definition does not check' : '$wrong definitions do not check',
+            style: small.copyWith(color: t.error),
+          ),
         );
       }
       // Unsaved definition drafts: Studio's, not the project's dirty flag.
@@ -234,13 +250,14 @@ class _StatusLine extends StatelessWidget {
     }
 
     final (Color dot, List<Widget> connCells) = switch (conn) {
-      Disconnected() => (t.textTertiary, [Text('bdld not connected', style: small)]),
-      Connecting() => (t.open, [Text('connecting to bdld', style: small)]),
+      Disconnected() => (t.textTertiary, [Text('Compiler not connected', style: small)]),
+      Connecting() => (t.open, [Text('Connecting to the compiler', style: small)]),
       Connected(:final handshake) => (
         t.settled,
         [
-          Text('bdld ${handshake.compilerVersion}', style: small),
-          Text('protocol ${formatVersion(handshake.protocolVersion)}', style: dim),
+          Text('Compiler ${handshake.compilerVersion}', style: small),
+          if (!handshake.compatible)
+            Text('protocol ${formatVersion(handshake.protocolVersion)}', style: dim),
         ],
       ),
       ConnectionFailed(:final reason) => (t.error, [Text(reason, style: small)]),
