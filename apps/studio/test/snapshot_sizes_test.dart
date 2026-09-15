@@ -49,6 +49,7 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         ProviderScope(
+          key: UniqueKey(),
           overrides: [appStoreProvider.overrideWith(() => _FixedStore(state))],
           child: MaterialApp(theme: macTheme(Brightness.dark), home: const StudioShell()),
         ),

@@ -205,7 +205,9 @@ class _NewConceptFormState extends State<_NewConceptForm> {
             child: MacDropdown<String>(
               value: _dim,
               items: dims.keys.toList(),
-              labelOf: (k) => '$k  ·  ${dimLabel(dims[k]!)}',
+              labelOf: (k) => k,
+              // the unit symbol sits in its own column, secondary colour
+              detailOf: (k) => dimLabel(dims[k]!),
               onChanged: (k) => setState(() => _dim = k),
             ),
           ),

@@ -199,6 +199,33 @@ One design, platform *details* adapt (`lib/platform/desktop.dart`):
 Colours, spacing, controls and the canvas are identical; nothing Material
 (ripples, FAB, snackbars) appears on either.
 
+## 3a. Spacing, alignment and separation — the foundations
+
+Text is not glued together with punctuation. Structure is shown by
+**proximity** (Gestalt: things that belong together sit closer than things
+that do not), **alignment** (a shared edge makes a column; Müller-Brockmann's
+grid), and **contrast** (weight and colour rank information). A middle dot,
+dash or slash between two facts is a typewriter habit that makes the reader
+parse instead of see.
+
+Rules, with the numbers:
+
+| Rule | Value |
+|---|---|
+| Base unit | 8 pt grid; 4 pt for optical adjustments only |
+| Gap inside one item (label ↔ value, icon ↔ text) | 4–8 pt (`MacMetrics.gapTight`, `gap`) |
+| Gap between items of one group (the facts in a status line) | 16 pt (`gapGroup`) |
+| Gap between groups / sections | 24 pt (`gapSection`) |
+| Separators | whitespace, never `·` `—` `/` or `|`; a hairline only between *sections* |
+| Secondary facts | secondary/tertiary colour, same size; never parentheses to demote |
+| Columns | anything with ≥ 2 items sharing the same fields is a grid: fixed column widths, one gutter (16 pt), labels right-aligned, text left-aligned, numbers right-aligned in tabular figures |
+| Form labels | right-aligned column, 78 pt, baseline-aligned with the field |
+| Units and symbols | in their own column, secondary colour, never appended with a separator |
+| Status lines | facts as separate cells with `gapGroup`; the leading fact is the one a glance needs (revision, connection) |
+
+`Row(spacing: MacMetrics.gapGroup)` and `MacTable` (fixed-width columns,
+one gutter) are the two ways to lay out facts; string concatenation is not.
+
 ## 4. Editing model (what the inspector must expose)
 
 Every operation is an `EditOp` the compiler already accepts:

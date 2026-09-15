@@ -113,6 +113,7 @@ void main() {
       );
       await tester.pumpWidget(
         ProviderScope(
+          key: UniqueKey(),
           overrides: [appStoreProvider.overrideWith(() => _FixedStore(welcome))],
           child: MaterialApp(theme: macTheme(brightness), home: const StudioShell()),
         ),
@@ -150,6 +151,7 @@ void main() {
       );
       await tester.pumpWidget(
         ProviderScope(
+          key: UniqueKey(),
           overrides: [appStoreProvider.overrideWith(() => _FixedStore(state))],
           child: MaterialApp(theme: macTheme(brightness), home: const StudioShell()),
         ),

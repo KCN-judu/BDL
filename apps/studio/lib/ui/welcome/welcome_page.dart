@@ -14,6 +14,7 @@ import '../../protocol/versions.dart';
 import '../dialogs.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
+import '../mac/widgets.dart';
 import 'hero_mark.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -240,24 +241,46 @@ class _RecentRowState extends State<_RecentRow> {
                     color: missing ? t.textTertiary : t.textPrimary,
                   ),
                 ),
-                Text(
-                  missing ? '${r.path}  ·  not found' : r.path,
-                  style: TextStyle(fontSize: 11, color: t.textTertiary),
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  spacing: MacMetrics.gapGroup,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        r.path,
+                        style: TextStyle(fontSize: 11, color: t.textTertiary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (missing) Text('not found', style: TextStyle(fontSize: 11, color: t.open)),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (_hover || missing)
-            IconButton(
-              icon: const Icon(Icons.close, size: 14),
-              tooltip: 'Remove from Recent',
-              onPressed: widget.onRemove,
-              constraints: const BoxConstraints.tightFor(width: 22, height: 22),
-            )
-          else
-            Text(relativeTime(r.lastOpened), style: TextStyle(fontSize: 11, color: t.textTertiary)),
+          const SizedBox(width: MacMetrics.gutter),
+          // the "when" column: fixed width, right-aligned, tabular figures
+          SizedBox(
+            width: 76,
+            child: _hover || missing
+                ? Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, size: 14),
+                      tooltip: 'Remove from Recent',
+                      onPressed: widget.onRemove,
+                      constraints: const BoxConstraints.tightFor(width: 22, height: 22),
+                    ),
+                  )
+                : Text(
+                    relativeTime(r.lastOpened),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: t.textTertiary,
+                      fontFeatures: kTabularFigures,
+                    ),
+                  ),
+          ),
         ],
       ),
     );

@@ -114,4 +114,12 @@ abstract final class MacMetrics {
   static const double controlHeight = 22;
   static const double radius = 6;
   static const double grid = 8;
+
+  // Separation is whitespace (STUDIO_UI.md §3a).
+  static const double gapTight = 4;
+  static const double gap = 8;
+  static const double gapGroup = 16;
+  static const double gapSection = 24;
+  static const double formLabelWidth = 78;
+  static const double gutter = 16;
 }

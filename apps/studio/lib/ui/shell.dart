@@ -191,47 +191,82 @@ class _StatusLine extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.project;
     final conn = state.connection;
-    final (Color dot, String connLabel) = switch (conn) {
-      Disconnected() => (t.textTertiary, 'bdld not connected'),
-      Connecting() => (t.open, 'connecting to bdld…'),
+    final small = TextStyle(fontSize: 11, color: t.textSecondary, fontFeatures: kTabularFigures);
+    final dim = TextStyle(fontSize: 11, color: t.textTertiary);
+
+    // Facts are cells separated by whitespace, never by punctuation.
+    final facts = <Widget>[];
+    if (p == null) {
+      facts.add(Text('No project', style: small));
+    } else {
+      final undefined = p.mappings.where((m) => !m.hasDefinition()).length;
+      facts.add(Text('r${p.revision}', style: small));
+      facts.add(_Fact(count: p.concepts.length, noun: 'concept', style: small));
+      facts.add(_Fact(count: p.mappings.length, noun: 'mapping', style: small));
+      if (undefined > 0) {
+        facts.add(
+          Text('$undefined declared without definition', style: small.copyWith(color: t.open)),
+        );
+      }
+    }
+
+    final (Color dot, List<Widget> connCells) = switch (conn) {
+      Disconnected() => (t.textTertiary, [Text('bdld not connected', style: small)]),
+      Connecting() => (t.open, [Text('connecting to bdld', style: small)]),
       Connected(:final handshake) => (
         t.settled,
-        'bdld ${handshake.compilerVersion} · protocol ${formatVersion(handshake.protocolVersion)}',
+        [
+          Text('bdld ${handshake.compilerVersion}', style: small),
+          Text('protocol ${formatVersion(handshake.protocolVersion)}', style: dim),
+        ],
       ),
-      ConnectionFailed(:final reason) => (t.error, reason),
+      ConnectionFailed(:final reason) => (t.error, [Text(reason, style: small)]),
     };
-    final undefined = p?.mappings.where((m) => !m.hasDefinition()).length ?? 0;
-    final summary = p == null
-        ? 'no project'
-        : 'r${p.revision} · ${p.concepts.length} concept${p.concepts.length == 1 ? '' : 's'} · '
-              '${p.mappings.length} mapping${p.mappings.length == 1 ? '' : 's'}'
-              '${undefined > 0 ? ' · $undefined declared without definition' : ''}';
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+
     return Container(
       height: MacMetrics.statusHeight,
       color: t.window,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
+        spacing: MacMetrics.gapGroup,
         children: [
           Expanded(
-            child: Text(summary, style: small, overflow: TextOverflow.ellipsis),
+            child: Row(spacing: MacMetrics.gapGroup, children: facts),
           ),
           if (state.editor.pendingRequests > 0)
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: SizedBox(
-                width: 10,
-                height: 10,
-                child: CircularProgressIndicator(strokeWidth: 1.5),
-              ),
+            const SizedBox(
+              width: 10,
+              height: 10,
+              child: CircularProgressIndicator(strokeWidth: 1.5),
             ),
-          Icon(Icons.circle, size: 7, color: dot),
-          const SizedBox(width: 6),
-          Text(connLabel, style: small),
+          Row(
+            spacing: MacMetrics.gapGroup,
+            children: [
+              Row(
+                spacing: MacMetrics.gapTight + 2,
+                children: [
+                  Icon(Icons.circle, size: 7, color: dot),
+                  connCells.first,
+                ],
+              ),
+              ...connCells.skip(1),
+            ],
+          ),
         ],
       ),
     );
   }
+}
+
+/// "4 concepts": the number in tabular figures, the noun pluralised.
+class _Fact extends StatelessWidget {
+  const _Fact({required this.count, required this.noun, required this.style});
+  final int count;
+  final String noun;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) => Text('$count $noun${count == 1 ? '' : 's'}', style: style);
 }
 
 /// Resolve's page bar: pages in workflow order, project manager left,

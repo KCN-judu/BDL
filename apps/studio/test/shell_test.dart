@@ -72,7 +72,7 @@ void main() {
     await tester.pumpWidget(_app(state));
     expect(find.text('Tilt'), findsWidgets);
     expect(find.text('dimByTilt'), findsWidgets);
-    expect(find.textContaining('1 declared without definition'), findsOneWidget);
+    expect(find.text('1 declared without definition'), findsOneWidget);
     // inspector shows the mapping's editable name and the delete action
     expect(find.text('Delete dimByTilt'), findsOneWidget);
     expect(find.text('Deploy'), findsOneWidget);

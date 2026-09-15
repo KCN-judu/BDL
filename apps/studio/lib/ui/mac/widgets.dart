@@ -82,7 +82,7 @@ class FormRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 78,
+            width: MacMetrics.formLabelWidth,
             child: Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -289,6 +289,7 @@ class MacDropdown<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.labelOf,
+    this.detailOf,
     this.hint,
     this.compact = false,
   });
@@ -296,6 +297,9 @@ class MacDropdown<T> extends StatelessWidget {
   final List<T> items;
   final void Function(T) onChanged;
   final String Function(T)? labelOf;
+
+  /// A secondary fact shown in its own right-hand column (a unit, a count).
+  final String Function(T)? detailOf;
   final String? hint;
   final bool compact;
 
@@ -316,7 +320,24 @@ class MacDropdown<T> extends StatelessWidget {
           PopupMenuItem<T>(
             value: i,
             height: 24,
-            child: Text(label(i), style: TextStyle(fontSize: 13, color: t.textPrimary)),
+            child: Row(
+              spacing: MacMetrics.gutter,
+              children: [
+                Expanded(
+                  child: Text(label(i), style: TextStyle(fontSize: 13, color: t.textPrimary)),
+                ),
+                ?detailOf == null
+                    ? null
+                    : Text(
+                        detailOf!(i),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: t.textSecondary,
+                          fontFeatures: kTabularFigures,
+                        ),
+                      ),
+              ],
+            ),
           ),
       ],
       onSelected: onChanged,
@@ -334,7 +355,7 @@ class MacDropdown<T> extends StatelessWidget {
           child: Row(
             mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
             children: [
-              if (!compact)
+              if (!compact) ...[
                 Expanded(
                   child: Text(
                     value == null ? (hint ?? '') : label(value as T),
@@ -344,8 +365,20 @@ class MacDropdown<T> extends StatelessWidget {
                       color: value == null ? t.textTertiary : t.textPrimary,
                     ),
                   ),
-                )
-              else
+                ),
+                if (detailOf != null && value != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: MacMetrics.gap),
+                    child: Text(
+                      detailOf!(value as T),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: t.textSecondary,
+                        fontFeatures: kTabularFigures,
+                      ),
+                    ),
+                  ),
+              ] else
                 Text(hint ?? '', style: TextStyle(fontSize: 13, color: t.textSecondary)),
               Icon(Icons.unfold_more, size: 14, color: t.textSecondary),
             ],
@@ -377,6 +410,60 @@ class _HoverableState extends State<_Hoverable> {
     );
   }
 }
+
+/// A small table of facts: fixed column widths, one gutter, text columns
+/// left-aligned, number columns right-aligned in tabular figures.  The way
+/// to show ≥ 2 rows that share fields (STUDIO_UI.md §3a).
+class MacTable extends StatelessWidget {
+  const MacTable({
+    super.key,
+    required this.columns,
+    required this.rows,
+    this.rowHeight = MacMetrics.rowHeight,
+  });
+
+  final List<MacColumn> columns;
+  final List<List<Widget>> rows;
+  final double rowHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Table(
+      columnWidths: {
+        for (var i = 0; i < columns.length; i++)
+          i: columns[i].width == null
+              ? const FlexColumnWidth()
+              : FixedColumnWidth(columns[i].width!),
+      },
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        for (final r in rows)
+          TableRow(
+            children: [
+              for (var i = 0; i < r.length; i++)
+                SizedBox(
+                  height: rowHeight,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: i == r.length - 1 ? 0 : MacMetrics.gutter),
+                    child: Align(alignment: columns[i].alignment, child: r[i]),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class MacColumn {
+  const MacColumn({this.width, this.numeric = false});
+  final double? width;
+  final bool numeric;
+  Alignment get alignment => numeric ? Alignment.centerRight : Alignment.centerLeft;
+}
+
+/// Tabular figures for numbers that sit in columns.
+const List<FontFeature> kTabularFigures = [FontFeature.tabularFigures()];
 
 class ConceptChip extends StatelessWidget {
   const ConceptChip({super.key, required this.label, required this.color, this.onRemove});

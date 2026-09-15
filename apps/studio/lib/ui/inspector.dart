@@ -75,36 +75,42 @@ class _OutcomeNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final (label, color) = switch (outcome.kind) {
+    final (String word, String detail, Color color) = switch (outcome.kind) {
       pb.EditKind.EDIT_KIND_REFINEMENT => (
-        'refinement — nothing established elsewhere is reopened',
+        'refinement',
+        'nothing established elsewhere is reopened',
         t.settled,
       ),
       pb.EditKind.EDIT_KIND_EDIT => (
-        'edit — reopens: ${outcome.invalidates.map(_invalidationWord).join(', ')}',
+        'edit',
+        'reopens ${outcome.invalidates.map(_invalidationWord).join(', ')}',
         t.open,
       ),
-      _ => ('', t.textTertiary),
+      _ => ('', '', t.textTertiary),
     };
-    if (label.isEmpty) return const SizedBox.shrink();
+    if (word.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: t.hairline)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: MacMetrics.gapTight,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Icon(Icons.circle, size: 7, color: color),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'last change: $label',
-              style: TextStyle(fontSize: 11, color: t.textSecondary),
-            ),
+          Text('Last change', style: Theme.of(context).textTheme.titleSmall),
+          Row(
+            spacing: MacMetrics.gap,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StatePill(word: word, settled: outcome.kind == pb.EditKind.EDIT_KIND_REFINEMENT),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(detail, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -163,7 +169,6 @@ class _ConceptInspector extends StatelessWidget {
               label: 'Description',
               child: CommitTextField(
                 value: concept.description,
-                hint: 'what this means for the product',
                 maxLines: 3,
                 onCommit: (v) => dispatch(SetConceptDescriptionRequested(id: id, description: v)),
               ),
@@ -204,11 +209,19 @@ class _ConceptInspector extends StatelessWidget {
             if (usedBy.isEmpty)
               Text('no mapping yet', style: TextStyle(color: t.textTertiary))
             else
-              for (final m in usedBy)
-                Text(
-                  '${m.name}  ·  ${m.signature.output.toInt() == id ? 'produces' : 'reads'}',
-                  style: TextStyle(color: t.textPrimary),
-                ),
+              MacTable(
+                columns: const [MacColumn(), MacColumn(width: 64)],
+                rows: [
+                  for (final m in usedBy)
+                    [
+                      Text(m.name, overflow: TextOverflow.ellipsis),
+                      Text(
+                        m.signature.output.toInt() == id ? 'produces' : 'reads',
+                        style: TextStyle(fontSize: 11, color: t.textSecondary),
+                      ),
+                    ],
+                ],
+              ),
           ],
         ),
         Padding(
@@ -338,7 +351,6 @@ class _MappingInspector extends StatelessWidget {
               label: 'Description',
               child: CommitTextField(
                 value: mapping.description,
-                hint: 'the relationship, in product words',
                 maxLines: 3,
                 onCommit: (v) => dispatch(SetMappingDescriptionRequested(id: id, description: v)),
               ),
@@ -360,7 +372,7 @@ class _MappingInspector extends StatelessWidget {
           title: 'Signature',
           children: [
             FormRow(
-              label: 'Inputs',
+              label: 'Reads',
               child: Wrap(
                 spacing: 4,
                 runSpacing: 4,
@@ -387,7 +399,7 @@ class _MappingInspector extends StatelessWidget {
               ),
             ),
             FormRow(
-              label: 'Output',
+              label: 'Produces',
               child: MacDropdown<int>(
                 value: output,
                 items: [for (final c in concepts) c.id.toInt()],
@@ -417,8 +429,9 @@ class _MappingInspector extends StatelessWidget {
               const SizedBox(height: 8),
               CommitTextField(
                 value: '',
-                hint:
-                    'formula, e.g. clamp(0.2 + 0.8 * ${inputs.isEmpty ? 'x' : _name(inputs.first)} / 60deg, 0, 1)',
+                hint: inputs.isEmpty
+                    ? 'expression with no inputs'
+                    : 'expression over ${inputs.map(_name).join(', ')}',
                 maxLines: 3,
                 commitLabel: 'Attach',
                 onCommit: (v) {
