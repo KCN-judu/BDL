@@ -56,6 +56,13 @@ class EffectExecutor {
           ),
           _onEditApplied,
         );
+      case SetLayout(:final layout):
+        // Layout is not a revision and is not counted as pending.
+        await _call(
+          pb.ClientMessage(setLayout: pb.SetLayoutRequest(layout: layout)),
+          (_) {},
+          counted: false,
+        );
       case Undo():
         await _call(pb.ClientMessage(undo: pb.UndoRequest()), _onEditApplied);
       case Redo():

@@ -16,3 +16,4 @@ mark superseded. Format: Context · Decision · Consequences.
 | [0009](0009-revisioned-edits-and-stale-results.md) | Revisioned edits; stale analysis results are discarded |
 | [0010](0010-lean-is-a-specification.md) | The Lean development is a specification, not a dependency |
 | [0011](0011-floats-not-nat.md) | Production numerics are IEEE floats, recorded as a deviation |
+| [0012](0012-studio-ui-references.md) | Studio UI follows Resolve's pages, Blender's node editor, and the macOS HIG |

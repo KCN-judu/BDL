@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "design": {
+    "name": "lamp",
+    "concepts": {},
+    "mappings": {},
+    "ids": {
+      "next_semantic": 0,
+      "next_decl": 0,
+      "next_clock": 0,
+      "next_output": 0
+    }
+  }
+}

@@ -8,9 +8,33 @@
 /// * [AppState.render]   — ephemeral rendering state (drag, hover, zoom).
 library;
 
+import 'dart:ui' show Offset;
+
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+
+/// The workflow pages, in workflow order (docs/STUDIO_UI.md §1).
+enum StudioPage { design, simulate, deploy, monitor }
+
+enum NodeKind { concept, mapping }
+
+/// A node on the canvas, identified by kind + stable id.
+@immutable
+class NodeRef {
+  const NodeRef(this.kind, this.id);
+  const NodeRef.concept(int id) : this(NodeKind.concept, id);
+  const NodeRef.mapping(int id) : this(NodeKind.mapping, id);
+  final NodeKind kind;
+  final int id;
+
+  @override
+  bool operator ==(Object other) => other is NodeRef && other.kind == kind && other.id == id;
+  @override
+  int get hashCode => Object.hash(kind, id);
+  @override
+  String toString() => '${kind.name}#$id';
+}
 
 @immutable
 sealed class DaemonConnection {
@@ -60,12 +84,20 @@ class MappingSelected extends Selection {
 @immutable
 class EditorState {
   const EditorState({
+    this.page = StudioPage.design,
     this.selection = const NoSelection(),
+    this.layout = const {},
     this.pendingRequests = 0,
     this.lastError,
+    this.lastOutcome,
   });
 
+  final StudioPage page;
   final Selection selection;
+
+  /// Canvas positions.  Studio authors these; the daemon stores them.  Never
+  /// semantics (ADR-0003).
+  final Map<NodeRef, Offset> layout;
 
   /// Requests sent to the daemon and not yet answered.
   final int pendingRequests;
@@ -73,16 +105,27 @@ class EditorState {
   /// The most recent request failure, shown until dismissed.
   final UserFacingError? lastError;
 
+  /// Refinement/edit classification of the last committed edit, shown in
+  /// the inspector so the paper's distinction is visible where one acts.
+  final pb.EditOutcome? lastOutcome;
+
   EditorState copyWith({
+    StudioPage? page,
     Selection? selection,
+    Map<NodeRef, Offset>? layout,
     int? pendingRequests,
     UserFacingError? lastError,
     bool clearError = false,
+    pb.EditOutcome? lastOutcome,
+    bool clearOutcome = false,
   }) {
     return EditorState(
+      page: page ?? this.page,
       selection: selection ?? this.selection,
+      layout: layout ?? this.layout,
       pendingRequests: pendingRequests ?? this.pendingRequests,
       lastError: clearError ? null : (lastError ?? this.lastError),
+      lastOutcome: clearOutcome ? null : (lastOutcome ?? this.lastOutcome),
     );
   }
 }

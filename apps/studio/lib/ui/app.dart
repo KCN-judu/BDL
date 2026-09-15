@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/actions.dart';
 import '../app/store.dart';
-import 'home_page.dart';
+import 'mac/theme.dart';
+import 'shell.dart';
 
 class StudioApp extends ConsumerStatefulWidget {
   const StudioApp({super.key});
@@ -26,13 +27,10 @@ class _StudioAppState extends ConsumerState<StudioApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BDL Studio',
-      theme: ThemeData(colorSchemeSeed: const Color(0xFF3B6EA5), useMaterial3: true),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF3B6EA5),
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      home: const HomePage(),
+      debugShowCheckedModeBanner: false,
+      theme: macTheme(Brightness.light),
+      darkTheme: macTheme(Brightness.dark),
+      home: const StudioShell(),
     );
   }
 }

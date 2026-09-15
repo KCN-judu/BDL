@@ -16,8 +16,9 @@ follows the formally developed semantics; it is not itself formally verified.
 ## Status
 
 Milestone 1 (vertical slice), steps A–F: Studio connects to `bdld`, shows
-compiler/protocol versions, creates concepts and unresolved mappings,
-saves and reopens them crash-safely. Next: the architecture review gate,
+compiler/protocol versions, and edits concepts and (possibly unresolved)
+mappings on a node canvas with a Resolve-style page workflow and a macOS
+look; projects save and reopen crash-safely. Next: the architecture review gate,
 then the checker. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Layout
@@ -51,5 +52,6 @@ just bdld           # run the daemon on stdio for manual experiments
 
 1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
 2. [docs/adr/](docs/adr/README.md) — decisions
-3. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
-4. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)
+3. [docs/STUDIO_UI.md](docs/STUDIO_UI.md) — what Studio looks like and why (Resolve · Blender · macOS)
+4. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
+5. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)

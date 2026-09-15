@@ -5,6 +5,8 @@
 /// same pure reducer.
 library;
 
+import 'dart:ui' show Offset;
+
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -75,6 +77,102 @@ class AttachFormulaRequested extends UserAction {
   const AttachFormulaRequested({required this.mappingId, required this.source});
   final int mappingId;
   final String source;
+}
+
+class PageSelected extends UserAction {
+  const PageSelected(this.page);
+  final StudioPage page;
+}
+
+class RenameConceptRequested extends UserAction {
+  const RenameConceptRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetConceptDescriptionRequested extends UserAction {
+  const SetConceptDescriptionRequested({required this.id, required this.description});
+  final int id;
+  final String description;
+}
+
+class SetConceptRepresentationRequested extends UserAction {
+  const SetConceptRepresentationRequested({required this.id, required this.representation});
+  final int id;
+  final pb.Representation? representation;
+}
+
+class DeleteConceptRequested extends UserAction {
+  const DeleteConceptRequested(this.id);
+  final int id;
+}
+
+class RenameMappingRequested extends UserAction {
+  const RenameMappingRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetMappingDescriptionRequested extends UserAction {
+  const SetMappingDescriptionRequested({required this.id, required this.description});
+  final int id;
+  final String description;
+}
+
+class SetMappingSignatureRequested extends UserAction {
+  const SetMappingSignatureRequested({
+    required this.id,
+    required this.inputs,
+    required this.output,
+  });
+  final int id;
+  final List<int> inputs;
+  final int output;
+}
+
+/// `source == null` detaches the definition.
+class ReplaceDefinitionRequested extends UserAction {
+  const ReplaceDefinitionRequested({required this.mappingId, required this.source});
+  final int mappingId;
+  final String? source;
+}
+
+class DeleteMappingRequested extends UserAction {
+  const DeleteMappingRequested(this.id);
+  final int id;
+}
+
+/// Delete whatever is selected.
+class DeleteSelectionRequested extends UserAction {
+  const DeleteSelectionRequested();
+}
+
+/// A node finished being dragged; commit its position (layout, not semantics).
+class NodeMoved extends UserAction {
+  const NodeMoved(this.node, this.position);
+  final NodeRef node;
+  final Offset position;
+}
+
+/// A link was drawn from a concept's value socket into a mapping's inputs.
+class LinkConceptToMappingInput extends UserAction {
+  const LinkConceptToMappingInput({required this.conceptId, required this.mappingId});
+  final int conceptId;
+  final int mappingId;
+}
+
+/// A link was drawn from a mapping's output socket to a concept.
+class LinkMappingOutputToConcept extends UserAction {
+  const LinkMappingOutputToConcept({required this.mappingId, required this.conceptId});
+  final int mappingId;
+  final int conceptId;
+}
+
+/// A concept was disconnected from a mapping's inputs.
+class UnlinkMappingInput extends UserAction {
+  const UnlinkMappingInput({required this.mappingId, required this.conceptId});
+  final int mappingId;
+  final int conceptId;
 }
 
 class SelectionChanged extends UserAction {

@@ -8,7 +8,9 @@ Layered; determinism is a tested property, not a hope.
 | Rust end-to-end | spawn the real `bdld`, drive the framed protocol through steps 1–12 of the vertical slice | `crates/bdl-daemon/tests/stdio_e2e.rs` | in place |
 | Dart unit | pure reducer transitions, framing codec | `apps/studio/test` | in place |
 | Dart integration | the Dart client against the real `bdld` binary (skipped if not built) | `apps/studio/test/daemon_client_test.dart` | in place |
-| Flutter widget | status bar states | `apps/studio/test/status_bar_test.dart` | in place |
+| Flutter widget | shell status line, library/canvas/inspector with an open project | `apps/studio/test/shell_test.dart` | in place |
+| Dart unit | canvas geometry: scene, auto-placement, hit testing, typed drop targets | `apps/studio/test/canvas_geometry_test.dart` | in place |
+| Render preview | renders the shell with the real system font to PNG (`SNAP_DIR=… flutter test --update-goldens test/snapshot_preview_test.dart`, or `just studio-snap`) — for looking, not asserting | `apps/studio/test/snapshot_preview_test.dart` | in place (opt-in) |
 | Property | solver output satisfies constraints; evaluator stability; codegen stability; refinement preserves public projections | `proptest` | planned with each subsystem |
 | Golden | project → diagnostics / IR / generated Rust / trace | `tests/golden/` | planned |
 | Differential | reference interpreter trace == generated-Rust host trace == Lean fixtures where practical | `tests/differential/` | planned; highest-value test in the project |

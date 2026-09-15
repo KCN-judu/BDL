@@ -44,6 +44,11 @@ class ApplyEdit extends Effect {
   final pb.EditOp op;
 }
 
+class SetLayout extends Effect {
+  const SetLayout(this.layout);
+  final pb.Layout layout;
+}
+
 class Undo extends Effect {
   const Undo();
 }

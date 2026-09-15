@@ -58,6 +58,12 @@ studio-analyze:
 studio-test: build
     cd {{studio}} && {{flutter}} test
 
+# Render the Studio shell to PNGs (light/dark) with the real system font.
+studio-snap out="/tmp/bdl-snap":
+    mkdir -p {{out}}
+    cd {{studio}} && SNAP_DIR={{out}} {{flutter}} test --update-goldens test/snapshot_preview_test.dart
+    @echo "wrote {{out}}/shell_light.png and shell_dark.png"
+
 # Build bdld, then run Studio against it.
 studio: build
     cd {{studio}} && {{flutter}} run -d macos --dart-define=BDLD_PATH=$(pwd)/../../target/debug/bdld

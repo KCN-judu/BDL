@@ -1,156 +1,189 @@
+/// Sheets and dialogs.  Text-field paths for now: a native file picker needs
+/// platform plugins and v0.1 keeps the desktop build plugin-free.
+library;
+
 import 'package:flutter/material.dart';
 
+import '../app/actions.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'mac/tokens.dart';
+import 'mac/widgets.dart';
 
-/// Path + name for a new project (no file picker yet: it needs platform
-/// plugins, and v0.1 keeps the desktop build plugin-free).
-Future<({String path, String name})?> showNewProjectDialog(BuildContext context) {
-  final path = TextEditingController();
-  final name = TextEditingController(text: 'lamp');
-  return showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('New project'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: path,
-            decoration: const InputDecoration(labelText: 'Directory'),
-          ),
-          TextField(
-            controller: name,
-            decoration: const InputDecoration(labelText: 'Name'),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, (path: path.text.trim(), name: name.text.trim())),
-          child: const Text('Create'),
-        ),
-      ],
-    ),
-  );
-}
-
-Future<String?> showOpenProjectDialog(BuildContext context) {
-  final path = TextEditingController();
-  return showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Open project'),
-      content: TextField(
-        controller: path,
-        decoration: const InputDecoration(labelText: 'Project directory (contains bdl.toml)'),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, path.text.trim()),
-          child: const Text('Open'),
-        ),
-      ],
-    ),
-  );
-}
-
-Future<String?> showNameDialog(BuildContext context, {required String title, String hint = ''}) {
-  final name = TextEditingController();
-  return showDialog<String>(
+Future<T?> _sheet<T>(
+  BuildContext context, {
+  required String title,
+  required Widget content,
+  required List<Widget> actions,
+}) {
+  return showDialog<T>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(title),
-      content: TextField(
+      content: SizedBox(width: 420, child: content),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      actions: actions,
+    ),
+  );
+}
+
+/// Project manager (Resolve's ⊞): new or open.
+Future<void> showProjectManager(BuildContext context, void Function(AppAction) dispatch) async {
+  final path = TextEditingController();
+  final name = TextEditingController(text: 'lamp');
+  var mode = 'open';
+  await _sheet<void>(
+    context,
+    title: 'Projects',
+    content: StatefulBuilder(
+      builder: (ctx, setState) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MacSegmented<String>(
+            value: mode,
+            options: const {'open': 'Open existing', 'new': 'Create new'},
+            onChanged: (m) => setState(() => mode = m),
+          ),
+          const SizedBox(height: 12),
+          FormRow(
+            label: 'Folder',
+            child: TextField(
+              controller: path,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: mode == 'open'
+                    ? '/path/to/project (contains bdl.toml)'
+                    : '/path/to/new/project',
+              ),
+            ),
+          ),
+          if (mode == 'new')
+            FormRow(
+              label: 'Name',
+              child: TextField(controller: name),
+            ),
+        ],
+      ),
+    ),
+    actions: [
+      OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(
+        onPressed: () {
+          final p = path.text.trim();
+          if (p.isEmpty) return;
+          Navigator.pop(context);
+          if (mode == 'open') {
+            dispatch(OpenProjectRequested(p));
+          } else {
+            dispatch(NewProjectRequested(rootPath: p, name: name.text.trim()));
+          }
+        },
+        child: Text(mode == 'open' ? 'Open' : 'Create'),
+      ),
+    ],
+  );
+}
+
+Future<String?> showNameSheet(BuildContext context, {required String title, String hint = ''}) {
+  final name = TextEditingController();
+  return _sheet<String>(
+    context,
+    title: title,
+    content: FormRow(
+      label: 'Name',
+      child: TextField(
         controller: name,
         autofocus: true,
-        decoration: InputDecoration(labelText: 'Name', hintText: hint),
-        onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        decoration: InputDecoration(hintText: hint),
+        onSubmitted: (v) => Navigator.pop(context, v.trim()),
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, name.text.trim()),
-          child: const Text('Create'),
-        ),
-      ],
     ),
+    actions: [
+      OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, name.text.trim()),
+        child: const Text('Create'),
+      ),
+    ],
   );
 }
 
 /// `name : (inputs) -> output` over existing concepts.
-Future<({String name, List<int> inputs, int output})?> showNewMappingDialog(
+Future<({String name, List<int> inputs, int output})?> showNewMappingSheet(
   BuildContext context,
   List<pb.ConceptView> concepts,
 ) {
+  final t = MacTokens.of(context);
   final name = TextEditingController();
   final selectedInputs = <int>{};
-  int? output = concepts.isNotEmpty ? concepts.first.id.toInt() : null;
-  return showDialog(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setState) => AlertDialog(
-        title: const Text('New mapping'),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: name,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Name', hintText: 'dimByTilt'),
-              ),
-              const SizedBox(height: 12),
-              const Text('Inputs'),
-              Wrap(
-                spacing: 6,
-                children: [
-                  for (final c in concepts)
-                    FilterChip(
-                      label: Text(c.name),
-                      selected: selectedInputs.contains(c.id.toInt()),
-                      onSelected: (on) => setState(() {
-                        on ? selectedInputs.add(c.id.toInt()) : selectedInputs.remove(c.id.toInt());
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                initialValue: output,
-                decoration: const InputDecoration(labelText: 'Output'),
-                items: [
-                  for (final c in concepts)
-                    DropdownMenuItem(value: c.id.toInt(), child: Text(c.name)),
-                ],
-                onChanged: (v) => setState(() => output = v),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'The mapping is created without a definition. That is a legal state: '
-                'others may depend on it before it is defined.',
-                style: Theme.of(ctx).textTheme.bodySmall,
-              ),
-            ],
+  int output = concepts.first.id.toInt();
+  String nameOf(int id) => concepts.firstWhere((c) => c.id.toInt() == id).name;
+  return _sheet(
+    context,
+    title: 'New mapping',
+    content: StatefulBuilder(
+      builder: (ctx, setState) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FormRow(
+            label: 'Name',
+            child: TextField(
+              controller: name,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'dimByTilt'),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: output == null
-                ? null
-                : () => Navigator.pop(ctx, (
-                    name: name.text.trim(),
-                    inputs: selectedInputs.toList()..sort(),
-                    output: output!,
-                  )),
-            child: const Text('Create'),
+          FormRow(
+            label: 'Inputs',
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final c in concepts)
+                  FilterChip(
+                    label: Text(c.name, style: const TextStyle(fontSize: 12)),
+                    avatar: Icon(Icons.circle, size: 8, color: t.conceptColor(c.id.toInt())),
+                    selected: selectedInputs.contains(c.id.toInt()),
+                    showCheckmark: false,
+                    selectedColor: t.selection,
+                    side: BorderSide(color: t.hairline),
+                    visualDensity: VisualDensity.compact,
+                    onSelected: (on) => setState(() {
+                      on ? selectedInputs.add(c.id.toInt()) : selectedInputs.remove(c.id.toInt());
+                    }),
+                  ),
+              ],
+            ),
+          ),
+          FormRow(
+            label: 'Output',
+            child: MacDropdown<int>(
+              value: output,
+              items: [for (final c in concepts) c.id.toInt()],
+              labelOf: nameOf,
+              onChanged: (v) => setState(() => output = v),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Created without a definition — a legal state. Others may depend on it before it '
+            'is defined.',
+            style: TextStyle(fontSize: 11, color: t.textSecondary),
           ),
         ],
       ),
     ),
+    actions: [
+      OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, (
+          name: name.text.trim(),
+          inputs: selectedInputs.toList()..sort(),
+          output: output,
+        )),
+        child: const Text('Create'),
+      ),
+    ],
   );
 }
