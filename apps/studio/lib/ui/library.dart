@@ -31,9 +31,15 @@ class Library extends StatelessWidget {
                 _Section(
                   title: 'Concepts',
                   onAdd: () async {
-                    final name = await showNameSheet(context, title: 'New concept', hint: 'Tilt');
-                    if (name != null && name.isNotEmpty) {
-                      dispatch(CreateConceptRequested(name: name));
+                    final r = await showNewConceptSheet(context);
+                    if (r != null) {
+                      dispatch(
+                        CreateConceptRequested(
+                          name: r.name,
+                          description: r.description,
+                          representation: r.representation,
+                        ),
+                      );
                     }
                   },
                 ),

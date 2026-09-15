@@ -215,6 +215,28 @@ The inspector shows the refinement/edit classification the compiler
 returns (`EditOutcome.kind`) as a one-line note after each change, so the
 paper's distinction is visible where the designer acts.
 
+## 5. Sheets teach by showing, not by example text
+
+A creation sheet never carries a sample value as a hint ("Tilt") — that
+repeats the paper and tells the designer nothing about what the field
+*means*. Instead the sheet renders, live and at canvas fidelity, the node
+the entries will become (`NodePreview`, painted by the same `NodePainter`
+as the canvas):
+
+* **New concept**: Name · Kind (Quantity / On–off / Count / Decide later) ·
+  Dimension (when quantity) · Meaning. The preview's socket fills when a
+  kind is chosen and stays hollow with *open* when it is not; a one-line
+  caption under the preview states what that socket means. The socket is
+  grey because its colour is the identity the compiler will allocate.
+* **New mapping**: Name · Reads (concept toggles drawn as their sockets, in
+  their colours) · Produces. The preview is the mapping node with those
+  input sockets, dashed, *declared* — the state it will be in.
+
+Text fields (`MacTextField`): hairline, 5 pt radius, 24 pt; focus = 1 px
+accent border + 3 pt soft glow, nothing moves. Push buttons (`MacButton`):
+22 pt, ≥ 72 pt wide, primary filled with the accent, secondary hairline,
+destructive red text; Cancel left of the default action; Return submits.
+
 ## 6. Interaction states — the one standard
 
 Every control in Studio answers hover, press, keyboard focus and disabled
@@ -253,7 +275,7 @@ hover never conveys information that is not also visible at rest, and the
 focus ring is the only place the accent appears on a control that is not
 selected or primary.
 
-## 7. When the OS dialog cannot be shown
+## 8. When the OS dialog cannot be shown
 
 `file_selector` dialogs are hosted by macOS's view-bridge, which refuses
 children of sandboxed hosts (Studio launched from an embedded terminal, for
@@ -261,7 +283,7 @@ example). A `null` returned faster than a person could cancel is treated
 as *refused*: Studio shows a banner explaining it and the Start list gains
 *Open by path…* / *New at path…* as a typed fallback.
 
-## 8. Non-goals for this iteration
+## 9. Non-goals for this iteration
 
 Contexts, outputs, transports and clock boundaries on the canvas;
 simulate/deploy/monitor content; native menu bar; drag-and-drop from the

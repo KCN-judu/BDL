@@ -320,8 +320,9 @@ class _CanvasPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
+    final painter = NodePainter(tokens, hoveredSocket: hoveredSocket, dropOk: dropOk);
     for (final n in scene.nodes) {
-      _node(canvas, n, n.ref == selected, n.ref == hovered);
+      painter.node(canvas, n, selected: n.ref == selected, hovered: n.ref == hovered);
     }
     canvas.restore();
   }
@@ -343,7 +344,27 @@ class _CanvasPainter extends CustomPainter {
     }
   }
 
-  void _node(Canvas canvas, NodeShape n, bool isSelected, bool isHovered) {
+  @override
+  bool shouldRepaint(_CanvasPainter old) => true;
+}
+
+/// Paints one node the way the canvas does — shared with previews so a
+/// node in a sheet looks exactly like the node it will become.
+class NodePainter {
+  NodePainter(this.tokens, {this.hoveredSocket, this.dropOk, Color Function(int)? conceptColor})
+    : conceptColor = conceptColor ?? tokens.conceptColor;
+  final MacTokens tokens;
+  final SocketRef? hoveredSocket;
+  final SocketRef? dropOk;
+
+  /// Socket/link colour per concept id.  Previews of a concept that does
+  /// not exist yet pass a neutral colour: its real hue is decided by the
+  /// identity the compiler allocates.
+  final Color Function(int) conceptColor;
+
+  void node(Canvas canvas, NodeShape n, {bool selected = false, bool hovered = false}) {
+    final isSelected = selected;
+    final isHovered = hovered;
     final rrect = RRect.fromRectAndRadius(n.rect, const Radius.circular(NodeMetrics.cornerRadius));
     canvas.drawRRect(
       rrect.shift(const Offset(0, 1)),
@@ -401,7 +422,7 @@ class _CanvasPainter extends CustomPainter {
     }
 
     for (final s in n.sockets) {
-      final color = tokens.conceptColor(s.ref.concept);
+      final color = conceptColor(s.ref.concept);
       final highlight = dropOk == s.ref;
       if (highlight) {
         canvas.drawCircle(
@@ -519,7 +540,72 @@ class _CanvasPainter extends CustomPainter {
     )..layout(maxWidth: maxWidth);
     tp.paint(canvas, alignRight ? at - Offset(tp.width, 0) : at);
   }
+}
+
+/// A single node rendered at canvas fidelity, for sheets and inspectors.
+/// Build it from a synthetic projection so the same `buildScene` geometry
+/// applies.
+class NodePreview extends StatelessWidget {
+  const NodePreview({
+    super.key,
+    required this.projection,
+    required this.node,
+    this.height = 96,
+    this.neutralConcepts = const {},
+  });
+  final pb.ProjectProjection projection;
+  final NodeRef node;
+  final double height;
+
+  /// Concept ids whose colour is not yet known (not created yet).
+  final Set<int> neutralConcepts;
 
   @override
-  bool shouldRepaint(_CanvasPainter old) => true;
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return SizedBox(
+      height: height,
+      child: CustomPaint(painter: _PreviewPainter(t, projection, node, neutralConcepts)),
+    );
+  }
+}
+
+class _PreviewPainter extends CustomPainter {
+  _PreviewPainter(this.t, this.p, this.node, this.neutral);
+  final MacTokens t;
+  final pb.ProjectProjection p;
+  final NodeRef node;
+  final Set<int> neutral;
+
+  Color _color(int id) => neutral.contains(id) ? t.textTertiary : t.conceptColor(id);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scene = buildScene(p, const {});
+    final shape = scene.nodes.where((n) => n.ref == node).firstOrNull;
+    if (shape == null) return;
+    // centre the node
+    final dx = (size.width - shape.rect.width) / 2 - shape.rect.left;
+    final dy = (size.height - shape.rect.height) / 2 - shape.rect.top;
+    canvas.translate(dx, dy);
+    // short link stubs so the sockets read as connectable
+    final stub = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    for (final s in shape.sockets) {
+      final c = _color(s.ref.concept).withValues(alpha: 0.6);
+      final dir = s.ref.side == SocketSide.input ? -1.0 : 1.0;
+      canvas.drawLine(
+        s.center + Offset(dir * 9, 0),
+        s.center + Offset(dir * 28, 0),
+        stub..color = c,
+      );
+    }
+    NodePainter(t, conceptColor: _color).node(canvas, shape);
+  }
+
+  @override
+  bool shouldRepaint(_PreviewPainter old) =>
+      old.p != p || old.node != node || old.t != t || old.neutral != neutral;
 }

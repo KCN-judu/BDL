@@ -11,6 +11,7 @@ import '../app/state.dart';
 import '../app/store.dart';
 import '../platform/desktop.dart';
 import '../protocol/versions.dart';
+import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'pages/design_page.dart';
@@ -141,14 +142,14 @@ class _Toolbar extends StatelessWidget {
             onPressed: p?.canRedo == true ? () => dispatch(const RedoRequested()) : null,
           ),
           const SizedBox(width: 12),
-          OutlinedButton(
+          MacButton(
+            label: 'Save',
             onPressed: p != null && p.dirty ? () => dispatch(const SaveRequested()) : null,
-            child: const Text('Save'),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(
+          MacButton(
+            label: 'Close',
             onPressed: p != null ? () => dispatch(const CloseProjectRequested()) : null,
-            child: const Text('Close'),
           ),
         ],
       ),

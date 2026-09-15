@@ -9,6 +9,7 @@ import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel;
+import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 
@@ -436,10 +437,10 @@ class _MappingInspector extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  OutlinedButton(
+                  MacButton(
+                    label: 'Detach definition',
                     onPressed: () =>
                         dispatch(ReplaceDefinitionRequested(mappingId: id, source: null)),
-                    child: const Text('Detach definition'),
                   ),
                   const SizedBox(width: 8),
                   Expanded(

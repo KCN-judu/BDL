@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'controls.dart';
 import 'theme.dart';
 import 'tokens.dart';
 
@@ -156,13 +157,12 @@ class _CommitTextFieldState extends State<CommitTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final field = TextField(
+    final field = MacTextField(
       controller: _c,
       focusNode: _focus,
       maxLines: widget.maxLines,
-      style: TextStyle(fontSize: 13, fontFamily: widget.monospace ? 'Menlo' : null),
-      decoration: InputDecoration(hintText: widget.hint),
-      textInputAction: widget.maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
+      monospace: widget.monospace,
+      hint: widget.hint,
       onSubmitted: (_) => _commit(),
     );
     if (widget.commitLabel == null) return field;
@@ -171,7 +171,7 @@ class _CommitTextFieldState extends State<CommitTextField> {
       children: [
         field,
         const SizedBox(height: 6),
-        FilledButton(onPressed: _commit, child: Text(widget.commitLabel!)),
+        MacButton.primary(label: widget.commitLabel!, onPressed: _commit),
       ],
     );
   }
@@ -457,13 +457,11 @@ class DestructiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final button = OutlinedButton(
+    return MacButton.destructive(
+      label: label,
       onPressed: enabled ? onPressed : null,
-      style: OutlinedButton.styleFrom(foregroundColor: t.error),
-      child: Text(label),
+      tooltip: tooltip,
     );
-    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }
 

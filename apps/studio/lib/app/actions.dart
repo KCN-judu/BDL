@@ -71,9 +71,10 @@ class RedoRequested extends UserAction {
 }
 
 class CreateConceptRequested extends UserAction {
-  const CreateConceptRequested({required this.name, this.description = ''});
+  const CreateConceptRequested({required this.name, this.description = '', this.representation});
   final String name;
   final String description;
+  final pb.Representation? representation;
 }
 
 class CreateMappingRequested extends UserAction {
