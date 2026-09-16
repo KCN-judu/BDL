@@ -4,6 +4,8 @@
 /// application behaves* is readable here and testable without a widget tree.
 library;
 
+import 'dart:ui' show Rect;
+
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 
@@ -472,6 +474,16 @@ Transition reduce(AppState s, AppAction action) {
     ),
     InlineRenameFinished(:final node, :final name) => _inlineRenameFinished(s, node, name),
     ConceptTemplatesReceived(:final library) => Transition(s.copyWith(library: library)),
+    // A collapsed group's box is layout of its own kind.
+    NodeMoved(:final node, :final position) when node.kind == NodeKind.group => systemAction(
+      s,
+      GroupBoxChanged(
+        id: node.id,
+        rect: (s.editor.layouts.groups[node.id]?.rect ?? Rect.zero).let(
+          (r) => Rect.fromLTWH(position.dx, position.dy, r.width, r.height),
+        ),
+      ),
+    ),
     NodeMoved(:final node, :final position) => _whenProject(s, () {
       final layout = {...s.editor.layout, node: position};
       final layouts = s.editor.layouts.withNodes(s.editor.context, layout);
@@ -933,4 +945,8 @@ extension on Transition {
 List<String> _appendLog(List<String> log, String line) {
   final next = [...log, line];
   return next.length > _maxLogLines ? next.sublist(next.length - _maxLogLines) : next;
+}
+
+extension<T> on T {
+  R let<R>(R Function(T) f) => f(this);
 }

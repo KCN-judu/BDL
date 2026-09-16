@@ -217,12 +217,19 @@ class _NodeCanvasState extends State<NodeCanvas> {
           ),
         if (node.kind == NodeKind.group) ...[
           MenuItemButton(
-            onPressed: () => widget.dispatch(
-              GroupCollapsedChanged(
-                id: node.id,
-                collapsed: !(widget.system.groupBoxes[node.id]?.collapsed ?? false),
-              ),
-            ),
+            onPressed: () {
+              final collapsed = widget.system.groupBoxes[node.id]?.collapsed ?? false;
+              // Collapsing: the box starts where the region was.
+              if (!collapsed) {
+                final region = _scene(widget.layout).groups
+                    .where((g) => g.id == node.id)
+                    .firstOrNull;
+                if (region != null) {
+                  widget.dispatch(GroupBoxChanged(id: node.id, rect: region.rect));
+                }
+              }
+              widget.dispatch(GroupCollapsedChanged(id: node.id, collapsed: !collapsed));
+            },
             child: Text(
               (widget.system.groupBoxes[node.id]?.collapsed ?? false) ? 'Expand' : 'Collapse',
             ),
