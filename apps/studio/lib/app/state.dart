@@ -8,7 +8,7 @@
 /// * [AppState.render]   — ephemeral rendering state (drag, hover, zoom).
 library;
 
-import 'dart:ui' show Offset;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
@@ -18,7 +18,11 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 /// The workflow pages, in workflow order (docs/STUDIO_UI.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
-enum NodeKind { concept, mapping, output }
+/// Canvas node kinds.  [instance] is a component instance of a system
+/// (rendered from its ports' contracts, never its body); [group] is a
+/// collapsed behaviour group (a picture of its members, never a node the
+/// compiler knows).
+enum NodeKind { concept, mapping, output, instance, group }
 
 /// A node on the canvas, identified by kind + stable id.
 @immutable
@@ -27,6 +31,8 @@ class NodeRef {
   const NodeRef.concept(int id) : this(NodeKind.concept, id);
   const NodeRef.mapping(int id) : this(NodeKind.mapping, id);
   const NodeRef.output(int id) : this(NodeKind.output, id);
+  const NodeRef.instance(int id) : this(NodeKind.instance, id);
+  const NodeRef.group(int id) : this(NodeKind.group, id);
   final NodeKind kind;
   final int id;
 
@@ -36,6 +42,83 @@ class NodeRef {
   int get hashCode => Object.hash(kind, id);
   @override
   String toString() => '${kind.name}#$id';
+}
+
+/// Which design the canvas shows (docs/STUDIO_UI.md §11).  A flat project
+/// has only the system context (its own design); a system project shows
+/// its top level — shared concepts, domains, sinks, top-level
+/// relationships, component instances — or the *source* of one component
+/// (its body, in the component's own names and identities).
+@immutable
+sealed class DesignContext {
+  const DesignContext();
+}
+
+class SystemContext extends DesignContext {
+  const SystemContext();
+  @override
+  bool operator ==(Object other) => other is SystemContext;
+  @override
+  int get hashCode => 1;
+}
+
+class ComponentContext extends DesignContext {
+  const ComponentContext(this.id);
+  final int id;
+  @override
+  bool operator ==(Object other) => other is ComponentContext && other.id == id;
+  @override
+  int get hashCode => Object.hash(2, id);
+}
+
+/// A behaviour group's picture: where its collapsed box stands, how big it
+/// is, whether it is collapsed.  Layout only — the members are the
+/// system's.
+@immutable
+class GroupBox {
+  const GroupBox({required this.rect, this.collapsed = false});
+  final Rect rect;
+  final bool collapsed;
+
+  GroupBox copyWith({Rect? rect, bool? collapsed}) =>
+      GroupBox(rect: rect ?? this.rect, collapsed: collapsed ?? this.collapsed);
+
+  @override
+  bool operator ==(Object other) =>
+      other is GroupBox && other.rect == rect && other.collapsed == collapsed;
+  @override
+  int get hashCode => Object.hash(rect, collapsed);
+}
+
+/// Every canvas of the project: the system (or flat) canvas, its group
+/// boxes, and one canvas per component body.  Studio authors it; the
+/// daemon stores it whole (`SetLayout`).  Never semantics (ADR-0003).
+@immutable
+class CanvasLayout {
+  const CanvasLayout({this.system = const {}, this.groups = const {}, this.components = const {}});
+  final Map<NodeRef, Offset> system;
+  final Map<int, GroupBox> groups;
+  final Map<int, Map<NodeRef, Offset>> components;
+
+  Map<NodeRef, Offset> of(DesignContext c) => switch (c) {
+    SystemContext() => system,
+    ComponentContext(:final id) => components[id] ?? const {},
+  };
+
+  CanvasLayout withNodes(DesignContext c, Map<NodeRef, Offset> nodes) => switch (c) {
+    SystemContext() => CanvasLayout(system: nodes, groups: groups, components: components),
+    ComponentContext(:final id) => CanvasLayout(
+      system: system,
+      groups: groups,
+      components: {...components, id: nodes},
+    ),
+  };
+
+  CanvasLayout withGroup(int id, GroupBox box) =>
+      CanvasLayout(system: system, groups: {...groups, id: box}, components: components);
+
+  CanvasLayout withoutGroup(int id) =>
+      CanvasLayout(system: system, groups: {...groups}..remove(id), components: components);
 }
 
 /// A project the user opened before.  App-level preference, not project data.
@@ -95,21 +178,171 @@ sealed class Selection {
 
 class NoSelection extends Selection {
   const NoSelection();
+  @override
+  bool operator ==(Object other) => other is NoSelection;
+  @override
+  int get hashCode => 0;
 }
 
 class ConceptSelected extends Selection {
   const ConceptSelected(this.id);
   final int id;
+  @override
+  bool operator ==(Object other) => other is ConceptSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(ConceptSelected, id);
 }
 
 class MappingSelected extends Selection {
   const MappingSelected(this.id);
   final int id;
+  @override
+  bool operator ==(Object other) => other is MappingSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(MappingSelected, id);
 }
 
 class OutputSelected extends Selection {
   const OutputSelected(this.id);
   final int id;
+  @override
+  bool operator ==(Object other) => other is OutputSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(OutputSelected, id);
+}
+
+// ---- system entities (a system project's own objects) -------------------------
+
+class ComponentSelected extends Selection {
+  const ComponentSelected(this.id);
+  final int id;
+  @override
+  bool operator ==(Object other) => other is ComponentSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(ComponentSelected, id);
+}
+
+class InstanceSelected extends Selection {
+  const InstanceSelected(this.id);
+  final int id;
+  @override
+  bool operator ==(Object other) => other is InstanceSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(InstanceSelected, id);
+}
+
+/// A port of an instance, on the system canvas.
+class PortSelected extends Selection {
+  const PortSelected({required this.instance, required this.port});
+  final int instance;
+  final int port;
+  @override
+  bool operator ==(Object other) =>
+      other is PortSelected && other.instance == instance && other.port == port;
+  @override
+  int get hashCode => Object.hash(instance, port);
+}
+
+class BindingSelected extends Selection {
+  const BindingSelected(this.id);
+  final int id;
+  @override
+  bool operator ==(Object other) => other is BindingSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(BindingSelected, id);
+}
+
+class GroupSelected extends Selection {
+  const GroupSelected(this.id);
+  final int id;
+  @override
+  bool operator ==(Object other) => other is GroupSelected && other.id == id;
+  @override
+  int get hashCode => Object.hash(GroupSelected, id);
+}
+
+/// A link drawn between two sockets that cannot be made silently: the
+/// destination is already bound (a required port takes one source), or
+/// the two sides update in different timing domains (the value must be
+/// carried across with a stated initial value).  The designer decides.
+@immutable
+class PendingBind {
+  const PendingBind({
+    required this.source,
+    required this.destination,
+    this.replaces,
+    this.needsTransport = false,
+    this.sourceDomain = '',
+    this.destinationDomain = '',
+  });
+  final pb.PortRefView source;
+  final pb.PortRefView destination;
+
+  /// The binding into the destination today, if any.
+  final int? replaces;
+  final bool needsTransport;
+  final String sourceDomain;
+  final String destinationDomain;
+}
+
+/// The "Package as reusable component" sheet: the designer's choices and
+/// the compiler's preview of what they mean.  The preview mutates nothing;
+/// only the final edit does.
+@immutable
+class ExtractionState {
+  const ExtractionState({
+    required this.groupId,
+    this.name = '',
+    this.instanceName = '',
+    this.keepInternal = const {},
+    this.internalizeSinks = const {},
+    this.preview,
+    this.generation = 0,
+    this.pending = true,
+    this.error,
+  });
+  final int groupId;
+  final String name;
+  final String instanceName;
+
+  /// Open members the designer keeps internal (default: inputs).
+  final Set<int> keepInternal;
+
+  /// Sinks the designer moves into the component (default: external).
+  final Set<int> internalizeSinks;
+  final pb.ExtractionPreviewView? preview;
+  final int generation;
+  final bool pending;
+  final String? error;
+
+  ExtractionState copyWith({
+    String? name,
+    String? instanceName,
+    Set<int>? keepInternal,
+    Set<int>? internalizeSinks,
+    pb.ExtractionPreviewView? preview,
+    int? generation,
+    bool? pending,
+    String? error,
+    bool clearError = false,
+  }) => ExtractionState(
+    groupId: groupId,
+    name: name ?? this.name,
+    instanceName: instanceName ?? this.instanceName,
+    keepInternal: keepInternal ?? this.keepInternal,
+    internalizeSinks: internalizeSinks ?? this.internalizeSinks,
+    preview: preview ?? this.preview,
+    generation: generation ?? this.generation,
+    pending: pending ?? this.pending,
+    error: clearError ? null : (error ?? this.error),
+  );
+
+  pb.ExtractionChoices get choices => pb.ExtractionChoices(
+    name: name,
+    instanceName: instanceName,
+    keepInternal: keepInternal.map(Int64.new),
+    internalizeSinks: internalizeSinks.map(Int64.new),
+  );
 }
 
 /// The semantic actions the service offers for one entity at one revision:
@@ -504,14 +737,44 @@ class EditorState {
     this.recentTemplates = const [],
     this.pendingInsert,
     this.renaming,
+    this.context = const SystemContext(),
+    this.layouts = const CanvasLayout(),
+    this.pendingBind,
+    this.extraction,
+    this.pendingPlacement,
+    this.pendingGroupFor,
+    this.queuedSystemEdits = const [],
   });
 
   final StudioPage page;
   final Selection selection;
 
-  /// Canvas positions.  Studio authors these; the daemon stores them.  Never
-  /// semantics (ADR-0003).
+  /// Canvas positions of the context on screen.  Studio authors these; the
+  /// daemon stores them.  Never semantics (ADR-0003).
   final Map<NodeRef, Offset> layout;
+
+  /// Which design the canvas shows: the system (or flat design) or one
+  /// component's source.
+  final DesignContext context;
+
+  /// Every canvas of the project; [layout] is `layouts.of(context)`.
+  final CanvasLayout layouts;
+
+  /// A link that needs the designer's decision before it is sent.
+  final PendingBind? pendingBind;
+
+  /// The open "Package as reusable component" sheet, if any.
+  final ExtractionState? extraction;
+
+  /// Where the instance being created lands, once the daemon confirms it.
+  final Offset? pendingPlacement;
+
+  /// The group the relationship being created joins, once confirmed.
+  final int? pendingGroupFor;
+
+  /// System edits still to send, one per confirmed revision (a connect
+  /// after its disconnect).
+  final List<pb.SystemEditOp> queuedSystemEdits;
 
   /// Requests sent to the daemon and not yet answered.
   final int pendingRequests;
@@ -603,6 +866,17 @@ class EditorState {
     bool clearPendingInsert = false,
     NodeRef? renaming,
     bool clearRenaming = false,
+    DesignContext? context,
+    CanvasLayout? layouts,
+    PendingBind? pendingBind,
+    bool clearPendingBind = false,
+    ExtractionState? extraction,
+    bool clearExtraction = false,
+    Offset? pendingPlacement,
+    bool clearPendingPlacement = false,
+    int? pendingGroupFor,
+    bool clearPendingGroup = false,
+    List<pb.SystemEditOp>? queuedSystemEdits,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -626,8 +900,21 @@ class EditorState {
       recentTemplates: recentTemplates ?? this.recentTemplates,
       pendingInsert: clearPendingInsert ? null : (pendingInsert ?? this.pendingInsert),
       renaming: clearRenaming ? null : (renaming ?? this.renaming),
+      context: context ?? this.context,
+      layouts: layouts ?? this.layouts,
+      pendingBind: clearPendingBind ? null : (pendingBind ?? this.pendingBind),
+      extraction: clearExtraction ? null : (extraction ?? this.extraction),
+      pendingPlacement: clearPendingPlacement ? null : (pendingPlacement ?? this.pendingPlacement),
+      pendingGroupFor: clearPendingGroup ? null : (pendingGroupFor ?? this.pendingGroupFor),
+      queuedSystemEdits: queuedSystemEdits ?? this.queuedSystemEdits,
     );
   }
+
+  /// The component whose source is on screen, for scoped requests.
+  int? get componentScope => switch (context) {
+    SystemContext() => null,
+    ComponentContext(:final id) => id,
+  };
 }
 
 @immutable
@@ -655,7 +942,10 @@ class AppState {
   const AppState({
     this.connection = const Disconnected(),
     this.project,
+    this._flat,
+    this.system,
     this.analysis,
+    this.systemAnalysis,
     this.recent = const [],
     this.library,
     this.editor = const EditorState(),
@@ -668,13 +958,29 @@ class AppState {
   /// the effect executor).
   final List<RecentProject> recent;
 
-  /// Semantic projection of the open project, owned by the compiler.  `null`
-  /// when no project is open.
+  /// The design on screen, owned by the compiler: the flat design of a flat
+  /// project; for a system project, its top level (the base design) or the
+  /// body of the component whose source is open — see
+  /// [EditorState.context].  `null` when no project is open.  Session
+  /// fields (revision, dirty, undo) are the project's whichever context.
   final pb.ProjectProjection? project;
 
-  /// The compiler's analysis of [project] — kept only when its revision is
+  /// The projection the daemon serves for every whole-design request
+  /// (analysis, simulation, deployment): the flat design, derived for a
+  /// system project.  Equal to [project] for a flat project.
+  pb.ProjectProjection? get flat => _flat ?? project;
+  final pb.ProjectProjection? _flat;
+
+  /// The authored system of a system project; `null` for a flat project.
+  final pb.SystemView? system;
+
+  /// The compiler's analysis of [flat] — kept only when its revision is
   /// the project's; `null` while a newer revision is still being analysed.
   final pb.ProjectAnalysis? analysis;
+
+  /// The system-level analysis (composition, port statuses, boundaries,
+  /// per-component body verdicts), at the project's revision.
+  final pb.SystemAnalysisView? systemAnalysis;
 
   /// The concept libraries the daemon serves (the Standard Concept Library
   /// and, later, others) plus the shared quantity vocabulary.  Authoring
@@ -686,15 +992,63 @@ class AppState {
 
   int get revision => project?.revision.toInt() ?? -1;
 
+  bool get isSystem => system != null;
+
+  /// The analysis that judges the design on screen: the flat analysis (a
+  /// base relationship keeps its identity in the flat design), or the
+  /// body's own analysis when a component's source is open.
+  pb.ProjectAnalysis? get contextAnalysis => switch (editor.context) {
+    SystemContext() => analysis,
+    ComponentContext(:final id) =>
+      systemAnalysis?.componentAnalyses.where((c) => c.id.toInt() == id).firstOrNull?.analysis,
+  };
+
+  pb.ComponentView? component(int id) =>
+      system?.components.where((c) => c.id.toInt() == id).firstOrNull;
+
+  pb.ComponentInstanceView? instance(int id) =>
+      system?.instances.where((i) => i.id.toInt() == id).firstOrNull;
+
+  /// The component an instance is an occurrence of.
+  pb.ComponentView? componentOf(int instance) {
+    final i = this.instance(instance);
+    return i == null ? null : component(i.component.toInt());
+  }
+
+  pb.PortView? port(int instance, int port) =>
+      componentOf(instance)?.ports.where((p) => p.id.toInt() == port).firstOrNull;
+
+  pb.BindingView? binding(int id) => system?.bindings.where((b) => b.id.toInt() == id).firstOrNull;
+
+  pb.BehaviorGroupView? group(int id) =>
+      system?.groups.where((g) => g.id.toInt() == id).firstOrNull;
+
+  /// A group's boundary: the system view carries it at every authoring
+  /// generation (read off the revision's analysis, never re-analysed).
+  pb.BehaviorGroupBoundaryView? boundary(int group) =>
+      system?.boundaries.where((g) => g.id.toInt() == group).firstOrNull ??
+      systemAnalysis?.groups.where((g) => g.id.toInt() == group).firstOrNull;
+
+  /// The group a base relationship belongs to, if any.
+  pb.BehaviorGroupView? groupOf(int mappingId) =>
+      system?.groups.where((g) => g.members.any((m) => m.toInt() == mappingId)).firstOrNull;
+
+  /// The component whose source is open, if any.
+  pb.ComponentView? get openComponent => switch (editor.context) {
+    SystemContext() => null,
+    ComponentContext(:final id) => component(id),
+  };
+
   /// Every template of every served library, in library order.
   Iterable<pb.ConceptTemplateView> get templates =>
       library?.libraries.expand((l) => l.templates) ?? const Iterable.empty();
 
   pb.ConceptTemplateView? template(String id) => templates.where((t) => t.id == id).firstOrNull;
 
-  /// Analysis of one mapping at the current revision, if available.
+  /// Analysis of one mapping of the design on screen at the current
+  /// revision, if available.
   pb.MappingAnalysis? mappingAnalysis(int id) =>
-      analysis?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
+      contextAnalysis?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
 
   pb.MappingView? mapping(int id) => project?.mappings.where((m) => m.id.toInt() == id).firstOrNull;
 
@@ -714,22 +1068,31 @@ class AppState {
 
   /// The output pass verdict for one sink at the current revision.
   pb.OutputAnalysis? outputAnalysis(int id) =>
-      analysis?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
+      contextAnalysis?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
 
-  /// The selected entity, by identity, for service queries.
-  pb.EntityRef? get selectedEntity => switch (editor.selection) {
-    NoSelection() => null,
-    ConceptSelected(:final id) => pb.EntityRef(conceptId: Int64(id)),
-    MappingSelected(:final id) => pb.EntityRef(mappingId: Int64(id)),
-    OutputSelected(:final id) => pb.EntityRef(outputId: Int64(id)),
-  };
+  /// The selected entity, by identity, for service queries.  The IDE
+  /// service answers about the flat design, so only the system context's
+  /// flat entities are asked about.
+  pb.EntityRef? get selectedEntity => editor.context is! SystemContext
+      ? null
+      : switch (editor.selection) {
+          ConceptSelected(:final id) => pb.EntityRef(conceptId: Int64(id)),
+          MappingSelected(:final id) => pb.EntityRef(mappingId: Int64(id)),
+          OutputSelected(:final id) => pb.EntityRef(outputId: Int64(id)),
+          _ => null,
+        };
 
   AppState copyWith({
     DaemonConnection? connection,
     pb.ProjectProjection? project,
     bool clearProject = false,
+    pb.ProjectProjection? flat,
+    pb.SystemView? system,
+    bool clearSystem = false,
     pb.ProjectAnalysis? analysis,
     bool clearAnalysis = false,
+    pb.SystemAnalysisView? systemAnalysis,
+    bool clearSystemAnalysis = false,
     List<RecentProject>? recent,
     pb.ConceptTemplatesResponse? library,
     EditorState? editor,
@@ -738,7 +1101,12 @@ class AppState {
     return AppState(
       connection: connection ?? this.connection,
       project: clearProject ? null : (project ?? this.project),
+      flat: clearProject ? null : (flat ?? _flat),
+      system: (clearProject || clearSystem) ? null : (system ?? this.system),
       analysis: (clearProject || clearAnalysis) ? null : (analysis ?? this.analysis),
+      systemAnalysis: (clearProject || clearAnalysis || clearSystemAnalysis)
+          ? null
+          : (systemAnalysis ?? this.systemAnalysis),
       recent: recent ?? this.recent,
       library: library ?? this.library,
       editor: editor ?? this.editor,

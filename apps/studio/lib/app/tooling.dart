@@ -37,6 +37,7 @@ Transition completionRequested(AppState s, int mappingId, String source, int off
         source: source,
         offset: offset,
         generation: generation,
+        component: s.editor.componentScope,
       ),
     ],
   );
@@ -100,6 +101,7 @@ Transition formulaHoverRequested(AppState s, int mappingId, String source, int? 
         source: source,
         offset: offset,
         generation: generation,
+        component: s.editor.componentScope,
       ),
     ],
   );
@@ -107,7 +109,9 @@ Transition formulaHoverRequested(AppState s, int mappingId, String source, int? 
 
 Transition entityHoverRequested(AppState s, pb.EntityRef? entity) {
   if (entity == null) return Transition(s.copyWith(editor: s.editor.copyWith(clearHover: true)));
-  if (s.project == null) return Transition(s);
+  // The IDE service explains flat entities; a component body's entities
+  // are reached through their formulas only.
+  if (s.project == null || s.editor.context is! SystemContext) return Transition(s);
   final h = s.editor.hover;
   if (h != null && h.entity == entity) return Transition(s);
   final generation = s.editor.toolingGeneration + 1;

@@ -4,8 +4,6 @@
 /// application behaves* is readable here and testable without a widget tree.
 library;
 
-import 'dart:ui' show Offset;
-
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,6 +14,7 @@ import 'drafts.dart';
 import 'effects.dart';
 import 'simulation.dart';
 import 'state.dart';
+import 'system.dart';
 import 'tooling.dart';
 
 @immutable
@@ -36,30 +35,32 @@ Transition reduce(AppState s, AppAction action) {
       s,
       () => s.project == null ? Transition(s, const [PickProjectToOpen()]) : Transition(s),
     ),
-    NewProjectPickRequested() => _whenConnected(
+    NewProjectPickRequested(:final system) => _whenConnected(
       s,
-      () => s.project == null ? Transition(s, const [PickNewProjectLocation()]) : Transition(s),
+      () => s.project == null
+          ? Transition(s, [PickNewProjectLocation(system: system)])
+          : Transition(s),
     ),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
-      () => Transition(_pending(s), [OpenProject(rootPath)]),
+      () => Transition(pending(s), [OpenProject(rootPath)]),
     ),
-    NewProjectRequested(:final rootPath, :final name) => _whenConnected(
+    NewProjectRequested(:final rootPath, :final name, :final system) => _whenConnected(
       s,
-      () => Transition(_pending(s), [InitProject(rootPath: rootPath, name: name)]),
+      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name, system: system)]),
     ),
-    SaveRequested() => _whenProject(s, () => Transition(_pending(s), const [SaveProject()])),
+    SaveRequested() => _whenProject(s, () => Transition(pending(s), const [SaveProject()])),
     CloseProjectRequested() => _whenProject(
       s,
-      () => Transition(_pending(s), const [CloseProject()]),
+      () => Transition(pending(s), const [CloseProject()]),
     ),
     UndoRequested() => _whenProject(
       s,
-      () => s.project!.canUndo ? Transition(_pending(s), const [Undo()]) : Transition(s),
+      () => s.project!.canUndo ? Transition(pending(s), const [Undo()]) : Transition(s),
     ),
     RedoRequested() => _whenProject(
       s,
-      () => s.project!.canRedo ? Transition(_pending(s), const [Redo()]) : Transition(s),
+      () => s.project!.canRedo ? Transition(pending(s), const [Redo()]) : Transition(s),
     ),
 
     // ---- concepts ----------------------------------------------------------
@@ -100,15 +101,22 @@ Transition reduce(AppState s, AppAction action) {
     ),
 
     // ---- mappings ----------------------------------------------------------
-    CreateMappingRequested(:final name, :final inputs, :final output) => _edit(
-      s,
-      pb.EditOp(
-        createMapping: pb.CreateMapping(
-          name: name,
-          signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),
+    CreateMappingRequested(:final name, :final inputs, :final output, :final group) => () {
+      final t = _edit(
+        s,
+        pb.EditOp(
+          createMapping: pb.CreateMapping(
+            name: name,
+            signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),
+          ),
         ),
-      ),
-    ),
+      );
+      if (group == null || t.effects.isEmpty) return t;
+      return Transition(
+        t.state.copyWith(editor: t.state.editor.copyWith(pendingGroupFor: group)),
+        t.effects,
+      );
+    }(),
     RenameMappingRequested(:final id, :final name) => _edit(
       s,
       pb.EditOp(
@@ -150,10 +158,16 @@ Transition reduce(AppState s, AppAction action) {
     DraftAnalysisFailed(:final mappingId, :final generation, :final code, :final message) =>
       draftAnalysisFailed(s, mappingId, generation, code, message),
     DeleteSelectionRequested() => switch (s.editor.selection) {
-      NoSelection() => Transition(s),
+      NoSelection() || PortSelected() => Transition(s),
       ConceptSelected(:final id) => reduce(s, DeleteConceptRequested(id)),
       MappingSelected(:final id) => reduce(s, DeleteMappingRequested(id)),
       OutputSelected(:final id) => reduce(s, DeleteOutputRequested(id)),
+      ComponentSelected(:final id) => reduce(s, DeleteComponentRequested(id)),
+      InstanceSelected(:final id) => reduce(s, DeleteInstanceRequested(id)),
+      BindingSelected(:final id) => reduce(s, UnbindRequested(id)),
+      // Deleting a group keeps its relationships; the destructive delete
+      // is a named action in the group's inspector.
+      GroupSelected(:final id) => reduce(s, UngroupRequested(id)),
     },
 
     // ---- timing domains ---------------------------------------------------
@@ -380,7 +394,7 @@ Transition reduce(AppState s, AppAction action) {
     }(),
     RecentProjectsLoaded(:final recent) => Transition(s.copyWith(recent: recent)),
     AnalysisReceived(:final analysis, :final fromRequest) => () {
-      final pending = fromRequest ? _dec(s) : s.editor.pendingRequests;
+      final pending = fromRequest ? decPending(s) : s.editor.pendingRequests;
       // Keep only an analysis of the revision we hold; older ones are stale,
       // newer ones mean a projection is on its way and will bring its own.
       final keep = s.project != null && analysis.revision == s.project!.revision;
@@ -415,16 +429,22 @@ Transition reduce(AppState s, AppAction action) {
     // ---- concept library ---------------------------------------------------
     InsertConceptTemplateRequested(:final templateId, :final position) => _whenProject(s, () {
       if (s.editor.pendingInsert != null) return Transition(s);
-      final pending = _pending(s);
+      final busy = pending(s);
       return Transition(
-        pending.copyWith(
-          editor: pending.editor.copyWith(
+        busy.copyWith(
+          editor: busy.editor.copyWith(
             pendingInsert: PendingInsert(templateId: templateId, position: position),
             recentTemplates: rememberTemplate(s.editor.recentTemplates, templateId),
             clearRenaming: true,
           ),
         ),
-        [InstantiateConceptTemplate(baseRevision: s.revision, templateId: templateId)],
+        [
+          InstantiateConceptTemplate(
+            baseRevision: s.revision,
+            templateId: templateId,
+            component: s.editor.componentScope,
+          ),
+        ],
       );
     }),
     SidebarTabSelected(:final tab) => Transition(
@@ -442,6 +462,8 @@ Transition reduce(AppState s, AppAction action) {
               NodeKind.concept => ConceptSelected(node.id),
               NodeKind.mapping => MappingSelected(node.id),
               NodeKind.output => OutputSelected(node.id),
+              NodeKind.instance => InstanceSelected(node.id),
+              NodeKind.group => GroupSelected(node.id),
             },
             renaming: node,
           ),
@@ -452,9 +474,13 @@ Transition reduce(AppState s, AppAction action) {
     ConceptTemplatesReceived(:final library) => Transition(s.copyWith(library: library)),
     NodeMoved(:final node, :final position) => _whenProject(s, () {
       final layout = {...s.editor.layout, node: position};
-      return Transition(s.copyWith(editor: s.editor.copyWith(layout: layout)), [
-        SetLayout(layoutToPb(layout)),
-      ]);
+      final layouts = s.editor.layouts.withNodes(s.editor.context, layout);
+      return Transition(
+        s.copyWith(
+          editor: s.editor.copyWith(layout: layout, layouts: layouts),
+        ),
+        [SetLayout(layoutToPb(layouts))],
+      );
     }),
     ErrorDismissed() => Transition(s.copyWith(editor: s.editor.copyWith(clearError: true))),
 
@@ -482,6 +508,11 @@ Transition reduce(AppState s, AppAction action) {
           pendingRequests: 0,
           selection: const NoSelection(),
           layout: const {},
+          layouts: const CanvasLayout(),
+          context: const SystemContext(),
+          clearExtraction: true,
+          clearPendingBind: true,
+          queuedSystemEdits: const [],
           drafts: const {},
           stashedDrafts: _stash(s),
           deploy: deployWithoutProject(s.editor.deploy).copyWith(targetsLoaded: false),
@@ -492,19 +523,46 @@ Transition reduce(AppState s, AppAction action) {
     DaemonLogged(:final line) => Transition(
       s.copyWith(render: s.render.copyWith(daemonLog: _appendLog(s.render.daemonLog, line))),
     ),
-    ProjectReceived(:final project, :final outcome, :final fromRequest) => _projectReceived(
+    ProjectReceived(:final project, :final outcome, :final fromRequest) => projectReceived(
       s,
       project,
       outcome,
       fromRequest,
     ),
+    SystemReceived(:final system, :final fromRequest) => systemReceived(
+      s,
+      system,
+      fromRequest: fromRequest,
+    ),
+    SystemEditApplied(:final system, :final project, :final outcome) => systemEditApplied(
+      s,
+      system,
+      project,
+      outcome,
+    ),
+    SystemAnalysisReceived(:final analysis) => systemAnalysisReceived(s, analysis),
+    ExtractionPreviewReceived(:final generation, :final preview) => extractionPreviewReceived(
+      s,
+      generation,
+      preview,
+    ),
+    ExtractionPreviewFailed(:final generation, :final message) => extractionPreviewFailed(
+      s,
+      generation,
+      message,
+    ),
     ProjectClosed() => Transition(
       s.copyWith(
         clearProject: true,
         editor: s.editor.copyWith(
-          pendingRequests: _dec(s),
+          pendingRequests: decPending(s),
           selection: const NoSelection(),
           layout: const {},
+          layouts: const CanvasLayout(),
+          context: const SystemContext(),
+          clearExtraction: true,
+          clearPendingBind: true,
+          queuedSystemEdits: const [],
           clearOutcome: true,
           drafts: const {},
           stashedDrafts: _stash(s),
@@ -514,20 +572,25 @@ Transition reduce(AppState s, AppAction action) {
       ),
     ),
     RequestSucceeded() => Transition(
-      s.copyWith(editor: s.editor.copyWith(pendingRequests: _dec(s))),
+      s.copyWith(editor: s.editor.copyWith(pendingRequests: decPending(s))),
     ),
     RequestFailed(:final code, :final message, :final details) => Transition(
       s.copyWith(
         editor: s.editor.copyWith(
-          pendingRequests: _dec(s),
+          pendingRequests: decPending(s),
           clearPendingInsert: true,
+          clearPendingPlacement: true,
+          clearPendingGroup: true,
           lastError: UserFacingError(code: code, message: message, details: details),
           drafts: draftsAfterFailedRequest(s.editor.drafts, message),
           // a failed step ends its plan; nothing after it is sent blindly
           queuedEdits: const [],
+          queuedSystemEdits: const [],
         ),
       ),
     ),
+    // ---- system projects (app/system.dart) --------------------------------
+    UserAction() => systemAction(s, action),
   };
 }
 
@@ -589,9 +652,13 @@ Transition _inlineRenameFinished(AppState s, NodeRef node, String? name) {
     NodeKind.concept => s.project?.concepts.where((c) => c.id.toInt() == node.id).firstOrNull?.name,
     NodeKind.mapping => s.mapping(node.id)?.name,
     NodeKind.output => s.project?.outputs.where((o) => o.id.toInt() == node.id).firstOrNull?.name,
+    NodeKind.instance => s.instance(node.id)?.name,
+    NodeKind.group => s.group(node.id)?.name,
   };
   if (current == null || current == wanted) return Transition(cleared);
   return switch (node.kind) {
+    NodeKind.instance => systemAction(cleared, RenameInstanceRequested(id: node.id, name: wanted)),
+    NodeKind.group => systemAction(cleared, RenameGroupRequested(id: node.id, name: wanted)),
     NodeKind.concept => sendEdit(
       cleared,
       pb.EditOp(
@@ -622,8 +689,18 @@ List<String> rememberTemplate(List<String> recent, String templateId) => [
 /// Every semantic edit is sent against the revision Studio currently holds;
 /// the daemon refuses it if the project has moved on.  No effect when
 /// disconnected or without a project.
-Transition sendEdit(AppState s, pb.EditOp op) =>
-    _whenProject(s, () => Transition(_pending(s), [ApplyEdit(baseRevision: s.revision, op: op)]));
+Transition sendEdit(AppState s, pb.EditOp op) => _whenProject(s, () {
+  if (!s.isSystem) return Transition(pending(s), [ApplyEdit(baseRevision: s.revision, op: op)]);
+  // On a system project a flat edit is an edit of the design in view: the
+  // system's own design, or the body of the open component.
+  final sop = switch (s.editor.context) {
+    SystemContext() => pb.SystemEditOp(base: op),
+    ComponentContext(:final id) => pb.SystemEditOp(
+      editComponentBody: pb.EditComponentBody(component: Int64(id), op: op),
+    ),
+  };
+  return Transition(pending(s), [ApplySystemEdit(baseRevision: s.revision, op: sop)]);
+});
 
 Transition _edit(AppState s, pb.EditOp op) => sendEdit(s, op);
 
@@ -668,40 +745,63 @@ final pb.EditOp _markRequired = pb.EditOp(
 Map<String, Map<int, DefinitionDraft>> _stash(AppState s) {
   final root = s.project?.rootPath;
   if (root == null) return s.editor.stashedDrafts;
+  final key = draftKey(root, s.editor.context);
   final dirty = dirtyDrafts(s);
   final next = {...s.editor.stashedDrafts};
   if (dirty.isEmpty) {
-    next.remove(root);
+    next.remove(key);
   } else {
-    next[root] = dirty;
+    next[key] = dirty;
   }
   return next;
 }
 
-AppState _pending(AppState s) =>
+AppState pending(AppState s) =>
     s.copyWith(editor: s.editor.copyWith(pendingRequests: s.editor.pendingRequests + 1));
 
-int _dec(AppState s) => s.editor.pendingRequests > 0 ? s.editor.pendingRequests - 1 : 0;
+int decPending(AppState s) => s.editor.pendingRequests > 0 ? s.editor.pendingRequests - 1 : 0;
 
 /// Accept a projection only if it is at least as new as what we hold for the
 /// same project.  Responses for an older revision are discarded — this is
 /// the stale-result rule of the protocol.
-Transition _projectReceived(
+Transition projectReceived(
   AppState s,
   pb.ProjectProjection incoming,
   pb.EditOutcome? outcome,
   bool fromRequest,
 ) {
-  final current = s.project;
+  final current = s.flat;
   final sameProject = current != null && current.rootPath == incoming.rootPath;
-  final pending = fromRequest ? _dec(s) : s.editor.pendingRequests;
+  final pendingCount = fromRequest ? decPending(s) : s.editor.pendingRequests;
   if (sameProject && incoming.revision < current.revision) {
-    return Transition(s.copyWith(editor: s.editor.copyWith(pendingRequests: pending)));
+    return Transition(s.copyWith(editor: s.editor.copyWith(pendingRequests: pendingCount)));
   }
+  final isSystem = incoming.kind == pb.ProjectKind.PROJECT_KIND_SYSTEM;
+  // A system project's system is fetched with the project and again
+  // whenever the flat design moved without it (undo, redo, another
+  // client); until it arrives the canvas waits rather than showing the
+  // derived flat design.
+  final system = sameProject && s.system != null && s.system!.revision == incoming.revision
+      ? s.system
+      : null;
+  final context = sameProject ? s.editor.context : const SystemContext();
+  final view = viewProjection(incoming, system, context);
+  final needsSystem = isSystem && system == null;
   // Layout: the daemon's copy is authoritative on open; afterwards Studio is
   // the author and only merges in positions it does not know yet.
   final stored = layoutFromPb(incoming.layout);
-  var layout = sameProject ? {...stored, ...s.editor.layout} : stored;
+  final layouts = sameProject
+      ? CanvasLayout(
+          system: {...stored.system, ...s.editor.layouts.system},
+          groups: {...stored.groups, ...s.editor.layouts.groups},
+          components: {
+            ...stored.components,
+            for (final e in s.editor.layouts.components.entries)
+              e.key: {...?stored.components[e.key], ...e.value},
+          },
+        )
+      : stored;
+  var layout = layouts.of(context);
   // Create-then-rename: the concept a template insertion created lands
   // where the designer pointed, is selected, and opens for naming.
   final insert = s.editor.pendingInsert;
@@ -711,57 +811,76 @@ Transition _projectReceived(
       : null;
   final dropped = created == null ? null : insert?.position;
   final placed = dropped != null;
-  if (created != null && dropped != null) layout = {...layout, created: dropped};
+  var layoutsOut = layouts;
+  if (created != null && dropped != null) {
+    layout = {...layout, created: dropped};
+    layoutsOut = layouts.withNodes(context, layout);
+  }
+  final next = s.copyWith(
+    project: view,
+    flat: incoming,
+    system: system,
+    clearSystem: system == null,
+  );
   final selection = created != null
       ? ConceptSelected(created.id)
-      : _selectionStillValid(s.editor.selection, incoming)
+      : selectionStillValid(next, s.editor.selection)
       ? s.editor.selection
       : const NoSelection();
   // An inline rename survives pushed projections (the daemon echoes every
   // commit) as long as its node still exists.
   final renaming = created ?? s.editor.renaming;
-  final renamingValid = renaming != null && _nodeExists(renaming, incoming);
+  final renamingValid = renaming != null && nodeExists(next, renaming);
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
   // Drafts: rebased on every new revision; restored from the stash when a
   // project is (re)opened.  Same revision (a save) changes nothing.
   final stashed = s.editor.stashedDrafts;
+  final key = draftKey(incoming.rootPath, context);
   final ({Map<int, DefinitionDraft> drafts, List<Effect> effects}) drafts = !sameProject
-      ? rebaseDrafts(stashed[incoming.rootPath] ?? const {}, incoming)
+      ? rebaseDrafts(stashed[key] ?? const {}, view, component: s.editor.componentScope)
       : incoming.revision == current.revision
       ? (drafts: s.editor.drafts, effects: const <Effect>[])
-      : rebaseDrafts(s.editor.drafts, incoming);
+      : rebaseDrafts(s.editor.drafts, view, component: s.editor.componentScope);
   final editor = sameProject && incoming.revision == current.revision
       ? s.editor
       : withoutTooling(s.editor)
             .copyWith(simulation: simulationAfterRevision(s.editor.simulation, incoming));
   return Transition(
-        s.copyWith(
-          project: incoming,
+        next.copyWith(
           recent: recent,
           clearAnalysis: !analysisStillValid,
           editor: editor.copyWith(
-            pendingRequests: pending,
+            pendingRequests: pendingCount,
             selection: selection,
             layout: layout,
+            layouts: layoutsOut,
+            context: context,
             lastOutcome: outcome,
             drafts: drafts.drafts,
-            stashedDrafts: sameProject ? stashed : ({...stashed}..remove(incoming.rootPath)),
+            stashedDrafts: sameProject ? stashed : ({...stashed}..remove(key)),
             clearPendingInsert: fromRequest,
             renaming: renamingValid ? renaming : null,
             clearRenaming: !renamingValid,
+            clearExtraction: !sameProject,
+            clearPendingBind: !sameProject,
           ),
         ),
         // A freshly opened project needs a subscription for pushed changes, an
         // analysis of what was just opened, and goes to the top of Recent.
-        // After an edit the daemon pushes AnalysisReady on its own.
+        // After an edit the daemon pushes AnalysisReady on its own.  A
+        // system project also needs its system and its system analysis at
+        // every new revision.
         [
           if (!sameProject) ...[
             const SubscribeProject(),
             const RunAnalysis(),
             SaveRecentProjects(recent),
           ],
-          if (placed) SetLayout(layoutToPb(layout)),
+          if (needsSystem) const GetSystem(),
+          if (isSystem && (!sameProject || incoming.revision != current.revision))
+            const RunSystemAnalysis(),
+          if (placed) SetLayout(layoutToPb(layoutsOut)),
           ...drafts.effects,
         ],
       )
@@ -811,46 +930,7 @@ extension on Transition {
   }
 }
 
-bool _nodeExists(NodeRef node, pb.ProjectProjection p) => switch (node.kind) {
-  NodeKind.concept => p.concepts.any((c) => c.id.toInt() == node.id),
-  NodeKind.mapping => p.mappings.any((m) => m.id.toInt() == node.id),
-  NodeKind.output => p.outputs.any((o) => o.id.toInt() == node.id),
-};
-
-bool _selectionStillValid(Selection sel, pb.ProjectProjection p) => switch (sel) {
-  NoSelection() => true,
-  ConceptSelected(:final id) => p.concepts.any((c) => c.id.toInt() == id),
-  MappingSelected(:final id) => p.mappings.any((m) => m.id.toInt() == id),
-  OutputSelected(:final id) => p.outputs.any((o) => o.id.toInt() == id),
-};
-
 List<String> _appendLog(List<String> log, String line) {
   final next = [...log, line];
   return next.length > _maxLogLines ? next.sublist(next.length - _maxLogLines) : next;
-}
-
-Map<NodeRef, Offset> layoutFromPb(pb.Layout l) => {
-  for (final n in l.concepts) NodeRef.concept(n.id.toInt()): Offset(n.x, n.y),
-  for (final n in l.mappings) NodeRef.mapping(n.id.toInt()): Offset(n.x, n.y),
-  for (final n in l.outputs) NodeRef.output(n.id.toInt()): Offset(n.x, n.y),
-};
-
-pb.Layout layoutToPb(Map<NodeRef, Offset> layout) {
-  final entries = layout.entries.toList()..sort((a, b) => a.key.id.compareTo(b.key.id));
-  pb.NodePosition pos(MapEntry<NodeRef, Offset> e) =>
-      pb.NodePosition(id: Int64(e.key.id), x: e.value.dx, y: e.value.dy);
-  return pb.Layout(
-    concepts: [
-      for (final e in entries)
-        if (e.key.kind == NodeKind.concept) pos(e),
-    ],
-    mappings: [
-      for (final e in entries)
-        if (e.key.kind == NodeKind.mapping) pos(e),
-    ],
-    outputs: [
-      for (final e in entries)
-        if (e.key.kind == NodeKind.output) pos(e),
-    ],
-  );
 }

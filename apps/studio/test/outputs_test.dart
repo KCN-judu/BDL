@@ -7,6 +7,7 @@ import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/effects.dart';
 import 'package:bdl_studio/app/reducer.dart';
 import 'package:bdl_studio/app/state.dart';
+import 'package:bdl_studio/app/system.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/inspector.dart';
@@ -316,8 +317,8 @@ void main() {
         const NodeRef.mapping(0): const Offset(3, 4),
         const NodeRef.output(0): const Offset(5, 6),
       };
-      final back = layoutFromPb(layoutToPb(layout));
-      expect(back, layout);
+      final back = layoutFromPb(layoutToPb(CanvasLayout(system: layout)));
+      expect(back.system, layout);
     });
   });
 

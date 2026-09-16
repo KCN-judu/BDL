@@ -383,6 +383,28 @@ impl Session {
         Ok(preview_extraction(&sys.current, group, choices)?)
     }
 
+    /// Every group's boundary, read off the flat analysis the IDE host
+    /// already holds for the revision — no re-analysis for a group edit.
+    pub fn group_boundaries(
+        &mut self,
+    ) -> Result<BTreeMap<BehaviorGroupId, bdl_system::GroupBoundary>, SessionError> {
+        let p = self.project_mut()?;
+        let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+        let analysis = p.ide.committed_analysis();
+        Ok(sys
+            .current
+            .system
+            .groups
+            .values()
+            .map(|g| {
+                (
+                    g.id,
+                    bdl_system::group_boundary(&sys.current.system.base, &analysis, &g.members),
+                )
+            })
+            .collect())
+    }
+
     /// The system analysis of the open system project.
     pub fn system_analysis(&self) -> Result<SystemAnalysis, SessionError> {
         let p = self.project()?;

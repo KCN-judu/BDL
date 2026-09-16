@@ -10742,11 +10742,13 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? baseRevision,
     $core.String? templateId,
     $core.String? name,
+    $fixnum.Int64? component,
   }) {
     final result = InstantiateConceptTemplateRequest._();
     if (baseRevision != null) result.baseRevision = baseRevision;
     if (templateId != null) result.templateId = templateId;
     if (name != null) result.name = name;
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -10767,6 +10769,8 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOS(2, _omitFieldNames ? '' : 'templateId')
     ..aOS(3, _omitFieldNames ? '' : 'name')
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -10819,6 +10823,17 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
   $core.bool hasName() => $_has(2);
   @$pb.TagNumber(3)
   void clearName() => $_clearField(3);
+
+  /// On a system project: insert into this component's body instead of the
+  /// system's own design (protocol 0.8).  Answered with SystemEditApplied.
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get component => $_getI64(3);
+  @$pb.TagNumber(4)
+  set component($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasComponent() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearComponent() => $_clearField(4);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {
@@ -14088,6 +14103,7 @@ class SystemView extends $pb.GeneratedMessage {
     $core.bool? isFlat,
     $core.Iterable<BehaviorGroupView>? groups,
     $fixnum.Int64? authoringGeneration,
+    $core.Iterable<BehaviorGroupBoundaryView>? boundaries,
   }) {
     final result = SystemView._();
     if (revision != null) result.revision = revision;
@@ -14101,6 +14117,7 @@ class SystemView extends $pb.GeneratedMessage {
     if (isFlat != null) result.isFlat = isFlat;
     if (groups != null) result.groups.addAll(groups);
     if (authoringGeneration != null) result.authoringGeneration = authoringGeneration;
+    if (boundaries != null) result.boundaries.addAll(boundaries);
     return result;
   }
 
@@ -14134,6 +14151,8 @@ class SystemView extends $pb.GeneratedMessage {
         subBuilder: BehaviorGroupView.$_createMessage)
     ..a<$fixnum.Int64>(11, _omitFieldNames ? '' : 'authoringGeneration', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<BehaviorGroupBoundaryView>(12, _omitFieldNames ? '' : 'boundaries',
+        subBuilder: BehaviorGroupBoundaryView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14227,6 +14246,12 @@ class SystemView extends $pb.GeneratedMessage {
   $core.bool hasAuthoringGeneration() => $_has(10);
   @$pb.TagNumber(11)
   void clearAuthoringGeneration() => $_clearField(11);
+
+  /// Every group's boundary at this authoring generation, read off the
+  /// (cached) flat analysis of the revision: a projection that follows the
+  /// membership without any re-analysis.
+  @$pb.TagNumber(12)
+  $pb.PbList<BehaviorGroupBoundaryView> get boundaries => $_getList(11);
 }
 
 /// A group is authoring metadata: identity, name, description, members.

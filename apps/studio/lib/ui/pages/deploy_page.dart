@@ -49,7 +49,7 @@ class DeployPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final p = state.project;
+    final p = state.flat;
     if (p == null) {
       return Container(
         color: t.canvas,

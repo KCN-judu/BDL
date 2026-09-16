@@ -67,7 +67,7 @@ class SimulationBlocker {
 /// and no definition, an input whose concept has no value form), then the
 /// inputs still without a value.  While any is listed a Step sends nothing.
 List<SimulationBlocker> simulationBlockers(AppState s) {
-  final p = s.project;
+  final p = s.flat;
   if (p == null) return const [];
   final a = s.analysis;
   if (a == null || a.revision != p.revision) {
@@ -148,7 +148,7 @@ pb.Value? sampleOf(SimulationState sim, pb.ProjectProjection p, pb.TickSample t,
 /// Refused — with no request — while anything blocks; the blockers are on
 /// screen, each naming its object.
 Transition simulationStepRequested(AppState s, int ticks) {
-  final p = s.project;
+  final p = s.flat;
   if (p == null || ticks < 1 || simulationBlockers(s).isNotEmpty) return Transition(s);
   final sim = s.editor.simulation;
   final upto = sim.nextTick + ticks;

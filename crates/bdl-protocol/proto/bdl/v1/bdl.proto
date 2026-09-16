@@ -1024,6 +1024,9 @@ message InstantiateConceptTemplateRequest {
   uint64 base_revision = 1;
   string template_id = 2;
   optional string name = 3;
+  // On a system project: insert into this component's body instead of the
+  // system's own design (protocol 0.8).  Answered with SystemEditApplied.
+  optional uint64 component = 4;
 }
 
 // ---------------------------------------------------------------------------
@@ -1422,6 +1425,10 @@ message SystemView {
   // Bumped by every group edit; never a revision (group edits change no
   // semantic fact, so nothing revision-keyed is invalidated by them).
   uint64 authoring_generation = 11;
+  // Every group's boundary at this authoring generation, read off the
+  // (cached) flat analysis of the revision: a projection that follows the
+  // membership without any re-analysis.
+  repeated BehaviorGroupBoundaryView boundaries = 12;
 }
 
 // A group is authoring metadata: identity, name, description, members.

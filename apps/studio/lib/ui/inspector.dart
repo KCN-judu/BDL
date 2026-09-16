@@ -13,10 +13,12 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel, socketKind, statusWord, SocketKind;
 import 'canvas/concept_glyphs.dart';
 import 'definition_editor.dart';
+import 'mac/controls.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'semantic_actions.dart';
+import 'system_inspector.dart';
 import 'units.dart';
 
 class Inspector extends StatelessWidget {
@@ -38,7 +40,9 @@ class Inspector extends StatelessWidget {
         NoSelection() => Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            'Select a concept, a mapping or an output.',
+            state.isSystem
+                ? 'Select a concept, a relationship, an output, an instance or a group.'
+                : 'Select a concept, a mapping or an output.',
             style: TextStyle(color: t.textTertiary),
           ),
         ),
@@ -68,11 +72,53 @@ class Inspector extends StatelessWidget {
           outputs: project.outputs,
           actions: state.editor.actions,
           dispatch: dispatch,
+          // A base relationship the system realised by a binding, or a
+          // port-backed relationship of a component's source.
+          boundTo: state.system?.bindings
+              .where((b) => b.destination.hasBaseDecl() && b.destination.baseDecl.toInt() == id)
+              .firstOrNull,
+          boundLabel: (b) => endLabel(state, b.source),
+          portWord: state.openComponent?.ports
+              .where((p) => p.decl.toInt() == id)
+              .map((p) => '${portKindWord(p.kind)} ${p.name}')
+              .firstOrNull,
+          group: state.editor.context is SystemContext ? state.groupOf(id) : null,
         ),
         OutputSelected(:final id) => _OutputInspector(
           key: ValueKey('o$id'),
           output: project.outputs.firstWhere((o) => o.id.toInt() == id),
           state: state,
+          dispatch: dispatch,
+        ),
+        ComponentSelected(:final id) => ComponentInspector(
+          key: ValueKey('comp$id'),
+          state: state,
+          id: id,
+          dispatch: dispatch,
+        ),
+        InstanceSelected(:final id) => InstanceInspector(
+          key: ValueKey('inst$id'),
+          state: state,
+          id: id,
+          dispatch: dispatch,
+        ),
+        PortSelected(:final instance, :final port) => PortInspector(
+          key: ValueKey('port$instance/$port'),
+          state: state,
+          instance: instance,
+          port: port,
+          dispatch: dispatch,
+        ),
+        BindingSelected(:final id) => BindingInspector(
+          key: ValueKey('bind$id'),
+          state: state,
+          id: id,
+          dispatch: dispatch,
+        ),
+        GroupSelected(:final id) => GroupInspector(
+          key: ValueKey('group$id'),
+          state: state,
+          id: id,
           dispatch: dispatch,
         ),
       };
@@ -418,12 +464,29 @@ class _MappingInspector extends StatelessWidget {
     required this.outputs,
     required this.actions,
     required this.dispatch,
+    this.boundTo,
+    this.boundLabel,
+    this.portWord,
+    this.group,
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
   final List<pb.ClockView> clocks;
   final List<pb.OutputView> outputs;
   final SemanticActionsState? actions;
+
+  /// The binding that realises this (open) base relationship, if any: the
+  /// definition is then the system's, not the designer's — shown, never
+  /// edited here.
+  final pb.BindingView? boundTo;
+  final String Function(pb.BindingView)? boundLabel;
+
+  /// "provides brightness": the port this relationship backs, in a
+  /// component's source.
+  final String? portWord;
+
+  /// The behaviour group the relationship belongs to (system canvas).
+  final pb.BehaviorGroupView? group;
 
   /// The compiler's verdict for the current revision; `null` while pending.
   final pb.MappingAnalysis? analysis;
@@ -543,30 +606,80 @@ class _MappingInspector extends StatelessWidget {
             ),
           ],
         ),
+        if (portWord != null || group != null)
+          InspectorSection(
+            title: 'Place',
+            children: [
+              if (portWord case final w?)
+                Text(
+                  'Backs the port "$w": what instances see of it is the promise, kept on the '
+                  'component, not this definition.',
+                  style: small,
+                ),
+              if (group case final g?)
+                Row(
+                  children: [
+                    Expanded(child: Text('In group ${g.name}.', style: small)),
+                    MacButton(
+                      label: 'Show Group',
+                      onPressed: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
+                    ),
+                  ],
+                ),
+            ],
+          ),
         InspectorSection(
           title: 'Relationship',
           // The one state word, only while there is nothing to show; an
           // unsaved draft is the editor's state, not the mapping's.
-          trailing: draft != null && draft!.dirtyAgainst(committed)
+          trailing: boundTo != null
+              ? Text('bound', style: small)
+              : draft != null && draft!.dirtyAgainst(committed)
               ? Text('unsaved', style: small)
               : declared
               ? Text('declared', style: small)
               : null,
           children: [
-            // The editor shows formula-local findings under the text they
-            // point into.  What remains here is about the mapping's place
-            // in the design (causality, domains, outputs) — attached to the
-            // relationship, in product language; the rule is in Explain.
-            DefinitionEditor(
-              mappingId: id,
-              committed: committed,
-              draft: draft,
-              committedAnalysis: analysis,
-              inputNames: inputs.map(_name).toList(),
-              completion: completion,
-              hover: hover,
-              dispatch: dispatch,
-            ),
+            // A relationship realised by a binding has the system's
+            // definition: a reference by identity, generated on every
+            // commit.  It is shown and traced, never typed into.
+            if (boundTo case final b?) ...[
+              Text(
+                'Takes its value from ${boundLabel?.call(b) ?? '?'}'
+                '${b.hasTransportInit() ? ', carried across timing domains starting at ${b.transportInit}' : ''}.',
+                style: TextStyle(fontSize: 12, color: t.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  MacButton(
+                    label: 'Show Binding',
+                    onPressed: () => dispatch(SelectionChanged(BindingSelected(b.id.toInt()))),
+                  ),
+                  const SizedBox(width: 8),
+                  MacButton(
+                    label: 'Disconnect',
+                    onPressed: () => dispatch(UnbindRequested(b.id.toInt())),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text('Disconnect it to define the relationship yourself.', style: small),
+            ] else
+              // The editor shows formula-local findings under the text they
+              // point into.  What remains here is about the mapping's place
+              // in the design (causality, domains, outputs) — attached to the
+              // relationship, in product language; the rule is in Explain.
+              DefinitionEditor(
+                mappingId: id,
+                committed: committed,
+                draft: draft,
+                committedAnalysis: analysis,
+                inputNames: inputs.map(_name).toList(),
+                completion: completion,
+                hover: hover,
+                dispatch: dispatch,
+              ),
             for (final d in broader)
               Padding(
                 padding: const EdgeInsets.only(top: MacMetrics.gap),

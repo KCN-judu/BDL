@@ -1208,6 +1208,7 @@ fn concept_templates_over_stdio() {
         let base = c.last_revision;
         let applied = match c.call(
             Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+                component: None,
                 base_revision: base,
                 template_id: "std.environment.temperature".into(),
                 name: None,
@@ -1234,6 +1235,7 @@ fn concept_templates_over_stdio() {
     let base = c.last_revision;
     let named = match c.call(
         Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+            component: None,
             base_revision: base,
             template_id: "std.environment.temperature".into(),
             name: Some("OvenTemperature".into()),
@@ -1246,6 +1248,7 @@ fn concept_templates_over_stdio() {
     assert!(named.concepts.iter().any(|x| x.name == "OvenTemperature"));
     match c.call(
         Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
+            component: None,
             base_revision: c.last_revision,
             template_id: "std.nope".into(),
             name: None,

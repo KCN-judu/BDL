@@ -1217,6 +1217,7 @@ pub mod system {
         PortContract, PortId, PortKind, PortRef, PortStatus, SystemAnalysis, SystemEditOp,
         SystemEditOutcome, SystemSnapshot,
     };
+    use std::collections::BTreeMap;
 
     pub fn contract_to_pb(c: &BehaviorComponent, k: &PortContract) -> pb::PortContractView {
         let name = |s: SemanticId| {
@@ -1432,6 +1433,7 @@ pub mod system {
         snapshot: &SystemSnapshot,
         origins: &OriginMap,
         authoring_generation: u64,
+        boundaries: &BTreeMap<BehaviorGroupId, GroupBoundary>,
     ) -> pb::SystemView {
         let s: &BehaviorSystem = &snapshot.system;
         pb::SystemView {
@@ -1532,6 +1534,10 @@ pub mod system {
                 })
                 .collect(),
             authoring_generation,
+            boundaries: boundaries
+                .iter()
+                .map(|(id, b)| boundary_to_pb(*id, b))
+                .collect(),
         }
     }
 

@@ -103,6 +103,34 @@ Future<String?> showPathSheet(BuildContext context, {required String title}) {
   );
 }
 
+/// A one-field sheet: a name for a new named thing (a component).
+Future<String?> showNameSheet(
+  BuildContext context, {
+  required String title,
+  String? subtitle,
+  String? hint,
+}) {
+  final name = TextEditingController();
+  return showMacSheet<String>(
+    context,
+    title: title,
+    subtitle: subtitle,
+    content: FormRow(
+      label: 'Name',
+      child: MacTextField(
+        controller: name,
+        hint: hint,
+        autofocus: true,
+        onSubmitted: (v) => Navigator.pop(context, v.trim()),
+      ),
+    ),
+    actions: [
+      MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+      MacButton.primary(label: 'Create', onPressed: () => Navigator.pop(context, name.text.trim())),
+    ],
+  );
+}
+
 // ---------------------------------------------------------------------------
 // New concept
 // ---------------------------------------------------------------------------

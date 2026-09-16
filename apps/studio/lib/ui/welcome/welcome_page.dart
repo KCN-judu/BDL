@@ -111,6 +111,12 @@ class _Start extends StatelessWidget {
           onTap: () => dispatch(const NewProjectPickRequested()),
         ),
         MacLink(
+          icon: Icons.account_tree_outlined,
+          label: 'New System…',
+          enabled: connected,
+          onTap: () => dispatch(const NewProjectPickRequested(system: true)),
+        ),
+        MacLink(
           icon: Icons.folder_open_outlined,
           label: 'Open Project…',
           shortcut: shortcut('O'),
@@ -136,6 +142,23 @@ class _Start extends StatelessWidget {
               if (path != null && path.isNotEmpty) {
                 dispatch(
                   NewProjectRequested(rootPath: path, name: path.split(RegExp(r'[/\\]')).last),
+                );
+              }
+            },
+          ),
+          MacLink(
+            icon: Icons.keyboard_outlined,
+            label: 'New system at path…',
+            enabled: connected,
+            onTap: () async {
+              final path = await showPathSheet(context, title: 'Create system at path');
+              if (path != null && path.isNotEmpty) {
+                dispatch(
+                  NewProjectRequested(
+                    rootPath: path,
+                    name: path.split(RegExp(r'[/\\]')).last,
+                    system: true,
+                  ),
                 );
               }
             },

@@ -559,17 +559,58 @@ fn instantiate_concept_template(
             None,
         );
     };
-    let op = match session.project() {
-        Ok(p) => bdl_library::instantiate(&p.current.design, template, r.name.as_deref()),
+    let revision = bdl_model::Revision::from_raw(r.base_revision);
+    let p = match session.project() {
+        Ok(p) => p,
         Err(e) => return (Resp::Error(session_error(&e)), None),
     };
-    match session.apply(bdl_model::Revision::from_raw(r.base_revision), &op) {
+    // A system project inserts into its own design or a component body;
+    // the template's defaults are read against that design's names.
+    let Some(sys) = p.system.as_ref() else {
+        let op = bdl_library::instantiate(&p.current.design, template, r.name.as_deref());
+        return match session.apply(revision, &op) {
+            Ok(c) => {
+                let resp = Resp::EditApplied(pb::EditApplied {
+                    project: Some(project_of(session)),
+                    outcome: c.outcome.as_ref().map(convert::outcome_to_pb),
+                });
+                (resp, Some(c))
+            }
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        };
+    };
+    let op = match component_scope(r.component) {
+        None => bdl_system::SystemEditOp::Base {
+            op: bdl_library::instantiate(&sys.current.system.base, template, r.name.as_deref()),
+        },
+        Some(c) => match sys.current.system.components.get(&c) {
+            Some(comp) => bdl_system::SystemEditOp::EditComponentBody {
+                component: c,
+                op: bdl_library::instantiate(&comp.body, template, r.name.as_deref()),
+            },
+            None => {
+                return (
+                    Resp::Error(session_error(&SessionError::UnknownComponent(c))),
+                    None,
+                )
+            }
+        },
+    };
+    match session.apply_system(revision, &op) {
         Ok(c) => {
-            let resp = Resp::EditApplied(pb::EditApplied {
+            let view = system_view(session).ok();
+            let resp = Resp::SystemEditApplied(pb::SystemEditApplied {
+                system: view,
                 project: Some(project_of(session)),
-                outcome: c.outcome.as_ref().map(convert::outcome_to_pb),
+                outcome: Some(convert::system::system_outcome_to_pb(&c.outcome)),
             });
-            (resp, Some(c))
+            (
+                resp,
+                Some(Committed {
+                    snapshot: c.snapshot,
+                    outcome: None,
+                }),
+            )
         }
         Err(e) => (Resp::Error(session_error(&e)), None),
     }
@@ -921,13 +962,15 @@ fn projection_of(
 }
 
 /// The system view of the open system project.
-fn system_view(session: &Session) -> Result<pb::SystemView, SessionError> {
+fn system_view(session: &mut Session) -> Result<pb::SystemView, SessionError> {
+    let boundaries = session.group_boundaries()?;
     let p = session.project()?;
     let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
     Ok(convert::system::system_view(
         &sys.current,
         &sys.flattened.origins,
         sys.authoring_generation,
+        &boundaries,
     ))
 }
 

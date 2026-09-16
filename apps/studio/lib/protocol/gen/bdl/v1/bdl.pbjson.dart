@@ -3181,9 +3181,11 @@ const InstantiateConceptTemplateRequest$json = {
     {'1': 'base_revision', '3': 1, '4': 1, '5': 4, '10': 'baseRevision'},
     {'1': 'template_id', '3': 2, '4': 1, '5': 9, '10': 'templateId'},
     {'1': 'name', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'name', '17': true},
+    {'1': 'component', '3': 4, '4': 1, '5': 4, '9': 1, '10': 'component', '17': true},
   ],
   '8': [
     {'1': '_name'},
+    {'1': '_component'},
   ],
 };
 
@@ -3191,7 +3193,8 @@ const InstantiateConceptTemplateRequest$json = {
 final $typed_data.Uint8List instantiateConceptTemplateRequestDescriptor = $convert
     .base64Decode('CiFJbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZVJlcXVlc3QSIwoNYmFzZV9yZXZpc2lvbhgBIA'
         'EoBFIMYmFzZVJldmlzaW9uEh8KC3RlbXBsYXRlX2lkGAIgASgJUgp0ZW1wbGF0ZUlkEhcKBG5h'
-        'bWUYAyABKAlIAFIEbmFtZYgBAUIHCgVfbmFtZQ==');
+        'bWUYAyABKAlIAFIEbmFtZYgBARIhCgljb21wb25lbnQYBCABKARIAVIJY29tcG9uZW50iAEBQg'
+        'cKBV9uYW1lQgwKCl9jb21wb25lbnQ=');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {
@@ -3977,6 +3980,14 @@ const SystemView$json = {
     {'1': 'is_flat', '3': 9, '4': 1, '5': 8, '10': 'isFlat'},
     {'1': 'groups', '3': 10, '4': 3, '5': 11, '6': '.bdl.v1.BehaviorGroupView', '10': 'groups'},
     {'1': 'authoring_generation', '3': 11, '4': 1, '5': 4, '10': 'authoringGeneration'},
+    {
+      '1': 'boundaries',
+      '3': 12,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.BehaviorGroupBoundaryView',
+      '10': 'boundaries'
+    },
   ],
 };
 
@@ -3990,7 +4001,9 @@ final $typed_data.Uint8List systemViewDescriptor = $convert
         'hwb3J0cxgHIAMoCzISLmJkbC52MS5FeHBvcnRWaWV3UgdleHBvcnRzEiwKB29yaWdpbnMYCCAD'
         'KAsyEi5iZGwudjEuT3JpZ2luVmlld1IHb3JpZ2lucxIXCgdpc19mbGF0GAkgASgIUgZpc0ZsYX'
         'QSMQoGZ3JvdXBzGAogAygLMhkuYmRsLnYxLkJlaGF2aW9yR3JvdXBWaWV3UgZncm91cHMSMQoU'
-        'YXV0aG9yaW5nX2dlbmVyYXRpb24YCyABKARSE2F1dGhvcmluZ0dlbmVyYXRpb24=');
+        'YXV0aG9yaW5nX2dlbmVyYXRpb24YCyABKARSE2F1dGhvcmluZ0dlbmVyYXRpb24SQQoKYm91bm'
+        'RhcmllcxgMIAMoCzIhLmJkbC52MS5CZWhhdmlvckdyb3VwQm91bmRhcnlWaWV3Ugpib3VuZGFy'
+        'aWVz');
 
 @$core.Deprecated('Use behaviorGroupViewDescriptor instead')
 const BehaviorGroupView$json = {

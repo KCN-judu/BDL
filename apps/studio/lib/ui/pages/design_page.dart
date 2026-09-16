@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import '../canvas/canvas_geometry.dart' show SystemSceneInput;
 import '../canvas/node_canvas.dart';
 import '../inspector.dart';
 import '../library.dart';
+import '../mac/controls.dart';
 import '../mac/tokens.dart';
+import '../system_inspector.dart' show portKindWord;
+import '../system_sheets.dart';
 
 /// Design page: library · node canvas · inspector (Fusion-page arrangement).
 class DesignPage extends StatelessWidget {
@@ -29,23 +33,48 @@ class DesignPage extends StatelessWidget {
         Expanded(
           child: project == null
               ? _Empty(dispatch: dispatch)
-              : NodeCanvas(
-                  project: project,
-                  layout: state.editor.layout,
-                  selection: state.editor.selection,
-                  dispatch: dispatch,
-                  statuses: {
-                    for (final m in state.analysis?.mappings ?? const <pb.MappingAnalysis>[])
-                      m.id.toInt(): m.status,
-                  },
-                  outputStates: {
-                    for (final o in state.analysis?.outputs ?? const <pb.OutputAnalysis>[])
-                      o.id.toInt(): o.state,
-                  },
-                  templates: state.templates.toList(),
-                  recentTemplates: state.editor.recentTemplates,
-                  renaming: state.editor.renaming,
-                  canInsert: state.editor.pendingInsert == null,
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (state.isSystem) _ContextBar(state: state, dispatch: dispatch),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          NodeCanvas(
+                            project: project,
+                            layout: state.editor.layout,
+                            selection: state.editor.selection,
+                            dispatch: dispatch,
+                            statuses: {
+                              for (final m
+                                  in state.contextAnalysis?.mappings ??
+                                      const <pb.MappingAnalysis>[])
+                                m.id.toInt(): m.status,
+                            },
+                            outputStates: {
+                              for (final o
+                                  in state.contextAnalysis?.outputs ?? const <pb.OutputAnalysis>[])
+                                o.id.toInt(): o.state,
+                            },
+                            templates: state.templates.toList(),
+                            recentTemplates: state.editor.recentTemplates,
+                            renaming: state.editor.renaming,
+                            canInsert: state.editor.pendingInsert == null,
+                            context: state.editor.context,
+                            system: _sceneInput(state),
+                            components: state.system?.components ?? const [],
+                            groups: state.editor.context is SystemContext
+                                ? (state.system?.groups ?? const [])
+                                : const [],
+                          ),
+                          if (state.editor.pendingBind case final b?)
+                            PendingBindSheet(state: state, bind: b, dispatch: dispatch),
+                          if (state.editor.extraction case final x?)
+                            ExtractionSheet(state: state, extraction: x, dispatch: dispatch),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
         ),
         VerticalDivider(width: 1, color: t.hairline),
@@ -72,6 +101,87 @@ class _Empty extends StatelessWidget {
         'No project open.',
         textAlign: TextAlign.center,
         style: TextStyle(color: t.textTertiary),
+      ),
+    );
+  }
+}
+
+/// What the canvas needs of the system: on the system canvas, the
+/// instances, bindings, groups and their verdicts; in a component's source,
+/// the words for its port-backed relationships.
+SystemSceneInput _sceneInput(AppState state) {
+  final sys = state.system;
+  if (sys == null) return const SystemSceneInput();
+  return switch (state.editor.context) {
+    SystemContext() => SystemSceneInput(
+      system: sys,
+      analysis: state.systemAnalysis,
+      groupBoxes: state.editor.layouts.groups,
+    ),
+    ComponentContext(:final id) => SystemSceneInput(
+      portWords: {
+        for (final p in state.component(id)?.ports ?? const <pb.PortView>[])
+          p.decl.toInt(): portKindWord(p.kind),
+      },
+    ),
+  };
+}
+
+/// Where the designer is: the system, or one component's source ("Editing
+/// AdaptiveLamp · used by 3 instances"), with the way back.
+class _ContextBar extends StatelessWidget {
+  const _ContextBar({required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final comp = state.openComponent;
+    final used = comp == null
+        ? 0
+        : (state.system?.instances.where((i) => i.component == comp.id).length ?? 0);
+    return Container(
+      height: 30,
+      color: t.window,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          if (comp == null) ...[
+            Text(
+              'System',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${state.system?.instances.length ?? 0} instance'
+              '${(state.system?.instances.length ?? 0) == 1 ? '' : 's'} · '
+              '${state.system?.components.length ?? 0} component'
+              '${(state.system?.components.length ?? 0) == 1 ? '' : 's'}',
+              style: TextStyle(fontSize: 11, color: t.textTertiary),
+            ),
+          ] else ...[
+            MacButton(
+              label: '‹ System',
+              onPressed: () => dispatch(const ContextChanged(SystemContext())),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Editing ${comp.name}',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              used == 0 ? 'not placed yet' : 'used by $used instance${used == 1 ? '' : 's'}',
+              style: TextStyle(fontSize: 11, color: t.textTertiary),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '— its promise is what instances see; edits here reach every instance.',
+              style: TextStyle(fontSize: 11, color: t.textTertiary),
+            ),
+          ],
+        ],
       ),
     );
   }

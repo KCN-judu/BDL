@@ -30,12 +30,27 @@ class NodeCanvas extends StatefulWidget {
     this.recentTemplates = const [],
     this.renaming,
     this.canInsert = true,
+    this.system = const SystemSceneInput(),
+    this.context = const SystemContext(),
+    this.components = const [],
+    this.groups = const [],
   });
 
   final pb.ProjectProjection project;
   final Map<NodeRef, Offset> layout;
   final Selection selection;
   final void Function(AppAction) dispatch;
+
+  /// A system project's instances, bindings, groups and their verdicts;
+  /// empty for a flat project and inside a component's source.
+  final SystemSceneInput system;
+  final DesignContext context;
+
+  /// The components an instance can be placed of (right-click menu).
+  final List<pb.ComponentView> components;
+
+  /// The groups a relationship can be added to.
+  final List<pb.BehaviorGroupView> groups;
 
   /// Compiler verdicts per mapping id, when an analysis of this revision
   /// exists.
@@ -93,7 +108,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
     layout,
     statuses: widget.statuses,
     outputStates: widget.outputStates,
+    system: widget.system,
   );
+
+  bool get _isSystemCanvas => widget.system.system != null && widget.context is SystemContext;
+
+  /// Dragging a group's title band moves every member together.
+  int? _draggingGroup;
 
   final MenuController _menu = MenuController();
 
@@ -118,6 +139,11 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final node = switch (hitTest(_scene(widget.layout), p)) {
       HitNode(:final node) => node.ref,
       HitSocket(:final node) => node.ref,
+      HitGroup(:final group) => NodeRef.group(group.id),
+      HitLink(:final link) => () {
+        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
+        return null;
+      }(),
       HitNothing() => null,
     };
     if (node != null) widget.dispatch(SelectionChanged(_select(node)));
@@ -129,8 +155,23 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   void _onDoubleTapDown(TapDownDetails d) {
-    if (hitTest(_scene(widget.layout), _toScene(d.localPosition)) case HitNode(:final node)) {
-      if (node.ref.kind != NodeKind.output) widget.dispatch(InlineRenameStarted(node.ref));
+    switch (hitTest(_scene(widget.layout), _toScene(d.localPosition))) {
+      case HitNode(:final node):
+        if (node.ref.kind == NodeKind.instance) {
+          // Into the component's source.
+          final inst = widget.system.system?.instances
+              .where((i) => i.id.toInt() == node.ref.id)
+              .firstOrNull;
+          if (inst != null) {
+            widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
+          }
+        } else if (node.ref.kind != NodeKind.output) {
+          widget.dispatch(InlineRenameStarted(node.ref));
+        }
+      case HitGroup(:final group):
+        widget.dispatch(InlineRenameStarted(NodeRef.group(group.id)));
+      default:
+        break;
     }
   }
 
@@ -152,6 +193,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final human = all.where((t) => t.category == 'human');
     final inputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_OUTPUT);
     final outputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_INPUT);
+    final groupOf = node == null || node.kind != NodeKind.mapping
+        ? null
+        : widget.groups.where((g) => g.members.any((m) => m.toInt() == node.id)).firstOrNull;
     return [
       if (node != null) ...[
         if (node.kind != NodeKind.output)
@@ -159,9 +203,96 @@ class _NodeCanvasState extends State<NodeCanvas> {
             onPressed: () => widget.dispatch(InlineRenameStarted(node)),
             child: const Text('Rename'),
           ),
+        if (node.kind == NodeKind.instance)
+          MenuItemButton(
+            onPressed: () {
+              final inst = widget.system.system?.instances
+                  .where((i) => i.id.toInt() == node.id)
+                  .firstOrNull;
+              if (inst != null) {
+                widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
+              }
+            },
+            child: const Text('Edit Source'),
+          ),
+        if (node.kind == NodeKind.group) ...[
+          MenuItemButton(
+            onPressed: () => widget.dispatch(
+              GroupCollapsedChanged(
+                id: node.id,
+                collapsed: !(widget.system.groupBoxes[node.id]?.collapsed ?? false),
+              ),
+            ),
+            child: Text(
+              (widget.system.groupBoxes[node.id]?.collapsed ?? false) ? 'Expand' : 'Collapse',
+            ),
+          ),
+          MenuItemButton(
+            onPressed: () => widget.dispatch(ExtractionSheetOpened(node.id)),
+            child: const Text('Package as Reusable Component…'),
+          ),
+          MenuItemButton(
+            onPressed: () => widget.dispatch(UngroupRequested(node.id)),
+            child: const Text('Ungroup'),
+          ),
+        ],
+        if (_isSystemCanvas && node.kind == NodeKind.mapping) ...[
+          if (groupOf == null) ...[
+            MenuItemButton(
+              onPressed: () => widget.dispatch(
+                CreateGroupRequested(name: _freshGroupName(), members: [node.id]),
+              ),
+              child: const Text('Group'),
+            ),
+            if (widget.groups.isNotEmpty)
+              SubmenuButton(
+                menuChildren: [
+                  for (final g in widget.groups)
+                    MenuItemButton(
+                      onPressed: () => widget.dispatch(
+                        AddGroupMemberRequested(group: g.id.toInt(), decl: node.id),
+                      ),
+                      child: Text(g.name),
+                    ),
+                ],
+                child: const Text('Add to Group'),
+              ),
+          ] else
+            MenuItemButton(
+              onPressed: () => widget.dispatch(
+                RemoveGroupMemberRequested(group: groupOf.id.toInt(), decl: node.id),
+              ),
+              child: Text('Remove from ${groupOf.name}'),
+            ),
+        ],
+        if (node.kind != NodeKind.group)
+          MenuItemButton(
+            onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+            child: const Text('Delete'),
+          ),
+        const Divider(height: 8),
+      ],
+      if (_isSystemCanvas && node == null) ...[
+        if (widget.components.isNotEmpty)
+          SubmenuButton(
+            menuChildren: [
+              for (final c in widget.components)
+                MenuItemButton(
+                  onPressed: () => widget.dispatch(
+                    CreateInstanceRequested(
+                      component: c.id.toInt(),
+                      name: _freshInstanceName(c),
+                      position: _menuScene,
+                    ),
+                  ),
+                  child: Text(c.name),
+                ),
+            ],
+            child: const Text('Add Instance'),
+          ),
         MenuItemButton(
-          onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
-          child: const Text('Delete'),
+          onPressed: () => widget.dispatch(CreateGroupRequested(name: _freshGroupName())),
+          child: const Text('New Group'),
         ),
         const Divider(height: 8),
       ],
@@ -191,7 +322,41 @@ class _NodeCanvasState extends State<NodeCanvas> {
     ];
   }
 
+  /// `Group 2`, `lampA2`: a default name the designer renames inline.
+  String _freshGroupName() {
+    final taken = widget.groups.map((g) => g.name).toSet();
+    var i = widget.groups.length + 1;
+    while (taken.contains('Group $i')) {
+      i++;
+    }
+    return 'Group $i';
+  }
+
+  String _freshInstanceName(pb.ComponentView c) {
+    final base = c.name.isEmpty ? 'instance' : c.name[0].toLowerCase() + c.name.substring(1);
+    final taken = (widget.system.system?.instances ?? const []).map((i) => i.name).toSet();
+    if (!taken.contains(base)) return base;
+    var i = 2;
+    while (taken.contains('$base$i')) {
+      i++;
+    }
+    return '$base$i';
+  }
+
   Map<NodeRef, Offset> get _effectiveLayout {
+    if (_draggingGroup != null) {
+      final scene = _scene(widget.layout);
+      final g = scene.groups.where((g) => g.id == _draggingGroup).firstOrNull;
+      if (g == null) return widget.layout;
+      final moved = {...widget.layout};
+      for (final m in g.members) {
+        final ref = NodeRef.mapping(m);
+        final base =
+            widget.layout[ref] ?? scene.nodes.where((n) => n.ref == ref).firstOrNull?.rect.topLeft;
+        if (base != null) moved[ref] = base + _dragDelta;
+      }
+      return moved;
+    }
     if (_draggingNode == null) return widget.layout;
     final scene = _scene(widget.layout);
     final base =
@@ -219,7 +384,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final (NodeRef? node, SocketRef? socket) = switch (hit) {
       HitSocket(:final socket, :final node) => (node.ref, socket.ref),
       HitNode(:final node) => (node.ref, null),
-      HitNothing() => (null, null),
+      HitGroup(:final group) => (NodeRef.group(group.id), null),
+      HitLink() || HitNothing() => (null, null),
     };
     if (node != _hoverNode || socket != _hoverSocket) {
       setState(() {
@@ -247,6 +413,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
           _draggingNode = node.ref;
           _dragDelta = Offset.zero;
         });
+      case HitGroup(:final group):
+        widget.dispatch(SelectionChanged(GroupSelected(group.id)));
+        setState(() {
+          _draggingGroup = group.id;
+          _dragDelta = Offset.zero;
+        });
+      case HitLink(:final link):
+        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
+        setState(() => _panning = true);
       case HitNothing():
         widget.dispatch(const SelectionChanged(NoSelection()));
         setState(() => _panning = true);
@@ -262,7 +437,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         // under the dragged link end so the cursor can refuse an illegal one.
         final hit = hitTest(_scene(widget.layout), p);
         _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
-      } else if (_draggingNode != null) {
+      } else if (_draggingNode != null || _draggingGroup != null) {
         _dragDelta += d.delta / _zoom;
       } else if (_panning) {
         _pan += d.delta;
@@ -283,14 +458,66 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
     final node = _draggingNode;
     if (node != null && _dragDelta != Offset.zero) {
-      widget.dispatch(NodeMoved(node, _effectiveLayout[node]!));
+      final layout = _effectiveLayout;
+      widget.dispatch(NodeMoved(node, layout[node]!));
+      // Into or out of a group region: membership follows the drop.  Only
+      // the membership changes — a group is authoring metadata.
+      if (_isSystemCanvas && node.kind == NodeKind.mapping) _membershipAfterDrop(node, layout);
+    }
+    final group = _draggingGroup;
+    if (group != null && _dragDelta != Offset.zero) {
+      final layout = _effectiveLayout;
+      final g = _scene(widget.layout).groups.where((g) => g.id == group).firstOrNull;
+      for (final m in g?.members ?? const <int>[]) {
+        final ref = NodeRef.mapping(m);
+        if (layout[ref] case final p?) widget.dispatch(NodeMoved(ref, p));
+      }
     }
     setState(() {
       _linkDrag = null;
       _draggingNode = null;
+      _draggingGroup = null;
       _dragDelta = Offset.zero;
       _panning = false;
     });
+  }
+
+  void _membershipAfterDrop(NodeRef node, Map<NodeRef, Offset> layout) {
+    final scene = _scene(layout);
+    final shape = scene.nodes.where((n) => n.ref == node).firstOrNull;
+    if (shape == null) return;
+    final current = widget.groups
+        .where((g) => g.members.any((m) => m.toInt() == node.id))
+        .firstOrNull;
+    // The region of the node's own group is measured without the node, so
+    // dragging out is possible.
+    final sceneWithout = buildScene(
+      widget.project,
+      {...layout}..remove(node),
+      system: widget.system,
+    );
+    final target = sceneWithout.groups
+        .where(
+          (g) =>
+              g.rect.contains(shape.rect.center) &&
+              !(g.members.length == 1 && g.members.first == node.id),
+        )
+        .lastOrNull;
+    if (target == null) {
+      if (current != null) {
+        final own = sceneWithout.groups.where((g) => g.id == current.id.toInt()).firstOrNull;
+        final stillInside = own != null && own.rect.contains(shape.rect.center);
+        if (!stillInside && current.members.length > 1) {
+          widget.dispatch(RemoveGroupMemberRequested(group: current.id.toInt(), decl: node.id));
+        }
+      }
+      return;
+    }
+    if (current == null) {
+      widget.dispatch(AddGroupMemberRequested(group: target.id, decl: node.id));
+    } else if (current.id.toInt() != target.id) {
+      widget.dispatch(MoveGroupMemberRequested(decl: node.id, to: target.id));
+    }
   }
 
   /// A link is always output → input in data-flow terms, whichever end was
@@ -298,6 +525,19 @@ class _NodeCanvasState extends State<NodeCanvas> {
   /// world there.
   void _makeLink(SocketRef a, SocketRef b) {
     final (out, inp) = a.side == SocketSide.output ? (a, b) : (b, a);
+    // A binding: between ports, or between a port and a base relationship.
+    final isBinding =
+        out.role == SocketRole.port ||
+        inp.role == SocketRole.port ||
+        inp.role == SocketRole.realise;
+    if (isBinding) {
+      final source = out.bindingEnd;
+      final destination = inp.bindingEnd;
+      if (source != null && destination != null) {
+        widget.dispatch(LinkEndsRequested(source: source, destination: destination));
+      }
+      return;
+    }
     if (out.node.kind == NodeKind.concept && inp.node.kind == NodeKind.mapping) {
       widget.dispatch(LinkConceptToMappingInput(conceptId: out.concept, mappingId: inp.node.id));
     } else if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.concept) {
@@ -310,6 +550,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
   /// Dragging a connected input away into empty space disconnects it: a
   /// mapping's read, or a sink's driver (the mapping stops driving).
   void _unlink(CanvasScene scene, SocketRef input) {
+    // A bound port or realised relationship: the binding goes.
+    if (input.role == SocketRole.port || input.role == SocketRole.realise) {
+      for (final l in scene.links.where((l) => l.to == input && l.binding != null)) {
+        widget.dispatch(UnbindRequested(l.binding!));
+      }
+      return;
+    }
     switch (input.node.kind) {
       case NodeKind.mapping:
         widget.dispatch(UnlinkMappingInput(mappingId: input.node.id, conceptId: input.concept));
@@ -318,6 +565,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
           widget.dispatch(SetMappingDriveRequested(mappingId: l.from.node.id, outputId: null));
         }
       case NodeKind.concept:
+      case NodeKind.instance:
+      case NodeKind.group:
         break;
     }
   }
@@ -326,6 +575,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
     NodeKind.concept => ConceptSelected(ref.id),
     NodeKind.mapping => MappingSelected(ref.id),
     NodeKind.output => OutputSelected(ref.id),
+    NodeKind.instance => InstanceSelected(ref.id),
+    NodeKind.group => GroupSelected(ref.id),
   };
 
   void _frameAll(Size viewport) {
@@ -349,7 +600,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
       ConceptSelected(:final id) => NodeRef.concept(id),
       MappingSelected(:final id) => NodeRef.mapping(id),
       OutputSelected(:final id) => NodeRef.output(id),
-      NoSelection() => null,
+      InstanceSelected(:final id) => NodeRef.instance(id),
+      GroupSelected(:final id) => NodeRef.group(id),
+      _ => null,
+    };
+    final selectedBinding = switch (widget.selection) {
+      BindingSelected(:final id) => id,
+      _ => null,
     };
 
     return LayoutBuilder(
@@ -422,6 +679,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                               pan: _pan,
                               zoom: _zoom,
                               selected: selected,
+                              selectedBinding: selectedBinding,
                               hovered: _hoverNode,
                               hoveredSocket: _hoverSocket,
                               linkDrag: _linkDrag,
@@ -441,7 +699,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                                 ),
                               ),
                             ),
-                          if (widget.renaming case final node?)
+                          if (widget.renaming case final node?) ...[
                             for (final shape in scene.nodes.where((n) => n.ref == node))
                               _InlineRename(
                                 key: ValueKey(node),
@@ -456,6 +714,21 @@ class _NodeCanvasState extends State<NodeCanvas> {
                                 onDone: (name) =>
                                     widget.dispatch(InlineRenameFinished(node, name: name)),
                               ),
+                            for (final g in scene.groups.where((g) => NodeRef.group(g.id) == node))
+                              _InlineRename(
+                                key: ValueKey(node),
+                                rect: Rect.fromLTWH(
+                                  g.rect.left * _zoom + _pan.dx,
+                                  g.rect.top * _zoom + _pan.dy,
+                                  (g.rect.width / 2).clamp(120, 320) * _zoom,
+                                  NodeMetrics.regionTitle * _zoom,
+                                ),
+                                zoom: _zoom,
+                                initial: g.title,
+                                onDone: (name) =>
+                                    widget.dispatch(InlineRenameFinished(node, name: name)),
+                              ),
+                          ],
                         ],
                       ),
                     ),
@@ -569,6 +842,7 @@ class _CanvasPainter extends CustomPainter {
     required this.pan,
     required this.zoom,
     required this.selected,
+    required this.selectedBinding,
     required this.hovered,
     required this.hoveredSocket,
     required this.linkDrag,
@@ -580,6 +854,7 @@ class _CanvasPainter extends CustomPainter {
   final Offset pan;
   final double zoom;
   final NodeRef? selected;
+  final int? selectedBinding;
   final NodeRef? hovered;
   final SocketRef? hoveredSocket;
   final _LinkDrag? linkDrag;
@@ -594,15 +869,37 @@ class _CanvasPainter extends CustomPainter {
     canvas.translate(pan.dx, pan.dy);
     canvas.scale(zoom);
 
+    // Group regions first: backgrounds, not boxes (node-editor rule 8).
+    final painter = NodePainter(
+      tokens,
+      hoveredSocket: hoveredSocket,
+      dropOk: dropOk,
+      compatible: linkDrag == null ? const {} : compatibleSockets(scene, linkDrag!.from),
+    );
+    for (final g in scene.groups) {
+      painter.region(
+        canvas,
+        g,
+        selected: selected == NodeRef.group(g.id),
+        hovered: hovered == NodeRef.group(g.id),
+      );
+    }
+
     for (final l in scene.links) {
+      final isSelected = l.binding != null && l.binding == selectedBinding;
       canvas.drawPath(
         l.path,
         Paint()
-          ..color = tokens.conceptColor(l.concept)
+          ..color = isSelected ? tokens.accent : tokens.conceptColor(l.concept)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
+          ..strokeWidth = isSelected ? 3 : 2
           ..strokeCap = StrokeCap.round,
       );
+      // A transported binding: a gate where the value crosses domains,
+      // with its initial value.
+      if (l.transport case final init?) {
+        painter.gate(canvas, l.midpoint, init, tokens.conceptColor(l.concept));
+      }
     }
     final drag = linkDrag;
     if (drag != null) {
@@ -614,12 +911,6 @@ class _CanvasPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
-    final painter = NodePainter(
-      tokens,
-      hoveredSocket: hoveredSocket,
-      dropOk: dropOk,
-      compatible: drag == null ? const {} : compatibleSockets(scene, drag.from),
-    );
     for (final n in scene.nodes) {
       painter.node(canvas, n, selected: n.ref == selected, hovered: n.ref == hovered);
     }
@@ -709,6 +1000,27 @@ class _CanvasPainter extends CustomPainter {
         };
         return '${n.title}, physical output, accepts $accepts, '
             '${n.required ? 'required' : 'optional'}, $state';
+      case NodeKind.instance:
+        final requires = n.sockets
+            .where((s) => s.ref.side == SocketSide.input)
+            .map((s) => '${n.socketLabels[s.ref] ?? ''}${s.open ? ' (open)' : ''}')
+            .join(', ');
+        final provides = n.sockets
+            .where((s) => s.ref.side == SocketSide.output)
+            .map((s) => n.socketLabels[s.ref] ?? '')
+            .join(', ');
+        return '${n.title}, instance of ${n.subtitle}, requires $requires, provides $provides'
+            '${n.unrealized ? ', body does not keep its promise' : ''}';
+      case NodeKind.group:
+        final ins = n.sockets
+            .where((s) => s.ref.side == SocketSide.input)
+            .map((s) => n.socketLabels[s.ref] ?? '')
+            .join(', ');
+        final outs = n.sockets
+            .where((s) => s.ref.side == SocketSide.output)
+            .map((s) => n.socketLabels[s.ref] ?? '')
+            .join(', ');
+        return '${n.title}, collapsed group of ${n.subtitle}, reads $ins, produces $outs';
     }
   }
 
@@ -779,6 +1091,11 @@ class NodePainter {
       NodeKind.concept => tokens.isDark ? const Color(0xFF3A4556) : const Color(0xFFDCE3EE),
       NodeKind.mapping => tokens.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5),
       NodeKind.output => tokens.isDark ? const Color(0xFF4A4030) : const Color(0xFFEFE3CF),
+      // A component instance: a teal-grey strip — a reusable behaviour,
+      // seen from outside.
+      NodeKind.instance => tokens.isDark ? const Color(0xFF2F4F4A) : const Color(0xFFD0E6E1),
+      // A collapsed group: the region tint, as a box.
+      NodeKind.group => tokens.isDark ? const Color(0xFF4A3F5C) : const Color(0xFFE4DCF0),
     };
     canvas.save();
     canvas.clipRRect(rrect);
@@ -830,9 +1147,12 @@ class NodePainter {
     );
     // The header's right word is object state in words only where the
     // geometry cannot carry it: a declared mapping, an open or contested
-    // sink, a required sink.
+    // sink, a required sink, a port-backed relationship in a component's
+    // source.
     final headerWord = n.declared
         ? 'declared'
+        : n.headerWord.isNotEmpty
+        ? n.headerWord
         : switch (n.sink) {
             SinkState.open => 'no domain',
             SinkState.contested => 'contested',
@@ -869,7 +1189,7 @@ class NodePainter {
     }
 
     for (final s in n.sockets) {
-      socket(canvas, s.center, s.kind, conceptColor(s.ref.concept), ref: s.ref);
+      socket(canvas, s.center, s.kind, conceptColor(s.ref.concept), ref: s.ref, open: s.open);
       final label = n.socketLabels[s.ref];
       if (label != null) {
         if (s.ref.side == SocketSide.input) {
@@ -895,6 +1215,32 @@ class NodePainter {
           );
         }
       }
+    }
+
+    // An instance's body row names its component; a collapsed group's, its
+    // size.  A body that no longer keeps its promise gets the red mark.
+    if (n.ref.kind == NodeKind.instance || n.ref.kind == NodeKind.group) {
+      final region = n.definitionRegion;
+      canvas.drawLine(
+        region.topLeft + const Offset(1, 0),
+        region.topRight + const Offset(-1, 0),
+        Paint()..color = tokens.hairline,
+      );
+      var left = region.left + 10;
+      if (n.unrealized) {
+        canvas.drawCircle(Offset(left + 3, region.center.dy), 3, Paint()..color = tokens.error);
+        left += 12;
+      }
+      _text(
+        canvas,
+        n.subtitle,
+        Offset(left, region.top + 5),
+        FontWeight.w400,
+        11,
+        tokens.textSecondary,
+        italic: n.ref.kind == NodeKind.group,
+        maxWidth: region.right - 10 - left - (n.timing.isEmpty ? 0 : 64),
+      );
     }
 
     // Definition region: the summary line, or nothing while declared.  A
@@ -930,7 +1276,17 @@ class NodePainter {
   /// One socket: shape by value form, hue by identity.  Reused by every
   /// widget that shows a concept (library rows, chips, toggles) so the mark
   /// is learned once.
-  void socket(Canvas canvas, Offset c, SocketKind kind, Color color, {SocketRef? ref}) {
+  /// [open]: a port nobody has bound (or an open base relationship's
+  /// realisation socket) — drawn hollow in its hue: the value form is
+  /// known, the value is not supplied.
+  void socket(
+    Canvas canvas,
+    Offset c,
+    SocketKind kind,
+    Color color, {
+    SocketRef? ref,
+    bool open = false,
+  }) {
     const r = NodeMetrics.socketRadius;
     if (ref != null) {
       if (dropOk == ref) {
@@ -941,7 +1297,8 @@ class NodePainter {
     }
     final path = socketPath(c, kind, r);
     canvas.drawPath(path, Paint()..color = tokens.content);
-    if (kind != SocketKind.open) {
+    final hollow = kind == SocketKind.open || open;
+    if (!hollow) {
       canvas.drawPath(path, Paint()..color = color);
     }
     canvas.drawPath(
@@ -949,8 +1306,66 @@ class NodePainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = kind == SocketKind.open ? color : tokens.content.withValues(alpha: 0.9),
+        ..color = hollow ? color : tokens.content.withValues(alpha: 0.9),
     );
+  }
+
+  /// An expanded group region: a tinted, rounded background with a title
+  /// band; members sit inside by position.  A picture, not a box the
+  /// compiler knows.
+  void region(Canvas canvas, GroupShape g, {bool selected = false, bool hovered = false}) {
+    final rrect = RRect.fromRectAndRadius(g.rect, const Radius.circular(10));
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = (tokens.isDark ? const Color(0xFF7A66A8) : const Color(0xFF8C6FC2)).withValues(
+          alpha: 0.12,
+        ),
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 2 : 1
+        ..color = selected
+            ? tokens.accent
+            : hovered
+            ? tokens.textSecondary
+            : (tokens.isDark ? const Color(0xFF7A66A8) : const Color(0xFF8C6FC2)).withValues(
+                alpha: 0.5,
+              ),
+    );
+    _text(
+      canvas,
+      g.title,
+      g.rect.topLeft + const Offset(10, 4),
+      FontWeight.w600,
+      11.5,
+      tokens.textSecondary,
+      maxWidth: g.rect.width - 20,
+    );
+  }
+
+  /// A transport gate on a link: a short vertical bar with the initial
+  /// value beside it — the value is carried across timing domains and
+  /// starts there.
+  void gate(Canvas canvas, Offset at, String init, Color color) {
+    canvas.drawLine(
+      at + const Offset(0, -7),
+      at + const Offset(0, 7),
+      Paint()
+        ..color = color
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawLine(
+      at + const Offset(4, -7),
+      at + const Offset(4, 7),
+      Paint()
+        ..color = tokens.content
+        ..strokeWidth = 1.5,
+    );
+    _text(canvas, init, at + const Offset(8, -14), FontWeight.w400, 10, tokens.textSecondary);
   }
 
   /// The socket outline for a value form, centred on [c] with radius [r].

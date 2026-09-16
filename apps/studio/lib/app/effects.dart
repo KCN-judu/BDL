@@ -34,7 +34,8 @@ class PickProjectToOpen extends Effect {
 /// Show the OS save dialog to choose where a new project directory goes;
 /// the executor dispatches `NewProjectRequested(rootPath, name)`.
 class PickNewProjectLocation extends Effect {
-  const PickNewProjectLocation();
+  const PickNewProjectLocation({this.system = false});
+  final bool system;
 }
 
 class OpenProject extends Effect {
@@ -43,9 +44,12 @@ class OpenProject extends Effect {
 }
 
 class InitProject extends Effect {
-  const InitProject({required this.rootPath, required this.name});
+  const InitProject({required this.rootPath, required this.name, this.system = false});
   final String rootPath;
   final String name;
+
+  /// A behaviour-system project (`InitSystemProject`).
+  final bool system;
 }
 
 class SaveProject extends Effect {
@@ -66,6 +70,40 @@ class ApplyEdit extends Effect {
   final pb.EditOp op;
 }
 
+/// One system edit against the revision Studio holds; answered like an
+/// edit, with the system alongside (`SystemEditApplied`).
+class ApplySystemEdit extends Effect {
+  const ApplySystemEdit({required this.baseRevision, required this.op});
+  final int baseRevision;
+  final pb.SystemEditOp op;
+}
+
+/// A group edit: authoring metadata, never a revision.  Counted (it is
+/// the designer's act), answered with the system at a new authoring
+/// generation.
+class ApplyGroupEdit extends Effect {
+  const ApplyGroupEdit(this.op);
+  final pb.GroupEditOp op;
+}
+
+/// The authored system of the open system project — uncounted.
+class GetSystem extends Effect {
+  const GetSystem();
+}
+
+/// The system-level analysis at the current revision — uncounted.
+class RunSystemAnalysis extends Effect {
+  const RunSystemAnalysis();
+}
+
+/// What packaging a group would do — uncounted, tagged.
+class PreviewExtraction extends Effect {
+  const PreviewExtraction({required this.group, required this.choices, required this.generation});
+  final int group;
+  final pb.ExtractionChoices choices;
+  final int generation;
+}
+
 /// Ask the daemon for its concept libraries.  Not counted as pending.
 class ListConceptTemplates extends Effect {
   const ListConceptTemplates();
@@ -74,9 +112,17 @@ class ListConceptTemplates extends Effect {
 /// The one instantiation request: the daemon builds and applies the
 /// `CreateConcept` from the template's defaults.  Answered like an edit.
 class InstantiateConceptTemplate extends Effect {
-  const InstantiateConceptTemplate({required this.baseRevision, required this.templateId});
+  const InstantiateConceptTemplate({
+    required this.baseRevision,
+    required this.templateId,
+    this.component,
+  });
   final int baseRevision;
   final String templateId;
+
+  /// On a system project: the component body to insert into (`null`: the
+  /// system's own design).
+  final int? component;
 }
 
 class RunAnalysis extends Effect {
@@ -93,11 +139,16 @@ class AnalyzeDraft extends Effect {
     required this.mappingId,
     required this.generation,
     required this.source,
+    this.component,
   });
   final int revision;
   final int mappingId;
   final int generation;
   final String source;
+
+  /// The component whose body the mapping belongs to (its source is open);
+  /// `null` for the flat design.
+  final int? component;
 }
 
 /// The draft is gone (revert, reload, detach, or the text returned to the
@@ -105,8 +156,9 @@ class AnalyzeDraft extends Effect {
 /// every later query, on every surface, sees the committed definition.
 /// Read-only for the project; not counted.
 class DiscardDraft extends Effect {
-  const DiscardDraft(this.mappingId);
+  const DiscardDraft(this.mappingId, {this.component});
   final int mappingId;
+  final int? component;
 }
 
 /// Completion candidates from the IDE service, over the draft overlay.
@@ -119,12 +171,14 @@ class CompleteDraft extends Effect {
     required this.source,
     required this.offset,
     required this.generation,
+    this.component,
   });
   final int revision;
   final int mappingId;
   final String source;
   final int offset;
   final int generation;
+  final int? component;
 }
 
 /// The hover card for a formula name (draft overlay) — uncounted.
@@ -135,12 +189,14 @@ class HoverDraft extends Effect {
     required this.source,
     required this.offset,
     required this.generation,
+    this.component,
   });
   final int revision;
   final int mappingId;
   final String source;
   final int offset;
   final int generation;
+  final int? component;
 }
 
 /// The hover card for an entity — uncounted.

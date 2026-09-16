@@ -32,7 +32,7 @@ class SimulatePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final p = state.project;
+    final p = state.flat;
     if (p == null) {
       return Container(
         color: t.canvas,
@@ -473,7 +473,7 @@ class _Trace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final p = state.project!;
+    final p = state.flat!;
     final sim = state.editor.simulation;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     final columns = [
@@ -587,13 +587,18 @@ class _Probe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final p = state.project!;
+    final p = state.flat!;
     final sim = state.editor.simulation;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     final value = TextStyle(fontSize: 13, color: t.textPrimary, fontFeatures: kTabularFigures);
     Widget body;
     switch (state.editor.selection) {
-      case NoSelection():
+      case NoSelection() ||
+          ComponentSelected() ||
+          InstanceSelected() ||
+          PortSelected() ||
+          BindingSelected() ||
+          GroupSelected():
         body = Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
@@ -668,10 +673,11 @@ class _Probe extends StatelessWidget {
         );
       case OutputSelected(:final id):
         final o = p.outputs.firstWhere((o) => o.id.toInt() == id);
-        final driver = state.outputAnalysis(id)?.hasDriver() == true
-            ? state.outputAnalysis(id)!.driver.toInt()
-            : null;
-        final driverName = driver == null ? null : state.mapping(driver)?.name;
+        final oa = state.analysis?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
+        final driver = oa?.hasDriver() == true ? oa!.driver.toInt() : null;
+        final driverName = driver == null
+            ? null
+            : p.mappings.where((m) => m.id.toInt() == driver).firstOrNull?.name;
         body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

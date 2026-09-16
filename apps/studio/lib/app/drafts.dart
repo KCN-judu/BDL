@@ -40,13 +40,17 @@ Transition draftChanged(AppState s, int id, String source) {
     clearCheckError: true,
     clearCommitError: true,
   );
-  return Transition(_withDraft(s, draft), _checkEffects(s.revision, draft));
+  return Transition(
+    _withDraft(s, draft),
+    _checkEffects(s.revision, draft, s.editor.componentScope),
+  );
 }
 
 /// Drop the draft on purpose (revert, reload); the daemon's overlay is
 /// discarded with it so the two never disagree about what is being judged.
-Transition draftDropped(AppState s, int id) =>
-    s.draft(id) == null ? Transition(s) : Transition(_withoutDraft(s, id), [DiscardDraft(id)]);
+Transition draftDropped(AppState s, int id) => s.draft(id) == null
+    ? Transition(s)
+    : Transition(_withoutDraft(s, id), [DiscardDraft(id, component: s.editor.componentScope)]);
 
 /// After a conflict, keep the draft: it is now based on what is committed.
 Transition draftKept(AppState s, int id) {
@@ -99,7 +103,7 @@ Transition detachDefinition(AppState s, int id) {
   final t = sendEdit(s, pb.EditOp(replaceDefinition: pb.ReplaceDefinition(id: Int64(id))));
   if (t.effects.isEmpty) return t;
   return Transition(_withoutDraft(t.state, id), [
-    if (s.draft(id) != null) DiscardDraft(id),
+    if (s.draft(id) != null) DiscardDraft(id, component: s.editor.componentScope),
     ...t.effects,
   ]);
 }
@@ -161,8 +165,9 @@ Map<int, DefinitionDraft> draftsAfterFailedRequest(
 /// an input's name) can change what the same text means.
 ({Map<int, DefinitionDraft> drafts, List<Effect> effects}) rebaseDrafts(
   Map<int, DefinitionDraft> drafts,
-  pb.ProjectProjection incoming,
-) {
+  pb.ProjectProjection incoming, {
+  int? component,
+}) {
   final revision = incoming.revision.toInt();
   final next = <int, DefinitionDraft>{};
   final effects = <Effect>[];
@@ -195,7 +200,7 @@ Map<int, DefinitionDraft> draftsAfterFailedRequest(
       clearCheckError: true,
     );
     next[draft.mappingId] = draft;
-    effects.addAll(_checkEffects(revision, draft));
+    effects.addAll(_checkEffects(revision, draft, component));
   }
   return (drafts: next, effects: effects);
 }
@@ -207,7 +212,8 @@ Map<int, DefinitionDraft> dirtyDrafts(AppState s) => {
     if (e.value.dirtyAgainst(s.committedDefinition(e.key))) e.key: e.value,
 };
 
-List<Effect> _checkEffects(int revision, DefinitionDraft d) => d.source.trim().isEmpty
+List<Effect> _checkEffects(int revision, DefinitionDraft d, int? component) =>
+    d.source.trim().isEmpty
     ? const []
     : [
         AnalyzeDraft(
@@ -215,6 +221,7 @@ List<Effect> _checkEffects(int revision, DefinitionDraft d) => d.source.trim().i
           mappingId: d.mappingId,
           generation: d.generation,
           source: d.source,
+          component: component,
         ),
       ];
 

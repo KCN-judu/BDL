@@ -5,7 +5,7 @@
 /// same pure reducer.
 library;
 
-import 'dart:ui' show Offset;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:flutter/foundation.dart';
 
@@ -40,7 +40,8 @@ class OpenProjectPickRequested extends UserAction {
 
 /// User chose "New Project…": ask the OS where to create it.
 class NewProjectPickRequested extends UserAction {
-  const NewProjectPickRequested();
+  const NewProjectPickRequested({this.system = false});
+  final bool system;
 }
 
 class OpenProjectRequested extends UserAction {
@@ -48,10 +49,13 @@ class OpenProjectRequested extends UserAction {
   final String rootPath;
 }
 
+/// Create a project: a flat design, or — [system] — a behaviour system whose
+/// top level composes components (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md).
 class NewProjectRequested extends UserAction {
-  const NewProjectRequested({required this.rootPath, required this.name});
+  const NewProjectRequested({required this.rootPath, required this.name, this.system = false});
   final String rootPath;
   final String name;
+  final bool system;
 }
 
 class SaveRequested extends UserAction {
@@ -113,11 +117,324 @@ class InlineRenameFinished extends UserAction {
   final String? name;
 }
 
+/// Create a relationship; with [group], it joins that behaviour group once
+/// the compiler has confirmed it ("+ Add relationship" in a group).
 class CreateMappingRequested extends UserAction {
-  const CreateMappingRequested({required this.name, required this.inputs, required this.output});
+  const CreateMappingRequested({
+    required this.name,
+    required this.inputs,
+    required this.output,
+    this.group,
+  });
   final String name;
   final List<int> inputs;
   final int output;
+  final int? group;
+}
+
+// ---- system projects: context, components, instances, bindings ------------
+//
+// Every one of these is one `SystemEditOp`, sent against the revision Studio
+// holds; the daemon answers with the system, the derived flat design and
+// the outcome.  Nothing here decides a semantic fact.
+
+/// Show the system's top level or one component's source on the canvas.
+class ContextChanged extends UserAction {
+  const ContextChanged(this.context);
+  final DesignContext context;
+}
+
+class CreateComponentRequested extends UserAction {
+  const CreateComponentRequested({required this.name, this.description = ''});
+  final String name;
+  final String description;
+}
+
+class RenameComponentRequested extends UserAction {
+  const RenameComponentRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetComponentDescriptionRequested extends UserAction {
+  const SetComponentDescriptionRequested({required this.id, required this.description});
+  final int id;
+  final String description;
+}
+
+class DeleteComponentRequested extends UserAction {
+  const DeleteComponentRequested(this.id);
+  final int id;
+}
+
+/// A new version of a component: same interface identities, a copied body.
+class DuplicateComponentRequested extends UserAction {
+  const DuplicateComponentRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class DeclarePortRequested extends UserAction {
+  const DeclarePortRequested({
+    required this.component,
+    required this.decl,
+    required this.kind,
+    required this.name,
+  });
+  final int component;
+  final int decl;
+  final pb.PortKind kind;
+  final String name;
+}
+
+class RenamePortRequested extends UserAction {
+  const RenamePortRequested({required this.component, required this.port, required this.name});
+  final int component;
+  final int port;
+  final String name;
+}
+
+class RetirePortRequested extends UserAction {
+  const RetirePortRequested({required this.component, required this.port});
+  final int component;
+  final int port;
+}
+
+/// An explicit change of the promise (the backend classifies it).
+class ChangePortContractRequested extends UserAction {
+  const ChangePortContractRequested({
+    required this.component,
+    required this.port,
+    required this.contract,
+  });
+  final int component;
+  final int port;
+  final pb.PortContractView contract;
+}
+
+/// Point the port at another body declaration; the promise is unchanged.
+class RebindPortDeclarationRequested extends UserAction {
+  const RebindPortDeclarationRequested({
+    required this.component,
+    required this.port,
+    required this.decl,
+  });
+  final int component;
+  final int port;
+  final int decl;
+}
+
+class SetClockParameterRequested extends UserAction {
+  const SetClockParameterRequested({
+    required this.component,
+    required this.clock,
+    required this.parameter,
+  });
+  final int component;
+  final int clock;
+  final bool parameter;
+}
+
+class ShareConceptRequested extends UserAction {
+  const ShareConceptRequested({required this.component, required this.local, this.system});
+  final int component;
+  final int local;
+  final int? system;
+}
+
+class ExternalizeOutputRequested extends UserAction {
+  const ExternalizeOutputRequested({required this.component, required this.local, this.system});
+  final int component;
+  final int local;
+  final int? system;
+}
+
+/// Place an instance of a component; [position] is where the node lands.
+class CreateInstanceRequested extends UserAction {
+  const CreateInstanceRequested({required this.component, required this.name, this.position});
+  final int component;
+  final String name;
+  final Offset? position;
+}
+
+class RenameInstanceRequested extends UserAction {
+  const RenameInstanceRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class DeleteInstanceRequested extends UserAction {
+  const DeleteInstanceRequested(this.id);
+  final int id;
+}
+
+/// Swap the component behind an instance (the backend decides
+/// substitutability on the interfaces and refuses otherwise).
+class ReplaceInstanceComponentRequested extends UserAction {
+  const ReplaceInstanceComponentRequested({required this.instance, required this.component});
+  final int instance;
+  final int component;
+}
+
+class SetClockArgumentRequested extends UserAction {
+  const SetClockArgumentRequested({
+    required this.instance,
+    required this.parameter,
+    required this.clock,
+  });
+  final int instance;
+  final int parameter;
+  final int? clock;
+}
+
+class SetParameterArgumentRequested extends UserAction {
+  const SetParameterArgumentRequested({
+    required this.instance,
+    required this.port,
+    required this.value,
+  });
+  final int instance;
+  final int port;
+  final String? value;
+}
+
+/// A link was drawn between two binding ends on the system canvas.  The
+/// reducer sends it, or asks first when the destination is taken or the
+/// domains differ ([PendingBind]).
+class LinkEndsRequested extends UserAction {
+  const LinkEndsRequested({required this.source, required this.destination});
+  final pb.PortRefView source;
+  final pb.PortRefView destination;
+}
+
+/// The designer answered the pending-bind question: disconnect and connect
+/// (with a transport's initial value when one is needed).
+class PendingBindConfirmed extends UserAction {
+  const PendingBindConfirmed({this.transportInit});
+  final String? transportInit;
+}
+
+class PendingBindCancelled extends UserAction {
+  const PendingBindCancelled();
+}
+
+class BindRequested extends UserAction {
+  const BindRequested({required this.source, required this.destination, this.transportInit});
+  final pb.PortRefView source;
+  final pb.PortRefView destination;
+  final String? transportInit;
+}
+
+class UnbindRequested extends UserAction {
+  const UnbindRequested(this.binding);
+  final int binding;
+}
+
+// ---- behaviour groups (authoring metadata; never a revision) ---------------
+
+class CreateGroupRequested extends UserAction {
+  const CreateGroupRequested({required this.name, this.members = const [], this.description = ''});
+  final String name;
+  final String description;
+  final List<int> members;
+}
+
+class RenameGroupRequested extends UserAction {
+  const RenameGroupRequested({required this.id, required this.name});
+  final int id;
+  final String name;
+}
+
+class SetGroupDescriptionRequested extends UserAction {
+  const SetGroupDescriptionRequested({required this.id, required this.description});
+  final int id;
+  final String description;
+}
+
+/// Dissolve the group; its relationships stay.
+class UngroupRequested extends UserAction {
+  const UngroupRequested(this.id);
+  final int id;
+}
+
+/// Delete the group *and* its relationships (a revision).
+class DeleteGroupWithMembersRequested extends UserAction {
+  const DeleteGroupWithMembersRequested(this.id);
+  final int id;
+}
+
+class AddGroupMemberRequested extends UserAction {
+  const AddGroupMemberRequested({required this.group, required this.decl});
+  final int group;
+  final int decl;
+}
+
+class RemoveGroupMemberRequested extends UserAction {
+  const RemoveGroupMemberRequested({required this.group, required this.decl});
+  final int group;
+  final int decl;
+}
+
+class MoveGroupMemberRequested extends UserAction {
+  const MoveGroupMemberRequested({required this.decl, required this.to});
+  final int decl;
+  final int to;
+}
+
+class MergeGroupsRequested extends UserAction {
+  const MergeGroupsRequested({required this.into, required this.from});
+  final int into;
+  final int from;
+}
+
+class SplitGroupRequested extends UserAction {
+  const SplitGroupRequested({required this.id, required this.name, required this.members});
+  final int id;
+  final String name;
+  final List<int> members;
+}
+
+/// Collapse or expand a group on the canvas (layout only).
+class GroupCollapsedChanged extends UserAction {
+  const GroupCollapsedChanged({required this.id, required this.collapsed});
+  final int id;
+  final bool collapsed;
+}
+
+/// A collapsed group's box was moved or resized (layout only).
+class GroupBoxChanged extends UserAction {
+  const GroupBoxChanged({required this.id, required this.rect});
+  final int id;
+  final Rect rect;
+}
+
+// ---- package as reusable component -------------------------------------------
+
+class ExtractionSheetOpened extends UserAction {
+  const ExtractionSheetOpened(this.group);
+  final int group;
+}
+
+class ExtractionChoicesChanged extends UserAction {
+  const ExtractionChoicesChanged({
+    this.name,
+    this.instanceName,
+    this.keepInternal,
+    this.internalizeSinks,
+  });
+  final String? name;
+  final String? instanceName;
+  final Set<int>? keepInternal;
+  final Set<int>? internalizeSinks;
+}
+
+class ExtractionSheetClosed extends UserAction {
+  const ExtractionSheetClosed();
+}
+
+/// Package: one atomic system edit from the sheet's choices.
+class ExtractionConfirmed extends UserAction {
+  const ExtractionConfirmed();
 }
 
 // ---- definition drafts -----------------------------------------------------
@@ -511,6 +828,45 @@ class DaemonExited extends ResponseAction {
 class DaemonLogged extends ResponseAction {
   const DaemonLogged(this.line);
   final String line;
+}
+
+/// The authored system arrived (GetSystem, or a group edit's answer).
+class SystemReceived extends ResponseAction {
+  const SystemReceived(this.system, {this.fromRequest = true});
+  final pb.SystemView system;
+  final bool fromRequest;
+}
+
+/// A system edit was applied: the system, the derived flat design and the
+/// outcome, in one answer.
+class SystemEditApplied extends ResponseAction {
+  const SystemEditApplied({required this.system, required this.project, this.outcome});
+  final pb.SystemView system;
+  final pb.ProjectProjection project;
+  final pb.SystemEditOutcome? outcome;
+}
+
+/// The system-level analysis arrived.  Revision-tagged, like the flat one.
+class SystemAnalysisReceived extends ResponseAction {
+  const SystemAnalysisReceived(this.analysis);
+  final pb.SystemAnalysisView analysis;
+}
+
+class ExtractionPreviewReceived extends ResponseAction {
+  const ExtractionPreviewReceived({required this.generation, required this.preview});
+  final int generation;
+  final pb.ExtractionPreviewView preview;
+}
+
+class ExtractionPreviewFailed extends ResponseAction {
+  const ExtractionPreviewFailed({
+    required this.generation,
+    required this.code,
+    required this.message,
+  });
+  final int generation;
+  final String code;
+  final String message;
 }
 
 /// A project projection arrived (from open/init/save/get/edit responses or a

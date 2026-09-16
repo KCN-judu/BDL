@@ -64,27 +64,35 @@ class EffectExecutor {
       case PickProjectToOpen():
         final dir = await _picker(() => fs.getDirectoryPath(confirmButtonText: 'Open Project'));
         if (dir != null) _dispatch(OpenProjectRequested(dir));
-      case PickNewProjectLocation():
+      case PickNewProjectLocation(:final system):
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
         final loc = await _picker(
           () => fs.getSaveLocation(
-            suggestedName: 'Untitled Project',
+            suggestedName: system ? 'Untitled System' : 'Untitled Project',
             confirmButtonText: 'Create Project',
           ),
         );
         if (loc != null) {
           _dispatch(
-            NewProjectRequested(rootPath: loc.path, name: p.basenameWithoutExtension(loc.path)),
+            NewProjectRequested(
+              rootPath: loc.path,
+              name: p.basenameWithoutExtension(loc.path),
+              system: system,
+            ),
           );
         }
       case OpenProject(:final rootPath):
         await _project(pb.ClientMessage(openProject: pb.OpenProjectRequest(rootPath: rootPath)));
-      case InitProject(:final rootPath, :final name):
+      case InitProject(:final rootPath, :final name, :final system):
         await _project(
-          pb.ClientMessage(
-            initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
-          ),
+          system
+              ? pb.ClientMessage(
+                  initSystemProject: pb.InitSystemProjectRequest(rootPath: rootPath, name: name),
+                )
+              : pb.ClientMessage(
+                  initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
+                ),
         );
       case SaveProject():
         await _project(pb.ClientMessage(saveProject: pb.SaveProjectRequest()));
@@ -105,18 +113,89 @@ class EffectExecutor {
           ),
           _onEditApplied,
         );
+      case ApplySystemEdit(:final baseRevision, :final op):
+        await _call(
+          pb.ClientMessage(
+            applySystemEdit: pb.ApplySystemEditRequest(baseRevision: Int64(baseRevision), op: op),
+          ),
+          (r) {
+            final e = r.systemEditApplied;
+            _dispatch(
+              SystemEditApplied(
+                system: e.system,
+                project: e.project,
+                outcome: e.hasOutcome() ? e.outcome : null,
+              ),
+            );
+          },
+        );
+      case ApplyGroupEdit(:final op):
+        await _call(
+          pb.ClientMessage(applyGroupEdit: pb.ApplyGroupEditRequest(op: op)),
+          (r) => _dispatch(SystemReceived(r.system.system)),
+        );
+      case GetSystem():
+        await _call(
+          pb.ClientMessage(getSystem: pb.GetSystemRequest()),
+          (r) => _dispatch(SystemReceived(r.system.system, fromRequest: false)),
+          counted: false,
+        );
+      case RunSystemAnalysis():
+        await _call(
+          pb.ClientMessage(runSystemAnalysis: pb.RunSystemAnalysisRequest()),
+          (r) => _dispatch(SystemAnalysisReceived(r.systemAnalysis.analysis)),
+          counted: false,
+        );
+      case PreviewExtraction(:final group, :final choices, :final generation):
+        final client = _client;
+        if (client == null) {
+          _dispatch(
+            ExtractionPreviewFailed(
+              generation: generation,
+              code: 'studio.not_connected',
+              message: 'The compiler service is not connected.',
+            ),
+          );
+          return;
+        }
+        try {
+          final r = await client.request(
+            pb.ClientMessage(
+              previewComponentExtraction: pb.PreviewComponentExtractionRequest(
+                group: Int64(group),
+                choices: choices,
+              ),
+            ),
+          );
+          _dispatch(
+            ExtractionPreviewReceived(generation: generation, preview: r.extractionPreview.preview),
+          );
+        } on DaemonError catch (e) {
+          _dispatch(
+            ExtractionPreviewFailed(generation: generation, code: e.code, message: e.message),
+          );
+        } catch (e) {
+          _dispatch(
+            ExtractionPreviewFailed(
+              generation: generation,
+              code: 'studio.transport',
+              message: '$e',
+            ),
+          );
+        }
       case ListConceptTemplates():
         await _call(
           pb.ClientMessage(listConceptTemplates: pb.ListConceptTemplatesRequest()),
           (r) => _dispatch(ConceptTemplatesReceived(r.conceptTemplates)),
           counted: false,
         );
-      case InstantiateConceptTemplate(:final baseRevision, :final templateId):
+      case InstantiateConceptTemplate(:final baseRevision, :final templateId, :final component):
         await _call(
           pb.ClientMessage(
             instantiateConceptTemplate: pb.InstantiateConceptTemplateRequest(
               baseRevision: Int64(baseRevision),
               templateId: templateId,
+              component: component == null ? null : Int64(component),
             ),
           ),
           _onEditApplied,
@@ -127,11 +206,17 @@ class EffectExecutor {
           (r) => _dispatch(AnalysisReceived(r.analysis.analysis)),
           counted: false,
         );
-      case AnalyzeDraft(:final revision, :final mappingId, :final generation, :final source):
+      case AnalyzeDraft(
+        :final revision,
+        :final mappingId,
+        :final generation,
+        :final source,
+        :final component,
+      ):
         _draftTimers.remove(mappingId)?.cancel();
         _draftTimers[mappingId] = Timer(draftDebounce, () {
           _draftTimers.remove(mappingId);
-          _analyzeDraft(revision, mappingId, generation, source);
+          _analyzeDraft(revision, mappingId, generation, source, component);
         });
       case CompleteDraft(
         :final revision,
@@ -139,6 +224,7 @@ class EffectExecutor {
         :final source,
         :final offset,
         :final generation,
+        :final component,
       ):
         await _tooling(
           generation,
@@ -148,6 +234,7 @@ class EffectExecutor {
               mappingId: Int64(mappingId),
               source: source,
               offset: offset,
+              component: component == null ? null : Int64(component),
             ),
           ),
           (r) => _dispatch(CompletionReceived(generation: generation, result: r.draftCompletion)),
@@ -158,6 +245,7 @@ class EffectExecutor {
         :final source,
         :final offset,
         :final generation,
+        :final component,
       ):
         await _tooling(
           generation,
@@ -167,6 +255,7 @@ class EffectExecutor {
               mappingId: Int64(mappingId),
               source: source,
               offset: offset,
+              component: component == null ? null : Int64(component),
             ),
           ),
           (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
@@ -257,12 +346,15 @@ class EffectExecutor {
             DeploymentFailed(generation: generation, code: 'studio.transport', message: '$e'),
           );
         }
-      case DiscardDraft(:final mappingId):
+      case DiscardDraft(:final mappingId, :final component):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();
         await _call(
           pb.ClientMessage(
-            discardDefinitionDraft: pb.DiscardDefinitionDraftRequest(mappingId: Int64(mappingId)),
+            discardDefinitionDraft: pb.DiscardDefinitionDraftRequest(
+              mappingId: Int64(mappingId),
+              component: component == null ? null : Int64(component),
+            ),
           ),
           (_) {},
           counted: false,
@@ -301,7 +393,13 @@ class EffectExecutor {
   /// Read-only and uncounted: the app is not "busy" while a draft is
   /// checked.  Every outcome is tagged with the generation it answers so the
   /// reducer can drop what a newer draft has superseded.
-  Future<void> _analyzeDraft(int revision, int mappingId, int generation, String source) async {
+  Future<void> _analyzeDraft(
+    int revision,
+    int mappingId,
+    int generation,
+    String source,
+    int? component,
+  ) async {
     final client = _client;
     if (client == null) {
       _dispatch(
@@ -322,6 +420,7 @@ class EffectExecutor {
             mappingId: Int64(mappingId),
             generation: Int64(generation),
             source: source,
+            component: component == null ? null : Int64(component),
           ),
         ),
       );
@@ -410,7 +509,20 @@ class EffectExecutor {
     }
   }
 
+  /// An edit's answer: a flat `EditApplied`, or — on a system project —
+  /// a `SystemEditApplied` carrying the system alongside.
   void _onEditApplied(pb.Response r) {
+    if (r.whichPayload() == pb.Response_Payload.systemEditApplied) {
+      final e = r.systemEditApplied;
+      _dispatch(
+        SystemEditApplied(
+          system: e.system,
+          project: e.project,
+          outcome: e.hasOutcome() ? e.outcome : null,
+        ),
+      );
+      return;
+    }
     final e = r.editApplied;
     _dispatch(ProjectReceived(e.project, outcome: e.hasOutcome() ? e.outcome : null));
   }

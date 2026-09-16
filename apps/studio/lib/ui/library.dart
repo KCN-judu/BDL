@@ -166,7 +166,64 @@ class _ProjectObjects extends StatelessWidget {
                     onTap: () => dispatch(SelectionChanged(OutputSelected(o.id.toInt()))),
                   ),
                 const _Section(title: 'Contexts'),
-                const _Section(title: 'Components'),
+                if (state.isSystem) ...[
+                  // ---- the system's own objects (docs/STUDIO_UI.md §11) ----
+                  _Section(
+                    title: 'Components',
+                    onAdd: () async {
+                      final name = await showNameSheet(
+                        context,
+                        title: 'New component',
+                        subtitle: 'A reusable behaviour with a promise (its ports) and a source of its own.',
+                        hint: 'AdaptiveLamp',
+                      );
+                      if (name != null && name.isNotEmpty) {
+                        dispatch(CreateComponentRequested(name: name));
+                      }
+                    },
+                  ),
+                  for (final c in state.system!.components)
+                    _Row(
+                      glyph: _ComponentGlyph(
+                        broken:
+                            state.systemAnalysis?.components
+                                .where((x) => x.id == c.id)
+                                .firstOrNull
+                                ?.realizes ==
+                            false,
+                        editing: state.editor.context == ComponentContext(c.id.toInt()),
+                      ),
+                      title: c.name,
+                      selected: sel is ComponentSelected && sel.id == c.id.toInt(),
+                      onTap: () => dispatch(SelectionChanged(ComponentSelected(c.id.toInt()))),
+                    ),
+                  if (state.editor.context is SystemContext) ...[
+                    const _Section(title: 'Instances'),
+                    for (final i in state.system!.instances)
+                      _Row(
+                        glyph: _InstanceGlyph(),
+                        title: i.name,
+                        selected: sel is InstanceSelected && sel.id == i.id.toInt(),
+                        onTap: () => dispatch(SelectionChanged(InstanceSelected(i.id.toInt()))),
+                      ),
+                    _Section(
+                      title: 'Groups',
+                      onAdd: () => dispatch(
+                        CreateGroupRequested(name: 'Group ${state.system!.groups.length + 1}'),
+                      ),
+                    ),
+                    for (final g in state.system!.groups)
+                      _Row(
+                        glyph: _GroupGlyph(
+                          collapsed: state.editor.layouts.groups[g.id.toInt()]?.collapsed ?? false,
+                        ),
+                        title: g.name,
+                        selected: sel is GroupSelected && sel.id == g.id.toInt(),
+                        onTap: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
+                      ),
+                  ],
+                ] else
+                  const _Section(title: 'Components'),
               ],
             ),
     );
@@ -266,4 +323,122 @@ class _ClockRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A component: a rounded box with two port ticks; a red mark when its
+/// source no longer keeps its promise; filled when its source is open.
+class _ComponentGlyph extends StatelessWidget {
+  const _ComponentGlyph({required this.broken, required this.editing});
+  final bool broken;
+  final bool editing;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return SizedBox(
+      width: 14,
+      height: 12,
+      child: CustomPaint(
+        painter: _BoxGlyphPainter(
+          fill: editing ? t.textSecondary : null,
+          stroke: t.textSecondary,
+          mark: broken ? t.error : null,
+          ticks: true,
+        ),
+      ),
+    );
+  }
+}
+
+class _InstanceGlyph extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return SizedBox(
+      width: 14,
+      height: 12,
+      child: CustomPaint(
+        painter: _BoxGlyphPainter(fill: null, stroke: t.textSecondary, mark: null, ticks: true),
+      ),
+    );
+  }
+}
+
+/// A group: a dashed region (expanded) or a solid box (collapsed).
+class _GroupGlyph extends StatelessWidget {
+  const _GroupGlyph({required this.collapsed});
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return SizedBox(
+      width: 14,
+      height: 12,
+      child: CustomPaint(
+        painter: _BoxGlyphPainter(
+          fill: null,
+          stroke: t.textSecondary,
+          mark: null,
+          ticks: false,
+          dashed: !collapsed,
+        ),
+      ),
+    );
+  }
+}
+
+class _BoxGlyphPainter extends CustomPainter {
+  _BoxGlyphPainter({
+    required this.fill,
+    required this.stroke,
+    required this.mark,
+    required this.ticks,
+    this.dashed = false,
+  });
+  final Color? fill;
+  final Color stroke;
+  final Color? mark;
+  final bool ticks;
+  final bool dashed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = RRect.fromRectAndRadius(
+      Rect.fromLTWH(2, 1, size.width - 4, size.height - 2),
+      const Radius.circular(2.5),
+    );
+    if (fill != null) canvas.drawRRect(r, Paint()..color = fill!.withValues(alpha: 0.35));
+    final p = Paint()
+      ..color = stroke
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    if (dashed) {
+      final path = Path()..addRRect(r);
+      for (final m in path.computeMetrics()) {
+        var d = 0.0;
+        while (d < m.length) {
+          canvas.drawPath(m.extractPath(d, d + 2.5), p);
+          d += 4.5;
+        }
+      }
+    } else {
+      canvas.drawRRect(r, p);
+    }
+    if (ticks) {
+      canvas.drawLine(Offset(0, size.height / 2), Offset(2, size.height / 2), p);
+      canvas.drawLine(
+        Offset(size.width - 2, size.height / 2),
+        Offset(size.width, size.height / 2),
+        p,
+      );
+    }
+    if (mark != null) {
+      canvas.drawCircle(Offset(size.width - 2, 2), 2.2, Paint()..color = mark!);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BoxGlyphPainter old) =>
+      old.fill != fill || old.stroke != stroke || old.mark != mark || old.dashed != dashed;
 }
