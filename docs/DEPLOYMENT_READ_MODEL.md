@@ -102,7 +102,10 @@ project the client no longer has.
 `requirements[]`, `assignment[]`, `dead_end` (fields 4–6) are the analysis
 as computed, by stable ids — for tools, tests and the expert view. A Deploy
 page needs none of them; nothing in `details_json` or any string needs
-parsing.
+parsing. (Studio's current Deploy page, written before this model, still
+renders from those fields and re-derives its labels client-side; moving it
+onto `rows[]` / `missing[]` / `blocker` is recorded as the next step in
+docs/STUDIO_COMPILER_INTEGRATION.md §3.)
 
 ## Not in this model
 

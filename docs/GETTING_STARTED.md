@@ -13,8 +13,10 @@ derived and proved in Lean 4 in the sibling repo
 [BDL_FV](https://github.com/KCN-judu/BDL_FV); that repo is the *semantic
 authority* and is never a runtime dependency. This repo is the *production
 implementation*: the editor (**BDL Studio**, Flutter), the compiler service
-(**bdld**, Rust), and — later — simulator, hardware allocator, Rust code
-generator and embedded runtime.
+(**bdld**, Rust) with its simulator, hardware allocator and Rust code
+generator, the host runtime the generated cores run on, a shared IDE
+service with an LSP, and — later — the embedded platform adapter,
+flashing and telemetry.
 
 ## 2. The one rule to internalise
 
@@ -69,7 +71,8 @@ apps/studio/            Flutter BDL Studio
   lib/app/              state · actions · effects · reducer (pure) · store
   lib/effects/          effect executor (daemon process, pickers, recent list)  ← the only I/O
   lib/daemon/           framed stdio client for bdld
-  lib/ui/               shell, welcome, design page, canvas, inspector, mac/ (tokens, theme, controls)
+  lib/ui/               shell, welcome, pages/ (design, simulate, deploy), canvas, inspector,
+                        definition editor, library panels, mac/ (tokens, theme, controls)
   lib/protocol/gen/     generated protobuf (do not edit; `just proto`)
 crates/
   bdl-model/            stable ids · surface model · apply_edit · persistence      (foundation)
@@ -95,12 +98,16 @@ assets/brand/           the compass-λ mark (generator, SVGs, icons)
 docs/                   architecture, formats, pipeline, IR, protocol, ADRs, design issues
 reference/paper/        the paper (PDF + markdown source)
 hardware/boards/        board descriptions as data
+library/std/            the Standard Concept Library, concepts.toml
+examples/smart_lamp/    the canonical example project (Design → Simulate → Deploy)
 runtime/bdl-runtime-core  no_std vocabulary every generated core links against
 runtime/bdl-runtime-host  std harness: run generated programs, JSON traces, cargo driver
 ```
 
 Dependency direction (acyclic, enforced by Cargo):
-`model → ir → {syntax → elab, check} → compiler → protocol → daemon`.
+`model → ir → {syntax → elab, check → reactive → output} → compiler → ide-db → ide → {lsp, daemon}`,
+with `protocol` between `compiler` and `daemon`, `hardware` off `model`,
+`lower → codegen` off `exec-ir` (docs/ARCHITECTURE.md).
 
 ## 6. How a keystroke becomes a diagnostic
 
@@ -150,6 +157,8 @@ persistence edges.
 
 ## 9. Where things are deliberately *not* yet
 
-Contexts, outputs, clocks, hardware allocation, code generation, runtime,
-telemetry — see `docs/ROADMAP.md` for the order and `docs/DESIGN_ISSUES.md`
-for the open questions each will have to answer.
+The embedded platform adapter (Embassy), `cargo` build orchestration and
+flashing from `bdld`, telemetry and the Monitor page, contexts, supplied
+Rust components, behaviour systems, a persisted edit log — see
+`docs/ROADMAP.md` for the order and `docs/DESIGN_ISSUES.md` for the open
+questions each will have to answer.

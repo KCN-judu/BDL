@@ -9,16 +9,16 @@ slice is started before the slice works end-to-end.
 |---|---|---|
 | A | architecture documents, ADRs | ✅ |
 | B | Rust project model, stable ids, revisioned edits | ✅ `bdl-model` |
-| C | protocol schema | ✅ `bdl-protocol` (0.1.0) |
+| C | protocol schema | ✅ `bdl-protocol` (now 0.5.0; history in docs/PROTOCOL.md) |
 | D | `bdld` process + Flutter connection, handshake, versions in the status bar | ✅ |
 | E | crash-safe persistence, save/reopen of an unresolved mapping | ✅ |
 | F | Project manager / welcome screen (hero, Start, Recent) and Concepts + Mapping editor: page shell, node canvas (drag, link, unlink, delete), inspector with full concept/mapping editing, macOS look | ✅ (docs/STUDIO_UI.md) |
-| — | **architecture review gate** (brief §63) | ⏳ next |
+| — | **architecture review gate** (brief §63) | ⏳ not recorded as held; G–O landed meanwhile |
 | G | type / semantic checking: formula parser, elaboration with rep/mk and units, Core typing, Grant, dimension via typing, diagnostics, `analyze()` in bdld, Studio shows status + diagnostics | ✅ (ADR-0013) |
 | H | incomplete-declaration support (declared / open / invalid / type-valid) | ✅ |
-| I | reference evaluator + simulator: dependency graph, causality, clock judgment, two-phase ticks, state cells, schedules, input traces, traces; bdld Start/Step/Reset | ✅ core (Studio Simulate page planned) |
-| J | `delay` / `sync` state with explicit initial values | ✅ at Core level (surface temporal phrases planned) |
-| K | output binding + single-driver diagnostic: nominal `PhysicalOutput`, `DriveWF` (exact type + domain), `SingleDriver`, partial validity vs executable completeness, `output_complete` | ✅ `bdl-output` (Studio Deploy page planned) |
+| I | reference evaluator + simulator: dependency graph, causality, clock judgment, two-phase ticks, state cells, schedules, input traces, traces; bdld Start/Step/Reset | ✅ core; Studio Simulate page ✅ (STUDIO_UI.md §10; ST-4 below) |
+| J | `delay` / `sync` state with explicit initial values | ✅ Core; ✅ surface calls `delay(init, e)` / `sync(domain, init, e)` elaborate, simulate and generate (DI-17, `surface_to_backend.rs`); sugar phrases (`previous`, `hold`, …) not parsed (TEXTUAL_SYNTAX.md §12); no canvas mark (STUDIO_UI.md §7) |
+| K | output binding + single-driver diagnostic: nominal `PhysicalOutput`, `DriveWF` (exact type + domain), `SingleDriver`, partial validity vs executable completeness, `output_complete` | ✅ `bdl-output`; outputs as canvas sink nodes and inspector objects ✅ (ST-3); Studio Deploy page ✅ (ST-5) |
 | L | hardware resource allocator (`bdl-hardware`): capability model, device → requirements, deterministic sound+complete solver, dead-end diagnosis, Nano golden cases, `analyze_deployment` + `AnalyzeDeployment`/`ListTargets` in bdld | ✅ (ADR-0015) |
 | M | board descriptions as data: `hardware/boards/arduino_nano.toml`, `big_board.toml` generated + round-tripped | ✅ (RP2040 board file and runtime loading of `hardware/boards/` next) |
 | N | Rust code generation via a backend AST + `bdl-manifest.json`: executable IR (`bdl-exec-ir`), reactive lowering (`bdl-lower`), owned Rust AST + printer (`bdl-codegen-rust`), readiness check, `compile()` | ✅ (ADR-0016) |
@@ -27,6 +27,28 @@ slice is started before the slice works end-to-end.
 | Q | `cargo check` / build orchestration in `bdld` with structured events | |
 | R | flash via `probe-rs` | |
 | S | telemetry back into Studio | |
+
+## Studio semantic surface
+
+The Studio work after step F, in landing order. Each row is verified in
+docs/STUDIO_COMPILER_INTEGRATION.md §3 (the audit table) and
+docs/STUDIO_UI.md.
+
+| Step | | Status |
+|---|---|---|
+| ST-1 | definition editor over compiler-backed drafts (`AnalyzeDefinitionDraft`, protocol 0.4): verdict, spans, add/save/revert/detach, conflicts, stash across close/reopen | ✅ |
+| ST-2 | completion pop-up and hover cards from the IDE service (`CompleteDefinitionDraft`, `HoverDefinitionDraft`, `HoverEntity`); semantic actions as *Fixes* (`ListSemanticActions`) | ✅ |
+| ST-3 | canvas carries semantics as geometry (hue = identity, shape = value form, dashed = declared); timing domains and physical outputs as first-class objects: library sections, inspector sections, sink nodes with drive links, the domain as a word on the node | ✅ (domain *regions* and cycle emphasis on the canvas: not built) |
+| ST-4 | Simulate page over `Start/Step/ResetSimulation`: inputs by value form, period per domain, replayed steps, trace table gated by domain activation, readiness blockers with *Show* links, probe panel with Explain | ✅ |
+| ST-5 | Deploy page over `ListTargets` / `AnalyzeDeployment`: target pop-up, verdict, device rows, pin table, dead end | ✅ built on analysis fields 4–9; the 0.5 read model (`rows[]`/`missing[]`/`blocker`) is on the wire and not yet consumed |
+| ST-6 | Explain disclosure served by `bdl_ide::explain` (dependencies, grant, clock, output relation) | protocol request not added; the disclosure shows the projection's technical fields only |
+| ST-7 | Monitor page (telemetry) | placeholder page (`placeholder_page.dart`); waits on step S |
+
+## Examples
+
+| | Status |
+|---|---|
+| `examples/smart_lamp` — tilt and ambient light in, one required output driven through `adaptBrightness(dimByTilt(tilt), ambient)`, one PWM device; Design → Simulate → Deploy | ✅ kept faithful by `crates/bdl-compiler/tests/examples.rs` and `apps/studio/test/smart_lamp_e2e_test.dart` |
 
 ## IDE service (shared language-service layer)
 

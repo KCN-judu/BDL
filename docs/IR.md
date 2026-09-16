@@ -28,8 +28,11 @@ Designer-level forms; may be incomplete; may contain constructs the kernel
 does not have. Today: `Concept { representation? }`, `MappingBlock
 { signature, definition?, clock?, drives? }`, `Definition::Formula`,
 `ClockDomain`, `PhysicalOutput { accepts: SemanticId, clock?, required }`,
-`DeviceBinding { kind: DeviceKind, output?, fixed_pins }`. Planned: curves,
-example sets, temporal modifiers, contexts, supplied components, units.
+`DeviceBinding { kind: DeviceKind, output?, fixed_pins }`. Temporal forms
+and units are not separate surface objects: `delay`/`sync` are written
+inside `Definition::Formula` and units are `Representation::Quantity { dim }`
+plus unit-suffixed literals in formulas. Planned: curves, example sets,
+contexts, supplied components.
 
 ## Design IR (`bdl-ir::design`)
 

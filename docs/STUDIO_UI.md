@@ -58,7 +58,7 @@ greyed with *not found* and can be removed on hover.
 │ Library       │                                      │ Inspector         │
 │  Concepts     │            page content              │  (selected object)│
 │  Mappings     │                                      │                   │
-│  Contexts     │                                      │                   │
+│  Timing dom.  │                                      │                   │
 │  Outputs      │                                      │                   │
 ├───────────────┴──────────────────────────────────────┴───────────────────┤
 │ r12 · 2 concepts · 1 mapping · dimByTilt: declared            bdld 0.1.0 │  status line
@@ -72,10 +72,10 @@ contexts → outputs → domains → board → observe):
 
 | Page | Centre | Left | Right | Answers |
 |---|---|---|---|---|
-| **Design** | node canvas | library (concepts, mappings, contexts, outputs, components) | inspector of the selection | what the product does |
-| **Simulate** | the trace as a table (tick, active domains, one column per relationship without inputs and per driven output), Step / Step ×10 / Reset; value plots later | inputs as controls by value form; a period per timing domain | — (the failure line stands in for a probe inspector) | what it does over time |
+| **Design** | node canvas | sidebar: *Project* tab (concepts, mappings, timing domains, outputs; *Contexts* and *Components* are empty headings) and *Library* tab (concept templates, §2) | inspector of the selection | what the product does |
+| **Simulate** | readiness blockers with *Show* links, Step / Step ×10 / Reset, the trace as a table (tick, active domains, one column per relationship without inputs and per driven output); value plots later | inputs as controls by value form; a period per timing domain | probe of the selection: value now and over the run, Explain | what it does over time |
 | **Deploy** | one verdict *for this board*, the placement device → requirement → pin, the dead end in the solver's terms; a board picture later | boards from bdld; devices, edited in place | — | whether it fits |
-| **Monitor** | the same canvas with live values | telemetry sessions | probe inspector | what it is doing right now |
+| **Monitor** | *spec*: the same canvas with live values; today a placeholder page (`placeholder_page.dart`) until telemetry exists (ROADMAP step S) | telemetry sessions | probe inspector | what it is doing right now |
 
 Resolve's page bar can hide labels (icons only) and hide pages; we keep
 labels by default and allow ⌘1–⌘4. The page bar's left button is the
@@ -277,6 +277,14 @@ is organised by what the designer means, not by the model's fields:
 | Mapping | **Produces** | pop-up with the socket glyph | SetSignature | edit |
 | Mapping | **Relationship** | the definition editor (§4a) — *Add definition* / *Save definition* / *Revert* / *Detach definition*; header word *declared* while empty, *unsaved* while a draft differs; findings about the mapping’s place in the design attached under the editor in product language | AttachDefinition, ReplaceDefinition (chosen by the reducer from the committed state, never by the widget) | add is a refinement; save (replace) and detach are edits |
 | Mapping | Delete <name> | — | DeleteMapping | edit |
+| Mapping | **Timing** | *Updates in*: a domain, or *any* (pure); `clock.*` findings under it | SetMappingClock | edit (Clock) |
+| Mapping | **Drives** | the output this relationship is the final target of, or none; drive findings under it | SetMappingDrive | edit (Output) |
+| Timing domain (library row) | — | Name (inline), create from the section's "+", delete while unused | CreateClockDomain, RenameClockDomain, DeleteClockDomain | — |
+| Output | **Meaning** · **Output** | Name, Meaning; Accepts (concept, with glyph), *Updates in*, Required | RenameOutput, SetOutputAccepts, SetOutputClock, SetOutputRequired | edit (Output) |
+| Output | **Driver** | the driver or *none*; claimants while contested; Connect (pop-up of eligible relationships) / disconnect | SetMappingDrive | edit (Output) |
+| Output | Delete <name> | — | DeleteOutput | — |
+| Device (Deploy page, left) | row edited in place | Name, kind (pop-up), output (pop-up), one pin field per requirement, Remove | CreateDevice, RenameDevice, SetDeviceKind, SetDeviceOutput, SetDevicePin, DeleteDevice | Deployment only |
+| Mapping, Output | **Fixes** | the service's actions for the selection: ready → button, needs a choice → pop-up, blocked → the reason | `ListSemanticActions`; edits applied one revision at a time | — |
 | both | **Explain** (collapsed) | `SemanticId` / `DeclId`, `Θ` / `Interface`, inferred type, core term, status enum, diagnostic codes and technical detail, revision, the last change's kind and invalidation categories | — | level 3 only |
 
 No static explanatory paragraphs: a sentence appears only when it is
@@ -419,14 +427,14 @@ lands. "Canvas" is level 1, "Inspector" level 2, "Explain" level 3.
 | semantic construction | `mk s` under `Grant.of τ` | a link forms only between sockets of one hue; the output socket is the produced concept | Produces | `Grant permits mk sem#1 in this realization` | now (grant is invisible by design) |
 | dimension mismatch | `Prim.ty` fails | a **red mark at the formula line** on the node, nothing in the header | under the formula: "This adds an angle and a time." + fixes | `+ : q[rad] → q[rad] → …, found q[s]`, code | now |
 | waiting on an open value | `MappingStatus.OPEN` | solid node whose read socket is hollow | under the formula: "Checked once *Temperature*'s value is decided." | status enum | now |
-| temporal state | `delay init e` | **register mark** on the link that crosses a tick, initial value beside it | "Remembers *Held*, starting at *no*" | `delay false (declRef d)` | spec |
-| clock / domain | `Κ d = some c` | **lane**: labelled background region; domain-free mappings outside | "Updates with *interaction* (50 Hz)" | `Κ(d) = c₀`, `Clocked` | spec |
-| cross-domain observation | `sync src init e` | **gate** on the link at the lane edge with the initial value; a crossing without a gate is broken at the boundary | "Observes the latest *Temperature*, starting at 20 °C" | `sync c₁ 293.15 (declRef d)` | spec |
-| physical output | `OutputId`, `OutputSpec { accepts, clock }` | **terminal node** in the right-most column: flat right edge, one input socket, device name | Output: accepts (Value), updates with, device, final target | `Ω(o) = ⟨q[1], c₀⟩` | spec |
-| output conflict | `SingleDriver β` fails | the second path **cannot converge**: the socket refuses the drop and names the current target; two existing targets are drawn meeting a red gap before the output | "*Light* already has a final target, *dimByTilt*. Combine the values before the output." | `β d₁ = β d₂ = o` | spec |
-| hardware feasibility | `solve` result | Deploy: board picture; each requirement a lead to a pin; an unsatisfied one has no lead | "Needs 7 PWM; this board has 6: D3 M1, D5 M2, …" | `Explanation::Blocked { blockers }` | spec |
-| deployment allocation | `Assignment` | lead from requirement to pin; pinned ones marked | Light → PWM → GP15 | resource ids | spec |
-| runtime value | telemetry by `DeclId` + activation | **number at the socket**, unit column; ◇ filled/empty; stale fades | Tilt 31.4° · Held yes | `DeclId 4 @ activation 1203` | spec |
+| temporal state | `delay init e` | **register mark** on the link that crosses a tick, initial value beside it | "Remembers *Held*, starting at *no*" | `delay false (declRef d)` | spec for the canvas; today `delay(init, e)` is written in the formula and its value shows in the Simulate trace |
+| clock / domain | `Κ d = some c` | **lane**: labelled background region; domain-free mappings outside | *Updates in* pop-up (pure = any domain); the domain is a name, never a rate | `Κ(d) = c₀`, `Clocked` | now as a quiet word at the node's right edge, the library's *Timing domains* section and the inspector pop-up; the lane is spec |
+| cross-domain observation | `sync src init e` | **gate** on the link at the lane edge with the initial value; a crossing without a gate is broken at the boundary | "Observes the latest *Temperature*, starting at 20 °C" | `sync c₁ 293.15 (declRef d)` | spec for the canvas; today `sync(domain, init, e)` is written in the formula, an ungated crossing is a `clock.*` finding under *Timing* and the status line's *reads across domains* |
+| physical output | `OutputId`, `OutputSpec { accepts, clock }` | **terminal node** (sink) at the right: boundary bar, one input socket, dashed while open or undriven; a drive link is dragged onto it and dragged away to disconnect | Output: accepts, *Updates in*, required, driver, claimants, connect / disconnect; the mapping's *Drives* | `Ω(o) = ⟨q[1], c₀⟩` | now (the device name on the node: not yet) |
+| output conflict | `SingleDriver β` fails | the sink carries the red word *contested* and every claimant's link; the drop is not refused (the model records the second driver, the analysis reports it) | "*Light* already has a final target, *dimByTilt*. Combine the values before the output." + the fixes *Detach `d` from `Light`* and *Create upstream combination mapping* | `β d₁ = β d₂ = o` | now (the refused drop and red gap of the original spec were not built) |
+| hardware feasibility | `solve` result | Deploy: board picture; each requirement a lead to a pin; an unsatisfied one has no lead | the verdict *for this board*, the dead end as a sentence about a device and a pin, the pins that block it | `DeadEnd { requirement, reason, placed }` | now as a table on the Deploy page; the board picture is spec |
+| deployment allocation | `Assignment` | lead from requirement to pin; pinned ones marked | device → requirement → pin rows; fixed pins edited in the device row | resource ids | now as a table; leads on a picture are spec |
+| runtime value | telemetry by `DeclId` + activation | **number at the socket**, unit column; ◇ filled/empty; stale fades | Tilt 31.4° · Held yes | `DeclId 4 @ activation 1203` | spec for the canvas and for telemetry; simulated values show in the Simulate trace and probe (§10) |
 | change consequence | `EditOutcome { kind, invalidates }` | — | "Nothing else needs rechecking." or "This change affects *dimByTilt*, *warmPulse*; they will be checked again." | `refinement` / `edit`, `Invalidation::{…}` | now |
 
 Rules the matrix implies: hue is identity and nothing else; shape is
@@ -437,21 +445,25 @@ the default button. Adding an encoding adds a row here.
 ### What Studio reads, and what it still needs from the read model
 
 Studio computes nothing semantic (ADR-0001). Everything above is read off
-`ProjectProjection`, `ProjectAnalysis` and `EditOutcome`. Two facts it
-shows today are derived structurally from the projection, not judged:
-which mappings read or produce a concept (from signatures), and which read
-concept of an `OPEN` mapping still has no value form (from `Θ`). Facts the
-UI wants and the protocol does not yet carry — to be added by the compiler
-side, never invented in Dart:
+`ProjectProjection`, `ProjectAnalysis`, `EditOutcome`, the draft, hover,
+completion and semantic-action responses, `SimulationResponse` and
+`DeploymentAnalysis` (docs/PROTOCOL.md). Facts it shows today that are
+derived *structurally* from the projection, not judged: which mappings
+read or produce a concept (from signatures), which read concept of an
+`OPEN` mapping still has no value form (from `Θ`), and which declarations
+are simulation inputs (no inputs, no definition). Facts the UI wants and
+the protocol does not yet carry — to be added on the compiler side, never
+invented in Dart:
 
 | Needed for | Field | Today |
 |---|---|---|
 | "This change affects *A*, *B*" for signature edits and detaches | dependents (by `DeclId`) in `EditOutcome`, not only the origin | `origin_decls` names the origin; a mapping edit lists only itself |
 | concept-level findings under the Value section | `Diagnostic.entity = concept_id` populated by the checker | shape exists, unused |
-| the ladder rungs beyond *type-valid* on the mapping node | `MappingStatus` extended (temporally valid, clock-consistent) or a separate per-rung projection | four statuses |
-| contexts, outputs, clock domains, transports on the canvas | their projections (`ContextView`, `OutputView`, `DomainView`, drive edges, `sync` sites with initial values) | none |
-| values at sockets (Simulate, Monitor) | per-`DeclId`, per-activation samples with units | none |
-| board picture and leads (Deploy) | `Assignment` and `Explanation` projections keyed by requirement and resource | none |
+| Explain's *why* (dependencies, grant, clock, output relation) | a request serving `bdl_ide::explain` | the disclosure shows the projection's technical fields; `explain` is LSP-only |
+| contexts on the canvas | a `ContextView` | contexts do not exist in the model |
+| domains as regions, `sync` gates and `delay` registers on the canvas | the `sync`/`delay` sites of a definition with their initial values (the elaborated Core has them; no projection lists them) | a word per node; the phrases in the formula text |
+| values at sockets (Simulate on the canvas, Monitor) | none missing for simulation — `TickSample` is per `DeclId` and activation; telemetry has no protocol yet | trace table and probe on the Simulate page; nothing on the canvas |
+| the Deploy page from the read model | none missing — `rows[]`, `missing[]`, `blocker` are on the wire (0.5) | the page still renders from fields 4–9 (docs/STUDIO_COMPILER_INTEGRATION.md §3) |
 
 ## 8. When the OS dialog cannot be shown
 
@@ -461,12 +473,12 @@ example). A `null` returned faster than a person could cancel is treated
 as *refused*: Studio shows a banner explaining it and the Start list gains
 *Open by path…* / *New at path…* as a typed fallback.
 
-## 9. Non-goals for this iteration
+## 9. Not built
 
 Contexts, transports and clock boundaries as canvas regions (a domain is a
-word on the node today); cycles drawn on the canvas; value plots and a
-board picture (both pages start as tables); monitor content; native menu
-bar; drag-and-drop from the library; draft indication on the canvas.
+word on the node today); cycles emphasised on the canvas; value plots and a
+board picture (both pages are tables); Monitor content; a native menu bar;
+draft indication on the canvas; the device name on a sink node.
 docs/STUDIO_COMPILER_INTEGRATION.md §3 places each.
 
 ## 10. Simulate
