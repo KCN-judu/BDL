@@ -13,7 +13,8 @@
 //!   components (§44 of the brief).
 
 use crate::contract::{component_substitutable, SubstitutionProblem};
-use crate::ids::{BindingId, ComponentId, ComponentInstanceId, ExportId, PortId};
+use crate::extract::{ExtractError, ExtractionChoices};
+use crate::ids::{BehaviorGroupId, BindingId, ComponentId, ComponentInstanceId, ExportId, PortId};
 use crate::model::*;
 use bdl_model::edit::{apply_edit, EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::surface::{Design, ProjectSnapshot};
@@ -149,9 +150,12 @@ pub enum SystemEditOp {
         value: Option<ParameterValue>,
     },
 
+    /// Bind a required port (or parameter) to a provided port, or bridge
+    /// the base and an instance: a base relationship feeding a required
+    /// port, or a provided port realising an open base relationship.
     BindPorts {
-        source: PortRef,
-        destination: PortRef,
+        source: BindingEnd,
+        destination: BindingEnd,
         #[serde(default)]
         transport: Option<BindingTransport>,
     },
@@ -164,6 +168,21 @@ pub enum SystemEditOp {
     },
     HidePort {
         export: ExportId,
+    },
+
+    /// "Package as reusable component" (FV Phase 8b `Extract`): the group's
+    /// members become a component, one instance takes their place, and
+    /// ordinary bindings reconnect it.  Atomic.  The group is retired.
+    ExtractGroupAsComponent {
+        group: BehaviorGroupId,
+        #[serde(default)]
+        choices: ExtractionChoices,
+    },
+    /// The destructive delete: the group *and* its relationships go (each
+    /// through the ordinary `DeleteMapping`).  `group::DeleteGroup` is the
+    /// one that keeps the members.
+    DeleteGroupWithMembers {
+        group: BehaviorGroupId,
     },
 }
 
@@ -227,10 +246,16 @@ pub enum SystemEditError {
     NotAClockParameter { clock: ClockId },
     #[error("port {port} is not a parameter")]
     NotAParameter { port: PortId },
-    #[error("a binding source must be a provided port")]
-    SourceNotProvided { port: PortRef },
-    #[error("a binding destination must be a required port or a parameter")]
-    DestinationNotRequired { port: PortRef },
+    #[error("a binding source must be a provided port or a base relationship")]
+    SourceNotProvided { port: BindingEnd },
+    #[error(
+        "a binding destination must be a required port, a parameter or an open base relationship"
+    )]
+    DestinationNotRequired { port: BindingEnd },
+    #[error("declaration {decl} is not a relationship of the system's own design")]
+    NotABaseDeclaration { decl: DeclId },
+    #[error("base relationship {decl} already has a definition")]
+    BaseNotOpen { decl: DeclId },
     #[error("the destination port is already bound by {binding}")]
     DestinationBound { binding: BindingId },
     #[error("the port is exported as a system input ({export})")]
@@ -250,6 +275,10 @@ pub enum SystemEditError {
         component: ComponentId,
         problems: Vec<SubstitutionProblem>,
     },
+    #[error("unknown group {id}")]
+    UnknownGroup { id: BehaviorGroupId },
+    #[error(transparent)]
+    Extraction(ExtractError),
     #[error(transparent)]
     Base(EditError),
     #[error("in the body of component {component}: {error}")]
@@ -440,11 +469,13 @@ fn bindings_on_port(
     component: ComponentId,
     port: PortId,
 ) -> BTreeSet<BindingId> {
-    let of_component = |r: PortRef| {
-        r.port == port
-            && s.instances
-                .get(&r.instance)
-                .is_some_and(|i| i.component == component)
+    let of_component = |r: BindingEnd| {
+        r.as_port().is_some_and(|r| {
+            r.port == port
+                && s.instances
+                    .get(&r.instance)
+                    .is_some_and(|i| i.component == component)
+        })
     };
     s.bindings
         .values()
@@ -453,11 +484,16 @@ fn bindings_on_port(
         .collect()
 }
 
-fn flat_decl(s: &BehaviorSystem, r: PortRef) -> Option<DeclId> {
-    let port = s.port(r)?;
-    s.flat_ids
-        .get(r.instance, LocalEntity::Decl(port.decl))
-        .map(DeclId::from_raw)
+fn flat_decl(s: &BehaviorSystem, r: impl Into<BindingEnd>) -> Option<DeclId> {
+    match r.into() {
+        BindingEnd::Base { decl } => Some(decl),
+        BindingEnd::Port(r) => {
+            let port = s.port(r)?;
+            s.flat_ids
+                .get(r.instance, LocalEntity::Decl(port.decl))
+                .map(DeclId::from_raw)
+        }
+    }
 }
 
 /// Apply one system edit.  Errors leave the input untouched.
@@ -683,8 +719,8 @@ pub fn apply_system_edit(
                 let touched = bindings_on_port(&s, *component, *port);
                 for b in &touched {
                     if let Some(b) = s.bindings.get(b) {
-                        o.instances.insert(b.source.instance);
-                        o.instances.insert(b.destination.instance);
+                        o.instances.extend(b.source.instance());
+                        o.instances.extend(b.destination.instance());
                         o.origin_decls.extend(flat_decl(&s, b.destination));
                     }
                 }
@@ -775,13 +811,10 @@ pub fn apply_system_edit(
             let mut used: BTreeSet<PortId> = s
                 .bindings
                 .values()
-                .flat_map(|b| {
-                    [
-                        (b.source.instance == *instance).then_some(b.source.port),
-                        (b.destination.instance == *instance).then_some(b.destination.port),
-                    ]
-                })
+                .flat_map(|b| [b.source.as_port(), b.destination.as_port()])
                 .flatten()
+                .filter(|r| r.instance == *instance)
+                .map(|r| r.port)
                 .collect();
             used.extend(
                 s.exports
@@ -798,12 +831,8 @@ pub fn apply_system_edit(
                     problems,
                 });
             }
-            let touched: BTreeSet<BindingId> = s
-                .bindings
-                .values()
-                .filter(|b| b.source.instance == *instance || b.destination.instance == *instance)
-                .map(|b| b.id)
-                .collect();
+            let touched: BTreeSet<BindingId> =
+                s.bindings_of_instance(*instance).map(|b| b.id).collect();
             instance_mut(&mut s, *instance)?.component = *component;
             // The instance's private entities are those of the new body;
             // entries for local ids the version kept stay, the rest go.
@@ -850,21 +879,16 @@ pub fn apply_system_edit(
                     port: *port,
                 });
             }
-            let in_use = s.bindings.values().any(|b| {
-                (b.source.port == *port || b.destination.port == *port)
-                    && s.instances
-                        .get(&b.source.instance)
-                        .map(|i| i.component == *component)
-                        .unwrap_or(false)
-            }) || s.exports.values().any(|e| {
-                e.port.port == *port
-                    && s.instances
-                        .get(&e.port.instance)
-                        .map(|i| i.component == *component)
-                        .unwrap_or(false)
-            }) || s
-                .instances_of(*component)
-                .any(|i| i.parameter_bindings.contains_key(port));
+            let in_use = !bindings_on_port(&s, *component, *port).is_empty()
+                || s.exports.values().any(|e| {
+                    e.port.port == *port
+                        && s.instances
+                            .get(&e.port.instance)
+                            .map(|i| i.component == *component)
+                            .unwrap_or(false)
+                })
+                || s.instances_of(*component)
+                    .any(|i| i.parameter_bindings.contains_key(port));
             if in_use {
                 return Err(SystemEditError::PortInUse { port: *port });
             }
@@ -1018,12 +1042,7 @@ pub fn apply_system_edit(
         }
         SystemEditOp::DeleteInstance { id } => {
             instance_mut(&mut s, *id)?;
-            let bindings: Vec<_> = s
-                .bindings
-                .values()
-                .filter(|b| b.source.instance == *id || b.destination.instance == *id)
-                .map(|b| b.id)
-                .collect();
+            let bindings: Vec<_> = s.bindings_of_instance(*id).map(|b| b.id).collect();
             let exports: Vec<_> = s
                 .exports
                 .values()
@@ -1136,25 +1155,50 @@ pub fn apply_system_edit(
             destination,
             transport,
         } => {
-            let sp = port_of(&s, *source)?;
-            let dp = port_of(&s, *destination)?;
-            if sp.kind != PortKind::Provided {
-                return Err(SystemEditError::SourceNotProvided { port: *source });
+            match *source {
+                BindingEnd::Port(r) => {
+                    if port_of(&s, r)?.kind != PortKind::Provided {
+                        return Err(SystemEditError::SourceNotProvided { port: *source });
+                    }
+                }
+                BindingEnd::Base { decl } => {
+                    if !s.base.mappings.contains_key(&decl) {
+                        return Err(SystemEditError::NotABaseDeclaration { decl });
+                    }
+                }
             }
-            if !matches!(dp.kind, PortKind::Required | PortKind::Parameter) {
+            match *destination {
+                BindingEnd::Port(r) => {
+                    let dp = port_of(&s, r)?;
+                    if !matches!(dp.kind, PortKind::Required | PortKind::Parameter) {
+                        return Err(SystemEditError::DestinationNotRequired { port: *destination });
+                    }
+                    if let Some(e) = s.export_of(r) {
+                        return Err(SystemEditError::PortExported { export: e.id });
+                    }
+                    if s.instances
+                        .get(&r.instance)
+                        .is_some_and(|i| i.parameter_bindings.contains_key(&r.port))
+                    {
+                        return Err(SystemEditError::PortHasValue);
+                    }
+                }
+                BindingEnd::Base { decl } => {
+                    let m = s
+                        .base
+                        .mappings
+                        .get(&decl)
+                        .ok_or(SystemEditError::NotABaseDeclaration { decl })?;
+                    if m.definition.is_some() {
+                        return Err(SystemEditError::BaseNotOpen { decl });
+                    }
+                }
+            }
+            if *source == *destination {
                 return Err(SystemEditError::DestinationNotRequired { port: *destination });
             }
             if let Some(b) = s.binding_into(*destination) {
                 return Err(SystemEditError::DestinationBound { binding: b.id });
-            }
-            if let Some(e) = s.export_of(*destination) {
-                return Err(SystemEditError::PortExported { export: e.id });
-            }
-            if s.instances
-                .get(&destination.instance)
-                .is_some_and(|i| i.parameter_bindings.contains_key(&destination.port))
-            {
-                return Err(SystemEditError::PortHasValue);
             }
             let id = s.ids.fresh_binding();
             s.bindings.insert(
@@ -1173,8 +1217,8 @@ pub fn apply_system_edit(
                 .touching(Invalidation::Clock)
                 .touching(Invalidation::Output);
             o.created_binding = Some(id);
-            o.instances.insert(source.instance);
-            o.instances.insert(destination.instance);
+            o.instances.extend(source.instance());
+            o.instances.extend(destination.instance());
             o.origin_decls.extend(flat_decl(&s, *destination));
             o
         }
@@ -1189,8 +1233,8 @@ pub fn apply_system_edit(
                 Invalidation::Clock,
                 Invalidation::Output,
             ]);
-            o.instances.insert(b.source.instance);
-            o.instances.insert(b.destination.instance);
+            o.instances.extend(b.source.instance());
+            o.instances.extend(b.destination.instance());
             o.origin_decls.extend(flat_decl(&s, b.destination));
             o
         }
@@ -1232,8 +1276,55 @@ pub fn apply_system_edit(
             o.instances.insert(e.port.instance);
             o
         }
+        SystemEditOp::ExtractGroupAsComponent { group, choices } => {
+            let x = crate::extract::extract_group(snapshot, &mut s, *group, choices)
+                .map_err(SystemEditError::Extraction)?;
+            // Every crossing declaration is re-realised; the flat design is
+            // re-derived wholesale, so every pass reopens.
+            let mut o = SystemEditOutcome::edit([
+                Invalidation::Interface,
+                Invalidation::Realization,
+                Invalidation::Reactive,
+                Invalidation::Clock,
+                Invalidation::Output,
+                Invalidation::Deployment,
+            ]);
+            o.created_component = Some(x.component);
+            o.created_instance = Some(x.instance);
+            o.instances.insert(x.instance);
+            o.origin_decls
+                .extend(x.preview.boundary.crossing_in.iter().copied());
+            o.origin_decls
+                .extend(x.preview.boundary.crossing_out.iter().copied());
+            o.bindings
+                .extend(s.bindings_of_instance(x.instance).map(|b| b.id));
+            o
+        }
+        SystemEditOp::DeleteGroupWithMembers { group } => {
+            let g = s
+                .groups
+                .remove(group)
+                .ok_or(SystemEditError::UnknownGroup { id: *group })?;
+            let mut o = SystemEditOutcome::refinement();
+            for d in g.members {
+                if !s.base.mappings.contains_key(&d) {
+                    continue;
+                }
+                let base = ProjectSnapshot::new(s.base.clone());
+                let applied = apply_edit(&base, &EditOp::DeleteMapping { id: d })
+                    .map_err(SystemEditError::Base)?;
+                s.base = applied.snapshot.design;
+                o.kind = Some(EditKind::Edit);
+                o.invalidates
+                    .extend(applied.outcome.invalidates.iter().copied());
+                o.origin_decls
+                    .extend(applied.outcome.origin_decls.iter().copied());
+            }
+            o
+        }
     };
     ensure_flat_ids(&mut s);
+    crate::group::prune_groups(&mut s);
     // A body edit reaches every instance's flattened declarations, which
     // may only exist after the table was completed (a new body mapping).
     if let SystemEditOp::EditComponentBody { component, .. } = op {

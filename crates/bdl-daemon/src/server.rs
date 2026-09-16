@@ -230,6 +230,49 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             ),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
+        // Group edits never commit: no ProjectChanged, no AnalysisReady —
+        // the flat design is the same value (Phase 8b, Theorem A).
+        Req::ApplyGroupEdit(a) => {
+            let Some(op) = a.op.as_ref() else {
+                return (
+                    Resp::Error(error(
+                        "protocol.missing_field",
+                        "apply_group_edit.op is required",
+                    )),
+                    None,
+                );
+            };
+            let op = match convert::system::group_edit_op_from_pb(op) {
+                Ok(op) => op,
+                Err(e) => {
+                    return (
+                        Resp::Error(error("protocol.invalid_edit", &e.to_string())),
+                        None,
+                    )
+                }
+            };
+            match session.apply_group(&op) {
+                Ok(()) => match system_view(session) {
+                    Ok(v) => (Resp::System(pb::SystemResponse { system: Some(v) }), None),
+                    Err(e) => (Resp::Error(session_error(&e)), None),
+                },
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
+        Req::PreviewComponentExtraction(r) => {
+            let choices = convert::system::choices_from_pb(r.choices.as_ref());
+            match session
+                .preview_extraction(bdl_system::BehaviorGroupId::from_raw(r.group), &choices)
+            {
+                Ok(p) => (
+                    Resp::ExtractionPreview(pb::ExtractionPreviewResponse {
+                        preview: Some(convert::system::preview_to_pb(&p)),
+                    }),
+                    None,
+                ),
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
         Req::SaveProject(_) => match session.save() {
             Ok(()) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
@@ -313,7 +356,10 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         Req::AnalyzeDeployment(r) => (analyze_deployment(session, &r), None),
         Req::AnalyzeDefinitionDraft(r) => (analyze_definition_draft(session, &r), None),
         Req::DiscardDefinitionDraft(r) => {
-            match session.discard_draft(bdl_model::DeclId::from_raw(r.mapping_id)) {
+            match session.discard_draft(
+                component_scope(r.component),
+                bdl_model::DeclId::from_raw(r.mapping_id),
+            ) {
                 Ok(_) => (Resp::Ack(pb::Ack {}), None),
                 Err(e) => (Resp::Error(session_error(&e)), None),
             }
@@ -343,7 +389,7 @@ fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraf
         return Resp::Error(e);
     }
     let id = bdl_model::DeclId::from_raw(r.mapping_id);
-    match session.draft_verdict(id, &r.source) {
+    match session.draft_verdict(component_scope(r.component), id, &r.source) {
         Ok(v) => Resp::DefinitionDraft(pb::DefinitionDraftAnalysis {
             revision: v.stamp.revision.raw(),
             mapping_id: r.mapping_id,
@@ -380,7 +426,7 @@ fn complete_definition_draft(
         return Resp::Error(e);
     }
     let id = bdl_model::DeclId::from_raw(r.mapping_id);
-    match session.draft_completion(id, &r.source, r.offset) {
+    match session.draft_completion(component_scope(r.component), id, &r.source, r.offset) {
         Ok(items) => Resp::DraftCompletion(pb::DraftCompletionResponse {
             revision: r.revision,
             mapping_id: r.mapping_id,
@@ -407,7 +453,7 @@ fn hover_definition_draft(session: &mut Session, r: &pb::HoverDefinitionDraftReq
         return Resp::Error(e);
     }
     let id = bdl_model::DeclId::from_raw(r.mapping_id);
-    match session.draft_hover(id, &r.source, r.offset) {
+    match session.draft_hover(component_scope(r.component), id, &r.source, r.offset) {
         Ok(None) => Resp::DraftHover(pb::DraftHoverResponse {
             revision: r.revision,
             mapping_id: r.mapping_id,
@@ -881,7 +927,12 @@ fn system_view(session: &Session) -> Result<pb::SystemView, SessionError> {
     Ok(convert::system::system_view(
         &sys.current,
         &sys.flattened.origins,
+        sys.authoring_generation,
     ))
+}
+
+fn component_scope(component: Option<u64>) -> Option<bdl_system::ComponentId> {
+    component.map(bdl_system::ComponentId::from_raw)
 }
 
 fn session_error(e: &SessionError) -> pb::Error {
@@ -892,6 +943,17 @@ fn session_error(e: &SessionError) -> pb::Error {
             message: edit.to_string(),
             details_json: serde_json::to_string(edit).unwrap_or_default(),
         },
+        SessionError::GroupEdit(edit) => pb::Error {
+            code: format!("group_edit.{}", group_edit_code(edit)),
+            message: edit.to_string(),
+            details_json: serde_json::to_string(edit).unwrap_or_default(),
+        },
+        SessionError::Extraction(x) => pb::Error {
+            code: format!("extract.{}", extract_code(x)),
+            message: x.to_string(),
+            details_json: serde_json::to_string(x).unwrap_or_default(),
+        },
+        SessionError::UnknownComponent(_) => error("system.unknown_component", &e.to_string()),
         SessionError::DerivedDesign => error("edit.derived_design", &e.to_string()),
         SessionError::NotASystem => error("system.not_a_system", &e.to_string()),
         SessionError::NoProject => error("session.no_project", &e.to_string()),
@@ -943,10 +1005,40 @@ fn system_edit_code(e: &bdl_system::SystemEditError) -> String {
         E::DuplicateExportName { .. } => "duplicate_export_name",
         E::ExportNotRequired { .. } => "export_not_required",
         E::NotSubstitutable { .. } => "not_substitutable",
+        E::NotABaseDeclaration { .. } => "not_a_base_declaration",
+        E::BaseNotOpen { .. } => "base_not_open",
+        E::UnknownGroup { .. } => "unknown_group",
+        E::Extraction(x) => return format!("extract.{}", extract_code(x)),
         E::Base(_) => "base",
         E::Body { .. } => "body",
     }
     .to_owned()
+}
+
+fn group_edit_code(e: &bdl_system::GroupEditError) -> &'static str {
+    use bdl_system::GroupEditError as E;
+    match e {
+        E::EmptyName => "empty_name",
+        E::DuplicateGroupName { .. } => "duplicate_group_name",
+        E::UnknownGroup { .. } => "unknown_group",
+        E::NotABaseDeclaration { .. } => "not_a_base_declaration",
+        E::AlreadyGrouped { .. } => "already_grouped",
+        E::NotAMember { .. } => "not_a_member",
+        E::SameGroup => "same_group",
+    }
+}
+
+fn extract_code(e: &bdl_system::ExtractError) -> &'static str {
+    use bdl_system::ExtractError as E;
+    match e {
+        E::UnknownGroup { .. } => "unknown_group",
+        E::EmptyGroup { .. } => "empty_group",
+        E::EmptyName => "empty_name",
+        E::DuplicateComponentName { .. } => "duplicate_component_name",
+        E::DuplicateInstanceName { .. } => "duplicate_instance_name",
+        E::NotAnOpenMember { .. } => "not_an_open_member",
+        E::NotADrivenSink { .. } => "not_a_driven_sink",
+    }
 }
 
 fn error(code: &str, message: &str) -> pb::Error {
@@ -973,6 +1065,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::OpenProject(_) => "open_project",
         Req::InitProject(_) => "init_project",
         Req::InitSystemProject(_) => "init_system_project",
+        Req::ApplyGroupEdit(_) => "apply_group_edit",
+        Req::PreviewComponentExtraction(_) => "preview_component_extraction",
         Req::GetSystem(_) => "get_system",
         Req::ApplySystemEdit(_) => "apply_system_edit",
         Req::RunSystemAnalysis(_) => "run_system_analysis",

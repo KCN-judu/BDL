@@ -420,9 +420,6 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
             };
             realise(
                 &mut design,
-                &mut diags,
-                inst,
-                port,
                 f,
                 Definition::ScopedFormula {
                     source: value.source.clone(),
@@ -432,28 +429,46 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
         }
     }
 
-    // Bindings: one realization step each (FV `applyBinding`).
+    // Bindings: one realization step each (FV `applyBinding`).  A base end
+    // is its own flat declaration; a port end is the instance's flat copy.
     for b in s.bindings.values() {
-        let (Some(sp), Some(dp)) = (s.port(b.source), s.port(b.destination)) else {
-            diags.push(internal(format!("binding {} names a missing port", b.id)));
-            continue;
+        let flat_of = |e: BindingEnd| -> Option<DeclId> {
+            match e {
+                BindingEnd::Base { decl } => Some(decl),
+                BindingEnd::Port(r) => {
+                    let p = s.port(r)?;
+                    s.flat_ids
+                        .get(r.instance, LocalEntity::Decl(p.decl))
+                        .map(DeclId::from_raw)
+                }
+            }
         };
-        let src = s
-            .flat_ids
-            .get(b.source.instance, LocalEntity::Decl(sp.decl))
-            .map(DeclId::from_raw);
-        let dst = s
-            .flat_ids
-            .get(b.destination.instance, LocalEntity::Decl(dp.decl))
-            .map(DeclId::from_raw);
-        let (Some(src), Some(dst)) = (src, dst) else {
+        let label = |e: BindingEnd| -> String {
+            match e {
+                BindingEnd::Base { decl } => s
+                    .base
+                    .mappings
+                    .get(&decl)
+                    .map(|m| m.name.clone())
+                    .unwrap_or_else(|| decl.to_string()),
+                BindingEnd::Port(r) => {
+                    let i = s.instances.get(&r.instance).map(|i| i.name.as_str());
+                    let p = s.port(r).map(|p| p.name.as_str());
+                    format!("{}.{}", i.unwrap_or("?"), p.unwrap_or("?"))
+                }
+            }
+        };
+        if let (BindingEnd::Port(sr), BindingEnd::Port(dr)) = (b.source, b.destination) {
+            if s.port(sr).is_none() || s.port(dr).is_none() {
+                diags.push(internal(format!("binding {} names a missing port", b.id)));
+                continue;
+            }
+        }
+        let (Some(src), Some(dst)) = (flat_of(b.source), flat_of(b.destination)) else {
             diags.push(internal(format!(
                 "binding {} has no flat declarations",
                 b.id
             )));
-            continue;
-        };
-        let Some(dinst) = s.instances.get(&b.destination.instance) else {
             continue;
         };
         let transport = match &b.transport {
@@ -464,13 +479,8 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                     init: t.init.clone(),
                 }),
                 None => {
-                    let sname = s
-                        .instances
-                        .get(&b.source.instance)
-                        .map(|i| i.name.as_str())
-                        .unwrap_or("?");
                     diags.push(
-                        Diagnostic::error("system.transport_without_source_domain", Entity::Mapping { id: dst }, format!("{}.{} is carried across domains, but {sname}.{} has no timing domain.", dinst.name, dp.name, sp.name))
+                        Diagnostic::error("system.transport_without_source_domain", Entity::Mapping { id: dst }, format!("{} is carried across domains, but {} has no timing domain.", label(b.destination), label(b.source)))
                             .explain("Transport reads the source's last activation strictly before now; a source with no domain has no activations. Bind it directly instead.")
                             .technical(format!("binding {}: transport with Κ src = none", b.id)),
                     );
@@ -480,9 +490,6 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
         };
         realise(
             &mut design,
-            &mut diags,
-            dinst,
-            dp,
             dst,
             Definition::Reference {
                 target: src,
@@ -502,16 +509,9 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
     }
 }
 
-/// Realise a port's flat declaration.  A port that is not open keeps its
-/// body definition (write-once); `validate` reports it.
-fn realise(
-    design: &mut bdl_model::surface::Design,
-    _diags: &mut [Diagnostic],
-    _inst: &ComponentInstance,
-    _port: &Port,
-    flat: DeclId,
-    definition: Definition,
-) {
+/// Realise a flat declaration.  A declaration that is not open keeps its
+/// own definition (write-once); `validate` reports it.
+fn realise(design: &mut bdl_model::surface::Design, flat: DeclId, definition: Definition) {
     if let Some(m) = design.mappings.get_mut(&flat) {
         if m.definition.is_none() {
             m.definition = Some(definition);

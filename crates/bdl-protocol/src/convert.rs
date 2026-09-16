@@ -538,6 +538,35 @@ pub fn layout_to_pb(l: &Layout) -> pb::Layout {
                 y: p.y,
             })
             .collect(),
+        instances: l
+            .instances
+            .iter()
+            .map(|(id, p)| pb::NodePosition {
+                id: *id,
+                x: p.x,
+                y: p.y,
+            })
+            .collect(),
+        groups: l
+            .groups
+            .iter()
+            .map(|(id, g)| pb::GroupBox {
+                id: *id,
+                x: g.x,
+                y: g.y,
+                width: g.width,
+                height: g.height,
+                collapsed: g.collapsed,
+            })
+            .collect(),
+        components: l
+            .components
+            .iter()
+            .map(|(id, inner)| pb::ComponentLayout {
+                id: *id,
+                layout: Some(layout_to_pb(inner)),
+            })
+            .collect(),
     }
 }
 
@@ -557,6 +586,37 @@ pub fn layout_from_pb(l: &pb::Layout) -> Layout {
             .outputs
             .iter()
             .map(|n| (OutputId::from_raw(n.id), Point { x: n.x, y: n.y }))
+            .collect(),
+        instances: l
+            .instances
+            .iter()
+            .map(|n| (n.id, Point { x: n.x, y: n.y }))
+            .collect(),
+        groups: l
+            .groups
+            .iter()
+            .map(|g| {
+                (
+                    g.id,
+                    bdl_model::layout::GroupBox {
+                        x: g.x,
+                        y: g.y,
+                        width: g.width,
+                        height: g.height,
+                        collapsed: g.collapsed,
+                    },
+                )
+            })
+            .collect(),
+        components: l
+            .components
+            .iter()
+            .map(|c| {
+                (
+                    c.id,
+                    c.layout.as_ref().map(layout_from_pb).unwrap_or_default(),
+                )
+            })
             .collect(),
     }
 }
@@ -1151,10 +1211,11 @@ pub fn tick_sample_to_pb(
 pub mod system {
     use super::*;
     use bdl_system::{
-        Acceptance, BehaviorComponent, BehaviorSystem, BindingTransport, ClockContract,
-        ComponentId, ComponentInstanceId, LocalEntity, OriginMap, ParameterValue, PortContract,
-        PortId, PortKind, PortRef, PortStatus, SystemAnalysis, SystemEditOp, SystemEditOutcome,
-        SystemSnapshot,
+        Acceptance, BehaviorComponent, BehaviorGroupId, BehaviorSystem, BindingEnd,
+        BindingTransport, ClockContract, ComponentId, ComponentInstanceId, ExtractionChoices,
+        ExtractionPreview, GroupBoundary, GroupEditOp, LocalEntity, OriginMap, ParameterValue,
+        PortContract, PortId, PortKind, PortRef, PortStatus, SystemAnalysis, SystemEditOp,
+        SystemEditOutcome, SystemSnapshot,
     };
 
     pub fn contract_to_pb(c: &BehaviorComponent, k: &PortContract) -> pb::PortContractView {
@@ -1260,6 +1321,7 @@ pub mod system {
         pb::PortRefView {
             instance: r.instance.raw(),
             port: r.port.raw(),
+            base_decl: None,
         }
     }
 
@@ -1268,9 +1330,39 @@ pub mod system {
         field: &'static str,
     ) -> Result<PortRef, ConvertError> {
         let r = r.ok_or(ConvertError::Missing(field))?;
+        if r.base_decl.is_some() {
+            return Err(ConvertError::Invalid(field));
+        }
         Ok(PortRef {
             instance: ComponentInstanceId::from_raw(r.instance),
             port: PortId::from_raw(r.port),
+        })
+    }
+
+    fn end_to_pb(e: BindingEnd) -> pb::PortRefView {
+        match e {
+            BindingEnd::Port(r) => port_ref_to_pb(r),
+            BindingEnd::Base { decl } => pb::PortRefView {
+                instance: 0,
+                port: 0,
+                base_decl: Some(decl.raw()),
+            },
+        }
+    }
+
+    fn end_from_pb(
+        r: Option<&pb::PortRefView>,
+        field: &'static str,
+    ) -> Result<BindingEnd, ConvertError> {
+        let r = r.ok_or(ConvertError::Missing(field))?;
+        Ok(match r.base_decl {
+            Some(d) => BindingEnd::Base {
+                decl: DeclId::from_raw(d),
+            },
+            None => BindingEnd::Port(PortRef {
+                instance: ComponentInstanceId::from_raw(r.instance),
+                port: PortId::from_raw(r.port),
+            }),
         })
     }
 
@@ -1336,7 +1428,11 @@ pub mod system {
         out
     }
 
-    pub fn system_view(snapshot: &SystemSnapshot, origins: &OriginMap) -> pb::SystemView {
+    pub fn system_view(
+        snapshot: &SystemSnapshot,
+        origins: &OriginMap,
+        authoring_generation: u64,
+    ) -> pb::SystemView {
         let s: &BehaviorSystem = &snapshot.system;
         pb::SystemView {
             revision: snapshot.revision.raw(),
@@ -1409,8 +1505,8 @@ pub mod system {
                 .values()
                 .map(|b| pb::BindingView {
                     id: b.id.raw(),
-                    source: Some(port_ref_to_pb(b.source)),
-                    destination: Some(port_ref_to_pb(b.destination)),
+                    source: Some(end_to_pb(b.source)),
+                    destination: Some(end_to_pb(b.destination)),
                     transport_init: b.transport.as_ref().map(|t| t.init.clone()),
                 })
                 .collect(),
@@ -1425,6 +1521,156 @@ pub mod system {
                 .collect(),
             origins: origins_to_pb(origins),
             is_flat: s.is_flat(),
+            groups: s
+                .groups
+                .values()
+                .map(|g| pb::BehaviorGroupView {
+                    id: g.id.raw(),
+                    name: g.name.clone(),
+                    description: g.description.clone(),
+                    members: g.members.iter().map(|d| d.raw()).collect(),
+                })
+                .collect(),
+            authoring_generation,
+        }
+    }
+
+    pub fn group_edit_op_from_pb(op: &pb::GroupEditOp) -> Result<GroupEditOp, ConvertError> {
+        use pb::group_edit_op::Op;
+        let g = BehaviorGroupId::from_raw;
+        let d = DeclId::from_raw;
+        Ok(
+            match op
+                .op
+                .as_ref()
+                .ok_or(ConvertError::Missing("group_edit_op.op"))?
+            {
+                Op::CreateGroup(m) => GroupEditOp::CreateGroup {
+                    name: m.name.clone(),
+                    description: m.description.clone(),
+                    members: m.members.iter().map(|x| d(*x)).collect(),
+                },
+                Op::RenameGroup(m) => GroupEditOp::RenameGroup {
+                    id: g(m.id),
+                    name: m.name.clone(),
+                },
+                Op::SetGroupDescription(m) => GroupEditOp::SetGroupDescription {
+                    id: g(m.id),
+                    description: m.description.clone(),
+                },
+                Op::DeleteGroup(m) => GroupEditOp::DeleteGroup { id: g(m.id) },
+                Op::AddMember(m) => GroupEditOp::AddMember {
+                    group: g(m.group),
+                    decl: d(m.decl),
+                },
+                Op::RemoveMember(m) => GroupEditOp::RemoveMember {
+                    group: g(m.group),
+                    decl: d(m.decl),
+                },
+                Op::MoveMember(m) => GroupEditOp::MoveMember {
+                    decl: d(m.decl),
+                    to: g(m.to),
+                },
+                Op::MergeGroups(m) => GroupEditOp::MergeGroups {
+                    into: g(m.into),
+                    from: g(m.from),
+                },
+                Op::SplitGroup(m) => GroupEditOp::SplitGroup {
+                    id: g(m.id),
+                    name: m.name.clone(),
+                    members: m.members.iter().map(|x| d(*x)).collect(),
+                },
+            },
+        )
+    }
+
+    pub fn choices_from_pb(c: Option<&pb::ExtractionChoices>) -> ExtractionChoices {
+        match c {
+            None => ExtractionChoices::default(),
+            Some(c) => ExtractionChoices {
+                name: c.name.clone(),
+                instance_name: c.instance_name.clone(),
+                keep_internal: c
+                    .keep_internal
+                    .iter()
+                    .map(|d| DeclId::from_raw(*d))
+                    .collect(),
+                internalize_sinks: c
+                    .internalize_sinks
+                    .iter()
+                    .map(|o| OutputId::from_raw(*o))
+                    .collect(),
+            },
+        }
+    }
+
+    fn raws(v: &[DeclId]) -> Vec<u64> {
+        v.iter().map(|d| d.raw()).collect()
+    }
+
+    pub fn boundary_to_pb(id: BehaviorGroupId, b: &GroupBoundary) -> pb::BehaviorGroupBoundaryView {
+        pb::BehaviorGroupBoundaryView {
+            id: id.raw(),
+            members: raws(&b.members),
+            crossing_in: raws(&b.crossing_in),
+            crossing_out: raws(&b.crossing_out),
+            open_members: raws(&b.open_members),
+            driven_members: raws(&b.driven_members),
+            private_candidates: raws(&b.private_candidates),
+            external_inputs: raws(&b.external_inputs),
+            external_outputs: raws(&b.external_outputs),
+            clocks: b.clocks.iter().map(|c| c.raw()).collect(),
+            internal_edges: b
+                .internal_edges
+                .iter()
+                .map(|(a, b)| pb::DeclEdge {
+                    from: a.raw(),
+                    to: b.raw(),
+                })
+                .collect(),
+        }
+    }
+
+    pub fn preview_to_pb(p: &ExtractionPreview) -> pb::ExtractionPreviewView {
+        let port = |x: &bdl_system::PreviewPort| {
+            let mut v = pb::PreviewPortView {
+                decl: x.decl.raw(),
+                name: x.name.clone(),
+                concept: x.concept.raw(),
+                ..Default::default()
+            };
+            v.set_kind(port_kind_to_pb(x.kind));
+            v
+        };
+        pb::ExtractionPreviewView {
+            group: p.group.raw(),
+            name: p.name.clone(),
+            instance_name: p.instance_name.clone(),
+            boundary: Some(boundary_to_pb(p.group, &p.boundary)),
+            required: p.required.iter().map(port).collect(),
+            provided: p.provided.iter().map(port).collect(),
+            open_members: p
+                .open_members
+                .iter()
+                .map(|o| pb::OpenMemberDecisionView {
+                    decl: o.decl.raw(),
+                    name: o.name.clone(),
+                    as_input: o.as_input,
+                })
+                .collect(),
+            clocks: p.clocks.iter().map(|c| c.raw()).collect(),
+            sinks: p
+                .sinks
+                .iter()
+                .map(|d| pb::SinkDecisionView {
+                    output: d.output.raw(),
+                    name: d.name.clone(),
+                    drivers: raws(&d.drivers),
+                    internal: d.internal,
+                })
+                .collect(),
+            private: raws(&p.private),
+            warnings: p.warnings.iter().map(diagnostic_to_pb).collect(),
         }
     }
 
@@ -1515,11 +1761,8 @@ pub mod system {
                     }),
                 },
                 Op::BindPorts(m) => SystemEditOp::BindPorts {
-                    source: port_ref_from_pb(m.source.as_ref(), "bind_ports.source")?,
-                    destination: port_ref_from_pb(
-                        m.destination.as_ref(),
-                        "bind_ports.destination",
-                    )?,
+                    source: end_from_pb(m.source.as_ref(), "bind_ports.source")?,
+                    destination: end_from_pb(m.destination.as_ref(), "bind_ports.destination")?,
                     transport: m
                         .transport_init
                         .as_ref()
@@ -1527,6 +1770,13 @@ pub mod system {
                 },
                 Op::UnbindPorts(m) => SystemEditOp::UnbindPorts {
                     binding: bdl_system::BindingId::from_raw(m.binding),
+                },
+                Op::ExtractGroupAsComponent(m) => SystemEditOp::ExtractGroupAsComponent {
+                    group: BehaviorGroupId::from_raw(m.group),
+                    choices: choices_from_pb(m.choices.as_ref()),
+                },
+                Op::DeleteGroupWithMembers(m) => SystemEditOp::DeleteGroupWithMembers {
+                    group: BehaviorGroupId::from_raw(m.group),
                 },
                 Op::ExportPort(m) => SystemEditOp::ExportPort {
                     port: port_ref_from_pb(m.port.as_ref(), "export_port.port")?,
@@ -1638,6 +1888,19 @@ pub mod system {
                 .map(|(id, realizes)| pb::ComponentStatusView {
                     id: id.raw(),
                     realizes: *realizes,
+                })
+                .collect(),
+            groups: a
+                .groups
+                .iter()
+                .map(|(id, b)| boundary_to_pb(*id, b))
+                .collect(),
+            component_analyses: a
+                .component_analyses
+                .iter()
+                .map(|(id, an)| pb::ComponentAnalysisView {
+                    id: id.raw(),
+                    analysis: Some(analysis_to_pb(an)),
                 })
                 .collect(),
             ..Default::default()

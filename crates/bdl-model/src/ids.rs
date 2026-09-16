@@ -156,6 +156,27 @@ impl IdAllocator {
             },
         )
     }
+    /// An allocator that will never issue an identity at or below the
+    /// given raw values (per sort): for a design assembled from copies of
+    /// another design's entities, which keep their identities.
+    #[must_use]
+    pub fn covering(
+        &self,
+        semantic: Option<u64>,
+        decl: Option<u64>,
+        clock: Option<u64>,
+        output: Option<u64>,
+        device: Option<u64>,
+    ) -> IdAllocator {
+        let above = |next: u64, used: Option<u64>| used.map_or(next, |u| next.max(u + 1));
+        IdAllocator {
+            next_semantic: above(self.next_semantic, semantic),
+            next_decl: above(self.next_decl, decl),
+            next_clock: above(self.next_clock, clock),
+            next_output: above(self.next_output, output),
+            next_device: above(self.next_device, device),
+        }
+    }
     #[must_use]
     pub fn fresh_device(&self) -> (DeviceId, IdAllocator) {
         let id = DeviceId(self.next_device);

@@ -301,45 +301,90 @@ pub enum Incompatibility {
     TransportOfRelationship,
 }
 
+/// A binding end resolved to what the flat design will see: its flat
+/// declaration, its promise over system-level identities, its clock, and
+/// a label for messages.  A port end resolves through its instance; a base
+/// end *is* the system's own relationship, so every concept is shared and
+/// its domain is the system's.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ResolvedEnd {
+    pub flat: Option<DeclId>,
+    pub label: String,
+    pub signature: (Vec<ResolvedConcept>, ResolvedConcept),
+    pub clock: ResolvedClock,
+    pub commitments: Vec<bdl_ir::PropertyId>,
+    /// The name of the concept the end produces, for messages.
+    pub output_name: String,
+}
+
+impl ResolvedEnd {
+    pub fn has_inputs(&self) -> bool {
+        !self.signature.0.is_empty()
+    }
+}
+
+pub fn resolve_end(s: &BehaviorSystem, e: BindingEnd) -> Option<ResolvedEnd> {
+    match e {
+        BindingEnd::Port(r) => {
+            let c = s.component_of(r.instance)?;
+            let p = c.interface.ports.get(&r.port)?;
+            let i = s.instances.get(&r.instance)?;
+            Some(ResolvedEnd {
+                flat: s
+                    .flat_ids
+                    .get(r.instance, LocalEntity::Decl(p.decl))
+                    .map(DeclId::from_raw),
+                label: format!("{}.{}", i.name, p.name),
+                signature: resolve_signature(c, i.id, &p.contract.signature),
+                clock: resolve_clock(i, p.contract.clock),
+                commitments: p.contract.commitments.clone(),
+                output_name: concept_name(c, p.contract.signature.output),
+            })
+        }
+        BindingEnd::Base { decl } => {
+            let m = s.base.mappings.get(&decl)?;
+            Some(ResolvedEnd {
+                flat: Some(decl),
+                label: m.name.clone(),
+                signature: (
+                    m.signature
+                        .inputs
+                        .iter()
+                        .map(|c| ResolvedConcept::Shared(*c))
+                        .collect(),
+                    ResolvedConcept::Shared(m.signature.output),
+                ),
+                clock: m
+                    .clock
+                    .map(ResolvedClock::System)
+                    .unwrap_or(ResolvedClock::Agnostic),
+                commitments: Vec::new(),
+                output_name: s
+                    .base
+                    .concepts
+                    .get(&m.signature.output)
+                    .map(|c| c.name.clone())
+                    .unwrap_or_else(|| m.signature.output.to_string()),
+            })
+        }
+    }
+}
+
 /// FV `BindingWF` on the two contracts: the source's resolved signature
 /// equals the destination's, commitments are included, and the clocks
 /// agree — equal, agnostic source, or bridged by transport.
 pub fn binding_compatibility(s: &BehaviorSystem, b: &Binding) -> Vec<Incompatibility> {
     let mut out = Vec::new();
-    let (Some(sc), Some(dc)) = (
-        s.component_of(b.source.instance),
-        s.component_of(b.destination.instance),
-    ) else {
+    let (Some(src), Some(dst)) = (resolve_end(s, b.source), resolve_end(s, b.destination)) else {
         return out;
     };
-    let (Some(sp), Some(dp)) = (
-        sc.interface.ports.get(&b.source.port),
-        dc.interface.ports.get(&b.destination.port),
-    ) else {
-        return out;
-    };
-    let (Some(si), Some(di)) = (
-        s.instances.get(&b.source.instance),
-        s.instances.get(&b.destination.instance),
-    ) else {
-        return out;
-    };
-    if resolve_signature(sc, si.id, &sp.contract.signature)
-        != resolve_signature(dc, di.id, &dp.contract.signature)
-    {
+    if src.signature != dst.signature {
         out.push(Incompatibility::Signature);
     }
-    if !dp
-        .contract
-        .commitments
-        .iter()
-        .all(|k| sp.contract.commitments.contains(k))
-    {
+    if !dst.commitments.iter().all(|k| src.commitments.contains(k)) {
         out.push(Incompatibility::Commitments);
     }
-    let sk = resolve_clock(si, sp.contract.clock);
-    let dk = resolve_clock(di, dp.contract.clock);
-    match (&b.transport, sk, dk) {
+    match (&b.transport, src.clock, dst.clock) {
         (None, ResolvedClock::Agnostic, _) => {}
         (None, a, d) if a == d => {}
         (None, _, _) => out.push(Incompatibility::NeedsTransport),
@@ -349,9 +394,7 @@ pub fn binding_compatibility(s: &BehaviorSystem, b: &Binding) -> Vec<Incompatibi
         (Some(_), _, ResolvedClock::Agnostic) => {
             out.push(Incompatibility::TransportWithoutDestinationDomain)
         }
-        (Some(_), _, _) if !dp.contract.signature.inputs.is_empty() => {
-            out.push(Incompatibility::TransportOfRelationship)
-        }
+        (Some(_), _, _) if dst.has_inputs() => out.push(Incompatibility::TransportOfRelationship),
         _ => {}
     }
     out

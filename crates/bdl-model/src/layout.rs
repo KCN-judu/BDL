@@ -23,4 +23,27 @@ pub struct Layout {
     /// Physical outputs are canvas nodes too (sinks at the right edge).
     #[serde(default)]
     pub outputs: BTreeMap<OutputId, Point>,
+    /// Component-instance nodes of a system canvas, by raw instance id
+    /// (the id sort belongs to `bdl-system`; layout only stores the number).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub instances: BTreeMap<u64, Point>,
+    /// Behaviour groups, by raw group id: where the collapsed box stands,
+    /// how large it is, and whether it is collapsed.  Membership is the
+    /// system's (semantic-free authoring metadata); this is the picture.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub groups: BTreeMap<u64, GroupBox>,
+    /// The canvas of each component's body (component-local ids), by raw
+    /// component id.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub components: BTreeMap<u64, Layout>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Default)]
+pub struct GroupBox {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    #[serde(default)]
+    pub collapsed: bool,
 }

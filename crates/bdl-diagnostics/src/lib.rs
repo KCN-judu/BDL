@@ -120,6 +120,9 @@ impl Diagnostic {
     pub fn error(code: impl Into<Code>, entity: Entity, message: impl Into<String>) -> Self {
         Self::new(code, Severity::Error, entity, message)
     }
+    pub fn warning(code: impl Into<Code>, entity: Entity, message: impl Into<String>) -> Self {
+        Self::new(code, Severity::Warning, entity, message)
+    }
     pub fn info(code: impl Into<Code>, entity: Entity, message: impl Into<String>) -> Self {
         Self::new(code, Severity::Info, entity, message)
     }

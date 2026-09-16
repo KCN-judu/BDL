@@ -171,7 +171,11 @@ fn formula(id: u64, source: &str) -> pb::edit_op::Op {
 }
 
 fn port_ref(instance: u64, port: u64) -> Option<pb::PortRefView> {
-    Some(pb::PortRefView { instance, port })
+    Some(pb::PortRefView {
+        instance,
+        port,
+        base_decl: None,
+    })
 }
 
 #[test]
@@ -745,6 +749,341 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     })) else {
         panic!()
     };
+
+    let Resp::Ack(_) = c.call(Req::Shutdown(pb::ShutdownRequest {})) else {
+        panic!()
+    };
+    assert!(c.child.wait().unwrap().success());
+}
+
+/// Phase 8b over the wire: group edits move the authoring generation and
+/// nothing else; the boundary is served with the analysis; a preview
+/// changes nothing; extraction packages the group, reconnects it through
+/// base-end bindings, and the component's body is editable in its own
+/// scope (component-scoped drafts).
+#[test]
+fn grouping_and_extraction_over_the_wire() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut c = Client::spawn();
+    c.call(Req::Handshake(pb::HandshakeRequest {
+        client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+        client_name: "system-e2e".into(),
+        client_version: "0".into(),
+    }));
+    c.call(Req::InitSystemProject(pb::InitSystemProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "lamp".into(),
+    }));
+    c.call(Req::SubscribeProject(pb::SubscribeProjectRequest {}));
+    let angle = pb::Dim {
+        angle: 1,
+        ..Default::default()
+    };
+    let tilt = c.base(concept("Tilt", angle)).created_concept.unwrap();
+    let level = c
+        .base(concept("Brightness", pb::Dim::default()))
+        .created_concept
+        .unwrap();
+    let main = c
+        .base(pb::edit_op::Op::CreateClockDomain(pb::CreateClockDomain {
+            name: "main".into(),
+        }))
+        .created_clock
+        .unwrap();
+    let clock_of = |c: &mut Client, id: u64| {
+        c.base(pb::edit_op::Op::SetMappingClock(pb::SetMappingClock {
+            id,
+            clock_id: Some(main),
+        }));
+    };
+    let raw = c
+        .base(mapping("raw", vec![], tilt))
+        .created_mapping
+        .unwrap();
+    clock_of(&mut c, raw);
+    let tilt_value = c
+        .base(mapping("tiltValue", vec![], tilt))
+        .created_mapping
+        .unwrap();
+    c.base(formula(tilt_value, "raw"));
+    clock_of(&mut c, tilt_value);
+    let dim = c
+        .base(mapping("dimByTilt", vec![tilt], level))
+        .created_mapping
+        .unwrap();
+    c.base(formula(dim, "Tilt / 90 deg"));
+    let brightness = c
+        .base(mapping("brightness", vec![], level))
+        .created_mapping
+        .unwrap();
+    c.base(formula(brightness, "dimByTilt(tiltValue)"));
+    clock_of(&mut c, brightness);
+    let indicator = c
+        .base(mapping("indicator", vec![], level))
+        .created_mapping
+        .unwrap();
+    c.base(formula(indicator, "brightness"));
+    clock_of(&mut c, indicator);
+    let revision = c.last_revision;
+    c.events.clear();
+
+    // --- group edits: no revision, no events, a new authoring generation ---
+    let group_edit = |c: &mut Client, op: pb::group_edit_op::Op| -> pb::SystemView {
+        match c.call(Req::ApplyGroupEdit(pb::ApplyGroupEditRequest {
+            op: Some(pb::GroupEditOp { op: Some(op) }),
+        })) {
+            Resp::System(s) => s.system.unwrap(),
+            other => panic!("{other:?}"),
+        }
+    };
+    let v = group_edit(
+        &mut c,
+        pb::group_edit_op::Op::CreateGroup(pb::CreateGroup {
+            name: "Lamp".into(),
+            description: "dims with tilt".into(),
+            members: vec![dim],
+        }),
+    );
+    assert_eq!(v.authoring_generation, 1);
+    assert_eq!(v.revision, revision);
+    let group = v.groups[0].id;
+    let v = group_edit(
+        &mut c,
+        pb::group_edit_op::Op::AddMember(pb::AddGroupMember {
+            group,
+            decl: brightness,
+        }),
+    );
+    assert_eq!(v.authoring_generation, 2);
+    assert_eq!(v.groups[0].members, vec![dim, brightness]);
+    assert_eq!(v.groups[0].description, "dims with tilt");
+    // group edits push nothing: every event seen is about the last commit
+    for e in &c.events {
+        if let Some(pb::event::Payload::ProjectChanged(pc)) = &e.payload {
+            assert_eq!(pc.project.as_ref().unwrap().revision, revision);
+        }
+        if let Some(pb::event::Payload::AnalysisReady(ar)) = &e.payload {
+            assert_eq!(ar.analysis.as_ref().unwrap().revision, revision);
+        }
+    }
+    let Resp::Project(p) = c.call(Req::GetProject(pb::GetProjectRequest {})) else {
+        panic!()
+    };
+    assert_eq!(p.project.unwrap().revision, revision);
+    // a refusal is a group_edit.* code
+    let Resp::Error(e) = c.call(Req::ApplyGroupEdit(pb::ApplyGroupEditRequest {
+        op: Some(pb::GroupEditOp {
+            op: Some(pb::group_edit_op::Op::AddMember(pb::AddGroupMember {
+                group: 99,
+                decl: dim,
+            })),
+        }),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "group_edit.unknown_group");
+
+    // --- the boundary comes with the analysis ---
+    let a = c.system_analysis();
+    let b = a.groups.iter().find(|g| g.id == group).unwrap();
+    assert_eq!(b.crossing_in, vec![tilt_value]);
+    assert_eq!(b.crossing_out, vec![brightness]);
+    assert_eq!(b.external_inputs, vec![tilt_value]);
+    assert_eq!(b.private_candidates, vec![dim]);
+    assert_eq!(b.clocks, vec![main]);
+
+    // --- preview: nothing changes ---
+    let Resp::ExtractionPreview(p) = c.call(Req::PreviewComponentExtraction(
+        pb::PreviewComponentExtractionRequest {
+            group,
+            choices: Some(pb::ExtractionChoices {
+                name: "AdaptiveLamp".into(),
+                ..Default::default()
+            }),
+        },
+    )) else {
+        panic!()
+    };
+    let p = p.preview.unwrap();
+    assert_eq!(p.name, "AdaptiveLamp");
+    assert_eq!(p.instance_name, "adaptiveLamp");
+    assert_eq!(p.required.len(), 1);
+    assert_eq!(p.required[0].name, "tiltValue");
+    assert_eq!(p.provided[0].name, "brightness");
+    assert_eq!(c.last_revision, revision);
+    assert_eq!(c.system().groups.len(), 1);
+
+    // --- extraction: one system edit, one revision ---
+    let applied = c.sys(pb::system_edit_op::Op::ExtractGroupAsComponent(
+        pb::ExtractGroupAsComponent {
+            group,
+            choices: Some(pb::ExtractionChoices {
+                name: "AdaptiveLamp".into(),
+                ..Default::default()
+            }),
+        },
+    ));
+    let o = applied.outcome.unwrap();
+    let comp = o.created_component.unwrap();
+    let inst = o.created_instance.unwrap();
+    let v = applied.system.unwrap();
+    assert!(v.groups.is_empty());
+    assert_eq!(v.components.len(), 1);
+    assert_eq!(v.instances[0].name, "adaptiveLamp");
+    assert_eq!(v.bindings.len(), 2);
+    // base ends on the wire
+    let into_port = v
+        .bindings
+        .iter()
+        .find(|b| b.destination.as_ref().unwrap().base_decl.is_none())
+        .unwrap();
+    assert_eq!(
+        into_port.source.as_ref().unwrap().base_decl,
+        Some(tilt_value)
+    );
+    assert_eq!(into_port.destination.as_ref().unwrap().instance, inst);
+    let into_base = v
+        .bindings
+        .iter()
+        .find(|b| b.destination.as_ref().unwrap().base_decl.is_some())
+        .unwrap();
+    assert_eq!(
+        into_base.destination.as_ref().unwrap().base_decl,
+        Some(brightness)
+    );
+    // the flat design: the base copy is a reference; still causal
+    let a = c.system_analysis();
+    assert_eq!(a.acceptance(), pb::SystemAcceptance::Executable);
+    let flat = applied.project.unwrap();
+    let copy = flat.mappings.iter().find(|m| m.id == brightness).unwrap();
+    assert!(copy
+        .definition
+        .as_ref()
+        .unwrap()
+        .kind
+        .as_ref()
+        .is_some_and(|k| matches!(k, pb::definition::Kind::Reference(_))));
+    // the component analysis of the body comes with the system analysis
+    let ca = a
+        .component_analyses
+        .iter()
+        .find(|x| x.id == comp)
+        .unwrap()
+        .analysis
+        .as_ref()
+        .unwrap();
+    assert_eq!(ca.mappings.len(), 3);
+
+    // --- a component-scoped draft is judged in the body's own scope ---
+    let rev = c.last_revision;
+    let Resp::DefinitionDraft(d) = c.call(Req::AnalyzeDefinitionDraft(
+        pb::AnalyzeDefinitionDraftRequest {
+            revision: rev,
+            mapping_id: brightness,
+            generation: 1,
+            source: "dimByTilt(tiltValue) * 2".into(),
+            component: Some(comp),
+        },
+    )) else {
+        panic!()
+    };
+    assert!(d.parse_ok);
+    assert_eq!(
+        d.analysis.as_ref().unwrap().status(),
+        pb::MappingStatus::ClockConsistent,
+        "{:?}",
+        d.analysis
+    );
+    let Resp::DraftCompletion(cmp) = c.call(Req::CompleteDefinitionDraft(
+        pb::CompleteDefinitionDraftRequest {
+            revision: rev,
+            mapping_id: brightness,
+            source: "dim".into(),
+            offset: 3,
+            component: Some(comp),
+        },
+    )) else {
+        panic!()
+    };
+    assert!(
+        cmp.items.iter().any(|i| i.label == "dimByTilt(Tilt)"),
+        "{:?}",
+        cmp.items
+    );
+    assert!(
+        !cmp.items.iter().any(|i| i.label.contains('.')),
+        "body scope, not flat names"
+    );
+    let Resp::Ack(_) = c.call(Req::DiscardDefinitionDraft(
+        pb::DiscardDefinitionDraftRequest {
+            mapping_id: brightness,
+            component: Some(comp),
+        },
+    )) else {
+        panic!()
+    };
+    // the same mapping id in the flat scope is the base copy (unrelated)
+    let Resp::Error(e) = c.call(Req::AnalyzeDefinitionDraft(
+        pb::AnalyzeDefinitionDraftRequest {
+            revision: rev,
+            mapping_id: brightness,
+            generation: 2,
+            source: "1".into(),
+            component: Some(99),
+        },
+    )) else {
+        panic!()
+    };
+    assert_eq!(e.code, "system.unknown_component");
+
+    // --- layout carries instances, groups and component canvases ---
+    c.call(Req::SetLayout(pb::SetLayoutRequest {
+        layout: Some(pb::Layout {
+            instances: vec![pb::NodePosition {
+                id: inst,
+                x: 10.0,
+                y: 20.0,
+            }],
+            groups: vec![pb::GroupBox {
+                id: 7,
+                x: 1.0,
+                y: 2.0,
+                width: 300.0,
+                height: 200.0,
+                collapsed: true,
+            }],
+            components: vec![pb::ComponentLayout {
+                id: comp,
+                layout: Some(pb::Layout {
+                    mappings: vec![pb::NodePosition {
+                        id: dim,
+                        x: 5.0,
+                        y: 6.0,
+                    }],
+                    ..Default::default()
+                }),
+            }],
+            ..Default::default()
+        }),
+    }));
+    c.call(Req::SaveProject(pb::SaveProjectRequest {}));
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let Resp::Project(re) = c.call(Req::OpenProject(pb::OpenProjectRequest {
+        root_path: root.to_string_lossy().into(),
+    })) else {
+        panic!()
+    };
+    let layout = re.project.unwrap().layout.unwrap();
+    assert_eq!(layout.instances[0].id, inst);
+    assert!(layout.groups[0].collapsed);
+    assert_eq!(
+        layout.components[0].layout.as_ref().unwrap().mappings[0].x,
+        5.0
+    );
+    let v2 = c.system();
+    assert_eq!(v2.bindings.len(), 2);
+    assert_eq!(v2.authoring_generation, 0);
 
     let Resp::Ack(_) = c.call(Req::Shutdown(pb::ShutdownRequest {})) else {
         panic!()

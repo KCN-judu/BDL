@@ -52,6 +52,8 @@ enum ClientMessage_Payload {
   getSystem,
   applySystemEdit,
   runSystemAnalysis,
+  applyGroupEdit,
+  previewComponentExtraction,
   notSet
 }
 
@@ -88,6 +90,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     GetSystemRequest? getSystem,
     ApplySystemEditRequest? applySystemEdit,
     RunSystemAnalysisRequest? runSystemAnalysis,
+    ApplyGroupEditRequest? applyGroupEdit,
+    PreviewComponentExtractionRequest? previewComponentExtraction,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -122,6 +126,9 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (getSystem != null) result.getSystem = getSystem;
     if (applySystemEdit != null) result.applySystemEdit = applySystemEdit;
     if (runSystemAnalysis != null) result.runSystemAnalysis = runSystemAnalysis;
+    if (applyGroupEdit != null) result.applyGroupEdit = applyGroupEdit;
+    if (previewComponentExtraction != null)
+      result.previewComponentExtraction = previewComponentExtraction;
     return result;
   }
 
@@ -165,6 +172,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     51: ClientMessage_Payload.getSystem,
     52: ClientMessage_Payload.applySystemEdit,
     53: ClientMessage_Payload.runSystemAnalysis,
+    54: ClientMessage_Payload.applyGroupEdit,
+    55: ClientMessage_Payload.previewComponentExtraction,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -200,7 +209,9 @@ class ClientMessage extends $pb.GeneratedMessage {
       50,
       51,
       52,
-      53
+      53,
+      54,
+      55
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -263,6 +274,11 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: ApplySystemEditRequest.$_createMessage)
     ..aOM<RunSystemAnalysisRequest>(53, _omitFieldNames ? '' : 'runSystemAnalysis',
         subBuilder: RunSystemAnalysisRequest.$_createMessage)
+    ..aOM<ApplyGroupEditRequest>(54, _omitFieldNames ? '' : 'applyGroupEdit',
+        subBuilder: ApplyGroupEditRequest.$_createMessage)
+    ..aOM<PreviewComponentExtractionRequest>(
+        55, _omitFieldNames ? '' : 'previewComponentExtraction',
+        subBuilder: PreviewComponentExtractionRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -315,6 +331,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
+  @$pb.TagNumber(54)
+  @$pb.TagNumber(55)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -346,6 +364,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
+  @$pb.TagNumber(54)
+  @$pb.TagNumber(55)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -687,6 +707,29 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearRunSystemAnalysis() => $_clearField(53);
   @$pb.TagNumber(53)
   RunSystemAnalysisRequest ensureRunSystemAnalysis() => $_ensure(30);
+
+  /// Behaviour grouping and component authoring (protocol 0.8).
+  @$pb.TagNumber(54)
+  ApplyGroupEditRequest get applyGroupEdit => $_getN(31);
+  @$pb.TagNumber(54)
+  set applyGroupEdit(ApplyGroupEditRequest value) => $_setField(54, value);
+  @$pb.TagNumber(54)
+  $core.bool hasApplyGroupEdit() => $_has(31);
+  @$pb.TagNumber(54)
+  void clearApplyGroupEdit() => $_clearField(54);
+  @$pb.TagNumber(54)
+  ApplyGroupEditRequest ensureApplyGroupEdit() => $_ensure(31);
+
+  @$pb.TagNumber(55)
+  PreviewComponentExtractionRequest get previewComponentExtraction => $_getN(32);
+  @$pb.TagNumber(55)
+  set previewComponentExtraction(PreviewComponentExtractionRequest value) => $_setField(55, value);
+  @$pb.TagNumber(55)
+  $core.bool hasPreviewComponentExtraction() => $_has(32);
+  @$pb.TagNumber(55)
+  void clearPreviewComponentExtraction() => $_clearField(55);
+  @$pb.TagNumber(55)
+  PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(32);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -792,6 +835,7 @@ enum Response_Payload {
   system,
   systemEditApplied,
   systemAnalysis,
+  extractionPreview,
   notSet
 }
 
@@ -815,6 +859,7 @@ class Response extends $pb.GeneratedMessage {
     SystemResponse? system,
     SystemEditApplied? systemEditApplied,
     SystemAnalysisResponse? systemAnalysis,
+    ExtractionPreviewResponse? extractionPreview,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -835,6 +880,7 @@ class Response extends $pb.GeneratedMessage {
     if (system != null) result.system = system;
     if (systemEditApplied != null) result.systemEditApplied = systemEditApplied;
     if (systemAnalysis != null) result.systemAnalysis = systemAnalysis;
+    if (extractionPreview != null) result.extractionPreview = extractionPreview;
     return result;
   }
 
@@ -865,12 +911,13 @@ class Response extends $pb.GeneratedMessage {
     40: Response_Payload.system,
     41: Response_Payload.systemEditApplied,
     42: Response_Payload.systemAnalysis,
+    43: Response_Payload.extractionPreview,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 40, 41, 42])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 40, 41, 42, 43])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -905,6 +952,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: SystemEditApplied.$_createMessage)
     ..aOM<SystemAnalysisResponse>(42, _omitFieldNames ? '' : 'systemAnalysis',
         subBuilder: SystemAnalysisResponse.$_createMessage)
+    ..aOM<ExtractionPreviewResponse>(43, _omitFieldNames ? '' : 'extractionPreview',
+        subBuilder: ExtractionPreviewResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -944,6 +993,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(40)
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
+  @$pb.TagNumber(43)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -962,6 +1012,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(40)
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
+  @$pb.TagNumber(43)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1159,6 +1210,17 @@ class Response extends $pb.GeneratedMessage {
   void clearSystemAnalysis() => $_clearField(42);
   @$pb.TagNumber(42)
   SystemAnalysisResponse ensureSystemAnalysis() => $_ensure(17);
+
+  @$pb.TagNumber(43)
+  ExtractionPreviewResponse get extractionPreview => $_getN(18);
+  @$pb.TagNumber(43)
+  set extractionPreview(ExtractionPreviewResponse value) => $_setField(43, value);
+  @$pb.TagNumber(43)
+  $core.bool hasExtractionPreview() => $_has(18);
+  @$pb.TagNumber(43)
+  void clearExtractionPreview() => $_clearField(43);
+  @$pb.TagNumber(43)
+  ExtractionPreviewResponse ensureExtractionPreview() => $_ensure(18);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -6392,11 +6454,17 @@ class Layout extends $pb.GeneratedMessage {
     $core.Iterable<NodePosition>? concepts,
     $core.Iterable<NodePosition>? mappings,
     $core.Iterable<NodePosition>? outputs,
+    $core.Iterable<NodePosition>? instances,
+    $core.Iterable<GroupBox>? groups,
+    $core.Iterable<ComponentLayout>? components,
   }) {
     final result = Layout._();
     if (concepts != null) result.concepts.addAll(concepts);
     if (mappings != null) result.mappings.addAll(mappings);
     if (outputs != null) result.outputs.addAll(outputs);
+    if (instances != null) result.instances.addAll(instances);
+    if (groups != null) result.groups.addAll(groups);
+    if (components != null) result.components.addAll(components);
     return result;
   }
 
@@ -6418,6 +6486,11 @@ class Layout extends $pb.GeneratedMessage {
         subBuilder: NodePosition.$_createMessage)
     ..pPM<NodePosition>(3, _omitFieldNames ? '' : 'outputs',
         subBuilder: NodePosition.$_createMessage)
+    ..pPM<NodePosition>(4, _omitFieldNames ? '' : 'instances',
+        subBuilder: NodePosition.$_createMessage)
+    ..pPM<GroupBox>(5, _omitFieldNames ? '' : 'groups', subBuilder: GroupBox.$_createMessage)
+    ..pPM<ComponentLayout>(6, _omitFieldNames ? '' : 'components',
+        subBuilder: ComponentLayout.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6448,6 +6521,202 @@ class Layout extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(3)
   $pb.PbList<NodePosition> get outputs => $_getList(2);
+
+  /// Component-instance nodes of a system canvas (protocol 0.8).
+  @$pb.TagNumber(4)
+  $pb.PbList<NodePosition> get instances => $_getList(3);
+
+  /// Behaviour groups: the collapsed box and its state.  Layout only.
+  @$pb.TagNumber(5)
+  $pb.PbList<GroupBox> get groups => $_getList(4);
+
+  /// The canvas of each component's body, in component-local ids.
+  @$pb.TagNumber(6)
+  $pb.PbList<ComponentLayout> get components => $_getList(5);
+}
+
+class GroupBox extends $pb.GeneratedMessage {
+  factory GroupBox({
+    $fixnum.Int64? id,
+    $core.double? x,
+    $core.double? y,
+    $core.double? width,
+    $core.double? height,
+    $core.bool? collapsed,
+  }) {
+    final result = GroupBox._();
+    if (id != null) result.id = id;
+    if (x != null) result.x = x;
+    if (y != null) result.y = y;
+    if (width != null) result.width = width;
+    if (height != null) result.height = height;
+    if (collapsed != null) result.collapsed = collapsed;
+    return result;
+  }
+
+  GroupBox._();
+
+  factory GroupBox.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GroupBox()..mergeFromBuffer(data, registry);
+  factory GroupBox.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GroupBox()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'GroupBox',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GroupBox.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aD(2, _omitFieldNames ? '' : 'x')
+    ..aD(3, _omitFieldNames ? '' : 'y')
+    ..aD(4, _omitFieldNames ? '' : 'width')
+    ..aD(5, _omitFieldNames ? '' : 'height')
+    ..aOB(6, _omitFieldNames ? '' : 'collapsed')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GroupBox clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GroupBox copyWith(void Function(GroupBox) updates) =>
+      super.copyWith((message) => updates(message as GroupBox)) as GroupBox;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GroupBox() / GroupBox.new instead')
+  static GroupBox create() => GroupBox._();
+  static $pb.GeneratedMessage $_createMessage() => GroupBox._();
+  @$core.override
+  GroupBox createEmptyInstance() => GroupBox._();
+  @$core.pragma('dart2js:noInline')
+  static GroupBox getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GroupBox>(GroupBox.$_createMessage);
+  static GroupBox? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get x => $_getN(1);
+  @$pb.TagNumber(2)
+  set x($core.double value) => $_setDouble(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasX() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearX() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get y => $_getN(2);
+  @$pb.TagNumber(3)
+  set y($core.double value) => $_setDouble(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasY() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearY() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get width => $_getN(3);
+  @$pb.TagNumber(4)
+  set width($core.double value) => $_setDouble(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasWidth() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearWidth() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.double get height => $_getN(4);
+  @$pb.TagNumber(5)
+  set height($core.double value) => $_setDouble(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasHeight() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearHeight() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get collapsed => $_getBF(5);
+  @$pb.TagNumber(6)
+  set collapsed($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasCollapsed() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearCollapsed() => $_clearField(6);
+}
+
+class ComponentLayout extends $pb.GeneratedMessage {
+  factory ComponentLayout({
+    $fixnum.Int64? id,
+    Layout? layout,
+  }) {
+    final result = ComponentLayout._();
+    if (id != null) result.id = id;
+    if (layout != null) result.layout = layout;
+    return result;
+  }
+
+  ComponentLayout._();
+
+  factory ComponentLayout.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComponentLayout()..mergeFromBuffer(data, registry);
+  factory ComponentLayout.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComponentLayout()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComponentLayout',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ComponentLayout.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<Layout>(2, _omitFieldNames ? '' : 'layout', subBuilder: Layout.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComponentLayout clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComponentLayout copyWith(void Function(ComponentLayout) updates) =>
+      super.copyWith((message) => updates(message as ComponentLayout)) as ComponentLayout;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ComponentLayout() / ComponentLayout.new instead')
+  static ComponentLayout create() => ComponentLayout._();
+  static $pb.GeneratedMessage $_createMessage() => ComponentLayout._();
+  @$core.override
+  ComponentLayout createEmptyInstance() => ComponentLayout._();
+  @$core.pragma('dart2js:noInline')
+  static ComponentLayout getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ComponentLayout>(ComponentLayout.$_createMessage);
+  static ComponentLayout? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  Layout get layout => $_getN(1);
+  @$pb.TagNumber(2)
+  set layout(Layout value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLayout() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLayout() => $_clearField(2);
+  @$pb.TagNumber(2)
+  Layout ensureLayout() => $_ensure(1);
 }
 
 class NodePosition extends $pb.GeneratedMessage {
@@ -8384,12 +8653,14 @@ class AnalyzeDefinitionDraftRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? mappingId,
     $fixnum.Int64? generation,
     $core.String? source,
+    $fixnum.Int64? component,
   }) {
     final result = AnalyzeDefinitionDraftRequest._();
     if (revision != null) result.revision = revision;
     if (mappingId != null) result.mappingId = mappingId;
     if (generation != null) result.generation = generation;
     if (source != null) result.source = source;
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -8413,6 +8684,8 @@ class AnalyzeDefinitionDraftRequest extends $pb.GeneratedMessage {
     ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOS(4, _omitFieldNames ? '' : 'source')
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -8473,6 +8746,17 @@ class AnalyzeDefinitionDraftRequest extends $pb.GeneratedMessage {
   $core.bool hasSource() => $_has(3);
   @$pb.TagNumber(4)
   void clearSource() => $_clearField(4);
+
+  /// When set, `mapping_id` is a declaration of this component's body and
+  /// the draft is judged in the body's own scope (protocol 0.8).
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get component => $_getI64(4);
+  @$pb.TagNumber(5)
+  set component($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComponent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComponent() => $_clearField(5);
 }
 
 class DefinitionDraftAnalysis extends $pb.GeneratedMessage {
@@ -8595,9 +8879,11 @@ class DefinitionDraftAnalysis extends $pb.GeneratedMessage {
 class DiscardDefinitionDraftRequest extends $pb.GeneratedMessage {
   factory DiscardDefinitionDraftRequest({
     $fixnum.Int64? mappingId,
+    $fixnum.Int64? component,
   }) {
     final result = DiscardDefinitionDraftRequest._();
     if (mappingId != null) result.mappingId = mappingId;
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -8615,6 +8901,8 @@ class DiscardDefinitionDraftRequest extends $pb.GeneratedMessage {
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: DiscardDefinitionDraftRequest.$_createMessage)
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
@@ -8649,6 +8937,15 @@ class DiscardDefinitionDraftRequest extends $pb.GeneratedMessage {
   $core.bool hasMappingId() => $_has(0);
   @$pb.TagNumber(1)
   void clearMappingId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get component => $_getI64(1);
+  @$pb.TagNumber(2)
+  set component($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasComponent() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearComponent() => $_clearField(2);
 }
 
 /// Completion inside the draft at a byte `offset` into `source`.  Sets the
@@ -8661,12 +8958,14 @@ class CompleteDefinitionDraftRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? mappingId,
     $core.String? source,
     $core.int? offset,
+    $fixnum.Int64? component,
   }) {
     final result = CompleteDefinitionDraftRequest._();
     if (revision != null) result.revision = revision;
     if (mappingId != null) result.mappingId = mappingId;
     if (source != null) result.source = source;
     if (offset != null) result.offset = offset;
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -8689,6 +8988,8 @@ class CompleteDefinitionDraftRequest extends $pb.GeneratedMessage {
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOS(3, _omitFieldNames ? '' : 'source')
     ..aI(4, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -8749,6 +9050,15 @@ class CompleteDefinitionDraftRequest extends $pb.GeneratedMessage {
   $core.bool hasOffset() => $_has(3);
   @$pb.TagNumber(4)
   void clearOffset() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get component => $_getI64(4);
+  @$pb.TagNumber(5)
+  set component($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComponent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComponent() => $_clearField(5);
 }
 
 class DraftCompletionResponse extends $pb.GeneratedMessage {
@@ -8979,12 +9289,14 @@ class HoverDefinitionDraftRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? mappingId,
     $core.String? source,
     $core.int? offset,
+    $fixnum.Int64? component,
   }) {
     final result = HoverDefinitionDraftRequest._();
     if (revision != null) result.revision = revision;
     if (mappingId != null) result.mappingId = mappingId;
     if (source != null) result.source = source;
     if (offset != null) result.offset = offset;
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -9007,6 +9319,8 @@ class HoverDefinitionDraftRequest extends $pb.GeneratedMessage {
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOS(3, _omitFieldNames ? '' : 'source')
     ..aI(4, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9066,6 +9380,15 @@ class HoverDefinitionDraftRequest extends $pb.GeneratedMessage {
   $core.bool hasOffset() => $_has(3);
   @$pb.TagNumber(4)
   void clearOffset() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get component => $_getI64(4);
+  @$pb.TagNumber(5)
+  set component($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComponent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComponent() => $_clearField(5);
 }
 
 class DraftHoverResponse extends $pb.GeneratedMessage {
@@ -13366,14 +13689,20 @@ class ParameterBindingView extends $pb.GeneratedMessage {
   void clearSource() => $_clearField(2);
 }
 
+/// A binding end.  Normally a port of an instance; with `base_decl` set it
+/// is a relationship of the system's own design instead (protocol 0.8:
+/// the base is the FV residual, bindable directly), and `instance`/`port`
+/// are unset.
 class PortRefView extends $pb.GeneratedMessage {
   factory PortRefView({
     $fixnum.Int64? instance,
     $fixnum.Int64? port,
+    $fixnum.Int64? baseDecl,
   }) {
     final result = PortRefView._();
     if (instance != null) result.instance = instance;
     if (port != null) result.port = port;
+    if (baseDecl != null) result.baseDecl = baseDecl;
     return result;
   }
 
@@ -13392,6 +13721,8 @@ class PortRefView extends $pb.GeneratedMessage {
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'instance', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'port', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'baseDecl', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
@@ -13432,6 +13763,15 @@ class PortRefView extends $pb.GeneratedMessage {
   $core.bool hasPort() => $_has(1);
   @$pb.TagNumber(2)
   void clearPort() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get baseDecl => $_getI64(2);
+  @$pb.TagNumber(3)
+  set baseDecl($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasBaseDecl() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearBaseDecl() => $_clearField(3);
 }
 
 class BindingView extends $pb.GeneratedMessage {
@@ -13746,6 +14086,8 @@ class SystemView extends $pb.GeneratedMessage {
     $core.Iterable<ExportView>? exports,
     $core.Iterable<OriginView>? origins,
     $core.bool? isFlat,
+    $core.Iterable<BehaviorGroupView>? groups,
+    $fixnum.Int64? authoringGeneration,
   }) {
     final result = SystemView._();
     if (revision != null) result.revision = revision;
@@ -13757,6 +14099,8 @@ class SystemView extends $pb.GeneratedMessage {
     if (exports != null) result.exports.addAll(exports);
     if (origins != null) result.origins.addAll(origins);
     if (isFlat != null) result.isFlat = isFlat;
+    if (groups != null) result.groups.addAll(groups);
+    if (authoringGeneration != null) result.authoringGeneration = authoringGeneration;
     return result;
   }
 
@@ -13786,6 +14130,10 @@ class SystemView extends $pb.GeneratedMessage {
     ..pPM<ExportView>(7, _omitFieldNames ? '' : 'exports', subBuilder: ExportView.$_createMessage)
     ..pPM<OriginView>(8, _omitFieldNames ? '' : 'origins', subBuilder: OriginView.$_createMessage)
     ..aOB(9, _omitFieldNames ? '' : 'isFlat')
+    ..pPM<BehaviorGroupView>(10, _omitFieldNames ? '' : 'groups',
+        subBuilder: BehaviorGroupView.$_createMessage)
+    ..a<$fixnum.Int64>(11, _omitFieldNames ? '' : 'authoringGeneration', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13864,6 +14212,1812 @@ class SystemView extends $pb.GeneratedMessage {
   $core.bool hasIsFlat() => $_has(8);
   @$pb.TagNumber(9)
   void clearIsFlat() => $_clearField(9);
+
+  /// Authoring groups over the base's relationships (protocol 0.8).
+  @$pb.TagNumber(10)
+  $pb.PbList<BehaviorGroupView> get groups => $_getList(9);
+
+  /// Bumped by every group edit; never a revision (group edits change no
+  /// semantic fact, so nothing revision-keyed is invalidated by them).
+  @$pb.TagNumber(11)
+  $fixnum.Int64 get authoringGeneration => $_getI64(10);
+  @$pb.TagNumber(11)
+  set authoringGeneration($fixnum.Int64 value) => $_setInt64(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasAuthoringGeneration() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearAuthoringGeneration() => $_clearField(11);
+}
+
+/// A group is authoring metadata: identity, name, description, members.
+class BehaviorGroupView extends $pb.GeneratedMessage {
+  factory BehaviorGroupView({
+    $fixnum.Int64? id,
+    $core.String? name,
+    $core.String? description,
+    $core.Iterable<$fixnum.Int64>? members,
+  }) {
+    final result = BehaviorGroupView._();
+    if (id != null) result.id = id;
+    if (name != null) result.name = name;
+    if (description != null) result.description = description;
+    if (members != null) result.members.addAll(members);
+    return result;
+  }
+
+  BehaviorGroupView._();
+
+  factory BehaviorGroupView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BehaviorGroupView()..mergeFromBuffer(data, registry);
+  factory BehaviorGroupView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BehaviorGroupView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BehaviorGroupView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BehaviorGroupView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aOS(3, _omitFieldNames ? '' : 'description')
+    ..p<$fixnum.Int64>(4, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BehaviorGroupView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BehaviorGroupView copyWith(void Function(BehaviorGroupView) updates) =>
+      super.copyWith((message) => updates(message as BehaviorGroupView)) as BehaviorGroupView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BehaviorGroupView() / BehaviorGroupView.new instead')
+  static BehaviorGroupView create() => BehaviorGroupView._();
+  static $pb.GeneratedMessage $_createMessage() => BehaviorGroupView._();
+  @$core.override
+  BehaviorGroupView createEmptyInstance() => BehaviorGroupView._();
+  @$core.pragma('dart2js:noInline')
+  static BehaviorGroupView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BehaviorGroupView>(BehaviorGroupView.$_createMessage);
+  static BehaviorGroupView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get description => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set description($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDescription() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDescription() => $_clearField(3);
+
+  /// Base relationship ids, in authoring order.
+  @$pb.TagNumber(4)
+  $pb.PbList<$fixnum.Int64> get members => $_getList(3);
+}
+
+/// Group edits: applied outside the revision stream (no ProjectChanged, no
+/// AnalysisReady), answered with the SystemView at the new authoring
+/// generation.
+class ApplyGroupEditRequest extends $pb.GeneratedMessage {
+  factory ApplyGroupEditRequest({
+    GroupEditOp? op,
+  }) {
+    final result = ApplyGroupEditRequest._();
+    if (op != null) result.op = op;
+    return result;
+  }
+
+  ApplyGroupEditRequest._();
+
+  factory ApplyGroupEditRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ApplyGroupEditRequest()..mergeFromBuffer(data, registry);
+  factory ApplyGroupEditRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ApplyGroupEditRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ApplyGroupEditRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ApplyGroupEditRequest.$_createMessage)
+    ..aOM<GroupEditOp>(1, _omitFieldNames ? '' : 'op', subBuilder: GroupEditOp.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ApplyGroupEditRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ApplyGroupEditRequest copyWith(void Function(ApplyGroupEditRequest) updates) =>
+      super.copyWith((message) => updates(message as ApplyGroupEditRequest))
+          as ApplyGroupEditRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ApplyGroupEditRequest() / ApplyGroupEditRequest.new instead')
+  static ApplyGroupEditRequest create() => ApplyGroupEditRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ApplyGroupEditRequest._();
+  @$core.override
+  ApplyGroupEditRequest createEmptyInstance() => ApplyGroupEditRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ApplyGroupEditRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ApplyGroupEditRequest>(
+          ApplyGroupEditRequest.$_createMessage);
+  static ApplyGroupEditRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  GroupEditOp get op => $_getN(0);
+  @$pb.TagNumber(1)
+  set op(GroupEditOp value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasOp() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearOp() => $_clearField(1);
+  @$pb.TagNumber(1)
+  GroupEditOp ensureOp() => $_ensure(0);
+}
+
+enum GroupEditOp_Op {
+  createGroup,
+  renameGroup,
+  setGroupDescription,
+  deleteGroup,
+  addMember,
+  removeMember,
+  moveMember,
+  mergeGroups,
+  splitGroup,
+  notSet
+}
+
+class GroupEditOp extends $pb.GeneratedMessage {
+  factory GroupEditOp({
+    CreateGroup? createGroup,
+    RenameGroup? renameGroup,
+    SetGroupDescription? setGroupDescription,
+    DeleteGroup? deleteGroup,
+    AddGroupMember? addMember,
+    RemoveGroupMember? removeMember,
+    MoveGroupMember? moveMember,
+    MergeGroups? mergeGroups,
+    SplitGroup? splitGroup,
+  }) {
+    final result = GroupEditOp._();
+    if (createGroup != null) result.createGroup = createGroup;
+    if (renameGroup != null) result.renameGroup = renameGroup;
+    if (setGroupDescription != null) result.setGroupDescription = setGroupDescription;
+    if (deleteGroup != null) result.deleteGroup = deleteGroup;
+    if (addMember != null) result.addMember = addMember;
+    if (removeMember != null) result.removeMember = removeMember;
+    if (moveMember != null) result.moveMember = moveMember;
+    if (mergeGroups != null) result.mergeGroups = mergeGroups;
+    if (splitGroup != null) result.splitGroup = splitGroup;
+    return result;
+  }
+
+  GroupEditOp._();
+
+  factory GroupEditOp.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GroupEditOp()..mergeFromBuffer(data, registry);
+  factory GroupEditOp.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GroupEditOp()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, GroupEditOp_Op> _GroupEditOp_OpByTag = {
+    1: GroupEditOp_Op.createGroup,
+    2: GroupEditOp_Op.renameGroup,
+    3: GroupEditOp_Op.setGroupDescription,
+    4: GroupEditOp_Op.deleteGroup,
+    5: GroupEditOp_Op.addMember,
+    6: GroupEditOp_Op.removeMember,
+    7: GroupEditOp_Op.moveMember,
+    8: GroupEditOp_Op.mergeGroups,
+    9: GroupEditOp_Op.splitGroup,
+    0: GroupEditOp_Op.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'GroupEditOp',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GroupEditOp.$_createMessage)
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    ..aOM<CreateGroup>(1, _omitFieldNames ? '' : 'createGroup',
+        subBuilder: CreateGroup.$_createMessage)
+    ..aOM<RenameGroup>(2, _omitFieldNames ? '' : 'renameGroup',
+        subBuilder: RenameGroup.$_createMessage)
+    ..aOM<SetGroupDescription>(3, _omitFieldNames ? '' : 'setGroupDescription',
+        subBuilder: SetGroupDescription.$_createMessage)
+    ..aOM<DeleteGroup>(4, _omitFieldNames ? '' : 'deleteGroup',
+        subBuilder: DeleteGroup.$_createMessage)
+    ..aOM<AddGroupMember>(5, _omitFieldNames ? '' : 'addMember',
+        subBuilder: AddGroupMember.$_createMessage)
+    ..aOM<RemoveGroupMember>(6, _omitFieldNames ? '' : 'removeMember',
+        subBuilder: RemoveGroupMember.$_createMessage)
+    ..aOM<MoveGroupMember>(7, _omitFieldNames ? '' : 'moveMember',
+        subBuilder: MoveGroupMember.$_createMessage)
+    ..aOM<MergeGroups>(8, _omitFieldNames ? '' : 'mergeGroups',
+        subBuilder: MergeGroups.$_createMessage)
+    ..aOM<SplitGroup>(9, _omitFieldNames ? '' : 'splitGroup',
+        subBuilder: SplitGroup.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GroupEditOp clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GroupEditOp copyWith(void Function(GroupEditOp) updates) =>
+      super.copyWith((message) => updates(message as GroupEditOp)) as GroupEditOp;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GroupEditOp() / GroupEditOp.new instead')
+  static GroupEditOp create() => GroupEditOp._();
+  static $pb.GeneratedMessage $_createMessage() => GroupEditOp._();
+  @$core.override
+  GroupEditOp createEmptyInstance() => GroupEditOp._();
+  @$core.pragma('dart2js:noInline')
+  static GroupEditOp getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GroupEditOp>(GroupEditOp.$_createMessage);
+  static GroupEditOp? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  GroupEditOp_Op whichOp() => _GroupEditOp_OpByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(1)
+  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  void clearOp() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  CreateGroup get createGroup => $_getN(0);
+  @$pb.TagNumber(1)
+  set createGroup(CreateGroup value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCreateGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCreateGroup() => $_clearField(1);
+  @$pb.TagNumber(1)
+  CreateGroup ensureCreateGroup() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  RenameGroup get renameGroup => $_getN(1);
+  @$pb.TagNumber(2)
+  set renameGroup(RenameGroup value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRenameGroup() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRenameGroup() => $_clearField(2);
+  @$pb.TagNumber(2)
+  RenameGroup ensureRenameGroup() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  SetGroupDescription get setGroupDescription => $_getN(2);
+  @$pb.TagNumber(3)
+  set setGroupDescription(SetGroupDescription value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSetGroupDescription() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSetGroupDescription() => $_clearField(3);
+  @$pb.TagNumber(3)
+  SetGroupDescription ensureSetGroupDescription() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  DeleteGroup get deleteGroup => $_getN(3);
+  @$pb.TagNumber(4)
+  set deleteGroup(DeleteGroup value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDeleteGroup() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDeleteGroup() => $_clearField(4);
+  @$pb.TagNumber(4)
+  DeleteGroup ensureDeleteGroup() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  AddGroupMember get addMember => $_getN(4);
+  @$pb.TagNumber(5)
+  set addMember(AddGroupMember value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAddMember() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAddMember() => $_clearField(5);
+  @$pb.TagNumber(5)
+  AddGroupMember ensureAddMember() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  RemoveGroupMember get removeMember => $_getN(5);
+  @$pb.TagNumber(6)
+  set removeMember(RemoveGroupMember value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasRemoveMember() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearRemoveMember() => $_clearField(6);
+  @$pb.TagNumber(6)
+  RemoveGroupMember ensureRemoveMember() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  MoveGroupMember get moveMember => $_getN(6);
+  @$pb.TagNumber(7)
+  set moveMember(MoveGroupMember value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasMoveMember() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearMoveMember() => $_clearField(7);
+  @$pb.TagNumber(7)
+  MoveGroupMember ensureMoveMember() => $_ensure(6);
+
+  @$pb.TagNumber(8)
+  MergeGroups get mergeGroups => $_getN(7);
+  @$pb.TagNumber(8)
+  set mergeGroups(MergeGroups value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasMergeGroups() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearMergeGroups() => $_clearField(8);
+  @$pb.TagNumber(8)
+  MergeGroups ensureMergeGroups() => $_ensure(7);
+
+  @$pb.TagNumber(9)
+  SplitGroup get splitGroup => $_getN(8);
+  @$pb.TagNumber(9)
+  set splitGroup(SplitGroup value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasSplitGroup() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearSplitGroup() => $_clearField(9);
+  @$pb.TagNumber(9)
+  SplitGroup ensureSplitGroup() => $_ensure(8);
+}
+
+class CreateGroup extends $pb.GeneratedMessage {
+  factory CreateGroup({
+    $core.String? name,
+    $core.String? description,
+    $core.Iterable<$fixnum.Int64>? members,
+  }) {
+    final result = CreateGroup._();
+    if (name != null) result.name = name;
+    if (description != null) result.description = description;
+    if (members != null) result.members.addAll(members);
+    return result;
+  }
+
+  CreateGroup._();
+
+  factory CreateGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateGroup()..mergeFromBuffer(data, registry);
+  factory CreateGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CreateGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CreateGroup.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'description')
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateGroup copyWith(void Function(CreateGroup) updates) =>
+      super.copyWith((message) => updates(message as CreateGroup)) as CreateGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CreateGroup() / CreateGroup.new instead')
+  static CreateGroup create() => CreateGroup._();
+  static $pb.GeneratedMessage $_createMessage() => CreateGroup._();
+  @$core.override
+  CreateGroup createEmptyInstance() => CreateGroup._();
+  @$core.pragma('dart2js:noInline')
+  static CreateGroup getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateGroup>(CreateGroup.$_createMessage);
+  static CreateGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get description => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set description($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDescription() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDescription() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get members => $_getList(2);
+}
+
+class RenameGroup extends $pb.GeneratedMessage {
+  factory RenameGroup({
+    $fixnum.Int64? id,
+    $core.String? name,
+  }) {
+    final result = RenameGroup._();
+    if (id != null) result.id = id;
+    if (name != null) result.name = name;
+    return result;
+  }
+
+  RenameGroup._();
+
+  factory RenameGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RenameGroup()..mergeFromBuffer(data, registry);
+  factory RenameGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RenameGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'RenameGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: RenameGroup.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RenameGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RenameGroup copyWith(void Function(RenameGroup) updates) =>
+      super.copyWith((message) => updates(message as RenameGroup)) as RenameGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use RenameGroup() / RenameGroup.new instead')
+  static RenameGroup create() => RenameGroup._();
+  static $pb.GeneratedMessage $_createMessage() => RenameGroup._();
+  @$core.override
+  RenameGroup createEmptyInstance() => RenameGroup._();
+  @$core.pragma('dart2js:noInline')
+  static RenameGroup getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RenameGroup>(RenameGroup.$_createMessage);
+  static RenameGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+}
+
+class SetGroupDescription extends $pb.GeneratedMessage {
+  factory SetGroupDescription({
+    $fixnum.Int64? id,
+    $core.String? description,
+  }) {
+    final result = SetGroupDescription._();
+    if (id != null) result.id = id;
+    if (description != null) result.description = description;
+    return result;
+  }
+
+  SetGroupDescription._();
+
+  factory SetGroupDescription.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetGroupDescription()..mergeFromBuffer(data, registry);
+  factory SetGroupDescription.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetGroupDescription()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SetGroupDescription',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SetGroupDescription.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'description')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetGroupDescription clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetGroupDescription copyWith(void Function(SetGroupDescription) updates) =>
+      super.copyWith((message) => updates(message as SetGroupDescription)) as SetGroupDescription;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SetGroupDescription() / SetGroupDescription.new instead')
+  static SetGroupDescription create() => SetGroupDescription._();
+  static $pb.GeneratedMessage $_createMessage() => SetGroupDescription._();
+  @$core.override
+  SetGroupDescription createEmptyInstance() => SetGroupDescription._();
+  @$core.pragma('dart2js:noInline')
+  static SetGroupDescription getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SetGroupDescription>(SetGroupDescription.$_createMessage);
+  static SetGroupDescription? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get description => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set description($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDescription() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDescription() => $_clearField(2);
+}
+
+/// The group goes; its relationships stay (the destructive delete is the
+/// system edit `delete_group_with_members`).
+class DeleteGroup extends $pb.GeneratedMessage {
+  factory DeleteGroup({
+    $fixnum.Int64? id,
+  }) {
+    final result = DeleteGroup._();
+    if (id != null) result.id = id;
+    return result;
+  }
+
+  DeleteGroup._();
+
+  factory DeleteGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeleteGroup()..mergeFromBuffer(data, registry);
+  factory DeleteGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeleteGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DeleteGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DeleteGroup.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteGroup copyWith(void Function(DeleteGroup) updates) =>
+      super.copyWith((message) => updates(message as DeleteGroup)) as DeleteGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DeleteGroup() / DeleteGroup.new instead')
+  static DeleteGroup create() => DeleteGroup._();
+  static $pb.GeneratedMessage $_createMessage() => DeleteGroup._();
+  @$core.override
+  DeleteGroup createEmptyInstance() => DeleteGroup._();
+  @$core.pragma('dart2js:noInline')
+  static DeleteGroup getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeleteGroup>(DeleteGroup.$_createMessage);
+  static DeleteGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+}
+
+class AddGroupMember extends $pb.GeneratedMessage {
+  factory AddGroupMember({
+    $fixnum.Int64? group,
+    $fixnum.Int64? decl,
+  }) {
+    final result = AddGroupMember._();
+    if (group != null) result.group = group;
+    if (decl != null) result.decl = decl;
+    return result;
+  }
+
+  AddGroupMember._();
+
+  factory AddGroupMember.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AddGroupMember()..mergeFromBuffer(data, registry);
+  factory AddGroupMember.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AddGroupMember()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'AddGroupMember',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: AddGroupMember.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'decl', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AddGroupMember clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AddGroupMember copyWith(void Function(AddGroupMember) updates) =>
+      super.copyWith((message) => updates(message as AddGroupMember)) as AddGroupMember;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use AddGroupMember() / AddGroupMember.new instead')
+  static AddGroupMember create() => AddGroupMember._();
+  static $pb.GeneratedMessage $_createMessage() => AddGroupMember._();
+  @$core.override
+  AddGroupMember createEmptyInstance() => AddGroupMember._();
+  @$core.pragma('dart2js:noInline')
+  static AddGroupMember getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AddGroupMember>(AddGroupMember.$_createMessage);
+  static AddGroupMember? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get decl => $_getI64(1);
+  @$pb.TagNumber(2)
+  set decl($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDecl() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDecl() => $_clearField(2);
+}
+
+class RemoveGroupMember extends $pb.GeneratedMessage {
+  factory RemoveGroupMember({
+    $fixnum.Int64? group,
+    $fixnum.Int64? decl,
+  }) {
+    final result = RemoveGroupMember._();
+    if (group != null) result.group = group;
+    if (decl != null) result.decl = decl;
+    return result;
+  }
+
+  RemoveGroupMember._();
+
+  factory RemoveGroupMember.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RemoveGroupMember()..mergeFromBuffer(data, registry);
+  factory RemoveGroupMember.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RemoveGroupMember()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'RemoveGroupMember',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: RemoveGroupMember.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'decl', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RemoveGroupMember clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RemoveGroupMember copyWith(void Function(RemoveGroupMember) updates) =>
+      super.copyWith((message) => updates(message as RemoveGroupMember)) as RemoveGroupMember;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use RemoveGroupMember() / RemoveGroupMember.new instead')
+  static RemoveGroupMember create() => RemoveGroupMember._();
+  static $pb.GeneratedMessage $_createMessage() => RemoveGroupMember._();
+  @$core.override
+  RemoveGroupMember createEmptyInstance() => RemoveGroupMember._();
+  @$core.pragma('dart2js:noInline')
+  static RemoveGroupMember getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RemoveGroupMember>(RemoveGroupMember.$_createMessage);
+  static RemoveGroupMember? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get decl => $_getI64(1);
+  @$pb.TagNumber(2)
+  set decl($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDecl() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDecl() => $_clearField(2);
+}
+
+class MoveGroupMember extends $pb.GeneratedMessage {
+  factory MoveGroupMember({
+    $fixnum.Int64? decl,
+    $fixnum.Int64? to,
+  }) {
+    final result = MoveGroupMember._();
+    if (decl != null) result.decl = decl;
+    if (to != null) result.to = to;
+    return result;
+  }
+
+  MoveGroupMember._();
+
+  factory MoveGroupMember.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MoveGroupMember()..mergeFromBuffer(data, registry);
+  factory MoveGroupMember.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MoveGroupMember()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MoveGroupMember',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: MoveGroupMember.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'decl', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'to', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MoveGroupMember clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MoveGroupMember copyWith(void Function(MoveGroupMember) updates) =>
+      super.copyWith((message) => updates(message as MoveGroupMember)) as MoveGroupMember;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use MoveGroupMember() / MoveGroupMember.new instead')
+  static MoveGroupMember create() => MoveGroupMember._();
+  static $pb.GeneratedMessage $_createMessage() => MoveGroupMember._();
+  @$core.override
+  MoveGroupMember createEmptyInstance() => MoveGroupMember._();
+  @$core.pragma('dart2js:noInline')
+  static MoveGroupMember getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MoveGroupMember>(MoveGroupMember.$_createMessage);
+  static MoveGroupMember? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get decl => $_getI64(0);
+  @$pb.TagNumber(1)
+  set decl($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDecl() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDecl() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get to => $_getI64(1);
+  @$pb.TagNumber(2)
+  set to($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTo() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTo() => $_clearField(2);
+}
+
+class MergeGroups extends $pb.GeneratedMessage {
+  factory MergeGroups({
+    $fixnum.Int64? into,
+    $fixnum.Int64? from,
+  }) {
+    final result = MergeGroups._();
+    if (into != null) result.into = into;
+    if (from != null) result.from = from;
+    return result;
+  }
+
+  MergeGroups._();
+
+  factory MergeGroups.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MergeGroups()..mergeFromBuffer(data, registry);
+  factory MergeGroups.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      MergeGroups()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MergeGroups',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: MergeGroups.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'into', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'from', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeGroups clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeGroups copyWith(void Function(MergeGroups) updates) =>
+      super.copyWith((message) => updates(message as MergeGroups)) as MergeGroups;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use MergeGroups() / MergeGroups.new instead')
+  static MergeGroups create() => MergeGroups._();
+  static $pb.GeneratedMessage $_createMessage() => MergeGroups._();
+  @$core.override
+  MergeGroups createEmptyInstance() => MergeGroups._();
+  @$core.pragma('dart2js:noInline')
+  static MergeGroups getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MergeGroups>(MergeGroups.$_createMessage);
+  static MergeGroups? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get into => $_getI64(0);
+  @$pb.TagNumber(1)
+  set into($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasInto() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearInto() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get from => $_getI64(1);
+  @$pb.TagNumber(2)
+  set from($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasFrom() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearFrom() => $_clearField(2);
+}
+
+class SplitGroup extends $pb.GeneratedMessage {
+  factory SplitGroup({
+    $fixnum.Int64? id,
+    $core.String? name,
+    $core.Iterable<$fixnum.Int64>? members,
+  }) {
+    final result = SplitGroup._();
+    if (id != null) result.id = id;
+    if (name != null) result.name = name;
+    if (members != null) result.members.addAll(members);
+    return result;
+  }
+
+  SplitGroup._();
+
+  factory SplitGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SplitGroup()..mergeFromBuffer(data, registry);
+  factory SplitGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SplitGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SplitGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SplitGroup.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SplitGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SplitGroup copyWith(void Function(SplitGroup) updates) =>
+      super.copyWith((message) => updates(message as SplitGroup)) as SplitGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SplitGroup() / SplitGroup.new instead')
+  static SplitGroup create() => SplitGroup._();
+  static $pb.GeneratedMessage $_createMessage() => SplitGroup._();
+  @$core.override
+  SplitGroup createEmptyInstance() => SplitGroup._();
+  @$core.pragma('dart2js:noInline')
+  static SplitGroup getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SplitGroup>(SplitGroup.$_createMessage);
+  static SplitGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get members => $_getList(2);
+}
+
+/// The boundary of a group, read off the flat dependency graph (FV
+/// `Boundary`): a projection, never a declaration.  Every list holds flat
+/// declaration ids (base relationships keep theirs).
+class BehaviorGroupBoundaryView extends $pb.GeneratedMessage {
+  factory BehaviorGroupBoundaryView({
+    $fixnum.Int64? id,
+    $core.Iterable<$fixnum.Int64>? members,
+    $core.Iterable<$fixnum.Int64>? crossingIn,
+    $core.Iterable<$fixnum.Int64>? crossingOut,
+    $core.Iterable<$fixnum.Int64>? openMembers,
+    $core.Iterable<$fixnum.Int64>? drivenMembers,
+    $core.Iterable<$fixnum.Int64>? privateCandidates,
+    $core.Iterable<$fixnum.Int64>? externalInputs,
+    $core.Iterable<$fixnum.Int64>? externalOutputs,
+    $core.Iterable<$fixnum.Int64>? clocks,
+    $core.Iterable<DeclEdge>? internalEdges,
+  }) {
+    final result = BehaviorGroupBoundaryView._();
+    if (id != null) result.id = id;
+    if (members != null) result.members.addAll(members);
+    if (crossingIn != null) result.crossingIn.addAll(crossingIn);
+    if (crossingOut != null) result.crossingOut.addAll(crossingOut);
+    if (openMembers != null) result.openMembers.addAll(openMembers);
+    if (drivenMembers != null) result.drivenMembers.addAll(drivenMembers);
+    if (privateCandidates != null) result.privateCandidates.addAll(privateCandidates);
+    if (externalInputs != null) result.externalInputs.addAll(externalInputs);
+    if (externalOutputs != null) result.externalOutputs.addAll(externalOutputs);
+    if (clocks != null) result.clocks.addAll(clocks);
+    if (internalEdges != null) result.internalEdges.addAll(internalEdges);
+    return result;
+  }
+
+  BehaviorGroupBoundaryView._();
+
+  factory BehaviorGroupBoundaryView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BehaviorGroupBoundaryView()..mergeFromBuffer(data, registry);
+  factory BehaviorGroupBoundaryView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BehaviorGroupBoundaryView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'BehaviorGroupBoundaryView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BehaviorGroupBoundaryView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..p<$fixnum.Int64>(2, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'crossingIn', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(4, _omitFieldNames ? '' : 'crossingOut', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(5, _omitFieldNames ? '' : 'openMembers', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(6, _omitFieldNames ? '' : 'drivenMembers', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(7, _omitFieldNames ? '' : 'privateCandidates', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(8, _omitFieldNames ? '' : 'externalInputs', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(9, _omitFieldNames ? '' : 'externalOutputs', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(10, _omitFieldNames ? '' : 'clocks', $pb.PbFieldType.KU6)
+    ..pPM<DeclEdge>(11, _omitFieldNames ? '' : 'internalEdges',
+        subBuilder: DeclEdge.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BehaviorGroupBoundaryView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BehaviorGroupBoundaryView copyWith(void Function(BehaviorGroupBoundaryView) updates) =>
+      super.copyWith((message) => updates(message as BehaviorGroupBoundaryView))
+          as BehaviorGroupBoundaryView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BehaviorGroupBoundaryView() / BehaviorGroupBoundaryView.new instead')
+  static BehaviorGroupBoundaryView create() => BehaviorGroupBoundaryView._();
+  static $pb.GeneratedMessage $_createMessage() => BehaviorGroupBoundaryView._();
+  @$core.override
+  BehaviorGroupBoundaryView createEmptyInstance() => BehaviorGroupBoundaryView._();
+  @$core.pragma('dart2js:noInline')
+  static BehaviorGroupBoundaryView getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<BehaviorGroupBoundaryView>(
+          BehaviorGroupBoundaryView.$_createMessage);
+  static BehaviorGroupBoundaryView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$fixnum.Int64> get members => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get crossingIn => $_getList(2);
+
+  @$pb.TagNumber(4)
+  $pb.PbList<$fixnum.Int64> get crossingOut => $_getList(3);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<$fixnum.Int64> get openMembers => $_getList(4);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<$fixnum.Int64> get drivenMembers => $_getList(5);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<$fixnum.Int64> get privateCandidates => $_getList(6);
+
+  /// crossing_in ++ open_members: the input socket list of a collapsed group.
+  @$pb.TagNumber(8)
+  $pb.PbList<$fixnum.Int64> get externalInputs => $_getList(7);
+
+  /// crossing_out: the output socket list.
+  @$pb.TagNumber(9)
+  $pb.PbList<$fixnum.Int64> get externalOutputs => $_getList(8);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<$fixnum.Int64> get clocks => $_getList(9);
+
+  @$pb.TagNumber(11)
+  $pb.PbList<DeclEdge> get internalEdges => $_getList(10);
+}
+
+class DeclEdge extends $pb.GeneratedMessage {
+  factory DeclEdge({
+    $fixnum.Int64? from,
+    $fixnum.Int64? to,
+  }) {
+    final result = DeclEdge._();
+    if (from != null) result.from = from;
+    if (to != null) result.to = to;
+    return result;
+  }
+
+  DeclEdge._();
+
+  factory DeclEdge.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclEdge()..mergeFromBuffer(data, registry);
+  factory DeclEdge.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeclEdge()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DeclEdge',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DeclEdge.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'from', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'to', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclEdge clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeclEdge copyWith(void Function(DeclEdge) updates) =>
+      super.copyWith((message) => updates(message as DeclEdge)) as DeclEdge;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DeclEdge() / DeclEdge.new instead')
+  static DeclEdge create() => DeclEdge._();
+  static $pb.GeneratedMessage $_createMessage() => DeclEdge._();
+  @$core.override
+  DeclEdge createEmptyInstance() => DeclEdge._();
+  @$core.pragma('dart2js:noInline')
+  static DeclEdge getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DeclEdge>(DeclEdge.$_createMessage);
+  static DeclEdge? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get from => $_getI64(0);
+  @$pb.TagNumber(1)
+  set from($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFrom() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFrom() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get to => $_getI64(1);
+  @$pb.TagNumber(2)
+  set to($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTo() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTo() => $_clearField(2);
+}
+
+/// "Package as reusable component": what it would do.  Nothing changes.
+class PreviewComponentExtractionRequest extends $pb.GeneratedMessage {
+  factory PreviewComponentExtractionRequest({
+    $fixnum.Int64? group,
+    ExtractionChoices? choices,
+  }) {
+    final result = PreviewComponentExtractionRequest._();
+    if (group != null) result.group = group;
+    if (choices != null) result.choices = choices;
+    return result;
+  }
+
+  PreviewComponentExtractionRequest._();
+
+  factory PreviewComponentExtractionRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PreviewComponentExtractionRequest()..mergeFromBuffer(data, registry);
+  factory PreviewComponentExtractionRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PreviewComponentExtractionRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'PreviewComponentExtractionRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: PreviewComponentExtractionRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<ExtractionChoices>(2, _omitFieldNames ? '' : 'choices',
+        subBuilder: ExtractionChoices.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PreviewComponentExtractionRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PreviewComponentExtractionRequest copyWith(
+          void Function(PreviewComponentExtractionRequest) updates) =>
+      super.copyWith((message) => updates(message as PreviewComponentExtractionRequest))
+          as PreviewComponentExtractionRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated(
+      'Use PreviewComponentExtractionRequest() / PreviewComponentExtractionRequest.new instead')
+  static PreviewComponentExtractionRequest create() => PreviewComponentExtractionRequest._();
+  static $pb.GeneratedMessage $_createMessage() => PreviewComponentExtractionRequest._();
+  @$core.override
+  PreviewComponentExtractionRequest createEmptyInstance() => PreviewComponentExtractionRequest._();
+  @$core.pragma('dart2js:noInline')
+  static PreviewComponentExtractionRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PreviewComponentExtractionRequest>(
+          PreviewComponentExtractionRequest.$_createMessage);
+  static PreviewComponentExtractionRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  ExtractionChoices get choices => $_getN(1);
+  @$pb.TagNumber(2)
+  set choices(ExtractionChoices value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasChoices() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChoices() => $_clearField(2);
+  @$pb.TagNumber(2)
+  ExtractionChoices ensureChoices() => $_ensure(1);
+}
+
+class ExtractionChoices extends $pb.GeneratedMessage {
+  factory ExtractionChoices({
+    $core.String? name,
+    $core.String? instanceName,
+    $core.Iterable<$fixnum.Int64>? keepInternal,
+    $core.Iterable<$fixnum.Int64>? internalizeSinks,
+  }) {
+    final result = ExtractionChoices._();
+    if (name != null) result.name = name;
+    if (instanceName != null) result.instanceName = instanceName;
+    if (keepInternal != null) result.keepInternal.addAll(keepInternal);
+    if (internalizeSinks != null) result.internalizeSinks.addAll(internalizeSinks);
+    return result;
+  }
+
+  ExtractionChoices._();
+
+  factory ExtractionChoices.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionChoices()..mergeFromBuffer(data, registry);
+  factory ExtractionChoices.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionChoices()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ExtractionChoices',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ExtractionChoices.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'instanceName')
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'keepInternal', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(4, _omitFieldNames ? '' : 'internalizeSinks', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionChoices clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionChoices copyWith(void Function(ExtractionChoices) updates) =>
+      super.copyWith((message) => updates(message as ExtractionChoices)) as ExtractionChoices;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ExtractionChoices() / ExtractionChoices.new instead')
+  static ExtractionChoices create() => ExtractionChoices._();
+  static $pb.GeneratedMessage $_createMessage() => ExtractionChoices._();
+  @$core.override
+  ExtractionChoices createEmptyInstance() => ExtractionChoices._();
+  @$core.pragma('dart2js:noInline')
+  static ExtractionChoices getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ExtractionChoices>(ExtractionChoices.$_createMessage);
+  static ExtractionChoices? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get instanceName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set instanceName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasInstanceName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearInstanceName() => $_clearField(2);
+
+  /// Open members to keep internal (default: every open member is an input).
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get keepInternal => $_getList(2);
+
+  /// Driven sinks to move into the component (default: they stay external).
+  @$pb.TagNumber(4)
+  $pb.PbList<$fixnum.Int64> get internalizeSinks => $_getList(3);
+}
+
+class ExtractionPreviewResponse extends $pb.GeneratedMessage {
+  factory ExtractionPreviewResponse({
+    ExtractionPreviewView? preview,
+  }) {
+    final result = ExtractionPreviewResponse._();
+    if (preview != null) result.preview = preview;
+    return result;
+  }
+
+  ExtractionPreviewResponse._();
+
+  factory ExtractionPreviewResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionPreviewResponse()..mergeFromBuffer(data, registry);
+  factory ExtractionPreviewResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionPreviewResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ExtractionPreviewResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ExtractionPreviewResponse.$_createMessage)
+    ..aOM<ExtractionPreviewView>(1, _omitFieldNames ? '' : 'preview',
+        subBuilder: ExtractionPreviewView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionPreviewResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionPreviewResponse copyWith(void Function(ExtractionPreviewResponse) updates) =>
+      super.copyWith((message) => updates(message as ExtractionPreviewResponse))
+          as ExtractionPreviewResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ExtractionPreviewResponse() / ExtractionPreviewResponse.new instead')
+  static ExtractionPreviewResponse create() => ExtractionPreviewResponse._();
+  static $pb.GeneratedMessage $_createMessage() => ExtractionPreviewResponse._();
+  @$core.override
+  ExtractionPreviewResponse createEmptyInstance() => ExtractionPreviewResponse._();
+  @$core.pragma('dart2js:noInline')
+  static ExtractionPreviewResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ExtractionPreviewResponse>(
+          ExtractionPreviewResponse.$_createMessage);
+  static ExtractionPreviewResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  ExtractionPreviewView get preview => $_getN(0);
+  @$pb.TagNumber(1)
+  set preview(ExtractionPreviewView value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPreview() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPreview() => $_clearField(1);
+  @$pb.TagNumber(1)
+  ExtractionPreviewView ensurePreview() => $_ensure(0);
+}
+
+class ExtractionPreviewView extends $pb.GeneratedMessage {
+  factory ExtractionPreviewView({
+    $fixnum.Int64? group,
+    $core.String? name,
+    $core.String? instanceName,
+    BehaviorGroupBoundaryView? boundary,
+    $core.Iterable<PreviewPortView>? required,
+    $core.Iterable<PreviewPortView>? provided,
+    $core.Iterable<OpenMemberDecisionView>? openMembers,
+    $core.Iterable<$fixnum.Int64>? clocks,
+    $core.Iterable<SinkDecisionView>? sinks,
+    $core.Iterable<$fixnum.Int64>? private,
+    $core.Iterable<Diagnostic>? warnings,
+  }) {
+    final result = ExtractionPreviewView._();
+    if (group != null) result.group = group;
+    if (name != null) result.name = name;
+    if (instanceName != null) result.instanceName = instanceName;
+    if (boundary != null) result.boundary = boundary;
+    if (required != null) result.required.addAll(required);
+    if (provided != null) result.provided.addAll(provided);
+    if (openMembers != null) result.openMembers.addAll(openMembers);
+    if (clocks != null) result.clocks.addAll(clocks);
+    if (sinks != null) result.sinks.addAll(sinks);
+    if (private != null) result.private.addAll(private);
+    if (warnings != null) result.warnings.addAll(warnings);
+    return result;
+  }
+
+  ExtractionPreviewView._();
+
+  factory ExtractionPreviewView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionPreviewView()..mergeFromBuffer(data, registry);
+  factory ExtractionPreviewView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractionPreviewView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ExtractionPreviewView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ExtractionPreviewView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aOS(3, _omitFieldNames ? '' : 'instanceName')
+    ..aOM<BehaviorGroupBoundaryView>(4, _omitFieldNames ? '' : 'boundary',
+        subBuilder: BehaviorGroupBoundaryView.$_createMessage)
+    ..pPM<PreviewPortView>(5, _omitFieldNames ? '' : 'required',
+        subBuilder: PreviewPortView.$_createMessage)
+    ..pPM<PreviewPortView>(6, _omitFieldNames ? '' : 'provided',
+        subBuilder: PreviewPortView.$_createMessage)
+    ..pPM<OpenMemberDecisionView>(7, _omitFieldNames ? '' : 'openMembers',
+        subBuilder: OpenMemberDecisionView.$_createMessage)
+    ..p<$fixnum.Int64>(8, _omitFieldNames ? '' : 'clocks', $pb.PbFieldType.KU6)
+    ..pPM<SinkDecisionView>(9, _omitFieldNames ? '' : 'sinks',
+        subBuilder: SinkDecisionView.$_createMessage)
+    ..p<$fixnum.Int64>(10, _omitFieldNames ? '' : 'private', $pb.PbFieldType.KU6)
+    ..pPM<Diagnostic>(11, _omitFieldNames ? '' : 'warnings', subBuilder: Diagnostic.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionPreviewView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractionPreviewView copyWith(void Function(ExtractionPreviewView) updates) =>
+      super.copyWith((message) => updates(message as ExtractionPreviewView))
+          as ExtractionPreviewView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ExtractionPreviewView() / ExtractionPreviewView.new instead')
+  static ExtractionPreviewView create() => ExtractionPreviewView._();
+  static $pb.GeneratedMessage $_createMessage() => ExtractionPreviewView._();
+  @$core.override
+  ExtractionPreviewView createEmptyInstance() => ExtractionPreviewView._();
+  @$core.pragma('dart2js:noInline')
+  static ExtractionPreviewView getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ExtractionPreviewView>(
+          ExtractionPreviewView.$_createMessage);
+  static ExtractionPreviewView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get instanceName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set instanceName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasInstanceName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearInstanceName() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  BehaviorGroupBoundaryView get boundary => $_getN(3);
+  @$pb.TagNumber(4)
+  set boundary(BehaviorGroupBoundaryView value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasBoundary() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearBoundary() => $_clearField(4);
+  @$pb.TagNumber(4)
+  BehaviorGroupBoundaryView ensureBoundary() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<PreviewPortView> get required => $_getList(4);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<PreviewPortView> get provided => $_getList(5);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<OpenMemberDecisionView> get openMembers => $_getList(6);
+
+  @$pb.TagNumber(8)
+  $pb.PbList<$fixnum.Int64> get clocks => $_getList(7);
+
+  @$pb.TagNumber(9)
+  $pb.PbList<SinkDecisionView> get sinks => $_getList(8);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<$fixnum.Int64> get private => $_getList(9);
+
+  @$pb.TagNumber(11)
+  $pb.PbList<Diagnostic> get warnings => $_getList(10);
+}
+
+class PreviewPortView extends $pb.GeneratedMessage {
+  factory PreviewPortView({
+    $fixnum.Int64? decl,
+    $core.String? name,
+    PortKind? kind,
+    $fixnum.Int64? concept,
+  }) {
+    final result = PreviewPortView._();
+    if (decl != null) result.decl = decl;
+    if (name != null) result.name = name;
+    if (kind != null) result.kind = kind;
+    if (concept != null) result.concept = concept;
+    return result;
+  }
+
+  PreviewPortView._();
+
+  factory PreviewPortView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PreviewPortView()..mergeFromBuffer(data, registry);
+  factory PreviewPortView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PreviewPortView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PreviewPortView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: PreviewPortView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'decl', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aE<PortKind>(3, _omitFieldNames ? '' : 'kind', enumValues: PortKind.values)
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'concept', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PreviewPortView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PreviewPortView copyWith(void Function(PreviewPortView) updates) =>
+      super.copyWith((message) => updates(message as PreviewPortView)) as PreviewPortView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use PreviewPortView() / PreviewPortView.new instead')
+  static PreviewPortView create() => PreviewPortView._();
+  static $pb.GeneratedMessage $_createMessage() => PreviewPortView._();
+  @$core.override
+  PreviewPortView createEmptyInstance() => PreviewPortView._();
+  @$core.pragma('dart2js:noInline')
+  static PreviewPortView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<PreviewPortView>(PreviewPortView.$_createMessage);
+  static PreviewPortView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get decl => $_getI64(0);
+  @$pb.TagNumber(1)
+  set decl($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDecl() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDecl() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  PortKind get kind => $_getN(2);
+  @$pb.TagNumber(3)
+  set kind(PortKind value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasKind() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearKind() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get concept => $_getI64(3);
+  @$pb.TagNumber(4)
+  set concept($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasConcept() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearConcept() => $_clearField(4);
+}
+
+class OpenMemberDecisionView extends $pb.GeneratedMessage {
+  factory OpenMemberDecisionView({
+    $fixnum.Int64? decl,
+    $core.String? name,
+    $core.bool? asInput,
+  }) {
+    final result = OpenMemberDecisionView._();
+    if (decl != null) result.decl = decl;
+    if (name != null) result.name = name;
+    if (asInput != null) result.asInput = asInput;
+    return result;
+  }
+
+  OpenMemberDecisionView._();
+
+  factory OpenMemberDecisionView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      OpenMemberDecisionView()..mergeFromBuffer(data, registry);
+  factory OpenMemberDecisionView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      OpenMemberDecisionView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'OpenMemberDecisionView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: OpenMemberDecisionView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'decl', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aOB(3, _omitFieldNames ? '' : 'asInput')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  OpenMemberDecisionView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  OpenMemberDecisionView copyWith(void Function(OpenMemberDecisionView) updates) =>
+      super.copyWith((message) => updates(message as OpenMemberDecisionView))
+          as OpenMemberDecisionView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use OpenMemberDecisionView() / OpenMemberDecisionView.new instead')
+  static OpenMemberDecisionView create() => OpenMemberDecisionView._();
+  static $pb.GeneratedMessage $_createMessage() => OpenMemberDecisionView._();
+  @$core.override
+  OpenMemberDecisionView createEmptyInstance() => OpenMemberDecisionView._();
+  @$core.pragma('dart2js:noInline')
+  static OpenMemberDecisionView getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<OpenMemberDecisionView>(
+          OpenMemberDecisionView.$_createMessage);
+  static OpenMemberDecisionView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get decl => $_getI64(0);
+  @$pb.TagNumber(1)
+  set decl($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDecl() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDecl() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get asInput => $_getBF(2);
+  @$pb.TagNumber(3)
+  set asInput($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAsInput() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAsInput() => $_clearField(3);
+}
+
+class SinkDecisionView extends $pb.GeneratedMessage {
+  factory SinkDecisionView({
+    $fixnum.Int64? output,
+    $core.String? name,
+    $core.Iterable<$fixnum.Int64>? drivers,
+    $core.bool? internal,
+  }) {
+    final result = SinkDecisionView._();
+    if (output != null) result.output = output;
+    if (name != null) result.name = name;
+    if (drivers != null) result.drivers.addAll(drivers);
+    if (internal != null) result.internal = internal;
+    return result;
+  }
+
+  SinkDecisionView._();
+
+  factory SinkDecisionView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SinkDecisionView()..mergeFromBuffer(data, registry);
+  factory SinkDecisionView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SinkDecisionView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SinkDecisionView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SinkDecisionView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'output', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'drivers', $pb.PbFieldType.KU6)
+    ..aOB(4, _omitFieldNames ? '' : 'internal')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SinkDecisionView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SinkDecisionView copyWith(void Function(SinkDecisionView) updates) =>
+      super.copyWith((message) => updates(message as SinkDecisionView)) as SinkDecisionView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SinkDecisionView() / SinkDecisionView.new instead')
+  static SinkDecisionView create() => SinkDecisionView._();
+  static $pb.GeneratedMessage $_createMessage() => SinkDecisionView._();
+  @$core.override
+  SinkDecisionView createEmptyInstance() => SinkDecisionView._();
+  @$core.pragma('dart2js:noInline')
+  static SinkDecisionView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SinkDecisionView>(SinkDecisionView.$_createMessage);
+  static SinkDecisionView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get output => $_getI64(0);
+  @$pb.TagNumber(1)
+  set output($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasOutput() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearOutput() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get drivers => $_getList(2);
+
+  @$pb.TagNumber(4)
+  $core.bool get internal => $_getBF(3);
+  @$pb.TagNumber(4)
+  set internal($core.bool value) => $_setBool(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasInternal() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearInternal() => $_clearField(4);
 }
 
 enum SystemEditOp_Op {
@@ -13892,6 +16046,8 @@ enum SystemEditOp_Op {
   rebindPortDeclaration,
   duplicateComponent,
   replaceInstanceComponent,
+  extractGroupAsComponent,
+  deleteGroupWithMembers,
   notSet
 }
 
@@ -13922,6 +16078,8 @@ class SystemEditOp extends $pb.GeneratedMessage {
     RebindPortDeclaration? rebindPortDeclaration,
     DuplicateComponent? duplicateComponent,
     ReplaceInstanceComponent? replaceInstanceComponent,
+    ExtractGroupAsComponent? extractGroupAsComponent,
+    DeleteGroupWithMembers? deleteGroupWithMembers,
   }) {
     final result = SystemEditOp._();
     if (base != null) result.base = base;
@@ -13950,6 +16108,8 @@ class SystemEditOp extends $pb.GeneratedMessage {
     if (duplicateComponent != null) result.duplicateComponent = duplicateComponent;
     if (replaceInstanceComponent != null)
       result.replaceInstanceComponent = replaceInstanceComponent;
+    if (extractGroupAsComponent != null) result.extractGroupAsComponent = extractGroupAsComponent;
+    if (deleteGroupWithMembers != null) result.deleteGroupWithMembers = deleteGroupWithMembers;
     return result;
   }
 
@@ -13988,13 +16148,42 @@ class SystemEditOp extends $pb.GeneratedMessage {
     23: SystemEditOp_Op.rebindPortDeclaration,
     24: SystemEditOp_Op.duplicateComponent,
     25: SystemEditOp_Op.replaceInstanceComponent,
+    26: SystemEditOp_Op.extractGroupAsComponent,
+    27: SystemEditOp_Op.deleteGroupWithMembers,
     0: SystemEditOp_Op.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SystemEditOp',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: SystemEditOp.$_createMessage)
-    ..oo(0,
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+    ..oo(0, [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ])
     ..aOM<EditOp>(1, _omitFieldNames ? '' : 'base', subBuilder: EditOp.$_createMessage)
     ..aOM<CreateComponent>(2, _omitFieldNames ? '' : 'createComponent',
         subBuilder: CreateComponent.$_createMessage)
@@ -14042,6 +16231,10 @@ class SystemEditOp extends $pb.GeneratedMessage {
         subBuilder: DuplicateComponent.$_createMessage)
     ..aOM<ReplaceInstanceComponent>(25, _omitFieldNames ? '' : 'replaceInstanceComponent',
         subBuilder: ReplaceInstanceComponent.$_createMessage)
+    ..aOM<ExtractGroupAsComponent>(26, _omitFieldNames ? '' : 'extractGroupAsComponent',
+        subBuilder: ExtractGroupAsComponent.$_createMessage)
+    ..aOM<DeleteGroupWithMembers>(27, _omitFieldNames ? '' : 'deleteGroupWithMembers',
+        subBuilder: DeleteGroupWithMembers.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14089,6 +16282,8 @@ class SystemEditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(23)
   @$pb.TagNumber(24)
   @$pb.TagNumber(25)
+  @$pb.TagNumber(26)
+  @$pb.TagNumber(27)
   SystemEditOp_Op whichOp() => _SystemEditOp_OpByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
@@ -14115,6 +16310,8 @@ class SystemEditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(23)
   @$pb.TagNumber(24)
   @$pb.TagNumber(25)
+  @$pb.TagNumber(26)
+  @$pb.TagNumber(27)
   void clearOp() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -14392,6 +16589,160 @@ class SystemEditOp extends $pb.GeneratedMessage {
   void clearReplaceInstanceComponent() => $_clearField(25);
   @$pb.TagNumber(25)
   ReplaceInstanceComponent ensureReplaceInstanceComponent() => $_ensure(24);
+
+  /// Behaviour grouping (protocol 0.8).
+  @$pb.TagNumber(26)
+  ExtractGroupAsComponent get extractGroupAsComponent => $_getN(25);
+  @$pb.TagNumber(26)
+  set extractGroupAsComponent(ExtractGroupAsComponent value) => $_setField(26, value);
+  @$pb.TagNumber(26)
+  $core.bool hasExtractGroupAsComponent() => $_has(25);
+  @$pb.TagNumber(26)
+  void clearExtractGroupAsComponent() => $_clearField(26);
+  @$pb.TagNumber(26)
+  ExtractGroupAsComponent ensureExtractGroupAsComponent() => $_ensure(25);
+
+  @$pb.TagNumber(27)
+  DeleteGroupWithMembers get deleteGroupWithMembers => $_getN(26);
+  @$pb.TagNumber(27)
+  set deleteGroupWithMembers(DeleteGroupWithMembers value) => $_setField(27, value);
+  @$pb.TagNumber(27)
+  $core.bool hasDeleteGroupWithMembers() => $_has(26);
+  @$pb.TagNumber(27)
+  void clearDeleteGroupWithMembers() => $_clearField(27);
+  @$pb.TagNumber(27)
+  DeleteGroupWithMembers ensureDeleteGroupWithMembers() => $_ensure(26);
+}
+
+class ExtractGroupAsComponent extends $pb.GeneratedMessage {
+  factory ExtractGroupAsComponent({
+    $fixnum.Int64? group,
+    ExtractionChoices? choices,
+  }) {
+    final result = ExtractGroupAsComponent._();
+    if (group != null) result.group = group;
+    if (choices != null) result.choices = choices;
+    return result;
+  }
+
+  ExtractGroupAsComponent._();
+
+  factory ExtractGroupAsComponent.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractGroupAsComponent()..mergeFromBuffer(data, registry);
+  factory ExtractGroupAsComponent.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ExtractGroupAsComponent()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ExtractGroupAsComponent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ExtractGroupAsComponent.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<ExtractionChoices>(2, _omitFieldNames ? '' : 'choices',
+        subBuilder: ExtractionChoices.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractGroupAsComponent clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ExtractGroupAsComponent copyWith(void Function(ExtractGroupAsComponent) updates) =>
+      super.copyWith((message) => updates(message as ExtractGroupAsComponent))
+          as ExtractGroupAsComponent;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ExtractGroupAsComponent() / ExtractGroupAsComponent.new instead')
+  static ExtractGroupAsComponent create() => ExtractGroupAsComponent._();
+  static $pb.GeneratedMessage $_createMessage() => ExtractGroupAsComponent._();
+  @$core.override
+  ExtractGroupAsComponent createEmptyInstance() => ExtractGroupAsComponent._();
+  @$core.pragma('dart2js:noInline')
+  static ExtractGroupAsComponent getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ExtractGroupAsComponent>(
+          ExtractGroupAsComponent.$_createMessage);
+  static ExtractGroupAsComponent? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  ExtractionChoices get choices => $_getN(1);
+  @$pb.TagNumber(2)
+  set choices(ExtractionChoices value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasChoices() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChoices() => $_clearField(2);
+  @$pb.TagNumber(2)
+  ExtractionChoices ensureChoices() => $_ensure(1);
+}
+
+class DeleteGroupWithMembers extends $pb.GeneratedMessage {
+  factory DeleteGroupWithMembers({
+    $fixnum.Int64? group,
+  }) {
+    final result = DeleteGroupWithMembers._();
+    if (group != null) result.group = group;
+    return result;
+  }
+
+  DeleteGroupWithMembers._();
+
+  factory DeleteGroupWithMembers.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeleteGroupWithMembers()..mergeFromBuffer(data, registry);
+  factory DeleteGroupWithMembers.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DeleteGroupWithMembers()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeleteGroupWithMembers',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DeleteGroupWithMembers.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'group', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteGroupWithMembers clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteGroupWithMembers copyWith(void Function(DeleteGroupWithMembers) updates) =>
+      super.copyWith((message) => updates(message as DeleteGroupWithMembers))
+          as DeleteGroupWithMembers;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DeleteGroupWithMembers() / DeleteGroupWithMembers.new instead')
+  static DeleteGroupWithMembers create() => DeleteGroupWithMembers._();
+  static $pb.GeneratedMessage $_createMessage() => DeleteGroupWithMembers._();
+  @$core.override
+  DeleteGroupWithMembers createEmptyInstance() => DeleteGroupWithMembers._();
+  @$core.pragma('dart2js:noInline')
+  static DeleteGroupWithMembers getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DeleteGroupWithMembers>(
+          DeleteGroupWithMembers.$_createMessage);
+  static DeleteGroupWithMembers? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get group => $_getI64(0);
+  @$pb.TagNumber(1)
+  set group($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasGroup() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearGroup() => $_clearField(1);
 }
 
 class ChangePortContract extends $pb.GeneratedMessage {
@@ -16483,6 +18834,8 @@ class SystemAnalysisView extends $pb.GeneratedMessage {
     SystemAcceptance? acceptance,
     $core.Iterable<ProjectedDiagnostic>? projected,
     $core.Iterable<ComponentStatusView>? components,
+    $core.Iterable<BehaviorGroupBoundaryView>? groups,
+    $core.Iterable<ComponentAnalysisView>? componentAnalyses,
   }) {
     final result = SystemAnalysisView._();
     if (revision != null) result.revision = revision;
@@ -16492,6 +18845,8 @@ class SystemAnalysisView extends $pb.GeneratedMessage {
     if (acceptance != null) result.acceptance = acceptance;
     if (projected != null) result.projected.addAll(projected);
     if (components != null) result.components.addAll(components);
+    if (groups != null) result.groups.addAll(groups);
+    if (componentAnalyses != null) result.componentAnalyses.addAll(componentAnalyses);
     return result;
   }
 
@@ -16521,6 +18876,10 @@ class SystemAnalysisView extends $pb.GeneratedMessage {
         subBuilder: ProjectedDiagnostic.$_createMessage)
     ..pPM<ComponentStatusView>(7, _omitFieldNames ? '' : 'components',
         subBuilder: ComponentStatusView.$_createMessage)
+    ..pPM<BehaviorGroupBoundaryView>(8, _omitFieldNames ? '' : 'groups',
+        subBuilder: BehaviorGroupBoundaryView.$_createMessage)
+    ..pPM<ComponentAnalysisView>(9, _omitFieldNames ? '' : 'componentAnalyses',
+        subBuilder: ComponentAnalysisView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -16587,6 +18946,88 @@ class SystemAnalysisView extends $pb.GeneratedMessage {
   /// Per component: whether its body realizes its public interface.
   @$pb.TagNumber(7)
   $pb.PbList<ComponentStatusView> get components => $_getList(6);
+
+  /// Per group: its boundary (protocol 0.8).
+  @$pb.TagNumber(8)
+  $pb.PbList<BehaviorGroupBoundaryView> get groups => $_getList(7);
+
+  /// Per component: the compiler's analysis of its body on its own, in
+  /// component-local ids — the component-source view's verdicts.
+  @$pb.TagNumber(9)
+  $pb.PbList<ComponentAnalysisView> get componentAnalyses => $_getList(8);
+}
+
+class ComponentAnalysisView extends $pb.GeneratedMessage {
+  factory ComponentAnalysisView({
+    $fixnum.Int64? id,
+    ProjectAnalysis? analysis,
+  }) {
+    final result = ComponentAnalysisView._();
+    if (id != null) result.id = id;
+    if (analysis != null) result.analysis = analysis;
+    return result;
+  }
+
+  ComponentAnalysisView._();
+
+  factory ComponentAnalysisView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComponentAnalysisView()..mergeFromBuffer(data, registry);
+  factory ComponentAnalysisView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComponentAnalysisView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ComponentAnalysisView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ComponentAnalysisView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<ProjectAnalysis>(2, _omitFieldNames ? '' : 'analysis',
+        subBuilder: ProjectAnalysis.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComponentAnalysisView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComponentAnalysisView copyWith(void Function(ComponentAnalysisView) updates) =>
+      super.copyWith((message) => updates(message as ComponentAnalysisView))
+          as ComponentAnalysisView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ComponentAnalysisView() / ComponentAnalysisView.new instead')
+  static ComponentAnalysisView create() => ComponentAnalysisView._();
+  static $pb.GeneratedMessage $_createMessage() => ComponentAnalysisView._();
+  @$core.override
+  ComponentAnalysisView createEmptyInstance() => ComponentAnalysisView._();
+  @$core.pragma('dart2js:noInline')
+  static ComponentAnalysisView getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ComponentAnalysisView>(
+          ComponentAnalysisView.$_createMessage);
+  static ComponentAnalysisView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  ProjectAnalysis get analysis => $_getN(1);
+  @$pb.TagNumber(2)
+  set analysis(ProjectAnalysis value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAnalysis() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAnalysis() => $_clearField(2);
+  @$pb.TagNumber(2)
+  ProjectAnalysis ensureAnalysis() => $_ensure(1);
 }
 
 class ComponentStatusView extends $pb.GeneratedMessage {

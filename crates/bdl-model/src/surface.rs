@@ -53,6 +53,18 @@ pub struct Design {
 }
 
 impl Design {
+    /// Move the allocator past every identity the design holds, so that a
+    /// design assembled from copied entities issues fresh ones only.
+    pub fn reserve_ids(&mut self) {
+        self.ids = self.ids.covering(
+            self.concepts.keys().map(|k| k.raw()).max(),
+            self.mappings.keys().map(|k| k.raw()).max(),
+            self.clocks.keys().map(|k| k.raw()).max(),
+            self.outputs.keys().map(|k| k.raw()).max(),
+            self.devices.keys().map(|k| k.raw()).max(),
+        );
+    }
+
     pub fn empty(name: impl Into<String>) -> Self {
         Design {
             name: name.into(),

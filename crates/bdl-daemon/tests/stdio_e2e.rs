@@ -425,6 +425,7 @@ fn vertical_slice_steps_1_to_12() {
                     y: 4.0,
                 }],
                 outputs: vec![],
+                ..Default::default()
             }),
         }),
         &mut events,
@@ -871,6 +872,7 @@ fn definition_drafts_over_stdio() {
         |c: &mut Client, events: &mut Vec<pb::Event>, rev: u64, id: u64, gen: u64, src: &str| {
             c.call(
                 Req::AnalyzeDefinitionDraft(pb::AnalyzeDefinitionDraftRequest {
+                    component: None,
                     revision: rev,
                     mapping_id: id,
                     generation: gen,
@@ -922,6 +924,7 @@ fn definition_drafts_over_stdio() {
     // offered, and the concept under the cursor is explained by bdl-ide
     let Resp::DraftCompletion(comp) = c.call(
         Req::CompleteDefinitionDraft(pb::CompleteDefinitionDraftRequest {
+            component: None,
             revision,
             mapping_id: mapping,
             source: "Ti".into(),
@@ -941,6 +944,7 @@ fn definition_drafts_over_stdio() {
     assert_eq!((tilt_item.replace_start, tilt_item.replace_end), (0, 2));
     let Resp::DraftHover(h) = c.call(
         Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            component: None,
             revision,
             mapping_id: mapping,
             source: "Tilt / 90 deg".into(),
@@ -956,6 +960,7 @@ fn definition_drafts_over_stdio() {
     assert_eq!(h.span.unwrap(), pb::SourceSpan { start: 0, end: 4 });
     let Resp::DraftHover(none) = c.call(
         Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            component: None,
             revision,
             mapping_id: mapping,
             source: "Tilt / 90 deg".into(),
@@ -1024,12 +1029,14 @@ fn definition_drafts_over_stdio() {
     // definition again (none: Declared) — and discarding twice is fine
     c.call(
         Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            component: None,
             mapping_id: open_mapping,
         }),
         &mut events,
     );
     let Resp::Ack(_) = c.call(
         Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            component: None,
             mapping_id: open_mapping,
         }),
         &mut events,
@@ -1038,6 +1045,7 @@ fn definition_drafts_over_stdio() {
     };
     let Resp::DraftHover(h) = c.call(
         Req::HoverDefinitionDraft(pb::HoverDefinitionDraftRequest {
+            component: None,
             revision,
             mapping_id: mapping,
             source: "Tilt".into(),
@@ -1120,6 +1128,7 @@ fn definition_drafts_over_stdio() {
     assert!(!d.parse_ok);
     c.call(
         Req::DiscardDefinitionDraft(pb::DiscardDefinitionDraftRequest {
+            component: None,
             mapping_id: mapping,
         }),
         &mut events,

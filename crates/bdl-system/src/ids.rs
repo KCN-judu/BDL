@@ -65,6 +65,12 @@ system_id!(
     ExportId,
     "export#"
 );
+system_id!(
+    /// An authoring group of base relationships (FV Phase 8b `GroupId`):
+    /// identity for a cognitive unit, never a kernel term.
+    BehaviorGroupId,
+    "group#"
+);
 
 /// Allocator of the system-layer sorts.  Kept beside the base design's
 /// `IdAllocator` (which issues every flat sort, global and freshened alike).
@@ -75,6 +81,8 @@ pub struct SystemIdAllocator {
     next_port: u64,
     next_binding: u64,
     next_export: u64,
+    #[serde(default)]
+    next_group: u64,
 }
 
 impl SystemIdAllocator {
@@ -101,6 +109,11 @@ impl SystemIdAllocator {
     pub fn fresh_export(&mut self) -> ExportId {
         let id = ExportId(self.next_export);
         self.next_export += 1;
+        id
+    }
+    pub fn fresh_group(&mut self) -> BehaviorGroupId {
+        let id = BehaviorGroupId(self.next_group);
+        self.next_group += 1;
         id
     }
 }

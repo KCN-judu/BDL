@@ -234,10 +234,14 @@ impl Sys {
             clock: Some(clock),
         });
     }
-    pub fn bind(&mut self, source: PortRef, destination: PortRef) -> BindingId {
+    pub fn bind(
+        &mut self,
+        source: impl Into<BindingEnd>,
+        destination: impl Into<BindingEnd>,
+    ) -> BindingId {
         self.apply(SystemEditOp::BindPorts {
-            source,
-            destination,
+            source: source.into(),
+            destination: destination.into(),
             transport: None,
         })
         .created_binding
@@ -245,16 +249,88 @@ impl Sys {
     }
     pub fn bind_transported(
         &mut self,
-        source: PortRef,
-        destination: PortRef,
+        source: impl Into<BindingEnd>,
+        destination: impl Into<BindingEnd>,
         init: &str,
     ) -> BindingId {
         self.apply(SystemEditOp::BindPorts {
-            source,
-            destination,
+            source: source.into(),
+            destination: destination.into(),
             transport: Some(BindingTransport { init: init.into() }),
         })
         .created_binding
+        .unwrap()
+    }
+
+    // ---- base relationships (the top level, groupable) ----------------------
+
+    pub fn base_mapping(
+        &mut self,
+        name: &str,
+        inputs: &[SemanticId],
+        output: SemanticId,
+    ) -> DeclId {
+        self.base(EditOp::CreateMapping {
+            name: name.into(),
+            description: String::new(),
+            signature: Signature {
+                inputs: inputs.to_vec(),
+                output,
+            },
+        })
+        .inner
+        .unwrap()
+        .created_mapping
+        .unwrap()
+    }
+    pub fn base_formula(&mut self, m: DeclId, source: &str) {
+        self.base(EditOp::AttachDefinition {
+            id: m,
+            definition: Definition::Formula {
+                source: source.into(),
+            },
+        });
+    }
+    pub fn base_clock_of(&mut self, m: DeclId, clock: ClockId) {
+        self.base(EditOp::SetMappingClock {
+            id: m,
+            clock: Some(clock),
+        });
+    }
+    pub fn base_drive(&mut self, m: DeclId, o: OutputId) {
+        self.base(EditOp::SetMappingDrive {
+            id: m,
+            output: Some(o),
+        });
+    }
+    pub fn base_device(&mut self, name: &str, kind: DeviceKind, output: OutputId) {
+        self.base(EditOp::CreateDevice {
+            name: name.into(),
+            kind,
+            output: Some(output),
+        });
+    }
+
+    // ---- groups (never a revision) -----------------------------------------
+
+    pub fn group(&mut self, op: GroupEditOp) -> GroupEditOutcome {
+        let (s, o) =
+            apply_group_edit(&self.snap.system, &op).unwrap_or_else(|e| panic!("{op:?}: {e}"));
+        self.snap.system = s;
+        o
+    }
+    pub fn try_group(&mut self, op: GroupEditOp) -> Result<GroupEditOutcome, GroupEditError> {
+        let (s, o) = apply_group_edit(&self.snap.system, &op)?;
+        self.snap.system = s;
+        Ok(o)
+    }
+    pub fn create_group(&mut self, name: &str, members: &[DeclId]) -> BehaviorGroupId {
+        self.group(GroupEditOp::CreateGroup {
+            name: name.into(),
+            description: String::new(),
+            members: members.to_vec(),
+        })
+        .created_group
         .unwrap()
     }
     pub fn flat_decl(&self, i: ComponentInstanceId, local: DeclId) -> DeclId {

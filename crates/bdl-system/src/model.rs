@@ -6,7 +6,8 @@
 //! `flatten` turns into an ordinary flat design; nothing is a kernel term.
 
 use crate::ids::{
-    BindingId, ComponentId, ComponentInstanceId, ExportId, PortId, SystemIdAllocator,
+    BehaviorGroupId, BindingId, ComponentId, ComponentInstanceId, ExportId, PortId,
+    SystemIdAllocator,
 };
 use bdl_ir::PropertyId;
 use bdl_model::surface::{Design, MappingBlock, Signature};
@@ -218,14 +219,55 @@ pub struct BindingTransport {
     pub init: String,
 }
 
+/// One end of a binding: a port of an instance, or a relationship of the
+/// system's own design (FV Extract: the residual is "instance 0" — here it
+/// is the base, so its declarations are bindable directly).  Untagged, so a
+/// port end persists as before (`{instance, port}`) and a base end as
+/// `{decl}`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum BindingEnd {
+    Port(PortRef),
+    Base { decl: DeclId },
+}
+
+impl BindingEnd {
+    pub const fn port(instance: ComponentInstanceId, port: PortId) -> BindingEnd {
+        BindingEnd::Port(PortRef { instance, port })
+    }
+    pub fn as_port(self) -> Option<PortRef> {
+        match self {
+            BindingEnd::Port(r) => Some(r),
+            BindingEnd::Base { .. } => None,
+        }
+    }
+    pub fn instance(self) -> Option<ComponentInstanceId> {
+        self.as_port().map(|r| r.instance)
+    }
+    pub fn base_decl(self) -> Option<DeclId> {
+        match self {
+            BindingEnd::Base { decl } => Some(decl),
+            BindingEnd::Port(_) => None,
+        }
+    }
+}
+
+impl From<PortRef> for BindingEnd {
+    fn from(r: PortRef) -> BindingEnd {
+        BindingEnd::Port(r)
+    }
+}
+
 /// A required port of one instance taken from a provided port of another
-/// (or of itself) — FV `Binding` with a port source.  Elaborates to one
-/// realization step of the destination (D-67).
+/// (or of itself) — FV `Binding` with a port source — or, since Phase 8b,
+/// an open relationship of the base taken from an instance's provided
+/// port, or an instance's required port taken from a base relationship.
+/// Elaborates to one realization step of the destination (D-67).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Binding {
     pub id: BindingId,
-    pub source: PortRef,
-    pub destination: PortRef,
+    pub source: BindingEnd,
+    pub destination: BindingEnd,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transport: Option<BindingTransport>,
 }
@@ -282,6 +324,23 @@ impl FlatIds {
     }
 }
 
+/// An authoring group over the base design's relationships (FV Phase 8b
+/// `BehaviorGroup`): an identity, a name, a description and a member list
+/// — and nothing semantic.  Types, formulas, clocks and drives stay on the
+/// members; every kernel judgment of the system is literally the judgment
+/// of the ungrouped design (`eraseGroups`).  Collapse state, position and
+/// size are layout, kept out of here on purpose.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BehaviorGroup {
+    pub id: BehaviorGroupId,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Base relationships, in authoring order, each in at most one group.
+    #[serde(default)]
+    pub members: Vec<DeclId>,
+}
+
 /// The authored truth of a system project.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BehaviorSystem {
@@ -297,6 +356,10 @@ pub struct BehaviorSystem {
     pub bindings: BTreeMap<BindingId, Binding>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub exports: BTreeMap<ExportId, Export>,
+    /// Authoring groups over `base`'s relationships.  Never read by
+    /// `flatten`, `validate` or any analysis.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub groups: BTreeMap<BehaviorGroupId, BehaviorGroup>,
     #[serde(default)]
     pub flat_ids: FlatIds,
     #[serde(default)]
@@ -313,6 +376,7 @@ impl BehaviorSystem {
             instances: BTreeMap::new(),
             bindings: BTreeMap::new(),
             exports: BTreeMap::new(),
+            groups: BTreeMap::new(),
             flat_ids: FlatIds::default(),
             ids: SystemIdAllocator::default(),
         }
@@ -340,12 +404,28 @@ impl BehaviorSystem {
     }
 
     /// The binding whose destination is `r`, if any (at most one: D-67).
-    pub fn binding_into(&self, r: PortRef) -> Option<&Binding> {
+    pub fn binding_into(&self, r: impl Into<BindingEnd>) -> Option<&Binding> {
+        let r = r.into();
         self.bindings.values().find(|b| b.destination == r)
+    }
+
+    /// The bindings touching an instance, at either end.
+    pub fn bindings_of_instance(
+        &self,
+        instance: ComponentInstanceId,
+    ) -> impl Iterator<Item = &Binding> {
+        self.bindings.values().filter(move |b| {
+            b.source.instance() == Some(instance) || b.destination.instance() == Some(instance)
+        })
     }
 
     pub fn export_of(&self, r: PortRef) -> Option<&Export> {
         self.exports.values().find(|e| e.port == r)
+    }
+
+    /// The group a base relationship belongs to, if any (at most one).
+    pub fn group_of(&self, decl: DeclId) -> Option<&BehaviorGroup> {
+        self.groups.values().find(|g| g.members.contains(&decl))
     }
 
     pub fn instances_of(&self, component: ComponentId) -> impl Iterator<Item = &ComponentInstance> {

@@ -57,6 +57,9 @@ message ClientMessage {
     GetSystemRequest get_system = 51;
     ApplySystemEditRequest apply_system_edit = 52;
     RunSystemAnalysisRequest run_system_analysis = 53;
+    // Behaviour grouping and component authoring (protocol 0.8).
+    ApplyGroupEditRequest apply_group_edit = 54;
+    PreviewComponentExtractionRequest preview_component_extraction = 55;
   }
 }
 
@@ -87,6 +90,7 @@ message Response {
     SystemResponse system = 40;
     SystemEditApplied system_edit_applied = 41;
     SystemAnalysisResponse system_analysis = 42;
+    ExtractionPreviewResponse extraction_preview = 43;
   }
 }
 
@@ -529,6 +533,26 @@ message Layout {
   repeated NodePosition concepts = 1;
   repeated NodePosition mappings = 2;
   repeated NodePosition outputs = 3;
+  // Component-instance nodes of a system canvas (protocol 0.8).
+  repeated NodePosition instances = 4;
+  // Behaviour groups: the collapsed box and its state.  Layout only.
+  repeated GroupBox groups = 5;
+  // The canvas of each component's body, in component-local ids.
+  repeated ComponentLayout components = 6;
+}
+
+message GroupBox {
+  uint64 id = 1;
+  double x = 2;
+  double y = 3;
+  double width = 4;
+  double height = 5;
+  bool collapsed = 6;
+}
+
+message ComponentLayout {
+  uint64 id = 1;
+  Layout layout = 2;
 }
 
 message NodePosition {
@@ -763,6 +787,9 @@ message AnalyzeDefinitionDraftRequest {
   uint64 mapping_id = 2;
   uint64 generation = 3;
   string source = 4;
+  // When set, `mapping_id` is a declaration of this component's body and
+  // the draft is judged in the body's own scope (protocol 0.8).
+  optional uint64 component = 5;
 }
 
 message DefinitionDraftAnalysis {
@@ -781,6 +808,7 @@ message DefinitionDraftAnalysis {
 // surface.  Ack, also when there was no draft.
 message DiscardDefinitionDraftRequest {
   uint64 mapping_id = 1;
+  optional uint64 component = 2;
 }
 
 // Completion inside the draft at a byte `offset` into `source`.  Sets the
@@ -792,6 +820,7 @@ message CompleteDefinitionDraftRequest {
   uint64 mapping_id = 2;
   string source = 3;
   uint32 offset = 4;
+  optional uint64 component = 5;
 }
 
 message DraftCompletionResponse {
@@ -822,6 +851,7 @@ message HoverDefinitionDraftRequest {
   uint64 mapping_id = 2;
   string source = 3;
   uint32 offset = 4;
+  optional uint64 component = 5;
 }
 
 message DraftHoverResponse {
@@ -1327,9 +1357,14 @@ message ParameterBindingView {
   string source = 2;
 }
 
+// A binding end.  Normally a port of an instance; with `base_decl` set it
+// is a relationship of the system's own design instead (protocol 0.8:
+// the base is the FV residual, bindable directly), and `instance`/`port`
+// are unset.
 message PortRefView {
   uint64 instance = 1;
   uint64 port = 2;
+  optional uint64 base_decl = 3;
 }
 
 message BindingView {
@@ -1382,6 +1417,157 @@ message SystemView {
   repeated OriginView origins = 8;
   // True for a system whose flattening is its base: an ordinary flat design.
   bool is_flat = 9;
+  // Authoring groups over the base's relationships (protocol 0.8).
+  repeated BehaviorGroupView groups = 10;
+  // Bumped by every group edit; never a revision (group edits change no
+  // semantic fact, so nothing revision-keyed is invalidated by them).
+  uint64 authoring_generation = 11;
+}
+
+// A group is authoring metadata: identity, name, description, members.
+message BehaviorGroupView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  // Base relationship ids, in authoring order.
+  repeated uint64 members = 4;
+}
+
+// Group edits: applied outside the revision stream (no ProjectChanged, no
+// AnalysisReady), answered with the SystemView at the new authoring
+// generation.
+message ApplyGroupEditRequest {
+  GroupEditOp op = 1;
+}
+
+message GroupEditOp {
+  oneof op {
+    CreateGroup create_group = 1;
+    RenameGroup rename_group = 2;
+    SetGroupDescription set_group_description = 3;
+    DeleteGroup delete_group = 4;
+    AddGroupMember add_member = 5;
+    RemoveGroupMember remove_member = 6;
+    MoveGroupMember move_member = 7;
+    MergeGroups merge_groups = 8;
+    SplitGroup split_group = 9;
+  }
+}
+message CreateGroup {
+  string name = 1;
+  string description = 2;
+  repeated uint64 members = 3;
+}
+message RenameGroup {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetGroupDescription {
+  uint64 id = 1;
+  string description = 2;
+}
+// The group goes; its relationships stay (the destructive delete is the
+// system edit `delete_group_with_members`).
+message DeleteGroup {
+  uint64 id = 1;
+}
+message AddGroupMember {
+  uint64 group = 1;
+  uint64 decl = 2;
+}
+message RemoveGroupMember {
+  uint64 group = 1;
+  uint64 decl = 2;
+}
+message MoveGroupMember {
+  uint64 decl = 1;
+  uint64 to = 2;
+}
+message MergeGroups {
+  uint64 into = 1;
+  uint64 from = 2;
+}
+message SplitGroup {
+  uint64 id = 1;
+  string name = 2;
+  repeated uint64 members = 3;
+}
+
+// The boundary of a group, read off the flat dependency graph (FV
+// `Boundary`): a projection, never a declaration.  Every list holds flat
+// declaration ids (base relationships keep theirs).
+message BehaviorGroupBoundaryView {
+  uint64 id = 1;
+  repeated uint64 members = 2;
+  repeated uint64 crossing_in = 3;
+  repeated uint64 crossing_out = 4;
+  repeated uint64 open_members = 5;
+  repeated uint64 driven_members = 6;
+  repeated uint64 private_candidates = 7;
+  // crossing_in ++ open_members: the input socket list of a collapsed group.
+  repeated uint64 external_inputs = 8;
+  // crossing_out: the output socket list.
+  repeated uint64 external_outputs = 9;
+  repeated uint64 clocks = 10;
+  repeated DeclEdge internal_edges = 11;
+}
+
+message DeclEdge {
+  uint64 from = 1;
+  uint64 to = 2;
+}
+
+// "Package as reusable component": what it would do.  Nothing changes.
+message PreviewComponentExtractionRequest {
+  uint64 group = 1;
+  ExtractionChoices choices = 2;
+}
+
+message ExtractionChoices {
+  string name = 1;
+  string instance_name = 2;
+  // Open members to keep internal (default: every open member is an input).
+  repeated uint64 keep_internal = 3;
+  // Driven sinks to move into the component (default: they stay external).
+  repeated uint64 internalize_sinks = 4;
+}
+
+message ExtractionPreviewResponse {
+  ExtractionPreviewView preview = 1;
+}
+
+message ExtractionPreviewView {
+  uint64 group = 1;
+  string name = 2;
+  string instance_name = 3;
+  BehaviorGroupBoundaryView boundary = 4;
+  repeated PreviewPortView required = 5;
+  repeated PreviewPortView provided = 6;
+  repeated OpenMemberDecisionView open_members = 7;
+  repeated uint64 clocks = 8;
+  repeated SinkDecisionView sinks = 9;
+  repeated uint64 private = 10;
+  repeated Diagnostic warnings = 11;
+}
+
+message PreviewPortView {
+  uint64 decl = 1;
+  string name = 2;
+  PortKind kind = 3;
+  uint64 concept = 4;
+}
+
+message OpenMemberDecisionView {
+  uint64 decl = 1;
+  string name = 2;
+  bool as_input = 3;
+}
+
+message SinkDecisionView {
+  uint64 output = 1;
+  string name = 2;
+  repeated uint64 drivers = 3;
+  bool internal = 4;
 }
 
 message SystemEditOp {
@@ -1412,7 +1598,18 @@ message SystemEditOp {
     RebindPortDeclaration rebind_port_declaration = 23;
     DuplicateComponent duplicate_component = 24;
     ReplaceInstanceComponent replace_instance_component = 25;
+    // Behaviour grouping (protocol 0.8).
+    ExtractGroupAsComponent extract_group_as_component = 26;
+    DeleteGroupWithMembers delete_group_with_members = 27;
   }
+}
+
+message ExtractGroupAsComponent {
+  uint64 group = 1;
+  ExtractionChoices choices = 2;
+}
+message DeleteGroupWithMembers {
+  uint64 group = 1;
 }
 
 message ChangePortContract {
@@ -1583,6 +1780,16 @@ message SystemAnalysisView {
   repeated ProjectedDiagnostic projected = 6;
   // Per component: whether its body realizes its public interface.
   repeated ComponentStatusView components = 7;
+  // Per group: its boundary (protocol 0.8).
+  repeated BehaviorGroupBoundaryView groups = 8;
+  // Per component: the compiler's analysis of its body on its own, in
+  // component-local ids — the component-source view's verdicts.
+  repeated ComponentAnalysisView component_analyses = 9;
+}
+
+message ComponentAnalysisView {
+  uint64 id = 1;
+  ProjectAnalysis analysis = 2;
 }
 
 message ComponentStatusView {

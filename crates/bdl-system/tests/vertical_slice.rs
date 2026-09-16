@@ -356,16 +356,16 @@ fn an_unbound_required_port_is_open_not_invalid() {
     // binding an exported port is refused; so is a second binding
     let e = s2
         .try_apply(SystemEditOp::BindPorts {
-            source: pr(s.sensor, s.source_port),
-            destination: pr(s.lamp_a, s.lamp_in),
+            source: pr(s.sensor, s.source_port).into(),
+            destination: pr(s.lamp_a, s.lamp_in).into(),
             transport: None,
         })
         .unwrap_err();
     assert!(matches!(e, SystemEditError::PortExported { .. }));
     let e = s2
         .try_apply(SystemEditOp::BindPorts {
-            source: pr(s.sensor, s.source_port),
-            destination: pr(s.lamp_b, s.lamp_in),
+            source: pr(s.sensor, s.source_port).into(),
+            destination: pr(s.lamp_b, s.lamp_in).into(),
             transport: None,
         })
         .unwrap_err();
@@ -441,7 +441,7 @@ fn two_locally_causal_components_can_close_an_instantaneous_cycle() {
         .system()
         .bindings
         .values()
-        .find(|b| b.destination == pr(ia, a_req))
+        .find(|b| b.destination == pr(ia, a_req).into())
         .unwrap()
         .id;
     s2.apply(SystemEditOp::UnbindPorts { binding: b2 });

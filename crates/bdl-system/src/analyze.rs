@@ -3,13 +3,15 @@
 //! checker, evaluator, clock judgment or code generator here — only
 //! projection (§34 of the brief).
 
+use crate::boundary::{group_boundary, GroupBoundary};
 use crate::contract::realizes;
 use crate::flatten::{flatten, FlattenedSystem, Origin};
-use crate::ids::{BindingId, ComponentId, ExportId};
+use crate::ids::{BehaviorGroupId, BindingId, ComponentId, ExportId};
 use crate::model::*;
 use crate::validate::validate_composition;
 use bdl_compiler::{analyze, readiness, ProjectAnalysis};
 use bdl_diagnostics::{Diagnostic, Entity};
+use bdl_model::surface::ProjectSnapshot;
 use bdl_model::{DeclId, Revision};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -74,6 +76,12 @@ pub struct SystemAnalysis {
     pub acceptance: Acceptance,
     /// Every diagnostic — composition and flat — projected to its origin.
     pub projected: Vec<ProjectedDiagnostic>,
+    /// Per group: its boundary, read off the flat dependency graph
+    /// (Phase 8b).  A projection; groups change nothing above.
+    pub groups: BTreeMap<BehaviorGroupId, GroupBoundary>,
+    /// Per component: the existing compiler's analysis of its body on its
+    /// own (required ports open), for the component-source view.
+    pub component_analyses: BTreeMap<ComponentId, ProjectAnalysis>,
 }
 
 pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
@@ -134,6 +142,25 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
         .map(|d| project(&flattened, d))
         .collect();
 
+    let groups = s
+        .groups
+        .values()
+        .map(|g| (g.id, group_boundary(&s.base, &analysis, &g.members)))
+        .collect();
+    let component_analyses = s
+        .components
+        .values()
+        .map(|c| {
+            (
+                c.id,
+                analyze(&ProjectSnapshot {
+                    revision: snapshot.revision,
+                    design: c.body.clone(),
+                }),
+            )
+        })
+        .collect();
+
     SystemAnalysis {
         revision: snapshot.revision,
         flattened,
@@ -143,6 +170,8 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
         components,
         acceptance,
         projected,
+        groups,
+        component_analyses,
     }
 }
 

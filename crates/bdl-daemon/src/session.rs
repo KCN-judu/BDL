@@ -30,10 +30,12 @@ use bdl_model::surface::{Design, ProjectSnapshot};
 use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
 use bdl_system::{
-    analyze_system, apply_system_edit, flatten, persist as system_persist, BehaviorSystem,
-    FlattenedSystem, SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome,
-    SystemSnapshot,
+    analyze_system, apply_group_edit, apply_system_edit, flatten, persist as system_persist,
+    preview_extraction, BehaviorGroupId, BehaviorSystem, ComponentId, ExtractError,
+    ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp,
+    SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome, SystemSnapshot,
 };
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
@@ -63,6 +65,12 @@ pub enum SessionError {
     NotASystem,
     #[error(transparent)]
     SystemEdit(#[from] SystemEditError),
+    #[error(transparent)]
+    GroupEdit(#[from] GroupEditError),
+    #[error(transparent)]
+    Extraction(#[from] ExtractError),
+    #[error("unknown component {0}")]
+    UnknownComponent(ComponentId),
 }
 
 /// The authored truth of a system project, beside the derived `current`.
@@ -70,9 +78,35 @@ pub struct SystemState {
     pub current: SystemSnapshot,
     /// The flattening of `current` (its origins serve every projection).
     pub flattened: FlattenedSystem,
+    /// Bumped by every group edit — authoring metadata that changes no
+    /// semantic fact and therefore no revision (Phase 8b, Theorem A).
+    pub authoring_generation: u64,
+    /// IDE ground state per component body, for component-scoped drafts:
+    /// created on first use, re-seated on every commit.
+    component_ide: BTreeMap<ComponentId, IdeHost>,
     saved: BehaviorSystem,
     undo: Vec<BehaviorSystem>,
     redo: Vec<BehaviorSystem>,
+}
+
+impl SystemState {
+    /// After a commit: every component host sees its body at the new
+    /// revision; hosts of components that no longer exist go.  Overlays
+    /// (drafts) survive, as on the project host.
+    fn reseat_component_hosts(&mut self) {
+        let revision = self.current.revision;
+        let components = &self.current.system.components;
+        self.component_ide
+            .retain(|id, _| components.contains_key(id));
+        for (id, host) in self.component_ide.iter_mut() {
+            if let Some(c) = components.get(id) {
+                host.set_committed(ProjectSnapshot {
+                    revision,
+                    design: c.body.clone(),
+                });
+            }
+        }
+    }
 }
 
 /// A simulation run, valid for exactly one project revision.
@@ -204,6 +238,8 @@ impl Session {
                 saved: system.system.clone(),
                 current: system,
                 flattened,
+                authoring_generation: 0,
+                component_ide: BTreeMap::new(),
                 undo: Vec::new(),
                 redo: Vec::new(),
             });
@@ -311,6 +347,7 @@ impl Session {
         sys.undo.push(previous.system);
         sys.redo.clear();
         sys.flattened = flatten(&sys.current);
+        sys.reseat_component_hosts();
         p.current = sys.flattened.snapshot.clone();
         p.simulation = None;
         p.ide.set_committed(p.current.clone());
@@ -318,6 +355,32 @@ impl Session {
             snapshot: p.current.clone(),
             outcome: applied.outcome,
         })
+    }
+
+    /// Apply one group edit: authoring metadata only.  No revision, no
+    /// re-derivation, no simulation reset — the flat design is the same
+    /// value before and after (FV Theorem A).  The authoring generation
+    /// moves so a client can tell the views apart.
+    pub fn apply_group(&mut self, op: &GroupEditOp) -> Result<(), SessionError> {
+        let p = self.project_mut()?;
+        let Some(sys) = p.system.as_mut() else {
+            return Err(SessionError::NotASystem);
+        };
+        let (system, _outcome) = apply_group_edit(&sys.current.system, op)?;
+        sys.current.system = system;
+        sys.authoring_generation += 1;
+        Ok(())
+    }
+
+    /// What "Package as reusable component" would do to a group.  Reads only.
+    pub fn preview_extraction(
+        &self,
+        group: BehaviorGroupId,
+        choices: &ExtractionChoices,
+    ) -> Result<ExtractionPreview, SessionError> {
+        let p = self.project()?;
+        let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+        Ok(preview_extraction(&sys.current, group, choices)?)
     }
 
     /// The system analysis of the open system project.
@@ -350,6 +413,7 @@ impl Session {
             sys.undo.push(previous.system);
         }
         sys.flattened = flatten(&sys.current);
+        sys.reseat_component_hosts();
         p.current = sys.flattened.snapshot.clone();
         p.simulation = None;
         p.ide.set_committed(p.current.clone());
@@ -404,6 +468,33 @@ impl Session {
         Ok(&mut self.project_mut()?.ide)
     }
 
+    /// The IDE host a draft lives in: the project's, or a component body's
+    /// (created on first use, re-seated on every commit).  A component's
+    /// body is an ordinary design, so the same service serves it — in the
+    /// body's own scope, where the component's names mean what they mean
+    /// to the component, not to any instance.
+    fn ide_in(&mut self, scope: Option<ComponentId>) -> Result<&mut IdeHost, SessionError> {
+        let p = self.project_mut()?;
+        let Some(component) = scope else {
+            return Ok(&mut p.ide);
+        };
+        let sys = p.system.as_mut().ok_or(SessionError::NotASystem)?;
+        let c = sys
+            .current
+            .system
+            .components
+            .get(&component)
+            .ok_or(SessionError::UnknownComponent(component))?;
+        let revision = sys.current.revision;
+        let body = c.body.clone();
+        Ok(sys.component_ide.entry(component).or_insert_with(|| {
+            IdeHost::new(ProjectSnapshot {
+                revision,
+                design: body,
+            })
+        }))
+    }
+
     /// Studio typed in the definition editor: `source` becomes the draft
     /// overlay of `mapping` and the compiler's verdict on the resulting
     /// world is returned.  The project, its revision and its history are
@@ -412,10 +503,11 @@ impl Session {
     /// Served by the `AnalyzeDefinitionDraft` request (protocol 0.4).
     pub fn draft_verdict(
         &mut self,
+        scope: Option<ComponentId>,
         mapping: DeclId,
         source: &str,
     ) -> Result<DraftVerdict, SessionError> {
-        let snapshot = self.draft_snapshot(mapping, source)?;
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
         Ok(draft_verdict(&snapshot, mapping)?)
     }
 
@@ -427,10 +519,11 @@ impl Session {
     /// tripped mid-flight; the wiring is what a worker pool will need.
     fn draft_snapshot(
         &mut self,
+        scope: Option<ComponentId>,
         mapping: DeclId,
         source: &str,
     ) -> Result<std::sync::Arc<AnalysisSnapshot>, SessionError> {
-        let host = self.ide()?;
+        let host = self.ide_in(scope)?;
         host.set_definition_draft(mapping, source);
         let (request, token) =
             host.begin_request(CancelScope::Overlay(OverlayKey::MappingDefinition {
@@ -443,18 +536,23 @@ impl Session {
 
     /// The draft is gone (revert, reload, detach): later queries on every
     /// surface see the committed definition again.  True if there was one.
-    pub fn discard_draft(&mut self, mapping: DeclId) -> Result<bool, SessionError> {
-        Ok(self.ide()?.clear_definition_draft(mapping))
+    pub fn discard_draft(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+    ) -> Result<bool, SessionError> {
+        Ok(self.ide_in(scope)?.clear_definition_draft(mapping))
     }
 
     /// Completion candidates at a byte offset into the draft.
     pub fn draft_completion(
         &mut self,
+        scope: Option<ComponentId>,
         mapping: DeclId,
         source: &str,
         offset: u32,
     ) -> Result<Vec<SemanticCompletion>, SessionError> {
-        let snapshot = self.draft_snapshot(mapping, source)?;
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
         if !snapshot.effective().design.mappings.contains_key(&mapping) {
             return Err(QueryError::UnknownEntity {
                 entity: EntityRef::Mapping(mapping),
@@ -471,11 +569,12 @@ impl Session {
     /// IDE service; `None` when nothing semantic is under the cursor.
     pub fn draft_hover(
         &mut self,
+        scope: Option<ComponentId>,
         mapping: DeclId,
         source: &str,
         offset: u32,
     ) -> Result<Option<(TextRange, SemanticHover)>, SessionError> {
-        let snapshot = self.draft_snapshot(mapping, source)?;
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
         if !snapshot.effective().design.mappings.contains_key(&mapping) {
             return Err(QueryError::UnknownEntity {
                 entity: EntityRef::Mapping(mapping),
@@ -633,7 +732,7 @@ mod tests {
             .unwrap();
 
         // The draft is judged; the project is not touched.
-        let v = s.draft_verdict(id, "Tilt / 90 deg").unwrap();
+        let v = s.draft_verdict(None, id, "Tilt / 90 deg").unwrap();
         assert_eq!(v.status, bdl_compiler::MappingStatus::ClockConsistent);
         assert_eq!(v.stamp.revision, Revision::from_raw(3));
         let p = s.project().unwrap();
@@ -642,7 +741,7 @@ mod tests {
         assert_eq!(p.ide.overlays().len(), 1);
 
         // A newer draft supersedes; its verdict carries a newer stamp.
-        let v2 = s.draft_verdict(id, "Tilt + 1 s").unwrap();
+        let v2 = s.draft_verdict(None, id, "Tilt + 1 s").unwrap();
         assert_eq!(v2.status, bdl_compiler::MappingStatus::Invalid);
         assert!(v2.stamp > v.stamp);
         assert!(!v2.diagnostics.is_empty());
@@ -660,11 +759,11 @@ mod tests {
         )
         .unwrap();
         assert!(s.project().unwrap().ide.overlays().is_empty());
-        s.draft_verdict(id, "Tilt / 45 deg").unwrap();
+        s.draft_verdict(None, id, "Tilt / 45 deg").unwrap();
         s.undo().unwrap();
         assert_eq!(s.project().unwrap().ide.overlays().len(), 1);
         assert!(matches!(
-            s.draft_verdict(DeclId::from_raw(99), "1"),
+            s.draft_verdict(None, DeclId::from_raw(99), "1"),
             Err(SessionError::Ide(QueryError::UnknownEntity { .. }))
         ));
     }

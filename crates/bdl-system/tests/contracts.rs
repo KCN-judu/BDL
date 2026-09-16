@@ -258,7 +258,7 @@ fn existing_bindings_survive_private_edits_and_stay_put_when_the_body_stops_real
     // the binding is still there, by identity, untouched
     assert_eq!(
         s.sys.system().bindings[&s.bind_a].source,
-        pr(s.sensor, s.source_port)
+        pr(s.sensor, s.source_port).into()
     );
     assert_eq!(
         a2.ports[&pr(s.lamp_a, s.lamp_in)],
@@ -416,7 +416,7 @@ fn a_refining_version_substitutes_an_incompatible_one_is_refused() {
     // bindings untouched and still valid; the instance keeps its flat identities (a version keeps its local ids)
     assert_eq!(
         s.sys.system().bindings[&s.bind_a].destination,
-        pr(s.lamp_a, s.lamp_in)
+        pr(s.lamp_a, s.lamp_in).into()
     );
     assert_eq!(
         s.sys

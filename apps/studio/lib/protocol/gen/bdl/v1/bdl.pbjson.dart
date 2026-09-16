@@ -594,6 +594,24 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'runSystemAnalysis'
     },
+    {
+      '1': 'apply_group_edit',
+      '3': 54,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ApplyGroupEditRequest',
+      '9': 0,
+      '10': 'applyGroupEdit'
+    },
+    {
+      '1': 'preview_component_extraction',
+      '3': 55,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.PreviewComponentExtractionRequest',
+      '9': 0,
+      '10': 'previewComponentExtraction'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -642,8 +660,11 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'N5c3RlbRgzIAEoCzIYLmJkbC52MS5HZXRTeXN0ZW1SZXF1ZXN0SABSCWdldFN5c3RlbRJMChFh'
         'cHBseV9zeXN0ZW1fZWRpdBg0IAEoCzIeLmJkbC52MS5BcHBseVN5c3RlbUVkaXRSZXF1ZXN0SA'
         'BSD2FwcGx5U3lzdGVtRWRpdBJSChNydW5fc3lzdGVtX2FuYWx5c2lzGDUgASgLMiAuYmRsLnYx'
-        'LlJ1blN5c3RlbUFuYWx5c2lzUmVxdWVzdEgAUhFydW5TeXN0ZW1BbmFseXNpc0IJCgdwYXlsb2'
-        'Fk');
+        'LlJ1blN5c3RlbUFuYWx5c2lzUmVxdWVzdEgAUhFydW5TeXN0ZW1BbmFseXNpcxJJChBhcHBseV'
+        '9ncm91cF9lZGl0GDYgASgLMh0uYmRsLnYxLkFwcGx5R3JvdXBFZGl0UmVxdWVzdEgAUg5hcHBs'
+        'eUdyb3VwRWRpdBJtChxwcmV2aWV3X2NvbXBvbmVudF9leHRyYWN0aW9uGDcgASgLMikuYmRsLn'
+        'YxLlByZXZpZXdDb21wb25lbnRFeHRyYWN0aW9uUmVxdWVzdEgAUhpwcmV2aWV3Q29tcG9uZW50'
+        'RXh0cmFjdGlvbkIJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -805,6 +826,15 @@ const Response$json = {
       '9': 0,
       '10': 'systemAnalysis'
     },
+    {
+      '1': 'extraction_preview',
+      '3': 43,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ExtractionPreviewResponse',
+      '9': 0,
+      '10': 'extractionPreview'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -832,7 +862,9 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'cGxhdGVzEjAKBnN5c3RlbRgoIAEoCzIWLmJkbC52MS5TeXN0ZW1SZXNwb25zZUgAUgZzeXN0ZW'
         '0SSwoTc3lzdGVtX2VkaXRfYXBwbGllZBgpIAEoCzIZLmJkbC52MS5TeXN0ZW1FZGl0QXBwbGll'
         'ZEgAUhFzeXN0ZW1FZGl0QXBwbGllZBJJCg9zeXN0ZW1fYW5hbHlzaXMYKiABKAsyHi5iZGwudj'
-        'EuU3lzdGVtQW5hbHlzaXNSZXNwb25zZUgAUg5zeXN0ZW1BbmFseXNpc0IJCgdwYXlsb2Fk');
+        'EuU3lzdGVtQW5hbHlzaXNSZXNwb25zZUgAUg5zeXN0ZW1BbmFseXNpcxJSChJleHRyYWN0aW9u'
+        'X3ByZXZpZXcYKyABKAsyIS5iZGwudjEuRXh0cmFjdGlvblByZXZpZXdSZXNwb25zZUgAUhFleH'
+        'RyYWN0aW9uUHJldmlld0IJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -2222,6 +2254,16 @@ const Layout$json = {
     {'1': 'concepts', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'concepts'},
     {'1': 'mappings', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'mappings'},
     {'1': 'outputs', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'outputs'},
+    {'1': 'instances', '3': 4, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'instances'},
+    {'1': 'groups', '3': 5, '4': 3, '5': 11, '6': '.bdl.v1.GroupBox', '10': 'groups'},
+    {
+      '1': 'components',
+      '3': 6,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ComponentLayout',
+      '10': 'components'
+    },
   ],
 };
 
@@ -2229,7 +2271,43 @@ const Layout$json = {
 final $typed_data.Uint8List layoutDescriptor = $convert
     .base64Decode('CgZMYXlvdXQSMAoIY29uY2VwdHMYASADKAsyFC5iZGwudjEuTm9kZVBvc2l0aW9uUghjb25jZX'
         'B0cxIwCghtYXBwaW5ncxgCIAMoCzIULmJkbC52MS5Ob2RlUG9zaXRpb25SCG1hcHBpbmdzEi4K'
-        'B291dHB1dHMYAyADKAsyFC5iZGwudjEuTm9kZVBvc2l0aW9uUgdvdXRwdXRz');
+        'B291dHB1dHMYAyADKAsyFC5iZGwudjEuTm9kZVBvc2l0aW9uUgdvdXRwdXRzEjIKCWluc3Rhbm'
+        'NlcxgEIAMoCzIULmJkbC52MS5Ob2RlUG9zaXRpb25SCWluc3RhbmNlcxIoCgZncm91cHMYBSAD'
+        'KAsyEC5iZGwudjEuR3JvdXBCb3hSBmdyb3VwcxI3Cgpjb21wb25lbnRzGAYgAygLMhcuYmRsLn'
+        'YxLkNvbXBvbmVudExheW91dFIKY29tcG9uZW50cw==');
+
+@$core.Deprecated('Use groupBoxDescriptor instead')
+const GroupBox$json = {
+  '1': 'GroupBox',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'x', '3': 2, '4': 1, '5': 1, '10': 'x'},
+    {'1': 'y', '3': 3, '4': 1, '5': 1, '10': 'y'},
+    {'1': 'width', '3': 4, '4': 1, '5': 1, '10': 'width'},
+    {'1': 'height', '3': 5, '4': 1, '5': 1, '10': 'height'},
+    {'1': 'collapsed', '3': 6, '4': 1, '5': 8, '10': 'collapsed'},
+  ],
+};
+
+/// Descriptor for `GroupBox`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List groupBoxDescriptor = $convert
+    .base64Decode('CghHcm91cEJveBIOCgJpZBgBIAEoBFICaWQSDAoBeBgCIAEoAVIBeBIMCgF5GAMgASgBUgF5Eh'
+        'QKBXdpZHRoGAQgASgBUgV3aWR0aBIWCgZoZWlnaHQYBSABKAFSBmhlaWdodBIcCgljb2xsYXBz'
+        'ZWQYBiABKAhSCWNvbGxhcHNlZA==');
+
+@$core.Deprecated('Use componentLayoutDescriptor instead')
+const ComponentLayout$json = {
+  '1': 'ComponentLayout',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'layout', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Layout', '10': 'layout'},
+  ],
+};
+
+/// Descriptor for `ComponentLayout`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List componentLayoutDescriptor = $convert
+    .base64Decode('Cg9Db21wb25lbnRMYXlvdXQSDgoCaWQYASABKARSAmlkEiYKBmxheW91dBgCIAEoCzIOLmJkbC'
+        '52MS5MYXlvdXRSBmxheW91dA==');
 
 @$core.Deprecated('Use nodePositionDescriptor instead')
 const NodePosition$json = {
@@ -2665,6 +2743,10 @@ const AnalyzeDefinitionDraftRequest$json = {
     {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
     {'1': 'generation', '3': 3, '4': 1, '5': 4, '10': 'generation'},
     {'1': 'source', '3': 4, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
   ],
 };
 
@@ -2672,7 +2754,8 @@ const AnalyzeDefinitionDraftRequest$json = {
 final $typed_data.Uint8List analyzeDefinitionDraftRequestDescriptor = $convert
     .base64Decode('Ch1BbmFseXplRGVmaW5pdGlvbkRyYWZ0UmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aX'
         'Npb24SHQoKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEh4KCmdlbmVyYXRpb24YAyABKARS'
-        'CmdlbmVyYXRpb24SFgoGc291cmNlGAQgASgJUgZzb3VyY2U=');
+        'CmdlbmVyYXRpb24SFgoGc291cmNlGAQgASgJUgZzb3VyY2USIQoJY29tcG9uZW50GAUgASgESA'
+        'BSCWNvbXBvbmVudIgBAUIMCgpfY29tcG9uZW50');
 
 @$core.Deprecated('Use definitionDraftAnalysisDescriptor instead')
 const DefinitionDraftAnalysis$json = {
@@ -2698,13 +2781,17 @@ const DiscardDefinitionDraftRequest$json = {
   '1': 'DiscardDefinitionDraftRequest',
   '2': [
     {'1': 'mapping_id', '3': 1, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'component', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
   ],
 };
 
 /// Descriptor for `DiscardDefinitionDraftRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List discardDefinitionDraftRequestDescriptor = $convert
     .base64Decode('Ch1EaXNjYXJkRGVmaW5pdGlvbkRyYWZ0UmVxdWVzdBIdCgptYXBwaW5nX2lkGAEgASgEUgltYX'
-        'BwaW5nSWQ=');
+        'BwaW5nSWQSIQoJY29tcG9uZW50GAIgASgESABSCWNvbXBvbmVudIgBAUIMCgpfY29tcG9uZW50');
 
 @$core.Deprecated('Use completeDefinitionDraftRequestDescriptor instead')
 const CompleteDefinitionDraftRequest$json = {
@@ -2714,6 +2801,10 @@ const CompleteDefinitionDraftRequest$json = {
     {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
     {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
     {'1': 'offset', '3': 4, '4': 1, '5': 13, '10': 'offset'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
   ],
 };
 
@@ -2721,7 +2812,8 @@ const CompleteDefinitionDraftRequest$json = {
 final $typed_data.Uint8List completeDefinitionDraftRequestDescriptor = $convert
     .base64Decode('Ch5Db21wbGV0ZURlZmluaXRpb25EcmFmdFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldm'
         'lzaW9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNv'
-        'dXJjZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldA==');
+        'dXJjZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldBIhCgljb21wb25lbnQYBSABKARIAFIJY29tcG'
+        '9uZW50iAEBQgwKCl9jb21wb25lbnQ=');
 
 @$core.Deprecated('Use draftCompletionResponseDescriptor instead')
 const DraftCompletionResponse$json = {
@@ -2770,6 +2862,10 @@ const HoverDefinitionDraftRequest$json = {
     {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
     {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
     {'1': 'offset', '3': 4, '4': 1, '5': 13, '10': 'offset'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
   ],
 };
 
@@ -2777,7 +2873,8 @@ const HoverDefinitionDraftRequest$json = {
 final $typed_data.Uint8List hoverDefinitionDraftRequestDescriptor = $convert
     .base64Decode('ChtIb3ZlckRlZmluaXRpb25EcmFmdFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW'
         '9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNvdXJj'
-        'ZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldA==');
+        'ZRIWCgZvZmZzZXQYBCABKA1SBm9mZnNldBIhCgljb21wb25lbnQYBSABKARIAFIJY29tcG9uZW'
+        '50iAEBQgwKCl9jb21wb25lbnQ=');
 
 @$core.Deprecated('Use draftHoverResponseDescriptor instead')
 const DraftHoverResponse$json = {
@@ -3787,13 +3884,17 @@ const PortRefView$json = {
   '2': [
     {'1': 'instance', '3': 1, '4': 1, '5': 4, '10': 'instance'},
     {'1': 'port', '3': 2, '4': 1, '5': 4, '10': 'port'},
+    {'1': 'base_decl', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'baseDecl', '17': true},
+  ],
+  '8': [
+    {'1': '_base_decl'},
   ],
 };
 
 /// Descriptor for `PortRefView`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List portRefViewDescriptor = $convert
     .base64Decode('CgtQb3J0UmVmVmlldxIaCghpbnN0YW5jZRgBIAEoBFIIaW5zdGFuY2USEgoEcG9ydBgCIAEoBF'
-        'IEcG9ydA==');
+        'IEcG9ydBIgCgliYXNlX2RlY2wYAyABKARIAFIIYmFzZURlY2yIAQFCDAoKX2Jhc2VfZGVjbA==');
 
 @$core.Deprecated('Use bindingViewDescriptor instead')
 const BindingView$json = {
@@ -3874,6 +3975,8 @@ const SystemView$json = {
     {'1': 'exports', '3': 7, '4': 3, '5': 11, '6': '.bdl.v1.ExportView', '10': 'exports'},
     {'1': 'origins', '3': 8, '4': 3, '5': 11, '6': '.bdl.v1.OriginView', '10': 'origins'},
     {'1': 'is_flat', '3': 9, '4': 1, '5': 8, '10': 'isFlat'},
+    {'1': 'groups', '3': 10, '4': 3, '5': 11, '6': '.bdl.v1.BehaviorGroupView', '10': 'groups'},
+    {'1': 'authoring_generation', '3': 11, '4': 1, '5': 4, '10': 'authoringGeneration'},
   ],
 };
 
@@ -3886,7 +3989,459 @@ final $typed_data.Uint8List systemViewDescriptor = $convert
         'cxIvCghiaW5kaW5ncxgGIAMoCzITLmJkbC52MS5CaW5kaW5nVmlld1IIYmluZGluZ3MSLAoHZX'
         'hwb3J0cxgHIAMoCzISLmJkbC52MS5FeHBvcnRWaWV3UgdleHBvcnRzEiwKB29yaWdpbnMYCCAD'
         'KAsyEi5iZGwudjEuT3JpZ2luVmlld1IHb3JpZ2lucxIXCgdpc19mbGF0GAkgASgIUgZpc0ZsYX'
-        'Q=');
+        'QSMQoGZ3JvdXBzGAogAygLMhkuYmRsLnYxLkJlaGF2aW9yR3JvdXBWaWV3UgZncm91cHMSMQoU'
+        'YXV0aG9yaW5nX2dlbmVyYXRpb24YCyABKARSE2F1dGhvcmluZ0dlbmVyYXRpb24=');
+
+@$core.Deprecated('Use behaviorGroupViewDescriptor instead')
+const BehaviorGroupView$json = {
+  '1': 'BehaviorGroupView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'members', '3': 4, '4': 3, '5': 4, '10': 'members'},
+  ],
+};
+
+/// Descriptor for `BehaviorGroupView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List behaviorGroupViewDescriptor = $convert
+    .base64Decode('ChFCZWhhdmlvckdyb3VwVmlldxIOCgJpZBgBIAEoBFICaWQSEgoEbmFtZRgCIAEoCVIEbmFtZR'
+        'IgCgtkZXNjcmlwdGlvbhgDIAEoCVILZGVzY3JpcHRpb24SGAoHbWVtYmVycxgEIAMoBFIHbWVt'
+        'YmVycw==');
+
+@$core.Deprecated('Use applyGroupEditRequestDescriptor instead')
+const ApplyGroupEditRequest$json = {
+  '1': 'ApplyGroupEditRequest',
+  '2': [
+    {'1': 'op', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.GroupEditOp', '10': 'op'},
+  ],
+};
+
+/// Descriptor for `ApplyGroupEditRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List applyGroupEditRequestDescriptor = $convert
+    .base64Decode('ChVBcHBseUdyb3VwRWRpdFJlcXVlc3QSIwoCb3AYASABKAsyEy5iZGwudjEuR3JvdXBFZGl0T3'
+        'BSAm9w');
+
+@$core.Deprecated('Use groupEditOpDescriptor instead')
+const GroupEditOp$json = {
+  '1': 'GroupEditOp',
+  '2': [
+    {
+      '1': 'create_group',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.CreateGroup',
+      '9': 0,
+      '10': 'createGroup'
+    },
+    {
+      '1': 'rename_group',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.RenameGroup',
+      '9': 0,
+      '10': 'renameGroup'
+    },
+    {
+      '1': 'set_group_description',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SetGroupDescription',
+      '9': 0,
+      '10': 'setGroupDescription'
+    },
+    {
+      '1': 'delete_group',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DeleteGroup',
+      '9': 0,
+      '10': 'deleteGroup'
+    },
+    {
+      '1': 'add_member',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.AddGroupMember',
+      '9': 0,
+      '10': 'addMember'
+    },
+    {
+      '1': 'remove_member',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.RemoveGroupMember',
+      '9': 0,
+      '10': 'removeMember'
+    },
+    {
+      '1': 'move_member',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.MoveGroupMember',
+      '9': 0,
+      '10': 'moveMember'
+    },
+    {
+      '1': 'merge_groups',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.MergeGroups',
+      '9': 0,
+      '10': 'mergeGroups'
+    },
+    {
+      '1': 'split_group',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SplitGroup',
+      '9': 0,
+      '10': 'splitGroup'
+    },
+  ],
+  '8': [
+    {'1': 'op'},
+  ],
+};
+
+/// Descriptor for `GroupEditOp`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List groupEditOpDescriptor = $convert
+    .base64Decode('CgtHcm91cEVkaXRPcBI4CgxjcmVhdGVfZ3JvdXAYASABKAsyEy5iZGwudjEuQ3JlYXRlR3JvdX'
+        'BIAFILY3JlYXRlR3JvdXASOAoMcmVuYW1lX2dyb3VwGAIgASgLMhMuYmRsLnYxLlJlbmFtZUdy'
+        'b3VwSABSC3JlbmFtZUdyb3VwElEKFXNldF9ncm91cF9kZXNjcmlwdGlvbhgDIAEoCzIbLmJkbC'
+        '52MS5TZXRHcm91cERlc2NyaXB0aW9uSABSE3NldEdyb3VwRGVzY3JpcHRpb24SOAoMZGVsZXRl'
+        'X2dyb3VwGAQgASgLMhMuYmRsLnYxLkRlbGV0ZUdyb3VwSABSC2RlbGV0ZUdyb3VwEjcKCmFkZF'
+        '9tZW1iZXIYBSABKAsyFi5iZGwudjEuQWRkR3JvdXBNZW1iZXJIAFIJYWRkTWVtYmVyEkAKDXJl'
+        'bW92ZV9tZW1iZXIYBiABKAsyGS5iZGwudjEuUmVtb3ZlR3JvdXBNZW1iZXJIAFIMcmVtb3ZlTW'
+        'VtYmVyEjoKC21vdmVfbWVtYmVyGAcgASgLMhcuYmRsLnYxLk1vdmVHcm91cE1lbWJlckgAUgpt'
+        'b3ZlTWVtYmVyEjgKDG1lcmdlX2dyb3VwcxgIIAEoCzITLmJkbC52MS5NZXJnZUdyb3Vwc0gAUg'
+        'ttZXJnZUdyb3VwcxI1CgtzcGxpdF9ncm91cBgJIAEoCzISLmJkbC52MS5TcGxpdEdyb3VwSABS'
+        'CnNwbGl0R3JvdXBCBAoCb3A=');
+
+@$core.Deprecated('Use createGroupDescriptor instead')
+const CreateGroup$json = {
+  '1': 'CreateGroup',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'description', '3': 2, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'members', '3': 3, '4': 3, '5': 4, '10': 'members'},
+  ],
+};
+
+/// Descriptor for `CreateGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createGroupDescriptor = $convert
+    .base64Decode('CgtDcmVhdGVHcm91cBISCgRuYW1lGAEgASgJUgRuYW1lEiAKC2Rlc2NyaXB0aW9uGAIgASgJUg'
+        'tkZXNjcmlwdGlvbhIYCgdtZW1iZXJzGAMgAygEUgdtZW1iZXJz');
+
+@$core.Deprecated('Use renameGroupDescriptor instead')
+const RenameGroup$json = {
+  '1': 'RenameGroup',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+  ],
+};
+
+/// Descriptor for `RenameGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List renameGroupDescriptor =
+    $convert.base64Decode('CgtSZW5hbWVHcm91cBIOCgJpZBgBIAEoBFICaWQSEgoEbmFtZRgCIAEoCVIEbmFtZQ==');
+
+@$core.Deprecated('Use setGroupDescriptionDescriptor instead')
+const SetGroupDescription$json = {
+  '1': 'SetGroupDescription',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'description', '3': 2, '4': 1, '5': 9, '10': 'description'},
+  ],
+};
+
+/// Descriptor for `SetGroupDescription`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List setGroupDescriptionDescriptor = $convert
+    .base64Decode('ChNTZXRHcm91cERlc2NyaXB0aW9uEg4KAmlkGAEgASgEUgJpZBIgCgtkZXNjcmlwdGlvbhgCIA'
+        'EoCVILZGVzY3JpcHRpb24=');
+
+@$core.Deprecated('Use deleteGroupDescriptor instead')
+const DeleteGroup$json = {
+  '1': 'DeleteGroup',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+  ],
+};
+
+/// Descriptor for `DeleteGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteGroupDescriptor =
+    $convert.base64Decode('CgtEZWxldGVHcm91cBIOCgJpZBgBIAEoBFICaWQ=');
+
+@$core.Deprecated('Use addGroupMemberDescriptor instead')
+const AddGroupMember$json = {
+  '1': 'AddGroupMember',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+    {'1': 'decl', '3': 2, '4': 1, '5': 4, '10': 'decl'},
+  ],
+};
+
+/// Descriptor for `AddGroupMember`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List addGroupMemberDescriptor = $convert
+    .base64Decode('Cg5BZGRHcm91cE1lbWJlchIUCgVncm91cBgBIAEoBFIFZ3JvdXASEgoEZGVjbBgCIAEoBFIEZG'
+        'VjbA==');
+
+@$core.Deprecated('Use removeGroupMemberDescriptor instead')
+const RemoveGroupMember$json = {
+  '1': 'RemoveGroupMember',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+    {'1': 'decl', '3': 2, '4': 1, '5': 4, '10': 'decl'},
+  ],
+};
+
+/// Descriptor for `RemoveGroupMember`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List removeGroupMemberDescriptor = $convert
+    .base64Decode('ChFSZW1vdmVHcm91cE1lbWJlchIUCgVncm91cBgBIAEoBFIFZ3JvdXASEgoEZGVjbBgCIAEoBF'
+        'IEZGVjbA==');
+
+@$core.Deprecated('Use moveGroupMemberDescriptor instead')
+const MoveGroupMember$json = {
+  '1': 'MoveGroupMember',
+  '2': [
+    {'1': 'decl', '3': 1, '4': 1, '5': 4, '10': 'decl'},
+    {'1': 'to', '3': 2, '4': 1, '5': 4, '10': 'to'},
+  ],
+};
+
+/// Descriptor for `MoveGroupMember`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List moveGroupMemberDescriptor = $convert
+    .base64Decode('Cg9Nb3ZlR3JvdXBNZW1iZXISEgoEZGVjbBgBIAEoBFIEZGVjbBIOCgJ0bxgCIAEoBFICdG8=');
+
+@$core.Deprecated('Use mergeGroupsDescriptor instead')
+const MergeGroups$json = {
+  '1': 'MergeGroups',
+  '2': [
+    {'1': 'into', '3': 1, '4': 1, '5': 4, '10': 'into'},
+    {'1': 'from', '3': 2, '4': 1, '5': 4, '10': 'from'},
+  ],
+};
+
+/// Descriptor for `MergeGroups`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List mergeGroupsDescriptor = $convert
+    .base64Decode('CgtNZXJnZUdyb3VwcxISCgRpbnRvGAEgASgEUgRpbnRvEhIKBGZyb20YAiABKARSBGZyb20=');
+
+@$core.Deprecated('Use splitGroupDescriptor instead')
+const SplitGroup$json = {
+  '1': 'SplitGroup',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'members', '3': 3, '4': 3, '5': 4, '10': 'members'},
+  ],
+};
+
+/// Descriptor for `SplitGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List splitGroupDescriptor = $convert
+    .base64Decode('CgpTcGxpdEdyb3VwEg4KAmlkGAEgASgEUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEhgKB21lbW'
+        'JlcnMYAyADKARSB21lbWJlcnM=');
+
+@$core.Deprecated('Use behaviorGroupBoundaryViewDescriptor instead')
+const BehaviorGroupBoundaryView$json = {
+  '1': 'BehaviorGroupBoundaryView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'members', '3': 2, '4': 3, '5': 4, '10': 'members'},
+    {'1': 'crossing_in', '3': 3, '4': 3, '5': 4, '10': 'crossingIn'},
+    {'1': 'crossing_out', '3': 4, '4': 3, '5': 4, '10': 'crossingOut'},
+    {'1': 'open_members', '3': 5, '4': 3, '5': 4, '10': 'openMembers'},
+    {'1': 'driven_members', '3': 6, '4': 3, '5': 4, '10': 'drivenMembers'},
+    {'1': 'private_candidates', '3': 7, '4': 3, '5': 4, '10': 'privateCandidates'},
+    {'1': 'external_inputs', '3': 8, '4': 3, '5': 4, '10': 'externalInputs'},
+    {'1': 'external_outputs', '3': 9, '4': 3, '5': 4, '10': 'externalOutputs'},
+    {'1': 'clocks', '3': 10, '4': 3, '5': 4, '10': 'clocks'},
+    {
+      '1': 'internal_edges',
+      '3': 11,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.DeclEdge',
+      '10': 'internalEdges'
+    },
+  ],
+};
+
+/// Descriptor for `BehaviorGroupBoundaryView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List behaviorGroupBoundaryViewDescriptor = $convert
+    .base64Decode('ChlCZWhhdmlvckdyb3VwQm91bmRhcnlWaWV3Eg4KAmlkGAEgASgEUgJpZBIYCgdtZW1iZXJzGA'
+        'IgAygEUgdtZW1iZXJzEh8KC2Nyb3NzaW5nX2luGAMgAygEUgpjcm9zc2luZ0luEiEKDGNyb3Nz'
+        'aW5nX291dBgEIAMoBFILY3Jvc3NpbmdPdXQSIQoMb3Blbl9tZW1iZXJzGAUgAygEUgtvcGVuTW'
+        'VtYmVycxIlCg5kcml2ZW5fbWVtYmVycxgGIAMoBFINZHJpdmVuTWVtYmVycxItChJwcml2YXRl'
+        'X2NhbmRpZGF0ZXMYByADKARSEXByaXZhdGVDYW5kaWRhdGVzEicKD2V4dGVybmFsX2lucHV0cx'
+        'gIIAMoBFIOZXh0ZXJuYWxJbnB1dHMSKQoQZXh0ZXJuYWxfb3V0cHV0cxgJIAMoBFIPZXh0ZXJu'
+        'YWxPdXRwdXRzEhYKBmNsb2NrcxgKIAMoBFIGY2xvY2tzEjcKDmludGVybmFsX2VkZ2VzGAsgAy'
+        'gLMhAuYmRsLnYxLkRlY2xFZGdlUg1pbnRlcm5hbEVkZ2Vz');
+
+@$core.Deprecated('Use declEdgeDescriptor instead')
+const DeclEdge$json = {
+  '1': 'DeclEdge',
+  '2': [
+    {'1': 'from', '3': 1, '4': 1, '5': 4, '10': 'from'},
+    {'1': 'to', '3': 2, '4': 1, '5': 4, '10': 'to'},
+  ],
+};
+
+/// Descriptor for `DeclEdge`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List declEdgeDescriptor =
+    $convert.base64Decode('CghEZWNsRWRnZRISCgRmcm9tGAEgASgEUgRmcm9tEg4KAnRvGAIgASgEUgJ0bw==');
+
+@$core.Deprecated('Use previewComponentExtractionRequestDescriptor instead')
+const PreviewComponentExtractionRequest$json = {
+  '1': 'PreviewComponentExtractionRequest',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+    {'1': 'choices', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.ExtractionChoices', '10': 'choices'},
+  ],
+};
+
+/// Descriptor for `PreviewComponentExtractionRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List previewComponentExtractionRequestDescriptor = $convert
+    .base64Decode('CiFQcmV2aWV3Q29tcG9uZW50RXh0cmFjdGlvblJlcXVlc3QSFAoFZ3JvdXAYASABKARSBWdyb3'
+        'VwEjMKB2Nob2ljZXMYAiABKAsyGS5iZGwudjEuRXh0cmFjdGlvbkNob2ljZXNSB2Nob2ljZXM=');
+
+@$core.Deprecated('Use extractionChoicesDescriptor instead')
+const ExtractionChoices$json = {
+  '1': 'ExtractionChoices',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'instance_name', '3': 2, '4': 1, '5': 9, '10': 'instanceName'},
+    {'1': 'keep_internal', '3': 3, '4': 3, '5': 4, '10': 'keepInternal'},
+    {'1': 'internalize_sinks', '3': 4, '4': 3, '5': 4, '10': 'internalizeSinks'},
+  ],
+};
+
+/// Descriptor for `ExtractionChoices`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List extractionChoicesDescriptor = $convert
+    .base64Decode('ChFFeHRyYWN0aW9uQ2hvaWNlcxISCgRuYW1lGAEgASgJUgRuYW1lEiMKDWluc3RhbmNlX25hbW'
+        'UYAiABKAlSDGluc3RhbmNlTmFtZRIjCg1rZWVwX2ludGVybmFsGAMgAygEUgxrZWVwSW50ZXJu'
+        'YWwSKwoRaW50ZXJuYWxpemVfc2lua3MYBCADKARSEGludGVybmFsaXplU2lua3M=');
+
+@$core.Deprecated('Use extractionPreviewResponseDescriptor instead')
+const ExtractionPreviewResponse$json = {
+  '1': 'ExtractionPreviewResponse',
+  '2': [
+    {
+      '1': 'preview',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ExtractionPreviewView',
+      '10': 'preview'
+    },
+  ],
+};
+
+/// Descriptor for `ExtractionPreviewResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List extractionPreviewResponseDescriptor = $convert
+    .base64Decode('ChlFeHRyYWN0aW9uUHJldmlld1Jlc3BvbnNlEjcKB3ByZXZpZXcYASABKAsyHS5iZGwudjEuRX'
+        'h0cmFjdGlvblByZXZpZXdWaWV3UgdwcmV2aWV3');
+
+@$core.Deprecated('Use extractionPreviewViewDescriptor instead')
+const ExtractionPreviewView$json = {
+  '1': 'ExtractionPreviewView',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'instance_name', '3': 3, '4': 1, '5': 9, '10': 'instanceName'},
+    {
+      '1': 'boundary',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BehaviorGroupBoundaryView',
+      '10': 'boundary'
+    },
+    {'1': 'required', '3': 5, '4': 3, '5': 11, '6': '.bdl.v1.PreviewPortView', '10': 'required'},
+    {'1': 'provided', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.PreviewPortView', '10': 'provided'},
+    {
+      '1': 'open_members',
+      '3': 7,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.OpenMemberDecisionView',
+      '10': 'openMembers'
+    },
+    {'1': 'clocks', '3': 8, '4': 3, '5': 4, '10': 'clocks'},
+    {'1': 'sinks', '3': 9, '4': 3, '5': 11, '6': '.bdl.v1.SinkDecisionView', '10': 'sinks'},
+    {'1': 'private', '3': 10, '4': 3, '5': 4, '10': 'private'},
+    {'1': 'warnings', '3': 11, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'warnings'},
+  ],
+};
+
+/// Descriptor for `ExtractionPreviewView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List extractionPreviewViewDescriptor = $convert
+    .base64Decode('ChVFeHRyYWN0aW9uUHJldmlld1ZpZXcSFAoFZ3JvdXAYASABKARSBWdyb3VwEhIKBG5hbWUYAi'
+        'ABKAlSBG5hbWUSIwoNaW5zdGFuY2VfbmFtZRgDIAEoCVIMaW5zdGFuY2VOYW1lEj0KCGJvdW5k'
+        'YXJ5GAQgASgLMiEuYmRsLnYxLkJlaGF2aW9yR3JvdXBCb3VuZGFyeVZpZXdSCGJvdW5kYXJ5Ej'
+        'MKCHJlcXVpcmVkGAUgAygLMhcuYmRsLnYxLlByZXZpZXdQb3J0Vmlld1IIcmVxdWlyZWQSMwoI'
+        'cHJvdmlkZWQYBiADKAsyFy5iZGwudjEuUHJldmlld1BvcnRWaWV3Ughwcm92aWRlZBJBCgxvcG'
+        'VuX21lbWJlcnMYByADKAsyHi5iZGwudjEuT3Blbk1lbWJlckRlY2lzaW9uVmlld1ILb3Blbk1l'
+        'bWJlcnMSFgoGY2xvY2tzGAggAygEUgZjbG9ja3MSLgoFc2lua3MYCSADKAsyGC5iZGwudjEuU2'
+        'lua0RlY2lzaW9uVmlld1IFc2lua3MSGAoHcHJpdmF0ZRgKIAMoBFIHcHJpdmF0ZRIuCgh3YXJu'
+        'aW5ncxgLIAMoCzISLmJkbC52MS5EaWFnbm9zdGljUgh3YXJuaW5ncw==');
+
+@$core.Deprecated('Use previewPortViewDescriptor instead')
+const PreviewPortView$json = {
+  '1': 'PreviewPortView',
+  '2': [
+    {'1': 'decl', '3': 1, '4': 1, '5': 4, '10': 'decl'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'kind', '3': 3, '4': 1, '5': 14, '6': '.bdl.v1.PortKind', '10': 'kind'},
+    {'1': 'concept', '3': 4, '4': 1, '5': 4, '10': 'concept'},
+  ],
+};
+
+/// Descriptor for `PreviewPortView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List previewPortViewDescriptor = $convert
+    .base64Decode('Cg9QcmV2aWV3UG9ydFZpZXcSEgoEZGVjbBgBIAEoBFIEZGVjbBISCgRuYW1lGAIgASgJUgRuYW'
+        '1lEiQKBGtpbmQYAyABKA4yEC5iZGwudjEuUG9ydEtpbmRSBGtpbmQSGAoHY29uY2VwdBgEIAEo'
+        'BFIHY29uY2VwdA==');
+
+@$core.Deprecated('Use openMemberDecisionViewDescriptor instead')
+const OpenMemberDecisionView$json = {
+  '1': 'OpenMemberDecisionView',
+  '2': [
+    {'1': 'decl', '3': 1, '4': 1, '5': 4, '10': 'decl'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'as_input', '3': 3, '4': 1, '5': 8, '10': 'asInput'},
+  ],
+};
+
+/// Descriptor for `OpenMemberDecisionView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List openMemberDecisionViewDescriptor = $convert
+    .base64Decode('ChZPcGVuTWVtYmVyRGVjaXNpb25WaWV3EhIKBGRlY2wYASABKARSBGRlY2wSEgoEbmFtZRgCIA'
+        'EoCVIEbmFtZRIZCghhc19pbnB1dBgDIAEoCFIHYXNJbnB1dA==');
+
+@$core.Deprecated('Use sinkDecisionViewDescriptor instead')
+const SinkDecisionView$json = {
+  '1': 'SinkDecisionView',
+  '2': [
+    {'1': 'output', '3': 1, '4': 1, '5': 4, '10': 'output'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'drivers', '3': 3, '4': 3, '5': 4, '10': 'drivers'},
+    {'1': 'internal', '3': 4, '4': 1, '5': 8, '10': 'internal'},
+  ],
+};
+
+/// Descriptor for `SinkDecisionView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sinkDecisionViewDescriptor = $convert
+    .base64Decode('ChBTaW5rRGVjaXNpb25WaWV3EhYKBm91dHB1dBgBIAEoBFIGb3V0cHV0EhIKBG5hbWUYAiABKA'
+        'lSBG5hbWUSGAoHZHJpdmVycxgDIAMoBFIHZHJpdmVycxIaCghpbnRlcm5hbBgEIAEoCFIIaW50'
+        'ZXJuYWw=');
 
 @$core.Deprecated('Use systemEditOpDescriptor instead')
 const SystemEditOp$json = {
@@ -4101,6 +4656,24 @@ const SystemEditOp$json = {
       '9': 0,
       '10': 'replaceInstanceComponent'
     },
+    {
+      '1': 'extract_group_as_component',
+      '3': 26,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ExtractGroupAsComponent',
+      '9': 0,
+      '10': 'extractGroupAsComponent'
+    },
+    {
+      '1': 'delete_group_with_members',
+      '3': 27,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DeleteGroupWithMembers',
+      '9': 0,
+      '10': 'deleteGroupWithMembers'
+    },
   ],
   '8': [
     {'1': 'op'},
@@ -4140,7 +4713,36 @@ final $typed_data.Uint8List systemEditOpDescriptor = $convert
         'cmF0aW9uEk0KE2R1cGxpY2F0ZV9jb21wb25lbnQYGCABKAsyGi5iZGwudjEuRHVwbGljYXRlQ2'
         '9tcG9uZW50SABSEmR1cGxpY2F0ZUNvbXBvbmVudBJgChpyZXBsYWNlX2luc3RhbmNlX2NvbXBv'
         'bmVudBgZIAEoCzIgLmJkbC52MS5SZXBsYWNlSW5zdGFuY2VDb21wb25lbnRIAFIYcmVwbGFjZU'
-        'luc3RhbmNlQ29tcG9uZW50QgQKAm9w');
+        'luc3RhbmNlQ29tcG9uZW50El4KGmV4dHJhY3RfZ3JvdXBfYXNfY29tcG9uZW50GBogASgLMh8u'
+        'YmRsLnYxLkV4dHJhY3RHcm91cEFzQ29tcG9uZW50SABSF2V4dHJhY3RHcm91cEFzQ29tcG9uZW'
+        '50ElsKGWRlbGV0ZV9ncm91cF93aXRoX21lbWJlcnMYGyABKAsyHi5iZGwudjEuRGVsZXRlR3Jv'
+        'dXBXaXRoTWVtYmVyc0gAUhZkZWxldGVHcm91cFdpdGhNZW1iZXJzQgQKAm9w');
+
+@$core.Deprecated('Use extractGroupAsComponentDescriptor instead')
+const ExtractGroupAsComponent$json = {
+  '1': 'ExtractGroupAsComponent',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+    {'1': 'choices', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.ExtractionChoices', '10': 'choices'},
+  ],
+};
+
+/// Descriptor for `ExtractGroupAsComponent`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List extractGroupAsComponentDescriptor = $convert
+    .base64Decode('ChdFeHRyYWN0R3JvdXBBc0NvbXBvbmVudBIUCgVncm91cBgBIAEoBFIFZ3JvdXASMwoHY2hvaW'
+        'NlcxgCIAEoCzIZLmJkbC52MS5FeHRyYWN0aW9uQ2hvaWNlc1IHY2hvaWNlcw==');
+
+@$core.Deprecated('Use deleteGroupWithMembersDescriptor instead')
+const DeleteGroupWithMembers$json = {
+  '1': 'DeleteGroupWithMembers',
+  '2': [
+    {'1': 'group', '3': 1, '4': 1, '5': 4, '10': 'group'},
+  ],
+};
+
+/// Descriptor for `DeleteGroupWithMembers`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteGroupWithMembersDescriptor =
+    $convert.base64Decode('ChZEZWxldGVHcm91cFdpdGhNZW1iZXJzEhQKBWdyb3VwGAEgASgEUgVncm91cA==');
 
 @$core.Deprecated('Use changePortContractDescriptor instead')
 const ChangePortContract$json = {
@@ -4639,6 +5241,22 @@ const SystemAnalysisView$json = {
       '6': '.bdl.v1.ComponentStatusView',
       '10': 'components'
     },
+    {
+      '1': 'groups',
+      '3': 8,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.BehaviorGroupBoundaryView',
+      '10': 'groups'
+    },
+    {
+      '1': 'component_analyses',
+      '3': 9,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ComponentAnalysisView',
+      '10': 'componentAnalyses'
+    },
   ],
 };
 
@@ -4650,7 +5268,24 @@ final $typed_data.Uint8List systemAnalysisViewDescriptor = $convert
         'ADKAsyFi5iZGwudjEuUG9ydFN0YXR1c1ZpZXdSBXBvcnRzEjgKCmFjY2VwdGFuY2UYBSABKA4y'
         'GC5iZGwudjEuU3lzdGVtQWNjZXB0YW5jZVIKYWNjZXB0YW5jZRI5Cglwcm9qZWN0ZWQYBiADKA'
         'syGy5iZGwudjEuUHJvamVjdGVkRGlhZ25vc3RpY1IJcHJvamVjdGVkEjsKCmNvbXBvbmVudHMY'
-        'ByADKAsyGy5iZGwudjEuQ29tcG9uZW50U3RhdHVzVmlld1IKY29tcG9uZW50cw==');
+        'ByADKAsyGy5iZGwudjEuQ29tcG9uZW50U3RhdHVzVmlld1IKY29tcG9uZW50cxI5CgZncm91cH'
+        'MYCCADKAsyIS5iZGwudjEuQmVoYXZpb3JHcm91cEJvdW5kYXJ5Vmlld1IGZ3JvdXBzEkwKEmNv'
+        'bXBvbmVudF9hbmFseXNlcxgJIAMoCzIdLmJkbC52MS5Db21wb25lbnRBbmFseXNpc1ZpZXdSEW'
+        'NvbXBvbmVudEFuYWx5c2Vz');
+
+@$core.Deprecated('Use componentAnalysisViewDescriptor instead')
+const ComponentAnalysisView$json = {
+  '1': 'ComponentAnalysisView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'analysis', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.ProjectAnalysis', '10': 'analysis'},
+  ],
+};
+
+/// Descriptor for `ComponentAnalysisView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List componentAnalysisViewDescriptor = $convert
+    .base64Decode('ChVDb21wb25lbnRBbmFseXNpc1ZpZXcSDgoCaWQYASABKARSAmlkEjMKCGFuYWx5c2lzGAIgAS'
+        'gLMhcuYmRsLnYxLlByb2plY3RBbmFseXNpc1IIYW5hbHlzaXM=');
 
 @$core.Deprecated('Use componentStatusViewDescriptor instead')
 const ComponentStatusView$json = {
