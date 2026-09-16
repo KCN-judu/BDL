@@ -475,9 +475,6 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     assert_eq!(v.bindings.len(), 2);
     let lamp_view = v.components.iter().find(|x| x.id == lamp).unwrap();
     assert_eq!(lamp_view.ports.len(), 2);
-    assert_eq!(lamp_view.clock_params, vec![l_tick]);
-    assert_eq!(lamp_view.shared_concepts[0].system, tilt);
-    assert_eq!(lamp_view.body.as_ref().unwrap().mappings.len(), 3);
     // provenance: the flat brightness of lampA points back at the instance and its port
     let o = v
         .origins
@@ -591,6 +588,116 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     let a = c.system_analysis();
     assert_eq!(st(&a, lamp_b, port_in), pb::PortStatusKind::Bound);
 
+    // the public contract is on the wire, renderable without the body:
+    // "Requires Tilt" / "Provides Brightness" / "Updates in tick"
+    let v = c.system();
+    let lamp_view = v.components.iter().find(|x| x.id == lamp).unwrap();
+    let req = lamp_view.ports.iter().find(|p| p.id == port_in).unwrap();
+    let k = req.contract.as_ref().unwrap();
+    assert_eq!(req.kind(), pb::PortKind::Required);
+    assert_eq!((k.input_names.len(), k.output_name.as_str()), (0, "Tilt"));
+    assert_eq!(k.clock_kind(), pb::ClockContractKind::Parameter);
+    assert_eq!((k.clock_id, k.clock_name.as_str()), (Some(l_tick), "tick"));
+    assert_eq!(
+        k.shared,
+        vec![pb::IdPair {
+            local: l_tilt,
+            system: tilt
+        }],
+        "over the shared system concept"
+    );
+    let prov = lamp_view.ports.iter().find(|p| p.id == port_out).unwrap();
+    assert_eq!(prov.contract.as_ref().unwrap().output_name, "Brightness");
+    assert!(
+        prov.contract.as_ref().unwrap().shared.is_empty(),
+        "a private concept"
+    );
+    assert!(lamp_view.interface_stamp > 0 && lamp_view.stamp > 0);
+    // a private body edit moves the implementation stamp only; the contract is unchanged
+    let before = req.contract.clone();
+    let applied = c.body(
+        lamp,
+        pb::edit_op::Op::ReplaceDefinition(pb::ReplaceDefinition {
+            id: l_dim,
+            definition: Some(pb::Definition {
+                kind: Some(pb::definition::Kind::Formula("Tilt / 45 deg".into())),
+            }),
+        }),
+    );
+    assert_eq!(applied.kind(), pb::EditKind::Edit);
+    let v_after = c.system();
+    let lamp_after = v_after.components.iter().find(|x| x.id == lamp).unwrap();
+    assert_eq!(lamp_after.interface_stamp, lamp_view.interface_stamp);
+    assert_eq!(lamp_after.stamp, lamp_view.stamp + 1);
+    assert_eq!(
+        lamp_after
+            .ports
+            .iter()
+            .find(|p| p.id == port_in)
+            .unwrap()
+            .contract,
+        before
+    );
+    c.body(
+        lamp,
+        pb::edit_op::Op::ReplaceDefinition(pb::ReplaceDefinition {
+            id: l_dim,
+            definition: Some(pb::Definition {
+                kind: Some(pb::definition::Kind::Formula("Tilt / 90 deg".into())),
+            }),
+        }),
+    );
+    // an explicit contract change is refused with a stable code when malformed, classified when applied
+    let base = c.last_revision;
+    let Resp::Error(e) = c.call(Req::ApplySystemEdit(pb::ApplySystemEditRequest {
+        base_revision: base,
+        op: Some(pb::SystemEditOp {
+            op: Some(pb::system_edit_op::Op::ChangePortContract(
+                pb::ChangePortContract {
+                    component: lamp,
+                    port: port_in,
+                    contract: None,
+                },
+            )),
+        }),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "protocol.invalid_edit");
+    let mut changed = before.clone().unwrap();
+    changed.signature = Some(pb::Signature {
+        inputs: vec![],
+        output: l_bright,
+    });
+    let applied = c.sys(pb::system_edit_op::Op::ChangePortContract(
+        pb::ChangePortContract {
+            component: lamp,
+            port: port_in,
+            contract: Some(changed),
+        },
+    ));
+    let o = applied.outcome.unwrap();
+    assert_eq!(o.kind(), pb::EditKind::Edit);
+    assert_eq!(
+        o.bindings.len(),
+        2,
+        "both bindings on the port are reopened"
+    );
+    let a = c.system_analysis();
+    assert_eq!(a.acceptance(), pb::SystemAcceptance::Invalid);
+    assert!(!a.components.iter().find(|x| x.id == lamp).unwrap().realizes);
+    assert!(a
+        .composition
+        .iter()
+        .any(|d| d.code == "component.port_signature_mismatch"));
+    c.call(Req::Undo(pb::UndoRequest {}));
+    let a = c.system_analysis();
+    assert!(a.components.iter().all(|x| x.realizes));
+    assert_eq!(a.acceptance(), pb::SystemAcceptance::Executable);
+    assert_eq!(lamp_view.clock_params, vec![l_tick]);
+    assert_eq!(lamp_view.shared_concepts[0].system, tilt);
+    assert_eq!(lamp_view.body.as_ref().unwrap().mappings.len(), 3);
+    let v = c.system();
     // save, reopen: the system is the truth; the flat file is not written
     let Resp::Project(saved) = c.call(Req::SaveProject(pb::SaveProjectRequest {})) else {
         panic!()

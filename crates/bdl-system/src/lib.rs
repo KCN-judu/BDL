@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 
 pub mod analyze;
+pub mod contract;
 pub mod edit;
 pub mod flatten;
 pub mod ids;
@@ -21,6 +22,10 @@ pub mod persist;
 pub mod validate;
 
 pub use analyze::{analyze_system, Acceptance, PortStatus, SystemAnalysis};
+pub use contract::{
+    binding_compatibility, component_substitutable, realizes, Incompatibility, ResolvedClock,
+    ResolvedConcept, SubstitutionProblem, SubstitutionReason,
+};
 pub use edit::{
     apply_system_edit, AppliedSystem, SystemEditError, SystemEditOp, SystemEditOutcome,
 };

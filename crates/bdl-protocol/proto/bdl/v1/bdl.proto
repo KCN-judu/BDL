@@ -1256,8 +1256,36 @@ message PortView {
   string name = 2;
   string description = 3;
   PortKind kind = 4;
-  // The body declaration behind the port (component-local id).
+  // The body declaration meant to realize the port (component-local id).
+  // A link, not the promise: `contract` is the promise.
   uint64 decl = 5;
+  PortContractView contract = 6;
+}
+
+// What a port promises, in component-local terms (protocol 0.7).  Enough
+// to render "Requires Tilt", "Provides Brightness", "Updates in tick"
+// without the component body.
+message PortContractView {
+  // Over component-local concepts.
+  Signature signature = 1;
+  // Display names of the signature's inputs and output, in order.
+  repeated string input_names = 2;
+  string output_name = 3;
+  // For each signature concept: the system concept it stands for, if shared.
+  repeated IdPair shared = 4;
+  ClockContractKind clock_kind = 5;
+  // The component-local clock, for PARAMETER and PRIVATE.
+  optional uint64 clock_id = 6;
+  string clock_name = 7;
+  // Kernel commitment labels (empty today).
+  repeated string commitments = 8;
+}
+
+enum ClockContractKind {
+  CLOCK_CONTRACT_KIND_UNSPECIFIED = 0;
+  CLOCK_CONTRACT_KIND_AGNOSTIC = 1;
+  CLOCK_CONTRACT_KIND_PARAMETER = 2;
+  CLOCK_CONTRACT_KIND_PRIVATE = 3;
 }
 
 message ComponentView {
@@ -1274,7 +1302,10 @@ message ComponentView {
   // The body as an ordinary design (component-local ids; no layout, no
   // session fields).
   ProjectProjection body = 8;
+  // Implementation stamp: bumped by body edits only.
   uint64 stamp = 9;
+  // Bumped by public-interface edits only (protocol 0.7).
+  uint64 interface_stamp = 10;
 }
 
 message IdPair {
@@ -1376,7 +1407,32 @@ message SystemEditOp {
     UnbindPorts unbind_ports = 19;
     ExportPort export_port = 20;
     HidePort hide_port = 21;
+    // Contract hardening (protocol 0.7).
+    ChangePortContract change_port_contract = 22;
+    RebindPortDeclaration rebind_port_declaration = 23;
+    DuplicateComponent duplicate_component = 24;
+    ReplaceInstanceComponent replace_instance_component = 25;
   }
+}
+
+message ChangePortContract {
+  uint64 component = 1;
+  uint64 port = 2;
+  // Only `signature`, `clock_kind`, `clock_id` and `commitments` are read.
+  PortContractView contract = 3;
+}
+message RebindPortDeclaration {
+  uint64 component = 1;
+  uint64 port = 2;
+  uint64 decl = 3;
+}
+message DuplicateComponent {
+  uint64 id = 1;
+  string name = 2;
+}
+message ReplaceInstanceComponent {
+  uint64 instance = 1;
+  uint64 component = 2;
 }
 
 message CreateComponent {
@@ -1479,6 +1535,8 @@ message SystemEditOutcome {
   optional uint64 created_export = 9;
   // The flat outcome of a base or body edit (body ids are local).
   optional EditOutcome inner = 10;
+  // Bindings whose well-formedness the edit reopens (protocol 0.7).
+  repeated uint64 bindings = 11;
 }
 
 enum PortStatusKind {
@@ -1523,4 +1581,11 @@ message SystemAnalysisView {
   SystemAcceptance acceptance = 5;
   // Every diagnostic, composition and flat, with its origin.
   repeated ProjectedDiagnostic projected = 6;
+  // Per component: whether its body realizes its public interface.
+  repeated ComponentStatusView components = 7;
+}
+
+message ComponentStatusView {
+  uint64 id = 1;
+  bool realizes = 2;
 }

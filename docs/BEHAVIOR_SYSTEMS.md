@@ -31,10 +31,13 @@ object or function and the formal definition or theorem it follows.
 | Production (`bdl-system`) | FV (`BDL/Behavior/`) |
 |---|---|
 | `BehaviorComponent { body: Design, interface, shared_concepts, external_outputs }` | `BehaviorComponent { design, iface, internalSem, internalOut, width }` (Component.lean) |
-| `BehaviorInterface { ports: Port { kind: Required \| Provided \| Parameter, decl }, clock_params }` | `BehaviorInterface { required, provided, params, clockParams }`, `Port = (DeclId, DeclInterface, Option ClockId)` (Interface.lean) |
+| `BehaviorInterface { ports: Port { kind: Required \| Provided \| Parameter, decl, contract: PortContract { signature, commitments, clock: Agnostic \| Parameter \| Private } }, clock_params }` — the contract is stored on the port, never read off the body | `BehaviorInterface { required, provided, params, clockParams }`, `Port = (DeclId, DeclInterface, Option ClockId)` (Interface.lean) |
+| `contract::realizes(component)` → `component.port_declaration_missing`, `component.port_signature_mismatch`, `component.port_clock_mismatch`, `component.required_port_realized`, `component.parameter_invalid`, `component.port_commitment_unrealized`, … — decided on the component alone, once, for every instance | `BehaviorComponent.Realizes` (Component.lean): every port is a declaration with exactly the advertised interface and clock, required ports and parameters unresolved, parameters data-typed and agnostic |
+| `contract::binding_compatibility(system, binding)` — resolved contract signatures equal (`ResolvedConcept::Shared(system id)` / `Private{instance, local}`), commitments included, clocks equal / agnostic source / explicit transport | `BindingWF` on the two interfaces (System.lean; D-68) |
+| `PortContract::is_refined_by`, `contract::component_substitutable(old, new, used_ports, used_clock_params)`, `ReplaceInstanceComponent` | `IfaceRefines`, `Substitutable`, `replace`, `substitute_composeWF` (Substitution.lean): existing wiring stays well formed; **no behavioural claim** |
 | `ComponentInstance { component, clock_bindings }` | `Inst { comp, κ }` (Instantiate.lean); the instance index is a stable `ComponentInstanceId` |
 | `FlatIds` — one flat id per `(instance, private local entity)`, issued by the base allocator; `flatten` reads it | `Ren.inst C W k κ`, `fresh W k n`, `decode` (Instantiate.lean); **Theorem A** `inst_decl_disjoint`, `inst_sem_disjoint`, `inst_out_disjoint`, `inst_clock_disjoint`, `inst_*_not_global` — production discharges injectivity and disjointness by the allocator's never-reuse contract (tested: `instances_never_alias_and_shared_identity_is_kept`) |
-| `validate_composition`: `system.binding_type_mismatch`, `system.binding_needs_transport`, `system.transport_*`, `system.port_not_open`, `system.parameter_not_a_value` | `BindingWF` (System.lean): type equality after renaming, clock compatibility or explicit transport with a closed init; `Realizes` (Component.lean): required/params unresolved, params data-typed |
+| `validate_composition` = `realizes` for every component + `binding_compatibility` for every binding, phrased as `component.*` / `system.binding_*` / `system.transport_*` diagnostics | `ComposeWF` (System.lean): `InstsWF` (every instance's component realizes) and `BindingWF` for every binding |
 | binding = `Definition::Reference { target, transport }` on the destination, elaborated to `declRef target` / `sync src init (declRef target)` (`bdl-elab::elaborate_reference`) | `applyBinding` = a Phase-1 `realize` step with `bindingBody` (System.lean); **Theorem C** `binding_satisfies` — the existing checker verifies the realization against the port's interface |
 | `flatten`: base ∪ instantiated fragments, then one realization per binding and per parameter value; unbound required ports left unresolved | `flatten = ⟨flattenΔ, unionΘ, unionΚ, unionΩ, unionβ⟩` (System.lean) |
 | `analyze_system` = `flatten` then `bdl_compiler::analyze` (typing, `Causal`, `Clocked`, `DriveWF`, `SingleDriver`, `CompleteOutputs` on the flat design) | **Theorem D** `flatten_WF`, **E** `flatten_globalWF` (Preservation.lean) — the flat judgments are the only judgments |
@@ -51,7 +54,7 @@ object or function and the formal definition or theorem it follows.
 ## What the surface adds, and what it does not
 
 Added: `ComponentId`, `ComponentInstanceId`, `PortId`, `BindingId`,
-`ExportId`; the authored `BehaviorSystem`; twenty system edit ops; the
+`ExportId`; the authored `BehaviorSystem`; twenty-five system edit ops; the
 freshening table; the origin map; composition diagnostics (`system.*`);
 `Acceptance { Invalid, Open, Executable }`; packaging; a system project
 format; protocol 0.6 views and requests.
@@ -92,10 +95,14 @@ else is private and fresh per instance.
   single-domain wiring with direct and constant bindings; the multi-domain
   case with transported bindings and higher-order bodies is not proved,
   and production claims only the differential tests it runs.
-* **Behavioural substitutability.** `IfaceRefines` / `substitute_composeWF`
-  (interface refinement) is not implemented; there is no versioning of
-  components beyond the `stamp`, and no claim of behavioural equivalence
-  between a component and a refinement of it.
+* **Behavioural substitutability.** Interface-refining substitution
+  (`component_substitutable`, `ReplaceInstanceComponent`) keeps the
+  wiring well formed and nothing more: no behavioural equivalence between
+  a component and a version of it is claimed or checked. Versions are
+  `DuplicateComponent` copies (same port and local ids); an independently
+  authored component cannot substitute even with equal promises (DI-34).
+  Commitments (`PropertyId`) are carried in contracts but the surface
+  never establishes any yet.
 * **Layout** for system projects is keyed by flat ids in `ui/layout.json`;
   a per-instance canvas layout is part of the Studio milestone.
 * **IDE surfaces** (hover, completion, rename, references) operate on the

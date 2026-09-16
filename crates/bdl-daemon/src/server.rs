@@ -942,6 +942,7 @@ fn system_edit_code(e: &bdl_system::SystemEditError) -> String {
         E::UnknownExport { .. } => "unknown_export",
         E::DuplicateExportName { .. } => "duplicate_export_name",
         E::ExportNotRequired { .. } => "export_not_required",
+        E::NotSubstitutable { .. } => "not_substitutable",
         E::Base(_) => "base",
         E::Body { .. } => "body",
     }

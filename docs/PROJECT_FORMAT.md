@@ -73,7 +73,7 @@ concepts and mappings only reads exactly as it did before those sections
 existed — the additions were made without a schema bump. Layout, analysis
 results, deployment results and simulation traces are never in this file.
 
-## `design/system.bdl.json` (schema 1)
+## `design/system.bdl.json` (schema 2)
 
 ```json
 {
@@ -81,8 +81,10 @@ results, deployment results and simulation traces are never in this file.
   "system": {
     "base": { "name": "rover", "concepts": { "0": { "id": 0, "name": "Tilt", … } }, "clocks": { … }, "outputs": { … }, "devices": { … }, "mappings": { … }, "ids": { … } },
     "components": { "0": { "id": 0, "name": "AdaptiveLamp", "body": { …an ordinary design over local ids… },
-                           "interface": { "ports": { "0": { "id": 0, "name": "tiltValue", "kind": "required", "decl": 0 } }, "clock_params": [0] },
-                           "shared_concepts": { "0": 0 }, "external_outputs": {}, "stamp": 7 } },
+                           "interface": { "ports": { "0": { "id": 0, "name": "tiltValue", "kind": "required", "decl": 0,
+                                                            "contract": { "signature": { "inputs": [], "output": 0 }, "clock": { "kind": "parameter", "clock": 0 } } } },
+                                          "clock_params": [0] },
+                           "shared_concepts": { "0": 0 }, "external_outputs": {}, "body_stamp": 7, "interface_stamp": 3 } },
     "instances":  { "1": { "id": 1, "component": 0, "name": "lampA", "clock_bindings": { "0": 0 }, "parameter_bindings": {} } },
     "bindings":   { "0": { "id": 0, "source": { "instance": 0, "port": 2 }, "destination": { "instance": 1, "port": 0 } } },
     "exports":    {},
@@ -98,6 +100,13 @@ never collide and a flat id is never reused. `flat_ids` is completed by
 the edit model and read by flattening (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md
 §5). A binding's `transport`, when present, is `{ "init": "45 deg" }`. The
 schema is refused when newer, as for every other file.
+
+A port's `contract` is the public promise, stored on its own (schema 2);
+`decl` is only the body declaration meant to realize it. **Schema 1**
+(ports without `contract`, one `stamp`) is migrated on load — the
+contract is derived from the backing declaration *once*, then persisted
+on the next save; nothing keeps deriving it from the body
+(`bdl-system::persist::migrate_v1_to_v2`).
 
 ## `ui/layout.json` (schema 1)
 

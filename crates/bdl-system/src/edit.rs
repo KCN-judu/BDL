@@ -12,6 +12,7 @@
 //!   per instance of the touched component and never spills to unrelated
 //!   components (§44 of the brief).
 
+use crate::contract::{component_substitutable, SubstitutionProblem};
 use crate::ids::{BindingId, ComponentId, ComponentInstanceId, ExportId, PortId};
 use crate::model::*;
 use bdl_model::edit::{apply_edit, EditError, EditKind, EditOp, EditOutcome, Invalidation};
@@ -58,7 +59,16 @@ pub enum SystemEditOp {
         op: EditOp,
     },
 
-    /// Expose a body declaration as a port.
+    /// Copy a component — body, interface, sharing tables — under a new id
+    /// with the *same* port ids and local ids: a version, which
+    /// `ReplaceInstanceComponent` can substitute for the original.
+    DuplicateComponent {
+        id: ComponentId,
+        name: String,
+    },
+    /// Expose a body declaration as a port.  The port's contract is
+    /// snapshotted from the declaration *now*; from then on it is the
+    /// port's own and only `ChangePortContract` moves it.
     DeclarePort {
         component: ComponentId,
         decl: DeclId,
@@ -66,6 +76,26 @@ pub enum SystemEditOp {
         name: String,
         #[serde(default)]
         description: String,
+    },
+    /// Change a port's public contract explicitly.  A change that is not a
+    /// refinement reopens every binding on the port.
+    ChangePortContract {
+        component: ComponentId,
+        port: PortId,
+        contract: PortContract,
+    },
+    /// Point a port at another body declaration; the contract stays.
+    RebindPortDeclaration {
+        component: ComponentId,
+        port: PortId,
+        decl: DeclId,
+    },
+    /// Substitute the component of an instance by one whose interface
+    /// refines it on every port and clock parameter the system uses
+    /// (`contract::component_substitutable`); refused otherwise.
+    ReplaceInstanceComponent {
+        instance: ComponentInstanceId,
+        component: ComponentId,
     },
     RenamePort {
         component: ComponentId,
@@ -215,6 +245,11 @@ pub enum SystemEditError {
     DuplicateExportName { name: String },
     #[error("only a required port can be exported")]
     ExportNotRequired { port: PortRef },
+    #[error("component {component} cannot stand in: {} port(s)/parameter(s) incompatible", problems.len())]
+    NotSubstitutable {
+        component: ComponentId,
+        problems: Vec<SubstitutionProblem>,
+    },
     #[error(transparent)]
     Base(EditError),
     #[error("in the body of component {component}: {error}")]
@@ -233,6 +268,9 @@ pub struct SystemEditOutcome {
     pub invalidates: BTreeSet<Invalidation>,
     pub origin_decls: BTreeSet<DeclId>,
     pub instances: BTreeSet<ComponentInstanceId>,
+    /// Bindings whose well-formedness the edit reopens (a contract change,
+    /// a substitution).
+    pub bindings: BTreeSet<BindingId>,
     pub created_component: Option<ComponentId>,
     pub created_instance: Option<ComponentInstanceId>,
     pub created_port: Option<PortId>,
@@ -395,6 +433,26 @@ pub fn ensure_flat_ids(s: &mut BehaviorSystem) {
         .sort_by(|a, b| (a.instance, a.local).cmp(&(b.instance, b.local)));
 }
 
+/// Every binding whose source or destination is `port` of an instance of
+/// `component`.
+fn bindings_on_port(
+    s: &BehaviorSystem,
+    component: ComponentId,
+    port: PortId,
+) -> BTreeSet<BindingId> {
+    let of_component = |r: PortRef| {
+        r.port == port
+            && s.instances
+                .get(&r.instance)
+                .is_some_and(|i| i.component == component)
+    };
+    s.bindings
+        .values()
+        .filter(|b| of_component(b.source) || of_component(b.destination))
+        .map(|b| b.id)
+        .collect()
+}
+
 fn flat_decl(s: &BehaviorSystem, r: PortRef) -> Option<DeclId> {
     let port = s.port(r)?;
     s.flat_ids
@@ -438,7 +496,8 @@ pub fn apply_system_edit(
                     interface: BehaviorInterface::default(),
                     shared_concepts: BTreeMap::new(),
                     external_outputs: BTreeMap::new(),
-                    stamp: 0,
+                    body_stamp: 0,
+                    interface_stamp: 0,
                 },
             );
             let mut o = SystemEditOutcome::refinement();
@@ -516,7 +575,7 @@ pub fn apply_system_edit(
                 error,
             })?;
             c.body = applied.snapshot.design;
-            c.stamp += 1;
+            c.body_stamp += 1;
             // Tables that named a removed entity are pruned.
             let concepts: BTreeSet<_> = c.body.concepts.keys().copied().collect();
             c.shared_concepts.retain(|l, _| concepts.contains(l));
@@ -565,6 +624,12 @@ pub fn apply_system_edit(
             }
             let id = s.ids.fresh_port();
             let c = component_mut(&mut s, *component)?;
+            let contract = c
+                .body
+                .mappings
+                .get(decl)
+                .map(|m| PortContract::of_declaration(m, &c.interface))
+                .ok_or(SystemEditError::NotABodyDeclaration { decl: *decl })?;
             c.interface.ports.insert(
                 id,
                 Port {
@@ -573,11 +638,184 @@ pub fn apply_system_edit(
                     description: description.clone(),
                     kind: *kind,
                     decl: *decl,
+                    contract,
                 },
             );
-            c.stamp += 1;
+            c.interface_stamp += 1;
             let mut o = SystemEditOutcome::refinement();
             o.created_port = Some(id);
+            o
+        }
+        SystemEditOp::ChangePortContract {
+            component,
+            port,
+            contract,
+        } => {
+            let c = component_mut(&mut s, *component)?;
+            let p = c
+                .interface
+                .ports
+                .get(port)
+                .ok_or(SystemEditError::UnknownPort {
+                    component: *component,
+                    port: *port,
+                })?;
+            let refinement = p.contract.is_refined_by(contract, p.kind);
+            let changed = p.contract != *contract;
+            if let Some(p) = c.interface.ports.get_mut(port) {
+                p.contract = contract.clone();
+            }
+            if changed {
+                c.interface_stamp += 1;
+            }
+            let mut o = if refinement {
+                SystemEditOutcome::refinement()
+            } else {
+                SystemEditOutcome::edit([
+                    Invalidation::Interface,
+                    Invalidation::Realization,
+                    Invalidation::Reactive,
+                    Invalidation::Clock,
+                    Invalidation::Output,
+                ])
+            };
+            if changed {
+                let touched = bindings_on_port(&s, *component, *port);
+                for b in &touched {
+                    if let Some(b) = s.bindings.get(b) {
+                        o.instances.insert(b.source.instance);
+                        o.instances.insert(b.destination.instance);
+                        o.origin_decls.extend(flat_decl(&s, b.destination));
+                    }
+                }
+                o.bindings = touched;
+                for inst in s.instances_of(*component) {
+                    o.instances.insert(inst.id);
+                    o.origin_decls.extend(flat_decl(
+                        &s,
+                        PortRef {
+                            instance: inst.id,
+                            port: *port,
+                        },
+                    ));
+                }
+            }
+            o
+        }
+        SystemEditOp::RebindPortDeclaration {
+            component,
+            port,
+            decl,
+        } => {
+            let c = component_mut(&mut s, *component)?;
+            if !c.body.mappings.contains_key(decl) {
+                return Err(SystemEditError::NotABodyDeclaration { decl: *decl });
+            }
+            if let Some(other) = c.interface.port_for_decl(*decl) {
+                if other.id != *port {
+                    return Err(SystemEditError::DeclAlreadyExposed {
+                        decl: *decl,
+                        port: other.id,
+                    });
+                }
+            }
+            c.interface
+                .ports
+                .get_mut(port)
+                .ok_or(SystemEditError::UnknownPort {
+                    component: *component,
+                    port: *port,
+                })?
+                .decl = *decl;
+            c.interface_stamp += 1;
+            // The promise is unchanged; what realizes it is — every
+            // instance's flattened port declaration changes identity.
+            let mut o =
+                SystemEditOutcome::edit([Invalidation::Realization, Invalidation::Reactive]);
+            o.instances = s.instances_of(*component).map(|i| i.id).collect();
+            o
+        }
+        SystemEditOp::DuplicateComponent { id, name } => {
+            let name = valid_name(name)?;
+            if s.components.values().any(|c| c.name == name) {
+                return Err(SystemEditError::DuplicateComponentName { name });
+            }
+            let original = s
+                .components
+                .get(id)
+                .ok_or(SystemEditError::UnknownComponent { id: *id })?
+                .clone();
+            let new_id = s.ids.fresh_component();
+            let mut copy = original;
+            copy.id = new_id;
+            copy.name = name;
+            s.components.insert(new_id, copy);
+            let mut o = SystemEditOutcome::refinement();
+            o.created_component = Some(new_id);
+            o
+        }
+        SystemEditOp::ReplaceInstanceComponent {
+            instance,
+            component,
+        } => {
+            let inst = s
+                .instances
+                .get(instance)
+                .ok_or(SystemEditError::UnknownInstance { id: *instance })?
+                .clone();
+            let old = s
+                .components
+                .get(&inst.component)
+                .ok_or(SystemEditError::UnknownComponent { id: inst.component })?;
+            let new = s
+                .components
+                .get(component)
+                .ok_or(SystemEditError::UnknownComponent { id: *component })?;
+            // Every port the system relies on at this instance.
+            let mut used: BTreeSet<PortId> = s
+                .bindings
+                .values()
+                .flat_map(|b| {
+                    [
+                        (b.source.instance == *instance).then_some(b.source.port),
+                        (b.destination.instance == *instance).then_some(b.destination.port),
+                    ]
+                })
+                .flatten()
+                .collect();
+            used.extend(
+                s.exports
+                    .values()
+                    .filter(|e| e.port.instance == *instance)
+                    .map(|e| e.port.port),
+            );
+            used.extend(inst.parameter_bindings.keys().copied());
+            let used_ports: Vec<PortId> = used.into_iter().collect();
+            let used_clocks: Vec<ClockId> = inst.clock_bindings.keys().copied().collect();
+            if let Err(problems) = component_substitutable(old, new, &used_ports, &used_clocks) {
+                return Err(SystemEditError::NotSubstitutable {
+                    component: *component,
+                    problems,
+                });
+            }
+            let touched: BTreeSet<BindingId> = s
+                .bindings
+                .values()
+                .filter(|b| b.source.instance == *instance || b.destination.instance == *instance)
+                .map(|b| b.id)
+                .collect();
+            instance_mut(&mut s, *instance)?.component = *component;
+            // The instance's private entities are those of the new body;
+            // entries for local ids the version kept stay, the rest go.
+            let mut o = SystemEditOutcome::edit([
+                Invalidation::Realization,
+                Invalidation::Reactive,
+                Invalidation::Clock,
+                Invalidation::Output,
+                Invalidation::Deployment,
+            ]);
+            o.instances.insert(*instance);
+            o.bindings = touched;
             o
         }
         SystemEditOp::RenamePort {
@@ -632,7 +870,7 @@ pub fn apply_system_edit(
             }
             let c = component_mut(&mut s, *component)?;
             c.interface.ports.remove(port);
-            c.stamp += 1;
+            c.interface_stamp += 1;
             SystemEditOutcome::refinement()
         }
         SystemEditOp::SetClockParameter {
@@ -664,10 +902,29 @@ pub fn apply_system_edit(
             } else if !*parameter && was {
                 c.interface.clock_params.retain(|k| k != clock);
             }
-            c.stamp += 1;
+            // The role of the clock is part of every contract that names
+            // it: a parameter becomes private or the reverse — an explicit
+            // interface change.
+            let mut ports_touched = Vec::new();
+            for p in c.interface.ports.values_mut() {
+                if p.contract.clock.local() == Some(*clock) {
+                    p.contract.clock = if *parameter {
+                        ClockContract::Parameter { clock: *clock }
+                    } else {
+                        ClockContract::Private { clock: *clock }
+                    };
+                    ports_touched.push(p.id);
+                }
+            }
+            if was != *parameter {
+                c.interface_stamp += 1;
+            }
             let instances: BTreeSet<_> = s.instances_of(*component).map(|i| i.id).collect();
-            let mut o = SystemEditOutcome::edit([Invalidation::Clock]);
+            let mut o = SystemEditOutcome::edit([Invalidation::Clock, Invalidation::Interface]);
             o.instances = instances;
+            for p in ports_touched {
+                o.bindings.extend(bindings_on_port(&s, *component, p));
+            }
             o
         }
         SystemEditOp::ShareConcept {
@@ -692,7 +949,7 @@ pub fn apply_system_edit(
                     c.shared_concepts.remove(local);
                 }
             }
-            c.stamp += 1;
+            c.interface_stamp += 1;
             let instances: BTreeSet<_> = s.instances_of(*component).map(|i| i.id).collect();
             let mut o =
                 SystemEditOutcome::edit([Invalidation::Semantic, Invalidation::Realization]);
@@ -721,7 +978,7 @@ pub fn apply_system_edit(
                     c.external_outputs.remove(local);
                 }
             }
-            c.stamp += 1;
+            c.interface_stamp += 1;
             let instances: BTreeSet<_> = s.instances_of(*component).map(|i| i.id).collect();
             let mut o = SystemEditOutcome::edit([Invalidation::Output, Invalidation::Deployment]);
             o.instances = instances;

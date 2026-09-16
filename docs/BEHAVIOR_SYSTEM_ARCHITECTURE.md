@@ -57,7 +57,8 @@ BehaviorComponent {
                                               that belong to the system
     stamp: u64                                bumped by every body/interface edit
 }
-Port { id: PortId, decl: DeclId(local), kind: Required | Provided | Parameter, name, description }
+Port { id: PortId, decl: DeclId(local), kind: Required | Provided | Parameter, name, description,
+       contract: PortContract { signature (local concepts), commitments: [PropertyId], clock: Agnostic | Parameter{clock} | Private{clock} } }
 ```
 
 The body is authored with the existing flat `EditOp`s (concepts,
@@ -215,13 +216,53 @@ implicit reinterpretation; `BehaviorSystem::from_flat(design)` exists for
 tests and tooling and produces the degenerate system whose flattening is
 the same design.
 
+## 11. Public contract versus body
+
+A port's `contract` is the promise (FV `Port.iface` + `Port.clock`),
+stored on the port; `port.decl` is only the body declaration meant to
+realize it. `DeclarePort` snapshots the contract from the declaration
+once; from then on
+
+* a body edit never touches a contract — it may make the component stop
+  **realizing** its interface (`contract::realizes`, the production
+  `BehaviorComponent.Realizes`: declaration present, same signature, same
+  clock role, required/parameter ports unresolved, parameters nullary and
+  agnostic, commitments established), which `analyze_system` reports as
+  `component.*` diagnostics naming the component, the port and the
+  backing declaration; bindings keep their identity and their meaning is
+  then judged by the flat compiler against the actual body, never
+  silently re-derived;
+* a contract changes only through `ChangePortContract` (classified as a
+  refinement when the new contract refines the old — FV `IfaceRefines`,
+  same signature and clock, commitments in the right direction — and an
+  `Interface` edit otherwise, naming the bindings it reopens) or
+  `SetClockParameter` (which rewrites the *role* of a clock in every
+  contract that names it); `RebindPortDeclaration` moves the link, not the
+  promise;
+* binding compatibility (`contract::binding_compatibility`, FV
+  `BindingWF`) and substitutability (`contract::component_substitutable`,
+  FV `Substitutable`) are decided on contracts alone, over **resolved**
+  concept identities — a shared concept is the system concept it stands
+  for, a private one is `(instance, local)` — so equal representations
+  never make two concepts one, and no body is inspected at a use site.
+
+Contract concepts and clocks are component-local: a system `ClockId`
+never appears in a contract (an instance maps a `Parameter`; a `Private`
+clock is freshened). `body_stamp` and `interface_stamp` count the two
+kinds of change separately. A version is a `DuplicateComponent` — same
+port ids, same local ids — so `ReplaceInstanceComponent` can substitute
+it at an instance while every binding, export and parameter value stays
+in place and the instance keeps its flat identities.
+
 ## Edit model and invalidation
 
 `apply_system_edit(&SystemSnapshot, &SystemEditOp) -> Result<AppliedSystem,
 SystemEditError>` — pure, revisioned, the same shape as `apply_edit`.
 Ops: `Base(EditOp)`, `CreateComponent`, `RenameComponent`,
 `DeleteComponent`, `EditComponentBody { component, op: EditOp }`,
-`DeclarePort`, `RetirePort`, `RenamePort`, `SetClockParameter`,
+`DeclarePort`, `RetirePort`, `RenamePort`, `ChangePortContract`,
+`RebindPortDeclaration`, `DuplicateComponent`, `ReplaceInstanceComponent`,
+`SetClockParameter`,
 `ShareConcept`, `ExternalizeOutput`, `CreateInstance`, `RenameInstance`,
 `DeleteInstance`, `SetClockArgument`, `SetParameterArgument`,
 `BindPorts`, `UnbindPorts`, `ExportPort`, `HidePort`. Each returns a
@@ -230,7 +271,10 @@ a body edit invalidates every instance of that component (their
 flattened declarations are the origin decls); a rename invalidates
 nothing semantic; a binding change is `Realization` (+ `Reactive`,
 `Clock`, `Output` downstream); a clock argument is `Clock`; a parameter
-argument is `Realization`. Unrelated components are never invalidated.
+argument is `Realization`; a contract change is `Interface` and lists the
+bindings on the port (`bindings`) and the instances of the component;
+a private body formula edit lists the instances only and touches no
+binding. Unrelated components are never invalidated.
 
 ## Acceptance levels
 

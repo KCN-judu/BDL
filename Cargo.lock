@@ -308,6 +308,7 @@ dependencies = [
  "bdl-compiler",
  "bdl-diagnostics",
  "bdl-hardware",
+ "bdl-ir",
  "bdl-library",
  "bdl-model",
  "bdl-output",

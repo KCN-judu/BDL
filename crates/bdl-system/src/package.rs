@@ -108,6 +108,11 @@ pub fn package_system(
             });
         }
         let id = PortId::from_raw(i as u64);
+        let interface_so_far = BehaviorInterface {
+            ports: BTreeMap::new(),
+            clock_params: interface.clock_params.clone(),
+        };
+        let contract = PortContract::of_declaration(m, &interface_so_far);
         ports.insert(
             id,
             Port {
@@ -116,6 +121,7 @@ pub fn package_system(
                 description: String::new(),
                 kind: p.kind,
                 decl,
+                contract,
             },
         );
     }
@@ -135,6 +141,7 @@ pub fn package_system(
         },
         shared_concepts: interface.shared_concepts,
         external_outputs: interface.external_outputs,
-        stamp: 0,
+        body_stamp: 0,
+        interface_stamp: 0,
     })
 }

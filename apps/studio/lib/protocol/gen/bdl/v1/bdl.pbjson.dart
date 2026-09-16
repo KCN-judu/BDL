@@ -262,6 +262,23 @@ final $typed_data.Uint8List portKindDescriptor = $convert
     .base64Decode('CghQb3J0S2luZBIZChVQT1JUX0tJTkRfVU5TUEVDSUZJRUQQABIWChJQT1JUX0tJTkRfUkVRVU'
         'lSRUQQARIWChJQT1JUX0tJTkRfUFJPVklERUQQAhIXChNQT1JUX0tJTkRfUEFSQU1FVEVSEAM=');
 
+@$core.Deprecated('Use clockContractKindDescriptor instead')
+const ClockContractKind$json = {
+  '1': 'ClockContractKind',
+  '2': [
+    {'1': 'CLOCK_CONTRACT_KIND_UNSPECIFIED', '2': 0},
+    {'1': 'CLOCK_CONTRACT_KIND_AGNOSTIC', '2': 1},
+    {'1': 'CLOCK_CONTRACT_KIND_PARAMETER', '2': 2},
+    {'1': 'CLOCK_CONTRACT_KIND_PRIVATE', '2': 3},
+  ],
+};
+
+/// Descriptor for `ClockContractKind`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List clockContractKindDescriptor = $convert
+    .base64Decode('ChFDbG9ja0NvbnRyYWN0S2luZBIjCh9DTE9DS19DT05UUkFDVF9LSU5EX1VOU1BFQ0lGSUVEEA'
+        'ASIAocQ0xPQ0tfQ09OVFJBQ1RfS0lORF9BR05PU1RJQxABEiEKHUNMT0NLX0NPTlRSQUNUX0tJ'
+        'TkRfUEFSQU1FVEVSEAISHwobQ0xPQ0tfQ09OVFJBQ1RfS0lORF9QUklWQVRFEAM=');
+
 @$core.Deprecated('Use localSortDescriptor instead')
 const LocalSort$json = {
   '1': 'LocalSort',
@@ -3624,6 +3641,7 @@ const PortView$json = {
     {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
     {'1': 'kind', '3': 4, '4': 1, '5': 14, '6': '.bdl.v1.PortKind', '10': 'kind'},
     {'1': 'decl', '3': 5, '4': 1, '5': 4, '10': 'decl'},
+    {'1': 'contract', '3': 6, '4': 1, '5': 11, '6': '.bdl.v1.PortContractView', '10': 'contract'},
   ],
 };
 
@@ -3631,7 +3649,43 @@ const PortView$json = {
 final $typed_data.Uint8List portViewDescriptor = $convert
     .base64Decode('CghQb3J0VmlldxIOCgJpZBgBIAEoBFICaWQSEgoEbmFtZRgCIAEoCVIEbmFtZRIgCgtkZXNjcm'
         'lwdGlvbhgDIAEoCVILZGVzY3JpcHRpb24SJAoEa2luZBgEIAEoDjIQLmJkbC52MS5Qb3J0S2lu'
-        'ZFIEa2luZBISCgRkZWNsGAUgASgEUgRkZWNs');
+        'ZFIEa2luZBISCgRkZWNsGAUgASgEUgRkZWNsEjQKCGNvbnRyYWN0GAYgASgLMhguYmRsLnYxLl'
+        'BvcnRDb250cmFjdFZpZXdSCGNvbnRyYWN0');
+
+@$core.Deprecated('Use portContractViewDescriptor instead')
+const PortContractView$json = {
+  '1': 'PortContractView',
+  '2': [
+    {'1': 'signature', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Signature', '10': 'signature'},
+    {'1': 'input_names', '3': 2, '4': 3, '5': 9, '10': 'inputNames'},
+    {'1': 'output_name', '3': 3, '4': 1, '5': 9, '10': 'outputName'},
+    {'1': 'shared', '3': 4, '4': 3, '5': 11, '6': '.bdl.v1.IdPair', '10': 'shared'},
+    {
+      '1': 'clock_kind',
+      '3': 5,
+      '4': 1,
+      '5': 14,
+      '6': '.bdl.v1.ClockContractKind',
+      '10': 'clockKind'
+    },
+    {'1': 'clock_id', '3': 6, '4': 1, '5': 4, '9': 0, '10': 'clockId', '17': true},
+    {'1': 'clock_name', '3': 7, '4': 1, '5': 9, '10': 'clockName'},
+    {'1': 'commitments', '3': 8, '4': 3, '5': 9, '10': 'commitments'},
+  ],
+  '8': [
+    {'1': '_clock_id'},
+  ],
+};
+
+/// Descriptor for `PortContractView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List portContractViewDescriptor = $convert
+    .base64Decode('ChBQb3J0Q29udHJhY3RWaWV3Ei8KCXNpZ25hdHVyZRgBIAEoCzIRLmJkbC52MS5TaWduYXR1cm'
+        'VSCXNpZ25hdHVyZRIfCgtpbnB1dF9uYW1lcxgCIAMoCVIKaW5wdXROYW1lcxIfCgtvdXRwdXRf'
+        'bmFtZRgDIAEoCVIKb3V0cHV0TmFtZRImCgZzaGFyZWQYBCADKAsyDi5iZGwudjEuSWRQYWlyUg'
+        'ZzaGFyZWQSOAoKY2xvY2tfa2luZBgFIAEoDjIZLmJkbC52MS5DbG9ja0NvbnRyYWN0S2luZFIJ'
+        'Y2xvY2tLaW5kEh4KCGNsb2NrX2lkGAYgASgESABSB2Nsb2NrSWSIAQESHQoKY2xvY2tfbmFtZR'
+        'gHIAEoCVIJY2xvY2tOYW1lEiAKC2NvbW1pdG1lbnRzGAggAygJUgtjb21taXRtZW50c0ILCglf'
+        'Y2xvY2tfaWQ=');
 
 @$core.Deprecated('Use componentViewDescriptor instead')
 const ComponentView$json = {
@@ -3660,6 +3714,7 @@ const ComponentView$json = {
     },
     {'1': 'body', '3': 8, '4': 1, '5': 11, '6': '.bdl.v1.ProjectProjection', '10': 'body'},
     {'1': 'stamp', '3': 9, '4': 1, '5': 4, '10': 'stamp'},
+    {'1': 'interface_stamp', '3': 10, '4': 1, '5': 4, '10': 'interfaceStamp'},
   ],
 };
 
@@ -3671,7 +3726,7 @@ final $typed_data.Uint8List componentViewDescriptor = $convert
         'FyZWRfY29uY2VwdHMYBiADKAsyDi5iZGwudjEuSWRQYWlyUg5zaGFyZWRDb25jZXB0cxI5ChBl'
         'eHRlcm5hbF9vdXRwdXRzGAcgAygLMg4uYmRsLnYxLklkUGFpclIPZXh0ZXJuYWxPdXRwdXRzEi'
         '0KBGJvZHkYCCABKAsyGS5iZGwudjEuUHJvamVjdFByb2plY3Rpb25SBGJvZHkSFAoFc3RhbXAY'
-        'CSABKARSBXN0YW1w');
+        'CSABKARSBXN0YW1wEicKD2ludGVyZmFjZV9zdGFtcBgKIAEoBFIOaW50ZXJmYWNlU3RhbXA=');
 
 @$core.Deprecated('Use idPairDescriptor instead')
 const IdPair$json = {
@@ -4010,6 +4065,42 @@ const SystemEditOp$json = {
       '10': 'exportPort'
     },
     {'1': 'hide_port', '3': 21, '4': 1, '5': 11, '6': '.bdl.v1.HidePort', '9': 0, '10': 'hidePort'},
+    {
+      '1': 'change_port_contract',
+      '3': 22,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ChangePortContract',
+      '9': 0,
+      '10': 'changePortContract'
+    },
+    {
+      '1': 'rebind_port_declaration',
+      '3': 23,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.RebindPortDeclaration',
+      '9': 0,
+      '10': 'rebindPortDeclaration'
+    },
+    {
+      '1': 'duplicate_component',
+      '3': 24,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.DuplicateComponent',
+      '9': 0,
+      '10': 'duplicateComponent'
+    },
+    {
+      '1': 'replace_instance_component',
+      '3': 25,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ReplaceInstanceComponent',
+      '9': 0,
+      '10': 'replaceInstanceComponent'
+    },
   ],
   '8': [
     {'1': 'op'},
@@ -4043,7 +4134,72 @@ final $typed_data.Uint8List systemEditOpDescriptor = $convert
         'aW5kUG9ydHMSOAoMdW5iaW5kX3BvcnRzGBMgASgLMhMuYmRsLnYxLlVuYmluZFBvcnRzSABSC3'
         'VuYmluZFBvcnRzEjUKC2V4cG9ydF9wb3J0GBQgASgLMhIuYmRsLnYxLkV4cG9ydFBvcnRIAFIK'
         'ZXhwb3J0UG9ydBIvCgloaWRlX3BvcnQYFSABKAsyEC5iZGwudjEuSGlkZVBvcnRIAFIIaGlkZV'
-        'BvcnRCBAoCb3A=');
+        'BvcnQSTgoUY2hhbmdlX3BvcnRfY29udHJhY3QYFiABKAsyGi5iZGwudjEuQ2hhbmdlUG9ydENv'
+        'bnRyYWN0SABSEmNoYW5nZVBvcnRDb250cmFjdBJXChdyZWJpbmRfcG9ydF9kZWNsYXJhdGlvbh'
+        'gXIAEoCzIdLmJkbC52MS5SZWJpbmRQb3J0RGVjbGFyYXRpb25IAFIVcmViaW5kUG9ydERlY2xh'
+        'cmF0aW9uEk0KE2R1cGxpY2F0ZV9jb21wb25lbnQYGCABKAsyGi5iZGwudjEuRHVwbGljYXRlQ2'
+        '9tcG9uZW50SABSEmR1cGxpY2F0ZUNvbXBvbmVudBJgChpyZXBsYWNlX2luc3RhbmNlX2NvbXBv'
+        'bmVudBgZIAEoCzIgLmJkbC52MS5SZXBsYWNlSW5zdGFuY2VDb21wb25lbnRIAFIYcmVwbGFjZU'
+        'luc3RhbmNlQ29tcG9uZW50QgQKAm9w');
+
+@$core.Deprecated('Use changePortContractDescriptor instead')
+const ChangePortContract$json = {
+  '1': 'ChangePortContract',
+  '2': [
+    {'1': 'component', '3': 1, '4': 1, '5': 4, '10': 'component'},
+    {'1': 'port', '3': 2, '4': 1, '5': 4, '10': 'port'},
+    {'1': 'contract', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.PortContractView', '10': 'contract'},
+  ],
+};
+
+/// Descriptor for `ChangePortContract`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List changePortContractDescriptor = $convert
+    .base64Decode('ChJDaGFuZ2VQb3J0Q29udHJhY3QSHAoJY29tcG9uZW50GAEgASgEUgljb21wb25lbnQSEgoEcG'
+        '9ydBgCIAEoBFIEcG9ydBI0Cghjb250cmFjdBgDIAEoCzIYLmJkbC52MS5Qb3J0Q29udHJhY3RW'
+        'aWV3Ughjb250cmFjdA==');
+
+@$core.Deprecated('Use rebindPortDeclarationDescriptor instead')
+const RebindPortDeclaration$json = {
+  '1': 'RebindPortDeclaration',
+  '2': [
+    {'1': 'component', '3': 1, '4': 1, '5': 4, '10': 'component'},
+    {'1': 'port', '3': 2, '4': 1, '5': 4, '10': 'port'},
+    {'1': 'decl', '3': 3, '4': 1, '5': 4, '10': 'decl'},
+  ],
+};
+
+/// Descriptor for `RebindPortDeclaration`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List rebindPortDeclarationDescriptor = $convert
+    .base64Decode('ChVSZWJpbmRQb3J0RGVjbGFyYXRpb24SHAoJY29tcG9uZW50GAEgASgEUgljb21wb25lbnQSEg'
+        'oEcG9ydBgCIAEoBFIEcG9ydBISCgRkZWNsGAMgASgEUgRkZWNs');
+
+@$core.Deprecated('Use duplicateComponentDescriptor instead')
+const DuplicateComponent$json = {
+  '1': 'DuplicateComponent',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+  ],
+};
+
+/// Descriptor for `DuplicateComponent`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List duplicateComponentDescriptor = $convert
+    .base64Decode('ChJEdXBsaWNhdGVDb21wb25lbnQSDgoCaWQYASABKARSAmlkEhIKBG5hbWUYAiABKAlSBG5hbW'
+        'U=');
+
+@$core.Deprecated('Use replaceInstanceComponentDescriptor instead')
+const ReplaceInstanceComponent$json = {
+  '1': 'ReplaceInstanceComponent',
+  '2': [
+    {'1': 'instance', '3': 1, '4': 1, '5': 4, '10': 'instance'},
+    {'1': 'component', '3': 2, '4': 1, '5': 4, '10': 'component'},
+  ],
+};
+
+/// Descriptor for `ReplaceInstanceComponent`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List replaceInstanceComponentDescriptor = $convert
+    .base64Decode('ChhSZXBsYWNlSW5zdGFuY2VDb21wb25lbnQSGgoIaW5zdGFuY2UYASABKARSCGluc3RhbmNlEh'
+        'wKCWNvbXBvbmVudBgCIAEoBFIJY29tcG9uZW50');
 
 @$core.Deprecated('Use createComponentDescriptor instead')
 const CreateComponent$json = {
@@ -4375,6 +4531,7 @@ const SystemEditOutcome$json = {
       '10': 'inner',
       '17': true
     },
+    {'1': 'bindings', '3': 11, '4': 3, '5': 4, '10': 'bindings'},
   ],
   '8': [
     {'1': '_created_component'},
@@ -4396,9 +4553,9 @@ final $typed_data.Uint8List systemEditOutcomeDescriptor = $convert
         'YKDGNyZWF0ZWRfcG9ydBgHIAEoBEgCUgtjcmVhdGVkUG9ydIgBARIsCg9jcmVhdGVkX2JpbmRp'
         'bmcYCCABKARIA1IOY3JlYXRlZEJpbmRpbmeIAQESKgoOY3JlYXRlZF9leHBvcnQYCSABKARIBF'
         'INY3JlYXRlZEV4cG9ydIgBARIuCgVpbm5lchgKIAEoCzITLmJkbC52MS5FZGl0T3V0Y29tZUgF'
-        'UgVpbm5lcogBAUIUChJfY3JlYXRlZF9jb21wb25lbnRCEwoRX2NyZWF0ZWRfaW5zdGFuY2VCDw'
-        'oNX2NyZWF0ZWRfcG9ydEISChBfY3JlYXRlZF9iaW5kaW5nQhEKD19jcmVhdGVkX2V4cG9ydEII'
-        'CgZfaW5uZXI=');
+        'UgVpbm5lcogBARIaCghiaW5kaW5ncxgLIAMoBFIIYmluZGluZ3NCFAoSX2NyZWF0ZWRfY29tcG'
+        '9uZW50QhMKEV9jcmVhdGVkX2luc3RhbmNlQg8KDV9jcmVhdGVkX3BvcnRCEgoQX2NyZWF0ZWRf'
+        'YmluZGluZ0IRCg9fY3JlYXRlZF9leHBvcnRCCAoGX2lubmVy');
 
 @$core.Deprecated('Use portStatusViewDescriptor instead')
 const PortStatusView$json = {
@@ -4474,6 +4631,14 @@ const SystemAnalysisView$json = {
       '6': '.bdl.v1.ProjectedDiagnostic',
       '10': 'projected'
     },
+    {
+      '1': 'components',
+      '3': 7,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ComponentStatusView',
+      '10': 'components'
+    },
   ],
 };
 
@@ -4484,4 +4649,19 @@ final $typed_data.Uint8List systemAnalysisViewDescriptor = $convert
         'aXRpb24YAyADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILY29tcG9zaXRpb24SLAoFcG9ydHMYBC'
         'ADKAsyFi5iZGwudjEuUG9ydFN0YXR1c1ZpZXdSBXBvcnRzEjgKCmFjY2VwdGFuY2UYBSABKA4y'
         'GC5iZGwudjEuU3lzdGVtQWNjZXB0YW5jZVIKYWNjZXB0YW5jZRI5Cglwcm9qZWN0ZWQYBiADKA'
-        'syGy5iZGwudjEuUHJvamVjdGVkRGlhZ25vc3RpY1IJcHJvamVjdGVk');
+        'syGy5iZGwudjEuUHJvamVjdGVkRGlhZ25vc3RpY1IJcHJvamVjdGVkEjsKCmNvbXBvbmVudHMY'
+        'ByADKAsyGy5iZGwudjEuQ29tcG9uZW50U3RhdHVzVmlld1IKY29tcG9uZW50cw==');
+
+@$core.Deprecated('Use componentStatusViewDescriptor instead')
+const ComponentStatusView$json = {
+  '1': 'ComponentStatusView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'realizes', '3': 2, '4': 1, '5': 8, '10': 'realizes'},
+  ],
+};
+
+/// Descriptor for `ComponentStatusView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List componentStatusViewDescriptor = $convert
+    .base64Decode('ChNDb21wb25lbnRTdGF0dXNWaWV3Eg4KAmlkGAEgASgEUgJpZBIaCghyZWFsaXplcxgCIAEoCF'
+        'IIcmVhbGl6ZXM=');

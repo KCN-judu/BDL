@@ -134,6 +134,8 @@ not a minimal unsat core (DI-21). `bdld` exposes it as `AnalyzeDeployment
 | `deploy.infeasible` | deployment | error (project; target-relative) |
 | `deploy.device_unbound` · `deploy.output_unrealised` | deployment | info |
 | `system.binding_type_mismatch` · `system.binding_needs_transport` · `system.transport_without_source_domain` · `system.transport_without_destination_domain` · `system.transport_of_relationship` · `system.port_not_open` · `system.parameter_not_a_value` · `system.clock_argument_missing` · `system.shared_concept_disagrees` · `system.*_missing` | system elaboration (composition, on interfaces) | error |
+| `component.port_declaration_missing` · `component.port_signature_mismatch` · `component.port_clock_mismatch` · `component.port_commitment_unrealized` · `component.required_port_realized` · `component.parameter_invalid` · `component.port_concept_missing` · `component.port_clock_missing` · `component.clock_parameter_missing` · `component.shared_concept_missing` · `component.external_output_missing` | `Realizes` (on the component alone) | error |
+| `system.binding_commitments` | composition (on contracts) | error |
 | `system.internal` | system elaboration | error (a compiler bug: the freshening table or a reference is inconsistent) |
 | `reference.unknown_target` · `reference.transport_of_relationship` · `reference.init_not_closed` | elab (`Definition::Reference`) | error |
 | `backend.not_ready` (one, listing every unmet condition) | readiness | error (project) |

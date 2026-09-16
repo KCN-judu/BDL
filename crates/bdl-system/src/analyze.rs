@@ -3,8 +3,9 @@
 //! checker, evaluator, clock judgment or code generator here — only
 //! projection (§34 of the brief).
 
+use crate::contract::realizes;
 use crate::flatten::{flatten, FlattenedSystem, Origin};
-use crate::ids::{BindingId, ExportId};
+use crate::ids::{BindingId, ComponentId, ExportId};
 use crate::model::*;
 use crate::validate::validate_composition;
 use bdl_compiler::{analyze, readiness, ProjectAnalysis};
@@ -67,6 +68,9 @@ pub struct SystemAnalysis {
     /// Composition-level diagnostics (`system.*`).
     pub composition: Vec<Diagnostic>,
     pub ports: BTreeMap<PortRef, PortStatus>,
+    /// Per component: whether its body realizes its public interface
+    /// (`contract::realizes`), decided on the component alone.
+    pub components: BTreeMap<ComponentId, bool>,
     pub acceptance: Acceptance,
     /// Every diagnostic — composition and flat — projected to its origin.
     pub projected: Vec<ProjectedDiagnostic>,
@@ -80,6 +84,11 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
     bdl_diagnostics::sort_diagnostics(&mut composition);
     let analysis = analyze(&flattened.snapshot);
 
+    let components: BTreeMap<ComponentId, bool> = s
+        .components
+        .values()
+        .map(|c| (c.id, realizes(c).is_empty()))
+        .collect();
     let mut ports = BTreeMap::new();
     for inst in s.instances.values() {
         let Some(c) = s.components.get(&inst.component) else {
@@ -131,6 +140,7 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
         analysis,
         composition,
         ports,
+        components,
         acceptance,
         projected,
     }

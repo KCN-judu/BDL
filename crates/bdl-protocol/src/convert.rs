@@ -1151,10 +1151,93 @@ pub fn tick_sample_to_pb(
 pub mod system {
     use super::*;
     use bdl_system::{
-        Acceptance, BehaviorSystem, BindingTransport, ComponentId, ComponentInstanceId,
-        LocalEntity, OriginMap, ParameterValue, PortId, PortKind, PortRef, PortStatus,
-        SystemAnalysis, SystemEditOp, SystemEditOutcome, SystemSnapshot,
+        Acceptance, BehaviorComponent, BehaviorSystem, BindingTransport, ClockContract,
+        ComponentId, ComponentInstanceId, LocalEntity, OriginMap, ParameterValue, PortContract,
+        PortId, PortKind, PortRef, PortStatus, SystemAnalysis, SystemEditOp, SystemEditOutcome,
+        SystemSnapshot,
     };
+
+    pub fn contract_to_pb(c: &BehaviorComponent, k: &PortContract) -> pb::PortContractView {
+        let name = |s: SemanticId| {
+            c.body
+                .concepts
+                .get(&s)
+                .map(|x| x.name.clone())
+                .unwrap_or_default()
+        };
+        let mut v = pb::PortContractView {
+            signature: Some(signature_to_pb(&k.signature)),
+            input_names: k.signature.inputs.iter().map(|s| name(*s)).collect(),
+            output_name: name(k.signature.output),
+            shared: k
+                .signature
+                .inputs
+                .iter()
+                .chain([&k.signature.output])
+                .filter_map(|s| {
+                    c.shared_concepts.get(s).map(|g| pb::IdPair {
+                        local: s.raw(),
+                        system: g.raw(),
+                    })
+                })
+                .collect(),
+            clock_id: k.clock.local().map(|x| x.raw()),
+            clock_name: k
+                .clock
+                .local()
+                .and_then(|x| c.body.clocks.get(&x))
+                .map(|x| x.name.clone())
+                .unwrap_or_default(),
+            commitments: k
+                .commitments
+                .iter()
+                .map(|p| format!("{p:?}").to_lowercase())
+                .collect(),
+            ..Default::default()
+        };
+        v.set_clock_kind(match k.clock {
+            ClockContract::Agnostic => pb::ClockContractKind::Agnostic,
+            ClockContract::Parameter { .. } => pb::ClockContractKind::Parameter,
+            ClockContract::Private { .. } => pb::ClockContractKind::Private,
+        });
+        v
+    }
+
+    pub fn contract_from_pb(v: &pb::PortContractView) -> Result<PortContract, ConvertError> {
+        let signature = signature_from_pb(
+            v.signature
+                .as_ref()
+                .ok_or(ConvertError::Missing("port_contract.signature"))?,
+        );
+        let local = || {
+            v.clock_id
+                .map(ClockId::from_raw)
+                .ok_or(ConvertError::Missing("port_contract.clock_id"))
+        };
+        let clock = match v.clock_kind() {
+            pb::ClockContractKind::Agnostic => ClockContract::Agnostic,
+            pb::ClockContractKind::Parameter => ClockContract::Parameter { clock: local()? },
+            pb::ClockContractKind::Private => ClockContract::Private { clock: local()? },
+            pb::ClockContractKind::Unspecified => {
+                return Err(ConvertError::Invalid("port_contract.clock_kind"))
+            }
+        };
+        let mut commitments = Vec::new();
+        for c in &v.commitments {
+            commitments.push(match c.as_str() {
+                "monotone" => bdl_ir::PropertyId::Monotone,
+                "deterministic" => bdl_ir::PropertyId::Deterministic,
+                "total" => bdl_ir::PropertyId::Total,
+                "boundedrange" | "bounded_range" => bdl_ir::PropertyId::BoundedRange,
+                _ => return Err(ConvertError::Invalid("port_contract.commitments")),
+            });
+        }
+        Ok(PortContract {
+            signature,
+            commitments,
+            clock,
+        })
+    }
 
     pub fn port_kind_to_pb(k: PortKind) -> pb::PortKind {
         match k {
@@ -1276,6 +1359,7 @@ pub mod system {
                                 name: p.name.clone(),
                                 description: p.description.clone(),
                                 decl: p.decl.raw(),
+                                contract: Some(contract_to_pb(c, &p.contract)),
                                 ..Default::default()
                             };
                             v.set_kind(port_kind_to_pb(p.kind));
@@ -1294,7 +1378,8 @@ pub mod system {
                         |b: OutputId| b.raw(),
                     ),
                     body: Some(design_projection(&c.body)),
-                    stamp: c.stamp,
+                    stamp: c.body_stamp,
+                    interface_stamp: c.interface_stamp,
                 })
                 .collect(),
             instances: s
@@ -1450,6 +1535,28 @@ pub mod system {
                 Op::HidePort(m) => SystemEditOp::HidePort {
                     export: bdl_system::ExportId::from_raw(m.export),
                 },
+                Op::ChangePortContract(m) => SystemEditOp::ChangePortContract {
+                    component: comp(m.component),
+                    port: port(m.port),
+                    contract: contract_from_pb(
+                        m.contract
+                            .as_ref()
+                            .ok_or(ConvertError::Missing("change_port_contract.contract"))?,
+                    )?,
+                },
+                Op::RebindPortDeclaration(m) => SystemEditOp::RebindPortDeclaration {
+                    component: comp(m.component),
+                    port: port(m.port),
+                    decl: DeclId::from_raw(m.decl),
+                },
+                Op::DuplicateComponent(m) => SystemEditOp::DuplicateComponent {
+                    id: comp(m.id),
+                    name: m.name.clone(),
+                },
+                Op::ReplaceInstanceComponent(m) => SystemEditOp::ReplaceInstanceComponent {
+                    instance: inst(m.instance),
+                    component: comp(m.component),
+                },
             },
         )
     }
@@ -1472,6 +1579,7 @@ pub mod system {
             created_binding: o.created_binding.map(|c| c.raw()),
             created_export: o.created_export.map(|c| c.raw()),
             inner: o.inner.as_ref().map(outcome_to_pb),
+            bindings: o.bindings.iter().map(|b| b.raw()).collect(),
         }
     }
 
@@ -1522,6 +1630,14 @@ pub mod system {
                         origin_view(flat, sort, o, p.port.map(|r| r.port))
                     }),
                     label: p.label.clone().unwrap_or_default(),
+                })
+                .collect(),
+            components: a
+                .components
+                .iter()
+                .map(|(id, realizes)| pb::ComponentStatusView {
+                    id: id.raw(),
+                    realizes: *realizes,
                 })
                 .collect(),
             ..Default::default()
@@ -1980,5 +2096,66 @@ mod tests {
                 && m.rows[0].output_id.is_none()
                 && m.rows[0].output_name.is_empty()
         );
+    }
+
+    #[test]
+    fn port_contracts_round_trip_through_pb() {
+        use bdl_model::surface::Signature;
+        use bdl_system::{ClockContract, PortContract};
+        use std::collections::BTreeMap;
+        let sem = SemanticId::from_raw;
+        let mut c = bdl_system::BehaviorComponent {
+            id: bdl_system::ComponentId::from_raw(0),
+            name: "Lamp".into(),
+            description: String::new(),
+            body: Design::empty("Lamp"),
+            interface: Default::default(),
+            shared_concepts: BTreeMap::new(),
+            external_outputs: BTreeMap::new(),
+            body_stamp: 0,
+            interface_stamp: 0,
+        };
+        c.body.concepts.insert(
+            sem(0),
+            bdl_model::surface::Concept {
+                id: sem(0),
+                name: "Tilt".into(),
+                description: String::new(),
+                representation: None,
+            },
+        );
+        c.body.clocks.insert(
+            ClockId::from_raw(2),
+            bdl_model::surface::ClockDomain {
+                id: ClockId::from_raw(2),
+                name: "tick".into(),
+            },
+        );
+        c.shared_concepts.insert(sem(0), sem(9));
+        for clock in [
+            ClockContract::Agnostic,
+            ClockContract::Parameter {
+                clock: ClockId::from_raw(2),
+            },
+            ClockContract::Private {
+                clock: ClockId::from_raw(2),
+            },
+        ] {
+            let k = PortContract {
+                signature: Signature {
+                    inputs: vec![sem(0)],
+                    output: sem(0),
+                },
+                commitments: vec![bdl_ir::PropertyId::Monotone],
+                clock,
+            };
+            let v = system::contract_to_pb(&c, &k);
+            assert_eq!(v.input_names, vec!["Tilt"]);
+            assert_eq!(v.shared.len(), 2);
+            if clock != ClockContract::Agnostic {
+                assert_eq!(v.clock_name, "tick");
+            }
+            assert_eq!(system::contract_from_pb(&v).unwrap(), k);
+        }
     }
 }

@@ -94,12 +94,24 @@ pub fn load_system_project(root: &Path) -> Result<LoadedSystem, PersistError> {
         });
     }
     let path = root.join(SYSTEM_FILE);
-    let file: SystemFile =
-        serde_json::from_str(&persist::read_text(&path)?).map_err(|source| PersistError::Json {
+    let text = persist::read_text(&path)?;
+    let mut raw: serde_json::Value =
+        serde_json::from_str(&text).map_err(|source| PersistError::Json {
             path: path.clone(),
             source,
         })?;
-    persist::schema_supported(&path, file.schema_version, SYSTEM_SCHEMA_VERSION)?;
+    let found = raw
+        .get("schema_version")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0) as u32;
+    persist::schema_supported(&path, found, SYSTEM_SCHEMA_VERSION)?;
+    if found < 2 {
+        migrate_v1_to_v2(&mut raw);
+    }
+    let file: SystemFile = serde_json::from_value(raw).map_err(|source| PersistError::Json {
+        path: path.clone(),
+        source,
+    })?;
     let layout = persist::load_layout(root)?;
     Ok(LoadedSystem {
         manifest,
@@ -109,4 +121,66 @@ pub fn load_system_project(root: &Path) -> Result<LoadedSystem, PersistError> {
         },
         layout,
     })
+}
+
+/// Schema 1 → 2: ports had no explicit contract (it was read off the body
+/// declaration on every use) and one `stamp`.  The contract is derived
+/// from the backing declaration **once, here**, then persisted; from then
+/// on it is the port's own.  A port whose declaration is gone gets a
+/// contract over nothing, which `realizes` reports.
+pub fn migrate_v1_to_v2(raw: &mut serde_json::Value) {
+    use serde_json::{json, Value};
+    let Some(components) = raw
+        .get_mut("system")
+        .and_then(|s| s.get_mut("components"))
+        .and_then(Value::as_object_mut)
+    else {
+        raw["schema_version"] = json!(2);
+        return;
+    };
+    for comp in components.values_mut() {
+        let clock_params: Vec<Value> = comp
+            .pointer("/interface/clock_params")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let mappings = comp
+            .pointer("/body/mappings")
+            .cloned()
+            .unwrap_or(Value::Null);
+        if let Some(stamp) = comp.get("stamp").cloned() {
+            comp["body_stamp"] = stamp.clone();
+            comp["interface_stamp"] = stamp;
+            comp.as_object_mut().map(|o| o.remove("stamp"));
+        }
+        let Some(ports) = comp
+            .pointer_mut("/interface/ports")
+            .and_then(Value::as_object_mut)
+        else {
+            continue;
+        };
+        for port in ports.values_mut() {
+            if port.get("contract").is_some() {
+                continue;
+            }
+            let decl = port.get("decl").cloned().unwrap_or(Value::Null);
+            let m = mappings.get(decl.to_string().trim_matches('"'));
+            let signature = m
+                .and_then(|m| m.get("signature"))
+                .cloned()
+                .unwrap_or_else(|| json!({ "inputs": [], "output": 0 }));
+            let clock = match m.and_then(|m| m.get("clock")).cloned() {
+                Some(c) if !c.is_null() => {
+                    if clock_params.contains(&c) {
+                        json!({ "kind": "parameter", "clock": c })
+                    } else {
+                        json!({ "kind": "private", "clock": c })
+                    }
+                }
+                _ => json!({ "kind": "agnostic" }),
+            };
+            port["contract"] = json!({ "signature": signature, "clock": clock });
+        }
+    }
+    raw["schema_version"] = json!(2);
 }

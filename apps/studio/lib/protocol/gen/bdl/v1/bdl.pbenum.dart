@@ -408,6 +408,31 @@ class PortKind extends $pb.ProtobufEnum {
   const PortKind._(super.value, super.name);
 }
 
+class ClockContractKind extends $pb.ProtobufEnum {
+  static const ClockContractKind CLOCK_CONTRACT_KIND_UNSPECIFIED =
+      ClockContractKind._(0, _omitEnumNames ? '' : 'CLOCK_CONTRACT_KIND_UNSPECIFIED');
+  static const ClockContractKind CLOCK_CONTRACT_KIND_AGNOSTIC =
+      ClockContractKind._(1, _omitEnumNames ? '' : 'CLOCK_CONTRACT_KIND_AGNOSTIC');
+  static const ClockContractKind CLOCK_CONTRACT_KIND_PARAMETER =
+      ClockContractKind._(2, _omitEnumNames ? '' : 'CLOCK_CONTRACT_KIND_PARAMETER');
+  static const ClockContractKind CLOCK_CONTRACT_KIND_PRIVATE =
+      ClockContractKind._(3, _omitEnumNames ? '' : 'CLOCK_CONTRACT_KIND_PRIVATE');
+
+  static const $core.List<ClockContractKind> values = <ClockContractKind>[
+    CLOCK_CONTRACT_KIND_UNSPECIFIED,
+    CLOCK_CONTRACT_KIND_AGNOSTIC,
+    CLOCK_CONTRACT_KIND_PARAMETER,
+    CLOCK_CONTRACT_KIND_PRIVATE,
+  ];
+
+  static final $core.List<ClockContractKind?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static ClockContractKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const ClockContractKind._(super.value, super.name);
+}
+
 class LocalSort extends $pb.ProtobufEnum {
   static const LocalSort LOCAL_SORT_UNSPECIFIED =
       LocalSort._(0, _omitEnumNames ? '' : 'LOCAL_SORT_UNSPECIFIED');

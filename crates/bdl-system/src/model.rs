@@ -8,13 +8,16 @@
 use crate::ids::{
     BindingId, ComponentId, ComponentInstanceId, ExportId, PortId, SystemIdAllocator,
 };
-use bdl_model::surface::Design;
+use bdl_ir::PropertyId;
+use bdl_model::surface::{Design, MappingBlock, Signature};
 use bdl_model::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-/// Bumped on any change to the persisted representation.
-pub const SYSTEM_SCHEMA_VERSION: u32 = 1;
+/// Bumped on any change to the persisted representation.  Schema 1 had
+/// ports without explicit contracts (derived from the body); `persist`
+/// migrates it forward once.
+pub const SYSTEM_SCHEMA_VERSION: u32 = 2;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -29,8 +32,76 @@ pub enum PortKind {
     Parameter,
 }
 
-/// A port: a declaration of the component body exposed by identity, with
-/// its own stable id and display name.  What a composer sees of the body.
+/// The timing side of a port contract, in component-local terms (FV
+/// `Port.clock`).  A system `ClockId` never appears in a contract: a
+/// parameter is mapped by each instance, a private clock is freshened.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum ClockContract {
+    /// The port serves any domain (the kernel's `Κ d = none`).
+    Agnostic,
+    /// The port updates in a clock parameter of the interface: the
+    /// instance says which system domain that is.
+    Parameter { clock: ClockId },
+    /// The port updates in a domain private to the component.
+    Private { clock: ClockId },
+}
+
+impl ClockContract {
+    pub fn local(self) -> Option<ClockId> {
+        match self {
+            ClockContract::Agnostic => None,
+            ClockContract::Parameter { clock } | ClockContract::Private { clock } => Some(clock),
+        }
+    }
+}
+
+/// What a port promises (FV `Port.iface` + `Port.clock`): the shape of
+/// the declaration behind it — over component-local concepts, shared ones
+/// standing for system concepts through the component's table — its
+/// commitments, and its timing.  Stored explicitly; a body edit never
+/// changes it (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §11).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PortContract {
+    pub signature: Signature,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub commitments: Vec<PropertyId>,
+    pub clock: ClockContract,
+}
+
+impl PortContract {
+    /// The contract a body declaration has *today* — what `DeclarePort`
+    /// snapshots once, and what `Realizes` compares against thereafter.
+    pub fn of_declaration(m: &MappingBlock, interface: &BehaviorInterface) -> PortContract {
+        PortContract {
+            signature: m.signature.clone(),
+            commitments: Vec::new(),
+            clock: match m.clock {
+                None => ClockContract::Agnostic,
+                Some(c) if interface.is_clock_param(c) => ClockContract::Parameter { clock: c },
+                Some(c) => ClockContract::Private { clock: c },
+            },
+        }
+    }
+
+    /// FV `IfaceRefines` for one port: same signature and clock; for a
+    /// provided port the new commitments include the old, for a required
+    /// port or parameter the old include the new.
+    pub fn is_refined_by(&self, new: &PortContract, kind: PortKind) -> bool {
+        self.signature == new.signature
+            && self.clock == new.clock
+            && match kind {
+                PortKind::Provided => self.commitments.iter().all(|c| new.commitments.contains(c)),
+                PortKind::Required | PortKind::Parameter => {
+                    new.commitments.iter().all(|c| self.commitments.contains(c))
+                }
+            }
+    }
+}
+
+/// A port: a public promise with its own stable id and display name, and
+/// the body declaration intended to realize it.  What a composer sees of
+/// the component; the body is not part of it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Port {
     pub id: PortId,
@@ -38,8 +109,10 @@ pub struct Port {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub description: String,
     pub kind: PortKind,
-    /// The body declaration this port is (component-local `DeclId`).
+    /// The body declaration meant to realize the contract (component-local
+    /// `DeclId`).  A link, not the contract: `Realizes` checks the two agree.
     pub decl: DeclId,
+    pub contract: PortContract,
 }
 
 /// The public boundary of a component (FV `BehaviorInterface`).
@@ -85,10 +158,14 @@ pub struct BehaviorComponent {
     /// Every other body sink is private and freshened per instance.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub external_outputs: BTreeMap<OutputId, OutputId>,
-    /// Bumped by every edit of the body or the interface; a version stamp
-    /// for caches and invalidation, never an identity.
+    /// Bumped by every edit of the body (implementation); never by an
+    /// interface edit.  A cache/invalidation stamp, never an identity.
     #[serde(default)]
-    pub stamp: u64,
+    pub body_stamp: u64,
+    /// Bumped by every edit of the public interface (ports, contracts,
+    /// clock parameters, sharing tables).
+    #[serde(default)]
+    pub interface_stamp: u64,
 }
 
 impl BehaviorComponent {
