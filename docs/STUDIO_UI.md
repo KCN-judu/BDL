@@ -436,11 +436,25 @@ lands. "Canvas" is level 1, "Inspector" level 2, "Explain" level 3.
 | deployment allocation | `Assignment` | lead from requirement to pin; pinned ones marked | device → requirement → pin rows; fixed pins edited in the device row | resource ids | now as a table; leads on a picture are spec |
 | runtime value | telemetry by `DeclId` + activation | **number at the socket**, unit column; ◇ filled/empty; stale fades | Tilt 31.4° · Held yes | `DeclId 4 @ activation 1203` | spec for the canvas and for telemetry; simulated values show in the Simulate trace and probe (§10) |
 | change consequence | `EditOutcome { kind, invalidates }` | — | "Nothing else needs rechecking." or "This change affects *dimByTilt*, *warmPulse*; they will be checked again." | `refinement` / `edit`, `Invalidation::{…}` | now |
+| component instance | `ComponentInstance`, ports' `PortContract`s | **instance node**: teal-grey header (the instance's name), the component's name in the body row, one row per port — required and parameters on the left, provided on the right — sockets typed by the concept each port carries *in the system* (a shared concept's hue; a private concept's flat identity, so two instances differ); the domains it is placed in as the quiet word | Instance: name, *Of* (+ Edit Source), timing parameters as pop-ups over the system's domains, ports with their status word, findings, replace with a version | `ComponentInstanceId`, `PortRef`, `ResolvedConcept::Private{instance, local}` | now (§11) |
+| open port / open base relationship | `PortStatus::Open`, an unresolved base relationship in a system | **hollow socket in its hue** (the value form is known, the value is not supplied) at the port row, and at an open base relationship's *realisation socket* on its definition row | Port: *open*, "nothing supplies it yet"; a design with open ports still simulates | `PortStatus::Open`, FV Theorem H | now |
+| binding | `Binding { source, destination: BindingEnd }` → `Definition::Reference` | a **link** between two binding ends (port ↔ port, base relationship → port, port → base realisation socket) in the concept's hue; selected: accent, 3 px; dragged away from its destination: disconnected | Binding: from, to, timing (direct / carried across), Disconnect; a bound base relationship reads *takes its value from lampA.brightness* with *Show Binding* and no formula field | `declRef target` / `sync src init (declRef target)`, `bind#n` | now |
+| transported binding | `BindingTransport { init }` | a **gate** on the link (a short bar with its initial value) | "carried across timing domains, starting at 0" | `sync c₀ 0 (declRef d)` | now |
+| second source for a taken port | `system_edit.destination_bound` | the drop is not refused: a sheet asks *Replace the connection?* — Disconnect and Connect, or Cancel; never a silent replace | the current source named in the question | — | now |
+| binding across timing domains | `Incompatibility::NeedsTransport` | the drop opens *Carry across timing domains* with a *Starts at* field; the value is required before Connect | the two domains named | — | now (Studio compares the resolved domains only to *ask*; the compiler judges the binding) |
+| a body that no longer keeps its promise | `contract::realizes` fails | a **red mark in the instance node's body row** (every instance of the component) | Component: *promise broken* with the `component.*` findings; Instance: "…'s source no longer keeps its promise; open it to see why" | `Realizes`, `component.port_clock_mismatch`, … | now |
+| behaviour group (expanded) | `BehaviorGroup { id, name, description, members }` — authoring metadata (ADR-0019) | a **tinted region** around the members with a title band (violet, 12 %); drag the band to move them together; drag a relationship in or out to change membership; nothing else changes | Group: name, meaning, relationships (+ Add relationship), boundary, package, collapse, ungroup / delete with relationships | `group#n`, Theorems A–G (`eraseGroups` is the identity on every judgment) | now |
+| behaviour group (collapsed) | the group's **boundary** (`GroupBoundary`, computed in Rust) | a **group box** (region tint as a header) with **aggregate sockets**: crossing-in and open members on the left, crossing-out and driven members on the right, each in the declaration's hue and labelled by it; links re-route to them; they accept no drop | Boundary: external inputs / external outputs / physical outputs / internal — "a picture of the cut, not a connection of its own" | `crossIn`, `crossOut`, Theorem H (`socket_no_fanout`) | now |
+| packaging | `preview_extraction`, `ExtractGroupAsComponent` | after packaging the instance node stands where the group's box stood (or at the members' top-left); the component's own canvas starts from the members' positions | the sheet: Requires / Provides (the floor, not negotiable), open relationships *Treat as input · Keep internal*, physical outputs *Stays the system's · Moves inside*, timing parameters, internal, the compiler's warnings; Package | `Extract`, Theorem R (restricted) | now |
+| port-backed relationship (component source) | `Port.decl` | header word *requires* / *provides* / *parameter* on the relationship node | Place: "Backs the port …: what instances see of it is the promise" | `Port { decl, contract }` | now |
 
 Rules the matrix implies: hue is identity and nothing else; shape is
 representation and nothing else; dashed is *declared* and nothing else; a red
-mark means *wrong now* and never *not yet*; the accent is selection, focus and
-the default button. Adding an encoding adds a row here.
+mark means *wrong now* and never *not yet*; a hollow socket at a *port* means
+*unbound* (its value form is known — only a concept's hollow ring means
+*undecided*); region tint means *grouped* and never a domain or a category;
+the accent is selection, focus and the default button. Adding an encoding
+adds a row here.
 
 ### What Studio reads, and what it still needs from the read model
 
@@ -461,6 +475,7 @@ invented in Dart:
 | concept-level findings under the Value section | `Diagnostic.entity = concept_id` populated by the checker | shape exists, unused |
 | Explain's *why* (dependencies, grant, clock, output relation) | a request serving `bdl_ide::explain` | the disclosure shows the projection's technical fields; `explain` is LSP-only |
 | contexts on the canvas | a `ContextView` | contexts do not exist in the model |
+| entity hover and fixes inside a component's source | a body-scoped `EntityRef` | the flat-entity services are not offered in the source view (DI-40) |
 | domains as regions, `sync` gates and `delay` registers on the canvas | the `sync`/`delay` sites of a definition with their initial values (the elaborated Core has them; no projection lists them) | a word per node; the phrases in the formula text |
 | values at sockets (Simulate on the canvas, Monitor) | none missing for simulation — `TickSample` is per `DeclId` and activation; telemetry has no protocol yet | trace table and probe on the Simulate page; nothing on the canvas |
 | the Deploy page from the read model | none missing — `rows[]`, `missing[]`, `blocker` are on the wire (0.5) | the page still renders from fields 4–9 (docs/STUDIO_COMPILER_INTEGRATION.md §3) |
@@ -550,3 +565,75 @@ x)` in a slower domain reads the source's last activation strictly before
 its own, so a source value produced at the same global tick is not yet
 visible (DI-17). The e2e cases in `test/simulation_test.dart` hold the
 same traces as `crates/bdl-compiler/tests/surface_to_backend.rs`.
+
+## 11. System projects: three zoom levels, one canvas
+
+A system project (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md, ADR-0019) has two
+truths on the wire — the authored system and the flat design derived
+from it — and Studio shows one design at a time
+(`EditorState.context`, `app/system.dart`):
+
+| Context | The canvas shows | Edits go to |
+|---|---|---|
+| **System** | the top level: shared concepts, domains, sinks, top-level relationships (with a *realisation socket* when open), component **instance nodes** drawn from their ports' contracts, **binding links** (a gate where a value is carried across domains), **group regions** or collapsed **group boxes** | `ApplySystemEdit { Base }` for the design's own objects; instance / binding / port / component ops; `ApplyGroupEdit` for groups (never a revision) |
+| **Component source** ("Editing AdaptiveLamp · used by 3 instances", *‹ System*) | the body as an ordinary design in the component's own names and identities; a port-backed relationship carries the word *requires* / *provides* / *parameter*; drafts, completion and hover run in the body's scope | `ApplySystemEdit { EditComponentBody }`; the component inspector's contract edits |
+| **Atomic** | a flat project's design (unchanged) | `ApplyEdit` |
+
+Simulate and Deploy read the derived flat design in every context
+(`AppState.flat`): an instance's relationships appear as `lampA.brightness`,
+its open ports as inputs.
+
+### Instance node anatomy
+
+```
+        ┌──────────────────────────────┐
+        │ lampA                        │   header: instance name (teal-grey strip)
+   ○────┤ tiltValue                    │   required port / parameter: left, hollow while open
+        │                  brightness ├────●   provided port: right
+        │ AdaptiveLamp        ↻ main   │   body row: the component's name (red mark: promise broken), its domains
+        └──────────────────────────────┘
+```
+
+208 pt wide; one row per port; the hue is the concept the port carries
+*in the system* (a shared concept's own; a private one's flat identity —
+two instances of one component have two hues for their private
+Brightness). Double-click or *Edit Source* opens the component; the
+component is never rendered from its body on the system canvas.
+
+### Gestures added
+
+| Gesture | Result |
+|---|---|
+| drag provided socket → required socket / parameter (or base relationship output → required socket, provided socket → an open base relationship's realisation socket) | `BindPorts`, when the destination is free and the domains agree |
+| … onto a taken destination | a sheet: *Disconnect and Connect* or *Cancel* — never a silent replace |
+| … across timing domains | a sheet asking *Starts at* — never an implicit transport |
+| drag a bound input away, release on empty | `UnbindPorts` |
+| click a binding link | select it (accent, 3 px); ⌫ disconnects |
+| right-click empty canvas → Add Instance ▸ component | `CreateInstance` at the pointer, name open for editing |
+| right-click a relationship → Group / Add to Group ▸ / Remove from … | group edits (membership only) |
+| drag a relationship into / out of a region | `AddMember` / `MoveMember` / `RemoveMember` |
+| drag a region's title band | moves every member (layout) |
+| double-click a region's title | rename inline |
+| right-click a group → Collapse / Expand, Package as Reusable Component…, Ungroup | layout; the packaging sheet; `DeleteGroup` |
+| double-click an instance | open its component's source |
+
+### The packaging sheet
+
+Requires and Provides are the boundary as the compiler computed it — the
+floor; the sheet never offers removing a crossing-in or crossing-out
+declaration. The four decisions it asks are the ones the formal work
+cannot infer: the component's name, the instance's name, whether each
+open relationship becomes an input or stays open inside, whether each
+driven sink stays the system's or moves inside. Every change re-asks the
+preview (`PreviewComponentExtraction`, generation-tagged); *Package* is one
+atomic edit; afterwards the instance stands where the group stood and the
+component's canvas opens laid out as the group was. The design computes
+the same values (FV Theorem R for the single-domain fragment; the e2e
+test compares the simulated trace before and after).
+
+### Not built
+
+Group edits in ⌘Z (they are not revisions, DI-38 — the inverse is one
+click away); entity hover and fixes inside a component's source (DI-40);
+multi-select grouping (⇧-click then *Group*); nested systems; a minimap.
+

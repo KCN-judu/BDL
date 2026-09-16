@@ -186,7 +186,20 @@ interface. The `init` (and a parameter's value) is a *closed* formula
 text: it is elaborated with no inputs and no relationship names in scope
 and must be reference-free and delay-free, so no name can enter. The
 authored system never contains a `Reference`; only the derived design
-does. Studio may render it as "bound to …" through the origin map.
+does. Studio renders it as "takes its value from …" with *Show Binding*,
+never as a formula field.
+
+**Binding ends** (Phase 8b): `Binding { source, destination: BindingEnd }`
+with `BindingEnd::Port(PortRef) | Base { decl }`. A base end is a
+relationship of the system's own design: a base relationship may be the
+*source* of a required port (the base is the FV residual, its provided
+"ports" being its relationships), and an *open* base relationship may be
+the destination of a provided port. `contract::resolve_end` gives every
+end the same shape (flat declaration, resolved signature, resolved clock,
+commitments, label) so `binding_compatibility` and `validate_composition`
+do not care which kind it is; `flatten` realises a base destination with
+the same `Definition::Reference`. Persistence is untagged: a port end is
+`{instance, port}` as before, a base end is `{decl}`.
 
 Choice A over B (flattening into `DesignIr`) because every downstream
 consumer — persistence of drafts, IDE overlays, projections, simulation
@@ -265,7 +278,8 @@ Ops: `Base(EditOp)`, `CreateComponent`, `RenameComponent`,
 `SetClockParameter`,
 `ShareConcept`, `ExternalizeOutput`, `CreateInstance`, `RenameInstance`,
 `DeleteInstance`, `SetClockArgument`, `SetParameterArgument`,
-`BindPorts`, `UnbindPorts`, `ExportPort`, `HidePort`. Each returns a
+`BindPorts`, `UnbindPorts`, `ExportPort`, `HidePort`,
+`ExtractGroupAsComponent`, `DeleteGroupWithMembers`. Each returns a
 `SystemEditOutcome { flat: EditOutcome-shaped invalidation, touched_instances }`:
 a body edit invalidates every instance of that component (their
 flattened declarations are the origin decls); a rename invalidates
@@ -295,3 +309,63 @@ component whose body is the flattened design and whose private/shared
 partition is inherited (base concepts of the inner system become the
 package's shared concepts if they came from a system concept). Hierarchy
 is instantiating a package (D-72); no recursive system type.
+
+## 12. Behaviour groups, boundaries, extraction (Phase 8b; ADR-0019)
+
+`BehaviorSystem.groups: BTreeMap<BehaviorGroupId, BehaviorGroup { id,
+name, description, members: Vec<DeclId> }>` — authoring metadata over the
+base design's relationships, each in at most one group (DI-36). Nothing
+below the edit model reads it: `flatten`, `validate_composition` and
+`analyze_system` are the same functions on a grouped and an ungrouped
+system, so every judgment is literally the ungrouped design's (FV
+Theorems A–G).
+
+**Group edits are not revisions.** `group::apply_group_edit(&BehaviorSystem,
+&GroupEditOp) -> (BehaviorSystem, GroupEditOutcome)` has no revision, no
+invalidation set and no undo entry; the daemon applies it outside the
+revision stream (`ApplyGroupEdit`, DI-38), bumps
+`SystemState.authoring_generation`, and answers with the `SystemView` —
+no `ProjectChanged`, no `AnalysisReady`. A semantic edit that deletes a
+member prunes it from its group (`prune_groups`); the group itself stays.
+`DeleteGroupWithMembers` and `ExtractGroupAsComponent` are ordinary
+revisioned system edits.
+
+**Boundary as projection.** `boundary::group_boundary(base, analysis,
+members) -> GroupBoundary { members, crossing_in, crossing_out,
+open_members, driven_members, private_candidates, external_inputs,
+external_outputs, clocks, internal_edges }` reads the flat
+`DependencyGraph` (base ids are preserved by flattening, DI-39) and the
+IR (for `sync` domains, DI-41). It is computed per group in
+`analyze_system` (`SystemAnalysis.groups`) and, for every authoring
+generation, by the daemon from the revision's cached analysis
+(`SystemView.boundaries`). Studio draws it; it never computes it.
+
+**Extraction.** `extract::preview_extraction(snapshot, group, choices)`
+and `extract::extract_group(...)` (called by `ExtractGroupAsComponent`):
+
+```
+component.body      = members (unchanged) ∪ unresolve(crossing_in)   -- FV restrict(isMember, isCrossIn)
+component.interface = required: crossing_in ∪ open members chosen as inputs;
+                      provided: crossing_out; clock_params: every clock used
+component.shared    = every concept the body mentions (same ids)
+component.external  = driven sinks left outside (same ids); moved sinks become private
+base                = base \ members ∪ unresolve(crossing_out)         -- FV restrict(isOutside, isCrossOut)
+instance            = one, clocks mapped identically (c ↦ c)
+bindings            = Base(r) → Port(inst, req_r) for r ∈ crossing_in;
+                      Port(inst, prov_p) → Base(p) for p ∈ crossing_out
+```
+
+Identities are kept: members and crossing-in copies have the same
+`DeclId` inside the body as they had in the base (the body's allocator is
+moved past them with `Design::reserve_ids`); the instance's flat ids come
+from the freshening table as for any instance. The group is retired.
+Causality is the flat analysis's verdict afterwards — no coarse instance
+graph gates the extraction.
+
+**Component-scoped drafts.** The daemon keeps one `IdeHost` per component
+body on demand (`SystemState.component_ide`), re-seated on every commit;
+draft requests carry an optional `component` so completion, hover and
+verdicts inside a component's source use the body's names and analysis
+(DI-40). `SystemAnalysis.component_analyses` holds each body's standalone
+analysis for the source view.
+

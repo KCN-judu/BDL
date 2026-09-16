@@ -44,6 +44,7 @@ docs/STUDIO_UI.md.
 | ST-5 | Deploy page over `ListTargets` / `AnalyzeDeployment`: target pop-up, verdict, device rows, pin table, dead end | ✅ built on analysis fields 4–9; the 0.5 read model (`rows[]`/`missing[]`/`blocker`) is on the wire and not yet consumed |
 | ST-6 | Explain disclosure served by `bdl_ide::explain` (dependencies, grant, clock, output relation) | protocol request not added; the disclosure shows the projection's technical fields only |
 | ST-7 | Monitor page (telemetry) | placeholder page (`placeholder_page.dart`); waits on step S |
+| ST-8 | Behaviour authoring, grouping, component authoring and system composition (ADR-0019, FV Phase 8b): system canvas with instance nodes from contracts, bindings incl. base ends, group regions and aggregate sockets, packaging sheet, component source with scoped drafts, inspectors for instances / components / ports / bindings / groups | ✅ (not built: group edits in ⌘Z, entity hover and fixes inside a component's source, nested systems, multi-select grouping) |
 
 ## Examples
 

@@ -331,6 +331,24 @@ inside a `TextDocument` overlay yields the same semantic diagnostics
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.
 
+### Component-scoped drafts (system projects)
+
+A component's body is an ordinary design, so the same service serves it —
+in the body's own scope. The daemon keeps one `IdeHost` per component on
+demand (`SystemState::component_ide`, created from `ProjectSnapshot {
+revision, body }` at first use and re-seated with the body on every
+commit; a host whose component is gone is dropped). The four draft
+requests carry an optional `component`; `Session::ide_in(scope)` routes
+to that host, and completion, hover and verdicts inside a component's
+source therefore see the body's names (`dimByTilt`, not
+`lampA.dimByTilt`) and the body's standalone analysis (required ports
+open). Studio stashes its drafts per context (`draftKey(root, context)`)
+so switching between the system and a component's source loses nothing
+typed. Entity hover and semantic actions stay flat-entity services: not
+offered inside a component's source (DI-40). Group edits do not touch any
+host: they are not commits (DI-38), and `ApplyGroupEdit` reads the host's
+cached committed analysis for the boundaries it answers with.
+
 ## LSP integration
 
 `bdl-lsp` (`lsp-server` + `lsp-types` 0.97, LSP 3.17 baseline):

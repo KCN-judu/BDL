@@ -51,6 +51,20 @@ object or function and the formal definition or theorem it follows.
 | parameters: `Parameter` ports with a closed formula value (`ParameterValue`), elaborated as a nullary formula with no relationship in scope | `params`, `BindSrc.const`, `HasType.refFree_env_irrelevant` (§14 of the requirements) |
 | `SystemEditOutcome { invalidates, origin_decls (flat), instances }` | Phase-1 refinement-vs-edit discipline extended to instances (§44 of the brief) |
 
+### Phase 8b — grouping, boundaries, packaging (`BDL_FV` cf2fc5e; ADR-0019)
+
+| Production (`bdl-system`) | FV (`BDL/Behavior/`) |
+|---|---|
+| `BehaviorGroup { id, name, description, members: Vec<DeclId> }` on `BehaviorSystem.groups`; never read by `flatten`, `validate_composition` or any analysis | `BehaviorGroup { id, members }`, `GroupedDesign { design, groups }`, `eraseGroups` (Group.lean) |
+| `group::apply_group_edit` — `CreateGroup`, `DeleteGroup`, `AddMember`, `RemoveMember`, `MoveMember`, `MergeGroups`, `SplitGroup` (+ rename / describe); no revision, no invalidation set, an *authoring generation* instead | `group`, `ungroup`, `addMember`, `removeMember`, `move`, `merge`, `split` — **Theorems A–G**: `eraseGroups` of every operation is the design itself (`rfl`); every kernel judgment (`WF`, `Causal`, `WellClocked`, `DriveWF`, `SingleDriver`, `CompleteOutputs`, `Ev`) is the ungrouped design's (test `grouping_is_semantically_transparent`: same flat design value, diagnostics, dependency graph, clocks, outputs, simulation trace and deployment requirements across every operation) |
+| `boundary::group_boundary(base, flat analysis, members)` → `crossing_in`, `crossing_out`, `open_members`, `driven_members`, `private_candidates`, `external_inputs`, `external_outputs`, `clocks`, `internal_edges` — off `bdl-reactive::DependencyGraph` | `Boundary.crossIn`, `crossOut`, `openMembers`, `drivenMembers`, `privateMembers`, `externalInputs = crossIn ++ openMembers`, `externalOutputs = crossOut`, `InternalEdge`, `clocksOf` (Boundary.lean); **Theorems I–L** `mem_crossIn`, `mem_crossOut`, `internal_not_crossIn`, `internal_only_not_crossOut` |
+| aggregate sockets of a collapsed group in Studio are these lists drawn; `canLink` refuses them; the dependency edges stay between declarations | **Theorem H** `socket_no_fanout`: membership in the input socket adds no `DependsOn` edge (test `boundary_is_a_projection_and_sockets_add_no_dependency`) |
+| `clocks` include domains observed only through `sync` (`collect_sync_clocks` over the IR) | `clocksOf` = every clock the design uses; BEHAVIOR_GROUPING_NOTE §II.4 (test `clock_coverage_includes_domains_read_only_through_sync`) |
+| `extract::extract_group`: body = members unchanged + unresolved copies of crossing-in (required ports), provided = crossing-out, every used clock a parameter, concepts shared, sinks external (or moved inside on request), drives kept; base keeps an unresolved copy of each crossing-out member; one instance; bindings `Base(r) → Port(inst, req_r)` and `Port(inst, prov_p) → Base(p)` | `Extract.restrict`, `template`, `Input.comp`, `Input.resid`, `Input.bindings`, `Input.system` (Extract.lean); `ExtractPreservation.lean` — extraction well formed, `Causal` and `SingleDriver` preserved by subdividing edges (never gated on `InstAcyclic`; test `a_bidirectional_boundary_is_not_a_cycle`) |
+| `extract::preview_extraction` — the same decisions, mutating nothing; `ExtractionChoices { name, instance_name, keep_internal, internalize_sinks }` | the four choices the FV cannot infer (BEHAVIOR_GROUPING_NOTE §II.5) |
+| `BindingEnd::{Port, Base}` — the base as the residual (DI-37) | the residual as instance 0 |
+| `extraction_is_a_differential_witness_of_theorem_r`, Studio `system_e2e_test` (same simulated values before and after packaging; same deployment requirements) | **Theorem R** `orig_iff_flat` — **restricted** to single-domain wiring designs without transported bindings; production claims the differential tests it runs, including a `sync`-only clock and a transported binding *after* packaging, which the theorem does not cover |
+
 ## What the surface adds, and what it does not
 
 Added: `ComponentId`, `ComponentInstanceId`, `PortId`, `BindingId`,
@@ -85,16 +99,24 @@ else is private and fresh per instance.
   semantic-interface mechanism (concepts identified across projects); the
   `shared_concepts` table assumes the enclosing project's ids. Not
   started.
-* **Hierarchical Studio canvas.** Studio receives `SystemView` and can show
-  the derived flat design (marked `PROJECT_KIND_SYSTEM`, with a reference
-  definition rendered as an empty formula by the current inspector), but
-  has no component/instance/port editor, nested navigation, or grouping.
-  The next milestone.
+* **Hierarchical Studio canvas** — built (docs/STUDIO_UI.md §11): the
+  system canvas with instance nodes from contracts, bindings, group
+  regions, the packaging sheet, and one component's source at a time. Not
+  built: nested systems (a component whose body is itself a system — the
+  model has none, D-72), multi-selection grouping gestures beyond
+  drag-in/out, and a minimap.
 * **Package marketplace / recursive distribution.** None.
-* **Semantic equivalence beyond the FV fragment.** Theorem J covers
+* **Semantic equivalence beyond the FV fragment.** Theorems J and R cover
   single-domain wiring with direct and constant bindings; the multi-domain
   case with transported bindings and higher-order bodies is not proved,
   and production claims only the differential tests it runs.
+* **Group edits are not undoable** through ⌘Z (they are not revisions,
+  DI-38); the inverse operation is one click away in the group's
+  inspector or the canvas.
+* **Boundary of a group containing an instance's port declaration**: not
+  reachable from Studio (groups hold base relationships); the Rust
+  boundary would handle it, extraction copies it like any crossing-in
+  declaration.
 * **Behavioural substitutability.** Interface-refining substitution
   (`component_substitutable`, `ReplaceInstanceComponent`) keeps the
   wiring well formed and nothing more: no behavioural equivalence between
@@ -103,8 +125,10 @@ else is private and fresh per instance.
   authored component cannot substitute even with equal promises (DI-34).
   Commitments (`PropertyId`) are carried in contracts but the surface
   never establishes any yet.
-* **Layout** for system projects is keyed by flat ids in `ui/layout.json`;
-  a per-instance canvas layout is part of the Studio milestone.
+* **Layout** for system projects: `ui/layout.json` holds the system canvas
+  (base ids, instance ids, group boxes) and one canvas per component
+  body (`Layout.components`); nothing per instance — an instance is a
+  node, its body has one picture.
 * **IDE surfaces** (hover, completion, rename, references) operate on the
   derived flat design; a reference definition hovers as "bound to
   sensor.tiltValue" and scoped formulas complete over their pinned names,

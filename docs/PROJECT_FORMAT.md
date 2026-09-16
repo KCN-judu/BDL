@@ -88,8 +88,9 @@ results, deployment results and simulation traces are never in this file.
     "instances":  { "1": { "id": 1, "component": 0, "name": "lampA", "clock_bindings": { "0": 0 }, "parameter_bindings": {} } },
     "bindings":   { "0": { "id": 0, "source": { "instance": 0, "port": 2 }, "destination": { "instance": 1, "port": 0 } } },
     "exports":    {},
+    "groups":     { "0": { "id": 0, "name": "Adaptive lamp", "description": "dims with tilt", "members": [4, 5] } },
     "flat_ids":   { "entries": [ { "instance": 1, "local": { "sort": "decl", "id": 0 }, "flat": 3 }, … ] },
-    "ids":        { "next_component": 2, "next_instance": 3, "next_port": 3, "next_binding": 2, "next_export": 0 }
+    "ids":        { "next_component": 2, "next_instance": 3, "next_port": 3, "next_binding": 2, "next_export": 0, "next_group": 1 }
   }
 }
 ```
@@ -108,16 +109,36 @@ contract is derived from the backing declaration *once*, then persisted
 on the next save; nothing keeps deriving it from the body
 (`bdl-system::persist::migrate_v1_to_v2`).
 
+**Groups** (still schema 2, an optional section added by the Studio
+behaviour-authoring milestone, ADR-0019): `groups` holds each behaviour
+group's identity, name, description and member list — base relationship
+ids, in authoring order — and nothing else; collapse state, position and
+size are layout (`ui/layout.json`). A file without `groups` reads as a
+system without groups. A binding end may also be a base relationship:
+`"source": { "decl": 7 }` (a base relationship feeding a required port) or
+`"destination": { "decl": 7 }` (a provided port realising an open base
+relationship); port ends are `{ "instance", "port" }` as before.
+
 ## `ui/layout.json` (schema 1)
 
 ```json
 { "schema_version": 1,
-  "layout": { "concepts": { "0": { "x": 10, "y": 20 } }, "mappings": {}, "outputs": {} } }
+  "layout": { "concepts": { "0": { "x": 10, "y": 20 } }, "mappings": {}, "outputs": {},
+              "instances": { "1": { "x": 300, "y": 200 } },
+              "groups": { "0": { "x": 30, "y": 40, "width": 200, "height": 100, "collapsed": true } },
+              "components": { "0": { "concepts": {}, "mappings": { "4": { "x": 5, "y": 6 } }, "outputs": {} } } } }
 ```
 
 Positions for concepts, mappings and physical outputs (sinks are canvas
 nodes too), each keyed by the object's stable id; every section defaults to
-empty. Timing domains and devices have no canvas position.
+empty. Timing domains and devices have no canvas position. A system
+project adds (all optional, schema unchanged): `instances` — the
+component-instance nodes of the system canvas, by raw instance id;
+`groups` — each behaviour group's collapsed box and whether it is
+collapsed (the expanded region is computed from its members' positions);
+`components` — one layout per component body, by raw component id, in
+the body's own ids (an extracted component's canvas starts from the
+members' positions in the system canvas).
 
 ## Revisions are not persisted
 
