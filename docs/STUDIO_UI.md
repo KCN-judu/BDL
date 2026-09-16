@@ -468,3 +468,73 @@ word on the node today); cycles drawn on the canvas; value plots and a
 board picture (both pages start as tables); monitor content; native menu
 bar; drag-and-drop from the library; draft indication on the canvas.
 docs/STUDIO_COMPILER_INTEGRATION.md §3 places each.
+
+## 10. Simulate
+
+The page answers *what does the product do over time*, one tick at a time,
+with bdld's reference evaluator (docs/RUNTIME_SEMANTICS.md) doing every
+evaluation. Studio holds the values the designer fed, the schedule they
+chose, and the samples that came back — tied to one project revision
+(`app/simulation.dart`) — and computes none of them.
+
+```
+┌───────────────┬────────────────────────────────────────┬───────────────────┐
+│ Inputs        │ [Step] [Step ×10] [Reset]   tick 3     │ Probe             │
+│ ● tilt  Tilt  │ ● held needs a value before simulation │ brightness   ●    │
+│   [0.5  ] rad │   can step.  Show                      │   Now   0.333     │
+│ ◆ held  Held  │ tick active       tilt  brightness     │ Over the run      │
+│   [off]       │   0  interaction  0.52  Brightness(…)  │   0  0.333        │
+│ Timing domains│   1  interaction  0.52  Brightness(…)  │ ▸ Explain         │
+│ ↻ interaction │                                        │                   │
+│   every [1]   │                                        │                   │
+└───────────────┴────────────────────────────────────────┴───────────────────┘
+```
+
+* **Inputs** are the unresolved value declarations — mappings that read
+  nothing and have no definition (`I d t`, DI-16). Each gets a control from
+  the concept's *value form*, never from its name: a number with the unit
+  beside it (quantity), a switch (on–off), a whole number (count). The row
+  carries the concept's glyph and hue from the canvas and selects the same
+  object as Design.
+* **Timing domains**: an activation period per domain, the `Schedule` the
+  evaluator activates by; a period, never a rate. Changing one starts over.
+* **Readiness** is read off the compiler's analysis and the projection and
+  never judged here. Each blocker is a sentence about a named object with a
+  *Show* link that selects it: *tilt needs a value before simulation can
+  step.* · *Tilt needs a value form (Quantity, On / off or Count) before tilt
+  can be given a value.* · *level has no valid definition.* · *dimByTilt has
+  no definition.* · *These relationships depend on each other in the same
+  instant: a, b.* While any is listed Step is disabled and a Step sends
+  nothing; while the analysis for this revision is pending the list says
+  *Checking the design…* and nothing is wrong. Entering the page never
+  starts a run.
+* **Step** evaluates the next tick(s) with the inputs on screen. The daemon
+  fixes an input trace at `StartSimulation`, so each step is a deterministic
+  **replay**: `Start` with every tick's inputs so far and the schedule, then
+  `Step(n)` — the same design, schedule and inputs give the same trace.
+  **Reset** returns to tick 0; inputs and periods stay.
+* **The trace** is the semantic diagram over time: rows are ticks, columns
+  the value declarations (a relationship with inputs is a function and has
+  no column) and the driven outputs; cells are bdld's own rendering; `·`
+  where a declaration was not evaluated because its domain did not activate
+  (the *active* column names the domains that did). An input is not echoed
+  by the evaluator, so its cell is the value Studio fed for that tick, shown
+  only where its domain activated according to the sample's
+  `active_clock_ids` (`sampleOf`); a read-model echo of inputs would remove
+  that lookup. Column order is identity, not time.
+* **The probe** (right) is the selection's value now and over the run, with
+  the object's glyph; an output shows its final target. Explain holds
+  `DeclId`, the run's revision, the rendered value and an error's code and
+  technical text.
+* **Errors** that stop a tick are the controls' line, about the object
+  (*bad divided by zero.*), never the global banner.
+* **Stale results**: a new revision drops the samples, keeps the fed values
+  for inputs that still exist, and ignores an answer in flight; the daemon's
+  `SimulationResponse.revision` is checked against the revision on screen.
+
+Memory and transports show up as values: `acc = delay(0, acc + x)` reads
+its initial value at tick 0 and the previous sum after; `y = sync(fast, -1,
+x)` in a slower domain reads the source's last activation strictly before
+its own, so a source value produced at the same global tick is not yet
+visible (DI-17). The e2e cases in `test/simulation_test.dart` hold the
+same traces as `crates/bdl-compiler/tests/surface_to_backend.rs`.

@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/effects.dart';
 import 'package:bdl_studio/app/reducer.dart';
+import 'package:bdl_studio/app/simulation.dart';
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -97,6 +98,21 @@ pb.Value angle(double deg) => pb.Value(
   ),
 );
 
+/// Every input of the lamp given a value (tilt 0 deg, held off): the
+/// readiness state a Step needs.
+AppState supplied(AppState s) {
+  s = reduce(s, SimulationInputChanged(mappingId: tiltIn, value: angle(0))).state;
+  return reduce(
+    s,
+    SimulationInputChanged(
+      mappingId: heldIn,
+      value: pb.Value(
+        semantic: pb.SemanticValue(conceptId: Int64(held), repr: pb.Value(boolean: false)),
+      ),
+    ),
+  ).state;
+}
+
 pb.SimulationResponse response({
   required int revision,
   required int nextTick,
@@ -128,11 +144,18 @@ String? _findBdld() {
   return null;
 }
 
+/// The page needs the width of a real window: inputs, trace, probe.
+void wide(WidgetTester t) {
+  t.view.physicalSize = const Size(1280, 720);
+  t.view.devicePixelRatio = 1;
+  addTearDown(t.view.reset);
+}
+
 Widget page(AppState s, void Function(AppAction) d) => MaterialApp(
   theme: macTheme(Brightness.light),
   home: Scaffold(
     body: SizedBox(
-      width: 1000,
+      width: 1280,
       height: 700,
       child: SimulatePage(state: s, dispatch: d),
     ),
@@ -142,7 +165,7 @@ Widget page(AppState s, void Function(AppAction) d) => MaterialApp(
 void main() {
   group('reducer', () {
     test('a step extends the authored trace with the current inputs and re-runs from tick 0', () {
-      var s = connected(lamp());
+      var s = supplied(connected(lamp()));
       s = reduce(s, SimulationInputChanged(mappingId: tiltIn, value: angle(30))).state;
       var t = reduce(s, const SimulationStepRequested(2));
       final run = t.effects.whereType<RunSimulation>().single;
@@ -150,6 +173,8 @@ void main() {
       expect(run.inputs.map((i) => (i.mappingId.toInt(), i.tick.toInt())), [
         (tiltIn, 0),
         (tiltIn, 1),
+        (heldIn, 0),
+        (heldIn, 1),
       ]);
       expect(run.schedule.single.clockId.toInt(), interaction);
       expect(run.schedule.single.period.toInt(), 1);
@@ -177,15 +202,15 @@ void main() {
       final again = t.effects.whereType<RunSimulation>().single;
       expect(again.ticks, 3, reason: 're-created from tick 0, stepped to 3');
       final fed = {
-        for (final i in again.inputs) i.tick.toInt(): i.value.semantic.repr.quantity.value,
+        for (final i in again.inputs)
+          if (i.mappingId.toInt() == tiltIn) i.tick.toInt(): i.value.semantic.repr.quantity.value,
       };
       expect(fed[0], closeTo(0.5236, 1e-3));
       expect(fed[2], closeTo(1.5708, 1e-3));
     });
 
     test('only the latest generation at the held revision lands; a new revision drops the run', () {
-      var s = connected(lamp());
-      s = reduce(s, SimulationInputChanged(mappingId: tiltIn, value: angle(0))).state;
+      var s = supplied(connected(lamp()));
       s = reduce(s, const SimulationStepRequested(1)).state;
       s = reduce(s, const SimulationStepRequested(1)).state;
       final g = s.editor.simulation.generation;
@@ -216,7 +241,7 @@ void main() {
     });
 
     test('a period change and reset start over; failures are kept in place', () {
-      var s = connected(lamp());
+      var s = supplied(connected(lamp()));
       s = reduce(s, const SimulationStepRequested(1)).state;
       final g = s.editor.simulation.generation;
       s = reduce(
@@ -244,12 +269,81 @@ void main() {
       expect(s.editor.simulation.failure, isNull);
       expect(s.editor.simulation.nextTick, 0);
     });
+
+    test('readiness: every input needs a value; a blocked step sends nothing', () {
+      final s = connected(lamp());
+      expect(simulationBlockers(s).map((b) => b.message), [
+        'tilt needs a value before simulation can step.',
+        'held needs a value before simulation can step.',
+      ]);
+      expect(simulationBlockers(s).map((b) => b.mappingId), [tiltIn, heldIn]);
+      expect(reduce(s, const SimulationStepRequested(1)).effects, isEmpty);
+      expect(simulationBlockers(supplied(s)), isEmpty);
+      // while the analysis for this revision is pending nothing is wrong, and nothing steps
+      final checking = supplied(s).copyWith(clearAnalysis: true);
+      expect(simulationBlockers(checking).single.checking, isTrue);
+      expect(reduce(checking, const SimulationStepRequested(1)).effects, isEmpty);
+    });
+
+    test(
+      'readiness: an open value form, an invalid definition, a cycle — named, in product words',
+      () {
+        final open = lamp()..concepts[tilt] = pb.ConceptView(id: Int64(tilt), name: 'Tilt');
+        expect(
+          simulationBlockers(supplied(connected(open))).first.message,
+          'Tilt needs a value form (Quantity, On / off or Count) before tilt can be given a value.',
+        );
+        final invalid = supplied(connected(lamp())).copyWith(
+          analysis: pb.ProjectAnalysis(revision: Int64(1), causal: true)
+            ..mappings.add(
+              pb.MappingAnalysis(id: Int64(dim), status: pb.MappingStatus.MAPPING_STATUS_INVALID),
+            ),
+        );
+        expect(simulationBlockers(invalid).single.message, 'dimByTilt has no valid definition.');
+        final cyclic = supplied(connected(lamp())).copyWith(
+          analysis: pb.ProjectAnalysis(revision: Int64(1), causal: false)
+            ..cycles.add(pb.DeclarationCycle(mappingIds: [Int64(bright), Int64(dim)])),
+        );
+        expect(
+          simulationBlockers(cyclic).single.message,
+          startsWith(
+            'These relationships depend on each other in the same instant: brightness, dimByTilt.',
+          ),
+        );
+        final undefined = supplied(connected(lamp()..mappings[dim].clearDefinition()));
+        expect(
+          simulationBlockers(undefined).single.message,
+          startsWith('dimByTilt has no definition.'),
+        );
+        for (final st in [invalid, cyclic, undefined]) {
+          for (final b in simulationBlockers(st)) {
+            expect(b.message, isNot(contains('INVALID')));
+            expect(b.message, isNot(contains('causal')));
+          }
+          expect(reduce(st, const SimulationStepRequested(1)).effects, isEmpty);
+        }
+      },
+    );
+
+    test('an input is shown only at ticks where its domain activated', () {
+      var s = supplied(connected(lamp()));
+      s = reduce(s, const SimulationStepRequested(2)).state;
+      final p = s.project!;
+      final fed = s.editor.simulation;
+      final active = pb.TickSample(tick: Int64(0), activeClockIds: [Int64(interaction)]);
+      final idle = pb.TickSample(tick: Int64(1), activeClockIds: []);
+      expect(sampleOf(fed, p, active, tiltIn), isNotNull);
+      expect(sampleOf(fed, p, idle, tiltIn), isNull, reason: 'interaction did not activate');
+      expect(sampleOf(fed, p, idle, heldIn), isNull, reason: 'no domain: nothing activated');
+      expect(sampleOf(fed, p, active, heldIn), isNotNull);
+    });
   });
 
   group('page', () {
     testWidgets('inputs are controls by value form; the trace shows bdld\'s rendering', (t) async {
+      wide(t);
       final dispatched = <AppAction>[];
-      var s = connected(lamp());
+      var s = supplied(connected(lamp()));
       s = reduce(s, const SimulationStepRequested(1)).state;
       s = reduce(
         s,
@@ -286,7 +380,8 @@ void main() {
     });
 
     testWidgets('failures are worded for the designer', (t) async {
-      var s = connected(lamp());
+      wide(t);
+      var s = supplied(connected(lamp()));
       s = reduce(s, const SimulationStepRequested(1)).state;
       s = reduce(
         s,
@@ -313,7 +408,19 @@ void main() {
         editor: s.editor.copyWith(simulation: const SimulationState()),
       );
       await t.pumpWidget(page(cyclic, (_) {}));
-      expect(find.text('The design contains an instantaneous cycle.'), findsOneWidget);
+      expect(find.text('This design contains an instantaneous cycle.'), findsOneWidget);
+    });
+
+    testWidgets('readiness names the object, links to it, and disables Step', (t) async {
+      wide(t);
+      final dispatched = <AppAction>[];
+      await t.pumpWidget(page(connected(lamp()), dispatched.add));
+      expect(find.text('tilt needs a value before simulation can step.'), findsOneWidget);
+      expect(find.text('held needs a value before simulation can step.'), findsOneWidget);
+      await t.tap(find.text('Step'));
+      expect(dispatched.whereType<SimulationStepRequested>(), isEmpty, reason: 'disabled');
+      await t.tap(find.text('Show').first);
+      expect(dispatched.whereType<SelectionChanged>().single.selection, isA<MappingSelected>());
     });
   });
 
@@ -374,9 +481,31 @@ void main() {
     }
 
     Future<AppState> step([int n = 1]) async {
+      final gen = store.state.editor.simulation.generation;
       store.dispatch(SimulationStepRequested(n));
+      expect(
+        store.state.editor.simulation.generation,
+        gen + 1,
+        reason: 'refused: ${simulationBlockers(store.state).map((b) => b.message)}',
+      );
       return store.until((s) => !s.editor.simulation.pending);
     }
+
+    void feed(int mapping, int concept, double v) => store.dispatch(
+      SimulationInputChanged(
+        mappingId: mapping,
+        value: pb.Value(
+          semantic: pb.SemanticValue(
+            conceptId: Int64(concept),
+            repr: pb.Value(
+              quantity: pb.Quantity(dim: pb.Dim(), value: v),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Future<void> analysed() => store.until((s) => s.analysis?.revision.toInt() == s.revision);
 
     String rendered(AppState s, int tick, int mapping) => s.editor.simulation.samples
         .firstWhere((x) => x.tick.toInt() == tick)
@@ -514,6 +643,177 @@ void main() {
         expect(at(4), 'Level(30)');
         final active = s.editor.simulation.samples[1].activeClockIds.map((c) => c.toInt());
         expect(active, [fast]);
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('an unresolved input must be supplied first; then a quantity changes per tick', () async {
+      await open('inputs');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final x = await mapping('x', [], level);
+        final twice = await mapping('twice', [], level, formula: 'x * 2');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        expect(simulationBlockers(store.state).map((b) => b.message), [
+          'x needs a value before simulation can step.',
+        ]);
+        store.dispatch(const SimulationStepRequested(1));
+        expect(store.state.editor.simulation.pending, isFalse, reason: 'refused, no request');
+        feed(x, level, 0.25);
+        var s = await step();
+        feed(x, level, 0.75);
+        s = await step();
+        s = await step();
+        expect(
+          [for (var t = 0; t < 3; t++) rendered(s, t, twice)],
+          ['Level(0.5)', 'Level(1.5)', 'Level(1.5)'],
+        );
+        // earlier ticks keep what they were fed
+        expect(
+          [
+            for (var t = 0; t < 3; t++)
+              s.editor.simulation.inputs[x]![t]!.semantic.repr.quantity.value,
+          ],
+          [0.25, 0.75, 0.75],
+        );
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('reset returns to tick 0; the next step starts a fresh trace', () async {
+      await open('reset');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final x = await mapping('x', [], level);
+        final twice = await mapping('twice', [], level, formula: 'x * 2');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        feed(x, level, 1);
+        await step();
+        var s = await step();
+        expect(s.editor.simulation.samples, hasLength(2));
+        store.dispatch(const SimulationResetRequested());
+        expect(store.state.editor.simulation.hasRun, isFalse);
+        expect(store.state.editor.simulation.nextTick, 0);
+        feed(x, level, 3);
+        s = await step();
+        expect(s.editor.simulation.samples.single.tick.toInt(), 0);
+        expect(rendered(s, 0, twice), 'Level(6)');
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('multi-clock: a domain on every 2nd tick is sampled only when it activates', () async {
+      await open('clocks');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final fast = await clock('fast');
+        final slow = await clock('slow');
+        final a = await mapping('a', [], level, clock: fast);
+        final b = await mapping('b', [], level, clock: slow);
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        feed(a, level, 1);
+        feed(b, level, 2);
+        store.dispatch(SimulationPeriodChanged(clockId: slow, period: 2));
+        final s = await step(3);
+        expect(s.editor.simulation.error, isNull);
+        Set<int> active(int t) =>
+            s.editor.simulation.samples[t].activeClockIds.map((c) => c.toInt()).toSet();
+        expect(active(0), {fast, slow});
+        expect(active(1), {fast});
+        expect(active(2), {fast, slow});
+        final p = s.project!;
+        bool sampled(int t, int m) =>
+            sampleOf(s.editor.simulation, p, s.editor.simulation.samples[t], m) != null;
+        expect([for (var t = 0; t < 3; t++) sampled(t, a)], [true, true, true]);
+        expect([for (var t = 0; t < 3; t++) sampled(t, b)], [true, false, true]);
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('an invalid design cannot start: the blocker names the relationship', () async {
+      await open('invalid');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final x = await mapping('x', [], level);
+        await mapping('bad', [], level, formula: '1 s');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        feed(x, level, 1);
+        expect(simulationBlockers(store.state).map((b) => b.message), [
+          'bad has no valid definition.',
+        ]);
+        store.dispatch(const SimulationStepRequested(1));
+        expect(store.state.editor.simulation.pending, isFalse);
+        expect(store.state.editor.simulation.samples, isEmpty);
+        expect(store.state.editor.lastError, isNull);
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('a new project revision invalidates the run; stepping starts over there', () async {
+      await open('stale');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final x = await mapping('x', [], level);
+        await mapping('twice', [], level, formula: 'x * 2');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        feed(x, level, 1);
+        await step();
+        var s = await step();
+        final before = s.editor.simulation.revision!;
+        store.dispatch(RenameConceptRequested(id: level, name: 'Amount'));
+        await settled();
+        s = store.state;
+        expect(s.revision, greaterThan(before));
+        expect(s.editor.simulation.hasRun, isFalse);
+        expect(s.editor.simulation.revision, isNull);
+        expect(s.editor.simulation.current[x], isNotNull, reason: 'the fed value survives');
+        await analysed();
+        s = await step();
+        expect(s.editor.simulation.revision, s.revision);
+        expect(s.editor.simulation.samples.single.tick.toInt(), 0);
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('a tick that fails at runtime is reported by the controls, not the banner', () async {
+      await open('runtime');
+      try {
+        final level = await concept('Level', pb.Representation(quantity: pb.Dim()));
+        final x = await mapping('x', [], level);
+        final bad = await mapping('bad', [], level, formula: '1 / 0');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        feed(x, level, 1);
+        expect(
+          simulationBlockers(store.state),
+          isEmpty,
+          reason: 'division by zero is a runtime fact',
+        );
+        var s = await step();
+        expect(s.editor.simulation.error!.code, 'simulation.division_by_zero');
+        expect(s.editor.simulation.error!.mappingId.toInt(), bad);
+        expect(s.editor.simulation.samples, isEmpty);
+        expect(s.editor.lastError, isNull, reason: 'never the global banner');
+        // and the session goes on: fix the definition, step
+        store.dispatch(DefinitionDraftChanged(mappingId: bad, source: 'x * 2'));
+        await store.until((st) => st.draft(bad)?.check == DraftCheck.checked);
+        store.dispatch(CommitDefinitionRequested(bad));
+        await store.until((st) => st.committedDefinition(bad) == 'x * 2');
+        await analysed();
+        s = await step();
+        expect(s.editor.simulation.error, isNull);
+        expect(rendered(s, 0, bad), 'Level(2)');
       } finally {
         await close();
       }

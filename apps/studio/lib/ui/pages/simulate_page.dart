@@ -18,7 +18,9 @@ import '../../app/simulation.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../canvas/canvas_geometry.dart' show dimLabel;
+import '../canvas/concept_glyphs.dart';
 import '../mac/controls.dart';
+import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
 
@@ -51,7 +53,12 @@ class SimulatePage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 children: [
-                  _InputsSection(project: p, sim: sim, dispatch: dispatch),
+                  _InputsSection(
+                    project: p,
+                    sim: sim,
+                    selection: state.editor.selection,
+                    dispatch: dispatch,
+                  ),
                   _DomainsSection(project: p, sim: sim, dispatch: dispatch),
                 ],
               ),
@@ -63,10 +70,77 @@ class SimulatePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _Controls(state: state, dispatch: dispatch),
-                Expanded(child: _Trace(state: state)),
+                _Blockers(state: state, dispatch: dispatch),
+                Expanded(
+                  child: _Trace(state: state, dispatch: dispatch),
+                ),
               ],
             ),
           ),
+          VerticalDivider(width: 1, color: t.hairline),
+          SizedBox(
+            width: MacMetrics.inspectorWidth,
+            child: _Probe(state: state, dispatch: dispatch),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What keeps the design from stepping, as sentences about named objects
+/// with a link to each — the readiness state.  Step is disabled while any
+/// is listed; nothing is sent.  A tick that *failed* is the controls' line.
+class _Blockers extends StatelessWidget {
+  const _Blockers({required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final blockers = simulationBlockers(state);
+    if (blockers.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(MacMetrics.gapGroup, 10, MacMetrics.gapGroup, 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: MacMetrics.gapTight,
+        children: [
+          for (final b in blockers)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MacMetrics.gap,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Icon(Icons.circle, size: 7, color: b.checking ? t.textTertiary : t.open),
+                ),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: MacMetrics.gapTight,
+                    children: [
+                      Text(b.message, style: const TextStyle(fontSize: 12)),
+                      if (b.conceptId != null || b.mappingId != null)
+                        MacLink(
+                          label: 'Show',
+                          onTap: () => dispatch(
+                            SelectionChanged(
+                              b.conceptId != null
+                                  ? ConceptSelected(b.conceptId!)
+                                  : MappingSelected(b.mappingId!),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -76,9 +150,15 @@ class SimulatePage extends StatelessWidget {
 /// One control per unresolved mapping without inputs, shaped by the value
 /// form of what it produces.
 class _InputsSection extends StatelessWidget {
-  const _InputsSection({required this.project, required this.sim, required this.dispatch});
+  const _InputsSection({
+    required this.project,
+    required this.sim,
+    required this.selection,
+    required this.dispatch,
+  });
   final pb.ProjectProjection project;
   final SimulationState sim;
+  final Selection selection;
   final void Function(AppAction) dispatch;
 
   @override
@@ -104,6 +184,7 @@ class _InputsSection extends StatelessWidget {
             mapping: m,
             concept: project.concepts.firstWhere((c) => c.id == m.signature.output),
             value: sim.current[m.id.toInt()],
+            selection: selection,
             dispatch: dispatch,
           ),
         if (functions.isNotEmpty)
@@ -125,11 +206,13 @@ class _InputControl extends StatelessWidget {
     required this.mapping,
     required this.concept,
     required this.value,
+    required this.selection,
     required this.dispatch,
   });
   final pb.MappingView mapping;
   final pb.ConceptView concept;
   final pb.Value? value;
+  final Selection selection;
   final void Function(AppAction) dispatch;
 
   pb.Value _semantic(pb.Value repr) => pb.Value(
@@ -221,12 +304,23 @@ class _InputControl extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: MacMetrics.gapTight,
         children: [
-          Row(
-            spacing: MacMetrics.gap,
-            children: [
-              Text(mapping.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
-              Text(concept.name, style: small),
-            ],
+          // The same glyph and hue the concept has on the canvas; the row
+          // selects the input so the probe shows it.
+          MacInteractive(
+            onTap: () => dispatch(SelectionChanged(MappingSelected(id))),
+            selected: switch (selection) {
+              MappingSelected(id: final sel) => sel == id,
+              _ => false,
+            },
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              spacing: MacMetrics.gap,
+              children: [
+                SocketGlyph.of(concept, t, size: 11),
+                Text(mapping.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                Text(concept.name, style: small),
+              ],
+            ),
           ),
           control,
         ],
@@ -235,7 +329,13 @@ class _InputControl extends StatelessWidget {
   }
 }
 
-String _fmt(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+/// Up to six significant digits, trailing zeros trimmed, integers plain.
+String _fmt(double v) {
+  if (v == v.roundToDouble() && v.abs() < 1e15) return v.toInt().toString();
+  final s = v.toStringAsPrecision(6);
+  if (s.contains('e') || !s.contains('.')) return s;
+  return s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+}
 
 /// Which domains activate when: a period per domain.  The schedule is
 /// outside the design; a domain name never implies a rate.
@@ -297,27 +397,18 @@ class _Controls extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final sim = state.editor.simulation;
-    final a = state.analysis;
-    final blockers = <String>[
-      if (a != null && !a.causal) 'The design contains an instantaneous cycle.',
-      if (a != null)
-        for (final m in a.mappings)
-          if (m.status == pb.MappingStatus.MAPPING_STATUS_INVALID)
-            '${state.mapping(m.id.toInt())?.name ?? '?'} cannot be simulated because its '
-                'definition is invalid.',
-    ];
+    final blocked = simulationBlockers(state).isNotEmpty;
     final (String line, Color color) = sim.failure != null
         ? (sim.failure!, t.error)
         : sim.error != null
         ? (_errorSentence(state, sim.error!), t.error)
-        : blockers.isNotEmpty
-        ? (blockers.first, t.error)
         : sim.pending
         ? ('Evaluating…', t.textTertiary)
         : sim.hasRun
         ? ('${sim.nextTick} tick${sim.nextTick == 1 ? '' : 's'} evaluated.', t.textSecondary)
-        : ('Set the inputs, then step.', t.textSecondary);
-    final canStep = !sim.pending && state.connection is Connected;
+        : (blocked ? '' : 'Set the inputs, then step.', t.textSecondary);
+    // Refused before any request while something blocks (listed below).
+    final canStep = !sim.pending && !blocked && state.connection is Connected;
     return Container(
       padding: const EdgeInsets.fromLTRB(MacMetrics.gapGroup, 12, MacMetrics.gapGroup, 12),
       decoration: BoxDecoration(
@@ -375,8 +466,9 @@ String _errorSentence(AppState s, pb.Diagnostic d) {
 /// inputs (a relationship with inputs is a function, not a value per
 /// tick) and per driven output.  Values are bdld's own rendering.
 class _Trace extends StatelessWidget {
-  const _Trace({required this.state});
+  const _Trace({required this.state, required this.dispatch});
   final AppState state;
+  final void Function(AppAction) dispatch;
 
   @override
   Widget build(BuildContext context) {
@@ -414,7 +506,18 @@ class _Trace extends StatelessWidget {
               children: [
                 _cell(Text('tick', style: head)),
                 _cell(Text('active', style: head)),
-                for (final m in columns) _cell(Text(m.name, style: head)),
+                for (final m in columns)
+                  _cell(
+                    MacInteractive(
+                      onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
+                      selected: switch (state.editor.selection) {
+                        MappingSelected(:final id) => id == m.id.toInt(),
+                        _ => false,
+                      },
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(m.name, style: head),
+                    ),
+                  ),
                 for (final (o, _) in outputs) _cell(Text('→ ${o.name}', style: head)),
               ],
             ),
@@ -427,9 +530,7 @@ class _Trace extends StatelessWidget {
                   for (final m in columns)
                     _cell(
                       Text(
-                        m.hasDefinition()
-                            ? _valueOf(s, m.id)
-                            : _fedValue(sim, m.id.toInt(), s.tick.toInt()),
+                        m.hasDefinition() ? _valueOf(s, m.id) : _fedValue(sim, p, s, m.id.toInt()),
                         style: mono,
                       ),
                     ),
@@ -444,9 +545,15 @@ class _Trace extends StatelessWidget {
   }
 
   /// An input's value at a tick is Studio's own trace (the evaluator
-  /// records computed declarations only): rendered from what was fed.
-  static String _fedValue(SimulationState sim, int mapping, int tick) {
-    final v = sim.inputs[mapping]?[tick];
+  /// records computed declarations only): rendered from what was fed, at
+  /// the ticks its domain activated.
+  static String _fedValue(
+    SimulationState sim,
+    pb.ProjectProjection p,
+    pb.TickSample s,
+    int mapping,
+  ) {
+    final v = sampleOf(sim, p, s, mapping);
     if (v == null) return '·';
     final repr = v.hasSemantic() ? v.semantic.repr : v;
     return switch (repr.whichKind()) {
@@ -462,4 +569,201 @@ class _Trace extends StatelessWidget {
 
   static Widget _cell(Widget child) =>
       Padding(padding: const EdgeInsets.fromLTRB(0, 3, MacMetrics.gutter, 3), child: child);
+}
+
+// ---------------------------------------------------------------------------
+// Right: the probe of the selection
+// ---------------------------------------------------------------------------
+
+/// What the selected object is worth now and over the run.  The selection
+/// is the one shared with Design; the object keeps its name and glyph.
+/// Explain holds the formal detail: DeclId, the run's revision, the
+/// evaluator's rendering, an error's code and technical text.
+class _Probe extends StatelessWidget {
+  const _Probe({required this.state, required this.dispatch});
+  final AppState state;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final p = state.project!;
+    final sim = state.editor.simulation;
+    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final value = TextStyle(fontSize: 13, color: t.textPrimary, fontFeatures: kTabularFigures);
+    Widget body;
+    switch (state.editor.selection) {
+      case NoSelection():
+        body = Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            'Select an input, a column or a concept.',
+            style: TextStyle(color: t.textTertiary),
+          ),
+        );
+      case ConceptSelected(:final id):
+        final c = p.concepts.firstWhere((c) => c.id.toInt() == id);
+        final producers = [
+          for (final m in p.mappings)
+            if (m.signature.inputs.isEmpty && m.signature.output.toInt() == id) m,
+        ];
+        body = InspectorSection(
+          title: c.name,
+          trailing: SocketGlyph.of(c, t),
+          children: [
+            if (producers.isEmpty)
+              Text('No value declaration produces ${c.name}.', style: small)
+            else
+              for (final m in producers)
+                FormRow(
+                  label: m.name,
+                  child: Text(_latest(sim, p, m.id.toInt()) ?? '—', style: value),
+                ),
+          ],
+        );
+      case MappingSelected(:final id):
+        final m = p.mappings.firstWhere((m) => m.id.toInt() == id);
+        final c = p.concepts.where((c) => c.id == m.signature.output).firstOrNull;
+        final isValue = m.signature.inputs.isEmpty;
+        body = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InspectorSection(
+              title: m.name,
+              trailing: c == null ? null : SocketGlyph.of(c, t),
+              children: [
+                if (!isValue)
+                  Text(
+                    'A relationship: it is applied inside other relationships and has no '
+                    'value of its own to sample.',
+                    style: small,
+                  )
+                else
+                  FormRow(
+                    label: 'Now',
+                    child: Text(
+                      _latest(sim, p, id) ?? (sim.hasRun ? '—' : 'not stepped yet'),
+                      style: value,
+                    ),
+                  ),
+              ],
+            ),
+            if (isValue && sim.hasRun) _Series(sim: sim, project: p, mappingId: id),
+            MacDisclosure(
+              title: 'Explain',
+              children: [
+                ExplainLine('DeclId ${m.id}'),
+                if (sim.revision case final r?) ExplainLine('run at revision $r'),
+                if (sim.samples.isNotEmpty)
+                  if (sim.samples.last.values.where((v) => v.mappingId.toInt() == id).firstOrNull
+                      case final v?)
+                    ExplainLine('rendered: ${v.rendered}'),
+                if (sim.error case final e?) ...[
+                  ExplainLine(e.code),
+                  if (e.technical.isNotEmpty) ExplainLine(e.technical),
+                ],
+              ],
+            ),
+          ],
+        );
+      case OutputSelected(:final id):
+        final o = p.outputs.firstWhere((o) => o.id.toInt() == id);
+        final driver = state.outputAnalysis(id)?.hasDriver() == true
+            ? state.outputAnalysis(id)!.driver.toInt()
+            : null;
+        final driverName = driver == null ? null : state.mapping(driver)?.name;
+        body = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InspectorSection(
+              title: o.name,
+              children: [
+                FormRow(
+                  label: 'Final target',
+                  child: driverName == null
+                      ? Text('none yet', style: TextStyle(fontSize: 13, color: t.textTertiary))
+                      : MacLink(
+                          label: driverName,
+                          onTap: () => dispatch(SelectionChanged(MappingSelected(driver!))),
+                        ),
+                ),
+                FormRow(
+                  label: 'Now',
+                  child: Text(
+                    driver == null ? '—' : (_latest(sim, p, driver) ?? '—'),
+                    style: value,
+                  ),
+                ),
+              ],
+            ),
+            if (driver != null && sim.hasRun) _Series(sim: sim, project: p, mappingId: driver),
+          ],
+        );
+    }
+    return Container(
+      color: t.sidebar,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PanelHeader('Probe'),
+          Expanded(child: SingleChildScrollView(child: body)),
+        ],
+      ),
+    );
+  }
+}
+
+/// The latest value of a declaration in the run, as text.
+String? _latest(SimulationState sim, pb.ProjectProjection p, int mappingId) {
+  for (final s in sim.samples.reversed) {
+    final v = sampleOf(sim, p, s, mappingId);
+    if (v != null) return _plainText(v);
+  }
+  return null;
+}
+
+/// A value without its identity wrapper: the number or word.
+String _plainText(pb.Value v) {
+  final r = v.hasSemantic() ? v.semantic.repr : v;
+  return switch (r.whichKind()) {
+    pb.Value_Kind.quantity => _fmt(r.quantity.value),
+    pb.Value_Kind.boolean => r.boolean ? 'on' : 'off',
+    pb.Value_Kind.count => r.count.toString(),
+    pb.Value_Kind.opaque => 'relationship',
+    _ => '·',
+  };
+}
+
+/// One declaration over the run: tick, value.
+class _Series extends StatelessWidget {
+  const _Series({required this.sim, required this.project, required this.mappingId});
+  final SimulationState sim;
+  final pb.ProjectProjection project;
+  final int mappingId;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final cell = TextStyle(fontSize: 12, fontFeatures: kTabularFigures, color: t.textPrimary);
+    final rows = [
+      for (final s in sim.samples)
+        if (sampleOf(sim, project, s, mappingId) case final v?)
+          [Text('${s.tick}', style: cell), Text(_plainText(v), style: cell)],
+    ];
+    return InspectorSection(
+      title: 'Over the run',
+      children: [
+        if (rows.isEmpty)
+          Text(
+            'Not evaluated at any tick yet.',
+            style: TextStyle(fontSize: 11, color: t.textSecondary),
+          )
+        else
+          MacTable(
+            columns: const [MacColumn(width: 44, numeric: true), MacColumn(numeric: true)],
+            rows: rows,
+          ),
+      ],
+    );
+  }
 }
