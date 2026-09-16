@@ -5,10 +5,11 @@
 //! (the surface does not author commitments yet), and whose realization is
 //! the elaborated formula when there is one and it elaborates.
 
-use crate::formula::{elaborate_formula, Realized};
-use bdl_diagnostics::Diagnostic;
-use bdl_ir::{ConceptBinding, Declaration, DesignIr, Interface, OutputSpec, Ty};
-use bdl_model::surface::{Definition, Design, MappingBlock, Representation};
+use crate::formula::{elaborate_formula, elaborate_formula_in, Realized};
+use crate::names::InputEnv;
+use bdl_diagnostics::{Diagnostic, Entity};
+use bdl_ir::{ConceptBinding, Declaration, DesignIr, Expr, Interface, OutputSpec, Ty};
+use bdl_model::surface::{Definition, Design, MappingBlock, Representation, Transport};
 use bdl_model::DeclId;
 use std::collections::BTreeMap;
 
@@ -122,6 +123,19 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
                 Ok((r, warnings)) => (RealizationOutcome::Elaborated(r), warnings),
                 Err(d) => (RealizationOutcome::Failed, d),
             },
+            Some(Definition::ScopedFormula { source, scope }) => {
+                let env = InputEnv::scoped(&m.signature.inputs, scope);
+                match elaborate_formula_in(design, &ir, m, source, env) {
+                    Ok((r, warnings)) => (RealizationOutcome::Elaborated(r), warnings),
+                    Err(d) => (RealizationOutcome::Failed, d),
+                }
+            }
+            Some(Definition::Reference { target, transport }) => {
+                match elaborate_reference(design, &ir, m, *target, transport.as_ref()) {
+                    Ok(r) => (RealizationOutcome::Elaborated(r), Vec::new()),
+                    Err(d) => (RealizationOutcome::Failed, d),
+                }
+            }
         };
         if let RealizationOutcome::Elaborated(r) = &outcome {
             if let Some(d) = ir.decls.get_mut(&m.id) {
@@ -139,6 +153,67 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
         );
     }
     Elaboration { ir, mappings }
+}
+
+/// `Definition::Reference`: the kernel's `declRef target`, or
+/// `sync src init (declRef target)`.  No name is resolved; the target is an
+/// identity.  The transport's initial value is a closed formula: it is
+/// elaborated as a nullary formula of this mapping's own signature and
+/// must mention no relationship and no temporal form, so a display name
+/// can never influence a binding.  Typing is left to the checker, as for
+/// every other realization.
+pub fn elaborate_reference(
+    design: &Design,
+    ir: &DesignIr,
+    mapping: &MappingBlock,
+    target: DeclId,
+    transport: Option<&Transport>,
+) -> Result<Realized, Vec<Diagnostic>> {
+    let entity = Entity::Mapping { id: mapping.id };
+    if !ir.decls.contains_key(&target) {
+        return Err(vec![Diagnostic::error(
+            "reference.unknown_target",
+            entity,
+            format!(
+                "{} refers to a relationship that does not exist.",
+                mapping.name
+            ),
+        )
+        .technical(format!("declRef {target}: not in Δ"))]);
+    }
+    let Some(t) = transport else {
+        return Ok(Realized {
+            expr: Expr::decl(target),
+            spans: BTreeMap::new(),
+        });
+    };
+    if !mapping.signature.inputs.is_empty() {
+        return Err(vec![Diagnostic::error(
+            "reference.transport_of_relationship",
+            entity,
+            format!("{} has inputs, so its value cannot be carried across timing domains.", mapping.name),
+        )
+        .explain("Only a value can be remembered and transported; a relationship with inputs is not a value.")
+        .technical("sync needs a data operand (TemporalNotData)")]);
+    }
+    let closed = MappingBlock {
+        definition: None,
+        ..mapping.clone()
+    };
+    let (init, _) = elaborate_formula(design, ir, &closed, &t.init)?;
+    if !init.expr.refs().is_empty() || !init.expr.is_delay_free() {
+        return Err(vec![Diagnostic::error(
+            "reference.init_not_closed",
+            entity,
+            format!("The initial value of {} must be a constant.", mapping.name),
+        )
+        .explain("A transported binding starts from a stated value; it cannot read other relationships or remember anything.")
+        .technical(format!("init refs {:?}, delay-free {}", init.expr.refs(), init.expr.is_delay_free()))]);
+    }
+    Ok(Realized {
+        expr: Expr::sync(t.source, init.expr, Expr::decl(target)),
+        spans: BTreeMap::new(),
+    })
 }
 
 #[cfg(test)]

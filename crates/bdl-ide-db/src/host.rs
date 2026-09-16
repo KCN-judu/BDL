@@ -132,10 +132,7 @@ impl IdeHost {
                 match design.mappings.get(mapping) {
                     None => to_drop.push(e.overlay.key()),
                     Some(m) if clear_redundant => {
-                        let committed = m
-                            .definition
-                            .as_ref()
-                            .map(|Definition::Formula { source }| source.as_str());
+                        let committed = m.definition.as_ref().and_then(Definition::formula_source);
                         if committed == Some(source.as_str()) {
                             to_drop.push(e.overlay.key());
                         }

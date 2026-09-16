@@ -82,6 +82,20 @@ pub fn definition_to_pb(d: &Definition) -> pb::Definition {
         Definition::Formula { source } => pb::Definition {
             kind: Some(pb::definition::Kind::Formula(source.clone())),
         },
+        // The wire keeps the designer's text; the pinned scope is an
+        // elaboration detail of a derived design.
+        Definition::ScopedFormula { source, .. } => pb::Definition {
+            kind: Some(pb::definition::Kind::Formula(source.clone())),
+        },
+        Definition::Reference { target, transport } => pb::Definition {
+            kind: Some(pb::definition::Kind::Reference(pb::ReferenceDefinition {
+                target: target.raw(),
+                transport: transport.as_ref().map(|t| pb::TransportSpec {
+                    source_clock_id: t.source.raw(),
+                    init: t.init.clone(),
+                }),
+            })),
+        },
     }
 }
 
@@ -93,6 +107,13 @@ pub fn definition_from_pb(d: &pb::Definition) -> Result<Definition, ConvertError
     {
         pb::definition::Kind::Formula(source) => Ok(Definition::Formula {
             source: source.clone(),
+        }),
+        pb::definition::Kind::Reference(r) => Ok(Definition::Reference {
+            target: DeclId::from_raw(r.target),
+            transport: r.transport.as_ref().map(|t| bdl_model::surface::Transport {
+                source: ClockId::from_raw(t.source_clock_id),
+                init: t.init.clone(),
+            }),
         }),
     }
 }
@@ -551,6 +572,8 @@ pub struct SessionInfo {
     pub can_undo: bool,
     pub can_redo: bool,
     pub dirty: bool,
+    /// The snapshot is the derived flattening of a behaviour system.
+    pub derived: bool,
 }
 
 /// Render a snapshot for the editor.  Deterministic: ordered maps in, ordered
@@ -560,11 +583,29 @@ pub fn projection(
     layout: &Layout,
     info: &SessionInfo,
 ) -> pb::ProjectProjection {
-    let design = &snapshot.design;
+    let mut p = design_projection(&snapshot.design);
+    p.revision = snapshot.revision.raw();
+    p.root_path = info.root_path.clone();
+    p.layout = Some(layout_to_pb(layout));
+    p.can_undo = info.can_undo;
+    p.can_redo = info.can_redo;
+    p.dirty = info.dirty;
+    p.set_kind(if info.derived {
+        pb::ProjectKind::System
+    } else {
+        pb::ProjectKind::Flat
+    });
+    p
+}
+
+/// A design's views alone — no revision, layout or session fields.  Used
+/// for the open project and for a component body.
+pub fn design_projection(design: &bdl_model::surface::Design) -> pb::ProjectProjection {
     pb::ProjectProjection {
-        revision: snapshot.revision.raw(),
+        revision: 0,
         name: design.name.clone(),
-        root_path: info.root_path.clone(),
+        root_path: String::new(),
+        kind: pb::ProjectKind::Flat.into(),
         concepts: design
             .concepts
             .values()
@@ -594,10 +635,10 @@ pub fn projection(
                 drives_output_id: m.drives.map(|o| o.raw()),
             })
             .collect(),
-        layout: Some(layout_to_pb(layout)),
-        can_undo: info.can_undo,
-        can_redo: info.can_redo,
-        dirty: info.dirty,
+        layout: None,
+        can_undo: false,
+        can_redo: false,
+        dirty: false,
         clocks: design
             .clocks
             .values()
@@ -1100,6 +1141,397 @@ pub fn tick_sample_to_pb(
                 rendered: v.render(concept_name),
             })
             .collect(),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Behaviour systems
+// ---------------------------------------------------------------------------
+
+pub mod system {
+    use super::*;
+    use bdl_system::{
+        Acceptance, BehaviorSystem, BindingTransport, ComponentId, ComponentInstanceId,
+        LocalEntity, OriginMap, ParameterValue, PortId, PortKind, PortRef, PortStatus,
+        SystemAnalysis, SystemEditOp, SystemEditOutcome, SystemSnapshot,
+    };
+
+    pub fn port_kind_to_pb(k: PortKind) -> pb::PortKind {
+        match k {
+            PortKind::Required => pb::PortKind::Required,
+            PortKind::Provided => pb::PortKind::Provided,
+            PortKind::Parameter => pb::PortKind::Parameter,
+        }
+    }
+
+    pub fn port_kind_from_pb(k: pb::PortKind) -> Result<PortKind, ConvertError> {
+        Ok(match k {
+            pb::PortKind::Required => PortKind::Required,
+            pb::PortKind::Provided => PortKind::Provided,
+            pb::PortKind::Parameter => PortKind::Parameter,
+            pb::PortKind::Unspecified => return Err(ConvertError::Invalid("port_kind")),
+        })
+    }
+
+    fn port_ref_to_pb(r: PortRef) -> pb::PortRefView {
+        pb::PortRefView {
+            instance: r.instance.raw(),
+            port: r.port.raw(),
+        }
+    }
+
+    fn port_ref_from_pb(
+        r: Option<&pb::PortRefView>,
+        field: &'static str,
+    ) -> Result<PortRef, ConvertError> {
+        let r = r.ok_or(ConvertError::Missing(field))?;
+        Ok(PortRef {
+            instance: ComponentInstanceId::from_raw(r.instance),
+            port: PortId::from_raw(r.port),
+        })
+    }
+
+    fn pairs<'a, A: Copy + 'a, B: Copy + 'a>(
+        it: impl Iterator<Item = (&'a A, &'a B)>,
+        raw: impl Fn(A) -> u64,
+        raw_b: impl Fn(B) -> u64,
+    ) -> Vec<pb::IdPair> {
+        it.map(|(a, b)| pb::IdPair {
+            local: raw(*a),
+            system: raw_b(*b),
+        })
+        .collect()
+    }
+
+    fn origin_view(
+        flat: u64,
+        sort: pb::LocalSort,
+        o: &bdl_system::Origin,
+        port: Option<PortId>,
+    ) -> pb::OriginView {
+        let local = match o.local {
+            LocalEntity::Decl(d) => d.raw(),
+            LocalEntity::Sem(s) => s.raw(),
+            LocalEntity::Clock(c) => c.raw(),
+            LocalEntity::Output(o) => o.raw(),
+            LocalEntity::Device(d) => d.raw(),
+        };
+        let mut v = pb::OriginView {
+            flat,
+            instance: o.instance.raw(),
+            component: o.component.raw(),
+            local,
+            port: port.map(|p| p.raw()),
+            ..Default::default()
+        };
+        v.set_sort(sort);
+        v
+    }
+
+    pub fn origins_to_pb(origins: &OriginMap) -> Vec<pb::OriginView> {
+        let mut out = Vec::new();
+        for (d, o) in &origins.decls {
+            out.push(origin_view(
+                d.raw(),
+                pb::LocalSort::Decl,
+                o,
+                origins.ports.get(d).map(|p| p.port),
+            ));
+        }
+        for (s, o) in &origins.sems {
+            out.push(origin_view(s.raw(), pb::LocalSort::Sem, o, None));
+        }
+        for (c, o) in &origins.clocks {
+            out.push(origin_view(c.raw(), pb::LocalSort::Clock, o, None));
+        }
+        for (x, o) in &origins.outputs {
+            out.push(origin_view(x.raw(), pb::LocalSort::Output, o, None));
+        }
+        for (d, o) in &origins.devices {
+            out.push(origin_view(d.raw(), pb::LocalSort::Device, o, None));
+        }
+        out
+    }
+
+    pub fn system_view(snapshot: &SystemSnapshot, origins: &OriginMap) -> pb::SystemView {
+        let s: &BehaviorSystem = &snapshot.system;
+        pb::SystemView {
+            revision: snapshot.revision.raw(),
+            name: s.base.name.clone(),
+            base: Some(design_projection(&s.base)),
+            components: s
+                .components
+                .values()
+                .map(|c| pb::ComponentView {
+                    id: c.id.raw(),
+                    name: c.name.clone(),
+                    description: c.description.clone(),
+                    ports: c
+                        .interface
+                        .ports
+                        .values()
+                        .map(|p| {
+                            let mut v = pb::PortView {
+                                id: p.id.raw(),
+                                name: p.name.clone(),
+                                description: p.description.clone(),
+                                decl: p.decl.raw(),
+                                ..Default::default()
+                            };
+                            v.set_kind(port_kind_to_pb(p.kind));
+                            v
+                        })
+                        .collect(),
+                    clock_params: c.interface.clock_params.iter().map(|k| k.raw()).collect(),
+                    shared_concepts: pairs(
+                        c.shared_concepts.iter(),
+                        |a: SemanticId| a.raw(),
+                        |b: SemanticId| b.raw(),
+                    ),
+                    external_outputs: pairs(
+                        c.external_outputs.iter(),
+                        |a: OutputId| a.raw(),
+                        |b: OutputId| b.raw(),
+                    ),
+                    body: Some(design_projection(&c.body)),
+                    stamp: c.stamp,
+                })
+                .collect(),
+            instances: s
+                .instances
+                .values()
+                .map(|i| pb::ComponentInstanceView {
+                    id: i.id.raw(),
+                    component: i.component.raw(),
+                    name: i.name.clone(),
+                    clock_bindings: pairs(
+                        i.clock_bindings.iter(),
+                        |a: ClockId| a.raw(),
+                        |b: ClockId| b.raw(),
+                    ),
+                    parameter_bindings: i
+                        .parameter_bindings
+                        .iter()
+                        .map(|(p, v)| pb::ParameterBindingView {
+                            port: p.raw(),
+                            source: v.source.clone(),
+                        })
+                        .collect(),
+                })
+                .collect(),
+            bindings: s
+                .bindings
+                .values()
+                .map(|b| pb::BindingView {
+                    id: b.id.raw(),
+                    source: Some(port_ref_to_pb(b.source)),
+                    destination: Some(port_ref_to_pb(b.destination)),
+                    transport_init: b.transport.as_ref().map(|t| t.init.clone()),
+                })
+                .collect(),
+            exports: s
+                .exports
+                .values()
+                .map(|e| pb::ExportView {
+                    id: e.id.raw(),
+                    port: Some(port_ref_to_pb(e.port)),
+                    name: e.name.clone(),
+                })
+                .collect(),
+            origins: origins_to_pb(origins),
+            is_flat: s.is_flat(),
+        }
+    }
+
+    pub fn system_edit_op_from_pb(op: &pb::SystemEditOp) -> Result<SystemEditOp, ConvertError> {
+        use pb::system_edit_op::Op;
+        let comp = ComponentId::from_raw;
+        let inst = ComponentInstanceId::from_raw;
+        let port = PortId::from_raw;
+        Ok(
+            match op
+                .op
+                .as_ref()
+                .ok_or(ConvertError::Missing("system_edit_op.op"))?
+            {
+                Op::Base(e) => SystemEditOp::Base {
+                    op: edit_op_from_pb(e)?,
+                },
+                Op::CreateComponent(m) => SystemEditOp::CreateComponent {
+                    name: m.name.clone(),
+                    description: m.description.clone(),
+                },
+                Op::RenameComponent(m) => SystemEditOp::RenameComponent {
+                    id: comp(m.id),
+                    name: m.name.clone(),
+                },
+                Op::SetComponentDescription(m) => SystemEditOp::SetComponentDescription {
+                    id: comp(m.id),
+                    description: m.description.clone(),
+                },
+                Op::DeleteComponent(m) => SystemEditOp::DeleteComponent { id: comp(m.id) },
+                Op::EditComponentBody(m) => SystemEditOp::EditComponentBody {
+                    component: comp(m.component),
+                    op: edit_op_from_pb(
+                        m.op.as_ref()
+                            .ok_or(ConvertError::Missing("edit_component_body.op"))?,
+                    )?,
+                },
+                Op::DeclarePort(m) => SystemEditOp::DeclarePort {
+                    component: comp(m.component),
+                    decl: DeclId::from_raw(m.decl),
+                    kind: port_kind_from_pb(m.kind())?,
+                    name: m.name.clone(),
+                    description: m.description.clone(),
+                },
+                Op::RenamePort(m) => SystemEditOp::RenamePort {
+                    component: comp(m.component),
+                    port: port(m.port),
+                    name: m.name.clone(),
+                },
+                Op::RetirePort(m) => SystemEditOp::RetirePort {
+                    component: comp(m.component),
+                    port: port(m.port),
+                },
+                Op::SetClockParameter(m) => SystemEditOp::SetClockParameter {
+                    component: comp(m.component),
+                    clock: ClockId::from_raw(m.clock),
+                    parameter: m.parameter,
+                },
+                Op::ShareConcept(m) => SystemEditOp::ShareConcept {
+                    component: comp(m.component),
+                    local: SemanticId::from_raw(m.local),
+                    system: m.system.map(SemanticId::from_raw),
+                },
+                Op::ExternalizeOutput(m) => SystemEditOp::ExternalizeOutput {
+                    component: comp(m.component),
+                    local: OutputId::from_raw(m.local),
+                    system: m.system.map(OutputId::from_raw),
+                },
+                Op::CreateInstance(m) => SystemEditOp::CreateInstance {
+                    component: comp(m.component),
+                    name: m.name.clone(),
+                },
+                Op::RenameInstance(m) => SystemEditOp::RenameInstance {
+                    id: inst(m.id),
+                    name: m.name.clone(),
+                },
+                Op::DeleteInstance(m) => SystemEditOp::DeleteInstance { id: inst(m.id) },
+                Op::SetClockArgument(m) => SystemEditOp::SetClockArgument {
+                    instance: inst(m.instance),
+                    parameter: ClockId::from_raw(m.parameter),
+                    clock: m.clock.map(ClockId::from_raw),
+                },
+                Op::SetParameterArgument(m) => SystemEditOp::SetParameterArgument {
+                    instance: inst(m.instance),
+                    port: port(m.port),
+                    value: m.value.as_ref().map(|source| ParameterValue {
+                        source: source.clone(),
+                    }),
+                },
+                Op::BindPorts(m) => SystemEditOp::BindPorts {
+                    source: port_ref_from_pb(m.source.as_ref(), "bind_ports.source")?,
+                    destination: port_ref_from_pb(
+                        m.destination.as_ref(),
+                        "bind_ports.destination",
+                    )?,
+                    transport: m
+                        .transport_init
+                        .as_ref()
+                        .map(|init| BindingTransport { init: init.clone() }),
+                },
+                Op::UnbindPorts(m) => SystemEditOp::UnbindPorts {
+                    binding: bdl_system::BindingId::from_raw(m.binding),
+                },
+                Op::ExportPort(m) => SystemEditOp::ExportPort {
+                    port: port_ref_from_pb(m.port.as_ref(), "export_port.port")?,
+                    name: m.name.clone(),
+                },
+                Op::HidePort(m) => SystemEditOp::HidePort {
+                    export: bdl_system::ExportId::from_raw(m.export),
+                },
+            },
+        )
+    }
+
+    pub fn system_outcome_to_pb(o: &SystemEditOutcome) -> pb::SystemEditOutcome {
+        let flat = outcome_to_pb(&EditOutcome {
+            kind: o.kind,
+            invalidates: o.invalidates.clone(),
+            origin_decls: o.origin_decls.clone(),
+            ..Default::default()
+        });
+        pb::SystemEditOutcome {
+            kind: flat.kind,
+            invalidates: flat.invalidates,
+            origin_decls: flat.origin_decls,
+            instances: o.instances.iter().map(|i| i.raw()).collect(),
+            created_component: o.created_component.map(|c| c.raw()),
+            created_instance: o.created_instance.map(|c| c.raw()),
+            created_port: o.created_port.map(|c| c.raw()),
+            created_binding: o.created_binding.map(|c| c.raw()),
+            created_export: o.created_export.map(|c| c.raw()),
+            inner: o.inner.as_ref().map(outcome_to_pb),
+        }
+    }
+
+    pub fn system_analysis_to_pb(a: &SystemAnalysis) -> pb::SystemAnalysisView {
+        let mut v = pb::SystemAnalysisView {
+            revision: a.revision.raw(),
+            analysis: Some(analysis_to_pb(&a.analysis)),
+            composition: a.composition.iter().map(diagnostic_to_pb).collect(),
+            ports: a
+                .ports
+                .iter()
+                .map(|(r, st)| {
+                    let mut p = pb::PortStatusView {
+                        port: Some(port_ref_to_pb(*r)),
+                        ..Default::default()
+                    };
+                    match st {
+                        PortStatus::Provided => p.set_status(pb::PortStatusKind::Provided),
+                        PortStatus::Bound { binding } => {
+                            p.set_status(pb::PortStatusKind::Bound);
+                            p.binding = Some(binding.raw());
+                        }
+                        PortStatus::Exported { export } => {
+                            p.set_status(pb::PortStatusKind::Exported);
+                            p.export = Some(export.raw());
+                        }
+                        PortStatus::Valued => p.set_status(pb::PortStatusKind::Valued),
+                        PortStatus::Open => p.set_status(pb::PortStatusKind::Open),
+                    }
+                    p
+                })
+                .collect(),
+            projected: a
+                .projected
+                .iter()
+                .map(|p| pb::ProjectedDiagnostic {
+                    diagnostic: Some(diagnostic_to_pb(&p.diagnostic)),
+                    origin: p.origin.as_ref().map(|o| {
+                        let (flat, sort) = match p.diagnostic.entity {
+                            bdl_diagnostics::Entity::Mapping { id } => {
+                                (id.raw(), pb::LocalSort::Decl)
+                            }
+                            bdl_diagnostics::Entity::Concept { id } => {
+                                (id.raw(), pb::LocalSort::Sem)
+                            }
+                            bdl_diagnostics::Entity::Project => (0, pb::LocalSort::Unspecified),
+                        };
+                        origin_view(flat, sort, o, p.port.map(|r| r.port))
+                    }),
+                    label: p.label.clone().unwrap_or_default(),
+                })
+                .collect(),
+            ..Default::default()
+        };
+        v.set_acceptance(match a.acceptance {
+            Acceptance::Invalid => pb::SystemAcceptance::Invalid,
+            Acceptance::Open => pb::SystemAcceptance::Open,
+            Acceptance::Executable => pb::SystemAcceptance::Executable,
+        });
+        v
     }
 }
 

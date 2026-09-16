@@ -29,6 +29,11 @@ use bdl_model::persist::{self, PersistError};
 use bdl_model::surface::{Design, ProjectSnapshot};
 use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
+use bdl_system::{
+    analyze_system, apply_system_edit, flatten, persist as system_persist, BehaviorSystem,
+    FlattenedSystem, SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome,
+    SystemSnapshot,
+};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
@@ -52,6 +57,22 @@ pub enum SessionError {
     Persist(#[from] PersistError),
     #[error(transparent)]
     Ide(#[from] QueryError),
+    #[error("this project is a behaviour system: its flat design is derived — edit the system")]
+    DerivedDesign,
+    #[error("this project is a flat design, not a behaviour system")]
+    NotASystem,
+    #[error(transparent)]
+    SystemEdit(#[from] SystemEditError),
+}
+
+/// The authored truth of a system project, beside the derived `current`.
+pub struct SystemState {
+    pub current: SystemSnapshot,
+    /// The flattening of `current` (its origins serve every projection).
+    pub flattened: FlattenedSystem,
+    saved: BehaviorSystem,
+    undo: Vec<BehaviorSystem>,
+    redo: Vec<BehaviorSystem>,
 }
 
 /// A simulation run, valid for exactly one project revision.
@@ -70,6 +91,9 @@ pub struct OpenProject {
     pub simulation: Option<SimulationRun>,
     /// IDE ground state over `current`: committed snapshot + overlays.
     pub ide: IdeHost,
+    /// Present for a behaviour-system project: then `current` is derived
+    /// from `system.current` on every commit and never edited directly.
+    pub system: Option<SystemState>,
     /// Designs before the current one, oldest first.
     undo: Vec<Design>,
     /// Designs undone, most recently undone last.
@@ -80,13 +104,26 @@ pub struct OpenProject {
 
 impl OpenProject {
     pub fn can_undo(&self) -> bool {
-        !self.undo.is_empty()
+        match &self.system {
+            Some(s) => !s.undo.is_empty(),
+            None => !self.undo.is_empty(),
+        }
     }
     pub fn can_redo(&self) -> bool {
-        !self.redo.is_empty()
+        match &self.system {
+            Some(s) => !s.redo.is_empty(),
+            None => !self.redo.is_empty(),
+        }
     }
     pub fn dirty(&self) -> bool {
-        self.current.design != self.saved || self.layout != self.saved_layout
+        let content = match &self.system {
+            Some(s) => s.current.system != s.saved,
+            None => self.current.design != self.saved,
+        };
+        content || self.layout != self.saved_layout
+    }
+    pub fn is_system(&self) -> bool {
+        self.system.is_some()
     }
 }
 
@@ -101,6 +138,14 @@ pub struct Session {
 pub struct Committed {
     pub snapshot: ProjectSnapshot,
     pub outcome: Option<EditOutcome>,
+}
+
+/// What a committed system edit produced.
+#[derive(Debug)]
+pub struct CommittedSystem {
+    /// The derived flat design at the new revision.
+    pub snapshot: ProjectSnapshot,
+    pub outcome: SystemEditOutcome,
 }
 
 impl Session {
@@ -126,11 +171,43 @@ impl Session {
         }
     }
 
+    /// Open a project of either kind: the manifest says which.
     pub fn open(&mut self, root: &Path) -> Result<&OpenProject, SessionError> {
         self.ensure_closed()?;
-        let loaded = persist::load_project(root)?;
-        self.install(root, loaded.snapshot, loaded.layout);
+        let manifest = persist::read_manifest(root)?;
+        match manifest.kind {
+            persist::ProjectKind::Flat => {
+                let loaded = persist::load_project(root)?;
+                self.install(root, loaded.snapshot, loaded.layout);
+            }
+            persist::ProjectKind::System => {
+                let loaded = system_persist::load_system_project(root)?;
+                self.install_system(root, loaded.snapshot, loaded.layout);
+            }
+        }
         self.project()
+    }
+
+    pub fn init_system(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+        self.ensure_closed()?;
+        let created = system_persist::init_system_project(root, name, &self.compiler_version)?;
+        self.install_system(root, created.snapshot, created.layout);
+        self.project()
+    }
+
+    fn install_system(&mut self, root: &Path, system: SystemSnapshot, layout: Layout) {
+        let flattened = flatten(&system);
+        let snapshot = flattened.snapshot.clone();
+        self.install(root, snapshot, layout);
+        if let Some(p) = self.project.as_mut() {
+            p.system = Some(SystemState {
+                saved: system.system.clone(),
+                current: system,
+                flattened,
+                undo: Vec::new(),
+                redo: Vec::new(),
+            });
+        }
     }
 
     pub fn init(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
@@ -149,6 +226,7 @@ impl Session {
             current: snapshot,
             layout,
             simulation: None,
+            system: None,
             undo: Vec::new(),
             redo: Vec::new(),
         });
@@ -163,15 +241,29 @@ impl Session {
     pub fn save(&mut self) -> Result<(), SessionError> {
         let version = self.compiler_version.clone();
         let p = self.project_mut()?;
-        persist::save_project(&p.root, &p.current, &p.layout, &version)?;
-        p.saved = p.current.design.clone();
+        match p.system.as_mut() {
+            Some(s) => {
+                // The system is the only truth written; the flat design is
+                // derived on open.
+                system_persist::save_system_project(&p.root, &s.current, &p.layout, &version)?;
+                s.saved = s.current.system.clone();
+            }
+            None => {
+                persist::save_project(&p.root, &p.current, &p.layout, &version)?;
+                p.saved = p.current.design.clone();
+            }
+        }
         p.saved_layout = p.layout.clone();
         Ok(())
     }
 
     /// Apply one edit against `base`; refused if the project has moved on.
+    /// A system project's flat design is derived: flat edits are refused.
     pub fn apply(&mut self, base: Revision, op: &EditOp) -> Result<Committed, SessionError> {
         let p = self.project_mut()?;
+        if p.system.is_some() {
+            return Err(SessionError::DerivedDesign);
+        }
         if p.current.revision != base {
             return Err(SessionError::StaleRevision {
                 expected: base,
@@ -190,7 +282,87 @@ impl Session {
         })
     }
 
+    /// Apply one system edit against `base`: the system moves, the flat
+    /// design is re-derived, and every consumer of `current` sees the new
+    /// revision as after any other commit.
+    pub fn apply_system(
+        &mut self,
+        base: Revision,
+        op: &SystemEditOp,
+    ) -> Result<CommittedSystem, SessionError> {
+        let p = self.project_mut()?;
+        let Some(sys) = p.system.as_mut() else {
+            return Err(SessionError::NotASystem);
+        };
+        if p.current.revision != base {
+            return Err(SessionError::StaleRevision {
+                expected: base,
+                actual: p.current.revision,
+            });
+        }
+        // The system's own revision counter follows the project's, so the
+        // derived snapshot and the authored system share one number.
+        let at = SystemSnapshot {
+            revision: p.current.revision,
+            system: sys.current.system.clone(),
+        };
+        let applied = apply_system_edit(&at, op)?;
+        let previous = std::mem::replace(&mut sys.current, applied.snapshot);
+        sys.undo.push(previous.system);
+        sys.redo.clear();
+        sys.flattened = flatten(&sys.current);
+        p.current = sys.flattened.snapshot.clone();
+        p.simulation = None;
+        p.ide.set_committed(p.current.clone());
+        Ok(CommittedSystem {
+            snapshot: p.current.clone(),
+            outcome: applied.outcome,
+        })
+    }
+
+    /// The system analysis of the open system project.
+    pub fn system_analysis(&self) -> Result<SystemAnalysis, SessionError> {
+        let p = self.project()?;
+        let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+        Ok(analyze_system(&sys.current))
+    }
+
+    /// Undo/redo of a system project: the system moves back, the flat
+    /// design is re-derived.
+    fn system_step(&mut self, undo: bool) -> Result<Committed, SessionError> {
+        let p = self.project_mut()?;
+        let Some(sys) = p.system.as_mut() else {
+            return Err(SessionError::NotASystem);
+        };
+        let system = if undo {
+            sys.undo.pop().ok_or(SessionError::NothingToUndo)?
+        } else {
+            sys.redo.pop().ok_or(SessionError::NothingToRedo)?
+        };
+        let next = SystemSnapshot {
+            revision: p.current.revision.next(),
+            system,
+        };
+        let previous = std::mem::replace(&mut sys.current, next);
+        if undo {
+            sys.redo.push(previous.system);
+        } else {
+            sys.undo.push(previous.system);
+        }
+        sys.flattened = flatten(&sys.current);
+        p.current = sys.flattened.snapshot.clone();
+        p.simulation = None;
+        p.ide.set_committed(p.current.clone());
+        Ok(Committed {
+            snapshot: p.current.clone(),
+            outcome: None,
+        })
+    }
+
     pub fn undo(&mut self) -> Result<Committed, SessionError> {
+        if self.project()?.system.is_some() {
+            return self.system_step(true);
+        }
         let p = self.project_mut()?;
         let design = p.undo.pop().ok_or(SessionError::NothingToUndo)?;
         let next = ProjectSnapshot {
@@ -208,6 +380,9 @@ impl Session {
     }
 
     pub fn redo(&mut self) -> Result<Committed, SessionError> {
+        if self.project()?.system.is_some() {
+            return self.system_step(false);
+        }
         let p = self.project_mut()?;
         let design = p.redo.pop().ok_or(SessionError::NothingToRedo)?;
         let next = ProjectSnapshot {

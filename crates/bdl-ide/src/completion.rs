@@ -108,8 +108,10 @@ pub fn completion(snapshot: &AnalysisSnapshot, ctx: &CompletionContext) -> Vec<S
                 return Vec::new();
             };
             let source = match &block.definition {
-                Some(Definition::Formula { source }) => source.as_str(),
-                None => "",
+                Some(Definition::Formula { source })
+                | Some(Definition::ScopedFormula { source, .. }) => source.as_str(),
+                // A reference has no formula text to complete in.
+                Some(Definition::Reference { .. }) | None => "",
             };
             formula_completions(snapshot, *mapping, source, *offset)
         }

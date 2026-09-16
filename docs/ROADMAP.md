@@ -24,6 +24,7 @@ slice is started before the slice works end-to-end.
 | N | Rust code generation via a backend AST + `bdl-manifest.json`: executable IR (`bdl-exec-ir`), reactive lowering (`bdl-lower`), owned Rust AST + printer (`bdl-codegen-rust`), readiness check, `compile()` | ✅ (ADR-0016) |
 | O | `no_std` generated core, host execution == interpreter: `runtime/bdl-runtime-core`, `runtime/bdl-runtime-host`, corpus + golden + property differential tests, every generated crate `cargo check`ed and run | ✅ |
 | P | first Embassy runtime adapter | |
+| BS | behaviour systems: components, interfaces (required/provided/parameter ports, clock parameters), instances with fresh identity, identity-based bindings (direct / transported), flattening with provenance, composition validation, acceptance levels, packaging, system project format, protocol 0.6 | ✅ semantics and protocol (ADR-0017); Studio system canvas next |
 | Q | `cargo check` / build orchestration in `bdld` with structured events | |
 | R | flash via `probe-rs` | |
 | S | telemetry back into Studio | |

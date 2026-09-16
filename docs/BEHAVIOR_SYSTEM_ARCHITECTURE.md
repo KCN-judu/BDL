@@ -1,0 +1,253 @@
+# Behaviour systems — implementation design
+
+How reusable behaviour components, instances and bindings enter
+production BDL without a second language, a second checker, or a change to
+the kernel. The formal reference is Phase 8a of `BDL_FV`
+(`BDL/Behavior/`, `BEHAVIOR_SYSTEM_REQUIREMENTS.md`, D-64..D-73); the
+correspondence table is `docs/BEHAVIOR_SYSTEMS.md`. Written before the
+code; the code follows it.
+
+```
+BehaviorSystem  (authored truth of a system project)
+      │  bdl-system::flatten            system elaboration: instantiate, freshen,
+      │                                 substitute clocks, realise parameters,
+      ▼                                 union, realise bindings, build origins
+ProjectSnapshot { design: Design }      an ordinary flat design — DERIVED
+      │
+      ▼
+EXISTING, UNCHANGED: elaborate → check → causality → clocks → outputs
+                     → simulate → deploy → lower → codegen → IDE
+```
+
+## 1. The canonical authored system model
+
+`bdl_system::BehaviorSystem` (crate `crates/bdl-system`, depends on
+`bdl-model` and, for validation only, on the compiler crates — never on
+Studio):
+
+```
+BehaviorSystem {
+    base:       Design                       the system-level flat design: shared concepts,
+                                             system clock domains, external sinks, devices,
+                                             and any top-level relationships
+    components: BTreeMap<ComponentId, BehaviorComponent>
+    instances:  BTreeMap<ComponentInstanceId, ComponentInstance>
+    bindings:   BTreeMap<BindingId, Binding>
+    exports:    BTreeMap<ExportId, Export>   required ports declared as system inputs
+    flat_ids:   FlatIds                      the persisted freshening table (§5)
+    ids:        SystemIdAllocator            component / instance / port / binding / export counters
+}
+```
+
+A **flat project is the degenerate system**: `base` only, no components,
+no instances, no bindings. Nothing about a flat project changes (§10).
+
+`BehaviorComponent` (project-local; §14 of the brief — not a portable
+package yet):
+
+```
+BehaviorComponent {
+    id, name, description,
+    body:       Design                        an ORDINARY flat design over the component's
+                                              own local ids and its own IdAllocator
+    interface:  BehaviorInterface { required, provided, params: Vec<Port>, clock_params: Vec<ClockId> }
+    shared_concepts:  BTreeMap<SemanticId(local), SemanticId(base)>   the concepts the body
+                                              takes from the system instead of owning
+    external_outputs: BTreeMap<OutputId(local), OutputId(base)>      sinks the body drives
+                                              that belong to the system
+    stamp: u64                                bumped by every body/interface edit
+}
+Port { id: PortId, decl: DeclId(local), kind: Required | Provided | Parameter, name, description }
+```
+
+The body is authored with the existing flat `EditOp`s (concepts,
+mappings, formulas, clocks, outputs, devices) — there is no second body
+language. A required port and a parameter *are* unresolved mappings of the
+body; a provided port is a mapping of the body; ports are exposed by
+identity (`PortId` → `DeclId(local)`), and consumers never see body names.
+
+## 2. What remains the canonical flat execution model
+
+`ProjectSnapshot { revision, design }`, exactly as today, is what every
+pass consumes. For a system project it is **derived** by `flatten` on
+every commit and never edited or persisted; for a flat project it is the
+authored truth. `bdl_compiler::analyze`, simulation, deployment,
+lowering, codegen, `IdeHost` and the LSP take it unchanged. There is no
+system type checker, evaluator, clock judgment or code generator
+(D-64).
+
+## 3. Component-local identities
+
+Inside a component body the ordinary id sorts (`DeclId`, `SemanticId`,
+`ClockId`, `OutputId`, `DeviceId`) are **local**: they come from the
+body's own `IdAllocator` and mean nothing outside the component — the
+production analogue of FV's "identities below `width`". Two components
+may both have local `DeclId 0`. A body entity is *private* unless it is
+listed in `shared_concepts` (a concept taken from the system),
+`external_outputs` (a sink of the system), or `interface.clock_params` (a
+clock the instantiation maps to a system domain). Sharing is never
+inferred from names or from Standard Library template origin (§13, §59 of
+the brief): it is an explicit table on the component.
+
+## 4. Instance identities
+
+```
+ComponentInstance { id: ComponentInstanceId, component: ComponentId, name,
+                    clock_bindings: BTreeMap<ClockId(local param), ClockId(base)>,
+                    parameter_bindings: BTreeMap<PortId, ParameterValue { source: closed formula }> }
+Binding  { id: BindingId, source: PortRef, destination: PortRef, transport: Option<Transport { init: closed formula }> }
+PortRef  { instance: ComponentInstanceId, port: PortId }
+Export   { id: ExportId, port: PortRef, name }
+```
+
+`ComponentId`, `ComponentInstanceId`, `PortId`, `BindingId`, `ExportId`
+are new `u64` newtypes allocated from `SystemIdAllocator`, persisted,
+never reused. They never overload `DeclId`/`SemanticId`/`ClockId`/
+`OutputId`. Renaming an instance, a port or a component changes a string
+and nothing else.
+
+## 5. Fresh flattened ids
+
+The FV encodes `fresh W k n = W·(k+1)+n` because Lean identities are
+naturals; production keeps its sequential per-project allocator instead
+(§19 of the brief). The **freshening table**
+
+```
+FlatIds: BTreeMap<(ComponentInstanceId, LocalEntity), u64>
+LocalEntity = Decl(DeclId) | Sem(SemanticId) | Clock(ClockId) | Output(OutputId) | Device(DeviceId)
+```
+
+is part of the authored system and is extended by the **edit model**, not
+by flattening: after every system edit, `ensure_flat_ids` walks every
+instance and every private entity of its component body in `BTreeMap`
+order and allocates a missing entry from `base.ids` — the same allocator
+the system's own concepts, clocks and outputs come from. Hence:
+
+* *injective / collision-free*: one counter per sort issues every id,
+  global and fresh alike;
+* *deterministic*: the walk order is fixed and the table is persisted,
+  so reopening gives the same ids;
+* *stable across unrelated edits*: an entry, once allocated, is never
+  renumbered; adding instance C or renaming lampA touches no existing
+  entry; deleting an instance removes its entries and the numbers are
+  never reused;
+* *origin recoverable*: the table is the reverse map (§6);
+* *compatible*: flattened ids are plain `DeclId` etc.
+
+`flatten` is then a pure function of the snapshot; a private entity with
+no entry is a `system.internal` diagnostic, never an allocation.
+
+## 6. Provenance
+
+`flatten` returns `FlattenedSystem { snapshot, origins: OriginMap,
+diagnostics }` where
+
+```
+OriginMap { decls: BTreeMap<DeclId, Origin>, sems, clocks, outputs, devices, ports: BTreeMap<DeclId, PortRef> }
+Origin { instance: ComponentInstanceId, component: ComponentId, local: LocalEntity }
+```
+
+plus the forward lookup `flat_of(instance, local)`. Base entities have no
+origin (they are the system's own). Every consumer that shows a flat id —
+diagnostics, hover, simulation traces, deployment rows, the generated
+manifest — can project it to `instance.local` through this map
+(`project_diagnostics` does so for `ProjectAnalysis`).
+
+## 7. Where flattening enters the pipeline
+
+One pre-pass, before pass 1 of `docs/COMPILER_PIPELINE.md`:
+
+```
+pass 0  system elaboration   BehaviorSystem → ProjectSnapshot (+ OriginMap, composition diagnostics)
+```
+
+`bdl_system::analyze_system(&SystemSnapshot) -> SystemAnalysis` = flatten,
+then `bdl_compiler::analyze` on the result, then origin projection of the
+diagnostics and the port/acceptance summary. Simulation and deployment
+likewise: flatten, then the existing `Simulation` / `analyze_deployment`.
+In `bdld` the session holds the system as authored truth and the
+flattened `ProjectSnapshot` as `current`; every existing request sees
+`current` and works unchanged.
+
+## 8. Bindings without synthesised text
+
+A binding never becomes `Formula { source: "sensorTilt" }`. The flat
+surface model gains one **identity-bearing** definition form:
+
+```
+Definition::Reference { target: DeclId, transport: Option<Transport { source: ClockId, init: String }> }
+```
+
+which `bdl-elab` elaborates directly to `Expr::DeclRef { target }` or
+`Expr::Sync { src, init, DeclRef target }` — exactly the FV's
+`bindingBody` — and the existing checker verifies against the destination's
+interface. The `init` (and a parameter's value) is a *closed* formula
+text: it is elaborated with no inputs and no relationship names in scope
+and must be reference-free and delay-free, so no name can enter. The
+authored system never contains a `Reference`; only the derived design
+does. Studio may render it as "bound to …" through the origin map.
+
+Choice A over B (flattening into `DesignIr`) because every downstream
+consumer — persistence of drafts, IDE overlays, projections, simulation
+input naming, deployment — starts from `ProjectSnapshot`; flattening to
+the surface reuses all of it, and the only price is one enum variant that
+the IDE's text-oriented paths treat as "has no formula text".
+
+## 9. Persistence
+
+`bdl.toml` gains `kind = "flat" | "system"` (default `flat`, so every
+existing manifest reads as before). A system project stores
+`design/system.bdl.json` (`schema_version` 1: `base`, `components`,
+`instances`, `bindings`, `exports`, `flat_ids`, `ids`) and **no**
+`design/project.bdl.json`: the flattened design is derived on open and on
+every commit, never written. Two files claiming to be the truth of one
+project is exactly what §7 of the brief forbids. Layout stays in
+`ui/layout.json` keyed by flat ids for now. Newer schemas are refused,
+as today.
+
+## 10. Ordinary flat projects
+
+Untouched: `kind` absent → flat; `design/project.bdl.json` is authored
+truth; `apply_edit`, undo, save, analyse, simulate, deploy, the IDE and
+the Smart Lamp example behave byte-for-byte as before. Converting a flat
+project into a system project is an explicit future action, not an
+implicit reinterpretation; `BehaviorSystem::from_flat(design)` exists for
+tests and tooling and produces the degenerate system whose flattening is
+the same design.
+
+## Edit model and invalidation
+
+`apply_system_edit(&SystemSnapshot, &SystemEditOp) -> Result<AppliedSystem,
+SystemEditError>` — pure, revisioned, the same shape as `apply_edit`.
+Ops: `Base(EditOp)`, `CreateComponent`, `RenameComponent`,
+`DeleteComponent`, `EditComponentBody { component, op: EditOp }`,
+`DeclarePort`, `RetirePort`, `RenamePort`, `SetClockParameter`,
+`ShareConcept`, `ExternalizeOutput`, `CreateInstance`, `RenameInstance`,
+`DeleteInstance`, `SetClockArgument`, `SetParameterArgument`,
+`BindPorts`, `UnbindPorts`, `ExportPort`, `HidePort`. Each returns a
+`SystemEditOutcome { flat: EditOutcome-shaped invalidation, touched_instances }`:
+a body edit invalidates every instance of that component (their
+flattened declarations are the origin decls); a rename invalidates
+nothing semantic; a binding change is `Realization` (+ `Reactive`,
+`Clock`, `Output` downstream); a clock argument is `Clock`; a parameter
+argument is `Realization`. Unrelated components are never invalidated.
+
+## Acceptance levels
+
+`SystemAnalysis.acceptance ∈ { Invalid, Open, Executable }`: a composition
+diagnostic or a flat error is `Invalid`; an unbound required port is
+`Open` (an ordinary unresolved declaration — FV Theorem H); `Executable`
+needs every required port bound or exported, and the existing
+`bdl_compiler::readiness` (causal, clock-consistent, outputs complete).
+No new acceptance machinery.
+
+## Packaging
+
+`package_system(&system, interface: PackageInterface) -> BehaviorComponent`
+flattens, validates that every chosen port is a declaration of the
+flattened design with the advertised shape (required ⇒ unresolved,
+provided ⇒ present, parameter ⇒ unresolved and nullary), and returns a
+component whose body is the flattened design and whose private/shared
+partition is inherited (base concepts of the inner system become the
+package's shared concepts if they came from a system concept). Hierarchy
+is instantiating a package (D-72); no recursive system type.

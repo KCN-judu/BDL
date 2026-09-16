@@ -14,6 +14,7 @@ members = [
     "crates/bdl-lower",
     "crates/bdl-codegen-rust",
     "crates/bdl-compiler",
+    "crates/bdl-system",
     "crates/bdl-protocol",
     "crates/bdl-daemon",
     "runtime/bdl-runtime-core",
@@ -47,6 +48,7 @@ bdl-codegen-rust = { path = "crates/bdl-codegen-rust" }
 bdl-runtime-core = { path = "runtime/bdl-runtime-core" }
 bdl-runtime-host = { path = "runtime/bdl-runtime-host" }
 bdl-compiler = { path = "crates/bdl-compiler" }
+bdl-system = { path = "crates/bdl-system" }
 bdl-protocol = { path = "crates/bdl-protocol" }
 bdl-library = { path = "crates/bdl-library" }
 bdl-ide-db = { path = "crates/bdl-ide-db" }

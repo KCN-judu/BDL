@@ -88,6 +88,7 @@ crates/
   bdl-lower/            DesignIr → ExecIr: clock/state/input/output slots, lambda inlining, evaluation order
   bdl-codegen-rust/     ExecIr → owned Rust AST → no_std core crate + host bridge + manifest (docs/CODEGEN_RUST.md)
   bdl-compiler/         analyze(snapshot) → ProjectAnalysis; compile(snapshot, options) → CompileArtifact
+  bdl-system/           behaviour systems: components, instances, bindings → flatten → the flat design (docs/BEHAVIOR_SYSTEMS.md)
   bdl-library/          concept libraries: templates → ordinary concepts (docs/STANDARD_CONCEPT_LIBRARY.md)
   bdl-ide-db/           IDE ground state: host, overlays, entity refs, projections, snapshots (docs/IDE_SERVICE_ARCHITECTURE.md)
   bdl-ide/              semantic IDE queries: diagnostics, hover, completion, references, rename, actions
@@ -141,6 +142,7 @@ persistence edges.
 | follow a design to a board | `docs/DEPLOYMENT_WALKTHROUGH.md`, `docs/HARDWARE_MODEL.md`, `crates/bdl-output`, `crates/bdl-hardware` |
 | build a Deploy surface | `docs/DEPLOYMENT_READ_MODEL.md`, `crates/bdl-compiler/src/deploy_report.rs`, `crates/bdl-daemon/tests/deploy_e2e.rs` |
 | generate and run Rust from a design | `docs/EXECUTABLE_IR.md`, `docs/CODEGEN_RUST.md`, `crates/bdl-compiler/tests/backend_differential.rs` |
+| compose reusable behaviours | `docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md`, `docs/BEHAVIOR_SYSTEMS.md`, `crates/bdl-system/tests/vertical_slice.rs` |
 | see what is next | `docs/ROADMAP.md` |
 
 ## 8. Conventions that are checked

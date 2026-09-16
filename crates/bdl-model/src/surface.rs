@@ -237,4 +237,61 @@ pub enum Definition {
     /// A formula in the surface expression language over the signature's
     /// input names.  Parsed and checked by the compiler, never by the editor.
     Formula { source: String },
+    /// A formula whose free names are pinned to identities: what a
+    /// component body's formula becomes when the body is instantiated into
+    /// a system (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §8).  `source` is the
+    /// designer's text, unchanged; `scope` says which input position and
+    /// which relationship each name meant *in the component*, so neither a
+    /// display name in the flattened design nor another instance's
+    /// homonym can capture it.  Never authored by hand.
+    ScopedFormula { source: String, scope: FormulaScope },
+    /// A realization by identity: this declaration *is* `target` — the
+    /// kernel's `declRef target`, or `sync src init (declRef target)` when
+    /// transported from `src`'s domain.  Produced by system flattening for
+    /// a port binding (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §8); never
+    /// authored by hand and never resolved through a name.  `init` is a
+    /// closed formula (no inputs, no relationships in scope).
+    Reference {
+        target: DeclId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        transport: Option<Transport>,
+    },
+}
+
+impl Definition {
+    /// The formula text, for the text-oriented tools; a reference has none.
+    pub fn formula_source(&self) -> Option<&str> {
+        match self {
+            Definition::Formula { source } | Definition::ScopedFormula { source, .. } => {
+                Some(source)
+            }
+            Definition::Reference { .. } => None,
+        }
+    }
+}
+
+/// The names a scoped formula may use and what each one is.
+#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct FormulaScope {
+    /// The input names in signature order (the concepts' display names as
+    /// the component saw them).
+    pub inputs: Vec<String>,
+    /// Relationships the formula may reference or apply, by the names the
+    /// component used, resolved to their flattened identities.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub mappings: BTreeMap<String, DeclId>,
+    /// Concepts the formula may name (for the "not an input" diagnostic).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub concepts: BTreeMap<String, SemanticId>,
+}
+
+/// Transport of a referenced value across timing domains: the kernel's
+/// `sync src init e`, strictly before (docs/RUNTIME_SEMANTICS.md).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Transport {
+    /// The source's domain.
+    pub source: ClockId,
+    /// The value before the first activation of the source: a closed
+    /// formula in the destination's units.
+    pub init: String,
 }

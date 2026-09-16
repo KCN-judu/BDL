@@ -105,6 +105,27 @@ class Invalidation extends $pb.ProtobufEnum {
   const Invalidation._(super.value, super.name);
 }
 
+class ProjectKind extends $pb.ProtobufEnum {
+  static const ProjectKind PROJECT_KIND_UNSPECIFIED =
+      ProjectKind._(0, _omitEnumNames ? '' : 'PROJECT_KIND_UNSPECIFIED');
+  static const ProjectKind PROJECT_KIND_FLAT =
+      ProjectKind._(1, _omitEnumNames ? '' : 'PROJECT_KIND_FLAT');
+  static const ProjectKind PROJECT_KIND_SYSTEM =
+      ProjectKind._(2, _omitEnumNames ? '' : 'PROJECT_KIND_SYSTEM');
+
+  static const $core.List<ProjectKind> values = <ProjectKind>[
+    PROJECT_KIND_UNSPECIFIED,
+    PROJECT_KIND_FLAT,
+    PROJECT_KIND_SYSTEM,
+  ];
+
+  static final $core.List<ProjectKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static ProjectKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const ProjectKind._(super.value, super.name);
+}
+
 /// The workspace states of the paper's interaction model.  Only the first two
 /// are produced before the checker exists; the rest are reserved.
 class AcceptanceState extends $pb.ProtobufEnum {
@@ -361,6 +382,115 @@ class MissingKind extends $pb.ProtobufEnum {
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
   const MissingKind._(super.value, super.name);
+}
+
+class PortKind extends $pb.ProtobufEnum {
+  static const PortKind PORT_KIND_UNSPECIFIED =
+      PortKind._(0, _omitEnumNames ? '' : 'PORT_KIND_UNSPECIFIED');
+  static const PortKind PORT_KIND_REQUIRED =
+      PortKind._(1, _omitEnumNames ? '' : 'PORT_KIND_REQUIRED');
+  static const PortKind PORT_KIND_PROVIDED =
+      PortKind._(2, _omitEnumNames ? '' : 'PORT_KIND_PROVIDED');
+  static const PortKind PORT_KIND_PARAMETER =
+      PortKind._(3, _omitEnumNames ? '' : 'PORT_KIND_PARAMETER');
+
+  static const $core.List<PortKind> values = <PortKind>[
+    PORT_KIND_UNSPECIFIED,
+    PORT_KIND_REQUIRED,
+    PORT_KIND_PROVIDED,
+    PORT_KIND_PARAMETER,
+  ];
+
+  static final $core.List<PortKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static PortKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const PortKind._(super.value, super.name);
+}
+
+class LocalSort extends $pb.ProtobufEnum {
+  static const LocalSort LOCAL_SORT_UNSPECIFIED =
+      LocalSort._(0, _omitEnumNames ? '' : 'LOCAL_SORT_UNSPECIFIED');
+  static const LocalSort LOCAL_SORT_DECL = LocalSort._(1, _omitEnumNames ? '' : 'LOCAL_SORT_DECL');
+  static const LocalSort LOCAL_SORT_SEM = LocalSort._(2, _omitEnumNames ? '' : 'LOCAL_SORT_SEM');
+  static const LocalSort LOCAL_SORT_CLOCK =
+      LocalSort._(3, _omitEnumNames ? '' : 'LOCAL_SORT_CLOCK');
+  static const LocalSort LOCAL_SORT_OUTPUT =
+      LocalSort._(4, _omitEnumNames ? '' : 'LOCAL_SORT_OUTPUT');
+  static const LocalSort LOCAL_SORT_DEVICE =
+      LocalSort._(5, _omitEnumNames ? '' : 'LOCAL_SORT_DEVICE');
+
+  static const $core.List<LocalSort> values = <LocalSort>[
+    LOCAL_SORT_UNSPECIFIED,
+    LOCAL_SORT_DECL,
+    LOCAL_SORT_SEM,
+    LOCAL_SORT_CLOCK,
+    LOCAL_SORT_OUTPUT,
+    LOCAL_SORT_DEVICE,
+  ];
+
+  static final $core.List<LocalSort?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 5);
+  static LocalSort? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const LocalSort._(super.value, super.name);
+}
+
+class PortStatusKind extends $pb.ProtobufEnum {
+  static const PortStatusKind PORT_STATUS_KIND_UNSPECIFIED =
+      PortStatusKind._(0, _omitEnumNames ? '' : 'PORT_STATUS_KIND_UNSPECIFIED');
+  static const PortStatusKind PORT_STATUS_KIND_PROVIDED =
+      PortStatusKind._(1, _omitEnumNames ? '' : 'PORT_STATUS_KIND_PROVIDED');
+  static const PortStatusKind PORT_STATUS_KIND_BOUND =
+      PortStatusKind._(2, _omitEnumNames ? '' : 'PORT_STATUS_KIND_BOUND');
+  static const PortStatusKind PORT_STATUS_KIND_EXPORTED =
+      PortStatusKind._(3, _omitEnumNames ? '' : 'PORT_STATUS_KIND_EXPORTED');
+  static const PortStatusKind PORT_STATUS_KIND_VALUED =
+      PortStatusKind._(4, _omitEnumNames ? '' : 'PORT_STATUS_KIND_VALUED');
+
+  /// An unbound required port: an ordinary open declaration, never an error.
+  static const PortStatusKind PORT_STATUS_KIND_OPEN =
+      PortStatusKind._(5, _omitEnumNames ? '' : 'PORT_STATUS_KIND_OPEN');
+
+  static const $core.List<PortStatusKind> values = <PortStatusKind>[
+    PORT_STATUS_KIND_UNSPECIFIED,
+    PORT_STATUS_KIND_PROVIDED,
+    PORT_STATUS_KIND_BOUND,
+    PORT_STATUS_KIND_EXPORTED,
+    PORT_STATUS_KIND_VALUED,
+    PORT_STATUS_KIND_OPEN,
+  ];
+
+  static final $core.List<PortStatusKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 5);
+  static PortStatusKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const PortStatusKind._(super.value, super.name);
+}
+
+class SystemAcceptance extends $pb.ProtobufEnum {
+  static const SystemAcceptance SYSTEM_ACCEPTANCE_UNSPECIFIED =
+      SystemAcceptance._(0, _omitEnumNames ? '' : 'SYSTEM_ACCEPTANCE_UNSPECIFIED');
+  static const SystemAcceptance SYSTEM_ACCEPTANCE_INVALID =
+      SystemAcceptance._(1, _omitEnumNames ? '' : 'SYSTEM_ACCEPTANCE_INVALID');
+  static const SystemAcceptance SYSTEM_ACCEPTANCE_OPEN =
+      SystemAcceptance._(2, _omitEnumNames ? '' : 'SYSTEM_ACCEPTANCE_OPEN');
+  static const SystemAcceptance SYSTEM_ACCEPTANCE_EXECUTABLE =
+      SystemAcceptance._(3, _omitEnumNames ? '' : 'SYSTEM_ACCEPTANCE_EXECUTABLE');
+
+  static const $core.List<SystemAcceptance> values = <SystemAcceptance>[
+    SYSTEM_ACCEPTANCE_UNSPECIFIED,
+    SYSTEM_ACCEPTANCE_INVALID,
+    SYSTEM_ACCEPTANCE_OPEN,
+    SYSTEM_ACCEPTANCE_EXECUTABLE,
+  ];
+
+  static final $core.List<SystemAcceptance?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static SystemAcceptance? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const SystemAcceptance._(super.value, super.name);
 }
 
 const $core.bool _omitEnumNames = $core.bool.fromEnvironment('protobuf.omit_enum_names');

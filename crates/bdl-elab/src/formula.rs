@@ -148,6 +148,19 @@ pub fn elaborate_formula(
     mapping: &MappingBlock,
     source: &str,
 ) -> Result<(Realized, Vec<Diagnostic>), Vec<Diagnostic>> {
+    let env = InputEnv::for_inputs(design, &mapping.signature.inputs);
+    elaborate_formula_in(design, ir, mapping, source, env)
+}
+
+/// [`elaborate_formula`] with an explicit name environment — a pinned
+/// scope for `Definition::ScopedFormula`.
+pub fn elaborate_formula_in(
+    design: &Design,
+    ir: &DesignIr,
+    mapping: &MappingBlock,
+    source: &str,
+    names: InputEnv,
+) -> Result<(Realized, Vec<Diagnostic>), Vec<Diagnostic>> {
     let entity = Entity::Mapping { id: mapping.id };
     let surface = match bdl_syntax::formula(source) {
         Ok(e) => e,
@@ -174,7 +187,7 @@ pub fn elaborate_formula(
         design,
         ir,
         mapping,
-        inputs: InputEnv::for_inputs(design, inputs),
+        inputs: names,
         env: inputs
             .iter()
             .map(|c| Binding {

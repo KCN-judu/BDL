@@ -190,7 +190,8 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             sig.push(cname(m.signature.output));
             let mut details = Vec::new();
             match &m.definition {
-                Some(Definition::Formula { source }) => {
+                Some(Definition::Formula { source })
+                | Some(Definition::ScopedFormula { source, .. }) => {
                     details.push(detail(
                         if snapshot.is_drafted(id) {
                             "definition (draft)"
@@ -198,6 +199,23 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                             "definition"
                         },
                         source.trim(),
+                    ));
+                }
+                Some(Definition::Reference { target, transport }) => {
+                    let name = design
+                        .mappings
+                        .get(target)
+                        .map(|t| t.name.clone())
+                        .unwrap_or_else(|| target.to_string());
+                    details.push(detail(
+                        "definition",
+                        match transport {
+                            None => format!("bound to {name}"),
+                            Some(t) => format!(
+                                "bound to {name}, carried across domains (initially {})",
+                                t.init.trim()
+                            ),
+                        },
                     ));
                 }
                 None => details.push(detail("definition", "none — an open declaration")),

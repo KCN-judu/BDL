@@ -11,6 +11,7 @@ repository.workspace = true
 bdl-model = { workspace = true }
 bdl-diagnostics = { workspace = true }
 bdl-compiler = { workspace = true }
+bdl-system = { workspace = true }
 bdl-check = { workspace = true }
 bdl-reactive = { workspace = true }
 bdl-hardware = { workspace = true }

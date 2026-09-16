@@ -5,14 +5,21 @@ model (`crates/bdl-model`), never by the Flutter graph.
 
 ```
 project/
-├── bdl.toml                  manifest: schema_version, name, compiler_version
+├── bdl.toml                  manifest: schema_version, name, compiler_version, kind
 ├── design/
-│   └── project.bdl.json      semantic content (concepts, mappings, id allocator)
+│   ├── project.bdl.json      kind = flat:   the authored flat design (concepts, mappings, …, id allocator)
+│   └── system.bdl.json       kind = system: the authored behaviour system — the ONLY truth of a system project
 ├── ui/
 │   └── layout.json           canvas positions keyed by stable id — NOT semantics
 ├── components/               supplied Rust components (planned)
 └── Bdl.lock                  pinned toolchain / runtime versions (planned)
 ```
+
+`kind` is absent in every project written before behaviour systems and
+means `flat`. A project has exactly one of the two design files: a
+system project's flat design is *derived* on open and on every commit
+(`bdl-system::flatten`) and is never written — two files claiming to be
+the truth of one project would be two authorities.
 
 ## Rules that do not change
 
@@ -65,6 +72,32 @@ complete checked-in instance.
 concepts and mappings only reads exactly as it did before those sections
 existed — the additions were made without a schema bump. Layout, analysis
 results, deployment results and simulation traces are never in this file.
+
+## `design/system.bdl.json` (schema 1)
+
+```json
+{
+  "schema_version": 1,
+  "system": {
+    "base": { "name": "rover", "concepts": { "0": { "id": 0, "name": "Tilt", … } }, "clocks": { … }, "outputs": { … }, "devices": { … }, "mappings": { … }, "ids": { … } },
+    "components": { "0": { "id": 0, "name": "AdaptiveLamp", "body": { …an ordinary design over local ids… },
+                           "interface": { "ports": { "0": { "id": 0, "name": "tiltValue", "kind": "required", "decl": 0 } }, "clock_params": [0] },
+                           "shared_concepts": { "0": 0 }, "external_outputs": {}, "stamp": 7 } },
+    "instances":  { "1": { "id": 1, "component": 0, "name": "lampA", "clock_bindings": { "0": 0 }, "parameter_bindings": {} } },
+    "bindings":   { "0": { "id": 0, "source": { "instance": 0, "port": 2 }, "destination": { "instance": 1, "port": 0 } } },
+    "exports":    {},
+    "flat_ids":   { "entries": [ { "instance": 1, "local": { "sort": "decl", "id": 0 }, "flat": 3 }, … ] },
+    "ids":        { "next_component": 2, "next_instance": 3, "next_port": 3, "next_binding": 2, "next_export": 0 }
+  }
+}
+```
+
+`base` is the system's own flat design; its `ids` allocator issues every
+flat identity, the freshened ones in `flat_ids` included, so the two can
+never collide and a flat id is never reused. `flat_ids` is completed by
+the edit model and read by flattening (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md
+§5). A binding's `transport`, when present, is `{ "init": "45 deg" }`. The
+schema is refused when newer, as for every other file.
 
 ## `ui/layout.json` (schema 1)
 

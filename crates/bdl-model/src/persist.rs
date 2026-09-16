@@ -49,6 +49,20 @@ pub enum PersistError {
     },
     #[error("{path}: not a BDL project (missing {MANIFEST_FILE})")]
     NotAProject { path: PathBuf },
+    #[error("{path}: a {kind:?} project, not a flat design (open it as a system)")]
+    NotFlat { path: PathBuf, kind: ProjectKind },
+}
+
+/// What kind of authored truth a project holds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectKind {
+    /// `design/project.bdl.json`: a flat design is the authored truth.
+    #[default]
+    Flat,
+    /// `design/system.bdl.json`: a behaviour system is the authored truth;
+    /// the flat design is derived (`bdl-system`).
+    System,
 }
 
 /// `bdl.toml`
@@ -59,6 +73,64 @@ pub struct Manifest {
     /// Compiler that last wrote the project (informational).
     #[serde(default)]
     pub compiler_version: String,
+    /// Absent in every project written before behaviour systems: flat.
+    #[serde(default, skip_serializing_if = "is_flat")]
+    pub kind: ProjectKind,
+}
+
+fn is_flat(k: &ProjectKind) -> bool {
+    *k == ProjectKind::Flat
+}
+
+/// Read only the manifest — to learn a project's kind before loading it.
+pub fn read_manifest(root: &Path) -> Result<Manifest, PersistError> {
+    let manifest_path = root.join(MANIFEST_FILE);
+    if !manifest_path.is_file() {
+        return Err(PersistError::NotAProject {
+            path: root.to_path_buf(),
+        });
+    }
+    let manifest_text = read(&manifest_path)?;
+    let manifest: Manifest = toml::from_str(&manifest_text).map_err(|e| PersistError::Toml {
+        path: manifest_path.clone(),
+        message: e.to_string(),
+    })?;
+    check_schema(
+        &manifest_path,
+        manifest.schema_version,
+        PROJECT_SCHEMA_VERSION,
+    )?;
+    Ok(manifest)
+}
+
+/// Write a manifest.  Exposed for the system layer, which owns the other
+/// files of a system project.
+pub fn write_manifest(root: &Path, manifest: &Manifest) -> Result<(), PersistError> {
+    let manifest_path = root.join(MANIFEST_FILE);
+    let text = toml::to_string_pretty(manifest).map_err(|e| PersistError::Toml {
+        path: manifest_path.clone(),
+        message: e.to_string(),
+    })?;
+    write_atomic(&manifest_path, text.as_bytes())
+}
+
+pub fn read_text(path: &Path) -> Result<String, PersistError> {
+    read(path)
+}
+
+pub fn schema_supported(path: &Path, found: u32, supported: u32) -> Result<(), PersistError> {
+    check_schema(path, found, supported)
+}
+
+pub fn load_layout(root: &Path) -> Result<Layout, PersistError> {
+    let layout_path = root.join(LAYOUT_FILE);
+    if layout_path.is_file() {
+        let file: LayoutFile = from_json(&layout_path, &read(&layout_path)?)?;
+        check_schema(&layout_path, file.schema_version, LAYOUT_SCHEMA_VERSION)?;
+        Ok(file.layout)
+    } else {
+        Ok(Layout::default())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -95,6 +167,7 @@ pub fn init_project(
             schema_version: PROJECT_SCHEMA_VERSION,
             name: name.to_owned(),
             compiler_version: compiler_version.to_owned(),
+            kind: ProjectKind::Flat,
         },
         snapshot,
         layout,
@@ -122,6 +195,7 @@ pub fn save_design(
         schema_version: PROJECT_SCHEMA_VERSION,
         name: snapshot.design.name.clone(),
         compiler_version: compiler_version.to_owned(),
+        kind: ProjectKind::Flat,
     };
     let manifest_path = root.join(MANIFEST_FILE);
     let manifest_text = toml::to_string_pretty(&manifest).map_err(|e| PersistError::Toml {
@@ -174,6 +248,12 @@ pub fn load_project(root: &Path) -> Result<LoadedProject, PersistError> {
         manifest.schema_version,
         PROJECT_SCHEMA_VERSION,
     )?;
+    if manifest.kind != ProjectKind::Flat {
+        return Err(PersistError::NotFlat {
+            path: root.to_path_buf(),
+            kind: manifest.kind,
+        });
+    }
 
     let design_path = root.join(DESIGN_FILE);
     let design_file: DesignFile = from_json(&design_path, &read(&design_path)?)?;

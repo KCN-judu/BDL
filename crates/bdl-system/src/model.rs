@@ -1,0 +1,295 @@
+//! The authored system model (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §1–§4).
+//!
+//! A [`BehaviorSystem`] is a flat `Design` (`base`) plus components,
+//! instances, bindings and exports.  A flat project is the degenerate
+//! system: `base` alone.  Everything here is a surface object that
+//! `flatten` turns into an ordinary flat design; nothing is a kernel term.
+
+use crate::ids::{
+    BindingId, ComponentId, ComponentInstanceId, ExportId, PortId, SystemIdAllocator,
+};
+use bdl_model::surface::Design;
+use bdl_model::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+
+/// Bumped on any change to the persisted representation.
+pub const SYSTEM_SCHEMA_VERSION: u32 = 1;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PortKind {
+    /// An unresolved declaration of the body, to be bound by a composer
+    /// (FV `required`).  Unbound, it stays *open* — never an error.
+    Required,
+    /// A declaration of the body offered to others (FV `provided`).
+    Provided,
+    /// An unresolved nullary declaration bound to a closed constant at
+    /// instantiation (FV `params`).
+    Parameter,
+}
+
+/// A port: a declaration of the component body exposed by identity, with
+/// its own stable id and display name.  What a composer sees of the body.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Port {
+    pub id: PortId,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    pub kind: PortKind,
+    /// The body declaration this port is (component-local `DeclId`).
+    pub decl: DeclId,
+}
+
+/// The public boundary of a component (FV `BehaviorInterface`).
+#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct BehaviorInterface {
+    /// Every port, by id; kinds partition them.
+    pub ports: BTreeMap<PortId, Port>,
+    /// Clock domains of the body that the instantiation maps to system
+    /// domains (FV `clockParams`).  Every other body clock is private.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub clock_params: Vec<ClockId>,
+}
+
+impl BehaviorInterface {
+    pub fn ports_of(&self, kind: PortKind) -> impl Iterator<Item = &Port> {
+        self.ports.values().filter(move |p| p.kind == kind)
+    }
+    pub fn port_for_decl(&self, decl: DeclId) -> Option<&Port> {
+        self.ports.values().find(|p| p.decl == decl)
+    }
+    pub fn is_clock_param(&self, c: ClockId) -> bool {
+        self.clock_params.contains(&c)
+    }
+}
+
+/// A reusable behaviour (FV `BehaviorComponent`): an interface over an
+/// ordinary flat design authored with the ordinary edit ops.  Project-local
+/// in this milestone (docs/BEHAVIOR_SYSTEMS.md, limitations).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BehaviorComponent {
+    pub id: ComponentId,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// The body, over the component's own local identities and allocator.
+    pub body: Design,
+    pub interface: BehaviorInterface,
+    /// Body concepts that stand for a system concept (FV: not `internalSem`).
+    /// Every other body concept is private and freshened per instance.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub shared_concepts: BTreeMap<SemanticId, SemanticId>,
+    /// Body sinks that stand for a system sink (FV: not `internalOut`).
+    /// Every other body sink is private and freshened per instance.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub external_outputs: BTreeMap<OutputId, OutputId>,
+    /// Bumped by every edit of the body or the interface; a version stamp
+    /// for caches and invalidation, never an identity.
+    #[serde(default)]
+    pub stamp: u64,
+}
+
+impl BehaviorComponent {
+    pub fn is_private_concept(&self, s: SemanticId) -> bool {
+        !self.shared_concepts.contains_key(&s)
+    }
+    pub fn is_private_output(&self, o: OutputId) -> bool {
+        !self.external_outputs.contains_key(&o)
+    }
+    pub fn is_private_clock(&self, c: ClockId) -> bool {
+        !self.interface.is_clock_param(c)
+    }
+}
+
+/// A closed constant for a parameter, as the designer writes it (`0.5`,
+/// `30 deg`).  Elaborated as a nullary formula of the port's own
+/// signature with no relationship in scope.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ParameterValue {
+    pub source: String,
+}
+
+/// One occurrence of a component in a system (FV `Inst`).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ComponentInstance {
+    pub id: ComponentInstanceId,
+    pub component: ComponentId,
+    pub name: String,
+    /// Component clock parameter → system clock domain (FV `κ`).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub clock_bindings: BTreeMap<ClockId, ClockId>,
+    /// Parameter port → closed value.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub parameter_bindings: BTreeMap<PortId, ParameterValue>,
+}
+
+/// A port of an instance, by identity.  Display names never enter.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct PortRef {
+    pub instance: ComponentInstanceId,
+    pub port: PortId,
+}
+
+/// How a binding crosses timing domains: `None` is a direct reference
+/// (same domain, or an agnostic source); `Some` transports through the
+/// kernel's `sync` from the source's domain, starting from `init`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BindingTransport {
+    /// A closed formula in the destination's units.
+    pub init: String,
+}
+
+/// A required port of one instance taken from a provided port of another
+/// (or of itself) — FV `Binding` with a port source.  Elaborates to one
+/// realization step of the destination (D-67).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Binding {
+    pub id: BindingId,
+    pub source: PortRef,
+    pub destination: PortRef,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transport: Option<BindingTransport>,
+}
+
+/// A required port declared as an input of the whole system: it stays
+/// unresolved, and the system is executable with it as an input.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Export {
+    pub id: ExportId,
+    pub port: PortRef,
+    pub name: String,
+}
+
+/// A component-local entity, by sort.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(tag = "sort", content = "id", rename_all = "snake_case")]
+pub enum LocalEntity {
+    Decl(DeclId),
+    Sem(SemanticId),
+    Clock(ClockId),
+    Output(OutputId),
+    Device(DeviceId),
+}
+
+/// The freshening table (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §5): for every
+/// private entity of every instance, the flat identity it was issued from
+/// the base allocator.  Extended by the edit model, read by `flatten`.
+#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct FlatIds {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub entries: Vec<FlatIdEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FlatIdEntry {
+    pub instance: ComponentInstanceId,
+    pub local: LocalEntity,
+    /// The flat id's raw value; its sort is `local`'s sort.
+    pub flat: u64,
+}
+
+impl FlatIds {
+    pub fn get(&self, instance: ComponentInstanceId, local: LocalEntity) -> Option<u64> {
+        self.entries
+            .iter()
+            .find(|e| e.instance == instance && e.local == local)
+            .map(|e| e.flat)
+    }
+    pub fn for_instance(
+        &self,
+        instance: ComponentInstanceId,
+    ) -> impl Iterator<Item = &FlatIdEntry> {
+        self.entries.iter().filter(move |e| e.instance == instance)
+    }
+}
+
+/// The authored truth of a system project.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BehaviorSystem {
+    /// The system-level flat design: shared concepts, system clock domains,
+    /// external sinks and devices, top-level relationships.  Its allocator
+    /// issues every flat id, freshened ones included.
+    pub base: Design,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub components: BTreeMap<ComponentId, BehaviorComponent>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub instances: BTreeMap<ComponentInstanceId, ComponentInstance>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub bindings: BTreeMap<BindingId, Binding>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub exports: BTreeMap<ExportId, Export>,
+    #[serde(default)]
+    pub flat_ids: FlatIds,
+    #[serde(default)]
+    pub ids: SystemIdAllocator,
+}
+
+impl BehaviorSystem {
+    /// The degenerate system: a flat design and nothing else.  Its
+    /// flattening is that design.
+    pub fn from_flat(design: Design) -> BehaviorSystem {
+        BehaviorSystem {
+            base: design,
+            components: BTreeMap::new(),
+            instances: BTreeMap::new(),
+            bindings: BTreeMap::new(),
+            exports: BTreeMap::new(),
+            flat_ids: FlatIds::default(),
+            ids: SystemIdAllocator::default(),
+        }
+    }
+
+    pub fn empty(name: impl Into<String>) -> BehaviorSystem {
+        BehaviorSystem::from_flat(Design::empty(name))
+    }
+
+    /// No components, instances or bindings: an ordinary flat design.
+    pub fn is_flat(&self) -> bool {
+        self.components.is_empty() && self.instances.is_empty() && self.bindings.is_empty()
+    }
+
+    pub fn component_of(&self, instance: ComponentInstanceId) -> Option<&BehaviorComponent> {
+        self.instances
+            .get(&instance)
+            .and_then(|i| self.components.get(&i.component))
+    }
+
+    /// The port a reference names, when both the instance and the port exist.
+    pub fn port(&self, r: PortRef) -> Option<&Port> {
+        self.component_of(r.instance)
+            .and_then(|c| c.interface.ports.get(&r.port))
+    }
+
+    /// The binding whose destination is `r`, if any (at most one: D-67).
+    pub fn binding_into(&self, r: PortRef) -> Option<&Binding> {
+        self.bindings.values().find(|b| b.destination == r)
+    }
+
+    pub fn export_of(&self, r: PortRef) -> Option<&Export> {
+        self.exports.values().find(|e| e.port == r)
+    }
+
+    pub fn instances_of(&self, component: ComponentId) -> impl Iterator<Item = &ComponentInstance> {
+        self.instances
+            .values()
+            .filter(move |i| i.component == component)
+    }
+}
+
+/// The revisioned system, the analogue of `ProjectSnapshot`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemSnapshot {
+    pub revision: Revision,
+    pub system: BehaviorSystem,
+}
+
+impl SystemSnapshot {
+    pub fn new(system: BehaviorSystem) -> SystemSnapshot {
+        SystemSnapshot {
+            revision: Revision::default(),
+            system,
+        }
+    }
+}

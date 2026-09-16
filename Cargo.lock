@@ -134,6 +134,7 @@ dependencies = [
  "bdl-model",
  "bdl-protocol",
  "bdl-reactive",
+ "bdl-system",
  "bytes",
  "clap",
  "prost",
@@ -311,6 +312,7 @@ dependencies = [
  "bdl-model",
  "bdl-output",
  "bdl-reactive",
+ "bdl-system",
  "bytes",
  "prost",
  "prost-build",
@@ -355,6 +357,26 @@ dependencies = [
  "proptest",
  "rowan",
  "serde",
+]
+
+[[package]]
+name = "bdl-system"
+version = "0.1.0"
+dependencies = [
+ "bdl-codegen-rust",
+ "bdl-compiler",
+ "bdl-diagnostics",
+ "bdl-exec-ir",
+ "bdl-hardware",
+ "bdl-ir",
+ "bdl-model",
+ "bdl-output",
+ "bdl-reactive",
+ "bdl-runtime-host",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
 ]
 
 [[package]]

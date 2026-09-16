@@ -7,6 +7,7 @@ pipeline does not fail fast.
 
 | # | Pass | Input → Output | Kernel notion | Status |
 |---|---|---|---|---|
+| 0 | system elaboration (flattening) | `BehaviorSystem` → `ProjectSnapshot` + `OriginMap` + `system.*` diagnostics: instantiate, freshen private ids, substitute clock parameters, realise parameters, union, realise bindings as `Definition::Reference` | FV `flatten` (`docs/BEHAVIOR_SYSTEMS.md`) | **integrated** (`bdl-system::flatten`); a flat project skips it — its snapshot *is* the input |
 | 1 | load / parse | files → `ProjectSnapshot` | — | done (`bdl-model::persist`) |
 | 2 | identity resolution | surface → ids resolved (names never used as refs) | `SemanticId`, `DeclId` | done by construction (model refers by id) |
 | 3 | signature / interface resolution | `Signature` over concepts → `Interface { expected_type, commitments }` | `DeclInterface` | **integrated** (`bdl-elab::elaborate_interface`; commitments empty) |
@@ -28,7 +29,9 @@ pipeline does not fail fast.
 ## Driver and result
 
 `bdl-compiler::analyze(&ProjectSnapshot) -> ProjectAnalysis` runs passes
-1–11 (`analyze_design_ir` the same over a Design IR built directly) and
+1–11 (`analyze_design_ir` the same over a Design IR built directly;
+`bdl_system::analyze_system` runs pass 0 first and then this, projecting
+the result to instances and ports) and
 returns, tagged with the snapshot's revision: per mapping the
 elaborated `Interface`, a status on the ladder
 
@@ -130,6 +133,9 @@ not a minimal unsat core (DI-21). `bdld` exposes it as `AnalyzeDeployment
 | `output.missing_driver` (required sink undriven) · `output.clock_unset` (open output) | outputs | info (the design is partial, not wrong) |
 | `deploy.infeasible` | deployment | error (project; target-relative) |
 | `deploy.device_unbound` · `deploy.output_unrealised` | deployment | info |
+| `system.binding_type_mismatch` · `system.binding_needs_transport` · `system.transport_without_source_domain` · `system.transport_without_destination_domain` · `system.transport_of_relationship` · `system.port_not_open` · `system.parameter_not_a_value` · `system.clock_argument_missing` · `system.shared_concept_disagrees` · `system.*_missing` | system elaboration (composition, on interfaces) | error |
+| `system.internal` | system elaboration | error (a compiler bug: the freshening table or a reference is inconsistent) |
+| `reference.unknown_target` · `reference.transport_of_relationship` · `reference.init_not_closed` | elab (`Definition::Reference`) | error |
 | `backend.not_ready` (one, listing every unmet condition) | readiness | error (project) |
 | `backend.unsupported_higher_order` (a relationship as a value, a partial application, a function-typed input) | lowering | error (on the mapping) |
 | `backend.internal_lowering` (an invariant analysis should have established is missing; a compiler bug) | lowering / codegen | error |

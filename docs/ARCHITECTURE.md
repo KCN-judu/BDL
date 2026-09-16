@@ -64,6 +64,7 @@ crates/
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
   bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
   bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
+  bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · system project format (→ model, compiler)
   bdl-library      concept libraries: data-driven templates (library/std/concepts.toml) that instantiate ordinary concepts via CreateConcept; search; multi-library set (→ model, elab)
   bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
   bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion (incl. library templates) · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db, library)
@@ -88,6 +89,22 @@ depends on `model` only (it never sees `Δ`) and `compiler` joins the two;
 `runtime-core` depends on nothing and is what generated code links
 against. A crate exists only where a real boundary exists; tiny crates are
 merged rather than kept for the diagram.
+
+## Behaviour systems flatten into the one flat design
+
+A reusable behaviour is a component: an ordinary flat design as body, a
+public interface of ports by identity, and a partition of its concepts and
+sinks into private and shared. Instantiating it freshens every private
+identity (from the same allocator the system's own ids come from, so
+nothing collides and nothing is renumbered); a binding realises the
+destination port with a reference to the source — the kernel's
+`declRef`, or `sync` across domains; the result is a flat
+`ProjectSnapshot` that every existing pass consumes unchanged, with an
+origin map back to instances and ports. There is one BDL: no system type
+checker, evaluator, clock judgment or code generator exists, and the
+kernel gained no construct (FV Phase 8a, ADR-0017, `docs/BEHAVIOR_SYSTEMS.md`).
+For a system project the authored truth is the system; the flat design is
+derived and never persisted. Flat projects are untouched.
 
 ## The generated core is an implementation of the reference evaluator
 

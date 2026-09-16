@@ -13,12 +13,22 @@
 //! nullary one.  Local `let` names are resolved by the elaborator before
 //! this rule applies; they are lexical and never reach here.
 
-use bdl_model::surface::{Design, MappingBlock};
+use bdl_model::surface::{Design, FormulaScope, MappingBlock};
 use bdl_model::{DeclId, SemanticId};
+use std::collections::BTreeMap;
 
 pub struct InputEnv {
     /// (concept, display name) per signature input, in signature order.
     pub inputs: Vec<(SemanticId, String)>,
+    /// A pinned scope (`Definition::ScopedFormula`): relationships and
+    /// concepts are looked up here by the names the component used, never
+    /// in the design at large.
+    pub scope: Option<PinnedScope>,
+}
+
+pub struct PinnedScope {
+    pub mappings: BTreeMap<String, DeclId>,
+    pub concepts: BTreeMap<String, SemanticId>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -50,6 +60,23 @@ impl InputEnv {
                     )
                 })
                 .collect(),
+            scope: None,
+        }
+    }
+
+    /// The environment of a scoped formula: input names come from the
+    /// scope (positionally), relationships and concepts from its tables.
+    pub fn scoped(inputs: &[SemanticId], scope: &FormulaScope) -> InputEnv {
+        InputEnv {
+            inputs: inputs
+                .iter()
+                .enumerate()
+                .map(|(i, id)| (*id, scope.inputs.get(i).cloned().unwrap_or_default()))
+                .collect(),
+            scope: Some(PinnedScope {
+                mappings: scope.mappings.clone(),
+                concepts: scope.concepts.clone(),
+            }),
         }
     }
 
@@ -60,6 +87,9 @@ impl InputEnv {
     pub fn resolve(&self, design: &Design, name: &str) -> Lookup {
         if let Some(i) = self.inputs.iter().position(|(_, n)| n == name) {
             return Lookup::Input(i);
+        }
+        if let Some(scope) = &self.scope {
+            return self.resolve_pinned(scope, name);
         }
         if let Some(m) = design.mappings.values().find(|m| m.name == name) {
             return Lookup::Mapping(m.id);
@@ -91,6 +121,42 @@ impl InputEnv {
             .find(|c| c.name.eq_ignore_ascii_case(name))
         {
             return Lookup::NotAnInput(c.id, c.name.clone());
+        }
+        Lookup::Unknown
+    }
+
+    fn resolve_pinned(&self, scope: &PinnedScope, name: &str) -> Lookup {
+        if let Some(id) = scope.mappings.get(name) {
+            return Lookup::Mapping(*id);
+        }
+        if let Some((n, id)) = scope.concepts.get_key_value(name) {
+            return Lookup::NotAnInput(*id, n.clone());
+        }
+        let loose: Vec<usize> = (0..self.inputs.len())
+            .filter(|&i| self.inputs[i].1.eq_ignore_ascii_case(name))
+            .collect();
+        match loose.as_slice() {
+            [i] => return Lookup::Input(*i),
+            [] => {}
+            many => {
+                return Lookup::Ambiguous(many.iter().map(|&i| self.inputs[i].1.clone()).collect())
+            }
+        }
+        let loose: Vec<&DeclId> = scope
+            .mappings
+            .iter()
+            .filter(|(n, _)| n.eq_ignore_ascii_case(name))
+            .map(|(_, id)| id)
+            .collect();
+        if let [id] = loose.as_slice() {
+            return Lookup::Mapping(**id);
+        }
+        if let Some((n, id)) = scope
+            .concepts
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case(name))
+        {
+            return Lookup::NotAnInput(*id, n.clone());
         }
         Lookup::Unknown
     }

@@ -173,6 +173,63 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             Ok(_) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
+        Req::InitSystemProject(i) => match session.init_system(Path::new(&i.root_path), &i.name) {
+            Ok(_) => (project_response(session), None),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
+        Req::GetSystem(_) => match system_view(session) {
+            Ok(v) => (Resp::System(pb::SystemResponse { system: Some(v) }), None),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
+        Req::ApplySystemEdit(a) => {
+            let Some(op) = a.op.as_ref() else {
+                return (
+                    Resp::Error(error(
+                        "protocol.missing_field",
+                        "apply_system_edit.op is required",
+                    )),
+                    None,
+                );
+            };
+            let op = match convert::system::system_edit_op_from_pb(op) {
+                Ok(op) => op,
+                Err(e) => {
+                    return (
+                        Resp::Error(error("protocol.invalid_edit", &e.to_string())),
+                        None,
+                    )
+                }
+            };
+            match session.apply_system(bdl_model::Revision::from_raw(a.base_revision), &op) {
+                Ok(c) => {
+                    let view = system_view(session).ok();
+                    let resp = Resp::SystemEditApplied(pb::SystemEditApplied {
+                        system: view,
+                        project: Some(project_of(session)),
+                        outcome: Some(convert::system::system_outcome_to_pb(&c.outcome)),
+                    });
+                    // Subscribers see the derived flat design move as after
+                    // any commit; the system-level outcome is in the response.
+                    (
+                        resp,
+                        Some(Committed {
+                            snapshot: c.snapshot,
+                            outcome: None,
+                        }),
+                    )
+                }
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
+        Req::RunSystemAnalysis(_) => match session.system_analysis() {
+            Ok(a) => (
+                Resp::SystemAnalysis(pb::SystemAnalysisResponse {
+                    analysis: Some(convert::system::system_analysis_to_pb(&a)),
+                }),
+                None,
+            ),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
         Req::SaveProject(_) => match session.save() {
             Ok(()) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
@@ -810,15 +867,33 @@ fn projection_of(
                 can_undo: p.can_undo(),
                 can_redo: p.can_redo(),
                 dirty: p.dirty(),
+                derived: p.is_system(),
             },
         ),
         Err(_) => pb::ProjectProjection::default(),
     }
 }
 
+/// The system view of the open system project.
+fn system_view(session: &Session) -> Result<pb::SystemView, SessionError> {
+    let p = session.project()?;
+    let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+    Ok(convert::system::system_view(
+        &sys.current,
+        &sys.flattened.origins,
+    ))
+}
+
 fn session_error(e: &SessionError) -> pb::Error {
     match e {
         SessionError::Edit(edit) => convert::edit_error_to_pb(edit),
+        SessionError::SystemEdit(edit) => pb::Error {
+            code: format!("system_edit.{}", system_edit_code(edit)),
+            message: edit.to_string(),
+            details_json: serde_json::to_string(edit).unwrap_or_default(),
+        },
+        SessionError::DerivedDesign => error("edit.derived_design", &e.to_string()),
+        SessionError::NotASystem => error("system.not_a_system", &e.to_string()),
         SessionError::NoProject => error("session.no_project", &e.to_string()),
         SessionError::AlreadyOpen(_) => error("session.already_open", &e.to_string()),
         SessionError::StaleRevision { .. } => error("edit.stale_revision", &e.to_string()),
@@ -830,6 +905,47 @@ fn session_error(e: &SessionError) -> pb::Error {
         }
         SessionError::Ide(_) => error("draft.unavailable", &e.to_string()),
     }
+}
+
+/// A stable snake_case code per refusal kind.
+fn system_edit_code(e: &bdl_system::SystemEditError) -> String {
+    use bdl_system::SystemEditError as E;
+    match e {
+        E::EmptyName => "empty_name",
+        E::DuplicateComponentName { .. } => "duplicate_component_name",
+        E::UnknownComponent { .. } => "unknown_component",
+        E::ComponentInUse { .. } => "component_in_use",
+        E::UnknownInstance { .. } => "unknown_instance",
+        E::DuplicateInstanceName { .. } => "duplicate_instance_name",
+        E::InstanceInUse { .. } => "instance_in_use",
+        E::UnknownPort { .. } => "unknown_port",
+        E::DuplicatePortName { .. } => "duplicate_port_name",
+        E::NotABodyDeclaration { .. } => "not_a_body_declaration",
+        E::DeclAlreadyExposed { .. } => "decl_already_exposed",
+        E::PortInUse { .. } => "port_in_use",
+        E::PortBacked { .. } => "port_backed",
+        E::NotABodyClock { .. } => "not_a_body_clock",
+        E::ClockParamInUse { .. } => "clock_param_in_use",
+        E::NotABodyConcept { .. } => "not_a_body_concept",
+        E::NotABodyOutput { .. } => "not_a_body_output",
+        E::UnknownSystemConcept { .. } => "unknown_system_concept",
+        E::UnknownSystemOutput { .. } => "unknown_system_output",
+        E::UnknownSystemClock { .. } => "unknown_system_clock",
+        E::NotAClockParameter { .. } => "not_a_clock_parameter",
+        E::NotAParameter { .. } => "not_a_parameter",
+        E::SourceNotProvided { .. } => "source_not_provided",
+        E::DestinationNotRequired { .. } => "destination_not_required",
+        E::DestinationBound { .. } => "destination_bound",
+        E::PortExported { .. } => "port_exported",
+        E::PortHasValue => "port_has_value",
+        E::UnknownBinding { .. } => "unknown_binding",
+        E::UnknownExport { .. } => "unknown_export",
+        E::DuplicateExportName { .. } => "duplicate_export_name",
+        E::ExportNotRequired { .. } => "export_not_required",
+        E::Base(_) => "base",
+        E::Body { .. } => "body",
+    }
+    .to_owned()
 }
 
 fn error(code: &str, message: &str) -> pb::Error {
@@ -855,6 +971,10 @@ fn payload_name(p: &Req) -> &'static str {
         Req::Handshake(_) => "handshake",
         Req::OpenProject(_) => "open_project",
         Req::InitProject(_) => "init_project",
+        Req::InitSystemProject(_) => "init_system_project",
+        Req::GetSystem(_) => "get_system",
+        Req::ApplySystemEdit(_) => "apply_system_edit",
+        Req::RunSystemAnalysis(_) => "run_system_analysis",
         Req::SaveProject(_) => "save_project",
         Req::CloseProject(_) => "close_project",
         Req::GetProject(_) => "get_project",

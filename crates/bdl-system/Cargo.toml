@@ -1,0 +1,29 @@
+[package]
+name = "bdl-system"
+description = "Behaviour systems: reusable components, instances and bindings that elaborate — by freshening, substitution and realization — into the same flat BDL design the existing compiler accepts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-diagnostics = { workspace = true }
+bdl-compiler = { workspace = true }
+bdl-reactive = { workspace = true }
+bdl-output = { workspace = true }
+bdl-hardware = { workspace = true }
+bdl-ir = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+bdl-runtime-host = { workspace = true }
+bdl-codegen-rust = { workspace = true }
+bdl-exec-ir = { workspace = true }
+
+[lints]
+workspace = true

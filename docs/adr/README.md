@@ -21,5 +21,6 @@ mark superseded. Format: Context · Decision · Consequences.
 | [0014](0014-textual-syntax-infrastructure.md) | Textual syntax infrastructure — Logos, hand-written event parser, Rowan |
 | [0015](0015-deployment-analysis-is-target-relative.md) | Deployment analysis is a separate, target-relative function; outputs are not a mapping status |
 | [0016](0016-generated-rust-is-an-implementation-of-the-reference-evaluator.md) | Generated Rust is an implementation of the reference evaluator — explicit executable IR, owned AST, differential tests |
+| [0017](0017-behaviour-systems-flatten-into-the-flat-design.md) | Behaviour systems are a surface layer that flattens into the flat design — no kernel construct, one BDL |
 | [0017](0017-lsp-is-an-adapter.md) | LSP is an adapter over a semantic-first IDE service — `lsp-server` at the edge, one service for Studio and text editors, GLSP borrowed not adopted |
 | [0018](0018-three-information-levels.md) | Semantics as structure; formal vocabulary only in Explain |

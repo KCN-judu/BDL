@@ -52,6 +52,11 @@ message ClientMessage {
     ListSemanticActionsRequest list_semantic_actions = 33;
     ListConceptTemplatesRequest list_concept_templates = 40;
     InstantiateConceptTemplateRequest instantiate_concept_template = 41;
+    // Behaviour systems (protocol 0.6).
+    InitSystemProjectRequest init_system_project = 50;
+    GetSystemRequest get_system = 51;
+    ApplySystemEditRequest apply_system_edit = 52;
+    RunSystemAnalysisRequest run_system_analysis = 53;
   }
 }
 
@@ -79,6 +84,9 @@ message Response {
     DraftHoverResponse draft_hover = 20;
     SemanticActionsResponse semantic_actions = 21;
     ConceptTemplatesResponse concept_templates = 30;
+    SystemResponse system = 40;
+    SystemEditApplied system_edit_applied = 41;
+    SystemAnalysisResponse system_analysis = 42;
   }
 }
 
@@ -388,6 +396,15 @@ message ProjectProjection {
   repeated ClockView clocks = 10;
   repeated OutputView outputs = 11;
   repeated DeviceView devices = 12;
+  // Whether this projection is an authored flat design or the derived
+  // flattening of a behaviour system (edit the system, not this).
+  ProjectKind kind = 13;
+}
+
+enum ProjectKind {
+  PROJECT_KIND_UNSPECIFIED = 0;
+  PROJECT_KIND_FLAT = 1;
+  PROJECT_KIND_SYSTEM = 2;
 }
 
 message ClockView {
@@ -466,7 +483,21 @@ message Signature {
 message Definition {
   oneof kind {
     string formula = 1;
+    // A realization by identity, produced by system flattening for a port
+    // binding: `declRef target`, or `sync` from `transport.source` with the
+    // closed initial value.  Never authored; shown as "bound to …".
+    ReferenceDefinition reference = 2;
   }
+}
+
+message ReferenceDefinition {
+  uint64 target = 1;
+  optional TransportSpec transport = 2;
+}
+
+message TransportSpec {
+  uint64 source_clock_id = 1;
+  string init = 2;
 }
 
 message Representation {
@@ -1171,4 +1202,325 @@ message BlockedCandidate {
   string resource = 1;
   uint64 held_by_device_id = 2;
   uint32 held_by_index = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Behaviour systems (reusable components, instances, bindings)
+// ---------------------------------------------------------------------------
+//
+// A system project's authored truth is a BehaviorSystem; the flat design
+// every other request sees (RunAnalysis, simulation, deployment, drafts)
+// is DERIVED from it on every commit and is never edited directly
+// (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md).  `OpenProject` opens either
+// kind; `ProjectProjection.kind` says which.  Ordinary flat projects are
+// untouched by all of this.
+
+message InitSystemProjectRequest {
+  string root_path = 1;
+  string name = 2;
+}
+
+message GetSystemRequest {}
+
+message SystemResponse {
+  SystemView system = 1;
+}
+
+message ApplySystemEditRequest {
+  uint64 base_revision = 1;
+  SystemEditOp op = 2;
+}
+
+message SystemEditApplied {
+  SystemView system = 1;
+  // The derived flat design at the new revision.
+  ProjectProjection project = 2;
+  SystemEditOutcome outcome = 3;
+}
+
+message RunSystemAnalysisRequest {}
+
+message SystemAnalysisResponse {
+  SystemAnalysisView analysis = 1;
+}
+
+enum PortKind {
+  PORT_KIND_UNSPECIFIED = 0;
+  PORT_KIND_REQUIRED = 1;
+  PORT_KIND_PROVIDED = 2;
+  PORT_KIND_PARAMETER = 3;
+}
+
+message PortView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  PortKind kind = 4;
+  // The body declaration behind the port (component-local id).
+  uint64 decl = 5;
+}
+
+message ComponentView {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  repeated PortView ports = 4;
+  // Body clock domains that are parameters (component-local ids).
+  repeated uint64 clock_params = 5;
+  // Body concept → system concept it stands for.
+  repeated IdPair shared_concepts = 6;
+  // Body sink → system sink it stands for.
+  repeated IdPair external_outputs = 7;
+  // The body as an ordinary design (component-local ids; no layout, no
+  // session fields).
+  ProjectProjection body = 8;
+  uint64 stamp = 9;
+}
+
+message IdPair {
+  uint64 local = 1;
+  uint64 system = 2;
+}
+
+message ComponentInstanceView {
+  uint64 id = 1;
+  uint64 component = 2;
+  string name = 3;
+  // Component clock parameter → system clock domain.
+  repeated IdPair clock_bindings = 4;
+  repeated ParameterBindingView parameter_bindings = 5;
+}
+
+message ParameterBindingView {
+  uint64 port = 1;
+  string source = 2;
+}
+
+message PortRefView {
+  uint64 instance = 1;
+  uint64 port = 2;
+}
+
+message BindingView {
+  uint64 id = 1;
+  PortRefView source = 2;
+  PortRefView destination = 3;
+  // Present when transported through `sync` from the source's domain.
+  optional string transport_init = 4;
+}
+
+message ExportView {
+  uint64 id = 1;
+  PortRefView port = 2;
+  string name = 3;
+}
+
+// Where a flat entity of the derived design came from.
+message OriginView {
+  // The flat id and its sort.
+  uint64 flat = 1;
+  LocalSort sort = 2;
+  uint64 instance = 3;
+  uint64 component = 4;
+  // The component-local id.
+  uint64 local = 5;
+  // The port, when the flat declaration is one.
+  optional uint64 port = 6;
+}
+
+enum LocalSort {
+  LOCAL_SORT_UNSPECIFIED = 0;
+  LOCAL_SORT_DECL = 1;
+  LOCAL_SORT_SEM = 2;
+  LOCAL_SORT_CLOCK = 3;
+  LOCAL_SORT_OUTPUT = 4;
+  LOCAL_SORT_DEVICE = 5;
+}
+
+message SystemView {
+  uint64 revision = 1;
+  string name = 2;
+  // The system's own flat design (shared concepts, domains, sinks, devices,
+  // top-level relationships), with base ids.
+  ProjectProjection base = 3;
+  repeated ComponentView components = 4;
+  repeated ComponentInstanceView instances = 5;
+  repeated BindingView bindings = 6;
+  repeated ExportView exports = 7;
+  // Provenance of the derived flat design.
+  repeated OriginView origins = 8;
+  // True for a system whose flattening is its base: an ordinary flat design.
+  bool is_flat = 9;
+}
+
+message SystemEditOp {
+  oneof op {
+    EditOp base = 1;
+    CreateComponent create_component = 2;
+    RenameComponent rename_component = 3;
+    SetComponentDescription set_component_description = 4;
+    DeleteComponent delete_component = 5;
+    EditComponentBody edit_component_body = 6;
+    DeclarePort declare_port = 7;
+    RenamePort rename_port = 8;
+    RetirePort retire_port = 9;
+    SetClockParameter set_clock_parameter = 10;
+    ShareConcept share_concept = 11;
+    ExternalizeOutput externalize_output = 12;
+    CreateInstance create_instance = 13;
+    RenameInstance rename_instance = 14;
+    DeleteInstance delete_instance = 15;
+    SetClockArgument set_clock_argument = 16;
+    SetParameterArgument set_parameter_argument = 17;
+    BindPorts bind_ports = 18;
+    UnbindPorts unbind_ports = 19;
+    ExportPort export_port = 20;
+    HidePort hide_port = 21;
+  }
+}
+
+message CreateComponent {
+  string name = 1;
+  string description = 2;
+}
+message RenameComponent {
+  uint64 id = 1;
+  string name = 2;
+}
+message SetComponentDescription {
+  uint64 id = 1;
+  string description = 2;
+}
+message DeleteComponent {
+  uint64 id = 1;
+}
+message EditComponentBody {
+  uint64 component = 1;
+  EditOp op = 2;
+}
+message DeclarePort {
+  uint64 component = 1;
+  uint64 decl = 2;
+  PortKind kind = 3;
+  string name = 4;
+  string description = 5;
+}
+message RenamePort {
+  uint64 component = 1;
+  uint64 port = 2;
+  string name = 3;
+}
+message RetirePort {
+  uint64 component = 1;
+  uint64 port = 2;
+}
+message SetClockParameter {
+  uint64 component = 1;
+  uint64 clock = 2;
+  bool parameter = 3;
+}
+message ShareConcept {
+  uint64 component = 1;
+  uint64 local = 2;
+  optional uint64 system = 3;
+}
+message ExternalizeOutput {
+  uint64 component = 1;
+  uint64 local = 2;
+  optional uint64 system = 3;
+}
+message CreateInstance {
+  uint64 component = 1;
+  string name = 2;
+}
+message RenameInstance {
+  uint64 id = 1;
+  string name = 2;
+}
+message DeleteInstance {
+  uint64 id = 1;
+}
+message SetClockArgument {
+  uint64 instance = 1;
+  uint64 parameter = 2;
+  optional uint64 clock = 3;
+}
+message SetParameterArgument {
+  uint64 instance = 1;
+  uint64 port = 2;
+  optional string value = 3;
+}
+message BindPorts {
+  PortRefView source = 1;
+  PortRefView destination = 2;
+  optional string transport_init = 3;
+}
+message UnbindPorts {
+  uint64 binding = 1;
+}
+message ExportPort {
+  PortRefView port = 1;
+  string name = 2;
+}
+message HidePort {
+  uint64 export = 1;
+}
+
+message SystemEditOutcome {
+  EditKind kind = 1;
+  repeated Invalidation invalidates = 2;
+  // In the derived flat design's ids.
+  repeated uint64 origin_decls = 3;
+  repeated uint64 instances = 4;
+  optional uint64 created_component = 5;
+  optional uint64 created_instance = 6;
+  optional uint64 created_port = 7;
+  optional uint64 created_binding = 8;
+  optional uint64 created_export = 9;
+  // The flat outcome of a base or body edit (body ids are local).
+  optional EditOutcome inner = 10;
+}
+
+enum PortStatusKind {
+  PORT_STATUS_KIND_UNSPECIFIED = 0;
+  PORT_STATUS_KIND_PROVIDED = 1;
+  PORT_STATUS_KIND_BOUND = 2;
+  PORT_STATUS_KIND_EXPORTED = 3;
+  PORT_STATUS_KIND_VALUED = 4;
+  // An unbound required port: an ordinary open declaration, never an error.
+  PORT_STATUS_KIND_OPEN = 5;
+}
+
+message PortStatusView {
+  PortRefView port = 1;
+  PortStatusKind status = 2;
+  optional uint64 binding = 3;
+  optional uint64 export = 4;
+}
+
+enum SystemAcceptance {
+  SYSTEM_ACCEPTANCE_UNSPECIFIED = 0;
+  SYSTEM_ACCEPTANCE_INVALID = 1;
+  SYSTEM_ACCEPTANCE_OPEN = 2;
+  SYSTEM_ACCEPTANCE_EXECUTABLE = 3;
+}
+
+// A flat diagnostic with its system origin.
+message ProjectedDiagnostic {
+  Diagnostic diagnostic = 1;
+  optional OriginView origin = 2;
+  // `instance.local` for an instance's entity, else the base entity's name.
+  string label = 3;
+}
+
+message SystemAnalysisView {
+  uint64 revision = 1;
+  // The existing compiler's analysis of the derived flat design.
+  ProjectAnalysis analysis = 2;
+  // Composition-level diagnostics (`system.*`).
+  repeated Diagnostic composition = 3;
+  repeated PortStatusView ports = 4;
+  SystemAcceptance acceptance = 5;
+  // Every diagnostic, composition and flat, with its origin.
+  repeated ProjectedDiagnostic projected = 6;
 }
