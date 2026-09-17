@@ -1,0 +1,4 @@
+schema_version = 1
+name = "component-system"
+compiler_version = "docs"
+kind = "text"

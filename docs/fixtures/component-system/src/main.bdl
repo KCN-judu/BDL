@@ -1,0 +1,64 @@
+// The tilt lamp after packaging "Adaptive lamp" as the component
+// AdaptiveLamp, with a second instance, a bound `mirror`, and `slow`
+// in another timing domain for the cross-domain binding sheet —
+// docs/user-guide/workflows/{package-as-component,composing-components,
+// cross-domain-transport}.md.
+
+/// How far the lamp head is tilted from upright.
+concept Tilt : Angle
+/// The lamp's output level, 0 (off) to 1 (full).
+concept Brightness : Scalar
+
+clock main
+clock aux
+
+/// Dims a light by how far it is tilted.
+component AdaptiveLamp {
+  use concept Tilt
+  use concept Brightness
+  param clock main
+
+  /// The tilt this lamp follows.
+  requires tiltValue : Tilt @main
+
+  /// Upright is off, flat is full: brightness grows with the tilt.
+  mapping dimByTilt : Tilt -> Brightness
+  dimByTilt(t) = t / (90 deg)
+
+  // What this lamp shows.
+  provides brightness : Brightness @main
+  brightness() = dimByTilt(tiltValue)
+}
+
+instance adaptiveLamp : AdaptiveLamp { main = main }
+instance second : AdaptiveLamp { main = main }
+
+/// The tilt sensor: a value per activation, from outside.
+mapping raw : Tilt @main
+
+/// The tilt both lamps work with.
+mapping tiltValue : Tilt @main
+tiltValue() = raw
+
+/// The first lamp's brightness, bound to its port.
+mapping brightness : Brightness @main
+
+/// The second lamp's brightness, bound to its port.
+mapping mirror : Brightness @main
+
+/// A second reader of the first brightness.
+mapping indicator : Brightness @main
+indicator() = brightness
+
+/// A value in another domain, still open: the target of a binding
+/// across timing domains.
+mapping slow : Brightness @aux
+
+bind adaptiveLamp.tiltValue = tiltValue
+bind second.tiltValue = tiltValue
+bind brightness = adaptiveLamp.brightness
+bind mirror = second.brightness
+
+/// The lamp itself.
+output light : Brightness @main
+drive light = brightness

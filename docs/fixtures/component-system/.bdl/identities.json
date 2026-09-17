@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "keys": {
+    "binding:adaptiveLamp.tiltValue<-tiltValue": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "binding:brightness<-adaptiveLamp.brightness": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "binding:mirror<-second.brightness": {
+      "id": 3,
+      "file": "src/main.bdl"
+    },
+    "binding:second.tiltValue<-tiltValue": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "clock:aux": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "clock:main": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "component:AdaptiveLamp": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "component:AdaptiveLamp/clock:main": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "component:AdaptiveLamp/concept:Brightness": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "component:AdaptiveLamp/concept:Tilt": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "component:AdaptiveLamp/mapping:brightness": {
+      "id": 2,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "component:AdaptiveLamp/mapping:dimByTilt": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "1"
+    },
+    "component:AdaptiveLamp/mapping:tiltValue": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "component:AdaptiveLamp/port:brightness": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "component:AdaptiveLamp/port:tiltValue": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "concept:Brightness": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "concept:Tilt": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "instance:adaptiveLamp": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "instance:second": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "mapping:brightness": {
+      "id": 2,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:indicator": {
+      "id": 4,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:mirror": {
+      "id": 3,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:raw": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:slow": {
+      "id": 5,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:tiltValue": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "output:light": {
+      "id": 0,
+      "file": "src/main.bdl"
+    }
+  },
+  "base_ids": {
+    "next_semantic": 2,
+    "next_decl": 12,
+    "next_clock": 2,
+    "next_output": 1,
+    "next_device": 0
+  },
+  "system_ids": {
+    "next_component": 1,
+    "next_instance": 2,
+    "next_port": 2,
+    "next_binding": 4,
+    "next_export": 0,
+    "next_group": 0
+  },
+  "component_ids": {
+    "component:AdaptiveLamp": {
+      "next_semantic": 2,
+      "next_decl": 3,
+      "next_clock": 1,
+      "next_output": 0,
+      "next_device": 0
+    }
+  },
+  "flat_ids": {
+    "entries": [
+      {
+        "instance": 0,
+        "local": {
+          "sort": "decl",
+          "id": 0
+        },
+        "flat": 6
+      },
+      {
+        "instance": 0,
+        "local": {
+          "sort": "decl",
+          "id": 1
+        },
+        "flat": 7
+      },
+      {
+        "instance": 0,
+        "local": {
+          "sort": "decl",
+          "id": 2
+        },
+        "flat": 8
+      },
+      {
+        "instance": 1,
+        "local": {
+          "sort": "decl",
+          "id": 0
+        },
+        "flat": 9
+      },
+      {
+        "instance": 1,
+        "local": {
+          "sort": "decl",
+          "id": 1
+        },
+        "flat": 10
+      },
+      {
+        "instance": 1,
+        "local": {
+          "sort": "decl",
+          "id": 2
+        },
+        "flat": 11
+      }
+    ]
+  }
+}

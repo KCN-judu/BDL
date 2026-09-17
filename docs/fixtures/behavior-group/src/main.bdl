@@ -1,0 +1,33 @@
+// The tilt lamp as a system project, before packaging: the dimming
+// relationships are gathered into the behavior group "Adaptive lamp"
+// (.bdl/authoring.json) — docs/user-guide/workflows/grouping-behavior.md.
+
+/// How far the lamp head is tilted from upright.
+concept Tilt : Angle
+/// The lamp's output level, 0 (off) to 1 (full).
+concept Brightness : Scalar
+
+clock main
+
+/// The tilt sensor: a value per activation, from outside.
+mapping raw : Tilt @main
+
+/// The tilt the lamp works with.
+mapping tiltValue : Tilt @main
+tiltValue() = raw
+
+/// Upright is off, flat is full: brightness grows with the tilt.
+mapping dimByTilt : Tilt -> Brightness
+dimByTilt(t) = t / (90 deg)
+
+/// What the lamp shows: the rule applied to the tilt.
+mapping brightness : Brightness @main
+brightness() = dimByTilt(tiltValue)
+
+/// A second reader of the brightness, outside the group.
+mapping indicator : Brightness @main
+indicator() = brightness
+
+/// The lamp itself.
+output light : Brightness @main
+drive light = brightness

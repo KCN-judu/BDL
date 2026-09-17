@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "groups": {
+    "0": {
+      "id": 0,
+      "scope": {
+        "kind": "system_base"
+      },
+      "name": "Adaptive lamp",
+      "description": "Dims the light by how far it is tilted.",
+      "members": [
+        2,
+        3
+      ]
+    }
+  }
+}
