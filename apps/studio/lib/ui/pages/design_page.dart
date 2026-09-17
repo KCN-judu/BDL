@@ -36,7 +36,13 @@ class DesignPage extends StatelessWidget {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (state.isSystem) _ContextBar(state: state, dispatch: dispatch),
+                    if (state.isSystem)
+                      // Keyed for the documentation screenshots (docs/user-guide/screenshots).
+                      _ContextBar(
+                        key: const ValueKey('context-bar'),
+                        state: state,
+                        dispatch: dispatch,
+                      ),
                     Expanded(
                       child: Stack(
                         children: [
@@ -137,7 +143,7 @@ SystemSceneInput _sceneInput(AppState state) {
 /// Where the designer is: the system, or one component's source ("Editing
 /// AdaptiveLamp · used by 3 instances"), with the way back.
 class _ContextBar extends StatelessWidget {
-  const _ContextBar({required this.state, required this.dispatch});
+  const _ContextBar({super.key, required this.state, required this.dispatch});
   final AppState state;
   final void Function(AppAction) dispatch;
 

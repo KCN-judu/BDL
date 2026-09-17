@@ -36,6 +36,8 @@ class SheetScrim extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.25),
         alignment: Alignment.center,
         child: Container(
+          // Keyed for the documentation screenshots (docs/user-guide/screenshots).
+          key: const ValueKey('sheet'),
           width: width,
           constraints: const BoxConstraints(maxHeight: 640),
           decoration: BoxDecoration(

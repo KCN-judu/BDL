@@ -69,8 +69,17 @@ class SimulatePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _Controls(state: state, dispatch: dispatch),
-                _Blockers(state: state, dispatch: dispatch),
+                // Keyed for the documentation screenshots (docs/user-guide/screenshots).
+                _Controls(
+                  key: const ValueKey('simulation-controls'),
+                  state: state,
+                  dispatch: dispatch,
+                ),
+                _Blockers(
+                  key: const ValueKey('simulation-readiness'),
+                  state: state,
+                  dispatch: dispatch,
+                ),
                 Expanded(
                   child: _Trace(state: state, dispatch: dispatch),
                 ),
@@ -92,7 +101,7 @@ class SimulatePage extends StatelessWidget {
 /// with a link to each — the readiness state.  Step is disabled while any
 /// is listed; nothing is sent.  A tick that *failed* is the controls' line.
 class _Blockers extends StatelessWidget {
-  const _Blockers({required this.state, required this.dispatch});
+  const _Blockers({super.key, required this.state, required this.dispatch});
   final AppState state;
   final void Function(AppAction) dispatch;
 
@@ -389,7 +398,7 @@ class _DomainsSection extends StatelessWidget {
 /// evaluator says — the failure in product words, or the design's own
 /// reasons it cannot run.
 class _Controls extends StatelessWidget {
-  const _Controls({required this.state, required this.dispatch});
+  const _Controls({super.key, required this.state, required this.dispatch});
   final AppState state;
   final void Function(AppAction) dispatch;
 
