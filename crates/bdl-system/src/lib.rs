@@ -1,7 +1,7 @@
 //! Behaviour systems for production BDL: reusable components, instances
 //! and bindings that elaborate into the same flat design the existing
 //! compiler accepts.  No kernel construct, no second checker, no second
-//! evaluator (FV Phase 8a, D-64; docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md).
+//! evaluator (FV Phase 8a, D-64; docs/architecture/behavior-systems.md).
 //!
 //! ```text
 //! BehaviorSystem ──flatten──▶ ProjectSnapshot ──bdl_compiler::analyze──▶ ProjectAnalysis

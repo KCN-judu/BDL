@@ -19,7 +19,7 @@ pub fn span_of(range: rowan::TextRange) -> Span {
 }
 
 /// Stable machine-readable classes of syntax error
-/// (`docs/TEXTUAL_SYNTAX.md` §9.2).
+/// (`docs/spec/textual-syntax.md` §9.2).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SyntaxErrorCode {

@@ -53,7 +53,7 @@ pub struct InitializationOptions {
     pub project_root: Option<PathBuf>,
 }
 
-// ---- custom requests (kept minimal; see docs/IDE_SERVICE_ARCHITECTURE.md)
+// ---- custom requests (kept minimal; see docs/architecture/ide-service.md)
 
 /// `bdl/explainEntity`: the explanation of the entity at a position.
 pub enum ExplainEntity {}

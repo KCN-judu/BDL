@@ -24,7 +24,7 @@ pub trait AstNode: Sized {
 
     /// Byte span of the node (leading/trailing trivia excluded by
     /// construction: trivia sits between nodes, except attached comments,
-    /// see `docs/TEXTUAL_SYNTAX.md` §2.4).
+    /// see `docs/spec/textual-syntax.md` §2.4).
     fn span(&self) -> bdl_diagnostics::Span {
         crate::syntax::span_of(self.syntax().text_range())
     }

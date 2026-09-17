@@ -1,6 +1,6 @@
 //! Executable IR → the generated semantic core (`src/lib.rs`).
 //!
-//! Correspondence (docs/CODEGEN_RUST.md):
+//! Correspondence (docs/architecture/codegen-rust.md):
 //!
 //! | exec IR | generated Rust |
 //! |---|---|
@@ -184,7 +184,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
             "reading inputs, declarations evaluated earlier this tick, and *committed* state),".into(),
             "write phase (every cell whose writing domain is active, into the next state),".into(),
             "commit, then output projection.  Nothing is mutated in place; reads never see".into(),
-            "writes of the same tick.  Semantics: docs/RUNTIME_SEMANTICS.md.".into(),
+            "writes of the same tick.  Semantics: docs/spec/runtime-semantics.md.".into(),
         ],
         inner_attrs: vec![
             "no_std".into(),

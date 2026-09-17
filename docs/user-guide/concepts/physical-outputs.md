@@ -71,7 +71,7 @@ well-formedness of a drive (`DriveWF`: exact type view and exact domain),
 the single-driver rule (`SingleDriver`) and completeness
 (`CompleteOutputs`) are checked by `bdl-output` after the semantic passes
 and never move a mapping down the status ladder (ADR-0015).
-`docs/DEPLOYMENT_WALKTHROUGH.md` follows one value from a relationship to
+`docs/guides/deployment-walkthrough.md` follows one value from a relationship to
 a pin. DI-20 records why only nullary relationships drive.
 
 ## Related

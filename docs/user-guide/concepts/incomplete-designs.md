@@ -73,7 +73,7 @@ realization as a legal, unresolved declaration; the ladder a mapping climbs
 is *Declared → Open → Invalid → TypeValid → TemporallyValid →
 ClockConsistent*, and output completeness and hardware feasibility are
 properties of the design and of a (design, target) pair, not rungs.
-`docs/COMPILER_PIPELINE.md` ("Driver and result") and ADR-0015.
+`docs/architecture/compiler-pipeline.md` ("Driver and result") and ADR-0015.
 
 ## Related
 

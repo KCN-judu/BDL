@@ -4,7 +4,7 @@
 //! reading inputs, declarations evaluated earlier this tick, and *committed* state),
 //! write phase (every cell whose writing domain is active, into the next state),
 //! commit, then output projection.  Nothing is mutated in place; reads never see
-//! writes of the same tick.  Semantics: docs/RUNTIME_SEMANTICS.md.
+//! writes of the same tick.  Semantics: docs/spec/runtime-semantics.md.
 
 #![no_std]
 #![forbid(unsafe_code)]

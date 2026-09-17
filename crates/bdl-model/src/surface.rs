@@ -258,7 +258,7 @@ pub enum Definition {
     Formula { source: String },
     /// A formula whose free names are pinned to identities: what a
     /// component body's formula becomes when the body is instantiated into
-    /// a system (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §8).  `source` is the
+    /// a system (docs/architecture/behavior-systems.md §8).  `source` is the
     /// designer's text, unchanged; `scope` says which input position and
     /// which relationship each name meant *in the component*, so neither a
     /// display name in the flattened design nor another instance's
@@ -267,7 +267,7 @@ pub enum Definition {
     /// A realization by identity: this declaration *is* `target` — the
     /// kernel's `declRef target`, or `sync src init (declRef target)` when
     /// transported from `src`'s domain.  Produced by system flattening for
-    /// a port binding (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §8); never
+    /// a port binding (docs/architecture/behavior-systems.md §8); never
     /// authored by hand and never resolved through a name.  `init` is a
     /// closed formula (no inputs, no relationships in scope).
     Reference {
@@ -305,7 +305,7 @@ pub struct FormulaScope {
 }
 
 /// Transport of a referenced value across timing domains: the kernel's
-/// `sync src init e`, strictly before (docs/RUNTIME_SEMANTICS.md).
+/// `sync src init e`, strictly before (docs/spec/runtime-semantics.md).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Transport {
     /// The source's domain.

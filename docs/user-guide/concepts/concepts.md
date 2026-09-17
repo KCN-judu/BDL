@@ -79,8 +79,8 @@ will be checked again.
 value form is its *representation*, chosen once (a write-once binding). A
 formula reads a concept through `rep` and produces one through `mk`, and
 the dimension check is the representation's dimension algebra.
-`docs/02-kernel-spec.md` and `docs/COMPILER_PIPELINE.md` (passes 3–7) are
-the reference; `docs/STANDARD_CONCEPT_LIBRARY.md` explains why a library
+`docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are
+the reference; `docs/spec/concept-library.md` explains why a library
 template is not an identity.
 
 ## Related

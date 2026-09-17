@@ -6,7 +6,7 @@
 //!
 //! * the **freshening table** is completed — every private entity of every
 //!   instance has a flat id, allocated from the base allocator in `BTreeMap`
-//!   order (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §5) — so `flatten` never
+//!   order (docs/architecture/behavior-systems.md §5) — so `flatten` never
 //!   allocates and never renumbers;
 //! * the outcome says which instances the edit reaches, so invalidation is
 //!   per instance of the touched component and never spills to unrelated

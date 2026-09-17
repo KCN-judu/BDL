@@ -1,7 +1,7 @@
 /// The marks that stand for a concept and a mapping outside the canvas —
 /// library rows, chips, toggles, pop-up items — painted by the same code as
 /// the canvas sockets so identity (hue) and value form (shape) are learned
-/// once and recognised everywhere (docs/STUDIO_UI.md §7).
+/// once and recognised everywhere (docs/architecture/studio-ui.md §7).
 library;
 
 import 'package:flutter/material.dart';

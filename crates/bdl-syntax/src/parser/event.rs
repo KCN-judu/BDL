@@ -27,7 +27,7 @@ pub enum Event {
 }
 
 /// Kinds whose leading comments (no blank line between) are attached inside
-/// the node rather than left in the parent (`docs/TEXTUAL_SYNTAX.md` §2.4).
+/// the node rather than left in the parent (`docs/spec/textual-syntax.md` §2.4).
 fn attaches_leading_comments(kind: SyntaxKind) -> bool {
     matches!(
         kind,

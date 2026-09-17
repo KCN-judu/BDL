@@ -60,7 +60,7 @@ pub enum Entity {
 }
 
 /// A stable machine-readable code such as `formula.parse.unexpected_token`.
-/// The set is closed per pass and documented in `docs/COMPILER_PIPELINE.md`.
+/// The set is closed per pass and documented in `docs/architecture/compiler-pipeline.md`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Code(pub String);

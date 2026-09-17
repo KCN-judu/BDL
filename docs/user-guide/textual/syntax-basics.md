@@ -2,7 +2,7 @@
 
 What a `.bdl` file looks like and the forms that are checked today.
 Everything here parses; the *Checked?* notes say whether it is also
-checked and runs. The normative grammar is `docs/TEXTUAL_SYNTAX.md`.
+checked and runs. The normative grammar is `docs/spec/textual-syntax.md`.
 
 ## A file
 

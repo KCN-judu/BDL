@@ -13,7 +13,7 @@
 //!   realizations, concept bindings, clock and output environments.
 //!
 //! The definitions transcribe `BDL_FV/BDL/Core/{Base,Interface,Decl,Clock,
-//! Output}.lean`; see `docs/IR.md` for the deliberate deviations.
+//! Output}.lean`; see `docs/architecture/ir.md` for the deliberate deviations.
 
 #![forbid(unsafe_code)]
 

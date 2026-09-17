@@ -2,20 +2,20 @@
 /// and what is under a point.  No widgets, no state — a function of the
 /// projection and the layout, so it is unit-testable and deterministic.
 ///
-/// Node anatomy follows Blender (docs/STUDIO_UI.md §2).  A concept is a
+/// Node anatomy follows Blender (docs/architecture/studio-ui.md §2).  A concept is a
 /// single-row object: its name, an input socket (what produces it) on the
 /// left and an output socket (what reads it) on the right.  A mapping has a
 /// header with title and state word, one input socket per read concept, the
 /// output socket on the right, and a definition region below.  Data flows
 /// left → right.
 ///
-/// Semantics are carried by the geometry, not by words (STUDIO_UI.md §7):
+/// Semantics are carried by the geometry, not by words (docs/architecture/studio-ui.md §7):
 /// socket hue is identity, socket *shape* is the concept's value form, a
 /// hollow ring means the form is not chosen yet, a dashed outline means
 /// declared-not-defined, and a red mark at the definition line means the
 /// definition does not check.
 ///
-/// A system canvas (docs/STUDIO_UI.md §11) adds component-instance nodes
+/// A system canvas (docs/architecture/studio-ui.md §11) adds component-instance nodes
 /// drawn from their ports' *contracts* (never their bodies), binding links
 /// between ports (a transport gate where a value is carried across timing
 /// domains), a realisation socket on an open base relationship (where a

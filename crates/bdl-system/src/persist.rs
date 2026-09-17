@@ -1,5 +1,5 @@
-//! Persistence of a system project (docs/PROJECT_FORMAT.md, docs/
-//! BEHAVIOR_SYSTEM_ARCHITECTURE.md §9):
+//! Persistence of a system project (docs/spec/project-format.md, docs/
+//! docs/architecture/behavior-systems.md §9):
 //!
 //! ```text
 //! project/

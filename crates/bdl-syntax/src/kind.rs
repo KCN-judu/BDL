@@ -5,7 +5,7 @@
 use rowan::Language;
 
 /// Token and node kinds of the BDL concrete syntax tree
-/// (`docs/TEXTUAL_SYNTAX.md` §2, §3).  Order matters only for the
+/// (`docs/spec/textual-syntax.md` §2, §3).  Order matters only for the
 /// `TRIVIA_END` / `NODE_START` boundaries.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types)]

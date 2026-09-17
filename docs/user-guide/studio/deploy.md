@@ -87,7 +87,7 @@ Generating and building firmware from the Deploy page, flashing a board,
 and reading values back from it. The compiler can already generate a
 Rust core for a design and checks it trace for trace against the
 simulator in the repository's tests, but that path has no Studio surface yet; the roadmap
-in `docs/ROADMAP.md` lists it.
+in `docs/project/roadmap.md` lists it.
 
 ## Related
 

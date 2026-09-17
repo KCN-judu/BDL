@@ -4,7 +4,7 @@ state: deferred
 area: runtime
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-28"]
+related: ["docs/archive/design-issues-ledger.md#di-28"]
 ---
 # ISS-0006: Numeric representation on the device (`f32`)
 
@@ -20,7 +20,7 @@ The first platform adapter will meet this on the first constrained board.
 
 ## Current evidence
 
-* Production: `docs/CODEGEN_RUST.md`, `docs/RUNTIME_SEMANTICS.md` (numeric
+* Production: `docs/architecture/codegen-rust.md`, `docs/spec/runtime-semantics.md` (numeric
   policy, DI-15); DI-1, DI-28.
 
 ## Dependencies

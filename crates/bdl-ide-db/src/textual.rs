@@ -5,7 +5,7 @@
 //!
 //! 1. **What does the text declare, in terms of stable identity?**  Each
 //!    item is bound to a committed entity by its declared name — that is
-//!    the identity-resolution pass (`docs/COMPILER_PIPELINE.md` #2) for the
+//!    the identity-resolution pass (`docs/architecture/compiler-pipeline.md` #2) for the
 //!    textual surface — or, when nothing committed has that name, to a
 //!    fresh id allocated for the overlay.  From then on everything speaks
 //!    `EntityRef`.
@@ -444,7 +444,7 @@ impl Binder<'_> {
 }
 
 /// The representation a type name in a `concept` declaration stands for.
-/// The textual vocabulary of representations (`docs/TEXTUAL_SYNTAX.md` §1).
+/// The textual vocabulary of representations (`docs/spec/textual-syntax.md` §1).
 pub fn representation_of(t: &ast::Type) -> Option<Representation> {
     representation_named(&named_type(t)?.name()?.as_str())
 }
@@ -493,7 +493,7 @@ pub fn representation_names() -> Vec<&'static str> {
 }
 
 /// Render the concepts and mappings of a design as a canonical `.bdl`
-/// module (`docs/TEXTUAL_SYNTAX.md` §10).  The inverse direction of
+/// module (`docs/spec/textual-syntax.md` §10).  The inverse direction of
 /// [`bind_document`] for what the model can express today; used for the
 /// generated textual projection of a project and in tests that need the
 /// same entity on both surfaces.

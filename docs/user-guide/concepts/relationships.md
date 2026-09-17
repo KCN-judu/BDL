@@ -87,8 +87,8 @@ interface (the signature elaborated over the concepts' representations)
 and an optional realization (the formula elaborated to a Core term, a
 lambda over `rep` of each input ending in `mk` of the output). A
 declaration without a realization is the language's unresolved
-declaration, a first-class state. `docs/COMPILER_PIPELINE.md` passes 3–6;
-`docs/TEXTUAL_SYNTAX.md` §11 for what elaborates; ADR-0013 for the
+declaration, a first-class state. `docs/architecture/compiler-pipeline.md` passes 3–6;
+`docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the
 formula language's naming rule.
 
 ## Related

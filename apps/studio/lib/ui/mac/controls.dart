@@ -1,4 +1,4 @@
-/// macOS-style text field and push buttons (docs/STUDIO_UI.md §3, §6).
+/// macOS-style text field and push buttons (docs/architecture/studio-ui.md §3, §6).
 ///
 /// `MacTextField`: 1 px hairline, 5 pt radius, 24 pt tall; focus shows the
 /// macOS focus *glow* (a soft 3 pt accent halo outside the border) instead

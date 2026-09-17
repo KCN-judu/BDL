@@ -131,7 +131,7 @@ in their own trees; both let an expert bypass the tutorial.
 
 What BDL adopts: `textual/` for code-oriented users with an explicit
 *Current status* section; `reference/` for lookups; pointers into
-`docs/*.md` and `docs/adr/` from "Going deeper" tails; the researcher
+`docs/*.md` and `docs/decisions/` from "Going deeper" tails; the researcher
 profile on the landing page routes straight there.
 
 ### Writing style

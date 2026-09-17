@@ -1,4 +1,4 @@
-/// macOS look tokens (docs/STUDIO_UI.md §3).  One place for every colour,
+/// macOS look tokens (docs/architecture/studio-ui.md §3).  One place for every colour,
 /// size and radius so the chrome stays consistent and swappable.
 library;
 
@@ -88,7 +88,7 @@ class MacTokens extends ThemeExtension<MacTokens> {
       Theme.of(context).extension<MacTokens>() ?? MacTokens.light;
 
   /// Stable hue per semantic identity: socket and link colour *is* the
-  /// nominal type (docs/STUDIO_UI.md §2).  Golden-angle spacing keeps
+  /// nominal type (docs/architecture/studio-ui.md §2).  Golden-angle spacing keeps
   /// neighbouring ids visually distinct.
   ///
   /// Lightness is chosen per hue so every identity clears the 3:1
@@ -133,7 +133,7 @@ abstract final class MacMetrics {
   static const double radius = 6;
   static const double grid = 8;
 
-  // Separation is whitespace (STUDIO_UI.md §3a).
+  // Separation is whitespace (docs/architecture/studio-ui.md §3a).
   static const double gapTight = 4;
   static const double gap = 8;
   static const double gapGroup = 16;

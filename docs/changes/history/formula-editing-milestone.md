@@ -1,6 +1,6 @@
 # The formula-editing milestone: bugs found and fixed, and its non-goals
 
-*Moved from `docs/STUDIO_COMPILER_INTEGRATION.md` §2 and §4 on
+*Moved from `docs/architecture/studio-compiler-integration.md` §2 and §4 on
 2026-09-17 so that page states the current integration only. This is the
 record of the Studio definition-editor milestone (protocol 0.4,
 `AnalyzeDefinitionDraft`); the regression tests named here still run.*

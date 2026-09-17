@@ -4,7 +4,7 @@ state: open
 area: language
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-7"]
+related: ["docs/archive/design-issues-ledger.md#di-7"]
 ---
 # ISS-0004: Affine units
 
@@ -21,7 +21,7 @@ gets *not a unit*.
 ## Current evidence
 
 * Production: `crates/bdl-elab/src/units.rs` (`UNITS`, linear only);
-  `docs/TEXTUAL_SYNTAX.md` §6. DI-7.
+  `docs/spec/textual-syntax.md` §6. DI-7.
 * Formal: `BDL/Core/Typing.lean` dimensions are linear; nothing affine.
 
 ## Dependencies

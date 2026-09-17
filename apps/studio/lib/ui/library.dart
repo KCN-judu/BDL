@@ -168,7 +168,7 @@ class _ProjectObjects extends StatelessWidget {
                   ),
                 const _Section(title: 'Contexts'),
                 if (state.isSystem) ...[
-                  // ---- the system's own objects (docs/STUDIO_UI.md §11) ----
+                  // ---- the system's own objects (docs/architecture/studio-ui.md §11) ----
                   _Section(
                     title: 'Components',
                     onAdd: () async {

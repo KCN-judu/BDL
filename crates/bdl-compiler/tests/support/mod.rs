@@ -1,6 +1,6 @@
 //! Shared fixtures for the backend tests: a corpus of small Design IRs
 //! with schedules and input traces, the reference run, the generated run,
-//! and the comparison policy (docs/CODEGEN_RUST.md §Differential testing).
+//! and the comparison policy (docs/architecture/codegen-rust.md §Differential testing).
 
 #![allow(dead_code, clippy::unwrap_used)]
 

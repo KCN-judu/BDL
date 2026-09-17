@@ -1,5 +1,5 @@
 /// Shared interactive primitives that implement the interaction standard
-/// (docs/STUDIO_UI.md §6) for things Material has no native control for:
+/// (docs/architecture/studio-ui.md §6) for things Material has no native control for:
 /// text links and hoverable rows.  Every hover/pressed/focus/disabled
 /// treatment in Studio comes from here or from `MacStates` in the theme.
 library;

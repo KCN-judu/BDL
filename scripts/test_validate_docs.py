@@ -64,14 +64,14 @@ class Tree:
     def __init__(self) -> None:
         self.dir = Path(tempfile.mkdtemp())
         self.root = self.dir / "repo"
-        for folder in ("docs/adr", "docs/proposals", "docs/issues", "docs/changes/unreleased"):
+        for folder in ("docs/decisions", "docs/proposals", "docs/issues", "docs/changes/unreleased"):
             (self.root / folder).mkdir(parents=True)
         self.write("README.md", "# BDL\n\n[docs](docs/README.md)\n")
-        self.write("docs/README.md", "# Front door\n\n[adr](adr/README.md) [issues](issues/README.md) [proposals](proposals/README.md)\n")
-        self.write("docs/adr/README.md", "# ADRs\n\nADR-0001\n")
+        self.write("docs/README.md", "# Front door\n\n[decisions](decisions/README.md) [issues](issues/README.md) [proposals](proposals/README.md)\n")
+        self.write("docs/decisions/README.md", "# ADRs\n\nADR-0001\n")
         self.write("docs/issues/README.md", "# Issues\n\nISS-0001\n")
         self.write("docs/proposals/README.md", "# Proposals\n")
-        self.write("docs/adr/0001-something.md", ADR)
+        self.write("docs/decisions/0001-something.md", ADR)
         self.write("docs/issues/0001-a-problem.md", ISSUE)
         self.write("docs/changes/unreleased/2026-09-a-change.md", CHANGE)
 
@@ -98,37 +98,37 @@ class ValidateDocsTest(unittest.TestCase):
         self.assertEqual(self.tree.errors(), [])
 
     def test_duplicate_decision_id_is_reported(self) -> None:
-        self.tree.write("docs/adr/0002-other.md", ADR.replace("0001-something", "0002-other"))
+        self.tree.write("docs/decisions/0002-other.md", ADR.replace("0001-something", "0002-other"))
         errors = self.tree.errors()
         self.assertTrue(any("does not match the file name" in e for e in errors), errors)
         self.assertTrue(any("duplicate id ADR-0001" in e for e in errors), errors)
 
     def test_unknown_status_and_area_are_reported(self) -> None:
-        self.tree.write("docs/adr/0001-something.md", ADR.replace("status: accepted", "status: proposed").replace("area: studio", "area: misc"))
+        self.tree.write("docs/decisions/0001-something.md", ADR.replace("status: accepted", "status: proposed").replace("area: studio", "area: misc"))
         errors = self.tree.errors()
         self.assertTrue(any("unknown decision status 'proposed'" in e for e in errors), errors)
         self.assertTrue(any("unknown area 'misc'" in e for e in errors), errors)
 
     def test_supersession_must_point_both_ways(self) -> None:
         new = ADR.replace("ADR-0001", "ADR-0002").replace("supersedes: []", "supersedes: [ADR-0001]")
-        self.tree.write("docs/adr/0002-newer.md", new)
-        self.tree.write("docs/adr/README.md", "# ADRs\n\nADR-0001 ADR-0002\n")
+        self.tree.write("docs/decisions/0002-newer.md", new)
+        self.tree.write("docs/decisions/README.md", "# ADRs\n\nADR-0001 ADR-0002\n")
         errors = self.tree.errors()
         self.assertTrue(any("0001-something.md: must list ADR-0002 in superseded-by" in e for e in errors), errors)
         old = ADR.replace("superseded-by: []", "superseded-by: [ADR-0002]").replace("status: accepted", "status: superseded")
-        self.tree.write("docs/adr/0001-something.md", old)
+        self.tree.write("docs/decisions/0001-something.md", old)
         self.assertEqual(self.tree.errors(), [])
 
     def test_superseded_by_without_status_is_reported(self) -> None:
         new = ADR.replace("ADR-0001", "ADR-0002").replace("supersedes: []", "supersedes: [ADR-0001]")
-        self.tree.write("docs/adr/0002-newer.md", new)
-        self.tree.write("docs/adr/README.md", "# ADRs\n\nADR-0001 ADR-0002\n")
-        self.tree.write("docs/adr/0001-something.md", ADR.replace("superseded-by: []", "superseded-by: [ADR-0002]"))
+        self.tree.write("docs/decisions/0002-newer.md", new)
+        self.tree.write("docs/decisions/README.md", "# ADRs\n\nADR-0001 ADR-0002\n")
+        self.tree.write("docs/decisions/0001-something.md", ADR.replace("superseded-by: []", "superseded-by: [ADR-0002]"))
         errors = self.tree.errors()
         self.assertTrue(any("status is not 'superseded'" in e for e in errors), errors)
 
     def test_missing_index_row_is_reported(self) -> None:
-        self.tree.write("docs/adr/README.md", "# ADRs\n")
+        self.tree.write("docs/decisions/README.md", "# ADRs\n")
         errors = self.tree.errors()
         self.assertTrue(any("ADR-0001 is missing from the index" in e for e in errors), errors)
 
@@ -171,10 +171,23 @@ Accepted.
         self.assertTrue(any("missing header bullet '- Area:'" in e for e in errors), errors)
         self.assertTrue(any("missing section '## What changed'" in e for e in errors), errors)
 
-    def test_front_door_must_register_top_level_docs(self) -> None:
+    def test_loose_top_level_page_is_reported(self) -> None:
         self.tree.write("docs/NEW_PAGE.md", "# New\n")
         errors = self.tree.errors()
-        self.assertTrue(any("NEW_PAGE.md is not registered" in e for e in errors), errors)
+        self.assertTrue(any("loose page at the top of docs/" in e for e in errors), errors)
+
+    def test_pages_need_a_matching_kind_header_and_a_front_door_row(self) -> None:
+        self.tree.write("docs/spec/thing.md", "---\nkind: architecture\narea: protocol\nstatus: current\n---\n# Thing\n")
+        errors = self.tree.errors()
+        self.assertTrue(any("kind must be 'specification'" in e for e in errors), errors)
+        self.assertTrue(any("spec/thing.md is not registered" in e for e in errors), errors)
+        self.tree.write("docs/spec/thing.md", "---\nkind: specification\narea: protocol\nstatus: current\n---\n# Thing\n")
+        self.tree.write("docs/README.md", "# Front door\n\n[decisions](decisions/README.md) [issues](issues/README.md) [proposals](proposals/README.md) [thing](spec/thing.md)\n")
+        self.assertEqual(self.tree.errors(), [])
+        self.tree.write("docs/archive/old.md", "---\nkind: archive\narea: process\nstatus: current\n---\n# Old\n")
+        self.tree.write("docs/README.md", "# Front door\n\n[decisions](decisions/README.md) [issues](issues/README.md) [proposals](proposals/README.md) [thing](spec/thing.md) [old](archive/old.md)\n")
+        errors = self.tree.errors()
+        self.assertTrue(any("status: archived" in e for e in errors), errors)
 
     def test_broken_relative_link_is_reported(self) -> None:
         self.tree.write("docs/issues/README.md", "# Issues\n\nISS-0001 [gone](../adr/0009-missing.md#x)\n")

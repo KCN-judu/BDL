@@ -27,7 +27,7 @@
 //!
 //! Semantic queries (diagnostics, hover, completion, references, rename,
 //! actions) live in `bdl-ide`; transports (`bdld`, `bdl-lsp`) adapt them.
-//! See `docs/IDE_SERVICE_ARCHITECTURE.md`.
+//! See `docs/architecture/ide-service.md`.
 
 #![forbid(unsafe_code)]
 

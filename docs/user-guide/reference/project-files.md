@@ -2,7 +2,7 @@
 
 A project is a folder of plain files. Studio reads and writes them; you
 can put the folder under version control, copy it, or diff it. The
-authoritative description for tool builders is `docs/PROJECT_FORMAT.md`.
+authoritative description for tool builders is `docs/spec/project-format.md`.
 
 ```
 lamp/

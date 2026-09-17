@@ -598,7 +598,7 @@ impl NameExpr {
 }
 
 /// The spelling of a number literal; never a machine number
-/// (`docs/TEXTUAL_SYNTAX.md` §2.3).
+/// (`docs/spec/textual-syntax.md` §2.3).
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct NumberToken(SyntaxToken);
 
@@ -870,7 +870,7 @@ impl LetStmt {
 // ---- patterns --------------------------------------------------------------
 
 ast_enum!(
-    /// A pattern (`docs/TEXTUAL_SYNTAX.md` §4.4).
+    /// A pattern (`docs/spec/textual-syntax.md` §4.4).
     Pattern {
         Wildcard(WildcardPattern),
         Ident(IdentPattern),

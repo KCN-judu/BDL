@@ -1,6 +1,6 @@
 /// Immutable application state.
 ///
-/// Three categories, kept apart on purpose (docs/ARCHITECTURE.md §Studio):
+/// Three categories, kept apart on purpose (docs/architecture/overview.md §Studio):
 ///
 /// * [AppState.project]  — the *semantic projection* the compiler sent.  Studio
 ///   never computes semantic facts; it renders this.
@@ -15,7 +15,7 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
-/// The workflow pages, in workflow order (docs/STUDIO_UI.md §1).
+/// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
 /// Canvas node kinds.  [instance] is a component instance of a system
@@ -44,7 +44,7 @@ class NodeRef {
   String toString() => '${kind.name}#$id';
 }
 
-/// Which design the canvas shows (docs/STUDIO_UI.md §11).  A flat project
+/// Which design the canvas shows (docs/architecture/studio-ui.md §11).  A flat project
 /// has only the system context (its own design); a system project shows
 /// its top level — shared concepts, domains, sinks, top-level
 /// relationships, component instances — or the *source* of one component

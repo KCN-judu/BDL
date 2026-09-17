@@ -11,7 +11,7 @@
 /// * detach, and a commit refused by the daemon.
 ///
 /// Skipped when the binary is absent (run `cargo build`).  Timings are
-/// printed for docs/STUDIO_COMPILER_INTEGRATION.md.
+/// printed for docs/architecture/studio-compiler-integration.md.
 library;
 
 import 'dart:io';

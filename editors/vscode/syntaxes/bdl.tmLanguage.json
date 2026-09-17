@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "BDL",
   "scopeName": "source.bdl",
-  "comment": "A fallback grammar for the time before bdl-lsp answers: keywords, comments, numbers with units, declarations. Semantic tokens from the server override it once connected (docs/TEXTUAL_SYNTAX.md).",
+  "comment": "A fallback grammar for the time before bdl-lsp answers: keywords, comments, numbers with units, declarations. Semantic tokens from the server override it once connected (docs/spec/textual-syntax.md).",
   "patterns": [
     { "include": "#comments" },
     { "include": "#doc-comments" },

@@ -13,7 +13,7 @@
 //! Everything is pure and deterministic: the same design, schedule and
 //! inputs yield the same trace, whatever order a host processes
 //! simultaneously active domains in.  This evaluator is the executable
-//! definition of BDL runtime behaviour (`docs/RUNTIME_SEMANTICS.md`).
+//! definition of BDL runtime behaviour (`docs/spec/runtime-semantics.md`).
 
 #![forbid(unsafe_code)]
 

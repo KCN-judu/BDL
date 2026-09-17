@@ -23,8 +23,8 @@ compiled to a `no_std` Rust core held trace for trace to the evaluator;
 reusable behaviours compose as components and flatten into that one
 design. Not built: an embedded platform adapter, build/flash orchestration,
 telemetry and the Monitor page, contexts, supplied Rust components. The
-[status matrix](docs/project-records/STATUS.md) is the authority for what
-exists, the [roadmap](docs/ROADMAP.md) for what is next, and
+[status matrix](docs/project/status.md) is the authority for what
+exists, the [roadmap](docs/project/roadmap.md) for what is next, and
 [docs/changes/](docs/changes/README.md) for what changed.
 
 ## Layout
@@ -34,7 +34,7 @@ apps/studio/        Flutter BDL Studio (presentation; semantic truth comes from 
 crates/             the Rust workspace — model, IR, syntax, elaboration, checking, reactive
                     semantics, outputs, hardware, executable IR, lowering, Rust codegen,
                     compiler driver, concept libraries, IDE service, LSP, protocol, bdld
-                    (docs/ARCHITECTURE.md lists each crate and its boundary)
+                    (docs/architecture/overview.md lists each crate and its boundary)
 runtime/            bdl-runtime-core (no_std vocabulary of generated cores), bdl-runtime-host
 hardware/boards/    board descriptions as data (arduino_nano, big_board)
 library/std/        the Standard Concept Library (concepts.toml)
@@ -60,17 +60,13 @@ just bdld           # run the daemon on stdio for manual experiments
 ## Reading order
 
 Using the tool rather than building it? Start with the
-[user guide](docs/user-guide/README.md). Engineering contributors start at the
-[engineering documentation index](docs/README.md).
+[user guide](docs/user-guide/README.md).
 
-0. [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — how to enter the project (toolchain, map, run, reading order by task)
+Building it? Start at the [engineering documentation front door](docs/README.md),
+which routes every question to one page. The folders under `docs/` are
+one per kind of record: `spec/` (what BDL means), `architecture/` (how it
+is built), `decisions/` (why — ADRs), `proposals/` and `issues/` (what is
+undecided), `project/` (status, roadmap, governance), `changes/` (what
+changed), `evidence/`, `guides/` ([getting started](docs/guides/getting-started.md)
+is the first read), `background/`, `archive/`.
 
-1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
-2. [docs/adr/](docs/adr/README.md) — decisions; [docs/project-records/STATUS.md](docs/project-records/STATUS.md) — what is implemented; [docs/issues/](docs/issues/README.md) — what is unresolved
-3. [docs/STUDIO_UI.md](docs/STUDIO_UI.md) — what Studio looks like and why (Resolve · Blender · macOS); [docs/STUDIO_COMPILER_INTEGRATION.md](docs/STUDIO_COMPILER_INTEGRATION.md) — which semantic capabilities Studio exposes, audited against the code
-4. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
-5. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)
-6. [docs/EXECUTION_WALKTHROUGH.md](docs/EXECUTION_WALKTHROUGH.md) · [docs/DEPLOYMENT_WALKTHROUGH.md](docs/DEPLOYMENT_WALKTHROUGH.md) · [docs/DEPLOYMENT_READ_MODEL.md](docs/DEPLOYMENT_READ_MODEL.md) — one value through a tick; one design out to a pin; what a Deploy page is handed
-7. [docs/EXECUTABLE_IR.md](docs/EXECUTABLE_IR.md) · [docs/CODEGEN_RUST.md](docs/CODEGEN_RUST.md) — from a checked design to a `no_std` Rust core, and how it is held to the reference evaluator
-8. [docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md](docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md) · [docs/BEHAVIOR_SYSTEMS.md](docs/BEHAVIOR_SYSTEMS.md) — reusable behaviour components, instances and bindings, and how they flatten into the one flat design
-8. [docs/IDE_SERVICE_ARCHITECTURE.md](docs/IDE_SERVICE_ARCHITECTURE.md) · [docs/TEXTUAL_SYNTAX.md](docs/TEXTUAL_SYNTAX.md) · [docs/STANDARD_CONCEPT_LIBRARY.md](docs/STANDARD_CONCEPT_LIBRARY.md) — the shared language service, the textual surface, the concept templates

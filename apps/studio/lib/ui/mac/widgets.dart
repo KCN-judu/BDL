@@ -404,7 +404,7 @@ class _HoverableState extends State<_Hoverable> {
 
 /// A small table of facts: fixed column widths, one gutter, text columns
 /// left-aligned, number columns right-aligned in tabular figures.  The way
-/// to show ≥ 2 rows that share fields (STUDIO_UI.md §3a).
+/// to show ≥ 2 rows that share fields (docs/architecture/studio-ui.md §3a).
 class MacTable extends StatelessWidget {
   const MacTable({
     super.key,

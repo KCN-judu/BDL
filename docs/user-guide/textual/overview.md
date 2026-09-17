@@ -132,8 +132,8 @@ simulation view and deployment; the two work on the same files.
 [Authoring a project as text](../workflows/authoring-as-text.md) ·
 [Command line](../reference/cli.md)
 
-*For language implementers:* `docs/TEXTUAL_SYNTAX.md` is the normative
-grammar (§14 for project items); `docs/IDE_SERVICE_ARCHITECTURE.md`
-explains the text workspace and the LSP adapter; `docs/PROJECT_FORMAT.md`
+*For language implementers:* `docs/spec/textual-syntax.md` is the normative
+grammar (§14 for project items); `docs/architecture/ide-service.md`
+explains the text workspace and the LSP adapter; `docs/spec/project-format.md`
 the text project layout; the ADR on the textual workspace and source
 identities records the identity rules.

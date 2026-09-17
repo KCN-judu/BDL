@@ -351,7 +351,7 @@ message DeleteDevice {
 }
 
 // What a device binding needs from the board is derived from its kind
-// (docs/HARDWARE_MODEL.md); the kind is the whole of what the surface says.
+// (docs/spec/hardware-model.md); the kind is the whole of what the surface says.
 enum DeviceKind {
   DEVICE_KIND_UNSPECIFIED = 0;
   DEVICE_KIND_PWM_CHANNEL = 1;
@@ -589,7 +589,7 @@ message SetLayoutRequest {
 // ---------------------------------------------------------------------------
 
 // Sent to subscribers after every committed revision.  v0.1 sends the full
-// projection; deltas are a planned protocol change (docs/PROTOCOL.md).
+// projection; deltas are a planned protocol change (docs/spec/protocol.md).
 message ProjectChanged {
   ProjectProjection project = 1;
   optional EditOutcome outcome = 2;
@@ -1108,7 +1108,7 @@ message DeploymentResponse {
 // (requirements, placement, dead end by stable ids).  Fields 10–15 are
 // the read model a frontend renders from directly — names, labels, what
 // is missing, the blocker — composed from the semantic analysis and the
-// deployment analysis at the daemon (docs/DEPLOYMENT_READ_MODEL.md).
+// deployment analysis at the daemon (docs/architecture/deployment-read-model.md).
 message DeploymentAnalysis {
   // The project revision this describes; discard when it moves on.
   uint64 revision = 1;
@@ -1263,7 +1263,7 @@ message BlockedCandidate {
 // A system project's authored truth is a BehaviorSystem; the flat design
 // every other request sees (RunAnalysis, simulation, deployment, drafts)
 // is DERIVED from it on every commit and is never edited directly
-// (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md).  `OpenProject` opens either
+// (docs/architecture/behavior-systems.md).  `OpenProject` opens either
 // kind; `ProjectProjection.kind` says which.  Ordinary flat projects are
 // untouched by all of this.
 

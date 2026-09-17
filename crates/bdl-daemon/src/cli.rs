@@ -1,7 +1,7 @@
 //! The headless front end: `bdld check | compile | simulate <project>`.
 //!
 //! Every command opens the project through the session — the one loader
-//! Studio, the LSP and this front end share (`docs/PROJECT_FORMAT.md`)
+//! Studio, the LSP and this front end share (`docs/spec/project-format.md`)
 //! — so a text project is read, reconciled and analysed exactly as an
 //! editor reads it, and what checks here checks there.  Output is for a
 //! person on a terminal, or JSON with `--json` for a script.

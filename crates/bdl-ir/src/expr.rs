@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 /// A numeric literal.  The formal development uses `Nat`; the production
 /// implementation uses IEEE doubles and records that as a deliberate,
-/// documented deviation (`docs/DESIGN_ISSUES.md`, DI-1).  `Scalar` gives
+/// documented deviation (`docs/archive/design-issues-ledger.md`, DI-1).  `Scalar` gives
 /// literals total equality and ordering (by bit pattern) so IR values remain
 /// hashable and deterministic.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]

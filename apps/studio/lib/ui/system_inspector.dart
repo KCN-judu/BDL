@@ -1,6 +1,6 @@
 /// Inspectors for a system project's own objects — a component instance,
 /// a component, a port, a binding, a behaviour group — in the designer's
-/// words (docs/STUDIO_UI.md §11).  Each control commits one system or group
+/// words (docs/architecture/studio-ui.md §11).  Each control commits one system or group
 /// edit; every verdict shown is the compiler's, read off
 /// [AppState.systemAnalysis].  Nothing here decides substitutability,
 /// compatibility or a boundary.

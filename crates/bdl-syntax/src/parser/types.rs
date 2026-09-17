@@ -1,4 +1,4 @@
-//! Types (`docs/TEXTUAL_SYNTAX.md` §4.2).
+//! Types (`docs/spec/textual-syntax.md` §4.2).
 //!
 //! ```text
 //! Type      ::= TypeAtom ("->" Type)?          -- right-associative

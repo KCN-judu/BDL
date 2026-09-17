@@ -15,7 +15,7 @@ import 'dart:core' as $core;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 /// What a device binding needs from the board is derived from its kind
-/// (docs/HARDWARE_MODEL.md); the kind is the whole of what the surface says.
+/// (docs/spec/hardware-model.md); the kind is the whole of what the surface says.
 class DeviceKind extends $pb.ProtobufEnum {
   static const DeviceKind DEVICE_KIND_UNSPECIFIED =
       DeviceKind._(0, _omitEnumNames ? '' : 'DEVICE_KIND_UNSPECIFIED');

@@ -1,5 +1,5 @@
 //! System elaboration: `BehaviorSystem → ProjectSnapshot` + provenance
-//! (FV `flatten`, docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §5–§8).
+//! (FV `flatten`, docs/architecture/behavior-systems.md §5–§8).
 //!
 //! 1. every instance is instantiated: its component body is copied with
 //!    every private identity replaced by the instance's flat id from the

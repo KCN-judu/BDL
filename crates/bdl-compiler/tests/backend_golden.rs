@@ -102,7 +102,7 @@ fn baseline_metrics_are_recorded() {
         let g = art.generated.unwrap();
         rows.push((case.name, g.core_lines(), g.total_bytes()));
     }
-    // Printed for the record (docs/CODEGEN_RUST.md keeps a snapshot).
+    // Printed for the record (docs/architecture/codegen-rust.md keeps a snapshot).
     for (n, l, b) in &rows {
         eprintln!("{n}: core {l} lines, crate {b} bytes");
     }

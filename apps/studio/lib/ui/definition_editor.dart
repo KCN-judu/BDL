@@ -17,7 +17,7 @@
 /// 5. a conflict — the committed definition moved under a dirty draft —
 ///    as a notice with the two ways out, never a silent overwrite.
 ///
-/// Keyboard (documented in docs/STUDIO_UI.md §4a): ⌘↩ saves the definition
+/// Keyboard (documented in docs/architecture/studio-ui.md §4a): ⌘↩ saves the definition
 /// while it is dirty; ⌘S keeps its meaning (*Save project*) and never
 /// commits a draft; Esc reverts a dirty draft.  Ordinary text-editing
 /// shortcuts are untouched; Return inserts a line.

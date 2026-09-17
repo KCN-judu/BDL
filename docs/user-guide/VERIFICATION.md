@@ -15,16 +15,16 @@ Evidence paths are relative to the repository root. *Studio* means
 
 | Page | Claim | Evidence |
 |---|---|---|
-| `install-and-launch.md` | toolchain versions; `just studio`; dialog fallback | `README.md`, `justfile`, `docs/GETTING_STARTED.md`; `Studio/ui/welcome/welcome_page.dart` (*Open by path…*, *New at path…*) |
+| `install-and-launch.md` | toolchain versions; `just studio`; dialog fallback | `README.md`, `justfile`, `docs/guides/getting-started.md`; `Studio/ui/welcome/welcome_page.dart` (*Open by path…*, *New at path…*) |
 | | project manager actions: *New Project…*, *New System…*, *New Text Project…*, *Open Project…*, Recent | `Studio/ui/welcome/welcome_page.dart` |
 | | status line connection words | `Studio/ui/shell.dart` (*Compiler …*, *Connecting to the compiler*, *Compiler not connected*) |
 | | no flat → system conversion | no such request in `crates/bdl-protocol/proto/bdl/v1/bdl.proto`; `NewProjectRequested(system:)` only |
 | `first-behavior.md` | concept sheet fields and value forms; unit column | `Studio/ui/dialogs.dart` (*New concept*, *Quantity*, *On / off*, *Count*, *Decide later*, *Unit*); `Studio/ui/units.dart` |
-| | mapping sheet: *Reads*, *Produces*, Create disabled without Produces | `Studio/ui/dialogs.dart`; `docs/STUDIO_UI.md` §5 |
-| | dashed *declared* node; red mark at formula line | `Studio/ui/canvas/node_canvas.dart`; `docs/STUDIO_UI.md` §2 |
+| | mapping sheet: *Reads*, *Produces*, Create disabled without Produces | `Studio/ui/dialogs.dart`; `docs/architecture/studio-ui.md` §5 |
+| | dashed *declared* node; red mark at formula line | `Studio/ui/canvas/node_canvas.dart`; `docs/architecture/studio-ui.md` §2 |
 | | draft verdict as you type; *Add definition* / ⌘↩; type-mismatch message | `Studio/ui/definition_editor.dart`; `crates/bdl-elab/src/formula.rs` (`realization.type_mismatch` wording); `test/definition_editor_test.dart`, `test/formula_e2e_test.dart` |
 | | completion ⌃Space, hover card | `Studio/ui/definition_editor.dart`; `test/tooling_test.dart` |
-| | nullary undefined mapping = simulation input; `dimByTilt(tilt)` application | `crates/bdl-compiler/tests/surface_to_backend.rs`; `examples/smart_lamp/design/project.bdl.json`; `docs/DESIGN_ISSUES.md` DI-17 |
+| | nullary undefined mapping = simulation input; `dimByTilt(tilt)` application | `crates/bdl-compiler/tests/surface_to_backend.rs`; `examples/smart_lamp/design/project.bdl.json`; `docs/archive/design-issues-ledger.md` DI-17 |
 | | timing domain creation and *Updates in*; *Any timing domain* | `Studio/ui/library.dart` (*Timing domains*), `Studio/ui/inspector.dart` (*Updates in*), `Studio/ui/system_inspector.dart` (*Any timing domain*); `test/outputs_test.dart` |
 | | output sheet (*Accepts*, *Updates in*, *Required*); sink node; drag to connect; Connect pop-up marks *has inputs* | `Studio/ui/dialogs.dart`, `Studio/ui/inspector.dart` (Connect dropdown), `Studio/ui/canvas/canvas_geometry.dart` (`canLink`); `test/outputs_test.dart`, `test/design_e2e_test.dart` |
 | | only nullary same-domain driver fits; otherwise reported | `crates/bdl-output/src/lib.rs` (`output.type_mismatch`, `output.clock_mismatch`) |
@@ -35,8 +35,8 @@ Evidence paths are relative to the repository root. *Studio* means
 | | column header selects; probe with Explain | `Studio/ui/pages/simulate_page.dart` (`_Probe`, header `onTap`) |
 | | inputs shown only on activation ticks | `test/simulation_test.dart` ("an input is shown only at ticks where its domain activated", "multi-clock…") |
 | `first-deployment.md` | Target pop-up, board names, verdict wording, *Add device*, kinds, pin field, dead end wording | `Studio/ui/pages/deploy_page.dart`; `hardware/boards/*.toml`; `crates/bdl-hardware/src/devices.rs`; `test/deploy_test.dart`, `crates/bdl-daemon/tests/deploy_e2e.rs` |
-| | board is a session preference; deployment never changes semantic analysis | `docs/STUDIO_COMPILER_INTEGRATION.md` §4; `crates/bdl-daemon/tests/deploy_e2e.rs` (case 10) |
-| | *feasible* excludes electrical constraints; first dead end only | `docs/DESIGN_ISSUES.md` DI-21, DI-22 |
+| | board is a session preference; deployment never changes semantic analysis | `docs/architecture/studio-compiler-integration.md` §4; `crates/bdl-daemon/tests/deploy_e2e.rs` (case 10) |
+| | *feasible* excludes electrical constraints; first dead end only | `docs/archive/design-issues-ledger.md` DI-21, DI-22 |
 
 ## Concepts
 
@@ -44,33 +44,33 @@ Evidence paths are relative to the repository root. *Studio* means
 |---|---|---|
 | `concepts.md` | nominal identity; hue per concept; link only between same concept | `Studio/ui/canvas/canvas_geometry.dart` (`canLink`); `crates/bdl-elab/src/formula.rs` (`formula.call.argument_type`) |
 | | value forms and quantity kinds | `crates/bdl-model/src/quantity.rs`; `Studio/ui/units.dart` |
-| | *Decide later*; *Checked once … is decided.*; refinement vs edit on representation change | `Studio/ui/inspector.dart`; `crates/bdl-model/src/edit.rs` (classification); `docs/STUDIO_UI.md` §4 |
-| | library templates are not identities | `docs/STANDARD_CONCEPT_LIBRARY.md`; `crates/bdl-library` tests |
-| `relationships.md` | signature-first; three shapes; only nullary drives | `crates/bdl-model/src/surface.rs`; `docs/DESIGN_ISSUES.md` DI-20 |
-| | link drag edits the signature; drag away disconnects | `Studio/ui/canvas/node_canvas.dart`; `docs/STUDIO_UI.md` §2 |
-| `incomplete-designs.md` | states and their marks; status-line phrases | `Studio/ui/shell.dart` (*not yet defined*, *outputs incomplete*, *not causal*, *reads across domains*); `docs/COMPILER_PIPELINE.md` (ladder) |
+| | *Decide later*; *Checked once … is decided.*; refinement vs edit on representation change | `Studio/ui/inspector.dart`; `crates/bdl-model/src/edit.rs` (classification); `docs/architecture/studio-ui.md` §4 |
+| | library templates are not identities | `docs/spec/concept-library.md`; `crates/bdl-library` tests |
+| `relationships.md` | signature-first; three shapes; only nullary drives | `crates/bdl-model/src/surface.rs`; `docs/archive/design-issues-ledger.md` DI-20 |
+| | link drag edits the signature; drag away disconnects | `Studio/ui/canvas/node_canvas.dart`; `docs/architecture/studio-ui.md` §2 |
+| `incomplete-designs.md` | states and their marks; status-line phrases | `Studio/ui/shell.dart` (*not yet defined*, *outputs incomplete*, *not causal*, *reads across domains*); `docs/architecture/compiler-pipeline.md` (ladder) |
 | | Simulate blockers | `Studio/app/simulation.dart` |
 | | required vs optional output; contested is an error | `crates/bdl-output/src/lib.rs` |
-| `timing.md` | domain is a name, not a rate; period is a schedule | `docs/RUNTIME_SEMANTICS.md`; `docs/02-kernel-spec.md` |
-| | agnostic declarations evaluated whenever anything is active | `docs/RUNTIME_SEMANTICS.md`; `crates/bdl-reactive/src/eval.rs` |
-| | `delay` / `sync` semantics and placement rules | `docs/TEXTUAL_SYNTAX.md` §11.1; `crates/bdl-elab/src/formula.rs` (`formula.temporal.*`); `crates/bdl-compiler/tests/surface_to_backend.rs`; `test/simulation_test.dart` (delay, sync) |
+| `timing.md` | domain is a name, not a rate; period is a schedule | `docs/spec/runtime-semantics.md`; `docs/spec/kernel.md` |
+| | agnostic declarations evaluated whenever anything is active | `docs/spec/runtime-semantics.md`; `crates/bdl-reactive/src/eval.rs` |
+| | `delay` / `sync` semantics and placement rules | `docs/spec/textual-syntax.md` §11.1; `crates/bdl-elab/src/formula.rs` (`formula.temporal.*`); `crates/bdl-compiler/tests/surface_to_backend.rs`; `test/simulation_test.dart` (delay, sync) |
 | | cross-domain read finding wording | `crates/bdl-reactive/src/clocks.rs` (`clock.cross_domain_reference`) |
 | `physical-outputs.md` | rules, states, inspector lines | `crates/bdl-output/src/lib.rs`; `Studio/ui/inspector.dart` (*Undriven — …*, *Driven by …*, *Still driven by …*); `Studio/ui/canvas/canvas_geometry.dart` (`SinkState`) |
 | | fixes offered | `crates/bdl-ide/src/actions.rs` (detach, combination, connect driver) |
-| `behavior-groups.md` | system projects only; membership rules; not a revision; undo covers; dirty | `Studio/ui/pages/design_page.dart` (`groupsEnabled: state.isSystem`); `test/system_e2e_test.dart` (grouping section); `test/system_reducer_test.dart` ("a group edit dirties the project without a revision…"); `docs/adr/0019-*.md` |
+| `behavior-groups.md` | system projects only; membership rules; not a revision; undo covers; dirty | `Studio/ui/pages/design_page.dart` (`groupsEnabled: state.isSystem`); `test/system_e2e_test.dart` (grouping section); `test/system_reducer_test.dart` ("a group edit dirties the project without a revision…"); `docs/decisions/0019-*.md` |
 | | boundary is computed; aggregate sockets accept no link | `crates/bdl-system/tests/grouping.rs` (`boundary_is_a_projection_and_sockets_add_no_dependency`); `test/system_e2e_test.dart` ("the aggregate socket accepts no link") |
 | | semantic transparency | `crates/bdl-system/tests/grouping.rs` (`grouping_is_semantically_transparent`) |
 | | menu and inspector labels | `Studio/ui/canvas/node_canvas.dart`, `Studio/ui/system_inspector.dart` |
-| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/adr/0022-a-component-interface-is-a-stored-promise.md` |
-| | shared vs private concepts | `crates/bdl-system/tests/contracts.rs` (`equal_representations_are_not_equal_concepts`); `docs/BEHAVIOR_SYSTEMS.md` |
+| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/decisions/0022-a-component-interface-is-a-stored-promise.md` |
+| | shared vs private concepts | `crates/bdl-system/tests/contracts.rs` (`equal_representations_are_not_equal_concepts`); `docs/evidence/behavior-systems-correspondence.md` |
 | | *Declare a port* in the component inspector; *Edit Source*; context bar text | `Studio/ui/system_inspector.dart`; `Studio/ui/pages/design_page.dart` |
 | | source edit reaches every instance | `test/system_e2e_test.dart` ("the body edit reached the instance") |
-| | not portable, not nestable | `docs/BEHAVIOR_SYSTEMS.md` (Limitations); `docs/DESIGN_ISSUES.md` DI-44 |
+| | not portable, not nestable | `docs/evidence/behavior-systems-correspondence.md` (Limitations); `docs/archive/design-issues-ledger.md` DI-44 |
 | `behavior-systems.md` | bindings by identity; fan-out; no silent replace; transport sheet | `test/system_e2e_test.dart` (§78/§80 section); `test/system_reducer_test.dart` ("a taken destination asks…", "different timing domains ask for an initial value…") |
-| | open port = open, simulated as input | `crates/bdl-system/tests/vertical_slice.rs` (`an_unbound_required_port_is_open_not_invalid`); `docs/BEHAVIOR_SYSTEMS.md` |
-| | one design to simulator/deploy; `lampA.brightness` naming | `test/system_e2e_test.dart` (`simulateIndicator` over `flatId`); `docs/BEHAVIOR_SYSTEMS.md` |
+| | open port = open, simulated as input | `crates/bdl-system/tests/vertical_slice.rs` (`an_unbound_required_port_is_open_not_invalid`); `docs/evidence/behavior-systems-correspondence.md` |
+| | one design to simulator/deploy; `lampA.brightness` naming | `test/system_e2e_test.dart` (`simulateIndicator` over `flatId`); `docs/evidence/behavior-systems-correspondence.md` |
 | | two instances driving one output → `output.multiple_drivers` | `test/system_e2e_test.dart` (end of test) |
-| | restricted formal claims | `docs/BEHAVIOR_SYSTEMS.md` (Theorems J, R marked restricted) |
+| | restricted formal claims | `docs/evidence/behavior-systems-correspondence.md` (Theorems J, R marked restricted) |
 
 ## Studio
 
@@ -84,20 +84,20 @@ Evidence paths are relative to the repository root. *Studio* means
 | | Library tab rows, double-click / drag insert, create-then-rename, recents | `Studio/ui/concept_library_panel.dart`; `test/concept_library_test.dart`, `test/concept_library_e2e_test.dart` |
 | `inspector.md` | sections and labels per object | `Studio/ui/inspector.dart` (string table); `Studio/ui/semantic_actions.dart` (*Fixes* in mapping and output inspectors) |
 | `formula-editor.md` | verdict line words, buttons, keys, conflict notice | `Studio/ui/definition_editor.dart`; `test/definition_editor_test.dart` |
-| | invalid formula may be saved | `docs/STUDIO_COMPILER_INTEGRATION.md` §1 ("Committing an invalid definition") |
+| | invalid formula may be saved | `docs/architecture/studio-compiler-integration.md` §1 ("Committing an invalid definition") |
 | | where committed findings appear | `Studio/ui/inspector.dart` (`timingIssues`, `driveIssues`, `broader`) |
 | `simulate.md` | as `first-simulation.md`; failure wording | `Studio/ui/pages/simulate_page.dart` (`simulation.*` → wording) |
 | `deploy.md` | as `first-deployment.md`; page never restates design validity | `Studio/ui/pages/deploy_page.dart` (`_Verdict` doc comment) |
-| | codegen exists but has no Studio surface | `docs/ROADMAP.md` (N, O done; Q, R open); no compile request in `bdl.proto` |
-| `system-projects.md` | contexts, bar text, instance node anatomy, gestures, inspectors, packaging sheet | `Studio/ui/pages/design_page.dart` (`_ContextBar`), `Studio/ui/system_inspector.dart`, `Studio/ui/system_sheets.dart`, `Studio/ui/canvas/node_canvas.dart`; `test/system_e2e_test.dart`, `test/system_gestures_e2e_test.dart`; `docs/STUDIO_UI.md` §11 |
-| | not built list | `docs/STUDIO_UI.md` §11 "Not built"; `docs/DESIGN_ISSUES.md` DI-40, DI-44 |
+| | codegen exists but has no Studio surface | `docs/project/roadmap.md` (N, O done; Q, R open); no compile request in `bdl.proto` |
+| `system-projects.md` | contexts, bar text, instance node anatomy, gestures, inspectors, packaging sheet | `Studio/ui/pages/design_page.dart` (`_ContextBar`), `Studio/ui/system_inspector.dart`, `Studio/ui/system_sheets.dart`, `Studio/ui/canvas/node_canvas.dart`; `test/system_e2e_test.dart`, `test/system_gestures_e2e_test.dart`; `docs/architecture/studio-ui.md` §11 |
+| | not built list | `docs/architecture/studio-ui.md` §11 "Not built"; `docs/archive/design-issues-ledger.md` DI-40, DI-44 |
 
 ## Workflows
 
 | Page | Claim | Evidence |
 |---|---|---|
 | `sensor-to-output.md` | the Smart Lamp design and values | `examples/smart_lamp/design/project.bdl.json`; `crates/bdl-compiler/tests/examples.rs`; `test/smart_lamp_e2e_test.dart` |
-| | `if` over a comparison with a unit; `chooseBrightness` pattern | `docs/TEXTUAL_SYNTAX.md` §1, §11.1; `crates/bdl-compiler/tests/surface_expressions.rs` |
+| | `if` over a comparison with a unit; `chooseBrightness` pattern | `docs/spec/textual-syntax.md` §1, §11.1; `crates/bdl-compiler/tests/surface_expressions.rs` |
 | `multi-output-behavior.md` | contested output, fixes, required vs optional | `crates/bdl-output/src/lib.rs`; `crates/bdl-ide/src/actions.rs`; `test/design_e2e_test.dart` (contested → detach via fix) |
 | `grouping-behavior.md` | every step | `test/system_e2e_test.dart` (grouping, boundary, collapsed sections); `test/system_reducer_test.dart` ("a multi-selection groups only the free relationships…", "a group created from the canvas is selected and opens for naming…") |
 | `package-as-component.md` | preview, choices, one edit, same trace, member identity kept, source edit reaches instance | `test/system_e2e_test.dart` (§75 packaging section); `crates/bdl-system/tests/grouping.rs` (`extraction_is_a_differential_witness_of_theorem_r`, `an_open_member_is_an_input_by_default_or_stays_open_inside`, `a_driven_member_keeps_its_drive_and_the_sink_stays_external`) |
@@ -110,9 +110,9 @@ Evidence paths are relative to the repository root. *Studio* means
 
 | Page | Claim | Evidence |
 |---|---|---|
-| `overview.md` | text projects; the whole design has syntax; stable identity rules (edit, move, rename by editor/canvas, unambiguous retype; ambiguous → fresh + finding); one loader on every surface, equal to the generated code; enums open; no live two-way editing | `crates/bdl-text/tests/workspace.rs` (`the_system_corpus_loads_…`, `identities_survive_a_reload_a_rename_a_move_and_a_split`, `ambiguous_renames_get_fresh_ids_and_a_fault`, `text_and_model_agree_down_to_the_executable_plan`); `crates/bdl-text/src/build.rs` (`text.unsupported_item`, `text.ambiguous_identity` wording); `test/text_project_e2e_test.dart`; `docs/TEXTUAL_SYNTAX.md` §14 |
+| `overview.md` | text projects; the whole design has syntax; stable identity rules (edit, move, rename by editor/canvas, unambiguous retype; ambiguous → fresh + finding); one loader on every surface, equal to the generated code; enums open; no live two-way editing | `crates/bdl-text/tests/workspace.rs` (`the_system_corpus_loads_…`, `identities_survive_a_reload_a_rename_a_move_and_a_split`, `ambiguous_renames_get_fresh_ids_and_a_fault`, `text_and_model_agree_down_to_the_executable_plan`); `crates/bdl-text/src/build.rs` (`text.unsupported_item`, `text.ambiguous_identity` wording); `test/text_project_e2e_test.dart`; `docs/spec/textual-syntax.md` §14 |
 | | parameter names are names; concept rename leaves them | `crates/bdl-elab/src/names.rs` (`InputEnv::for_mapping`); `crates/bdl-daemon/src/rename.rs` (test `concept_named_occurrences_follow_and_parameters_stay`); `crates/bdl-lsp/tests/e2e.rs` (rename) |
-| `syntax-basics.md` | grammar and the checked/unchecked matrix; type names; project items (`clock`, `@`, `output … optional`, `drive`, `device` kinds and pins, `component` body items, ports, `instance` braces, `bind … init`, `export … as`); `///` descriptions; second driver ignored; multi-file projects | `docs/TEXTUAL_SYNTAX.md` §4–6, §11.1, §14; `crates/bdl-syntax/test_data/valid/system.bdl`; `crates/bdl-text/src/build.rs` (`device_kind_named`, `text.second_driver`); `crates/bdl-text/tests/workspace.rs` (`doc_comments_are_descriptions_and_round_trip`); `crates/bdl-system/src/validate.rs` (`system.binding_needs_transport`) |
+| `syntax-basics.md` | grammar and the checked/unchecked matrix; type names; project items (`clock`, `@`, `output … optional`, `drive`, `device` kinds and pins, `component` body items, ports, `instance` braces, `bind … init`, `export … as`); `///` descriptions; second driver ignored; multi-file projects | `docs/spec/textual-syntax.md` §4–6, §11.1, §14; `crates/bdl-syntax/test_data/valid/system.bdl`; `crates/bdl-text/src/build.rs` (`device_kind_named`, `text.second_driver`); `crates/bdl-text/tests/workspace.rs` (`doc_comments_are_descriptions_and_round_trip`); `crates/bdl-system/src/validate.rs` (`system.binding_needs_transport`) |
 | `editor-and-lsp.md` | capabilities, root resolution, text workspace (unopened files known, buffers substitute, sidecar written after save/outside change), full sync, encodings, pull diagnostics with push fallback, cross-file definition/references/rename incl. body calls, scope-aware completion, formatting, inlay hints, virtual documents, custom requests, disabled model-only actions, VS Code commands | `crates/bdl-lsp/src/server.rs` (`ServerCapabilities`, `open_host`, `reload_text_ground`, `VirtualDocumentRequest`), `crates/bdl-lsp/src/convert.rs`; `crates/bdl-lsp/tests/e2e.rs`; `crates/bdl-lsp/tests/text_workspace.rs` (`navigation_and_rename_cross_files_without_opening_them`, `open_buffers_substitute_and_saves_reload_the_ground`, `cancellation_under_load_answers_every_request_once`); `crates/bdl-syntax/src/format.rs` (tests); `crates/bdl-ide/src/{inlay,virtual_docs}.rs`; `editors/vscode/package.json`, `editors/vscode/src/extension.ts` |
 
 ## Troubleshooting and reference
@@ -124,8 +124,8 @@ Evidence paths are relative to the repository root. *Studio* means
 | `reference/terminology.md` | Studio labels | the string tables of `Studio/ui/*.dart` |
 | `reference/keyboard-and-mouse.md` | bindings; Windows bindings inactive; ⌘N/⌘O labels only | `Studio/ui/shell.dart` (`CallbackShortcuts`, `meta: true`), `Studio/ui/definition_editor.dart`, `Studio/ui/canvas/node_canvas.dart`, `Studio/ui/welcome/welcome_page.dart`, `Studio/platform/desktop.dart` |
 | `reference/status-meanings.md` | every phrase | `Studio/ui/shell.dart`, `Studio/ui/inspector.dart`, `Studio/ui/definition_editor.dart`, `Studio/ui/system_inspector.dart`, `Studio/ui/pages/*.dart` |
-| `reference/formula-language.md` | operators, units, forms, placement | `docs/TEXTUAL_SYNTAX.md` §5–6, §11.1; `crates/bdl-elab/src/units.rs`; `crates/bdl-ir/src/expr.rs` (`Prim`) |
-| `reference/project-files.md` | file layout, contents, what is not saved, atomic writes, migration; text project layout, sidecars written on open/save/editor save, new items to `src/main.bdl` or the first file, body appends | `docs/PROJECT_FORMAT.md`; `crates/bdl-model/src/persist.rs`; `crates/bdl-system/src/persist.rs`; `crates/bdl-text/src/workspace.rs` (`load_text_project`, `save_text_project`, `init_text_project`), `crates/bdl-text/src/splice.rs` (`DEFAULT_FILE`) |
+| `reference/formula-language.md` | operators, units, forms, placement | `docs/spec/textual-syntax.md` §5–6, §11.1; `crates/bdl-elab/src/units.rs`; `crates/bdl-ir/src/expr.rs` (`Prim`) |
+| `reference/project-files.md` | file layout, contents, what is not saved, atomic writes, migration; text project layout, sidecars written on open/save/editor save, new items to `src/main.bdl` or the first file, body appends | `docs/spec/project-format.md`; `crates/bdl-model/src/persist.rs`; `crates/bdl-system/src/persist.rs`; `crates/bdl-text/src/workspace.rs` (`load_text_project`, `save_text_project`, `init_text_project`), `crates/bdl-text/src/splice.rs` (`DEFAULT_FILE`) |
 | `reference/cli.md` | commands, exit codes, `--json`, input forms, printed shapes | `crates/bdl-daemon/src/{main,cli}.rs`; `crates/bdl-daemon/tests/cli.rs`; output reproduced by running `bdld check` / `bdld simulate` on the workflow's lamp |
 | `troubleshooting/text-project-errors.md` | every quoted message and code | `crates/bdl-text/src/build.rs` (`fault`, `open_fault` call sites); `crates/bdl-daemon/src/session.rs` (`ChangedOnDisk`); `crates/bdl-daemon/src/server.rs` (`project.changed_on_disk`) |
 

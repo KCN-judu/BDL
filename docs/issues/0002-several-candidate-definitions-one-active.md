@@ -4,7 +4,7 @@ state: open
 area: language
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-4"]
+related: ["docs/archive/design-issues-ledger.md#di-4"]
 ---
 # ISS-0002: Several candidate definitions, one active
 
@@ -23,15 +23,15 @@ replace-and-undo. Studio's *drafts* cover the unsaved case only.
 
 * Production: `MappingBlock.definition: Option<Definition>`
   (`crates/bdl-model/src/surface.rs`); `ReplaceDefinition` is an edit that
-  reopens realization (`docs/COMPILER_PIPELINE.md`); drafts are overlays
-  (`docs/IDE_SERVICE_ARCHITECTURE.md`).
+  reopens realization (`docs/architecture/compiler-pipeline.md`); drafts are overlays
+  (`docs/architecture/ide-service.md`).
 * The original entry proposed: the surface stores candidates, the kernel sees
   the active one, switching is an ordinary edit. DI-4.
 
 ## Dependencies
 
-* A persistence and protocol shape for candidates (`docs/PROJECT_FORMAT.md`,
-  `docs/PROTOCOL.md`), and a rule for identity of a candidate under rename.
+* A persistence and protocol shape for candidates (`docs/spec/project-format.md`,
+  `docs/spec/protocol.md`), and a rule for identity of a candidate under rename.
 
 ## Resolution
 

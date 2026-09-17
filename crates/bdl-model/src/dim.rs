@@ -5,7 +5,7 @@
 //! them.  The Lean development uses three base dimensions "enough to test
 //! the abstraction"; the production model uses the seven SI base
 //! dimensions plus plane angle, which the paper keeps as a base dimension so
-//! that `Tilt` and `MotorAngle` can share it.  See `docs/IR.md`.
+//! that `Tilt` and `MotorAngle` can share it.  See `docs/architecture/ir.md`.
 
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Sub};

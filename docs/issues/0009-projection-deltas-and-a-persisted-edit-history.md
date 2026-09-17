@@ -22,7 +22,7 @@ session and a *reopen where I was* undo need.
 
 ## Current evidence
 
-* Production: `docs/PROTOCOL.md` *Deltas* section (full projections),
+* Production: `docs/spec/protocol.md` *Deltas* section (full projections),
   `crates/bdl-daemon/src/session.rs` (`undo`/`redo` vectors);
   ADR-0009 (revisioned edits). Recorded in the old roadmap as
   *known v0.1 simplifications*.
@@ -30,7 +30,7 @@ session and a *reopen where I was* undo need.
 ## Dependencies
 
 * A delta encoding in the protocol (a minor bump) and a log file format in
-  `docs/PROJECT_FORMAT.md`; both are additive.
+  `docs/spec/project-format.md`; both are additive.
 
 ## Resolution
 

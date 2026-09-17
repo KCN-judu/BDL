@@ -90,6 +90,6 @@ Core* and *BDL: Show Generated Rust*.
 [Overview and current status](overview.md) · [Syntax basics](syntax-basics.md) ·
 [Authoring a project as text](../workflows/authoring-as-text.md)
 
-*For language implementers:* `docs/IDE_SERVICE_ARCHITECTURE.md`
+*For language implementers:* `docs/architecture/ide-service.md`
 (the text workspace, overlays, projections, the LSP adapter) and the
 ADR on the LSP as an adapter.

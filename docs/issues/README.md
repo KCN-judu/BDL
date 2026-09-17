@@ -4,7 +4,7 @@ A design issue is a recognised problem with no chosen answer: the record
 for "we know this is unresolved" — not a proposal, not a decision, and
 never permission to implement its tentative answer. When a concrete
 alternative exists, a [proposal](../proposals/README.md) follows; when a
-choice is made, an [ADR](../adr/README.md) closes the issue through
+choice is made, an [ADR](../decisions/README.md) closes the issue through
 `resolved-by`.
 
 ## Active
@@ -30,11 +30,11 @@ choice is made, an [ADR](../adr/README.md) closes the issue through
 
 ## Before the registry
 
-`docs/DESIGN_ISSUES.md` is the ledger kept from 2026-09-15 to 2026-09-17
+`docs/archive/design-issues-ledger.md` is the ledger kept from 2026-09-15 to 2026-09-17
 (DI-1 … DI-44, two numbers used twice). Its decided entries stay there as
 history — each names the decision or the code that resolved it; its open
 entries became the issues above (`related` names the DI). Do not add rows
 to the old ledger.
 
 Start a new issue from [TEMPLATE.md](TEMPLATE.md); the lifecycle is in
-[GOVERNANCE.md](../project-records/GOVERNANCE.md).
+[governance.md](../project/governance.md).

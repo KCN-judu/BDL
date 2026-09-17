@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Validate BDL's engineering records (docs/project-records/GOVERNANCE.md).
+"""Validate BDL's engineering records (docs/project/governance.md).
 
 Checks, without any third-party dependency:
 
-* decisions (`docs/adr/NNNN-*.md`): frontmatter present with the required
+* decisions (`docs/decisions/NNNN-*.md`): frontmatter present with the required
   fields, known status and area, id matches the file name and the title,
   ids unique, `supersedes` / `superseded-by` name existing records and agree
   in both directions, a `superseded` record names its replacement, every id
@@ -15,7 +15,10 @@ Checks, without any third-party dependency:
   records, every id is in the issue index;
 * change fragments (`docs/changes/unreleased/*.md`): the header bullets and
   the three sections;
-* the front door (`docs/README.md`) links every top-level `docs/*.md`;
+* pages (`docs/{spec,architecture,evidence,guides,background,archive,project}/*.md`):
+  a `kind` / `area` / `status` header whose kind matches the folder;
+* the front door (`docs/README.md`) links every page and no `.md` sits
+  loose at the top of `docs/`;
 * every relative Markdown link under `docs/` and in `README.md` resolves.
 
 Exit status 1 with one line per problem; 0 and "engineering records:
@@ -50,6 +53,16 @@ AREAS = {
 DECISION_FIELDS = {"id", "status", "date", "area", "supersedes", "superseded-by"}
 PROPOSAL_FIELDS = {"id", "status", "date", "area", "related-issues", "superseded-by"}
 ISSUE_FIELDS = {"id", "state", "area", "opened", "resolved-by"}
+PAGE_FOLDERS = {
+    "spec": "specification",
+    "architecture": "architecture",
+    "evidence": "evidence",
+    "guides": "guide",
+    "background": "background",
+    "archive": "archive",
+    "project": "project",
+}
+PAGE_STATUSES = {"current", "archived"}
 CHANGE_BULLETS = ("- Date:", "- Area:", "- Affected:", "- Related:")
 CHANGE_SECTIONS = ("## What changed", "## Compatibility and migration", "## Evidence")
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -143,7 +156,7 @@ class Validator:
                 self.error(index, f"{record_id} is missing from the index")
 
     def check_decisions(self) -> None:
-        recs = self.records("docs/adr")
+        recs = self.records("docs/decisions")
         by_id: dict[str, dict[str, object]] = {}
         paths: dict[str, Path] = {}
         for path, meta, _ in recs:
@@ -168,7 +181,7 @@ class Validator:
                     self.error(path, "has superseded-by but status is not 'superseded'")
             if str(meta.get("status")) == "superseded" and not as_list(meta.get("superseded-by")):
                 self.error(path, "status 'superseded' needs a superseded-by record")
-        self.check_index(self.root / "docs/adr/README.md", list(by_id))
+        self.check_index(self.root / "docs/decisions/README.md", list(by_id))
 
     def check_proposals(self) -> None:
         recs = self.records("docs/proposals")
@@ -223,14 +236,37 @@ class Validator:
 
     # ---- indexes and links ------------------------------------------------
 
+    def check_pages(self) -> None:
+        for folder, kind in PAGE_FOLDERS.items():
+            for path in sorted((self.root / "docs" / folder).glob("*.md")):
+                if path.name in {"README.md", "TEMPLATE.md"}:
+                    continue
+                meta = parse_frontmatter(path.read_text(encoding="utf-8"))
+                if meta is None:
+                    self.error(path, "missing kind/area/status header")
+                    continue
+                if str(meta.get("kind")) != kind:
+                    self.error(path, f"kind must be {kind!r} in docs/{folder}/")
+                if str(meta.get("area")) not in AREAS:
+                    self.error(path, f"unknown area {meta.get('area')!r}")
+                if str(meta.get("status")) not in PAGE_STATUSES:
+                    self.error(path, f"unknown status {meta.get('status')!r}")
+                if folder == "archive" and str(meta.get("status")) != "archived":
+                    self.error(path, "pages under docs/archive/ are status: archived")
+
     def check_front_door(self) -> None:
         front = self.root / "docs/README.md"
         text = front.read_text(encoding="utf-8") if front.exists() else ""
         for path in sorted((self.root / "docs").glob("*.md")):
-            if path.name == "README.md":
-                continue
-            if f"({path.name})" not in text and f"({path.name}#" not in text:
-                self.error(front, f"{path.name} is not registered in the front door")
+            if path.name != "README.md":
+                self.error(path, "loose page at the top of docs/: move it into its kind's folder")
+        for folder in PAGE_FOLDERS:
+            for path in sorted((self.root / "docs" / folder).glob("*.md")):
+                if path.name in {"README.md", "TEMPLATE.md"}:
+                    continue
+                rel = f"{folder}/{path.name}"
+                if f"({rel})" not in text and f"({rel}#" not in text:
+                    self.error(front, f"{rel} is not registered in the front door")
 
     def check_links(self) -> None:
         files = [self.root / "README.md"] + sorted((self.root / "docs").rglob("*.md"))
@@ -254,6 +290,7 @@ class Validator:
         self.check_proposals()
         self.check_issues()
         self.check_changes()
+        self.check_pages()
         self.check_front_door()
         self.check_links()
         return self.errors

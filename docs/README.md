@@ -6,46 +6,107 @@ who want to *use* Behavior Designer read the separate
 [user guide](user-guide/README.md); the formal development lives in the
 sibling repository `../BDL_FV`.
 
+## Layout
+
+One folder per kind of record; every page carries a `kind / area /
+status` header that `just docs-check` verifies against its folder.
+
+| Folder | Holds | Mutability |
+|---|---|---|
+| [`spec/`](#specification) | what BDL means now: language, runtime, files, wire, boards, libraries | current truth, edited in place |
+| [`architecture/`](#architecture) | how the implementation is structured now | current truth, edited in place |
+| [`decisions/`](decisions/README.md) | why a consequential choice was made (ADR-NNNN) | append-only; superseded, never rewritten |
+| [`proposals/`](proposals/README.md) | consequential changes not yet decided (PRP-NNNN) | open until an outcome |
+| [`issues/`](issues/README.md) | recognised problems with no answer yet (ISS-NNNN) | open · deferred · resolved |
+| [`project/`](#project) | status, roadmap, governance, formal correspondence, research | current |
+| [`changes/`](changes/README.md) | what changed for someone, and the history moved out of current pages | append-only |
+| [`evidence/`](#evidence) | which test or theorem backs a claim | current index |
+| [`guides/`](#guides) | how a developer enters the codebase; one design through the pipeline | current |
+| [`background/`](#background) | research context that informed choices — not truth | historical |
+| [`archive/`](#archive) | superseded records kept because code and commits cite them | frozen |
+| `user-guide/` | the designer-facing manual — a separate product | — |
+
 ## Where to look
 
 | I want… | Read |
 |---|---|
-| **current language truth** — what a design means | [02-kernel-spec.md](02-kernel-spec.md) (the kernel, transcribed from Lean) · [TEXTUAL_SYNTAX.md](TEXTUAL_SYNTAX.md) · [RUNTIME_SEMANTICS.md](RUNTIME_SEMANTICS.md) |
-| **current file and wire formats** | [PROJECT_FORMAT.md](PROJECT_FORMAT.md) · [PROTOCOL.md](PROTOCOL.md) · [HARDWARE_MODEL.md](HARDWARE_MODEL.md) (board files) · [STANDARD_CONCEPT_LIBRARY.md](STANDARD_CONCEPT_LIBRARY.md) (library files) |
-| **current architecture** — how the implementation is built | [ARCHITECTURE.md](ARCHITECTURE.md), then the subsystem pages below |
-| **why a decision exists** | [adr/README.md](adr/README.md) — the decision index; each ADR is immutable rationale |
-| **whether a change is proposed or decided** | [proposals/README.md](proposals/README.md) — open proposals; anything not there and not an ADR is not decided |
-| **unresolved design questions** | [issues/README.md](issues/README.md) — the issue registry |
-| **what is implemented today** | [project-records/STATUS.md](project-records/STATUS.md) |
-| **what is planned next** | [ROADMAP.md](ROADMAP.md) — priorities only, never evidence |
-| **what changed for users, project files, clients or developers** | [changes/README.md](changes/README.md) — unreleased fragments and the moved-out history |
-| **which claims are formally proved** | [project-records/FORMAL_CORRESPONDENCE.md](project-records/FORMAL_CORRESPONDENCE.md) |
-| **which test backs a claim** | [TESTING.md](TESTING.md) · [STUDIO_COMPILER_INTEGRATION.md §3](STUDIO_COMPILER_INTEGRATION.md) · [user-guide/VERIFICATION.md](user-guide/VERIFICATION.md) |
-| **how to enter the codebase** | [GETTING_STARTED.md](GETTING_STARTED.md), then the walkthroughs below |
-| **how these records work** | [project-records/GOVERNANCE.md](project-records/GOVERNANCE.md) · [RESEARCH.md](project-records/RESEARCH.md) (the precedents) · [MIGRATION_REPORT.md](project-records/MIGRATION_REPORT.md) (where the old documents went) |
+| **current language truth** | [spec/kernel.md](spec/kernel.md) · [spec/textual-syntax.md](spec/textual-syntax.md) · [spec/runtime-semantics.md](spec/runtime-semantics.md) |
+| **current file and wire formats** | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/concept-library.md](spec/concept-library.md) |
+| **current architecture** | [architecture/overview.md](architecture/overview.md), then the page for the area |
+| **why a decision exists** | [decisions/README.md](decisions/README.md) |
+| **whether a change is proposed or decided** | [proposals/README.md](proposals/README.md); anything not there and not an ADR is not decided |
+| **unresolved design questions** | [issues/README.md](issues/README.md) |
+| **what is implemented today** | [project/status.md](project/status.md) |
+| **what is planned next** | [project/roadmap.md](project/roadmap.md) — priorities only, never evidence |
+| **what changed for users, project files, clients or developers** | [changes/README.md](changes/README.md) |
+| **which claims are formally proved** | [project/formal-correspondence.md](project/formal-correspondence.md) |
+| **which test backs a claim** | [evidence/testing.md](evidence/testing.md) · [evidence/behavior-systems-correspondence.md](evidence/behavior-systems-correspondence.md) · [architecture/studio-compiler-integration.md §3](architecture/studio-compiler-integration.md) · [user-guide/VERIFICATION.md](user-guide/VERIFICATION.md) |
+| **how to enter the codebase** | [guides/getting-started.md](guides/getting-started.md) |
+| **how these records work** | [project/governance.md](project/governance.md) · [project/research.md](project/research.md) · [project/migration-report.md](project/migration-report.md) |
 
-## Architecture pages by area
+## Pages
 
-| Area | Pages |
-|---|---|
-| compiler and semantics | [COMPILER_PIPELINE.md](COMPILER_PIPELINE.md) · [IR.md](IR.md) · [EXECUTABLE_IR.md](EXECUTABLE_IR.md) |
-| code generation and runtime | [CODEGEN_RUST.md](CODEGEN_RUST.md) · [RUNTIME_SEMANTICS.md](RUNTIME_SEMANTICS.md) · [COMPONENT_BOUNDARY.md](COMPONENT_BOUNDARY.md) (supplied Rust — designed, not built) |
-| behaviour systems | [BEHAVIOR_SYSTEM_ARCHITECTURE.md](BEHAVIOR_SYSTEM_ARCHITECTURE.md) (implementation) · [BEHAVIOR_SYSTEMS.md](BEHAVIOR_SYSTEMS.md) (formal correspondence, object by object) |
-| deployment | [HARDWARE_MODEL.md](HARDWARE_MODEL.md) · [DEPLOYMENT_READ_MODEL.md](DEPLOYMENT_READ_MODEL.md) |
-| IDE service, LSP, textual | [IDE_SERVICE_ARCHITECTURE.md](IDE_SERVICE_ARCHITECTURE.md) · [TEXTUAL_SYNTAX.md](TEXTUAL_SYNTAX.md) §14 (project items) · `editors/vscode/README.md` |
-| Studio | [STUDIO_UI.md](STUDIO_UI.md) (design) · [STUDIO_COMPILER_INTEGRATION.md](STUDIO_COMPILER_INTEGRATION.md) (the boundary and its evidence map) |
-| daemon and protocol | [PROTOCOL.md](PROTOCOL.md) · [ARCHITECTURE.md](ARCHITECTURE.md) (`bdl-daemon`) |
+### Specification
 
-**Developer walkthroughs** (one design through the whole pipeline; not
-user documentation): [EXECUTION_WALKTHROUGH.md](EXECUTION_WALKTHROUGH.md) ·
-[DEPLOYMENT_WALKTHROUGH.md](DEPLOYMENT_WALKTHROUGH.md).
+| Page | Area | What it fixes |
+|---|---|---|
+| [kernel.md](spec/kernel.md) | language | the kernel contract, transcribed from the Lean development (Chinese) |
+| [textual-syntax.md](spec/textual-syntax.md) | textual | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix |
+| [runtime-semantics.md](spec/runtime-semantics.md) | runtime | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve |
+| [project-format.md](spec/project-format.md) | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules |
+| [protocol.md](spec/protocol.md) | protocol | the Studio ↔ bdld messages, current version 0.9, compatibility rule |
+| [hardware-model.md](spec/hardware-model.md) | deployment | capabilities, requirements, board description files |
+| [concept-library.md](spec/concept-library.md) | language | concept template libraries and their file format |
 
-**Background** (research context, not truth): [01-paper-digest.md](01-paper-digest.md)
-(the paper) · [IDE_SERVICE_RESEARCH_CONTEXT.md](IDE_SERVICE_RESEARCH_CONTEXT.md).
+### Architecture
 
-**Archived** (history, not to be extended): [DESIGN_ISSUES.md](DESIGN_ISSUES.md)
-(the DI ledger; open items became issues) · [03-open-questions.md](03-open-questions.md)
-(the pre-implementation checklist, with where each item was decided).
+| Page | Area | Describes |
+|---|---|---|
+| [overview.md](architecture/overview.md) | — | the crates, the trust layers, the dependency direction |
+| [compiler-pipeline.md](architecture/compiler-pipeline.md) | compiler | every pass and its diagnostics |
+| [ir.md](architecture/ir.md) | compiler | the intermediate representations and recorded deviations |
+| [executable-ir.md](architecture/executable-ir.md) | codegen | slots, first-order expressions, the evaluation plan |
+| [codegen-rust.md](architecture/codegen-rust.md) | codegen | the owned Rust AST, printed crate, host bridge, differential tests |
+| [behavior-systems.md](architecture/behavior-systems.md) | behavior-systems | components, contracts, instances, bindings, flattening, groups — implementation design |
+| [deployment-read-model.md](architecture/deployment-read-model.md) | deployment | what a Deploy surface is handed |
+| [ide-service.md](architecture/ide-service.md) | ide | overlays, projections, text workspaces, the LSP adapter |
+| [studio-ui.md](architecture/studio-ui.md) | studio | the design system and interaction standard of Studio |
+| [studio-compiler-integration.md](architecture/studio-compiler-integration.md) | studio | the Studio/compiler boundary and its evidence map |
+| [component-boundary.md](architecture/component-boundary.md) | runtime | supplied Rust computation blocks — designed, not built |
+
+### Project
+
+[status.md](project/status.md) · [roadmap.md](project/roadmap.md) ·
+[governance.md](project/governance.md) · [formal-correspondence.md](project/formal-correspondence.md) ·
+[research.md](project/research.md) · [migration-report.md](project/migration-report.md)
+
+### Evidence
+
+[testing.md](evidence/testing.md) — every test suite and what it holds ·
+[behavior-systems-correspondence.md](evidence/behavior-systems-correspondence.md)
+— the behaviour-system implementation object by object against the formal
+theorems and the test that discharges each.
+
+### Guides
+
+[getting-started.md](guides/getting-started.md) — toolchain, map, run,
+reading order · [execution-walkthrough.md](guides/execution-walkthrough.md)
+— one value through a tick · [deployment-walkthrough.md](guides/deployment-walkthrough.md)
+— one design out to a pin.
+
+### Background
+
+[paper-digest.md](background/paper-digest.md) — the paper's engineering-binding
+content (Chinese) · [ide-service-research.md](background/ide-service-research.md)
+— the precedents behind the IDE service.
+
+### Archive
+
+[design-issues-ledger.md](archive/design-issues-ledger.md) — the DI-1…DI-44
+ledger; decided entries stay here because code comments cite them, open
+entries became issues. The pre-implementation checklist was removed on
+2026-09-17; where each of its questions was answered is in the
+[migration report](project/migration-report.md#the-pre-implementation-checklist).
 
 ## Current snapshot — 2026-09-17
 
@@ -55,7 +116,6 @@ user documentation): [EXECUTION_WALKTHROUGH.md](EXECUTION_WALKTHROUGH.md) ·
   behaviour-system layer that flattens into the one flat design, a shared
   IDE service under both Studio and the LSP, and `bdld` as the process
   boundary that Studio (Flutter) talks protobuf to.
-  [ARCHITECTURE.md](ARCHITECTURE.md).
 * **Governing decisions:** ADR-0001/0002 (Rust owns semantics; bdld is a
   process), 0008/0009 (stable ids; revisioned edits), 0010/0011 (Lean is
   the specification; floats are a recorded deviation), 0013/0014/0020
@@ -66,20 +126,19 @@ user documentation): [EXECUTION_WALKTHROUGH.md](EXECUTION_WALKTHROUGH.md) ·
 * **Unresolved:** ten design issues — occurrence windows, candidate
   definitions, the evidence model, affine units, user enums, `f32` on
   device, nested packaging, a structural output entity, projection
-  deltas, temporal modifiers. [issues/README.md](issues/README.md).
+  deltas, temporal modifiers.
 * **Active work:** the first embedded platform adapter is priority 1;
-  nothing is in progress in this repository beyond that ordering.
-  [ROADMAP.md](ROADMAP.md).
-* **Recently changed:** text projects and protocol 0.9 (2026-09-17); the
-  engineering records themselves (this structure).
-  [changes/unreleased/](changes/unreleased/).
+  nothing else is in progress in this repository.
+* **Recently changed:** text projects and protocol 0.9; the engineering
+  records themselves. [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph
 
-Current truth lives in a specification or architecture page and is
-edited in place. A consequential choice gets an ADR that is never
-rewritten — supersede it. Something not yet decided is a proposal or an
-issue, not an ADR. What exists is in the status matrix, not in the ADR
-and not in the roadmap. What changed for someone is a change fragment.
-Run `just docs-check` before committing. The full rules:
-[GOVERNANCE.md](project-records/GOVERNANCE.md).
+Current truth lives in `spec/` or `architecture/` and is edited in place.
+A consequential choice gets an ADR that is never rewritten — supersede
+it. Something not yet decided is a proposal or an issue, not an ADR. What
+exists is in `project/status.md`, not in the ADR and not in the roadmap.
+What changed for someone is a change fragment. A new page goes into its
+kind's folder with a `kind / area / status` header and a row on this
+page. Run `just docs-check` before committing. The full rules:
+[project/governance.md](project/governance.md).

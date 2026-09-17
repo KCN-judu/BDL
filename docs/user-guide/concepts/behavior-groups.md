@@ -78,7 +78,7 @@ outputs* driven by members, *Internal* (members nobody outside reads).
 *For language implementers.* Groups are authoring metadata on the
 authored system (`BehaviorGroup { scope, name, members }`), never read by
 flattening or any analysis; the formal development proves every kernel
-judgment is that of the ungrouped design (ADR-0019, `docs/BEHAVIOR_SYSTEMS.md`
+judgment is that of the ungrouped design (ADR-0019, `docs/evidence/behavior-systems-correspondence.md`
 Phase 8b). The boundary (crossing-in, crossing-out, open, driven,
 private) is a projection of the dependency graph, and an aggregate socket
 adds no dependency edge.

@@ -51,4 +51,4 @@ then press F5 in VS Code (Run Extension), or `npm run package` for a
   renderings, never sources of truth, and are not editable.
 
 See `docs/user-guide/textual/editor-and-lsp.md` for the user guide and
-`docs/IDE_SERVICE_ARCHITECTURE.md` for the design.
+`docs/architecture/ide-service.md` for the design.

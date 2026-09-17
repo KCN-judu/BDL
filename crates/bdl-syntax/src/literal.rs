@@ -4,7 +4,7 @@
 //! [`NumberLiteral::decimal`] reads it as the exact `1 × 10⁻¹`.  Machine
 //! conversion (`to_f64`) exists only for the elaboration boundary and is
 //! recorded as technical debt against the planned exact/symbolic layer
-//! (`docs/TEXTUAL_SYNTAX.md` §2.3, §11; DI-1).
+//! (`docs/spec/textual-syntax.md` §2.3, §11; DI-1).
 
 use serde::{Deserialize, Serialize};
 

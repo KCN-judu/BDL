@@ -1,4 +1,4 @@
-//! Expressions (`docs/TEXTUAL_SYNTAX.md` §4.3, §5): a Pratt loop over the
+//! Expressions (`docs/spec/textual-syntax.md` §4.3, §5): a Pratt loop over the
 //! binary operators, prefix unary, postfix call, and the primary forms
 //! (`if`, `match`, blocks, literals with units, names, parentheses).
 

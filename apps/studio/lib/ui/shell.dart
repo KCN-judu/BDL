@@ -255,7 +255,7 @@ class _StatusLine extends StatelessWidget {
         );
       }
       // Whole-design verdicts of the reactive and output passes, when the
-      // analysis is the one for this revision (docs/STUDIO_COMPILER_INTEGRATION.md).
+      // analysis is the one for this revision (docs/architecture/studio-compiler-integration.md).
       if (state.analysis case final a? when a.revision == p.revision) {
         if (!a.causal) facts.add(Text('not causal', style: small.copyWith(color: t.error)));
         if (!a.clockConsistent) {

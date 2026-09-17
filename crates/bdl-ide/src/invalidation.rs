@@ -1,7 +1,7 @@
 //! Invalidation preview: what an edit would reopen, before it is made.
 //!
 //! BDL's refinement-vs-edit distinction is a model, not UI folklore
-//! (`docs/ARCHITECTURE.md`): every [`EditOp`] classifies itself and names
+//! (`docs/architecture/overview.md`): every [`EditOp`] classifies itself and names
 //! the [`Invalidation`] categories and origin declarations it touches.
 //! This query applies the edit to a *copy* of the effective snapshot,
 //! reads that classification, follows the dependency graph to the

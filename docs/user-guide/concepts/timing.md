@@ -110,9 +110,9 @@ source's previous activation. See [Simulate](../studio/simulate.md).
 `Κ`; the per-declaration judgment is `Clocked`, and a direct cross-domain
 read fails it (`clock.cross_domain_reference`). `delay init e` and
 `sync src init e` are Core forms with explicit state cells; the tick is a
-two-phase read/write. `docs/RUNTIME_SEMANTICS.md`, `docs/COMPILER_PIPELINE.md`
-passes 8–10 and 14, DI-17 in `docs/DESIGN_ISSUES.md`. Frequency is
-deliberately not part of a domain's identity (`docs/02-kernel-spec.md`).
+two-phase read/write. `docs/spec/runtime-semantics.md`, `docs/architecture/compiler-pipeline.md`
+passes 8–10 and 14, DI-17 in `docs/archive/design-issues-ledger.md`. Frequency is
+deliberately not part of a domain's identity (`docs/spec/kernel.md`).
 
 ## Related
 

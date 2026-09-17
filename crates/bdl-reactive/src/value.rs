@@ -3,7 +3,7 @@
 //! share a number are never confused (`Tilt` 0.5 rad is not `MotorAngle`
 //! 0.5 rad).
 //!
-//! Numeric policy (docs/RUNTIME_SEMANTICS.md, DESIGN_ISSUES DI-15): IEEE
+//! Numeric policy (docs/spec/runtime-semantics.md, DESIGN_ISSUES DI-15): IEEE
 //! `f64`; a primitive whose result is not finite (division by zero,
 //! overflow, NaN) is a runtime error that fails the tick — the reference
 //! evaluator never propagates NaN/∞ as a value.  Equality is exact bitwise

@@ -4,7 +4,7 @@
 //! [`SyntaxKind::Error`] tokens covering one whole UTF-8 character.
 //!
 //! Numbers are *spelled*, not valued: a [`SyntaxKind::Number`] token is its
-//! text, and nothing here converts it (`docs/TEXTUAL_SYNTAX.md` §2.3).
+//! text, and nothing here converts it (`docs/spec/textual-syntax.md` §2.3).
 
 use crate::kind::SyntaxKind;
 use crate::syntax::{SyntaxError, SyntaxErrorCode};

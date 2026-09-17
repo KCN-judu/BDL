@@ -4,13 +4,13 @@ state: open
 area: language
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-19"]
+related: ["docs/archive/design-issues-ledger.md#di-19"]
 ---
 # ISS-0005: User-defined enums
 
 ## Problem
 
-`enum` items and constructor patterns parse (`docs/TEXTUAL_SYNTAX.md`) and
+`enum` items and constructor patterns parse (`docs/spec/textual-syntax.md`) and
 every form except a user enum desugars into the existing Core; a user enum
 has no surface-model type and no kernel sum type.
 

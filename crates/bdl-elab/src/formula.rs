@@ -14,7 +14,7 @@
 //! translator.
 //!
 //! Every surface form desugars into the *existing* Core; no primitive was
-//! added for the textual syntax (`docs/TEXTUAL_SYNTAX.md` §11):
+//! added for the textual syntax (`docs/spec/textual-syntax.md` §11):
 //!
 //! | surface | Core |
 //! |---|---|

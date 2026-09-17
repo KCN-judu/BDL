@@ -1,4 +1,4 @@
-//! Module and items (`docs/TEXTUAL_SYNTAX.md` §4.1) and the formula entry
+//! Module and items (`docs/spec/textual-syntax.md` §4.1) and the formula entry
 //! point.
 
 use super::{expr, pattern, types, Parser};

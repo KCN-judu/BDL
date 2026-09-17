@@ -1,4 +1,4 @@
-//! The authored system model (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §1–§4).
+//! The authored system model (docs/architecture/behavior-systems.md §1–§4).
 //!
 //! A [`BehaviorSystem`] is a flat `Design` (`base`) plus components,
 //! instances, bindings and exports.  A flat project is the degenerate
@@ -61,7 +61,7 @@ impl ClockContract {
 /// the declaration behind it — over component-local concepts, shared ones
 /// standing for system concepts through the component's table — its
 /// commitments, and its timing.  Stored explicitly; a body edit never
-/// changes it (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §11).
+/// changes it (docs/architecture/behavior-systems.md §11).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortContract {
     pub signature: Signature,
@@ -141,7 +141,7 @@ impl BehaviorInterface {
 
 /// A reusable behaviour (FV `BehaviorComponent`): an interface over an
 /// ordinary flat design authored with the ordinary edit ops.  Project-local
-/// in this milestone (docs/BEHAVIOR_SYSTEMS.md, limitations).
+/// in this milestone (docs/evidence/behavior-systems-correspondence.md, limitations).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BehaviorComponent {
     pub id: ComponentId,
@@ -292,7 +292,7 @@ pub enum LocalEntity {
     Device(DeviceId),
 }
 
-/// The freshening table (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §5): for every
+/// The freshening table (docs/architecture/behavior-systems.md §5): for every
 /// private entity of every instance, the flat identity it was issued from
 /// the base allocator.  Extended by the edit model, read by `flatten`.
 #[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]

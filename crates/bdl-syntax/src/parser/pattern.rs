@@ -1,4 +1,4 @@
-//! Patterns (`docs/TEXTUAL_SYNTAX.md` §4.4).
+//! Patterns (`docs/spec/textual-syntax.md` §4.4).
 //!
 //! ```text
 //! Pattern            ::= "_" | Name | LiteralPattern | ConstructorPattern

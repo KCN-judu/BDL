@@ -4,7 +4,7 @@ state: deferred
 area: behavior-systems
 opened: 2026-09-16
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-44"]
+related: ["docs/archive/design-issues-ledger.md#di-44"]
 ---
 # ISS-0007: Packaging a group inside a component body
 
@@ -22,7 +22,7 @@ of packaging; without it a body is flat.
 ## Current evidence
 
 * Production: `preview_extraction` refuses a component-scoped group with
-  `extract.not_a_base_group`; `docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md` §13
+  `extract.not_a_base_group`; `docs/architecture/behavior-systems.md` §13
   (option A); DI-44.
 * Formal: `BDL/Behavior/Extract.lean` extracts from a `GroupedDesign`, not
   from a body.

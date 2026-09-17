@@ -1,4 +1,4 @@
-//! The parser test matrix (`docs/TEXTUAL_SYNTAX.md`; task §31–§33).
+//! The parser test matrix (`docs/spec/textual-syntax.md`; task §31–§33).
 
 use crate::ast::{self, AstNode};
 use crate::kind::SyntaxKind;

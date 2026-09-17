@@ -1,4 +1,4 @@
-//! Read-only virtual documents (docs/IDE_SERVICE_ARCHITECTURE.md
+//! Read-only virtual documents (docs/architecture/ide-service.md
 //! "Virtual documents"): the explanation of an entity, the kernel Core
 //! of the design, the generated Rust.  Each is a rendering of the
 //! semantic model or of the compiler's output; none is ever a source of

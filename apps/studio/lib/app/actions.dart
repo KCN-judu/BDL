@@ -54,8 +54,8 @@ class OpenProjectRequested extends UserAction {
   final String rootPath;
 }
 
-/// Create a project of [kind] (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md,
-/// docs/adr/0020-textual-workspace-and-source-identities.md).
+/// Create a project of [kind] (docs/architecture/behavior-systems.md,
+/// docs/decisions/0020-textual-workspace-and-source-identities.md).
 class NewProjectRequested extends UserAction {
   const NewProjectRequested({
     required this.rootPath,

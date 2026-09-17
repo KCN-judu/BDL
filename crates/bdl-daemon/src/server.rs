@@ -391,7 +391,7 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
 /// The draft is an *overlay* on the session's IDE host: the request
 /// updates it, an immutable snapshot of committed + overlays is taken, and
 /// `bdl-ide` returns the stamped verdict — the same path a text editor's
-/// unsaved buffer takes (`docs/IDE_SERVICE_ARCHITECTURE.md`).
+/// unsaved buffer takes (`docs/architecture/ide-service.md`).
 fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraftRequest) -> Resp {
     if let Err(e) = draft_revision(session, r.revision) {
         return Resp::Error(e);
@@ -551,7 +551,7 @@ fn hover_to_pb(h: bdl_ide::SemanticHover, revision: u64) -> pb::DraftHoverRespon
 /// The everyday card for a canvas node or a library row.
 /// The concept libraries this daemon serves.  The Standard Concept Library
 /// is embedded; team/project/package libraries are a loader away
-/// (`docs/STANDARD_CONCEPT_LIBRARY.md`).
+/// (`docs/spec/concept-library.md`).
 fn libraries() -> &'static bdl_library::LibrarySet {
     static LIBRARIES: std::sync::OnceLock<bdl_library::LibrarySet> = std::sync::OnceLock::new();
     LIBRARIES.get_or_init(bdl_library::LibrarySet::standard)

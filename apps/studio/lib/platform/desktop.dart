@@ -1,6 +1,6 @@
 /// Platform facts the UI adapts to.  Studio targets macOS and Windows
 /// (Linux builds too); everything here is a *detail* of one design, not a
-/// second design per platform (docs/STUDIO_UI.md §3).
+/// second design per platform (docs/architecture/studio-ui.md §3).
 library;
 
 import 'dart:io';

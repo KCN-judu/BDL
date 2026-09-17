@@ -7,7 +7,7 @@
 //! computed as before and joined here with the surface names and the
 //! target's wording.  Nothing in it feeds back into either analysis.
 //!
-//! Four different questions, kept apart (docs/DEPLOYMENT_READ_MODEL.md):
+//! Four different questions, kept apart (docs/architecture/deployment-read-model.md):
 //!
 //! | question | answered by | here |
 //! |---|---|---|

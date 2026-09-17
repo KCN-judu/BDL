@@ -1,4 +1,4 @@
-//! The milestone's acceptance scenarios (`docs/IDE_SERVICE_ARCHITECTURE.md`
+//! The milestone's acceptance scenarios (`docs/architecture/ide-service.md`
 //! §Tests): unresolved mappings stay legal and queryable; one entity is
 //! the same entity on both surfaces; a semantic diagnostic is made once
 //! and projected twice; drafts and unsaved documents are overlays; stale

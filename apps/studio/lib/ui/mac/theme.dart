@@ -192,7 +192,7 @@ ThemeData macTheme(Brightness brightness) {
   );
 }
 
-/// The interaction-state standard (docs/STUDIO_UI.md §6), as
+/// The interaction-state standard (docs/architecture/studio-ui.md §6), as
 /// `WidgetStateProperty`s every control theme shares:
 ///
 /// | state    | effect                                     |

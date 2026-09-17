@@ -1,5 +1,5 @@
 /// The inspector: what the selected object means, what can be changed, and
-/// what a change will affect — in the designer's words (docs/STUDIO_UI.md
+/// what a change will affect — in the designer's words (docs/architecture/studio-ui.md
 /// §7, level 2).  Each control commits one `EditOp`.  Formal vocabulary
 /// (ids, kernel types, invalidation categories, core terms) lives in one
 /// collapsed *Explain* disclosure at the end (level 3).

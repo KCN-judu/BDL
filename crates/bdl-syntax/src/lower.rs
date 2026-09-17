@@ -2,7 +2,7 @@
 //! structure of what was written (names, spans, exact literals).  This is
 //! what `bdl-elab` consumes for formulas today and what a textual project
 //! loader will turn into `bdl-model` edits.  Nothing semantic happens here:
-//! no name resolution, no ids, no types (`docs/TEXTUAL_SYNTAX.md` §11).
+//! no name resolution, no ids, no types (`docs/spec/textual-syntax.md` §11).
 //!
 //! Lowering is total on error-free trees.  It refuses trees with syntax
 //! errors (the errors are returned) rather than guessing at missing parts.

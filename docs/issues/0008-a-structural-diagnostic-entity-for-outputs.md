@@ -4,7 +4,7 @@ state: deferred
 area: protocol
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-29"]
+related: ["docs/archive/design-issues-ledger.md#di-29"]
 ---
 # ISS-0008: A structural diagnostic entity for outputs
 

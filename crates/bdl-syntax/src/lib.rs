@@ -1,4 +1,4 @@
-//! The BDL textual syntax (`docs/TEXTUAL_SYNTAX.md`).
+//! The BDL textual syntax (`docs/spec/textual-syntax.md`).
 //!
 //! ```text
 //! source ──lexer──▶ tokens ──parser──▶ events ──sink──▶ Rowan CST

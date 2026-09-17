@@ -104,7 +104,7 @@ carry a *Current status* section because that surface is changing.
 
 * Every page ends with *Related* or *Next*.
 * Link a concept the first time it matters on a page, not every time.
-* *Going deeper* links to `docs/*.md` and `docs/adr/*` with a label —
+* *Going deeper* links to `docs/*.md` and `docs/decisions/*` with a label —
   *for language implementers*, *formal reference* — so a designer knows
   they may stop.
 * Do not repeat another page's explanation; link it.

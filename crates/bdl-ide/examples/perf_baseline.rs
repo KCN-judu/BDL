@@ -1,5 +1,5 @@
 //! Rough timings for the IDE queries on representative designs, to decide
-//! whether finer incremental caching is needed (`docs/IDE_SERVICE_ARCHITECTURE.md`
+//! whether finer incremental caching is needed (`docs/architecture/ide-service.md`
 //! §Performance baseline).  Run with `cargo run --release -p bdl-ide
 //! --example perf_baseline`.
 

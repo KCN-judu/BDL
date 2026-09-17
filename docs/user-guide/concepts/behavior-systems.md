@@ -103,7 +103,7 @@ flat design (ADR-0021 "behaviour systems flatten into the flat design").
 Identities: `ComponentId` (a definition), `ComponentInstanceId` (one use),
 `PortId`, `BindingId`, and the flat `SemanticId` / `DeclId` / `ClockId` /
 `OutputId` per instance — five different kinds of identity that the tool
-never collapses. `docs/BEHAVIOR_SYSTEMS.md` states which formal theorems
+never collapses. `docs/evidence/behavior-systems-correspondence.md` states which formal theorems
 each production step follows and which are restricted (the
 modular-equals-flat result is proved for a single-domain fragment; the
 production claims a differential test, not the theorem).

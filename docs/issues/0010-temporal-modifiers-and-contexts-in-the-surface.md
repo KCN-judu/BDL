@@ -22,7 +22,7 @@ timing is expressed only through domains and `delay`/`sync`.
 
 ## Current evidence
 
-* Production: `docs/TEXTUAL_SYNTAX.md` §12 (reserved words), `bdl-elab`
+* Production: `docs/spec/textual-syntax.md` §12 (reserved words), `bdl-elab`
   refuses contexts with their own clock domain (DI-6).
 * Original entries: `docs/03-open-questions.md` §C (modifier list and
   shapes, context representation).

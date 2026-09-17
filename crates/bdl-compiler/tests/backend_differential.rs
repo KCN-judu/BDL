@@ -100,7 +100,7 @@ fn every_corpus_case_agrees_with_the_reference() {
     for case in corpus() {
         let (art, trace) = differential(&case);
         let g = art.generated.as_ref().unwrap();
-        // Baseline metrics (docs/CODEGEN_RUST.md keeps a snapshot); `--nocapture` to see them.
+        // Baseline metrics (docs/architecture/codegen-rust.md keeps a snapshot); `--nocapture` to see them.
         eprintln!(
             "metrics {}: core {} lines, crate {} bytes, state {} bytes, {} steps in {} ns",
             case.name,

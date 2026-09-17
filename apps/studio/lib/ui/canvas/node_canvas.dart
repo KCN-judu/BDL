@@ -230,7 +230,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
-  /// The contextual menu (docs/STUDIO_UI.md §2): what can be done here,
+  /// The contextual menu (docs/architecture/studio-ui.md §2): what can be done here,
   /// and the compact quick-insert tree — Recent, by role, the three most
   /// common categories, then the Library tab for the rest.
   List<Widget> _menuItems(BuildContext context) {
@@ -1362,7 +1362,7 @@ class _CanvasPainter extends CustomPainter {
 /// Paints one node the way the canvas does — shared with previews, chips
 /// and library rows so a concept looks the same wherever it appears.
 ///
-/// What the geometry means (STUDIO_UI.md §7): socket hue = identity, socket
+/// What the geometry means (docs/architecture/studio-ui.md §7): socket hue = identity, socket
 /// shape = value form (○ quantity, ◇ on–off, □ count, hollow ring while
 /// undecided), dashed outline = declared-not-defined, a red mark at the
 /// definition line = the definition does not check.  No other state is

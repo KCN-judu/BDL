@@ -7008,7 +7008,7 @@ class SetLayoutRequest extends $pb.GeneratedMessage {
 }
 
 /// Sent to subscribers after every committed revision.  v0.1 sends the full
-/// projection; deltas are a planned protocol change (docs/PROTOCOL.md).
+/// projection; deltas are a planned protocol change (docs/spec/protocol.md).
 class ProjectChanged extends $pb.GeneratedMessage {
   factory ProjectChanged({
     ProjectProjection? project,
@@ -11429,7 +11429,7 @@ class DeploymentResponse extends $pb.GeneratedMessage {
 /// (requirements, placement, dead end by stable ids).  Fields 10–15 are
 /// the read model a frontend renders from directly — names, labels, what
 /// is missing, the blocker — composed from the semantic analysis and the
-/// deployment analysis at the daemon (docs/DEPLOYMENT_READ_MODEL.md).
+/// deployment analysis at the daemon (docs/architecture/deployment-read-model.md).
 class DeploymentAnalysis extends $pb.GeneratedMessage {
   factory DeploymentAnalysis({
     $fixnum.Int64? revision,

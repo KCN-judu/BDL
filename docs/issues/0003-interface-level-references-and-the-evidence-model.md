@@ -4,7 +4,7 @@ state: open
 area: formal
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/DESIGN_ISSUES.md#di-5", "docs/03-open-questions.md"]
+related: ["docs/archive/design-issues-ledger.md#di-5", "docs/03-open-questions.md"]
 ---
 # ISS-0003: Interface-level references and the evidence model
 
