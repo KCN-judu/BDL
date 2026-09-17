@@ -1,0 +1,99 @@
+//! `bdld check | compile | simulate` over a text project: the headless
+//! front end reads the same sources through the same loader as the
+//! editors, and its exit code tells a script what it found.
+
+use std::path::Path;
+use std::process::Command;
+
+const CONCEPTS: &str = "concept Tilt : Angle\nconcept Brightness : Scalar\nclock interaction\n";
+const MAIN: &str = "mapping tilt : Tilt @interaction\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) = t / (90 deg)\n\nmapping brightness : Brightness @interaction\nbrightness() = dimByTilt(tiltValue)\n\noutput light : Brightness @interaction\ndrive light = brightness\n";
+
+fn project(root: &Path, main: &str) {
+    std::fs::create_dir_all(root.join("src")).expect("mkdir");
+    std::fs::write(
+        root.join("bdl.toml"),
+        "schema_version = 1\nname = \"lamp\"\ncompiler_version = \"test\"\nkind = \"text\"\n",
+    )
+    .expect("manifest");
+    std::fs::write(root.join("src/concepts.bdl"), CONCEPTS).expect("write");
+    std::fs::write(root.join("src/main.bdl"), main).expect("write");
+}
+
+fn bdld(args: &[&str]) -> (i32, String, String) {
+    let out = Command::new(env!("CARGO_BIN_EXE_bdld"))
+        .args(args)
+        .output()
+        .expect("run bdld");
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}
+
+#[test]
+fn check_compile_and_simulate_a_text_project() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("lamp");
+    project(&root, MAIN);
+    let r = root.to_string_lossy().into_owned();
+
+    let (code, out, err) = bdld(&["check", &r]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out.contains("checks, outputs complete"), "{out}");
+    assert!(!out.contains("error["), "{out}");
+    // Opening allocated the identities: the sidecar is there for the
+    // next tool.
+    assert!(root.join(".bdl/identities.json").is_file());
+
+    let (code, out, _) = bdld(&["check", &r, "--json"]);
+    assert_eq!(code, 0);
+    let v: serde_json::Value =
+        serde_json::from_str(out.lines().next().expect("line")).expect("json");
+    assert!(v["diagnostics"]
+        .as_array()
+        .is_some_and(|d| d.iter().all(|x| x["severity"] != "error")));
+
+    let (code, out, _) = bdld(&[
+        "simulate",
+        &r,
+        "--ticks",
+        "2",
+        "--input",
+        "tilt=0.7853981633974483",
+    ]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("tick 1:"), "{out}");
+    assert!(
+        out.contains("brightness = ") && out.contains("0.5"),
+        "{out}"
+    );
+
+    let out_dir = dir.path().join("gen");
+    let (code, out, err) = bdld(&["compile", &r, "--out", out_dir.to_str().expect("utf8")]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out_dir.join("src/lib.rs").is_file());
+    assert!(out_dir.join("Cargo.toml").is_file());
+}
+
+#[test]
+fn a_fault_in_the_sources_fails_check_with_its_position() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("lamp");
+    project(
+        &root,
+        &MAIN.replace(
+            "mapping brightness : Brightness",
+            "mapping brightness : Glow",
+        ),
+    );
+    let r = root.to_string_lossy().into_owned();
+    let (code, out, _) = bdld(&["check", &r]);
+    assert_eq!(code, 1, "{out}");
+    assert!(out.contains("src/main.bdl:8:"), "{out}");
+    assert!(out.contains("Glow"), "{out}");
+
+    let (code, _, err) = bdld(&["check", dir.path().join("nowhere").to_str().expect("utf8")]);
+    assert_eq!(code, 2);
+    assert!(err.starts_with("error:"), "{err}");
+}
