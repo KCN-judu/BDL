@@ -1003,25 +1003,28 @@ class GroupInspector extends StatelessWidget {
         ),
         InspectorSection(
           title: 'Relationships',
-          trailing: MacButton(
-            label: '+ Add relationship',
-            onPressed: p.concepts.isEmpty
-                ? null
-                : () async {
-                    final r = await showNewMappingSheet(context, p.concepts);
-                    if (r != null && r.name.isNotEmpty) {
-                      dispatch(
-                        CreateMappingRequested(
-                          name: r.name,
-                          inputs: r.inputs,
-                          output: r.output,
-                          group: id,
-                        ),
-                      );
-                    }
-                  },
-          ),
           children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: MacButton(
+                label: '+ Add relationship',
+                onPressed: p.concepts.isEmpty
+                    ? null
+                    : () async {
+                        final r = await showNewMappingSheet(context, p.concepts);
+                        if (r != null && r.name.isNotEmpty) {
+                          dispatch(
+                            CreateMappingRequested(
+                              name: r.name,
+                              inputs: r.inputs,
+                              output: r.output,
+                              group: id,
+                            ),
+                          );
+                        }
+                      },
+              ),
+            ),
             if (members.isEmpty) Text('Empty. Drag relationships in, or add one.', style: small),
             for (final m in members)
               Padding(

@@ -444,8 +444,16 @@ Transition systemAction(AppState s, UserAction a) {
     case ExtractionConfirmed():
       final x = s.editor.extraction;
       if (x == null || x.preview == null || x.error != null) return Transition(s);
+      // Remember where the group stands now: the answer may arrive after a
+      // pushed projection has already retired it.
+      final members = s.group(x.groupId)?.members.map((m) => m.toInt()).toList() ?? const [];
+      final nodes = s.editor.layouts.system.nodes;
+      final captured = x.copyWith(
+        memberPositions: {for (final m in members) NodeRef.mapping(m): ?nodes[NodeRef.mapping(m)]},
+        box: s.editor.layouts.system.groups[x.groupId]?.rect,
+      );
       return sendSystemEdit(
-        s,
+        s.copyWith(editor: s.editor.copyWith(extraction: captured)),
         pb.SystemEditOp(
           extractGroupAsComponent: pb.ExtractGroupAsComponent(
             group: Int64(x.groupId),
@@ -734,20 +742,17 @@ Transition systemEditApplied(
       // The packaged group's instance stands where the group stood; the
       // component's own canvas opens laid out as the group was.
       final groupId = extraction.groupId;
-      final members = s.group(groupId)?.members.map((m) => m.toInt()).toList() ?? const [];
-      final box = layouts.system.groups[groupId];
-      final memberPositions = {
-        for (final m in members) NodeRef.mapping(m): ?layouts.system.nodes[NodeRef.mapping(m)],
-      };
-      final at = box != null && box.rect != Rect.zero
-          ? box.rect.topLeft
+      final memberPositions = extraction.memberPositions;
+      final box = extraction.box;
+      final at = box != null && box != Rect.zero
+          ? box.topLeft
           : memberPositions.isEmpty
           ? null
           : memberPositions.values.reduce((a, b) => Offset(min(a.dx, b.dx), min(a.dy, b.dy)));
       var system = {...layouts.system.nodes};
       if (at != null) system[node] = at;
-      for (final m in members) {
-        system.remove(NodeRef.mapping(m));
+      for (final m in memberPositions.keys) {
+        system.remove(m);
       }
       layouts = CanvasLayout(
         system: ContextLayout(

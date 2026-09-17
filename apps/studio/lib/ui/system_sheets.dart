@@ -249,18 +249,21 @@ class ExtractionSheet extends StatelessWidget {
                     child: Row(
                       children: [
                         Expanded(child: Text(o.name, style: body)),
-                        MacSegmented<bool>(
-                          value: o.asInput,
-                          options: const {true: 'Treat as input', false: 'Keep internal'},
-                          onChanged: (v) {
-                            final keep = {...x.keepInternal};
-                            if (v) {
-                              keep.remove(o.decl.toInt());
-                            } else {
-                              keep.add(o.decl.toInt());
-                            }
-                            dispatch(ExtractionChoicesChanged(keepInternal: keep));
-                          },
+                        SizedBox(
+                          width: 250,
+                          child: MacSegmented<bool>(
+                            value: o.asInput,
+                            options: const {true: 'Treat as input', false: 'Keep internal'},
+                            onChanged: (v) {
+                              final keep = {...x.keepInternal};
+                              if (v) {
+                                keep.remove(o.decl.toInt());
+                              } else {
+                                keep.add(o.decl.toInt());
+                              }
+                              dispatch(ExtractionChoicesChanged(keepInternal: keep));
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -280,18 +283,21 @@ class ExtractionSheet extends StatelessWidget {
                             style: body,
                           ),
                         ),
-                        MacSegmented<bool>(
-                          value: d.internal,
-                          options: const {false: 'Stays the system\'s', true: 'Moves inside'},
-                          onChanged: (v) {
-                            final inside = {...x.internalizeSinks};
-                            if (v) {
-                              inside.add(d.output.toInt());
-                            } else {
-                              inside.remove(d.output.toInt());
-                            }
-                            dispatch(ExtractionChoicesChanged(internalizeSinks: inside));
-                          },
+                        SizedBox(
+                          width: 250,
+                          child: MacSegmented<bool>(
+                            value: d.internal,
+                            options: const {false: 'Stays the system\'s', true: 'Moves inside'},
+                            onChanged: (v) {
+                              final inside = {...x.internalizeSinks};
+                              if (v) {
+                                inside.add(d.output.toInt());
+                              } else {
+                                inside.remove(d.output.toInt());
+                              }
+                              dispatch(ExtractionChoicesChanged(internalizeSinks: inside));
+                            },
+                          ),
                         ),
                       ],
                     ),

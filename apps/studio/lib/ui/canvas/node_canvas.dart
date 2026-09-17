@@ -197,7 +197,11 @@ class _NodeCanvasState extends State<NodeCanvas> {
       }(),
       HitNothing() => null,
     };
-    if (node != null) widget.dispatch(SelectionChanged(_select(node)));
+    // A right-click on one of several selected nodes keeps the selection:
+    // the menu is about all of them.
+    final sel = widget.selection;
+    final inMulti = node != null && sel is MultiSelected && sel.nodes.contains(node);
+    if (node != null && !inMulti) widget.dispatch(SelectionChanged(_select(node)));
     setState(() {
       _menuScene = p;
       _menuNode = node;
@@ -473,10 +477,39 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
-  void _onPanStart(DragStartDetails d) {
+  /// Where the button went down: a drag is about what was *pressed*, not
+  /// where the pointer had got to when the drag was recognised.
+  Offset? _downLocal;
+
+  void _onPanDown(DragDownDetails d) {
+    _downLocal = d.localPosition;
+  }
+
+  /// A click (no drag): select what is under it; ⇧ extends the selection.
+  void _onTapUp(TapUpDetails d) {
     _focus.requestFocus();
     final scene = _scene(widget.layout);
     final p = _toScene(d.localPosition);
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    switch (hitTest(scene, p)) {
+      case HitNode(:final node):
+        widget.dispatch(SelectionChanged(shift ? _extend(node.ref) : _select(node.ref)));
+      case HitSocket(:final node):
+        widget.dispatch(SelectionChanged(shift ? _extend(node.ref) : _select(node.ref)));
+      case HitGroup(:final group):
+        final ref = NodeRef.group(group.id);
+        widget.dispatch(SelectionChanged(shift ? _extend(ref) : GroupSelected(group.id)));
+      case HitLink(:final link):
+        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
+      case HitNothing():
+        if (!shift) widget.dispatch(const SelectionChanged(NoSelection()));
+    }
+  }
+
+  void _onPanStart(DragStartDetails d) {
+    _focus.requestFocus();
+    final scene = _scene(widget.layout);
+    final p = _toScene(_downLocal ?? d.localPosition);
     final shift = HardwareKeyboard.instance.isShiftPressed;
     switch (hitTest(scene, p)) {
       case HitSocket(:final socket):
@@ -915,6 +948,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
                     }),
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
+                      onTapUp: _onTapUp,
+                      onPanDown: _onPanDown,
                       onPanStart: _onPanStart,
                       onPanUpdate: _onPanUpdate,
                       onPanEnd: _onPanEnd,

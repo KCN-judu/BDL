@@ -668,7 +668,10 @@ CanvasScene buildScene(
             : memberRects.isEmpty
             ? NodeMetrics.origin
             : memberRects.reduce((a, b) => a.expandToInclude(b)).topLeft -
-                  const Offset(NodeMetrics.regionPadding, NodeMetrics.regionTitle);
+                  const Offset(
+                    NodeMetrics.regionPadding,
+                    NodeMetrics.regionPadding + NodeMetrics.regionTitle,
+                  );
         final rect = Rect.fromLTWH(
           origin.dx,
           origin.dy,

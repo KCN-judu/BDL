@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../app/actions.dart';
 import '../app/state.dart';
+import '../app/system.dart' show freshGroupName;
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/concept_glyphs.dart';
 import 'concept_library_panel.dart';
@@ -206,23 +207,25 @@ class _ProjectObjects extends StatelessWidget {
                         selected: sel is InstanceSelected && sel.id == i.id.toInt(),
                         onTap: () => dispatch(SelectionChanged(InstanceSelected(i.id.toInt()))),
                       ),
-                    _Section(
-                      title: 'Groups',
-                      onAdd: () => dispatch(
-                        CreateGroupRequested(name: 'Group ${state.system!.groups.length + 1}'),
-                      ),
-                    ),
-                    for (final g in state.system!.groups)
-                      _Row(
-                        glyph: _GroupGlyph(
-                          collapsed:
-                              state.editor.contextLayout.groups[g.id.toInt()]?.collapsed ?? false,
-                        ),
-                        title: g.name,
-                        selected: sel is GroupSelected && sel.id == g.id.toInt(),
-                        onTap: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
-                      ),
                   ],
+                  // Behaviours of the design on screen: the system's own,
+                  // or the open component's.
+                  _Section(
+                    title: 'Behaviors',
+                    onAdd: () => dispatch(
+                      CreateGroupRequested(name: freshGroupName(state), renameAfter: true),
+                    ),
+                  ),
+                  for (final g in state.groupsInView)
+                    _Row(
+                      glyph: _GroupGlyph(
+                        collapsed:
+                            state.editor.contextLayout.groups[g.id.toInt()]?.collapsed ?? false,
+                      ),
+                      title: g.name,
+                      selected: sel is GroupSelected && sel.id == g.id.toInt(),
+                      onTap: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
+                    ),
                 ] else
                   const _Section(title: 'Components'),
               ],

@@ -162,6 +162,7 @@ AppState opened({
 }
 
 void main() {
+  scopedGroupTests();
   group('the design in view', () {
     test('a system project opens on its top level and asks for the system', () {
       final t = reduce(connected(), ProjectReceived(flat()));
@@ -415,7 +416,10 @@ void main() {
       expect(e.selection, const InstanceSelected(9));
       expect(e.layout[const NodeRef.instance(9)], const Offset(30, 40));
       expect(e.layouts.system.groups.containsKey(7), isFalse);
-      expect(e.layouts.components[3]!.nodes[const NodeRef.mapping(brightness)], const Offset(50, 60));
+      expect(
+        e.layouts.components[3]!.nodes[const NodeRef.mapping(brightness)],
+        const Offset(50, 60),
+      );
       expect(e.layout.containsKey(const NodeRef.mapping(brightness)), isFalse);
       expect(applied.effects.whereType<SetLayout>(), hasLength(1));
     });
@@ -547,5 +551,169 @@ void main() {
     expect(back.system, layouts.system);
     expect(back.components, layouts.components);
     expect(back.components[2]!.groups[9]!.rect, const Rect.fromLTWH(5, 6, 7, 8));
+  });
+}
+
+void scopedGroupTests() {
+  test('a group made in a component\'s source belongs to that component', () {
+    var s = opened();
+    s = reduce(s, const ContextChanged(ComponentContext(comp))).state;
+    final t = reduce(s, const CreateGroupRequested(name: 'Dimming', members: [0]));
+    final op = t.effects.whereType<ApplyGroupEdit>().single.op.createGroup;
+    expect(op.component.toInt(), comp);
+    expect(op.members.map((m) => m.toInt()), [0]);
+    // groups in view are the component's; the system's own are not shown
+    s = reduce(
+      t.state,
+      SystemReceived(
+        system(
+          generation: 1,
+          groups: [
+            pb.BehaviorGroupView(id: Int64(3), name: 'Lamp', members: [Int64(brightness)]),
+            pb.BehaviorGroupView(
+              id: Int64(4),
+              name: 'Dimming',
+              members: [Int64(0)],
+              component: Int64(comp),
+            ),
+          ],
+        ),
+      ),
+    ).state;
+    expect(s.groupsInView.map((g) => g.name), ['Dimming']);
+    expect(s.groupOf(0)!.name, 'Dimming');
+    s = reduce(s, const ContextChanged(SystemContext())).state;
+    expect(s.groupsInView.map((g) => g.name), ['Lamp']);
+    expect(s.groupOf(0), isNull, reason: 'a body id means nothing at the top level');
+  });
+
+  test(
+    'collapse, move, expand: hidden members travel with the box, nothing jumps to the origin',
+    () {
+      var s = opened(
+        groups: [
+          pb.BehaviorGroupView(
+            id: Int64(7),
+            name: 'Lamp',
+            members: [Int64(brightness), Int64(mirror)],
+          ),
+        ],
+      );
+      s = reduce(s, const NodeMoved(NodeRef.mapping(brightness), Offset(100, 100))).state;
+      s = reduce(s, const NodeMoved(NodeRef.mapping(mirror), Offset(100, 260))).state;
+      // collapsing without a stored box: the box starts where the members are
+      s = reduce(s, const GroupCollapsedChanged(id: 7, collapsed: true)).state;
+      final box = s.editor.contextLayout.groups[7]!;
+      expect(box.collapsed, isTrue);
+      expect(
+        box.rect.topLeft,
+        const Offset(84, 62),
+        reason: 'members\' top-left minus the region inset',
+      );
+      // moving the collapsed node (a group node) is a box move; members follow
+      final t = reduce(s, const NodeMoved(NodeRef.group(7), Offset(384, 562)));
+      s = t.state;
+      expect(t.effects.whereType<SetLayout>(), hasLength(1));
+      expect(s.editor.contextLayout.groups[7]!.rect.topLeft, const Offset(384, 562));
+      expect(s.editor.layout[const NodeRef.mapping(brightness)], const Offset(400, 600));
+      expect(s.editor.layout[const NodeRef.mapping(mirror)], const Offset(400, 760));
+      // expanding restores the stored internal layout, translated by the delta
+      s = reduce(s, const GroupCollapsedChanged(id: 7, collapsed: false)).state;
+      expect(s.editor.contextLayout.groups[7]!.collapsed, isFalse);
+      expect(s.editor.layout[const NodeRef.mapping(brightness)], const Offset(400, 600));
+      final scene = buildScene(
+        s.project!,
+        s.editor.layout,
+        system: SystemSceneInput(
+          system: s.system,
+          groups: s.groupsInView,
+          groupBoxes: s.editor.contextLayout.groups,
+        ),
+      );
+      expect(scene.groups.single.rect.contains(const Offset(420, 620)), isTrue);
+      expect(s.revision, 3, reason: 'layout is never a revision');
+    },
+  );
+
+  test('a group edit dirties the project without a revision; a save clears it', () {
+    var s = opened();
+    expect(s.project!.dirty, isFalse);
+    s = reduce(s, SystemReceived(system(generation: 1)..dirty = true)).state;
+    expect(s.project!.dirty, isTrue);
+    expect(s.revision, 3);
+    // the save answers with the same revision, not dirty: the view follows
+    s = reduce(s, ProjectReceived(flat()..dirty = false)).state;
+    expect(s.project!.dirty, isFalse);
+    expect(s.system!.dirty, isFalse);
+  });
+
+  test('a stale authoring generation is refused; Studio refreshes the table', () {
+    final s = opened();
+    final t = reduce(
+      s,
+      const RequestFailed(code: 'group_edit.stale_generation', message: 'the table moved'),
+    );
+    expect(t.state.editor.lastError!.code, 'group_edit.stale_generation');
+    expect(t.effects.whereType<GetSystem>(), hasLength(1));
+    expect(t.state.editor.renameNextGroup, isFalse);
+  });
+
+  test('the viewport is layout of its canvas', () {
+    var s = opened();
+    final t = reduce(s, const ViewportChanged(pan: Offset(10, 20), zoom: 0.5));
+    expect(t.effects.whereType<SetLayout>().single.layout.viewport.zoom, 0.5);
+    s = reduce(t.state, const ContextChanged(ComponentContext(comp))).state;
+    expect(s.editor.contextLayout.viewport, isNull, reason: 'another canvas, its own viewport');
+    s = reduce(s, const ContextChanged(SystemContext())).state;
+    expect(s.editor.contextLayout.viewport!.zoom, 0.5);
+  });
+
+  test('a multi-selection groups only the free relationships of the design on screen', () {
+    var s = opened(
+      groups: [
+        pb.BehaviorGroupView(id: Int64(7), name: 'Lamp', members: [Int64(mirror)]),
+      ],
+    );
+    s = reduce(
+      s,
+      SelectionChanged(
+        MultiSelected({
+          const NodeRef.mapping(brightness),
+          const NodeRef.mapping(mirror),
+          const NodeRef.concept(tilt),
+        }),
+      ),
+    ).state;
+    final t = reduce(s, const GroupSelectionRequested());
+    final op = t.effects.whereType<ApplyGroupEdit>().single.op.createGroup;
+    expect(op.name, 'Behavior');
+    expect(op.members.map((m) => m.toInt()), [brightness], reason: 'mirror is already in Lamp');
+    expect(t.state.editor.renameNextGroup, isTrue);
+  });
+
+  test('a group created from the canvas is selected and opens for naming when it arrives', () {
+    var s = opened();
+    final t = reduce(
+      s,
+      const CreateGroupRequested(name: 'Behavior', members: [brightness], renameAfter: true),
+    );
+    expect(t.effects.whereType<ApplyGroupEdit>().single.baseGeneration, 0);
+    expect(t.state.editor.renameNextGroup, isTrue);
+    s = reduce(
+      t.state,
+      SystemReceived(
+        system(
+          generation: 1,
+          groups: [
+            pb.BehaviorGroupView(id: Int64(7), name: 'Behavior', members: [Int64(brightness)]),
+          ],
+        ),
+      ),
+    ).state;
+    expect(s.editor.pendingRequests, 0);
+    expect(s.groupsInView.single.id.toInt(), 7);
+    expect(s.editor.selection, const GroupSelected(7));
+    expect(s.editor.renaming, const NodeRef.group(7));
+    expect(s.editor.renameNextGroup, isFalse);
   });
 }

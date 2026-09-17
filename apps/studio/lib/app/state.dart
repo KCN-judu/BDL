@@ -365,6 +365,8 @@ class ExtractionState {
     this.generation = 0,
     this.pending = true,
     this.error,
+    this.memberPositions = const {},
+    this.box,
   });
   final int groupId;
   final String name;
@@ -380,6 +382,12 @@ class ExtractionState {
   final bool pending;
   final String? error;
 
+  /// Where the group's members and box stood when packaging was confirmed:
+  /// the instance takes the box's place and the component's canvas starts
+  /// from the members' positions, whatever arrives first afterwards.
+  final Map<NodeRef, Offset> memberPositions;
+  final Rect? box;
+
   ExtractionState copyWith({
     String? name,
     String? instanceName,
@@ -390,6 +398,8 @@ class ExtractionState {
     bool? pending,
     String? error,
     bool clearError = false,
+    Map<NodeRef, Offset>? memberPositions,
+    Rect? box,
   }) => ExtractionState(
     groupId: groupId,
     name: name ?? this.name,
@@ -400,6 +410,8 @@ class ExtractionState {
     generation: generation ?? this.generation,
     pending: pending ?? this.pending,
     error: clearError ? null : (error ?? this.error),
+    memberPositions: memberPositions ?? this.memberPositions,
+    box: box ?? this.box,
   );
 
   pb.ExtractionChoices get choices => pb.ExtractionChoices(
