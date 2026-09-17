@@ -33,6 +33,14 @@ docs-lint:
 docs-check: docs-lint
     python3 scripts/validate_docs.py
     python3 -m unittest scripts/test_validate_docs.py
+    python3 scripts/check_screenshots.py
+
+# Capture the user guide's screenshots from the real Studio against the real
+# bdld on docs/fixtures/*, as docs/user-guide/screenshots/manifest.json says
+# (writes the PNGs under docs/user-guide/assets and the capture ledger).
+docs-shots: build
+    cd {{studio}} && DOCS_SHOTS=1 {{flutter}} test test/docs_screenshots_test.dart
+    python3 scripts/check_screenshots.py
 
 # ---- Rust -----------------------------------------------------------------
 
@@ -83,7 +91,9 @@ studio-analyze:
 studio-test: build
     cd {{studio}} && {{flutter}} test
 
-# Render the Studio shell to PNGs (light/dark) with the real system font.
+# Render the Studio shell from hand-built state to PNGs (light/dark) for a
+# quick look at the chrome.  Not a documentation source: the user guide's
+# screenshots come from `just docs-shots`.
 studio-snap out="/tmp/bdl-snap":
     mkdir -p {{out}}
     cd {{studio}} && SNAP_DIR={{out}} {{flutter}} test --update-goldens test/snapshot_preview_test.dart

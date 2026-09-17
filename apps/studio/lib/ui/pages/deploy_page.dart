@@ -409,6 +409,7 @@ class _DeadEndView extends StatelessWidget {
         .map((d) => d.explanation)
         .firstOrNull;
     return Container(
+      key: const ValueKey('dead-end'),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: t.error.withValues(alpha: 0.06),
@@ -421,7 +422,7 @@ class _DeadEndView extends StatelessWidget {
         children: [
           Text(
             headline ?? 'Could not place $what of $who.',
-            key: const ValueKey('dead-end'),
+            key: const ValueKey('dead-end-headline'),
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
           ),
           if (explanation != null && explanation.isNotEmpty) Text(explanation, style: small),
