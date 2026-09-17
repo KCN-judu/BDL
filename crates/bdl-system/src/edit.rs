@@ -786,6 +786,9 @@ pub fn apply_system_edit(
             copy.id = new_id;
             copy.name = name;
             s.components.insert(new_id, copy);
+            // The version's authoring structure comes along, with ids of
+            // its own (DI-43).
+            crate::group::copy_groups(&mut s, *id, new_id);
             let mut o = SystemEditOutcome::refinement();
             o.created_component = Some(new_id);
             o

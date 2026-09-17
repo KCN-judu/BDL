@@ -90,35 +90,88 @@ class GroupBox {
   int get hashCode => Object.hash(rect, collapsed);
 }
 
-/// Every canvas of the project: the system (or flat) canvas, its group
-/// boxes, and one canvas per component body.  Studio authors it; the
-/// daemon stores it whole (`SetLayout`).  Never semantics (ADR-0003).
+/// Where the designer left a canvas: pan and zoom.
+@immutable
+class CanvasViewport {
+  const CanvasViewport({required this.pan, required this.zoom});
+  final Offset pan;
+  final double zoom;
+  @override
+  bool operator ==(Object other) =>
+      other is CanvasViewport && other.pan == pan && other.zoom == zoom;
+  @override
+  int get hashCode => Object.hash(pan, zoom);
+}
+
+/// One canvas's picture: node positions, group boxes, viewport.  A
+/// component's source has its own; coordinates are never shared between
+/// canvases.
+@immutable
+class ContextLayout {
+  const ContextLayout({this.nodes = const {}, this.groups = const {}, this.viewport});
+  final Map<NodeRef, Offset> nodes;
+  final Map<int, GroupBox> groups;
+  final CanvasViewport? viewport;
+
+  ContextLayout copyWith({
+    Map<NodeRef, Offset>? nodes,
+    Map<int, GroupBox>? groups,
+    CanvasViewport? viewport,
+  }) => ContextLayout(
+    nodes: nodes ?? this.nodes,
+    groups: groups ?? this.groups,
+    viewport: viewport ?? this.viewport,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is ContextLayout &&
+      mapEquals(other.nodes, nodes) &&
+      mapEquals(other.groups, groups) &&
+      other.viewport == viewport;
+  @override
+  int get hashCode => Object.hash(nodes.length, groups.length, viewport);
+}
+
+/// Every canvas of the project: the system (or flat) canvas and one canvas
+/// per component body.  Studio authors it; the daemon stores it whole
+/// (`SetLayout`).  Never semantics (ADR-0003).
 @immutable
 class CanvasLayout {
-  const CanvasLayout({this.system = const {}, this.groups = const {}, this.components = const {}});
-  final Map<NodeRef, Offset> system;
-  final Map<int, GroupBox> groups;
-  final Map<int, Map<NodeRef, Offset>> components;
+  const CanvasLayout({this.system = const ContextLayout(), this.components = const {}});
+  final ContextLayout system;
+  final Map<int, ContextLayout> components;
 
-  Map<NodeRef, Offset> of(DesignContext c) => switch (c) {
+  ContextLayout of(DesignContext c) => switch (c) {
     SystemContext() => system,
-    ComponentContext(:final id) => components[id] ?? const {},
+    ComponentContext(:final id) => components[id] ?? const ContextLayout(),
   };
 
-  CanvasLayout withNodes(DesignContext c, Map<NodeRef, Offset> nodes) => switch (c) {
-    SystemContext() => CanvasLayout(system: nodes, groups: groups, components: components),
+  /// The group boxes of the canvas on screen.
+  Map<int, GroupBox> groupsOf(DesignContext c) => of(c).groups;
+
+  CanvasLayout withContext(DesignContext c, ContextLayout layout) => switch (c) {
+    SystemContext() => CanvasLayout(system: layout, components: components),
     ComponentContext(:final id) => CanvasLayout(
       system: system,
-      groups: groups,
-      components: {...components, id: nodes},
+      components: {...components, id: layout},
     ),
   };
 
-  CanvasLayout withGroup(int id, GroupBox box) =>
-      CanvasLayout(system: system, groups: {...groups, id: box}, components: components);
+  CanvasLayout withNodes(DesignContext c, Map<NodeRef, Offset> nodes) =>
+      withContext(c, of(c).copyWith(nodes: nodes));
 
-  CanvasLayout withoutGroup(int id) =>
-      CanvasLayout(system: system, groups: {...groups}..remove(id), components: components);
+  CanvasLayout withGroup(DesignContext c, int id, GroupBox box) =>
+      withContext(c, of(c).copyWith(groups: {...of(c).groups, id: box}));
+
+  CanvasLayout withoutGroup(DesignContext c, int id) =>
+      withContext(c, of(c).copyWith(groups: {...of(c).groups}..remove(id)));
+
+  CanvasLayout withViewport(DesignContext c, CanvasViewport v) =>
+      withContext(c, of(c).copyWith(viewport: v));
+
+  CanvasLayout withoutComponent(int id) =>
+      CanvasLayout(system: system, components: {...components}..remove(id));
 }
 
 /// A project the user opened before.  App-level preference, not project data.
@@ -259,6 +312,18 @@ class GroupSelected extends Selection {
   bool operator ==(Object other) => other is GroupSelected && other.id == id;
   @override
   int get hashCode => Object.hash(GroupSelected, id);
+}
+
+/// Several canvas nodes at once (box select, ⇧-click): the inspector offers
+/// what applies to all of them — grouping the relationships among them.
+class MultiSelected extends Selection {
+  const MultiSelected(this.nodes);
+  final Set<NodeRef> nodes;
+  Iterable<int> get mappings => nodes.where((n) => n.kind == NodeKind.mapping).map((n) => n.id);
+  @override
+  bool operator ==(Object other) => other is MultiSelected && setEquals(other.nodes, nodes);
+  @override
+  int get hashCode => Object.hash(MultiSelected, nodes.length);
 }
 
 /// A link drawn between two sockets that cannot be made silently: the
@@ -744,6 +809,7 @@ class EditorState {
     this.pendingPlacement,
     this.pendingGroupFor,
     this.queuedSystemEdits = const [],
+    this.renameNextGroup = false,
   });
 
   final StudioPage page;
@@ -775,6 +841,10 @@ class EditorState {
   /// System edits still to send, one per confirmed revision (a connect
   /// after its disconnect).
   final List<pb.SystemEditOp> queuedSystemEdits;
+
+  /// A group is being created from the canvas: when it arrives, select it
+  /// and open its name for editing (create-then-rename, no modal).
+  final bool renameNextGroup;
 
   /// Requests sent to the daemon and not yet answered.
   final int pendingRequests;
@@ -877,6 +947,7 @@ class EditorState {
     int? pendingGroupFor,
     bool clearPendingGroup = false,
     List<pb.SystemEditOp>? queuedSystemEdits,
+    bool? renameNextGroup,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -907,8 +978,12 @@ class EditorState {
       pendingPlacement: clearPendingPlacement ? null : (pendingPlacement ?? this.pendingPlacement),
       pendingGroupFor: clearPendingGroup ? null : (pendingGroupFor ?? this.pendingGroupFor),
       queuedSystemEdits: queuedSystemEdits ?? this.queuedSystemEdits,
+      renameNextGroup: renameNextGroup ?? this.renameNextGroup,
     );
   }
+
+  /// The layout of the canvas on screen.
+  ContextLayout get contextLayout => layouts.of(context);
 
   /// The component whose source is on screen, for scoped requests.
   int? get componentScope => switch (context) {
@@ -1023,15 +1098,27 @@ class AppState {
   pb.BehaviorGroupView? group(int id) =>
       system?.groups.where((g) => g.id.toInt() == id).firstOrNull;
 
+  /// The groups of the design on screen: the system's own, or the open
+  /// component's.
+  List<pb.BehaviorGroupView> get groupsInView => switch (editor.context) {
+    SystemContext() => [...?system?.groups.where((g) => !g.hasComponent())],
+    ComponentContext(:final id) => [
+      ...?system?.groups.where((g) => g.hasComponent() && g.component.toInt() == id),
+    ],
+  };
+
+  /// The scope a group created now belongs to.
+  int? get groupScopeComponent => editor.componentScope;
+
   /// A group's boundary: the system view carries it at every authoring
   /// generation (read off the revision's analysis, never re-analysed).
   pb.BehaviorGroupBoundaryView? boundary(int group) =>
       system?.boundaries.where((g) => g.id.toInt() == group).firstOrNull ??
       systemAnalysis?.groups.where((g) => g.id.toInt() == group).firstOrNull;
 
-  /// The group a base relationship belongs to, if any.
+  /// The group a relationship of the design on screen belongs to, if any.
   pb.BehaviorGroupView? groupOf(int mappingId) =>
-      system?.groups.where((g) => g.members.any((m) => m.toInt() == mappingId)).firstOrNull;
+      groupsInView.where((g) => g.members.any((m) => m.toInt() == mappingId)).firstOrNull;
 
   /// The component whose source is open, if any.
   pb.ComponentView? get openComponent => switch (editor.context) {
@@ -1069,6 +1156,10 @@ class AppState {
   /// The output pass verdict for one sink at the current revision.
   pb.OutputAnalysis? outputAnalysis(int id) =>
       contextAnalysis?.outputs.where((o) => o.id.toInt() == id).firstOrNull;
+
+  /// The system's authoring generation, for group edits (a stale one is
+  /// refused).
+  int? get authoringGeneration => system?.authoringGeneration.toInt();
 
   /// The selected entity, by identity, for service queries.  The IDE
   /// service answers about the flat design, so only the system context's

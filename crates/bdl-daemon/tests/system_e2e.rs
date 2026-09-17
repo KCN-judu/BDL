@@ -581,10 +581,12 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     assert!(d.design_ready);
 
     // undo the last binding: lampB's port is open again; redo restores it
-    let Resp::EditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+    // (a system project answers with the system alongside)
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
         panic!()
     };
     assert_eq!(u.project.as_ref().unwrap().revision, c.last_revision);
+    assert!(u.system.is_some());
     let a = c.system_analysis();
     assert_eq!(st(&a, lamp_b, port_in), pb::PortStatusKind::Open);
     assert_eq!(a.acceptance(), pb::SystemAcceptance::Open);
@@ -832,6 +834,7 @@ fn grouping_and_extraction_over_the_wire() {
     let group_edit = |c: &mut Client, op: pb::group_edit_op::Op| -> pb::SystemView {
         match c.call(Req::ApplyGroupEdit(pb::ApplyGroupEditRequest {
             op: Some(pb::GroupEditOp { op: Some(op) }),
+            base_generation: None,
         })) {
             Resp::System(s) => s.system.unwrap(),
             other => panic!("{other:?}"),
@@ -843,6 +846,7 @@ fn grouping_and_extraction_over_the_wire() {
             name: "Lamp".into(),
             description: "dims with tilt".into(),
             members: vec![dim],
+            component: None,
         }),
     );
     assert_eq!(v.authoring_generation, 1);
@@ -879,10 +883,99 @@ fn grouping_and_extraction_over_the_wire() {
                 decl: dim,
             })),
         }),
+        base_generation: None,
     })) else {
         panic!()
     };
     assert_eq!(e.code, "group_edit.unknown_group");
+
+    // --- authoring history: undo/redo of group edits move no revision ---
+    let saved_before = c.call(Req::SaveProject(pb::SaveProjectRequest {}));
+    let Resp::Project(sp) = saved_before else {
+        panic!()
+    };
+    assert!(!sp.project.unwrap().dirty);
+    assert!(!c.system().dirty);
+    group_edit(
+        &mut c,
+        pb::group_edit_op::Op::RenameGroup(pb::RenameGroup {
+            id: group,
+            name: "Adaptive lamp".into(),
+        }),
+    );
+    // a group edit dirties the project although the revision is unchanged
+    let v = c.system();
+    assert!(v.dirty, "a group edit needs saving");
+    assert_eq!(v.revision, revision);
+    let Resp::Project(p) = c.call(Req::GetProject(pb::GetProjectRequest {})) else {
+        panic!()
+    };
+    assert!(p.project.unwrap().dirty);
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    let v = u.system.unwrap();
+    assert_eq!(v.groups[0].name, "Lamp");
+    assert_eq!(v.revision, revision, "an authoring undo is not a revision");
+    assert_eq!(u.project.as_ref().unwrap().revision, revision);
+    assert!(v.authoring_generation > 3);
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {})) else {
+        panic!()
+    };
+    assert_eq!(r.system.unwrap().groups[0].name, "Adaptive lamp");
+    assert_eq!(c.last_revision, revision);
+    // undo twice more: the member add, then the group's creation
+    c.call(Req::Undo(pb::UndoRequest {}));
+    c.call(Req::Undo(pb::UndoRequest {}));
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    assert!(u.system.unwrap().groups.is_empty());
+    assert_eq!(c.last_revision, revision);
+    c.call(Req::Redo(pb::RedoRequest {}));
+    c.call(Req::Redo(pb::RedoRequest {}));
+    c.call(Req::Redo(pb::RedoRequest {}));
+    let v = c.system();
+    assert_eq!(v.groups[0].name, "Adaptive lamp");
+    assert_eq!(v.groups[0].members, vec![dim, brightness]);
+    group_edit(
+        &mut c,
+        pb::group_edit_op::Op::RenameGroup(pb::RenameGroup {
+            id: group,
+            name: "Lamp".into(),
+        }),
+    );
+    let generation = c.system().authoring_generation;
+
+    // a stale authoring generation is refused; the current one is accepted
+    let Resp::Error(e) = c.call(Req::ApplyGroupEdit(pb::ApplyGroupEditRequest {
+        op: Some(pb::GroupEditOp {
+            op: Some(pb::group_edit_op::Op::SetGroupDescription(
+                pb::SetGroupDescription {
+                    id: group,
+                    description: "stale".into(),
+                },
+            )),
+        }),
+        base_generation: Some(generation - 1),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "group_edit.stale_generation");
+    assert_eq!(c.system().groups[0].description, "dims with tilt");
+    let Resp::System(_) = c.call(Req::ApplyGroupEdit(pb::ApplyGroupEditRequest {
+        op: Some(pb::GroupEditOp {
+            op: Some(pb::group_edit_op::Op::SetGroupDescription(
+                pb::SetGroupDescription {
+                    id: group,
+                    description: "dims with tilt".into(),
+                },
+            )),
+        }),
+        base_generation: Some(generation),
+    })) else {
+        panic!()
+    };
 
     // --- the boundary comes with the analysis ---
     let a = c.system_analysis();

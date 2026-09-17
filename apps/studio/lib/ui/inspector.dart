@@ -121,6 +121,12 @@ class Inspector extends StatelessWidget {
           id: id,
           dispatch: dispatch,
         ),
+        MultiSelected(:final nodes) => MultiInspector(
+          key: ValueKey('multi${nodes.length}'),
+          state: state,
+          nodes: nodes,
+          dispatch: dispatch,
+        ),
       };
     }
 

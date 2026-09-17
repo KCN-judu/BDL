@@ -262,10 +262,10 @@ void main() {
       expect(t.effects.whereType<SetLayout>().single.layout.groups.single.collapsed, isTrue);
       expect(t.effects.whereType<ApplySystemEdit>(), isEmpty);
       s = reduce(t.state, const GroupBoxChanged(id: 7, rect: Rect.fromLTWH(1, 2, 300, 200))).state;
-      expect(s.editor.layouts.groups[7]!.rect, const Rect.fromLTWH(1, 2, 300, 200));
-      expect(s.editor.layouts.groups[7]!.collapsed, isTrue);
+      expect(s.editor.contextLayout.groups[7]!.rect, const Rect.fromLTWH(1, 2, 300, 200));
+      expect(s.editor.contextLayout.groups[7]!.collapsed, isTrue);
       final gone = reduce(s, SystemReceived(system(generation: 2)));
-      expect(gone.state.editor.layouts.groups, isEmpty);
+      expect(gone.state.editor.layouts.system.groups, isEmpty);
       expect(gone.effects.whereType<SetLayout>(), hasLength(1));
     });
 
@@ -414,8 +414,8 @@ void main() {
       expect(e.extraction, isNull);
       expect(e.selection, const InstanceSelected(9));
       expect(e.layout[const NodeRef.instance(9)], const Offset(30, 40));
-      expect(e.layouts.groups.containsKey(7), isFalse);
-      expect(e.layouts.components[3]![const NodeRef.mapping(brightness)], const Offset(50, 60));
+      expect(e.layouts.system.groups.containsKey(7), isFalse);
+      expect(e.layouts.components[3]!.nodes[const NodeRef.mapping(brightness)], const Offset(50, 60));
       expect(e.layout.containsKey(const NodeRef.mapping(brightness)), isFalse);
       expect(applied.effects.whereType<SetLayout>(), hasLength(1));
     });
@@ -526,20 +526,26 @@ void main() {
     });
   });
 
-  test('the wire layout round-trips instances, groups and component canvases', () {
+  test('the wire layout round-trips instances, groups, viewports and component canvases', () {
     final layouts = CanvasLayout(
-      system: {
-        const NodeRef.mapping(1): const Offset(1, 2),
-        const NodeRef.instance(3): const Offset(4, 5),
-      },
-      groups: {7: const GroupBox(rect: Rect.fromLTWH(1, 2, 3, 4), collapsed: true)},
+      system: ContextLayout(
+        nodes: {
+          const NodeRef.mapping(1): const Offset(1, 2),
+          const NodeRef.instance(3): const Offset(4, 5),
+        },
+        groups: {7: const GroupBox(rect: Rect.fromLTWH(1, 2, 3, 4), collapsed: true)},
+        viewport: const CanvasViewport(pan: Offset(9, 8), zoom: 0.5),
+      ),
       components: {
-        2: {const NodeRef.concept(0): const Offset(6, 7)},
+        2: ContextLayout(
+          nodes: {const NodeRef.concept(0): const Offset(6, 7)},
+          groups: {9: const GroupBox(rect: Rect.fromLTWH(5, 6, 7, 8))},
+        ),
       },
     );
     final back = layoutFromPb(layoutToPb(layouts));
     expect(back.system, layouts.system);
-    expect(back.groups, layouts.groups);
     expect(back.components, layouts.components);
+    expect(back.components[2]!.groups[9]!.rect, const Rect.fromLTWH(5, 6, 7, 8));
   });
 }

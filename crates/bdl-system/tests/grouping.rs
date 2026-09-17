@@ -655,3 +655,223 @@ fn groups_persist_and_survive_reopening() {
     assert_eq!(loaded.snapshot.system.groups, l.sys.system().groups);
     assert_eq!(loaded.snapshot.system, *l.sys.system());
 }
+
+// ---- scoped groups (ADR-0019 amendment): a component's body has groups too ----
+
+/// A component `AdaptiveLighting` with three body relationships and one
+/// instance, plus a base group, for the scope tests.
+struct Lighting {
+    sys: Sys,
+    comp: ComponentId,
+    inst: ComponentInstanceId,
+    dim: DeclId,
+    color: DeclId,
+    warning: DeclId,
+    base_decl: DeclId,
+}
+
+fn lighting() -> Lighting {
+    let mut sys = Sys::new("lighting");
+    let level = sys.base_concept("Brightness", LEVEL);
+    let main = sys.base_clock("main");
+    // Fillers so the base relationship's id is not also a body id: scope is
+    // explicit, never inferred from ids, and the test must not rely on a
+    // collision either way.
+    for name in ["a0", "a1", "a2", "a3"] {
+        sys.base_mapping(name, &[], level);
+    }
+    let base_decl = sys.base_mapping("ambient", &[], level);
+    sys.base_clock_of(base_decl, main);
+    let comp = sys.component("AdaptiveLighting");
+    let l = sys.body_concept(comp, "Brightness", Some(LEVEL));
+    sys.share(comp, l, level);
+    let tick = sys.body_clock(comp, "tick");
+    sys.clock_param(comp, tick);
+    let dim = sys.body_mapping(comp, "dimBrightness", &[], l);
+    sys.body_formula(comp, dim, "1");
+    sys.body_clock_of(comp, dim, tick);
+    let color = sys.body_mapping(comp, "colorTemp", &[], l);
+    sys.body_formula(comp, color, "dimBrightness");
+    sys.body_clock_of(comp, color, tick);
+    let warning = sys.body_mapping(comp, "warning", &[], l);
+    sys.body_formula(comp, warning, "colorTemp");
+    sys.body_clock_of(comp, warning, tick);
+    sys.port(comp, warning, PortKind::Provided, "warning");
+    let inst = sys.instance(comp, "lighting");
+    sys.clock_arg(inst, tick, main);
+    Lighting {
+        sys,
+        comp,
+        inst,
+        dim,
+        color,
+        warning,
+        base_decl,
+    }
+}
+
+// §31 — a component-local group changes nothing about the component.
+#[test]
+fn a_component_local_group_is_adjacent_to_the_body_not_part_of_it() {
+    let mut l = lighting();
+    let scope = GroupScope::Component { component: l.comp };
+    let before = l.sys.system().clone();
+    let a0 = analyze_system(&l.sys.snap);
+    let flat_ids_before = l.sys.system().flat_ids.clone();
+    let revision = l.sys.snap.revision;
+
+    let g = l.sys.create_group_in(scope, "Dimming", &[l.dim, l.color]);
+    let s = l.sys.system();
+    let group = &s.groups[&g];
+    assert_eq!(group.scope, scope);
+    assert_eq!(ids(&group.members), ids(&[l.dim, l.color]));
+    // the component is the same value: body, stamps, interface
+    assert_eq!(s.components[&l.comp], before.components[&l.comp]);
+    assert_eq!(
+        s.components[&l.comp].body_stamp,
+        before.components[&l.comp].body_stamp
+    );
+    assert_eq!(
+        s.components[&l.comp].interface_stamp,
+        before.components[&l.comp].interface_stamp
+    );
+    assert_eq!(s.flat_ids, flat_ids_before);
+    assert_eq!(l.sys.snap.revision, revision);
+    let a1 = analyze_system(&l.sys.snap);
+    assert_eq!(a1.flattened.snapshot.design, a0.flattened.snapshot.design);
+    assert_eq!(a1.components, a0.components, "Realizes unchanged");
+    assert_eq!(a1.analysis.diagnostics, a0.analysis.diagnostics);
+    // the boundary is in the body's own ids, off the body's own analysis
+    let b = &a1.groups[&g];
+    assert_eq!(ids(&b.members), ids(&[l.dim, l.color]));
+    assert_eq!(ids(&b.crossing_in), ids(&[]));
+    assert_eq!(ids(&b.crossing_out), ids(&[l.color]));
+    assert_eq!(ids(&b.private_candidates), ids(&[l.dim]));
+    assert_eq!(b.internal_edges, vec![(l.color, l.dim)]);
+    assert!(b.crossing_edges.is_empty());
+    let g2 = l.sys.create_group_in(scope, "Alerts", &[l.warning]);
+    let b2 = &analyze_system(&l.sys.snap).groups[&g2];
+    assert_eq!(ids(&b2.crossing_in), ids(&[l.color]));
+    assert_eq!(b2.crossing_edges, vec![(l.warning, l.color)]);
+
+    // persistence: scope, name, members
+    let dir = tempfile::tempdir().unwrap();
+    persist::save_system_project(
+        dir.path(),
+        &l.sys.snap,
+        &bdl_model::layout::Layout::default(),
+        "test",
+    )
+    .unwrap();
+    let loaded = persist::load_system_project(dir.path()).unwrap();
+    assert_eq!(loaded.snapshot.system.groups, l.sys.system().groups);
+    let json = std::fs::read_to_string(dir.path().join(persist::SYSTEM_FILE)).unwrap();
+    let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(
+        v["system"]["groups"][&g.raw().to_string()]["scope"],
+        serde_json::json!({ "kind": "component", "component": l.comp.raw() })
+    );
+}
+
+// §32 — a group never spans two designs.
+#[test]
+fn groups_never_cross_a_component_boundary() {
+    let mut l = lighting();
+    let scope = GroupScope::Component { component: l.comp };
+    // a base relationship cannot join a component group, nor the reverse
+    let e = l
+        .sys
+        .try_group(GroupEditOp::CreateGroup {
+            scope,
+            name: "Mixed".into(),
+            description: String::new(),
+            members: vec![l.base_decl],
+        })
+        .unwrap_err();
+    assert!(matches!(e, GroupEditError::NotABaseDeclaration { .. }));
+    let local = l.sys.create_group_in(scope, "Dimming", &[l.dim]);
+    let base = l.sys.create_group("Ambient", &[l.base_decl]);
+    let e = l
+        .sys
+        .try_group(GroupEditOp::MoveMember {
+            decl: l.base_decl,
+            to: local,
+        })
+        .unwrap_err();
+    assert!(matches!(e, GroupEditError::NotABaseDeclaration { .. }));
+    let e = l
+        .sys
+        .try_group(GroupEditOp::MergeGroups {
+            into: base,
+            from: local,
+        })
+        .unwrap_err();
+    assert_eq!(e, GroupEditError::ScopeMismatch);
+    // names are unique per design: two components may both have "Dimming"
+    let other = l.sys.component("Other");
+    l.sys
+        .create_group_in(GroupScope::Component { component: other }, "Dimming", &[]);
+    l.sys.create_group("Dimming", &[]);
+    assert_eq!(l.sys.system().groups.len(), 4);
+    // an unknown component is refused
+    let e = l
+        .sys
+        .try_group(GroupEditOp::CreateGroup {
+            scope: GroupScope::Component {
+                component: ComponentId::from_raw(99),
+            },
+            name: "Ghost".into(),
+            description: String::new(),
+            members: vec![],
+        })
+        .unwrap_err();
+    assert!(matches!(e, GroupEditError::UnknownComponent { .. }));
+    // packaging is for the system's own design
+    assert!(matches!(
+        preview_extraction(&l.sys.snap, local, &ExtractionChoices::default()),
+        Err(ExtractError::NotABaseGroup { .. })
+    ));
+}
+
+// §37 / §38 / §39 — deletion prunes, component deletion retires, versions copy.
+#[test]
+fn component_groups_follow_their_component() {
+    let mut l = lighting();
+    let scope = GroupScope::Component { component: l.comp };
+    let g = l.sys.create_group_in(scope, "Dimming", &[l.dim, l.color]);
+    // deleting a body relationship prunes it; the group stays
+    l.sys.body(l.comp, EditOp::DeleteMapping { id: l.dim });
+    assert_eq!(ids(&l.sys.system().groups[&g].members), ids(&[l.color]));
+    l.sys.body(l.comp, EditOp::DeleteMapping { id: l.color });
+    assert!(l.sys.system().groups[&g].members.is_empty());
+    assert!(l.sys.system().groups.contains_key(&g));
+    // a version copies the groups under fresh ids, same local members
+    let v2 = l
+        .sys
+        .apply(SystemEditOp::DuplicateComponent {
+            id: l.comp,
+            name: "AdaptiveLighting v2".into(),
+        })
+        .created_component
+        .unwrap();
+    let copies: Vec<&BehaviorGroup> = l
+        .sys
+        .system()
+        .groups_in(GroupScope::Component { component: v2 })
+        .collect();
+    assert_eq!(copies.len(), 1);
+    assert_ne!(copies[0].id, g);
+    assert_eq!(copies[0].name, "Dimming");
+    assert_eq!(copies[0].members, l.sys.system().groups[&g].members);
+    // deleting a component retires its groups; nothing orphaned
+    l.sys.apply(SystemEditOp::DeleteComponent { id: v2 });
+    assert!(l
+        .sys
+        .system()
+        .groups
+        .values()
+        .all(|x| x.scope != GroupScope::Component { component: v2 }));
+    assert!(l.sys.system().groups.contains_key(&g));
+    let _ = l.inst;
+    let _ = l.warning;
+}

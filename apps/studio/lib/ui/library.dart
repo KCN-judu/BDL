@@ -215,7 +215,8 @@ class _ProjectObjects extends StatelessWidget {
                     for (final g in state.system!.groups)
                       _Row(
                         glyph: _GroupGlyph(
-                          collapsed: state.editor.layouts.groups[g.id.toInt()]?.collapsed ?? false,
+                          collapsed:
+                              state.editor.contextLayout.groups[g.id.toInt()]?.collapsed ?? false,
                         ),
                         title: g.name,
                         selected: sel is GroupSelected && sel.id == g.id.toInt(),

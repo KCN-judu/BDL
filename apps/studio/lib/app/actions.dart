@@ -332,11 +332,32 @@ class UnbindRequested extends UserAction {
 
 // ---- behaviour groups (authoring metadata; never a revision) ---------------
 
+/// A group in the design on screen (the system's own, or the open
+/// component's); [renameAfter] opens its name for editing once it arrives.
 class CreateGroupRequested extends UserAction {
-  const CreateGroupRequested({required this.name, this.members = const [], this.description = ''});
+  const CreateGroupRequested({
+    required this.name,
+    this.members = const [],
+    this.description = '',
+    this.renameAfter = false,
+  });
   final String name;
   final String description;
   final List<int> members;
+  final bool renameAfter;
+}
+
+/// "Group as Behavior" on a multi-selection: the relationships among the
+/// selected nodes become a group named *Behavior*, then renamed inline.
+class GroupSelectionRequested extends UserAction {
+  const GroupSelectionRequested();
+}
+
+/// The canvas was panned or zoomed; where it stands is layout.
+class ViewportChanged extends UserAction {
+  const ViewportChanged({required this.pan, required this.zoom});
+  final Offset pan;
+  final double zoom;
 }
 
 class RenameGroupRequested extends UserAction {

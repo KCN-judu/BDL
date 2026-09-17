@@ -258,14 +258,39 @@ class GroupShape {
   Rect get titleBand => Rect.fromLTWH(rect.left, rect.top, rect.width, NodeMetrics.regionTitle);
 }
 
+/// A concrete endpoint an aggregate socket stands for: a member's socket
+/// (when its signature has one for the concept) or just the member.  A
+/// link started or dropped on an aggregate socket resolves to one of these
+/// — the committed edit names the declaration, never the group.
+class ProxyTarget {
+  const ProxyTarget({required this.label, required this.node, this.socket});
+  final String label;
+  final NodeRef node;
+  final SocketRef? socket;
+}
+
 class CanvasScene {
-  const CanvasScene({required this.nodes, required this.links, this.groups = const []});
+  const CanvasScene({
+    required this.nodes,
+    required this.links,
+    this.groups = const [],
+    this.proxies = const {},
+  });
   final List<NodeShape> nodes;
   final List<LinkShape> links;
 
   /// Expanded group regions (their collapsed counterparts are nodes of
   /// kind [NodeKind.group]).
   final List<GroupShape> groups;
+
+  /// What each aggregate socket of a collapsed group stands for.
+  final Map<SocketRef, List<ProxyTarget>> proxies;
+
+  /// The concrete endpoints behind a socket: itself, or — for an aggregate
+  /// socket — the declarations it stands for.
+  List<ProxyTarget> resolve(SocketRef s) => s.role == SocketRole.aggregate
+      ? proxies[s] ?? const []
+      : [ProxyTarget(label: '', node: s.node, socket: s)];
 
   Rect get bounds {
     if (nodes.isEmpty) return const Rect.fromLTWH(0, 0, 400, 300);
@@ -320,13 +345,29 @@ class SystemSceneInput {
   const SystemSceneInput({
     this.system,
     this.analysis,
+    this.groups = const [],
+    this.boundaries = const [],
     this.groupBoxes = const {},
     this.portWords = const {},
+    this.summarize = false,
   });
+
+  /// Instances and bindings: the system canvas only.
   final pb.SystemView? system;
   final pb.SystemAnalysisView? analysis;
+
+  /// The groups of the design on screen (the system's own, or the open
+  /// component's) and their boundaries, as the compiler computed them.
+  final List<pb.BehaviorGroupView> groups;
+  final List<pb.BehaviorGroupBoundaryView> boundaries;
   final Map<int, GroupBox> groupBoxes;
   final Map<int, String> portWords;
+
+  /// Semantic zoom: at a low zoom every group reads as its summary box,
+  /// whatever its authored collapse state (which is not touched).
+  final bool summarize;
+
+  bool isCollapsed(int group) => summarize || (groupBoxes[group]?.collapsed ?? false);
 }
 
 CanvasScene buildScene(
@@ -359,13 +400,10 @@ CanvasScene buildScene(
   }
   // Members of collapsed groups are not drawn; the group box stands in.
   final hiddenMembers = <int, int>{};
-  if (sys != null) {
-    for (final g in sys.groups) {
-      final box = system.groupBoxes[g.id.toInt()];
-      if (box != null && box.collapsed) {
-        for (final m in g.members) {
-          hiddenMembers[m.toInt()] = g.id.toInt();
-        }
+  for (final g in system.groups) {
+    if (system.isCollapsed(g.id.toInt())) {
+      for (final m in g.members) {
+        hiddenMembers[m.toInt()] = g.id.toInt();
       }
     }
   }
@@ -600,16 +638,15 @@ CanvasScene buildScene(
   // cut, never a declaration.
   final groups = <GroupShape>[];
   final groupSockets = <int, ({Map<int, SocketRef> ins, Map<int, SocketRef> outs})>{};
-  if (sys != null) {
+  final proxies = <SocketRef, List<ProxyTarget>>{};
+  {
     final byId = {for (final n in nodes) n.ref: n};
-    for (final g in sys.groups) {
+    for (final g in system.groups) {
       final id = g.id.toInt();
       final members = g.members.map((m) => m.toInt()).toList();
       final box = system.groupBoxes[id];
-      final boundary =
-          sys.boundaries.where((b) => b.id == g.id).firstOrNull ??
-          system.analysis?.groups.where((b) => b.id == g.id).firstOrNull;
-      if (box != null && box.collapsed) {
+      final boundary = system.boundaries.where((b) => b.id == g.id).firstOrNull;
+      if (system.isCollapsed(id)) {
         final ins = <int>[...?boundary?.externalInputs.map((d) => d.toInt())];
         final outs = <int>[
           ...?boundary?.externalOutputs.map((d) => d.toInt()),
@@ -618,7 +655,20 @@ CanvasScene buildScene(
         ];
         final rows = ins.length > outs.length ? ins.length : outs.length;
         final ref = NodeRef.group(id);
-        final origin = box.rect == Rect.zero ? NodeMetrics.origin : box.rect.topLeft;
+        // A box without a stored place stands where its members are (a
+        // transient summary at low zoom, or a group collapsed before any
+        // layout was stored) — never at the origin.
+        final memberRects = [
+          for (final m in members)
+            if (layout[NodeRef.mapping(m)] case final pos?)
+              Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.mappingWidth, NodeMetrics.headerHeight),
+        ];
+        final origin = box != null && box.rect != Rect.zero && (box.collapsed || !system.summarize)
+            ? box.rect.topLeft
+            : memberRects.isEmpty
+            ? NodeMetrics.origin
+            : memberRects.reduce((a, b) => a.expandToInclude(b)).topLeft -
+                  const Offset(NodeMetrics.regionPadding, NodeMetrics.regionTitle);
         final rect = Rect.fromLTWH(
           origin.dx,
           origin.dy,
@@ -631,10 +681,9 @@ CanvasScene buildScene(
         final labels = <SocketRef, String>{};
         final inRefs = <int, SocketRef>{};
         final outRefs = <int, SocketRef>{};
-        int conceptOfDecl(int d) =>
-            p.mappings.where((m) => m.id.toInt() == d).firstOrNull?.signature.output.toInt() ?? -1;
-        String nameOfDecl(int d) =>
-            p.mappings.where((m) => m.id.toInt() == d).firstOrNull?.name ?? '?';
+        pb.MappingView? mappingOf(int d) => p.mappings.where((m) => m.id.toInt() == d).firstOrNull;
+        int conceptOfDecl(int d) => mappingOf(d)?.signature.output.toInt() ?? -1;
+        String nameOfDecl(int d) => mappingOf(d)?.name ?? '?';
         for (var i = 0; i < ins.length; i++) {
           final c = conceptOfDecl(ins[i]);
           final r = SocketRef(
@@ -651,6 +700,51 @@ CanvasScene buildScene(
           socketByRef[r] = sock;
           inRefs[ins[i]] = r;
           labels[r] = nameOfDecl(ins[i]);
+          // What the socket stands for, concretely.  An open member: its
+          // own realisation socket (a provided port may realise it).  A
+          // crossing-in declaration: the members that read it — each as
+          // its input socket of that concept when its signature has one,
+          // else the member itself.  Never the group.
+          if (open) {
+            proxies[r] = [
+              ProxyTarget(
+                label: nameOfDecl(ins[i]),
+                node: NodeRef.mapping(ins[i]),
+                socket: SocketRef(
+                  node: NodeRef.mapping(ins[i]),
+                  side: SocketSide.input,
+                  concept: c,
+                  index: realiseIndex,
+                  role: SocketRole.realise,
+                ),
+              ),
+            ];
+          } else {
+            final readers = [
+              for (final e in boundary?.crossingEdges ?? const <pb.DeclEdge>[])
+                if (e.to.toInt() == ins[i]) e.from.toInt(),
+            ];
+            proxies[r] = [
+              for (final m in readers)
+                () {
+                  final mv = mappingOf(m);
+                  final inputs = mv?.signature.inputs.map((x) => x.toInt()).toList() ?? const [];
+                  final at = inputs.indexOf(c);
+                  return ProxyTarget(
+                    label: nameOfDecl(m),
+                    node: NodeRef.mapping(m),
+                    socket: at < 0
+                        ? null
+                        : SocketRef(
+                            node: NodeRef.mapping(m),
+                            side: SocketSide.input,
+                            concept: c,
+                            index: at,
+                          ),
+                  );
+                }(),
+            ];
+          }
         }
         for (var i = 0; i < outs.length; i++) {
           final c = conceptOfDecl(outs[i]);
@@ -667,6 +761,18 @@ CanvasScene buildScene(
           socketByRef[r] = sock;
           outRefs[outs[i]] = r;
           labels[r] = nameOfDecl(outs[i]);
+          // An output socket stands for exactly one member's output.
+          proxies[r] = [
+            ProxyTarget(
+              label: nameOfDecl(outs[i]),
+              node: NodeRef.mapping(outs[i]),
+              socket: SocketRef(
+                node: NodeRef.mapping(outs[i]),
+                side: SocketSide.output,
+                concept: c,
+              ),
+            ),
+          ];
         }
         groupSockets[id] = (ins: inRefs, outs: outRefs);
         nodes.add(
@@ -874,7 +980,7 @@ CanvasScene buildScene(
     }
   }
 
-  return CanvasScene(nodes: nodes, links: links, groups: groups);
+  return CanvasScene(nodes: nodes, links: links, groups: groups, proxies: proxies);
 }
 
 extension<T> on T {

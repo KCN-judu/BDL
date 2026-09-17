@@ -41,6 +41,9 @@ pb.ProjectProjection viewProjection(
     ComponentContext(:final id) =>
       system?.components.where((c) => c.id.toInt() == id).firstOrNull?.body,
   };
+  // A group edit dirties the project without moving the revision: the
+  // system view knows, the flat projection may be older.
+  final dirty = flat.dirty || (system != null && system.revision == flat.revision && system.dirty);
   final view = pb.ProjectProjection()
     ..revision = flat.revision
     ..name = flat.name
@@ -48,7 +51,7 @@ pb.ProjectProjection viewProjection(
     ..layout = flat.layout
     ..canUndo = flat.canUndo
     ..canRedo = flat.canRedo
-    ..dirty = flat.dirty
+    ..dirty = dirty
     ..kind = flat.kind;
   if (design != null) {
     view
@@ -83,9 +86,11 @@ Transition sendSystemEdit(AppState s, pb.SystemEditOp op) {
 }
 
 /// One group edit: counted (it is the designer's act), never a revision.
+/// It names the authoring generation Studio holds, so a table another
+/// client moved refuses it instead of being overwritten.
 Transition sendGroupEdit(AppState s, pb.GroupEditOp op) {
   if (s.connection is! Connected || s.project == null || !s.isSystem) return Transition(s);
-  return Transition(pending(s), [ApplyGroupEdit(op)]);
+  return Transition(pending(s), [ApplyGroupEdit(op, baseGeneration: s.authoringGeneration)]);
 }
 
 Transition systemAction(AppState s, UserAction a) {
@@ -281,17 +286,44 @@ Transition systemAction(AppState s, UserAction a) {
       );
 
     // ---- groups ----------------------------------------------------------
-    case CreateGroupRequested(:final name, :final description, :final members):
-      return sendGroupEdit(
+    case CreateGroupRequested(:final name, :final description, :final members, :final renameAfter):
+      final scope = s.groupScopeComponent;
+      final t = sendGroupEdit(
         s,
         pb.GroupEditOp(
           createGroup: pb.CreateGroup(
             name: name,
             description: description,
             members: members.map(Int64.new),
+            component: scope == null ? null : Int64(scope),
           ),
         ),
       );
+      if (t.effects.isEmpty || !renameAfter) return t;
+      return Transition(
+        t.state.copyWith(editor: t.state.editor.copyWith(renameNextGroup: true)),
+        t.effects,
+      );
+    case GroupSelectionRequested():
+      final sel = s.editor.selection;
+      final members = switch (sel) {
+        MultiSelected() => sel.mappings.where((m) => s.groupOf(m) == null).toList(),
+        MappingSelected(:final id) when s.groupOf(id) == null => [id],
+        _ => const <int>[],
+      };
+      if (members.isEmpty) return Transition(s);
+      return systemAction(
+        s,
+        CreateGroupRequested(name: freshGroupName(s), members: members, renameAfter: true),
+      );
+    case ViewportChanged(:final pan, :final zoom):
+      final layouts = s.editor.layouts.withViewport(
+        s.editor.context,
+        CanvasViewport(pan: pan, zoom: zoom),
+      );
+      return Transition(s.copyWith(editor: s.editor.copyWith(layouts: layouts)), [
+        SetLayout(layoutToPb(layouts)),
+      ]);
     case RenameGroupRequested(:final id, :final name):
       return sendGroupEdit(
         s,
@@ -349,11 +381,35 @@ Transition systemAction(AppState s, UserAction a) {
         ),
       );
     case GroupCollapsedChanged(:final id, :final collapsed):
-      final box = s.editor.layouts.groups[id] ?? const GroupBox(rect: Rect.zero);
-      return _layoutChanged(s, s.editor.layouts.withGroup(id, box.copyWith(collapsed: collapsed)));
+      final ctx = s.editor.context;
+      var box = s.editor.contextLayout.groups[id] ?? const GroupBox(rect: Rect.zero);
+      // Collapsing without a box yet: it starts where the members are, so
+      // nothing jumps to the origin.
+      if (collapsed && box.rect == Rect.zero) {
+        final at = memberOrigin(s, id);
+        if (at != null) box = box.copyWith(rect: Rect.fromLTWH(at.dx, at.dy, 208, 96));
+      }
+      return _layoutChanged(
+        s,
+        s.editor.layouts.withGroup(ctx, id, box.copyWith(collapsed: collapsed)),
+      );
     case GroupBoxChanged(:final id, :final rect):
-      final box = s.editor.layouts.groups[id] ?? const GroupBox(rect: Rect.zero);
-      return _layoutChanged(s, s.editor.layouts.withGroup(id, box.copyWith(rect: rect)));
+      final ctx = s.editor.context;
+      final box = s.editor.contextLayout.groups[id] ?? const GroupBox(rect: Rect.zero);
+      // Moving a collapsed box carries its hidden members along, so that
+      // expanding later shows them where the group now is (the stored
+      // internal layout translated by the box's delta).
+      var layouts = s.editor.layouts.withGroup(ctx, id, box.copyWith(rect: rect));
+      if (box.collapsed && box.rect != Rect.zero && rect.topLeft != box.rect.topLeft) {
+        final delta = rect.topLeft - box.rect.topLeft;
+        final nodes = {...layouts.of(ctx).nodes};
+        for (final m in s.group(id)?.members ?? const <Int64>[]) {
+          final ref = NodeRef.mapping(m.toInt());
+          if (nodes[ref] case final p?) nodes[ref] = p + delta;
+        }
+        layouts = layouts.withNodes(ctx, nodes);
+      }
+      return _layoutChanged(s, layouts);
 
     // ---- packaging -------------------------------------------------------
     case ExtractionSheetOpened(:final group):
@@ -404,10 +460,34 @@ Transition systemAction(AppState s, UserAction a) {
 
 Transition _layoutChanged(AppState s, CanvasLayout layouts) => Transition(
   s.copyWith(
-    editor: s.editor.copyWith(layouts: layouts, layout: layouts.of(s.editor.context)),
+    editor: s.editor.copyWith(layouts: layouts, layout: layouts.of(s.editor.context).nodes),
   ),
   [SetLayout(layoutToPb(layouts))],
 );
+
+/// The top-left of a group's members on the canvas on screen, if any has
+/// a stored position.
+Offset? memberOrigin(AppState s, int group) {
+  final nodes = s.editor.layout;
+  Offset? at;
+  for (final m in s.group(group)?.members ?? const <Int64>[]) {
+    final p = nodes[NodeRef.mapping(m.toInt())];
+    if (p == null) continue;
+    at = at == null ? p : Offset(min(at.dx, p.dx), min(at.dy, p.dy));
+  }
+  return at == null ? null : at - const Offset(16, 38);
+}
+
+/// `Behavior`, `Behavior 2`, …: a default name the designer renames inline.
+String freshGroupName(AppState s) {
+  final taken = s.groupsInView.map((g) => g.name).toSet();
+  if (!taken.contains('Behavior')) return 'Behavior';
+  var i = 2;
+  while (taken.contains('Behavior $i')) {
+    i++;
+  }
+  return 'Behavior $i';
+}
 
 pb.SystemEditOp bindOp(pb.PortRefView source, pb.PortRefView destination, String? transportInit) =>
     pb.SystemEditOp(
@@ -543,7 +623,7 @@ Transition contextChanged(AppState s, DesignContext context) {
   );
   final editor = withoutTooling(s.editor).copyWith(
     context: context,
-    layout: s.editor.layouts.of(context),
+    layout: s.editor.layouts.of(context).nodes,
     selection: const NoSelection(),
     clearRenaming: true,
     clearActions: true,
@@ -576,22 +656,48 @@ Transition systemReceived(AppState s, pb.SystemView system, {required bool fromR
     final c => c,
   };
   final next = withView(s.copyWith(system: system), context: context);
-  final selection = selectionStillValid(next, next.editor.selection)
+  var selection = selectionStillValid(next, next.editor.selection)
       ? next.editor.selection
       : const NoSelection();
-  // Boxes of groups that no longer exist go with them (layout only).
+  // Boxes of groups that no longer exist go with them, and the canvas of
+  // a component that is gone (layout only).
   var layouts = next.editor.layouts;
-  for (final id in layouts.groups.keys.toList()) {
-    if (system.groups.every((g) => g.id.toInt() != id)) layouts = layouts.withoutGroup(id);
+  final live = system.groups.map((g) => g.id.toInt()).toSet();
+  for (final id in layouts.system.groups.keys.toList()) {
+    if (!live.contains(id)) layouts = layouts.withoutGroup(const SystemContext(), id);
+  }
+  for (final c in layouts.components.keys.toList()) {
+    if (system.components.every((x) => x.id.toInt() != c)) {
+      layouts = layouts.withoutComponent(c);
+      continue;
+    }
+    for (final id in layouts.components[c]!.groups.keys.toList()) {
+      if (!live.contains(id)) layouts = layouts.withoutGroup(ComponentContext(c), id);
+    }
   }
   final layoutChanged = layouts != next.editor.layouts;
+  // Create-then-rename: a group made from the canvas opens for naming.
+  NodeRef? renaming = next.editor.renaming;
+  var renameNext = next.editor.renameNextGroup;
+  if (renameNext && fromRequest) {
+    final before = s.system?.groups.map((g) => g.id.toInt()).toSet() ?? const <int>{};
+    final created = system.groups.map((g) => g.id.toInt()).where((id) => !before.contains(id));
+    if (created.isNotEmpty) {
+      selection = GroupSelected(created.first);
+      renaming = NodeRef.group(created.first);
+    }
+    renameNext = false;
+  }
   return Transition(
     next.copyWith(
       editor: next.editor.copyWith(
         pendingRequests: pendingCount,
         selection: selection,
         layouts: layouts,
-        layout: layouts.of(context),
+        layout: layouts.of(context).nodes,
+        renaming: renaming,
+        clearRenaming: renaming == null,
+        renameNextGroup: renameNext,
       ),
     ),
     [if (layoutChanged) SetLayout(layoutToPb(layouts))],
@@ -629,29 +735,38 @@ Transition systemEditApplied(
       // component's own canvas opens laid out as the group was.
       final groupId = extraction.groupId;
       final members = s.group(groupId)?.members.map((m) => m.toInt()).toList() ?? const [];
-      final box = layouts.groups[groupId];
+      final box = layouts.system.groups[groupId];
       final memberPositions = {
-        for (final m in members) NodeRef.mapping(m): ?layouts.system[NodeRef.mapping(m)],
+        for (final m in members) NodeRef.mapping(m): ?layouts.system.nodes[NodeRef.mapping(m)],
       };
       final at = box != null && box.rect != Rect.zero
           ? box.rect.topLeft
           : memberPositions.isEmpty
           ? null
           : memberPositions.values.reduce((a, b) => Offset(min(a.dx, b.dx), min(a.dy, b.dy)));
-      var system = {...layouts.system};
+      var system = {...layouts.system.nodes};
       if (at != null) system[node] = at;
       for (final m in members) {
         system.remove(NodeRef.mapping(m));
       }
       layouts = CanvasLayout(
-        system: system,
-        groups: {...layouts.groups}..remove(groupId),
-        components: {...layouts.components, outcome.createdComponent.toInt(): memberPositions},
+        system: ContextLayout(
+          nodes: system,
+          groups: {...layouts.system.groups}..remove(groupId),
+          viewport: layouts.system.viewport,
+        ),
+        components: {
+          ...layouts.components,
+          outcome.createdComponent.toInt(): ContextLayout(nodes: memberPositions),
+        },
       );
       extraction = null;
       selection = InstanceSelected(id);
     } else if (placement != null) {
-      layouts = layouts.withNodes(const SystemContext(), {...layouts.system, node: placement});
+      layouts = layouts.withNodes(const SystemContext(), {
+        ...layouts.system.nodes,
+        node: placement,
+      });
       placement = null;
       selection = InstanceSelected(id);
       renaming = node;
@@ -690,7 +805,7 @@ Transition systemEditApplied(
     state.copyWith(
       editor: state.editor.copyWith(
         layouts: layouts,
-        layout: layouts.of(state.editor.context),
+        layout: layouts.of(state.editor.context).nodes,
         selection: selection,
         renaming: renaming,
         clearRenaming: renaming == null,
@@ -751,6 +866,7 @@ bool selectionStillValid(AppState s, Selection sel) {
     PortSelected(:final instance, :final port) => s.port(instance, port) != null,
     BindingSelected(:final id) => s.binding(id) != null,
     GroupSelected(:final id) => s.group(id) != null,
+    MultiSelected(:final nodes) => nodes.every((n) => nodeExists(s, n)),
   };
 }
 
@@ -771,14 +887,13 @@ bool nodeExists(AppState s, NodeRef node) {
 // ---------------------------------------------------------------------------
 
 CanvasLayout layoutFromPb(pb.Layout l) {
-  Map<NodeRef, Offset> nodes(pb.Layout l) => {
-    for (final n in l.concepts) NodeRef.concept(n.id.toInt()): Offset(n.x, n.y),
-    for (final n in l.mappings) NodeRef.mapping(n.id.toInt()): Offset(n.x, n.y),
-    for (final n in l.outputs) NodeRef.output(n.id.toInt()): Offset(n.x, n.y),
-    for (final n in l.instances) NodeRef.instance(n.id.toInt()): Offset(n.x, n.y),
-  };
-  return CanvasLayout(
-    system: nodes(l),
+  ContextLayout context(pb.Layout l) => ContextLayout(
+    nodes: {
+      for (final n in l.concepts) NodeRef.concept(n.id.toInt()): Offset(n.x, n.y),
+      for (final n in l.mappings) NodeRef.mapping(n.id.toInt()): Offset(n.x, n.y),
+      for (final n in l.outputs) NodeRef.output(n.id.toInt()): Offset(n.x, n.y),
+      for (final n in l.instances) NodeRef.instance(n.id.toInt()): Offset(n.x, n.y),
+    },
     groups: {
       for (final g in l.groups)
         g.id.toInt(): GroupBox(
@@ -786,15 +901,22 @@ CanvasLayout layoutFromPb(pb.Layout l) {
           collapsed: g.collapsed,
         ),
     },
-    components: {for (final c in l.components) c.id.toInt(): nodes(c.layout)},
+    viewport: l.hasViewport()
+        ? CanvasViewport(pan: Offset(l.viewport.x, l.viewport.y), zoom: l.viewport.zoom)
+        : null,
+  );
+  return CanvasLayout(
+    system: context(l),
+    components: {for (final c in l.components) c.id.toInt(): context(c.layout)},
   );
 }
 
 pb.Layout layoutToPb(CanvasLayout layouts) {
-  pb.Layout nodes(Map<NodeRef, Offset> layout) {
-    final entries = layout.entries.toList()..sort((a, b) => a.key.id.compareTo(b.key.id));
+  pb.Layout context(ContextLayout c) {
+    final entries = c.nodes.entries.toList()..sort((a, b) => a.key.id.compareTo(b.key.id));
     pb.NodePosition pos(MapEntry<NodeRef, Offset> e) =>
         pb.NodePosition(id: Int64(e.key.id), x: e.value.dx, y: e.value.dy);
+    final groups = c.groups.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
     return pb.Layout(
       concepts: [
         for (final e in entries)
@@ -812,25 +934,27 @@ pb.Layout layoutToPb(CanvasLayout layouts) {
         for (final e in entries)
           if (e.key.kind == NodeKind.instance) pos(e),
       ],
+      groups: [
+        for (final g in groups)
+          pb.GroupBox(
+            id: Int64(g.key),
+            x: g.value.rect.left,
+            y: g.value.rect.top,
+            width: g.value.rect.width,
+            height: g.value.rect.height,
+            collapsed: g.value.collapsed,
+          ),
+      ],
+      viewport: c.viewport == null
+          ? null
+          : pb.Viewport(x: c.viewport!.pan.dx, y: c.viewport!.pan.dy, zoom: c.viewport!.zoom),
     );
   }
 
-  final out = nodes(layouts.system);
-  final groups = layouts.groups.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
-  out.groups.addAll([
-    for (final g in groups)
-      pb.GroupBox(
-        id: Int64(g.key),
-        x: g.value.rect.left,
-        y: g.value.rect.top,
-        width: g.value.rect.width,
-        height: g.value.rect.height,
-        collapsed: g.value.collapsed,
-      ),
-  ]);
+  final out = context(layouts.system);
   final components = layouts.components.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   out.components.addAll([
-    for (final c in components) pb.ComponentLayout(id: Int64(c.key), layout: nodes(c.value)),
+    for (final c in components) pb.ComponentLayout(id: Int64(c.key), layout: context(c.value)),
   ]);
   return out;
 }

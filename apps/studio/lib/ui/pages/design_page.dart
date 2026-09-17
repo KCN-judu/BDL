@@ -63,9 +63,9 @@ class DesignPage extends StatelessWidget {
                             context: state.editor.context,
                             system: _sceneInput(state),
                             components: state.system?.components ?? const [],
-                            groups: state.editor.context is SystemContext
-                                ? (state.system?.groups ?? const [])
-                                : const [],
+                            groups: state.groupsInView,
+                            viewport: state.editor.contextLayout.viewport,
+                            groupsEnabled: state.isSystem,
                           ),
                           if (state.editor.pendingBind case final b?)
                             PendingBindSheet(state: state, bind: b, dispatch: dispatch),
@@ -112,13 +112,20 @@ class _Empty extends StatelessWidget {
 SystemSceneInput _sceneInput(AppState state) {
   final sys = state.system;
   if (sys == null) return const SystemSceneInput();
+  final groups = state.groupsInView;
+  final boundaries = [for (final g in groups) ?state.boundary(g.id.toInt())];
   return switch (state.editor.context) {
     SystemContext() => SystemSceneInput(
       system: sys,
       analysis: state.systemAnalysis,
-      groupBoxes: state.editor.layouts.groups,
+      groups: groups,
+      boundaries: boundaries,
+      groupBoxes: state.editor.contextLayout.groups,
     ),
     ComponentContext(:final id) => SystemSceneInput(
+      groups: groups,
+      boundaries: boundaries,
+      groupBoxes: state.editor.contextLayout.groups,
       portWords: {
         for (final p in state.component(id)?.ports ?? const <pb.PortView>[])
           p.decl.toInt(): portKindWord(p.kind),

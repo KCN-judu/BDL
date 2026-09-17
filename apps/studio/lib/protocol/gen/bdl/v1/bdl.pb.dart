@@ -6457,6 +6457,7 @@ class Layout extends $pb.GeneratedMessage {
     $core.Iterable<NodePosition>? instances,
     $core.Iterable<GroupBox>? groups,
     $core.Iterable<ComponentLayout>? components,
+    Viewport? viewport,
   }) {
     final result = Layout._();
     if (concepts != null) result.concepts.addAll(concepts);
@@ -6465,6 +6466,7 @@ class Layout extends $pb.GeneratedMessage {
     if (instances != null) result.instances.addAll(instances);
     if (groups != null) result.groups.addAll(groups);
     if (components != null) result.components.addAll(components);
+    if (viewport != null) result.viewport = viewport;
     return result;
   }
 
@@ -6491,6 +6493,7 @@ class Layout extends $pb.GeneratedMessage {
     ..pPM<GroupBox>(5, _omitFieldNames ? '' : 'groups', subBuilder: GroupBox.$_createMessage)
     ..pPM<ComponentLayout>(6, _omitFieldNames ? '' : 'components',
         subBuilder: ComponentLayout.$_createMessage)
+    ..aOM<Viewport>(7, _omitFieldNames ? '' : 'viewport', subBuilder: Viewport.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6526,13 +6529,104 @@ class Layout extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $pb.PbList<NodePosition> get instances => $_getList(3);
 
-  /// Behaviour groups: the collapsed box and its state.  Layout only.
+  /// Behaviour groups of this canvas: the collapsed box and its state.
+  /// Layout only.  A component's groups are in its own ComponentLayout.
   @$pb.TagNumber(5)
   $pb.PbList<GroupBox> get groups => $_getList(4);
 
   /// The canvas of each component's body, in component-local ids.
   @$pb.TagNumber(6)
   $pb.PbList<ComponentLayout> get components => $_getList(5);
+
+  /// Where the designer left this canvas.
+  @$pb.TagNumber(7)
+  Viewport get viewport => $_getN(6);
+  @$pb.TagNumber(7)
+  set viewport(Viewport value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasViewport() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearViewport() => $_clearField(7);
+  @$pb.TagNumber(7)
+  Viewport ensureViewport() => $_ensure(6);
+}
+
+class Viewport extends $pb.GeneratedMessage {
+  factory Viewport({
+    $core.double? x,
+    $core.double? y,
+    $core.double? zoom,
+  }) {
+    final result = Viewport._();
+    if (x != null) result.x = x;
+    if (y != null) result.y = y;
+    if (zoom != null) result.zoom = zoom;
+    return result;
+  }
+
+  Viewport._();
+
+  factory Viewport.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Viewport()..mergeFromBuffer(data, registry);
+  factory Viewport.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      Viewport()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Viewport',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: Viewport.$_createMessage)
+    ..aD(1, _omitFieldNames ? '' : 'x')
+    ..aD(2, _omitFieldNames ? '' : 'y')
+    ..aD(3, _omitFieldNames ? '' : 'zoom')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Viewport clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Viewport copyWith(void Function(Viewport) updates) =>
+      super.copyWith((message) => updates(message as Viewport)) as Viewport;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use Viewport() / Viewport.new instead')
+  static Viewport create() => Viewport._();
+  static $pb.GeneratedMessage $_createMessage() => Viewport._();
+  @$core.override
+  Viewport createEmptyInstance() => Viewport._();
+  @$core.pragma('dart2js:noInline')
+  static Viewport getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Viewport>(Viewport.$_createMessage);
+  static Viewport? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get x => $_getN(0);
+  @$pb.TagNumber(1)
+  set x($core.double value) => $_setDouble(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasX() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearX() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get y => $_getN(1);
+  @$pb.TagNumber(2)
+  set y($core.double value) => $_setDouble(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasY() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearY() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get zoom => $_getN(2);
+  @$pb.TagNumber(3)
+  set zoom($core.double value) => $_setDouble(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasZoom() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearZoom() => $_clearField(3);
 }
 
 class GroupBox extends $pb.GeneratedMessage {
@@ -14104,6 +14198,7 @@ class SystemView extends $pb.GeneratedMessage {
     $core.Iterable<BehaviorGroupView>? groups,
     $fixnum.Int64? authoringGeneration,
     $core.Iterable<BehaviorGroupBoundaryView>? boundaries,
+    $core.bool? dirty,
   }) {
     final result = SystemView._();
     if (revision != null) result.revision = revision;
@@ -14118,6 +14213,7 @@ class SystemView extends $pb.GeneratedMessage {
     if (groups != null) result.groups.addAll(groups);
     if (authoringGeneration != null) result.authoringGeneration = authoringGeneration;
     if (boundaries != null) result.boundaries.addAll(boundaries);
+    if (dirty != null) result.dirty = dirty;
     return result;
   }
 
@@ -14153,6 +14249,7 @@ class SystemView extends $pb.GeneratedMessage {
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..pPM<BehaviorGroupBoundaryView>(12, _omitFieldNames ? '' : 'boundaries',
         subBuilder: BehaviorGroupBoundaryView.$_createMessage)
+    ..aOB(13, _omitFieldNames ? '' : 'dirty')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14248,25 +14345,41 @@ class SystemView extends $pb.GeneratedMessage {
   void clearAuthoringGeneration() => $_clearField(11);
 
   /// Every group's boundary at this authoring generation, read off the
-  /// (cached) flat analysis of the revision: a projection that follows the
+  /// (cached) analyses of the revision: a projection that follows the
   /// membership without any re-analysis.
   @$pb.TagNumber(12)
   $pb.PbList<BehaviorGroupBoundaryView> get boundaries => $_getList(11);
+
+  /// Whether the authored system differs from what is saved — a group edit
+  /// dirties the project without moving the revision.
+  @$pb.TagNumber(13)
+  $core.bool get dirty => $_getBF(12);
+  @$pb.TagNumber(13)
+  set dirty($core.bool value) => $_setBool(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasDirty() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearDirty() => $_clearField(13);
 }
 
-/// A group is authoring metadata: identity, name, description, members.
+/// A group is authoring metadata: identity, scope, name, description,
+/// members.  Its scope is the authored design the members belong to: the
+/// system's own design, or — with `component` set — that component's body
+/// (members are then component-local ids).
 class BehaviorGroupView extends $pb.GeneratedMessage {
   factory BehaviorGroupView({
     $fixnum.Int64? id,
     $core.String? name,
     $core.String? description,
     $core.Iterable<$fixnum.Int64>? members,
+    $fixnum.Int64? component,
   }) {
     final result = BehaviorGroupView._();
     if (id != null) result.id = id;
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (members != null) result.members.addAll(members);
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -14287,6 +14400,8 @@ class BehaviorGroupView extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..aOS(3, _omitFieldNames ? '' : 'description')
     ..p<$fixnum.Int64>(4, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14336,9 +14451,18 @@ class BehaviorGroupView extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearDescription() => $_clearField(3);
 
-  /// Base relationship ids, in authoring order.
+  /// Relationship ids of the scope's design, in authoring order.
   @$pb.TagNumber(4)
   $pb.PbList<$fixnum.Int64> get members => $_getList(3);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get component => $_getI64(4);
+  @$pb.TagNumber(5)
+  set component($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComponent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComponent() => $_clearField(5);
 }
 
 /// Group edits: applied outside the revision stream (no ProjectChanged, no
@@ -14347,9 +14471,11 @@ class BehaviorGroupView extends $pb.GeneratedMessage {
 class ApplyGroupEditRequest extends $pb.GeneratedMessage {
   factory ApplyGroupEditRequest({
     GroupEditOp? op,
+    $fixnum.Int64? baseGeneration,
   }) {
     final result = ApplyGroupEditRequest._();
     if (op != null) result.op = op;
+    if (baseGeneration != null) result.baseGeneration = baseGeneration;
     return result;
   }
 
@@ -14367,6 +14493,8 @@ class ApplyGroupEditRequest extends $pb.GeneratedMessage {
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ApplyGroupEditRequest.$_createMessage)
     ..aOM<GroupEditOp>(1, _omitFieldNames ? '' : 'op', subBuilder: GroupEditOp.$_createMessage)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'baseGeneration', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14401,6 +14529,18 @@ class ApplyGroupEditRequest extends $pb.GeneratedMessage {
   void clearOp() => $_clearField(1);
   @$pb.TagNumber(1)
   GroupEditOp ensureOp() => $_ensure(0);
+
+  /// The authoring generation the client saw; refused with
+  /// `group_edit.stale_generation` if the table has moved since (so two
+  /// clients never silently overwrite each other's membership).
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get baseGeneration => $_getI64(1);
+  @$pb.TagNumber(2)
+  set baseGeneration($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasBaseGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearBaseGeneration() => $_clearField(2);
 }
 
 enum GroupEditOp_Op {
@@ -14632,11 +14772,13 @@ class CreateGroup extends $pb.GeneratedMessage {
     $core.String? name,
     $core.String? description,
     $core.Iterable<$fixnum.Int64>? members,
+    $fixnum.Int64? component,
   }) {
     final result = CreateGroup._();
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (members != null) result.members.addAll(members);
+    if (component != null) result.component = component;
     return result;
   }
 
@@ -14655,6 +14797,8 @@ class CreateGroup extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'name')
     ..aOS(2, _omitFieldNames ? '' : 'description')
     ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'members', $pb.PbFieldType.KU6)
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14697,6 +14841,17 @@ class CreateGroup extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(3)
   $pb.PbList<$fixnum.Int64> get members => $_getList(2);
+
+  /// The component whose body the group organises; unset: the system's own
+  /// design.
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get component => $_getI64(3);
+  @$pb.TagNumber(4)
+  set component($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasComponent() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearComponent() => $_clearField(4);
 }
 
 class RenameGroup extends $pb.GeneratedMessage {
@@ -15251,6 +15406,7 @@ class BehaviorGroupBoundaryView extends $pb.GeneratedMessage {
     $core.Iterable<$fixnum.Int64>? externalOutputs,
     $core.Iterable<$fixnum.Int64>? clocks,
     $core.Iterable<DeclEdge>? internalEdges,
+    $core.Iterable<DeclEdge>? crossingEdges,
   }) {
     final result = BehaviorGroupBoundaryView._();
     if (id != null) result.id = id;
@@ -15264,6 +15420,7 @@ class BehaviorGroupBoundaryView extends $pb.GeneratedMessage {
     if (externalOutputs != null) result.externalOutputs.addAll(externalOutputs);
     if (clocks != null) result.clocks.addAll(clocks);
     if (internalEdges != null) result.internalEdges.addAll(internalEdges);
+    if (crossingEdges != null) result.crossingEdges.addAll(crossingEdges);
     return result;
   }
 
@@ -15292,6 +15449,8 @@ class BehaviorGroupBoundaryView extends $pb.GeneratedMessage {
     ..p<$fixnum.Int64>(9, _omitFieldNames ? '' : 'externalOutputs', $pb.PbFieldType.KU6)
     ..p<$fixnum.Int64>(10, _omitFieldNames ? '' : 'clocks', $pb.PbFieldType.KU6)
     ..pPM<DeclEdge>(11, _omitFieldNames ? '' : 'internalEdges',
+        subBuilder: DeclEdge.$_createMessage)
+    ..pPM<DeclEdge>(12, _omitFieldNames ? '' : 'crossingEdges',
         subBuilder: DeclEdge.$_createMessage)
     ..hasRequiredFields = false;
 
@@ -15357,6 +15516,12 @@ class BehaviorGroupBoundaryView extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(11)
   $pb.PbList<DeclEdge> get internalEdges => $_getList(10);
+
+  /// (member, crossing-in declaration): which member reads which outside
+  /// declaration — the concrete endpoints an aggregate input socket stands
+  /// for.
+  @$pb.TagNumber(12)
+  $pb.PbList<DeclEdge> get crossingEdges => $_getList(11);
 }
 
 class DeclEdge extends $pb.GeneratedMessage {

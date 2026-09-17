@@ -36,6 +36,16 @@ pub struct Layout {
     /// component id.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub components: BTreeMap<u64, Layout>,
+    /// Where the designer left this canvas (pan and zoom).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub viewport: Option<Viewport>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Viewport {
+    pub x: f64,
+    pub y: f64,
+    pub zoom: f64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Default)]

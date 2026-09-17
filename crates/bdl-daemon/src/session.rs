@@ -31,8 +31,8 @@ use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
 use bdl_system::{
     analyze_system, apply_group_edit, apply_system_edit, flatten, persist as system_persist,
-    preview_extraction, BehaviorGroupId, BehaviorSystem, ComponentId, ExtractError,
-    ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp,
+    preview_extraction, BehaviorGroup, BehaviorGroupId, BehaviorSystem, ComponentId, ExtractError,
+    ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp, GroupScope,
     SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome, SystemSnapshot,
 };
 use std::collections::BTreeMap;
@@ -71,6 +71,25 @@ pub enum SessionError {
     Extraction(#[from] ExtractError),
     #[error("unknown component {0}")]
     UnknownComponent(ComponentId),
+    #[error("group edit targets authoring generation {expected} but the project is at {actual}")]
+    StaleGeneration { expected: u64, actual: u64 },
+}
+
+/// One authored step of a system project, for undo/redo: a semantic edit
+/// (the whole system before it) or an authoring edit (the group table
+/// before it).  One history, two kinds: undoing a group edit never
+/// replays a compilation.
+pub enum HistoryEntry {
+    Semantic(Box<BehaviorSystem>),
+    Authoring(BTreeMap<BehaviorGroupId, BehaviorGroup>),
+}
+
+/// What undoing or redoing did on a system project.
+pub enum Stepped {
+    /// A semantic step: a new revision, a re-derived flat design.
+    Semantic(Box<Committed>),
+    /// An authoring step: the group table moved, nothing semantic did.
+    Authoring,
 }
 
 /// The authored truth of a system project, beside the derived `current`.
@@ -85,8 +104,8 @@ pub struct SystemState {
     /// created on first use, re-seated on every commit.
     component_ide: BTreeMap<ComponentId, IdeHost>,
     saved: BehaviorSystem,
-    undo: Vec<BehaviorSystem>,
-    redo: Vec<BehaviorSystem>,
+    undo: Vec<HistoryEntry>,
+    redo: Vec<HistoryEntry>,
 }
 
 impl SystemState {
@@ -344,7 +363,8 @@ impl Session {
         };
         let applied = apply_system_edit(&at, op)?;
         let previous = std::mem::replace(&mut sys.current, applied.snapshot);
-        sys.undo.push(previous.system);
+        sys.undo
+            .push(HistoryEntry::Semantic(Box::new(previous.system)));
         sys.redo.clear();
         sys.flattened = flatten(&sys.current);
         sys.reseat_component_hosts();
@@ -361,13 +381,29 @@ impl Session {
     /// re-derivation, no simulation reset — the flat design is the same
     /// value before and after (FV Theorem A).  The authoring generation
     /// moves so a client can tell the views apart.
-    pub fn apply_group(&mut self, op: &GroupEditOp) -> Result<(), SessionError> {
+    pub fn apply_group(
+        &mut self,
+        base_generation: Option<u64>,
+        op: &GroupEditOp,
+    ) -> Result<(), SessionError> {
         let p = self.project_mut()?;
         let Some(sys) = p.system.as_mut() else {
             return Err(SessionError::NotASystem);
         };
+        // Two clients never silently overwrite each other's membership: an
+        // edit names the generation it saw.
+        if let Some(g) = base_generation {
+            if g != sys.authoring_generation {
+                return Err(SessionError::StaleGeneration {
+                    expected: g,
+                    actual: sys.authoring_generation,
+                });
+            }
+        }
         let (system, _outcome) = apply_group_edit(&sys.current.system, op)?;
-        sys.current.system = system;
+        let previous = std::mem::replace(&mut sys.current.system, system);
+        sys.undo.push(HistoryEntry::Authoring(previous.groups));
+        sys.redo.clear();
         sys.authoring_generation += 1;
         Ok(())
     }
@@ -383,26 +419,35 @@ impl Session {
         Ok(preview_extraction(&sys.current, group, choices)?)
     }
 
-    /// Every group's boundary, read off the flat analysis the IDE host
-    /// already holds for the revision — no re-analysis for a group edit.
+    /// Every group's boundary, read off the analyses the IDE hosts already
+    /// hold for the revision — the flat one for the system's own groups,
+    /// a body's own for a component's — no re-analysis for a group edit.
     pub fn group_boundaries(
         &mut self,
     ) -> Result<BTreeMap<BehaviorGroupId, bdl_system::GroupBoundary>, SessionError> {
-        let p = self.project_mut()?;
-        let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
-        let analysis = p.ide.committed_analysis();
-        Ok(sys
-            .current
-            .system
-            .groups
-            .values()
-            .map(|g| {
-                (
-                    g.id,
-                    bdl_system::group_boundary(&sys.current.system.base, &analysis, &g.members),
-                )
-            })
-            .collect())
+        let groups: Vec<BehaviorGroup> = {
+            let p = self.project()?;
+            let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+            sys.current.system.groups.values().cloned().collect()
+        };
+        let mut out = BTreeMap::new();
+        for g in groups {
+            let scope = match g.scope {
+                GroupScope::SystemBase => None,
+                GroupScope::Component { component } => Some(component),
+            };
+            let analysis = self.ide_in(scope)?.committed_analysis();
+            let p = self.project()?;
+            let sys = p.system.as_ref().ok_or(SessionError::NotASystem)?;
+            let Some(design) = sys.current.system.design_of(g.scope) else {
+                continue;
+            };
+            out.insert(
+                g.id,
+                bdl_system::group_boundary(design, &analysis, &g.members),
+            );
+        }
+        Ok(out)
     }
 
     /// The system analysis of the open system project.
@@ -412,42 +457,67 @@ impl Session {
         Ok(analyze_system(&sys.current))
     }
 
-    /// Undo/redo of a system project: the system moves back, the flat
-    /// design is re-derived.
-    fn system_step(&mut self, undo: bool) -> Result<Committed, SessionError> {
+    /// Undo/redo of a system project: one history of semantic and
+    /// authoring steps.  A semantic step moves the system back and
+    /// re-derives the flat design (a new revision); an authoring step moves
+    /// the group table back (a new authoring generation, no revision, no
+    /// compilation).
+    pub fn system_step(&mut self, undo: bool) -> Result<Stepped, SessionError> {
         let p = self.project_mut()?;
         let Some(sys) = p.system.as_mut() else {
             return Err(SessionError::NotASystem);
         };
-        let system = if undo {
+        let entry = if undo {
             sys.undo.pop().ok_or(SessionError::NothingToUndo)?
         } else {
             sys.redo.pop().ok_or(SessionError::NothingToRedo)?
         };
-        let next = SystemSnapshot {
-            revision: p.current.revision.next(),
-            system,
-        };
-        let previous = std::mem::replace(&mut sys.current, next);
-        if undo {
-            sys.redo.push(previous.system);
-        } else {
-            sys.undo.push(previous.system);
+        match entry {
+            HistoryEntry::Authoring(groups) => {
+                let previous = std::mem::replace(&mut sys.current.system.groups, groups);
+                let back = HistoryEntry::Authoring(previous);
+                if undo {
+                    sys.redo.push(back);
+                } else {
+                    sys.undo.push(back);
+                }
+                sys.authoring_generation += 1;
+                Ok(Stepped::Authoring)
+            }
+            HistoryEntry::Semantic(system) => {
+                let next = SystemSnapshot {
+                    revision: p.current.revision.next(),
+                    system: *system,
+                };
+                let previous = std::mem::replace(&mut sys.current, next);
+                let back = HistoryEntry::Semantic(Box::new(previous.system));
+                if undo {
+                    sys.redo.push(back);
+                } else {
+                    sys.undo.push(back);
+                }
+                sys.flattened = flatten(&sys.current);
+                sys.reseat_component_hosts();
+                p.current = sys.flattened.snapshot.clone();
+                p.simulation = None;
+                p.ide.set_committed(p.current.clone());
+                Ok(Stepped::Semantic(Box::new(Committed {
+                    snapshot: p.current.clone(),
+                    outcome: None,
+                })))
+            }
         }
-        sys.flattened = flatten(&sys.current);
-        sys.reseat_component_hosts();
-        p.current = sys.flattened.snapshot.clone();
-        p.simulation = None;
-        p.ide.set_committed(p.current.clone());
-        Ok(Committed {
-            snapshot: p.current.clone(),
-            outcome: None,
-        })
     }
 
     pub fn undo(&mut self) -> Result<Committed, SessionError> {
         if self.project()?.system.is_some() {
-            return self.system_step(true);
+            return match self.system_step(true)? {
+                Stepped::Semantic(c) => Ok(*c),
+                Stepped::Authoring => Ok(Committed {
+                    snapshot: self.project()?.current.clone(),
+                    outcome: None,
+                }),
+            };
         }
         let p = self.project_mut()?;
         let design = p.undo.pop().ok_or(SessionError::NothingToUndo)?;
@@ -467,7 +537,13 @@ impl Session {
 
     pub fn redo(&mut self) -> Result<Committed, SessionError> {
         if self.project()?.system.is_some() {
-            return self.system_step(false);
+            return match self.system_step(false)? {
+                Stepped::Semantic(c) => Ok(*c),
+                Stepped::Authoring => Ok(Committed {
+                    snapshot: self.project()?.current.clone(),
+                    outcome: None,
+                }),
+            };
         }
         let p = self.project_mut()?;
         let design = p.redo.pop().ok_or(SessionError::NothingToRedo)?;

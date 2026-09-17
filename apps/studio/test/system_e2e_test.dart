@@ -234,14 +234,16 @@ void main() {
         // ---- collapsed: a box with aggregate sockets, members hidden, links re-routed ----
         store.dispatch(GroupCollapsedChanged(id: group.id.toInt(), collapsed: true));
         s = store.state;
-        expect(s.editor.layouts.groups[group.id.toInt()]!.collapsed, isTrue);
+        expect(s.editor.contextLayout.groups[group.id.toInt()]!.collapsed, isTrue);
         var scene = buildScene(
           s.project!,
           s.editor.layout,
           system: SystemSceneInput(
             system: s.system,
             analysis: s.systemAnalysis,
-            groupBoxes: s.editor.layouts.groups,
+            groups: s.groupsInView,
+            boundaries: [for (final g in s.groupsInView) ?s.boundary(g.id.toInt())],
+            groupBoxes: s.editor.contextLayout.groups,
           ),
         );
         final box = scene.nodes.firstWhere((n) => n.ref == NodeRef.group(group.id.toInt()));
@@ -307,7 +309,7 @@ void main() {
         expect(s.editor.selection, isA<InstanceSelected>());
         expect(s.editor.layout[NodeRef.instance(inst.id.toInt())], groupPos);
         expect(
-          s.editor.layouts.components[comp.id.toInt()]![NodeRef.mapping(dimLocal)],
+          s.editor.layouts.components[comp.id.toInt()]!.nodes[NodeRef.mapping(dimLocal)],
           const Offset(310, 240),
           reason: 'a member keeps its identity and its place inside the component',
         );
@@ -621,7 +623,7 @@ void main() {
         expect(s.system!.groups.single.name, 'Rest');
         expect(s.editor.layout[NodeRef.instance(inst.id.toInt())], groupPos);
         expect(
-          s.editor.layouts.components[comp.id.toInt()]![NodeRef.mapping(dimLocal)],
+          s.editor.layouts.components[comp.id.toInt()]!.nodes[NodeRef.mapping(dimLocal)],
           const Offset(310, 240),
         );
         expect(s.editor.context, const SystemContext());

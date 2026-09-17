@@ -598,7 +598,8 @@ class _Probe extends StatelessWidget {
           InstanceSelected() ||
           PortSelected() ||
           BindingSelected() ||
-          GroupSelected():
+          GroupSelected() ||
+          MultiSelected():
         body = Padding(
           padding: const EdgeInsets.all(12),
           child: Text(

@@ -324,19 +324,42 @@ impl FlatIds {
     }
 }
 
-/// An authoring group over the base design's relationships (FV Phase 8b
-/// `BehaviorGroup`): an identity, a name, a description and a member list
-/// — and nothing semantic.  Types, formulas, clocks and drives stay on the
-/// members; every kernel judgment of the system is literally the judgment
-/// of the ungrouped design (`eraseGroups`).  Collapse state, position and
-/// size are layout, kept out of here on purpose.
+/// The authored design a group lives in (ADR-0019 amendment): the
+/// system's own design, or one component's body.  FV `GroupedDesign` is
+/// `Design + groups` for *any* design; production names the design by its
+/// place in the project rather than inferring it from ids.
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default,
+)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum GroupScope {
+    #[default]
+    SystemBase,
+    Component {
+        component: ComponentId,
+    },
+}
+
+/// An authoring group over one authored design's relationships (FV Phase
+/// 8b `BehaviorGroup`): an identity, a scope, a name, a description and a
+/// member list — and nothing semantic.  Types, formulas, clocks and drives
+/// stay on the members; every kernel judgment of the system is literally
+/// the judgment of the ungrouped design (`eraseGroups`).  A group inside a
+/// component's body is *adjacent* to the body, not part of it: no body or
+/// interface stamp moves.  Collapse state, position and size are layout,
+/// kept out of here on purpose.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BehaviorGroup {
     pub id: BehaviorGroupId,
+    /// The design the members belong to; a file without it is a
+    /// base-scoped group (the first milestone's only kind).
+    #[serde(default)]
+    pub scope: GroupScope,
     pub name: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub description: String,
-    /// Base relationships, in authoring order, each in at most one group.
+    /// Relationships of the scope's design, in authoring order, each in at
+    /// most one group of that scope.
     #[serde(default)]
     pub members: Vec<DeclId>,
 }
@@ -423,9 +446,25 @@ impl BehaviorSystem {
         self.exports.values().find(|e| e.port == r)
     }
 
-    /// The group a base relationship belongs to, if any (at most one).
-    pub fn group_of(&self, decl: DeclId) -> Option<&BehaviorGroup> {
-        self.groups.values().find(|g| g.members.contains(&decl))
+    /// The group a relationship of `scope`'s design belongs to, if any (at
+    /// most one per scope).
+    pub fn group_of(&self, scope: GroupScope, decl: DeclId) -> Option<&BehaviorGroup> {
+        self.groups
+            .values()
+            .find(|g| g.scope == scope && g.members.contains(&decl))
+    }
+
+    /// The groups of one authored design.
+    pub fn groups_in(&self, scope: GroupScope) -> impl Iterator<Item = &BehaviorGroup> {
+        self.groups.values().filter(move |g| g.scope == scope)
+    }
+
+    /// The authored design a scope names.
+    pub fn design_of(&self, scope: GroupScope) -> Option<&Design> {
+        match scope {
+            GroupScope::SystemBase => Some(&self.base),
+            GroupScope::Component { component } => self.components.get(&component).map(|c| &c.body),
+        }
     }
 
     pub fn instances_of(&self, component: ComponentId) -> impl Iterator<Item = &ComponentInstance> {

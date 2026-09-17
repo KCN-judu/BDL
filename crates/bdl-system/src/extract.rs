@@ -111,6 +111,8 @@ pub enum ExtractError {
     NotAnOpenMember { decl: DeclId },
     #[error("output {output} is not driven by a member of the group")]
     NotADrivenSink { output: OutputId },
+    #[error("group {id} is inside a component; packaging applies to the system's own design")]
+    NotABaseGroup { id: BehaviorGroupId },
 }
 
 fn name_of(design: &Design, d: DeclId) -> String {
@@ -132,6 +134,12 @@ pub fn preview_extraction(
         .groups
         .get(&group)
         .ok_or(ExtractError::UnknownGroup { id: group })?;
+    // Packaging is defined on the system's own design (the FV residual);
+    // a component-local group is organisation only for now (ADR-0019
+    // amendment, option A).
+    if g.scope != GroupScope::SystemBase {
+        return Err(ExtractError::NotABaseGroup { id: group });
+    }
     let flat = flatten(snapshot);
     let analysis = bdl_compiler::analyze(&flat.snapshot);
     let boundary = group_boundary(&s.base, &analysis, &g.members);

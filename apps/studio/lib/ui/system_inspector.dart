@@ -963,7 +963,7 @@ class GroupInspector extends StatelessWidget {
                 ),
             ],
           );
-    final box = state.editor.layouts.groups[id];
+    final box = state.editor.contextLayout.groups[id];
     final members = g.members.map((m) => m.toInt()).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -991,8 +991,12 @@ class GroupInspector extends StatelessWidget {
               ),
             ),
             Text(
-              'A group is a way of seeing the design: grouping, moving, splitting or dissolving '
-              'it changes nothing about what the design means.',
+              g.hasComponent()
+                  ? "A behavior is a way of seeing this component's source: grouping, moving, "
+                        'splitting or dissolving it changes nothing about what the component '
+                        'promises or does.'
+                  : 'A behavior is a way of seeing the design: grouping, moving, splitting or '
+                        'dissolving it changes nothing about what the design means.',
               style: small,
             ),
           ],
@@ -1060,14 +1064,9 @@ class GroupInspector extends StatelessWidget {
             if (b == null)
               Text('Computed once the analysis arrives.', style: small)
             else ...[
-              FormRow(
-                label: 'External inputs',
-                child: names(b.externalInputs.map((d) => d.toInt())),
-              ),
-              FormRow(
-                label: 'External outputs',
-                child: names(b.externalOutputs.map((d) => d.toInt())),
-              ),
+              FormRow(label: 'Inputs', child: names(b.externalInputs.map((d) => d.toInt()))),
+              FormRow(label: 'Outputs', child: names(b.externalOutputs.map((d) => d.toInt()))),
+              FormRow(label: 'Open', child: names(b.openMembers.map((d) => d.toInt()))),
               FormRow(
                 label: 'Physical outputs',
                 child: names(b.drivenMembers.map((d) => d.toInt())),
@@ -1081,21 +1080,34 @@ class GroupInspector extends StatelessWidget {
             ],
           ],
         ),
-        InspectorSection(
-          title: 'Package',
-          children: [
-            MacButton.primary(
-              label: 'Package as Reusable Component…',
-              onPressed: members.isEmpty ? null : () => dispatch(ExtractionSheetOpened(id)),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Turns the group into a component and one instance in its place; the design '
-              'computes the same values.',
-              style: small,
-            ),
-          ],
-        ),
+        if (!g.hasComponent())
+          InspectorSection(
+            title: 'Package',
+            children: [
+              MacButton.primary(
+                label: 'Package as Reusable Component…',
+                onPressed: members.isEmpty ? null : () => dispatch(ExtractionSheetOpened(id)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Turns the behavior into a component and one instance in its place; the design '
+                'computes the same values.',
+                style: small,
+              ),
+            ],
+          )
+        else
+          InspectorSection(
+            title: 'Package',
+            children: [
+              Text(
+                'A behavior inside a component stays a way of seeing its source. Packaging it '
+                'as a component of its own comes with nested components; until then, edit and '
+                'move it freely.',
+                style: small,
+              ),
+            ],
+          ),
         InspectorSection(
           title: 'Canvas',
           children: [
@@ -1123,6 +1135,100 @@ class GroupInspector extends StatelessWidget {
             Text('Ungroup keeps every relationship where it is.', style: small),
           ],
         ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Several nodes at once
+// ---------------------------------------------------------------------------
+
+/// A multi-selection: what the nodes are, and — for the relationships among
+/// them — *Group as Behavior*.  A quiet suggestion appears when they read
+/// each other or share a timing domain; nothing is ever grouped on its own.
+class MultiInspector extends StatelessWidget {
+  const MultiInspector({
+    super.key,
+    required this.state,
+    required this.nodes,
+    required this.dispatch,
+  });
+  final AppState state;
+  final Set<NodeRef> nodes;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final p = state.project;
+    if (p == null) return const SizedBox.shrink();
+    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final mappings = [
+      for (final n in nodes)
+        if (n.kind == NodeKind.mapping) ?p.mappings.where((m) => m.id.toInt() == n.id).firstOrNull,
+    ];
+    final free = mappings.where((m) => state.groupOf(m.id.toInt()) == null).toList();
+    final others = nodes.length - mappings.length;
+    // A suggestion, from the projection only: one produces what another
+    // reads, or they update in one domain.
+    final produced = mappings.map((m) => m.signature.output).toSet();
+    final related = mappings.any((m) => m.signature.inputs.any(produced.contains));
+    final domains = mappings.where((m) => m.hasClockId()).map((m) => m.clockId).toSet();
+    final sameDomain =
+        free.length > 1 && domains.length == 1 && mappings.every((m) => m.hasClockId());
+    final suggest = free.length > 1 && (related || sameDomain);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InspectorSection(
+          title: '${nodes.length} selected',
+          children: [
+            Text(
+              '${mappings.length} relationship${mappings.length == 1 ? '' : 's'}'
+              '${others > 0 ? ', $others other${others == 1 ? '' : 's'}' : ''}.',
+              style: TextStyle(fontSize: 12, color: t.textPrimary),
+            ),
+            for (final m in mappings)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: InkWell(
+                  onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
+                  child: Text(m.name, style: TextStyle(fontSize: 12, color: t.accent)),
+                ),
+              ),
+          ],
+        ),
+        if (state.isSystem && free.isNotEmpty)
+          InspectorSection(
+            title: 'Behavior',
+            children: [
+              if (suggest)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    related
+                        ? 'These relationships read each other.'
+                        : 'These relationships update in one timing domain.',
+                    style: small,
+                  ),
+                ),
+              MacButton(
+                label: free.length == 1
+                    ? 'Group as Behavior'
+                    : 'Group ${free.length} relationships as Behavior',
+                onPressed: () => dispatch(const GroupSelectionRequested()),
+              ),
+              if (free.length < mappings.length)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '${mappings.length - free.length} already in a behavior; move them from there.',
+                    style: small,
+                  ),
+                ),
+            ],
+          ),
       ],
     );
   }

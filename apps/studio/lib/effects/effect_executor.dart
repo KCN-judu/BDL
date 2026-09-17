@@ -129,9 +129,14 @@ class EffectExecutor {
             );
           },
         );
-      case ApplyGroupEdit(:final op):
+      case ApplyGroupEdit(:final op, :final baseGeneration):
         await _call(
-          pb.ClientMessage(applyGroupEdit: pb.ApplyGroupEditRequest(op: op)),
+          pb.ClientMessage(
+            applyGroupEdit: pb.ApplyGroupEditRequest(
+              op: op,
+              baseGeneration: baseGeneration == null ? null : Int64(baseGeneration),
+            ),
+          ),
           (r) => _dispatch(SystemReceived(r.system.system)),
         );
       case GetSystem():

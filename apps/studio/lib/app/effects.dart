@@ -82,8 +82,12 @@ class ApplySystemEdit extends Effect {
 /// the designer's act), answered with the system at a new authoring
 /// generation.
 class ApplyGroupEdit extends Effect {
-  const ApplyGroupEdit(this.op);
+  const ApplyGroupEdit(this.op, {this.baseGeneration});
   final pb.GroupEditOp op;
+
+  /// The authoring generation Studio holds; the daemon refuses the edit
+  /// if the table moved (`group_edit.stale_generation`).
+  final int? baseGeneration;
 }
 
 /// The authored system of the open system project — uncounted.

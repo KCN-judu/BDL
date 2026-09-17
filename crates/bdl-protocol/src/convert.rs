@@ -567,6 +567,11 @@ pub fn layout_to_pb(l: &Layout) -> pb::Layout {
                 layout: Some(layout_to_pb(inner)),
             })
             .collect(),
+        viewport: l.viewport.map(|v| pb::Viewport {
+            x: v.x,
+            y: v.y,
+            zoom: v.zoom,
+        }),
     }
 }
 
@@ -618,6 +623,11 @@ pub fn layout_from_pb(l: &pb::Layout) -> Layout {
                 )
             })
             .collect(),
+        viewport: l.viewport.as_ref().map(|v| bdl_model::layout::Viewport {
+            x: v.x,
+            y: v.y,
+            zoom: v.zoom,
+        }),
     }
 }
 
@@ -1213,9 +1223,9 @@ pub mod system {
     use bdl_system::{
         Acceptance, BehaviorComponent, BehaviorGroupId, BehaviorSystem, BindingEnd,
         BindingTransport, ClockContract, ComponentId, ComponentInstanceId, ExtractionChoices,
-        ExtractionPreview, GroupBoundary, GroupEditOp, LocalEntity, OriginMap, ParameterValue,
-        PortContract, PortId, PortKind, PortRef, PortStatus, SystemAnalysis, SystemEditOp,
-        SystemEditOutcome, SystemSnapshot,
+        ExtractionPreview, GroupBoundary, GroupEditOp, GroupScope, LocalEntity, OriginMap,
+        ParameterValue, PortContract, PortId, PortKind, PortRef, PortStatus, SystemAnalysis,
+        SystemEditOp, SystemEditOutcome, SystemSnapshot,
     };
     use std::collections::BTreeMap;
 
@@ -1434,6 +1444,7 @@ pub mod system {
         origins: &OriginMap,
         authoring_generation: u64,
         boundaries: &BTreeMap<BehaviorGroupId, GroupBoundary>,
+        dirty: bool,
     ) -> pb::SystemView {
         let s: &BehaviorSystem = &snapshot.system;
         pb::SystemView {
@@ -1531,9 +1542,14 @@ pub mod system {
                     name: g.name.clone(),
                     description: g.description.clone(),
                     members: g.members.iter().map(|d| d.raw()).collect(),
+                    component: match g.scope {
+                        GroupScope::SystemBase => None,
+                        GroupScope::Component { component } => Some(component.raw()),
+                    },
                 })
                 .collect(),
             authoring_generation,
+            dirty,
             boundaries: boundaries
                 .iter()
                 .map(|(id, b)| boundary_to_pb(*id, b))
@@ -1552,6 +1568,12 @@ pub mod system {
                 .ok_or(ConvertError::Missing("group_edit_op.op"))?
             {
                 Op::CreateGroup(m) => GroupEditOp::CreateGroup {
+                    scope: match m.component {
+                        None => GroupScope::SystemBase,
+                        Some(c) => GroupScope::Component {
+                            component: ComponentId::from_raw(c),
+                        },
+                    },
                     name: m.name.clone(),
                     description: m.description.clone(),
                     members: m.members.iter().map(|x| d(*x)).collect(),
@@ -1628,6 +1650,14 @@ pub mod system {
             clocks: b.clocks.iter().map(|c| c.raw()).collect(),
             internal_edges: b
                 .internal_edges
+                .iter()
+                .map(|(a, b)| pb::DeclEdge {
+                    from: a.raw(),
+                    to: b.raw(),
+                })
+                .collect(),
+            crossing_edges: b
+                .crossing_edges
                 .iter()
                 .map(|(a, b)| pb::DeclEdge {
                     from: a.raw(),

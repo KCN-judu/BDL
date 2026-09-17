@@ -41,11 +41,19 @@ pub struct GroupBoundary {
     pub clocks: Vec<ClockId>,
     /// Internal edges: producer and consumer both members.
     pub internal_edges: Vec<(DeclId, DeclId)>,
+    /// Crossing-in edges `(member, crossing-in declaration)`: which member
+    /// reads which outside declaration — the concrete endpoints behind an
+    /// aggregate input socket (a UI proxy resolves to these, never to the
+    /// group).
+    #[serde(default)]
+    pub crossing_edges: Vec<(DeclId, DeclId)>,
 }
 
 /// The boundary of `members` in `design`, with the dependency graph and IR
-/// of `analysis` (the flattened design's; base relationships keep their
-/// identities there).
+/// of `analysis`: the flattened design's for the system's own relationships
+/// (which keep their identities there), a component body's own analysis
+/// for a component-scoped group (component-local ids, never an instance's
+/// freshened ones).
 pub fn group_boundary(
     design: &Design,
     analysis: &ProjectAnalysis,
@@ -100,6 +108,11 @@ pub fn group_boundary(
         .flat_map(|a| members.iter().map(move |b| (*a, *b)))
         .filter(|(a, b)| deps.depends_on(*a, *b))
         .collect();
+    let crossing_edges: Vec<(DeclId, DeclId)> = members
+        .iter()
+        .flat_map(|m| crossing_in.iter().map(move |r| (*m, *r)))
+        .filter(|(m, r)| deps.depends_on(*m, *r))
+        .collect();
 
     let mut clocks: BTreeSet<ClockId> = BTreeSet::new();
     for d in members.iter().chain(crossing_in.iter()) {
@@ -131,6 +144,7 @@ pub fn group_boundary(
         external_inputs,
         clocks: clocks.into_iter().collect(),
         internal_edges,
+        crossing_edges,
     }
 }
 

@@ -535,10 +535,19 @@ message Layout {
   repeated NodePosition outputs = 3;
   // Component-instance nodes of a system canvas (protocol 0.8).
   repeated NodePosition instances = 4;
-  // Behaviour groups: the collapsed box and its state.  Layout only.
+  // Behaviour groups of this canvas: the collapsed box and its state.
+  // Layout only.  A component's groups are in its own ComponentLayout.
   repeated GroupBox groups = 5;
   // The canvas of each component's body, in component-local ids.
   repeated ComponentLayout components = 6;
+  // Where the designer left this canvas.
+  optional Viewport viewport = 7;
+}
+
+message Viewport {
+  double x = 1;
+  double y = 2;
+  double zoom = 3;
 }
 
 message GroupBox {
@@ -1426,18 +1435,25 @@ message SystemView {
   // semantic fact, so nothing revision-keyed is invalidated by them).
   uint64 authoring_generation = 11;
   // Every group's boundary at this authoring generation, read off the
-  // (cached) flat analysis of the revision: a projection that follows the
+  // (cached) analyses of the revision: a projection that follows the
   // membership without any re-analysis.
   repeated BehaviorGroupBoundaryView boundaries = 12;
+  // Whether the authored system differs from what is saved — a group edit
+  // dirties the project without moving the revision.
+  bool dirty = 13;
 }
 
-// A group is authoring metadata: identity, name, description, members.
+// A group is authoring metadata: identity, scope, name, description,
+// members.  Its scope is the authored design the members belong to: the
+// system's own design, or — with `component` set — that component's body
+// (members are then component-local ids).
 message BehaviorGroupView {
   uint64 id = 1;
   string name = 2;
   string description = 3;
-  // Base relationship ids, in authoring order.
+  // Relationship ids of the scope's design, in authoring order.
   repeated uint64 members = 4;
+  optional uint64 component = 5;
 }
 
 // Group edits: applied outside the revision stream (no ProjectChanged, no
@@ -1445,6 +1461,10 @@ message BehaviorGroupView {
 // generation.
 message ApplyGroupEditRequest {
   GroupEditOp op = 1;
+  // The authoring generation the client saw; refused with
+  // `group_edit.stale_generation` if the table has moved since (so two
+  // clients never silently overwrite each other's membership).
+  optional uint64 base_generation = 2;
 }
 
 message GroupEditOp {
@@ -1464,6 +1484,9 @@ message CreateGroup {
   string name = 1;
   string description = 2;
   repeated uint64 members = 3;
+  // The component whose body the group organises; unset: the system's own
+  // design.
+  optional uint64 component = 4;
 }
 message RenameGroup {
   uint64 id = 1;
@@ -1517,6 +1540,10 @@ message BehaviorGroupBoundaryView {
   repeated uint64 external_outputs = 9;
   repeated uint64 clocks = 10;
   repeated DeclEdge internal_edges = 11;
+  // (member, crossing-in declaration): which member reads which outside
+  // declaration — the concrete endpoints an aggregate input socket stands
+  // for.
+  repeated DeclEdge crossing_edges = 12;
 }
 
 message DeclEdge {

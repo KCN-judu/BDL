@@ -34,6 +34,8 @@ class NodeCanvas extends StatefulWidget {
     this.context = const SystemContext(),
     this.components = const [],
     this.groups = const [],
+    this.viewport,
+    this.groupsEnabled = false,
   });
 
   final pb.ProjectProjection project;
@@ -49,8 +51,16 @@ class NodeCanvas extends StatefulWidget {
   /// The components an instance can be placed of (right-click menu).
   final List<pb.ComponentView> components;
 
-  /// The groups a relationship can be added to.
+  /// The groups a relationship can be added to (those of the design on
+  /// screen).
   final List<pb.BehaviorGroupView> groups;
+
+  /// Where the designer left this canvas; `null` on a fresh canvas.
+  final CanvasViewport? viewport;
+
+  /// Whether behaviour groups exist here (a system project, in any
+  /// context).
+  final bool groupsEnabled;
 
   /// Compiler verdicts per mapping id, when an analysis of this revision
   /// exists.
@@ -80,14 +90,42 @@ class _LinkDrag {
   final Offset start;
   Offset current;
 
+  /// The drag started on an aggregate socket standing for several
+  /// concrete sources; the drop asks which.
+  List<ProxyTarget>? proxyChoices;
+
   /// Dragging away from a connected mapping input: releasing on empty space
   /// disconnects (Blender: "drag the link away from its input socket").
   final bool fromConnectedInput;
 }
 
+/// Below this zoom every group reads as its summary box (semantic zoom);
+/// the authored collapse state is untouched.
+const double kSummarizeBelowZoom = 0.5;
+
 class _NodeCanvasState extends State<NodeCanvas> {
-  Offset _pan = Offset.zero;
-  double _zoom = 1;
+  late Offset _pan = widget.viewport?.pan ?? Offset.zero;
+  late double _zoom = widget.viewport?.zoom ?? 1;
+
+  /// Box selection in progress (⇧-drag on empty canvas), scene coordinates.
+  Rect? _marquee;
+
+  /// The expanded group the dragged relationship would join on release.
+  int? _dragOverGroup;
+
+  @override
+  void didUpdateWidget(NodeCanvas old) {
+    super.didUpdateWidget(old);
+    // Another canvas: its own viewport.
+    if (old.context != widget.context) {
+      _pan = widget.viewport?.pan ?? Offset.zero;
+      _zoom = widget.viewport?.zoom ?? 1;
+    }
+  }
+
+  void _viewportMoved() {
+    widget.dispatch(ViewportChanged(pan: _pan, zoom: _zoom));
+  }
 
   NodeRef? _draggingNode;
   Offset _dragDelta = Offset.zero;
@@ -103,15 +141,28 @@ class _NodeCanvasState extends State<NodeCanvas> {
     super.dispose();
   }
 
+  SystemSceneInput get _sceneInput => _zoom < kSummarizeBelowZoom
+      ? SystemSceneInput(
+          system: widget.system.system,
+          analysis: widget.system.analysis,
+          groups: widget.system.groups,
+          boundaries: widget.system.boundaries,
+          groupBoxes: widget.system.groupBoxes,
+          portWords: widget.system.portWords,
+          summarize: true,
+        )
+      : widget.system;
+
   CanvasScene _scene(Map<NodeRef, Offset> layout) => buildScene(
     widget.project,
     layout,
     statuses: widget.statuses,
     outputStates: widget.outputStates,
-    system: widget.system,
+    system: _sceneInput,
   );
 
   bool get _isSystemCanvas => widget.system.system != null && widget.context is SystemContext;
+  bool get _groupsEnabled => widget.groupsEnabled;
 
   /// Dragging a group's title band moves every member together.
   int? _draggingGroup;
@@ -196,8 +247,21 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final groupOf = node == null || node.kind != NodeKind.mapping
         ? null
         : widget.groups.where((g) => g.members.any((m) => m.toInt() == node.id)).firstOrNull;
+    final multi = widget.selection;
+    final groupable = multi is MultiSelected
+        ? multi.mappings
+              .where((m) => widget.groups.every((g) => g.members.every((x) => x.toInt() != m)))
+              .length
+        : 0;
     return [
-      if (node != null) ...[
+      if (_groupsEnabled && multi is MultiSelected && groupable > 0) ...[
+        MenuItemButton(
+          onPressed: () => widget.dispatch(const GroupSelectionRequested()),
+          child: Text('Group as Behavior ($groupable relationship${groupable == 1 ? '' : 's'})'),
+        ),
+        const Divider(height: 8),
+      ],
+      if (node != null && multi is! MultiSelected) ...[
         if (node.kind != NodeKind.output)
           MenuItemButton(
             onPressed: () => widget.dispatch(InlineRenameStarted(node)),
@@ -234,22 +298,23 @@ class _NodeCanvasState extends State<NodeCanvas> {
               (widget.system.groupBoxes[node.id]?.collapsed ?? false) ? 'Expand' : 'Collapse',
             ),
           ),
-          MenuItemButton(
-            onPressed: () => widget.dispatch(ExtractionSheetOpened(node.id)),
-            child: const Text('Package as Reusable Component…'),
-          ),
+          if (_isSystemCanvas)
+            MenuItemButton(
+              onPressed: () => widget.dispatch(ExtractionSheetOpened(node.id)),
+              child: const Text('Package as Reusable Component…'),
+            ),
           MenuItemButton(
             onPressed: () => widget.dispatch(UngroupRequested(node.id)),
             child: const Text('Ungroup'),
           ),
         ],
-        if (_isSystemCanvas && node.kind == NodeKind.mapping) ...[
+        if (_groupsEnabled && node.kind == NodeKind.mapping) ...[
           if (groupOf == null) ...[
             MenuItemButton(
               onPressed: () => widget.dispatch(
-                CreateGroupRequested(name: _freshGroupName(), members: [node.id]),
+                CreateGroupRequested(name: 'Behavior', members: [node.id], renameAfter: true),
               ),
-              child: const Text('Group'),
+              child: const Text('Group as Behavior'),
             ),
             if (widget.groups.isNotEmpty)
               SubmenuButton(
@@ -297,9 +362,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
             ],
             child: const Text('Add Instance'),
           ),
+        const Divider(height: 8),
+      ],
+      if (_groupsEnabled && node == null) ...[
         MenuItemButton(
-          onPressed: () => widget.dispatch(CreateGroupRequested(name: _freshGroupName())),
-          child: const Text('New Group'),
+          onPressed: () =>
+              widget.dispatch(CreateGroupRequested(name: _freshGroupName(), renameAfter: true)),
+          child: const Text('New Behavior Group'),
         ),
         const Divider(height: 8),
       ],
@@ -329,14 +398,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
     ];
   }
 
-  /// `Group 2`, `lampA2`: a default name the designer renames inline.
+  /// `Behavior`, `Behavior 2`: a default name the designer renames inline.
   String _freshGroupName() {
     final taken = widget.groups.map((g) => g.name).toSet();
-    var i = widget.groups.length + 1;
-    while (taken.contains('Group $i')) {
+    if (!taken.contains('Behavior')) return 'Behavior';
+    var i = 2;
+    while (taken.contains('Behavior $i')) {
       i++;
     }
-    return 'Group $i';
+    return 'Behavior $i';
   }
 
   String _freshInstanceName(pb.ComponentView c) {
@@ -382,6 +452,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         _zoom = (_zoom * factor).clamp(0.25, 3.0);
         _pan = e.localPosition - before * _zoom;
       });
+      _viewportMoved();
     }
   }
 
@@ -406,16 +477,34 @@ class _NodeCanvasState extends State<NodeCanvas> {
     _focus.requestFocus();
     final scene = _scene(widget.layout);
     final p = _toScene(d.localPosition);
+    final shift = HardwareKeyboard.instance.isShiftPressed;
     switch (hitTest(scene, p)) {
       case HitSocket(:final socket):
-        final connected =
-            socket.ref.side == SocketSide.input && scene.links.any((l) => l.to == socket.ref);
+        // An aggregate socket is a proxy: the drag starts from the one
+        // concrete socket it stands for (several: the drop asks).
+        final targets = scene.resolve(socket.ref);
+        final from = targets.length == 1 && targets.single.socket != null
+            ? targets.single.socket!
+            : targets.isNotEmpty && targets.every((t) => t.socket != null)
+            ? targets.first.socket!
+            : socket.ref;
+        final connected = from.side == SocketSide.input && scene.links.any((l) => l.to == from);
         setState(() {
-          _linkDrag = _LinkDrag(socket.ref, socket.center, fromConnectedInput: connected)
-            ..current = p;
+          _linkDrag = _LinkDrag(from, socket.center, fromConnectedInput: connected)
+            ..current = p
+            ..proxyChoices = targets.length > 1 ? targets : null;
         });
       case HitNode(:final node):
-        widget.dispatch(SelectionChanged(_select(node.ref)));
+        if (shift) {
+          widget.dispatch(SelectionChanged(_extend(node.ref)));
+          setState(() => _panning = true);
+          return;
+        }
+        // Dragging a node that is part of the multi-selection keeps it.
+        final sel = widget.selection;
+        if (sel is! MultiSelected || !sel.nodes.contains(node.ref)) {
+          widget.dispatch(SelectionChanged(_select(node.ref)));
+        }
         setState(() {
           _draggingNode = node.ref;
           _dragDelta = Offset.zero;
@@ -430,9 +519,32 @@ class _NodeCanvasState extends State<NodeCanvas> {
         widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
         setState(() => _panning = true);
       case HitNothing():
+        if (shift) {
+          setState(() => _marquee = Rect.fromPoints(p, p));
+          return;
+        }
         widget.dispatch(const SelectionChanged(NoSelection()));
         setState(() => _panning = true);
     }
+  }
+
+  /// ⇧-click: toggle a node in the multi-selection.
+  Selection _extend(NodeRef ref) {
+    final sel = widget.selection;
+    final current = switch (sel) {
+      MultiSelected(:final nodes) => nodes,
+      ConceptSelected(:final id) => {NodeRef.concept(id)},
+      MappingSelected(:final id) => {NodeRef.mapping(id)},
+      OutputSelected(:final id) => {NodeRef.output(id)},
+      InstanceSelected(:final id) => {NodeRef.instance(id)},
+      GroupSelected(:final id) => {NodeRef.group(id)},
+      _ => <NodeRef>{},
+    };
+    final next = {...current};
+    if (!next.remove(ref)) next.add(ref);
+    if (next.isEmpty) return const NoSelection();
+    if (next.length == 1) return _select(next.single);
+    return MultiSelected(next);
   }
 
   void _onPanUpdate(DragUpdateDetails d) {
@@ -444,8 +556,27 @@ class _NodeCanvasState extends State<NodeCanvas> {
         // under the dragged link end so the cursor can refuse an illegal one.
         final hit = hitTest(_scene(widget.layout), p);
         _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
+      } else if (_marquee != null) {
+        _marquee = Rect.fromPoints(_marquee!.topLeft, _toScene(d.localPosition));
       } else if (_draggingNode != null || _draggingGroup != null) {
         _dragDelta += d.delta / _zoom;
+        // Insertion affordance: the expanded group under the dragged
+        // relationship (its own group's region measured without it).
+        final node = _draggingNode;
+        if (_groupsEnabled && node != null && node.kind == NodeKind.mapping) {
+          final layout = _effectiveLayout;
+          final shape = _scene(layout).nodes.where((n) => n.ref == node).firstOrNull;
+          final without = buildScene(
+            widget.project,
+            {...layout}..remove(node),
+            system: _sceneInput,
+          );
+          final over = shape == null ? null : groupAt(without, shape.rect.center);
+          _dragOverGroup =
+              over == null || (over.members.length == 1 && over.members.first == node.id)
+              ? null
+              : over.id;
+        }
       } else if (_panning) {
         _pan += d.delta;
       }
@@ -456,20 +587,32 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final link = _linkDrag;
     if (link != null) {
       final scene = _scene(widget.layout);
-      final target = dropTarget(scene, link.from, link.current);
-      if (target != null) {
-        _makeLink(link.from, target.ref);
-      } else if (link.fromConnectedInput && hitTest(scene, link.current) is HitNothing) {
-        _unlink(scene, link.from);
-      }
+      _dropLink(scene, link);
     }
+    if (_marquee case final box?) {
+      final scene = _scene(widget.layout);
+      final inside = {
+        for (final n in scene.nodes)
+          if (box.overlaps(n.rect) && box.contains(n.rect.center)) n.ref,
+      };
+      widget.dispatch(
+        SelectionChanged(
+          inside.isEmpty
+              ? const NoSelection()
+              : inside.length == 1
+              ? _select(inside.single)
+              : MultiSelected(inside),
+        ),
+      );
+    }
+    if (_panning) _viewportMoved();
     final node = _draggingNode;
     if (node != null && _dragDelta != Offset.zero) {
       final layout = _effectiveLayout;
       widget.dispatch(NodeMoved(node, layout[node]!));
       // Into or out of a group region: membership follows the drop.  Only
       // the membership changes — a group is authoring metadata.
-      if (_isSystemCanvas && node.kind == NodeKind.mapping) _membershipAfterDrop(node, layout);
+      if (_groupsEnabled && node.kind == NodeKind.mapping) _membershipAfterDrop(node, layout);
     }
     final group = _draggingGroup;
     if (group != null && _dragDelta != Offset.zero) {
@@ -486,7 +629,104 @@ class _NodeCanvasState extends State<NodeCanvas> {
       _draggingGroup = null;
       _dragDelta = Offset.zero;
       _panning = false;
+      _marquee = null;
+      _dragOverGroup = null;
     });
+  }
+
+  /// The drop.  A hit on an aggregate socket resolves to the concrete
+  /// endpoints it stands for: one → the link is made to it; several → a
+  /// chooser names them (the member and its socket), and the choice makes
+  /// the link.  Nothing is ever bound to the group.
+  void _dropLink(CanvasScene scene, _LinkDrag link) {
+    final hit = hitTest(scene, link.current);
+    if (hit is HitSocket && hit.socket.ref.role == SocketRole.aggregate) {
+      final candidates = [
+        for (final t in scene.resolve(hit.socket.ref))
+          if (t.socket != null && canLink(link.from, t.socket!))
+            t
+          else if (t.socket == null && _canLinkToNode(link.from, t.node))
+            t,
+      ];
+      if (candidates.isEmpty) return;
+      if (candidates.length == 1) {
+        _linkToTarget(link.from, candidates.single);
+        return;
+      }
+      _offerTargets(link.from, candidates, link.current);
+      return;
+    }
+    final target = dropTarget(scene, link.from, link.current);
+    if (target != null) {
+      if (link.proxyChoices case final choices?) {
+        // The drag started on an aggregate socket standing for several
+        // sources: choose which one connects.
+        final usable = [
+          for (final t in choices)
+            if (t.socket != null && canLink(t.socket!, target.ref)) t,
+        ];
+        if (usable.length == 1) {
+          _makeLink(usable.single.socket!, target.ref);
+        } else if (usable.length > 1) {
+          _offerSources(usable, target.ref, link.current);
+        }
+        return;
+      }
+      _makeLink(link.from, target.ref);
+    } else if (link.fromConnectedInput && hit is HitNothing) {
+      _unlink(scene, link.from);
+    }
+  }
+
+  /// A concept dragged onto a member without a socket for it: the member
+  /// would read the concept (an explicit, concrete edit).
+  bool _canLinkToNode(SocketRef from, NodeRef node) =>
+      from.node.kind == NodeKind.concept &&
+      from.side == SocketSide.output &&
+      node.kind == NodeKind.mapping;
+
+  void _linkToTarget(SocketRef from, ProxyTarget t) {
+    if (t.socket case final to?) {
+      _makeLink(from, to);
+    } else if (_canLinkToNode(from, t.node)) {
+      widget.dispatch(LinkConceptToMappingInput(conceptId: from.concept, mappingId: t.node.id));
+    }
+  }
+
+  List<Widget> _chooser = const [];
+  final MenuController _chooserMenu = MenuController();
+
+  void _offerTargets(SocketRef from, List<ProxyTarget> targets, Offset at) {
+    final concept = widget.project.concepts.where((c) => c.id.toInt() == from.concept).firstOrNull;
+    String describe(ProxyTarget t) => t.socket == null
+        ? '${t.label} — read ${concept?.name ?? ''}'
+        : '${t.label} · ${_socketWord(t.socket!)}';
+    setState(() {
+      _chooser = [
+        for (final t in targets)
+          MenuItemButton(onPressed: () => _linkToTarget(from, t), child: Text(describe(t))),
+      ];
+    });
+    _chooserMenu.open(position: at * _zoom + _pan);
+  }
+
+  void _offerSources(List<ProxyTarget> sources, SocketRef to, Offset at) {
+    setState(() {
+      _chooser = [
+        for (final t in sources)
+          MenuItemButton(onPressed: () => _makeLink(t.socket!, to), child: Text(t.label)),
+      ];
+    });
+    _chooserMenu.open(position: at * _zoom + _pan);
+  }
+
+  String _socketWord(SocketRef s) {
+    final concept = widget.project.concepts.where((c) => c.id.toInt() == s.concept).firstOrNull;
+    final name = concept?.name ?? '';
+    return switch (s.role) {
+      SocketRole.realise => 'definition',
+      _ => s.side == SocketSide.input ? 'reads $name' : 'produces $name',
+    };
   }
 
   void _membershipAfterDrop(NodeRef node, Map<NodeRef, Offset> layout) {
@@ -498,11 +738,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         .firstOrNull;
     // The region of the node's own group is measured without the node, so
     // dragging out is possible.
-    final sceneWithout = buildScene(
-      widget.project,
-      {...layout}..remove(node),
-      system: widget.system,
-    );
+    final sceneWithout = buildScene(widget.project, {...layout}..remove(node), system: _sceneInput);
     final target = sceneWithout.groups
         .where(
           (g) =>
@@ -611,6 +847,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
       GroupSelected(:final id) => NodeRef.group(id),
       _ => null,
     };
+    final selectedSet = switch (widget.selection) {
+      MultiSelected(:final nodes) => nodes,
+      _ => const <NodeRef>{},
+    };
     final selectedBinding = switch (widget.selection) {
       BindingSelected(:final id) => id,
       _ => null,
@@ -647,96 +887,106 @@ class _NodeCanvasState extends State<NodeCanvas> {
               _insert(d.data.templateId, _toScene(box.globalToLocal(d.offset)));
             },
             builder: (context, candidates, _) => MenuAnchor(
-              controller: _menu,
+              controller: _chooserMenu,
               consumeOutsideTap: true,
-              menuChildren: _menuItems(context),
-              child: Listener(
-                onPointerSignal: _onPointerSignal,
-                onPointerHover: _onHover,
-                child: MouseRegion(
-                  // Over a socket the link cannot reach, the pointer says so
-                  // before the drop: the typing rule is refused, not diagnosed.
-                  cursor: _linkDrag != null && _hoverSocket != null
-                      ? (canLink(_linkDrag!.from, _hoverSocket!)
-                            ? SystemMouseCursors.precise
-                            : SystemMouseCursors.forbidden)
-                      : _hoverSocket != null
-                      ? SystemMouseCursors.precise
-                      : _hoverNode != null
-                      ? SystemMouseCursors.grab
-                      : SystemMouseCursors.basic,
-                  onExit: (_) => setState(() {
-                    _hoverNode = null;
-                    _hoverSocket = null;
-                  }),
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onPanStart: _onPanStart,
-                    onPanUpdate: _onPanUpdate,
-                    onPanEnd: _onPanEnd,
-                    onSecondaryTapDown: _onSecondaryTapDown,
-                    onDoubleTapDown: _onDoubleTapDown,
-                    child: ClipRect(
-                      child: Stack(
-                        children: [
-                          CustomPaint(
-                            painter: _CanvasPainter(
-                              scene: scene,
-                              tokens: t,
-                              pan: _pan,
-                              zoom: _zoom,
-                              selected: selected,
-                              selectedBinding: selectedBinding,
-                              hovered: _hoverNode,
-                              hoveredSocket: _hoverSocket,
-                              linkDrag: _linkDrag,
-                              dropOk: _linkDrag == null
-                                  ? null
-                                  : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+              menuChildren: _chooser,
+              child: MenuAnchor(
+                controller: _menu,
+                consumeOutsideTap: true,
+                menuChildren: _menuItems(context),
+                child: Listener(
+                  onPointerSignal: _onPointerSignal,
+                  onPointerHover: _onHover,
+                  child: MouseRegion(
+                    // Over a socket the link cannot reach, the pointer says so
+                    // before the drop: the typing rule is refused, not diagnosed.
+                    cursor: _linkDrag != null && _hoverSocket != null
+                        ? (canLink(_linkDrag!.from, _hoverSocket!)
+                              ? SystemMouseCursors.precise
+                              : SystemMouseCursors.forbidden)
+                        : _hoverSocket != null
+                        ? SystemMouseCursors.precise
+                        : _hoverNode != null
+                        ? SystemMouseCursors.grab
+                        : SystemMouseCursors.basic,
+                    onExit: (_) => setState(() {
+                      _hoverNode = null;
+                      _hoverSocket = null;
+                    }),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanStart: _onPanStart,
+                      onPanUpdate: _onPanUpdate,
+                      onPanEnd: _onPanEnd,
+                      onSecondaryTapDown: _onSecondaryTapDown,
+                      onDoubleTapDown: _onDoubleTapDown,
+                      child: ClipRect(
+                        child: Stack(
+                          children: [
+                            CustomPaint(
+                              painter: _CanvasPainter(
+                                scene: scene,
+                                tokens: t,
+                                pan: _pan,
+                                zoom: _zoom,
+                                selected: selected,
+                                selectedSet: selectedSet,
+                                selectedBinding: selectedBinding,
+                                marquee: _marquee,
+                                dragOverGroup: _dragOverGroup,
+                                hovered: _hoverNode,
+                                hoveredSocket: _hoverSocket,
+                                linkDrag: _linkDrag,
+                                dropOk: _linkDrag == null
+                                    ? null
+                                    : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
+                              ),
+                              size: Size.infinite,
                             ),
-                            size: Size.infinite,
-                          ),
-                          if (candidates.isNotEmpty)
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: t.accent, width: 2),
+                            if (candidates.isNotEmpty)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: t.accent, width: 2),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          if (widget.renaming case final node?) ...[
-                            for (final shape in scene.nodes.where((n) => n.ref == node))
-                              _InlineRename(
-                                key: ValueKey(node),
-                                rect: Rect.fromLTWH(
-                                  shape.rect.left * _zoom + _pan.dx,
-                                  shape.rect.top * _zoom + _pan.dy,
-                                  shape.rect.width * _zoom,
-                                  NodeMetrics.headerHeight * _zoom,
+                            if (widget.renaming case final node?) ...[
+                              for (final shape in scene.nodes.where((n) => n.ref == node))
+                                _InlineRename(
+                                  key: ValueKey(node),
+                                  rect: Rect.fromLTWH(
+                                    shape.rect.left * _zoom + _pan.dx,
+                                    shape.rect.top * _zoom + _pan.dy,
+                                    shape.rect.width * _zoom,
+                                    NodeMetrics.headerHeight * _zoom,
+                                  ),
+                                  zoom: _zoom,
+                                  initial: shape.title,
+                                  onDone: (name) =>
+                                      widget.dispatch(InlineRenameFinished(node, name: name)),
                                 ),
-                                zoom: _zoom,
-                                initial: shape.title,
-                                onDone: (name) =>
-                                    widget.dispatch(InlineRenameFinished(node, name: name)),
-                              ),
-                            for (final g in scene.groups.where((g) => NodeRef.group(g.id) == node))
-                              _InlineRename(
-                                key: ValueKey(node),
-                                rect: Rect.fromLTWH(
-                                  g.rect.left * _zoom + _pan.dx,
-                                  g.rect.top * _zoom + _pan.dy,
-                                  (g.rect.width / 2).clamp(120, 320) * _zoom,
-                                  NodeMetrics.regionTitle * _zoom,
+                              for (final g in scene.groups.where(
+                                (g) => NodeRef.group(g.id) == node,
+                              ))
+                                _InlineRename(
+                                  key: ValueKey(node),
+                                  rect: Rect.fromLTWH(
+                                    g.rect.left * _zoom + _pan.dx,
+                                    g.rect.top * _zoom + _pan.dy,
+                                    (g.rect.width / 2).clamp(120, 320) * _zoom,
+                                    NodeMetrics.regionTitle * _zoom,
+                                  ),
+                                  zoom: _zoom,
+                                  initial: g.title,
+                                  onDone: (name) =>
+                                      widget.dispatch(InlineRenameFinished(node, name: name)),
                                 ),
-                                zoom: _zoom,
-                                initial: g.title,
-                                onDone: (name) =>
-                                    widget.dispatch(InlineRenameFinished(node, name: name)),
-                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -849,11 +1099,14 @@ class _CanvasPainter extends CustomPainter {
     required this.pan,
     required this.zoom,
     required this.selected,
+    required this.selectedSet,
     required this.selectedBinding,
     required this.hovered,
     required this.hoveredSocket,
     required this.linkDrag,
     required this.dropOk,
+    this.marquee,
+    this.dragOverGroup,
   });
 
   final CanvasScene scene;
@@ -861,7 +1114,10 @@ class _CanvasPainter extends CustomPainter {
   final Offset pan;
   final double zoom;
   final NodeRef? selected;
+  final Set<NodeRef> selectedSet;
   final int? selectedBinding;
+  final Rect? marquee;
+  final int? dragOverGroup;
   final NodeRef? hovered;
   final SocketRef? hoveredSocket;
   final _LinkDrag? linkDrag;
@@ -887,8 +1143,9 @@ class _CanvasPainter extends CustomPainter {
       painter.region(
         canvas,
         g,
-        selected: selected == NodeRef.group(g.id),
+        selected: selected == NodeRef.group(g.id) || selectedSet.contains(NodeRef.group(g.id)),
         hovered: hovered == NodeRef.group(g.id),
+        receiving: dragOverGroup == g.id,
       );
     }
 
@@ -919,7 +1176,22 @@ class _CanvasPainter extends CustomPainter {
       );
     }
     for (final n in scene.nodes) {
-      painter.node(canvas, n, selected: n.ref == selected, hovered: n.ref == hovered);
+      painter.node(
+        canvas,
+        n,
+        selected: n.ref == selected || selectedSet.contains(n.ref),
+        hovered: n.ref == hovered,
+      );
+    }
+    if (marquee case final m?) {
+      canvas.drawRect(m, Paint()..color = tokens.accent.withValues(alpha: 0.08));
+      canvas.drawRect(
+        m,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1 / zoom
+          ..color = tokens.accent,
+      );
     }
     canvas.restore();
 
@@ -1320,27 +1592,28 @@ class NodePainter {
   /// An expanded group region: a tinted, rounded background with a title
   /// band; members sit inside by position.  A picture, not a box the
   /// compiler knows.
-  void region(Canvas canvas, GroupShape g, {bool selected = false, bool hovered = false}) {
+  /// [receiving]: a relationship dragged over the region would join it on
+  /// release — the insertion affordance.
+  void region(
+    Canvas canvas,
+    GroupShape g, {
+    bool selected = false,
+    bool hovered = false,
+    bool receiving = false,
+  }) {
     final rrect = RRect.fromRectAndRadius(g.rect, const Radius.circular(10));
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..color = (tokens.isDark ? const Color(0xFF7A66A8) : const Color(0xFF8C6FC2)).withValues(
-          alpha: 0.12,
-        ),
-    );
+    final tint = tokens.isDark ? const Color(0xFF7A66A8) : const Color(0xFF8C6FC2);
+    canvas.drawRRect(rrect, Paint()..color = tint.withValues(alpha: receiving ? 0.22 : 0.12));
     canvas.drawRRect(
       rrect,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 2 : 1
-        ..color = selected
+        ..strokeWidth = selected || receiving ? 2 : 1
+        ..color = selected || receiving
             ? tokens.accent
             : hovered
             ? tokens.textSecondary
-            : (tokens.isDark ? const Color(0xFF7A66A8) : const Color(0xFF8C6FC2)).withValues(
-                alpha: 0.5,
-              ),
+            : tint.withValues(alpha: 0.5),
     );
     _text(
       canvas,

@@ -142,12 +142,7 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
         .map(|d| project(&flattened, d))
         .collect();
 
-    let groups = s
-        .groups
-        .values()
-        .map(|g| (g.id, group_boundary(&s.base, &analysis, &g.members)))
-        .collect();
-    let component_analyses = s
+    let component_analyses: BTreeMap<ComponentId, ProjectAnalysis> = s
         .components
         .values()
         .map(|c| {
@@ -158,6 +153,20 @@ pub fn analyze_system(snapshot: &SystemSnapshot) -> SystemAnalysis {
                     design: c.body.clone(),
                 }),
             )
+        })
+        .collect();
+    // A base group's boundary is read off the flat analysis; a component
+    // group's off its body's own analysis, in the body's ids.
+    let groups = s
+        .groups
+        .values()
+        .filter_map(|g| match g.scope {
+            GroupScope::SystemBase => Some((g.id, group_boundary(&s.base, &analysis, &g.members))),
+            GroupScope::Component { component } => {
+                let c = s.components.get(&component)?;
+                let a = component_analyses.get(&component)?;
+                Some((g.id, group_boundary(&c.body, a, &g.members)))
+            }
         })
         .collect();
 

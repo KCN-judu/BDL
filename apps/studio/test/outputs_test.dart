@@ -317,8 +317,8 @@ void main() {
         const NodeRef.mapping(0): const Offset(3, 4),
         const NodeRef.output(0): const Offset(5, 6),
       };
-      final back = layoutFromPb(layoutToPb(CanvasLayout(system: layout)));
-      expect(back.system, layout);
+      final back = layoutFromPb(layoutToPb(CanvasLayout(system: ContextLayout(nodes: layout))));
+      expect(back.system.nodes, layout);
     });
   });
 

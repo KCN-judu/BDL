@@ -325,7 +325,16 @@ impl Sys {
         Ok(o)
     }
     pub fn create_group(&mut self, name: &str, members: &[DeclId]) -> BehaviorGroupId {
+        self.create_group_in(GroupScope::SystemBase, name, members)
+    }
+    pub fn create_group_in(
+        &mut self,
+        scope: GroupScope,
+        name: &str,
+        members: &[DeclId],
+    ) -> BehaviorGroupId {
         self.group(GroupEditOp::CreateGroup {
+            scope,
             name: name.into(),
             description: String::new(),
             members: members.to_vec(),

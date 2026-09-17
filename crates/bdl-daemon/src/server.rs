@@ -251,7 +251,7 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                     )
                 }
             };
-            match session.apply_group(&op) {
+            match session.apply_group(a.base_generation, &op) {
                 Ok(()) => match system_view(session) {
                     Ok(v) => (Resp::System(pb::SystemResponse { system: Some(v) }), None),
                     Err(e) => (Resp::Error(session_error(&e)), None),
@@ -313,8 +313,8 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                 Err(e) => (Resp::Error(session_error(&e)), None),
             }
         }
-        Req::Undo(_) => commit_result(session, session_undo),
-        Req::Redo(_) => commit_result(session, session_redo),
+        Req::Undo(_) => step_result(session, true),
+        Req::Redo(_) => step_result(session, false),
         Req::SetLayout(l) => {
             let layout = l
                 .layout
@@ -900,25 +900,38 @@ fn simulation_response(
     })
 }
 
-fn session_undo(s: &mut Session) -> Result<Committed, SessionError> {
-    s.undo()
-}
-fn session_redo(s: &mut Session) -> Result<Committed, SessionError> {
-    s.redo()
-}
-
-fn commit_result(
-    session: &mut Session,
-    f: fn(&mut Session) -> Result<Committed, SessionError>,
-) -> (Resp, Option<Committed>) {
-    match f(session) {
-        Ok(c) => (
-            Resp::EditApplied(pb::EditApplied {
+/// Undo / redo.  A flat project answers `EditApplied`; a system project
+/// answers `SystemEditApplied` (the system alongside) and pushes a
+/// `ProjectChanged` only for a semantic step — an authoring step (a group
+/// edit undone) moves no revision.
+fn step_result(session: &mut Session, undo: bool) -> (Resp, Option<Committed>) {
+    let is_system = session.project().map(|p| p.is_system()).unwrap_or(false);
+    if !is_system {
+        let r = if undo { session.undo() } else { session.redo() };
+        return match r {
+            Ok(c) => (
+                Resp::EditApplied(pb::EditApplied {
+                    project: Some(project_of(session)),
+                    outcome: None,
+                }),
+                Some(c),
+            ),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        };
+    }
+    match session.system_step(undo) {
+        Ok(stepped) => {
+            let view = system_view(session).ok();
+            let resp = Resp::SystemEditApplied(pb::SystemEditApplied {
+                system: view,
                 project: Some(project_of(session)),
                 outcome: None,
-            }),
-            Some(c),
-        ),
+            });
+            match stepped {
+                crate::session::Stepped::Semantic(c) => (resp, Some(*c)),
+                crate::session::Stepped::Authoring => (resp, None),
+            }
+        }
         Err(e) => (Resp::Error(session_error(&e)), None),
     }
 }
@@ -971,6 +984,7 @@ fn system_view(session: &mut Session) -> Result<pb::SystemView, SessionError> {
         &sys.flattened.origins,
         sys.authoring_generation,
         &boundaries,
+        p.dirty(),
     ))
 }
 
@@ -997,6 +1011,9 @@ fn session_error(e: &SessionError) -> pb::Error {
             details_json: serde_json::to_string(x).unwrap_or_default(),
         },
         SessionError::UnknownComponent(_) => error("system.unknown_component", &e.to_string()),
+        SessionError::StaleGeneration { .. } => {
+            error("group_edit.stale_generation", &e.to_string())
+        }
         SessionError::DerivedDesign => error("edit.derived_design", &e.to_string()),
         SessionError::NotASystem => error("system.not_a_system", &e.to_string()),
         SessionError::NoProject => error("session.no_project", &e.to_string()),
@@ -1068,6 +1085,8 @@ fn group_edit_code(e: &bdl_system::GroupEditError) -> &'static str {
         E::AlreadyGrouped { .. } => "already_grouped",
         E::NotAMember { .. } => "not_a_member",
         E::SameGroup => "same_group",
+        E::ScopeMismatch => "scope_mismatch",
+        E::UnknownComponent { .. } => "unknown_component",
     }
 }
 
@@ -1081,6 +1100,7 @@ fn extract_code(e: &bdl_system::ExtractError) -> &'static str {
         E::DuplicateInstanceName { .. } => "duplicate_instance_name",
         E::NotAnOpenMember { .. } => "not_an_open_member",
         E::NotADrivenSink { .. } => "not_a_driven_sink",
+        E::NotABaseGroup { .. } => "not_a_base_group",
     }
 }
 

@@ -160,7 +160,7 @@ Transition reduce(AppState s, AppAction action) {
     DraftAnalysisFailed(:final mappingId, :final generation, :final code, :final message) =>
       draftAnalysisFailed(s, mappingId, generation, code, message),
     DeleteSelectionRequested() => switch (s.editor.selection) {
-      NoSelection() || PortSelected() => Transition(s),
+      NoSelection() || PortSelected() || MultiSelected() => Transition(s),
       ConceptSelected(:final id) => reduce(s, DeleteConceptRequested(id)),
       MappingSelected(:final id) => reduce(s, DeleteMappingRequested(id)),
       OutputSelected(:final id) => reduce(s, DeleteOutputRequested(id)),
@@ -479,7 +479,7 @@ Transition reduce(AppState s, AppAction action) {
       s,
       GroupBoxChanged(
         id: node.id,
-        rect: (s.editor.layouts.groups[node.id]?.rect ?? Rect.zero).let(
+        rect: (s.editor.contextLayout.groups[node.id]?.rect ?? Rect.zero).let(
           (r) => Rect.fromLTWH(position.dx, position.dy, r.width, r.height),
         ),
       ),
@@ -593,6 +593,7 @@ Transition reduce(AppState s, AppAction action) {
           clearPendingInsert: true,
           clearPendingPlacement: true,
           clearPendingGroup: true,
+          renameNextGroup: false,
           lastError: UserFacingError(code: code, message: message, details: details),
           drafts: draftsAfterFailedRequest(s.editor.drafts, message),
           // a failed step ends its plan; nothing after it is sent blindly
@@ -600,6 +601,8 @@ Transition reduce(AppState s, AppAction action) {
           queuedSystemEdits: const [],
         ),
       ),
+      // The group table moved under us: show the current one.
+      [if (code == 'group_edit.stale_generation' && s.isSystem) const GetSystem()],
     ),
     // ---- system projects (app/system.dart) --------------------------------
     UserAction() => systemAction(s, action),
@@ -793,27 +796,36 @@ Transition projectReceived(
   // whenever the flat design moved without it (undo, redo, another
   // client); until it arrives the canvas waits rather than showing the
   // derived flat design.
-  final system = sameProject && s.system != null && s.system!.revision == incoming.revision
+  var system = sameProject && s.system != null && s.system!.revision == incoming.revision
       ? s.system
       : null;
+  // A save answers with the same revision and `dirty = false`; the system
+  // view's own dirty flag follows.
+  if (system != null && !incoming.dirty && system.dirty) {
+    system = system.deepCopy()..dirty = false;
+  }
   final context = sameProject ? s.editor.context : const SystemContext();
   final view = viewProjection(incoming, system, context);
   final needsSystem = isSystem && system == null;
   // Layout: the daemon's copy is authoritative on open; afterwards Studio is
   // the author and only merges in positions it does not know yet.
   final stored = layoutFromPb(incoming.layout);
+  ContextLayout merged(ContextLayout stored, ContextLayout own) => ContextLayout(
+    nodes: {...stored.nodes, ...own.nodes},
+    groups: {...stored.groups, ...own.groups},
+    viewport: own.viewport ?? stored.viewport,
+  );
   final layouts = sameProject
       ? CanvasLayout(
-          system: {...stored.system, ...s.editor.layouts.system},
-          groups: {...stored.groups, ...s.editor.layouts.groups},
+          system: merged(stored.system, s.editor.layouts.system),
           components: {
             ...stored.components,
             for (final e in s.editor.layouts.components.entries)
-              e.key: {...?stored.components[e.key], ...e.value},
+              e.key: merged(stored.components[e.key] ?? const ContextLayout(), e.value),
           },
         )
       : stored;
-  var layout = layouts.of(context);
+  var layout = layouts.of(context).nodes;
   // Create-then-rename: the concept a template insertion created lands
   // where the designer pointed, is selected, and opens for naming.
   final insert = s.editor.pendingInsert;

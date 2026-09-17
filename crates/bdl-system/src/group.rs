@@ -11,12 +11,17 @@
 //! invalidation set at all, and the daemon applies these outside the
 //! revision stream, on an *authoring generation* of its own.
 //!
-//! Members are relationships of `base`; a relationship is in at most one
-//! group (a region on the canvas contains a node once).  The FV allows
-//! overlapping lists; the restriction is an authoring choice (DI-36) that
-//! costs no theorem.
+//! A group lives in one authored design — the system's own, or a
+//! component's body (`GroupScope`) — and its members are relationships of
+//! that design; a relationship is in at most one group of its scope (a
+//! region on the canvas contains a node once).  The FV allows overlapping
+//! lists and states its results for any design; the one-group restriction
+//! is an authoring choice (DI-36) that costs no theorem, and the explicit
+//! scope is how production names the design (never inferred from ids,
+//! DI-42).  A group never spans two designs: moving a relationship across
+//! a component boundary is an extraction or a body edit, not grouping.
 
-use crate::ids::BehaviorGroupId;
+use crate::ids::{BehaviorGroupId, ComponentId};
 use crate::model::*;
 use bdl_model::DeclId;
 use serde::{Deserialize, Serialize};
@@ -25,8 +30,10 @@ use std::collections::BTreeSet;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "edit", rename_all = "snake_case")]
 pub enum GroupEditOp {
-    /// FV `group`: a fresh group over some relationships.
+    /// FV `group`: a fresh group over some relationships of one design.
     CreateGroup {
+        #[serde(default)]
+        scope: GroupScope,
         name: String,
         #[serde(default)]
         description: String,
@@ -94,6 +101,10 @@ pub enum GroupEditError {
     },
     #[error("a group cannot be merged into itself")]
     SameGroup,
+    #[error("the groups belong to different designs")]
+    ScopeMismatch,
+    #[error("unknown component {id}")]
+    UnknownComponent { id: ComponentId },
 }
 
 /// What a group edit did.  Deliberately no `invalidates`: nothing
@@ -115,18 +126,30 @@ fn valid_name(name: &str) -> Result<String, GroupEditError> {
     }
 }
 
+/// Names are unique within a scope (two components may each have a
+/// "Dimming").
 fn unique_name(
     s: &BehaviorSystem,
+    scope: GroupScope,
     name: String,
     except: Option<BehaviorGroupId>,
 ) -> Result<String, GroupEditError> {
-    if s.groups
-        .values()
+    if s.groups_in(scope)
         .any(|g| g.name == name && Some(g.id) != except)
     {
         return Err(GroupEditError::DuplicateGroupName { name });
     }
     Ok(name)
+}
+
+fn scope_exists(s: &BehaviorSystem, scope: GroupScope) -> Result<(), GroupEditError> {
+    match scope {
+        GroupScope::SystemBase => Ok(()),
+        GroupScope::Component { component } if s.components.contains_key(&component) => Ok(()),
+        GroupScope::Component { component } => {
+            Err(GroupEditError::UnknownComponent { id: component })
+        }
+    }
 }
 
 fn group_mut(
@@ -138,22 +161,33 @@ fn group_mut(
         .ok_or(GroupEditError::UnknownGroup { id })
 }
 
-fn base_decl(s: &BehaviorSystem, decl: DeclId) -> Result<DeclId, GroupEditError> {
-    if s.base.mappings.contains_key(&decl) {
+/// `decl` is a relationship of the scope's design.
+fn scoped_decl(
+    s: &BehaviorSystem,
+    scope: GroupScope,
+    decl: DeclId,
+) -> Result<DeclId, GroupEditError> {
+    scope_exists(s, scope)?;
+    let design = s
+        .design_of(scope)
+        .ok_or(GroupEditError::NotABaseDeclaration { decl })?;
+    if design.mappings.contains_key(&decl) {
         Ok(decl)
     } else {
         Err(GroupEditError::NotABaseDeclaration { decl })
     }
 }
 
-/// `decl` may join `group`: it is a base relationship in no other group.
+/// `decl` may join `group`: it is a relationship of the scope's design in
+/// no other group of that scope.
 fn free_for(
     s: &BehaviorSystem,
+    scope: GroupScope,
     decl: DeclId,
     group: Option<BehaviorGroupId>,
 ) -> Result<(), GroupEditError> {
-    base_decl(s, decl)?;
-    if let Some(g) = s.group_of(decl) {
+    scoped_decl(s, scope, decl)?;
+    if let Some(g) = s.group_of(scope, decl) {
         if Some(g.id) != group {
             return Err(GroupEditError::AlreadyGrouped { decl, group: g.id });
         }
@@ -171,14 +205,16 @@ pub fn apply_group_edit(
     let mut o = GroupEditOutcome::default();
     match op {
         GroupEditOp::CreateGroup {
+            scope,
             name,
             description,
             members,
         } => {
-            let name = unique_name(&s, valid_name(name)?, None)?;
+            scope_exists(&s, *scope)?;
+            let name = unique_name(&s, *scope, valid_name(name)?, None)?;
             let mut list = Vec::new();
             for d in members {
-                free_for(&s, *d, None)?;
+                free_for(&s, *scope, *d, None)?;
                 if !list.contains(d) {
                     list.push(*d);
                 }
@@ -188,6 +224,7 @@ pub fn apply_group_edit(
                 id,
                 BehaviorGroup {
                     id,
+                    scope: *scope,
                     name,
                     description: description.clone(),
                     members: list,
@@ -197,7 +234,8 @@ pub fn apply_group_edit(
             o.groups.insert(id);
         }
         GroupEditOp::RenameGroup { id, name } => {
-            let name = unique_name(&s, valid_name(name)?, Some(*id))?;
+            let scope = group_mut(&mut s, *id)?.scope;
+            let name = unique_name(&s, scope, valid_name(name)?, Some(*id))?;
             group_mut(&mut s, *id)?.name = name;
             o.groups.insert(*id);
         }
@@ -212,8 +250,8 @@ pub fn apply_group_edit(
             o.groups.insert(*id);
         }
         GroupEditOp::AddMember { group, decl } => {
-            group_mut(&mut s, *group)?;
-            free_for(&s, *decl, Some(*group))?;
+            let scope = group_mut(&mut s, *group)?.scope;
+            free_for(&s, scope, *decl, Some(*group))?;
             let g = group_mut(&mut s, *group)?;
             if !g.members.contains(decl) {
                 g.members.push(*decl);
@@ -232,9 +270,9 @@ pub fn apply_group_edit(
             o.groups.insert(*group);
         }
         GroupEditOp::MoveMember { decl, to } => {
-            group_mut(&mut s, *to)?;
-            base_decl(&s, *decl)?;
-            if let Some(from) = s.group_of(*decl).map(|g| g.id) {
+            let scope = group_mut(&mut s, *to)?.scope;
+            scoped_decl(&s, scope, *decl)?;
+            if let Some(from) = s.group_of(scope, *decl).map(|g| g.id) {
                 if from == *to {
                     return Ok((s, o));
                 }
@@ -249,7 +287,11 @@ pub fn apply_group_edit(
             if into == from {
                 return Err(GroupEditError::SameGroup);
             }
-            group_mut(&mut s, *into)?;
+            let into_scope = group_mut(&mut s, *into)?.scope;
+            let from_scope = group_mut(&mut s, *from)?.scope;
+            if into_scope != from_scope {
+                return Err(GroupEditError::ScopeMismatch);
+            }
             let moved = s
                 .groups
                 .remove(from)
@@ -264,7 +306,8 @@ pub fn apply_group_edit(
             o.groups.insert(*from);
         }
         GroupEditOp::SplitGroup { id, name, members } => {
-            let name = unique_name(&s, valid_name(name)?, None)?;
+            let scope = group_mut(&mut s, *id)?.scope;
+            let name = unique_name(&s, scope, valid_name(name)?, None)?;
             let g = group_mut(&mut s, *id)?;
             for d in members {
                 if !g.members.contains(d) {
@@ -286,6 +329,7 @@ pub fn apply_group_edit(
                 fresh,
                 BehaviorGroup {
                     id: fresh,
+                    scope,
                     name,
                     description: String::new(),
                     members: moved,
@@ -301,10 +345,76 @@ pub fn apply_group_edit(
 
 /// After a semantic edit: a member whose relationship is gone leaves its
 /// group (the group itself stays, possibly empty — the designer's unit
-/// outlives one deletion).
+/// outlives one deletion); the groups of a component that is gone go with
+/// it (no orphan scope).
 pub fn prune_groups(s: &mut BehaviorSystem) {
-    let base = &s.base;
-    for g in s.groups.values_mut() {
-        g.members.retain(|d| base.mappings.contains_key(d));
+    let scopes: Vec<(BehaviorGroupId, GroupScope)> =
+        s.groups.values().map(|g| (g.id, g.scope)).collect();
+    for (id, scope) in scopes {
+        let Some(design) = s.design_of(scope) else {
+            s.groups.remove(&id);
+            continue;
+        };
+        let live: Vec<DeclId> = design.mappings.keys().copied().collect();
+        if let Some(g) = s.groups.get_mut(&id) {
+            g.members.retain(|d| live.contains(d));
+        }
+    }
+}
+
+/// A component's groups copied for a version of it: fresh group ids, the
+/// same local member ids (a version keeps its local ids).  Group ids are
+/// never shared between components.
+pub fn copy_groups(s: &mut BehaviorSystem, from: ComponentId, to: ComponentId) {
+    let originals: Vec<BehaviorGroup> = s
+        .groups_in(GroupScope::Component { component: from })
+        .cloned()
+        .collect();
+    for g in originals {
+        let id = s.ids.fresh_group();
+        s.groups.insert(
+            id,
+            BehaviorGroup {
+                id,
+                scope: GroupScope::Component { component: to },
+                name: g.name,
+                description: g.description,
+                members: g.members,
+            },
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ids::ComponentId;
+
+    #[test]
+    fn a_group_without_a_scope_reads_as_base_scoped_and_scopes_round_trip() {
+        let legacy = r#"{"id":0,"name":"Lamp","members":[1,2]}"#;
+        let g: BehaviorGroup = serde_json::from_str(legacy).unwrap();
+        assert_eq!(g.scope, GroupScope::SystemBase);
+        let scoped = BehaviorGroup {
+            id: BehaviorGroupId::from_raw(1),
+            scope: GroupScope::Component {
+                component: ComponentId::from_raw(3),
+            },
+            name: "Dimming".into(),
+            description: String::new(),
+            members: vec![DeclId::from_raw(4)],
+        };
+        let json = serde_json::to_string(&scoped).unwrap();
+        assert!(
+            json.contains(r#""scope":{"kind":"component","component":3}"#),
+            "{json}"
+        );
+        let back: BehaviorGroup = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, scoped);
+        let base_json = serde_json::to_string(&g).unwrap();
+        assert!(
+            base_json.contains(r#""scope":{"kind":"system_base"}"#),
+            "{base_json}"
+        );
     }
 }
