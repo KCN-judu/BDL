@@ -791,7 +791,9 @@ Transition projectReceived(
   if (sameProject && incoming.revision < current.revision) {
     return Transition(s.copyWith(editor: s.editor.copyWith(pendingRequests: pendingCount)));
   }
-  final isSystem = incoming.kind == pb.ProjectKind.PROJECT_KIND_SYSTEM;
+  final isSystem =
+      incoming.kind == pb.ProjectKind.PROJECT_KIND_SYSTEM ||
+      incoming.kind == pb.ProjectKind.PROJECT_KIND_TEXT;
   // A system project's system is fetched with the project and again
   // whenever the flat design moved without it (undo, redo, another
   // client); until it arrives the canvas waits rather than showing the

@@ -644,6 +644,8 @@ pub struct SessionInfo {
     pub dirty: bool,
     /// The snapshot is the derived flattening of a behaviour system.
     pub derived: bool,
+    /// The system is loaded from and written as text (ADR-0020).
+    pub textual: bool,
 }
 
 /// Render a snapshot for the editor.  Deterministic: ordered maps in, ordered
@@ -660,7 +662,9 @@ pub fn projection(
     p.can_undo = info.can_undo;
     p.can_redo = info.can_redo;
     p.dirty = info.dirty;
-    p.set_kind(if info.derived {
+    p.set_kind(if info.textual {
+        pb::ProjectKind::Text
+    } else if info.derived {
         pb::ProjectKind::System
     } else {
         pb::ProjectKind::Flat

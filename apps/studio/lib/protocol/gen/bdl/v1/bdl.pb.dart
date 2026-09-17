@@ -54,6 +54,8 @@ enum ClientMessage_Payload {
   runSystemAnalysis,
   applyGroupEdit,
   previewComponentExtraction,
+  initTextProject,
+  reloadProject,
   notSet
 }
 
@@ -92,6 +94,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     RunSystemAnalysisRequest? runSystemAnalysis,
     ApplyGroupEditRequest? applyGroupEdit,
     PreviewComponentExtractionRequest? previewComponentExtraction,
+    InitTextProjectRequest? initTextProject,
+    ReloadProjectRequest? reloadProject,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -129,6 +133,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (applyGroupEdit != null) result.applyGroupEdit = applyGroupEdit;
     if (previewComponentExtraction != null)
       result.previewComponentExtraction = previewComponentExtraction;
+    if (initTextProject != null) result.initTextProject = initTextProject;
+    if (reloadProject != null) result.reloadProject = reloadProject;
     return result;
   }
 
@@ -174,6 +180,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     53: ClientMessage_Payload.runSystemAnalysis,
     54: ClientMessage_Payload.applyGroupEdit,
     55: ClientMessage_Payload.previewComponentExtraction,
+    60: ClientMessage_Payload.initTextProject,
+    61: ClientMessage_Payload.reloadProject,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -211,7 +219,9 @@ class ClientMessage extends $pb.GeneratedMessage {
       52,
       53,
       54,
-      55
+      55,
+      60,
+      61
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -279,6 +289,10 @@ class ClientMessage extends $pb.GeneratedMessage {
     ..aOM<PreviewComponentExtractionRequest>(
         55, _omitFieldNames ? '' : 'previewComponentExtraction',
         subBuilder: PreviewComponentExtractionRequest.$_createMessage)
+    ..aOM<InitTextProjectRequest>(60, _omitFieldNames ? '' : 'initTextProject',
+        subBuilder: InitTextProjectRequest.$_createMessage)
+    ..aOM<ReloadProjectRequest>(61, _omitFieldNames ? '' : 'reloadProject',
+        subBuilder: ReloadProjectRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -333,6 +347,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(53)
   @$pb.TagNumber(54)
   @$pb.TagNumber(55)
+  @$pb.TagNumber(60)
+  @$pb.TagNumber(61)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -366,6 +382,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(53)
   @$pb.TagNumber(54)
   @$pb.TagNumber(55)
+  @$pb.TagNumber(60)
+  @$pb.TagNumber(61)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -730,6 +748,29 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearPreviewComponentExtraction() => $_clearField(55);
   @$pb.TagNumber(55)
   PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(32);
+
+  /// Text projects (ADR-0020; 0.9).
+  @$pb.TagNumber(60)
+  InitTextProjectRequest get initTextProject => $_getN(33);
+  @$pb.TagNumber(60)
+  set initTextProject(InitTextProjectRequest value) => $_setField(60, value);
+  @$pb.TagNumber(60)
+  $core.bool hasInitTextProject() => $_has(33);
+  @$pb.TagNumber(60)
+  void clearInitTextProject() => $_clearField(60);
+  @$pb.TagNumber(60)
+  InitTextProjectRequest ensureInitTextProject() => $_ensure(33);
+
+  @$pb.TagNumber(61)
+  ReloadProjectRequest get reloadProject => $_getN(34);
+  @$pb.TagNumber(61)
+  set reloadProject(ReloadProjectRequest value) => $_setField(61, value);
+  @$pb.TagNumber(61)
+  $core.bool hasReloadProject() => $_has(34);
+  @$pb.TagNumber(61)
+  void clearReloadProject() => $_clearField(61);
+  @$pb.TagNumber(61)
+  ReloadProjectRequest ensureReloadProject() => $_ensure(34);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1821,7 +1862,13 @@ class InitProjectRequest extends $pb.GeneratedMessage {
 }
 
 class SaveProjectRequest extends $pb.GeneratedMessage {
-  factory SaveProjectRequest() => SaveProjectRequest._();
+  factory SaveProjectRequest({
+    $core.bool? force,
+  }) {
+    final result = SaveProjectRequest._();
+    if (force != null) result.force = force;
+    return result;
+  }
 
   SaveProjectRequest._();
 
@@ -1835,6 +1882,7 @@ class SaveProjectRequest extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SaveProjectRequest',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: SaveProjectRequest.$_createMessage)
+    ..aOB(1, _omitFieldNames ? '' : 'force')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1856,6 +1904,17 @@ class SaveProjectRequest extends $pb.GeneratedMessage {
   static SaveProjectRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<SaveProjectRequest>(SaveProjectRequest.$_createMessage);
   static SaveProjectRequest? _defaultInstance;
+
+  /// A text project refuses to save over sources that changed on disk since
+  /// they were loaded (`project.changed_on_disk`); `force` overwrites them.
+  @$pb.TagNumber(1)
+  $core.bool get force => $_getBF(0);
+  @$pb.TagNumber(1)
+  set force($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasForce() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearForce() => $_clearField(1);
 }
 
 class CloseProjectRequest extends $pb.GeneratedMessage {
@@ -12806,6 +12865,117 @@ class InitSystemProjectRequest extends $pb.GeneratedMessage {
   $core.bool hasName() => $_has(1);
   @$pb.TagNumber(2)
   void clearName() => $_clearField(2);
+}
+
+/// Create a text project: `bdl.toml` (kind = text), `src/main.bdl`, the
+/// identity and authoring sidecars.
+class InitTextProjectRequest extends $pb.GeneratedMessage {
+  factory InitTextProjectRequest({
+    $core.String? rootPath,
+    $core.String? name,
+  }) {
+    final result = InitTextProjectRequest._();
+    if (rootPath != null) result.rootPath = rootPath;
+    if (name != null) result.name = name;
+    return result;
+  }
+
+  InitTextProjectRequest._();
+
+  factory InitTextProjectRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InitTextProjectRequest()..mergeFromBuffer(data, registry);
+  factory InitTextProjectRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InitTextProjectRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'InitTextProjectRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: InitTextProjectRequest.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'rootPath')
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InitTextProjectRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InitTextProjectRequest copyWith(void Function(InitTextProjectRequest) updates) =>
+      super.copyWith((message) => updates(message as InitTextProjectRequest))
+          as InitTextProjectRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use InitTextProjectRequest() / InitTextProjectRequest.new instead')
+  static InitTextProjectRequest create() => InitTextProjectRequest._();
+  static $pb.GeneratedMessage $_createMessage() => InitTextProjectRequest._();
+  @$core.override
+  InitTextProjectRequest createEmptyInstance() => InitTextProjectRequest._();
+  @$core.pragma('dart2js:noInline')
+  static InitTextProjectRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<InitTextProjectRequest>(
+          InitTextProjectRequest.$_createMessage);
+  static InitTextProjectRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get rootPath => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set rootPath($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRootPath() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRootPath() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+}
+
+/// Re-read the open project from disk, dropping the in-memory design
+/// (identities return through the sidecar).  Answers like OpenProject.
+class ReloadProjectRequest extends $pb.GeneratedMessage {
+  factory ReloadProjectRequest() => ReloadProjectRequest._();
+
+  ReloadProjectRequest._();
+
+  factory ReloadProjectRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ReloadProjectRequest()..mergeFromBuffer(data, registry);
+  factory ReloadProjectRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ReloadProjectRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ReloadProjectRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ReloadProjectRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ReloadProjectRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ReloadProjectRequest copyWith(void Function(ReloadProjectRequest) updates) =>
+      super.copyWith((message) => updates(message as ReloadProjectRequest)) as ReloadProjectRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ReloadProjectRequest() / ReloadProjectRequest.new instead')
+  static ReloadProjectRequest create() => ReloadProjectRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ReloadProjectRequest._();
+  @$core.override
+  ReloadProjectRequest createEmptyInstance() => ReloadProjectRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ReloadProjectRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ReloadProjectRequest>(ReloadProjectRequest.$_createMessage);
+  static ReloadProjectRequest? _defaultInstance;
 }
 
 class GetSystemRequest extends $pb.GeneratedMessage {

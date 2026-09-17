@@ -149,12 +149,15 @@ pub fn plan_rename(
             let occurrences = formula_input_names(
                 &snapshot.effective().design,
                 &block.signature.inputs,
+                &block.parameters,
                 source,
             );
+            // A textual parameter name is the body's own; only the
+            // concept's name spelled in the body follows the rename.
             let edits: Vec<TextEdit> = occurrences
                 .into_iter()
-                .filter(|(_, x)| *x == c)
-                .map(|(range, _)| TextEdit::replace(range, new_name))
+                .filter(|n| n.concept == c && !n.by_parameter)
+                .map(|n| TextEdit::replace(n.range, new_name))
                 .collect();
             if edits.is_empty() {
                 continue;

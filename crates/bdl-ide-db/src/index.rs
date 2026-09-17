@@ -94,16 +94,17 @@ impl EntityIndex {
                 });
             }
             if let Some(Definition::Formula { source }) = &m.definition {
-                let names = formula_input_names(design, &m.signature.inputs, source);
-                for (range, c) in &names {
+                let names = formula_input_names(design, &m.signature.inputs, &m.parameters, source);
+                for n in &names {
                     ix.add(SemanticReference {
-                        target: EntityRef::Concept(*c),
+                        target: EntityRef::Concept(n.concept),
                         referrer: me,
                         role: EntityRole::Definition,
-                        in_formula: Some(*range),
+                        in_formula: Some(n.range),
                     });
                 }
-                ix.formula_names.insert(m.id, names);
+                ix.formula_names
+                    .insert(m.id, names.iter().map(|n| (n.range, n.concept)).collect());
             }
         }
         for o in design.outputs.values() {
@@ -196,15 +197,18 @@ impl EntityIndex {
 }
 
 /// The input-name occurrences of a formula, resolved to concepts by the
-/// elaborator's own rule (`bdl_elab::names`, ADR-0013).  Total: an
-/// unparsable formula yields the names the tree still has.  Body-relative
-/// ranges, in source order.
+/// elaborator's own rule (`bdl_elab::names`, ADR-0013 / TEXTUAL_SYNTAX
+/// §14.4).  Total: an unparsable formula yields the names the tree still
+/// has.  Body-relative ranges, in source order; `by_parameter` is `true`
+/// when the occurrence is a textual parameter name rather than the
+/// concept's own name — a rename of the concept must leave it alone.
 pub fn formula_input_names(
     design: &Design,
     inputs: &[SemanticId],
+    parameters: &[String],
     source: &str,
-) -> Vec<(TextRange, SemanticId)> {
-    let env = InputEnv::for_inputs(design, inputs);
+) -> Vec<FormulaInputName> {
+    let env = InputEnv::with_parameters(design, inputs, parameters);
     let parse = bdl_syntax::parse_formula(source);
     let mut out = Vec::new();
     for node in parse.syntax_node().descendants() {
@@ -214,11 +218,23 @@ pub fn formula_input_names(
         let Some(r) = name.name() else { continue };
         if let Lookup::Input(i) = env.resolve(design, &r.as_str()) {
             if let Some(c) = inputs.get(i) {
-                out.push((TextRange::from(r.span()), *c));
+                out.push(FormulaInputName {
+                    range: TextRange::from(r.span()),
+                    concept: *c,
+                    by_parameter: parameters.get(i).is_some_and(|p| !p.is_empty()),
+                });
             }
         }
     }
     out
+}
+
+/// One occurrence of an input name inside a formula body.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FormulaInputName {
+    pub range: TextRange,
+    pub concept: SemanticId,
+    pub by_parameter: bool,
 }
 
 #[cfg(test)]
@@ -259,6 +275,7 @@ mod tests {
                 }),
                 clock: None,
                 drives: None,
+                parameters: Vec::new(),
             },
         );
         (d, tilt, bright, dim)

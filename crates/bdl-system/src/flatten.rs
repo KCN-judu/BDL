@@ -333,11 +333,21 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                 Some(Definition::Formula { source }) => Some(Definition::ScopedFormula {
                     source: source.clone(),
                     scope: FormulaScope {
+                        // The body's own names for its inputs: its textual
+                        // parameters where it has them, the concepts'
+                        // names otherwise (TEXTUAL_SYNTAX §14.4).
                         inputs: m
                             .signature
                             .inputs
                             .iter()
-                            .map(|c| concept_name(*c))
+                            .enumerate()
+                            .map(|(i, c)| {
+                                m.parameters
+                                    .get(i)
+                                    .filter(|p| !p.is_empty())
+                                    .cloned()
+                                    .unwrap_or_else(|| concept_name(*c))
+                            })
                             .collect(),
                         mappings: scope_mappings.clone(),
                         concepts: scope_concepts.clone(),
@@ -402,6 +412,7 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                     definition,
                     clock: m.clock.and_then(|c| ren.clock(c)),
                     drives: m.drives.and_then(|o| ren.output(o)),
+                    parameters: m.parameters.clone(),
                 },
             );
         }

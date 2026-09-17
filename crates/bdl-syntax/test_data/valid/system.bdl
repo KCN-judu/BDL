@@ -2,6 +2,7 @@
 
 concept Tilt : Angle
 concept Brightness : Scalar
+concept Gain : Scalar
 
 clock interaction
 clock display
@@ -20,11 +21,12 @@ device imu : i2c_sensor
 component AdaptiveLamp {
   use concept Tilt
   use concept Brightness
+  use concept Gain
   param clock main
   clock blink
 
   requires tiltValue : Tilt @main
-  param gain : Scalar
+  param gain : Gain
 
   mapping dimByTilt : Tilt -> Brightness
   dimByTilt(t) = t / (90 deg)

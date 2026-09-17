@@ -73,6 +73,10 @@ pub enum SessionError {
     UnknownComponent(ComponentId),
     #[error("group edit targets authoring generation {expected} but the project is at {actual}")]
     StaleGeneration { expected: u64, actual: u64 },
+    #[error(transparent)]
+    Text(#[from] bdl_text::TextError),
+    #[error("{} changed on disk since the project was opened: {}", files.len(), files.join(", "))]
+    ChangedOnDisk { files: Vec<String> },
 }
 
 /// One authored step of a system project, for undo/redo: a semantic edit
@@ -106,6 +110,10 @@ pub struct SystemState {
     saved: BehaviorSystem,
     undo: Vec<HistoryEntry>,
     redo: Vec<HistoryEntry>,
+    /// Present for a text project (ADR-0020): the sources as last loaded
+    /// or written, with their anchors and modification stamps.  Saving
+    /// writes the system back as text through them.
+    pub text: Option<bdl_text::LoadedWorkspace>,
 }
 
 impl SystemState {
@@ -178,6 +186,10 @@ impl OpenProject {
     pub fn is_system(&self) -> bool {
         self.system.is_some()
     }
+    /// A text project: canonical source under `src/`, written on save.
+    pub fn is_text(&self) -> bool {
+        self.system.as_ref().is_some_and(|s| s.text.is_some())
+    }
 }
 
 #[derive(Default)]
@@ -235,20 +247,64 @@ impl Session {
             }
             persist::ProjectKind::System => {
                 let loaded = system_persist::load_system_project(root)?;
-                self.install_system(root, loaded.snapshot, loaded.layout);
+                self.install_system(root, loaded.snapshot, loaded.layout, None);
+            }
+            persist::ProjectKind::Text => {
+                let loaded = bdl_text::load_text_project(root)?;
+                let snapshot = SystemSnapshot::new(loaded.build.system.clone());
+                let layout = loaded.layout.clone();
+                self.install_system(root, snapshot, layout, Some(loaded));
             }
         }
         self.project()
     }
 
-    pub fn init_system(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+    /// Create a text project (ADR-0020): `src/main.bdl`, the sidecars, the
+    /// manifest.
+    pub fn init_text(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
         self.ensure_closed()?;
-        let created = system_persist::init_system_project(root, name, &self.compiler_version)?;
-        self.install_system(root, created.snapshot, created.layout);
+        let loaded = bdl_text::init_text_project(root, name, &self.compiler_version)?;
+        let snapshot = SystemSnapshot::new(loaded.build.system.clone());
+        let layout = loaded.layout.clone();
+        self.install_system(root, snapshot, layout, Some(loaded));
         self.project()
     }
 
-    fn install_system(&mut self, root: &Path, system: SystemSnapshot, layout: Layout) {
+    /// Re-read a text project from disk, dropping the in-memory design:
+    /// identities come back through the sidecar, layout through its file.
+    pub fn reload_text(&mut self) -> Result<&OpenProject, SessionError> {
+        let root = self.project()?.root.clone();
+        if !self.project()?.is_text() {
+            return Err(SessionError::NotASystem);
+        }
+        self.project = None;
+        self.open(&root)
+    }
+
+    /// The source files a text project has that changed on disk since they
+    /// were loaded (empty for other kinds).
+    pub fn changed_on_disk(&self) -> Result<Vec<String>, SessionError> {
+        let p = self.project()?;
+        match p.system.as_ref().and_then(|s| s.text.as_ref()) {
+            Some(loaded) => Ok(bdl_text::workspace::changed_on_disk(loaded)?),
+            None => Ok(Vec::new()),
+        }
+    }
+
+    pub fn init_system(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+        self.ensure_closed()?;
+        let created = system_persist::init_system_project(root, name, &self.compiler_version)?;
+        self.install_system(root, created.snapshot, created.layout, None);
+        self.project()
+    }
+
+    fn install_system(
+        &mut self,
+        root: &Path,
+        system: SystemSnapshot,
+        layout: Layout,
+        text: Option<bdl_text::LoadedWorkspace>,
+    ) {
         let flattened = flatten(&system);
         let snapshot = flattened.snapshot.clone();
         self.install(root, snapshot, layout);
@@ -261,6 +317,7 @@ impl Session {
                 component_ide: BTreeMap::new(),
                 undo: Vec::new(),
                 redo: Vec::new(),
+                text,
             });
         }
     }
@@ -293,10 +350,40 @@ impl Session {
         Ok(())
     }
 
-    pub fn save(&mut self) -> Result<(), SessionError> {
+    /// Save; a text project refuses when its sources changed on disk since
+    /// they were loaded, unless `force` overwrites them (ADR-0020 §9).
+    pub fn save_with(&mut self, force: bool) -> Result<(), SessionError> {
         let version = self.compiler_version.clone();
+        if !force {
+            let changed = self.changed_on_disk()?;
+            if !changed.is_empty() {
+                return Err(SessionError::ChangedOnDisk { files: changed });
+            }
+        }
         let p = self.project_mut()?;
         match p.system.as_mut() {
+            Some(s) if s.text.is_some() => {
+                // Text is the only truth written: the system goes back as
+                // item-level edits of the sources, then the sources are
+                // re-read so anchors and stamps describe what is on disk.
+                let loaded = s.text.as_ref().expect("checked");
+                bdl_text::save_text_project(
+                    &p.root,
+                    loaded,
+                    &s.current.system,
+                    &p.layout,
+                    &version,
+                )?;
+                let reloaded = bdl_text::load_text_project(&p.root)?;
+                if reloaded.build.system != s.current.system {
+                    tracing::warn!(
+                        root = %p.root.display(),
+                        "the written text does not read back as the saved system; keeping the in-memory design"
+                    );
+                }
+                s.text = Some(reloaded);
+                s.saved = s.current.system.clone();
+            }
             Some(s) => {
                 // The system is the only truth written; the flat design is
                 // derived on open.
@@ -769,7 +856,7 @@ mod tests {
             )
             .unwrap();
         let id = c.outcome.unwrap().created_mapping.unwrap();
-        s.save().unwrap();
+        s.save_with(false).unwrap();
         assert!(!s.project().unwrap().dirty());
         s.close().unwrap();
 

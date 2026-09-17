@@ -177,6 +177,14 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             Ok(_) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
+        Req::InitTextProject(i) => match session.init_text(Path::new(&i.root_path), &i.name) {
+            Ok(_) => (project_response(session), None),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
+        Req::ReloadProject(_) => match session.reload_text() {
+            Ok(_) => (project_response(session), None),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
         Req::GetSystem(_) => match system_view(session) {
             Ok(v) => (Resp::System(pb::SystemResponse { system: Some(v) }), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
@@ -273,7 +281,7 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                 Err(e) => (Resp::Error(session_error(&e)), None),
             }
         }
-        Req::SaveProject(_) => match session.save() {
+        Req::SaveProject(r) => match session.save_with(r.force) {
             Ok(()) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
@@ -968,6 +976,7 @@ fn projection_of(
                 can_redo: p.can_redo(),
                 dirty: p.dirty(),
                 derived: p.is_system(),
+                textual: p.is_text(),
             },
         ),
         Err(_) => pb::ProjectProjection::default(),
@@ -1022,6 +1031,8 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::NothingToUndo => error("edit.nothing_to_undo", &e.to_string()),
         SessionError::NothingToRedo => error("edit.nothing_to_redo", &e.to_string()),
         SessionError::Persist(_) => error("project.persist", &e.to_string()),
+        SessionError::Text(_) => error("project.text", &e.to_string()),
+        SessionError::ChangedOnDisk { .. } => error("project.changed_on_disk", &e.to_string()),
         SessionError::Ide(bdl_ide::QueryError::UnknownEntity { .. }) => {
             error("draft.unknown_mapping", &e.to_string())
         }
@@ -1128,6 +1139,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::OpenProject(_) => "open_project",
         Req::InitProject(_) => "init_project",
         Req::InitSystemProject(_) => "init_system_project",
+        Req::InitTextProject(_) => "init_text_project",
+        Req::ReloadProject(_) => "reload_project",
         Req::ApplyGroupEdit(_) => "apply_group_edit",
         Req::PreviewComponentExtraction(_) => "preview_component_extraction",
         Req::GetSystem(_) => "get_system",

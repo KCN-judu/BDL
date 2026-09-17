@@ -35,7 +35,10 @@ pb.ProjectProjection viewProjection(
   pb.SystemView? system,
   DesignContext context,
 ) {
-  if (flat.kind != pb.ProjectKind.PROJECT_KIND_SYSTEM) return flat;
+  if (flat.kind != pb.ProjectKind.PROJECT_KIND_SYSTEM &&
+      flat.kind != pb.ProjectKind.PROJECT_KIND_TEXT) {
+    return flat;
+  }
   final design = switch (context) {
     SystemContext() => system?.base,
     ComponentContext(:final id) =>

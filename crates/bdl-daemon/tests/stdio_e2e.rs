@@ -434,7 +434,10 @@ fn vertical_slice_steps_1_to_12() {
     assert_eq!(p.revision, rev_after_formula);
 
     // save, close, reopen: the unresolved mapping and layout survive
-    let p = project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
+    let p = project(c.call(
+        Req::SaveProject(pb::SaveProjectRequest { force: false }),
+        &mut events,
+    ));
     assert!(!p.dirty);
     c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
     let p = project(c.call(
@@ -770,7 +773,10 @@ fn outputs_and_deployment_over_stdio() {
     assert!(a.analysis.unwrap().output_complete);
 
     // the whole thing survives a save/reopen
-    project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
+    project(c.call(
+        Req::SaveProject(pb::SaveProjectRequest { force: false }),
+        &mut events,
+    ));
     c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
     let p = project(c.call(
         Req::OpenProject(pb::OpenProjectRequest {
@@ -1099,7 +1105,10 @@ fn definition_drafts_over_stdio() {
             }),
         }),
     );
-    project(c.call(Req::SaveProject(pb::SaveProjectRequest {}), &mut events));
+    project(c.call(
+        Req::SaveProject(pb::SaveProjectRequest { force: false }),
+        &mut events,
+    ));
     c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
     let p = project(c.call(
         Req::OpenProject(pb::OpenProjectRequest {

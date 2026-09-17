@@ -37,6 +37,17 @@ fn attaches_leading_comments(kind: SyntaxKind) -> bool {
             | SyntaxKind::EnumVariant
             | SyntaxKind::MatchArm
             | SyntaxKind::LetStmt
+            | SyntaxKind::ClockDecl
+            | SyntaxKind::OutputDecl
+            | SyntaxKind::DriveDecl
+            | SyntaxKind::DeviceDecl
+            | SyntaxKind::ComponentDecl
+            | SyntaxKind::UseDecl
+            | SyntaxKind::ParamClockDecl
+            | SyntaxKind::PortDecl
+            | SyntaxKind::InstanceDecl
+            | SyntaxKind::BindDecl
+            | SyntaxKind::ExportDecl
     )
 }
 

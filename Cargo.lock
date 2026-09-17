@@ -135,6 +135,7 @@ dependencies = [
  "bdl-protocol",
  "bdl-reactive",
  "bdl-system",
+ "bdl-text",
  "bytes",
  "clap",
  "prost",
@@ -374,6 +375,22 @@ dependencies = [
  "bdl-output",
  "bdl-reactive",
  "bdl-runtime-host",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "bdl-text"
+version = "0.1.0"
+dependencies = [
+ "bdl-compiler",
+ "bdl-diagnostics",
+ "bdl-model",
+ "bdl-reactive",
+ "bdl-syntax",
+ "bdl-system",
  "serde",
  "serde_json",
  "tempfile",

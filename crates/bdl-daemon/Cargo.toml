@@ -16,6 +16,7 @@ bdl-model = { workspace = true }
 bdl-protocol = { workspace = true }
 bdl-compiler = { workspace = true }
 bdl-system = { workspace = true }
+bdl-text = { workspace = true }
 bdl-ide = { workspace = true }
 bdl-library = { workspace = true }
 bdl-ide-db = { workspace = true }

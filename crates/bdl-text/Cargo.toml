@@ -1,0 +1,19 @@
+[package]
+name = "bdl-text"
+version = "0.1.0"
+edition = "2021"
+description = "Textual BDL workspaces: source discovery, stable source identities, loading text into the authored model, and writing model edits back as text (ADR-0020)"
+
+[dependencies]
+bdl-model = { path = "../bdl-model" }
+bdl-system = { path = "../bdl-system" }
+bdl-syntax = { path = "../bdl-syntax" }
+bdl-diagnostics = { path = "../bdl-diagnostics" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+bdl-compiler = { path = "../bdl-compiler" }
+bdl-reactive = { path = "../bdl-reactive" }
+tempfile = { workspace = true }

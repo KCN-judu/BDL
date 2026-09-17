@@ -381,6 +381,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     definition: None,
                     clock: None,
                     drives: None,
+                    parameters: Vec::new(),
                 },
             );
             EditOutcome {

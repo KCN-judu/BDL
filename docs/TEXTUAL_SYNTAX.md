@@ -734,11 +734,12 @@ PortDecl      ::= ("requires" | "provides" | "param") Name ":" Type ClockTag? Ma
 component AdaptiveLamp {
   use concept Tilt                 // the system's Tilt, shared
   use concept Brightness
+  use concept Gain
   param clock main                 // a timing parameter: each instance names a system domain
   clock blink                      // a private domain of the component
 
   requires tiltValue : Tilt @main             // what the behavior needs
-  param gain : Scalar                         // configured per instance
+  param gain : Gain                           // configured per instance (a concept, like any value)
 
   mapping dimByTilt : Tilt -> Brightness      // component-local
   dimByTilt(t) = t / (90 deg)
@@ -819,6 +820,19 @@ Nothing in source names a stable identity. The loader keys every item by
 kind and qualified name (`component:AdaptiveLamp/port:brightness`) and
 reconciles keys against `.bdl/identities.json` (ADR-0020 §3–4). Groups
 and layout are not in source.
+
+### 14.7 Descriptions are doc comments
+
+A run of `///` lines directly above an item (no blank line between) is
+the item's description — the *Meaning* field of Studio's inspector — and
+is the only comment a tool rewrites: write-back prints a changed
+description as `///` lines and leaves every `//` and `/* */` comment
+where it was.
+
+```bdl
+/// How far the lamp head is tilted from upright.
+concept Tilt : Angle
+```
 
 ### 14.6 Canonical formatting of the new items
 

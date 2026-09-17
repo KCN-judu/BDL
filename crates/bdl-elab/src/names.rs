@@ -46,17 +46,38 @@ pub enum Lookup {
 
 impl InputEnv {
     pub fn for_inputs(design: &Design, inputs: &[SemanticId]) -> InputEnv {
+        InputEnv::with_parameters(design, inputs, &[])
+    }
+
+    /// The environment of a mapping's own body: its textual parameter
+    /// names where it has them, the concepts' names otherwise
+    /// (TEXTUAL_SYNTAX §14.4).
+    pub fn for_mapping(design: &Design, mapping: &MappingBlock) -> InputEnv {
+        InputEnv::with_parameters(design, &mapping.signature.inputs, &mapping.parameters)
+    }
+
+    /// `parameters[i]`, when present and non-empty, is the name of input
+    /// `i`; every other input is named after its concept.
+    pub fn with_parameters(
+        design: &Design,
+        inputs: &[SemanticId],
+        parameters: &[String],
+    ) -> InputEnv {
         InputEnv {
             inputs: inputs
                 .iter()
-                .map(|id| {
+                .enumerate()
+                .map(|(i, id)| {
+                    let param = parameters.get(i).filter(|p| !p.is_empty()).cloned();
                     (
                         *id,
-                        design
-                            .concepts
-                            .get(id)
-                            .map(|c| c.name.clone())
-                            .unwrap_or_default(),
+                        param.unwrap_or_else(|| {
+                            design
+                                .concepts
+                                .get(id)
+                                .map(|c| c.name.clone())
+                                .unwrap_or_default()
+                        }),
                     )
                 })
                 .collect(),

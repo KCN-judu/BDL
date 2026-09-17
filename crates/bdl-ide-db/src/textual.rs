@@ -120,6 +120,13 @@ pub fn bind_document(
                 entity: None,
                 open: true,
             }),
+            other => b.faults.push(BindingFault {
+                code: "binding.unsupported_item".into(),
+                range: other.span().into(),
+                message: "this item is authored in a text project (`bdl.toml` kind = \"text\"); a document overlaid on a JSON project can declare concepts and mappings only.".into(),
+                entity: None,
+                open: true,
+            }),
         }
     }
     let mut anchors = b.anchors;
@@ -316,6 +323,7 @@ impl Binder<'_> {
                         definition: None,
                         clock: None,
                         drives: None,
+                        parameters: Vec::new(),
                     },
                 );
                 id

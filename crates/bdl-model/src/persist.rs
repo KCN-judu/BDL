@@ -63,6 +63,11 @@ pub enum ProjectKind {
     /// `design/system.bdl.json`: a behaviour system is the authored truth;
     /// the flat design is derived (`bdl-system`).
     System,
+    /// `src/**/*.bdl`: the source tree is the authored truth (ADR-0020);
+    /// identities live in `.bdl/identities.json`, groups in
+    /// `.bdl/authoring.json`, and the system and flat design are derived
+    /// by the textual loader (`bdl-text`).
+    Text,
 }
 
 /// `bdl.toml`

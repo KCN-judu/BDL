@@ -218,6 +218,13 @@ pub struct MappingBlock {
     /// driver of.  Write-once as a refinement; retargeting is an edit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub drives: Option<OutputId>,
+    /// The names a formula body uses for the inputs, positionally — the
+    /// textual surface's `f(t, held) = …` (TEXTUAL_SYNTAX §14.4).  Empty
+    /// for a relationship authored in Studio: its body names the concepts
+    /// themselves (ADR-0013).  A missing or empty entry falls back to the
+    /// concept's name for that position.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parameters: Vec<String>,
 }
 
 impl MappingBlock {

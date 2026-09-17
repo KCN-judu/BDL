@@ -148,7 +148,7 @@ pub fn elaborate_formula(
     mapping: &MappingBlock,
     source: &str,
 ) -> Result<(Realized, Vec<Diagnostic>), Vec<Diagnostic>> {
-    let env = InputEnv::for_inputs(design, &mapping.signature.inputs);
+    let env = InputEnv::for_mapping(design, mapping);
     elaborate_formula_in(design, ir, mapping, source, env)
 }
 

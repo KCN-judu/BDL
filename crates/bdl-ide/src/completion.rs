@@ -180,11 +180,19 @@ fn formula_completions(
     let mut out = Vec::new();
     let unit_position = after_number(source, replace);
 
-    for c in &block.signature.inputs {
+    for (i, c) in block.signature.inputs.iter().enumerate() {
         let Some(concept) = design.concepts.get(c) else {
             continue;
         };
-        if !matches(&concept.name) {
+        // The name the body uses for this input: its textual parameter
+        // name when it has one, the concept's name otherwise.
+        let name = block
+            .parameters
+            .get(i)
+            .filter(|p| !p.is_empty())
+            .cloned()
+            .unwrap_or_else(|| concept.name.clone());
+        if !matches(&name) {
             continue;
         }
         let ty = ExpectedType::of(concept.representation);
@@ -194,17 +202,18 @@ fn formula_completions(
             rank(&expected, &ty)
         };
         out.push(SemanticCompletion {
-            label: concept.name.clone(),
+            label: name.clone(),
             kind: CompletionKind::Input,
             entity: Some(EntityRef::Concept(*c)),
             resulting_type: Some(ty.describe()),
             replace,
-            insert: concept.name.clone(),
+            insert: name,
             relevance,
             template: None,
             documentation: Some(format!(
-                "input of `{}`{}",
+                "input of `{}` ({}){}",
                 block.name,
+                concept.name,
                 if concept.description.is_empty() {
                     String::new()
                 } else {

@@ -705,7 +705,8 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     assert_eq!(lamp_view.body.as_ref().unwrap().mappings.len(), 3);
     let v = c.system();
     // save, reopen: the system is the truth; the flat file is not written
-    let Resp::Project(saved) = c.call(Req::SaveProject(pb::SaveProjectRequest {})) else {
+    let Resp::Project(saved) = c.call(Req::SaveProject(pb::SaveProjectRequest { force: false }))
+    else {
         panic!()
     };
     assert!(!saved.project.unwrap().dirty);
@@ -890,7 +891,7 @@ fn grouping_and_extraction_over_the_wire() {
     assert_eq!(e.code, "group_edit.unknown_group");
 
     // --- authoring history: undo/redo of group edits move no revision ---
-    let saved_before = c.call(Req::SaveProject(pb::SaveProjectRequest {}));
+    let saved_before = c.call(Req::SaveProject(pb::SaveProjectRequest { force: false }));
     let Resp::Project(sp) = saved_before else {
         panic!()
     };
@@ -1160,7 +1161,7 @@ fn grouping_and_extraction_over_the_wire() {
             ..Default::default()
         }),
     }));
-    c.call(Req::SaveProject(pb::SaveProjectRequest {}));
+    c.call(Req::SaveProject(pb::SaveProjectRequest { force: false }));
     c.call(Req::CloseProject(pb::CloseProjectRequest {}));
     let Resp::Project(re) = c.call(Req::OpenProject(pb::OpenProjectRequest {
         root_path: root.to_string_lossy().into(),

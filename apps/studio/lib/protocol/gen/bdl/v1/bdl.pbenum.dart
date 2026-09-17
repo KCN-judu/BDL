@@ -113,13 +113,19 @@ class ProjectKind extends $pb.ProtobufEnum {
   static const ProjectKind PROJECT_KIND_SYSTEM =
       ProjectKind._(2, _omitEnumNames ? '' : 'PROJECT_KIND_SYSTEM');
 
+  /// `src/**/*.bdl` is the canonical source (ADR-0020); to Studio it is a
+  /// system project whose sources are written on save.
+  static const ProjectKind PROJECT_KIND_TEXT =
+      ProjectKind._(3, _omitEnumNames ? '' : 'PROJECT_KIND_TEXT');
+
   static const $core.List<ProjectKind> values = <ProjectKind>[
     PROJECT_KIND_UNSPECIFIED,
     PROJECT_KIND_FLAT,
     PROJECT_KIND_SYSTEM,
+    PROJECT_KIND_TEXT,
   ];
 
-  static final $core.List<ProjectKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static final $core.List<ProjectKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 3);
   static ProjectKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

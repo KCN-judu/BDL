@@ -81,13 +81,15 @@ const ProjectKind$json = {
     {'1': 'PROJECT_KIND_UNSPECIFIED', '2': 0},
     {'1': 'PROJECT_KIND_FLAT', '2': 1},
     {'1': 'PROJECT_KIND_SYSTEM', '2': 2},
+    {'1': 'PROJECT_KIND_TEXT', '2': 3},
   ],
 };
 
 /// Descriptor for `ProjectKind`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List projectKindDescriptor = $convert
     .base64Decode('CgtQcm9qZWN0S2luZBIcChhQUk9KRUNUX0tJTkRfVU5TUEVDSUZJRUQQABIVChFQUk9KRUNUX0'
-        'tJTkRfRkxBVBABEhcKE1BST0pFQ1RfS0lORF9TWVNURU0QAg==');
+        'tJTkRfRkxBVBABEhcKE1BST0pFQ1RfS0lORF9TWVNURU0QAhIVChFQUk9KRUNUX0tJTkRfVEVY'
+        'VBAD');
 
 @$core.Deprecated('Use acceptanceStateDescriptor instead')
 const AcceptanceState$json = {
@@ -612,6 +614,24 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'previewComponentExtraction'
     },
+    {
+      '1': 'init_text_project',
+      '3': 60,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.InitTextProjectRequest',
+      '9': 0,
+      '10': 'initTextProject'
+    },
+    {
+      '1': 'reload_project',
+      '3': 61,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ReloadProjectRequest',
+      '9': 0,
+      '10': 'reloadProject'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -664,7 +684,10 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         '9ncm91cF9lZGl0GDYgASgLMh0uYmRsLnYxLkFwcGx5R3JvdXBFZGl0UmVxdWVzdEgAUg5hcHBs'
         'eUdyb3VwRWRpdBJtChxwcmV2aWV3X2NvbXBvbmVudF9leHRyYWN0aW9uGDcgASgLMikuYmRsLn'
         'YxLlByZXZpZXdDb21wb25lbnRFeHRyYWN0aW9uUmVxdWVzdEgAUhpwcmV2aWV3Q29tcG9uZW50'
-        'RXh0cmFjdGlvbkIJCgdwYXlsb2Fk');
+        'RXh0cmFjdGlvbhJMChFpbml0X3RleHRfcHJvamVjdBg8IAEoCzIeLmJkbC52MS5Jbml0VGV4dF'
+        'Byb2plY3RSZXF1ZXN0SABSD2luaXRUZXh0UHJvamVjdBJFCg5yZWxvYWRfcHJvamVjdBg9IAEo'
+        'CzIcLmJkbC52MS5SZWxvYWRQcm9qZWN0UmVxdWVzdEgAUg1yZWxvYWRQcm9qZWN0QgkKB3BheW'
+        'xvYWQ=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1017,11 +1040,14 @@ final $typed_data.Uint8List initProjectRequestDescriptor = $convert
 @$core.Deprecated('Use saveProjectRequestDescriptor instead')
 const SaveProjectRequest$json = {
   '1': 'SaveProjectRequest',
+  '2': [
+    {'1': 'force', '3': 1, '4': 1, '5': 8, '10': 'force'},
+  ],
 };
 
 /// Descriptor for `SaveProjectRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List saveProjectRequestDescriptor =
-    $convert.base64Decode('ChJTYXZlUHJvamVjdFJlcXVlc3Q=');
+    $convert.base64Decode('ChJTYXZlUHJvamVjdFJlcXVlc3QSFAoFZm9yY2UYASABKAhSBWZvcmNl');
 
 @$core.Deprecated('Use closeProjectRequestDescriptor instead')
 const CloseProjectRequest$json = {
@@ -3685,6 +3711,29 @@ const InitSystemProjectRequest$json = {
 final $typed_data.Uint8List initSystemProjectRequestDescriptor = $convert
     .base64Decode('ChhJbml0U3lzdGVtUHJvamVjdFJlcXVlc3QSGwoJcm9vdF9wYXRoGAEgASgJUghyb290UGF0aB'
         'ISCgRuYW1lGAIgASgJUgRuYW1l');
+
+@$core.Deprecated('Use initTextProjectRequestDescriptor instead')
+const InitTextProjectRequest$json = {
+  '1': 'InitTextProjectRequest',
+  '2': [
+    {'1': 'root_path', '3': 1, '4': 1, '5': 9, '10': 'rootPath'},
+    {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+  ],
+};
+
+/// Descriptor for `InitTextProjectRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List initTextProjectRequestDescriptor = $convert
+    .base64Decode('ChZJbml0VGV4dFByb2plY3RSZXF1ZXN0EhsKCXJvb3RfcGF0aBgBIAEoCVIIcm9vdFBhdGgSEg'
+        'oEbmFtZRgCIAEoCVIEbmFtZQ==');
+
+@$core.Deprecated('Use reloadProjectRequestDescriptor instead')
+const ReloadProjectRequest$json = {
+  '1': 'ReloadProjectRequest',
+};
+
+/// Descriptor for `ReloadProjectRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List reloadProjectRequestDescriptor =
+    $convert.base64Decode('ChRSZWxvYWRQcm9qZWN0UmVxdWVzdA==');
 
 @$core.Deprecated('Use getSystemRequestDescriptor instead')
 const GetSystemRequest$json = {

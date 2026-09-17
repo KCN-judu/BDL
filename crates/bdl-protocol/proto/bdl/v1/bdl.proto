@@ -60,6 +60,9 @@ message ClientMessage {
     // Behaviour grouping and component authoring (protocol 0.8).
     ApplyGroupEditRequest apply_group_edit = 54;
     PreviewComponentExtractionRequest preview_component_extraction = 55;
+    // Text projects (ADR-0020; 0.9).
+    InitTextProjectRequest init_text_project = 60;
+    ReloadProjectRequest reload_project = 61;
   }
 }
 
@@ -152,7 +155,11 @@ message InitProjectRequest {
   string name = 2;
 }
 
-message SaveProjectRequest {}
+message SaveProjectRequest {
+  // A text project refuses to save over sources that changed on disk since
+  // they were loaded (`project.changed_on_disk`); `force` overwrites them.
+  bool force = 1;
+}
 
 message CloseProjectRequest {}
 
@@ -409,6 +416,9 @@ enum ProjectKind {
   PROJECT_KIND_UNSPECIFIED = 0;
   PROJECT_KIND_FLAT = 1;
   PROJECT_KIND_SYSTEM = 2;
+  // `src/**/*.bdl` is the canonical source (ADR-0020); to Studio it is a
+  // system project whose sources are written on save.
+  PROJECT_KIND_TEXT = 3;
 }
 
 message ClockView {
@@ -1261,6 +1271,17 @@ message InitSystemProjectRequest {
   string root_path = 1;
   string name = 2;
 }
+
+// Create a text project: `bdl.toml` (kind = text), `src/main.bdl`, the
+// identity and authoring sidecars.
+message InitTextProjectRequest {
+  string root_path = 1;
+  string name = 2;
+}
+
+// Re-read the open project from disk, dropping the in-memory design
+// (identities return through the sidecar).  Answers like OpenProject.
+message ReloadProjectRequest {}
 
 message GetSystemRequest {}
 
