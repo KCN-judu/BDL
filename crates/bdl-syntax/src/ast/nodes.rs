@@ -80,11 +80,35 @@ impl NameRef {
 // ---- items -----------------------------------------------------------------
 
 ast_enum!(
-    /// A top-level declaration.
+    /// A top-level declaration (§4.1, §14).
     Item {
         Concept(ConceptDecl),
         Mapping(MappingDecl),
         Enum(EnumDecl),
+        Clock(ClockDecl),
+        Output(OutputDecl),
+        Drive(DriveDecl),
+        Device(DeviceDecl),
+        Component(ComponentDecl),
+        Instance(InstanceDecl),
+        Bind(BindDecl),
+        Export(ExportDecl),
+    }
+);
+
+ast_enum!(
+    /// An item inside a `component { … }` body (§14.2).
+    ComponentItem {
+        Concept(ConceptDecl),
+        Mapping(MappingDecl),
+        Enum(EnumDecl),
+        Clock(ClockDecl),
+        Output(OutputDecl),
+        Drive(DriveDecl),
+        Device(DeviceDecl),
+        Use(UseDecl),
+        ParamClock(ParamClockDecl),
+        Port(PortDecl),
     }
 );
 
@@ -111,6 +135,84 @@ ast_node!(
 ast_node!(EnumVariant, EnumVariant);
 ast_node!(TypeParamList, TypeParamList);
 ast_node!(ParamList, ParamList);
+ast_node!(
+    /// `clock Name`
+    ClockDecl,
+    ClockDecl
+);
+ast_node!(
+    /// `@ NameRef`
+    ClockTag,
+    ClockTag
+);
+ast_node!(
+    /// `output Name : Type ClockTag? optional?`
+    OutputDecl,
+    OutputDecl
+);
+ast_node!(
+    /// `drive NameRef = NameRef`
+    DriveDecl,
+    DriveDecl
+);
+ast_node!(
+    /// `device Name : kind (for NameRef)? DeviceBody?`
+    DeviceDecl,
+    DeviceDecl
+);
+ast_node!(DeviceBody, DeviceBody);
+ast_node!(
+    /// `pin Number = Ident`
+    PinFix,
+    PinFix
+);
+ast_node!(
+    /// `component Name { ComponentItem* }`
+    ComponentDecl,
+    ComponentDecl
+);
+ast_node!(ComponentBody, ComponentBody);
+ast_node!(
+    /// `use concept NameRef` / `use output NameRef`
+    UseDecl,
+    UseDecl
+);
+ast_node!(
+    /// `param clock Name`
+    ParamClockDecl,
+    ParamClockDecl
+);
+ast_node!(
+    /// `(requires | provides | param) Name : Type ClockTag? MappingDef?`
+    PortDecl,
+    PortDecl
+);
+ast_node!(
+    /// `instance Name : NameRef InstanceBody?`
+    InstanceDecl,
+    InstanceDecl
+);
+ast_node!(InstanceBody, InstanceBody);
+ast_node!(
+    /// `NameRef = Expr`
+    InstanceArg,
+    InstanceArg
+);
+ast_node!(
+    /// `bind BindEnd = BindEnd (init Expr)?`
+    BindDecl,
+    BindDecl
+);
+ast_node!(
+    /// `NameRef (. NameRef)?`
+    BindEnd,
+    BindEnd
+);
+ast_node!(
+    /// `export BindEnd as Name`
+    ExportDecl,
+    ExportDecl
+);
 
 impl ConceptDecl {
     pub fn name(&self) -> Option<Name> {
@@ -130,7 +232,197 @@ impl MappingDecl {
     pub fn signature(&self) -> Option<Type> {
         child(&self.0)
     }
+    /// The `@domain` tag, if written.
+    pub fn clock_tag(&self) -> Option<ClockTag> {
+        child(&self.0)
+    }
     pub fn definition(&self) -> Option<MappingDef> {
+        child(&self.0)
+    }
+}
+
+impl ClockTag {
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+}
+
+impl ClockDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+}
+
+impl OutputDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn accepts(&self) -> Option<Type> {
+        child(&self.0)
+    }
+    pub fn clock_tag(&self) -> Option<ClockTag> {
+        child(&self.0)
+    }
+    /// `true` when the item ends with the contextual word `optional`.
+    pub fn is_optional(&self) -> bool {
+        self.0
+            .children_with_tokens()
+            .filter_map(|el| el.into_token())
+            .any(|t| t.kind() == SyntaxKind::Ident && t.text() == "optional")
+    }
+}
+
+impl DriveDecl {
+    /// The output, then the relationship.
+    pub fn output(&self) -> Option<NameRef> {
+        nth_child(&self.0, 0)
+    }
+    pub fn driver(&self) -> Option<NameRef> {
+        nth_child(&self.0, 1)
+    }
+}
+
+impl DeviceDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    /// The kind after `:`, then the output after `for`.
+    pub fn kind(&self) -> Option<NameRef> {
+        nth_child(&self.0, 0)
+    }
+    pub fn output(&self) -> Option<NameRef> {
+        nth_child(&self.0, 1)
+    }
+    pub fn pins(&self) -> impl Iterator<Item = PinFix> {
+        child::<DeviceBody>(&self.0)
+            .into_iter()
+            .flat_map(|b| children::<PinFix>(b.syntax()))
+    }
+}
+
+impl PinFix {
+    pub fn index(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Number)
+    }
+    pub fn pin(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+}
+
+impl ComponentDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn body(&self) -> Option<ComponentBody> {
+        child(&self.0)
+    }
+    pub fn items(&self) -> impl Iterator<Item = ComponentItem> {
+        self.body()
+            .into_iter()
+            .flat_map(|b| children::<ComponentItem>(b.syntax()))
+    }
+}
+
+impl UseDecl {
+    /// `true` for `use concept`, `false` for `use output`.
+    pub fn is_concept(&self) -> bool {
+        token(&self.0, SyntaxKind::KwConcept).is_some()
+    }
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+}
+
+impl ParamClockDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+}
+
+/// Which port a `PortDecl` declares.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum PortWord {
+    Requires,
+    Provides,
+    Param,
+}
+
+impl PortDecl {
+    pub fn word(&self) -> Option<PortWord> {
+        let t = self.0.first_token()?;
+        Some(match t.kind() {
+            SyntaxKind::KwRequires => PortWord::Requires,
+            SyntaxKind::KwProvides => PortWord::Provides,
+            SyntaxKind::KwParam => PortWord::Param,
+            _ => return None,
+        })
+    }
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn signature(&self) -> Option<Type> {
+        child(&self.0)
+    }
+    pub fn clock_tag(&self) -> Option<ClockTag> {
+        child(&self.0)
+    }
+    pub fn definition(&self) -> Option<MappingDef> {
+        child(&self.0)
+    }
+}
+
+impl InstanceDecl {
+    pub fn name(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn component(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+    pub fn args(&self) -> impl Iterator<Item = InstanceArg> {
+        child::<InstanceBody>(&self.0)
+            .into_iter()
+            .flat_map(|b| children::<InstanceArg>(b.syntax()))
+    }
+}
+
+impl InstanceArg {
+    pub fn name(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+    pub fn value(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+impl BindEnd {
+    /// `instance` of `instance.port`, or the relationship's name.
+    pub fn first(&self) -> Option<NameRef> {
+        nth_child(&self.0, 0)
+    }
+    /// `port` of `instance.port`.
+    pub fn second(&self) -> Option<NameRef> {
+        nth_child(&self.0, 1)
+    }
+}
+
+impl BindDecl {
+    pub fn destination(&self) -> Option<BindEnd> {
+        nth_child(&self.0, 0)
+    }
+    pub fn source(&self) -> Option<BindEnd> {
+        nth_child(&self.0, 1)
+    }
+    /// The expression after `init`, if any.
+    pub fn init(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
+
+impl ExportDecl {
+    pub fn port(&self) -> Option<BindEnd> {
+        child(&self.0)
+    }
+    pub fn name(&self) -> Option<Name> {
         child(&self.0)
     }
 }

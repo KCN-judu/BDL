@@ -468,6 +468,7 @@ fn unexpected_tokens_at_top_level_are_skipped_to_the_next_item() {
             ast::Item::Concept(c) => c.name().map(|n| n.as_str()),
             ast::Item::Mapping(m) => m.name().map(|n| n.as_str()),
             ast::Item::Enum(e) => e.name().map(|n| n.as_str()),
+            _ => None,
         })
         .collect();
     assert_eq!(names, vec!["A", "B", "m"]);
@@ -505,10 +506,10 @@ fn invalid_acceptance_program() {
 
 #[test]
 fn reserved_words_are_diagnosed_not_fatal() {
-    let e = errors("concept output");
+    let e = errors("concept context");
     assert_eq!(e[0].0, SyntaxErrorCode::ReservedWord);
     assert_eq!(e.len(), 1);
-    let e = parse("clock + 1").expect_err("reserved");
+    let e = parse("context + 1").expect_err("reserved");
     assert_eq!(e.code, SyntaxErrorCode::ReservedWord);
 }
 

@@ -36,11 +36,21 @@ pub enum SyntaxKind {
     KwElse,
     KwTrue,
     KwFalse,
+    // project items (§14)
+    KwClock,
+    KwOutput,
+    KwDrive,
+    KwDevice,
+    KwComponent,
+    KwInstance,
+    KwBind,
+    KwExport,
+    KwRequires,
+    KwProvides,
+    KwParam,
+    KwUse,
     // future-reserved (§2.1): lexed, no grammar
     KwContext,
-    KwOutput,
-    KwClock,
-    KwComponent,
     KwRequire,
 
     // punctuation and operators
@@ -67,6 +77,8 @@ pub enum SyntaxKind {
     Bang,
     AndAnd,
     OrOr,
+    At,
+    Dot,
 
     // ---- nodes -----------------------------------------------------------
     Module,
@@ -77,6 +89,24 @@ pub enum SyntaxKind {
     MappingDef,
     EnumDecl,
     EnumVariant,
+    ClockDecl,
+    ClockTag,
+    OutputDecl,
+    DriveDecl,
+    DeviceDecl,
+    DeviceBody,
+    PinFix,
+    ComponentDecl,
+    ComponentBody,
+    UseDecl,
+    ParamClockDecl,
+    PortDecl,
+    InstanceDecl,
+    InstanceBody,
+    InstanceArg,
+    BindDecl,
+    BindEnd,
+    ExportDecl,
     TypeParamList,
     TypeArgList,
     TypeList,
@@ -135,24 +165,62 @@ impl SyntaxKind {
                 | KwElse
                 | KwTrue
                 | KwFalse
-                | KwContext
-                | KwOutput
                 | KwClock
+                | KwOutput
+                | KwDrive
+                | KwDevice
                 | KwComponent
+                | KwInstance
+                | KwBind
+                | KwExport
+                | KwRequires
+                | KwProvides
+                | KwParam
+                | KwUse
+                | KwContext
                 | KwRequire
         )
     }
 
     /// Reserved for a later version: lexed as a keyword, no production.
     pub fn is_future_reserved(self) -> bool {
+        matches!(self, KwContext | KwRequire)
+    }
+
+    /// The keywords that begin a top-level item (§14.1).
+    pub fn is_item_start(self) -> bool {
         matches!(
             self,
-            KwContext | KwOutput | KwClock | KwComponent | KwRequire
+            KwConcept
+                | KwMapping
+                | KwEnum
+                | KwClock
+                | KwOutput
+                | KwDrive
+                | KwDevice
+                | KwComponent
+                | KwInstance
+                | KwBind
+                | KwExport
         )
     }
 
-    pub fn is_item_start(self) -> bool {
-        matches!(self, KwConcept | KwMapping | KwEnum)
+    /// The keywords that begin an item inside a component body (§14.2).
+    pub fn is_component_item_start(self) -> bool {
+        matches!(
+            self,
+            KwConcept
+                | KwMapping
+                | KwEnum
+                | KwClock
+                | KwOutput
+                | KwDrive
+                | KwDevice
+                | KwUse
+                | KwParam
+                | KwRequires
+                | KwProvides
+        )
     }
 
     /// Keyword kind for an identifier spelling, if it is reserved.
@@ -168,10 +236,19 @@ impl SyntaxKind {
             "else" => KwElse,
             "true" => KwTrue,
             "false" => KwFalse,
-            "context" => KwContext,
-            "output" => KwOutput,
             "clock" => KwClock,
+            "output" => KwOutput,
+            "drive" => KwDrive,
+            "device" => KwDevice,
             "component" => KwComponent,
+            "instance" => KwInstance,
+            "bind" => KwBind,
+            "export" => KwExport,
+            "requires" => KwRequires,
+            "provides" => KwProvides,
+            "param" => KwParam,
+            "use" => KwUse,
+            "context" => KwContext,
             "require" => KwRequire,
             _ => return None,
         })
@@ -190,10 +267,19 @@ impl SyntaxKind {
             KwElse => "else",
             KwTrue => "true",
             KwFalse => "false",
-            KwContext => "context",
-            KwOutput => "output",
             KwClock => "clock",
+            KwOutput => "output",
+            KwDrive => "drive",
+            KwDevice => "device",
             KwComponent => "component",
+            KwInstance => "instance",
+            KwBind => "bind",
+            KwExport => "export",
+            KwRequires => "requires",
+            KwProvides => "provides",
+            KwParam => "param",
+            KwUse => "use",
+            KwContext => "context",
             KwRequire => "require",
             Underscore => "_",
             LParen => "(",
@@ -219,6 +305,8 @@ impl SyntaxKind {
             Bang => "!",
             AndAnd => "&&",
             OrOr => "||",
+            At => "@",
+            Dot => ".",
             _ => return None,
         })
     }
@@ -287,10 +375,19 @@ const ALL_KINDS: &[SyntaxKind] = &[
     KwElse,
     KwTrue,
     KwFalse,
-    KwContext,
-    KwOutput,
     KwClock,
+    KwOutput,
+    KwDrive,
+    KwDevice,
     KwComponent,
+    KwInstance,
+    KwBind,
+    KwExport,
+    KwRequires,
+    KwProvides,
+    KwParam,
+    KwUse,
+    KwContext,
     KwRequire,
     LParen,
     RParen,
@@ -315,6 +412,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     Bang,
     AndAnd,
     OrOr,
+    At,
+    Dot,
     Module,
     Formula,
     ConceptDecl,
@@ -322,6 +421,24 @@ const ALL_KINDS: &[SyntaxKind] = &[
     MappingDef,
     EnumDecl,
     EnumVariant,
+    ClockDecl,
+    ClockTag,
+    OutputDecl,
+    DriveDecl,
+    DeviceDecl,
+    DeviceBody,
+    PinFix,
+    ComponentDecl,
+    ComponentBody,
+    UseDecl,
+    ParamClockDecl,
+    PortDecl,
+    InstanceDecl,
+    InstanceBody,
+    InstanceArg,
+    BindDecl,
+    BindEnd,
+    ExportDecl,
     TypeParamList,
     TypeArgList,
     TypeList,

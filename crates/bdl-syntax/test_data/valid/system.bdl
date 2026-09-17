@@ -1,0 +1,49 @@
+// A system project in one file: the lamp, a component, two instances.
+
+concept Tilt : Angle
+concept Brightness : Scalar
+
+clock interaction
+clock display
+
+mapping tilt : Tilt @interaction                   // supplied from outside
+mapping tiltValue : Tilt @interaction
+tiltValue() = tilt
+
+output light : Brightness @interaction
+output indicator : Brightness @interaction optional
+drive light = brightness
+
+device pwmLight : pwm_channel for light { pin 0 = D3 }
+device imu : i2c_sensor
+
+component AdaptiveLamp {
+  use concept Tilt
+  use concept Brightness
+  param clock main
+  clock blink
+
+  requires tiltValue : Tilt @main
+  param gain : Scalar
+
+  mapping dimByTilt : Tilt -> Brightness
+  dimByTilt(t) = t / (90 deg)
+
+  provides brightness : Brightness @main
+  brightness() = dimByTilt(tiltValue) * gain
+}
+
+instance lampA : AdaptiveLamp { main = interaction, gain = 2 }
+instance lampB : AdaptiveLamp { main = interaction, gain = 1 }
+
+mapping brightness : Brightness @interaction
+mapping mirror : Brightness @interaction
+mapping slow : Brightness @display
+
+bind lampA.tiltValue = tiltValue
+bind lampB.tiltValue = tiltValue
+bind brightness = lampA.brightness
+bind mirror = lampB.brightness
+bind slow = lampA.brightness init 0
+
+export lampB.tiltValue as tiltIn

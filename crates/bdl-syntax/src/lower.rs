@@ -197,6 +197,181 @@ pub enum SurfaceItem {
     Concept(ConceptItem),
     Mapping(MappingItem),
     Enum(EnumItem),
+    Clock(ClockItem),
+    Output(OutputItem),
+    Drive(DriveItem),
+    Device(DeviceItem),
+    Component(ComponentItem),
+    Instance(InstanceItem),
+    Bind(BindItem),
+    Export(ExportItem),
+}
+
+impl SurfaceItem {
+    pub fn span(&self) -> Span {
+        match self {
+            SurfaceItem::Concept(i) => i.span,
+            SurfaceItem::Mapping(i) => i.span,
+            SurfaceItem::Enum(i) => i.span,
+            SurfaceItem::Clock(i) => i.span,
+            SurfaceItem::Output(i) => i.span,
+            SurfaceItem::Drive(i) => i.span,
+            SurfaceItem::Device(i) => i.span,
+            SurfaceItem::Component(i) => i.span,
+            SurfaceItem::Instance(i) => i.span,
+            SurfaceItem::Bind(i) => i.span,
+            SurfaceItem::Export(i) => i.span,
+        }
+    }
+}
+
+/// `clock Name`
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ClockItem {
+    pub name: Ident,
+    pub span: Span,
+}
+
+/// `output Name : Type @clock? optional?` — a physical output.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OutputItem {
+    pub name: Ident,
+    pub accepts: SurfaceType,
+    pub clock: Option<Ident>,
+    pub required: bool,
+    pub span: Span,
+}
+
+/// `drive output = relationship`
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DriveItem {
+    pub output: Ident,
+    pub driver: Ident,
+    pub span: Span,
+}
+
+/// `device Name : kind for output { pin i = name }`
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeviceItem {
+    pub name: Ident,
+    pub kind: Ident,
+    pub output: Option<Ident>,
+    /// `(requirement index, pin name)` as written.
+    pub pins: Vec<(u16, Ident)>,
+    pub span: Span,
+}
+
+/// `component Name { items }`
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ComponentItem {
+    pub name: Ident,
+    pub items: Vec<ComponentBodyItem>,
+    /// The span of the `{ … }` body, for splicing new items into it.
+    pub body_span: Span,
+    pub span: Span,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum ComponentBodyItem {
+    Concept(ConceptItem),
+    Mapping(MappingItem),
+    Enum(EnumItem),
+    Clock(ClockItem),
+    Output(OutputItem),
+    Drive(DriveItem),
+    Device(DeviceItem),
+    Use(UseItem),
+    ParamClock(ClockItem),
+    Port(PortItem),
+}
+
+impl ComponentBodyItem {
+    pub fn span(&self) -> Span {
+        match self {
+            ComponentBodyItem::Concept(i) => i.span,
+            ComponentBodyItem::Mapping(i) => i.span,
+            ComponentBodyItem::Enum(i) => i.span,
+            ComponentBodyItem::Clock(i) => i.span,
+            ComponentBodyItem::Output(i) => i.span,
+            ComponentBodyItem::Drive(i) => i.span,
+            ComponentBodyItem::Device(i) => i.span,
+            ComponentBodyItem::Use(i) => i.span,
+            ComponentBodyItem::ParamClock(i) => i.span,
+            ComponentBodyItem::Port(i) => i.span,
+        }
+    }
+}
+
+/// `use concept Name` / `use output Name`
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UseItem {
+    pub concept: bool,
+    pub name: Ident,
+    pub span: Span,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PortWord {
+    Requires,
+    Provides,
+    Param,
+}
+
+/// `requires|provides|param Name : Type @clock? definition?`
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PortItem {
+    pub word: PortWord,
+    pub name: Ident,
+    pub signature: SurfaceType,
+    pub clock: Option<Ident>,
+    pub definition: Option<MappingDefinition>,
+    pub span: Span,
+}
+
+/// `instance Name : Component { arg = value }`
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InstanceItem {
+    pub name: Ident,
+    pub component: Ident,
+    pub args: Vec<InstanceArgItem>,
+    pub span: Span,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InstanceArgItem {
+    pub name: Ident,
+    pub value: SurfaceExpr,
+    /// The value's source text, kept for parameter values (which the
+    /// model stores as text) and for clock arguments (a bare name).
+    pub text: String,
+    pub span: Span,
+}
+
+/// One end of a binding: `instance.port` or a top-level relationship.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BindEndItem {
+    pub first: Ident,
+    pub second: Option<Ident>,
+    pub span: Span,
+}
+
+/// `bind destination = source (init e)?`
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BindItem {
+    pub destination: BindEndItem,
+    pub source: BindEndItem,
+    /// The initial value's source text when the binding is transported.
+    pub init: Option<(SurfaceExpr, String)>,
+    pub span: Span,
+}
+
+/// `export instance.port as Name`
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExportItem {
+    pub port: BindEndItem,
+    pub name: Ident,
+    pub span: Span,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -212,6 +387,8 @@ pub struct MappingItem {
     pub name: Ident,
     /// The type as written, e.g. `Held -> Tilt -> Brightness`.
     pub signature: SurfaceType,
+    /// The `@domain` tag, if written.
+    pub clock: Option<Ident>,
     pub definition: Option<MappingDefinition>,
     pub span: Span,
 }
@@ -286,34 +463,92 @@ pub fn lower_module(parse: &Parse<ast::Module>) -> (SurfaceModule, Vec<SyntaxErr
     let syntax_errors = parse.errors().to_vec();
     let mut errors = syntax_errors.clone();
     let mut items = Vec::new();
+    let mut cx = Lowering {
+        syntax_errors: &syntax_errors,
+        errors: &mut errors,
+    };
     for item in parse.tree().items() {
-        match item {
-            ast::Item::Concept(c) => {
-                if let Some(c) = concept(&c) {
-                    items.push(SurfaceItem::Concept(c));
-                }
-            }
-            ast::Item::Mapping(m) => {
-                // Structural checks are only meaningful on a mapping that
-                // parsed cleanly; a syntax error inside it already explains
-                // any mismatch.
-                let span = m.span();
-                let clean = !syntax_errors.iter().any(|e| {
-                    e.span.start < span.end && span.start < e.span.end.max(e.span.start + 1)
-                });
-                if let Some(m) = mapping(&m, clean, &mut errors) {
-                    items.push(SurfaceItem::Mapping(m));
-                }
-            }
-            ast::Item::Enum(e) => {
-                if let Some(e) = enum_(&e) {
-                    items.push(SurfaceItem::Enum(e));
-                }
-            }
+        if let Some(i) = cx.item(&item) {
+            items.push(i);
         }
     }
     errors.sort_by_key(|e| (e.span.start, e.span.end));
     (SurfaceModule { items }, errors)
+}
+
+struct Lowering<'a> {
+    syntax_errors: &'a [SyntaxError],
+    errors: &'a mut Vec<SyntaxError>,
+}
+
+impl Lowering<'_> {
+    /// Structural checks are only meaningful on an item that parsed
+    /// cleanly; a syntax error inside it already explains any mismatch.
+    fn clean(&self, span: Span) -> bool {
+        !self
+            .syntax_errors
+            .iter()
+            .any(|e| e.span.start < span.end && span.start < e.span.end.max(e.span.start + 1))
+    }
+
+    fn item(&mut self, item: &ast::Item) -> Option<SurfaceItem> {
+        Some(match item {
+            ast::Item::Concept(c) => SurfaceItem::Concept(concept(c)?),
+            ast::Item::Mapping(m) => {
+                let clean = self.clean(m.span());
+                SurfaceItem::Mapping(mapping(m, clean, self.errors)?)
+            }
+            ast::Item::Enum(e) => SurfaceItem::Enum(enum_(e)?),
+            ast::Item::Clock(c) => SurfaceItem::Clock(clock(c)?),
+            ast::Item::Output(o) => SurfaceItem::Output(output(o)?),
+            ast::Item::Drive(d) => SurfaceItem::Drive(drive(d)?),
+            ast::Item::Device(d) => SurfaceItem::Device(device(d, self.errors)?),
+            ast::Item::Component(c) => SurfaceItem::Component(self.component(c)?),
+            ast::Item::Instance(i) => SurfaceItem::Instance(instance(i)?),
+            ast::Item::Bind(b) => SurfaceItem::Bind(bind(b)?),
+            ast::Item::Export(e) => SurfaceItem::Export(export(e)?),
+        })
+    }
+
+    fn component(&mut self, c: &ast::ComponentDecl) -> Option<ComponentItem> {
+        let name = ident(&c.name()?)?;
+        let body = c.body()?;
+        let mut items = Vec::new();
+        for item in c.items() {
+            let lowered = match &item {
+                ast::ComponentItem::Concept(x) => ComponentBodyItem::Concept(concept(x)?),
+                ast::ComponentItem::Mapping(m) => {
+                    let clean = self.clean(m.span());
+                    ComponentBodyItem::Mapping(mapping(m, clean, self.errors)?)
+                }
+                ast::ComponentItem::Enum(e) => ComponentBodyItem::Enum(enum_(e)?),
+                ast::ComponentItem::Clock(x) => ComponentBodyItem::Clock(clock(x)?),
+                ast::ComponentItem::Output(o) => ComponentBodyItem::Output(output(o)?),
+                ast::ComponentItem::Drive(d) => ComponentBodyItem::Drive(drive(d)?),
+                ast::ComponentItem::Device(d) => ComponentBodyItem::Device(device(d, self.errors)?),
+                ast::ComponentItem::Use(u) => ComponentBodyItem::Use(UseItem {
+                    concept: u.is_concept(),
+                    name: ident_ref(&u.name()?)?,
+                    span: u.span(),
+                }),
+                ast::ComponentItem::ParamClock(p) => ComponentBodyItem::ParamClock(ClockItem {
+                    name: ident(&p.name()?)?,
+                    span: p.span(),
+                }),
+                ast::ComponentItem::Port(p) => {
+                    let clean = self.clean(p.span());
+                    ComponentBodyItem::Port(port(p, clean, self.errors)?)
+                }
+            };
+            items.push(lowered);
+        }
+        Some(ComponentItem {
+            name,
+            items,
+            body_span: body.span(),
+            span: c.span(),
+        })
+    }
 }
 
 fn incomplete(span: Span) -> SyntaxError {
@@ -362,64 +597,206 @@ fn mapping(
     let name = ident(&m.name()?)?;
     let signature = type_(&m.signature()?)?;
     let definition = match m.definition() {
-        Some(def) => {
-            let def_name = ident_ref(&def.name()?)?;
-            let params: Option<Vec<SurfacePattern>> = def.params().map(|p| pattern(&p)).collect();
-            let params = params?;
-            let body = expr(&def.body()?)?;
-            if clean && def_name.name != name.name {
-                errors.push(
-                    SyntaxError::new(
-                        SyntaxErrorCode::Unexpected,
-                        def_name.span,
-                        format!(
-                            "this definition is named `{}`, but the mapping declared above it is `{}`",
-                            def_name.name, name.name
-                        ),
-                        format!("`{}`", def_name.name),
-                    )
-                    .with_hint(format!(
-                        "A definition repeats the name of its signature: `{}({}) = …`.",
-                        name.name,
-                        params
-                            .iter()
-                            .map(|p| p.kind.describe())
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    )),
-                );
-            }
-            let arity = signature.uncurry().0.len();
-            if clean && params.len() != arity {
-                errors.push(
-                    SyntaxError::new(
-                        SyntaxErrorCode::Unexpected,
-                        def.param_list().map(|l| l.span()).unwrap_or(def.span()),
-                        format!(
-                            "`{}` reads {arity} input{} by its signature, but its definition names {}",
-                            name.name,
-                            if arity == 1 { "" } else { "s" },
-                            params.len()
-                        ),
-                        format!("{} parameter(s)", params.len()),
-                    )
-                    .with_hint("Each `->` in the signature except the last introduces one input."),
-                );
-            }
-            Some(MappingDefinition {
-                name: def_name,
-                params,
-                body,
-                span: def.span(),
-            })
-        }
+        Some(def) => Some(definition(&def, &name, &signature, clean, errors)?),
         None => None,
     };
     Some(MappingItem {
         name,
         signature,
+        clock: m.clock_tag().and_then(|t| ident_ref(&t.name()?)),
         definition,
         span: m.span(),
+    })
+}
+
+/// The definition part shared by mappings and ports: name check, arity
+/// check, params and body.
+fn definition(
+    def: &ast::MappingDef,
+    name: &Ident,
+    signature: &SurfaceType,
+    clean: bool,
+    errors: &mut Vec<SyntaxError>,
+) -> Option<MappingDefinition> {
+    let def_name = ident_ref(&def.name()?)?;
+    let params: Option<Vec<SurfacePattern>> = def.params().map(|p| pattern(&p)).collect();
+    let params = params?;
+    let body = expr(&def.body()?)?;
+    if clean && def_name.name != name.name {
+        errors.push(
+            SyntaxError::new(
+                SyntaxErrorCode::Unexpected,
+                def_name.span,
+                format!(
+                    "this definition is named `{}`, but the mapping declared above it is `{}`",
+                    def_name.name, name.name
+                ),
+                format!("`{}`", def_name.name),
+            )
+            .with_hint(format!(
+                "A definition repeats the name of its signature: `{}({}) = …`.",
+                name.name,
+                params
+                    .iter()
+                    .map(|p| p.kind.describe())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )),
+        );
+    }
+    let arity = signature.uncurry().0.len();
+    if clean && params.len() != arity {
+        errors.push(
+            SyntaxError::new(
+                SyntaxErrorCode::Unexpected,
+                def.param_list().map(|l| l.span()).unwrap_or(def.span()),
+                format!(
+                    "`{}` reads {arity} input{} by its signature, but its definition names {}",
+                    name.name,
+                    if arity == 1 { "" } else { "s" },
+                    params.len()
+                ),
+                format!("{} parameter(s)", params.len()),
+            )
+            .with_hint("Each `->` in the signature except the last introduces one input."),
+        );
+    }
+    Some(MappingDefinition {
+        name: def_name,
+        params,
+        body,
+        span: def.span(),
+    })
+}
+
+fn clock(c: &ast::ClockDecl) -> Option<ClockItem> {
+    Some(ClockItem {
+        name: ident(&c.name()?)?,
+        span: c.span(),
+    })
+}
+
+fn output(o: &ast::OutputDecl) -> Option<OutputItem> {
+    Some(OutputItem {
+        name: ident(&o.name()?)?,
+        accepts: type_(&o.accepts()?)?,
+        clock: o.clock_tag().and_then(|t| ident_ref(&t.name()?)),
+        required: !o.is_optional(),
+        span: o.span(),
+    })
+}
+
+fn drive(d: &ast::DriveDecl) -> Option<DriveItem> {
+    Some(DriveItem {
+        output: ident_ref(&d.output()?)?,
+        driver: ident_ref(&d.driver()?)?,
+        span: d.span(),
+    })
+}
+
+fn device(d: &ast::DeviceDecl, errors: &mut Vec<SyntaxError>) -> Option<DeviceItem> {
+    let name = ident(&d.name()?)?;
+    let kind = ident_ref(&d.kind()?)?;
+    let output = match d.output() {
+        Some(o) => Some(ident_ref(&o)?),
+        None => None,
+    };
+    let mut pins = Vec::new();
+    for pin in d.pins() {
+        let index_tok = pin.index()?;
+        let index: u16 = match index_tok.text().parse() {
+            Ok(i) => i,
+            Err(_) => {
+                errors.push(SyntaxError::new(
+                    SyntaxErrorCode::Unexpected,
+                    crate::syntax::span_of(index_tok.text_range()),
+                    "a pin index is a small whole number",
+                    format!("`{}`", index_tok.text()),
+                ));
+                return None;
+            }
+        };
+        pins.push((index, ident_ref(&pin.pin()?)?));
+    }
+    Some(DeviceItem {
+        name,
+        kind,
+        output,
+        pins,
+        span: d.span(),
+    })
+}
+
+fn port(p: &ast::PortDecl, clean: bool, errors: &mut Vec<SyntaxError>) -> Option<PortItem> {
+    let word = match p.word()? {
+        ast::PortWord::Requires => PortWord::Requires,
+        ast::PortWord::Provides => PortWord::Provides,
+        ast::PortWord::Param => PortWord::Param,
+    };
+    let name = ident(&p.name()?)?;
+    let signature = type_(&p.signature()?)?;
+    let def = match p.definition() {
+        Some(d) => Some(definition(&d, &name, &signature, clean, errors)?),
+        None => None,
+    };
+    Some(PortItem {
+        word,
+        name,
+        signature,
+        clock: p.clock_tag().and_then(|t| ident_ref(&t.name()?)),
+        definition: def,
+        span: p.span(),
+    })
+}
+
+fn instance(i: &ast::InstanceDecl) -> Option<InstanceItem> {
+    let mut args = Vec::new();
+    for a in i.args() {
+        let value_node = a.value()?;
+        args.push(InstanceArgItem {
+            name: ident_ref(&a.name()?)?,
+            text: value_node.text().trim().to_owned(),
+            value: expr(&value_node)?,
+            span: a.span(),
+        });
+    }
+    Some(InstanceItem {
+        name: ident(&i.name()?)?,
+        component: ident_ref(&i.component()?)?,
+        args,
+        span: i.span(),
+    })
+}
+
+fn bind_end(e: &ast::BindEnd) -> Option<BindEndItem> {
+    Some(BindEndItem {
+        first: ident_ref(&e.first()?)?,
+        second: match e.second() {
+            Some(s) => Some(ident_ref(&s)?),
+            None => None,
+        },
+        span: e.span(),
+    })
+}
+
+fn bind(b: &ast::BindDecl) -> Option<BindItem> {
+    let init = match b.init() {
+        Some(e) => Some((expr(&e)?, e.text().trim().to_owned())),
+        None => None,
+    };
+    Some(BindItem {
+        destination: bind_end(&b.destination()?)?,
+        source: bind_end(&b.source()?)?,
+        init,
+        span: b.span(),
+    })
+}
+
+fn export(e: &ast::ExportDecl) -> Option<ExportItem> {
+    Some(ExportItem {
+        port: bind_end(&e.port()?)?,
+        name: ident(&e.name()?)?,
+        span: e.span(),
     })
 }
 

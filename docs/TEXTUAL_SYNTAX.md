@@ -1,4 +1,4 @@
-# BDL textual syntax (v0.1)
+# BDL textual syntax (v0.1 core, v0.2 project items)
 
 Normative for the textual authoring surface and for `crates/bdl-syntax`.
 Nothing is implemented in the parser that is not described here; when the
@@ -635,22 +635,18 @@ that parse ahead of the kernel.
 
 ## 12. Future-reserved syntax
 
-Reserved words (§2.1): `context`, `output`, `clock`, `component`, `require`.
-Reserved shapes, not parsed today, listed so that v0.1 programs stay valid
-when they arrive:
+Reserved words (§2.1) still without a production: `context`, `require`.
+Reserved shapes:
 
 * `context Name when Expr { Item* }` — behavioural contexts.
-* `output name : Type` and `drive name = expr` — physical sinks and the
-  single drive edge.
-* `clock Name` and `@Name` on declarations — clock domains.
 * temporal phrases `previous`, `hold`, `count`, `rise`, `every` — planned
   as ordinary calls in the first instance (`previous(x, init)`), so no
   grammar change is needed.
-* `component name : Type = extern "…"` — supplied blocks.
 * `require` — commitments on a declaration.
 
-Reserved punctuation with no token yet: `@`, `#`, `.`, `|`, `&`, `..`,
-`::`. They lex as `Error` today so that no program depends on them.
+Reserved punctuation with no token yet: `#`, `|`, `&`, `..`, `::`. They
+lex as `Error` so that no program depends on them. `@` and `.` became
+tokens in v0.2 (§14).
 
 ---
 
@@ -666,3 +662,169 @@ Reserved punctuation with no token yet: `@`, `#`, `.`, `|`, `&`, `..`,
 5. Whether `f(x)(y)` should be a parse error rather than a typing error.
 6. A dedicated integer literal class in the lexer (today the parser checks
    the spelling in literal patterns).
+
+---
+
+## 14. Project items (v0.2)
+
+v0.1 spelled concepts, relationships and enums; a text project must spell
+everything the model holds (ADR-0020). v0.2 adds the items below. Every
+one lowers to an existing `bdl-model` / `bdl-system` structure; none adds
+a semantic notion. The item keywords are real keywords; `for`, `pin`,
+`init`, `as`, `optional` are **contextual** — identifiers everywhere else,
+recognised by spelling only where the grammar expects them.
+
+### 14.1 Timing domains, physical outputs, drives, devices
+
+```ebnf
+Item          ::= ConceptDecl | MappingDecl | EnumDecl | ClockDecl | OutputDecl
+                | DriveDecl | DeviceDecl | ComponentDecl | InstanceDecl
+                | BindDecl | ExportDecl
+
+ClockDecl     ::= "clock" Name
+ClockTag      ::= "@" NameRef                      (* the domain a declaration updates in *)
+MappingDecl   ::= "mapping" Name ":" Type ClockTag? MappingDef?
+OutputDecl    ::= "output" Name ":" Type ClockTag? ("optional")?
+DriveDecl     ::= "drive" NameRef "=" NameRef       (* output = relationship *)
+DeviceDecl    ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?
+DeviceBody    ::= "{" ( PinFix ","? )* "}"
+PinFix        ::= "pin" Number "=" Ident
+```
+
+```bdl
+clock interaction
+
+mapping tilt : Tilt @interaction                 // a value, supplied from outside
+mapping brightness : Brightness @interaction
+brightness() = dimByTilt(tilt)
+
+output light : Brightness @interaction            // a physical output, required by default
+output indicator : Brightness @interaction optional
+drive light = brightness                          // the single drive edge
+
+device pwmLight : pwm_channel for light { pin 0 = D3 }
+```
+
+* `output` is a **physical output** (`PhysicalOutput { accepts, clock,
+  required }`), never a relationship's produced concept and never a
+  provided port — those are `mapping … : T` and `provides` (§14.2). The
+  clock tag is optional (an output without one is *open*).
+* `drive o = m` is `MappingBlock.drives = Some(o)`; a relationship drives
+  at most one output and an output is driven by at most one relationship,
+  as the model already requires. A second `drive` for the same output is a
+  lowering fault, not a merge.
+* A device's kind is a `DeviceKind` name in snake case (`pwm_channel`,
+  `digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`,
+  `uart`); `for` names the output it realises (absent for a sensor); pins
+  are fixed by the device's requirement index and a board-relative pin
+  name, which is an identifier (`D3`, `A4`, `GP15`).
+
+### 14.2 Components
+
+```ebnf
+ComponentDecl ::= "component" Name "{" ComponentItem* "}"
+ComponentItem ::= ConceptDecl | UseDecl | ClockDecl | ParamClockDecl
+                | MappingDecl | EnumDecl | PortDecl | OutputDecl | DriveDecl | DeviceDecl
+UseDecl       ::= "use" ("concept" | "output") NameRef
+ParamClockDecl::= "param" "clock" Name
+PortDecl      ::= ("requires" | "provides" | "param") Name ":" Type ClockTag? MappingDef?
+```
+
+```bdl
+component AdaptiveLamp {
+  use concept Tilt                 // the system's Tilt, shared
+  use concept Brightness
+  param clock main                 // a timing parameter: each instance names a system domain
+  clock blink                      // a private domain of the component
+
+  requires tiltValue : Tilt @main             // what the behavior needs
+  param gain : Scalar                         // configured per instance
+
+  mapping dimByTilt : Tilt -> Brightness      // component-local
+  dimByTilt(t) = t / (90 deg)
+
+  provides brightness : Brightness @main      // what the behavior offers
+  brightness() = dimByTilt(tiltValue) * gain
+}
+```
+
+* The body is an ordinary flat design in the component's own names:
+  `concept` declares a **private** concept; `use concept X` declares a body
+  concept named `X` that *is* the system concept `X`
+  (`shared_concepts[local] = system`). `use output X` does the same for a
+  physical output (`external_outputs`). Nothing is shared by name
+  coincidence; only `use` shares.
+* `clock c` is a private domain; `param clock c` is a **timing parameter**
+  (`interface.clock_params`). A `@c` tag on a port makes the port's clock
+  contract `Private { c }` or `Parameter { c }` accordingly; no tag is
+  `Agnostic`.
+* `requires n : T` is a nullary relationship `n` of the body **without a
+  definition** plus a required port whose contract is snapshotted from the
+  declaration; `provides n : T` is a nullary relationship with a
+  definition (which must follow, like any `MappingDef`) plus a provided
+  port; `param n : T` is a nullary relationship without a definition plus
+  a parameter port. A `requires` with a definition or a `provides` without
+  one is a lowering fault — the contract stays what the text says, so the
+  body's failure to keep it is the ordinary `component.*` finding.
+* The public contract is exactly the port declarations. A body `mapping`
+  is never exported by inference.
+
+### 14.3 Instances, bindings, exports
+
+```ebnf
+InstanceDecl  ::= "instance" Name ":" NameRef InstanceBody?
+InstanceBody  ::= "{" ( InstanceArg ","? )* "}"
+InstanceArg   ::= NameRef "=" Expr           (* a clock parameter = a system clock name; a parameter port = a closed expression *)
+BindDecl      ::= "bind" BindEnd "=" BindEnd ("init" Expr)?
+BindEnd       ::= NameRef ("." NameRef)?     (* instance.port, or a top-level relationship *)
+ExportDecl    ::= "export" BindEnd "as" Name
+```
+
+```bdl
+instance lampA : AdaptiveLamp { main = interaction, gain = 2 }
+instance lampB : AdaptiveLamp { main = interaction, gain = 1 }
+
+bind lampA.tiltValue = tiltValue         // required port ← top-level value
+bind lampB.tiltValue = tiltValue         // fan-out: the same value, twice
+bind mirror = lampB.brightness           // open top-level relationship ← provided port
+bind slow = lampA.brightness init 0      // across domains: carried, starting at 0
+
+export lampB.tiltValue as tiltIn         // a required port left open, named at the system boundary
+```
+
+* `bind destination = source`: the destination is a required port or a
+  parameter port (`instance.port`) or an open top-level relationship; the
+  source is a provided port or a top-level relationship. This is
+  `SystemEditOp::BindPorts { source, destination, transport }`; `init e`
+  is `BindingTransport { init: "e" }` — the transport is explicit or
+  absent, never inferred.
+* An instance argument whose name is a timing parameter takes a system
+  clock name; one whose name is a parameter port takes a closed expression
+  (`ParameterValue`). Anything else is a lowering fault.
+* `export instance.port as name` is `Export { port, name }`.
+
+### 14.4 Parameters bind lexically
+
+`dimByTilt(t) = t / (90 deg)`: the parameter names of a definition are the
+names of the inputs *in that body*, positionally, stored on the
+relationship (`MappingBlock.parameters`). They shadow nothing outside the
+body and are not concept names: `t` resolves to the first input whatever
+the concept is called. A body may still write the concept's name when the
+relationship has no parameter names (a relationship authored in Studio),
+which keeps the v0.1 rule as the fallback only.
+
+### 14.5 Keys, not ids
+
+Nothing in source names a stable identity. The loader keys every item by
+kind and qualified name (`component:AdaptiveLamp/port:brightness`) and
+reconciles keys against `.bdl/identities.json` (ADR-0020 §3–4). Groups
+and layout are not in source.
+
+### 14.6 Canonical formatting of the new items
+
+One item per line unless it has a body; bodies are `{` on the item's
+line, members indented two spaces, `}` on its own line; instance arguments
+on one line separated by `, `; a port's definition follows on the next
+line like a mapping's. A component's items are printed in the order
+concepts, `use`, clocks, ports, mappings, outputs, drives, devices when a
+tool renders them; a formatter never reorders what a person wrote.

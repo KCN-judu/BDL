@@ -11,7 +11,7 @@ Module@0..89
       NameRef@15..20
         Ident@15..20 "Angle"
   Whitespace@20..21 "\n"
-  MappingDecl@21..72
+  MappingDecl@21..65
     KwMapping@21..28 "mapping"
     Whitespace@28..29 " "
     Name@29..30
@@ -30,7 +30,7 @@ Module@0..89
         NameRef@41..45
           Ident@41..45 "Tilt"
     Whitespace@45..46 "\n"
-    MappingDef@46..72
+    MappingDef@46..65
       NameRef@46..47
         Ident@46..47 "f"
       ParamList@47..50
@@ -49,16 +49,17 @@ Module@0..89
       ErrorNode@55..57
         Error@55..57 "§"
       Whitespace@57..58 " "
-      ErrorNode@58..72
+      ErrorNode@58..65
         Number@58..59 "2"
         Whitespace@59..60 " "
         Error@60..61 "&"
         Whitespace@61..62 " "
         Number@62..63 "3"
         Whitespace@63..64 " "
-        Error@64..65 "@"
-        Whitespace@65..66 " "
-        KwOutput@66..72 "output"
+        At@64..65 "@"
+  Whitespace@65..66 " "
+  OutputDecl@66..72
+    KwOutput@66..72 "output"
   Whitespace@72..73 "\n"
   BlockComment@73..89 "/* never closed\n"
 error 55..57 syntax.invalid_character: `§` cannot appear in BDL source
@@ -67,8 +68,8 @@ error 58..59 syntax.unexpected: expected an operator or the next declaration aft
   found the number `2`
 error 60..61 syntax.invalid_character: `&` cannot appear in BDL source
   found `&`
-error 64..65 syntax.invalid_character: `@` cannot appear in BDL source
-  found `@`
 error 73..89 syntax.unterminated_comment: this `/*` comment is never closed
   found the end of the source
+error 89..89 syntax.expected: expected the output's name after `output`
+  expected a name, found the end of the source
 lowered: 1 concept(s), 1 mapping(s), 0 enum(s)

@@ -87,6 +87,10 @@ enum Raw {
     AndAnd,
     #[token("||")]
     OrOr,
+    #[token("@")]
+    At,
+    #[token(".")]
+    Dot,
 }
 
 fn line_comment(lex: &mut logos::Lexer<Raw>) {
@@ -161,6 +165,8 @@ pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
             Ok(Raw::Bang) => SyntaxKind::Bang,
             Ok(Raw::AndAnd) => SyntaxKind::AndAnd,
             Ok(Raw::OrOr) => SyntaxKind::OrOr,
+            Ok(Raw::At) => SyntaxKind::At,
+            Ok(Raw::Dot) => SyntaxKind::Dot,
             Err(()) => {
                 errors.push(SyntaxError::new(
                     SyntaxErrorCode::InvalidCharacter,
@@ -217,6 +223,19 @@ mod tests {
             kinds("_ _x iffy context"),
             vec![Underscore, Whitespace, Ident, Whitespace, Ident, Whitespace, KwContext]
         );
+        assert_eq!(
+            kinds("clock output drive device component instance bind export requires provides param use"),
+            vec![
+                KwClock, Whitespace, KwOutput, Whitespace, KwDrive, Whitespace, KwDevice,
+                Whitespace, KwComponent, Whitespace, KwInstance, Whitespace, KwBind, Whitespace,
+                KwExport, Whitespace, KwRequires, Whitespace, KwProvides, Whitespace, KwParam,
+                Whitespace, KwUse
+            ]
+        );
+        assert_eq!(
+            kinds("a.b @c .5"),
+            vec![Ident, Dot, Ident, Whitespace, At, Ident, Whitespace, Number]
+        );
     }
 
     #[test]
@@ -225,7 +244,7 @@ mod tests {
             texts("1.5e3 .5 2 0.1 1e999"),
             vec!["1.5e3", " ", ".5", " ", "2", " ", "0.1", " ", "1e999"]
         );
-        assert_eq!(kinds("1."), vec![Number, Error]);
+        assert_eq!(kinds("1."), vec![Number, Dot]);
         assert_eq!(kinds("1e"), vec![Number, Ident]);
         assert_eq!(kinds("90deg"), vec![Number, Ident]);
     }
