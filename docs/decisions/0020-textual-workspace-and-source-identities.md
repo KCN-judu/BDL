@@ -1,10 +1,10 @@
 ---
 id: ADR-0020
-status: accepted
+status: superseded
 date: 2026-09-17
 area: textual
 supersedes: []
-superseded-by: []
+superseded-by: [ADR-0023]
 related: []
 fv: []
 ---
