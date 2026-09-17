@@ -1,3 +1,13 @@
+---
+id: ADR-0006
+status: accepted
+date: 2026-09-15
+area: deployment
+supersedes: []
+superseded-by: []
+related: []
+fv: ["informed by FV: BDL_FV BDL/Validation/Hardware.lean (Phase 7)"]
+---
 # ADR-0006: Hardware allocation is outside typing
 
 **Status**: accepted (2026-09-15)

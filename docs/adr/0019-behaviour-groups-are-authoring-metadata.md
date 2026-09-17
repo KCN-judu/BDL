@@ -1,3 +1,13 @@
+---
+id: ADR-0019
+status: accepted
+date: 2026-09-17
+area: behavior-systems
+supersedes: []
+superseded-by: []
+related: []
+fv: ["informed by FV: BDL_FV Phase 8b cf2fc5e — BDL/Behavior/Group.lean, Boundary.lean, Extract.lean, ExtractPreservation.lean"]
+---
 # ADR-0019: Behaviour groups are authoring metadata; aggregate sockets are a projection; packaging elaborates into the existing component model
 
 ## Status

@@ -1,3 +1,13 @@
+---
+id: ADR-0004
+status: accepted
+date: 2026-09-15
+area: runtime
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0004: BDL declarations are not Embassy tasks
 
 **Status**: accepted (2026-09-15)

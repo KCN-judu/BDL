@@ -1,3 +1,13 @@
+---
+id: ADR-0003
+status: accepted
+date: 2026-09-15
+area: persistence
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0003: Project layout is stored apart from semantics
 
 **Status**: accepted (2026-09-15)

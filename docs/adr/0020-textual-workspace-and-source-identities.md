@@ -1,3 +1,13 @@
+---
+id: ADR-0020
+status: accepted
+date: 2026-09-17
+area: textual
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0020: A textual project is canonical source plus a source-identity sidecar
 
 ## Status

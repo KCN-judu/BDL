@@ -61,7 +61,7 @@ Evidence paths are relative to the repository root. *Studio* means
 | | boundary is computed; aggregate sockets accept no link | `crates/bdl-system/tests/grouping.rs` (`boundary_is_a_projection_and_sockets_add_no_dependency`); `test/system_e2e_test.dart` ("the aggregate socket accepts no link") |
 | | semantic transparency | `crates/bdl-system/tests/grouping.rs` (`grouping_is_semantically_transparent`) |
 | | menu and inspector labels | `Studio/ui/canvas/node_canvas.dart`, `Studio/ui/system_inspector.dart` |
-| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/adr/0020-a-component-interface-is-a-stored-promise.md` |
+| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/adr/0022-a-component-interface-is-a-stored-promise.md` |
 | | shared vs private concepts | `crates/bdl-system/tests/contracts.rs` (`equal_representations_are_not_equal_concepts`); `docs/BEHAVIOR_SYSTEMS.md` |
 | | *Declare a port* in the component inspector; *Edit Source*; context bar text | `Studio/ui/system_inspector.dart`; `Studio/ui/pages/design_page.dart` |
 | | source edit reaches every instance | `test/system_e2e_test.dart` ("the body edit reached the instance") |

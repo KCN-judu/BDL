@@ -1,3 +1,13 @@
+---
+id: ADR-0001
+status: accepted
+date: 2026-09-15
+area: studio
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0001: Flutter does not own semantic truth
 
 **Status**: accepted (2026-09-15)

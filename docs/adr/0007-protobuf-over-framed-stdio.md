@@ -1,3 +1,13 @@
+---
+id: ADR-0007
+status: accepted
+date: 2026-09-15
+area: protocol
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0007: Protobuf messages over framed child-process stdio
 
 **Status**: accepted (2026-09-15)

@@ -102,7 +102,7 @@ destination port with a reference to the source — the kernel's
 `ProjectSnapshot` that every existing pass consumes unchanged, with an
 origin map back to instances and ports. There is one BDL: no system type
 checker, evaluator, clock judgment or code generator exists, and the
-kernel gained no construct (FV Phase 8a, ADR-0017, `docs/BEHAVIOR_SYSTEMS.md`).
+kernel gained no construct (FV Phase 8a, ADR-0021, `docs/BEHAVIOR_SYSTEMS.md`).
 For a system project the authored truth is the system; the flat design is
 derived and never persisted. Flat projects are untouched.
 

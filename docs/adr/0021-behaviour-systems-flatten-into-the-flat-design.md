@@ -1,4 +1,15 @@
-# ADR-0017: Behaviour systems are a surface layer that flattens into the flat design
+---
+id: ADR-0021
+status: accepted
+date: 2026-09-16
+area: behavior-systems
+supersedes: []
+superseded-by: []
+renumbered-from: ADR-0017
+related: []
+fv: ["informed by FV: BDL_FV Phase 8a bf19162 — BDL/Behavior/System.lean, Instantiate.lean, Preservation.lean"]
+---
+# ADR-0021: Behaviour systems are a surface layer that flattens into the flat design
 
 ## Status
 

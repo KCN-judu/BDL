@@ -1,3 +1,13 @@
+---
+id: ADR-0002
+status: accepted
+date: 2026-09-15
+area: daemon
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0002: bdld is a separate process
 
 **Status**: accepted (2026-09-15)

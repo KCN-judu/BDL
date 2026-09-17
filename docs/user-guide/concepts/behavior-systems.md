@@ -99,7 +99,7 @@ values) — see [Versioning a component](../workflows/component-versioning.md).
 instantiate, freshen identities, substitute clocks, realise parameters,
 union with the base, realise bindings as `declRef` / `sync` references —
 into an ordinary flat design, and every judgment is a judgment of that
-flat design (ADR-0017 "behaviour systems flatten into the flat design").
+flat design (ADR-0021 "behaviour systems flatten into the flat design").
 Identities: `ComponentId` (a definition), `ComponentInstanceId` (one use),
 `PortId`, `BindingId`, and the flat `SemanticId` / `DeclId` / `ClockId` /
 `OutputId` per instance — five different kinds of identity that the tool

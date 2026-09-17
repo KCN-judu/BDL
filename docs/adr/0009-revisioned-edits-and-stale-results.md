@@ -1,3 +1,13 @@
+---
+id: ADR-0009
+status: accepted
+date: 2026-09-15
+area: daemon
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0009: Revisioned edits; stale analysis results are discarded
 
 **Status**: accepted (2026-09-15)

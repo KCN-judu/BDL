@@ -1,3 +1,13 @@
+---
+id: ADR-0010
+status: accepted
+date: 2026-09-15
+area: formal
+supersedes: []
+superseded-by: []
+related: []
+fv: ["informed by FV: the Lean development is the semantic authority (docs/02-kernel-spec.md)"]
+---
 # ADR-0010: The Lean development is a specification, not a dependency
 
 **Status**: accepted (2026-09-15)

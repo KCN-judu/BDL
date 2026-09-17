@@ -1,3 +1,13 @@
+---
+id: ADR-0011
+status: accepted
+date: 2026-09-15
+area: language
+supersedes: []
+superseded-by: []
+related: []
+fv: ["engineering choice: deviation from the kernel's Nat, recorded in docs/DESIGN_ISSUES.md DI-1, DI-15"]
+---
 # ADR-0011: Production numerics are IEEE floats, recorded as a deviation
 
 **Status**: accepted (2026-09-15)

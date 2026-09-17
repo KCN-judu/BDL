@@ -1,3 +1,13 @@
+---
+id: ADR-0014
+status: accepted
+date: 2026-09-15
+area: textual
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0014: Textual syntax infrastructure — Logos, hand-written event parser, Rowan
 
 **Status**: accepted (2026-09-15)

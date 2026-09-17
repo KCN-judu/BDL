@@ -1,3 +1,13 @@
+---
+id: ADR-0012
+status: accepted
+date: 2026-09-15
+area: studio
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0012: Studio UI follows Resolve's pages, Blender's node editor, and the macOS HIG
 
 **Status**: accepted (2026-09-15)

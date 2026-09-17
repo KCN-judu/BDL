@@ -91,7 +91,7 @@ retirement, and deletion (*Delete its instances first.*).
 *For language implementers.* A component is `BehaviorComponent { body:
 Design, interface, shared_concepts, external_outputs }`; its interface is a
 stored promise per port (`PortContract`), checked against the body by
-`Realizes` once per component, not per instance (ADR-0018). Instances are
+`Realizes` once per component, not per instance (ADR-0022). Instances are
 freshened copies with private identities; bindings are references by
 identity, never by name. `docs/BEHAVIOR_SYSTEMS.md` maps every production
 object to the formal development; `docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md`

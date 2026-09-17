@@ -1,3 +1,13 @@
+---
+id: ADR-0016
+status: accepted
+date: 2026-09-15
+area: codegen
+supersedes: []
+superseded-by: []
+related: []
+fv: ["production-tested: differential tests against the reference evaluator (docs/CODEGEN_RUST.md)"]
+---
 # ADR-0016: Generated Rust is an implementation of the reference evaluator
 
 ## Status

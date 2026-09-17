@@ -1,3 +1,13 @@
+---
+id: ADR-0005
+status: accepted
+date: 2026-09-15
+area: runtime
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0005: Supplied Rust cannot access outputs
 
 **Status**: accepted (2026-09-15)

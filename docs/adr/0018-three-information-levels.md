@@ -1,3 +1,13 @@
+---
+id: ADR-0018
+status: accepted
+date: 2026-09-15
+area: studio
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0018: Semantics are shown as structure, explained in prose, named formally only on demand
 
 **Status**: accepted (2026-09-15)

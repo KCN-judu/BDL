@@ -1,4 +1,15 @@
-# ADR-0018: A component's public interface is a stored promise, realized by its body
+---
+id: ADR-0022
+status: accepted
+date: 2026-09-16
+area: behavior-systems
+supersedes: []
+superseded-by: []
+renumbered-from: ADR-0018
+related: []
+fv: ["informed by FV: BDL_FV Phase 8a — BDL/Behavior/Interface.lean, Substitution.lean"]
+---
+# ADR-0022: A component's public interface is a stored promise, realized by its body
 
 ## Status
 
@@ -6,7 +17,7 @@ Accepted (contract-hardening milestone).
 
 ## Context
 
-ADR-0017 introduced behaviour components whose ports were links into the
+ADR-0021 introduced behaviour components whose ports were links into the
 component body: the "contract" a binding checked against was whatever the
 backing declaration happened to look like. Editing the body silently
 changed what every instance promised, and composition could not be

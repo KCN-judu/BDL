@@ -2,7 +2,7 @@
 //! the concept's name, the same name where a component body shares the
 //! concept (`use concept`, one concept under two local ids), and every
 //! formula that reads the concept *by its display name* — a parameter
-//! name is lexical and stays (ADR-0022, TEXTUAL_SYNTAX §14.4).  The
+//! name is lexical and stays (ADR-0020, TEXTUAL_SYNTAX §14.4).  The
 //! occurrences are found by the elaborator's own resolution rule through
 //! `bdl_ide_db::index::formula_input_names`, never by string matching.
 //!

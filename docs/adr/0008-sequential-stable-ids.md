@@ -1,3 +1,13 @@
+---
+id: ADR-0008
+status: accepted
+date: 2026-09-15
+area: persistence
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0008: Stable identities are sequential per-project integers
 
 **Status**: accepted (2026-09-15)

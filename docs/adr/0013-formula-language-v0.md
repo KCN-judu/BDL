@@ -1,3 +1,13 @@
+---
+id: ADR-0013
+status: accepted
+date: 2026-09-15
+area: language
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0013: Formula language v0 — names, rep/mk insertion, units, crate split
 
 **Status**: accepted (2026-09-15)

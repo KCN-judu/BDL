@@ -1,3 +1,13 @@
+---
+id: ADR-0017
+status: accepted
+date: 2026-09-15
+area: ide
+supersedes: []
+superseded-by: []
+related: []
+fv: []
+---
 # ADR-0017: LSP is an adapter over a semantic-first IDE service
 
 **Status**: accepted (2026-09-15)
