@@ -1,4 +1,4 @@
-//! Names are identifiers (docs/TEXTUAL_SYNTAX.md §2.5; ADR-0023).
+//! Names are identifiers (docs/spec/textual-syntax.md §2.5; ADR-0023).
 //!
 //! The text is the semantic source of every project, so a name the text
 //! cannot spell is not a name the model may hold.  A create or rename from

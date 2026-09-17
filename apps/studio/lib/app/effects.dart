@@ -5,7 +5,6 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
-import 'actions.dart' show NewProjectKind;
 import 'state.dart';
 
 @immutable
@@ -35,8 +34,7 @@ class PickProjectToOpen extends Effect {
 /// Show the OS save dialog to choose where a new project directory goes;
 /// the executor dispatches `NewProjectRequested(rootPath, name)`.
 class PickNewProjectLocation extends Effect {
-  const PickNewProjectLocation({this.kind = NewProjectKind.design});
-  final NewProjectKind kind;
+  const PickNewProjectLocation();
 }
 
 class OpenProject extends Effect {
@@ -45,16 +43,24 @@ class OpenProject extends Effect {
 }
 
 class InitProject extends Effect {
-  const InitProject({
-    required this.rootPath,
-    required this.name,
-    this.kind = NewProjectKind.design,
-  });
+  const InitProject({required this.rootPath, required this.name});
   final String rootPath;
   final String name;
+}
 
-  /// `InitProject`, `InitSystemProject` or `InitTextProject`.
-  final NewProjectKind kind;
+/// The Code view's sources (uncounted: a view fetch, answered by
+/// `SourcesReceived`).
+class GetSources extends Effect {
+  const GetSources();
+}
+
+/// A text edit against [baseRevision]; counted, answered by
+/// `SourceEditApplied` or `RequestFailed`.
+class ApplySourceEdit extends Effect {
+  const ApplySourceEdit({required this.baseRevision, required this.path, required this.text});
+  final int baseRevision;
+  final String path;
+  final String text;
 }
 
 class SaveProject extends Effect {

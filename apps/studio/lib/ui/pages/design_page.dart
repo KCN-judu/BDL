@@ -9,6 +9,8 @@ import '../inspector.dart';
 import '../library.dart';
 import '../mac/controls.dart';
 import '../mac/tokens.dart';
+import '../mac/widgets.dart';
+import 'code_pane.dart';
 import '../system_inspector.dart' show portKindWord;
 import '../system_sheets.dart';
 
@@ -43,43 +45,7 @@ class DesignPage extends StatelessWidget {
                         state: state,
                         dispatch: dispatch,
                       ),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          NodeCanvas(
-                            project: project,
-                            layout: state.editor.layout,
-                            selection: state.editor.selection,
-                            dispatch: dispatch,
-                            statuses: {
-                              for (final m
-                                  in state.contextAnalysis?.mappings ??
-                                      const <pb.MappingAnalysis>[])
-                                m.id.toInt(): m.status,
-                            },
-                            outputStates: {
-                              for (final o
-                                  in state.contextAnalysis?.outputs ?? const <pb.OutputAnalysis>[])
-                                o.id.toInt(): o.state,
-                            },
-                            templates: state.templates.toList(),
-                            recentTemplates: state.editor.recentTemplates,
-                            renaming: state.editor.renaming,
-                            canInsert: state.editor.pendingInsert == null,
-                            context: state.editor.context,
-                            system: _sceneInput(state),
-                            components: state.system?.components ?? const [],
-                            groups: state.groupsInView,
-                            viewport: state.editor.contextLayout.viewport,
-                            groupsEnabled: state.isSystem,
-                          ),
-                          if (state.editor.pendingBind case final b?)
-                            PendingBindSheet(state: state, bind: b, dispatch: dispatch),
-                          if (state.editor.extraction case final x?)
-                            ExtractionSheet(state: state, extraction: x, dispatch: dispatch),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: _views(context, project)),
                   ],
                 ),
         ),
@@ -89,6 +55,96 @@ class DesignPage extends StatelessWidget {
           child: Inspector(state: state, dispatch: dispatch),
         ),
       ],
+    );
+  }
+
+  /// Design, Code or Split (ADR-0023 §3): the same project, one canvas
+  /// and one editor; side by side they share the selection.
+  Widget _views(BuildContext context, pb.ProjectProjection project) {
+    final t = MacTokens.of(context);
+    final canvas = _canvas(project);
+    final code = CodePane(state: state, dispatch: dispatch);
+    return switch (state.editor.view) {
+      DesignView.design => canvas,
+      DesignView.code => code,
+      DesignView.split => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: canvas),
+          VerticalDivider(width: 1, color: t.hairline),
+          Expanded(child: code),
+        ],
+      ),
+    };
+  }
+
+  Widget _canvas(pb.ProjectProjection project) {
+    final outOfSync = state.editor.sources.outOfSync;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The text does not build: the graph is the last revision that did
+        // (ADR-0023 §5).  Said once, at the top of the graph, in the words
+        // the Code view uses.
+        if (outOfSync) _OutOfSync(),
+        Expanded(
+          child: Stack(
+            children: [
+              NodeCanvas(
+                project: project,
+                layout: state.editor.layout,
+                selection: state.editor.selection,
+                dispatch: dispatch,
+                statuses: {
+                  for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+                    m.id.toInt(): m.status,
+                },
+                outputStates: {
+                  for (final o in state.contextAnalysis?.outputs ?? const <pb.OutputAnalysis>[])
+                    o.id.toInt(): o.state,
+                },
+                templates: state.templates.toList(),
+                recentTemplates: state.editor.recentTemplates,
+                renaming: state.editor.renaming,
+                canInsert: state.editor.pendingInsert == null,
+                context: state.editor.context,
+                system: _sceneInput(state),
+                components: state.system?.components ?? const [],
+                groups: state.groupsInView,
+                viewport: state.editor.contextLayout.viewport,
+                groupsEnabled: state.isSystem,
+              ),
+              if (state.editor.pendingBind case final b?)
+                PendingBindSheet(state: state, bind: b, dispatch: dispatch),
+              if (state.editor.extraction case final x?)
+                ExtractionSheet(state: state, extraction: x, dispatch: dispatch),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OutOfSync extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Container(
+      color: t.sidebar,
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      child: Row(
+        children: [
+          Icon(Icons.sync_problem_outlined, size: 16, color: t.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Showing the last version that built; the text has changes that do not build yet.',
+              style: TextStyle(fontSize: 12, color: t.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -194,6 +250,21 @@ class _ContextBar extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
           ],
+          const Spacer(),
+          // Views of the one project, as Xcode switches editors: a
+          // segmented control, the platform's shape for a mode.
+          SizedBox(
+            width: 200,
+            child: MacSegmented<DesignView>(
+              value: state.editor.view,
+              options: const {
+                DesignView.design: 'Design',
+                DesignView.code: 'Code',
+                DesignView.split: 'Split',
+              },
+              onChanged: (v) => dispatch(DesignViewChanged(v)),
+            ),
+          ),
         ],
       ),
     );

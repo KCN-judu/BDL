@@ -64,42 +64,45 @@ class EffectExecutor {
       case PickProjectToOpen():
         final dir = await _picker(() => fs.getDirectoryPath(confirmButtonText: 'Open Project'));
         if (dir != null) _dispatch(OpenProjectRequested(dir));
-      case PickNewProjectLocation(:final kind):
+      case PickNewProjectLocation():
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
         final loc = await _picker(
           () => fs.getSaveLocation(
-            suggestedName: switch (kind) {
-              NewProjectKind.design => 'Untitled Project',
-              NewProjectKind.system => 'Untitled System',
-              NewProjectKind.text => 'Untitled Text Project',
-            },
+            suggestedName: 'Untitled Project',
             confirmButtonText: 'Create Project',
           ),
         );
         if (loc != null) {
           _dispatch(
-            NewProjectRequested(
-              rootPath: loc.path,
-              name: p.basenameWithoutExtension(loc.path),
-              kind: kind,
-            ),
+            NewProjectRequested(rootPath: loc.path, name: p.basenameWithoutExtension(loc.path)),
           );
         }
       case OpenProject(:final rootPath):
         await _project(pb.ClientMessage(openProject: pb.OpenProjectRequest(rootPath: rootPath)));
-      case InitProject(:final rootPath, :final name, :final kind):
-        await _project(switch (kind) {
-          NewProjectKind.design => pb.ClientMessage(
+      case InitProject(:final rootPath, :final name):
+        await _project(
+          pb.ClientMessage(
             initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
           ),
-          NewProjectKind.system => pb.ClientMessage(
-            initSystemProject: pb.InitSystemProjectRequest(rootPath: rootPath, name: name),
+        );
+      case GetSources():
+        await _call(
+          pb.ClientMessage(getSources: pb.GetSourcesRequest()),
+          (r) => _dispatch(SourcesReceived(r.sources.sources)),
+          counted: false,
+        );
+      case ApplySourceEdit(:final baseRevision, :final path, :final text):
+        await _call(
+          pb.ClientMessage(
+            applySourceEdit: pb.ApplySourceEditRequest(
+              baseRevision: Int64(baseRevision),
+              path: path,
+              text: text,
+            ),
           ),
-          NewProjectKind.text => pb.ClientMessage(
-            initTextProject: pb.InitTextProjectRequest(rootPath: rootPath, name: name),
-          ),
-        });
+          (r) => _dispatch(SourceEditApplied(r.sourceEditApplied)),
+        );
       case SaveProject(:final force):
         await _project(pb.ClientMessage(saveProject: pb.SaveProjectRequest(force: force)));
       case ReloadProject():

@@ -95,9 +95,7 @@ void main() {
       await connect();
       final root = p.join(dir.path, 'lamp');
       try {
-        store.dispatch(
-          NewProjectRequested(rootPath: root, name: 'lamp', kind: NewProjectKind.text),
-        );
+        store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
         await store.until((s) => s.project != null && s.system != null);
         expect(store.state.flat!.kind, pb.ProjectKind.PROJECT_KIND_TEXT);
         expect(store.state.isSystem, isTrue, reason: 'a text project is a system project');

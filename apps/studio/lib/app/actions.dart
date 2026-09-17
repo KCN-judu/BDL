@@ -38,15 +38,11 @@ class OpenProjectPickRequested extends UserAction {
   const OpenProjectPickRequested();
 }
 
-/// What a new project is: a flat design, a behaviour system whose top
-/// level composes components, or a system written as text
-/// (`src/**/*.bdl`, ADR-0020) that Studio and editors share.
-enum NewProjectKind { design, system, text }
-
-/// User chose "New Project…": ask the OS where to create it.
+/// User chose "New Project…": ask the OS where to create it.  There is
+/// one kind of project (ADR-0023): sources under `src/`, a behaviour
+/// system, shown as Design, Code or Split.
 class NewProjectPickRequested extends UserAction {
-  const NewProjectPickRequested({this.kind = NewProjectKind.design});
-  final NewProjectKind kind;
+  const NewProjectPickRequested();
 }
 
 class OpenProjectRequested extends UserAction {
@@ -54,17 +50,11 @@ class OpenProjectRequested extends UserAction {
   final String rootPath;
 }
 
-/// Create a project of [kind] (docs/architecture/behavior-systems.md,
-/// docs/decisions/0020-textual-workspace-and-source-identities.md).
+/// Create a project (docs/spec/project-format.md, ADR-0023).
 class NewProjectRequested extends UserAction {
-  const NewProjectRequested({
-    required this.rootPath,
-    required this.name,
-    this.kind = NewProjectKind.design,
-  });
+  const NewProjectRequested({required this.rootPath, required this.name});
   final String rootPath;
   final String name;
-  final NewProjectKind kind;
 }
 
 /// Save.  A text project whose sources changed on disk since they were
@@ -837,6 +827,35 @@ class SelectionChanged extends UserAction {
   final Selection selection;
 }
 
+// ---- the Code view (ADR-0023 §3–§5) -------------------------------------
+
+/// Design, Code or Split.
+class DesignViewChanged extends UserAction {
+  const DesignViewChanged(this.view);
+  final DesignView view;
+}
+
+/// The editor shows another source file.
+class SourceFileOpened extends UserAction {
+  const SourceFileOpened(this.path);
+  final String path;
+}
+
+/// The designer typed in the editor: the text is the editor's until it is
+/// sent (after a pause, or on leaving the field).
+class SourceTextChanged extends UserAction {
+  const SourceTextChanged(this.path, this.text);
+  final String path;
+  final String text;
+}
+
+/// Send the editor's text for [path] to the model.
+class SourceEditRequested extends UserAction {
+  const SourceEditRequested(this.path, this.text);
+  final String path;
+  final String text;
+}
+
 class ErrorDismissed extends UserAction {
   const ErrorDismissed();
 }
@@ -1033,6 +1052,19 @@ class ProjectClosed extends ResponseAction {
 
 class RequestSucceeded extends ResponseAction {
   const RequestSucceeded();
+}
+
+/// GetSources answered.
+class SourcesReceived extends ResponseAction {
+  const SourcesReceived(this.sources);
+  final pb.SourcesView sources;
+}
+
+/// ApplySourceEdit answered: accepted (a new revision) or refused with
+/// the draft's diagnostics; the projection and sources either way.
+class SourceEditApplied extends ResponseAction {
+  const SourceEditApplied(this.applied);
+  final pb.SourceEditApplied applied;
 }
 
 class RequestFailed extends ResponseAction {

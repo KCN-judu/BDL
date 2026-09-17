@@ -95,7 +95,7 @@ pub fn migrate_legacy(
     }
 
     // Names the source cannot spell become identifiers, once and
-    // deterministically (docs/TEXTUAL_SYNTAX.md §2.5).
+    // deterministically (docs/spec/textual-syntax.md §2.5).
     let renamed_names = identifier_names(&mut system);
 
     // Render once, then prove the text reads back as the model before

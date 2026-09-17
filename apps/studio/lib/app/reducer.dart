@@ -13,6 +13,7 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
 import 'deploy.dart';
 import 'drafts.dart';
+import 'sources.dart';
 import 'effects.dart';
 import 'simulation.dart';
 import 'state.dart';
@@ -37,17 +38,17 @@ Transition reduce(AppState s, AppAction action) {
       s,
       () => s.project == null ? Transition(s, const [PickProjectToOpen()]) : Transition(s),
     ),
-    NewProjectPickRequested(:final kind) => _whenConnected(
+    NewProjectPickRequested() => _whenConnected(
       s,
-      () => s.project == null ? Transition(s, [PickNewProjectLocation(kind: kind)]) : Transition(s),
+      () => s.project == null ? Transition(s, const [PickNewProjectLocation()]) : Transition(s),
     ),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
       () => Transition(pending(s), [OpenProject(rootPath)]),
     ),
-    NewProjectRequested(:final rootPath, :final name, :final kind) => _whenConnected(
+    NewProjectRequested(:final rootPath, :final name) => _whenConnected(
       s,
-      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name, kind: kind)]),
+      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name)]),
     ),
     SaveRequested(:final force) => _whenProject(
       s,
@@ -437,6 +438,18 @@ Transition reduce(AppState s, AppAction action) {
       ),
     ),
 
+    // ---- the Code view (app/sources.dart) ---------------------------------
+    DesignViewChanged(:final view) => viewChanged(s, view),
+    SourceFileOpened(:final path) => Transition(
+      s.copyWith(
+        editor: s.editor.copyWith(sources: s.editor.sources.copyWith(openPath: path)),
+      ),
+    ),
+    SourceTextChanged(:final path, :final text) => sourceTextChanged(s, path, text),
+    SourceEditRequested(:final path, :final text) => sourceEditRequested(s, path, text),
+    SourcesReceived(:final sources) => sourcesReceived(s, sources),
+    SourceEditApplied(:final applied) => sourceEditApplied(s, applied),
+
     // ---- concept library ---------------------------------------------------
     InsertConceptTemplateRequested(:final templateId, :final position) => _whenProject(s, () {
       if (s.editor.pendingInsert != null) return Transition(s);
@@ -576,6 +589,7 @@ Transition reduce(AppState s, AppAction action) {
       s.copyWith(
         clearProject: true,
         editor: s.editor.copyWith(
+          sources: const SourcesState(),
           pendingRequests: decPending(s),
           selection: const NoSelection(),
           layout: const {},
@@ -597,9 +611,25 @@ Transition reduce(AppState s, AppAction action) {
     ),
     RequestFailed(:final code, :final message, :final details) => () {
       final refetch = code == 'group_edit.stale_generation' && s.isSystem;
+      // A text edit sent against a revision that moved: keep the typed text
+      // and send it again once the sources are current (nothing typed is
+      // lost, no banner for a race the designer did not cause).
+      final staleSource = code == 'edit.stale_revision' && s.editor.sources.sent != null;
+      final sources = staleSource
+          ? s.editor.sources.copyWith(retry: s.editor.sources.sent, clearSent: true)
+          : s.editor.sources.copyWith(clearSent: true);
+      if (staleSource) {
+        return Transition(
+          s.copyWith(
+            editor: s.editor.copyWith(pendingRequests: decPending(s), sources: sources),
+          ),
+          const [GetSources()],
+        );
+      }
       return Transition(
         s.copyWith(
           editor: s.editor.copyWith(
+            sources: sources,
             // the failed request settles; a counted refetch takes its place
             pendingRequests: decPending(s) + (refetch ? 1 : 0),
             clearPendingInsert: true,
@@ -920,6 +950,10 @@ Transition projectReceived(
           if (needsSystem) const GetSystem(),
           if (isSystem && (!sameProject || incoming.revision != current.revision))
             const RunSystemAnalysis(),
+          // the Code view shows this revision's text (ADR-0023 §4)
+          if (s.editor.showsCode &&
+              (!sameProject || incoming.revision.toInt() != s.editor.sources.revision))
+            const GetSources(),
           if (placed) SetLayout(layoutToPb(layoutsOut)),
           ...drafts.effects,
         ],

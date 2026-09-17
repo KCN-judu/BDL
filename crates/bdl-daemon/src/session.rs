@@ -75,7 +75,7 @@ pub enum SessionError {
     Text(#[from] bdl_text::TextError),
     #[error("{} changed on disk since the project was opened: {}", files.len(), files.join(", "))]
     ChangedOnDisk { files: Vec<String> },
-    /// A name the source cannot spell (docs/TEXTUAL_SYNTAX.md §2.5): the
+    /// A name the source cannot spell (docs/spec/textual-syntax.md §2.5): the
     /// text is the semantic source, so it is refused on every surface.
     #[error("`{name}` cannot be a name: {reason}")]
     InvalidName { name: String, reason: String },

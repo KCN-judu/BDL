@@ -18,6 +18,86 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 /// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
+/// How the Design page shows the one open project (ADR-0023 §3): as the
+/// graph, as its source files, or both side by side.  A view, never a
+/// kind of project.
+enum DesignView { design, code, split }
+
+/// The source files of the open project as the Code view shows them: the
+/// daemon's text with every committed graph edit written back, plus a
+/// draft the semantic project has not accepted (ADR-0023 §5).
+@immutable
+class SourcesState {
+  const SourcesState({
+    this.revision = -1,
+    this.files = const [],
+    this.diagnostics = const [],
+    this.openPath,
+    this.buffer,
+    this.sent,
+    this.retry,
+  });
+
+  /// The project revision [files] describe; -1 before the first answer.
+  final int revision;
+  final List<pb.SourceFileView> files;
+
+  /// Why a draft does not build (empty when every file is committed).
+  final List<pb.SourceDiagnostic> diagnostics;
+
+  /// The file in the editor.
+  final String? openPath;
+
+  /// Text typed in the editor and not yet sent: the editor's own truth
+  /// while the designer types.  Null when the editor shows [files].
+  final String? buffer;
+
+  /// The text of the edit in flight, to tell its answer from a later one.
+  final String? sent;
+
+  /// An edit refused as stale, resent once the sources catch up.
+  final String? retry;
+
+  pb.SourceFileView? file(String? path) => files.where((f) => f.path == path).firstOrNull;
+
+  pb.SourceFileView? get open => file(openPath);
+
+  /// The text the editor shows for the open file.
+  String get text => buffer ?? open?.text ?? '';
+
+  /// Whether the graph shows an older revision than the text: some file is
+  /// a draft the model did not accept.
+  bool get outOfSync => files.any((f) => f.draft);
+
+  /// Diagnostics of one file, errors before open ones, in text order.
+  List<pb.SourceDiagnostic> diagnosticsOf(String? path) =>
+      [...diagnostics.where((d) => d.path == path)]..sort((a, b) {
+        if (a.open != b.open) return a.open ? 1 : -1;
+        return a.start.compareTo(b.start);
+      });
+
+  SourcesState copyWith({
+    int? revision,
+    List<pb.SourceFileView>? files,
+    List<pb.SourceDiagnostic>? diagnostics,
+    String? openPath,
+    String? buffer,
+    bool clearBuffer = false,
+    String? sent,
+    bool clearSent = false,
+    String? retry,
+    bool clearRetry = false,
+  }) => SourcesState(
+    revision: revision ?? this.revision,
+    files: files ?? this.files,
+    diagnostics: diagnostics ?? this.diagnostics,
+    openPath: openPath ?? this.openPath,
+    buffer: clearBuffer ? null : (buffer ?? this.buffer),
+    sent: clearSent ? null : (sent ?? this.sent),
+    retry: clearRetry ? null : (retry ?? this.retry),
+  );
+}
+
 /// Canvas node kinds.  [instance] is a component instance of a system
 /// (rendered from its ports' contracts, never its body); [group] is a
 /// collapsed behaviour group (a picture of its members, never a node the
@@ -822,10 +902,18 @@ class EditorState {
     this.pendingGroupFor,
     this.queuedSystemEdits = const [],
     this.renameNextGroup = false,
+    this.view = DesignView.design,
+    this.sources = const SourcesState(),
   });
 
   final StudioPage page;
   final Selection selection;
+
+  /// Design, Code or Split: views of the one project (ADR-0023 §3).
+  final DesignView view;
+
+  /// The Code view's sources, fetched while it is on screen.
+  final SourcesState sources;
 
   /// Canvas positions of the context on screen.  Studio authors these; the
   /// daemon stores them.  Never semantics (ADR-0003).
@@ -960,6 +1048,8 @@ class EditorState {
     bool clearPendingGroup = false,
     List<pb.SystemEditOp>? queuedSystemEdits,
     bool? renameNextGroup,
+    DesignView? view,
+    SourcesState? sources,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -991,8 +1081,13 @@ class EditorState {
       pendingGroupFor: clearPendingGroup ? null : (pendingGroupFor ?? this.pendingGroupFor),
       queuedSystemEdits: queuedSystemEdits ?? this.queuedSystemEdits,
       renameNextGroup: renameNextGroup ?? this.renameNextGroup,
+      view: view ?? this.view,
+      sources: sources ?? this.sources,
     );
   }
+
+  /// Whether the Code view is on screen (alone or beside the graph).
+  bool get showsCode => view != DesignView.design;
 
   /// The layout of the canvas on screen.
   ContextLayout get contextLayout => layouts.of(context);
