@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "keys": {
+    "clock:interaction": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "concept:Brightness": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "concept:Tilt": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "device:pwmLight": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "mapping:brightness": {
+      "id": 2,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:dimByTilt": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "1"
+    },
+    "mapping:tilt": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "output:light": {
+      "id": 0,
+      "file": "src/main.bdl"
+    }
+  },
+  "base_ids": {
+    "next_semantic": 2,
+    "next_decl": 3,
+    "next_clock": 1,
+    "next_output": 1,
+    "next_device": 1
+  },
+  "system_ids": {
+    "next_component": 0,
+    "next_instance": 0,
+    "next_port": 0,
+    "next_binding": 0,
+    "next_export": 0,
+    "next_group": 0
+  },
+  "flat_ids": {}
+}

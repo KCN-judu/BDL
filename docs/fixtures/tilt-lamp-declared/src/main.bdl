@@ -1,0 +1,8 @@
+/// How far the lamp head is tilted from upright.
+concept Tilt : Angle
+
+/// The lamp's output level, 0 (off) to 1 (full).
+concept Brightness : Scalar
+
+/// Upright is off, flat is full: brightness grows with the tilt.
+mapping dimByTilt : Tilt -> Brightness

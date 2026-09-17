@@ -1,4 +1,3 @@
-schema_version = 1
+schema_version = 2
 name = "component-system"
 compiler_version = "docs"
-kind = "text"

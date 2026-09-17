@@ -20,7 +20,6 @@
       "expect": {
         "texts": [
           "New Project…",
-          "New System…",
           "Open Project…",
           "Recent"
         ]
@@ -30,7 +29,7 @@
       },
       "output": "getting-started/project-manager.png",
       "caption": "The project manager: Start actions on the left, Recent on the right.",
-      "alt": "Studio's start screen with New Project, New System, New Text Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
+      "alt": "Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
       "purpose": "What a reader sees first after launching Studio."
     },
     {
@@ -54,7 +53,7 @@
           "tilt",
           "dimByTilt",
           "brightness",
-          "Light Output"
+          "light"
         ],
         "texts": [
           "Design",
@@ -160,7 +159,7 @@
           "tilt",
           "dimByTilt",
           "brightness",
-          "Light Output"
+          "light"
         ],
         "outputComplete": true
       },
@@ -171,13 +170,13 @@
           "tilt",
           "dimByTilt",
           "brightness",
-          "Light Output"
+          "light"
         ],
         "pad": 40
       },
       "output": "getting-started/complete-lamp.png",
-      "caption": "The finished lamp: the input tilt, the rule dimByTilt, the value brightness, and the driven Light Output.",
-      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the Light Output sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "caption": "The finished lamp: the input tilt, the rule dimByTilt, the value brightness, and the driven light.",
+      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
       "purpose": "What the tutorial's design looks like when it is executable."
     },
     {
@@ -201,7 +200,7 @@
           "tilt",
           "dimByTilt",
           "brightness",
-          "Light Output"
+          "light"
         ]
       },
       "crop": {
@@ -211,13 +210,13 @@
           "tilt",
           "dimByTilt",
           "brightness",
-          "Light Output"
+          "light"
         ],
         "pad": 40
       },
       "output": "studio/node-anatomy.png",
-      "caption": "Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the Light Output sink.",
-      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the Light Output sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "caption": "Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the light sink.",
+      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
       "purpose": "The parts of every node kind, on real nodes."
     },
     {
@@ -257,7 +256,7 @@
       },
       "output": "studio/simulate-page.png",
       "caption": "The Simulate page after three steps with the tilt at 45°: inputs on the left, the trace in the middle, the probe on the right.",
-      "alt": "The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.",
+      "alt": "The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.",
       "purpose": "The whole Simulate page in a settled run."
     },
     {
@@ -308,7 +307,7 @@
           "Feasible on Arduino Nano."
         ],
         "textsContaining": [
-          "PWM light"
+          "pwmLight"
         ]
       },
       "crop": {
@@ -316,8 +315,8 @@
         "maxHeight": 480
       },
       "output": "studio/deploy-page.png",
-      "caption": "The Deploy page: Arduino Nano chosen, one PWM device on Light Output, the verdict and the placement.",
-      "alt": "The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named PWM light of kind PWM channel realising Light Output, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: PWM light, PWM light PWM, arrow D3.",
+      "caption": "The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and the placement.",
+      "alt": "The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.",
       "purpose": "A feasible placement, as the page reports it."
     },
     {
@@ -333,7 +332,7 @@
         },
         {
           "pin": {
-            "device": "PWM light",
+            "device": "pwmLight",
             "index": 0,
             "resource": "D4"
           }
@@ -360,7 +359,7 @@
       },
       "output": "getting-started/deploy-dead-end.png",
       "caption": "Not feasible: the pin chosen by hand cannot carry PWM.",
-      "alt": "The verdict Not feasible on Arduino Nano in red, the device card with D4 typed into its pin field, and below it a red-bordered box headed D4 cannot carry PWM light PWM on arduino_nano, explaining that the pin chosen by hand cannot carry the requirement here.",
+      "alt": "The verdict Not feasible on Arduino Nano in red, the device card with D4 typed into its pin field, and below it a red-bordered box headed D4 cannot carry pwmLight PWM on arduino_nano, explaining that the pin chosen by hand cannot carry the requirement here.",
       "purpose": "How a placement failure is explained."
     },
     {
