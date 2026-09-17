@@ -514,39 +514,46 @@ impl Lowering<'_> {
         let name = ident(&c.name()?)?;
         let body = c.body()?;
         let mut items = Vec::new();
+        // An item that does not lower is left out; the rest of the body
+        // and the component itself stand.
         for item in c.items() {
-            let lowered = match &item {
-                ast::ComponentItem::Concept(x) => ComponentBodyItem::Concept(concept(x)?),
-                ast::ComponentItem::Mapping(m) => {
-                    let clean = self.clean(m.span());
-                    ComponentBodyItem::Mapping(mapping(m, clean, self.errors)?)
-                }
-                ast::ComponentItem::Enum(e) => ComponentBodyItem::Enum(enum_(e)?),
-                ast::ComponentItem::Clock(x) => ComponentBodyItem::Clock(clock(x)?),
-                ast::ComponentItem::Output(o) => ComponentBodyItem::Output(output(o)?),
-                ast::ComponentItem::Drive(d) => ComponentBodyItem::Drive(drive(d)?),
-                ast::ComponentItem::Device(d) => ComponentBodyItem::Device(device(d, self.errors)?),
-                ast::ComponentItem::Use(u) => ComponentBodyItem::Use(UseItem {
-                    concept: u.is_concept(),
-                    name: ident_ref(&u.name()?)?,
-                    span: u.span(),
-                }),
-                ast::ComponentItem::ParamClock(p) => ComponentBodyItem::ParamClock(ClockItem {
-                    name: ident(&p.name()?)?,
-                    span: p.span(),
-                }),
-                ast::ComponentItem::Port(p) => {
-                    let clean = self.clean(p.span());
-                    ComponentBodyItem::Port(port(p, clean, self.errors)?)
-                }
-            };
-            items.push(lowered);
+            if let Some(lowered) = self.component_item(&item) {
+                items.push(lowered);
+            }
         }
         Some(ComponentItem {
             name,
             items,
             body_span: body.span(),
             span: c.span(),
+        })
+    }
+
+    fn component_item(&mut self, item: &ast::ComponentItem) -> Option<ComponentBodyItem> {
+        Some(match item {
+            ast::ComponentItem::Concept(x) => ComponentBodyItem::Concept(concept(x)?),
+            ast::ComponentItem::Mapping(m) => {
+                let clean = self.clean(m.span());
+                ComponentBodyItem::Mapping(mapping(m, clean, self.errors)?)
+            }
+            ast::ComponentItem::Enum(e) => ComponentBodyItem::Enum(enum_(e)?),
+            ast::ComponentItem::Clock(x) => ComponentBodyItem::Clock(clock(x)?),
+            ast::ComponentItem::Output(o) => ComponentBodyItem::Output(output(o)?),
+            ast::ComponentItem::Drive(d) => ComponentBodyItem::Drive(drive(d)?),
+            ast::ComponentItem::Device(d) => ComponentBodyItem::Device(device(d, self.errors)?),
+            ast::ComponentItem::Use(u) => ComponentBodyItem::Use(UseItem {
+                concept: u.is_concept(),
+                name: ident_ref(&u.name()?)?,
+                span: u.span(),
+            }),
+            ast::ComponentItem::ParamClock(p) => ComponentBodyItem::ParamClock(ClockItem {
+                name: ident(&p.name()?)?,
+                span: p.span(),
+            }),
+            ast::ComponentItem::Port(p) => {
+                let clean = self.clean(p.span());
+                ComponentBodyItem::Port(port(p, clean, self.errors)?)
+            }
         })
     }
 }
@@ -596,10 +603,11 @@ fn mapping(
 ) -> Option<MappingItem> {
     let name = ident(&m.name()?)?;
     let signature = type_(&m.signature()?)?;
-    let definition = match m.definition() {
-        Some(def) => Some(definition(&def, &name, &signature, clean, errors)?),
-        None => None,
-    };
+    // A definition that does not lower (a body still being typed) leaves
+    // the declaration standing: the syntax error already says why.
+    let definition = m
+        .definition()
+        .and_then(|def| definition(&def, &name, &signature, clean, errors));
     Some(MappingItem {
         name,
         signature,
@@ -735,10 +743,9 @@ fn port(p: &ast::PortDecl, clean: bool, errors: &mut Vec<SyntaxError>) -> Option
     };
     let name = ident(&p.name()?)?;
     let signature = type_(&p.signature()?)?;
-    let def = match p.definition() {
-        Some(d) => Some(definition(&d, &name, &signature, clean, errors)?),
-        None => None,
-    };
+    let def = p
+        .definition()
+        .and_then(|d| definition(&d, &name, &signature, clean, errors));
     Some(PortItem {
         word,
         name,

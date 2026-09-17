@@ -63,6 +63,19 @@ pub struct TextWorld {
     pub files: Vec<SourceFile>,
     /// File index → document.
     pub documents: Vec<DocumentId>,
+    /// Where each component's body is written: the scope of the items
+    /// inside it.
+    pub component_bodies: Vec<(DocumentId, TextRange, ComponentId)>,
+}
+
+impl TextWorld {
+    /// The component whose body encloses `offset` in `document`.
+    pub fn component_at(&self, document: DocumentId, offset: u32) -> Option<ComponentId> {
+        self.component_bodies
+            .iter()
+            .find(|(d, r, _)| *d == document && r.start <= offset && offset <= r.end)
+            .map(|(_, _, c)| *c)
+    }
 }
 
 /// What [`compose_text`] yields: the flat snapshot, the text world, the
@@ -122,6 +135,7 @@ pub fn compose_text(
 
     let system = &build.system;
     let mut projections = ProjectionMap::default();
+    let mut component_bodies = Vec::new();
     let mut states: BTreeMap<DocumentId, TextDocumentState> = BTreeMap::new();
     for (i, f) in files.iter().enumerate() {
         states.insert(
@@ -210,7 +224,12 @@ pub fn compose_text(
             AnchorRole::Body => EntityRole::Definition,
             AnchorRole::Reference => EntityRole::Reference,
             AnchorRole::Drive => EntityRole::DriveEdge,
-            AnchorRole::ComponentBody => continue,
+            AnchorRole::ComponentBody => {
+                if let TextEntity::Component(c) = a.entity {
+                    component_bodies.push((doc, range, c));
+                }
+                continue;
+            }
         };
         for e in &entities {
             projections.insert(ProjectionAnchor::text(*e, role, doc, range));
@@ -256,6 +275,7 @@ pub fn compose_text(
         faults: build.faults,
         files,
         documents: doc_of,
+        component_bodies,
     };
     (snapshot, world, states, projections, names)
 }

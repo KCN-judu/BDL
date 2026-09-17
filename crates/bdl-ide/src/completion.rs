@@ -56,7 +56,7 @@ pub enum ExpectedType {
 }
 
 impl ExpectedType {
-    fn of(r: Option<Representation>) -> ExpectedType {
+    pub(crate) fn of(r: Option<Representation>) -> ExpectedType {
         match r {
             Some(Representation::Quantity { dim }) => ExpectedType::Quantity { dim },
             Some(Representation::Boolean) => ExpectedType::Boolean,
@@ -64,7 +64,7 @@ impl ExpectedType {
             None => ExpectedType::Unknown,
         }
     }
-    fn describe(&self) -> String {
+    pub(crate) fn describe(&self) -> String {
         match self {
             ExpectedType::Quantity { dim } => pretty::describe_dim(*dim),
             ExpectedType::Boolean => "true or false".into(),
@@ -180,17 +180,22 @@ fn formula_completions(
     let mut out = Vec::new();
     let unit_position = after_number(source, replace);
 
+    // A formula pinned to a component scope names its inputs and the
+    // relationships it may call by the component's spellings, not by
+    // whatever the flat design calls them (or another instance's copies).
+    let scope = match &block.definition {
+        Some(Definition::ScopedFormula { scope, .. }) => Some(scope),
+        _ => None,
+    };
     for (i, c) in block.signature.inputs.iter().enumerate() {
         let Some(concept) = design.concepts.get(c) else {
             continue;
         };
         // The name the body uses for this input: its textual parameter
         // name when it has one, the concept's name otherwise.
-        let name = block
-            .parameters
-            .get(i)
-            .filter(|p| !p.is_empty())
-            .cloned()
+        let name = scope
+            .and_then(|s| s.inputs.get(i).cloned())
+            .or_else(|| block.parameters.get(i).filter(|p| !p.is_empty()).cloned())
             .unwrap_or_else(|| concept.name.clone());
         if !matches(&name) {
             continue;
@@ -227,17 +232,22 @@ fn formula_completions(
     // complete when it has some.  The mapping's own name is not offered
     // (an instantaneous self-reference is a cycle; memory uses `delay`).
     if !unit_position {
-        for m in design.mappings.values() {
-            if m.id == mapping || !matches(&m.name) {
+        let visible: Vec<(String, &bdl_model::surface::MappingBlock)> = match scope {
+            Some(s) => s
+                .mappings
+                .iter()
+                .filter_map(|(name, id)| design.mappings.get(id).map(|m| (name.clone(), m)))
+                .collect(),
+            None => design
+                .mappings
+                .values()
+                .map(|m| (m.name.clone(), m))
+                .collect(),
+        };
+        for (name, m) in visible {
+            if m.id == mapping || !matches(&name) {
                 continue;
             }
-            let ty = ExpectedType::of(
-                design
-                    .concepts
-                    .get(&m.signature.output)
-                    .and_then(|c| c.representation),
-            );
-            let callable = !m.signature.inputs.is_empty();
             let params: Vec<String> = m
                 .signature
                 .inputs
@@ -250,20 +260,27 @@ fn formula_completions(
                         .unwrap_or_default()
                 })
                 .collect();
+            let ty = ExpectedType::of(
+                design
+                    .concepts
+                    .get(&m.signature.output)
+                    .and_then(|c| c.representation),
+            );
+            let callable = !m.signature.inputs.is_empty();
             out.push(SemanticCompletion {
                 label: if callable {
-                    format!("{}({})", m.name, params.join(", "))
+                    format!("{}({})", name, params.join(", "))
                 } else {
-                    m.name.clone()
+                    name.clone()
                 },
                 kind: CompletionKind::Mapping,
                 entity: Some(EntityRef::Mapping(m.id)),
                 resulting_type: Some(ty.describe()),
                 replace,
                 insert: if callable {
-                    format!("{}(", m.name)
+                    format!("{name}(")
                 } else {
-                    m.name.clone()
+                    name.clone()
                 },
                 relevance: rank(&expected, &ty).saturating_sub(5),
                 documentation: Some(if callable {
@@ -380,6 +397,10 @@ fn document_completions(
                 return items;
             }
         }
+    }
+    // A text workspace decides scope from the authored system.
+    if let Some(world) = snapshot.text() {
+        return crate::completion_text::text_completions(world, document, source, prefix, replace);
     }
     let matches = |label: &str| {
         prefix.is_empty()

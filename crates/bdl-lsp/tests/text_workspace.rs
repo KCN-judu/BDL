@@ -431,6 +431,150 @@ fn open_buffers_substitute_and_saves_reload_the_ground() {
         "{labels:?}"
     );
 
+    // Completion knows the scope of the position from the authored
+    // system, not from the file it is in.
+    let labels_at = |c: &mut Client,
+                     uri: &str,
+                     text: &str,
+                     needle: &str,
+                     plus: usize|
+     -> Vec<String> {
+        c.notify(
+            lsp::notification::DidChangeTextDocument::METHOD,
+            json!({ "textDocument": { "uri": uri, "version": 9 }, "contentChanges": [{ "text": text }] }),
+        );
+        let comp = c.request(
+            lsp::request::Completion::METHOD,
+            json!({ "textDocument": { "uri": uri }, "position": position(text, needle, plus) }),
+        );
+        comp.as_array()
+            .or_else(|| comp["items"].as_array())
+            .expect("items")
+            .iter()
+            .filter_map(|i| i["label"].as_str().map(str::to_owned))
+            .collect()
+    };
+    // Module level, at an item start: the project items.
+    let with_blank = format!("{MAIN}\n\n");
+    let labels = labels_at(
+        &mut c,
+        &main_uri,
+        &with_blank,
+        "drive light = brightness\n\n",
+        "drive light = brightness\n\n".len(),
+    );
+    assert!(
+        labels.contains(&"instance".into()) && labels.contains(&"bind".into()),
+        "{labels:?}"
+    );
+    assert!(!labels.contains(&"requires".into()), "{labels:?}");
+    // `bind lampA.|` → that instance's ports.
+    let text = format!("{MAIN}bind lampA.\n");
+    let labels = labels_at(
+        &mut c,
+        &main_uri,
+        &text,
+        "bind lampA.\n",
+        "bind lampA.".len(),
+    );
+    // Parameters are given at instantiation, not bound.
+    assert_eq!(labels, ["brightness", "tiltValue"], "{labels:?}");
+    // `instance x : |` → components.
+    let text = format!("{MAIN}instance lampC : \n");
+    let labels = labels_at(
+        &mut c,
+        &main_uri,
+        &text,
+        "instance lampC : \n",
+        "instance lampC : ".len(),
+    );
+    assert_eq!(labels, vec!["AdaptiveLamp".to_owned()], "{labels:?}");
+    // `instance lampC : AdaptiveLamp { |` → its arguments.
+    let text = format!("{MAIN}instance lampC : AdaptiveLamp {{ \n");
+    let labels = labels_at(
+        &mut c,
+        &main_uri,
+        &text,
+        "AdaptiveLamp { \n",
+        "AdaptiveLamp { ".len(),
+    );
+    assert_eq!(
+        labels,
+        vec!["gain".to_owned(), "main".to_owned()],
+        "{labels:?}"
+    );
+    // Inside the component: an item start offers body items, `@` the
+    // body's clocks, a type position the concepts the body knows.
+    c.notify(
+        lsp::notification::DidChangeTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "version": 10 }, "contentChanges": [{ "text": MAIN }] }),
+    );
+    let lamp_uri = p.uri("src/lamp.bdl");
+    c.notify(
+        lsp::notification::DidOpenTextDocument::METHOD,
+        json!({ "textDocument": { "uri": lamp_uri, "languageId": "bdl", "version": 1, "text": LAMP } }),
+    );
+    let labels = labels_at(
+        &mut c,
+        &lamp_uri,
+        LAMP,
+        "param clock main\n\n",
+        "param clock main\n\n".len(),
+    );
+    assert!(
+        labels.contains(&"requires".into()) && labels.contains(&"use".into()),
+        "{labels:?}"
+    );
+    assert!(!labels.contains(&"instance".into()), "{labels:?}");
+    let text = LAMP.replace(
+        "provides brightness : Brightness @main",
+        "provides brightness : Brightness @",
+    );
+    let labels = labels_at(
+        &mut c,
+        &lamp_uri,
+        &text,
+        "Brightness @\n",
+        "Brightness @".len(),
+    );
+    assert_eq!(labels, vec!["main".to_owned()], "{labels:?}");
+    let text = LAMP.replace(
+        "provides brightness : Brightness @main",
+        "provides brightness : ",
+    );
+    let labels = labels_at(
+        &mut c,
+        &lamp_uri,
+        &text,
+        "provides brightness : \n",
+        "provides brightness : ".len(),
+    );
+    assert_eq!(labels, ["Brightness", "Gain", "Tilt"], "{labels:?}");
+    // In a body formula: the body's relationships by the component's
+    // names — one `dimByTilt`, not one per instance — and its inputs.
+    let text = LAMP.replace("dimByTilt(tiltValue) * gain", "dimByTilt(tiltValue) * ");
+    let labels = labels_at(
+        &mut c,
+        &lamp_uri,
+        &text,
+        "dimByTilt(tiltValue) * \n",
+        "dimByTilt(tiltValue) * ".len(),
+    );
+    assert!(
+        labels.contains(&"gain".into()) && labels.contains(&"tiltValue".into()),
+        "{labels:?}"
+    );
+    assert_eq!(
+        labels.iter().filter(|l| l.starts_with("dimByTilt")).count(),
+        1,
+        "{labels:?}"
+    );
+    assert!(!labels.iter().any(|l| l.contains("lampA")), "{labels:?}");
+    c.notify(
+        lsp::notification::DidCloseTextDocument::METHOD,
+        json!({ "textDocument": { "uri": lamp_uri } }),
+    );
+
     // Fix the buffer, save it to disk, tell the server: the ground is
     // re-read and the identity table written for the next tool.
     c.notify(

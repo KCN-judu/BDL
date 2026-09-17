@@ -25,6 +25,7 @@
 
 pub mod actions;
 pub mod completion;
+mod completion_text;
 pub mod diagnostics;
 pub mod draft;
 pub mod edit_plan;

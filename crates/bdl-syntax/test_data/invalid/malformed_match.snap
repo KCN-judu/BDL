@@ -127,4 +127,4 @@ error 148..150 syntax.expected: expected a pattern before `=>`
 error 158..161 syntax.literal_pattern: only whole numbers can be matched, not `1.5`
   found the number `1.5`
   hint: Match on a whole number, or compare with `<` in an `if` instead.
-lowered: 1 concept(s), 0 mapping(s), 0 enum(s)
+lowered: 1 concept(s), 1 mapping(s), 0 enum(s)
