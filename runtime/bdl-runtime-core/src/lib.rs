@@ -5,7 +5,7 @@
 //! runtime errors* — nothing else.
 //!
 //! The numeric helpers implement exactly the reference evaluator's policy
-//! (`docs/RUNTIME_SEMANTICS.md`, DI-15): IEEE `f64`; division by zero and
+//! (`docs/spec/runtime-semantics.md`, DI-15): IEEE `f64`; division by zero and
 //! any non-finite result are errors that fail the tick.  Generated code
 //! calls these helpers instead of bare operators so that the policy lives
 //! in one place on both sides of the differential tests.

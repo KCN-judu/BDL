@@ -12,5 +12,5 @@ compiler.
   checks, builds and runs a generated crate. Used by the differential
   tests and by tooling.
 
-Planned: `bdl-runtime-embassy`, the first platform adapter (docs/ROADMAP.md
-P–S). See docs/RUNTIME_SEMANTICS.md and docs/CODEGEN_RUST.md.
+Planned: `bdl-runtime-embassy`, the first platform adapter (docs/project/roadmap.md
+P–S). See docs/spec/runtime-semantics.md and docs/architecture/codegen-rust.md.

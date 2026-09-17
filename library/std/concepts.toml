@@ -4,7 +4,7 @@
 # it produces a CreateConcept edit with these defaults and a fresh
 # SemanticId.  Two instantiations are two distinct concepts.  Nothing here
 # is a kernel type, a device, or a global identity; a project never depends
-# on this file after the concept exists (docs/STANDARD_CONCEPT_LIBRARY.md).
+# on this file after the concept exists (docs/spec/concept-library.md).
 #
 # representation: { quantity = "<quantity id>" } — from the shared quantity
 # vocabulary (bdl_model::quantity), "boolean", "count", or "open" (decide
