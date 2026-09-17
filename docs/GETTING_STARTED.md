@@ -134,17 +134,18 @@ persistence edges.
 | If you are here to… | Read |
 |---|---|
 | use Studio as a designer or prototyper | `docs/user-guide/README.md` — tutorials, concepts, the interface, troubleshooting |
-| understand the system | `docs/ARCHITECTURE.md`, then `docs/adr/` (short, numbered) |
+| understand the system | `docs/README.md` (the front door), `docs/ARCHITECTURE.md`, then `docs/adr/` (short, numbered) |
 | understand the language | `docs/01-paper-digest.md` (Chinese), `docs/02-kernel-spec.md` (exact kernel contract), then the paper |
 | add a compiler pass | `docs/COMPILER_PIPELINE.md`, `docs/IR.md`, `crates/bdl-ir`, then the pass crate it belongs to |
 | touch the editor | `docs/STUDIO_UI.md` (design system + interaction standard), `apps/studio/lib/app/reducer.dart` |
 | change the wire format | `docs/PROTOCOL.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto` |
-| decide something the paper left open | `docs/DESIGN_ISSUES.md` — record it there, never silently in code |
+| decide something the paper left open | `docs/issues/` (the problem), `docs/proposals/` (a concrete alternative), `docs/adr/` (the choice) — never silently in code; `docs/project-records/GOVERNANCE.md` says which |
 | follow a design to a board | `docs/DEPLOYMENT_WALKTHROUGH.md`, `docs/HARDWARE_MODEL.md`, `crates/bdl-output`, `crates/bdl-hardware` |
 | build a Deploy surface | `docs/DEPLOYMENT_READ_MODEL.md`, `crates/bdl-compiler/src/deploy_report.rs`, `crates/bdl-daemon/tests/deploy_e2e.rs` |
 | generate and run Rust from a design | `docs/EXECUTABLE_IR.md`, `docs/CODEGEN_RUST.md`, `crates/bdl-compiler/tests/backend_differential.rs` |
 | compose reusable behaviours | `docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md`, `docs/BEHAVIOR_SYSTEMS.md`, `crates/bdl-system/tests/vertical_slice.rs` |
-| see what is next | `docs/ROADMAP.md` |
+| see what exists and what is next | `docs/project-records/STATUS.md`, then `docs/ROADMAP.md` |
+| see what changed for users or clients | `docs/changes/` |
 
 ## 8. Conventions that are checked
 
@@ -162,6 +163,6 @@ persistence edges.
 
 The embedded platform adapter (Embassy), `cargo` build orchestration and
 flashing from `bdld`, telemetry and the Monitor page, contexts, supplied
-Rust components, behaviour systems, a persisted edit log — see
-`docs/ROADMAP.md` for the order and `docs/DESIGN_ISSUES.md` for the open
+Rust components, a persisted edit log — `docs/project-records/STATUS.md`
+says what exists, `docs/ROADMAP.md` the order, and `docs/issues/` the open
 questions each will have to answer.

@@ -15,20 +15,17 @@ follows the formally developed semantics; it is not itself formally verified.
 
 ## Status
 
-Milestone 1 (the vertical slice, docs/ROADMAP.md) is implemented through
-step O: a design authored in Studio or as text is elaborated onto the
+A design authored in Studio or as `.bdl` text is elaborated onto the
 kernel, type- and dimension-checked, checked for causality and timing
-domains, checked for physical-output well-formedness, simulated by the
+domains and for physical-output well-formedness, simulated by the
 reference evaluator, placed on a board by the hardware allocator, and
-compiled to a `no_std` Rust core whose host execution is held trace for
-trace to the evaluator. Studio exposes this on three pages — Design
-(canvas, inspector, compiler-backed definition editor with completion and
-hover, timing domains and outputs as objects), Simulate and Deploy — over
-`bdld`; a shared IDE service also serves an LSP; a Standard Concept
-Library supplies concept templates; `examples/smart_lamp` walks the slice
-end to end. Not built: an embedded platform adapter (Embassy), build/flash
-orchestration, telemetry and the Monitor page, contexts, supplied Rust
-components, behaviour systems.
+compiled to a `no_std` Rust core held trace for trace to the evaluator;
+reusable behaviours compose as components and flatten into that one
+design. Not built: an embedded platform adapter, build/flash orchestration,
+telemetry and the Monitor page, contexts, supplied Rust components. The
+[status matrix](docs/project-records/STATUS.md) is the authority for what
+exists, the [roadmap](docs/ROADMAP.md) for what is next, and
+[docs/changes/](docs/changes/README.md) for what changed.
 
 ## Layout
 
@@ -63,12 +60,13 @@ just bdld           # run the daemon on stdio for manual experiments
 ## Reading order
 
 Using the tool rather than building it? Start with the
-[user guide](docs/user-guide/README.md).
+[user guide](docs/user-guide/README.md). Engineering contributors start at the
+[engineering documentation index](docs/README.md).
 
 0. [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — how to enter the project (toolchain, map, run, reading order by task)
 
 1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
-2. [docs/adr/](docs/adr/README.md) — decisions
+2. [docs/adr/](docs/adr/README.md) — decisions; [docs/project-records/STATUS.md](docs/project-records/STATUS.md) — what is implemented; [docs/issues/](docs/issues/README.md) — what is unresolved
 3. [docs/STUDIO_UI.md](docs/STUDIO_UI.md) — what Studio looks like and why (Resolve · Blender · macOS); [docs/STUDIO_COMPILER_INTEGRATION.md](docs/STUDIO_COMPILER_INTEGRATION.md) — which semantic capabilities Studio exposes, audited against the code
 4. [docs/01-paper-digest.md](docs/01-paper-digest.md) · [docs/02-kernel-spec.md](docs/02-kernel-spec.md) — the language
 5. [docs/PROTOCOL.md](docs/PROTOCOL.md) · [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) · [docs/COMPILER_PIPELINE.md](docs/COMPILER_PIPELINE.md)
