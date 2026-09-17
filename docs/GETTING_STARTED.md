@@ -133,6 +133,7 @@ persistence edges.
 
 | If you are here to… | Read |
 |---|---|
+| use Studio as a designer or prototyper | `docs/user-guide/README.md` — tutorials, concepts, the interface, troubleshooting |
 | understand the system | `docs/ARCHITECTURE.md`, then `docs/adr/` (short, numbered) |
 | understand the language | `docs/01-paper-digest.md` (Chinese), `docs/02-kernel-spec.md` (exact kernel contract), then the paper |
 | add a compiler pass | `docs/COMPILER_PIPELINE.md`, `docs/IR.md`, `crates/bdl-ir`, then the pass crate it belongs to |

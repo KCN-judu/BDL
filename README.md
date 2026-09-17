@@ -62,6 +62,9 @@ just bdld           # run the daemon on stdio for manual experiments
 
 ## Reading order
 
+Using the tool rather than building it? Start with the
+[user guide](docs/user-guide/README.md).
+
 0. [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — how to enter the project (toolchain, map, run, reading order by task)
 
 1. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the four trust layers and why
