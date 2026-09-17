@@ -88,7 +88,8 @@ results, deployment results and simulation traces are never in this file.
     "instances":  { "1": { "id": 1, "component": 0, "name": "lampA", "clock_bindings": { "0": 0 }, "parameter_bindings": {} } },
     "bindings":   { "0": { "id": 0, "source": { "instance": 0, "port": 2 }, "destination": { "instance": 1, "port": 0 } } },
     "exports":    {},
-    "groups":     { "0": { "id": 0, "name": "Adaptive lamp", "description": "dims with tilt", "members": [4, 5] } },
+    "groups":     { "0": { "id": 0, "scope": { "kind": "system_base" }, "name": "Adaptive lamp", "description": "dims with tilt", "members": [4, 5] },
+                    "1": { "id": 1, "scope": { "kind": "component", "component": 0 }, "name": "Dimming", "members": [1, 2] } },
     "flat_ids":   { "entries": [ { "instance": 1, "local": { "sort": "decl", "id": 0 }, "flat": 3 }, … ] },
     "ids":        { "next_component": 2, "next_instance": 3, "next_port": 3, "next_binding": 2, "next_export": 0, "next_group": 1 }
   }
@@ -111,10 +112,14 @@ on the next save; nothing keeps deriving it from the body
 
 **Groups** (still schema 2, an optional section added by the Studio
 behaviour-authoring milestone, ADR-0019): `groups` holds each behaviour
-group's identity, name, description and member list — base relationship
-ids, in authoring order — and nothing else; collapse state, position and
-size are layout (`ui/layout.json`). A file without `groups` reads as a
-system without groups. A binding end may also be a base relationship:
+group's identity, scope, name, description and member list — relationship
+ids of the scope's design, in authoring order — and nothing else; collapse
+state, position and size are layout (`ui/layout.json`). `scope` is
+`{ "kind": "system_base" }` (the system's own design) or `{ "kind":
+"component", "component": <id> }` (that component's body, with
+component-local member ids); a group without `scope` reads as
+base-scoped. A file without `groups` reads as a system without groups.
+Boundary results are never persisted. A binding end may also be a base relationship:
 `"source": { "decl": 7 }` (a base relationship feeding a required port) or
 `"destination": { "decl": 7 }` (a provided port realising an open base
 relationship); port ends are `{ "instance", "port" }` as before.
@@ -126,7 +131,10 @@ relationship); port ends are `{ "instance", "port" }` as before.
   "layout": { "concepts": { "0": { "x": 10, "y": 20 } }, "mappings": {}, "outputs": {},
               "instances": { "1": { "x": 300, "y": 200 } },
               "groups": { "0": { "x": 30, "y": 40, "width": 200, "height": 100, "collapsed": true } },
-              "components": { "0": { "concepts": {}, "mappings": { "4": { "x": 5, "y": 6 } }, "outputs": {} } } } }
+              "viewport": { "x": 0, "y": 0, "zoom": 1 },
+              "components": { "0": { "concepts": {}, "mappings": { "4": { "x": 5, "y": 6 } }, "outputs": {},
+                                     "groups": { "1": { "x": 5, "y": 6, "width": 208, "height": 92, "collapsed": false } },
+                                     "viewport": { "x": -40, "y": 0, "zoom": 0.75 } } } } }
 ```
 
 Positions for concepts, mappings and physical outputs (sinks are canvas
@@ -138,7 +146,9 @@ component-instance nodes of the system canvas, by raw instance id;
 collapsed (the expanded region is computed from its members' positions);
 `components` — one layout per component body, by raw component id, in
 the body's own ids (an extracted component's canvas starts from the
-members' positions in the system canvas).
+members' positions in the system canvas), with its own `groups` boxes
+and `viewport`: coordinates are never shared between canvases. `viewport`
+— where the designer left a canvas (pan and zoom).
 
 ## Revisions are not persisted
 

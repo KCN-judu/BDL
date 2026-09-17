@@ -74,6 +74,51 @@ judgments of the ungrouped one.
   fine as long as the declarations stay acyclic (FV `flat_causal` by
   subdividing edges; test `a_bidirectional_boundary_is_not_a_cycle`).
 
+## Amendment (scoped groups, Studio interaction hardening)
+
+The FV states grouping for *any* `GroupedDesign = Design + groups`;
+production first supported base-only groups. This amendment generalises
+the scope:
+
+* `BehaviorGroup.scope: GroupScope { SystemBase | Component { component } }`
+  — the authored design the members belong to, stated explicitly (never
+  inferred from `DeclId` collisions, DI-42). Members are validated against
+  that design; a group never spans two designs; moving a relationship
+  across a component boundary is an extraction or a body edit, not
+  grouping. Names are unique per scope.
+* A component-scoped group is *adjacent* to the body: no `body_stamp`,
+  `interface_stamp`, `Realizes`, instance freshening or flattening moves;
+  its boundary is read off the body's own standalone analysis in
+  component-local ids (never an instance's freshened ones). A version
+  (`DuplicateComponent`) copies its groups under fresh ids (DI-43); a
+  deleted component retires them; a deleted relationship leaves its group.
+* One project-level authoring generation still suffices; a group edit
+  names the generation it saw (`ApplyGroupEditRequest.base_generation`)
+  and is refused as `group_edit.stale_generation` otherwise, so two
+  clients never silently overwrite membership. The daemon keeps one
+  history of semantic and authoring steps: undo/redo of a group edit
+  moves the group table and the authoring generation, never the revision,
+  and replays no compilation. A group edit dirties the project
+  (`SystemView.dirty`) although the revision is unchanged.
+* Aggregate sockets of a collapsed group stay projections, but act as
+  *interaction proxies*: a link started or dropped on one resolves to the
+  concrete declarations it stands for (a member's socket, or the member
+  itself), one directly or several through a chooser; the committed edit
+  always names the declaration. No binding to a group socket exists and
+  no group-level dependency is ever added (FV Theorem H; regression tests
+  `aggregate sockets resolve to concrete declarations, never the group`).
+* Layout is context-scoped (`Layout.components[c]` carries a component
+  canvas's nodes, group boxes and viewport); collapsing starts the box
+  where the region was; moving a collapsed box carries its hidden members
+  along, so expanding places the stored internal layout translated by the
+  box's delta. Semantic zoom below 0.5× shows every group as its summary
+  without touching the authored collapse state.
+* Packaging a component-scoped group is deferred (option A, see
+  docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md §13): component bodies are flat
+  designs, and lowering a nested extraction by re-flattening would put a
+  second semantic truth beside the body. Grouping inside a component is
+  organisation only; the sheet says so.
+
 ## Consequences
 
 * No new kernel term, runtime node, semantic port, evaluator or type

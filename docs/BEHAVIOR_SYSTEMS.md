@@ -55,7 +55,7 @@ object or function and the formal definition or theorem it follows.
 
 | Production (`bdl-system`) | FV (`BDL/Behavior/`) |
 |---|---|
-| `BehaviorGroup { id, name, description, members: Vec<DeclId> }` on `BehaviorSystem.groups`; never read by `flatten`, `validate_composition` or any analysis | `BehaviorGroup { id, members }`, `GroupedDesign { design, groups }`, `eraseGroups` (Group.lean) |
+| `BehaviorGroup { id, scope: GroupScope { SystemBase \| Component }, name, description, members: Vec<DeclId> }` on `BehaviorSystem.groups`; never read by `flatten`, `validate_composition` or any analysis; members validated against the scope's design (the system's own, or a component body) | `BehaviorGroup { id, members }`, `GroupedDesign { design, groups }` for *any* design, `eraseGroups` (Group.lean) — production first supported base-only groups; the scoped-groups milestone generalises the scope (ADR-0019 amendment) |
 | `group::apply_group_edit` — `CreateGroup`, `DeleteGroup`, `AddMember`, `RemoveMember`, `MoveMember`, `MergeGroups`, `SplitGroup` (+ rename / describe); no revision, no invalidation set, an *authoring generation* instead | `group`, `ungroup`, `addMember`, `removeMember`, `move`, `merge`, `split` — **Theorems A–G**: `eraseGroups` of every operation is the design itself (`rfl`); every kernel judgment (`WF`, `Causal`, `WellClocked`, `DriveWF`, `SingleDriver`, `CompleteOutputs`, `Ev`) is the ungrouped design's (test `grouping_is_semantically_transparent`: same flat design value, diagnostics, dependency graph, clocks, outputs, simulation trace and deployment requirements across every operation) |
 | `boundary::group_boundary(base, flat analysis, members)` → `crossing_in`, `crossing_out`, `open_members`, `driven_members`, `private_candidates`, `external_inputs`, `external_outputs`, `clocks`, `internal_edges` — off `bdl-reactive::DependencyGraph` | `Boundary.crossIn`, `crossOut`, `openMembers`, `drivenMembers`, `privateMembers`, `externalInputs = crossIn ++ openMembers`, `externalOutputs = crossOut`, `InternalEdge`, `clocksOf` (Boundary.lean); **Theorems I–L** `mem_crossIn`, `mem_crossOut`, `internal_not_crossIn`, `internal_only_not_crossOut` |
 | aggregate sockets of a collapsed group in Studio are these lists drawn; `canLink` refuses them; the dependency edges stay between declarations | **Theorem H** `socket_no_fanout`: membership in the input socket adds no `DependsOn` edge (test `boundary_is_a_projection_and_sockets_add_no_dependency`) |
@@ -110,9 +110,11 @@ else is private and fresh per instance.
   single-domain wiring with direct and constant bindings; the multi-domain
   case with transported bindings and higher-order bodies is not proved,
   and production claims only the differential tests it runs.
-* **Group edits are not undoable** through ⌘Z (they are not revisions,
-  DI-38); the inverse operation is one click away in the group's
-  inspector or the canvas.
+* **Packaging a group inside a component** is deferred: bodies are flat
+  designs, and lowering a nested extraction now would put a second
+  semantic truth beside the body (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md
+  §13, option A). Grouping inside a component works fully; the inspector
+  says packaging comes with nested components.
 * **Boundary of a group containing an instance's port declaration**: not
   reachable from Studio (groups hold base relationships); the Rust
   boundary would handle it, extraction copies it like any crossing-in

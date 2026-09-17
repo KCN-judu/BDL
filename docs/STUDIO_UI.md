@@ -443,10 +443,11 @@ lands. "Canvas" is level 1, "Inspector" level 2, "Explain" level 3.
 | second source for a taken port | `system_edit.destination_bound` | the drop is not refused: a sheet asks *Replace the connection?* — Disconnect and Connect, or Cancel; never a silent replace | the current source named in the question | — | now |
 | binding across timing domains | `Incompatibility::NeedsTransport` | the drop opens *Carry across timing domains* with a *Starts at* field; the value is required before Connect | the two domains named | — | now (Studio compares the resolved domains only to *ask*; the compiler judges the binding) |
 | a body that no longer keeps its promise | `contract::realizes` fails | a **red mark in the instance node's body row** (every instance of the component) | Component: *promise broken* with the `component.*` findings; Instance: "…'s source no longer keeps its promise; open it to see why" | `Realizes`, `component.port_clock_mismatch`, … | now |
-| behaviour group (expanded) | `BehaviorGroup { id, name, description, members }` — authoring metadata (ADR-0019) | a **tinted region** around the members with a title band (violet, 12 %); drag the band to move them together; drag a relationship in or out to change membership; nothing else changes | Group: name, meaning, relationships (+ Add relationship), boundary, package, collapse, ungroup / delete with relationships | `group#n`, Theorems A–G (`eraseGroups` is the identity on every judgment) | now |
-| behaviour group (collapsed) | the group's **boundary** (`GroupBoundary`, computed in Rust) | a **group box** (region tint as a header) with **aggregate sockets**: crossing-in and open members on the left, crossing-out and driven members on the right, each in the declaration's hue and labelled by it; links re-route to them; they accept no drop | Boundary: external inputs / external outputs / physical outputs / internal — "a picture of the cut, not a connection of its own" | `crossIn`, `crossOut`, Theorem H (`socket_no_fanout`) | now |
+| behaviour group (expanded) | `BehaviorGroup { id, scope, name, description, members }` — authoring metadata (ADR-0019) | a **tinted region** around the members with a title band (violet, 12 %; brighter while a dragged relationship would join it); drag the band to move them together; drag a relationship in or out to change membership; nothing else changes | Behavior: name, meaning, relationships (+ Add relationship), inputs / outputs / open / physical outputs / internal, package (system's own design only), collapse, ungroup / delete with relationships | `group#n`, `GroupScope`, Theorems A–G (`eraseGroups` is the identity on every judgment) | now |
+| behaviour group (collapsed) | the group's **boundary** (`GroupBoundary`, computed in Rust) | a **group box** (region tint as a header) with **aggregate sockets**: crossing-in and open members on the left, crossing-out and driven members on the right, each in the declaration's hue and labelled by it; links re-route to them; a link started or dropped on one **resolves to the concrete declaration** (one directly, several through a chooser) and never binds to the box | Boundary: inputs / outputs / open / physical outputs / internal — "a picture of the cut, not a connection of its own" | `crossIn`, `crossOut`, `crossing_edges`, Theorem H (`socket_no_fanout`) | now |
 | packaging | `preview_extraction`, `ExtractGroupAsComponent` | after packaging the instance node stands where the group's box stood (or at the members' top-left); the component's own canvas starts from the members' positions | the sheet: Requires / Provides (the floor, not negotiable), open relationships *Treat as input · Keep internal*, physical outputs *Stays the system's · Moves inside*, timing parameters, internal, the compiler's warnings; Package | `Extract`, Theorem R (restricted) | now |
 | port-backed relationship (component source) | `Port.decl` | header word *requires* / *provides* / *parameter* on the relationship node | Place: "Backs the port …: what instances see of it is the promise" | `Port { decl, contract }` | now |
+| multi-selection | none — `MultiSelected` (Studio state) | accent outline on every selected node; a translucent accent marquee while box-selecting | *N selected*: the relationships as links; *Group as Behavior* with a quiet suggestion when they read each other or share a domain | — | now |
 
 Rules the matrix implies: hue is identity and nothing else; shape is
 representation and nothing else; dashed is *declared* and nothing else; a red
@@ -575,8 +576,8 @@ from it — and Studio shows one design at a time
 
 | Context | The canvas shows | Edits go to |
 |---|---|---|
-| **System** | the top level: shared concepts, domains, sinks, top-level relationships (with a *realisation socket* when open), component **instance nodes** drawn from their ports' contracts, **binding links** (a gate where a value is carried across domains), **group regions** or collapsed **group boxes** | `ApplySystemEdit { Base }` for the design's own objects; instance / binding / port / component ops; `ApplyGroupEdit` for groups (never a revision) |
-| **Component source** ("Editing AdaptiveLamp · used by 3 instances", *‹ System*) | the body as an ordinary design in the component's own names and identities; a port-backed relationship carries the word *requires* / *provides* / *parameter*; drafts, completion and hover run in the body's scope | `ApplySystemEdit { EditComponentBody }`; the component inspector's contract edits |
+| **System** | the top level: shared concepts, domains, sinks, top-level relationships (with a *realisation socket* when open), component **instance nodes** drawn from their ports' contracts, **binding links** (a gate where a value is carried across domains), **behaviour regions** or collapsed **behaviour boxes** | `ApplySystemEdit { Base }` for the design's own objects; instance / binding / port / component ops; `ApplyGroupEdit` for behaviours (never a revision) |
+| **Component source** ("Editing AdaptiveLamp · used by 3 instances", *‹ System*) | the body as an ordinary design in the component's own names and identities; a port-backed relationship carries the word *requires* / *provides* / *parameter*; drafts, completion and hover run in the body's scope; the component's own **behaviour regions and boxes** (scoped to it, with their own canvas and viewport) | `ApplySystemEdit { EditComponentBody }`; the component inspector's contract edits; `ApplyGroupEdit { component }` for its behaviours |
 | **Atomic** | a flat project's design (unchanged) | `ApplyEdit` |
 
 Simulate and Deploy read the derived flat design in every context
@@ -604,6 +605,16 @@ component is never rendered from its body on the system canvas.
 
 | Gesture | Result |
 |---|---|
+| click a node / region band / link; ⇧-click | select; ⇧ toggles the node into a multi-selection |
+| ⇧-drag on empty canvas | box select (nodes whose centre is inside); the inspector shows *N selected* and offers *Group as Behavior* for the free relationships, with a quiet suggestion when they read each other or share a domain — never grouped on their own |
+| right-click a multi-selection → Group as Behavior (n relationships) | one group named *Behavior*, then renamed inline; no creation modal |
+| drag a relationship over an expanded region | the region brightens (the insertion affordance); on release it joins (or moves from its old behaviour) — membership only |
+| drag from / drop on an aggregate socket of a collapsed behaviour | resolves to the concrete declaration it stands for (a member's socket, or the member); several → a small chooser naming *member · reads X* / *member · produces Y*; never a link to the behaviour |
+| collapse (menu, inspector) | the box starts where the region was |
+| drag a collapsed box | the hidden members travel with it |
+| expand | the members appear where the box now is (the stored layout translated by the box's delta) |
+| zoom below 0.5× | every behaviour reads as its summary box; the authored collapse state is untouched |
+| pan / zoom | remembered per canvas (`Layout.viewport`) |
 | drag provided socket → required socket / parameter (or base relationship output → required socket, provided socket → an open base relationship's realisation socket) | `BindPorts`, when the destination is free and the domains agree |
 | … onto a taken destination | a sheet: *Disconnect and Connect* or *Cancel* — never a silent replace |
 | … across timing domains | a sheet asking *Starts at* — never an implicit transport |
@@ -631,9 +642,22 @@ component's canvas opens laid out as the group was. The design computes
 the same values (FV Theorem R for the single-domain fragment; the e2e
 test compares the simulated trace before and after).
 
+### Behaviours in both scopes
+
+A behaviour (group) is a permanent way of seeing an authored design, not
+only a step toward a component: it exists wherever an authored design
+exists — the system's own design and every component's source — and is
+invisible to BDL semantics in both (ADR-0019 amendment). In a component's
+source the inspector shows the same sections (Name, Meaning,
+Relationships with *+ Add relationship*, Inputs / Outputs / Open /
+Physical outputs / Internal, Canvas, Remove) and says that packaging a
+behaviour inside a component comes with nested components. Undo (⌘Z)
+covers behaviour edits — they are authored actions in one history with
+the semantic edits, and undoing one moves no revision. A behaviour edit
+dirties the project (the save mark) although the revision is unchanged.
+
 ### Not built
 
-Group edits in ⌘Z (they are not revisions, DI-38 — the inverse is one
-click away); entity hover and fixes inside a component's source (DI-40);
-multi-select grouping (⇧-click then *Group*); nested systems; a minimap.
+Entity hover and fixes inside a component's source (DI-40); packaging a
+behaviour inside a component (nested components, DI-44); a minimap.
 

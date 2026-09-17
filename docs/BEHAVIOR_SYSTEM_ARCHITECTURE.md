@@ -369,3 +369,47 @@ verdicts inside a component's source use the body's names and analysis
 (DI-40). `SystemAnalysis.component_analyses` holds each body's standalone
 analysis for the source view.
 
+## 13. Scoped groups, and why nested packaging waits (architecture note)
+
+`GroupScope { SystemBase | Component { component } }` names the authored
+design a group organises. Both designs are ordinary `Design`s, so the
+same `group_boundary` serves both — off the flat analysis for the base
+(base ids are preserved by flattening), off the body's standalone
+analysis for a component (`SystemAnalysis.component_analyses`, the
+per-body `IdeHost` in the daemon). Nothing about a component changes when
+its body is grouped: the group table lives on the system, beside the
+components.
+
+**Component-local "Package as component": deferred (option A).** The
+production model has no nested system: a `BehaviorComponent.body` is a
+flat `Design`, and hierarchy is packaging a flattened system into a
+component (D-72). Extracting a group *inside* a body would have to
+produce a component *and an instance inside the parent's body*; the
+parent's body cannot hold an instance, so option B would lower the
+instance immediately by re-flattening it into the parent's flat body
+(the Phase-8a `toComponent` strategy). That works, but the result is two
+truths of one behaviour — the new component and the flattened copy inside
+the parent — with no authored link between them: editing the component
+would not reach the parent, and the parent's body would carry generated
+`ScopedFormula`s and `Reference`s as if authored. That is exactly the
+"second semantic truth" this architecture refuses (§9, §10). Until a
+hierarchical authoring layer exists (a body that is itself a system,
+flattened recursively, with provenance through both levels), a group
+inside a component is organisation only, and `preview_extraction` refuses
+it with `extract.not_a_base_group`. Grouping itself is not blocked by
+this: every group operation, boundary and canvas behaviour works in both
+scopes.
+
+**One history.** `SystemState.undo/redo: Vec<HistoryEntry>` interleaves
+`Semantic(Box<BehaviorSystem>)` and `Authoring(groups)` entries in the
+order they happened; `Undo`/`Redo` on a system project answer
+`SystemEditApplied` (the system alongside) and push a `ProjectChanged`
+only for a semantic step. Group edits therefore undo like any authored
+action without turning into semantic edits.
+
+**Stale metadata edits.** `ApplyGroupEditRequest.base_generation` is the
+generation the client saw; a mismatch is `group_edit.stale_generation`
+and the client re-fetches the system. The generation is project-level:
+one table, one counter, and it invalidates only authoring projections
+(the group views, boundaries and layout Studio derives), never a
+revision.
