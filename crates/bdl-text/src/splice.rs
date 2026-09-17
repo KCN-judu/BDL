@@ -63,7 +63,14 @@ pub fn write_back(
         w.edits.push(Vec::new());
         w.appends.push(Vec::new());
     }
-    w.default_file = Some(0);
+    // New top-level items go to `src/main.bdl` when the project has one,
+    // else to the first file in path order.
+    w.default_file = Some(
+        w.files
+            .iter()
+            .position(|f| f.path == DEFAULT_FILE)
+            .unwrap_or(0),
+    );
     w.top_level();
     w.components();
     w.instances_bindings_exports();
