@@ -76,6 +76,40 @@ impl Client {
         }
     }
 
+    /// Send a request without waiting for its answer.
+    fn send(&mut self, method: &str, params: Value) -> RequestId {
+        let id = RequestId::from(self.next);
+        self.next += 1;
+        self.conn
+            .sender
+            .send(Message::Request(Request::new(
+                id.clone(),
+                method.into(),
+                params,
+            )))
+            .expect("send");
+        id
+    }
+
+    /// Wait until every id has an answer; `Ok` results and `Err` errors.
+    fn collect(
+        &self,
+        ids: &[RequestId],
+    ) -> Vec<(RequestId, Result<Value, lsp_server::ResponseError>)> {
+        let mut out = Vec::new();
+        while out.len() < ids.len() {
+            match self.conn.receiver.recv_timeout(Duration::from_secs(20)) {
+                Ok(Message::Response(Response {
+                    id,
+                    response_result,
+                })) if ids.contains(&id) => out.push((id, response_result)),
+                Ok(_) => continue,
+                Err(e) => panic!("missing answers: {e}"),
+            }
+        }
+        out
+    }
+
     fn notify(&self, method: &str, params: Value) {
         self.conn
             .sender
@@ -745,5 +779,80 @@ fn open_buffers_substitute_and_saves_reload_the_ground() {
         serde_json::from_str(&p.text(".bdl/identities.json")).expect("table");
     assert!(!table.keys.contains_key("concept:Tilt"));
     assert_eq!(table.keys["concept:Lean"].id, tilt_id, "{:?}", table.keys);
+    c.shutdown();
+}
+
+/// Many requests in flight, half of them cancelled while buffers change
+/// underneath: every request is answered exactly once — a result or the
+/// cancellation error, never a crash or a hang — and the server keeps
+/// answering afterwards with the current text.
+#[test]
+fn cancellation_under_load_answers_every_request_once() {
+    let p = Project::create();
+    let mut c = Client::start(&p.root);
+    let main_uri = p.uri("src/main.bdl");
+    let lamp = json!({ "uri": p.uri("src/lamp.bdl") });
+    c.notify(
+        lsp::notification::DidOpenTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "languageId": "bdl", "version": 1, "text": MAIN } }),
+    );
+    let at_tilt = position(LAMP, "tiltValue : Tilt", "tiltValue : ".len() + 1);
+    let mut ids = Vec::new();
+    for round in 0..8 {
+        // Edit, then a burst of queries against the new text.
+        let text = MAIN.replace("gain = 2", &format!("gain = {}", round + 2));
+        c.notify(
+            lsp::notification::DidChangeTextDocument::METHOD,
+            json!({ "textDocument": { "uri": main_uri, "version": round + 2 }, "contentChanges": [{ "text": text }] }),
+        );
+        for _ in 0..5 {
+            ids.push(c.send(
+                lsp::request::HoverRequest::METHOD,
+                json!({ "textDocument": lamp, "position": at_tilt }),
+            ));
+            ids.push(c.send(
+                lsp::request::References::METHOD,
+                json!({ "textDocument": lamp, "position": at_tilt, "context": { "includeDeclaration": true } }),
+            ));
+            ids.push(c.send(
+                lsp::request::DocumentDiagnosticRequest::METHOD,
+                json!({ "textDocument": { "uri": main_uri } }),
+            ));
+        }
+        for id in ids.iter().skip(ids.len() - 15).step_by(2) {
+            c.notify(
+                lsp::notification::Cancel::METHOD,
+                json!({ "id": serde_json::to_value(id).expect("id") }),
+            );
+        }
+    }
+    let answers = c.collect(&ids);
+    assert_eq!(answers.len(), ids.len());
+    let mut seen = std::collections::BTreeSet::new();
+    for (id, r) in &answers {
+        assert!(seen.insert(id.to_string()), "answered twice: {id}");
+        if let Err(e) = r {
+            assert_eq!(e.code, -32800, "{e:?}");
+        }
+    }
+    let h = c.request(
+        lsp::request::HoverRequest::METHOD,
+        json!({ "textDocument": lamp, "position": at_tilt }),
+    );
+    assert!(h["contents"]["value"]
+        .as_str()
+        .expect("md")
+        .contains("Tilt"));
+    let hover_main = c.request(
+        lsp::request::HoverRequest::METHOD,
+        json!({ "textDocument": { "uri": main_uri }, "position": position(MAIN, "instance lampA", 10) }),
+    );
+    assert!(
+        hover_main["contents"]["value"]
+            .as_str()
+            .expect("md")
+            .contains("gain**: 9"),
+        "{hover_main}"
+    );
     c.shutdown();
 }

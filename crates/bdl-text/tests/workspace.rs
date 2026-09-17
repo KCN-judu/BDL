@@ -504,3 +504,98 @@ fn doc_comments_are_descriptions_and_round_trip() {
     let b2 = load_workspace("lamp", &wb.files, &wb.table);
     assert_eq!(b2.system.base, edited.base);
 }
+
+/// The text of a system and the system are one thing: rendering the
+/// loaded system and loading the rendering gives the same system, the
+/// same flat design and the same executable plan — ids included, since
+/// the identity table carries them across.
+#[test]
+fn text_and_model_agree_down_to_the_executable_plan() {
+    let fs = files(&[("src/system.bdl", SYSTEM)]);
+    let first = load_workspace("lamp", &fs, &IdentityTable::default());
+    assert!(
+        first.faults.iter().all(|f| f.is_open()),
+        "{:#?}",
+        first.faults
+    );
+    let rendered = bdl_text::print::render_system(&first.system);
+    let again = load_workspace(
+        "lamp",
+        &files(&[("src/system.bdl", &rendered)]),
+        &first.table,
+    );
+    assert!(
+        again.faults.iter().all(|f| f.is_open()),
+        "{:#?}",
+        again.faults
+    );
+    assert_eq!(again.system, first.system);
+    assert_eq!(again.table, first.table);
+
+    let flat = |s: &bdl_system::BehaviorSystem| {
+        bdl_system::flatten(&SystemSnapshot::new(s.clone())).snapshot
+    };
+    let (a, b) = (flat(&first.system), flat(&again.system));
+    assert_eq!(a.design, b.design);
+    let options = bdl_compiler::CompileOptions {
+        require_complete: false,
+        codegen: Default::default(),
+    };
+    let (ca, cb) = (
+        bdl_compiler::compile(&a, &options),
+        bdl_compiler::compile(&b, &options),
+    );
+    assert!(ca.exec_ir.is_some(), "{:#?}", ca.diagnostics);
+    assert_eq!(ca.exec_ir, cb.exec_ir);
+    assert_eq!(ca.generated.map(|g| g.files), cb.generated.map(|g| g.files));
+}
+
+/// Loading stays proportional to the source: a project of many files
+/// and thousands of items builds in well under the time a person waits
+/// for an editor.
+#[test]
+fn a_large_project_loads_in_bounded_time() {
+    let mut fs = Vec::new();
+    let mut concepts = String::from("clock main\n");
+    for i in 0..200 {
+        concepts.push_str(&format!("concept C{i} : Scalar\n"));
+    }
+    fs.push(SourceFile {
+        path: "src/concepts.bdl".into(),
+        text: concepts,
+    });
+    for f in 0..40 {
+        let mut text = String::new();
+        for i in 0..50 {
+            let c = (f * 50 + i) % 200;
+            text.push_str(&format!(
+                "mapping m{f}_{i} : C{c} -> C{c}\nm{f}_{i}(x) = x * 2 + 1\n\n"
+            ));
+        }
+        fs.push(SourceFile {
+            path: format!("src/f{f:02}.bdl"),
+            text,
+        });
+    }
+    let started = std::time::Instant::now();
+    let b = load_workspace("big", &fs, &IdentityTable::default());
+    let loaded = started.elapsed();
+    assert!(
+        b.faults.iter().all(|f| f.is_open()),
+        "{:#?}",
+        &b.faults[..b.faults.len().min(3)]
+    );
+    assert_eq!(b.system.base.mappings.len(), 2000);
+    let again = load_workspace("big", &fs, &b.table);
+    let reloaded = started.elapsed() - loaded;
+    assert_eq!(again.table, b.table);
+    eprintln!("load {loaded:?}, reload {reloaded:?}");
+    assert!(
+        loaded < std::time::Duration::from_secs(5),
+        "load took {loaded:?}"
+    );
+    assert!(
+        reloaded < std::time::Duration::from_secs(5),
+        "reload took {reloaded:?}"
+    );
+}
