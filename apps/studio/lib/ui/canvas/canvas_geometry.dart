@@ -43,9 +43,10 @@ abstract final class NodeMetrics {
   static const double socketHitRadius = 10;
   static const double cornerRadius = 7;
 
-  /// Auto-placement grid for nodes without a stored position.
-  static const double columnGap = 320;
-  static const double rowGap = 96;
+  /// Where a node without a stored position is drawn.  Placement is the
+  /// daemon's (the layout service places every unpositioned entity on
+  /// open and on commit, ADR-0023 §7), so this is reached only between a
+  /// commit and its projection; Studio never arranges nodes itself.
   static const Offset origin = Offset(48, 48);
 
   /// Component-instance and collapsed-group nodes.
@@ -333,9 +334,8 @@ class HitLink extends CanvasHit {
   final LinkShape link;
 }
 
-/// Build the scene.  Positions come from [layout]; anything missing is
-/// auto-placed deterministically by id (concepts in column 0, mappings in
-/// column 1) so an untouched project still reads left → right.
+/// Build the scene.  Positions come from [layout], which the daemon has
+/// completed for every entity (ADR-0023 §7); Studio does not arrange.
 /// What a system canvas adds to a flat one: the system (instances, their
 /// contracts, bindings, groups), its analysis (port statuses, boundaries,
 /// realizes), and the groups' boxes.  Absent for a flat project and for a
@@ -411,11 +411,9 @@ CanvasScene buildScene(
   final nodes = <NodeShape>[];
   final socketByRef = <SocketRef, SocketShape>{};
 
-  var row = 0;
   for (final c in concepts) {
     final ref = NodeRef.concept(c.id.toInt());
-    final pos = layout[ref] ?? NodeMetrics.origin + Offset(0, row * NodeMetrics.rowGap);
-    row++;
+    final pos = layout[ref] ?? NodeMetrics.origin;
     final rect = Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.conceptWidth, NodeMetrics.conceptHeight);
     final y = rect.center.dy;
     final id = c.id.toInt();
@@ -431,13 +429,9 @@ CanvasScene buildScene(
     nodes.add(NodeShape(ref: ref, rect: rect, title: c.name, sockets: sockets));
   }
 
-  row = 0;
   for (final m in mappings) {
     final ref = NodeRef.mapping(m.id.toInt());
-    final pos =
-        layout[ref] ??
-        NodeMetrics.origin + Offset(NodeMetrics.columnGap, row * NodeMetrics.rowGap * 1.3);
-    row++;
+    final pos = layout[ref] ?? NodeMetrics.origin;
     if (hiddenMembers.containsKey(m.id.toInt())) continue;
     final inputs = m.signature.inputs.map((i) => i.toInt()).toList();
     final rows = inputs.isEmpty ? 1 : inputs.length;
@@ -519,15 +513,11 @@ CanvasScene buildScene(
       for (final c in system.analysis?.components ?? const <pb.ComponentStatusView>[])
         c.id.toInt(): c.realizes,
     };
-    row = 0;
     for (final inst in instances) {
       final comp = sys.components.where((c) => c.id == inst.component).firstOrNull;
       if (comp == null) continue;
       final ref = NodeRef.instance(inst.id.toInt());
-      final pos =
-          layout[ref] ??
-          NodeMetrics.origin + Offset(NodeMetrics.columnGap, row * NodeMetrics.rowGap * 1.5 + 400);
-      row++;
+      final pos = layout[ref] ?? NodeMetrics.origin;
       final ports = [...comp.ports]..sort((a, b) => a.id.compareTo(b.id));
       final rows = ports.isEmpty ? 1 : ports.length;
       final rect = Rect.fromLTWH(
@@ -587,13 +577,9 @@ CanvasScene buildScene(
   // Physical outputs: sinks in a third column.  One socket on the left,
   // typed by the concept the sink accepts, no output socket — to the right
   // is the world.
-  row = 0;
   for (final o in outputs) {
     final ref = NodeRef.output(o.id.toInt());
-    final pos =
-        layout[ref] ??
-        NodeMetrics.origin + Offset(NodeMetrics.columnGap * 2, row * NodeMetrics.rowGap);
-    row++;
+    final pos = layout[ref] ?? NodeMetrics.origin;
     final rect = Rect.fromLTWH(
       pos.dx,
       pos.dy,

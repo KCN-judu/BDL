@@ -1,0 +1,12 @@
+[package]
+name = "bdl-layout"
+version = "0.1.0"
+edition = "2021"
+description = "The layout service: deterministic, incremental placement of canvas nodes that have no position yet (ADR-0023 §7). Layout only — never semantics."
+
+[dependencies]
+bdl-model = { path = "../bdl-model" }
+bdl-system = { path = "../bdl-system" }
+
+[lints]
+workspace = true

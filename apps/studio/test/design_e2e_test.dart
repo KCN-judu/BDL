@@ -183,7 +183,7 @@ void main() {
         store.dispatch(const CloseProjectRequested());
         await store.until((s) => s.project == null);
         store.dispatch(OpenProjectRequested(root));
-        s = await store.until((s) => s.project != null);
+        s = await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
         expect(s.project!.clocks.single.name, 'main');
         expect(s.project!.outputs.single.name, 'motor');
         expect(s.project!.outputs.single.required, isTrue);

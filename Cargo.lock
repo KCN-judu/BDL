@@ -131,6 +131,7 @@ dependencies = [
  "bdl-hardware",
  "bdl-ide",
  "bdl-ide-db",
+ "bdl-layout",
  "bdl-library",
  "bdl-model",
  "bdl-protocol",
@@ -237,6 +238,14 @@ dependencies = [
  "bdl-model",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "bdl-layout"
+version = "0.1.0"
+dependencies = [
+ "bdl-model",
+ "bdl-system",
 ]
 
 [[package]]

@@ -24,6 +24,7 @@ members = [
     "crates/bdl-ide",
     "crates/bdl-lsp",
     "crates/bdl-text",
+    "crates/bdl-layout",
 ]
 
 [workspace.package]
@@ -51,6 +52,7 @@ bdl-runtime-host = { path = "runtime/bdl-runtime-host" }
 bdl-compiler = { path = "crates/bdl-compiler" }
 bdl-system = { path = "crates/bdl-system" }
 bdl-text = { path = "crates/bdl-text" }
+bdl-layout = { path = "crates/bdl-layout" }
 bdl-protocol = { path = "crates/bdl-protocol" }
 bdl-library = { path = "crates/bdl-library" }
 bdl-ide-db = { path = "crates/bdl-ide-db" }

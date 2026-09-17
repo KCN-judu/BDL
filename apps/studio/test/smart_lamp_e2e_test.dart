@@ -36,7 +36,7 @@ void main() {
       store.dispatch(const AppStarted());
       await store.until((s) => s.connection is Connected);
       store.dispatch(OpenProjectRequested(example));
-      var s = await store.until((s) => s.project != null);
+      var s = await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
       s = await store.until((s) => s.analysis?.revision.toInt() == s.revision);
       int mappingId(String n) => s.project!.mappings.firstWhere((m) => m.name == n).id.toInt();
       int conceptId(String n) => s.project!.concepts.firstWhere((c) => c.name == n).id.toInt();

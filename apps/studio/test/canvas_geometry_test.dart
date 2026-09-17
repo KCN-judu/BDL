@@ -22,6 +22,14 @@ pb.ProjectProjection lamp() => pb.ProjectProjection(revision: Int64(1), name: 'l
     ),
   );
 
+/// What the daemon's layout service gives the lamp: concepts left,
+/// relationships right.
+final placedLamp = <NodeRef, Offset>{
+  const NodeRef.concept(0): const Offset(48, 48),
+  const NodeRef.concept(1): const Offset(48, 96),
+  const NodeRef.mapping(0): const Offset(368, 48),
+};
+
 void main() {
   test('scene has one link per signature input plus one for the output', () {
     final scene = buildScene(lamp(), const {});
@@ -31,15 +39,22 @@ void main() {
     expect(byConcept, [0, 1]);
   });
 
-  test('auto placement is deterministic and left-to-right; stored layout wins', () {
+  test('positions come from the layout; Studio arranges nothing itself', () {
+    // The daemon's layout service places every entity (ADR-0023 §7); a
+    // node the layout does not know is drawn at the origin, not arranged.
     final a = buildScene(lamp(), const {});
-    final b = buildScene(lamp(), const {});
-    expect(a.nodes.map((n) => n.rect).toList(), b.nodes.map((n) => n.rect).toList());
-    final concept = a.nodes.firstWhere((n) => n.ref == const NodeRef.concept(0));
-    final mapping = a.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
+    for (final n in a.nodes) {
+      expect(n.rect.topLeft, NodeMetrics.origin, reason: '${n.ref}');
+    }
+    final placed = buildScene(lamp(), placedLamp);
+    final concept = placed.nodes.firstWhere((n) => n.ref == const NodeRef.concept(0));
+    final mapping = placed.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
     expect(concept.rect.left < mapping.rect.left, isTrue);
 
-    final moved = buildScene(lamp(), {const NodeRef.mapping(0): const Offset(900, 10)});
+    final moved = buildScene(lamp(), {
+      ...placedLamp,
+      const NodeRef.mapping(0): const Offset(900, 10),
+    });
     expect(
       moved.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0)).rect.topLeft,
       const Offset(900, 10),
@@ -47,7 +62,7 @@ void main() {
   });
 
   test('sockets are hit before nodes, and only same-concept opposite sockets accept drops', () {
-    final scene = buildScene(lamp(), const {});
+    final scene = buildScene(lamp(), placedLamp);
     final mapping = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(0));
     final out = mapping.sockets.firstWhere((s) => s.ref.side == SocketSide.output);
     expect(hitTest(scene, out.center), isA<HitSocket>());

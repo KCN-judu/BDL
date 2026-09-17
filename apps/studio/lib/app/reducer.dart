@@ -595,24 +595,28 @@ Transition reduce(AppState s, AppAction action) {
     RequestSucceeded() => Transition(
       s.copyWith(editor: s.editor.copyWith(pendingRequests: decPending(s))),
     ),
-    RequestFailed(:final code, :final message, :final details) => Transition(
-      s.copyWith(
-        editor: s.editor.copyWith(
-          pendingRequests: decPending(s),
-          clearPendingInsert: true,
-          clearPendingPlacement: true,
-          clearPendingGroup: true,
-          renameNextGroup: false,
-          lastError: UserFacingError(code: code, message: message, details: details),
-          drafts: draftsAfterFailedRequest(s.editor.drafts, message),
-          // a failed step ends its plan; nothing after it is sent blindly
-          queuedEdits: const [],
-          queuedSystemEdits: const [],
+    RequestFailed(:final code, :final message, :final details) => () {
+      final refetch = code == 'group_edit.stale_generation' && s.isSystem;
+      return Transition(
+        s.copyWith(
+          editor: s.editor.copyWith(
+            // the failed request settles; a counted refetch takes its place
+            pendingRequests: decPending(s) + (refetch ? 1 : 0),
+            clearPendingInsert: true,
+            clearPendingPlacement: true,
+            clearPendingGroup: true,
+            renameNextGroup: false,
+            lastError: UserFacingError(code: code, message: message, details: details),
+            drafts: draftsAfterFailedRequest(s.editor.drafts, message),
+            // a failed step ends its plan; nothing after it is sent blindly
+            queuedEdits: const [],
+            queuedSystemEdits: const [],
+          ),
         ),
-      ),
-      // The group table moved under us: show the current one.
-      [if (code == 'group_edit.stale_generation' && s.isSystem) const GetSystem()],
-    ),
+        // The group table moved under us: show the current one (counted).
+        [if (refetch) const GetSystem()],
+      );
+    }(),
     // ---- system projects (app/system.dart) --------------------------------
     UserAction() => systemAction(s, action),
   };
@@ -886,7 +890,8 @@ Transition projectReceived(
           recent: recent,
           clearAnalysis: !analysisStillValid,
           editor: editor.copyWith(
-            pendingRequests: pendingCount,
+            // the system is part of the project: its fetch is pending too
+            pendingRequests: pendingCount + (needsSystem ? 1 : 0),
             selection: selection,
             layout: layout,
             layouts: layoutsOut,

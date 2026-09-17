@@ -25,7 +25,7 @@ use bdl_ide::{
 use bdl_ide_db::CancelScope;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome};
 use bdl_model::layout::Layout;
-use bdl_model::persist::PersistError;
+use bdl_model::persist::{self, PersistError};
 use bdl_model::surface::{Design, ProjectSnapshot};
 use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
@@ -82,6 +82,57 @@ pub enum SessionError {
 }
 
 /// Refuse an edit that would introduce a name the source cannot spell.
+/// The layout service on open (ADR-0023 §7): every entity the sources
+/// declare but the layout does not place gets a position, and the layout
+/// is written back so the first graphical projection is the persisted one.
+/// Nothing positioned moves.
+fn place_on_open(
+    root: &Path,
+    system: &BehaviorSystem,
+    layout: &Layout,
+) -> Result<Layout, SessionError> {
+    let placement = bdl_layout::place_missing(system, layout);
+    if !placement.is_empty() {
+        tracing::info!(root = %root.display(), placed = placement.placed.len(), "placed unpositioned entities");
+        persist::save_layout(root, &placement.layout)?;
+    }
+    Ok(placement.layout)
+}
+
+/// The layout service on commit: what an edit created and did not place
+/// (a Code-view edit, a template, an extraction) is placed now, so the
+/// projection that answers the edit already has a position for it.  The
+/// layout is saved with the project; a placement alone never makes the
+/// project dirty (it is derived, and derived again the same way), so the
+/// saved copy learns the same positions.
+fn place_on_commit(system: &BehaviorSystem, layout: &mut Layout, saved: &mut Layout) {
+    let placement = bdl_layout::place_missing(system, layout);
+    if placement.is_empty() {
+        return;
+    }
+    for placed in &placement.placed {
+        let canvas = match placed.component {
+            None => &mut *saved,
+            Some(c) => saved.components.entry(c).or_default(),
+        };
+        match placed.node {
+            bdl_layout::Node::Concept(id) => {
+                canvas.concepts.entry(id).or_insert(placed.at);
+            }
+            bdl_layout::Node::Mapping(id) => {
+                canvas.mappings.entry(id).or_insert(placed.at);
+            }
+            bdl_layout::Node::Output(id) => {
+                canvas.outputs.entry(id).or_insert(placed.at);
+            }
+            bdl_layout::Node::Instance(id) => {
+                canvas.instances.entry(id).or_insert(placed.at);
+            }
+        }
+    }
+    *layout = placement.layout;
+}
+
 fn check_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<(), SessionError> {
     for name in names {
         if let Some(reason) = bdl_text::why_not_identifier(name) {
@@ -260,7 +311,7 @@ impl Session {
             tracing::info!(root = %root.display(), from = ?m.from, "migrated a legacy project");
         }
         let snapshot = SystemSnapshot::new(loaded.build.system.clone());
-        let layout = loaded.layout.clone();
+        let layout = place_on_open(root, &snapshot.system, &loaded.layout)?;
         self.install_system(root, snapshot, layout, Some(loaded));
         self.project()
     }
@@ -299,7 +350,7 @@ impl Session {
             revision: after,
             system: loaded.build.system.clone(),
         };
-        let layout = loaded.layout.clone();
+        let layout = place_on_open(&root, &snapshot.system, &loaded.layout)?;
         self.install_system(&root, snapshot, layout, Some(loaded));
         self.project()
     }
@@ -466,6 +517,7 @@ impl Session {
         p.current = sys.flattened.snapshot.clone();
         p.simulation = None;
         p.ide.set_committed(p.current.clone());
+        place_on_commit(&sys.current.system, &mut p.layout, &mut p.saved_layout);
         Ok(CommittedSystem {
             snapshot: p.current.clone(),
             outcome: applied.outcome,
@@ -596,6 +648,7 @@ impl Session {
                 p.current = sys.flattened.snapshot.clone();
                 p.simulation = None;
                 p.ide.set_committed(p.current.clone());
+                place_on_commit(&sys.current.system, &mut p.layout, &mut p.saved_layout);
                 Ok(Stepped::Semantic(Box::new(Committed {
                     snapshot: p.current.clone(),
                     outcome: None,

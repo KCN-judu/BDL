@@ -1190,11 +1190,15 @@ fn grouping_and_extraction_over_the_wire() {
         panic!()
     };
     let layout = re.project.unwrap().layout.unwrap();
-    assert_eq!(layout.instances[0].id, inst);
+    // what was placed by hand is where it was left; the rest was placed
+    // by the layout service on open (ADR-0023 §7)
+    assert!(layout.instances.iter().any(|p| p.id == inst));
     assert!(layout.groups[0].collapsed);
-    assert_eq!(
-        layout.components[0].layout.as_ref().unwrap().mappings[0].x,
-        5.0
+    let body = layout.components[0].layout.as_ref().unwrap();
+    assert_eq!(body.mappings.iter().find(|p| p.id == dim).unwrap().x, 5.0);
+    assert!(
+        !body.concepts.is_empty(),
+        "body concepts were placed on open"
     );
     let v2 = c.system();
     assert_eq!(v2.bindings.len(), 2);

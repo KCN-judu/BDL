@@ -324,9 +324,13 @@ void main() {
 
   group('geometry', () {
     test('an output is a sink node with one socket typed by what it accepts', () {
+      // positions are the daemon's (ADR-0023 §7): a sink to the right
       final scene = buildScene(
         rover(),
-        const {},
+        {
+          const NodeRef.mapping(cruise): const Offset(368, 48),
+          const NodeRef.output(motor): const Offset(688, 48),
+        },
         outputStates: {motor: pb.OutputState.OUTPUT_STATE_DRIVEN},
       );
       final sink = scene.nodes.singleWhere((n) => n.ref == const NodeRef.output(motor));
@@ -337,7 +341,7 @@ void main() {
       expect(sink.required, isTrue);
       expect(sink.timing, 'main');
       expect(sink.title, 'motor');
-      // a sink sits to the right of mappings by default
+      // a sink sits to the right of mappings
       final mapping = scene.nodes.singleWhere((n) => n.ref == const NodeRef.mapping(cruise));
       expect(sink.rect.left, greaterThan(mapping.rect.right));
       expect(mapping.timing, 'main');

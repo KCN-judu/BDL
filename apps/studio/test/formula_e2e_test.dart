@@ -130,7 +130,7 @@ void main() {
       store.dispatch(const CloseProjectRequested());
       await store.until((s) => s.project == null);
       store.dispatch(OpenProjectRequested(root));
-      s = await store.until((s) => s.project != null);
+      s = await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
       expect(s.project!.mappings.single.definition.formula, 'Tilt / 90 deg');
       s = await store.until((s) => s.analysis != null);
       expect(

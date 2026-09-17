@@ -260,7 +260,7 @@ void main() {
         final motor = s.project!.outputs.single.id.toInt();
         store.dispatch(
           CreateDeviceRequested(
-            name: 'drive',
+            name: 'driver',
             kind: pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL,
             outputId: motor,
           ),

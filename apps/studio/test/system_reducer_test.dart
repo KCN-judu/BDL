@@ -152,10 +152,7 @@ AppState opened({
   List<pb.BehaviorGroupView> groups = const [],
 }) {
   var s = reduce(connected(), ProjectReceived(flat())).state;
-  s = reduce(
-    s,
-    SystemReceived(system(bindings: bindings, groups: groups), fromRequest: false),
-  ).state;
+  s = reduce(s, SystemReceived(system(bindings: bindings, groups: groups))).state;
   s = reduce(s, AnalysisReceived(pb.ProjectAnalysis(revision: Int64(3), causal: true))).state;
   s = reduce(s, SystemAnalysisReceived(pb.SystemAnalysisView(revision: Int64(3)))).state;
   return s;

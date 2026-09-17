@@ -78,7 +78,7 @@ void main() {
     root = p.join(dir.path, 'lamp');
     store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp', kind: NewProjectKind.system));
     await store.until((s) => s.project != null && s.system != null);
-    expect(store.state.flat!.kind, pb.ProjectKind.PROJECT_KIND_SYSTEM);
+    expect(store.state.flat!.kind, pb.ProjectKind.PROJECT_KIND_TEXT, reason: 'one kind of project');
     expect(store.state.isSystem, isTrue);
     expect(store.state.editor.context, const SystemContext());
 
@@ -509,11 +509,11 @@ void main() {
         expect(scene.links.where((l) => l.transport == '0'), hasLength(1));
 
         // ---- §80 versions: substitution accepted on interfaces, refused when a used port is gone ----
-        store.dispatch(DuplicateComponentRequested(id: comp.id.toInt(), name: 'AdaptiveLamp v2'));
+        store.dispatch(DuplicateComponentRequested(id: comp.id.toInt(), name: 'AdaptiveLamp_v2'));
         s = await store.until(
           (s) => s.system!.components.length == 2 && s.editor.pendingRequests == 0,
         );
-        final v2 = s.system!.components.firstWhere((c) => c.name == 'AdaptiveLamp v2');
+        final v2 = s.system!.components.firstWhere((c) => c.name == 'AdaptiveLamp_v2');
         expect(s.editor.selection, ComponentSelected(v2.id.toInt()));
         store.dispatch(
           ReplaceInstanceComponentRequested(instance: second.id.toInt(), component: v2.id.toInt()),

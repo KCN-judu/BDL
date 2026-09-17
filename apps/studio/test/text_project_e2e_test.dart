@@ -102,7 +102,7 @@ void main() {
         expect(store.state.flat!.kind, pb.ProjectKind.PROJECT_KIND_TEXT);
         expect(store.state.isSystem, isTrue, reason: 'a text project is a system project');
         expect(File(p.join(root, 'src', 'main.bdl')).existsSync(), isTrue);
-        expect(File(p.join(root, 'bdl.toml')).readAsStringSync(), contains('kind = "text"'));
+        expect(File(p.join(root, 'bdl.toml')).readAsStringSync(), isNot(contains('kind =')));
 
         // Author on the canvas as in any project.
         store.dispatch(

@@ -427,3 +427,101 @@ fn a_hand_written_text_system_opens_analyses_and_simulates() {
     let m = last.values.iter().find(|v| v.mapping_id == mirror).unwrap();
     assert_eq!(m.rendered, "Brightness(1)", "lampB with gain 1");
 }
+
+/// The layout service (ADR-0023 §7): a project written by hand has no
+/// layout; opening it places every entity and persists the placement;
+/// reopening changes nothing; a commit places what it created and never
+/// moves what has a position.
+#[test]
+fn a_hand_written_project_is_placed_on_open_and_new_items_on_commit() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("system");
+    std::fs::create_dir_all(root.join("src")).unwrap();
+    std::fs::write(
+        root.join("bdl.toml"),
+        "schema_version = 2\nname = \"system\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("src/system.bdl"),
+        include_str!("../../bdl-syntax/test_data/valid/system.bdl"),
+    )
+    .unwrap();
+    assert!(!root.join("ui/layout.json").exists());
+    let mut c = Client::spawn();
+    let p = c.open(&root);
+    let layout = p.layout.clone().unwrap();
+    // the system canvas shows the system's own design (base ids) and its
+    // instances; the flat projection's per-instance copies are not nodes
+    let Resp::System(s) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
+        panic!()
+    };
+    let s = s.system.unwrap();
+    let base = s.base.as_ref().unwrap();
+    for concept in &base.concepts {
+        assert!(
+            layout.concepts.iter().any(|n| n.id == concept.id),
+            "{} unplaced",
+            concept.name
+        );
+    }
+    for m in &base.mappings {
+        assert!(
+            layout.mappings.iter().any(|n| n.id == m.id),
+            "{} unplaced",
+            m.name
+        );
+    }
+    for o in &base.outputs {
+        assert!(
+            layout.outputs.iter().any(|n| n.id == o.id),
+            "{} unplaced",
+            o.name
+        );
+    }
+    for i in &s.instances {
+        assert!(
+            layout.instances.iter().any(|n| n.id == i.id),
+            "{} unplaced",
+            i.name
+        );
+    }
+    assert_eq!(
+        layout.components.len(),
+        s.components.len(),
+        "every body canvas"
+    );
+    assert!(!p.dirty, "a placement is not an unsaved change");
+    assert!(root.join("ui/layout.json").is_file(), "persisted on open");
+
+    // reopening: the same layout, nothing placed again
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let p2 = c.open(&root);
+    assert_eq!(p2.layout, p.layout);
+
+    // a commit places what it created and leaves everything else alone
+    let tilt = base.concepts.iter().find(|x| x.name == "Tilt").unwrap().id;
+    let before = p2.layout.clone().unwrap();
+    let tilt_at = *before.concepts.iter().find(|n| n.id == tilt).unwrap();
+    let created = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Warmth".into(),
+            description: String::new(),
+            representation: quantity(pb::Dim::default()),
+        }))
+        .created_concept
+        .unwrap();
+    let after = c.project().layout.unwrap();
+    assert!(
+        after.concepts.iter().any(|n| n.id == created),
+        "placed on commit"
+    );
+    assert_eq!(
+        after.concepts.iter().find(|n| n.id == tilt).unwrap(),
+        &tilt_at,
+        "a positioned node never moves"
+    );
+    assert_eq!(after.mappings, before.mappings);
+    assert_eq!(after.outputs, before.outputs);
+    assert_eq!(after.instances, before.instances);
+}

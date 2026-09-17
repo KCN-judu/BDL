@@ -1011,6 +1011,12 @@ fn component_scope(component: Option<u64>) -> Option<bdl_system::ComponentId> {
 fn session_error(e: &SessionError) -> pb::Error {
     match e {
         SessionError::Edit(edit) => convert::edit_error_to_pb(edit),
+        // A base edit that fails inside a system edit is that edit's
+        // refusal (`edit.<reason>`): every project is a system (ADR-0023)
+        // and the reasons speak the design's language.
+        SessionError::SystemEdit(bdl_system::SystemEditError::Base(inner)) => {
+            convert::edit_error_to_pb(inner)
+        }
         SessionError::SystemEdit(edit) => pb::Error {
             code: format!("system_edit.{}", system_edit_code(edit)),
             message: edit.to_string(),

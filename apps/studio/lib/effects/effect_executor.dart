@@ -148,10 +148,11 @@ class EffectExecutor {
           (r) => _dispatch(SystemReceived(r.system.system)),
         );
       case GetSystem():
+        // Counted: a project is not "here" until its system is (the
+        // reducer registers it when it asks).
         await _call(
           pb.ClientMessage(getSystem: pb.GetSystemRequest()),
-          (r) => _dispatch(SystemReceived(r.system.system, fromRequest: false)),
-          counted: false,
+          (r) => _dispatch(SystemReceived(r.system.system)),
         );
       case RunSystemAnalysis():
         await _call(
