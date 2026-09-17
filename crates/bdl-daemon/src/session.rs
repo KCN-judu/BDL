@@ -268,6 +268,16 @@ pub struct SourceFileView {
     pub text: String,
     /// The text is a draft the semantic project has not accepted.
     pub draft: bool,
+    /// Where each canvas entity's item is in `text` (none for a draft).
+    pub anchors: Vec<SourceAnchor>,
+}
+
+/// The whole item declaring one entity, in byte offsets of its file.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SourceAnchor {
+    pub entity: bdl_text::TextEntity,
+    pub start: u32,
+    pub end: u32,
 }
 
 /// The sources of the open project: the files as loaded with every
@@ -839,19 +849,42 @@ impl Session {
             return Err(SessionError::NotASystem);
         };
         let wb = written_back(sys)?;
+        // Anchors are spans into the text as shown, which the splice moved:
+        // read the written-back files once more for them.
+        let name = sys.current.system.base.name.clone();
+        let build = bdl_text::load_workspace(&name, &wb.files, &wb.table);
         let files = wb
             .files
             .iter()
-            .map(|f| match sys.drafts.get(&f.path) {
+            .enumerate()
+            .map(|(i, f)| match sys.drafts.get(&f.path) {
                 Some(d) => SourceFileView {
                     path: f.path.clone(),
                     text: d.text.clone(),
                     draft: true,
+                    anchors: Vec::new(),
                 },
                 None => SourceFileView {
                     path: f.path.clone(),
                     text: f.text.clone(),
                     draft: false,
+                    anchors: build
+                        .anchors
+                        .iter()
+                        .filter(|a| a.file == i && a.role == bdl_text::AnchorRole::Item)
+                        // bindings and exports are not canvas objects
+                        .filter(|a| {
+                            !matches!(
+                                a.entity,
+                                bdl_text::TextEntity::Binding(_) | bdl_text::TextEntity::Export(_)
+                            )
+                        })
+                        .map(|a| SourceAnchor {
+                            entity: a.entity,
+                            start: a.span.start,
+                            end: a.span.end,
+                        })
+                        .collect(),
                 },
             })
             .collect();

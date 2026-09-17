@@ -598,6 +598,18 @@ fn code_view_edits_flow_through_the_model_and_keep_identities() {
         main.text
     );
     assert!(sources.diagnostics.is_empty());
+    // anchors say where each entity's item is in the text as shown
+    let at = main
+        .anchors
+        .iter()
+        .find(|a| a.entity == Some(pb::source_anchor::Entity::ConceptId(tilt)))
+        .expect("Tilt anchored");
+    let item = &main.text[at.start as usize..at.end as usize];
+    assert!(item.ends_with("concept Tilt : Angle"), "{item:?}");
+    assert!(
+        item.starts_with("/// how far"),
+        "the item is doc comment to end"
+    );
 
     // text → graph: a relationship typed in the Code view, with a comment
     let typed = format!(

@@ -13233,11 +13233,13 @@ class SourceFileView extends $pb.GeneratedMessage {
     $core.String? path,
     $core.String? text,
     $core.bool? draft,
+    $core.Iterable<SourceAnchor>? anchors,
   }) {
     final result = SourceFileView._();
     if (path != null) result.path = path;
     if (text != null) result.text = text;
     if (draft != null) result.draft = draft;
+    if (anchors != null) result.anchors.addAll(anchors);
     return result;
   }
 
@@ -13256,6 +13258,8 @@ class SourceFileView extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'path')
     ..aOS(2, _omitFieldNames ? '' : 'text')
     ..aOB(3, _omitFieldNames ? '' : 'draft')
+    ..pPM<SourceAnchor>(4, _omitFieldNames ? '' : 'anchors',
+        subBuilder: SourceAnchor.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13307,6 +13311,240 @@ class SourceFileView extends $pb.GeneratedMessage {
   $core.bool hasDraft() => $_has(2);
   @$pb.TagNumber(3)
   void clearDraft() => $_clearField(3);
+
+  /// Where each entity is declared in `text` (empty for a draft): the
+  /// Split view's selection sync.
+  @$pb.TagNumber(4)
+  $pb.PbList<SourceAnchor> get anchors => $_getList(3);
+}
+
+enum SourceAnchor_Entity {
+  conceptId,
+  mappingId,
+  clockId,
+  outputId,
+  deviceId,
+  componentId,
+  instanceId,
+  portId,
+  notSet
+}
+
+/// The whole item declaring one entity, in byte offsets.  An entity of a
+/// component's body (or a port) carries its component; the ids are then
+/// component-local.
+class SourceAnchor extends $pb.GeneratedMessage {
+  factory SourceAnchor({
+    $core.int? start,
+    $core.int? end,
+    $fixnum.Int64? component,
+    $fixnum.Int64? conceptId,
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? clockId,
+    $fixnum.Int64? outputId,
+    $fixnum.Int64? deviceId,
+    $fixnum.Int64? componentId,
+    $fixnum.Int64? instanceId,
+    $fixnum.Int64? portId,
+  }) {
+    final result = SourceAnchor._();
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    if (component != null) result.component = component;
+    if (conceptId != null) result.conceptId = conceptId;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (clockId != null) result.clockId = clockId;
+    if (outputId != null) result.outputId = outputId;
+    if (deviceId != null) result.deviceId = deviceId;
+    if (componentId != null) result.componentId = componentId;
+    if (instanceId != null) result.instanceId = instanceId;
+    if (portId != null) result.portId = portId;
+    return result;
+  }
+
+  SourceAnchor._();
+
+  factory SourceAnchor.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceAnchor()..mergeFromBuffer(data, registry);
+  factory SourceAnchor.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceAnchor()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, SourceAnchor_Entity> _SourceAnchor_EntityByTag = {
+    4: SourceAnchor_Entity.conceptId,
+    5: SourceAnchor_Entity.mappingId,
+    6: SourceAnchor_Entity.clockId,
+    7: SourceAnchor_Entity.outputId,
+    8: SourceAnchor_Entity.deviceId,
+    9: SourceAnchor_Entity.componentId,
+    10: SourceAnchor_Entity.instanceId,
+    11: SourceAnchor_Entity.portId,
+    0: SourceAnchor_Entity.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceAnchor',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceAnchor.$_createMessage)
+    ..oo(0, [4, 5, 6, 7, 8, 9, 10, 11])
+    ..aI(1, _omitFieldNames ? '' : 'start', fieldType: $pb.PbFieldType.OU3)
+    ..aI(2, _omitFieldNames ? '' : 'end', fieldType: $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(6, _omitFieldNames ? '' : 'clockId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(7, _omitFieldNames ? '' : 'outputId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(8, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(9, _omitFieldNames ? '' : 'componentId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(10, _omitFieldNames ? '' : 'instanceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(11, _omitFieldNames ? '' : 'portId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceAnchor clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceAnchor copyWith(void Function(SourceAnchor) updates) =>
+      super.copyWith((message) => updates(message as SourceAnchor)) as SourceAnchor;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceAnchor() / SourceAnchor.new instead')
+  static SourceAnchor create() => SourceAnchor._();
+  static $pb.GeneratedMessage $_createMessage() => SourceAnchor._();
+  @$core.override
+  SourceAnchor createEmptyInstance() => SourceAnchor._();
+  @$core.pragma('dart2js:noInline')
+  static SourceAnchor getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceAnchor>(SourceAnchor.$_createMessage);
+  static SourceAnchor? _defaultInstance;
+
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
+  SourceAnchor_Entity whichEntity() => _SourceAnchor_EntityByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
+  void clearEntity() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $core.int get start => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set start($core.int value) => $_setUnsignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStart() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStart() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get end => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set end($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEnd() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEnd() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get component => $_getI64(2);
+  @$pb.TagNumber(3)
+  set component($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasComponent() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearComponent() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get conceptId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set conceptId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasConceptId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearConceptId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get mappingId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set mappingId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasMappingId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMappingId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get clockId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set clockId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasClockId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearClockId() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $fixnum.Int64 get outputId => $_getI64(6);
+  @$pb.TagNumber(7)
+  set outputId($fixnum.Int64 value) => $_setInt64(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasOutputId() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearOutputId() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get deviceId => $_getI64(7);
+  @$pb.TagNumber(8)
+  set deviceId($fixnum.Int64 value) => $_setInt64(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasDeviceId() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearDeviceId() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $fixnum.Int64 get componentId => $_getI64(8);
+  @$pb.TagNumber(9)
+  set componentId($fixnum.Int64 value) => $_setInt64(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasComponentId() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearComponentId() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $fixnum.Int64 get instanceId => $_getI64(9);
+  @$pb.TagNumber(10)
+  set instanceId($fixnum.Int64 value) => $_setInt64(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasInstanceId() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearInstanceId() => $_clearField(10);
+
+  @$pb.TagNumber(11)
+  $fixnum.Int64 get portId => $_getI64(10);
+  @$pb.TagNumber(11)
+  set portId($fixnum.Int64 value) => $_setInt64(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasPortId() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearPortId() => $_clearField(11);
 }
 
 class SourceDiagnostic extends $pb.GeneratedMessage {

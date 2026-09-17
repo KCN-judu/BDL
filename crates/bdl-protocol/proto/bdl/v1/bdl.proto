@@ -1319,6 +1319,28 @@ message SourceFileView {
   // True when `text` is a draft the semantic project has not accepted:
   // the graph shows the last revision that built.
   bool draft = 3;
+  // Where each entity is declared in `text` (empty for a draft): the
+  // Split view's selection sync.
+  repeated SourceAnchor anchors = 4;
+}
+
+// The whole item declaring one entity, in byte offsets.  An entity of a
+// component's body (or a port) carries its component; the ids are then
+// component-local.
+message SourceAnchor {
+  uint32 start = 1;
+  uint32 end = 2;
+  optional uint64 component = 3;
+  oneof entity {
+    uint64 concept_id = 4;
+    uint64 mapping_id = 5;
+    uint64 clock_id = 6;
+    uint64 output_id = 7;
+    uint64 device_id = 8;
+    uint64 component_id = 9;
+    uint64 instance_id = 10;
+    uint64 port_id = 11;
+  }
 }
 
 message SourceDiagnostic {

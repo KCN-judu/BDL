@@ -981,6 +981,33 @@ fn step_result(session: &mut Session, undo: bool) -> (Resp, Option<Committed>) {
     }
 }
 
+fn anchor_to_pb(a: &crate::session::SourceAnchor) -> Option<pb::SourceAnchor> {
+    use bdl_text::TextEntity as E;
+    use pb::source_anchor::Entity;
+    let (component, entity) = match a.entity {
+        E::Concept(id) => (None, Entity::ConceptId(id.raw())),
+        E::Mapping(id) => (None, Entity::MappingId(id.raw())),
+        E::Clock(id) => (None, Entity::ClockId(id.raw())),
+        E::Output(id) => (None, Entity::OutputId(id.raw())),
+        E::Device(id) => (None, Entity::DeviceId(id.raw())),
+        E::Component(c) => (None, Entity::ComponentId(c.raw())),
+        E::BodyConcept(c, id) => (Some(c.raw()), Entity::ConceptId(id.raw())),
+        E::BodyMapping(c, id) => (Some(c.raw()), Entity::MappingId(id.raw())),
+        E::BodyClock(c, id) => (Some(c.raw()), Entity::ClockId(id.raw())),
+        E::BodyOutput(c, id) => (Some(c.raw()), Entity::OutputId(id.raw())),
+        E::BodyDevice(c, id) => (Some(c.raw()), Entity::DeviceId(id.raw())),
+        E::Port(c, id) => (Some(c.raw()), Entity::PortId(id.raw())),
+        E::Instance(id) => (None, Entity::InstanceId(id.raw())),
+        E::Binding(_) | E::Export(_) => return None,
+    };
+    Some(pb::SourceAnchor {
+        start: a.start,
+        end: a.end,
+        component,
+        entity: Some(entity),
+    })
+}
+
 fn sources_to_pb(s: &crate::session::Sources) -> pb::SourcesView {
     pb::SourcesView {
         revision: s.revision.raw(),
@@ -991,6 +1018,7 @@ fn sources_to_pb(s: &crate::session::Sources) -> pb::SourcesView {
                 path: f.path.clone(),
                 text: f.text.clone(),
                 draft: f.draft,
+                anchors: f.anchors.iter().filter_map(anchor_to_pb).collect(),
             })
             .collect(),
         diagnostics: s

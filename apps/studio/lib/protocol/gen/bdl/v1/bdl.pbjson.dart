@@ -3827,13 +3827,47 @@ const SourceFileView$json = {
     {'1': 'path', '3': 1, '4': 1, '5': 9, '10': 'path'},
     {'1': 'text', '3': 2, '4': 1, '5': 9, '10': 'text'},
     {'1': 'draft', '3': 3, '4': 1, '5': 8, '10': 'draft'},
+    {'1': 'anchors', '3': 4, '4': 3, '5': 11, '6': '.bdl.v1.SourceAnchor', '10': 'anchors'},
   ],
 };
 
 /// Descriptor for `SourceFileView`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List sourceFileViewDescriptor = $convert
     .base64Decode('Cg5Tb3VyY2VGaWxlVmlldxISCgRwYXRoGAEgASgJUgRwYXRoEhIKBHRleHQYAiABKAlSBHRleH'
-        'QSFAoFZHJhZnQYAyABKAhSBWRyYWZ0');
+        'QSFAoFZHJhZnQYAyABKAhSBWRyYWZ0Ei4KB2FuY2hvcnMYBCADKAsyFC5iZGwudjEuU291cmNl'
+        'QW5jaG9yUgdhbmNob3Jz');
+
+@$core.Deprecated('Use sourceAnchorDescriptor instead')
+const SourceAnchor$json = {
+  '1': 'SourceAnchor',
+  '2': [
+    {'1': 'start', '3': 1, '4': 1, '5': 13, '10': 'start'},
+    {'1': 'end', '3': 2, '4': 1, '5': 13, '10': 'end'},
+    {'1': 'component', '3': 3, '4': 1, '5': 4, '9': 1, '10': 'component', '17': true},
+    {'1': 'concept_id', '3': 4, '4': 1, '5': 4, '9': 0, '10': 'conceptId'},
+    {'1': 'mapping_id', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'mappingId'},
+    {'1': 'clock_id', '3': 6, '4': 1, '5': 4, '9': 0, '10': 'clockId'},
+    {'1': 'output_id', '3': 7, '4': 1, '5': 4, '9': 0, '10': 'outputId'},
+    {'1': 'device_id', '3': 8, '4': 1, '5': 4, '9': 0, '10': 'deviceId'},
+    {'1': 'component_id', '3': 9, '4': 1, '5': 4, '9': 0, '10': 'componentId'},
+    {'1': 'instance_id', '3': 10, '4': 1, '5': 4, '9': 0, '10': 'instanceId'},
+    {'1': 'port_id', '3': 11, '4': 1, '5': 4, '9': 0, '10': 'portId'},
+  ],
+  '8': [
+    {'1': 'entity'},
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `SourceAnchor`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceAnchorDescriptor = $convert
+    .base64Decode('CgxTb3VyY2VBbmNob3ISFAoFc3RhcnQYASABKA1SBXN0YXJ0EhAKA2VuZBgCIAEoDVIDZW5kEi'
+        'EKCWNvbXBvbmVudBgDIAEoBEgBUgljb21wb25lbnSIAQESHwoKY29uY2VwdF9pZBgEIAEoBEgA'
+        'Ugljb25jZXB0SWQSHwoKbWFwcGluZ19pZBgFIAEoBEgAUgltYXBwaW5nSWQSGwoIY2xvY2tfaW'
+        'QYBiABKARIAFIHY2xvY2tJZBIdCglvdXRwdXRfaWQYByABKARIAFIIb3V0cHV0SWQSHQoJZGV2'
+        'aWNlX2lkGAggASgESABSCGRldmljZUlkEiMKDGNvbXBvbmVudF9pZBgJIAEoBEgAUgtjb21wb2'
+        '5lbnRJZBIhCgtpbnN0YW5jZV9pZBgKIAEoBEgAUgppbnN0YW5jZUlkEhkKB3BvcnRfaWQYCyAB'
+        'KARIAFIGcG9ydElkQggKBmVudGl0eUIMCgpfY29tcG9uZW50');
 
 @$core.Deprecated('Use sourceDiagnosticDescriptor instead')
 const SourceDiagnostic$json = {
