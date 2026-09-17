@@ -548,6 +548,145 @@ fn a_comment_directly_above_an_item_is_attached_to_it() {
 }
 
 #[test]
+fn a_comment_directly_above_a_port_keeps_the_port() {
+    use crate::lower::{lower_module, ComponentBodyItem, PortWord, SurfaceItem};
+    let cases: [(&str, &str, ast::PortWord, PortWord); 5] = [
+        (
+            "// c",
+            "requires tiltValue : Tilt @main",
+            ast::PortWord::Requires,
+            PortWord::Requires,
+        ),
+        (
+            "/// doc",
+            "requires tiltValue : Tilt @main",
+            ast::PortWord::Requires,
+            PortWord::Requires,
+        ),
+        (
+            "// c",
+            "provides brightness : Brightness @main\n  brightness() = 1",
+            ast::PortWord::Provides,
+            PortWord::Provides,
+        ),
+        (
+            "/// doc",
+            "provides brightness : Brightness @main\n  brightness() = 1",
+            ast::PortWord::Provides,
+            PortWord::Provides,
+        ),
+        (
+            "// c",
+            "param gain : Gain",
+            ast::PortWord::Param,
+            PortWord::Param,
+        ),
+    ];
+    for (comment, decl, word, lowered_word) in cases {
+        for blank in ["", "\n"] {
+            let src =
+                format!("component L {{\n  use concept Tilt\n{blank}  {comment}\n  {decl}\n}}\n");
+            // The CST is lossless: the comment is there …
+            let t = tree(&src);
+            assert!(t.contains("LineComment@"), "{src:?}\n{t}");
+            assert!(t.contains(comment), "{src:?}\n{t}");
+            // … and so is the declaration, with the comment attached to it.
+            let m = module_ok(&src);
+            let comp = match m.items().next().expect("an item") {
+                ast::Item::Component(c) => c,
+                other => panic!("{src:?}: {other:?}"),
+            };
+            let ports: Vec<ast::PortDecl> = comp
+                .items()
+                .filter_map(|i| match i {
+                    ast::ComponentItem::Port(p) => Some(p),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(ports.len(), 1, "{src:?}: one port declaration in the AST");
+            assert!(
+                ports[0].text().starts_with(comment),
+                "{src:?}: {:?}",
+                ports[0].text()
+            );
+            assert_eq!(ports[0].word(), Some(word), "{src:?}: the port's word");
+            assert_eq!(
+                ports[0].name().map(|n| n.as_str()).as_deref(),
+                decl.split(' ').nth(1)
+            );
+            // Lowering keeps it: the same item with or without the comment.
+            let (with, errors) = lower_module(&parse_module(&src));
+            assert!(errors.is_empty(), "{src:?}: {errors:?}");
+            let bare = src.replace(&format!("  {comment}\n"), "");
+            let (without, _) = lower_module(&parse_module(&bare));
+            let ports_of = |m: &crate::lower::SurfaceModule| -> Vec<(PortWord, String)> {
+                match &m.items[0] {
+                    SurfaceItem::Component(c) => c
+                        .items
+                        .iter()
+                        .filter_map(|i| match i {
+                            ComponentBodyItem::Port(p) => Some((p.word, p.name.name.clone())),
+                            _ => None,
+                        })
+                        .collect(),
+                    other => panic!("{other:?}"),
+                }
+            };
+            assert_eq!(ports_of(&with), ports_of(&without), "{src:?}");
+            assert_eq!(
+                ports_of(&with),
+                vec![(lowered_word, decl.split(' ').nth(1).unwrap().into())]
+            );
+        }
+    }
+}
+
+#[test]
+fn a_comment_directly_above_a_body_mapping_keeps_the_mapping() {
+    use crate::lower::{lower_module, ComponentBodyItem, SurfaceItem};
+    let src = "component L {\n  // c\n  mapping d : Tilt -> Brightness\n  d(t) = t\n  /// doc\n  requires t : Tilt\n}\n";
+    let (m, errors) = lower_module(&parse_module(src));
+    assert!(errors.is_empty(), "{errors:?}");
+    let SurfaceItem::Component(c) = &m.items[0] else {
+        panic!("{:?}", m.items[0]);
+    };
+    let kinds: Vec<&str> = c
+        .items
+        .iter()
+        .map(|i| match i {
+            ComponentBodyItem::Mapping(_) => "mapping",
+            ComponentBodyItem::Port(_) => "port",
+            _ => "other",
+        })
+        .collect();
+    assert_eq!(kinds, ["mapping", "port"]);
+}
+
+#[test]
+fn a_trailing_comment_before_the_closing_brace_declares_nothing() {
+    use crate::lower::{lower_module, SurfaceItem};
+    let src = "component L {\n  requires t : Tilt\n  // last\n}\nconcept A\n";
+    let p = parse_module(src);
+    assert!(p.is_ok(), "{:?}", p.errors());
+    assert_eq!(p.text(), src);
+    let t = tree(src);
+    assert!(t.contains("LineComment@"), "{t}");
+    assert!(t.contains("\"// last\""), "{t}");
+    let (m, errors) = lower_module(&p);
+    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(m.items.len(), 2, "{:?}", m.items);
+    let SurfaceItem::Component(c) = &m.items[0] else {
+        panic!("{:?}", m.items[0]);
+    };
+    assert_eq!(c.items.len(), 1, "{:?}", c.items);
+    assert!(
+        matches!(&m.items[1], SurfaceItem::Concept(_)),
+        "{:?}",
+        m.items[1]
+    );
+}
+
+#[test]
 fn round_trip_valid_and_malformed() {
     let cases = [
         "",

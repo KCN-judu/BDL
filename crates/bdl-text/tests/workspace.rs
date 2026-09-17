@@ -253,6 +253,83 @@ fn ambiguous_renames_get_fresh_ids_and_a_fault() {
 }
 
 #[test]
+fn a_comment_above_a_port_declaration_does_not_lose_the_port() {
+    // Comments are presentation: a port declared after one lowers exactly
+    // as it does without it — the component keeps its promise and the
+    // bindings that name the port resolve.
+    const BARE: &str = "concept Tilt : Angle\nconcept Brightness : Scalar\n\nclock main\n\ncomponent L {\n  use concept Tilt\n  use concept Brightness\n  param clock main\n\n  requires tiltValue : Tilt @main\n  provides brightness : Brightness @main\n  brightness() = tiltValue / (90 deg)\n}\n\ninstance a : L { main = main }\n\nmapping tv : Tilt @main\n\nbind a.tiltValue = tv\n";
+    let reference = load_workspace(
+        "p",
+        &files(&[("src/main.bdl", BARE)]),
+        &IdentityTable::default(),
+    );
+    assert!(reference.faults.is_empty(), "{:#?}", reference.faults);
+    for comment in ["// c", "/// doc"] {
+        for (before, after) in [
+            ("  requires", "  provides"),
+            ("  provides", "  brightness()"),
+        ] {
+            let src = BARE.replacen(before, &format!("  {comment}\n{before}"), 1);
+            assert_ne!(src, BARE);
+            let _ = after;
+            let b = load_workspace(
+                "p",
+                &files(&[("src/main.bdl", &src)]),
+                &IdentityTable::default(),
+            );
+            assert!(b.faults.is_empty(), "{src}\n{:#?}", b.faults);
+            let comp = b.system.components.values().next().expect("the component");
+            let mut ports: Vec<(PortKind, &str)> = comp
+                .interface
+                .ports
+                .values()
+                .map(|p| (p.kind, p.name.as_str()))
+                .collect();
+            ports.sort_by_key(|(_, n)| *n);
+            assert_eq!(
+                ports,
+                [
+                    (PortKind::Provided, "brightness"),
+                    (PortKind::Required, "tiltValue")
+                ],
+                "{src}"
+            );
+            assert_eq!(comp.body.mappings.len(), 2, "{src}");
+            let bindings: Vec<_> = b.system.bindings.values().collect();
+            assert_eq!(bindings.len(), 1, "{src}");
+            let req = comp
+                .interface
+                .ports
+                .values()
+                .find(|p| p.name == "tiltValue")
+                .unwrap();
+            assert!(
+                matches!(&bindings[0].destination, BindingEnd::Port(r) if r.port == req.id),
+                "{src}: {:?}",
+                bindings[0]
+            );
+            // The same count with or without the comment.
+            assert_eq!(
+                b.system.base.mappings.len(),
+                reference.system.base.mappings.len()
+            );
+            assert_eq!(
+                comp.body.mappings.len(),
+                reference
+                    .system
+                    .components
+                    .values()
+                    .next()
+                    .unwrap()
+                    .body
+                    .mappings
+                    .len()
+            );
+        }
+    }
+}
+
+#[test]
 fn duplicates_and_unknown_names_are_faults_not_panics() {
     let src = "concept A : Scalar\nconcept A : Bool\nmapping f : Nope -> A\nclock c\noutput o : A @nowhere\ndrive o = g\ninstance i : Missing\nbind i.p = f\n";
     let b = load_workspace(

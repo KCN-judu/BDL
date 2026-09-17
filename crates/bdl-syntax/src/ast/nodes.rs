@@ -348,14 +348,19 @@ pub enum PortWord {
 }
 
 impl PortDecl {
+    /// The keyword the declaration starts with — looked up by kind, because
+    /// a comment directly above the port is attached inside the node and
+    /// is then its first token.
     pub fn word(&self) -> Option<PortWord> {
-        let t = self.0.first_token()?;
-        Some(match t.kind() {
-            SyntaxKind::KwRequires => PortWord::Requires,
-            SyntaxKind::KwProvides => PortWord::Provides,
-            SyntaxKind::KwParam => PortWord::Param,
-            _ => return None,
-        })
+        self.0
+            .children_with_tokens()
+            .filter_map(|el| el.into_token())
+            .find_map(|t| match t.kind() {
+                SyntaxKind::KwRequires => Some(PortWord::Requires),
+                SyntaxKind::KwProvides => Some(PortWord::Provides),
+                SyntaxKind::KwParam => Some(PortWord::Param),
+                _ => None,
+            })
     }
     pub fn name(&self) -> Option<Name> {
         child(&self.0)
