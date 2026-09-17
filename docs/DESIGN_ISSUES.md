@@ -1,9 +1,15 @@
-# Design issues
+# Design issues (archived ledger, 2026-09-15 → 2026-09-17)
 
-Places where implementation pressure exposed an ambiguity or a gap in the
-paper / formal development. Each is recorded rather than silently resolved;
-the resolution, when one is taken, is an engineering decision that does not
-claim formal backing.
+**Archived.** This is the chronological ledger of places where
+implementation pressure exposed an ambiguity or a gap in the paper or the
+formal development. Every resolution recorded here is an engineering
+decision that does not claim formal backing. Two numbers (DI-29, DI-30)
+were used twice; both entries are kept. **Do not add rows**: an
+unresolved problem is a file in [issues/](issues/README.md) (ISS-0001
+… ISS-0010 migrated the open entries: DI-3 → ISS-0001, DI-4 → ISS-0002,
+DI-5 → ISS-0003, DI-7 → ISS-0004, DI-19 → ISS-0005, DI-28 → ISS-0006,
+DI-44 → ISS-0007, DI-29 (first) → ISS-0008); a decided question is an ADR
+or a sentence in the specification it changed.
 
 | Id | Issue | Where it bites | Status |
 |---|---|---|---|
@@ -36,7 +42,7 @@ claim formal backing.
 | DI-27 | Reference traces record computed declarations only (inputs are read through, never memoised); generated `Values` records inputs too. | trace comparison, telemetry | **Decided**: an observable difference of the trace *shape*, not of any value; tests compare generated input entries against the fed inputs. Studio traces keep the reference shape. |
 | DI-28 | Numeric representation on device: `f64` everywhere today; `f32` on device would be a deviation from the reference evaluator that the differential tests cannot hide. | future platform adapter | Open: decide per target as a recorded numeric obligation (DI-1), with a reference-side `f32` mode so the differential tests still hold; not part of the backend milestone. |
 | DI-29 | Diagnostic entities: `bdl_diagnostics::Entity` has `Project`, `Concept`, `Mapping` only, so a project-level output note (`output.missing_driver`, `output.clock_unset`) names its sink in the message, not structurally. | `bdl-ide` diagnostic lift | **Decided** for now: the IDE lift recovers the sink from the analysis sets (`missing_required`, `open_outputs`) by a name check against the message and anchors the diagnostic on `Output(o)`; an `Entity::Output` variant (a protocol change) replaces the check when the next protocol bump happens. |
-| DI-30 | Textual parameter names: `f(tilt) = …` names its parameters, but formula names resolve against concept display names (DI-13), so the textual surface has no parameter layer and a body must spell the concept's name (case-insensitively). | `bdl-ide-db::textual`, rename | Open: a parameter layer in the surface model (a `Signature` input carrying an optional local name) would let text and Studio differ in spelling and let rename skip parameters cleanly; until then the binder records no anchors for parameters and the documentation says so. |
+| DI-30 | Textual parameter names: `f(tilt) = …` names its parameters, but formula names originally resolved against concept display names. | `bdl-text`, rename | **Closed by ADR-0020**: `MappingBlock.parameters` is the lexical binding layer; textual rename keeps parameter bindings distinct from concept display names. |
 | DI-31 | `match` is strict: it desugars into `ite`, which evaluates every arm (DI-26), so an arm that divides by zero fails the tick even when another arm is chosen, and `getD` supplies a default for a binding whose arm is not taken. | surface `match`, runtime errors | **Decided** for now: the same strictness as `if`; laziness is a kernel question (Lean first). The defaults are total and never observable. |
 | DI-32 | Memory placement: the kernel types `delay`/`sync` in the empty context, so a temporal form may be a `let`'s value, a `match`'s scrutinee or an `if` branch, but not a block's result, an arm's body or a formula with inputs. | `formula.temporal.under_binder` | **Decided**: refused at the surface with a rewrite hint (`let previous = delay(…);`); each written temporal form is one state cell whatever branch is taken, because the scrutinee is bound once. |
 | DI-29 | Formula names inside a component body resolve by display name within the body (ADR-0013, DI-17); after flattening, several instances of one component put homonymous relationships into one flat design. | `bdl-system::flatten`, `bdl-elab::names` | **Decided**: a body formula becomes `Definition::ScopedFormula` — the text unchanged, with the input names pinned positionally and every relationship/concept name pinned to its flattened identity at flattening time; resolution never searches the flat design. No name is synthesised. Renaming a body relationship keeps the flat design correct because the pinned scope is rebuilt from the body on every flattening. |

@@ -1,3 +1,21 @@
+# Pre-implementation questions (archived, 2026-09-15)
+
+**Archived.** The checklist written before implementation started, in
+its original wording, kept as history. It asked for decisions to be filed
+under `docs/decisions/`; they were filed as ADRs instead. Where each
+group of questions was answered:
+
+| Section | Answered by |
+|---|---|
+| A — language, numerics, ids, delivery | Rust workspace (`docs/ARCHITECTURE.md`); ADR-0011 (floats); ADR-0008 (ids); Studio + `bdld` + LSP + CLI (`docs/project-records/STATUS.md`) |
+| B — `PropertyId` / evidence, dimensions, lists, `Causal` | ISS-0003 (open); DI-2 (7 SI + angle); ISS-0001 (lists — FV Phase 9a, production open); DI-8 (conservative `Causal` accepted) |
+| C — surface: syntax, definition forms, temporal modifiers, contexts, candidates, affine units, device kinds, board files | ADR-0013, ADR-0014, ADR-0020 (syntax); formulas only (curve/example-fit/component forms: not built); ISS-0010 (modifiers, contexts); ISS-0002 (candidates); ISS-0004 (affine units); `docs/HARDWARE_MODEL.md` (device kinds, board files) |
+| D — diagnostics format, workspace states, explanation view, declared vs computed evidence | `docs/COMPILER_PIPELINE.md` (diagnostics), `docs/STUDIO_UI.md` (states, Explain), ADR-0018; evidence kinds: ISS-0003 |
+| E — backend target, scheduler, numeric deviations, supplied blocks | ADR-0016 (Rust), `docs/RUNTIME_SEMANTICS.md` (scheduler), DI-15 / ADR-0011 (numerics), `docs/COMPONENT_BOUNDARY.md` + ADR-0005 (designed, not built) |
+| F — tests | `docs/TESTING.md`, `docs/project-records/FORMAL_CORRESPONDENCE.md` |
+
+---
+
 # 实现前需要决定的事项
 
 论文与 Lean 开发把内核钉死了，但**消解器、编辑器、固件路径都没有实现**（论文原话："no elaborator, editor, firmware generator, or user study has yet been built"）。
