@@ -15,6 +15,7 @@ path = "src/main.rs"
 bdl-ide-db = { workspace = true }
 bdl-ide = { workspace = true }
 bdl-model = { workspace = true }
+bdl-text = { workspace = true }
 lsp-server = { workspace = true }
 lsp-types = { workspace = true }
 crossbeam-channel = { workspace = true }

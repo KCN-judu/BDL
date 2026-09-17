@@ -152,6 +152,12 @@ impl EntityIndex {
         self.names.get(&entity).map(String::as_str)
     }
 
+    /// Register an entity the design itself does not carry (a system's
+    /// components, instances, ports, exports in a text workspace).
+    pub fn add_name(&mut self, entity: EntityRef, name: String) {
+        self.names.insert(entity, name);
+    }
+
     pub fn exists(&self, entity: EntityRef) -> bool {
         entity == EntityRef::Project || self.names.contains_key(&entity)
     }

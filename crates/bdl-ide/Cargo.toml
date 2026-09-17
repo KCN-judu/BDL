@@ -9,6 +9,8 @@ repository.workspace = true
 
 [dependencies]
 bdl-ide-db = { workspace = true }
+bdl-text = { workspace = true }
+bdl-system = { workspace = true }
 bdl-library = { workspace = true }
 bdl-model = { workspace = true }
 bdl-ir = { workspace = true }

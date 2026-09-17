@@ -34,6 +34,40 @@ pub enum RenameError {
     Duplicate { kind: EntityKind, name: String },
 }
 
+/// A rename of an entity that exists only in source (a component, a port,
+/// an instance): every name and reference site in every document.
+fn plan_text_only_rename(
+    snapshot: &AnalysisSnapshot,
+    entity: EntityRef,
+    new_name: &str,
+) -> Result<SemanticEditPlan, RenameError> {
+    let old_name = snapshot.name_of(entity).unwrap_or("").to_owned();
+    let mut plan = SemanticEditPlan::new(
+        format!("Rename `{old_name}` to `{new_name}`"),
+        snapshot.stamp(),
+    );
+    plan.affected_entities.insert(entity);
+    let mut per_document: BTreeMap<_, Vec<TextEdit>> = BTreeMap::new();
+    for a in snapshot.projections().anchors_of(entity) {
+        if !matches!(a.role, EntityRole::Name | EntityRole::Reference) {
+            continue;
+        }
+        if let (Some(doc), Some(range)) = (a.document(), a.text_range()) {
+            per_document
+                .entry(doc)
+                .or_default()
+                .push(TextEdit::replace(range, new_name));
+        }
+    }
+    for (document, mut edits) in per_document {
+        edits.sort_by_key(|e| e.range);
+        edits.dedup();
+        plan.operations
+            .push(SemanticOperation::Text { document, edits });
+    }
+    Ok(plan)
+}
+
 /// Plan renaming `entity` to `new_name`.  Nothing is applied.
 pub fn plan_rename(
     snapshot: &AnalysisSnapshot,
@@ -90,8 +124,15 @@ pub fn plan_rename(
             id,
             name: new_name.to_owned(),
         },
-        EntityRef::Project | EntityRef::Requirement { .. } => {
-            return Err(RenameError::NotRenamable { entity })
+        EntityRef::Project
+        | EntityRef::Requirement { .. }
+        | EntityRef::Binding(_)
+        | EntityRef::Export(_) => return Err(RenameError::NotRenamable { entity }),
+        // System entities live in text only: their rename is the text
+        // edits below, with no model operation (the model is rebuilt from
+        // the source).
+        EntityRef::Component(_) | EntityRef::Port { .. } | EntityRef::Instance(_) => {
+            return plan_text_only_rename(snapshot, entity, new_name)
         }
     };
     let old_name = snapshot.name_of(entity).unwrap_or("").to_owned();

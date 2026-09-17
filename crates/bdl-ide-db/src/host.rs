@@ -25,6 +25,7 @@ use crate::overlay::{Overlay, OverlayGeneration, OverlayId, OverlayKey, OverlayS
 use crate::snapshot::AnalysisSnapshot;
 use crate::stamp::SnapshotStamp;
 use crate::text::{DocumentId, DocumentUri};
+use crate::workspace::{file_uri, TextGround};
 use bdl_compiler::ProjectAnalysis;
 use bdl_model::surface::{Definition, Design, ProjectSnapshot};
 use std::collections::BTreeMap;
@@ -62,6 +63,9 @@ pub struct CommitEffect {
 pub struct IdeHost {
     committed: Arc<ProjectSnapshot>,
     committed_analysis: Option<Arc<ProjectAnalysis>>,
+    /// Present for a text workspace: the sources on disk are the ground,
+    /// and `committed` is their flattening (ADR-0020).
+    text: Option<TextGround>,
     overlays: OverlaySet,
     uris: BTreeMap<DocumentId, DocumentUri>,
     ids: BTreeMap<DocumentUri, DocumentId>,
@@ -80,6 +84,7 @@ impl IdeHost {
         IdeHost {
             committed: Arc::new(committed),
             committed_analysis: None,
+            text: None,
             overlays: OverlaySet::default(),
             uris: BTreeMap::new(),
             ids: BTreeMap::new(),
@@ -93,6 +98,61 @@ impl IdeHost {
     /// A host over an empty design: text documents alone will populate it.
     pub fn empty(name: &str) -> IdeHost {
         IdeHost::new(ProjectSnapshot::new(Design::empty(name)))
+    }
+
+    /// A host over a text workspace: every source file becomes a document
+    /// (`bdl-file:<path>`) whether or not a buffer is open for it, so
+    /// navigation and rename reach unopened files too.
+    pub fn text_workspace(
+        name: &str,
+        files: Vec<bdl_text::SourceFile>,
+        table: bdl_text::IdentityTable,
+    ) -> IdeHost {
+        let mut host = IdeHost::empty(name);
+        host.set_text_ground(files, table);
+        host
+    }
+
+    /// Whether this host is over a text workspace.
+    pub fn is_text_workspace(&self) -> bool {
+        self.text.is_some()
+    }
+
+    /// The text ground as last loaded from disk.
+    pub fn text_ground(&self) -> Option<&TextGround> {
+        self.text.as_ref()
+    }
+
+    /// (Re)load the text ground from disk: the files, the identity table.
+    /// Open buffers survive as overlays over the new files; the revision
+    /// moves so results stamped before the reload are stale.
+    pub fn set_text_ground(
+        &mut self,
+        files: Vec<bdl_text::SourceFile>,
+        table: bdl_text::IdentityTable,
+    ) {
+        let revision = match &self.text {
+            Some(g) => g.revision.next(),
+            None => bdl_model::Revision::INITIAL,
+        };
+        let name = self.committed.design.name.clone();
+        for f in &files {
+            self.document_id(&file_uri(&f.path));
+        }
+        self.text = Some(TextGround {
+            name,
+            files,
+            table,
+            revision,
+        });
+        self.requests.project_changed();
+        self.committed_analysis = None;
+        self.cache = None;
+    }
+
+    /// The document of a workspace file by its relative path.
+    pub fn file_document(&self, path: &str) -> Option<DocumentId> {
+        self.known_document(&file_uri(path))
     }
 
     pub fn config(&self) -> &IdeConfig {
@@ -160,7 +220,11 @@ impl IdeHost {
 
     /// The current world: committed revision + overlay generation.
     pub fn stamp(&self) -> SnapshotStamp {
-        SnapshotStamp::new(self.committed.revision, self.overlays.generation())
+        let revision = match &self.text {
+            Some(g) => g.revision,
+            None => self.committed.revision,
+        };
+        SnapshotStamp::new(revision, self.overlays.generation())
     }
 
     /// Insert or replace an overlay.  Cancels requests scoped to its key.
@@ -238,6 +302,13 @@ impl IdeHost {
     /// The buffer is gone (didClose): the document reverts to whatever the
     /// committed model says.  The id is retired.
     pub fn close_text_document(&mut self, uri: &DocumentUri) -> bool {
+        if crate::workspace::file_path(uri).is_some() && self.text.is_some() {
+            // A workspace file stays a document; only its buffer goes.
+            let Some(id) = self.ids.get(uri).copied() else {
+                return false;
+            };
+            return self.remove_overlay(OverlayKey::TextDocument { document: id });
+        }
         let Some(id) = self.ids.remove(uri) else {
             return false;
         };
@@ -286,12 +357,20 @@ impl IdeHost {
                 return Ok(s.clone());
             }
         }
-        let s = Arc::new(AnalysisSnapshot::compose(
-            self.committed.clone(),
-            &self.overlays,
-            &self.uris,
-            token,
-        )?);
+        let s = match &self.text {
+            Some(ground) => Arc::new(AnalysisSnapshot::compose_text(
+                ground,
+                &self.overlays,
+                &self.uris,
+                token,
+            )?),
+            None => Arc::new(AnalysisSnapshot::compose(
+                self.committed.clone(),
+                &self.overlays,
+                &self.uris,
+                token,
+            )?),
+        };
         self.cache = Some(s.clone());
         Ok(s)
     }

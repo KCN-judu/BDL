@@ -177,6 +177,11 @@ pub fn symbol_kind(k: EntityKind) -> SymbolKind {
         EntityKind::Device => SymbolKind::OBJECT,
         EntityKind::Requirement => SymbolKind::FIELD,
         EntityKind::Project => SymbolKind::MODULE,
+        EntityKind::Component => SymbolKind::STRUCT,
+        EntityKind::Port => SymbolKind::INTERFACE,
+        EntityKind::Instance => SymbolKind::VARIABLE,
+        EntityKind::Binding => SymbolKind::OPERATOR,
+        EntityKind::Export => SymbolKind::PROPERTY,
     }
 }
 

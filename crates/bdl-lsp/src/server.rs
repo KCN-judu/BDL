@@ -95,6 +95,9 @@ impl lsp::request::Request for PreviewEdit {
 struct Shared {
     host: Mutex<IdeHost>,
     encoding: PositionEncoding,
+    /// The text project's root when the workspace is one (ADR-0020):
+    /// `file://` URIs under `root/src` are the workspace's documents.
+    text_root: Option<PathBuf>,
 }
 
 pub struct Server {
@@ -141,10 +144,27 @@ pub fn run(connection: Connection) -> anyhow::Result<()> {
             .or_else(|| params.root_uri.as_ref().and_then(uri_to_path))
     });
     let host = open_host(root.as_deref());
+    let text_root = if host.is_text_workspace() {
+        root.clone()
+    } else {
+        None
+    };
 
     let capabilities = ServerCapabilities {
         position_encoding: Some(encoding.kind()),
-        text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
+        text_document_sync: Some(TextDocumentSyncCapability::Options(
+            lsp::TextDocumentSyncOptions {
+                open_close: Some(true),
+                change: Some(TextDocumentSyncKind::FULL),
+                will_save: None,
+                will_save_wait_until: None,
+                save: Some(lsp::TextDocumentSyncSaveOptions::SaveOptions(
+                    lsp::SaveOptions {
+                        include_text: Some(false),
+                    },
+                )),
+            },
+        )),
         hover_provider: Some(lsp::HoverProviderCapability::Simple(true)),
         completion_provider: Some(lsp::CompletionOptions {
             trigger_characters: Some(vec![":".into(), ">".into(), " ".into()]),
@@ -189,6 +209,7 @@ pub fn run(connection: Connection) -> anyhow::Result<()> {
         shared: Arc::new(Shared {
             host: Mutex::new(host),
             encoding,
+            text_root,
         }),
         pull_diagnostics,
         inflight: Arc::new(Mutex::new(HashMap::new())),
@@ -201,14 +222,25 @@ pub fn run(connection: Connection) -> anyhow::Result<()> {
 fn open_host(root: Option<&Path>) -> IdeHost {
     if let Some(root) = root {
         if root.join("bdl.toml").is_file() {
-            match bdl_model::persist::load_project(root) {
-                Ok(loaded) => {
-                    info!(root = %root.display(), "opened project");
-                    return IdeHost::new(loaded.snapshot);
-                }
-                Err(e) => {
-                    warn!(root = %root.display(), error = %e, "could not load project; starting empty")
-                }
+            match bdl_model::persist::read_manifest(root).map(|m| m.kind) {
+                Ok(bdl_model::persist::ProjectKind::Text) => match text_ground(root) {
+                    Ok((name, files, table)) => {
+                        info!(root = %root.display(), files = files.len(), "opened text project");
+                        return IdeHost::text_workspace(&name, files, table);
+                    }
+                    Err(e) => {
+                        warn!(root = %root.display(), error = %e, "could not load the text project; starting empty")
+                    }
+                },
+                _ => match bdl_model::persist::load_project(root) {
+                    Ok(loaded) => {
+                        info!(root = %root.display(), "opened project");
+                        return IdeHost::new(loaded.snapshot);
+                    }
+                    Err(e) => {
+                        warn!(root = %root.display(), error = %e, "could not load project; starting empty")
+                    }
+                },
             }
         }
         let name = root
@@ -218,6 +250,32 @@ fn open_host(root: Option<&Path>) -> IdeHost {
         return IdeHost::empty(&name);
     }
     IdeHost::empty("workspace")
+}
+
+/// The sources and identity table of a text project on disk.
+fn text_ground(
+    root: &Path,
+) -> Result<(String, Vec<bdl_text::SourceFile>, bdl_text::IdentityTable), bdl_text::TextError> {
+    let manifest = bdl_model::persist::read_manifest(root)?;
+    let files = bdl_text::discover_sources(root)?;
+    let table = bdl_text::workspace::load_identities(root)?;
+    Ok((manifest.name, files, table))
+}
+
+/// A `file://` URI for an absolute path (spaces and `%` escaped).
+fn path_to_uri(path: &Path) -> Option<Uri> {
+    let s = path.to_string_lossy();
+    let mut out = String::from("file://");
+    for ch in s.chars() {
+        match ch {
+            ' ' => out.push_str("%20"),
+            '%' => out.push_str("%25"),
+            '#' => out.push_str("%23"),
+            '?' => out.push_str("%3F"),
+            c => out.push(c),
+        }
+    }
+    Uri::from_str(&out).ok()
 }
 
 fn uri_to_path(uri: &Uri) -> Option<PathBuf> {
@@ -250,7 +308,23 @@ fn percent_decode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-fn document_uri(uri: &Uri) -> DocumentUri {
+/// The host's document for a client URI: a workspace source file is
+/// `bdl-file:<relative path>` (so it is the same document whether or not
+/// a buffer is open); anything else is the URI itself.
+fn document_uri(text_root: Option<&Path>, uri: &Uri) -> DocumentUri {
+    if let (Some(root), Some(path)) = (text_root, uri_to_path(uri)) {
+        if let Ok(rel) = path.strip_prefix(root) {
+            let rel: Vec<String> = rel
+                .components()
+                .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                .collect();
+            if rel.first().map(String::as_str) == Some(bdl_text::SOURCE_DIR)
+                && path.extension().and_then(|e| e.to_str()) == Some("bdl")
+            {
+                return bdl_ide_db::workspace::file_uri(&rel.join("/"));
+            }
+        }
+    }
     DocumentUri::new(uri.as_str())
 }
 
@@ -293,11 +367,23 @@ impl Server {
                     }
                 }
             }
+            lsp::notification::DidSaveTextDocument::METHOD => {
+                // The sources on disk moved: reload the ground and commit
+                // the identities the build decided (ADR-0020 §4).
+                if self.shared.text_root.is_some() {
+                    self.reload_text_ground();
+                }
+            }
+            lsp::notification::DidChangeWatchedFiles::METHOD => {
+                if self.shared.text_root.is_some() {
+                    self.reload_text_ground();
+                }
+            }
             lsp::notification::DidCloseTextDocument::METHOD => {
                 if let Ok(p) = n.extract::<lsp::DidCloseTextDocumentParams>(
                     lsp::notification::DidCloseTextDocument::METHOD,
                 ) {
-                    let uri = document_uri(&p.text_document.uri);
+                    let uri = document_uri(self.shared.text_root.as_deref(), &p.text_document.uri);
                     self.lock_host().close_text_document(&uri);
                     if !self.pull_diagnostics {
                         self.publish(&p.text_document.uri, Vec::new(), None);
@@ -321,8 +407,37 @@ impl Server {
         }
     }
 
+    /// Re-read a text project's sources and identity table from disk and
+    /// write the reconciled table back, so every tool that opens the
+    /// project next agrees on the identities the editor session decided.
+    fn reload_text_ground(&self) {
+        let Some(root) = self.shared.text_root.as_deref() else {
+            return;
+        };
+        match text_ground(root) {
+            Ok((_, files, table)) => {
+                let mut host = self.lock_host();
+                host.set_text_ground(files, table);
+                let snapshot = host.snapshot();
+                if let Some(world) = snapshot.text() {
+                    let path = root.join(bdl_text::IDENTITIES_FILE);
+                    match serde_json::to_string_pretty(&world.table) {
+                        Ok(text) => {
+                            if let Err(e) = bdl_model::persist::write_atomic(&path, text.as_bytes())
+                            {
+                                warn!(error = %e, "could not write the identity table");
+                            }
+                        }
+                        Err(e) => warn!(error = %e, "could not render the identity table"),
+                    }
+                }
+            }
+            Err(e) => warn!(error = %e, "could not reload the text project"),
+        }
+    }
+
     fn document_changed(&self, uri: &Uri, text: String) {
-        let doc = document_uri(uri);
+        let doc = document_uri(self.shared.text_root.as_deref(), uri);
         let (id, _) = self.lock_host().set_text_document(&doc, text);
         if !self.pull_diagnostics {
             // Push fallback, isolated here: compute and publish right away.
@@ -371,7 +486,12 @@ impl Server {
         snapshot: &bdl_ide::AnalysisSnapshot,
         id: DocumentId,
     ) -> Option<(Uri, LineIndex)> {
-        resolve_document(snapshot, self.shared.encoding, id)
+        resolve_document(
+            snapshot,
+            self.shared.encoding,
+            self.shared.text_root.as_deref(),
+            id,
+        )
     }
 
     // ---- requests: one worker per request over one snapshot ------------------------
@@ -379,7 +499,7 @@ impl Server {
     fn dispatch_request(&self, req: Request) {
         let id = req.id.clone();
         let method = req.method.clone();
-        let scope = request_scope(&req, &self.lock_host());
+        let scope = request_scope(&req, &self.lock_host(), self.shared.text_root.as_deref());
         let (host_req, token) = self.lock_host().begin_request(scope);
         if let Ok(mut m) = self.inflight.lock() {
             m.insert(id.clone(), host_req);
@@ -404,6 +524,7 @@ impl Server {
                         let ctx = Ctx {
                             snapshot: &snapshot,
                             encoding: shared.encoding,
+                            text_root: shared.text_root.as_deref(),
                         };
                         let r = handle_request(&ctx, req);
                         if token.is_cancelled() {
@@ -435,13 +556,14 @@ impl Server {
 
 /// What a request depends on, for cancellation: a request on a document
 /// is obsolete when that document's overlay changes.
-fn request_scope(req: &Request, host: &IdeHost) -> CancelScope {
+fn request_scope(req: &Request, host: &IdeHost, text_root: Option<&Path>) -> CancelScope {
     let uri = req
         .params
         .get("textDocument")
         .and_then(|t| t.get("uri"))
         .and_then(|u| u.as_str())
-        .map(DocumentUri::new);
+        .and_then(|u| Uri::from_str(u).ok())
+        .map(|u| document_uri(text_root, &u));
     match uri.and_then(|u| host.known_document(&u)) {
         Some(document) => CancelScope::Overlay(OverlayKey::TextDocument { document }),
         None => CancelScope::Project,
@@ -451,10 +573,14 @@ fn request_scope(req: &Request, host: &IdeHost) -> CancelScope {
 fn resolve_document(
     snapshot: &bdl_ide::AnalysisSnapshot,
     encoding: PositionEncoding,
+    text_root: Option<&Path>,
     id: DocumentId,
 ) -> Option<(Uri, LineIndex)> {
     let uri = snapshot.document_uri(id)?;
-    let uri = Uri::from_str(uri.as_str()).ok()?;
+    let uri = match (bdl_ide_db::workspace::file_path(uri), text_root) {
+        (Some(rel), Some(root)) => path_to_uri(&root.join(rel))?,
+        _ => Uri::from_str(uri.as_str()).ok()?,
+    };
     let doc = snapshot.document(id)?;
     Some((uri, LineIndex::new(&doc.source, encoding)))
 }
@@ -462,6 +588,7 @@ fn resolve_document(
 struct Ctx<'a> {
     snapshot: &'a bdl_ide::AnalysisSnapshot,
     encoding: PositionEncoding,
+    text_root: Option<&'a Path>,
 }
 
 struct RequestError {
@@ -487,13 +614,15 @@ impl RequestError {
 impl Ctx<'_> {
     /// The document and its index; `None` when the document is not open.
     fn document(&self, uri: &Uri) -> Option<(DocumentId, LineIndex)> {
-        let id = self.snapshot.document_by_uri(&document_uri(uri))?;
+        let id = self
+            .snapshot
+            .document_by_uri(&document_uri(self.text_root, uri))?;
         let doc = self.snapshot.document(id)?;
         Some((id, LineIndex::new(&doc.source, self.encoding)))
     }
 
     fn resolve(&self, id: DocumentId) -> Option<(Uri, LineIndex)> {
-        resolve_document(self.snapshot, self.encoding, id)
+        resolve_document(self.snapshot, self.encoding, self.text_root, id)
     }
 
     fn entity_at(

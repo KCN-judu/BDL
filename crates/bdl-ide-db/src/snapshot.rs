@@ -17,6 +17,7 @@ use crate::stamp::SnapshotStamp;
 use crate::text::{DocumentId, DocumentUri};
 use crate::textual::{bind_document, TextDocumentState};
 use crate::visual::visual_projection;
+use crate::workspace::{compose_text, register_names, TextGround, TextWorld};
 use bdl_compiler::ProjectAnalysis;
 use bdl_model::surface::{Definition, ProjectSnapshot};
 use bdl_model::{DeclId, Revision};
@@ -55,9 +56,97 @@ pub struct AnalysisSnapshot {
     uris: BTreeMap<DocumentId, DocumentUri>,
     projections: ProjectionMap,
     index: EntityIndex,
+    /// Present for a text workspace: the authored system behind the flat
+    /// design, and the identities as the build decided them.
+    text: Option<Arc<TextWorld>>,
 }
 
 impl AnalysisSnapshot {
+    /// Compose the world of a text project (ADR-0020): the sources on disk
+    /// with open buffers substituted, built and flattened.  Definition
+    /// drafts apply on top, as for a flat ground.
+    pub fn compose_text(
+        ground: &TextGround,
+        overlays: &OverlaySet,
+        uris: &BTreeMap<DocumentId, DocumentUri>,
+        token: &CancellationToken,
+    ) -> Result<AnalysisSnapshot, Cancelled> {
+        token.check()?;
+        let mut buffers = BTreeMap::new();
+        let mut applied = Vec::new();
+        for e in overlays.iter() {
+            if let Overlay::TextDocument { document, source } = &e.overlay {
+                buffers.insert(*document, source.clone());
+                applied.push(AppliedOverlay {
+                    id: e.id,
+                    key: e.overlay.key(),
+                    generation: e.generation,
+                    fault: None,
+                });
+            }
+        }
+        let documents: BTreeMap<String, DocumentId> = uris
+            .iter()
+            .filter_map(|(id, uri)| crate::workspace::file_path(uri).map(|p| (p.to_owned(), *id)))
+            .collect();
+        let (mut effective, world, states, mut projections, names) =
+            compose_text(ground, &buffers, &documents);
+        token.check()?;
+        for e in overlays.iter() {
+            if let Overlay::MappingDefinitionDraft { mapping, source } = &e.overlay {
+                let fault = match effective.design.mappings.get_mut(mapping) {
+                    Some(m) => {
+                        m.definition = Some(Definition::Formula {
+                            source: source.clone(),
+                        });
+                        None
+                    }
+                    None => Some(OverlayFault::UnknownMapping { mapping: *mapping }),
+                };
+                applied.push(AppliedOverlay {
+                    id: e.id,
+                    key: e.overlay.key(),
+                    generation: e.generation,
+                    fault,
+                });
+            }
+        }
+        applied.sort_by_key(|a| a.key);
+        token.check()?;
+        let analysis = bdl_compiler::analyze(&effective);
+        token.check()?;
+        projections.extend(visual_projection(&effective.design));
+        projections.finish();
+        let mut index = EntityIndex::build(&effective.design);
+        register_names(&mut index, &names);
+        let committed = Arc::new(ProjectSnapshot {
+            revision: ground.revision,
+            design: world.flattened.snapshot.design.clone(),
+        });
+        let uris = uris
+            .iter()
+            .filter(|(id, _)| states.contains_key(id))
+            .map(|(id, uri)| (*id, uri.clone()))
+            .collect();
+        Ok(AnalysisSnapshot {
+            stamp: SnapshotStamp::new(ground.revision, overlays.generation()),
+            committed,
+            effective,
+            analysis,
+            overlays: applied,
+            documents: states,
+            uris,
+            projections,
+            index,
+            text: Some(Arc::new(world)),
+        })
+    }
+
+    /// The authored system and its flattening, for a text workspace.
+    pub fn text(&self) -> Option<&TextWorld> {
+        self.text.as_deref()
+    }
+
     /// Compose and analyse.  Pure apart from the token, which is polled
     /// between the phases (overlay application, compiler, indexing) so a
     /// superseded snapshot stops early.
@@ -135,6 +224,7 @@ impl AnalysisSnapshot {
             uris,
             projections,
             index,
+            text: None,
         })
     }
 

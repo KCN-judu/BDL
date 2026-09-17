@@ -33,6 +33,19 @@ pub enum EntityRef {
         device: DeviceId,
         index: u16,
     },
+    /// A behaviour component (a text or system project); raw `ComponentId`.
+    Component(u64),
+    /// A component's port; raw ids.
+    Port {
+        component: u64,
+        port: u64,
+    },
+    /// A component instance; raw `ComponentInstanceId`.
+    Instance(u64),
+    /// A binding between ports; raw `BindingId`.
+    Binding(u64),
+    /// An exported port; raw `ExportId`.
+    Export(u64),
 }
 
 impl EntityRef {
@@ -76,6 +89,11 @@ impl EntityRef {
             EntityRef::Output(_) => EntityKind::Output,
             EntityRef::Device(_) => EntityKind::Device,
             EntityRef::Requirement { .. } => EntityKind::Requirement,
+            EntityRef::Component(_) => EntityKind::Component,
+            EntityRef::Port { .. } => EntityKind::Port,
+            EntityRef::Instance(_) => EntityKind::Instance,
+            EntityRef::Binding(_) => EntityKind::Binding,
+            EntityRef::Export(_) => EntityKind::Export,
         }
     }
 }
@@ -90,6 +108,11 @@ impl fmt::Display for EntityRef {
             EntityRef::Output(o) => write!(f, "{o}"),
             EntityRef::Device(d) => write!(f, "{d}"),
             EntityRef::Requirement { device, index } => write!(f, "{device}/{index}"),
+            EntityRef::Component(c) => write!(f, "component#{c}"),
+            EntityRef::Port { component, port } => write!(f, "component#{component}/port#{port}"),
+            EntityRef::Instance(i) => write!(f, "instance#{i}"),
+            EntityRef::Binding(b) => write!(f, "binding#{b}"),
+            EntityRef::Export(e) => write!(f, "export#{e}"),
         }
     }
 }
@@ -105,6 +128,11 @@ pub enum EntityKind {
     Output,
     Device,
     Requirement,
+    Component,
+    Port,
+    Instance,
+    Binding,
+    Export,
 }
 
 /// Which aspect of an entity a location, diagnostic or action concerns.

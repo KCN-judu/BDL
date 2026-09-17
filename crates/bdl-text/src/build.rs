@@ -478,6 +478,12 @@ impl<'a> Builder<'a> {
                         AnchorRole::Name,
                     );
                     if let Some(d) = &mp.definition {
+                        self.anchor(
+                            file,
+                            d.name.span,
+                            TextEntity::Mapping(id),
+                            AnchorRole::Reference,
+                        );
                         self.anchor(file, d.body.span, TextEntity::Mapping(id), AnchorRole::Body);
                     }
                 }
@@ -1288,6 +1294,12 @@ impl<'a> Builder<'a> {
                     if let Some(d) = &mp.definition {
                         self.anchor(
                             file,
+                            d.name.span,
+                            TextEntity::BodyMapping(cid, id),
+                            AnchorRole::Reference,
+                        );
+                        self.anchor(
+                            file,
                             d.body.span,
                             TextEntity::BodyMapping(cid, id),
                             AnchorRole::Body,
@@ -1381,6 +1393,12 @@ impl<'a> Builder<'a> {
                         AnchorRole::Name,
                     );
                     if let Some(d) = &p.definition {
+                        self.anchor(
+                            file,
+                            d.name.span,
+                            TextEntity::Port(cid, port),
+                            AnchorRole::Reference,
+                        );
                         self.anchor(
                             file,
                             d.body.span,

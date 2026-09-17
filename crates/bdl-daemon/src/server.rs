@@ -506,6 +506,13 @@ fn entity_to_pb(e: bdl_ide::EntityRef) -> pb::EntityRef {
             bdl_ide::EntityRef::Output(o) => Kind::OutputId(o.raw()),
             bdl_ide::EntityRef::Device(d) => Kind::DeviceId(d.raw()),
             bdl_ide::EntityRef::Requirement { device, .. } => Kind::DeviceId(device.raw()),
+            // System entities are text-workspace entities the wire has no
+            // reference for yet; Studio names them by its own views.
+            bdl_ide::EntityRef::Component(_)
+            | bdl_ide::EntityRef::Port { .. }
+            | bdl_ide::EntityRef::Instance(_)
+            | bdl_ide::EntityRef::Binding(_)
+            | bdl_ide::EntityRef::Export(_) => Kind::Project(pb::Unit {}),
         }),
     }
 }

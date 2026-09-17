@@ -42,6 +42,7 @@ pub mod stamp;
 pub mod text;
 pub mod textual;
 pub mod visual;
+pub mod workspace;
 
 pub use cancel::{CancelScope, CancellationToken, Cancelled, RequestId, RequestTracker};
 pub use entity::{EntityKind, EntityRef, EntityRole};
@@ -55,3 +56,4 @@ pub use snapshot::{AnalysisSnapshot, AppliedOverlay, OverlayFault};
 pub use stamp::{ResultGate, SnapshotStamp};
 pub use text::{DocumentId, DocumentKind, DocumentUri, EditConflict, TextEdit, TextRange};
 pub use textual::{BindingFault, TextDocumentState};
+pub use workspace::{TextGround, TextWorld};

@@ -401,5 +401,214 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             ],
             explanation: None,
         },
+        EntityRef::Component(_)
+        | EntityRef::Port { .. }
+        | EntityRef::Instance(_)
+        | EntityRef::Binding(_)
+        | EntityRef::Export(_) => system_hover(snapshot, entity)?,
+    })
+}
+
+/// A card for a system's own entities (a text workspace): the component's
+/// promise, an instance's component and arguments, a port's contract.
+fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticHover> {
+    let world = snapshot.text()?;
+    let system = &world.system;
+    let detail = |label: &str, value: String| HoverDetail {
+        label: label.to_owned(),
+        value,
+    };
+    Some(match entity {
+        EntityRef::Component(raw) => {
+            let c = system
+                .components
+                .get(&bdl_system::ComponentId::from_raw(raw))?;
+            let instances = system
+                .instances
+                .values()
+                .filter(|i| i.component == c.id)
+                .count();
+            let mut details = vec![detail("instances", instances.to_string())];
+            for p in c.interface.ports.values() {
+                let word = match p.kind {
+                    bdl_system::PortKind::Required => "requires",
+                    bdl_system::PortKind::Provided => "provides",
+                    bdl_system::PortKind::Parameter => "param",
+                };
+                let concept = c
+                    .body
+                    .concepts
+                    .get(&p.contract.signature.output)
+                    .map(|x| x.name.clone())
+                    .unwrap_or_default();
+                details.push(detail(word, format!("{} : {concept}", p.name)));
+            }
+            for k in &c.interface.clock_params {
+                if let Some(clock) = c.body.clocks.get(k) {
+                    details.push(detail("timing parameter", clock.name.clone()));
+                }
+            }
+            SemanticHover {
+                entity,
+                kind: EntityKind::Component,
+                title: c.name.clone(),
+                signature: None,
+                semantic_type: None,
+                representation: None,
+                status: EntityStatus::Plain,
+                details,
+                explanation: if c.description.is_empty() {
+                    None
+                } else {
+                    Some(c.description.clone())
+                },
+            }
+        }
+        EntityRef::Port { component, port } => {
+            let c = system
+                .components
+                .get(&bdl_system::ComponentId::from_raw(component))?;
+            let p = c.interface.ports.get(&bdl_system::PortId::from_raw(port))?;
+            let word = match p.kind {
+                bdl_system::PortKind::Required => "required port",
+                bdl_system::PortKind::Provided => "provided port",
+                bdl_system::PortKind::Parameter => "parameter port",
+            };
+            let concept = c
+                .body
+                .concepts
+                .get(&p.contract.signature.output)
+                .map(|x| x.name.clone())
+                .unwrap_or_default();
+            let timing = match p.contract.clock {
+                bdl_system::ClockContract::Agnostic => "any timing domain".to_owned(),
+                bdl_system::ClockContract::Parameter { clock } => format!(
+                    "updates in {} (a timing parameter)",
+                    c.body
+                        .clocks
+                        .get(&clock)
+                        .map(|k| k.name.clone())
+                        .unwrap_or_default()
+                ),
+                bdl_system::ClockContract::Private { clock } => format!(
+                    "updates in its own {}",
+                    c.body
+                        .clocks
+                        .get(&clock)
+                        .map(|k| k.name.clone())
+                        .unwrap_or_default()
+                ),
+            };
+            SemanticHover {
+                entity,
+                kind: EntityKind::Port,
+                title: format!("{}.{}", c.name, p.name),
+                signature: Some(format!("{word} of {}", c.name)),
+                semantic_type: Some(concept),
+                representation: None,
+                status: EntityStatus::Plain,
+                details: vec![detail("timing", timing)],
+                explanation: if p.description.is_empty() {
+                    None
+                } else {
+                    Some(p.description.clone())
+                },
+            }
+        }
+        EntityRef::Instance(raw) => {
+            let i = system
+                .instances
+                .get(&bdl_system::ComponentInstanceId::from_raw(raw))?;
+            let c = system.components.get(&i.component)?;
+            let mut details = vec![detail("component", c.name.clone())];
+            for (local, sys) in &i.clock_bindings {
+                details.push(detail(
+                    &c.body
+                        .clocks
+                        .get(local)
+                        .map(|k| k.name.clone())
+                        .unwrap_or_default(),
+                    system
+                        .base
+                        .clocks
+                        .get(sys)
+                        .map(|k| k.name.clone())
+                        .unwrap_or_default(),
+                ));
+            }
+            for (port, value) in &i.parameter_bindings {
+                details.push(detail(
+                    &c.interface
+                        .ports
+                        .get(port)
+                        .map(|p| p.name.clone())
+                        .unwrap_or_default(),
+                    value.source.clone(),
+                ));
+            }
+            let bound = system
+                .bindings
+                .values()
+                .filter(|b| b.destination.instance() == Some(i.id))
+                .count();
+            details.push(detail("bound ports", bound.to_string()));
+            SemanticHover {
+                entity,
+                kind: EntityKind::Instance,
+                title: i.name.clone(),
+                signature: Some(format!("instance {} : {}", i.name, c.name)),
+                semantic_type: None,
+                representation: None,
+                status: EntityStatus::Plain,
+                details,
+                explanation: None,
+            }
+        }
+        EntityRef::Binding(raw) => {
+            let b = system.bindings.get(&bdl_system::BindingId::from_raw(raw))?;
+            let end = |e: bdl_system::BindingEnd| bdl_text::print::binding_end(system, e);
+            let mut details = vec![
+                detail("from", end(b.source)),
+                detail("to", end(b.destination)),
+            ];
+            match &b.transport {
+                Some(t) => {
+                    details.push(detail("carried across domains, starts at", t.init.clone()))
+                }
+                None => details.push(detail("transport", "direct".into())),
+            }
+            SemanticHover {
+                entity,
+                kind: EntityKind::Binding,
+                title: format!("bind {} = {}", end(b.destination), end(b.source)),
+                signature: None,
+                semantic_type: None,
+                representation: None,
+                status: EntityStatus::Plain,
+                details,
+                explanation: Some(
+                    "A binding converts nothing: both ends carry the same concept, by identity."
+                        .into(),
+                ),
+            }
+        }
+        EntityRef::Export(raw) => {
+            let e = system.exports.get(&bdl_system::ExportId::from_raw(raw))?;
+            SemanticHover {
+                entity,
+                kind: EntityKind::Export,
+                title: e.name.clone(),
+                signature: Some(format!(
+                    "exported {}",
+                    bdl_text::print::binding_end(system, bdl_system::BindingEnd::Port(e.port))
+                )),
+                semantic_type: None,
+                representation: None,
+                status: EntityStatus::Plain,
+                details: Vec::new(),
+                explanation: None,
+            }
+        }
+        _ => return None,
     })
 }
