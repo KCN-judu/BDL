@@ -6,6 +6,7 @@
 
 #![forbid(unsafe_code)]
 
+mod rename;
 mod server;
 mod session;
 

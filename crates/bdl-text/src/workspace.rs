@@ -196,8 +196,19 @@ pub fn load_workspace(name: &str, files: &[SourceFile], table: &IdentityTable) -
     build_system(name, &sources, table)
 }
 
+/// Write the identity table sidecar.
+pub fn write_identities(root: &Path, table: &IdentityTable) -> Result<(), TextError> {
+    write_json(&root.join(IDENTITIES_FILE), table)
+}
+
 /// Open a text project from disk.  Faults in the sources are returned
 /// inside the build, not as an error: an unfinished project opens.
+///
+/// Identities the sources needed and the sidecar did not have (a project
+/// written by hand, an item added by another editor) are allocated by the
+/// build and written back at once, so the ids an open session shows are
+/// the ids every later open — by any tool — shows, whether or not this
+/// session saves (ADR-0020 §3).
 pub fn load_text_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
     let manifest = persist::read_manifest(root)?;
     if manifest.kind != ProjectKind::Text {
@@ -219,6 +230,9 @@ pub fn load_text_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
         build.system.groups.insert(id, g);
     }
     bdl_system::prune_groups(&mut build.system);
+    if build.table != table {
+        write_identities(root, &build.table)?;
+    }
     let layout = persist::load_layout(root)?;
     let mut stamps: Vec<(String, Option<std::time::SystemTime>)> = files
         .iter()

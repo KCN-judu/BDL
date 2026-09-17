@@ -37,21 +37,30 @@ Transition reduce(AppState s, AppAction action) {
       s,
       () => s.project == null ? Transition(s, const [PickProjectToOpen()]) : Transition(s),
     ),
-    NewProjectPickRequested(:final system) => _whenConnected(
+    NewProjectPickRequested(:final kind) => _whenConnected(
       s,
-      () => s.project == null
-          ? Transition(s, [PickNewProjectLocation(system: system)])
-          : Transition(s),
+      () => s.project == null ? Transition(s, [PickNewProjectLocation(kind: kind)]) : Transition(s),
     ),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
       () => Transition(pending(s), [OpenProject(rootPath)]),
     ),
-    NewProjectRequested(:final rootPath, :final name, :final system) => _whenConnected(
+    NewProjectRequested(:final rootPath, :final name, :final kind) => _whenConnected(
       s,
-      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name, system: system)]),
+      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name, kind: kind)]),
     ),
-    SaveRequested() => _whenProject(s, () => Transition(pending(s), const [SaveProject()])),
+    SaveRequested(:final force) => _whenProject(
+      s,
+      () => Transition(pending(s.copyWith(editor: s.editor.copyWith(clearError: true))), [
+        SaveProject(force: force),
+      ]),
+    ),
+    ReloadProjectRequested() => _whenProject(
+      s,
+      () => Transition(pending(s.copyWith(editor: s.editor.copyWith(clearError: true))), const [
+        ReloadProject(),
+      ]),
+    ),
     CloseProjectRequested() => _whenProject(
       s,
       () => Transition(pending(s), const [CloseProject()]),

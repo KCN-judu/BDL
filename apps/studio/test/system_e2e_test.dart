@@ -76,7 +76,7 @@ void main() {
     expect(store.state.connection, isA<Connected>());
     dir = await Directory.systemTemp.createTemp('bdl-studio-system-e2e');
     root = p.join(dir.path, 'lamp');
-    store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp', system: true));
+    store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp', kind: NewProjectKind.system));
     await store.until((s) => s.project != null && s.system != null);
     expect(store.state.flat!.kind, pb.ProjectKind.PROJECT_KIND_SYSTEM);
     expect(store.state.isSystem, isTrue);

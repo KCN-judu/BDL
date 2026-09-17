@@ -114,7 +114,13 @@ class _Start extends StatelessWidget {
           icon: Icons.account_tree_outlined,
           label: 'New System…',
           enabled: connected,
-          onTap: () => dispatch(const NewProjectPickRequested(system: true)),
+          onTap: () => dispatch(const NewProjectPickRequested(kind: NewProjectKind.system)),
+        ),
+        MacLink(
+          icon: Icons.code_outlined,
+          label: 'New Text Project…',
+          enabled: connected,
+          onTap: () => dispatch(const NewProjectPickRequested(kind: NewProjectKind.text)),
         ),
         MacLink(
           icon: Icons.folder_open_outlined,
@@ -157,7 +163,7 @@ class _Start extends StatelessWidget {
                   NewProjectRequested(
                     rootPath: path,
                     name: path.split(RegExp(r'[/\\]')).last,
-                    system: true,
+                    kind: NewProjectKind.system,
                   ),
                 );
               }

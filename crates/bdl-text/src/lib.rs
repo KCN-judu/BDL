@@ -37,5 +37,6 @@ pub use identity::{IdentityTable, KeyEntry, Reconciliation, IDENTITIES_SCHEMA_VE
 pub use splice::{write_back, WriteBack};
 pub use workspace::{
     discover_sources, init_text_project, load_text_project, load_workspace, save_text_project,
-    LoadedWorkspace, SourceFile, TextError, AUTHORING_FILE, IDENTITIES_FILE, SOURCE_DIR,
+    write_identities, LoadedWorkspace, SourceFile, TextError, AUTHORING_FILE, IDENTITIES_FILE,
+    SOURCE_DIR,
 };

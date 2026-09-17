@@ -102,7 +102,7 @@ void main() {
         Directory.systemTemp;
     root = p.join(dir.path, 'lamp');
     await act(
-      NewProjectRequested(rootPath: root, name: 'lamp', system: true),
+      NewProjectRequested(rootPath: root, name: 'lamp', kind: NewProjectKind.system),
       (s) => s.project != null && s.system != null,
     );
     await act(

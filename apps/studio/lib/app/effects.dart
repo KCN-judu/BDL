@@ -5,6 +5,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'actions.dart' show NewProjectKind;
 import 'state.dart';
 
 @immutable
@@ -34,8 +35,8 @@ class PickProjectToOpen extends Effect {
 /// Show the OS save dialog to choose where a new project directory goes;
 /// the executor dispatches `NewProjectRequested(rootPath, name)`.
 class PickNewProjectLocation extends Effect {
-  const PickNewProjectLocation({this.system = false});
-  final bool system;
+  const PickNewProjectLocation({this.kind = NewProjectKind.design});
+  final NewProjectKind kind;
 }
 
 class OpenProject extends Effect {
@@ -44,16 +45,26 @@ class OpenProject extends Effect {
 }
 
 class InitProject extends Effect {
-  const InitProject({required this.rootPath, required this.name, this.system = false});
+  const InitProject({
+    required this.rootPath,
+    required this.name,
+    this.kind = NewProjectKind.design,
+  });
   final String rootPath;
   final String name;
 
-  /// A behaviour-system project (`InitSystemProject`).
-  final bool system;
+  /// `InitProject`, `InitSystemProject` or `InitTextProject`.
+  final NewProjectKind kind;
 }
 
 class SaveProject extends Effect {
-  const SaveProject();
+  const SaveProject({this.force = false});
+  final bool force;
+}
+
+/// `ReloadProject`: a text project re-read from disk.
+class ReloadProject extends Effect {
+  const ReloadProject();
 }
 
 class CloseProject extends Effect {

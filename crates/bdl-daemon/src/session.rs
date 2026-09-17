@@ -23,7 +23,7 @@ use bdl_ide::{
     TextRange,
 };
 use bdl_ide_db::CancelScope;
-use bdl_model::edit::{apply_edit, EditError, EditOp, EditOutcome};
+use bdl_model::edit::{apply_edit, EditError, EditKind, EditOp, EditOutcome};
 use bdl_model::layout::Layout;
 use bdl_model::persist::{self, PersistError};
 use bdl_model::surface::{Design, ProjectSnapshot};
@@ -31,9 +31,10 @@ use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
 use bdl_system::{
     analyze_system, apply_group_edit, apply_system_edit, flatten, persist as system_persist,
-    preview_extraction, BehaviorGroup, BehaviorGroupId, BehaviorSystem, ComponentId, ExtractError,
-    ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp, GroupScope,
-    SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome, SystemSnapshot,
+    preview_extraction, AppliedSystem, BehaviorGroup, BehaviorGroupId, BehaviorSystem, ComponentId,
+    ExtractError, ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError,
+    GroupEditOp, GroupScope, SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome,
+    SystemSnapshot,
 };
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -272,13 +273,25 @@ impl Session {
 
     /// Re-read a text project from disk, dropping the in-memory design:
     /// identities come back through the sidecar, layout through its file.
+    ///
+    /// The reloaded state is a new revision after the one it replaces —
+    /// a client that ignores stale revisions (ADR-0009) must see it as
+    /// what supersedes its edits, not as an old answer.
     pub fn reload_text(&mut self) -> Result<&OpenProject, SessionError> {
         let root = self.project()?.root.clone();
         if !self.project()?.is_text() {
             return Err(SessionError::NotASystem);
         }
+        let after = self.project()?.current.revision.next();
+        let loaded = bdl_text::load_text_project(&root)?;
         self.project = None;
-        self.open(&root)
+        let snapshot = SystemSnapshot {
+            revision: after,
+            system: loaded.build.system.clone(),
+        };
+        let layout = loaded.layout.clone();
+        self.install_system(&root, snapshot, layout, Some(loaded));
+        self.project()
     }
 
     /// The source files a text project has that changed on disk since they
@@ -412,15 +425,27 @@ impl Session {
                 actual: p.current.revision,
             });
         }
-        let applied = apply_edit(&p.current, op)?;
-        let previous = std::mem::replace(&mut p.current, applied.snapshot);
+        // A rename carries the formulas that read the concept by name
+        // (`rename`): several model steps, one revision, one undo entry.
+        let ops = crate::rename::expand_flat(&p.current.design, op);
+        let mut working = p.current.clone();
+        let mut outcome: Option<EditOutcome> = None;
+        for step in &ops {
+            let applied = apply_edit(&working, step)?;
+            working = applied.snapshot;
+            outcome = Some(match outcome {
+                None => applied.outcome,
+                Some(acc) => merge_outcomes(acc, applied.outcome),
+            });
+        }
+        let previous = std::mem::replace(&mut p.current, working);
         p.undo.push(previous.design);
         p.redo.clear();
         p.simulation = None;
         p.ide.set_committed(p.current.clone());
         Ok(Committed {
             snapshot: p.current.clone(),
-            outcome: Some(applied.outcome),
+            outcome,
         })
     }
 
@@ -448,7 +473,21 @@ impl Session {
             revision: p.current.revision,
             system: sys.current.system.clone(),
         };
-        let applied = apply_system_edit(&at, op)?;
+        let ops = crate::rename::expand_system(&at.system, op);
+        let mut working = at;
+        let mut outcome: Option<SystemEditOutcome> = None;
+        for step in &ops {
+            let applied = apply_system_edit(&working, step)?;
+            working = applied.snapshot;
+            outcome = Some(match outcome {
+                None => applied.outcome,
+                Some(acc) => merge_system_outcomes(acc, applied.outcome),
+            });
+        }
+        let applied = AppliedSystem {
+            snapshot: working,
+            outcome: outcome.unwrap_or_default(),
+        };
         let previous = std::mem::replace(&mut sys.current, applied.snapshot);
         sys.undo
             .push(HistoryEntry::Semantic(Box::new(previous.system)));
@@ -790,6 +829,42 @@ impl Session {
         self.project_mut()?.layout = layout;
         Ok(())
     }
+}
+
+/// The outcome of several model steps committed as one revision: the
+/// strongest kind, every invalidation, every origin, the first creation.
+fn merge_outcomes(mut acc: EditOutcome, next: EditOutcome) -> EditOutcome {
+    if next.kind == Some(EditKind::Edit) || acc.kind.is_none() {
+        acc.kind = next.kind.or(acc.kind);
+    }
+    acc.invalidates.extend(next.invalidates);
+    acc.origin_decls.extend(next.origin_decls);
+    acc.created_concept = acc.created_concept.or(next.created_concept);
+    acc.created_mapping = acc.created_mapping.or(next.created_mapping);
+    acc.created_clock = acc.created_clock.or(next.created_clock);
+    acc.created_output = acc.created_output.or(next.created_output);
+    acc.created_device = acc.created_device.or(next.created_device);
+    acc
+}
+
+fn merge_system_outcomes(mut acc: SystemEditOutcome, next: SystemEditOutcome) -> SystemEditOutcome {
+    if next.kind == Some(EditKind::Edit) || acc.kind.is_none() {
+        acc.kind = next.kind.or(acc.kind);
+    }
+    acc.invalidates.extend(next.invalidates);
+    acc.origin_decls.extend(next.origin_decls);
+    acc.instances.extend(next.instances);
+    acc.bindings.extend(next.bindings);
+    acc.created_component = acc.created_component.or(next.created_component);
+    acc.created_instance = acc.created_instance.or(next.created_instance);
+    acc.created_port = acc.created_port.or(next.created_port);
+    acc.created_binding = acc.created_binding.or(next.created_binding);
+    acc.created_export = acc.created_export.or(next.created_export);
+    acc.inner = match (acc.inner.take(), next.inner) {
+        (Some(a), Some(b)) => Some(merge_outcomes(a, b)),
+        (a, b) => a.or(b),
+    };
+    acc
 }
 
 #[cfg(test)]

@@ -81,7 +81,11 @@ class StudioShell extends ConsumerWidget {
                     _Toolbar(state: state, dispatch: dispatch),
                     Divider(color: t.hairline),
                     if (state.editor.lastError case final err?)
-                      _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
+                      _Banner(
+                        error: err,
+                        onDismiss: () => dispatch(const ErrorDismissed()),
+                        dispatch: dispatch,
+                      ),
                     Expanded(child: page),
                     Divider(color: t.hairline),
                     _StatusLine(state: state),
@@ -150,14 +154,20 @@ class _Toolbar extends StatelessWidget {
   }
 }
 
+/// The error code a text project answers a save with when its sources
+/// changed on disk since they were loaded (ADR-0020 §10).
+const kChangedOnDisk = 'project.changed_on_disk';
+
 class _Banner extends StatelessWidget {
-  const _Banner({required this.error, required this.onDismiss});
+  const _Banner({required this.error, required this.onDismiss, this.dispatch});
   final UserFacingError error;
   final VoidCallback onDismiss;
+  final void Function(AppAction)? dispatch;
 
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
+    final conflict = error.code == kChangedOnDisk && dispatch != null;
     return Container(
       color: t.sidebar,
       padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
@@ -171,6 +181,19 @@ class _Banner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(child: Text(error.message)),
           const SizedBox(width: 8),
+          // A conflict has two honest answers: take the disk's version
+          // (dropping the edits here) or keep this one (writing over the
+          // other editor's).  Neither is silent.
+          if (conflict) ...[
+            TextButton(
+              onPressed: () => dispatch!(const ReloadProjectRequested()),
+              child: const Text('Reload from disk'),
+            ),
+            TextButton(
+              onPressed: () => dispatch!(const SaveRequested(force: true)),
+              child: const Text('Overwrite'),
+            ),
+          ],
           TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
         ],
       ),

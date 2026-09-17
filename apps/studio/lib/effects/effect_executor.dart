@@ -64,12 +64,16 @@ class EffectExecutor {
       case PickProjectToOpen():
         final dir = await _picker(() => fs.getDirectoryPath(confirmButtonText: 'Open Project'));
         if (dir != null) _dispatch(OpenProjectRequested(dir));
-      case PickNewProjectLocation(:final system):
+      case PickNewProjectLocation(:final kind):
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
         final loc = await _picker(
           () => fs.getSaveLocation(
-            suggestedName: system ? 'Untitled System' : 'Untitled Project',
+            suggestedName: switch (kind) {
+              NewProjectKind.design => 'Untitled Project',
+              NewProjectKind.system => 'Untitled System',
+              NewProjectKind.text => 'Untitled Text Project',
+            },
             confirmButtonText: 'Create Project',
           ),
         );
@@ -78,24 +82,28 @@ class EffectExecutor {
             NewProjectRequested(
               rootPath: loc.path,
               name: p.basenameWithoutExtension(loc.path),
-              system: system,
+              kind: kind,
             ),
           );
         }
       case OpenProject(:final rootPath):
         await _project(pb.ClientMessage(openProject: pb.OpenProjectRequest(rootPath: rootPath)));
-      case InitProject(:final rootPath, :final name, :final system):
-        await _project(
-          system
-              ? pb.ClientMessage(
-                  initSystemProject: pb.InitSystemProjectRequest(rootPath: rootPath, name: name),
-                )
-              : pb.ClientMessage(
-                  initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
-                ),
-        );
-      case SaveProject():
-        await _project(pb.ClientMessage(saveProject: pb.SaveProjectRequest()));
+      case InitProject(:final rootPath, :final name, :final kind):
+        await _project(switch (kind) {
+          NewProjectKind.design => pb.ClientMessage(
+            initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
+          ),
+          NewProjectKind.system => pb.ClientMessage(
+            initSystemProject: pb.InitSystemProjectRequest(rootPath: rootPath, name: name),
+          ),
+          NewProjectKind.text => pb.ClientMessage(
+            initTextProject: pb.InitTextProjectRequest(rootPath: rootPath, name: name),
+          ),
+        });
+      case SaveProject(:final force):
+        await _project(pb.ClientMessage(saveProject: pb.SaveProjectRequest(force: force)));
+      case ReloadProject():
+        await _project(pb.ClientMessage(reloadProject: pb.ReloadProjectRequest()));
       case CloseProject():
         await _call(pb.ClientMessage(closeProject: pb.CloseProjectRequest()), (_) {
           _dispatch(const ProjectClosed());

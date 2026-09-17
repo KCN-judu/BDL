@@ -38,10 +38,15 @@ class OpenProjectPickRequested extends UserAction {
   const OpenProjectPickRequested();
 }
 
+/// What a new project is: a flat design, a behaviour system whose top
+/// level composes components, or a system written as text
+/// (`src/**/*.bdl`, ADR-0020) that Studio and editors share.
+enum NewProjectKind { design, system, text }
+
 /// User chose "New Project…": ask the OS where to create it.
 class NewProjectPickRequested extends UserAction {
-  const NewProjectPickRequested({this.system = false});
-  final bool system;
+  const NewProjectPickRequested({this.kind = NewProjectKind.design});
+  final NewProjectKind kind;
 }
 
 class OpenProjectRequested extends UserAction {
@@ -49,17 +54,31 @@ class OpenProjectRequested extends UserAction {
   final String rootPath;
 }
 
-/// Create a project: a flat design, or — [system] — a behaviour system whose
-/// top level composes components (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md).
+/// Create a project of [kind] (docs/BEHAVIOR_SYSTEM_ARCHITECTURE.md,
+/// docs/adr/0020-textual-workspace-and-source-identities.md).
 class NewProjectRequested extends UserAction {
-  const NewProjectRequested({required this.rootPath, required this.name, this.system = false});
+  const NewProjectRequested({
+    required this.rootPath,
+    required this.name,
+    this.kind = NewProjectKind.design,
+  });
   final String rootPath;
   final String name;
-  final bool system;
+  final NewProjectKind kind;
 }
 
+/// Save.  A text project whose sources changed on disk since they were
+/// loaded refuses (`project.changed_on_disk`) unless [force]; the banner
+/// offers reloading instead.
 class SaveRequested extends UserAction {
-  const SaveRequested();
+  const SaveRequested({this.force = false});
+  final bool force;
+}
+
+/// Re-read a text project from disk, dropping unsaved edits: the answer
+/// to `project.changed_on_disk` when the other editor's version wins.
+class ReloadProjectRequested extends UserAction {
+  const ReloadProjectRequested();
 }
 
 class CloseProjectRequested extends UserAction {
