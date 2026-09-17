@@ -208,22 +208,22 @@ treat as "has no formula text".
 
 ## 9. Persistence
 
-`bdl.toml` gains `kind = "flat" | "system"` (default `flat`, so every existing
-manifest reads as before). A system project stores `design/system.bdl.json`
-(`schema_version` 1: `base`, `components`, `instances`, `bindings`, `exports`,
-`flat_ids`, `ids`) and **no** `design/project.bdl.json`: the flattened design is
-derived on open and on every commit, never written. Two files claiming to be the
-truth of one project is exactly what §7 of the brief forbids. Layout stays in
-`ui/layout.json` keyed by flat ids for now. Newer schemas are refused, as today.
+The system is persisted as source text under `src/**/*.bdl` with the identity
+sidecar `.bdl/identities.json` and the authoring sidecar `.bdl/authoring.json`
+(docs/spec/project-format.md, ADR-0023); the flattened design is derived on open
+and on every commit, never written. Two files claiming to be the truth of one
+project is exactly what §7 of the brief forbids. Layout stays in
+`ui/layout.json` keyed by flat ids. The JSON form (`design/system.bdl.json`) is
+legacy: read once, on open, to migrate a project written before ADR-0023.
 
 ## 10. Ordinary flat projects
 
-Untouched: `kind` absent → flat; `design/project.bdl.json` is authored truth;
+There is no separate flat project kind: every open project is a
+`BehaviorSystem`, and a design with no components is the degenerate system whose
+flattening is its own base (`BehaviorSystem::from_flat`, `SystemView.is_flat`).
 `apply_edit`, undo, save, analyse, simulate, deploy, the IDE and the Smart Lamp
-example behave byte-for-byte as before. Converting a flat project into a system
-project is an explicit future action, not an implicit reinterpretation;
-`BehaviorSystem::from_flat(design)` exists for tests and tooling and produces
-the degenerate system whose flattening is the same design.
+example behave as before; a flat `ApplyEdit` is the system edit `Base { op }` on
+that base.
 
 ## 11. Public contract versus body
 

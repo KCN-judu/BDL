@@ -44,12 +44,12 @@ and redefine the language.
 
 ## Four trust layers
 
-| Layer                               | Owns                                                                                                       | Never does                                                                                                                  |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Flutter Studio**                  | presentation, interaction, layout, ephemeral render state                                                  | compute type validity, semantic identity, dimensions, causality, clocks, output ownership, hardware feasibility, simulation |
-| **Rust compiler (`bdld` + crates)** | the canonical project model, every semantic judgment, diagnostics, simulation, allocation, code generation | render, decide layout                                                                                                       |
-| **Generated Rust core**             | deterministic executable behaviour: domain step functions, state, output values                            | touch hardware, know about tasks or executors                                                                               |
-| **Platform adapter**                | physical I/O, clock activation sources, telemetry transport                                                | interpret BDL semantics                                                                                                     |
+| Layer                               | Owns                                                                                                                                                            | Never does                                                                                                                  |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Flutter Studio**                  | presentation, interaction, layout, ephemeral render state                                                                                                       | compute type validity, semantic identity, dimensions, causality, clocks, output ownership, hardware feasibility, simulation |
+| **Rust compiler (`bdld` + crates)** | the canonical project model, every semantic judgment, diagnostics, simulation, allocation, code generation, the placement of entities that have no position yet | render, decide where a placed node goes                                                                                     |
+| **Generated Rust core**             | deterministic executable behaviour: domain step functions, state, output values                                                                                 | touch hardware, know about tasks or executors                                                                               |
+| **Platform adapter**                | physical I/O, clock activation sources, telemetry transport                                                                                                     | interpret BDL semantics                                                                                                     |
 
 Flutter may render an edit optimistically, but the truth comes back from the
 compiler as a _projection_. Studio never holds a second copy of the language.
@@ -71,14 +71,16 @@ crates/
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
   bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
   bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
-  bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · system project format (→ model, compiler)
+  bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · legacy system JSON reader (→ model, compiler)
+  bdl-text         the project's persistence: source discovery · identity sidecar and reconciliation · load_workspace → BehaviorSystem · item-level write-back · legacy JSON migration · names are identifiers (→ model, system, syntax)
+  bdl-layout       the layout service: deterministic, incremental placement of entities without a position; never semantics (→ model, system)
   bdl-library      concept libraries: data-driven templates (library/std/concepts.toml) that instantiate ordinary concepts via CreateConcept; search; multi-library set (→ model, elab)
   bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
   bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion (incl. library templates) · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db, library)
   bdl-text         text projects: src/**/*.bdl loader · source-identity sidecar · item-level write-back (→ syntax, system)
   bdl-lsp          LSP adapter only: lsp-server transport · position encoding · lsp-types rendering (→ ide, text)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler, library)
-  bdl-daemon       bdld: session (owns the project's IdeHost), coordinator, transport, analysis push; `bdld check|compile|simulate` as the headless front end over the same session (→ protocol, compiler, ide, text)
+  bdl-daemon       bdld: session (owns the project's IdeHost, its sources and text drafts), coordinator, transport, analysis push, the layout service on open and commit; `bdld check|compile|simulate` as the headless front end over the same session (→ protocol, compiler, ide, text, layout)
 planned:
   bdl-component  supplied Rust component contracts (docs/architecture/component-boundary.md)
 runtime/
@@ -93,11 +95,12 @@ Editor integration outside the workspace: `editors/vscode` (a thin client of
 
 Dependency direction is strict and acyclic:
 `model → ir → {syntax → elab, check → reactive → output} → compiler → ide-db → ide → {lsp, daemon}`
-(`protocol` sits between `compiler` and `daemon`); `hardware` depends on `model`
-only (it never sees `Δ`) and `compiler` joins the two; `lower → codegen` hang
-off `exec-ir` and are joined by `compiler`; `runtime-core` depends on nothing
-and is what generated code links against. A crate exists only where a real
-boundary exists; tiny crates are merged rather than kept for the diagram.
+(`protocol` sits between `compiler` and `daemon`; `text` and `layout` hang off
+`system` and are joined by `daemon`, `lsp` and `cli`); `hardware` depends on
+`model` only (it never sees `Δ`) and `compiler` joins the two; `lower → codegen`
+hang off `exec-ir` and are joined by `compiler`; `runtime-core` depends on
+nothing and is what generated code links against. A crate exists only where a
+real boundary exists; tiny crates are merged rather than kept for the diagram.
 
 ## Behaviour systems flatten into the one flat design
 
@@ -111,9 +114,33 @@ source — the kernel's `declRef`, or `sync` across domains; the result is a fla
 map back to instances and ports. There is one BDL: no system type checker,
 evaluator, clock judgment or code generator exists, and the kernel gained no
 construct (FV Phase 8a, ADR-0021,
-`docs/evidence/behavior-systems-correspondence.md`). For a system project the
-authored truth is the system; the flat design is derived and never persisted.
-Flat projects are untouched.
+`docs/evidence/behavior-systems-correspondence.md`). Every project is a
+behaviour system (a design with no components is the degenerate one, `is_flat`);
+the flat design is derived and never persisted.
+
+## One project, persisted as text, shown as graph or text
+
+A project is one directory (ADR-0023, `docs/spec/project-format.md`): the
+sources under `src/**/*.bdl` are the semantic source of every project,
+`.bdl/identities.json` binds every declaration to its stable id,
+`ui/layout.json` holds presentation. `bdl-text::load_project` is the one loader
+(bdld, the CLI, the language server); a legacy JSON project is migrated in place
+the first time it is opened. Design, Code and Split are Studio views of the same
+open project:
+
+- graph → text: a canvas operation is a semantic edit on the model; the textual
+  projection is the item-level splice of the sources (`bdl-text::write_back`),
+  computed for the Code view on request and written on save — comments and
+  formatting outside the touched item stay;
+- text → graph: a Code-view edit is the whole text of one file against a
+  revision (`ApplySourceEdit`); if it builds, declarations are bound to their
+  identities by reconciliation and the project moves to a new revision; if not,
+  the committed project stays and the draft is held with the loader's faults
+  (ADR-0023 §5) — malformed text never erases the graph;
+- layout never enters the model: moving a node changes the layout file and no
+  revision; the layout service (`bdl-layout`) places exactly the entities that
+  have no position, on open (persisted) and on every commit, deterministically
+  and without moving anything placed. Studio arranges nothing at render time.
 
 ## The generated core is an implementation of the reference evaluator
 

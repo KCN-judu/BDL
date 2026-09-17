@@ -36,8 +36,14 @@ formal result arrives.
   (_What remains_): the Deploy page on the 0.5 read model, an Explain request,
   domain regions and cycle emphasis on the canvas, entity hover and fixes inside
   a component's source.
+
 - Cross-surface actions applying model operations from text editors; workspace
   symbols in the LSP.
+- The Code view's remaining slice (ADR-0023): inline fault ranges, completion
+  and hover in Studio's Code pane through the IDE service; a _Format_ command;
+  whole-graph relayout on request; a persisted edit history that makes text-only
+  changes undoable (ISS-0009).
+
 - Projection deltas and a persisted edit history — ISS-0009.
 - Team / project / package concept libraries (LIB-2); a separate device library
   that provides concepts and generates requirements (LIB-3) —

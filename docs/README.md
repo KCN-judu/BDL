@@ -120,18 +120,21 @@ each of its questions was answered is in the
   protobuf to.
 - **Governing decisions:** ADR-0001/0002 (Rust owns semantics; bdld is a
   process), 0008/0009 (stable ids; revisioned edits), 0010/0011 (Lean is the
-  specification; floats are a recorded deviation), 0013/0014/0020 (formula
-  language; lossless syntax; text projects), 0015/0016 (target-relative
-  deployment; generated Rust implements the evaluator), 0021/0022/0019
-  (flattening; stored contracts; groups as metadata), 0017/0018 (LSP is an
-  adapter; three information levels).
+  specification; floats are a recorded deviation), 0013/0014/0023 (formula
+  language; lossless syntax; one project with Design, Code and Split views —
+  ADR-0020's text mechanisms kept), 0015/0016 (target-relative deployment;
+  generated Rust implements the evaluator), 0021/0022/0019 (flattening; stored
+  contracts; groups as metadata), 0017/0018 (LSP is an adapter; three
+  information levels).
 - **Unresolved:** ten design issues — occurrence windows, candidate definitions,
   the evidence model, affine units, user enums, `f32` on device, nested
   packaging, a structural output entity, projection deltas, temporal modifiers.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** text projects and protocol 0.9; the engineering records
-  themselves. [changes/unreleased/](changes/unreleased/).
+- **Recently changed:** one BDL project — sources canonical, legacy JSON
+  migrated on open, the layout service, the Code and Split views, protocol 0.10;
+  text projects and protocol 0.9; the engineering records themselves.
+  [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph
 

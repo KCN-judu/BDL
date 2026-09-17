@@ -156,9 +156,14 @@ all other trivia sits between nodes in the enclosing node.
 
 ASCII only in v0.1: `[A-Za-z_][A-Za-z0-9_]*`, excluding the keywords and the
 lone `_`. Unicode identifiers are deferred (normalisation, confusables and code
-generation would each need a policy). Display names in Studio remain free
-Unicode; the textual surface will need a mapping from display names to
-identifiers when the two are round-tripped (§11).
+generation would each need a policy). Since the text is the semantic source of
+every project (ADR-0023), a name is an identifier on every surface: Studio
+refuses a create or rename the text cannot spell (`edit.invalid_name`, with the
+identifier it would be — _A name is one word, without spaces: `Light_Output`_),
+and a display name in a legacy JSON project is mapped once, deterministically,
+when the project is migrated (`bdl-text::identifier_from`: every run of other
+characters becomes one `_`, a leading digit gets a `_` before it, a keyword or
+an empty result gets a trailing `_`).
 
 Capitalisation is a convention, not a rule: concepts and constructors are
 conventionally `UpperCamel`, mappings and parameters `lowerCamel`. The parser
@@ -666,11 +671,11 @@ Reserved punctuation with no token yet: `#`, `|`, `&`, `..`, `::`. They lex as
 
 ## 14. Project items (v0.2)
 
-v0.1 spelled concepts, relationships and enums; a text project must spell
-everything the model holds (ADR-0020). v0.2 adds the items below. Every one
-lowers to an existing `bdl-model` / `bdl-system` structure; none adds a semantic
-notion. The item keywords are real keywords; `for`, `pin`, `init`, `as`,
-`optional` are **contextual** — identifiers everywhere else, recognised by
+v0.1 spelled concepts, relationships and enums; the sources must spell
+everything the model holds (ADR-0020, ADR-0023). v0.2 adds the items below.
+Every one lowers to an existing `bdl-model` / `bdl-system` structure; none adds
+a semantic notion. The item keywords are real keywords; `for`, `pin`, `init`,
+`as`, `optional` are **contextual** — identifiers everywhere else, recognised by
 spelling only where the grammar expects them.
 
 ### 14.1 Timing domains, physical outputs, drives, devices

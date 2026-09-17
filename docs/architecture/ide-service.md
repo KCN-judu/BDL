@@ -386,7 +386,8 @@ and to record cancellation.
 
 ## Text workspaces
 
-A text project (`kind = "text"`, ADR-0020) is the host's _ground_
+Every project is a text workspace (ADR-0023; the mechanism is ADR-0020's): the
+language server opens a project directory as the host's _ground_
 (`bdl-ide-db::workspace::TextGround`): the sources under `src/**/*.bdl` read in
 path order and the identity table from `.bdl/identities.json`. Composing a
 snapshot substitutes open buffers for files, builds the system with

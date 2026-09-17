@@ -56,7 +56,9 @@ from)._
 ```
 
 Laid out like VS Code's welcome page (Start on the left, Recent on the right)
-rather than Resolve's thumbnail grid — BDL projects have no thumbnail yet.
+rather than Resolve's thumbnail grid — BDL projects have no thumbnail yet. There
+is one _New Project…_ (ADR-0023): a project is sources under `src/` and a
+behaviour system, whatever it is later shown as; nothing asks for a kind.
 **Hero**: the wordmark _Behavior Designer_ set in Chakra Petch (a square sans
 with 45° chamfered corners, SIL OFL, bundled) over a field of 45°-routed traces
 drawn deterministically — PCB routing is the one visual idiom that belongs to
@@ -89,7 +91,7 @@ contexts → outputs → domains → board → observe):
 
 | Page         | Centre                                                                                                                                                                                          | Left                                                                                                                                                           | Right                                                       | Answers                    |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------- |
-| **Design**   | node canvas                                                                                                                                                                                     | sidebar: _Project_ tab (concepts, mappings, timing domains, outputs; _Contexts_ and _Components_ are empty headings) and _Library_ tab (concept templates, §2) | inspector of the selection                                  | what the product does      |
+| **Design**   | the project as **Design** (node canvas), **Code** (its source files) or **Split** (both) — §12                                                                                                  | sidebar: _Project_ tab (concepts, mappings, timing domains, outputs; _Contexts_ and _Components_ are empty headings) and _Library_ tab (concept templates, §2) | inspector of the selection                                  | what the product does      |
 | **Simulate** | readiness blockers with _Show_ links, Step / Step ×10 / Reset, the trace as a table (tick, active domains, one column per relationship without inputs and per driven output); value plots later | inputs as controls by value form; a period per timing domain                                                                                                   | probe of the selection: value now and over the run, Explain | what it does over time     |
 | **Deploy**   | one verdict _for this board_, the placement device → requirement → pin, the dead end in the solver's terms; a board picture later                                                               | boards from bdld; devices, edited in place                                                                                                                     | —                                                           | whether it fits            |
 | **Monitor**  | _spec_: the same canvas with live values; today a placeholder page (`placeholder_page.dart`) until telemetry exists (ROADMAP step S)                                                            | telemetry sessions                                                                                                                                             | probe inspector                                             | what it is doing right now |
@@ -188,8 +190,12 @@ Muting nodes (M) has no BDL meaning and is not offered.
 ### What the canvas never means
 
 Edges are dependency, not execution order. Drawing order does not set output
-priority. Node position is layout only (ADR-0003). No node type exists per
-arithmetic operator — formulas live in the inspector.
+priority. Node position is layout only (ADR-0003): the canvas draws every node
+where the layout puts it and arranges nothing itself — an entity without a
+position is placed by the daemon's layout service on open and on commit
+(ADR-0023 §7, `docs/architecture/overview.md`), and the projection carries the
+result. No node type exists per arithmetic operator — formulas live in the
+inspector.
 
 ### Create-then-rename (concept templates)
 
@@ -583,16 +589,18 @@ e2e cases in `test/simulation_test.dart` hold the same traces as
 
 ## 11. System projects: three zoom levels, one canvas
 
-A system project (docs/architecture/behavior-systems.md, ADR-0019) has two
-truths on the wire — the authored system and the flat design derived from it —
-and Studio shows one design at a time (`EditorState.context`,
-`app/system.dart`):
+Every project is a behaviour system (docs/architecture/behavior-systems.md,
+ADR-0019, ADR-0023) with two truths on the wire — the authored system and the
+flat design derived from it — and Studio shows one design at a time
+(`EditorState.context`, `app/system.dart`):
 
 | Context                                                                         | The canvas shows                                                                                                                                                                                                                                                                                                            | Edits go to                                                                                                                                            |
 | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **System**                                                                      | the top level: shared concepts, domains, sinks, top-level relationships (with a _realisation socket_ when open), component **instance nodes** drawn from their ports' contracts, **binding links** (a gate where a value is carried across domains), **behaviour regions** or collapsed **behaviour boxes**                 | `ApplySystemEdit { Base }` for the design's own objects; instance / binding / port / component ops; `ApplyGroupEdit` for behaviours (never a revision) |
 | **Component source** ("Editing AdaptiveLamp · used by 3 instances", _‹ System_) | the body as an ordinary design in the component's own names and identities; a port-backed relationship carries the word _requires_ / _provides_ / _parameter_; drafts, completion and hover run in the body's scope; the component's own **behaviour regions and boxes** (scoped to it, with their own canvas and viewport) | `ApplySystemEdit { EditComponentBody }`; the component inspector's contract edits; `ApplyGroupEdit { component }` for its behaviours                   |
-| **Atomic**                                                                      | a flat project's design (unchanged)                                                                                                                                                                                                                                                                                         | `ApplyEdit`                                                                                                                                            |
+
+A design with no components is the system context of the degenerate system
+(`SystemView.is_flat`); nothing about it is a separate kind.
 
 Simulate and Deploy read the derived flat design in every context
 (`AppState.flat`): an instance's relationships appear as `lampA.brightness`, its
@@ -675,3 +683,53 @@ project (the save mark) although the revision is unchanged.
 
 Entity hover and fixes inside a component's source (DI-40); packaging a
 behaviour inside a component (nested components, DI-44); a minimap.
+
+## 12. Design, Code and Split: views of one project
+
+The Design page's context bar ends in a segmented control — _Design_ · _Code_ ·
+_Split_ — the platform's shape for a mode (Xcode's editor modes). Switching is a
+view change; no conversion, no project kind (ADR-0023 §3). `EditorState.view`,
+`app/sources.dart`, `ui/pages/code_pane.dart`.
+
+**Task.** Change the design as text and see the graph follow — or see, at once,
+that what was typed does not build yet and where.
+
+**Facts and where they land.** (1) Is the graph in step with the text — the
+costliest mistake is to read the graph as the text's meaning when the text did
+not build. A _document-level condition_, so a banner (never a colour on the
+text): on the Code pane, _This file does not build yet: the design shows the
+last version that did_; on the canvas, _Showing the last version that built; the
+text has changes that do not build yet_. Both are the daemon's `draft` flag;
+Studio judges nothing. (2) Where the fault is — the explanation layer: a list
+under the editor, one row per reason in product language, the line number in
+tabular figures, a mark that survives without colour (× for an error, the
+canvas's hollow ring for something still open — incompleteness is never red);
+activating a row puts the caret on the range. (3) The text itself — the primary
+object, a plain monospace editor over the daemon's sources, one file at a time
+(a pop-up names the others; a draft file is labelled _— not built_). (4) The
+selection — shared in Split: selecting a node scrolls the editor to its item;
+the caret in an item selects its node. Both directions use the daemon's source
+anchors (`GetSources`); Studio does not parse.
+
+**Flow.** The Code pane shows `GetSources`: the files with every graph edit
+written back, so a rename on the canvas appears in the text with its comments
+intact. Typing edits the editor's own buffer; after a 400 ms pause (or on
+leaving the field) the whole file is one `ApplySourceEdit` against the revision
+it was read at. Accepted: a new revision, the graph follows, the new node is
+already placed. Refused: the graph stays at the last revision that built, the
+banner appears, the draft stays exactly as typed with its reasons. A stale edit
+(the project moved under it) is resent once the sources catch up; typing during
+a send is the next send; nothing typed is discarded and no error banner is
+raised for a race the designer did not cause. `pendingRequests` counts the send,
+as it counts every edit.
+
+**States.** No project: the page's empty state. Sources not yet here: _Reading
+the sources…_. Incomplete-but-valid (open faults): listed with the hollow ring,
+the graph in step. Not building: the banners and the list. Disconnected: the
+editor is read-only.
+
+**Not built.** Inline squiggles on the fault's range (the list and the caret
+jump stand in); completion and hover in the Code pane (the language server has
+them; the pane does not yet ask); a _Format_ command (`bdl-ide::format` exists);
+creating a second source file from Studio (a file made by an external editor
+appears on reload).
