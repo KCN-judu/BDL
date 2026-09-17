@@ -45,6 +45,11 @@ outputs are not grouped.
 
 ## What the box shows
 
+![A titled region labelled Adaptive lamp enclosing the relationship nodes dimByTilt and brightness, outlined in the accent colour because it is selected; tiltValue to its left feeds into it and indicator and the light sink to its right read from it.](../assets/workflows/behavior-region.png)
+
+_The expanded behavior Adaptive lamp: a region around dimByTilt and brightness,
+selected._
+
 A collapsed behavior is one box. Its left sockets are what the members **read
 from outside** the group; its right sockets are what outside **reads from** the
 members. The tool computes these from the design's dependencies — you cannot

@@ -2,25 +2,17 @@
 
 The Deploy page (⌘3) answers _does this design fit this board_. It is a
 placement check: for each physical output's device, which board resources it
-would use — or the first reason it cannot be placed. It does not build firmware
-or flash a board yet; see [What is not there](#what-is-not-there).
+would use — or the first reason it cannot be placed. The page is one column: the
+**Target** pop-up, the **verdict**, the **Devices** and, once a board has
+answered, the **Placement**. It does not build firmware or flash a board yet;
+see [What is not there](#what-is-not-there).
 
-```text
-┌───────────────┬────────────────────────────────────────────────────────┐
-│ Target        │ Feasible on Arduino Nano.                              │
-│ [Arduino Nano]│                                                        │
-│               │ Placement on arduino_nano                              │
-│ Devices       │  PWM light   PWM   D3   digital in, digital out, PWM   │
-│ [Add device]  │                                (timer 2), interrupt    │
-│ PWM light     │                                                        │
-│  PWM channel  │                                                        │
-│  Light Output │                                                        │
-│  PWM [    ]   │                                                        │
-│  Remove       │                                                        │
-└───────────────┴────────────────────────────────────────────────────────┘
-```
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named PWM light of kind PWM channel realising Light Output, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: PWM light, PWM light PWM, arrow D3.](../assets/studio/deploy-page.png)
 
-## Target (left)
+_The Deploy page: Arduino Nano chosen, one PWM device on Light Output, the
+verdict and the placement._
+
+## Target
 
 The boards the compiler service knows. Today: **Arduino Nano** and **Big board
 (mock)**, a test target with more PWM pins. The board choice is a **session
@@ -30,7 +22,7 @@ the design.
 Until a board is chosen the page says _Choose a board to see whether this design
 fits it._
 
-## Devices (left)
+## Devices
 
 A **device** realises one physical output on the board. **Add device** creates a
 row; in it you set
@@ -52,13 +44,13 @@ fields are the only manual choice.
 Devices are saved with the project. They are deployment data, not design data:
 adding, changing or removing one leaves every Design-page verdict unchanged.
 
-## The verdict (centre)
+## The verdict
 
-| Verdict                                                     | Meaning                                                                                                                                                                                                                                                                                                                               |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Feasible on Arduino Nano.**                               | every device's requirements were placed on distinct pins with the right capabilities; the _Placement_ table lists device → requirement → pin, with what the pin can do                                                                                                                                                                |
-| **Fits Arduino Nano so far — the binding is not finished.** | what is bound fits, but an output has no device (_No device on … for: …_) or a device no output (_Not connected to an output: …_)                                                                                                                                                                                                     |
-| **Not feasible on Arduino Nano.**                           | one requirement could not be placed; the page names it — _Could not place PWM light PWM of PWM light._ — and why: _Nothing on … can carry …_ (no pin has the capability), _The pin chosen by hand, D4, cannot carry … here._, or the pins that block it, each with what holds it; _Placed before the dead end:_ lists what was placed |
+| Verdict                                                     | Meaning                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Feasible on Arduino Nano.**                               | every device's requirements were placed on distinct pins with the right capabilities; the _Placement on …_ table lists device · requirement · → pin                                                                                                                                                                                                                                             |
+| **Fits Arduino Nano so far — the binding is not finished.** | what is bound fits, but an output has no device (_No device on … for: …_) or a device no output (_Not connected to an output: …_)                                                                                                                                                                                                                                                               |
+| **Not feasible on Arduino Nano.**                           | one requirement could not be placed; a red box names it and why — _arduino_nano has nothing that can carry PWM light PWM._ (no pin has the capability), _D4 cannot carry PWM light PWM on arduino_nano._ with _The pin chosen by hand, D4, cannot carry … here._ (a pin fixed by hand), or the pins that block it, each with what holds it; _Placed before the dead end:_ lists what was placed |
 
 The verdict is only about the board. Whether the **design** itself is ready —
 every relationship checks, no instantaneous cycle, every required output driven

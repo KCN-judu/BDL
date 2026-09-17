@@ -14,10 +14,10 @@ creation.
 
 The canvas shows **one design at a time**:
 
-| Canvas               | Shows                                                                                                                                                          | Bar above the canvas                                                                                                                 |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **System**           | the top level: the system's own concepts, relationships, domains, outputs; component **instance nodes**; **binding links**; behavior **regions** and **boxes** | _System · N instances · M components_                                                                                                |
-| **Component source** | one component's own design, in its own names; its port-backed relationships carry _requires_ / _provides_ / _parameter_; its own behavior regions              | _Editing AdaptiveLamp · used by 3 instances — its promise is what instances see; edits here reach every instance._ with **‹ System** |
+| Canvas               | Shows                                                                                                                                                                                                           | Bar above the canvas                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **System**           | the top level: the system's own concepts, relationships, domains, outputs; component **instance nodes**; **binding links**; behavior **regions** and **boxes**                                                  | _System · N instances · M components_                                                                                                |
+| **Component source** | one component's own design, in its own names; its port-backed relationships carry _provides_ / _parameter_ in their header (a _requires_ port has no formula, so it reads _declared_); its own behavior regions | _Editing AdaptiveLamp · used by 3 instances — its promise is what instances see; edits here reach every instance._ with **‹ System** |
 
 Open a component's source by double-clicking an instance, or with **Edit
 Source** on an instance or component. Return with _‹ System_ or the inspector's
@@ -26,21 +26,27 @@ whichever canvas is open.
 
 ## Instance nodes
 
-```text
-        ┌──────────────────────────────┐
-        │ lampA                        │   the instance's name
-   ○────┤ tiltValue                    │   requires / parameter: left; hollow while open
-        │                  brightness ├────●   provides: right
-        │ AdaptiveLamp        ↻ main   │   the component; its timing parameters
-        └──────────────────────────────┘
-```
+![Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level tiltValue into both required sockets and from each provided socket to the top-level relationships brightness and mirror, whose bodies read = adaptiveLamp.brightness and = second.brightness.](../assets/studio/instance-nodes.png)
+
+_Two instances of AdaptiveLamp, drawn from the component's promise, fed by one
+tiltValue and bound to brightness and mirror._
+
+An instance node has the instance's name in a tinted header; one row per port —
+_requires_ ports and _parameters_ on the left, with a hollow socket while
+nothing is bound to them, _provides_ ports on the right; and in the body the
+component's name with its timing parameters, each shown with the system domain
+the instance gave it. A top-level relationship bound to a provided port shows
+the binding in its formula line: _= adaptiveLamp.brightness_.
 
 Socket colours are the concepts the ports carry _in the system_: a shared
 concept's own hue, or the instance's private hue for a private concept — so two
 instances of one component have two colours for their private _Brightness_. A
 red mark on the component's name means the source no longer keeps its promise.
 
-<!-- figure F12 -->
+![Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue drawn dashed with the word declared (a required port has no formula of its own), the rule dimByTilt, and brightness with the word provides in its header.](../assets/studio/component-source.png)
+
+_A component's source: its own canvas, with the ports marked, and the bar that
+leads back to the system._
 
 ## Gestures added on the system canvas
 

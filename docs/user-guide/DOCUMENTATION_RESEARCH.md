@@ -91,10 +91,13 @@ captures only for gestures. Blender captions every figure with what it shows
 ("How a node appears when collapsed"). Blender's writing guide warns that
 details tied to a release rot.
 
-What BDL adopts: no screenshots in the first version; figure _slots_ with a
-required state, crop, caption and alt text recorded in `SCREENSHOT_PLAN.md` so
-images can be added by an automated capture later; ASCII/annotated diagrams for
-anatomy where they are stable (workspace, node, instance node).
+What BDL adopts: real screenshots, each reproducible from a checked-in fixture
+by an automated capture (`just docs-shots`, `SCREENSHOT_PLAN.md`) so that they
+can be retaken when Studio moves and are reported as stale when their fixture or
+scene changes; a concise caption and the surrounding prose rather than callouts;
+diagrams only for what is not one screen. The first version of the guide drew
+anatomy in ASCII instead, which turned out to invent a second visual language
+and to preserve stale claims the drawing had encoded.
 
 ### Error explanation
 
@@ -159,8 +162,8 @@ planned work labelled as such.
    never described as if it existed.
 7. Examples build on one product — the tilt lamp — from the first tutorial
    through components and systems.
-8. Figures are planned, captioned and alt-texted before they are taken; anatomy
-   is drawn as a diagram where a screenshot would rot.
+8. Figures are captured from the real Studio on a fixture, reproducibly, with a
+   caption and alt text; what Studio shows is never redrawn by hand.
 9. Every page ends with where to go next; the landing page routes by reader.
 10. Every factual claim about the software has a verification row
     (`VERIFICATION.md`).

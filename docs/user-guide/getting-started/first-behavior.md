@@ -59,7 +59,9 @@ A node appears with one input socket (Tilt, on the left) and one output socket
 its header: the relationship exists and has a signature, but no formula yet.
 That is not an error. You could stop here, save, and come back tomorrow.
 
-<!-- figure F3 -->
+![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.](../assets/getting-started/declared-relationship.png)
+
+_A declared relationship: dashed outline and the word declared in its header._
 
 ## 4. Write the formula
 
@@ -82,10 +84,13 @@ time is not a plain number. Put `deg` back. Every formula is checked this way,
 for units and for meaning, as you type — and nothing is saved to the design
 until you press _Add definition_.
 
+![The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.](../assets/studio/formula-verdict.png)
+
+_The formula field with a draft that does not check: the red verdict line says
+what Brightness is and what the formula produces instead._
+
 > **⌃Space** in the field opens completion: the names you can use here (_Tilt_),
 > units after a number, keywords. Hovering a name for a moment shows what it is.
-
-<!-- figure F4 -->
 
 ## 5. Bring the tilt in from outside
 
@@ -161,16 +166,21 @@ reported under the output as a connection that does not fit.
 incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the input,
 which is meant to stay without a formula. Press **⌘S** to save.
 
-<!-- figure F5 -->
-
 ## What you have
 
-```text
- ○ Tilt                 tilt ──▶ (Tilt)                     interaction
- ○ Brightness           dimByTilt : Tilt → Brightness   =  Tilt / 90 deg
-                        brightness ──▶ (Brightness)       =  dimByTilt(tilt)   interaction
-                        Light Output ◀── brightness                              interaction
-```
+![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the Light Output sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/getting-started/complete-lamp.png)
+
+_The finished lamp: the input tilt, the rule dimByTilt, the value brightness,
+and the driven Light Output._
+
+| Object           | Kind                                  | Formula           | Updates in    |
+| ---------------- | ------------------------------------- | ----------------- | ------------- |
+| **Tilt**         | concept, an angle                     |                   |               |
+| **Brightness**   | concept, a plain number               |                   |               |
+| **tilt**         | relationship reading nothing: input   | _none_            | _interaction_ |
+| **dimByTilt**    | relationship reading Tilt: a rule     | `Tilt / 90 deg`   | any           |
+| **brightness**   | relationship reading nothing: a value | `dimByTilt(tilt)` | _interaction_ |
+| **Light Output** | physical output driven by brightness  |                   | _interaction_ |
 
 The design is _executable_: every relationship the output depends on is defined
 or is an input, checks, has a rhythm, and the output has exactly one driver.

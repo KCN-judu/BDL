@@ -1,0 +1,605 @@
+{
+  "$comment": "Executable screenshot manifest for the user guide. Read by apps/studio/test/docs_screenshots_test.dart (`just docs-shots`) and checked by scripts/check_screenshots.py (`just docs-check`). Format: docs/user-guide/SCREENSHOT_PLAN.md.",
+  "window": {
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  "theme": "light",
+  "fixtures": "docs/fixtures",
+  "assets": "docs/user-guide/assets",
+  "screenshots": [
+    {
+      "id": "project-manager",
+      "pages": [
+        "getting-started/install-and-launch.md"
+      ],
+      "fixture": null,
+      "view": "welcome",
+      "steps": [],
+      "expect": {
+        "texts": [
+          "New Project…",
+          "New System…",
+          "Open Project…",
+          "Recent"
+        ]
+      },
+      "crop": {
+        "region": "window"
+      },
+      "output": "getting-started/project-manager.png",
+      "caption": "The project manager: Start actions on the left, Recent on the right.",
+      "alt": "Studio's start screen with New Project, New System, New Text Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
+      "purpose": "What a reader sees first after launching Studio."
+    },
+    {
+      "id": "workspace",
+      "pages": [
+        "studio/workspace.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "mapping": "brightness"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "tilt",
+          "dimByTilt",
+          "brightness",
+          "Light Output"
+        ],
+        "texts": [
+          "Design",
+          "Simulate",
+          "Deploy",
+          "Monitor",
+          "Inspector"
+        ]
+      },
+      "crop": {
+        "region": "window"
+      },
+      "output": "studio/workspace.png",
+      "caption": "The workspace with the tilt lamp open and brightness selected: toolbar, sidebar, canvas, inspector, status line and page bar.",
+      "alt": "The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 not yet defined, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.",
+      "purpose": "The six regions of the workspace, on a real design."
+    },
+    {
+      "id": "declared-relationship",
+      "pages": [
+        "getting-started/first-behavior.md"
+      ],
+      "fixture": "tilt-lamp-declared",
+      "view": "design",
+      "steps": [],
+      "expect": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "dimByTilt"
+        ]
+      },
+      "crop": {
+        "nodes": [
+          "Tilt",
+          "dimByTilt",
+          "Brightness"
+        ],
+        "pad": 32
+      },
+      "output": "getting-started/declared-relationship.png",
+      "caption": "A declared relationship: dashed outline and the word declared in its header.",
+      "alt": "Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.",
+      "purpose": "The tutorial's step 3: what a relationship without a formula looks like."
+    },
+    {
+      "id": "formula-verdict",
+      "pages": [
+        "getting-started/first-behavior.md",
+        "studio/formula-editor.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "mapping": "dimByTilt"
+          }
+        },
+        {
+          "draft": {
+            "mapping": "dimByTilt",
+            "source": "Tilt / 90 s"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Tilt / 90 s"
+        ],
+        "textsContaining": [
+          "Brightness"
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "text": "Relationship"
+          },
+          {
+            "widget": "DefinitionEditor"
+          }
+        ],
+        "pad": 8
+      },
+      "output": "studio/formula-verdict.png",
+      "caption": "The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead.",
+      "alt": "The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.",
+      "purpose": "How a formula is checked as you type, before anything is saved."
+    },
+    {
+      "id": "complete-lamp",
+      "pages": [
+        "getting-started/first-behavior.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [],
+      "expect": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "tilt",
+          "dimByTilt",
+          "brightness",
+          "Light Output"
+        ],
+        "outputComplete": true
+      },
+      "crop": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "tilt",
+          "dimByTilt",
+          "brightness",
+          "Light Output"
+        ],
+        "pad": 40
+      },
+      "output": "getting-started/complete-lamp.png",
+      "caption": "The finished lamp: the input tilt, the rule dimByTilt, the value brightness, and the driven Light Output.",
+      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the Light Output sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "purpose": "What the tutorial's design looks like when it is executable."
+    },
+    {
+      "id": "node-anatomy",
+      "pages": [
+        "studio/canvas.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "mapping": "dimByTilt"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "tilt",
+          "dimByTilt",
+          "brightness",
+          "Light Output"
+        ]
+      },
+      "crop": {
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "tilt",
+          "dimByTilt",
+          "brightness",
+          "Light Output"
+        ],
+        "pad": 40
+      },
+      "output": "studio/node-anatomy.png",
+      "caption": "Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the Light Output sink.",
+      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the Light Output sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "purpose": "The parts of every node kind, on real nodes."
+    },
+    {
+      "id": "simulate-page",
+      "pages": [
+        "getting-started/first-simulation.md",
+        "studio/simulate.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "simulate",
+      "steps": [
+        {
+          "input": {
+            "mapping": "tilt",
+            "quantity": 0.7853981633974483
+          }
+        },
+        {
+          "step": 3
+        },
+        {
+          "select": {
+            "mapping": "brightness"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Inputs",
+          "Timing domains"
+        ],
+        "ticks": 3
+      },
+      "crop": {
+        "region": "page",
+        "maxHeight": 420
+      },
+      "output": "studio/simulate-page.png",
+      "caption": "The Simulate page after three steps with the tilt at 45°: inputs on the left, the trace in the middle, the probe on the right.",
+      "alt": "The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.",
+      "purpose": "The whole Simulate page in a settled run."
+    },
+    {
+      "id": "simulate-readiness",
+      "pages": [
+        "studio/simulate.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "simulate",
+      "steps": [],
+      "expect": {
+        "textsContaining": [
+          "needs a value before simulation can step"
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "key": "simulation-controls"
+          },
+          {
+            "key": "simulation-readiness"
+          }
+        ],
+        "pad": 8,
+        "maxWidth": 720
+      },
+      "output": "studio/simulate-readiness.png",
+      "caption": "A blocker with its Show link: the input tilt has no value yet, so Step is disabled.",
+      "alt": "Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.",
+      "purpose": "What stops a step, and how it is worded."
+    },
+    {
+      "id": "deploy-page",
+      "pages": [
+        "getting-started/first-deployment.md",
+        "studio/deploy.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "deploy",
+      "steps": [
+        {
+          "target": "arduino_nano"
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Feasible on Arduino Nano."
+        ],
+        "textsContaining": [
+          "PWM light"
+        ]
+      },
+      "crop": {
+        "region": "page",
+        "maxHeight": 480
+      },
+      "output": "studio/deploy-page.png",
+      "caption": "The Deploy page: Arduino Nano chosen, one PWM device on Light Output, the verdict and the placement.",
+      "alt": "The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named PWM light of kind PWM channel realising Light Output, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: PWM light, PWM light PWM, arrow D3.",
+      "purpose": "A feasible placement, as the page reports it."
+    },
+    {
+      "id": "deploy-dead-end",
+      "pages": [
+        "getting-started/first-deployment.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "deploy",
+      "steps": [
+        {
+          "target": "arduino_nano"
+        },
+        {
+          "pin": {
+            "device": "PWM light",
+            "index": 0,
+            "resource": "D4"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Not feasible on Arduino Nano."
+        ],
+        "textsContaining": [
+          "D4"
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "key": "deploy-verdict"
+          },
+          {
+            "key": "dead-end"
+          }
+        ],
+        "pad": 12
+      },
+      "output": "getting-started/deploy-dead-end.png",
+      "caption": "Not feasible: the pin chosen by hand cannot carry PWM.",
+      "alt": "The verdict Not feasible on Arduino Nano in red, the device card with D4 typed into its pin field, and below it a red-bordered box headed D4 cannot carry PWM light PWM on arduino_nano, explaining that the pin chosen by hand cannot carry the requirement here.",
+      "purpose": "How a placement failure is explained."
+    },
+    {
+      "id": "instance-nodes",
+      "pages": [
+        "studio/system-projects.md",
+        "concepts/behavior-systems.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "instance": "adaptiveLamp"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "adaptiveLamp",
+          "second",
+          "tiltValue",
+          "brightness",
+          "mirror"
+        ]
+      },
+      "crop": {
+        "nodes": [
+          "tiltValue",
+          "adaptiveLamp",
+          "second",
+          "brightness",
+          "mirror"
+        ],
+        "pad": 32
+      },
+      "output": "studio/instance-nodes.png",
+      "caption": "Two instances of AdaptiveLamp, drawn from the component's promise, fed by one tiltValue and bound to brightness and mirror.",
+      "alt": "Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level tiltValue into both required sockets and from each provided socket to the top-level relationships brightness and mirror, whose bodies read = adaptiveLamp.brightness and = second.brightness.",
+      "purpose": "Instance node anatomy and bindings on a real system canvas."
+    },
+    {
+      "id": "component-source",
+      "pages": [
+        "studio/system-projects.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "context": {
+            "component": "AdaptiveLamp"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "tiltValue",
+          "dimByTilt",
+          "brightness"
+        ],
+        "textsContaining": [
+          "AdaptiveLamp"
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "key": "context-bar"
+          },
+          {
+            "nodes": [
+              "Tilt",
+              "Brightness",
+              "tiltValue",
+              "dimByTilt",
+              "brightness"
+            ],
+            "pad": 32
+          }
+        ]
+      },
+      "output": "studio/component-source.png",
+      "caption": "A component's source: its own canvas, with the ports marked, and the bar that leads back to the system.",
+      "alt": "Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue drawn dashed with the word declared (a required port has no formula of its own), the rule dimByTilt, and brightness with the word provides in its header.",
+      "purpose": "What opening an instance's source shows."
+    },
+    {
+      "id": "behavior-region",
+      "pages": [
+        "workflows/grouping-behavior.md",
+        "concepts/behavior-groups.md"
+      ],
+      "fixture": "behavior-group",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "group": "Adaptive lamp"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "tiltValue",
+          "dimByTilt",
+          "brightness",
+          "indicator",
+          "light"
+        ],
+        "groups": [
+          "Adaptive lamp"
+        ],
+        "texts": [
+          "Boundary"
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "nodes": [
+              "tiltValue",
+              "indicator",
+              "light"
+            ]
+          },
+          {
+            "groups": [
+              "Adaptive lamp"
+            ]
+          }
+        ],
+        "pad": 32
+      },
+      "output": "workflows/behavior-region.png",
+      "caption": "The expanded behavior Adaptive lamp: a region around dimByTilt and brightness, selected.",
+      "alt": "A titled region labelled Adaptive lamp enclosing the relationship nodes dimByTilt and brightness, outlined in the accent colour because it is selected; tiltValue to its left feeds into it and indicator and the light sink to its right read from it.",
+      "purpose": "What a behavior group looks like when expanded."
+    },
+    {
+      "id": "behavior-collapsed",
+      "pages": [
+        "workflows/grouping-behavior.md"
+      ],
+      "fixture": "behavior-group",
+      "view": "design",
+      "steps": [
+        {
+          "collapse": {
+            "group": "Adaptive lamp"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "tiltValue",
+          "Adaptive lamp",
+          "indicator",
+          "light"
+        ]
+      },
+      "crop": {
+        "nodes": [
+          "tiltValue",
+          "Adaptive lamp",
+          "indicator",
+          "light"
+        ],
+        "pad": 32
+      },
+      "output": "workflows/behavior-collapsed.png",
+      "caption": "The same behavior collapsed: one box with an aggregate socket for the member each link reaches.",
+      "alt": "A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to indicator and the light sink on the right.",
+      "purpose": "The collapsed form of a behavior and what its sockets stand for."
+    },
+    {
+      "id": "packaging-sheet",
+      "pages": [
+        "workflows/package-as-component.md"
+      ],
+      "fixture": "behavior-group",
+      "view": "design",
+      "steps": [
+        {
+          "package": {
+            "group": "Adaptive lamp"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Requires",
+          "Provides"
+        ],
+        "textsContaining": [
+          "tiltValue",
+          "brightness"
+        ]
+      },
+      "crop": {
+        "key": "sheet",
+        "pad": 24
+      },
+      "output": "workflows/packaging-sheet.png",
+      "caption": "The packaging sheet for Adaptive lamp: the computed Requires and Provides, and the decisions only you can make.",
+      "alt": "A sheet titled Package as Reusable Component for Adaptive lamp: name fields for the component and the instance; tiltValue under Requires; brightness under Provides; under Physical outputs the row light, driven by brightness, with a switch between Stays the system's and Moves inside; Timing parameters listing main; Internal listing dimByTilt; and Cancel and Package buttons.",
+      "purpose": "What the tool computes and what it asks before packaging."
+    },
+    {
+      "id": "transport-sheet",
+      "pages": [
+        "workflows/cross-domain-transport.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "link": {
+            "from": "adaptiveLamp.brightness",
+            "to": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Carry across timing domains"
+        ],
+        "textsContaining": [
+          "Starts at"
+        ]
+      },
+      "crop": {
+        "key": "sheet",
+        "pad": 24
+      },
+      "output": "workflows/transport-sheet.png",
+      "caption": "Binding across timing domains asks for a starting value.",
+      "alt": "A sheet titled Carry across timing domains for adaptiveLamp.brightness to slow, explaining that the source updates in main and slow in aux, that slow sees the last value committed strictly before its own activation and needs a value to start from, with a Starts at field and Cancel and Connect buttons.",
+      "purpose": "The one question a cross-domain binding asks."
+    }
+  ]
+}

@@ -41,12 +41,14 @@ With the system from [Composing components](composing-components.md):
    formula.
 2. **Bind across.** Drag from `adaptiveLamp`'s _brightness_ socket (domain
    _main_) onto `slow`. A sheet: _Carry across timing domains_ — from _main_ to
-   _aux_ — with a **Starts at** field. Enter `0` and confirm.
+   _aux_ — with a **Starts at** field. Enter `0` and click **Connect**.
 3. The link carries a gate mark; the binding's inspector says _Carried across
    timing domains: the destination sees the last value …_ with _Starts at 0_.
    Cancelling instead makes no binding: a transport is never inserted for you.
 
-<!-- figure F15 -->
+![A sheet titled Carry across timing domains for adaptiveLamp.brightness to slow, explaining that the source updates in main and slow in aux, that slow sees the last value committed strictly before its own activation and needs a value to start from, with a Starts at field and Cancel and Connect buttons.](../assets/workflows/transport-sheet.png)
+
+_Binding across timing domains asks for a starting value._
 
 ## What BDL means by this
 

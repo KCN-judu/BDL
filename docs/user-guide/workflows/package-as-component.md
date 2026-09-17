@@ -37,7 +37,10 @@ promise — and keep the design computing exactly what it did.
    _Save definition_; back at _‹ System_, Step again: the light doubled. The
    source is the one place the behavior is defined.
 
-<!-- figure F14 -->
+![A sheet titled Package as Reusable Component for Adaptive lamp: name fields for the component and the instance; tiltValue under Requires; brightness under Provides; under Physical outputs the row light, driven by brightness, with a switch between Stays the system's and Moves inside; Timing parameters listing main; Internal listing dimByTilt; and Cancel and Package buttons.](../assets/workflows/packaging-sheet.png)
+
+_The packaging sheet for Adaptive lamp: the computed Requires and Provides, and
+the decisions only you can make._
 
 ## What BDL means by this
 

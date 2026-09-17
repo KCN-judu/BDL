@@ -50,7 +50,10 @@ recomputed from the inputs you supplied. The evaluator that produced these
 numbers is the one that defines what a BDL design means; the generated code for
 a device is held to it.
 
-<!-- figure F8 -->
+![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+
+_The Simulate page after three steps with the tilt at 45°: inputs on the left,
+the trace in the middle, the probe on the right._
 
 ## 4. Look at one value
 

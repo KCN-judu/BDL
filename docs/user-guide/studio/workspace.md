@@ -4,33 +4,23 @@ Studio has two screens: the **project manager** (no project open) and the
 **workspace** (a project open). The workspace is one window with pages in
 workflow order along the bottom.
 
-```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ ● ● ●   lamp  Edited                  ↶ ↷        Save                │  toolbar
-├──────────────┬─────────────────────────────────────┬─────────────────┤
-│ Sidebar      │                                     │ Inspector       │
-│  Project │   │           page content              │  the selected   │
-│  Library     │                                     │  object         │
-├──────────────┴─────────────────────────────────────┴─────────────────┤
-│ Saved   2 concepts  3 mappings  1 not yet defined     Compiler 0.1.0 │  status line
-├──────────────────────────────────────────────────────────────────────┤
-│ ⊞        Design      Simulate      Deploy      Monitor            ⚙ │  page bar
-└──────────────────────────────────────────────────────────────────────┘
-```
+![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 not yet defined, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../assets/studio/workspace.png)
 
-<!-- figure F2 -->
+_The workspace with the tilt lamp open and brightness selected: toolbar,
+sidebar, canvas, inspector, status line and page bar._
 
 ## Regions
 
 **Toolbar** — the project's name (followed by _Edited_ while there are unsaved
-changes), Undo and Redo, and Save (enabled only while edited).
+changes), Undo and Redo, Save (enabled only while edited) and Close.
 
 **Sidebar** (left) — on the Design page, two tabs: **Project**, the project's
 objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_; in a
 system project also _Components_, _Instances_, _Behaviors_), each with a **+**
-to create one; and **Library**, the ready-made concept templates. See
-[Library](library.md). The Simulate and Deploy pages put their own controls
-here.
+to create one — a plain project also shows the headings _Contexts_ and
+_Components_, which stay empty there; and **Library**, the ready-made concept
+templates. See [Library](library.md). The Simulate and Deploy pages put their
+own controls here.
 
 **Page content** (centre) — the canvas on Design, the trace on Simulate, the
 verdict on Deploy.

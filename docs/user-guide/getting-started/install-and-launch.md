@@ -34,10 +34,12 @@ intended way.
 
 ## What you see first
 
-<!-- figure F1 -->
-
 Studio opens on the **project manager**: the wordmark on the left with _Start_
 actions under it, _Recent_ projects on the right.
+
+![Studio's start screen with New Project, New System, New Text Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
+
+_The project manager: Start actions on the left, Recent on the right._
 
 | Action                | What it does                                                                                                                             |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |

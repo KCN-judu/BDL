@@ -38,23 +38,28 @@ motor.
    pop-up choose **Light Output**.
 
 The verdict changes to **Feasible on Arduino Nano.** and a _Placement on
-arduino_nano_ table shows the one line the lamp needs: `PWM light` → _PWM_ → a
-pin such as `D3`, with what that pin can do.
+arduino_nano_ table shows the one line the lamp needs: `PWM light`, its _PWM_
+requirement, and the pin it was given, such as `D3`.
 
 **What you made.** A deployment configuration for one board. It lives in the
 project with the design, but it is a separate layer: the Design page's verdicts
 did not change when you added the device, and they will not change if you pick
 another board.
 
-<!-- figure F10 -->
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named PWM light of kind PWM channel realising Light Output, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: PWM light, PWM light PWM, arrow D3.](../assets/studio/deploy-page.png)
+
+_The Deploy page: Arduino Nano chosen, one PWM device on Light Output, the
+verdict and the placement._
 
 ## 4. Make it fail on purpose
 
 Each device row has one pin field per requirement. In `PWM light`'s pin field
 type `D4` — a pin that cannot do PWM on the Nano.
 
-> Not feasible on Arduino Nano. The pin chosen by hand, D4, cannot carry PWM
-> light PWM here.
+> Not feasible on Arduino Nano.
+>
+> D4 cannot carry PWM light PWM on arduino_nano. The pin chosen by hand, D4,
+> cannot carry PWM light PWM here.
 
 Clear the field: feasible again. Now switch **Target** to **Big board (mock)**:
 feasible there too, on a different pin. Switch back.
@@ -63,7 +68,9 @@ feasible there too, on a different pin. Switch back.
 board choice is a session preference — it is not saved with the project — and
 the placement is recomputed for whatever board is chosen.
 
-<!-- figure F11 -->
+![The verdict Not feasible on Arduino Nano in red, the device card with D4 typed into its pin field, and below it a red-bordered box headed D4 cannot carry PWM light PWM on arduino_nano, explaining that the pin chosen by hand cannot carry the requirement here.](../assets/getting-started/deploy-dead-end.png)
+
+_Not feasible: the pin chosen by hand cannot carry PWM._
 
 ## What "feasible" means, and does not
 

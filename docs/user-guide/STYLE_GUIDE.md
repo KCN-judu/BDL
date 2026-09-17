@@ -85,10 +85,16 @@ that are not dangerous.
 
 ## Screenshots and diagrams
 
-No screenshot without an entry in [SCREENSHOT_PLAN.md](SCREENSHOT_PLAN.md)
-stating the exact design state, crop, caption and alt text. Use ASCII diagrams
-for anatomy (workspace, node, instance node, pages); they do not rot. A
-screenshot shows _where_; the text says _what it means_.
+Show the product when explaining the product. Anything the designer sees in
+Studio — the workspace, a node, an instance node, a page, a sheet — is shown as
+a real screenshot, captured reproducibly from a fixture by `just docs-shots`
+with an entry in `screenshots/manifest.json` and a row in
+[SCREENSHOT_PLAN.md](SCREENSHOT_PLAN.md); never drawn in ASCII or Markdown,
+never taken by hand. Embed it as `![alt](../assets/…)` with the caption in
+italics under it. A screenshot shows _where_; the text says _what it means_ — a
+concise caption and the paragraphs around it, not callouts on the image. Keep
+diagrams and tables for what is not one screen: the pipeline from design to
+device, flattening, file trees, data flow.
 
 ## Current versus planned
 

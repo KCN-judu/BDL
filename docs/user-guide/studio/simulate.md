@@ -6,18 +6,10 @@ executable definition of what a BDL design means. Studio holds the inputs you
 typed, the periods you chose and the samples that came back; it computes nothing
 itself.
 
-```text
-┌───────────────┬────────────────────────────────────────┬───────────────────┐
-│ Inputs        │ [Step] [Step ×10] [Reset]   tick 3     │ Probe             │
-│ ○ tilt  Tilt  │ ● held needs a value before simulation │ brightness   ○    │
-│   [0.7854] rad│   can step.  Show                      │   Now   Brightness(0.5)
-│ ◇ held  Held  │  tick active       tilt  brightness …  │   Over the run    │
-│   [off]       │    0  interaction  0.785 Brightness(…) │    0  Brightness(0.5)
-│ Timing domains│    1  interaction  0.785 Brightness(…) │ ▸ Explain         │
-│ ↻ interaction │                                        │                   │
-│   every [1]   │                                        │                   │
-└───────────────┴────────────────────────────────────────┴───────────────────┘
-```
+![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+
+_The Simulate page after three steps with the tilt at 45°: inputs on the left,
+the trace in the middle, the probe on the right._
 
 ## Inputs (left)
 
@@ -50,7 +42,10 @@ While any is listed **Step** is disabled and does nothing. While the analysis
 for the current design has not arrived the list says _Checking the design…_ and
 nothing is wrong. Opening the page never starts a run.
 
-<!-- figure F9 -->
+![Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.](../assets/studio/simulate-readiness.png)
+
+_A blocker with its Show link: the input tilt has no value yet, so Step is
+disabled._
 
 ## Step, Step ×10, Reset
 

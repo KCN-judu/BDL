@@ -12,7 +12,7 @@ Everything on it means something, and each visual channel means one thing only.
 | **a link**                                                      | _this relationship reads that concept_ (concept → relationship input), or _this value drives that output_ (relationship → sink) |
 | **dashed outline**                                              | _declared_: a relationship without a formula; an output without a driver or without a domain                                    |
 | **a red mark at the formula line**                              | the formula does not check — _wrong now_, never _not yet_                                                                       |
-| **the word _declared_, _contested_, _ill-formed_, _no domain_** | the one state word a node may carry, only while that state holds                                                                |
+| **the word _declared_, _contested_, _ill-formed_, _no domain_** | the one state word a node may carry, only while that state holds (an output that must be driven says _required_ meanwhile)      |
 | **a small name at a node's right edge**                         | its timing domain                                                                                                               |
 | **the accent colour**                                           | selection — and nothing else                                                                                                    |
 
@@ -23,25 +23,36 @@ field.
 
 ## The nodes
 
-```text
-   ●────[ Tilt ]────●                 concept: one row, an input socket (something
-                                      produces this) and an output socket (values flow out)
+![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the Light Output sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/studio/node-anatomy.png)
 
-        ┌────────────────────────┐
-        │ dimByTilt      declared│    relationship: header with the name and the one
-   ●────┤ Tilt                   │    state word; one input socket per concept read;
-        │            Brightness ├──●  one output socket; the formula line below
-        └────────────────────────┘
+_Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt
+selected), and the Light Output sink._
 
-        ┃ Light Output          ┃     physical output: a sink at the right edge,
-   ●────┃                       ┃     one input socket, a boundary bar
-```
+A **concept** is one row: its name, an input socket on the left (something
+produces this concept) and an output socket on the right (relationships read it
+from here). Both sockets carry the concept's colour and shape.
+
+A **relationship** is a box: a header with the name and, while it applies, the
+one state word (_declared_ on `tilt` above, which has no formula); one input
+socket per concept it reads, on the left, each labelled with the concept; one
+output socket on the right, labelled with the concept it produces; and the
+formula on the line below, with the timing domain's name at the right edge when
+the relationship has one. A relationship that reads nothing — `tilt`,
+`brightness` — has no input sockets; it is a value, and its formula, if any,
+names the values and rules it depends on.
+
+A **physical output** is a sink: a tinted header with its name and a word at the
+right — _required_ for an output the design must drive before it is complete, or
+the state that overrides it (_no domain_, _contested_, _ill-formed_); one input
+socket labelled with the concept it accepts; the timing domain at the right
+edge; and a bar down its right side — nothing flows out of it.
+
+The selected node (`dimByTilt` above) is outlined in the accent colour; nothing
+else on the canvas uses that colour.
 
 In a system project there are also **instance nodes** (one row per port, the
 component's name in the body) and **behavior regions** or collapsed **behavior
 boxes**; see [System projects](system-projects.md).
-
-<!-- figure F6 -->
 
 ## Gestures
 
@@ -62,7 +73,7 @@ boxes**; see [System projects](system-projects.md).
 | right-click                                                      | the context menu (below)                                                                                               |
 | drag a row from the Library tab onto the canvas                  | insert that concept at the drop point; its name opens for editing                                                      |
 
-<!-- figure F7 -->
+<!-- figure F7: a link in mid-drag with the halo — pending, see SCREENSHOT_PLAN.md -->
 
 ## The context menu
 

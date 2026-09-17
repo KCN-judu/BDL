@@ -24,10 +24,22 @@ start from the system built in the [tests](../VERIFICATION.md): `raw` →
    brightness_ (what outside reads), _Physical outputs: light_ (driven by a
    member), _Internal: dimByTilt_. You did not choose any of this; it is read
    off the dependencies.
+
+   ![A titled region labelled Adaptive lamp enclosing the relationship nodes dimByTilt and brightness, outlined in the accent colour because it is selected; tiltValue to its left feeds into it and indicator and the light sink to its right read from it.](../assets/workflows/behavior-region.png)
+
+   _The expanded behavior Adaptive lamp: a region around dimByTilt and
+   brightness, selected._
+
 4. **Collapse.** Right-click the region → **Collapse**. The two nodes become one
    box with a socket _tiltValue_ on the left and _brightness_ on the right; the
    links that entered and left the members now enter and leave the box. Zoom
    out: below half size every behavior reads as its box anyway.
+
+   ![A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to indicator and the light sink on the right.](../assets/workflows/behavior-collapsed.png)
+
+   _The same behavior collapsed: one box with an aggregate socket for the member
+   each link reaches._
+
 5. **Notice what the box's sockets are.** Each is labelled with the member it
    stands for. A link dragged from or onto one resolves to that member — the box
    itself is never an end of a link.
@@ -37,8 +49,6 @@ start from the system built in the [tests](../VERIFICATION.md): `raw` →
 7. **Check nothing changed.** ⌘2, Step a few ticks: the trace is the one you
    had, and a run that was already there is kept. A group edit is not a design
    change: the analysis is not redone and the status line does not move.
-
-<!-- figure F13 -->
 
 ## What BDL means by this
 

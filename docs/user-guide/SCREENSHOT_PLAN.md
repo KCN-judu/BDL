@@ -1,33 +1,120 @@
-# Screenshot plan
+# Screenshots
 
-No screenshots are committed yet: the interface is still moving, and a stale
-image misleads more than no image. This plan fixes what each figure must show so
-that they can be captured — by hand or by the snapshot test
-(`apps/studio/test/snapshot_preview_test.dart`, `just studio-snap`) once it can
-drive these states — and dropped into the pages at the marked slots.
+Every picture of Studio in this guide is a screenshot of the real Studio,
+rendered from a checked-in fixture project against the real `bdld`, captured by
+a harness that fails when the scene it was asked for cannot be reached. Nothing
+is drawn by hand, and nothing is captured by hand.
 
-Rules: light appearance, the system font, the window at 1280 × 800 unless the
-crop says otherwise, `examples/smart_lamp` or the tutorial lamp as the design,
-no cursor unless the figure is about a gesture. Every figure has a caption (what
-it shows) and alt text (what a reader who cannot see it needs to know).
+The rule for the guide: **actual UI → screenshot; abstract semantics →
+diagram.** A page that explains what the designer sees on screen shows the
+screen. A page that explains something the screen does not show as one view (the
+pipeline from design to code, the flattening of a system, a file tree) keeps a
+diagram or a table. Drawing Studio in monospace is not an option.
 
-| Id  | Page · slot                                                          | Design state                                                       | Crop                                                                                        | Caption                                                             | Alt text                                                                                                                                                 |
-| --- | -------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1  | `getting-started/install-and-launch.md` · after "What you see first" | no project open; two recent projects, one _not found_              | whole window                                                                                | The project manager: Start actions on the left, Recent on the right | Studio's start screen with New Project, New System and Open Project buttons and a list of recent projects                                                |
-| F2  | `studio/workspace.md` · replaces the ASCII sketch                    | `smart_lamp` open, `brightness` selected, Design page              | whole window, regions annotated: toolbar, sidebar, canvas, inspector, status line, page bar | The workspace with its six regions                                  | The Studio window: sidebar left, canvas centre, inspector right, status line and page bar at the bottom                                                  |
-| F3  | `getting-started/first-behavior.md` · after step 3                   | tutorial lamp with `Tilt`, `Brightness` and a declared `dimByTilt` | canvas only, the three nodes                                                                | A declared relationship: dashed outline and the word _declared_     | Two concept rows and one dashed relationship node labelled declared                                                                                      |
-| F4  | `getting-started/first-behavior.md` · after step 4                   | as F3 with `Tilt / 90 s` typed, not added                          | inspector's Relationship section                                                            | The formula field with a red verdict line and the underlined span   | The formula field showing a red message that Brightness is a dimensionless quantity but the formula produces a quantity of rad·s⁻¹                       |
-| F5  | `getting-started/first-behavior.md` · after step 8                   | the finished tutorial lamp                                         | canvas                                                                                      | The lamp: inputs, rule, value and the driven sink                   | Three relationship nodes and a solid sink node at the right, with the domain name at the nodes' edges                                                    |
-| F6  | `studio/canvas.md` · "The nodes"                                     | `smart_lamp`                                                       | one concept row, one relationship node, one sink, side by side                              | Node anatomy                                                        | A concept row with round sockets, a relationship node with input sockets on the left and one output socket on the right, a sink node with a boundary bar |
-| F7  | `studio/canvas.md` · "Gestures"                                      | a link being dragged from `brightness` towards the sink            | canvas, cursor included                                                                     | Compatible sockets light up while a link is dragged                 | A link in mid-drag with a halo on the one socket that can accept it                                                                                      |
-| F8  | `getting-started/first-simulation.md` · after step 3                 | `smart_lamp`, three ticks stepped with tilt 0.7854                 | whole Simulate page                                                                         | The Simulate page after three steps                                 | Inputs on the left, a three-row trace in the middle showing Brightness values, the probe on the right                                                    |
-| F9  | `studio/simulate.md` · readiness                                     | tutorial lamp before `tilt` has a value                            | the readiness list above the trace                                                          | A blocker with its Show link                                        | A sentence saying tilt needs a value before simulation can step, with a Show link, and a disabled Step button                                            |
-| F10 | `getting-started/first-deployment.md` · after step 3                 | `smart_lamp`, Arduino Nano, PWM light on Light Output              | whole Deploy page                                                                           | Feasible on Arduino Nano, with the placement table                  | Target pop-up and one device row on the left; the verdict and a one-line placement table in the centre                                                   |
-| F11 | `getting-started/first-deployment.md` · after step 4                 | as F10 with pin D4 fixed                                           | verdict area                                                                                | Not feasible: the pin chosen by hand cannot carry PWM               | The verdict line in red and the dead-end explanation naming pin D4                                                                                       |
-| F12 | `studio/system-projects.md` · "Instance nodes"                       | the packaged lamp system with two instances                        | the two instance nodes and their bindings                                                   | Instance nodes drawn from the component's promise                   | Two instance nodes with a required socket on the left and a provided socket on the right, joined to top-level relationships by links                     |
-| F13 | `workflows/grouping-behavior.md` · end of Steps                      | _Adaptive lamp_ collapsed                                          | the box and its neighbours                                                                  | A collapsed behavior with aggregate sockets                         | A single box labelled Adaptive lamp with one socket on each side and the links that entered and left its members                                         |
-| F14 | `workflows/package-as-component.md` · end of Steps                   | the packaging sheet open for _Adaptive lamp_                       | the sheet                                                                                   | The packaging sheet: Requires, Provides, and the four decisions     | A sheet listing tiltValue under Requires, brightness under Provides, the light under Physical outputs with Stays the system's selected, and name fields  |
-| F15 | `workflows/cross-domain-transport.md` · after "On a binding"         | the _Carry across timing domains_ sheet                            | the sheet                                                                                   | Binding across domains asks for a starting value                    | A sheet titled Carry across timing domains with the two domain names and a Starts at field                                                               |
+## The pieces
 
-Slots are marked in the pages as HTML comments (`<!-- figure F3 -->`) where a
-figure is intended; a page without a marker needs no figure.
+| Piece    | Where                                                               | Role                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| -------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fixtures | `docs/fixtures/*`                                                   | small, deterministic projects the screenshots are taken of: `tilt-lamp` (the tutorial lamp, flat), `tilt-lamp-declared` (the tutorial at step 3), `behavior-group` (the lamp as a text system project with the _Adaptive lamp_ group), `component-system` (after packaging: `AdaptiveLamp`, two instances, `mirror`, `slow`). Each pins node positions and the canvas viewport in `ui/layout.json`. See `docs/fixtures/README.md`. |
+| manifest | `docs/user-guide/screenshots/manifest.json`                         | one entry per screenshot: id, pages, fixture, view, steps, what must be visible, crop, output, caption, alt text, purpose                                                                                                                                                                                                                                                                                                          |
+| harness  | `apps/studio/test/docs_screenshots_test.dart`                       | a Flutter test that, per entry, starts `bdld`, renders the whole `StudioShell` with the app's theme and fonts at the manifest's window size, opens the fixture, runs the steps through the store, checks the expectations, cuts the crop and writes the PNG                                                                                                                                                                        |
+| ledger   | `docs/user-guide/screenshots/captured.json`                         | per id: the commit, whether the checkout was dirty, the time, the hash of the fixture and of the manifest entry the image came from, the image size                                                                                                                                                                                                                                                                                |
+| check    | `scripts/check_screenshots.py` (in `just docs-check`, `just check`) | images exist, pages embed them with the manifest's alt text and caption, no stray images, every entry captured and not stale, every id listed here                                                                                                                                                                                                                                                                                 |
+
+## Regenerating
+
+```bash
+just docs-shots
+```
+
+builds `bdld`, runs the harness with `DOCS_SHOTS=1`, writes the PNGs under
+`docs/user-guide/assets/<area>/` and the ledger, then runs the check. Commit the
+images and the ledger together with the change that made them necessary. Without
+`DOCS_SHOTS=1` the same test runs in `just studio-test` and writes nothing: it
+is the guide's UI regression probe — a fixture that no longer opens, a node that
+vanished, a message that changed, a sheet that does not appear, or a node the
+fixture's layout pushes off the canvas fails the test.
+
+Run it from a clean checkout when the images are to be committed: the ledger
+records `dirty: true` otherwise and `scripts/check_screenshots.py --strict`
+refuses it.
+
+### When to regenerate
+
+- the manifest entry's scene changed (fixture, view, steps, expectations, crop,
+  output) — the check reports the entry as _stale_;
+- a fixture changed — the check reports every entry on it as _stale_;
+- Studio's look changed — the check cannot see that; rerun `just docs-shots`
+  after a change under `apps/studio/lib/ui` that touches what a screenshot
+  shows, and review the diff of the images.
+
+Prose changes (caption, alt, purpose, pages) do not make an image stale; the
+check only requires the page to carry the new text.
+
+## Presentation
+
+Fixed by the manifest and the harness, the same for every image:
+
+| Setting     | Value                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| window      | 1440 × 900 logical pixels                                                                                      |
+| scale       | 2 device pixels per logical pixel (an uncropped window is 2880 × 1800)                                         |
+| theme       | light                                                                                                          |
+| fonts       | the system UI font and Menlo as macOS resolves them, the Material icon font from the Flutter SDK, Chakra Petch |
+| viewport    | pan and zoom from the fixture's `ui/layout.json`; a nodes crop refuses a fixture without one                   |
+| recent list | empty on the project manager (paths would be machine-specific)                                                 |
+| cursor      | none — the renderer has no pointer, so gestures in progress cannot be shown                                    |
+
+## Writing a new entry
+
+1. Pick or add a fixture. Keep it small; name things as the guide does; put
+   nodes where the crop wants them and pin the viewport.
+2. Add the manifest entry. Steps name entities
+   (`{"select": {"mapping": "brightness"}}`, `{"draft": …}`, `{"input": …}`,
+   `{"step": 3}`, `{"target": …}`, `{"pin": …}`, `{"context": …}`,
+   `{"collapse": …}`, `{"package": …}`, `{"link": …}`, `{"sidebar": …}`);
+   expectations name nodes, groups, texts; the crop is a `region` (`window`,
+   `page`, `canvas`, `inspector`, `sidebar`, `welcome`), a widget `key`, a
+   `widget` type, a `text`, a set of `nodes` / `groups`, or a `union` of those,
+   with `pad`, `maxWidth`, `maxHeight`. Everything a step or a crop names must
+   exist, or the harness fails and says what is missing.
+3. Write the caption (what the reader is looking at, one sentence) and the alt
+   text (what a reader who cannot see it needs, in the designer's words — what
+   is on screen, not every pixel).
+4. `just docs-shots`; look at the image; correct the prose on the page to what
+   the image shows, never the other way round.
+5. Embed it on each page the entry names as `![alt](../assets/…)` followed by
+   the caption in italics, and add a row below.
+
+If a crop needs a widget the harness cannot find by type or text, add a
+`ValueKey` to that widget in Studio (as `simulation-controls`,
+`simulation-readiness`, `context-bar`, `sheet` and `dead-end` were added) —
+never a behavioural change to make a picture easier.
+
+## Status
+
+| Id                    | Pages                                                           | Fixture            | Shows                                                                 | Status                                                      |
+| --------------------- | --------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| project-manager       | `getting-started/install-and-launch.md`                         | —                  | the project manager (F1)                                              | captured, automated                                         |
+| workspace             | `studio/workspace.md`                                           | tilt-lamp          | the whole workspace, `brightness` selected (F2)                       | captured, automated                                         |
+| declared-relationship | `getting-started/first-behavior.md`                             | tilt-lamp-declared | a dashed _declared_ relationship between its concepts (F3)            | captured, automated                                         |
+| formula-verdict       | `getting-started/first-behavior.md`, `studio/formula-editor.md` | tilt-lamp          | the formula field with a red verdict on `Tilt / 90 s` (F4)            | captured, automated                                         |
+| complete-lamp         | `getting-started/first-behavior.md`                             | tilt-lamp          | the finished tutorial design (F5)                                     | captured, automated                                         |
+| node-anatomy          | `studio/canvas.md`                                              | tilt-lamp          | concept rows, relationship nodes, the sink; `dimByTilt` selected (F6) | captured, automated                                         |
+| —                     | `studio/canvas.md`                                              | tilt-lamp          | a link in mid-drag with the halo and the cursor (F7)                  | blocked: no pointer in the renderer; the prose describes it |
+| simulate-page         | `getting-started/first-simulation.md`, `studio/simulate.md`     | tilt-lamp          | the Simulate page after three ticks at 45° (F8)                       | captured, automated                                         |
+| simulate-readiness    | `studio/simulate.md`                                            | tilt-lamp          | the readiness list with its _Show_ link and the disabled Step (F9)    | captured, automated                                         |
+| deploy-page           | `getting-started/first-deployment.md`, `studio/deploy.md`       | tilt-lamp          | Arduino Nano, one PWM device, _Feasible_, the placement (F10)         | captured, automated                                         |
+| deploy-dead-end       | `getting-started/first-deployment.md`                           | tilt-lamp          | _Not feasible_ with pin D4 fixed by hand (F11)                        | captured, automated                                         |
+| instance-nodes        | `studio/system-projects.md`, `concepts/behavior-systems.md`     | component-system   | two instance nodes, their bindings, `adaptiveLamp` selected (F12)     | captured, automated                                         |
+| component-source      | `studio/system-projects.md`                                     | component-system   | the component's own canvas with the bar back to the system            | captured, automated                                         |
+| behavior-region       | `workflows/grouping-behavior.md`, `concepts/behavior-groups.md` | behavior-group     | the expanded _Adaptive lamp_ region, selected                         | captured, automated                                         |
+| behavior-collapsed    | `workflows/grouping-behavior.md`                                | behavior-group     | the collapsed box with its aggregate sockets (F13)                    | captured, automated                                         |
+| packaging-sheet       | `workflows/package-as-component.md`                             | behavior-group     | the packaging sheet with Requires, Provides and the decisions (F14)   | captured, automated                                         |
+| transport-sheet       | `workflows/cross-domain-transport.md`                           | component-system   | the _Carry across timing domains_ sheet (F15)                         | captured, automated                                         |
+
+F-numbers refer to the slots of the earlier plan, kept so that older references
+still resolve. Pending: a Library-tab figure for `studio/library.md` and an
+inspector figure for `studio/inspector.md` — both reachable with the existing
+steps (`{"sidebar": "library"}`, a selection) once those pages need one; the
+workspace figure shows the inspector meanwhile.

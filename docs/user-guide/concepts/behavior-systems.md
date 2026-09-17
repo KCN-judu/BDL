@@ -30,6 +30,11 @@ per port — _requires_ and _parameter_ on the left, _provides_ on the right —
 the component's name in the body. The node never shows the inside of the source;
 double-click it to open the source.
 
+![Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level tiltValue into both required sockets and from each provided socket to the top-level relationships brightness and mirror, whose bodies read = adaptiveLamp.brightness and = second.brightness.](../assets/studio/instance-nodes.png)
+
+_Two instances of AdaptiveLamp, drawn from the component's promise, fed by one
+tiltValue and bound to brightness and mirror._
+
 ## Bindings
 
 A **binding** connects a provided port (or a top-level value) to a required port
