@@ -1,0 +1,106 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "BDL",
+  "scopeName": "source.bdl",
+  "comment": "A fallback grammar for the time before bdl-lsp answers: keywords, comments, numbers with units, declarations. Semantic tokens from the server override it once connected (docs/TEXTUAL_SYNTAX.md).",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#doc-comments" },
+    { "include": "#declarations" },
+    { "include": "#keywords" },
+    { "include": "#clock-tag" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.bdl", "match": "//(?!/).*$" },
+        { "name": "comment.block.bdl", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "doc-comments": {
+      "patterns": [
+        { "name": "comment.line.documentation.bdl", "match": "///.*$" }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "\\b(concept)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.bdl" },
+            "2": { "name": "entity.name.type.concept.bdl" }
+          }
+        },
+        {
+          "match": "\\b(mapping|requires|provides|param)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.bdl" },
+            "2": { "name": "entity.name.function.mapping.bdl" }
+          }
+        },
+        {
+          "match": "\\b(component)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.bdl" },
+            "2": { "name": "entity.name.type.component.bdl" }
+          }
+        },
+        {
+          "match": "\\b(instance|output|device|clock|enum)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.bdl" },
+            "2": { "name": "variable.other.declaration.bdl" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.bdl",
+          "match": "\\b(concept|mapping|enum|clock|output|drive|device|component|instance|bind|export|requires|provides|param|use)\\b"
+        },
+        {
+          "name": "keyword.control.bdl",
+          "match": "\\b(if|then|else|match|let)\\b"
+        },
+        {
+          "name": "keyword.other.contextual.bdl",
+          "match": "\\b(for|pin|init|as|optional)\\b"
+        },
+        {
+          "name": "constant.language.bdl",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "support.function.builtin.bdl",
+          "match": "\\b(delay|sync|clamp)\\b"
+        },
+        {
+          "name": "invalid.illegal.reserved.bdl",
+          "match": "\\b(context|require)\\b"
+        }
+      ]
+    },
+    "clock-tag": {
+      "match": "(@)([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.clock.bdl" },
+        "2": { "name": "entity.name.tag.clock.bdl" }
+      }
+    },
+    "numbers": {
+      "match": "\\b(\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)(?:\\s+([A-Za-z]+))?",
+      "captures": {
+        "1": { "name": "constant.numeric.bdl" },
+        "2": { "name": "constant.other.unit.bdl" }
+      }
+    },
+    "operators": {
+      "name": "keyword.operator.bdl",
+      "match": "->|=>|==|!=|<=|>=|&&|\\|\\||[-+*/<>=!:]"
+    }
+  }
+}

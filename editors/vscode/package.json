@@ -1,0 +1,124 @@
+{
+  "name": "bdl-vscode",
+  "displayName": "BDL",
+  "description": "Behavior Design Language: language support through bdl-lsp (diagnostics, navigation, rename, completion, formatting, inlay hints, explain / Core / Rust views).",
+  "version": "0.1.0",
+  "publisher": "bdl",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:bdl",
+    "workspaceContains:bdl.toml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "bdl",
+        "aliases": [
+          "BDL",
+          "Behavior Design Language"
+        ],
+        "extensions": [
+          ".bdl"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "bdl-core",
+        "aliases": [
+          "BDL Core"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bdl",
+        "scopeName": "source.bdl",
+        "path": "./syntaxes/bdl.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "bdl.showCore",
+        "title": "BDL: Show Kernel Core"
+      },
+      {
+        "command": "bdl.showRust",
+        "title": "BDL: Show Generated Rust"
+      },
+      {
+        "command": "bdl.explain",
+        "title": "BDL: Explain Entity at Cursor"
+      },
+      {
+        "command": "bdl.restartServer",
+        "title": "BDL: Restart Language Server"
+      }
+    ],
+    "configuration": {
+      "title": "BDL",
+      "properties": {
+        "bdl.serverPath": {
+          "type": "string",
+          "default": "bdl-lsp",
+          "description": "Path to the bdl-lsp executable (built with `cargo build -p bdl-lsp`)."
+        },
+        "bdl.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the language server protocol traffic."
+        }
+      }
+    },
+    "semanticTokenScopes": [
+      {
+        "language": "bdl",
+        "scopes": {
+          "concept": [
+            "entity.name.type.concept.bdl"
+          ],
+          "mapping": [
+            "entity.name.function.mapping.bdl"
+          ],
+          "output": [
+            "variable.other.output.bdl"
+          ],
+          "clock": [
+            "entity.name.tag.clock.bdl"
+          ],
+          "device": [
+            "variable.other.device.bdl"
+          ],
+          "unit": [
+            "constant.other.unit.bdl"
+          ]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}
