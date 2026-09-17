@@ -245,11 +245,16 @@ class _ContextBar extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
             const SizedBox(width: 8),
-            Text(
-              '— its promise is what instances see; edits here reach every instance.',
-              style: TextStyle(fontSize: 11, color: t.textTertiary),
+            // The one sentence that may give way when the bar is narrow.
+            Flexible(
+              child: Text(
+                '— its promise is what instances see; edits here reach every instance.',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: t.textTertiary),
+              ),
             ),
           ],
+          const SizedBox(width: 12),
           const Spacer(),
           // Views of the one project, as Xcode switches editors: a
           // segmented control, the platform's shape for a mode.
