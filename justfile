@@ -13,6 +13,12 @@ bdld    := if os() == "windows" { "bdld.exe" } else { "bdld" }
 default:
     @just --list
 
+# ---- Documentation --------------------------------------------------------
+
+docs-check:
+    python3 scripts/validate_docs.py
+    python3 -m unittest scripts/test_validate_docs.py
+
 # ---- Rust -----------------------------------------------------------------
 
 build:
@@ -74,7 +80,7 @@ studio: build
 
 # ---- Everything -----------------------------------------------------------
 
-check: lint test studio-analyze studio-test proto-check
+check: docs-check lint test studio-analyze studio-test proto-check
 
 # Run bdld on stdio (for manual protocol experiments).
 bdld:

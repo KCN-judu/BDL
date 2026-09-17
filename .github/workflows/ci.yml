@@ -20,6 +20,8 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
+      - run: python3 scripts/validate_docs.py
+      - run: python3 -m unittest scripts/test_validate_docs.py
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - name: Upload bdld for the Flutter job
