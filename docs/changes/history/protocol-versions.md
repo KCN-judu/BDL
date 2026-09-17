@@ -1,0 +1,19 @@
+# Studio ↔ bdld protocol: version history
+
+*Moved from the header of `docs/PROTOCOL.md` on 2026-09-17; that page
+states the current version only. Every minor version is additive within
+major 0: an older client works against a newer daemon (ADR-0007). The
+schema is `crates/bdl-protocol/proto/bdl/v1/bdl.proto`; each row names
+what the version added.*
+
+| Version | Added | Affected | Record |
+|---|---|---|---|
+| 0.1 | the vertical-slice protocol: handshake, projects, edits, undo/redo, layout, subscriptions, `ProjectChanged` | — | ADR-0007, ADR-0009 |
+| 0.2 | reactive statuses, causality/clock summary, simulation (`Start`/`Step`/`ResetSimulation`) | Studio | — |
+| 0.3 | clock/output/device edit ops and views, the output pass in `ProjectAnalysis`, `ListTargets`, `AnalyzeDeployment` | Studio | ADR-0015 |
+| 0.4 | definition-draft requests `AnalyzeDefinitionDraft`, `DiscardDefinitionDraft`, `CompleteDefinitionDraft`, `HoverDefinitionDraft`; then, additively without a bump, `HoverEntity`, `ListSemanticActions`, `EntityRef`, `Layout.outputs` | Studio | [formula-editing milestone](formula-editing-milestone.md) |
+| 0.5 | the Deploy read model — `TargetView` chooser fields, `AnalyzeDeploymentRequest.revision`, `DeploymentAnalysis` fields 10–15; concept libraries `ListConceptTemplates`, `InstantiateConceptTemplate` | Studio | `docs/DEPLOYMENT_READ_MODEL.md`, `docs/STANDARD_CONCEPT_LIBRARY.md` |
+| 0.6 | behaviour systems — `InitSystemProject`, `GetSystem`, `ApplySystemEdit`, `RunSystemAnalysis`, `ProjectProjection.kind`, the `reference` definition form | Studio, project files (`kind = "system"`) | ADR-0021 |
+| 0.7 | port contracts — `PortView.contract`, `ComponentView.interface_stamp`, `ChangePortContract` / `RebindPortDeclaration` / `DuplicateComponent` / `ReplaceInstanceComponent`, `SystemEditOutcome.bindings`, `SystemAnalysisView.components` | Studio | ADR-0022 |
+| 0.8 | behaviour grouping and component authoring — `ApplyGroupEdit` / `GroupEditOp`, `PreviewComponentExtraction` / `ExtractionPreviewView`, `SystemEditOp.extract_group_as_component` / `delete_group_with_members`, `SystemView.groups` / `authoring_generation` / `boundaries`, `SystemAnalysisView.groups` / `component_analyses`, `PortRefView.base_decl`, `Layout.instances` / `groups` / `components`, an optional `component` scope on the four draft requests and on `InstantiateConceptTemplate`; then, still 0.8 and additive, scoped groups — `BehaviorGroupView.component` / `CreateGroup.component`, `ApplyGroupEditRequest.base_generation`, `SystemView.dirty`, `BehaviorGroupBoundaryView.crossing_edges`, `Layout.viewport` | Studio | ADR-0019 |
+| 0.9 | text projects — `PROJECT_KIND_TEXT`, `InitTextProject`, `ReloadProject`, `SaveProject.force` (refusal `project.changed_on_disk`), `SessionInfo.textual` | Studio, protocol clients, project files (`kind = "text"`) | ADR-0020, [2026-09 text projects](../unreleased/2026-09-text-projects.md) |
