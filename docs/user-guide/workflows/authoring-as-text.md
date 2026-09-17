@@ -9,12 +9,12 @@ the same project in Studio, and keep both sides agreeing.
 
 ## Steps
 
-1. **Create the project.** In Studio's welcome page choose _New Text Project…_
-   and pick a folder. Or from a terminal make the folder by hand:
+1. **Create the project.** In Studio's welcome page choose _New Project…_ and
+   pick a folder. Or from a terminal make the folder by hand:
 
    ```text
    lamp/
-   ├── bdl.toml            schema_version = 1, name = "lamp", compiler_version = "…", kind = "text"
+   ├── bdl.toml            schema_version = 2, name = "lamp", compiler_version = "…"
    └── src/main.bdl
    ```
 
@@ -102,8 +102,9 @@ modification times before saving and asks, rather than merging.
   or use the editor's rename.
 - **An item is a finding in the editor but fine in Studio** (or the reverse):
   one side has unsaved changes. Save on both sides; the two read the same files.
-- **`bdld check` exits 2 with _error:_** — the folder has no `bdl.toml` or it is
-  not `kind = "text"`.
+- **`bdld check` exits 2 with _error:_** — the folder has no `bdl.toml`, or it
+  is an older project that has both `src/` files and a `design/*.json` file;
+  keep one of the two.
 
 ## Next
 

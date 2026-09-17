@@ -10,8 +10,7 @@ values, the timing, the outputs, the simulation trace and the deployment
 placement are identical before and after you group, ungroup, move a relationship
 in or out, or collapse a box. A group has no formula, no domain, no ports.
 
-Groups exist in **system projects** (_New System…_ on the project manager). A
-plain project has no groups; the rest of this page assumes a system project.
+Groups exist in every project ([System projects](../studio/system-projects.md)).
 
 ## What a group is for
 

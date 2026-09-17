@@ -6,80 +6,44 @@ authoritative description for tool builders is `docs/spec/project-format.md`.
 
 ```text
 lamp/
-├── bdl.toml                 the manifest: name, schema version, kind (flat, system or text)
-├── design/
-│   ├── project.bdl.json     a flat project's design
-│   └── system.bdl.json      a system project's design (one of the two exists, never both)
-└── ui/
-    └── layout.json          where things are on the canvas — not part of the design
-```
-
-A **text project** (`kind = "text"`) has no design JSON; its design is
-the `.bdl` files:
-
-```text
-lamp/
-├── bdl.toml                 kind = "text"
+├── bdl.toml                 the manifest: name, schema version
 ├── src/
-│   ├── concepts.bdl         any number of .bdl files, any names, read in path order
+│   ├── concepts.bdl         the design — any number of .bdl files, any names, read in path order
 │   └── main.bdl
 ├── .bdl/
 │   ├── identities.json      the stable identity of every item — owned by the tools
 │   └── authoring.json       behavior groups — owned by the tools
 └── ui/
-    └── layout.json          as above
+    └── layout.json          where things are on the canvas — not part of the design
 ```
 
-## What is in the design file
+There is one kind of project. Its design is the `.bdl` files
+([Syntax basics](../textual/syntax-basics.md)); Studio shows them as a
+graph, as text, or both ([Design, Code and Split](../studio/code-view.md)).
+
+## What is in the design
 
 Everything that means something: concepts (name, description, value
 form), relationships (name, description, reads, produces, formula, timing
 domain, the output it drives), timing domains, physical outputs (name,
 what it accepts, domain, required), devices (name, kind, output, fixed
-pins), and the counters that allocate identities. In a system project
-also: components (each with its own design and its ports), instances,
-bindings, behavior groups, and the table that gives each instance its own
-identities.
+pins), components (each with its own design and its ports), instances,
+bindings and exports.
 
 Every object has a stable numeric identity that never changes and is
-never reused; the **name is a label**. Renaming touches nothing but the
-label. Two objects with the same name in two projects have nothing to do
-with each other.
+never reused. The **name is how the files spell it**: renaming an item
+changes its name everywhere it is written and nothing else, because the
+identity lives in `.bdl/identities.json`, matched to the item by its
+kind and name. Two objects with the same name in two projects have
+nothing to do with each other.
 
-## What is in the layout file
+A name must be a name the files can spell: letters, digits and
+underscores, not starting with a digit, not a word of the language
+(`light`, `pwmLight`, `dimByTilt`). Studio refuses any other spelling
+and shows the one that would work
+([Source files](../troubleshooting/text-project-errors.md)).
 
-Positions of concepts, relationships, outputs, instances and behavior
-boxes; collapse state; pan and zoom per canvas. A project opens without
-this file; deleting it loses nothing but placement.
-
-## What is not saved
-
-- the chosen **board** on the Deploy page — a session preference;
-- the **simulation** — inputs, periods and trace;
-- the **analysis** — every verdict is recomputed on open;
-- the **revision history** — undo is per session.
-
-Formula **drafts** are not in the project either; Studio keeps unsaved
-drafts on its side, by project path, and restores them when you reopen.
-
-## Saving
-
-**⌘S** or **Save** writes the design file first, then the manifest, each
-through a temporary file and an atomic rename, so an interrupted save
-never leaves a half-written project. Newer file versions are refused
-rather than misread; older ones are migrated on open. A text project
-writes the changed source files, then the sidecars, the layout and the
-manifest, the same way.
-
-## Text projects
-
-The `.bdl` files are the design ([Syntax basics](../textual/syntax-basics.md)).
-Studio and the language server read them with one loader and write them
-back as item-level edits: a save changes the items you changed and
-leaves the rest of the text — comments, blank lines, your ordering — as
-it was. New items Studio creates go to the end of `src/main.bdl` (or of the
-first file in path order when there is no `main.bdl`), or to the end of
-the component body they belong to.
+## What is in the sidecars
 
 `.bdl/identities.json` records which identity each item has, by its
 kind and name, together with the counters that hand out new ones. It is
@@ -91,8 +55,67 @@ but canvas positions and group membership, which are keyed by identity,
 are.
 
 `.bdl/authoring.json` holds behavior groups, which the text does not
-express.
+express. A group whose members are gone from the text loses them.
 
-Saving from Studio checks that no source file changed on disk since it
-was read; if one did, Studio refuses and offers to reload or overwrite
+## What is in the layout file
+
+Positions of concepts, relationships, outputs, instances and behavior
+boxes; collapse state; pan and zoom per canvas. A project opens without
+this file; deleting it loses nothing but placement. Every item that has
+no position is given one when the project opens and whenever an item is
+made — in the column of its kind, beside what it reads or produces —
+and nothing that has a position is moved ([Canvas](../studio/canvas.md)).
+
+## What is not saved
+
+- the chosen **board** on the Deploy page — a session preference;
+- the **simulation** — inputs, periods and trace;
+- the **analysis** — every verdict is recomputed on open;
+- the **revision history** — undo is per session;
+- text in the Code view that **does not build yet** — the file on disk
+  is the last version that did.
+
+Formula **drafts** are not in the project either; Studio keeps unsaved
+drafts on its side, by project path, and restores them when you reopen.
+
+## Saving
+
+**⌘S** or **Save** writes the changed source files as item-level edits
+— a save changes the items you changed and leaves the rest of the text,
+comments, blank lines and your ordering as it was — then the sidecars,
+the layout and the manifest, each through a temporary file and an atomic
+rename, so an interrupted save never leaves a half-written project. New
+items made on the canvas go to the end of `src/main.bdl` (or of the first
+file in path order when there is no `main.bdl`), or to the end of the
+component body they belong to. Newer file versions are refused rather
+than misread.
+
+Saving checks that no source file changed on disk since it was read; if
+one did, Studio refuses and offers to reload or overwrite
 ([Authoring a project as text](../workflows/authoring-as-text.md)).
+
+## Older projects
+
+Projects saved by earlier versions of Studio kept the design in a JSON
+file (`design/project.bdl.json` or `design/system.bdl.json`) and said
+so in `bdl.toml`. Opening one — in Studio, from the command line or
+with the language server — converts it in place, once:
+
+- the design is written to `src/main.bdl`;
+- every item keeps its identity, so positions, colours and group
+  membership are unchanged;
+- a name the files cannot spell is respelled (`Light Output` becomes
+  `Light_Output`, a word of the language gets a trailing `_`);
+- the JSON file is renamed `….migrated` and is never read again; delete
+  it when you are sure, or keep it as a record;
+- `bdl.toml` is rewritten.
+
+A folder that has both a JSON design file and `.bdl` files under `src/`
+is refused rather than guessed at: keep one of the two. There is no way
+back to the JSON form.
+
+## Related
+
+[Design, Code and Split](../studio/code-view.md) ·
+[Authoring a project as text](../workflows/authoring-as-text.md) ·
+[Textual BDL](../textual/overview.md)

@@ -23,7 +23,7 @@ concept, or bind the concept to the one you meant. In a system, a private
 concept of an instance is a different concept from the system's; share it in the
 component if it should be the same.
 
-## _Light Output expects Brightness, but dimByTilt produces Tilt → Brightness._ (under _Drives_ / _Driver_)
+## _light expects Brightness, but dimByTilt produces Tilt → Brightness._ (under _Drives_ / _Driver_)
 
 **What it means.** The connected relationship does not produce exactly what the
 output accepts — a rule with inputs was connected, or a value of another
@@ -37,7 +37,7 @@ relationship without inputs — can be _the_ brightness at a tick.
 the wrong one with _disconnect_ in the output's _Driver_ section. Code:
 `output.type_mismatch`.
 
-## _Light Output updates in the interaction domain, but its driver shown updates in display._
+## _light updates in the interaction domain, but its driver shown updates in display._
 
 **Why.** A connection transports nothing. The device refreshes at its domain's
 rhythm and must read a value of that rhythm.
@@ -47,7 +47,7 @@ _interaction_ that reads the other through `sync` — then connect that. Or set
 the output's _Updates in_ to the driver's domain, if that is what the product
 should do. Code: `output.clock_mismatch`.
 
-## The sink says _contested_; _Light Output already has a final target._; _brightness, indicator all connect to Light Output._
+## The sink says _contested_; _light already has a final target._; _brightness, indicator all connect to light._
 
 **What it means.** Two or more values drive one output.
 

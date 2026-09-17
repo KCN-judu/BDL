@@ -15,12 +15,11 @@ sidebar, canvas, inspector, status line and page bar._
 changes), Undo and Redo, Save (enabled only while edited) and Close.
 
 **Sidebar** (left) — on the Design page, two tabs: **Project**, the project's
-objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_; in a
-system project also _Components_, _Instances_, _Behaviors_), each with a **+**
-to create one — a plain project also shows the headings _Contexts_ and
-_Components_, which stay empty there; and **Library**, the ready-made concept
-templates. See [Library](library.md). The Simulate and Deploy pages put their
-own controls here.
+objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_,
+_Components_, _Instances_, _Behaviors_), each with a **+** to create one — the
+heading _Contexts_ stays empty (contexts are not part of the tool yet); and
+**Library**, the ready-made concept templates. See [Library](library.md). The
+Simulate and Deploy pages put their own controls here.
 
 **Page content** (centre) — the canvas on Design, the trace on Simulate, the
 verdict on Deploy.

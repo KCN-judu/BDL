@@ -63,7 +63,8 @@ importing components from other projects. The guide says so where it matters.
 [Workspace](studio/workspace.md) · [Canvas](studio/canvas.md) ·
 [Library](studio/library.md) · [Inspector](studio/inspector.md) ·
 [Formula editor](studio/formula-editor.md) · [Simulate](studio/simulate.md) ·
-[Deploy](studio/deploy.md) · [System projects](studio/system-projects.md)
+[Deploy](studio/deploy.md) · [System projects](studio/system-projects.md) ·
+[Design, Code and Split](studio/code-view.md)
 
 **Workflows** — one goal each, on the same lamp
 [From sensor to output](workflows/sensor-to-output.md) ·
@@ -86,7 +87,7 @@ importing components from other projects. The guide says so where it matters.
 [Timing](troubleshooting/timing-errors.md) ·
 [Connections](troubleshooting/connection-errors.md) ·
 [Deployment](troubleshooting/deployment-errors.md) ·
-[Text projects](troubleshooting/text-project-errors.md)
+[Source files](troubleshooting/text-project-errors.md)
 
 **Reference** [Terminology](reference/terminology.md) ·
 [Keyboard and mouse](reference/keyboard-and-mouse.md) ·

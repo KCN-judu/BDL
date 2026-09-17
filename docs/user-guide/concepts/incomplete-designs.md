@@ -62,7 +62,7 @@ The practical consequences:
 The Simulate page's list, the status line, and the **Fixes** section of an
 inspector all point at the same work. Fixes are actions the tool can offer for a
 finding — _Choose what Temperature is represented by_, _Connect a driver to
-Light Output_ — each applied as an ordinary edit you can undo.
+light_ — each applied as an ordinary edit you can undo.
 
 ## Going deeper
 

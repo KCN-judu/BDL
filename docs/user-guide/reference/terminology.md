@@ -43,7 +43,9 @@ last column is the formal or internal name, which appears only in
 | **binding** | a connection from a provided port or value to a required port or open relationship | Connection, Binding | `Binding`, `BindingId`, `Definition::Reference` |
 | **fan-out** | one value read by several required ports | — | several bindings from one source |
 | **version** | a copy of a component with the same promise | Duplicate as Version | `DuplicateComponent` |
-| **system** | a design with instances; what a system project holds | System (context bar) | `BehaviorSystem`; flattened design |
+| **system** | a design with instances; what every project holds | System (context bar) | `BehaviorSystem`; flattened design |
+| **Design view / Code view / Split** | the project as a graph, as its `.bdl` files, or both side by side | Design · Code · Split (Design page) | `DesignView`; `GetSources`, `ApplySourceEdit` |
+| **does not build yet** | the text in the Code view is not a design yet; the graph shows the last version that was | *This file does not build yet …* | a draft the loader refused; last-known-good revision |
 | **revision** | one version of the design; every edit makes a new one | Explain | `Revision` |
 | **draft** | a typed but not yet added formula | *unsaved* | `MappingDefinitionDraft` overlay |
 | **finding** | what the compiler reports about an object | (under the field it concerns) | diagnostic, code |

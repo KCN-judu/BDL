@@ -1,14 +1,11 @@
 # System projects
 
-A **system project** (_New System…_ on the project manager) is a project that
-can hold behavior groups, components and instances. Everything a plain project
-can do, a system project can do; this page covers what it adds on the Design
-page. The ideas are in [Behavior groups](../concepts/behavior-groups.md),
+Every project is a **system project**: it can hold behavior groups, components
+and instances, and a project with none of them is simply a system whose design
+is its own top level. This page covers what the system adds on the Design page.
+The ideas are in [Behavior groups](../concepts/behavior-groups.md),
 [Components](../concepts/components.md) and
 [Behavior systems](../concepts/behavior-systems.md).
-
-A plain project cannot be turned into a system project later; choose at
-creation.
 
 ## Two canvases, one design
 
@@ -128,8 +125,7 @@ as before.
 ## Not built
 
 Entity hover cards and _Fixes_ inside a component's source; packaging a behavior
-that is inside a component (nested components); a minimap; converting a plain
-project into a system project.
+that is inside a component (nested components); a minimap.
 
 ## Related
 

@@ -25,19 +25,18 @@ At start-up the server looks for a **project root** — a folder containing
 2. otherwise the first workspace folder;
 3. otherwise the older `rootUri`.
 
-**A text project** (`kind = "text"`, sources under `src/`) is the workspace:
-every `src/**/*.bdl` file is known to the server whether or not you have it
-open, and every answer is about the whole project — a definition in another
-file, references across files, a rename that touches three files. An open buffer
-replaces the file on disk while it is open; nothing is written by the server
-except the identity sidecar (`.bdl/identities.json`) after a save or an outside
-change, so the next tool to open the project agrees on identities. Saving is the
-editor's ordinary save of the `.bdl` file.
+**The project** (sources under `src/`) is the workspace: every `src/**/*.bdl`
+file is known to the server whether or not you have it open, and every answer is
+about the whole project — a definition in another file, references across files,
+a rename that touches three files. An open buffer replaces the file on disk
+while it is open; nothing is written by the server except the identity sidecar
+(`.bdl/identities.json`) after a save or an outside change, so the next tool to
+open the project agrees on identities. Saving is the editor's ordinary save of
+the `.bdl` file.
 
-**A flat or system project** saved by Studio is loaded as the _committed state_;
-an open `.bdl` document is an _overlay_ on it, matched by name, analysed and
-never written back — the older mode, still there for checking a formula against
-a canvas project.
+**A project saved by an older version of Studio** (a `design/*.json` file, no
+`src/`) is converted to `.bdl` sources the first time any tool opens it, the
+language server included; from then on it is an ordinary workspace.
 
 **No project**: the server starts empty and open documents alone populate it.
 
@@ -45,7 +44,7 @@ a canvas project.
 
 | Feature              | LSP request                                                                                  | Notes                                                                                                                                                                                                                                                                                                                                                                                                         |
 | -------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Diagnostics**      | `textDocument/diagnostic` (pull); `publishDiagnostics` only for clients without pull support | the same findings as Studio, with the same spans, in the file they belong to; _open_ findings come as information, not errors; a text project's own findings (an unknown concept, a duplicate item, a second driver) are errors on the item                                                                                                                                                                   |
+| **Diagnostics**      | `textDocument/diagnostic` (pull); `publishDiagnostics` only for clients without pull support | the same findings as Studio, with the same spans, in the file they belong to; _open_ findings come as information, not errors; findings about the source files (an unknown concept, a duplicate item, a second driver) are errors on the item                                                                                                                                                                 |
 | **Hover**            | `textDocument/hover`                                                                         | what a name is: a concept's value form and description, a relationship's signature and status, a component's ports, an instance's arguments and bound ports, a binding's ends                                                                                                                                                                                                                                 |
 | **Completion**       | `textDocument/completion`                                                                    | knows its scope: at an item start the items allowed there (a component body offers `requires`, `provides`, `use`, …); after `instance x :` the components; inside the braces the clock parameters and parameters not yet given; after `bind a.` the instance's ports; after `@` the domains in scope; in a body the body's own relationships and inputs, units after a number, `delay` / `sync` where allowed |
 | **Go to definition** | `textDocument/definition`                                                                    | by identity, across files — a concept from its use in a component, a component from its instance, a relationship from a call in a body                                                                                                                                                                                                                                                                        |

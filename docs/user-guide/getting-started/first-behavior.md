@@ -147,8 +147,8 @@ chosen when you simulate or deploy, not here.
 Brightness is a value inside the design. The lamp itself is a **physical
 output**: the place where a value leaves the design for the world.
 
-1. **+** next to _Outputs_. In the _New output_ sheet: Name `Light Output`,
-   **Accepts** Brightness, **Updates in** interaction, **Required** on. Create.
+1. **+** next to _Outputs_. In the _New output_ sheet: Name `light`, **Accepts**
+   Brightness, **Updates in** interaction, **Required** on. Create.
 
 A sink node appears at the right edge of the canvas, drawn dashed: it has a
 domain but nothing drives it yet. The status line says _outputs incomplete_.
@@ -168,19 +168,19 @@ which is meant to stay without a formula. Press **⌘S** to save.
 
 ## What you have
 
-![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the Light Output sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/getting-started/complete-lamp.png)
+![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/getting-started/complete-lamp.png)
 
 _The finished lamp: the input tilt, the rule dimByTilt, the value brightness,
-and the driven Light Output._
+and the driven light._
 
-| Object           | Kind                                  | Formula           | Updates in    |
-| ---------------- | ------------------------------------- | ----------------- | ------------- |
-| **Tilt**         | concept, an angle                     |                   |               |
-| **Brightness**   | concept, a plain number               |                   |               |
-| **tilt**         | relationship reading nothing: input   | _none_            | _interaction_ |
-| **dimByTilt**    | relationship reading Tilt: a rule     | `Tilt / 90 deg`   | any           |
-| **brightness**   | relationship reading nothing: a value | `dimByTilt(tilt)` | _interaction_ |
-| **Light Output** | physical output driven by brightness  |                   | _interaction_ |
+| Object         | Kind                                  | Formula           | Updates in    |
+| -------------- | ------------------------------------- | ----------------- | ------------- |
+| **Tilt**       | concept, an angle                     |                   |               |
+| **Brightness** | concept, a plain number               |                   |               |
+| **tilt**       | relationship reading nothing: input   | _none_            | _interaction_ |
+| **dimByTilt**  | relationship reading Tilt: a rule     | `Tilt / 90 deg`   | any           |
+| **brightness** | relationship reading nothing: a value | `dimByTilt(tilt)` | _interaction_ |
+| **light**      | physical output driven by brightness  |                   | _interaction_ |
 
 The design is _executable_: every relationship the output depends on is defined
 or is an input, checks, has a rhythm, and the output has exactly one driver.

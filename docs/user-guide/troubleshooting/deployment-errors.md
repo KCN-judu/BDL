@@ -4,7 +4,7 @@ Verdicts on the Deploy page are about **this design on this board**. They never
 change the design, and choosing another board never changes a Design-page
 verdict. The rules are in [Deploy](../studio/deploy.md).
 
-## _Fits Arduino Nano so far — the binding is not finished._ with _No device on arduino_nano for: Light Output._
+## _Fits Arduino Nano so far — the binding is not finished._ with _No device on arduino_nano for: light._
 
 **What it means.** An output has a domain but no device realises it on the
 board.
@@ -13,7 +13,7 @@ board.
 channel for a dimmable light, a digital output for a switched load) and choose
 the output in the row. Code: `deploy.output_unrealised` (information).
 
-## _… so far …_ with _Not connected to an output: PWM light._
+## _… so far …_ with _Not connected to an output: pwmLight._
 
 **What it means.** A device has no output.
 
@@ -21,7 +21,7 @@ the output in the row. Code: `deploy.output_unrealised` (information).
 that feeds the design rather than realising an output may stay unconnected.
 Code: `deploy.device_unbound` (information).
 
-## _Not feasible on Arduino Nano._ — _Could not place PWM light PWM of PWM light._ — _Nothing on arduino_nano can carry PWM light PWM._
+## _Not feasible on Arduino Nano._ — _Could not place pwmLight PWM of pwmLight._ — _Nothing on arduino_nano can carry pwmLight PWM._
 
 **What it means.** No pin on the board offers what one requirement needs (PWM,
 an interrupt, an I²C bus…), or every pin that does is already taken by another
@@ -35,7 +35,7 @@ one bus; a UART's TX and RX on one unit).
 fixed by hand to free a contested one, or another board. The Nano has six PWM
 pins; _Big board (mock)_ has twelve. Code: `deploy.infeasible`.
 
-## _Not feasible …_ — _The pin chosen by hand, D4, cannot carry PWM light PWM here._
+## _Not feasible …_ — _The pin chosen by hand, D4, cannot carry pwmLight PWM here._
 
 **What it means.** The pin you typed in the device row is not on this board or
 lacks the capability.

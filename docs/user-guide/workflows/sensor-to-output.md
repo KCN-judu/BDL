@@ -49,7 +49,7 @@ input (declared, in a domain)  →  rule(s)  →  value (defined, in the domain)
 - `dimByTilt` and `adaptBrightness` are **rules** with no domain of their own;
   they run when `brightness` runs.
 - `brightness` is the **one value** the light shows, and the **only driver** of
-  _Light Output_. Everything the lamp does is legible from this one formula.
+  _light_. Everything the lamp does is legible from this one formula.
 - The comparison `AmbientLight > 300 lx` is checked for dimension like any
   arithmetic: comparing an illuminance with `300` (no unit) would be refused.
 

@@ -15,12 +15,11 @@ creation sheet for that kind:
 | **Outputs**        | _New output_ — name, _Accepts_, _Updates in_, _Required_                                                                                 | the sink with its state glyph                    |
 | **Contexts**       | — (a heading; contexts are not part of the tool yet)                                                                                     |                                                  |
 
-In a **system project** the tab also lists **Components** (_New component_ — a
-name; the source is empty until you edit it), **Instances** (when the system
-canvas is showing), and **Behaviors** (_New Behavior Group_ — an empty group to
-drag relationships into). A component's row carries a red mark when its source
-no longer keeps its promise, and is filled while its source is the one open on
-the canvas.
+The tab also lists **Components** (_New component_ — a name; the source is empty
+until you edit it), **Instances** (when the system canvas is showing), and
+**Behaviors** (_New Behavior Group_ — an empty group to drag relationships
+into). A component's row carries a red mark when its source no longer keeps its
+promise, and is filled while its source is the one open on the canvas.
 
 Selecting a row selects the object on the canvas and in the inspector.
 

@@ -29,12 +29,16 @@ drive light = brightness
 
 ### Works today
 
-- **Text projects.** A project whose design lives in `src/**/*.bdl` files, with
-  no design JSON at all ([Project files](../reference/project-files.md)). Studio
-  creates one with _New Text Project…_, opens it like any system project, and
-  saves your canvas edits back into the files as item-level changes — comments
-  and layout of the text you did not touch stay as they were
-  ([Authoring a project as text](../workflows/authoring-as-text.md)).
+- **Every project is text.** A project's design lives in its `src/**/*.bdl`
+  files ([Project files](../reference/project-files.md)). Studio saves your
+  canvas edits back into them as item-level changes — comments and layout of the
+  text you did not touch stay as they were — and shows the same files in its
+  **Code** view, where typing changes the design
+  ([Design, Code and Split](../studio/code-view.md),
+  [Authoring a project as text](../workflows/authoring-as-text.md)). Projects
+  saved by older versions of Studio are converted to text the first time they
+  open, keeping every identity and position.
+
 - **The whole design has syntax**: concepts, relationships, timing domains
   (`clock`, `@domain`), physical outputs and their drivers, devices with fixed
   pins, components with required / provided / parameter ports and clock
@@ -70,11 +74,10 @@ drive light = brightness
 
 ## Identity
 
-Every item in a text project has a stable identity, kept in
-`.bdl/identities.json` next to the sources — a file the tools own and you never
-need to edit. When the files are read again, each item is matched to its
-identity by its kind and name (and, for the items inside a component, the
-component's name). So:
+Every item has a stable identity, kept in `.bdl/identities.json` next to the
+sources — a file the tools own and you never need to edit. When the files are
+read again, each item is matched to its identity by its kind and name (and, for
+the items inside a component, the component's name). So:
 
 - **Editing a body, a signature or a description** keeps the identity.
 - **Moving an item** to another file or another place in the file keeps it.
@@ -127,6 +130,6 @@ deployment; the two work on the same files.
 
 _For language implementers:_ `docs/spec/textual-syntax.md` is the normative
 grammar (§14 for project items); `docs/architecture/ide-service.md` explains the
-text workspace and the LSP adapter; `docs/spec/project-format.md` the text
-project layout; the ADR on the textual workspace and source identities records
-the identity rules.
+text workspace and the LSP adapter; `docs/spec/project-format.md` the project
+layout; the ADRs on the textual workspace and source identities (0020) and on
+the one project with Design, Code and Split views (0023) record the rules.

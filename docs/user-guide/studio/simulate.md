@@ -6,7 +6,7 @@ executable definition of what a BDL design means. Studio holds the inputs you
 typed, the periods you chose and the samples that came back; it computes nothing
 itself.
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _The Simulate page after three steps with the tilt at 45°: inputs on the left,
 the trace in the middle, the probe on the right._
@@ -24,8 +24,8 @@ Under the inputs, **Timing domains**: a period per domain — _every N_ ticks �
 the schedule the evaluator activates by. A period, never a rate. Changing a
 period starts the run over.
 
-In a system project, an instance's **open required ports** are inputs too, and
-an instance's values are listed as `lampA.brightness`.
+An instance's **open required ports** are inputs too, and an instance's values
+are listed as `lampA.brightness`.
 
 ## Readiness (above the trace)
 

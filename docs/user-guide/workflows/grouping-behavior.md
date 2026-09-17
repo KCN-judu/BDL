@@ -4,12 +4,10 @@
 _Adaptive lamp_, and see the design from a step back — without changing what it
 does.
 
-**Needs** a **system project** (_New System…_). If your lamp is a plain project,
-rebuild it in a system project — the steps of
-[Your first behavior](../getting-started/first-behavior.md) are the same — or
-start from the system built in the [tests](../VERIFICATION.md): `raw` →
-`tiltValue` → `dimByTilt` → `brightness` → `light`, with
-`indicator = brightness`.
+**Needs** a project with a few relationships — the lamp of
+[Your first behavior](../getting-started/first-behavior.md) — or the system
+built in the [tests](../VERIFICATION.md): `raw` → `tiltValue` → `dimByTilt` →
+`brightness` → `light`, with `indicator = brightness`.
 
 ## Steps
 
@@ -63,8 +61,6 @@ start from the system built in the [tests](../VERIFICATION.md): `raw` →
 
 ## If it does not work
 
-- _Group as Behavior_ is missing — this is a plain project; groups need a system
-  project.
 - A banner refuses adding a relationship — it is already in another behavior; a
   relationship belongs to at most one.
 - The **Boundary** section says _Computed once the analysis arrives._ — wait a

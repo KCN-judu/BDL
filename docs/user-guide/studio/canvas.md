@@ -23,10 +23,10 @@ field.
 
 ## The nodes
 
-![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the Light Output sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/studio/node-anatomy.png)
+![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/studio/node-anatomy.png)
 
 _Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt
-selected), and the Light Output sink._
+selected), and the light sink._
 
 A **concept** is one row: its name, an input socket on the left (something
 produces this concept) and an output socket on the right (relationships read it
@@ -50,9 +50,15 @@ edge; and a bar down its right side — nothing flows out of it.
 The selected node (`dimByTilt` above) is outlined in the accent colour; nothing
 else on the canvas uses that colour.
 
-In a system project there are also **instance nodes** (one row per port, the
-component's name in the body) and **behavior regions** or collapsed **behavior
-boxes**; see [System projects](system-projects.md).
+A project that composes components also shows **instance nodes** (one row per
+port, the component's name in the body) and **behavior regions** or collapsed
+**behavior boxes**; see [System projects](system-projects.md).
+
+Every node has a place. A node you did not place — one made in the Code view, in
+a code editor, or by an older project's first open — is placed for you: in the
+column of its kind (concepts left, relationships in the middle, outputs right),
+beside what it reads or produces, below anything already there. Nothing you
+placed moves; drag it where you like ([Design, Code and Split](code-view.md)).
 
 ## Gestures
 
@@ -78,13 +84,13 @@ boxes**; see [System projects](system-projects.md).
 ## The context menu
 
 On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most
-common categories, _More…_ (which opens the Library tab); in a system project
-also **Add Instance ▸** _component_ and **New Behavior Group**.
+common categories, _More…_ (which opens the Library tab); **Add Instance ▸**
+_component_ and **New Behavior Group**.
 
-On a node: **Rename**, **Delete**; on a relationship in a system project also
-**Group as Behavior**, **Add to Group ▸**, **Remove from …**; on an instance,
-**Edit Source**; on a behavior, **Collapse** / **Expand**, **Package as Reusable
-Component…**, **Ungroup**.
+On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**,
+**Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a
+behavior, **Collapse** / **Expand**, **Package as Reusable Component…**,
+**Ungroup**.
 
 ## What the canvas never shows
 

@@ -18,7 +18,7 @@ the inspector's _Explain_.
 | a link will not land; _contested_; _… already has a final target_; _… expects …, but … produces …_; _Replace the connection?_; _Carry across timing domains_; _… expects …, but … provides …_; a banner about a port in use or a component that cannot stand in                                      | [Connections](connection-errors.md)                                                                     |
 | _Not feasible on …_; _Nothing on … can carry …_; _The pin chosen by hand … cannot carry …_; _No device on … for …_; _Not connected to an output_                                                                                                                                                     | [Deployment](deployment-errors.md)                                                                      |
 | a **banner** after an action: _a concept named … already exists_; _concept … is still used by …_; _the project has moved on_                                                                                                                                                                         | the action was refused, nothing changed; read the banner — it names the reason — and _Dismiss_          |
-| in a `.bdl` file or from `bdld check`: _… is not a concept of this project_; _… is declared twice_; _… has a fresh one_; a banner _… changed on disk since the project was opened_                                                                                                                   | [Text projects](text-project-errors.md)                                                                 |
+| in a `.bdl` file, the Code view or `bdld check`: _… is not a concept of this project_; _… is declared twice_; _… has a fresh one_; banners _This file does not build yet …_ and _… changed on disk since the project was opened_; _A name is one word, without spaces_                               | [Source files](text-project-errors.md)                                                                  |
 | _Compiler not connected_ in the status line                                                                                                                                                                                                                                                          | [Install and launch](../getting-started/install-and-launch.md): Studio does nothing semantic on its own |
 
 ## Three habits
@@ -27,7 +27,6 @@ the inspector's _Explain_.
    under it (or in _Explain_) names the alternative.
 2. **Look for a fix.** The inspector's **Fixes** section offers the actions the
    tool can take for a finding — _Choose what Temperature is represented by_,
-   _Connect a driver to Light Output_, _Detach … from …_ — as ordinary, undoable
-   edits.
+   _Connect a driver to light_, _Detach … from …_ — as ordinary, undoable edits.
 3. **Orange is not red.** Orange and dashed mean _not decided yet_; red means
    _wrong now_. Only red stops anything.

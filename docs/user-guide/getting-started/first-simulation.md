@@ -37,10 +37,10 @@ Click **Step**.
 
 The trace gains its first row: tick 0, the active domain _interaction_, and the
 values the design computed — `brightness` as `Brightness(0.5)` (or within a few
-digits of it, depending on what you typed), and the _Light Output_ column
-showing the same value, because `brightness` drives it. A value is always
-written with the concept it belongs to. Click **Step** twice more: three rows,
-the same values, because the input has not changed.
+digits of it, depending on what you typed), and the _light_ column showing the
+same value, because `brightness` drives it. A value is always written with the
+concept it belongs to. Click **Step** twice more: three rows, the same values,
+because the input has not changed.
 
 Change the field to `1.5708` (90°) and **Step**: about `Brightness(1)`. Set `0`
 and step: `Brightness(0)`. Upright is off; flat is full.
@@ -50,7 +50,7 @@ recomputed from the inputs you supplied. The evaluator that produced these
 numbers is the one that defines what a BDL design means; the generated code for
 a device is held to it.
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and Light Output columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _The Simulate page after three steps with the tilt at 45°: inputs on the left,
 the trace in the middle, the probe on the right._

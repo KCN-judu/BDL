@@ -12,7 +12,8 @@ design can only reach through that boundary. Most groups never become
 components; a component is what you make when a behavior will be used more than
 once, or should be understood without looking inside.
 
-Components exist in **system projects** (_New System…_).
+Components exist in every project
+([System projects](../studio/system-projects.md)).
 
 ## The promise: ports
 

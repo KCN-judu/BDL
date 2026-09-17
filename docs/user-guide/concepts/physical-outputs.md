@@ -6,9 +6,9 @@ a motor, a display, a buzzer. It is not a concept and not a relationship. It
 exactly one value of the design.
 
 Do not confuse it with a relationship's _output_ — the concept a relationship
-produces. `dimByTilt` produces _Brightness_; _Light Output_ is a physical output
-that accepts _Brightness_. The first is a meaning inside the design; the second
-is the lamp.
+produces. `dimByTilt` produces _Brightness_; _light_ is a physical output that
+accepts _Brightness_. The first is a meaning inside the design; the second is
+the lamp.
 
 ## The rules, in designer terms
 

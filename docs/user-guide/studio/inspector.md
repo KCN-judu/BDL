@@ -31,11 +31,11 @@ _This change affects dimByTilt, warmPulse; they will be checked again._ — and
 | **Fixes**        | actions the tool offers for findings on this relationship: a button when ready, a pop-up when it needs a choice, the reason when blocked | applied as ordinary, undoable edits          |
 | **Delete …**     |                                                                                                                                          |                                              |
 
-In a system project a relationship can also show _In group …_ with a _Show
-Group_ link, _Takes its value from …_ with _Show Binding_ when it is bound to a
-port (with _Disconnect it to define the relationship yourself._), and — in a
-component's source — the port it backs (_requires_ / _provides_ / _parameter_).
-Ports are declared from the component's own inspector.
+A relationship can also show _In group …_ with a _Show Group_ link, _Takes its
+value from …_ with _Show Binding_ when it is bound to a port (with _Disconnect
+it to define the relationship yourself._), and — in a component's source — the
+port it backs (_requires_ / _provides_ / _parameter_). Ports are declared from
+the component's own inspector.
 
 ## Physical output
 
@@ -53,10 +53,10 @@ Timing domains have no inspector page: rename them in place in the sidebar and
 delete them there while unused. Their meaning is in the relationships and
 outputs that _update in_ them.
 
-## In a system project
+## Behaviors, components, instances, bindings
 
-Behaviors, components, instances and bindings have inspectors of their own;
-[System projects](system-projects.md) describes them.
+They have inspectors of their own; [System projects](system-projects.md)
+describes them.
 
 ## Explain
 

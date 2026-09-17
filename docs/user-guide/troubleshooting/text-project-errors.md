@@ -1,10 +1,31 @@
-# Text projects
+# Source files
 
-Findings a text project reports about its files, in the editor (on the item) and
-in `bdld check` (with `file:line:col`). A text project's own findings are red:
-the file says something the design cannot mean, and the item is left out until
-it is fixed. Everything else — a wrong unit, a missing driver, a domain crossing
-— is the same finding as in Studio, on the same page of this section.
+Findings about a project's `.bdl` files, in Studio's Code view (under the
+editor), in a code editor (on the item) and in `bdld check` (with
+`file:line:col`). These findings are red: the file says something the design
+cannot mean. In a code editor the item is left out until it is fixed; in
+Studio's Code view the whole file waits (below). Everything else — a wrong unit,
+a missing driver, a domain crossing — is the same finding as on the canvas, on
+the same page of this section.
+
+## A banner in the Code view: _This file does not build yet: the design shows the last version that did._
+
+What you typed does not read as a design yet — a syntax slip, or one of the
+findings below. Nothing is lost on either side: the canvas keeps showing the
+last version of the file that did build (its banner says _Showing the last
+version that built; the text has changes that do not build yet_), and the editor
+keeps your text exactly as typed. The reasons are listed under the editor; click
+one to put the cursor on it. Fix the text and the banners go as soon as the file
+builds again ([Design, Code and Split](../studio/code-view.md)).
+
+## _A name is one word, without spaces: `Light_Output`._ · _`…` is a word of the language; choose another name._ · _A name is letters, digits and underscores, starting with a letter: `…`._
+
+A name on the canvas, in a sheet or in the inspector must be a name the source
+files can spell: letters, digits and underscores, not starting with a digit, not
+a keyword of the language, because the files _are_ the design. The message shows
+the spelling that would work. Projects saved by older versions of Studio that
+had such names get them respelled this way the first time they open. —
+`edit.invalid_name`
 
 ## _… is not a concept of this project; declare it with `concept … : …` or pick an existing one._
 
@@ -88,8 +109,18 @@ _Dismiss_ leaves both as they are
 ([Authoring a project as text](../workflows/authoring-as-text.md)). —
 `project.changed_on_disk`
 
+## On opening an older project: _a Flat project that already has files under src/: which is the design?_
+
+The folder has both an older `design/*.json` design file and `.bdl` files under
+`src/`. Studio converts older projects to `.bdl` text the first time they open,
+but it will not guess which of the two is the design. Move one of them out of
+the folder and open again
+([Project files — Older projects](../reference/project-files.md#older-projects)).
+— `project.text`
+
 ## Related
 
+[Design, Code and Split](../studio/code-view.md) ·
 [Syntax basics](../textual/syntax-basics.md) ·
 [Types, units and concepts](type-and-concept-errors.md) ·
 [Connections](connection-errors.md)

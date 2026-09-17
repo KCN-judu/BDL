@@ -51,17 +51,17 @@ is fine; a _rule_ without one has nothing to compute.)
 This one _is_ an error — see
 [Types, units and concepts](type-and-concept-errors.md).
 
-## _Light Output has no final target yet._ / _Undriven — the design is incomplete without a driver._ / status line _outputs incomplete_
+## _light has no final target yet._ / _Undriven — the design is incomplete without a driver._ / status line _outputs incomplete_
 
 **What it is.** A required output with no driver. The design is incomplete, not
 wrong.
 
 **What to do.** Connect the value that should drive it: drag from its output
 socket to the sink, pick it in the output's _Connect_ pop-up, or take the fix
-_Connect a driver to Light Output_. If the output is not essential, switch
-_Required_ off. Code: `output.missing_driver` (information).
+_Connect a driver to light_. If the output is not essential, switch _Required_
+off. Code: `output.missing_driver` (information).
 
-## _Light Output has no timing domain yet, so this connection cannot be checked._
+## _light has no timing domain yet, so this connection cannot be checked._
 
 **What it is.** The output is _open_ — it has no domain, so nothing can be
 checked against it.

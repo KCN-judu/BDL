@@ -2,8 +2,8 @@
 
 A **behavior system** is a design made of component **instances** wired
 together, alongside the system's own concepts, relationships, timing domains and
-physical outputs. It is what a _system project_ holds. A plain project is the
-simplest case: a system with no components.
+physical outputs. Every project holds one; the simplest case is a system with no
+components — the lamp of the tutorials.
 
 ```text
 concept                 ─┐

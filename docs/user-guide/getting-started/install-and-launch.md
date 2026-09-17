@@ -37,23 +37,22 @@ intended way.
 Studio opens on the **project manager**: the wordmark on the left with _Start_
 actions under it, _Recent_ projects on the right.
 
-![Studio's start screen with New Project, New System, New Text Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
+![Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
 
 _The project manager: Start actions on the left, Recent on the right._
 
-| Action                | What it does                                                                                                                             |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **New Project…**      | asks for a folder name and location, creates a project there, opens the workspace                                                        |
-| **New System…**       | the same, for a project that can contain behavior groups, components and instances (see [System projects](../studio/system-projects.md)) |
-| **New Text Project…** | the same as _New System…_, stored as `.bdl` text files you can also edit in a code editor (see [Textual BDL](../textual/overview.md))    |
-| **Open Project…**     | opens an existing project folder                                                                                                         |
-| a _Recent_ row        | reopens that project; rows whose folder is gone are greyed _not found_                                                                   |
+| Action            | What it does                                                                      |
+| ----------------- | --------------------------------------------------------------------------------- |
+| **New Project…**  | asks for a folder name and location, creates a project there, opens the workspace |
+| **Open Project…** | opens an existing project folder                                                  |
+| a _Recent_ row    | reopens that project; rows whose folder is gone are greyed _not found_            |
 
 A **project** is a folder. Everything in it is saved as plain files
-([Project files](../reference/project-files.md)). If you are not sure which kind
-to create, start with _New Project…_; groups and components are introduced later
-in the guide and need a system project, and a project cannot be converted from
-one kind to the other yet.
+([Project files](../reference/project-files.md)): the design as `.bdl` text you
+can also edit in a code editor, and the canvas layout beside it. There is one
+kind of project; behavior groups, components and instances
+([System projects](../studio/system-projects.md)) and the **Code** view
+([Design, Code and Split](../studio/code-view.md)) are available in every one.
 
 The bottom line of the window shows the connection to the compiler service:
 _Compiler 0.1.0_ when connected, _Connecting to the compiler_ while it starts,
