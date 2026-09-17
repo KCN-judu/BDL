@@ -20,6 +20,13 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Markdown format and lint (what `just docs-fmt` would change fails here)
+        run: |
+          git ls-files -z '*.md' | xargs -0 npx --yes prettier@3.9.7 --log-level warn --check
+          git ls-files -z '*.md' | xargs -0 npx --yes markdownlint-cli2@0.23.2
       - run: python3 scripts/validate_docs.py
       - run: python3 -m unittest scripts/test_validate_docs.py
       - run: cargo clippy --workspace --all-targets -- -D warnings

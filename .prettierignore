@@ -1,0 +1,8 @@
+# Prettier is used for Markdown only (`just docs-fmt` passes the tracked
+# .md files); Rust and Dart have their own formatters.
+node_modules/
+target/
+apps/studio/build/
+apps/studio/.dart_tool/
+reference/
+editors/vscode/out/

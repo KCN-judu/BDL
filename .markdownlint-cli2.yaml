@@ -1,0 +1,44 @@
+# Markdown lint for this repository. `just docs-fmt` runs Prettier (layout),
+# labels bare fences and applies markdownlint's own fixes; `just docs-lint`
+# (part of `just check` and CI) reports what is left.
+# Rules: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+config:
+  default: true
+  # Prettier wraps prose at 80, so a longer line is an unwrappable span (a
+  # long inline-code shape, a URL); those are allowed up to 120 and become
+  # a fenced block beyond that. Tables, code and headings are exempt.
+  MD013:
+    line_length: 120
+    tables: false
+    code_blocks: false
+    headings: false
+  # Tables are padded to column width by Prettier.
+  MD060:
+    style: any
+  # Bare fences are text (ASCII diagrams, file trees): `just docs-fmt`
+  # labels them; anything else names its language.
+  MD040: true
+  # `-` bullets, as Prettier writes them.
+  MD004:
+    style: dash
+  # Comments and a few inline elements the guide uses on purpose.
+  MD033:
+    allowed_elements: [br, kbd, sup, sub, details, summary]
+  # Numbered lists may all be `1.` or count up; both are used.
+  MD029:
+    style: one_or_ordered
+  # A page may repeat a heading under different parents (troubleshooting
+  # entries all end in "Related").
+  MD024:
+    siblings_only: true
+  # Front matter is allowed to precede the first heading (default), and a
+  # page whose first heading is not H1 is fine in the archive.
+  MD041: true
+ignores:
+  - ".claude/**"
+  - "**/node_modules/**"
+  - "target/**"
+  - "apps/studio/build/**"
+  - "apps/studio/.dart_tool/**"
+  - "reference/**"
+  - "**/CHANGELOG.md"

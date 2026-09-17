@@ -1,0 +1,8 @@
+# Markdown is formatted by Prettier (`just docs-fmt`); prose keeps the
+# author's line breaks, lists use `-`, tables are aligned.
+proseWrap: always
+printWidth: 80
+overrides:
+  - files: "*.md"
+    options:
+      proseWrap: always

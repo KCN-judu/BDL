@@ -15,7 +15,22 @@ default:
 
 # ---- Documentation --------------------------------------------------------
 
-docs-check:
+prettier      := "npx --yes prettier@3.9.7"
+markdownlint  := "npx --yes markdownlint-cli2@0.23.2"
+
+# Format every tracked Markdown file: Prettier for layout, bare fences
+# labelled `text`, then markdownlint's own fixes.
+docs-fmt:
+    git ls-files -z '*.md' | xargs -0 {{prettier}} --log-level warn --write
+    git ls-files -z '*.md' | xargs -0 python3 scripts/md_normalize.py
+    git ls-files -z '*.md' | xargs -0 {{markdownlint}} --fix
+
+# Report Markdown that `just docs-fmt` would change or that breaks a rule.
+docs-lint:
+    git ls-files -z '*.md' | xargs -0 {{prettier}} --log-level warn --check
+    git ls-files -z '*.md' | xargs -0 {{markdownlint}}
+
+docs-check: docs-lint
     python3 scripts/validate_docs.py
     python3 -m unittest scripts/test_validate_docs.py
 
