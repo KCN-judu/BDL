@@ -18,6 +18,7 @@ given last, for search, and can be read in the inspector's *Explain*.
 | a link will not land; *contested*; *… already has a final target*; *… expects …, but … produces …*; *Replace the connection?*; *Carry across timing domains*; *… expects …, but … provides …*; a banner about a port in use or a component that cannot stand in | [Connections](connection-errors.md) |
 | *Not feasible on …*; *Nothing on … can carry …*; *The pin chosen by hand … cannot carry …*; *No device on … for …*; *Not connected to an output* | [Deployment](deployment-errors.md) |
 | a **banner** after an action: *a concept named … already exists*; *concept … is still used by …*; *the project has moved on* | the action was refused, nothing changed; read the banner — it names the reason — and *Dismiss* |
+| in a `.bdl` file or from `bdld check`: *… is not a concept of this project*; *… is declared twice*; *… has a fresh one*; a banner *… changed on disk since the project was opened* | [Text projects](text-project-errors.md) |
 | *Compiler not connected* in the status line | [Install and launch](../getting-started/install-and-launch.md): Studio does nothing semantic on its own |
 
 ## Three habits

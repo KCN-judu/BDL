@@ -6,7 +6,7 @@ a source file whose labels or logic were read, or a test that exercises
 the workflow. When the product moves, re-verify the rows that cite the
 changed files and update the commit column.
 
-**Verified at:** `36f966f` (main, 2026-09-17).
+**Verified at:** `36f966f` (main, 2026-09-17); textual, workflow `authoring-as-text`, reference `cli` / `project-files` and troubleshooting `text-project-errors` rows at the textual-milestone commits of 2026-09-17 (`5a07b79` and after).
 
 Evidence paths are relative to the repository root. *Studio* means
 `apps/studio/lib`, *test* means `apps/studio/test`.
@@ -16,7 +16,7 @@ Evidence paths are relative to the repository root. *Studio* means
 | Page | Claim | Evidence |
 |---|---|---|
 | `install-and-launch.md` | toolchain versions; `just studio`; dialog fallback | `README.md`, `justfile`, `docs/GETTING_STARTED.md`; `Studio/ui/welcome/welcome_page.dart` (*Open by path…*, *New at path…*) |
-| | project manager actions: *New Project…*, *New System…*, *Open Project…*, Recent | `Studio/ui/welcome/welcome_page.dart` |
+| | project manager actions: *New Project…*, *New System…*, *New Text Project…*, *Open Project…*, Recent | `Studio/ui/welcome/welcome_page.dart` |
 | | status line connection words | `Studio/ui/shell.dart` (*Compiler …*, *Connecting to the compiler*, *Compiler not connected*) |
 | | no flat → system conversion | no such request in `crates/bdl-protocol/proto/bdl/v1/bdl.proto`; `NewProjectRequested(system:)` only |
 | `first-behavior.md` | concept sheet fields and value forms; unit column | `Studio/ui/dialogs.dart` (*New concept*, *Quantity*, *On / off*, *Count*, *Decide later*, *Unit*); `Studio/ui/units.dart` |
@@ -61,7 +61,7 @@ Evidence paths are relative to the repository root. *Studio* means
 | | boundary is computed; aggregate sockets accept no link | `crates/bdl-system/tests/grouping.rs` (`boundary_is_a_projection_and_sockets_add_no_dependency`); `test/system_e2e_test.dart` ("the aggregate socket accepts no link") |
 | | semantic transparency | `crates/bdl-system/tests/grouping.rs` (`grouping_is_semantically_transparent`) |
 | | menu and inspector labels | `Studio/ui/canvas/node_canvas.dart`, `Studio/ui/system_inspector.dart` |
-| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/adr/0018-a-component-interface-is-a-stored-promise.md` |
+| `components.md` | port kinds, stored contracts, *Realizes* once per component | `crates/bdl-system/tests/contracts.rs`; `docs/adr/0020-a-component-interface-is-a-stored-promise.md` |
 | | shared vs private concepts | `crates/bdl-system/tests/contracts.rs` (`equal_representations_are_not_equal_concepts`); `docs/BEHAVIOR_SYSTEMS.md` |
 | | *Declare a port* in the component inspector; *Edit Source*; context bar text | `Studio/ui/system_inspector.dart`; `Studio/ui/pages/design_page.dart` |
 | | source edit reaches every instance | `test/system_e2e_test.dart` ("the body edit reached the instance") |
@@ -103,16 +103,17 @@ Evidence paths are relative to the repository root. *Studio* means
 | `package-as-component.md` | preview, choices, one edit, same trace, member identity kept, source edit reaches instance | `test/system_e2e_test.dart` (§75 packaging section); `crates/bdl-system/tests/grouping.rs` (`extraction_is_a_differential_witness_of_theorem_r`, `an_open_member_is_an_input_by_default_or_stays_open_inside`, `a_driven_member_keeps_its_drive_and_the_sink_stays_external`) |
 | `composing-components.md` | second instance, clock argument, fan-out, replace sheet, contested light | `test/system_e2e_test.dart` (§78/§80 section, end of test); `crates/bdl-system/tests/grouping.rs` (`fan_out_delete_and_transport_coexist`) |
 | `cross-domain-transport.md` | `sync` in a formula; trace values; binding sheet *Starts at*; gate on link | `test/simulation_test.dart` (sync case); `test/system_e2e_test.dart` (transport section); `test/system_reducer_test.dart` ("a bound copy shows what it takes and a transport is a gate") |
+| `authoring-as-text.md` | *New Text Project…*; canvas edits written back as item edits with comments kept; canvas rename keeps identity and body follows; *… changed on disk since the project was opened: …* banner with *Reload from disk* / *Overwrite*; reload drops unsaved edits and keeps identities; `bdld check` line | `Studio/ui/welcome/welcome_page.dart`, `Studio/ui/shell.dart` (`_Banner`, `kChangedOnDisk`); `crates/bdl-daemon/src/session.rs` (`ChangedOnDisk` wording, `reload_text`); `test/text_project_e2e_test.dart`; `crates/bdl-daemon/tests/cli.rs` |
 | `component-versioning.md` | *Duplicate as Version*, *Replace with*, port retirement refusals, `not_substitutable`, `instance_in_use`, contract change classified, undo | `test/system_e2e_test.dart` (§80 versions, §79 contract sections); `crates/bdl-system/tests/contracts.rs` (`a_refining_version_substitutes_an_incompatible_one_is_refused`, `a_contract_change_is_explicit_and_classified`) |
 
 ## Textual
 
 | Page | Claim | Evidence |
 |---|---|---|
-| `overview.md` | parsing scope; overlay semantics; no textual project; no syntax for domains/outputs/devices; parameter-name limitation; enums open | `docs/TEXTUAL_SYNTAX.md` §11–12; `docs/IDE_SERVICE_ARCHITECTURE.md` ("Textual surface today", "Overlays"); `crates/bdl-ide-db/src/textual.rs`; `docs/DESIGN_ISSUES.md` DI-19, DI-30 |
-| | same verdict on both surfaces | `crates/bdl-ide/tests/surface_equivalence.rs` |
-| `syntax-basics.md` | grammar and the checked/unchecked matrix; type names | `docs/TEXTUAL_SYNTAX.md` §4–6, §11.1; `crates/bdl-ide-db/src/textual.rs` (`representation_named`); `crates/bdl-syntax/test_data/valid/*.bdl` |
-| `editor-and-lsp.md` | capabilities, root resolution, full sync, encodings, pull diagnostics with push fallback, custom requests, disabled model-only actions | `crates/bdl-lsp/src/server.rs` (`ServerCapabilities`, `InitializationOptions`, `open_host`), `crates/bdl-lsp/src/convert.rs` (`code_action`, `workspace_edit`, token legend); `crates/bdl-lsp/tests/e2e.rs` |
+| `overview.md` | text projects; the whole design has syntax; stable identity rules (edit, move, rename by editor/canvas, unambiguous retype; ambiguous → fresh + finding); one loader on every surface, equal to the generated code; enums open; no live two-way editing | `crates/bdl-text/tests/workspace.rs` (`the_system_corpus_loads_…`, `identities_survive_a_reload_a_rename_a_move_and_a_split`, `ambiguous_renames_get_fresh_ids_and_a_fault`, `text_and_model_agree_down_to_the_executable_plan`); `crates/bdl-text/src/build.rs` (`text.unsupported_item`, `text.ambiguous_identity` wording); `test/text_project_e2e_test.dart`; `docs/TEXTUAL_SYNTAX.md` §14 |
+| | parameter names are names; concept rename leaves them | `crates/bdl-elab/src/names.rs` (`InputEnv::for_mapping`); `crates/bdl-daemon/src/rename.rs` (test `concept_named_occurrences_follow_and_parameters_stay`); `crates/bdl-lsp/tests/e2e.rs` (rename) |
+| `syntax-basics.md` | grammar and the checked/unchecked matrix; type names; project items (`clock`, `@`, `output … optional`, `drive`, `device` kinds and pins, `component` body items, ports, `instance` braces, `bind … init`, `export … as`); `///` descriptions; second driver ignored; multi-file projects | `docs/TEXTUAL_SYNTAX.md` §4–6, §11.1, §14; `crates/bdl-syntax/test_data/valid/system.bdl`; `crates/bdl-text/src/build.rs` (`device_kind_named`, `text.second_driver`); `crates/bdl-text/tests/workspace.rs` (`doc_comments_are_descriptions_and_round_trip`); `crates/bdl-system/src/validate.rs` (`system.binding_needs_transport`) |
+| `editor-and-lsp.md` | capabilities, root resolution, text workspace (unopened files known, buffers substitute, sidecar written after save/outside change), full sync, encodings, pull diagnostics with push fallback, cross-file definition/references/rename incl. body calls, scope-aware completion, formatting, inlay hints, virtual documents, custom requests, disabled model-only actions, VS Code commands | `crates/bdl-lsp/src/server.rs` (`ServerCapabilities`, `open_host`, `reload_text_ground`, `VirtualDocumentRequest`), `crates/bdl-lsp/src/convert.rs`; `crates/bdl-lsp/tests/e2e.rs`; `crates/bdl-lsp/tests/text_workspace.rs` (`navigation_and_rename_cross_files_without_opening_them`, `open_buffers_substitute_and_saves_reload_the_ground`, `cancellation_under_load_answers_every_request_once`); `crates/bdl-syntax/src/format.rs` (tests); `crates/bdl-ide/src/{inlay,virtual_docs}.rs`; `editors/vscode/package.json`, `editors/vscode/src/extension.ts` |
 
 ## Troubleshooting and reference
 
@@ -124,7 +125,9 @@ Evidence paths are relative to the repository root. *Studio* means
 | `reference/keyboard-and-mouse.md` | bindings; Windows bindings inactive; ⌘N/⌘O labels only | `Studio/ui/shell.dart` (`CallbackShortcuts`, `meta: true`), `Studio/ui/definition_editor.dart`, `Studio/ui/canvas/node_canvas.dart`, `Studio/ui/welcome/welcome_page.dart`, `Studio/platform/desktop.dart` |
 | `reference/status-meanings.md` | every phrase | `Studio/ui/shell.dart`, `Studio/ui/inspector.dart`, `Studio/ui/definition_editor.dart`, `Studio/ui/system_inspector.dart`, `Studio/ui/pages/*.dart` |
 | `reference/formula-language.md` | operators, units, forms, placement | `docs/TEXTUAL_SYNTAX.md` §5–6, §11.1; `crates/bdl-elab/src/units.rs`; `crates/bdl-ir/src/expr.rs` (`Prim`) |
-| `reference/project-files.md` | file layout, contents, what is not saved, atomic writes, migration | `docs/PROJECT_FORMAT.md`; `crates/bdl-model/src/persist.rs`; `crates/bdl-system/src/persist.rs` |
+| `reference/project-files.md` | file layout, contents, what is not saved, atomic writes, migration; text project layout, sidecars written on open/save/editor save, new items to `src/main.bdl` or the first file, body appends | `docs/PROJECT_FORMAT.md`; `crates/bdl-model/src/persist.rs`; `crates/bdl-system/src/persist.rs`; `crates/bdl-text/src/workspace.rs` (`load_text_project`, `save_text_project`, `init_text_project`), `crates/bdl-text/src/splice.rs` (`DEFAULT_FILE`) |
+| `reference/cli.md` | commands, exit codes, `--json`, input forms, printed shapes | `crates/bdl-daemon/src/{main,cli}.rs`; `crates/bdl-daemon/tests/cli.rs`; output reproduced by running `bdld check` / `bdld simulate` on the workflow's lamp |
+| `troubleshooting/text-project-errors.md` | every quoted message and code | `crates/bdl-text/src/build.rs` (`fault`, `open_fault` call sites); `crates/bdl-daemon/src/session.rs` (`ChangedOnDisk`); `crates/bdl-daemon/src/server.rs` (`project.changed_on_disk`) |
 
 ## Known gaps recorded while verifying
 

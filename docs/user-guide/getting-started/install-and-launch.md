@@ -43,6 +43,7 @@ Studio opens on the **project manager**: the wordmark on the left with
 |---|---|
 | **New Project…** | asks for a folder name and location, creates a project there, opens the workspace |
 | **New System…** | the same, for a project that can contain behavior groups, components and instances (see [System projects](../studio/system-projects.md)) |
+| **New Text Project…** | the same as *New System…*, stored as `.bdl` text files you can also edit in a code editor (see [Textual BDL](../textual/overview.md)) |
 | **Open Project…** | opens an existing project folder |
 | a *Recent* row | reopens that project; rows whose folder is gone are greyed *not found* |
 

@@ -82,12 +82,14 @@ matters.
 [Packaging a behavior as a component](workflows/package-as-component.md) ·
 [Composing components](workflows/composing-components.md) ·
 [Carrying a value across timing domains](workflows/cross-domain-transport.md) ·
-[Versioning a component](workflows/component-versioning.md)
+[Versioning a component](workflows/component-versioning.md) ·
+[Authoring a project as text](workflows/authoring-as-text.md)
 
 **Textual BDL**
 [Overview and current status](textual/overview.md) ·
 [Syntax basics](textual/syntax-basics.md) ·
-[Editor and language server](textual/editor-and-lsp.md)
+[Editor and language server](textual/editor-and-lsp.md) ·
+[Authoring a project as text](workflows/authoring-as-text.md)
 
 **Troubleshooting**
 [Start here](troubleshooting/README.md) ·
@@ -95,14 +97,16 @@ matters.
 [Types, units and concepts](troubleshooting/type-and-concept-errors.md) ·
 [Timing](troubleshooting/timing-errors.md) ·
 [Connections](troubleshooting/connection-errors.md) ·
-[Deployment](troubleshooting/deployment-errors.md)
+[Deployment](troubleshooting/deployment-errors.md) ·
+[Text projects](troubleshooting/text-project-errors.md)
 
 **Reference**
 [Terminology](reference/terminology.md) ·
 [Keyboard and mouse](reference/keyboard-and-mouse.md) ·
 [Status meanings](reference/status-meanings.md) ·
 [Formula language](reference/formula-language.md) ·
-[Project files](reference/project-files.md)
+[Project files](reference/project-files.md) ·
+[Command line](reference/cli.md)
 
 **About this guide**
 [Style guide](STYLE_GUIDE.md) · [Verification matrix](VERIFICATION.md) ·

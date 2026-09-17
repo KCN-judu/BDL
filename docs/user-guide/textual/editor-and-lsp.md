@@ -2,9 +2,9 @@
 
 `bdl-lsp` is a language server for `.bdl` files. It speaks the Language
 Server Protocol over standard input and output, so any editor with LSP
-support can use it. There is no editor extension or syntax-highlighting
-grammar shipped for any particular editor yet; you configure your editor
-to launch the binary.
+support can use it. A reference VS Code extension is in
+`editors/vscode` (see its README); for other editors you configure the
+client to launch the binary.
 
 ## Launching
 
@@ -13,65 +13,83 @@ Build it with the rest of the workspace (`cargo build --workspace`, or
 arguments; it logs to standard error (set `RUST_LOG` to change the level).
 
 Point your editor's LSP client at that binary for files with the `.bdl`
-extension.
+extension. In VS Code, install the extension from `editors/vscode` and
+set `bdl.serverPath` to the binary.
 
-## Which project it checks against
+## Which project it works on
 
 At start-up the server looks for a **project root** — a folder containing
 `bdl.toml`:
 
-1. `initializationOptions.projectRoot`, if your client sends it;
+1. `initializationOptions.projectRoot`, if your client sends it (the
+   VS Code extension sends the nearest such folder above the active
+   file);
 2. otherwise the first workspace folder;
 3. otherwise the older `rootUri`.
 
-If that folder holds a BDL project, the server loads it as the
-**committed state**: the concepts, relationships, domains, outputs and
-devices Studio saved there. If not, it starts with an empty design named
-after the folder, and open documents alone populate it.
+**A text project** (`kind = "text"`, sources under `src/`) is the
+workspace: every `src/**/*.bdl` file is known to the server whether or
+not you have it open, and every answer is about the whole project — a
+definition in another file, references across files, a rename that
+touches three files. An open buffer replaces the file on disk while it
+is open; nothing is written by the server except the identity sidecar
+(`.bdl/identities.json`) after a save or an outside change, so the next
+tool to open the project agrees on identities. Saving is the editor's
+ordinary save of the `.bdl` file.
 
-An open `.bdl` document is an **overlay** on that state. Its `concept`
-and `mapping` items are matched by name to the project's; a name the
-project does not have becomes a new entity for as long as the document
-is open. Every query answers about *project + open documents*. Nothing
-is written back: closing the document or the editor leaves the project
-as Studio saved it.
+**A flat or system project** saved by Studio is loaded as the
+*committed state*; an open `.bdl` document is an *overlay* on it,
+matched by name, analysed and never written back — the older mode, still
+there for checking a formula against a canvas project.
+
+**No project**: the server starts empty and open documents alone
+populate it.
 
 ## What the server answers
 
 | Feature | LSP request | Notes |
 |---|---|---|
-| **Diagnostics** | `textDocument/diagnostic` (pull); `publishDiagnostics` only for clients without pull support | the same findings as Studio, with the same spans; *open* findings (a concept without a value form) come as information, not errors |
-| **Hover** | `textDocument/hover` | what a name is, its value form, its status, its description |
-| **Completion** | `textDocument/completion` | inputs, relationships, units after a number, keywords, `delay` / `sync` where allowed, library templates for new concepts — ranked by the compiler |
-| **Go to definition** | `textDocument/definition` | by identity — the declaration of the entity under the cursor |
-| **References** | `textDocument/references` | every place the entity is named |
-| **Rename** | `textDocument/prepareRename`, `textDocument/rename` | renames the entity everywhere it is named, as text edits; parameter names are not touched |
-| **Document symbols** | `textDocument/documentSymbol` | the file's concepts and relationships |
+| **Diagnostics** | `textDocument/diagnostic` (pull); `publishDiagnostics` only for clients without pull support | the same findings as Studio, with the same spans, in the file they belong to; *open* findings come as information, not errors; a text project's own findings (an unknown concept, a duplicate item, a second driver) are errors on the item |
+| **Hover** | `textDocument/hover` | what a name is: a concept's value form and description, a relationship's signature and status, a component's ports, an instance's arguments and bound ports, a binding's ends |
+| **Completion** | `textDocument/completion` | knows its scope: at an item start the items allowed there (a component body offers `requires`, `provides`, `use`, …); after `instance x :` the components; inside the braces the clock parameters and parameters not yet given; after `bind a.` the instance's ports; after `@` the domains in scope; in a body the body's own relationships and inputs, units after a number, `delay` / `sync` where allowed |
+| **Go to definition** | `textDocument/definition` | by identity, across files — a concept from its use in a component, a component from its instance, a relationship from a call in a body |
+| **References** | `textDocument/references` | every place the entity is named, in every file, including uses inside formula bodies |
+| **Rename** | `textDocument/prepareRename`, `textDocument/rename` | renames the entity everywhere it is named, in every file, as text edits — concepts, relationships, components, ports, instances; parameter names are left alone |
+| **Formatting** | `textDocument/formatting` | canonical spacing and indentation; keeps item order, blank-line grouping, comments and your line breaks (a multi-line body keeps its relative indentation); a file with a syntax error is left untouched |
+| **Inlay hints** | `textDocument/inlayHint` | `: Tilt` after a parameter whose name is not the concept's; `sync interaction → display, init 0` after a binding that crosses domains |
+| **Document symbols** | `textDocument/documentSymbol` | the file's items |
 | **Semantic tokens** | `textDocument/semanticTokens/full` | concept, mapping, output, clock, device, unit, keyword, parameter, constructor, number, comment, operator |
-| **Code actions** | `textDocument/codeAction` | the compiler's *fixes* for findings in the range, and context actions at the cursor. An action that changes only text carries its edit; an action that would change the project model (choose a value form, connect a driver, choose a domain) or needs a choice is listed as **disabled** with the reason — make it in Studio |
+| **Code actions** | `textDocument/codeAction` | the compiler's *fixes* for findings in the range and context actions at the cursor. An action that changes only text carries its edit; one that would change the model or needs a choice is listed as **disabled** with the reason |
 | **Cancellation** | `$/cancelRequest` | honoured; a cancelled request answers *RequestCancelled* |
 
 Positions are negotiated in UTF-8, UTF-16 or UTF-32 as the client
-prefers; documents are synchronised in full on every change.
+prefers; documents are synchronised in full on every change. Saving a
+file or changing one outside the editor (`workspace/didChangeWatchedFiles`)
+makes the server re-read the project.
 
-Three custom requests exist for tools built on the server:
-`bdl/explainEntity` (the explanation of the entity at a position — the
-same content as Studio's *Explain*), `bdl/invalidationPreview` (what a
-model edit would reopen), and `bdl/previewEdit` (the full semantic plan
-of a rename at a position).
+Custom requests for tools built on the server: `bdl/explainEntity` (the
+explanation of the entity at a position — the same content as Studio's
+*Explain*), `bdl/virtualDocument` (a read-only rendering: `explain` of
+the entity at a position or of the whole project, `core` — the design
+in kernel terms, `rust` — the generated core or why nothing is generated
+yet), `bdl/invalidationPreview` (what a model edit would reopen), and
+`bdl/previewEdit` (the full semantic plan of a rename). In VS Code these
+are the commands *BDL: Explain Entity at Cursor*, *BDL: Show Kernel
+Core* and *BDL: Show Generated Rust*.
 
 ## What the editor cannot do today
 
-* Save a project. A `.bdl` file is analysed against the project; it is
-  not the project.
-* Author timing domains, outputs, devices, behaviors or components: they
-  have no syntax.
-* Apply model-changing fixes (they are disabled in the editor).
-* Format a file, show inlay hints, search workspace symbols.
+* Apply model-changing fixes (they are disabled in the editor; edit the
+  text or use Studio).
+* See Studio's unsaved edits, or show its own to Studio, before a save
+  ([Authoring a project as text](../workflows/authoring-as-text.md)).
+* Search workspace symbols.
 
 ## Related
 
-[Overview and current status](overview.md) · [Syntax basics](syntax-basics.md)
+[Overview and current status](overview.md) · [Syntax basics](syntax-basics.md) ·
+[Authoring a project as text](../workflows/authoring-as-text.md)
 
 *For language implementers:* `docs/IDE_SERVICE_ARCHITECTURE.md`
-(overlays, projections, the LSP adapter) and ADR-0017.
+(the text workspace, overlays, projections, the LSP adapter) and the
+ADR on the LSP as an adapter.
