@@ -6,6 +6,11 @@ status: current
 
 # Studio UI design
 
+Screenshots of the built UI live in the user guide
+(`docs/user-guide/SCREENSHOT_PLAN.md`, captured by `just docs-shots`); the
+monospace sketches on this page are the design intent the UI was built from and
+are kept as such — each is followed by a link to what was built.
+
 Three references, each used for one thing:
 
 | Reference               | What we take from it                                                                                                                                                                                                                                 | What we do not take                                                   |
@@ -25,6 +30,11 @@ Resolve opens on the **Project Manager** and only shows the page workspace once
 a project is open. Studio does the same: with no project, the window is the
 launcher below; opening or creating a project replaces it with the workspace of
 §1; ⊞ in the page bar closes the project and returns.
+
+_As built:
+[project manager](../user-guide/assets/getting-started/project-manager.png) (the
+user guide's screenshot; the sketch below is the design intent it was built
+from)._
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -55,6 +65,8 @@ in the per-user application support directory), never project data; missing
 directories are shown greyed with _not found_ and can be removed on hover.
 
 ## 1. Window structure (DaVinci)
+
+_As built: [workspace](../user-guide/assets/studio/workspace.png)._
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -97,6 +109,9 @@ as a banner above the page content, never as a modal.
 ## 2. Node canvas (Blender)
 
 ### Anatomy
+
+_As built: [node anatomy](../user-guide/assets/studio/node-anatomy.png); the
+header word precedence is `declared` › port word › sink state › `required`._
 
 ```text
    ●────[ Tilt ]────●                       concept: one row — name, in-socket, out-socket
@@ -504,6 +519,9 @@ evaluation. Studio holds the values the designer fed, the schedule they chose,
 and the samples that came back — tied to one project revision
 (`app/simulation.dart`) — and computes none of them.
 
+_As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
+[readiness](../user-guide/assets/studio/simulate-readiness.png)._
+
 ```text
 ┌───────────────┬────────────────────────────────────────┬───────────────────┐
 │ Inputs        │ [Step] [Step ×10] [Reset]   tick 3     │ Probe             │
@@ -581,6 +599,9 @@ Simulate and Deploy read the derived flat design in every context
 open ports as inputs.
 
 ### Instance node anatomy
+
+_As built: [instance nodes](../user-guide/assets/studio/instance-nodes.png) and
+a [component's source](../user-guide/assets/studio/component-source.png)._
 
 ```text
         ┌──────────────────────────────┐
