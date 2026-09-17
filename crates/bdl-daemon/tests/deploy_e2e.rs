@@ -314,7 +314,12 @@ fn incomplete_says_what_is_missing_then_feasible_gives_a_table_by_name() {
     }));
 
     // 1. feasible on the Nano: the table, by name
-    let drive = device(&mut c, "drive", pb::DeviceKind::HBridgeChannel, Some(motor));
+    let drive = device(
+        &mut c,
+        "driver",
+        pb::DeviceKind::HBridgeChannel,
+        Some(motor),
+    );
     let d = c.deploy("arduino_nano");
     assert_eq!(d.status(), pb::DeploymentStatus::Feasible);
     assert!(d.design_ready && d.deployable && d.missing.is_empty());
@@ -338,7 +343,7 @@ fn incomplete_says_what_is_missing_then_feasible_gives_a_table_by_name() {
         vec![
             (
                 "motor".into(),
-                "drive".into(),
+                "driver".into(),
                 "H-bridge channel".into(),
                 "PWM".into(),
                 "PWM".into(),
@@ -347,7 +352,7 @@ fn incomplete_says_what_is_missing_then_feasible_gives_a_table_by_name() {
             ),
             (
                 "motor".into(),
-                "drive".into(),
+                "driver".into(),
                 "H-bridge channel".into(),
                 "direction".into(),
                 "digital out".into(),
@@ -396,13 +401,13 @@ fn incomplete_says_what_is_missing_then_feasible_gives_a_table_by_name() {
             b.requirement_label.as_str(),
             b.capability_label.as_str()
         ),
-        ("drive", "PWM", "PWM")
+        ("driver", "PWM", "PWM")
     );
     assert_eq!(
         b.kind,
         Some(pb::blocker::Kind::FixedUnavailable("D4".into()))
     );
-    assert_eq!(b.message, "D4 cannot carry drive PWM on arduino_nano.");
+    assert_eq!(b.message, "D4 cannot carry driver PWM on arduino_nano.");
     assert!(b.explanation.contains("chosen by hand"));
     assert!(d.rows.iter().all(|r| r.resource.is_none()));
     assert_eq!(d.rows[0].fixed.as_deref(), Some("D4"));
@@ -476,7 +481,7 @@ fn semantic_problems_are_named_as_missing_never_as_infeasibility() {
         id: cruise,
         output_id: Some(motor),
     }));
-    device(&mut c, "drive", pb::DeviceKind::PwmChannel, Some(motor));
+    device(&mut c, "driver", pb::DeviceKind::PwmChannel, Some(motor));
     assert!(c.deploy("arduino_nano").deployable);
     // break the definition: the devices still fit, the design is not ready
     c.apply(pb::edit_op::Op::ReplaceDefinition(pb::ReplaceDefinition {

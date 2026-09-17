@@ -81,6 +81,9 @@ impl Client {
                         Resp::Project(p) => {
                             self.last_revision = p.project.as_ref().unwrap().revision
                         }
+                        Resp::SystemEditApplied(e) => {
+                            self.last_revision = e.project.as_ref().unwrap().revision
+                        }
                         Resp::EditApplied(e) => {
                             self.last_revision = e.project.as_ref().unwrap().revision
                         }
@@ -702,7 +705,7 @@ fn outputs_and_deployment_over_stdio() {
         &mut c,
         &mut events,
         pb::edit_op::Op::CreateDevice(pb::CreateDevice {
-            name: "drive".into(),
+            name: "driver".into(),
             kind: pb::DeviceKind::HBridgeChannel.into(),
             output_id: Some(motor),
         }),
@@ -766,7 +769,7 @@ fn outputs_and_deployment_over_stdio() {
         Some(pb::dead_end::Reason::FixedUnavailable("D4".into()))
     );
     assert_eq!(d.diagnostics[0].code, "deploy.infeasible");
-    assert!(d.diagnostics[0].message.contains("D4 cannot carry drive"));
+    assert!(d.diagnostics[0].message.contains("D4 cannot carry driver"));
     let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) else {
         panic!()
     };
@@ -1224,10 +1227,20 @@ fn concept_templates_over_stdio() {
             }),
             &mut events,
         ) {
-            Resp::EditApplied(e) => e,
+            // every project is a behaviour system (ADR-0023): the answer
+            // is the system's, with the flat outcome inside
+            Resp::SystemEditApplied(e) => e,
             other => panic!("instantiate failed: {other:?}"),
         };
-        ids.push(applied.outcome.unwrap().created_concept.unwrap());
+        ids.push(
+            applied
+                .outcome
+                .unwrap()
+                .inner
+                .unwrap()
+                .created_concept
+                .unwrap(),
+        );
     }
     assert_ne!(ids[0], ids[1]);
     let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
@@ -1251,7 +1264,7 @@ fn concept_templates_over_stdio() {
         }),
         &mut events,
     ) {
-        Resp::EditApplied(e) => e.project.unwrap(),
+        Resp::SystemEditApplied(e) => e.project.unwrap(),
         other => panic!("instantiate failed: {other:?}"),
     };
     assert!(named.concepts.iter().any(|x| x.name == "OvenTemperature"));

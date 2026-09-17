@@ -1,0 +1,38 @@
+/// How far the lamp head is tilted from upright.
+concept Tilt : Angle
+
+/// Illuminance of the room, as the light sensor reports it.
+concept AmbientLight : Illuminance
+
+/// The lamp's output level, 0 (off) to 1 (full).
+concept Brightness : Scalar
+
+clock interaction
+
+/// The tilt sensor: a value per activation, from outside.
+mapping tilt : Tilt @interaction
+
+/// The light sensor: a value per activation.
+mapping ambient : AmbientLight @interaction
+
+/// Upright is off, flat is full: brightness grows with the tilt.
+mapping dimByTilt : Tilt -> Brightness
+dimByTilt(Tilt) =
+  Tilt / 90 deg
+
+/// In a bright room the lamp need only be half as bright.
+mapping adaptBrightness : Brightness -> AmbientLight -> Brightness
+adaptBrightness(Brightness, AmbientLight) =
+  if AmbientLight > 300 lx then Brightness / 2 else Brightness
+
+/// What the lamp shows: the tilt's brightness, adapted to the room.
+mapping brightness : Brightness @interaction
+brightness() =
+  adaptBrightness(dimByTilt(tilt), ambient)
+
+/// The lamp itself.
+output light : Brightness @interaction
+
+drive light = brightness
+
+device pwmLight : pwm_channel for light

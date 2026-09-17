@@ -36,7 +36,12 @@ pub use surface::{
     Concept, Definition, Design, MappingBlock, ProjectSnapshot, Representation, Signature,
 };
 
-/// Version of the semantic project schema written by [`persist`].
+/// Version of the legacy JSON design schema (`design/*.json`), read only
+/// to migrate a legacy project (ADR-0023 §6).
 pub const PROJECT_SCHEMA_VERSION: u32 = 1;
+/// Version of the manifest (`bdl.toml`).  Schema 2 is the unified project
+/// (ADR-0023): no `kind`, the sources are the semantic truth.  A schema-1
+/// manifest names a legacy project by its `kind` and is migrated on open.
+pub const MANIFEST_SCHEMA_VERSION: u32 = 2;
 /// Version of the UI layout schema written by [`persist`].
 pub const LAYOUT_SCHEMA_VERSION: u32 = 1;

@@ -253,25 +253,16 @@ pub fn run(connection: Connection) -> anyhow::Result<()> {
 fn open_host(root: Option<&Path>) -> IdeHost {
     if let Some(root) = root {
         if root.join("bdl.toml").is_file() {
-            match bdl_model::persist::read_manifest(root).map(|m| m.kind) {
-                Ok(bdl_model::persist::ProjectKind::Text) => match text_ground(root) {
-                    Ok((name, files, table)) => {
-                        info!(root = %root.display(), files = files.len(), "opened text project");
-                        return IdeHost::text_workspace(&name, files, table);
-                    }
-                    Err(e) => {
-                        warn!(root = %root.display(), error = %e, "could not load the text project; starting empty")
-                    }
-                },
-                _ => match bdl_model::persist::load_project(root) {
-                    Ok(loaded) => {
-                        info!(root = %root.display(), "opened project");
-                        return IdeHost::new(loaded.snapshot);
-                    }
-                    Err(e) => {
-                        warn!(root = %root.display(), error = %e, "could not load project; starting empty")
-                    }
-                },
+            // One kind of project (ADR-0023): the sources are the truth; a
+            // legacy JSON project is migrated in place by the loader.
+            match text_ground(root) {
+                Ok((name, files, table)) => {
+                    info!(root = %root.display(), files = files.len(), "opened project");
+                    return IdeHost::text_workspace(&name, files, table);
+                }
+                Err(e) => {
+                    warn!(root = %root.display(), error = %e, "could not load the project; starting empty")
+                }
             }
         }
         let name = root
@@ -283,10 +274,12 @@ fn open_host(root: Option<&Path>) -> IdeHost {
     IdeHost::empty("workspace")
 }
 
-/// The sources and identity table of a text project on disk.
+/// The sources and identity table of a project on disk, migrating a
+/// legacy JSON project first (ADR-0023 §6).
 fn text_ground(
     root: &Path,
 ) -> Result<(String, Vec<bdl_text::SourceFile>, bdl_text::IdentityTable), bdl_text::TextError> {
+    bdl_text::migrate_legacy(root, env!("CARGO_PKG_VERSION"))?;
     let manifest = bdl_model::persist::read_manifest(root)?;
     let files = bdl_text::discover_sources(root)?;
     let table = bdl_text::workspace::load_identities(root)?;

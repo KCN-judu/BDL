@@ -28,15 +28,20 @@
 
 pub mod build;
 pub mod identity;
+pub mod migrate;
+pub mod names;
 pub mod print;
 pub mod splice;
 pub mod workspace;
 
 pub use build::{build_system, Anchor, AnchorRole, BuildResult, LoadFault, TextEntity, TextFault};
 pub use identity::{IdentityTable, KeyEntry, Reconciliation, IDENTITIES_SCHEMA_VERSION};
+pub use migrate::{migrate_legacy, MigrationReport};
+pub use names::{identifier_from, is_identifier, why_not_identifier};
 pub use splice::{write_back, WriteBack};
 pub use workspace::{
-    discover_sources, init_text_project, load_text_project, load_workspace, save_text_project,
+    discover_sources, init_project, init_text_project, load_project, load_project_with,
+    load_text_project, load_workspace, save_project, save_text_project, write_authoring,
     write_identities, LoadedWorkspace, SourceFile, TextError, AUTHORING_FILE, IDENTITIES_FILE,
     SOURCE_DIR,
 };

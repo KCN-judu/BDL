@@ -56,7 +56,7 @@ fn manifest_for(snapshot: &SystemSnapshot, compiler_version: &str) -> Manifest {
         schema_version: PROJECT_SCHEMA_VERSION,
         name: snapshot.system.base.name.clone(),
         compiler_version: compiler_version.to_owned(),
-        kind: ProjectKind::System,
+        kind: Some(ProjectKind::System),
     }
 }
 
@@ -87,7 +87,7 @@ pub fn save_system_project(
 /// flat project); a newer schema is refused.
 pub fn load_system_project(root: &Path) -> Result<LoadedSystem, PersistError> {
     let manifest = persist::read_manifest(root)?;
-    if manifest.kind != ProjectKind::System {
+    if manifest.legacy_kind() != Some(ProjectKind::System) {
         return Err(PersistError::Json {
             path: root.join(MANIFEST_FILE),
             source: serde::de::Error::custom("not a system project (kind = flat)"),

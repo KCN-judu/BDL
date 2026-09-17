@@ -1030,7 +1030,6 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::StaleGeneration { .. } => {
             error("group_edit.stale_generation", &e.to_string())
         }
-        SessionError::DerivedDesign => error("edit.derived_design", &e.to_string()),
         SessionError::NotASystem => error("system.not_a_system", &e.to_string()),
         SessionError::NoProject => error("session.no_project", &e.to_string()),
         SessionError::AlreadyOpen(_) => error("session.already_open", &e.to_string()),
@@ -1039,6 +1038,7 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::NothingToRedo => error("edit.nothing_to_redo", &e.to_string()),
         SessionError::Persist(_) => error("project.persist", &e.to_string()),
         SessionError::Text(_) => error("project.text", &e.to_string()),
+        SessionError::InvalidName { reason, .. } => error("edit.invalid_name", reason),
         SessionError::ChangedOnDisk { .. } => error("project.changed_on_disk", &e.to_string()),
         SessionError::Ide(bdl_ide::QueryError::UnknownEntity { .. }) => {
             error("draft.unknown_mapping", &e.to_string())

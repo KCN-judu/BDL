@@ -373,6 +373,8 @@ fn push_diagnostics_only_for_clients_without_pull_support() {
 
 #[test]
 fn opens_a_project_directory_as_committed_state() {
+    // A legacy JSON project is migrated on open (ADR-0023 §6): its sources
+    // become the ground, and a new source buffer sees what they declare.
     let dir = tempfile::tempdir().expect("tempdir");
     let created = bdl_model::persist::init_project(dir.path(), "lamp", "test").expect("init");
     let s = created.snapshot;
@@ -389,10 +391,15 @@ fn opens_a_project_directory_as_committed_state() {
     bdl_model::persist::save_project(dir.path(), &s, &created.layout, "test").expect("save");
 
     let mut c = Client::start(Some(dir.path()), true);
-    let uri = "file:///tmp/extra.bdl";
-    // The document names the committed concept without declaring it:
+    assert!(
+        dir.path().join("src/main.bdl").is_file(),
+        "migrated on open"
+    );
+    assert!(!dir.path().join("design/project.bdl.json").exists());
+    let uri = format!("file://{}/src/extra.bdl", dir.path().display());
+    // The buffer names the committed concept without declaring it:
     // binding finds it in the project.
-    c.open(uri, "mapping isHeld : Held -> Held\n");
+    c.open(&uri, "mapping isHeld : Held -> Held\n");
     let diag = c.request(
         lsp::request::DocumentDiagnosticRequest::METHOD,
         json!({ "textDocument": { "uri": uri } }),
@@ -414,5 +421,5 @@ fn opens_a_project_directory_as_committed_state() {
         .expect("md")
         .contains("concept Held : Bool"));
     c.shutdown();
-    let _ = Uri::from_str(uri);
+    let _ = Uri::from_str(&uri);
 }

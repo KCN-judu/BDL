@@ -1,20 +1,22 @@
-//! A text project on disk (ADR-0020 §1–2, §7–8).
+//! A BDL project on disk (ADR-0023 §1; the mechanisms of ADR-0020).
 //!
 //! ```text
 //! project/
-//! ├── bdl.toml                 kind = "text"
+//! ├── bdl.toml                 name, manifest schema 2 — no kind
 //! ├── src/**/*.bdl             the canonical semantic source, read in sorted path order
 //! ├── .bdl/identities.json     source key → stable id, allocators, flat ids   (tool-owned)
 //! ├── .bdl/authoring.json      behavior groups                                 (tool-owned)
-//! └── ui/layout.json           canvas layout                                    (as before)
+//! └── ui/layout.json           canvas layout                                    (presentation)
 //! ```
+//!
+//! A manifest of schema 1 names a legacy JSON project; [`load_project`]
+//! migrates it in place first (`migrate`).
 
 use crate::build::{build_system, BuildResult};
 use crate::identity::{IdentityTable, IDENTITIES_SCHEMA_VERSION};
 use crate::splice::{write_back, WriteBack};
 use bdl_model::layout::Layout;
 use bdl_model::persist::{self, Manifest, PersistError, ProjectKind};
-use bdl_model::PROJECT_SCHEMA_VERSION;
 use bdl_system::{BehaviorGroup, BehaviorGroupId, BehaviorSystem};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -49,8 +51,12 @@ pub enum TextError {
         #[source]
         source: serde_json::Error,
     },
-    #[error("{path}: a {kind:?} project, not a text project")]
-    NotText { path: PathBuf, kind: ProjectKind },
+    #[error("{path}: a legacy {kind:?} project could not be migrated: {message}")]
+    Migration {
+        path: PathBuf,
+        kind: ProjectKind,
+        message: String,
+    },
     #[error(
         "the sources declare something the text cannot mean; {count} fault(s), first: {first}"
     )]
@@ -65,7 +71,7 @@ pub struct AuthoringFile {
     pub groups: BTreeMap<BehaviorGroupId, BehaviorGroup>,
 }
 
-/// A text project as loaded: sources, the build, and the sidecars.
+/// A project as loaded: sources, the build, and the sidecars.
 #[derive(Clone, Debug)]
 pub struct LoadedWorkspace {
     pub root: PathBuf,
@@ -75,6 +81,8 @@ pub struct LoadedWorkspace {
     pub layout: Layout,
     /// Modification times of every file read, to notice external edits.
     pub stamps: Vec<(String, Option<std::time::SystemTime>)>,
+    /// What opening did to a legacy project, when it migrated one.
+    pub migrated: Option<crate::migrate::MigrationReport>,
 }
 
 impl LoadedWorkspace {
@@ -146,6 +154,17 @@ fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<Option<T>, Tex
         })
 }
 
+/// Write the authoring sidecar (groups) of a system.
+pub fn write_authoring(root: &Path, system: &BehaviorSystem) -> Result<(), TextError> {
+    write_json(
+        &root.join(AUTHORING_FILE),
+        &AuthoringFile {
+            schema_version: AUTHORING_SCHEMA_VERSION,
+            groups: system.groups.clone(),
+        },
+    )
+}
+
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), TextError> {
     let text = serde_json::to_string_pretty(value).map_err(|source| TextError::Json {
         path: path.to_path_buf(),
@@ -209,14 +228,18 @@ pub fn write_identities(root: &Path, table: &IdentityTable) -> Result<(), TextEr
 /// build and written back at once, so the ids an open session shows are
 /// the ids every later open — by any tool — shows, whether or not this
 /// session saves (ADR-0020 §3).
-pub fn load_text_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
+pub fn load_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
+    load_project_with(root, "")
+}
+
+/// [`load_project`] naming the compiler that performs a migration, for
+/// the manifest it writes.
+pub fn load_project_with(
+    root: &Path,
+    compiler_version: &str,
+) -> Result<LoadedWorkspace, TextError> {
+    let migrated = crate::migrate::migrate_legacy(root, compiler_version)?;
     let manifest = persist::read_manifest(root)?;
-    if manifest.kind != ProjectKind::Text {
-        return Err(TextError::NotText {
-            path: root.to_path_buf(),
-            kind: manifest.kind,
-        });
-    }
     let files = discover_sources(root)?;
     let table = load_identities(root)?;
     let authoring = load_authoring(root)?;
@@ -246,7 +269,13 @@ pub fn load_text_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
         build,
         layout,
         stamps,
+        migrated,
     })
+}
+
+/// The name ADR-0020 gave [`load_project`].
+pub fn load_text_project(root: &Path) -> Result<LoadedWorkspace, TextError> {
+    load_project(root)
 }
 
 /// Files that changed on disk since `loaded` read them (a new source
@@ -272,7 +301,7 @@ pub fn changed_on_disk(loaded: &LoadedWorkspace) -> Result<Vec<String>, TextErro
 /// files of `previous`, the identity table that describes the result, the
 /// authoring sidecar, the layout and the manifest.  Returns what was
 /// written so the caller can reload anchors from it.
-pub fn save_text_project(
+pub fn save_project(
     root: &Path,
     previous: &LoadedWorkspace,
     system: &BehaviorSystem,
@@ -285,29 +314,29 @@ pub fn save_text_project(
         persist::write_atomic(&root.join(&f.path), f.text.as_bytes())?;
     }
     write_json(&root.join(IDENTITIES_FILE), &wb.table)?;
-    write_json(
-        &root.join(AUTHORING_FILE),
-        &AuthoringFile {
-            schema_version: AUTHORING_SCHEMA_VERSION,
-            groups: system.groups.clone(),
-        },
-    )?;
+    write_authoring(root, system)?;
     persist::save_layout(root, layout)?;
     persist::write_manifest(
         root,
-        &Manifest {
-            schema_version: PROJECT_SCHEMA_VERSION,
-            name: system.base.name.clone(),
-            compiler_version: compiler_version.to_owned(),
-            kind: ProjectKind::Text,
-        },
+        &Manifest::unified(&system.base.name, compiler_version),
     )?;
     Ok(wb)
 }
 
-/// Create an empty text project: a manifest, an empty `src/main.bdl`, an
+/// The name ADR-0020 gave [`save_project`].
+pub fn save_text_project(
+    root: &Path,
+    previous: &LoadedWorkspace,
+    system: &BehaviorSystem,
+    layout: &Layout,
+    compiler_version: &str,
+) -> Result<WriteBack, TextError> {
+    save_project(root, previous, system, layout, compiler_version)
+}
+
+/// Create an empty project: a manifest, an empty `src/main.bdl`, an
 /// empty identity table.
-pub fn init_text_project(
+pub fn init_project(
     root: &Path,
     name: &str,
     compiler_version: &str,
@@ -325,14 +354,15 @@ pub fn init_text_project(
         },
     )?;
     persist::save_layout(root, &Layout::default())?;
-    persist::write_manifest(
-        root,
-        &Manifest {
-            schema_version: PROJECT_SCHEMA_VERSION,
-            name: name.to_owned(),
-            compiler_version: compiler_version.to_owned(),
-            kind: ProjectKind::Text,
-        },
-    )?;
-    load_text_project(root)
+    persist::write_manifest(root, &Manifest::unified(name, compiler_version))?;
+    load_project(root)
+}
+
+/// The name ADR-0020 gave [`init_project`].
+pub fn init_text_project(
+    root: &Path,
+    name: &str,
+    compiler_version: &str,
+) -> Result<LoadedWorkspace, TextError> {
+    init_project(root, name, compiler_version)
 }

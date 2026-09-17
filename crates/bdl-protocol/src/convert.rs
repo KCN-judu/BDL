@@ -662,13 +662,10 @@ pub fn projection(
     p.can_undo = info.can_undo;
     p.can_redo = info.can_redo;
     p.dirty = info.dirty;
-    p.set_kind(if info.textual {
-        pb::ProjectKind::Text
-    } else if info.derived {
-        pb::ProjectKind::System
-    } else {
-        pb::ProjectKind::Flat
-    });
+    // One kind of project (ADR-0023): the field stays for clients that
+    // still read it and always says the unified kind.
+    let _ = (info.textual, info.derived);
+    p.set_kind(pb::ProjectKind::Text);
     p
 }
 

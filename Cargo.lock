@@ -114,6 +114,7 @@ dependencies = [
  "bdl-output",
  "bdl-reactive",
  "bdl-runtime-host",
+ "bdl-text",
  "proptest",
  "serde",
  "serde_json",

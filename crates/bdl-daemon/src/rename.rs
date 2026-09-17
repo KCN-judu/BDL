@@ -47,18 +47,6 @@ fn formula_rewrites(design: &Design, concept: SemanticId, name: &str) -> Vec<Edi
     ops
 }
 
-/// A flat design's rename, with the formulas that follow it.
-pub fn expand_flat(design: &Design, op: &EditOp) -> Vec<EditOp> {
-    match op {
-        EditOp::RenameConcept { id, name } => {
-            let mut ops = formula_rewrites(design, *id, name);
-            ops.push(op.clone());
-            ops
-        }
-        _ => vec![op.clone()],
-    }
-}
-
 /// A system's rename: the base concept and every body copy of it are one
 /// concept to the designer and to the text, so they move together.
 pub fn expand_system(system: &BehaviorSystem, op: &SystemEditOp) -> Vec<SystemEditOp> {
@@ -205,21 +193,32 @@ mod tests {
     #[test]
     fn concept_named_occurrences_follow_and_parameters_stay() {
         let (d, tilt) = lamp();
-        let ops = expand_flat(
-            &d,
-            &EditOp::RenameConcept {
-                id: tilt,
-                name: "Lean".into(),
+        let system = BehaviorSystem::from_flat(d);
+        let ops = expand_system(
+            &system,
+            &SystemEditOp::Base {
+                op: EditOp::RenameConcept {
+                    id: tilt,
+                    name: "Lean".into(),
+                },
             },
         );
         assert_eq!(ops.len(), 2, "{ops:?}");
         match &ops[0] {
-            EditOp::ReplaceDefinition {
-                definition: Some(Definition::Formula { source }),
-                ..
+            SystemEditOp::Base {
+                op:
+                    EditOp::ReplaceDefinition {
+                        definition: Some(Definition::Formula { source }),
+                        ..
+                    },
             } => assert_eq!(source, "Lean / (90 deg) + Lean / (90 deg)"),
             other => panic!("{other:?}"),
         }
-        assert!(matches!(&ops[1], EditOp::RenameConcept { .. }));
+        assert!(matches!(
+            &ops[1],
+            SystemEditOp::Base {
+                op: EditOp::RenameConcept { .. }
+            }
+        ));
     }
 }

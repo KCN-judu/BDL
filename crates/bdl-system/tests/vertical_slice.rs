@@ -794,7 +794,11 @@ fn system_projects_persist_the_source_and_derive_the_flat_design() {
         "the flat design is derived, never written"
     );
     let manifest = bdl_model::persist::read_manifest(&root).unwrap();
-    assert_eq!(manifest.kind, bdl_model::persist::ProjectKind::System);
+    // a legacy system project (manifest schema 1), as the migration reads it
+    assert_eq!(
+        manifest.legacy_kind(),
+        Some(bdl_model::persist::ProjectKind::System)
+    );
     let loaded = persist::load_system_project(&root).unwrap();
     assert_eq!(loaded.snapshot.system, s.sys.snap.system);
     assert_eq!(
@@ -809,8 +813,10 @@ fn system_projects_persist_the_source_and_derive_the_flat_design() {
     let flat_root = dir.path().join("flat");
     let created = bdl_model::persist::init_project(&flat_root, "plain", "test").unwrap();
     assert_eq!(
-        bdl_model::persist::read_manifest(&flat_root).unwrap().kind,
-        bdl_model::persist::ProjectKind::Flat
+        bdl_model::persist::read_manifest(&flat_root)
+            .unwrap()
+            .legacy_kind(),
+        Some(bdl_model::persist::ProjectKind::Flat)
     );
     assert!(persist::load_system_project(&flat_root).is_err());
     assert_eq!(

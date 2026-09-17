@@ -195,15 +195,17 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
         panic!()
     };
     let p = p.project.unwrap();
-    assert_eq!(p.kind(), pb::ProjectKind::System);
+    // one kind of project (ADR-0023): the field always reports it
+    assert_eq!(p.kind(), pb::ProjectKind::Text);
     assert_eq!(p.revision, 0);
 
-    // flat edits are refused on a system project: the flat design is derived
-    let Resp::Error(e) = c.call(Req::ApplyEdit(pb::ApplyEditRequest {
+    // a flat edit is the system edit `Base { op }`: it lands, as one
+    // revision, and is undone together with every other edit
+    let Resp::EditApplied(applied) = c.call(Req::ApplyEdit(pb::ApplyEditRequest {
         base_revision: 0,
         op: Some(pb::EditOp {
             op: Some(concept(
-                "Tilt",
+                "Probe",
                 pb::Dim {
                     angle: 1,
                     ..Default::default()
@@ -213,7 +215,11 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     })) else {
         panic!()
     };
-    assert_eq!(e.code, "edit.derived_design");
+    assert_eq!(applied.project.unwrap().revision, 1);
+    let Resp::SystemEditApplied(undone) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    assert!(undone.project.unwrap().concepts.is_empty());
 
     // the system: shared Tilt, domain main
     let angle = pb::Dim {
@@ -438,9 +444,9 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
         1,
         "the destination's flat declaration"
     );
-    // the derived flat design came back with the edit, and it is marked derived
+    // the derived flat design came back with the edit
     let flat = applied.project.unwrap();
-    assert_eq!(flat.kind(), pb::ProjectKind::System);
+    assert_eq!(flat.kind(), pb::ProjectKind::Text);
     assert!(flat.mappings.iter().any(|m| m.name == "lampA.tiltValue"));
     c.sys(pb::system_edit_op::Op::BindPorts(pb::BindPorts {
         source: port_ref(sensor, s_port),
@@ -704,14 +710,16 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     assert_eq!(lamp_view.shared_concepts[0].system, tilt);
     assert_eq!(lamp_view.body.as_ref().unwrap().mappings.len(), 3);
     let v = c.system();
-    // save, reopen: the system is the truth; the flat file is not written
+    // save, reopen: the sources and the identity sidecar are the truth
+    // (ADR-0023); no JSON design file is written
     let Resp::Project(saved) = c.call(Req::SaveProject(pb::SaveProjectRequest { force: false }))
     else {
         panic!()
     };
     assert!(!saved.project.unwrap().dirty);
-    assert!(root.join("design/system.bdl.json").is_file());
-    assert!(!root.join("design/project.bdl.json").exists());
+    assert!(root.join("src/main.bdl").is_file());
+    assert!(root.join(".bdl/identities.json").is_file());
+    assert!(!root.join("design").exists());
     c.call(Req::CloseProject(pb::CloseProjectRequest {}));
     let Resp::Project(re) = c.call(Req::OpenProject(pb::OpenProjectRequest {
         root_path: root.to_string_lossy().into(),
@@ -719,10 +727,21 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
         panic!()
     };
     let re = re.project.unwrap();
-    assert_eq!(re.kind(), pb::ProjectKind::System);
+    assert_eq!(re.kind(), pb::ProjectKind::Text);
     assert_eq!(re.revision, 0);
     let v2 = c.system();
-    assert_eq!(v2.components, v.components);
+    // stamps are session edit counters, never persisted semantics
+    let unstamped = |cs: &[pb::ComponentView]| -> Vec<pb::ComponentView> {
+        cs.iter()
+            .cloned()
+            .map(|mut c| {
+                c.stamp = 0;
+                c.interface_stamp = 0;
+                c
+            })
+            .collect()
+    };
+    assert_eq!(unstamped(&v2.components), unstamped(&v.components));
     assert_eq!(v2.instances, v.instances);
     assert_eq!(v2.bindings, v.bindings);
     assert_eq!(
@@ -739,11 +758,13 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     })) else {
         panic!()
     };
-    assert_eq!(fp.project.unwrap().kind(), pb::ProjectKind::Flat);
-    let Resp::Error(e) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
+    // a new project is the same one kind (ADR-0023): a behaviour system
+    // with sources, whose system view is served and whose flat edits land
+    assert_eq!(fp.project.unwrap().kind(), pb::ProjectKind::Text);
+    let Resp::System(sv) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
         panic!()
     };
-    assert_eq!(e.code, "system.not_a_system");
+    assert!(sv.system.unwrap().is_flat);
     let Resp::EditApplied(_) = c.call(Req::ApplyEdit(pb::ApplyEditRequest {
         base_revision: 0,
         op: Some(pb::EditOp {

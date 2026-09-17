@@ -23,18 +23,17 @@ use bdl_ide::{
     TextRange,
 };
 use bdl_ide_db::CancelScope;
-use bdl_model::edit::{apply_edit, EditError, EditKind, EditOp, EditOutcome};
+use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome};
 use bdl_model::layout::Layout;
-use bdl_model::persist::{self, PersistError};
+use bdl_model::persist::PersistError;
 use bdl_model::surface::{Design, ProjectSnapshot};
 use bdl_model::{DeclId, Revision};
 use bdl_reactive::Simulation;
 use bdl_system::{
-    analyze_system, apply_group_edit, apply_system_edit, flatten, persist as system_persist,
-    preview_extraction, AppliedSystem, BehaviorGroup, BehaviorGroupId, BehaviorSystem, ComponentId,
-    ExtractError, ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError,
-    GroupEditOp, GroupScope, SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome,
-    SystemSnapshot,
+    analyze_system, apply_group_edit, apply_system_edit, flatten, preview_extraction,
+    AppliedSystem, BehaviorGroup, BehaviorGroupId, BehaviorSystem, ComponentId, ExtractError,
+    ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp, GroupScope,
+    SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome, SystemSnapshot,
 };
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -60,8 +59,6 @@ pub enum SessionError {
     Persist(#[from] PersistError),
     #[error(transparent)]
     Ide(#[from] QueryError),
-    #[error("this project is a behaviour system: its flat design is derived — edit the system")]
-    DerivedDesign,
     #[error("this project is a flat design, not a behaviour system")]
     NotASystem,
     #[error(transparent)]
@@ -78,6 +75,23 @@ pub enum SessionError {
     Text(#[from] bdl_text::TextError),
     #[error("{} changed on disk since the project was opened: {}", files.len(), files.join(", "))]
     ChangedOnDisk { files: Vec<String> },
+    /// A name the source cannot spell (docs/TEXTUAL_SYNTAX.md §2.5): the
+    /// text is the semantic source, so it is refused on every surface.
+    #[error("`{name}` cannot be a name: {reason}")]
+    InvalidName { name: String, reason: String },
+}
+
+/// Refuse an edit that would introduce a name the source cannot spell.
+fn check_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<(), SessionError> {
+    for name in names {
+        if let Some(reason) = bdl_text::why_not_identifier(name) {
+            return Err(SessionError::InvalidName {
+                name: name.to_owned(),
+                reason,
+            });
+        }
+    }
+    Ok(())
 }
 
 /// One authored step of a system project, for undo/redo: a semantic edit
@@ -237,38 +251,34 @@ impl Session {
         }
     }
 
-    /// Open a project of either kind: the manifest says which.
+    /// Open a project (ADR-0023): the sources and sidecars are the truth of
+    /// every project; a legacy JSON project is migrated in place first.
     pub fn open(&mut self, root: &Path) -> Result<&OpenProject, SessionError> {
         self.ensure_closed()?;
-        let manifest = persist::read_manifest(root)?;
-        match manifest.kind {
-            persist::ProjectKind::Flat => {
-                let loaded = persist::load_project(root)?;
-                self.install(root, loaded.snapshot, loaded.layout);
-            }
-            persist::ProjectKind::System => {
-                let loaded = system_persist::load_system_project(root)?;
-                self.install_system(root, loaded.snapshot, loaded.layout, None);
-            }
-            persist::ProjectKind::Text => {
-                let loaded = bdl_text::load_text_project(root)?;
-                let snapshot = SystemSnapshot::new(loaded.build.system.clone());
-                let layout = loaded.layout.clone();
-                self.install_system(root, snapshot, layout, Some(loaded));
-            }
+        let loaded = bdl_text::load_project_with(root, &self.compiler_version)?;
+        if let Some(m) = &loaded.migrated {
+            tracing::info!(root = %root.display(), from = ?m.from, "migrated a legacy project");
         }
-        self.project()
-    }
-
-    /// Create a text project (ADR-0020): `src/main.bdl`, the sidecars, the
-    /// manifest.
-    pub fn init_text(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
-        self.ensure_closed()?;
-        let loaded = bdl_text::init_text_project(root, name, &self.compiler_version)?;
         let snapshot = SystemSnapshot::new(loaded.build.system.clone());
         let layout = loaded.layout.clone();
         self.install_system(root, snapshot, layout, Some(loaded));
         self.project()
+    }
+
+    /// Create a project: `src/main.bdl`, the sidecars, the manifest.
+    pub fn init(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+        self.ensure_closed()?;
+        let loaded = bdl_text::init_project(root, name, &self.compiler_version)?;
+        let snapshot = SystemSnapshot::new(loaded.build.system.clone());
+        let layout = loaded.layout.clone();
+        self.install_system(root, snapshot, layout, Some(loaded));
+        self.project()
+    }
+
+    /// The names the protocol still carries for [`Session::init`]: there is
+    /// one kind of project (ADR-0023).
+    pub fn init_text(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+        self.init(root, name)
     }
 
     /// Re-read a text project from disk, dropping the in-memory design:
@@ -283,7 +293,7 @@ impl Session {
             return Err(SessionError::NotASystem);
         }
         let after = self.project()?.current.revision.next();
-        let loaded = bdl_text::load_text_project(&root)?;
+        let loaded = bdl_text::load_project_with(&root, &self.compiler_version)?;
         self.project = None;
         let snapshot = SystemSnapshot {
             revision: after,
@@ -305,10 +315,7 @@ impl Session {
     }
 
     pub fn init_system(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
-        self.ensure_closed()?;
-        let created = system_persist::init_system_project(root, name, &self.compiler_version)?;
-        self.install_system(root, created.snapshot, created.layout, None);
-        self.project()
+        self.init(root, name)
     }
 
     fn install_system(
@@ -333,13 +340,6 @@ impl Session {
                 text,
             });
         }
-    }
-
-    pub fn init(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
-        self.ensure_closed()?;
-        let created = persist::init_project(root, name, &self.compiler_version)?;
-        self.install(root, created.snapshot, created.layout);
-        self.project()
     }
 
     fn install(&mut self, root: &Path, snapshot: ProjectSnapshot, layout: Layout) {
@@ -380,14 +380,8 @@ impl Session {
                 // item-level edits of the sources, then the sources are
                 // re-read so anchors and stamps describe what is on disk.
                 let loaded = s.text.as_ref().expect("checked");
-                bdl_text::save_text_project(
-                    &p.root,
-                    loaded,
-                    &s.current.system,
-                    &p.layout,
-                    &version,
-                )?;
-                let reloaded = bdl_text::load_text_project(&p.root)?;
+                bdl_text::save_project(&p.root, loaded, &s.current.system, &p.layout, &version)?;
+                let reloaded = bdl_text::load_project_with(&p.root, &version)?;
                 if reloaded.build.system != s.current.system {
                     tracing::warn!(
                         root = %p.root.display(),
@@ -397,55 +391,29 @@ impl Session {
                 s.text = Some(reloaded);
                 s.saved = s.current.system.clone();
             }
-            Some(s) => {
-                // The system is the only truth written; the flat design is
-                // derived on open.
-                system_persist::save_system_project(&p.root, &s.current, &p.layout, &version)?;
-                s.saved = s.current.system.clone();
-            }
-            None => {
-                persist::save_project(&p.root, &p.current, &p.layout, &version)?;
-                p.saved = p.current.design.clone();
-            }
+            // Every open project has sources (ADR-0023); these arms are the
+            // type's, not a second persistence.
+            Some(_) | None => return Err(SessionError::NotASystem),
         }
         p.saved_layout = p.layout.clone();
         Ok(())
     }
 
-    /// Apply one edit against `base`; refused if the project has moved on.
-    /// A system project's flat design is derived: flat edits are refused.
+    /// Apply one flat edit against `base`: the same as the system edit
+    /// `Base { op }` — every project is a behaviour system whose flat
+    /// design is derived (ADR-0023), so there is one edit path and one
+    /// history.  The protocol's `ApplyEdit` lands here.
     pub fn apply(&mut self, base: Revision, op: &EditOp) -> Result<Committed, SessionError> {
-        let p = self.project_mut()?;
-        if p.system.is_some() {
-            return Err(SessionError::DerivedDesign);
-        }
-        if p.current.revision != base {
-            return Err(SessionError::StaleRevision {
-                expected: base,
-                actual: p.current.revision,
-            });
-        }
-        // A rename carries the formulas that read the concept by name
-        // (`rename`): several model steps, one revision, one undo entry.
-        let ops = crate::rename::expand_flat(&p.current.design, op);
-        let mut working = p.current.clone();
-        let mut outcome: Option<EditOutcome> = None;
-        for step in &ops {
-            let applied = apply_edit(&working, step)?;
-            working = applied.snapshot;
-            outcome = Some(match outcome {
-                None => applied.outcome,
-                Some(acc) => merge_outcomes(acc, applied.outcome),
-            });
-        }
-        let previous = std::mem::replace(&mut p.current, working);
-        p.undo.push(previous.design);
-        p.redo.clear();
-        p.simulation = None;
-        p.ide.set_committed(p.current.clone());
+        let c = self
+            .apply_system(base, &SystemEditOp::Base { op: op.clone() })
+            .map_err(|e| match e {
+                // the flat model's own refusal, in its own words
+                SessionError::SystemEdit(SystemEditError::Base(inner)) => SessionError::Edit(inner),
+                other => other,
+            })?;
         Ok(Committed {
-            snapshot: p.current.clone(),
-            outcome,
+            snapshot: c.snapshot,
+            outcome: c.outcome.inner,
         })
     }
 
@@ -457,6 +425,7 @@ impl Session {
         base: Revision,
         op: &SystemEditOp,
     ) -> Result<CommittedSystem, SessionError> {
+        check_names(bdl_text::names::names_in_system_edit(op))?;
         let p = self.project_mut()?;
         let Some(sys) = p.system.as_mut() else {
             return Err(SessionError::NotASystem);

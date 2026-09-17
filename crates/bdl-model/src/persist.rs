@@ -15,7 +15,7 @@
 use crate::ids::Revision;
 use crate::layout::Layout;
 use crate::surface::{Design, ProjectSnapshot};
-use crate::{LAYOUT_SCHEMA_VERSION, PROJECT_SCHEMA_VERSION};
+use crate::{LAYOUT_SCHEMA_VERSION, MANIFEST_SCHEMA_VERSION, PROJECT_SCHEMA_VERSION};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
@@ -49,24 +49,25 @@ pub enum PersistError {
     },
     #[error("{path}: not a BDL project (missing {MANIFEST_FILE})")]
     NotAProject { path: PathBuf },
-    #[error("{path}: a {kind:?} project, not a flat design (open it as a system)")]
-    NotFlat { path: PathBuf, kind: ProjectKind },
+    #[error("{path}: not a legacy flat design ({kind:?})")]
+    NotFlat {
+        path: PathBuf,
+        kind: Option<ProjectKind>,
+    },
 }
 
-/// What kind of authored truth a project holds.
+/// The kind a **legacy** (manifest schema 1) project declared.  Read only
+/// by the migration path (ADR-0023 §6); a unified project has no kind.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectKind {
-    /// `design/project.bdl.json`: a flat design is the authored truth.
+    /// `design/project.bdl.json` was the authored truth.
     #[default]
     Flat,
-    /// `design/system.bdl.json`: a behaviour system is the authored truth;
-    /// the flat design is derived (`bdl-system`).
+    /// `design/system.bdl.json` was the authored truth.
     System,
-    /// `src/**/*.bdl`: the source tree is the authored truth (ADR-0020);
-    /// identities live in `.bdl/identities.json`, groups in
-    /// `.bdl/authoring.json`, and the system and flat design are derived
-    /// by the textual loader (`bdl-text`).
+    /// Already the unified layout (`src/**/*.bdl` + sidecars, ADR-0020);
+    /// only the manifest needs rewriting.
     Text,
 }
 
@@ -78,13 +79,37 @@ pub struct Manifest {
     /// Compiler that last wrote the project (informational).
     #[serde(default)]
     pub compiler_version: String,
-    /// Absent in every project written before behaviour systems: flat.
-    #[serde(default, skip_serializing_if = "is_flat")]
-    pub kind: ProjectKind,
+    /// Legacy only: what a schema-1 manifest declared (absent meant
+    /// flat, and a legacy flat writer still leaves it absent).  A unified
+    /// manifest carries none and ignores one.
+    #[serde(default, skip_serializing_if = "is_absent_or_flat")]
+    pub kind: Option<ProjectKind>,
 }
 
-fn is_flat(k: &ProjectKind) -> bool {
-    *k == ProjectKind::Flat
+fn is_absent_or_flat(k: &Option<ProjectKind>) -> bool {
+    matches!(k, None | Some(ProjectKind::Flat))
+}
+
+impl Manifest {
+    /// The manifest of a unified project (ADR-0023): schema 2, no kind.
+    pub fn unified(name: &str, compiler_version: &str) -> Manifest {
+        Manifest {
+            schema_version: MANIFEST_SCHEMA_VERSION,
+            name: name.to_owned(),
+            compiler_version: compiler_version.to_owned(),
+            kind: None,
+        }
+    }
+
+    /// `Some(kind)` when this manifest names a legacy project that must be
+    /// migrated before it can be opened; `None` for a unified project.
+    pub fn legacy_kind(&self) -> Option<ProjectKind> {
+        if self.schema_version >= MANIFEST_SCHEMA_VERSION {
+            None
+        } else {
+            Some(self.kind.unwrap_or_default())
+        }
+    }
 }
 
 /// Read only the manifest — to learn a project's kind before loading it.
@@ -103,7 +128,7 @@ pub fn read_manifest(root: &Path) -> Result<Manifest, PersistError> {
     check_schema(
         &manifest_path,
         manifest.schema_version,
-        PROJECT_SCHEMA_VERSION,
+        MANIFEST_SCHEMA_VERSION,
     )?;
     Ok(manifest)
 }
@@ -158,7 +183,9 @@ pub struct LoadedProject {
     pub layout: Layout,
 }
 
-/// Create a new project directory with an empty design.
+/// Create a **legacy** flat project (manifest schema 1, `kind = flat`).
+/// Kept for the migration path and its tests; every tool creates unified
+/// projects through `bdl-text` (ADR-0023).
 pub fn init_project(
     root: &Path,
     name: &str,
@@ -172,7 +199,7 @@ pub fn init_project(
             schema_version: PROJECT_SCHEMA_VERSION,
             name: name.to_owned(),
             compiler_version: compiler_version.to_owned(),
-            kind: ProjectKind::Flat,
+            kind: Some(ProjectKind::Flat),
         },
         snapshot,
         layout,
@@ -200,7 +227,7 @@ pub fn save_design(
         schema_version: PROJECT_SCHEMA_VERSION,
         name: snapshot.design.name.clone(),
         compiler_version: compiler_version.to_owned(),
-        kind: ProjectKind::Flat,
+        kind: Some(ProjectKind::Flat),
     };
     let manifest_path = root.join(MANIFEST_FILE);
     let manifest_text = toml::to_string_pretty(&manifest).map_err(|e| PersistError::Toml {
@@ -234,8 +261,9 @@ pub fn save_layout(root: &Path, layout: &Layout) -> Result<(), PersistError> {
     write_atomic(&path, text.as_bytes())
 }
 
-/// Load a project.  A missing layout file is not an error (a design can exist
-/// without any canvas); a missing design is.
+/// Load a **legacy** flat project (`design/project.bdl.json`), for
+/// migration (ADR-0023 §6).  A missing layout file is not an error (a
+/// design can exist without any canvas); a missing design is.
 pub fn load_project(root: &Path) -> Result<LoadedProject, PersistError> {
     let manifest_path = root.join(MANIFEST_FILE);
     if !manifest_path.is_file() {
@@ -251,12 +279,12 @@ pub fn load_project(root: &Path) -> Result<LoadedProject, PersistError> {
     check_schema(
         &manifest_path,
         manifest.schema_version,
-        PROJECT_SCHEMA_VERSION,
+        MANIFEST_SCHEMA_VERSION,
     )?;
-    if manifest.kind != ProjectKind::Flat {
+    if manifest.legacy_kind() != Some(ProjectKind::Flat) {
         return Err(PersistError::NotFlat {
             path: root.to_path_buf(),
-            kind: manifest.kind,
+            kind: manifest.legacy_kind(),
         });
     }
 

@@ -23,6 +23,8 @@ serde = { workspace = true }
 
 [dev-dependencies]
 bdl-runtime-host = { workspace = true }
+# the examples test migrates the legacy form it writes (a dev-only cycle)
+bdl-text = { path = "../bdl-text" }
 proptest = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

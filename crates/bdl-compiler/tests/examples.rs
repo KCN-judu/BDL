@@ -200,7 +200,7 @@ fn author(root: &std::path::Path) -> Authored {
     let light = apply(
         &mut s,
         EditOp::CreateOutput {
-            name: "Light Output".into(),
+            name: "light".into(),
             description: "The lamp itself.".into(),
             accepts: brightness,
             clock: Some(interaction),
@@ -225,7 +225,7 @@ fn author(root: &std::path::Path) -> Authored {
     apply(
         &mut s,
         EditOp::CreateDevice {
-            name: "PWM light".into(),
+            name: "pwmLight".into(),
             kind: DeviceKind::PwmChannel,
             output: Some(light),
         },
@@ -350,19 +350,34 @@ fn smart_lamp_is_authored_from_the_surface_and_does_everything_the_compiler_know
     assert_eq!(d.status, DeploymentStatus::Feasible, "{:?}", d.diagnostics);
     assert_eq!(d.assignment.as_ref().unwrap().len(), 1);
 
-    // the checked-in example is exactly this project (or is written now)
+    // the checked-in example is exactly this project in the unified
+    // layout (ADR-0023): the legacy form just written is migrated in
+    // place — sources, identities and layout — and compared file by
+    // file (or written now).
+    bdl_text::migrate_legacy(&fresh, COMPILER_VERSION)
+        .unwrap()
+        .expect("a legacy project migrates");
     let example = example_dir();
     if std::env::var_os("BDL_WRITE_EXAMPLES").is_some() {
         if example.exists() {
             std::fs::remove_dir_all(&example).unwrap();
         }
         copy_dir(&fresh, &example);
+        // the JSON the migration renamed is not part of the example
+        let _ = std::fs::remove_dir_all(example.join("design"));
     }
-    let loaded = persist::load_project(&example).unwrap();
-    assert_eq!(loaded.snapshot.design, snapshot.design);
+    let loaded = bdl_text::load_project(&example).unwrap();
+    assert!(loaded.migrated.is_none(), "the example is already unified");
+    let mut base = loaded.build.system.base.clone();
+    for m in base.mappings.values_mut() {
+        m.parameters.clear();
+    }
+    assert_eq!(base, snapshot.design);
     assert_eq!(loaded.layout, authored.layout);
     for f in [
-        persist::DESIGN_FILE,
+        "src/main.bdl",
+        bdl_text::IDENTITIES_FILE,
+        bdl_text::AUTHORING_FILE,
         persist::LAYOUT_FILE,
         persist::MANIFEST_FILE,
     ] {
