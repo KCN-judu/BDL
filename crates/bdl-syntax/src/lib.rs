@@ -20,6 +20,7 @@
 #![forbid(unsafe_code)]
 
 pub mod ast;
+pub mod format;
 pub mod kind;
 pub mod lexer;
 pub mod literal;

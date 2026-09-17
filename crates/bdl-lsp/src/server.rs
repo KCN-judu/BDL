@@ -17,9 +17,10 @@
 use crate::convert;
 use crate::position::{LineIndex, PositionEncoding};
 use bdl_ide::{
-    actions_at, actions_for, completion, diagnostics, document_symbols, entity_at, explain, hover,
-    plan_rename, preview_change, project_to_document, references, semantic_tokens,
-    CompletionContext, DiagnosticScope, EntityRole, IdeHost,
+    actions_at, actions_for, completion, diagnostics, document_symbols, entity_at, explain,
+    format_document, hover, inlay_hints, plan_rename, preview_change, project_to_document,
+    references, semantic_tokens, virtual_document, CompletionContext, DiagnosticScope, EntityRole,
+    IdeHost,
 };
 use bdl_ide_db::{CancelScope, DocumentId, DocumentUri, OverlayKey};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, RequestId, Response};
@@ -88,6 +89,34 @@ impl lsp::request::Request for PreviewEdit {
     type Params = lsp::RenameParams;
     type Result = Option<bdl_ide::SemanticEditPlan>;
     const METHOD: &'static str = "bdl/previewEdit";
+}
+
+/// `bdl/virtualDocument`: a read-only rendering — the explanation of
+/// the entity at a position (or of the whole project), the kernel Core,
+/// or the generated Rust.
+pub enum VirtualDocumentRequest {}
+impl lsp::request::Request for VirtualDocumentRequest {
+    type Params = VirtualDocumentParams;
+    type Result = VirtualDocumentResult;
+    const METHOD: &'static str = "bdl/virtualDocument";
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VirtualDocumentParams {
+    pub kind: bdl_ide::VirtualKind,
+    /// Narrows an explanation to the entity at this position.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_document: Option<lsp::TextDocumentIdentifier>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<lsp::Position>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct VirtualDocumentResult {
+    pub uri: String,
+    pub language: String,
+    pub text: String,
 }
 
 // ---- server ---------------------------------------------------------------------
@@ -177,6 +206,8 @@ pub fn run(connection: Connection) -> anyhow::Result<()> {
             work_done_progress_options: WorkDoneProgressOptions::default(),
         })),
         document_symbol_provider: Some(OneOf::Left(true)),
+        document_formatting_provider: Some(OneOf::Left(true)),
+        inlay_hint_provider: Some(OneOf::Left(true)),
         code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
         diagnostic_provider: Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
             identifier: Some(convert::SOURCE.into()),
@@ -852,13 +883,64 @@ fn handle_request(ctx: &Ctx<'_>, req: Request) -> Result<serde_json::Value, Requ
             }
             ok(Some(out))
         }
+        r::Formatting::METHOD => {
+            let p: lsp::DocumentFormattingParams = params(&req)?;
+            let Some((doc, index)) = ctx.document(&p.text_document.uri) else {
+                return ok(None::<Vec<lsp::TextEdit>>);
+            };
+            let edits: Vec<lsp::TextEdit> = format_document(ctx.snapshot, doc)
+                .into_iter()
+                .map(|e| lsp::TextEdit {
+                    range: index.range(e.range),
+                    new_text: e.new_text,
+                })
+                .collect();
+            ok(Some(edits))
+        }
+        r::InlayHintRequest::METHOD => {
+            let p: lsp::InlayHintParams = params(&req)?;
+            let Some((doc, index)) = ctx.document(&p.text_document.uri) else {
+                return ok(None::<Vec<lsp::InlayHint>>);
+            };
+            let range = index.text_range(p.range);
+            let hints: Vec<lsp::InlayHint> = inlay_hints(ctx.snapshot, doc, Some(range))
+                .into_iter()
+                .map(|h| lsp::InlayHint {
+                    position: index.position(h.offset),
+                    label: lsp::InlayHintLabel::String(h.label),
+                    kind: Some(match h.kind {
+                        bdl_ide::InlayKind::Type => lsp::InlayHintKind::TYPE,
+                        bdl_ide::InlayKind::Transport => lsp::InlayHintKind::PARAMETER,
+                    }),
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(h.kind == bdl_ide::InlayKind::Transport),
+                    padding_right: None,
+                    data: None,
+                })
+                .collect();
+            ok(Some(hints))
+        }
+        VirtualDocumentRequest::METHOD => {
+            let p: VirtualDocumentParams = params(&req)?;
+            let entity = match (&p.text_document, p.position) {
+                (Some(td), Some(pos)) => ctx.entity_at(&td.uri, pos).map(|(_, _, e, _)| e),
+                _ => None,
+            };
+            let doc = virtual_document(ctx.snapshot, p.kind, entity);
+            ok(VirtualDocumentResult {
+                uri: doc.uri.as_str().to_owned(),
+                language: doc.language,
+                text: doc.text,
+            })
+        }
         ExplainEntity::METHOD => {
             let p: lsp::TextDocumentPositionParams = params(&req)?;
             let result = ctx
                 .entity_at(&p.text_document.uri, p.position)
                 .and_then(|(_, _, e, _)| explain(ctx.snapshot, e))
                 .map(|explanation| ExplainResult {
-                    markdown: convert::explanation_markdown(&explanation),
+                    markdown: explanation.markdown(),
                     explanation,
                 });
             ok(result)

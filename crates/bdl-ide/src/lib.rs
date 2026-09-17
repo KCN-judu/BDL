@@ -30,12 +30,15 @@ pub mod diagnostics;
 pub mod draft;
 pub mod edit_plan;
 pub mod explain;
+pub mod format;
 pub mod hover;
+pub mod inlay;
 pub mod invalidation;
 pub mod references;
 pub mod rename;
 pub mod symbols;
 pub mod tokens;
+pub mod virtual_docs;
 
 pub use actions::{
     actions_at, actions_for, ActionChoice, ActionKind, Applicability, SemanticAction,
@@ -57,12 +60,15 @@ pub use diagnostics::{
 pub use draft::{draft_verdict, DraftVerdict};
 pub use edit_plan::{Precondition, SemanticEditPlan, SemanticOperation};
 pub use explain::{explain, Explanation, ExplanationSection};
+pub use format::format_document;
 pub use hover::{hover, EntityStatus, HoverDetail, SemanticHover};
+pub use inlay::{inlay_hints, InlayHint, InlayKind};
 pub use invalidation::{preview_change, Fact, Invalidated, InvalidationPreview, StatusChange};
 pub use references::{definition_of, entity_at, entity_at_formula, references, ReferenceResult};
 pub use rename::{plan_rename, RenameError};
 pub use symbols::{document_symbols, symbols, SemanticSymbol};
 pub use tokens::{semantic_tokens, SemanticToken, TokenKind, TokenModifiers};
+pub use virtual_docs::{virtual_document, VirtualDocument, VirtualKind};
 
 use serde::{Deserialize, Serialize};
 

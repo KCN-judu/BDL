@@ -5,9 +5,9 @@
 
 use crate::position::LineIndex;
 use bdl_ide::{
-    ActionKind, Applicability, CompletionKind, EntityKind, EntityStatus, Explanation,
-    SemanticAction, SemanticCompletion, SemanticEditPlan, SemanticHover, SemanticOperation,
-    SemanticSeverity, SemanticSymbol, SemanticToken, TextDiagnostic, TokenKind,
+    ActionKind, Applicability, CompletionKind, EntityKind, EntityStatus, SemanticAction,
+    SemanticCompletion, SemanticEditPlan, SemanticHover, SemanticOperation, SemanticSeverity,
+    SemanticSymbol, SemanticToken, TextDiagnostic, TokenKind,
 };
 use bdl_ide_db::{DocumentId, TextRange};
 use lsp_types::{
@@ -112,23 +112,6 @@ pub fn hover(h: &SemanticHover) -> Hover {
         }),
         range: None,
     }
-}
-
-pub fn explanation_markdown(e: &Explanation) -> String {
-    let mut md = format!("# {}\n\n*{}*\n", e.title, e.status.label());
-    for s in &e.sections {
-        md.push_str(&format!("\n## {}\n\n", s.heading));
-        for (k, v) in &s.lines {
-            md.push_str(&format!("- **{k}**: {v}\n"));
-        }
-    }
-    if !e.diagnostics.is_empty() {
-        md.push_str("\n## Diagnostics\n\n");
-        for d in &e.diagnostics {
-            md.push_str(&format!("- `{}` {}\n", d.code, d.message));
-        }
-    }
-    md
 }
 
 pub fn completion_item(c: &SemanticCompletion, index: &LineIndex) -> CompletionItem {

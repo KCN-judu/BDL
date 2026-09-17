@@ -575,6 +575,124 @@ fn open_buffers_substitute_and_saves_reload_the_ground() {
         json!({ "textDocument": { "uri": lamp_uri } }),
     );
 
+    // Formatting: canonical spacing, comments kept; a canonical file
+    // gets no edit; a file with a syntax error is left alone.
+    let messy = "mapping   tilt:Tilt @interaction // outside\n".to_owned()
+        + &MAIN["mapping tilt : Tilt @interaction\n".len()..];
+    c.notify(
+        lsp::notification::DidChangeTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "version": 20 }, "contentChanges": [{ "text": messy }] }),
+    );
+    let fmt = c.request(
+        lsp::request::Formatting::METHOD,
+        json!({ "textDocument": main, "options": { "tabSize": 2, "insertSpaces": true } }),
+    );
+    let edits = fmt.as_array().expect("edits");
+    assert_eq!(edits.len(), 1, "{fmt}");
+    let formatted = edits[0]["newText"].as_str().expect("text");
+    assert!(
+        formatted.starts_with("mapping tilt : Tilt @interaction  // outside\n"),
+        "{formatted}"
+    );
+    assert_eq!(
+        &formatted["mapping tilt : Tilt @interaction  // outside\n".len()..],
+        &MAIN["mapping tilt : Tilt @interaction\n".len()..]
+    );
+    c.notify(
+        lsp::notification::DidChangeTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "version": 21 }, "contentChanges": [{ "text": MAIN }] }),
+    );
+    let fmt = c.request(
+        lsp::request::Formatting::METHOD,
+        json!({ "textDocument": main, "options": { "tabSize": 2, "insertSpaces": true } }),
+    );
+    assert_eq!(fmt.as_array().map(Vec::len), Some(0), "{fmt}");
+
+    // Inlay hints: the concept a parameter reads (`t: Tilt` in the
+    // component), the transport of a binding that crosses domains.
+    let lamp_uri = p.uri("src/lamp.bdl");
+    let hints = c.request(
+        lsp::request::InlayHintRequest::METHOD,
+        json!({ "textDocument": { "uri": lamp_uri }, "range": { "start": { "line": 0, "character": 0 }, "end": { "line": 40, "character": 0 } } }),
+    );
+    let labels: Vec<(u64, String)> = hints
+        .as_array()
+        .expect("hints")
+        .iter()
+        .map(|h| {
+            (
+                h["position"]["line"].as_u64().expect("line"),
+                h["label"].as_str().expect("label").to_owned(),
+            )
+        })
+        .collect();
+    let t_line = position(LAMP, "dimByTilt(t) =", 0).line as u64;
+    assert_eq!(labels, vec![(t_line, ": Tilt".to_owned())], "{labels:?}");
+    let with_sync = format!("{MAIN}clock display\nmapping slow : Brightness @display\nbind slow = lampA.brightness init 0\n");
+    c.notify(
+        lsp::notification::DidChangeTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "version": 22 }, "contentChanges": [{ "text": with_sync }] }),
+    );
+    let hints = c.request(
+        lsp::request::InlayHintRequest::METHOD,
+        json!({ "textDocument": main, "range": { "start": { "line": 0, "character": 0 }, "end": { "line": 40, "character": 0 } } }),
+    );
+    let labels: Vec<String> = hints
+        .as_array()
+        .expect("hints")
+        .iter()
+        .map(|h| h["label"].as_str().expect("label").to_owned())
+        .collect();
+    assert_eq!(
+        labels,
+        vec!["sync interaction → display, init 0".to_owned()],
+        "{labels:?}"
+    );
+
+    // Virtual documents: explain, Core, Rust.
+    let core = c.request(
+        bdl_lsp::VirtualDocumentRequest::METHOD,
+        json!({ "kind": "core" }),
+    );
+    assert_eq!(core["language"], "bdl-core");
+    let text = core["text"].as_str().expect("text");
+    assert!(
+        text.contains("sem Tilt")
+            && text.contains("decl tiltValue")
+            && text.contains("@ interaction"),
+        "{text}"
+    );
+    let rust = c.request(
+        bdl_lsp::VirtualDocumentRequest::METHOD,
+        json!({ "kind": "rust" }),
+    );
+    assert_eq!(rust["language"], "rust");
+    assert!(
+        rust["text"]
+            .as_str()
+            .expect("text")
+            .contains("bdl_runtime_core"),
+        "{}",
+        rust["text"]
+    );
+    let ex = c.request(
+        bdl_lsp::VirtualDocumentRequest::METHOD,
+        json!({ "kind": "explain", "textDocument": main, "position": position(&with_sync, "mapping tiltValue", 8) }),
+    );
+    assert_eq!(ex["language"], "markdown");
+    assert!(
+        ex["text"]
+            .as_str()
+            .expect("text")
+            .starts_with("# tiltValue"),
+        "{}",
+        ex["text"]
+    );
+    c.notify(
+        lsp::notification::DidChangeTextDocument::METHOD,
+        json!({ "textDocument": { "uri": main_uri, "version": 23 }, "contentChanges": [{ "text": MAIN }] }),
+    );
+
     // Fix the buffer, save it to disk, tell the server: the ground is
     // re-read and the identity table written for the next tool.
     c.notify(

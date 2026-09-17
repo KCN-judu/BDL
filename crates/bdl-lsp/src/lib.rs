@@ -19,4 +19,7 @@ pub mod position;
 pub mod server;
 
 pub use position::{LineIndex, PositionEncoding};
-pub use server::{run, ExplainEntity, InvalidationPreviewRequest, PreviewEdit};
+pub use server::{
+    run, ExplainEntity, InvalidationPreviewRequest, PreviewEdit, VirtualDocumentParams,
+    VirtualDocumentRequest, VirtualDocumentResult,
+};
