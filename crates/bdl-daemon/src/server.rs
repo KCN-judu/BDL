@@ -185,6 +185,36 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             Ok(_) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
+        Req::GetSources(_) => match session.sources() {
+            Ok(sources) => (
+                Resp::Sources(pb::SourcesResponse {
+                    sources: Some(sources_to_pb(&sources)),
+                }),
+                None,
+            ),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
+        Req::ApplySourceEdit(a) => {
+            let base = bdl_model::Revision::from_raw(a.base_revision);
+            match session.apply_source_edit(base, &a.path, &a.text) {
+                Ok(edit) => {
+                    let sources = session.sources().map(|s| sources_to_pb(&s)).ok();
+                    let resp = Resp::SourceEditApplied(pb::SourceEditApplied {
+                        accepted: edit.accepted,
+                        project: Some(project_of(session)),
+                        sources,
+                    });
+                    // An accepted text edit is a commit like any other:
+                    // subscribers see the design move.
+                    let committed = edit.accepted.then_some(Committed {
+                        snapshot: edit.snapshot,
+                        outcome: None,
+                    });
+                    (resp, committed)
+                }
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
         Req::GetSystem(_) => match system_view(session) {
             Ok(v) => (Resp::System(pb::SystemResponse { system: Some(v) }), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
@@ -951,6 +981,33 @@ fn step_result(session: &mut Session, undo: bool) -> (Resp, Option<Committed>) {
     }
 }
 
+fn sources_to_pb(s: &crate::session::Sources) -> pb::SourcesView {
+    pb::SourcesView {
+        revision: s.revision.raw(),
+        files: s
+            .files
+            .iter()
+            .map(|f| pb::SourceFileView {
+                path: f.path.clone(),
+                text: f.text.clone(),
+                draft: f.draft,
+            })
+            .collect(),
+        diagnostics: s
+            .diagnostics
+            .iter()
+            .map(|d| pb::SourceDiagnostic {
+                path: d.path.clone(),
+                code: d.code.clone(),
+                message: d.message.clone(),
+                start: d.start,
+                end: d.end,
+                open: d.open,
+            })
+            .collect(),
+    }
+}
+
 fn project_response(session: &Session) -> Resp {
     Resp::Project(pb::ProjectResponse {
         project: Some(project_of(session)),
@@ -1045,6 +1102,7 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::Persist(_) => error("project.persist", &e.to_string()),
         SessionError::Text(_) => error("project.text", &e.to_string()),
         SessionError::InvalidName { reason, .. } => error("edit.invalid_name", reason),
+        SessionError::InvalidSourcePath { .. } => error("source.invalid_path", &e.to_string()),
         SessionError::ChangedOnDisk { .. } => error("project.changed_on_disk", &e.to_string()),
         SessionError::Ide(bdl_ide::QueryError::UnknownEntity { .. }) => {
             error("draft.unknown_mapping", &e.to_string())
@@ -1154,6 +1212,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::InitSystemProject(_) => "init_system_project",
         Req::InitTextProject(_) => "init_text_project",
         Req::ReloadProject(_) => "reload_project",
+        Req::GetSources(_) => "get_sources",
+        Req::ApplySourceEdit(_) => "apply_source_edit",
         Req::ApplyGroupEdit(_) => "apply_group_edit",
         Req::PreviewComponentExtraction(_) => "preview_component_extraction",
         Req::GetSystem(_) => "get_system",

@@ -87,6 +87,9 @@ impl Client {
                         Resp::SystemEditApplied(e) => {
                             self.last_revision = e.project.as_ref().unwrap().revision
                         }
+                        Resp::SourceEditApplied(e) => {
+                            self.last_revision = e.project.as_ref().unwrap().revision
+                        }
                         _ => {}
                     }
                     return payload;
@@ -127,6 +130,25 @@ impl Client {
 
     fn save(&mut self, force: bool) -> Resp {
         self.call(Req::SaveProject(pb::SaveProjectRequest { force }))
+    }
+
+    fn sources(&mut self) -> pb::SourcesView {
+        match self.call(Req::GetSources(pb::GetSourcesRequest {})) {
+            Resp::Sources(s) => s.sources.unwrap(),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    fn source_edit(&mut self, path: &str, text: &str) -> pb::SourceEditApplied {
+        let base = self.last_revision;
+        match self.call(Req::ApplySourceEdit(pb::ApplySourceEditRequest {
+            base_revision: base,
+            path: path.into(),
+            text: text.into(),
+        })) {
+            Resp::SourceEditApplied(e) => e,
+            other => panic!("source edit failed: {other:?}"),
+        }
     }
 }
 
@@ -524,4 +546,238 @@ fn a_hand_written_project_is_placed_on_open_and_new_items_on_commit() {
     assert_eq!(after.mappings, before.mappings);
     assert_eq!(after.outputs, before.outputs);
     assert_eq!(after.instances, before.instances);
+}
+
+/// The Code view (ADR-0023 §3–§5): the sources are the project with every
+/// graph edit written back; a text edit that builds is a new revision
+/// bound to the same identities; one that does not keeps the last good
+/// project and the draft; comments survive graph edits; a save writes
+/// the accepted text; undo is one history.
+#[test]
+fn code_view_edits_flow_through_the_model_and_keep_identities() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut c = Client::spawn();
+    let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "lamp".into(),
+    })) else {
+        panic!()
+    };
+    c.last_revision = p.project.unwrap().revision;
+    let tilt = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Tilt".into(),
+            description: "how far the head is tilted".into(),
+            representation: quantity(angle()),
+        }))
+        .created_concept
+        .unwrap();
+    let bright = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Brightness".into(),
+            description: String::new(),
+            representation: quantity(pb::Dim::default()),
+        }))
+        .created_concept
+        .unwrap();
+
+    // graph → text: the sources carry what the canvas made
+    let sources = c.sources();
+    assert_eq!(sources.revision, c.last_revision);
+    let main = sources
+        .files
+        .iter()
+        .find(|f| f.path == "src/main.bdl")
+        .expect("main.bdl");
+    assert!(!main.draft);
+    assert!(main.text.contains("concept Tilt : Angle"), "{}", main.text);
+    assert!(
+        main.text.contains("/// how far the head is tilted"),
+        "{}",
+        main.text
+    );
+    assert!(sources.diagnostics.is_empty());
+
+    // text → graph: a relationship typed in the Code view, with a comment
+    let typed = format!(
+        "{}\n// a note the model does not keep\n/// dims with the tilt\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(Tilt) =\n  Tilt / 90 deg\n",
+        main.text.trim_end()
+    );
+    let applied = c.source_edit("src/main.bdl", &typed);
+    assert!(applied.accepted, "{:?}", applied.sources);
+    let p = applied.project.unwrap();
+    assert_eq!(p.revision, c.last_revision);
+    let dim = p
+        .mappings
+        .iter()
+        .find(|m| m.name == "dimByTilt")
+        .expect("bound");
+    assert_eq!(dim.signature.as_ref().unwrap().inputs, vec![tilt]);
+    assert_eq!(dim.signature.as_ref().unwrap().output, bright);
+    assert!(matches!(
+        dim.definition.as_ref().and_then(|d| d.kind.as_ref()),
+        Some(pb::definition::Kind::Formula(f)) if f.contains("90 deg")
+    ));
+    assert_eq!(
+        p.concepts.iter().find(|x| x.name == "Tilt").unwrap().id,
+        tilt,
+        "identities survive a text edit"
+    );
+    assert!(
+        p.layout
+            .as_ref()
+            .unwrap()
+            .mappings
+            .iter()
+            .any(|n| n.id == dim.id),
+        "placed by the layout service on commit"
+    );
+    let dim_id = dim.id;
+
+    // invalid text keeps the last known good project and the draft
+    let broken = typed.replace("Tilt -> Brightness", "Tilt -> ");
+    let refused = c.source_edit("src/main.bdl", &broken);
+    assert!(!refused.accepted);
+    let p = refused.project.unwrap();
+    assert_eq!(p.revision, c.last_revision, "no revision");
+    assert!(
+        p.mappings.iter().any(|m| m.id == dim_id),
+        "nothing discarded"
+    );
+    let sources = refused.sources.unwrap();
+    let main = sources
+        .files
+        .iter()
+        .find(|f| f.path == "src/main.bdl")
+        .unwrap();
+    assert!(main.draft);
+    assert_eq!(main.text, broken, "the draft exactly as typed");
+    let d = sources
+        .diagnostics
+        .iter()
+        .find(|d| !d.open)
+        .expect("a fault");
+    assert_eq!(d.path, "src/main.bdl");
+    assert!(d.end >= d.start && (d.end as usize) <= broken.len());
+    assert_eq!(
+        c.sources()
+            .files
+            .iter()
+            .find(|f| f.path == "src/main.bdl")
+            .unwrap()
+            .text,
+        broken
+    );
+
+    // a rename in the text keeps the identity (reconciliation, ADR-0020 §4)
+    let renamed = typed
+        .replace("concept Tilt", "concept HeadTilt")
+        .replace(": Tilt ->", ": HeadTilt ->")
+        .replace("dimByTilt(Tilt)", "dimByTilt(HeadTilt)")
+        .replace("  Tilt / 90", "  HeadTilt / 90");
+    let applied = c.source_edit("src/main.bdl", &renamed);
+    assert!(applied.accepted, "{:?}", applied.sources);
+    let p = applied.project.unwrap();
+    assert_eq!(
+        p.concepts.iter().find(|x| x.name == "HeadTilt").unwrap().id,
+        tilt
+    );
+    assert!(
+        !applied.sources.unwrap().files[0].draft,
+        "the draft is gone"
+    );
+
+    // graph → text again: a rename from the canvas patches the text and
+    // leaves the comments where they were
+    c.base(pb::edit_op::Op::RenameConcept(pb::RenameConcept {
+        id: bright,
+        name: "Level".into(),
+    }));
+    let main = c
+        .sources()
+        .files
+        .into_iter()
+        .find(|f| f.path == "src/main.bdl")
+        .unwrap();
+    assert!(
+        main.text.contains("mapping dimByTilt : HeadTilt -> Level"),
+        "{}",
+        main.text
+    );
+    assert!(
+        main.text.contains("// a note the model does not keep"),
+        "{}",
+        main.text
+    );
+    assert!(
+        main.text.contains("/// dims with the tilt"),
+        "{}",
+        main.text
+    );
+    assert!(
+        main.text.contains("/// how far the head is tilted"),
+        "{}",
+        main.text
+    );
+
+    // stale base is refused
+    let Resp::Error(e) = c.call(Req::ApplySourceEdit(pb::ApplySourceEditRequest {
+        base_revision: 0,
+        path: "src/main.bdl".into(),
+        text: main.text.clone(),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "edit.stale_revision");
+    let Resp::Error(e) = c.call(Req::ApplySourceEdit(pb::ApplySourceEditRequest {
+        base_revision: c.last_revision,
+        path: "../outside.bdl".into(),
+        text: String::new(),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "source.invalid_path");
+
+    // save: the text on disk is the Code view's; reopen keeps identities
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+    let on_disk = std::fs::read_to_string(root.join("src/main.bdl")).unwrap();
+    assert_eq!(on_disk, main.text);
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let p = c.open(&root);
+    assert_eq!(
+        p.concepts.iter().find(|x| x.name == "HeadTilt").unwrap().id,
+        tilt
+    );
+    assert_eq!(
+        p.mappings
+            .iter()
+            .find(|m| m.name == "dimByTilt")
+            .unwrap()
+            .id,
+        dim_id
+    );
+
+    // one history: a text edit that adds a sink undoes like a graph edit
+    let with_sink = format!("{}\noutput light : Level\n", on_disk.trim_end());
+    let applied = c.source_edit("src/main.bdl", &with_sink);
+    assert!(applied.accepted, "{:?}", applied.sources);
+    assert_eq!(applied.project.as_ref().unwrap().outputs.len(), 1);
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    let p = u.project.unwrap();
+    c.last_revision = p.revision;
+    assert!(p.outputs.is_empty());
+    let main = c
+        .sources()
+        .files
+        .into_iter()
+        .find(|f| f.path == "src/main.bdl")
+        .unwrap();
+    assert!(!main.text.contains("output light"), "{}", main.text);
+    assert!(main.text.contains("// a note the model does not keep"));
 }

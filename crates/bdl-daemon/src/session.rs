@@ -35,7 +35,7 @@ use bdl_system::{
     ExtractionChoices, ExtractionPreview, FlattenedSystem, GroupEditError, GroupEditOp, GroupScope,
     SystemAnalysis, SystemEditError, SystemEditOp, SystemEditOutcome, SystemSnapshot,
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
@@ -79,9 +79,61 @@ pub enum SessionError {
     /// text is the semantic source, so it is refused on every surface.
     #[error("`{name}` cannot be a name: {reason}")]
     InvalidName { name: String, reason: String },
+    #[error("`{path}` is not a source file of the project: sources are `.bdl` files under `src/`")]
+    InvalidSourcePath { path: String },
 }
 
 /// Refuse an edit that would introduce a name the source cannot spell.
+/// The sources with the current system written back: what the Code view
+/// shows and what a save would write.
+fn written_back(sys: &SystemState) -> Result<bdl_text::WriteBack, SessionError> {
+    let loaded = sys.text.as_ref().ok_or(SessionError::NotASystem)?;
+    Ok(bdl_text::write_back(
+        &loaded.build,
+        &loaded.files,
+        &sys.current.system,
+    ))
+}
+
+/// A source path the Code view may write: a `.bdl` file under `src/`,
+/// relative, with no `..`.
+fn is_source_path(path: &str) -> bool {
+    path.starts_with(&format!("{}/", bdl_text::SOURCE_DIR))
+        && path.ends_with(".bdl")
+        && !path
+            .split('/')
+            .any(|c| c.is_empty() || c == "." || c == "..")
+}
+
+fn source_diagnostic(
+    files: &[bdl_text::SourceFile],
+    fault: &bdl_text::TextFault,
+) -> SourceDiagnostic {
+    let span = fault.span();
+    let path = files
+        .get(fault.file())
+        .map(|f| f.path.clone())
+        .unwrap_or_default();
+    match fault {
+        bdl_text::TextFault::Syntax { error, .. } => SourceDiagnostic {
+            path,
+            code: "syntax".into(),
+            message: error.message.clone(),
+            start: span.start,
+            end: span.end,
+            open: false,
+        },
+        bdl_text::TextFault::Load(l) => SourceDiagnostic {
+            path,
+            code: l.code.clone(),
+            message: l.message.clone(),
+            start: span.start,
+            end: span.end,
+            open: l.open,
+        },
+    }
+}
+
 /// The layout service on open (ADR-0023 §7): every entity the sources
 /// declare but the layout does not place gets a position, and the layout
 /// is written back so the first graphical projection is the persisted one.
@@ -180,6 +232,59 @@ pub struct SystemState {
     /// or written, with their anchors and modification stamps.  Saving
     /// writes the system back as text through them.
     pub text: Option<bdl_text::LoadedWorkspace>,
+    /// Text the Code view typed that does not build (ADR-0023 §5), by
+    /// path, exactly as typed, with why.  The committed project is the
+    /// last revision that built.
+    drafts: BTreeMap<String, SourceDraft>,
+    /// Sources accepted from the Code view since the last save: their
+    /// text is in `text` but not on disk yet.
+    dirty_sources: BTreeSet<String>,
+}
+
+/// A text draft the semantic project has not accepted.
+#[derive(Clone, Debug)]
+pub struct SourceDraft {
+    pub text: String,
+    pub diagnostics: Vec<SourceDiagnostic>,
+}
+
+/// Why a draft does not build: one fault on one file, in byte offsets.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SourceDiagnostic {
+    pub path: String,
+    /// `syntax`, or the loader's `text.<reason>`.
+    pub code: String,
+    pub message: String,
+    pub start: u32,
+    pub end: u32,
+    /// Incompleteness, not an error: does not keep a draft from building.
+    pub open: bool,
+}
+
+/// One source file as the Code view shows it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SourceFileView {
+    pub path: String,
+    pub text: String,
+    /// The text is a draft the semantic project has not accepted.
+    pub draft: bool,
+}
+
+/// The sources of the open project: the files as loaded with every
+/// committed semantic edit written back, drafts substituted.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Sources {
+    pub revision: Revision,
+    pub files: Vec<SourceFileView>,
+    pub diagnostics: Vec<SourceDiagnostic>,
+}
+
+/// What a source edit did.
+pub struct SourceEdit {
+    /// The sources built: a new revision.
+    pub accepted: bool,
+    /// The derived flat design now (new when accepted).
+    pub snapshot: ProjectSnapshot,
 }
 
 impl SystemState {
@@ -244,7 +349,7 @@ impl OpenProject {
     }
     pub fn dirty(&self) -> bool {
         let content = match &self.system {
-            Some(s) => s.current.system != s.saved,
+            Some(s) => s.current.system != s.saved || !s.dirty_sources.is_empty(),
             None => self.current.design != self.saved,
         };
         content || self.layout != self.saved_layout
@@ -389,6 +494,8 @@ impl Session {
                 undo: Vec::new(),
                 redo: Vec::new(),
                 text,
+                drafts: BTreeMap::new(),
+                dirty_sources: BTreeSet::new(),
             });
         }
     }
@@ -431,7 +538,21 @@ impl Session {
                 // item-level edits of the sources, then the sources are
                 // re-read so anchors and stamps describe what is on disk.
                 let loaded = s.text.as_ref().expect("checked");
-                bdl_text::save_project(&p.root, loaded, &s.current.system, &p.layout, &version)?;
+                let wb = bdl_text::save_project(
+                    &p.root,
+                    loaded,
+                    &s.current.system,
+                    &p.layout,
+                    &version,
+                )?;
+                // Text accepted from the Code view is already in the files
+                // the splice started from; it reaches disk here.
+                for (i, f) in wb.files.iter().enumerate() {
+                    if s.dirty_sources.contains(&f.path) && !wb.changed.contains(&i) {
+                        persist::write_atomic(&p.root.join(&f.path), f.text.as_bytes())?;
+                    }
+                }
+                s.dirty_sources.clear();
                 let reloaded = bdl_text::load_project_with(&p.root, &version)?;
                 if reloaded.build.system != s.current.system {
                     tracing::warn!(
@@ -706,6 +827,141 @@ impl Session {
         Ok(Committed {
             snapshot: p.current.clone(),
             outcome: None,
+        })
+    }
+
+    /// The sources as the Code view shows them (ADR-0023 §3): the files as
+    /// loaded with every committed semantic edit written back — the same
+    /// item-level splice a save performs — and any draft substituted.
+    pub fn sources(&self) -> Result<Sources, SessionError> {
+        let p = self.project()?;
+        let Some(sys) = p.system.as_ref() else {
+            return Err(SessionError::NotASystem);
+        };
+        let wb = written_back(sys)?;
+        let files = wb
+            .files
+            .iter()
+            .map(|f| match sys.drafts.get(&f.path) {
+                Some(d) => SourceFileView {
+                    path: f.path.clone(),
+                    text: d.text.clone(),
+                    draft: true,
+                },
+                None => SourceFileView {
+                    path: f.path.clone(),
+                    text: f.text.clone(),
+                    draft: false,
+                },
+            })
+            .collect();
+        Ok(Sources {
+            revision: p.current.revision,
+            files,
+            diagnostics: sys
+                .drafts
+                .values()
+                .flat_map(|d| d.diagnostics.iter().cloned())
+                .collect(),
+        })
+    }
+
+    /// A text edit from the Code view (ADR-0023 §4–§5): the whole text of
+    /// one file against `base`.  When the sources build, every declaration
+    /// is bound to its identity by reconciliation against the working
+    /// table and the project moves to a new revision; when they do not,
+    /// the committed project stays and the draft is kept with its faults.
+    /// A text change that leaves the semantic project equal moves the
+    /// revision but adds no history entry: undo is semantic history.
+    pub fn apply_source_edit(
+        &mut self,
+        base: Revision,
+        path: &str,
+        text: &str,
+    ) -> Result<SourceEdit, SessionError> {
+        let p = self.project_mut()?;
+        let Some(sys) = p.system.as_mut() else {
+            return Err(SessionError::NotASystem);
+        };
+        if p.current.revision != base {
+            return Err(SessionError::StaleRevision {
+                expected: base,
+                actual: p.current.revision,
+            });
+        }
+        if !is_source_path(path) {
+            return Err(SessionError::InvalidSourcePath {
+                path: path.to_owned(),
+            });
+        }
+        let wb = written_back(sys)?;
+        let mut files = wb.files.clone();
+        match files.iter_mut().find(|f| f.path == path) {
+            Some(f) => f.text = text.to_owned(),
+            None => files.push(bdl_text::SourceFile {
+                path: path.to_owned(),
+                text: text.to_owned(),
+            }),
+        }
+        files.sort_by(|a, b| a.path.cmp(&b.path));
+        let name = sys.current.system.base.name.clone();
+        let mut build = bdl_text::load_workspace(&name, &files, &wb.table);
+        let diagnostics: Vec<SourceDiagnostic> = build
+            .faults
+            .iter()
+            .map(|f| source_diagnostic(&files, f))
+            .collect();
+        if diagnostics.iter().any(|d| !d.open) {
+            sys.drafts.insert(
+                path.to_owned(),
+                SourceDraft {
+                    text: text.to_owned(),
+                    diagnostics,
+                },
+            );
+            return Ok(SourceEdit {
+                accepted: false,
+                snapshot: p.current.clone(),
+            });
+        }
+        // Groups are authoring metadata the text does not carry: they
+        // follow the identities that survived.
+        let known: std::collections::BTreeSet<DeclId> =
+            build.system.base.mappings.keys().copied().collect();
+        for (id, g) in &sys.current.system.groups {
+            let mut g = g.clone();
+            g.members
+                .retain(|m| known.contains(m) || g.scope != GroupScope::SystemBase);
+            build.system.groups.insert(*id, g);
+        }
+        bdl_system::prune_groups(&mut build.system);
+        let system = build.system.clone();
+        if let Some(loaded) = sys.text.as_mut() {
+            loaded.files = files;
+            loaded.build = build;
+        }
+        sys.drafts.remove(path);
+        sys.dirty_sources.insert(path.to_owned());
+        let changed = system != sys.current.system;
+        let next = SystemSnapshot {
+            revision: p.current.revision.next(),
+            system,
+        };
+        let previous = std::mem::replace(&mut sys.current, next);
+        if changed {
+            sys.undo
+                .push(HistoryEntry::Semantic(Box::new(previous.system)));
+            sys.redo.clear();
+        }
+        sys.flattened = flatten(&sys.current);
+        sys.reseat_component_hosts();
+        p.current = sys.flattened.snapshot.clone();
+        p.simulation = None;
+        p.ide.set_committed(p.current.clone());
+        place_on_commit(&sys.current.system, &mut p.layout, &mut p.saved_layout);
+        Ok(SourceEdit {
+            accepted: true,
+            snapshot: p.current.clone(),
         })
     }
 

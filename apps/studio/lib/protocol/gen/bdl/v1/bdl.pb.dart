@@ -56,6 +56,8 @@ enum ClientMessage_Payload {
   previewComponentExtraction,
   initTextProject,
   reloadProject,
+  getSources,
+  applySourceEdit,
   notSet
 }
 
@@ -96,6 +98,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     PreviewComponentExtractionRequest? previewComponentExtraction,
     InitTextProjectRequest? initTextProject,
     ReloadProjectRequest? reloadProject,
+    GetSourcesRequest? getSources,
+    ApplySourceEditRequest? applySourceEdit,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -135,6 +139,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       result.previewComponentExtraction = previewComponentExtraction;
     if (initTextProject != null) result.initTextProject = initTextProject;
     if (reloadProject != null) result.reloadProject = reloadProject;
+    if (getSources != null) result.getSources = getSources;
+    if (applySourceEdit != null) result.applySourceEdit = applySourceEdit;
     return result;
   }
 
@@ -182,6 +188,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     55: ClientMessage_Payload.previewComponentExtraction,
     60: ClientMessage_Payload.initTextProject,
     61: ClientMessage_Payload.reloadProject,
+    62: ClientMessage_Payload.getSources,
+    63: ClientMessage_Payload.applySourceEdit,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -221,7 +229,9 @@ class ClientMessage extends $pb.GeneratedMessage {
       54,
       55,
       60,
-      61
+      61,
+      62,
+      63
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -293,6 +303,10 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: InitTextProjectRequest.$_createMessage)
     ..aOM<ReloadProjectRequest>(61, _omitFieldNames ? '' : 'reloadProject',
         subBuilder: ReloadProjectRequest.$_createMessage)
+    ..aOM<GetSourcesRequest>(62, _omitFieldNames ? '' : 'getSources',
+        subBuilder: GetSourcesRequest.$_createMessage)
+    ..aOM<ApplySourceEditRequest>(63, _omitFieldNames ? '' : 'applySourceEdit',
+        subBuilder: ApplySourceEditRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -349,6 +363,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(55)
   @$pb.TagNumber(60)
   @$pb.TagNumber(61)
+  @$pb.TagNumber(62)
+  @$pb.TagNumber(63)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -384,6 +400,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(55)
   @$pb.TagNumber(60)
   @$pb.TagNumber(61)
+  @$pb.TagNumber(62)
+  @$pb.TagNumber(63)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -771,6 +789,29 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearReloadProject() => $_clearField(61);
   @$pb.TagNumber(61)
   ReloadProjectRequest ensureReloadProject() => $_ensure(34);
+
+  /// One project, Code view (ADR-0023; 0.10).
+  @$pb.TagNumber(62)
+  GetSourcesRequest get getSources => $_getN(35);
+  @$pb.TagNumber(62)
+  set getSources(GetSourcesRequest value) => $_setField(62, value);
+  @$pb.TagNumber(62)
+  $core.bool hasGetSources() => $_has(35);
+  @$pb.TagNumber(62)
+  void clearGetSources() => $_clearField(62);
+  @$pb.TagNumber(62)
+  GetSourcesRequest ensureGetSources() => $_ensure(35);
+
+  @$pb.TagNumber(63)
+  ApplySourceEditRequest get applySourceEdit => $_getN(36);
+  @$pb.TagNumber(63)
+  set applySourceEdit(ApplySourceEditRequest value) => $_setField(63, value);
+  @$pb.TagNumber(63)
+  $core.bool hasApplySourceEdit() => $_has(36);
+  @$pb.TagNumber(63)
+  void clearApplySourceEdit() => $_clearField(63);
+  @$pb.TagNumber(63)
+  ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(36);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -877,6 +918,8 @@ enum Response_Payload {
   systemEditApplied,
   systemAnalysis,
   extractionPreview,
+  sources,
+  sourceEditApplied,
   notSet
 }
 
@@ -901,6 +944,8 @@ class Response extends $pb.GeneratedMessage {
     SystemEditApplied? systemEditApplied,
     SystemAnalysisResponse? systemAnalysis,
     ExtractionPreviewResponse? extractionPreview,
+    SourcesResponse? sources,
+    SourceEditApplied? sourceEditApplied,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -922,6 +967,8 @@ class Response extends $pb.GeneratedMessage {
     if (systemEditApplied != null) result.systemEditApplied = systemEditApplied;
     if (systemAnalysis != null) result.systemAnalysis = systemAnalysis;
     if (extractionPreview != null) result.extractionPreview = extractionPreview;
+    if (sources != null) result.sources = sources;
+    if (sourceEditApplied != null) result.sourceEditApplied = sourceEditApplied;
     return result;
   }
 
@@ -953,12 +1000,14 @@ class Response extends $pb.GeneratedMessage {
     41: Response_Payload.systemEditApplied,
     42: Response_Payload.systemAnalysis,
     43: Response_Payload.extractionPreview,
+    44: Response_Payload.sources,
+    45: Response_Payload.sourceEditApplied,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 40, 41, 42, 43])
+    ..oo(0, [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 40, 41, 42, 43, 44, 45])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -995,6 +1044,10 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: SystemAnalysisResponse.$_createMessage)
     ..aOM<ExtractionPreviewResponse>(43, _omitFieldNames ? '' : 'extractionPreview',
         subBuilder: ExtractionPreviewResponse.$_createMessage)
+    ..aOM<SourcesResponse>(44, _omitFieldNames ? '' : 'sources',
+        subBuilder: SourcesResponse.$_createMessage)
+    ..aOM<SourceEditApplied>(45, _omitFieldNames ? '' : 'sourceEditApplied',
+        subBuilder: SourceEditApplied.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1035,6 +1088,8 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
   @$pb.TagNumber(43)
+  @$pb.TagNumber(44)
+  @$pb.TagNumber(45)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1054,6 +1109,8 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
   @$pb.TagNumber(43)
+  @$pb.TagNumber(44)
+  @$pb.TagNumber(45)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1262,6 +1319,28 @@ class Response extends $pb.GeneratedMessage {
   void clearExtractionPreview() => $_clearField(43);
   @$pb.TagNumber(43)
   ExtractionPreviewResponse ensureExtractionPreview() => $_ensure(18);
+
+  @$pb.TagNumber(44)
+  SourcesResponse get sources => $_getN(19);
+  @$pb.TagNumber(44)
+  set sources(SourcesResponse value) => $_setField(44, value);
+  @$pb.TagNumber(44)
+  $core.bool hasSources() => $_has(19);
+  @$pb.TagNumber(44)
+  void clearSources() => $_clearField(44);
+  @$pb.TagNumber(44)
+  SourcesResponse ensureSources() => $_ensure(19);
+
+  @$pb.TagNumber(45)
+  SourceEditApplied get sourceEditApplied => $_getN(20);
+  @$pb.TagNumber(45)
+  set sourceEditApplied(SourceEditApplied value) => $_setField(45, value);
+  @$pb.TagNumber(45)
+  $core.bool hasSourceEditApplied() => $_has(20);
+  @$pb.TagNumber(45)
+  void clearSourceEditApplied() => $_clearField(45);
+  @$pb.TagNumber(45)
+  SourceEditApplied ensureSourceEditApplied() => $_ensure(20);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -12976,6 +13055,548 @@ class ReloadProjectRequest extends $pb.GeneratedMessage {
   static ReloadProjectRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<ReloadProjectRequest>(ReloadProjectRequest.$_createMessage);
   static ReloadProjectRequest? _defaultInstance;
+}
+
+/// The source files as the Code view shows them: the files as loaded with
+/// every committed semantic edit written back (the same item-level splice
+/// a save performs, so comments and formatting outside a touched item
+/// stay), plus any text draft the semantic project has not accepted yet,
+/// exactly as typed.
+class GetSourcesRequest extends $pb.GeneratedMessage {
+  factory GetSourcesRequest() => GetSourcesRequest._();
+
+  GetSourcesRequest._();
+
+  factory GetSourcesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetSourcesRequest()..mergeFromBuffer(data, registry);
+  factory GetSourcesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetSourcesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'GetSourcesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GetSourcesRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetSourcesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetSourcesRequest copyWith(void Function(GetSourcesRequest) updates) =>
+      super.copyWith((message) => updates(message as GetSourcesRequest)) as GetSourcesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GetSourcesRequest() / GetSourcesRequest.new instead')
+  static GetSourcesRequest create() => GetSourcesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => GetSourcesRequest._();
+  @$core.override
+  GetSourcesRequest createEmptyInstance() => GetSourcesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static GetSourcesRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetSourcesRequest>(GetSourcesRequest.$_createMessage);
+  static GetSourcesRequest? _defaultInstance;
+}
+
+class SourcesResponse extends $pb.GeneratedMessage {
+  factory SourcesResponse({
+    SourcesView? sources,
+  }) {
+    final result = SourcesResponse._();
+    if (sources != null) result.sources = sources;
+    return result;
+  }
+
+  SourcesResponse._();
+
+  factory SourcesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcesResponse()..mergeFromBuffer(data, registry);
+  factory SourcesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourcesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourcesResponse.$_createMessage)
+    ..aOM<SourcesView>(1, _omitFieldNames ? '' : 'sources', subBuilder: SourcesView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcesResponse copyWith(void Function(SourcesResponse) updates) =>
+      super.copyWith((message) => updates(message as SourcesResponse)) as SourcesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourcesResponse() / SourcesResponse.new instead')
+  static SourcesResponse create() => SourcesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SourcesResponse._();
+  @$core.override
+  SourcesResponse createEmptyInstance() => SourcesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SourcesResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourcesResponse>(SourcesResponse.$_createMessage);
+  static SourcesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  SourcesView get sources => $_getN(0);
+  @$pb.TagNumber(1)
+  set sources(SourcesView value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSources() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSources() => $_clearField(1);
+  @$pb.TagNumber(1)
+  SourcesView ensureSources() => $_ensure(0);
+}
+
+class SourcesView extends $pb.GeneratedMessage {
+  factory SourcesView({
+    $fixnum.Int64? revision,
+    $core.Iterable<SourceFileView>? files,
+    $core.Iterable<SourceDiagnostic>? diagnostics,
+  }) {
+    final result = SourcesView._();
+    if (revision != null) result.revision = revision;
+    if (files != null) result.files.addAll(files);
+    if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    return result;
+  }
+
+  SourcesView._();
+
+  factory SourcesView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcesView()..mergeFromBuffer(data, registry);
+  factory SourcesView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcesView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourcesView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourcesView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<SourceFileView>(2, _omitFieldNames ? '' : 'files',
+        subBuilder: SourceFileView.$_createMessage)
+    ..pPM<SourceDiagnostic>(3, _omitFieldNames ? '' : 'diagnostics',
+        subBuilder: SourceDiagnostic.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcesView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcesView copyWith(void Function(SourcesView) updates) =>
+      super.copyWith((message) => updates(message as SourcesView)) as SourcesView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourcesView() / SourcesView.new instead')
+  static SourcesView create() => SourcesView._();
+  static $pb.GeneratedMessage $_createMessage() => SourcesView._();
+  @$core.override
+  SourcesView createEmptyInstance() => SourcesView._();
+  @$core.pragma('dart2js:noInline')
+  static SourcesView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourcesView>(SourcesView.$_createMessage);
+  static SourcesView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<SourceFileView> get files => $_getList(1);
+
+  /// Why a draft does not build; empty when every file is the committed
+  /// project's.  An `open` diagnostic is incompleteness, not an error, and
+  /// does not keep a draft from building.
+  @$pb.TagNumber(3)
+  $pb.PbList<SourceDiagnostic> get diagnostics => $_getList(2);
+}
+
+class SourceFileView extends $pb.GeneratedMessage {
+  factory SourceFileView({
+    $core.String? path,
+    $core.String? text,
+    $core.bool? draft,
+  }) {
+    final result = SourceFileView._();
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    if (draft != null) result.draft = draft;
+    return result;
+  }
+
+  SourceFileView._();
+
+  factory SourceFileView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceFileView()..mergeFromBuffer(data, registry);
+  factory SourceFileView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceFileView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceFileView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceFileView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'path')
+    ..aOS(2, _omitFieldNames ? '' : 'text')
+    ..aOB(3, _omitFieldNames ? '' : 'draft')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceFileView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceFileView copyWith(void Function(SourceFileView) updates) =>
+      super.copyWith((message) => updates(message as SourceFileView)) as SourceFileView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceFileView() / SourceFileView.new instead')
+  static SourceFileView create() => SourceFileView._();
+  static $pb.GeneratedMessage $_createMessage() => SourceFileView._();
+  @$core.override
+  SourceFileView createEmptyInstance() => SourceFileView._();
+  @$core.pragma('dart2js:noInline')
+  static SourceFileView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceFileView>(SourceFileView.$_createMessage);
+  static SourceFileView? _defaultInstance;
+
+  /// Relative to the project root, e.g. `src/main.bdl`.
+  @$pb.TagNumber(1)
+  $core.String get path => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set path($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPath() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPath() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get text => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set text($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasText() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearText() => $_clearField(2);
+
+  /// True when `text` is a draft the semantic project has not accepted:
+  /// the graph shows the last revision that built.
+  @$pb.TagNumber(3)
+  $core.bool get draft => $_getBF(2);
+  @$pb.TagNumber(3)
+  set draft($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDraft() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDraft() => $_clearField(3);
+}
+
+class SourceDiagnostic extends $pb.GeneratedMessage {
+  factory SourceDiagnostic({
+    $core.String? path,
+    $core.String? code,
+    $core.String? message,
+    $core.int? start,
+    $core.int? end,
+    $core.bool? open,
+  }) {
+    final result = SourceDiagnostic._();
+    if (path != null) result.path = path;
+    if (code != null) result.code = code;
+    if (message != null) result.message = message;
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    if (open != null) result.open = open;
+    return result;
+  }
+
+  SourceDiagnostic._();
+
+  factory SourceDiagnostic.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceDiagnostic()..mergeFromBuffer(data, registry);
+  factory SourceDiagnostic.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceDiagnostic()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceDiagnostic',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceDiagnostic.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'path')
+    ..aOS(2, _omitFieldNames ? '' : 'code')
+    ..aOS(3, _omitFieldNames ? '' : 'message')
+    ..aI(4, _omitFieldNames ? '' : 'start', fieldType: $pb.PbFieldType.OU3)
+    ..aI(5, _omitFieldNames ? '' : 'end', fieldType: $pb.PbFieldType.OU3)
+    ..aOB(6, _omitFieldNames ? '' : 'open')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceDiagnostic clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceDiagnostic copyWith(void Function(SourceDiagnostic) updates) =>
+      super.copyWith((message) => updates(message as SourceDiagnostic)) as SourceDiagnostic;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceDiagnostic() / SourceDiagnostic.new instead')
+  static SourceDiagnostic create() => SourceDiagnostic._();
+  static $pb.GeneratedMessage $_createMessage() => SourceDiagnostic._();
+  @$core.override
+  SourceDiagnostic createEmptyInstance() => SourceDiagnostic._();
+  @$core.pragma('dart2js:noInline')
+  static SourceDiagnostic getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceDiagnostic>(SourceDiagnostic.$_createMessage);
+  static SourceDiagnostic? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get path => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set path($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPath() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPath() => $_clearField(1);
+
+  /// `syntax`, or the loader's `text.<reason>`.
+  @$pb.TagNumber(2)
+  $core.String get code => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set code($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCode() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCode() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get message => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set message($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMessage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMessage() => $_clearField(3);
+
+  /// Byte offsets into the file's UTF-8 text.
+  @$pb.TagNumber(4)
+  $core.int get start => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set start($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasStart() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearStart() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get end => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set end($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasEnd() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearEnd() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get open => $_getBF(5);
+  @$pb.TagNumber(6)
+  set open($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasOpen() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearOpen() => $_clearField(6);
+}
+
+/// A text edit from the Code view: the whole text of one file, against the
+/// revision it was read at (refused with `edit.stale_revision` otherwise).
+/// When the sources build, the project moves to a new revision — every
+/// declaration bound to its identity by reconciliation against the working
+/// identity table, new entities placed by the layout service — and
+/// `accepted` is true.  When they do not, the committed project stays,
+/// the draft is kept (GetSources returns it, marked) and `diagnostics`
+/// say why.  A save writes the accepted text.
+class ApplySourceEditRequest extends $pb.GeneratedMessage {
+  factory ApplySourceEditRequest({
+    $fixnum.Int64? baseRevision,
+    $core.String? path,
+    $core.String? text,
+  }) {
+    final result = ApplySourceEditRequest._();
+    if (baseRevision != null) result.baseRevision = baseRevision;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    return result;
+  }
+
+  ApplySourceEditRequest._();
+
+  factory ApplySourceEditRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ApplySourceEditRequest()..mergeFromBuffer(data, registry);
+  factory ApplySourceEditRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ApplySourceEditRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ApplySourceEditRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ApplySourceEditRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'baseRevision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'path')
+    ..aOS(3, _omitFieldNames ? '' : 'text')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ApplySourceEditRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ApplySourceEditRequest copyWith(void Function(ApplySourceEditRequest) updates) =>
+      super.copyWith((message) => updates(message as ApplySourceEditRequest))
+          as ApplySourceEditRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ApplySourceEditRequest() / ApplySourceEditRequest.new instead')
+  static ApplySourceEditRequest create() => ApplySourceEditRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ApplySourceEditRequest._();
+  @$core.override
+  ApplySourceEditRequest createEmptyInstance() => ApplySourceEditRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ApplySourceEditRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ApplySourceEditRequest>(
+          ApplySourceEditRequest.$_createMessage);
+  static ApplySourceEditRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get baseRevision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set baseRevision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBaseRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBaseRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get path => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set path($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPath() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPath() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get text => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set text($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasText() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearText() => $_clearField(3);
+}
+
+class SourceEditApplied extends $pb.GeneratedMessage {
+  factory SourceEditApplied({
+    $core.bool? accepted,
+    ProjectProjection? project,
+    SourcesView? sources,
+  }) {
+    final result = SourceEditApplied._();
+    if (accepted != null) result.accepted = accepted;
+    if (project != null) result.project = project;
+    if (sources != null) result.sources = sources;
+    return result;
+  }
+
+  SourceEditApplied._();
+
+  factory SourceEditApplied.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceEditApplied()..mergeFromBuffer(data, registry);
+  factory SourceEditApplied.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceEditApplied()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceEditApplied',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceEditApplied.$_createMessage)
+    ..aOB(1, _omitFieldNames ? '' : 'accepted')
+    ..aOM<ProjectProjection>(2, _omitFieldNames ? '' : 'project',
+        subBuilder: ProjectProjection.$_createMessage)
+    ..aOM<SourcesView>(3, _omitFieldNames ? '' : 'sources', subBuilder: SourcesView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceEditApplied clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceEditApplied copyWith(void Function(SourceEditApplied) updates) =>
+      super.copyWith((message) => updates(message as SourceEditApplied)) as SourceEditApplied;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceEditApplied() / SourceEditApplied.new instead')
+  static SourceEditApplied create() => SourceEditApplied._();
+  static $pb.GeneratedMessage $_createMessage() => SourceEditApplied._();
+  @$core.override
+  SourceEditApplied createEmptyInstance() => SourceEditApplied._();
+  @$core.pragma('dart2js:noInline')
+  static SourceEditApplied getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceEditApplied>(SourceEditApplied.$_createMessage);
+  static SourceEditApplied? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get accepted => $_getBF(0);
+  @$pb.TagNumber(1)
+  set accepted($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAccepted() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAccepted() => $_clearField(1);
+
+  /// The current projection either way (new revision when accepted).
+  @$pb.TagNumber(2)
+  ProjectProjection get project => $_getN(1);
+  @$pb.TagNumber(2)
+  set project(ProjectProjection value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasProject() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearProject() => $_clearField(2);
+  @$pb.TagNumber(2)
+  ProjectProjection ensureProject() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  SourcesView get sources => $_getN(2);
+  @$pb.TagNumber(3)
+  set sources(SourcesView value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSources() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSources() => $_clearField(3);
+  @$pb.TagNumber(3)
+  SourcesView ensureSources() => $_ensure(2);
 }
 
 class GetSystemRequest extends $pb.GeneratedMessage {

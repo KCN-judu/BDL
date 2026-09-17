@@ -63,6 +63,9 @@ message ClientMessage {
     // Text projects (ADR-0020; 0.9).
     InitTextProjectRequest init_text_project = 60;
     ReloadProjectRequest reload_project = 61;
+    // One project, Code view (ADR-0023; 0.10).
+    GetSourcesRequest get_sources = 62;
+    ApplySourceEditRequest apply_source_edit = 63;
   }
 }
 
@@ -94,6 +97,8 @@ message Response {
     SystemEditApplied system_edit_applied = 41;
     SystemAnalysisResponse system_analysis = 42;
     ExtractionPreviewResponse extraction_preview = 43;
+    SourcesResponse sources = 44;
+    SourceEditApplied source_edit_applied = 45;
   }
 }
 
@@ -1282,6 +1287,71 @@ message InitTextProjectRequest {
 // Re-read the open project from disk, dropping the in-memory design
 // (identities return through the sidecar).  Answers like OpenProject.
 message ReloadProjectRequest {}
+
+// ---------------------------------------------------------------------------
+// Sources: the Code view of the one project (ADR-0023 §3–§5; 0.10)
+// ---------------------------------------------------------------------------
+
+// The source files as the Code view shows them: the files as loaded with
+// every committed semantic edit written back (the same item-level splice
+// a save performs, so comments and formatting outside a touched item
+// stay), plus any text draft the semantic project has not accepted yet,
+// exactly as typed.
+message GetSourcesRequest {}
+
+message SourcesResponse {
+  SourcesView sources = 1;
+}
+
+message SourcesView {
+  uint64 revision = 1;
+  repeated SourceFileView files = 2;
+  // Why a draft does not build; empty when every file is the committed
+  // project's.  An `open` diagnostic is incompleteness, not an error, and
+  // does not keep a draft from building.
+  repeated SourceDiagnostic diagnostics = 3;
+}
+
+message SourceFileView {
+  // Relative to the project root, e.g. `src/main.bdl`.
+  string path = 1;
+  string text = 2;
+  // True when `text` is a draft the semantic project has not accepted:
+  // the graph shows the last revision that built.
+  bool draft = 3;
+}
+
+message SourceDiagnostic {
+  string path = 1;
+  // `syntax`, or the loader's `text.<reason>`.
+  string code = 2;
+  string message = 3;
+  // Byte offsets into the file's UTF-8 text.
+  uint32 start = 4;
+  uint32 end = 5;
+  bool open = 6;
+}
+
+// A text edit from the Code view: the whole text of one file, against the
+// revision it was read at (refused with `edit.stale_revision` otherwise).
+// When the sources build, the project moves to a new revision — every
+// declaration bound to its identity by reconciliation against the working
+// identity table, new entities placed by the layout service — and
+// `accepted` is true.  When they do not, the committed project stays,
+// the draft is kept (GetSources returns it, marked) and `diagnostics`
+// say why.  A save writes the accepted text.
+message ApplySourceEditRequest {
+  uint64 base_revision = 1;
+  string path = 2;
+  string text = 3;
+}
+
+message SourceEditApplied {
+  bool accepted = 1;
+  // The current projection either way (new revision when accepted).
+  ProjectProjection project = 2;
+  SourcesView sources = 3;
+}
 
 message GetSystemRequest {}
 
