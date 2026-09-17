@@ -15,18 +15,38 @@ project/
 └── Bdl.lock                  pinned toolchain / runtime versions (planned)
 ```
 
-`kind` is absent in every project written before behaviour systems and
-means `flat`. A project has exactly one of the two design files: a
-system project's flat design is *derived* on open and on every commit
-(`bdl-system::flatten`) and is never written — two files claiming to be
-the truth of one project would be two authorities.
+`kind` is absent in every project written before behaviour systems and means
+`flat`. A JSON project has exactly one of the two design files: a system
+project's flat design is *derived* on open and on every commit
+(`bdl-system::flatten`) and is never written — two files claiming to be the
+truth of one project would be two authorities.
+
+A text project instead has this canonical shape (ADR-0020):
+
+```text
+project/
+├── bdl.toml                  kind = "text"
+├── src/**/*.bdl             canonical authored semantics
+├── .bdl/identities.json     stable source identities and allocators
+├── .bdl/authoring.json      behavior groups (authoring metadata)
+└── ui/layout.json           presentation only
+```
+
+`bdl-text::load_workspace` discovers source files in sorted path order,
+reconciles source keys with the identity sidecar, and builds the same
+`BehaviorSystem` used by JSON system projects. A text project has no authored
+`design/*.json`; derived flat designs, analyses, traces, and generated Rust are
+never source. CLI/LSP/bdld/Studio use this loader rather than separate parsers.
+Save refuses an external-disk change unless the caller explicitly chooses the
+force-overwrite path; reload is explicit.
 
 ## Rules that do not change
 
 * `semantics != UI layout`. A design opens without any layout file; a layout
   never changes what a design means. Moving a node creates no revision.
-* Every persisted file carries `schema_version`. Newer schemas are refused,
-  older ones are migrated forward in `persist::check_schema` (none exist yet).
+* Every persisted structured file carries `schema_version`. Newer schemas are
+  refused; supported older schemas are migrated by the owning persistence
+  layer.
 * Identity is a stable integer id allocated per project and never reused
   (`IdAllocator` is persisted). Display names are mutable documentation.
 * Writes are crash-safe: temporary file in the same directory → flush → fsync →

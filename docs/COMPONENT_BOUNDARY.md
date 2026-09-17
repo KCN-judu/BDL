@@ -1,5 +1,9 @@
 # Supplied Rust computation blocks
 
+*Design, not implementation: nothing below exists in the code yet
+(`docs/project-records/STATUS.md`, roadmap). The obligations follow
+ADR-0005.*
+
 Expert-supplied Rust is a *computation boundary*, not an escape from BDL
 semantics.
 

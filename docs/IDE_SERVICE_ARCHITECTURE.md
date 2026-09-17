@@ -384,32 +384,37 @@ Requests run on worker threads over one snapshot each; the host is locked
 only to take the snapshot (which runs the compiler when the cached stamp
 is stale) and to record cancellation.
 
-## Textual surface today
+## Text workspaces
 
-The full textual project loader is not built yet (`docs/TEXTUAL_SYNTAX.md`
-§11). What the textual projection binds today: `concept` (name,
-representation by the type names `Scalar`, `Bool`, `Count`, `Angle`,
-`Length`, `Time`, `Mass`, `Current`, `Temperature`, `Amount`, `Luminous`),
-`mapping` (name, signature over concept names, definition body). `enum`
-items are reported as *open* (`binding.unsupported_item`, DI-19). Outputs,
-clocks and devices have no textual syntax yet (§12 reserved words) — they
-exist in the model and on the canvas, and the textual projection shows
-diagnostics about them on the mapping that drives/reads them.
+A text project (`kind = "text"`, ADR-0020) is the host's *ground*
+(`bdl-ide-db::workspace::TextGround`): the sources under `src/**/*.bdl`
+read in path order and the identity table from `.bdl/identities.json`.
+Composing a snapshot substitutes open buffers for files, builds the
+system with `bdl_text::load_workspace` — the same loader `bdld` and the
+CLI use — flattens it, and anchors every entity on the authored source:
+a component body's declaration maps to its per-instance flat ids, a
+shared concept to the system's, so diagnostics, navigation and rename
+land on the text a person wrote. Names inside formula bodies are resolved
+through the elaborator's own environment (plain or pinned scope) to
+concepts and mapping calls; textual parameter names are lexical and are
+not references to the concept.
 
-Parameter names in a definition (`f(tilt) = …`) have no semantic layer yet
-(DI-13): the body is elaborated against the concepts' display names, so
-`tilt` for a concept `Tilt` resolves by the elaborator's case-insensitive
-rule and anything else reports `formula.name.unknown` as it would in
-Studio. Rename does not touch parameter names for the same reason.
+Edits from Studio or semantic actions go back through `bdl-text`'s
+item-level splice: only a changed item is re-rendered, comments and trivia
+outside it stay. Completion reads scope from the authored system (a
+component body offers the body's names). The adapter reloads the ground on
+save and on watched-file changes and writes the reconciled identity table
+back. User-defined enums parse and are reported open (ISS-0005).
 
 ## Virtual documents
 
 `DocumentUri::kind()` distinguishes authored documents from generated ones
-(`bdl-core://`, `bdl-explain://`, `bdl-generated://`). Nothing in the host
-assumes a document is a file, and `render_module` already produces the
-textual projection of a project; serving generated Core/Rust or explain
-documents as read-only virtual documents is future work in the adapter.
-Generated text is never a source of truth.
+(`bdl-core://`, `bdl-explain://`, `bdl-generated://`). `bdl_ide::virtual_docs`
+renders three read-only documents — the explanation of an entity or of the
+project as Markdown, the kernel Core of the design, and the generated Rust
+core (or why nothing is generated yet) — and `bdl-lsp` serves them through
+`bdl/virtualDocument`. Generated text is never a source of truth and is
+never edited.
 
 ## Low-code operations
 

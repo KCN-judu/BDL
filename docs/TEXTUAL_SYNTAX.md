@@ -607,11 +607,11 @@ Core IR
 | `enum` items, other constructors | yes (CST, lowering) | no — `formula.constructor.unknown` (DI-19) | — |
 | a relationship as a value, `f(x)(y)`, calling an input | yes | no — `formula.mapping.needs_arguments`, `formula.call.not_a_relationship` (the higher-order boundary, DI-24, is closed at the surface) | — |
 
-The formula field in Studio and a `.bdl` file's definition bodies go
-through the same elaborator (`bdl-elab::formula`), so this matrix holds
-for both; textual parameter names are still not a binding layer (DI-30),
-so a body names the concept (`Tilt`), not the parameter (`tilt`), unless
-the two spell the same (case-insensitively).
+The formula field in Studio and a `.bdl` file's definition bodies go through
+the same elaborator (`bdl-elab::formula`), so this matrix holds for both. A
+textual definition's parameter names are lexical bindings stored in
+`MappingBlock.parameters` (§14.4); a relationship authored without parameter
+names falls back to concept display-name resolution.
 
 Rules the syntax layer keeps out of itself: `SemanticId`, `DeclId`,
 grants, dimensions, clocks, causality, hardware. The tree records what was

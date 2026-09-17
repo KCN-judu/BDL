@@ -41,6 +41,9 @@ Layered; determinism is a tested property, not a hope.
 | Flutter | reducer, widget transitions, protocol integration — never screenshots only | | ongoing |
 
 CI (`.github/workflows/ci.yml`), four jobs: **Rust** — `cargo fmt --all --check`,
+`python3 scripts/validate_docs.py` and its unit tests (the engineering-record
+validator: decision/issue/proposal metadata, index coverage, supersession
+in both directions, relative links under `docs/`),
 `cargo clippy --workspace --all-targets -D warnings`, `cargo test --workspace`,
 then the Linux `bdld` is uploaded; **Flutter** — `dart format --page-width
 100 --set-exit-if-changed`, `flutter analyze`, `flutter test` with that
@@ -49,7 +52,7 @@ then the Linux `bdld` is uploaded; **Flutter** — `dart format --page-width
 --debug`; **Protocol** — a diff of the checked-in generated Dart protobuf
 code against a fresh `protoc` run.
 
-Locally: `just check`.
+Locally: `just check` (`just docs-check` for the records alone).
 
 ## Determinism rules under test
 
