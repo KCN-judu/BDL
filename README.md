@@ -1,35 +1,34 @@
 # BDL — Behavior Design Language
 
-Engineering implementation of **BDL**, a behavior design language for
-industrial designers: typed semantic relationships (`?dimByTilt : Tilt ->
-Brightness`) are first-class design artifacts, an unresolved relationship is
-a legal state of the design, and every designer-facing construct elaborates
-onto a small formal kernel.
+Engineering implementation of **BDL**, a behavior design language for industrial
+designers: typed semantic relationships (`?dimByTilt : Tilt -> Brightness`) are
+first-class design artifacts, an unresolved relationship is a legal state of the
+design, and every designer-facing construct elaborates onto a small formal
+kernel.
 
 The kernel was derived in the Lean 4 development
 [KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV). This repository builds
 what that development deliberately did not: **BDL Studio** (Flutter), the
-**compiler service `bdld`** (Rust), the simulator, the hardware allocator,
-the Rust code generator, the embedded runtime, and deployment tooling. It
-follows the formally developed semantics; it is not itself formally verified.
+**compiler service `bdld`** (Rust), the simulator, the hardware allocator, the
+Rust code generator, the embedded runtime, and deployment tooling. It follows
+the formally developed semantics; it is not itself formally verified.
 
 ## Status
 
-A design authored in Studio or as `.bdl` text is elaborated onto the
-kernel, type- and dimension-checked, checked for causality and timing
-domains and for physical-output well-formedness, simulated by the
-reference evaluator, placed on a board by the hardware allocator, and
-compiled to a `no_std` Rust core held trace for trace to the evaluator;
-reusable behaviours compose as components and flatten into that one
-design. Not built: an embedded platform adapter, build/flash orchestration,
-telemetry and the Monitor page, contexts, supplied Rust components. The
-[status matrix](docs/project/status.md) is the authority for what
-exists, the [roadmap](docs/project/roadmap.md) for what is next, and
+A design authored in Studio or as `.bdl` text is elaborated onto the kernel,
+type- and dimension-checked, checked for causality and timing domains and for
+physical-output well-formedness, simulated by the reference evaluator, placed on
+a board by the hardware allocator, and compiled to a `no_std` Rust core held
+trace for trace to the evaluator; reusable behaviours compose as components and
+flatten into that one design. Not built: an embedded platform adapter,
+build/flash orchestration, telemetry and the Monitor page, contexts, supplied
+Rust components. The [status matrix](docs/project/status.md) is the authority
+for what exists, the [roadmap](docs/project/roadmap.md) for what is next, and
 [docs/changes/](docs/changes/README.md) for what changed.
 
 ## Layout
 
-```
+```text
 apps/studio/        Flutter BDL Studio (presentation; semantic truth comes from bdld)
 crates/             the Rust workspace — model, IR, syntax, elaboration, checking, reactive
                     semantics, outputs, hardware, executable IR, lowering, Rust codegen,
@@ -47,8 +46,8 @@ reference/paper/    the BDL paper
 
 Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`, which also pulls
 `rustfmt`, `clippy`, `rust-analyzer` and `rust-src` via rustup), Flutter 3.47
-(`brew install --cask flutter`),
-`just`; `protoc` + `protoc-gen-dart` only to regenerate the Dart protocol code.
+(`brew install --cask flutter`), `just`; `protoc` + `protoc-gen-dart` only to
+regenerate the Dart protocol code.
 
 ```bash
 just check          # fmt, clippy, tests, Flutter analyze/test, proto drift
@@ -62,11 +61,11 @@ just bdld           # run the daemon on stdio for manual experiments
 Using the tool rather than building it? Start with the
 [user guide](docs/user-guide/README.md).
 
-Building it? Start at the [engineering documentation front door](docs/README.md),
-which routes every question to one page. The folders under `docs/` are
-one per kind of record: `spec/` (what BDL means), `architecture/` (how it
-is built), `decisions/` (why — ADRs), `proposals/` and `issues/` (what is
-undecided), `project/` (status, roadmap, governance), `changes/` (what
-changed), `evidence/`, `guides/` ([getting started](docs/guides/getting-started.md)
-is the first read), `background/`, `archive/`.
-
+Building it? Start at the
+[engineering documentation front door](docs/README.md), which routes every
+question to one page. The folders under `docs/` are one per kind of record:
+`spec/` (what BDL means), `architecture/` (how it is built), `decisions/` (why —
+ADRs), `proposals/` and `issues/` (what is undecided), `project/` (status,
+roadmap, governance), `changes/` (what changed), `evidence/`, `guides/`
+([getting started](docs/guides/getting-started.md) is the first read),
+`background/`, `archive/`.

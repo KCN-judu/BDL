@@ -6,7 +6,7 @@ last column is the formal or internal name, which appears only in
 *Explain* and in the technical documentation.
 
 | Guide word | Meaning | Studio label | Formal / internal |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **concept** | a value with a meaning: *Tilt*, *Brightness* | Concept | semantic type, `SemanticId` |
 | **value form** | what kind of value a concept carries: quantity (with a unit), on / off, count, or *decide later* | Value | representation `Θ`: `q dim`, `bool`, `nat`, or none |
 | **dimension** | the physical kind of a quantity (angle, length, time…), what formulas are checked against | Unit (chosen by quantity kind) | `Dim` |

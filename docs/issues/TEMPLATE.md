@@ -6,6 +6,7 @@ opened: YYYY-MM-DD
 resolved-by: []
 related: []
 ---
+
 # ISS-NNNN: The problem in one sentence
 
 ## Problem
@@ -14,8 +15,8 @@ related: []
 
 ## Current evidence
 
-What the code does today, what the formal development says, where it bites
-(a test, a diagnostic code, a section).
+What the code does today, what the formal development says, where it bites (a
+test, a diagnostic code, a section).
 
 ## Dependencies
 

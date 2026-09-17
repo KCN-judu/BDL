@@ -7,7 +7,7 @@ colour means *selected* and nothing else.
 ## On the canvas
 
 | Mark | Meaning |
-|---|---|
+| --- | --- |
 | dashed relationship node, word *declared* | no formula yet |
 | solid node with a hollow input socket | *open*: waits for that concept's value form |
 | red mark at the formula line | the formula does not check |
@@ -25,7 +25,7 @@ colour means *selected* and nothing else.
 ## In the status line
 
 | Text | Meaning |
-|---|---|
+| --- | --- |
 | *Saved* / *Edited* | whether the project on disk matches what you see |
 | *N concepts · M mappings* | counts |
 | *N not yet defined* (orange) | relationships without a formula |
@@ -40,7 +40,7 @@ colour means *selected* and nothing else.
 ## In a relationship's inspector
 
 | Line under the formula | Meaning |
-|---|---|
+| --- | --- |
 | *Checking…* | the compiler has not answered for this text yet |
 | *Valid definition* | checks |
 | *Tilt has no representation yet.* (orange) | open |
@@ -51,7 +51,7 @@ colour means *selected* and nothing else.
 ## In an output's inspector
 
 | Line | Meaning |
-|---|---|
+| --- | --- |
 | *No timing domain yet: not part of the design's commitment until one is chosen.* | open |
 | *Undriven — the design is incomplete without a driver.* | required, no driver |
 | *Undriven.* | optional, no driver |
@@ -62,7 +62,7 @@ colour means *selected* and nothing else.
 ## On an instance's port
 
 | Text | Meaning |
-|---|---|
+| --- | --- |
 | *Open: nothing supplies it yet.* | required port without a binding |
 | *Bound to lampA.brightness* | bound; *Show Binding* selects the link |
 | *Direct* / *Carried across timing domains* (binding inspector) | whether the binding transports |
@@ -70,7 +70,7 @@ colour means *selected* and nothing else.
 ## On the Simulate page
 
 | Text | Meaning |
-|---|---|
+| --- | --- |
 | *Checking the design…* | the analysis for this revision has not arrived |
 | a sentence with *Show* | something blocks stepping (see [Incomplete design](../troubleshooting/incomplete-design.md)) |
 | *tilt divided by zero.* / *… produced a value that is not a number.* / *… needs a value for this step.* | the tick failed at that relationship |
@@ -79,7 +79,7 @@ colour means *selected* and nothing else.
 ## On the Deploy page
 
 | Text | Meaning |
-|---|---|
+| --- | --- |
 | *Choose a board to see whether this design fits it.* | no target chosen |
 | *Checking Arduino Nano…* | the analysis is running |
 | *Feasible on …* | placed |

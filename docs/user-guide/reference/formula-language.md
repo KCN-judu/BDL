@@ -6,7 +6,7 @@ in a `.bdl` definition body, which share one grammar and one checker.
 ## Names
 
 | In a **rule** (a relationship with inputs) | In a **value** (a relationship without inputs) |
-|---|---|
+| --- | --- |
 | the concepts it reads, by name: `Tilt`, `AmbientLight` | the design's values: `tilt`, `ambient`, `brightness` |
 | the design's rules, applied: `dimByTilt(Tilt)` | the design's rules, applied: `dimByTilt(tilt)` |
 
@@ -17,7 +17,7 @@ is always named alone, never called (`tilt`, not `tilt()`).
 ## Literals
 
 | | Example |
-|---|---|
+| --- | --- |
 | number | `0`, `0.5`, `1e-3`, `-2` |
 | number with a unit | `90 deg`, `2.5 s`, `300 lx`, `25.4 mm` |
 | on / off | `true`, `false` |
@@ -30,7 +30,7 @@ a syntax error. A quantity's dimension comes from arithmetic — write
 ## Operators, loosest to tightest
 
 | | Operators | Notes |
-|---|---|---|
+| --- | --- | --- |
 | or | `\|\|` | |
 | and | `&&` | |
 | equality | `==` `!=` | same dimension both sides; no chaining |
@@ -47,7 +47,7 @@ have the value form of the concept the relationship produces.
 ## Forms
 
 | Form | Example | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | conditional | `if Held then dimByTilt(Tilt) else 0` | both branches the same kind |
 | block with bindings | `{ let half = Brightness / 2; let dark = AmbientLight < 10 lx; if dark then Brightness else half }` | `let` names a value for the rest of the block; may shadow |
 | options | `Some(e)`, `None` | an optional value; `None` takes its kind from a sibling |
@@ -63,7 +63,7 @@ its own memory cell. The relationship must have a timing domain.
 ## What is checked
 
 | Check | Example finding |
-|---|---|
+| --- | --- |
 | dimensions | *This expression adds values with different physical dimensions: an angle and a time.* |
 | the produced concept | *Brightness is a dimensionless quantity, but this formula produces an angle.* |
 | names in scope | *`x` is not something this mapping reads or can call.* |

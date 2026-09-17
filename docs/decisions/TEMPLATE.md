@@ -2,24 +2,27 @@
 id: ADR-NNNN
 status: accepted
 date: YYYY-MM-DD
-area: language | textual | compiler | runtime | codegen | persistence | protocol | daemon | ide | studio | behavior-systems | deployment | formal | process
+area:
+  language | textual | compiler | runtime | codegen | persistence | protocol |
+  daemon | ide | studio | behavior-systems | deployment | formal | process
 supersedes: []
 superseded-by: []
 related: []
 fv: []
 ---
+
 # ADR-NNNN: One sentence that is the decision
 
 ## Status
 
-Accepted (which milestone or proposal led here). If this replaces an
-earlier decision, say whether that decision was wrong on the same evidence
-or right until the circumstances changed.
+Accepted (which milestone or proposal led here). If this replaces an earlier
+decision, say whether that decision was wrong on the same evidence or right
+until the circumstances changed.
 
 ## Context
 
-What was true, what pressure made a choice necessary, which constraints
-(formal results, product, existing architecture) bounded it.
+What was true, what pressure made a choice necessary, which constraints (formal
+results, product, existing architecture) bounded it.
 
 ## Decision
 

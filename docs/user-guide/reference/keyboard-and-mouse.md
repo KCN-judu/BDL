@@ -7,7 +7,7 @@ the toolbar and menus.
 ## Application
 
 | Keys | Does |
-|---|---|
+| --- | --- |
 | ⌘S | Save the project (never a formula draft) |
 | ⌘Z / ⇧⌘Z | Undo / Redo — design edits and behavior-group edits, one history |
 | ⌘1 · ⌘2 · ⌘3 · ⌘4 | Design · Simulate · Deploy · Monitor |
@@ -18,7 +18,7 @@ their shortcuts but are reached by clicking today.
 ## Canvas
 
 | Do | Result |
-|---|---|
+| --- | --- |
 | drag empty canvas | pan |
 | scroll wheel / pinch | zoom about the pointer |
 | Home · ⌘0 | frame all |
@@ -38,7 +38,7 @@ their shortcuts but are reached by clicking today.
 ## Formula field
 
 | Keys | Does |
-|---|---|
+| --- | --- |
 | ⌘↩ | Add / Save the definition |
 | Esc | Revert the draft; with completion open, close it first |
 | Return | new line |
@@ -48,7 +48,7 @@ their shortcuts but are reached by clicking today.
 ## Inline rename (canvas, library rows)
 
 | Keys | Does |
-|---|---|
+| --- | --- |
 | Return | commit |
 | Esc | keep the old name |
 | click elsewhere | commit what was typed |

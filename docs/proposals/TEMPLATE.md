@@ -6,6 +6,7 @@ area: subsystem
 related-issues: []
 superseded-by: []
 ---
+
 # PRP-NNNN: Proposal title
 
 ## Problem
@@ -20,8 +21,8 @@ superseded-by: []
 
 ## Implementation and evidence
 
-What would have to exist for this to be *implemented* and *tested*; which
-formal result, if any, would have to be extended first.
+What would have to exist for this to be _implemented_ and _tested_; which formal
+result, if any, would have to be extended first.
 
 ## Open questions
 

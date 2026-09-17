@@ -4,7 +4,7 @@ A project is a folder of plain files. Studio reads and writes them; you
 can put the folder under version control, copy it, or diff it. The
 authoritative description for tool builders is `docs/spec/project-format.md`.
 
-```
+```text
 lamp/
 ├── bdl.toml                 the manifest: name, schema version, kind (flat, system or text)
 ├── design/
@@ -17,7 +17,7 @@ lamp/
 A **text project** (`kind = "text"`) has no design JSON; its design is
 the `.bdl` files:
 
-```
+```text
 lamp/
 ├── bdl.toml                 kind = "text"
 ├── src/
@@ -54,10 +54,10 @@ this file; deleting it loses nothing but placement.
 
 ## What is not saved
 
-* the chosen **board** on the Deploy page — a session preference;
-* the **simulation** — inputs, periods and trace;
-* the **analysis** — every verdict is recomputed on open;
-* the **revision history** — undo is per session.
+- the chosen **board** on the Deploy page — a session preference;
+- the **simulation** — inputs, periods and trace;
+- the **analysis** — every verdict is recomputed on open;
+- the **revision history** — undo is per session.
 
 Formula **drafts** are not in the project either; Studio keeps unsaved
 drafts on its side, by project path, and restores them when you reopen.

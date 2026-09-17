@@ -5,7 +5,7 @@ commands that read a project — flat, system or text — with the same
 loader Studio and the language server use.
 
 | Command | What it does | Exit code |
-|---|---|---|
+| --- | --- | --- |
 | `bdld check <project>` | opens the project and prints every finding (`error[code] place: message`, with `file:line:col` for a text project's own findings), then one line: name, counts, *checks, outputs complete* / *checks, outputs not yet complete* / *N error(s)* | 0 no errors · 1 errors · 2 the project did not open |
 | `bdld compile <project> [--out DIR]` | generates the Rust crate into `DIR` (default `target/bdl`); refuses while the design is not ready, printing why | 0 written · 1 not ready · 2 did not open |
 | `bdld simulate <project> [--ticks N] [--input rel=value …]` | runs the reference evaluator for `N` activations (default 1) with constant inputs and prints every relationship's value per tick | 0 · 1 findings · 2 did not open or a runtime error |
@@ -25,7 +25,7 @@ with a *missing input* error.
 bdld simulate lamp --ticks 2 --input tilt=0.7853981633974483
 ```
 
-```
+```text
 tick 0: brightness = Brightness(0.5)  dimByTilt = <function>
 tick 1: brightness = Brightness(0.5)  dimByTilt = <function>
 ```
