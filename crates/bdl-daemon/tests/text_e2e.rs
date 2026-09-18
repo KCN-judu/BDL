@@ -288,10 +288,14 @@ fn a_text_project_is_edited_over_the_wire_saved_as_source_and_reopened() {
         ),
         "{text}"
     );
+    // a relationship without inputs is written in the preferred spelling
+    // from the start: never the output-only shorthand
     assert!(
-        text.contains("mapping brightness : Brightness @main\n"),
+        text.contains("mapping brightness : () -> Brightness @main\n"),
         "{text}"
     );
+    assert!(text.contains("mapping raw : () -> Tilt @main\n"), "{text}");
+    assert!(!text.contains("mapping raw : Tilt"), "{text}");
     assert!(text.contains("output light : Brightness @main\n"), "{text}");
     assert!(text.contains("drive light = brightness\n"), "{text}");
     let ids = std::fs::read_to_string(root.join(".bdl/identities.json")).unwrap();

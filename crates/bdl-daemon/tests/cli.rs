@@ -192,3 +192,57 @@ window() = reverse(take(seen - cursor, logD))
     assert_ne!(code, 0);
     assert!(err.contains("no timing domain named `nope`"), "{err}");
 }
+
+/// `bdld migrate-unit-domain`: the legacy `mapping f : A` becomes
+/// `mapping f : () -> A` everywhere, and nothing else — comments, blank
+/// lines, definitions, the explicit form — while the identities the
+/// project already allocated stay what they were and the design is the
+/// same design; `--dry-run` writes nothing; a second run has nothing to do.
+#[test]
+fn migrate_unit_domain_rewrites_only_the_legacy_signatures_and_keeps_identities() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("lamp");
+    let main = "// the lamp\nmapping tilt : Tilt @interaction   // a source\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) = t / (90 deg)\n\nmapping brightness : () -> Brightness @interaction\nbrightness() = dimByTilt(tiltValue)\n\noutput light : Brightness @interaction\ndrive light = brightness\n";
+    project(&root, main);
+    let r = root.to_string_lossy().into_owned();
+    // open once so the identities exist
+    let (code, _, err) = bdld(&["check", &r]);
+    assert_eq!(code, 0, "{err}");
+    let ids_before = std::fs::read_to_string(root.join(".bdl/identities.json")).expect("ids");
+
+    let (code, out, err) = bdld(&["migrate-unit-domain", &r, "--dry-run"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(
+        out.contains("2 signature(s) in 1 file(s) would be rewritten"),
+        "{out}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(root.join("src/main.bdl")).expect("main"),
+        main
+    );
+
+    let (code, out, err) = bdld(&["migrate-unit-domain", &r, "--json"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let v: serde_json::Value = serde_json::from_str(out.trim()).expect("json");
+    assert_eq!(v["signatures"], 2);
+    assert_eq!(v["files"][0]["path"], "src/main.bdl");
+    let migrated = std::fs::read_to_string(root.join("src/main.bdl")).expect("main");
+    assert_eq!(
+        migrated,
+        "// the lamp\nmapping tilt : () -> Tilt @interaction   // a source\nmapping tiltValue : () -> Tilt @interaction\ntiltValue() = tilt\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) = t / (90 deg)\n\nmapping brightness : () -> Brightness @interaction\nbrightness() = dimByTilt(tiltValue)\n\noutput light : Brightness @interaction\ndrive light = brightness\n"
+    );
+    // concepts.bdl has no mapping: untouched
+    assert_eq!(
+        std::fs::read_to_string(root.join("src/concepts.bdl")).expect("concepts"),
+        CONCEPTS
+    );
+    // the same identities, the same design
+    let (code, out, _) = bdld(&["check", &r]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("checks, outputs complete"), "{out}");
+    let ids_after = std::fs::read_to_string(root.join(".bdl/identities.json")).expect("ids");
+    assert_eq!(ids_before, ids_after);
+    let (code, out, _) = bdld(&["migrate-unit-domain", &r]);
+    assert_eq!(code, 0);
+    assert!(out.contains("nothing to migrate"), "{out}");
+}

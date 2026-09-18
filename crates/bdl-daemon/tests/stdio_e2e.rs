@@ -607,7 +607,7 @@ fn outputs_and_deployment_over_stdio() {
     };
     assert!(h.found);
     assert_eq!(h.title, "cruise");
-    assert_eq!(h.signature, "mapping cruise : Speed");
+    assert_eq!(h.signature, "mapping cruise : () -> Speed");
     assert_eq!(h.mapping_id, level);
     assert!(!h.status.is_empty());
     let Resp::DraftHover(none) = c.call(
