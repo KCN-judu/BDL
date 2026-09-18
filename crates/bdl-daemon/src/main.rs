@@ -56,6 +56,19 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Rewrite legacy zero-input signatures (`mapping f : A`) into the
+    /// preferred explicit spelling (`mapping f : () -> A`), project-wide
+    /// and losslessly: one insertion per signature, comments, spacing and
+    /// identities untouched, refused if the design would change.  Opt-in;
+    /// nothing else rewrites a source.
+    MigrateUnitDomain {
+        root: std::path::PathBuf,
+        /// Report what would change without writing.
+        #[arg(long)]
+        dry_run: bool,
+        #[arg(long)]
+        json: bool,
+    },
     /// Run the reference evaluator over a project for a number of ticks.
     Simulate {
         root: std::path::PathBuf,
@@ -113,6 +126,11 @@ fn main() -> anyhow::Result<()> {
             inputs,
             json,
         } => exit_with(cli::simulate(&root, COMPILER_VERSION, ticks, &inputs, json)),
+        Command::MigrateUnitDomain {
+            root,
+            dry_run,
+            json,
+        } => exit_with(cli::migrate_unit_domain(&root, dry_run, json)),
     }
 }
 

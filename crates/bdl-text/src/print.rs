@@ -73,14 +73,21 @@ fn output_name(design: &Design, id: bdl_model::OutputId) -> String {
         .unwrap_or_else(|| format!("output{}", id.raw()))
 }
 
-/// The signature `A -> B -> C` and the clock tag of a mapping.
-fn signature_and_tag(design: &Design, m: &MappingBlock) -> String {
+/// The signature and the clock tag of a mapping, in the preferred
+/// spelling: `A -> B -> C`, and `() -> B` for the unit domain
+/// (docs/spec/textual-syntax.md §4.1 — the output-only shorthand is
+/// compatibility syntax and is never generated).  A port keeps the bare
+/// output (`explicit_unit: false`): its grammar has no domain to spell.
+fn signature_and_tag(design: &Design, m: &MappingBlock, explicit_unit: bool) -> String {
     let mut ty: Vec<String> = m
         .signature
         .inputs
         .iter()
         .map(|i| concept_name(design, *i))
         .collect();
+    if ty.is_empty() && explicit_unit {
+        ty.push("()".to_string());
+    }
     ty.push(concept_name(design, m.signature.output));
     let mut s = ty.join(" -> ");
     if let Some(c) = m.clock {
@@ -131,7 +138,7 @@ pub fn mapping(design: &Design, m: &MappingBlock) -> String {
     let mut s = format!(
         "mapping {} : {}",
         ident(&m.name),
-        signature_and_tag(design, m)
+        signature_and_tag(design, m, true)
     );
     if let Some(d) = definition(design, m) {
         s.push('\n');
@@ -197,7 +204,7 @@ pub fn port(c: &BehaviorComponent, port: &bdl_system::Port) -> String {
     let mut s = format!(
         "{word} {} : {}",
         ident(&port.name),
-        signature_and_tag(&c.body, m)
+        signature_and_tag(&c.body, m, false)
     );
     if let Some(d) = definition(&c.body, m) {
         s.push('\n');

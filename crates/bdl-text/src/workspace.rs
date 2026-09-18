@@ -61,6 +61,9 @@ pub enum TextError {
         "the sources declare something the text cannot mean; {count} fault(s), first: {first}"
     )]
     Faults { count: usize, first: String },
+    /// A source rewrite that would not be lossless was refused.
+    #[error("{path}: the source rewrite was refused: {message}")]
+    Rewrite { path: PathBuf, message: String },
 }
 
 /// `.bdl/authoring.json`: what is authored but not semantic.

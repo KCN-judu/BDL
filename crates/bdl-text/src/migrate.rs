@@ -308,3 +308,73 @@ pub fn first_difference(expected: &BehaviorSystem, actual: &BehaviorSystem) -> O
     }
     Some("system identities".into())
 }
+
+// ---- the explicit unit domain (docs/spec/textual-syntax.md §4.1) ----------------
+
+/// What [`make_unit_domains_explicit`] did, or would do.
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct UnitDomainMigration {
+    /// `(path, signatures rewritten)` for every file that changes.
+    pub files: Vec<(String, usize)>,
+}
+
+impl UnitDomainMigration {
+    pub fn total(&self) -> usize {
+        self.files.iter().map(|(_, n)| n).sum()
+    }
+}
+
+/// Rewrite every legacy output-only signature `mapping f : A` of the
+/// project's sources into the preferred `mapping f : () -> A`, losslessly:
+/// one insertion per signature, nothing else touched — comments, blank
+/// lines, spacing and definitions stay byte for byte.  Opt-in: nothing
+/// runs it but a designer's request.  The rewritten sources are built
+/// against the project's identity table before anything is written: a
+/// system or a table that differs refuses the migration (no semantic
+/// change, no identity moved).  With `dry_run` nothing is written.
+pub fn make_unit_domains_explicit(
+    root: &Path,
+    dry_run: bool,
+) -> Result<UnitDomainMigration, TextError> {
+    let manifest = persist::read_manifest(root)?;
+    let files = crate::workspace::discover_sources(root)?;
+    let table = crate::workspace::load_identities(root)?;
+    let before = load_workspace(&manifest.name, &files, &table);
+    let mut report = UnitDomainMigration::default();
+    let mut after_files = Vec::with_capacity(files.len());
+    for f in &files {
+        let (text, n) = bdl_syntax::migrate::make_unit_domains_explicit(&f.text);
+        if n > 0 {
+            report.files.push((f.path.clone(), n));
+        }
+        after_files.push(SourceFile {
+            path: f.path.clone(),
+            text,
+        });
+    }
+    if report.files.is_empty() {
+        return Ok(report);
+    }
+    let after = load_workspace(&manifest.name, &after_files, &table);
+    if after.system != before.system || after.table != before.table {
+        return Err(TextError::Rewrite {
+            path: root.to_path_buf(),
+            message: "the explicit unit domains would change the design or an identity; nothing was written".into(),
+        });
+    }
+    if after.faults.len() != before.faults.len() {
+        return Err(TextError::Rewrite {
+            path: root.to_path_buf(),
+            message: "the rewritten sources report different faults; nothing was written".into(),
+        });
+    }
+    if !dry_run {
+        for f in &after_files {
+            if report.files.iter().any(|(p, _)| p == &f.path) {
+                let path = root.join(&f.path);
+                std::fs::write(&path, &f.text).map_err(|source| TextError::Io { path, source })?;
+            }
+        }
+    }
+    Ok(report)
+}

@@ -519,3 +519,47 @@ pub fn simulate(
     }
     Ok(())
 }
+
+/// `bdld migrate-unit-domain`: the opt-in rewrite of legacy zero-input
+/// signatures into the preferred `() -> A` spelling
+/// (`bdl_text::make_unit_domains_explicit`).
+pub fn migrate_unit_domain(root: &Path, dry_run: bool, json: bool) -> Result<(), Failure> {
+    let report = bdl_text::make_unit_domains_explicit(root, dry_run)
+        .map_err(|e| Failure::Open(e.to_string()))?;
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "dry_run": dry_run,
+                "signatures": report.total(),
+                "files": report
+                    .files
+                    .iter()
+                    .map(|(p, n)| serde_json::json!({ "path": p, "signatures": n }))
+                    .collect::<Vec<_>>(),
+            })
+        );
+        return Ok(());
+    }
+    if report.files.is_empty() {
+        println!("nothing to migrate: every relationship without inputs is written `() -> A`");
+        return Ok(());
+    }
+    for (path, n) in &report.files {
+        println!(
+            "{path}: {n} signature(s) {}",
+            if dry_run { "would become" } else { "now" }
+        );
+    }
+    println!(
+        "{} signature(s) in {} file(s) {}`() -> A`",
+        report.total(),
+        report.files.len(),
+        if dry_run {
+            "would be rewritten to "
+        } else {
+            "rewritten to "
+        }
+    );
+    Ok(())
+}

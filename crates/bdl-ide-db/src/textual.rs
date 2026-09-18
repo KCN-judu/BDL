@@ -563,7 +563,12 @@ pub fn render_module(design: &Design) -> String {
         if !out.is_empty() {
             out.push('\n');
         }
+        // the preferred spelling: `() -> B` for the unit domain, never the
+        // output-only shorthand (docs/spec/textual-syntax.md §4.1)
         let mut ty: Vec<String> = m.signature.inputs.iter().map(|i| name(*i)).collect();
+        if ty.is_empty() {
+            ty.push("()".to_string());
+        }
         ty.push(name(m.signature.output));
         out.push_str(&format!("mapping {} : {}\n", m.name, ty.join(" -> ")));
         if let Some(Definition::Formula { source }) = &m.definition {

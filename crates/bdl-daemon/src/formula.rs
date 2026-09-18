@@ -199,7 +199,7 @@ fn semantic_diagnostic_to_pb(d: &SemanticDiagnostic) -> pb::Diagnostic {
     let severity = match d.severity {
         SemanticSeverity::Error => pb::DiagnosticSeverity::Error,
         SemanticSeverity::Warning => pb::DiagnosticSeverity::Warning,
-        SemanticSeverity::Open => pb::DiagnosticSeverity::Info,
+        SemanticSeverity::Open | SemanticSeverity::Hint => pb::DiagnosticSeverity::Info,
     };
     let entity = match d.primary.entity {
         bdl_ide::EntityRef::Concept(id) => pb::diagnostic::Entity::ConceptId(id.raw()),

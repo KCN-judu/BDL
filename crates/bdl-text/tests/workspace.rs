@@ -433,8 +433,10 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
         text.starts_with("// The lamp.\n\nconcept HeadTilt : Angle   // how far\n"),
         "{text}"
     );
+    // the renamed concept re-renders the signature that mentions it, in the
+    // preferred spelling (`() -> HeadTilt`; the shorthand is never generated)
     assert!(
-        text.contains("// inputs\nmapping tilt : HeadTilt @main\n"),
+        text.contains("// inputs\nmapping tilt : () -> HeadTilt @main\n"),
         "{text}"
     );
     assert!(text.contains("dimByTilt(t) =\n  t / (45 deg)\n"), "{text}");

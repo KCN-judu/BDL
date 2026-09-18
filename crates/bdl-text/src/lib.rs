@@ -36,7 +36,9 @@ pub mod workspace;
 
 pub use build::{build_system, Anchor, AnchorRole, BuildResult, LoadFault, TextEntity, TextFault};
 pub use identity::{IdentityTable, KeyEntry, Reconciliation, IDENTITIES_SCHEMA_VERSION};
-pub use migrate::{migrate_legacy, MigrationReport};
+pub use migrate::{
+    make_unit_domains_explicit, migrate_legacy, MigrationReport, UnitDomainMigration,
+};
 pub use names::{identifier_from, is_identifier, why_not_identifier};
 pub use splice::{write_back, WriteBack};
 pub use workspace::{
