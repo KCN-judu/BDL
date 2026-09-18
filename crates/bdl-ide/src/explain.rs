@@ -81,10 +81,17 @@ pub fn explain(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Explana
                     pretty::mapping_type(ir, &m.signature.inputs, m.signature.output),
                 );
                 if m.signature.is_unit_domain() {
-                    sem = sem.line(
-                        "domain",
-                        "This relationship has no explicit inputs. Its canonical domain is (), the empty product; the kernel encodes `() -> B` as `B` (unit elimination).",
-                    );
+                    if let Some(spelling) = crate::hover::declared_spelling(snapshot, id) {
+                        sem = sem.line("declared spelling", spelling).line(
+                            "domain",
+                            "The omitted domain is the empty product (). The output-only shorthand is compatibility syntax; the preferred spelling is `() -> B`.",
+                        );
+                    } else {
+                        sem = sem.line(
+                            "domain",
+                            "This relationship has no explicit inputs. Its canonical domain is (), the empty product; the kernel encodes `() -> B` as `B` (unit elimination).",
+                        );
+                    }
                 }
             }
             sem = sem.line("interface", pretty::kernel(&a.interface.expected_type));

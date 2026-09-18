@@ -7,9 +7,11 @@
 
 use bdl_check::pretty;
 use bdl_compiler::MappingStatus;
-use bdl_ide_db::{AnalysisSnapshot, EntityKind, EntityRef};
+use bdl_ide_db::{AnalysisSnapshot, EntityKind, EntityRef, EntityRole};
 use bdl_model::surface::{Definition, Representation};
+use bdl_model::DeclId;
 use bdl_output::OutputState;
+use bdl_syntax::ast::AstNode;
 use serde::{Deserialize, Serialize};
 
 /// Where an entity stands.  The mapping ladder, the concept binding, the
@@ -193,9 +195,18 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             let m = design.mappings.get(&id)?;
             let a = analysis.mappings.get(&id);
             let inputs: Vec<String> = m.signature.inputs.iter().map(|c| cname(*c)).collect();
+            // the surface line in the preferred spelling: `() -> B` for the
+            // unit domain; the declared spelling, when a document declares
+            // the mapping in the legacy output-only shorthand, is a detail
             let mut sig = inputs.clone();
+            if sig.is_empty() {
+                sig.push("()".to_string());
+            }
             sig.push(cname(m.signature.output));
             let mut details = Vec::new();
+            if let Some(spelling) = declared_spelling(snapshot, id) {
+                details.push(detail("declared spelling", spelling));
+            }
             // the canonical type: `() -> B` for a relationship without
             // inputs (the surface line above keeps the shorthand)
             details.push(detail(
@@ -624,4 +635,30 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
         }
         _ => return None,
     })
+}
+
+/// The signature text a document declares for `mapping`, when it is the
+/// legacy output-only shorthand (`mapping f : B` for `() -> B`): the text
+/// as written.  `None` for the explicit spelling and for a mapping no
+/// document declares.
+pub(crate) fn declared_spelling(snapshot: &AnalysisSnapshot, mapping: DeclId) -> Option<String> {
+    let map = snapshot.projections();
+    let anchor = map
+        .anchors_for(EntityRef::Mapping(mapping), EntityRole::Signature)
+        .find_map(|a| Some((a.document()?, a.text_range()?)))?;
+    let doc = snapshot.document(anchor.0)?;
+    let text = doc
+        .source
+        .get(anchor.1.start as usize..anchor.1.end as usize)?;
+    let parse = bdl_syntax::parse_module(&doc.source);
+    let legacy = parse
+        .syntax_node()
+        .descendants()
+        .filter_map(bdl_syntax::ast::MappingDecl::cast)
+        .filter_map(|m| m.signature())
+        .any(|t| {
+            u32::from(t.syntax().text_range().start()) == anchor.1.start
+                && !matches!(t, bdl_syntax::ast::Type::Function(_))
+        });
+    legacy.then(|| text.trim().to_string())
 }

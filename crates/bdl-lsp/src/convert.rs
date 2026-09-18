@@ -27,6 +27,7 @@ pub fn severity(s: SemanticSeverity) -> DiagnosticSeverity {
         // Open is never an error in a text editor: information, not a
         // squiggle that says something is wrong.
         SemanticSeverity::Open => DiagnosticSeverity::INFORMATION,
+        SemanticSeverity::Hint => DiagnosticSeverity::HINT,
     }
 }
 
@@ -68,12 +69,13 @@ pub fn diagnostic(
         } else {
             Some(related)
         },
-        tags: if d.severity == SemanticSeverity::Open {
+        tags: match d.severity {
             // Unnecessary is the closest standard tag to "not finished";
             // clients render it faded rather than red.
-            Some(vec![DiagnosticTag::UNNECESSARY])
-        } else {
-            None
+            SemanticSeverity::Open => Some(vec![DiagnosticTag::UNNECESSARY]),
+            // a spelling the language no longer prefers
+            SemanticSeverity::Hint => Some(vec![DiagnosticTag::DEPRECATED]),
+            _ => None,
         },
         data: None,
     }

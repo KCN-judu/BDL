@@ -883,7 +883,7 @@ fn a_relationship_without_inputs_has_the_unit_domain_in_hover_explain_and_the_co
     let mut host = IdeHost::new(s.clone());
     let snap = host.snapshot();
     let h = hover(&snap, EntityRef::Mapping(ambient)).expect("hover");
-    assert_eq!(h.signature.as_deref(), Some("mapping ambient : Tilt"));
+    assert_eq!(h.signature.as_deref(), Some("mapping ambient : () -> Tilt"));
     let ty = h
         .details
         .iter()
@@ -958,4 +958,124 @@ fn a_relationship_without_inputs_has_the_unit_domain_in_hover_explain_and_the_co
             .any(|d| d.code == "formula.call.arity"
                 && d.message.contains("its only argument is `()`"))
     );
+}
+
+// ---- the preferred spelling `() -> A` and the legacy shorthand ---------------------
+
+/// `mapping f : () -> A` is the spelling the language prefers: it gets no
+/// diagnostic.  The legacy `mapping f : A` still parses to the same
+/// declaration and the same canonical type, carries a hint — never an
+/// error — with the quick fix *Make empty domain explicit*, one insertion
+/// that leaves everything else byte for byte; hover and Explain show the
+/// declared spelling beside the canonical type; a bare type anywhere else
+/// (a concept's value form) is never flagged; and the rendered projection
+/// of the model writes the explicit form.
+#[test]
+fn the_legacy_output_only_shorthand_is_a_hint_with_a_quick_fix_and_the_explicit_form_is_clean() {
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    let uri = DocumentUri::new("file:///lamp.bdl");
+    let text = "concept Tilt : Angle\nconcept Brightness : Scalar\n\n// the sensor\nmapping tilt : Tilt  // legacy\nmapping level : () -> Brightness\nmapping dimByTilt : Tilt -> Brightness\n";
+    let (doc, _) = host.set_text_document(&uri, text);
+    let snap = host.snapshot();
+    let set = diagnostics(&snap, DiagnosticScope::Document(doc));
+    let hints: Vec<&SemanticDiagnostic> = set
+        .items
+        .iter()
+        .filter(|d| d.code == "text.legacy_unit_domain")
+        .collect();
+    assert_eq!(hints.len(), 1, "{:?}", set.items);
+    let h = hints[0];
+    assert_eq!(h.severity, SemanticSeverity::Hint);
+    assert!(!h.is_error());
+    assert_eq!(
+        h.message,
+        "A relationship with no inputs is written explicitly as `() -> Tilt`. The output-only shorthand is deprecated."
+    );
+    let range = h.primary.source.expect("placed").range;
+    assert_eq!(&text[range.start as usize..range.end as usize], "Tilt");
+    let tilt_decl = snap
+        .effective()
+        .design
+        .mappings
+        .values()
+        .find(|m| m.name == "tilt")
+        .expect("tilt bound");
+    assert_eq!(h.primary.entity, EntityRef::Mapping(tilt_decl.id));
+    // the same canonical type as the explicit form
+    let level = snap
+        .effective()
+        .design
+        .mappings
+        .values()
+        .find(|m| m.name == "level")
+        .expect("level");
+    assert!(tilt_decl.signature.is_unit_domain() && level.signature.is_unit_domain());
+    // the quick fix: one insertion
+    let actions = actions_for(&snap, h);
+    let fix = actions
+        .iter()
+        .find(|a| a.title == "Make empty domain explicit")
+        .expect("quick fix");
+    assert!(fix.is_ready());
+    let plan = fix.plan.as_ref().expect("plan");
+    let edits: Vec<TextEdit> = plan.text_edits(doc).into_iter().cloned().collect();
+    assert_eq!(edits.len(), 1);
+    let fixed = TextEdit::apply_all(text, &edits).expect("apply");
+    assert_eq!(
+        fixed,
+        "concept Tilt : Angle\nconcept Brightness : Scalar\n\n// the sensor\nmapping tilt : () -> Tilt  // legacy\nmapping level : () -> Brightness\nmapping dimByTilt : Tilt -> Brightness\n"
+    );
+    // hover and Explain: the declared spelling beside the canonical type
+    let hov = hover(&snap, EntityRef::Mapping(tilt_decl.id)).expect("hover");
+    assert_eq!(hov.signature.as_deref(), Some("mapping tilt : () -> Tilt"));
+    let detail = |label: &str| {
+        hov.details
+            .iter()
+            .find(|d| d.label == label)
+            .map(|d| d.value.as_str())
+    };
+    assert_eq!(detail("declared spelling"), Some("Tilt"));
+    assert_eq!(detail("type"), Some("() -> Tilt"));
+    let x = explain(&snap, EntityRef::Mapping(tilt_decl.id)).expect("explain");
+    let sem = x
+        .sections
+        .iter()
+        .find(|s| s.heading == "Semantics")
+        .expect("semantics");
+    let line = |l: &str| {
+        sem.lines
+            .iter()
+            .find(|(k, _)| k == l)
+            .map(|(_, v)| v.as_str())
+    };
+    assert_eq!(line("declared spelling"), Some("Tilt"));
+    assert_eq!(line("canonical type"), Some("() -> Tilt"));
+    assert!(line("domain").is_some_and(|d| d.contains("omitted domain is the empty product")));
+    let hov2 = hover(&snap, EntityRef::Mapping(level.id)).expect("hover");
+    assert!(hov2.details.iter().all(|d| d.label != "declared spelling"));
+    // after the fix: clean
+    let (doc2, _) = host.set_text_document(&uri, fixed.clone());
+    let snap2 = host.snapshot();
+    let set2 = diagnostics(&snap2, DiagnosticScope::Document(doc2));
+    assert!(
+        set2.items
+            .iter()
+            .all(|d| d.code != "text.legacy_unit_domain"),
+        "{:?}",
+        set2.items
+    );
+    // the formatter keeps both spellings as authored
+    assert_eq!(
+        bdl_syntax::format::format_module(text).as_deref(),
+        Some(text)
+    );
+    assert_eq!(
+        bdl_syntax::format::format_module(&fixed).as_deref(),
+        Some(fixed.as_str())
+    );
+    // what the model renders is the explicit form
+    let rendered = render_module(&snap2.effective().design);
+    assert!(rendered.contains("mapping tilt : () -> Tilt"), "{rendered}");
+    assert!(!rendered.contains("mapping tilt : Tilt"), "{rendered}");
 }

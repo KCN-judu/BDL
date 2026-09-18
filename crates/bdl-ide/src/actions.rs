@@ -116,6 +116,39 @@ pub fn actions_for(snapshot: &AnalysisSnapshot, d: &SemanticDiagnostic) -> Vec<S
                 }
             }
         }
+        // the legacy output-only shorthand: one insertion makes the empty
+        // domain explicit, in the document, at the signature
+        "text.legacy_unit_domain" => {
+            if let Some(SourceSpan {
+                origin: SourceOrigin::Document { document },
+                range,
+            }) = d.primary.source
+            {
+                let mut plan =
+                    SemanticEditPlan::new("Make empty domain explicit", snapshot.stamp());
+                plan.affected_entities.insert(entity);
+                plan.operations.push(SemanticOperation::Text {
+                    document,
+                    edits: vec![TextEdit::replace(
+                        TextRange::new(range.start, range.start),
+                        "() -> ",
+                    )],
+                });
+                out.push(SemanticAction {
+                    id: SemanticActionId(format!(
+                        "text.explicit_unit_domain:{}:{}",
+                        document.0, range.start
+                    )),
+                    title: "Make empty domain explicit".into(),
+                    kind: ActionKind::QuickFix,
+                    applicability: Applicability::Ready,
+                    plan: Some(plan),
+                    explanation: "Writes the signature as `() -> B`, the preferred spelling of a relationship without inputs. The meaning does not change: both spellings declare the one type `() -> B`."
+                        .into(),
+                    addresses: vec![code.to_owned()],
+                });
+            }
+        }
         "output.clock_mismatch" => {
             if let (Some(m), Some(o)) = (entity.as_mapping(), drives_of(snapshot, entity)) {
                 let design = &snapshot.effective().design;

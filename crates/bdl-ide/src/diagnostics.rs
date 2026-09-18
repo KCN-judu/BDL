@@ -23,6 +23,7 @@ use bdl_ide_db::{
     AnalysisSnapshot, DocumentId, EntityRef, EntityRole, SnapshotStamp, TextRange, VisualElementRef,
 };
 use bdl_model::{DeclId, OutputId};
+use bdl_syntax::ast::AstNode;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -35,6 +36,10 @@ pub enum SemanticSeverity {
     /// undriven sink.  A text editor shows it as information, never as an
     /// error; Studio shows it as the design's state.
     Open,
+    /// Legal and complete, spelled in a way the language no longer
+    /// prefers (a deprecated shorthand): a hint with a quick fix, never a
+    /// state of the design.
+    Hint,
 }
 
 impl SemanticSeverity {
@@ -350,6 +355,46 @@ fn lift_all(snapshot: &AnalysisSnapshot) -> Vec<SemanticDiagnostic> {
                 explanation: String::new(),
                 technical: e.technical(),
                 fixes: e.hint.iter().cloned().collect(),
+                actions: Vec::new(),
+            });
+        }
+        // the legacy output-only shorthand `mapping f : B` for `() -> B`
+        // (docs/spec/textual-syntax.md §4.1): a hint with a quick fix, only
+        // where the bare type means that shorthand — a `mapping`'s
+        // signature — never in another type position
+        for (decl, span) in bdl_syntax::migrate::legacy_unit_domain_signatures(&doc.source) {
+            let entity = decl
+                .name()
+                .and_then(|n| {
+                    snapshot
+                        .projections()
+                        .document_anchors(doc.document)
+                        .iter()
+                        .find(|a| {
+                            a.role == EntityRole::Name
+                                && a.text_range() == Some(TextRange::from(n.span()))
+                        })
+                        .map(|a| a.entity)
+                })
+                .unwrap_or(EntityRef::Project);
+            let output = doc
+                .source
+                .get(span.start as usize..span.end as usize)
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            out.push(SemanticDiagnostic {
+                code: "text.legacy_unit_domain".into(),
+                severity: SemanticSeverity::Hint,
+                primary: SemanticAnchor::new(entity, EntityRole::Signature).at(at(span.into())),
+                related: Vec::new(),
+                message: format!(
+                    "A relationship with no inputs is written explicitly as `() -> {output}`. The output-only shorthand is deprecated."
+                ),
+                explanation: "The omitted domain is the empty product `()`; both spellings declare the one type `() -> B`. The shorthand stays accepted as compatibility syntax and is never generated."
+                    .into(),
+                technical: String::new(),
+                fixes: vec![format!("Write `mapping … : () -> {output}`.")],
                 actions: Vec::new(),
             });
         }
