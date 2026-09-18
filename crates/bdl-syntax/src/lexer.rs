@@ -95,9 +95,15 @@ enum Raw {
     At,
     #[token(".")]
     Dot,
+    /// `..` — a closed range between two values (`lo .. hi`).
+    #[token("..")]
+    DotDot,
     /// `?` — a slot: an expression not yet written (a Composer hole).
     #[token("?")]
     Question,
+    /// `??` — the value when present, a default when absent.
+    #[token("??")]
+    QuestionQuestion,
 }
 
 fn line_comment(lex: &mut logos::Lexer<Raw>) {
@@ -176,7 +182,9 @@ pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
             Ok(Raw::OrOr) => SyntaxKind::OrOr,
             Ok(Raw::At) => SyntaxKind::At,
             Ok(Raw::Dot) => SyntaxKind::Dot,
+            Ok(Raw::DotDot) => SyntaxKind::DotDot,
             Ok(Raw::Question) => SyntaxKind::Question,
+            Ok(Raw::QuestionQuestion) => SyntaxKind::QuestionQuestion,
             Err(()) => {
                 errors.push(SyntaxError::new(
                     SyntaxErrorCode::InvalidCharacter,

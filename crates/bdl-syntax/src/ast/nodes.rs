@@ -578,6 +578,8 @@ ast_enum!(
         Tuple(TupleExpr),
         Lambda(LambdaExpr),
         Slot(SlotExpr),
+        Binder(BinderExpr),
+        Range(RangeExpr),
     }
 );
 ast_node!(
@@ -585,6 +587,44 @@ ast_node!(
     SlotExpr,
     SlotExpr
 );
+ast_node!(
+    /// `all x in xs: body` — a binder over a collection.
+    BinderExpr,
+    BinderExpr
+);
+ast_node!(
+    /// `lo .. hi` — a closed range.
+    RangeExpr,
+    RangeExpr
+);
+
+impl BinderExpr {
+    /// The word: `all`, `any`, `map` or `filter` (an identifier token).
+    pub fn word(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|el| el.into_token())
+            .find(|t| t.kind() == SyntaxKind::Ident)
+    }
+    pub fn param(&self) -> Option<Name> {
+        child(&self.0)
+    }
+    pub fn collection(&self) -> Option<Expr> {
+        nth_child(&self.0, 0)
+    }
+    pub fn body(&self) -> Option<Expr> {
+        nth_child(&self.0, 1)
+    }
+}
+
+impl RangeExpr {
+    pub fn lo(&self) -> Option<Expr> {
+        nth_child(&self.0, 0)
+    }
+    pub fn hi(&self) -> Option<Expr> {
+        nth_child(&self.0, 1)
+    }
+}
 ast_node!(
     /// `[a, b, c]`
     ListExpr,
@@ -652,6 +692,75 @@ impl NameExpr {
     pub fn name(&self) -> Option<NameRef> {
         child(&self.0)
     }
+
+    /// The local that binds this name, when one does: the parameter of an
+    /// enclosing binder (`all x in xs: … x …`, body only) or rule
+    /// (`x => … x …`), a pattern of an enclosing match arm, or a `let`
+    /// earlier in an enclosing block.  The nearest wins, so an inner
+    /// binder shadows an outer one.  `None` for a name that reaches the
+    /// design — an input, a relationship — or nothing.
+    pub fn local_binding(&self) -> Option<Name> {
+        let text = self.name()?.as_str();
+        let here = self.0.text_range();
+        let mut node = self.0.parent();
+        while let Some(n) = node {
+            match n.kind() {
+                SyntaxKind::BinderExpr => {
+                    let b = BinderExpr::cast(n.clone())?;
+                    let in_body = b
+                        .body()
+                        .is_some_and(|body| body.syntax().text_range().contains_range(here));
+                    if in_body {
+                        if let Some(p) = b.param().filter(|p| p.as_str() == text) {
+                            return Some(p);
+                        }
+                    }
+                }
+                SyntaxKind::LambdaExpr => {
+                    let l = LambdaExpr::cast(n.clone())?;
+                    if let Some(p) = l.params().find(|p| p.as_str() == text) {
+                        return Some(p);
+                    }
+                }
+                SyntaxKind::MatchArm => {
+                    let a = MatchArm::cast(n.clone())?;
+                    let in_body = a
+                        .body()
+                        .is_some_and(|body| body.syntax().text_range().contains_range(here));
+                    if in_body {
+                        if let Some(p) = a.pattern().and_then(|p| bound_name(p.syntax(), &text)) {
+                            return Some(p);
+                        }
+                    }
+                }
+                SyntaxKind::BlockExpr => {
+                    let b = BlockExpr::cast(n.clone())?;
+                    // the lets before this position, nearest first
+                    let earlier: Vec<LetStmt> = b
+                        .lets()
+                        .filter(|l| l.syntax().text_range().end() <= here.start())
+                        .collect();
+                    for l in earlier.into_iter().rev() {
+                        if let Some(p) = l.pattern().and_then(|p| bound_name(p.syntax(), &text)) {
+                            return Some(p);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            node = n.parent();
+        }
+        None
+    }
+}
+
+/// The `Name` of an identifier pattern spelled `text` under `pattern`.
+fn bound_name(pattern: &SyntaxNode, text: &str) -> Option<Name> {
+    pattern
+        .descendants()
+        .filter_map(IdentPattern::cast)
+        .filter_map(|p| p.name())
+        .find(|n| n.as_str() == text)
 }
 
 /// The spelling of a number literal; never a machine number
@@ -759,6 +868,8 @@ pub enum BinaryOp {
     Or,
     /// `x in xs`: membership in a collection.
     In,
+    /// `x ?? d`: the value when present, `d` when absent.
+    Coalesce,
 }
 
 impl BinaryOp {
@@ -777,6 +888,7 @@ impl BinaryOp {
             SyntaxKind::AndAnd => BinaryOp::And,
             SyntaxKind::OrOr => BinaryOp::Or,
             SyntaxKind::KwIn => BinaryOp::In,
+            SyntaxKind::QuestionQuestion => BinaryOp::Coalesce,
             _ => return None,
         })
     }
@@ -796,6 +908,7 @@ impl BinaryOp {
             BinaryOp::And => "&&",
             BinaryOp::Or => "||",
             BinaryOp::In => "in",
+            BinaryOp::Coalesce => "??",
         }
     }
 

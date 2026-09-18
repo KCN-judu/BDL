@@ -74,6 +74,50 @@ pub enum ExprKind {
     /// Composer's hole; elaboration refuses it (`formula.slot.empty`) and
     /// nothing downstream of the surface ever sees one.
     Hole,
+    /// `all x in xs: body` — the binder family: sugar for the equation
+    /// `all(xs, x => body)` (likewise `any`, `map`, `filter`); the binder is
+    /// the rule's parameter, scoped to the body.
+    Binder {
+        form: BinderForm,
+        param: Ident,
+        collection: Box<SurfaceExpr>,
+        body: Box<SurfaceExpr>,
+    },
+    /// `lo .. hi` — a closed range; `x in lo .. hi` is `inRange(x, lo, hi)`.
+    Range {
+        lo: Box<SurfaceExpr>,
+        hi: Box<SurfaceExpr>,
+    },
+}
+
+/// The four binder words.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BinderForm {
+    All,
+    Any,
+    Map,
+    Filter,
+}
+
+impl BinderForm {
+    pub fn word(self) -> &'static str {
+        match self {
+            BinderForm::All => "all",
+            BinderForm::Any => "any",
+            BinderForm::Map => "map",
+            BinderForm::Filter => "filter",
+        }
+    }
+    pub fn from_word(w: &str) -> Option<BinderForm> {
+        Some(match w {
+            "all" => BinderForm::All,
+            "any" => BinderForm::Any,
+            "map" => BinderForm::Map,
+            "filter" => BinderForm::Filter,
+            _ => return None,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -134,6 +178,16 @@ impl SurfaceExpr {
         f(self);
         match &self.kind {
             ExprKind::Name(_) | ExprKind::Number { .. } | ExprKind::Bool(_) | ExprKind::Hole => {}
+            ExprKind::Binder {
+                collection, body, ..
+            } => {
+                collection.walk(f);
+                body.walk(f);
+            }
+            ExprKind::Range { lo, hi } => {
+                lo.walk(f);
+                hi.walk(f);
+            }
             ExprKind::Unary { expr, .. } => expr.walk(f),
             ExprKind::Binary { lhs, rhs, .. } => {
                 lhs.walk(f);
@@ -937,6 +991,16 @@ fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
         },
         ast::Expr::Paren(p) => expr(&p.inner()?)?.kind,
         ast::Expr::Slot(_) => ExprKind::Hole,
+        ast::Expr::Binder(b) => ExprKind::Binder {
+            form: BinderForm::from_word(b.word()?.text())?,
+            param: ident(&b.param()?)?,
+            collection: Box::new(expr(&b.collection()?)?),
+            body: Box::new(expr(&b.body()?)?),
+        },
+        ast::Expr::Range(r) => ExprKind::Range {
+            lo: Box::new(expr(&r.lo()?)?),
+            hi: Box::new(expr(&r.hi()?)?),
+        },
         ast::Expr::Call(c) => {
             let args: Option<Vec<SurfaceExpr>> = c.arguments().map(|a| expr(&a)).collect();
             ExprKind::Call {

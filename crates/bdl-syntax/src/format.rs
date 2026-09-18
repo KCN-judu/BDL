@@ -330,6 +330,10 @@ impl Formatter {
         if matches!(p.kind(), K::LParen | K::LBracket | K::Dot | K::At | K::Bang) {
             return false;
         }
+        // `all x in xs: body` — the colon closes the head
+        if t.kind() == K::Colon && t.parent().is_some_and(|n| n.kind() == K::BinderExpr) {
+            return false;
+        }
         if t.kind() == K::LParen && p.kind() == K::Ident {
             return false;
         }

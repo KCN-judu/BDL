@@ -86,6 +86,10 @@ pub enum SyntaxKind {
     Dot,
     /// `?` — a slot (docs/spec/textual-syntax.md §16).
     Question,
+    /// `..` — a closed range (docs/spec/textual-syntax.md §17).
+    DotDot,
+    /// `??` — a default for an absent value (docs/spec/textual-syntax.md §17).
+    QuestionQuestion,
 
     // ---- nodes -----------------------------------------------------------
     Module,
@@ -151,6 +155,10 @@ pub enum SyntaxKind {
     LambdaParams,
     /// `?` — a slot: an expression not yet written, never elaborated.
     SlotExpr,
+    /// `all x in xs: body` — a binder form over a collection (§17).
+    BinderExpr,
+    /// `lo .. hi` — a closed range, meaningful after `in` (§17).
+    RangeExpr,
     /// Skipped tokens during recovery, kept so the tree stays lossless.
     ErrorNode,
     /// Placeholder for an abandoned marker; never appears in a tree.
@@ -334,6 +342,8 @@ impl SyntaxKind {
             At => "@",
             Dot => ".",
             Question => "?",
+            DotDot => "..",
+            QuestionQuestion => "??",
             _ => return None,
         })
     }
@@ -446,6 +456,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     At,
     Dot,
     Question,
+    DotDot,
+    QuestionQuestion,
     Module,
     Formula,
     ConceptDecl,
@@ -504,6 +516,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     LambdaExpr,
     LambdaParams,
     SlotExpr,
+    BinderExpr,
+    RangeExpr,
     ErrorNode,
     Tombstone,
 ];

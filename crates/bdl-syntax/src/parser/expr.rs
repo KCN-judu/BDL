@@ -17,13 +17,19 @@ fn infix(kind: SyntaxKind) -> Option<(u8, u8, bool)> {
         AndAnd => (3, 4, false),
         EqEq | Ne => (5, 6, true),
         Lt | Le | Gt | Ge | KwIn => (7, 8, true),
-        Plus | Minus => (9, 10, false),
-        Star | Slash => (11, 12, false),
+        // `lo .. hi` binds weaker than arithmetic and stronger than a
+        // comparison, so `x in lo + d .. hi - d` is `x in ((lo + d) .. (hi - d))`
+        DotDot => (8, 9, false),
+        // `x ?? d` binds tighter than a range or a comparison and weaker
+        // than arithmetic (`x ?? d + 1` is `x ?? (d + 1)`); right-associative
+        QuestionQuestion => (10, 9, false),
+        Plus | Minus => (11, 12, false),
+        Star | Slash => (13, 14, false),
         _ => return None,
     })
 }
 
-const UNARY_BP: u8 = 13;
+const UNARY_BP: u8 = 15;
 
 pub(super) fn can_start(kind: SyntaxKind) -> bool {
     matches!(
@@ -77,14 +83,30 @@ pub(super) fn unexpected_after_expr(p: &mut Parser<'_>, expected: &str) {
 
 /// Returns the completed node and, when it is an unparenthesised
 /// comparison, the span of its operator (for the chaining diagnostic).
+/// `all` / `any` / `map` / `filter` written as a binder: `all x in xs: …`.
+/// Contextual — the words stay identifiers everywhere else (`map(xs, f)`,
+/// a relationship named `filter`); only the full shape `word Ident in` is
+/// the form.
+pub(super) fn at_binder(p: &Parser<'_>) -> bool {
+    p.at(Ident)
+        && matches!(p.current_text(), "all" | "any" | "map" | "filter")
+        && p.nth(1) == Ident
+        && p.nth(2) == KwIn
+}
+
 fn expr_bp(p: &mut Parser<'_>, min_bp: u8) -> Option<(CompletedMarker, Option<Span>)> {
     // `x => e`: a rule with one parameter.  A lambda extends as far right
     // as possible, like `if`; it is only ever an argument.
     if p.at(Ident) && p.nth(1) == FatArrow {
         return Some((lambda(p), None));
     }
+    // `all x in xs: body`: a binder extends as far right as its body does.
+    if at_binder(p) {
+        return Some((binder(p), None));
+    }
     let mut lhs = unary(p)?;
     let mut lhs_cmp: Option<Span> = None;
+    let mut lhs_range = false;
     loop {
         if p.at(Error) {
             // Already reported by the lexer; keep going as if it were absent.
@@ -101,8 +123,12 @@ fn expr_bp(p: &mut Parser<'_>, min_bp: u8) -> Option<(CompletedMarker, Option<Sp
         if is_cmp && lhs_cmp.is_some() {
             chained_comparison(p, op_span);
         }
+        if p.at(DotDot) && lhs_range {
+            chained_range(p, op_span);
+        }
         let m = lhs.precede(p);
         let op = p.current();
+        let node = if op == DotDot { RangeExpr } else { BinaryExpr };
         p.bump();
         match expr_bp(p, rbp) {
             None => {
@@ -114,7 +140,7 @@ fn expr_bp(p: &mut Parser<'_>, min_bp: u8) -> Option<(CompletedMarker, Option<Sp
                     .as_str(),
                     &[],
                 );
-                lhs = m.complete(p, BinaryExpr);
+                lhs = m.complete(p, node);
                 lhs_cmp = None;
                 break;
             }
@@ -124,12 +150,45 @@ fn expr_bp(p: &mut Parser<'_>, min_bp: u8) -> Option<(CompletedMarker, Option<Sp
                         chained_comparison(p, inner);
                     }
                 }
-                lhs = m.complete(p, BinaryExpr);
+                lhs = m.complete(p, node);
                 lhs_cmp = if is_cmp { Some(op_span) } else { None };
+                lhs_range = op == DotDot;
             }
         }
     }
     Some((lhs, lhs_cmp))
+}
+
+fn chained_range(p: &mut Parser<'_>, at: Span) {
+    let e = crate::syntax::SyntaxError::new(
+        SyntaxErrorCode::ChainedComparison,
+        at,
+        "a range has two ends",
+        "a third `..`",
+    )
+    .with_hint("Write `lo .. hi`; a value is tested against it with `x in lo .. hi`.");
+    p.push_error(e);
+}
+
+/// `BinderExpr ::= ("all" | "any" | "map" | "filter") Name "in" Expr ":" Expr`
+fn binder(p: &mut Parser<'_>) -> CompletedMarker {
+    let m = p.start();
+    p.bump(); // the word: kept as an identifier token, classified by position
+    grammar::name(p, "expected the name of each element");
+    p.expect(KwIn, "expected `in` after the element's name");
+    if expr_bp(p, 8).is_none() {
+        // the collection, up to the `:` — a comparison or range would
+        // swallow the colon's neighbours; arithmetic is fine
+        p.error_expecting("expected the collection after `in`", &[]);
+    }
+    if !p.eat(Colon) {
+        p.error_expecting("expected `:` before the body", &[]);
+        p.hint("A binder reads `all reading in readings: reading < limit`.");
+    }
+    if expr(p).is_none() {
+        p.error_expecting("expected the body after `:`", &[]);
+    }
+    m.complete(p, BinderExpr)
 }
 
 fn chained_comparison(p: &mut Parser<'_>, at: Span) {

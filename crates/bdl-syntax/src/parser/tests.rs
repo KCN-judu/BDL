@@ -70,6 +70,19 @@ fn show(e: &SurfaceExpr) -> String {
             show(body)
         ),
         ExprKind::Hole => "?".into(),
+        ExprKind::Binder {
+            form,
+            param,
+            collection,
+            body,
+        } => format!(
+            "({} {} in {}: {})",
+            form.word(),
+            param.name,
+            show(collection),
+            show(body)
+        ),
+        ExprKind::Range { lo, hi } => format!("({} .. {})", show(lo), show(hi)),
     }
 }
 
@@ -861,5 +874,152 @@ f() = tilt/?
 f() = tilt / ?
 "
         )
+    );
+}
+
+/// The natural forms (P11): `all x in xs: body` and `lo .. hi` are surface
+/// syntax over the same rules and equations — the parser builds them as
+/// their own nodes; nothing else about the grammar changes.
+#[test]
+fn binders_are_contextual_and_extend_as_far_right_as_a_rule() {
+    assert_eq!(
+        ok("all reading in readings: reading < limit"),
+        "(all reading in readings: (reading < limit))"
+    );
+    assert_eq!(
+        ok("any x in xs: x > 1 && y"),
+        "(any x in xs: ((x > 1) && y))"
+    );
+    assert_eq!(ok("map x in xs: x * 2"), "(map x in xs: (x * 2))");
+    assert_eq!(
+        ok("filter x in xs: x in a .. b"),
+        "(filter x in xs: (x in (a .. b)))"
+    );
+    // a binder is an operand only in parentheses
+    assert_eq!(ok("(all x in xs: x) && ok"), "((all x in xs: x) && ok)");
+    assert_eq!(ok("!(any x in xs: x)"), "(!(any x in xs: x))");
+    // nested, with shadowing left to the elaborator's lexical scopes
+    assert_eq!(
+        ok("all row in grid: all x in row: x < 1"),
+        "(all row in grid: (all x in row: (x < 1)))"
+    );
+    assert_eq!(
+        ok("any x in xs: all x in ys: x"),
+        "(any x in xs: (all x in ys: x))"
+    );
+    // the collection is an expression short of `:` — a call, an index, a
+    // sum; a membership test or a range there needs parentheses
+    assert_eq!(ok("all x in f(a): x"), "(all x in f[a]: x)");
+    assert_eq!(ok("all x in xs + ys: x"), "(all x in (xs + ys): x)");
+    assert_eq!(ok("all x in (a .. b): x"), "(all x in (a .. b): x)");
+    // the words stay ordinary names elsewhere: a mapping called `map`
+    assert_eq!(ok("map(xs, x => x)"), "map[xs, (\\x => x)]");
+    assert_eq!(ok("map(x)"), "map[x]");
+    assert_eq!(ok("all(x, y)"), "all[x, y]");
+    assert_eq!(ok("all + 1"), "(all + 1)");
+    assert_eq!(ok("filter"), "filter");
+    assert_eq!(ok("all in xs"), "(all in xs)");
+    // the binder body is the whole rest, like a rule's
+    assert_eq!(
+        ok("any(xs, x => all y in ys: x < y)"),
+        "any[xs, (\\x => (all y in ys: (x < y)))]"
+    );
+}
+
+#[test]
+fn malformed_binders_say_what_is_missing() {
+    let says = |src: &str, what: &str| {
+        let es = errors(&format!("mapping f : A\nf() = {src}\n"));
+        assert!(
+            es.iter().any(|(_, _, m)| m.contains(what)),
+            "{src:?}: {es:?}"
+        );
+    };
+    says("all x in xs x < 1", "expected `:` before the body");
+    says("all x in : x", "expected the collection after `in`");
+    says("all x in xs:", "expected the body after `:`");
+    // `all in xs` is a membership test on a name called `all`: the colon
+    // is the surprise, not the word
+    let es = errors("mapping f : A\nf() = all in xs: x\n");
+    assert_eq!(es.len(), 1, "{es:?}");
+    assert_eq!(es[0].1, Span::new(29, 30));
+}
+
+#[test]
+fn ranges_sit_between_comparison_and_arithmetic_and_do_not_chain() {
+    assert_eq!(ok("x in lo .. hi"), "(x in (lo .. hi))");
+    assert_eq!(ok("x + y in lo .. hi"), "((x + y) in (lo .. hi))");
+    assert_eq!(ok("x in lo + d .. hi - d"), "(x in ((lo + d) .. (hi - d)))");
+    assert_eq!(ok("x in -45 deg .. 45 deg"), "(x in ((-45deg) .. 45deg))");
+    assert_eq!(ok("x in a * 2 .. b / 2"), "(x in ((a * 2) .. (b / 2)))");
+    assert_eq!(ok("x in lo .. hi && y"), "((x in (lo .. hi)) && y)");
+    assert_eq!(ok("x in xs"), "(x in xs)");
+    // the lexer: a number never swallows the dots
+    assert_eq!(ok("1.0..2.0"), "(1.0 .. 2.0)");
+    assert_eq!(ok("1..2"), "(1 .. 2)");
+    assert_eq!(ok("0.5 .. 1.5"), "(0.5 .. 1.5)");
+    assert_eq!(ok("-1.0 .. 1.0"), "((-1.0) .. 1.0)");
+    assert_eq!(ok("1 mm..2 mm"), "(1mm .. 2mm)");
+    // the tokens of `-1.0 .. +1.0`: signs are operators, dots are one
+    // operator, numbers are whole (there is no unary `+` in BDL, so the
+    // parser then says so; the lexer never mis-splits)
+    let (tokens, errs) = crate::lexer::lex("-1.0 .. +1.0");
+    assert!(errs.is_empty());
+    let kinds: Vec<SyntaxKind> = tokens
+        .iter()
+        .map(|t| t.kind)
+        .filter(|k| *k != SyntaxKind::Whitespace)
+        .collect();
+    assert_eq!(
+        kinds,
+        vec![
+            SyntaxKind::Minus,
+            SyntaxKind::Number,
+            SyntaxKind::DotDot,
+            SyntaxKind::Plus,
+            SyntaxKind::Number
+        ]
+    );
+    // a range is one span, not a chain
+    assert!(errors("mapping f : A\nf() = 1 .. 2 .. 3\n")
+        .iter()
+        .any(|(c, _, _)| *c == SyntaxErrorCode::ChainedComparison));
+    // lossless: the formatter normalises the spaces and nothing else
+    let fmt = |src: &str| crate::format::format_module(&format!("mapping f : A\nf() = {src}\n"));
+    assert_eq!(
+        fmt("x in 1.0..2.0").as_deref(),
+        Some("mapping f : A\nf() = x in 1.0 .. 2.0\n")
+    );
+    assert_eq!(
+        fmt("all reading in readings:reading<limit").as_deref(),
+        Some("mapping f : A\nf() = all reading in readings: reading < limit\n")
+    );
+    // old call syntax is kept as written: never rewritten to the natural form
+    assert_eq!(
+        fmt("all(readings, reading => reading < limit)").as_deref(),
+        Some("mapping f : A\nf() = all(readings, reading => reading < limit)\n")
+    );
+    assert_eq!(
+        fmt("inRange(x, 1, 2)").as_deref(),
+        Some("mapping f : A\nf() = inRange(x, 1, 2)\n")
+    );
+}
+
+/// `x ?? d` is a default for a value that may be absent: it binds tighter
+/// than a range or a comparison and weaker than arithmetic, and
+/// associates to the right.
+#[test]
+fn coalesce_binds_between_comparison_and_arithmetic() {
+    assert_eq!(ok("x ?? 0"), "(x ?? 0)");
+    assert_eq!(ok("x ?? d + 1"), "(x ?? (d + 1))");
+    assert_eq!(ok("x ?? 0 < 1"), "((x ?? 0) < 1)");
+    assert_eq!(ok("x ?? 0 in lo .. hi"), "((x ?? 0) in (lo .. hi))");
+    assert_eq!(ok("x in a ?? 0 .. b"), "(x in ((a ?? 0) .. b))");
+    assert_eq!(ok("a ?? b ?? c"), "(a ?? (b ?? c))");
+    assert_eq!(ok("? ?? ?"), "(? ?? ?)");
+    assert_eq!(ok("-x ?? 1"), "((-x) ?? 1)");
+    assert_eq!(
+        crate::format::format_module("mapping f : A\nf() = x??0\n").as_deref(),
+        Some("mapping f : A\nf() = x ?? 0\n")
     );
 }
