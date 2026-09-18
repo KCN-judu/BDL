@@ -27,7 +27,7 @@
 //! (`solve_sound`, `solve_complete` are the formal warrant; the tests here
 //! are the production evidence).
 
-use crate::completion::{describe_representation, equation_documentation};
+use crate::completion::describe_representation;
 use crate::diagnostics::{lift_for_mapping, SemanticDiagnostic};
 use crate::QueryError;
 use bdl_check::pretty;
@@ -976,7 +976,20 @@ pub fn formula_slot(
         Some(t) => format!("expected {}", t.description),
         None => "expected: undetermined".into(),
     };
-    let dim = expected.as_ref().and_then(|t| t.dim);
+    // a literal's own unit pop-up switches the unit while keeping the
+    // quantity (18D): its candidates are the units of the literal's own
+    // dimension; an empty slot's are those of the expected dimension (18C)
+    let literal_dim = projection
+        .root
+        .as_ref()
+        .and_then(|r| r.find(node))
+        .and_then(|n| match &n.kind {
+            NodeKind::Quantity {
+                unit_id: Some(_), ..
+            } => n.actual.as_ref().and_then(|t| t.dim),
+            _ => None,
+        });
+    let dim = literal_dim.or(expected.as_ref().and_then(|t| t.dim));
     let units: Vec<UnitCandidate> = match dim {
         Some(d) => units::units_for(d)
             .into_iter()
@@ -1176,7 +1189,7 @@ fn equation_candidates(ir: &DesignIr, expected: Option<&TypeView>) -> Vec<Equati
             name: e.name.to_owned(),
             shape: e.shape(),
             insert: format!("{}({})", e.name, args.join(", ")),
-            summary: equation_documentation(e),
+            summary: e.summary.to_owned(),
         });
     }
     out

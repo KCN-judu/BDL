@@ -260,6 +260,17 @@ fn unit_candidates_are_exactly_the_registered_units_of_the_slots_dimension() {
             u.name
         );
     }
+    // a literal's own pop-up offers the units of *its* dimension — the
+    // switch keeps the quantity — even where the position expects another
+    host.set_definition_draft(lamp.dim_by_tilt, "Tilt + 90 mm");
+    let slot = formula_slot(&host.snapshot(), lamp.dim_by_tilt, "r.1").expect("slot");
+    // (a sum's sides must be the result: dimensionless, like Brightness)
+    assert_eq!(dim_of(&slot.expected), Some(Dim::ZERO));
+    assert!(
+        slot.units.iter().all(|u| u.measures == "a length"),
+        "{:?}",
+        slot.units
+    );
     // a length slot offers the length units, with inch and ft
     let ph = physics();
     let mut host = IdeHost::new(ph.snapshot.clone());

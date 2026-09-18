@@ -191,9 +191,20 @@ pb.DefinitionDraftAnalysis verdict({
   mappingId: Int64(dim),
   generation: Int64(generation),
   parseOk: parseOk,
-  analysis: pb.MappingAnalysis(id: Int64(dim), status: status),
+  // the verdict carries every finding as text; the projection places the
+  // same findings on nodes (one diagnostic, two projections)
+  analysis: pb.MappingAnalysis(
+    id: Int64(dim),
+    status: status,
+    diagnostics: projection.hasRoot() ? _findings(projection.root) : const [],
+  ),
   projection: projection,
 );
+
+List<pb.Diagnostic> _findings(pb.FormulaNode n) => [
+  ...n.diagnostics,
+  for (final c in n.children) ..._findings(c),
+];
 
 class Harness extends StatefulWidget {
   const Harness({super.key, required this.initial});
@@ -455,11 +466,14 @@ void main() {
       await t.tap(find.text('Explain'));
       await t.pump();
       expect(find.text('expected q[angle]'), findsOneWidget);
-      // the reference and equation candidates are rows
+      // the reference candidates are rows; the equations fold open
       expect(find.byKey(const ValueKey('ref-Tilt')), findsOneWidget);
+      expect(find.byKey(const ValueKey('eq-clamp')), findsNothing);
+      await t.tap(find.text('Equations (1)'));
+      await t.pump();
       expect(find.byKey(const ValueKey('eq-clamp')), findsOneWidget);
-      // the objection on the component
-      expect(find.text('This slot is empty; it expects an angle.'), findsOneWidget);
+      // the objection on the component: the diagnostic row under the field
+      expect(find.text('This slot is empty; it expects an angle.'), findsWidgets);
     });
 
     testWidgets('filling a slot with a number and a unit is one structured action', (t) async {

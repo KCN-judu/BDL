@@ -353,6 +353,23 @@ class Scene {
       );
       return;
     }
+    if (step['mode'] case final String mode) {
+      // Formula | Text: the definition editor's projection
+      final formula = mode == 'formula';
+      await act(FormulaModeChanged(formula), (s) => s.editor.composer.formulaMode == formula);
+      return;
+    }
+    if (step['slot'] case final Map<String, dynamic> d) {
+      // select a component of the Formula Composer and wait for what fits
+      final id = mapping(d['mapping'] as String);
+      final node = d['node'] as String;
+      await act(
+        FormulaNodeSelected(mappingId: id, nodeId: node),
+        (s) => s.editor.composer.slot?.nodeId == node,
+        why: 'the slot\'s candidates',
+      );
+      return;
+    }
     if (step['input'] case final Map<String, dynamic> i) {
       final id = mapping(i['mapping'] as String);
       final m = project.mappings.firstWhere((m) => m.id.toInt() == id);

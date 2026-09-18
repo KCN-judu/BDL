@@ -712,22 +712,19 @@ class _SlotPanelState extends State<_SlotPanel> {
         // 2. what to put here: a number (with its unit, 18C), a reference,
         //    an equation — or, on a component, an operator around it
         if (_isSlot) ...[
+          // a number: the coordinate, its unit (the compiler's list for the
+          // slot's dimension), Insert — the literal's construction (18B.1)
           Row(
             spacing: MacMetrics.gapTight,
             children: [
-              SizedBox(
-                width: MacMetrics.formLabelWidth,
-                child: Text('Number', style: small),
-              ),
-              SizedBox(
-                width: 72,
+              Expanded(
                 child: MacTextField(
                   key: const ValueKey('slot-number'),
                   controller: _number,
                   focusNode: _numberFocus,
                   autofocus: true,
                   monospace: true,
-                  hint: '0',
+                  hint: 'number',
                   onSubmitted: (_) => _insertNumber(),
                 ),
               ),
@@ -761,14 +758,20 @@ class _SlotPanelState extends State<_SlotPanel> {
           ],
           if (s != null && s.equations.isNotEmpty) ...[
             const SizedBox(height: MacMetrics.gap),
-            Text('Equations', style: small),
-            for (final e in s.equations)
-              _CandidateRow(
-                key: ValueKey('eq-${e.name}'),
-                label: e.shape,
-                detail: e.summary,
-                onTap: widget.pending ? null : () => _fill(e.insert),
-              ),
+            // the library is long: folded until asked for
+            MacDisclosure(
+              key: const ValueKey('slot-equations'),
+              title: 'Equations (${s.equations.length})',
+              children: [
+                for (final e in s.equations)
+                  _CandidateRow(
+                    key: ValueKey('eq-${e.name}'),
+                    label: e.shape,
+                    detail: e.summary,
+                    onTap: widget.pending ? null : () => _fill(e.insert),
+                  ),
+              ],
+            ),
           ],
         ] else ...[
           Wrap(
@@ -836,21 +839,8 @@ class _SlotPanelState extends State<_SlotPanel> {
               child: Text('This part is edited as text.', style: small),
             ),
         ],
-        // 3. the objections on this component, in the compiler's words
-        if (n != null && n.diagnostics.isNotEmpty) ...[
-          const SizedBox(height: MacMetrics.gap),
-          for (final d in n.diagnostics)
-            Text(
-              d.message,
-              key: ValueKey('node-diag-${d.code}'),
-              style: TextStyle(
-                fontSize: 11,
-                color: d.severity == pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR
-                    ? t.error
-                    : t.open,
-              ),
-            ),
-        ],
+        // the objections on this component are the red underline on it
+        // and the diagnostic rows under the field: one finding, two places
       ],
     );
   }
