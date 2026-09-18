@@ -125,6 +125,8 @@ pub fn completion_item(c: &SemanticCompletion, index: &LineIndex) -> CompletionI
         // class with the library named beside it, not a snippet.
         CompletionKind::Template => CompletionItemKind::CLASS,
         CompletionKind::Equation => CompletionItemKind::FUNCTION,
+        // a binder's or rule's local: a variable of the formula itself
+        CompletionKind::Local => CompletionItemKind::VARIABLE,
     };
     CompletionItem {
         label: c.label.clone(),

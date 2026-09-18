@@ -222,6 +222,11 @@ pub fn formula_input_names(
             continue;
         };
         let Some(r) = name.name() else { continue };
+        // a binder's or rule's local is the formula's own, whatever the
+        // design calls something
+        if name.local_binding().is_some() {
+            continue;
+        }
         if let Lookup::Input(i) = env.resolve(design, &r.as_str()) {
             if let Some(c) = inputs.get(i) {
                 out.push(FormulaInputName {

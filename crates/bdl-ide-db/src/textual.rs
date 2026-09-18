@@ -407,6 +407,10 @@ impl Binder<'_> {
             let Some(name_ref) = name.name() else {
                 continue;
             };
+            // a local of a binder, rule or pattern is never the concept
+            if name.local_binding().is_some() {
+                continue;
+            }
             let text = name_ref.as_str();
             if let bdl_elab::names::Lookup::Input(i) = env.resolve(self.design, &text) {
                 if let Some(c) = inputs.get(i) {

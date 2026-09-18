@@ -333,6 +333,9 @@ fn formula_occurrences(
             continue;
         };
         let Some(r) = name.name() else { continue };
+        if name.local_binding().is_some() {
+            continue;
+        }
         let target = match env.resolve(design, &r.as_str()) {
             Lookup::Input(i) => {
                 if by_parameter.get(i).copied().unwrap_or(false) {

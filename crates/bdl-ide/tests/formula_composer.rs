@@ -112,7 +112,7 @@ fn the_projection_is_the_surface_tree_with_types_expected_types_and_ranges() {
     assert_eq!(quotient.text, "Tilt / (90 deg)");
     let tilt = node(&p, "r.0.0");
     assert!(
-        matches!(&tilt.kind, NodeKind::Reference { name, entity: Some(EntityRef::Concept(c)) } if name == "Tilt" && *c == lamp.tilt)
+        matches!(&tilt.kind, NodeKind::Reference { name, entity: Some(EntityRef::Concept(c)), .. } if name == "Tilt" && *c == lamp.tilt)
     );
     assert_eq!(
         tilt.actual.as_ref().map(|t| t.kind),
@@ -1238,4 +1238,440 @@ fn composer_latency_measurement() {
         );
         let _ = s;
     }
+}
+
+// ---- P11: the natural forms in the projection ----------------------------------------
+
+struct Readings {
+    snapshot: ProjectSnapshot,
+    angles_ok: DeclId,
+    normalized: DeclId,
+    tilt: SemanticId,
+}
+
+/// `Tilt : q angle`, `Angles : List<q angle>`, `Ok : Bool`, `Levels :
+/// List<q0>`; `angles : Angles` (a relationship without inputs),
+/// `anglesOk : Angles -> Ok`, `normalized : Angles -> Levels`, `limit : Tilt`.
+fn readings() -> Readings {
+    let s = ProjectSnapshot::new(bdl_model::surface::Design::empty("readings"));
+    let mk = |s: &ProjectSnapshot, name: &str, rep: Representation| {
+        let a = bdl_model::edit::apply_edit(s, &concept(name, Some(rep))).expect("concept");
+        (a.snapshot, a.outcome.created_concept.expect("id"))
+    };
+    let angle = Representation::Quantity { dim: Dim::ANGLE };
+    let (s, tilt) = mk(&s, "Tilt", angle.clone());
+    let (s, angles) = mk(&s, "Angles", Representation::list(angle));
+    let (s, ok) = mk(&s, "Ok", Representation::Boolean);
+    let (s, levels) = mk(
+        &s,
+        "Levels",
+        Representation::list(Representation::Quantity { dim: Dim::ZERO }),
+    );
+    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<SemanticId>, out: SemanticId| {
+        let a = bdl_model::edit::apply_edit(s, &mapping(name, inputs, out)).expect("mapping");
+        (a.snapshot, a.outcome.created_mapping.expect("id"))
+    };
+    let (s, _angles) = m(&s, "angles", vec![], angles);
+    let (s, _limit) = m(&s, "limit", vec![], tilt);
+    let (s, angles_ok) = m(&s, "anglesOk", vec![angles], ok);
+    let (s, normalized) = m(&s, "normalized", vec![angles], levels);
+    Readings {
+        snapshot: s,
+        angles_ok,
+        normalized,
+        tilt,
+    }
+}
+
+#[test]
+fn a_binder_projects_structurally_with_a_local_and_its_element_type() {
+    let r = readings();
+    let mut host = IdeHost::new(r.snapshot.clone());
+    host.set_definition_draft(
+        r.angles_ok,
+        "all angle in Angles: angle in -45 deg .. 45 deg",
+    );
+    let snap = host.snapshot();
+    let p = formula_projection(&snap, r.angles_ok).expect("projection");
+    assert!(p.parse_ok && p.complete, "{p:#?}");
+    let root = node(&p, "r");
+    assert!(
+        matches!(&root.kind, NodeKind::Binder { form, param, param_type: Some(t) }
+            if form == "all" && param == "angle" && t.dim == Some(Dim::ANGLE)),
+        "{root:#?}"
+    );
+    assert_eq!(root.children.len(), 2);
+    // the collection is the input, a collection of angles
+    let coll = node(&p, "r.0");
+    assert!(matches!(
+        &coll.kind,
+        NodeKind::Reference {
+            local: false,
+            entity: Some(_),
+            ..
+        }
+    ));
+    assert_eq!(
+        coll.actual
+            .as_ref()
+            .and_then(|t| t.element.as_ref())
+            .and_then(|e| e.dim),
+        Some(Dim::ANGLE)
+    );
+    // the body is a membership test in a range; its subject is the local
+    let body = node(&p, "r.1");
+    assert!(matches!(&body.kind, NodeKind::Compare { op } if op == "in"));
+    assert_eq!(dim_of(&body.expected), None);
+    assert!(
+        body.because.contains("all asks a question of every angle"),
+        "{}",
+        body.because
+    );
+    let subject = node(&p, "r.1.0");
+    assert!(
+        matches!(&subject.kind, NodeKind::Reference { name, local: true, entity: None } if name == "angle")
+    );
+    assert_eq!(dim_of(&subject.actual), Some(Dim::ANGLE));
+    let range = node(&p, "r.1.1");
+    assert!(matches!(range.kind, NodeKind::Range));
+    assert_eq!(range.children.len(), 2);
+    // both ends expect the subject's kind
+    for id in ["r.1.1.0", "r.1.1.1"] {
+        let end = node(&p, id);
+        assert_eq!(dim_of(&end.expected), Some(Dim::ANGLE), "{id}: {end:#?}");
+        assert!(
+            end.because.contains("comparable with angle"),
+            "{}",
+            end.because
+        );
+    }
+    assert!(matches!(&node(&p, "r.1.1.0").kind, NodeKind::Unary { .. }));
+    assert!(matches!(
+        &node(&p, "r.1.1.1").kind,
+        NodeKind::Quantity { .. }
+    ));
+    // the slot query on an endpoint offers angle units, and the local as a
+    // reference is not a design entity
+    host.set_definition_draft(r.angles_ok, "all angle in Angles: angle in ? .. ?");
+    let snap = host.snapshot();
+    let slot = formula_slot(&snap, r.angles_ok, "r.1.1.0").expect("slot");
+    assert_eq!(dim_of(&slot.expected), Some(Dim::ANGLE));
+    assert_eq!(
+        slot.units
+            .iter()
+            .map(|u| u.symbol.as_str())
+            .collect::<Vec<_>>(),
+        vec!["rad", "deg", "turn"]
+    );
+    let slot = formula_slot(&snap, r.angles_ok, "r.1.1.1").expect("slot");
+    assert_eq!(dim_of(&slot.expected), Some(Dim::ANGLE));
+    assert!(slot.references.iter().any(|c| c.label == "limit"));
+}
+
+#[test]
+fn binder_bodies_expect_bool_or_the_element_of_the_result() {
+    let r = readings();
+    let mut host = IdeHost::new(r.snapshot.clone());
+    host.set_definition_draft(r.angles_ok, "any angle in Angles: ?");
+    let snap = host.snapshot();
+    let slot = formula_slot(&snap, r.angles_ok, "r.1").expect("slot");
+    assert!(matches!(
+        slot.expected.as_ref().map(|t| t.kind),
+        Some(TypeKindView::Boolean)
+    ));
+    assert!(
+        slot.explanation.contains("true or false"),
+        "{}",
+        slot.explanation
+    );
+    // filter: Bool body, and the result is the collection itself
+    host.set_definition_draft(r.normalized, "filter angle in Angles: ?");
+    let slot = formula_slot(&host.snapshot(), r.normalized, "r.1").expect("slot");
+    assert!(matches!(
+        slot.expected.as_ref().map(|t| t.kind),
+        Some(TypeKindView::Boolean)
+    ));
+    // map: the body is one element of what the mapping produces (Levels
+    // is a collection of dimensionless quantities)
+    host.set_definition_draft(r.normalized, "map angle in Angles: ?");
+    let slot = formula_slot(&host.snapshot(), r.normalized, "r.1").expect("slot");
+    assert_eq!(dim_of(&slot.expected), Some(Dim::ZERO), "{slot:#?}");
+    assert!(
+        slot.explanation.contains("map makes a collection"),
+        "{}",
+        slot.explanation
+    );
+    // the local is offered in the body by the slot's references? no — the
+    // slot's references are the design's; the local appears through the
+    // projection's `local` reference nodes and text completion
+    let p = formula_projection(&host.snapshot(), r.normalized).expect("projection");
+    let root = node(&p, "r");
+    assert!(
+        matches!(&root.kind, NodeKind::Binder { form, param_type: Some(t), .. }
+        if form == "map" && t.dim == Some(Dim::ANGLE))
+    );
+    // a product of two unknowns stays insufficient inside a binder
+    host.set_definition_draft(r.normalized, "map angle in Angles: ? * ?");
+    let slot = formula_slot(&host.snapshot(), r.normalized, "r.1.0").expect("slot");
+    assert!(slot.insufficient);
+}
+
+#[test]
+fn wrapping_in_a_binder_and_inserting_a_range_are_text_edits_with_fresh_names() {
+    let r = readings();
+    let mut host = IdeHost::new(r.snapshot.clone());
+    let m = r.angles_ok;
+    // wrap the input in `all`: the local is the collection's singular
+    let res = composed(
+        &mut host,
+        m,
+        "Angles",
+        ComposeOp::Binder {
+            node: "r".into(),
+            form: "all".into(),
+        },
+    );
+    assert_eq!(res.source, "all angle in Angles: ?");
+    assert_eq!(res.select.as_deref(), Some("r.1"));
+    // the relationship `angles` is taken: `angle` is still free
+    let res = composed(
+        &mut host,
+        m,
+        "angles",
+        ComposeOp::Binder {
+            node: "r".into(),
+            form: "any".into(),
+        },
+    );
+    assert_eq!(res.source, "any angle in angles: ?");
+    // a collection that is not a plural name gets `item`; nested, `item2`
+    let res = composed(
+        &mut host,
+        m,
+        "map x in Angles: ?",
+        ComposeOp::Binder {
+            node: "r.1".into(),
+            form: "filter".into(),
+        },
+    );
+    assert_eq!(res.source, "map x in Angles: filter item in ?: ?");
+    let res = composed(
+        &mut host,
+        m,
+        "all item in Angles: any item in Angles: ?",
+        ComposeOp::Binder {
+            node: "r.1.1".into(),
+            form: "all".into(),
+        },
+    );
+    assert_eq!(
+        res.source,
+        "all item in Angles: any item in Angles: all item2 in ?: ?"
+    );
+    // a fresh name never captures: `limit` is a relationship, so a
+    // collection called `limits` gives `item`
+    let res = composed(
+        &mut host,
+        m,
+        "limits",
+        ComposeOp::Binder {
+            node: "r".into(),
+            form: "all".into(),
+        },
+    );
+    assert_eq!(res.source, "all item in limits: ?");
+    // in the collection position a binder is parenthesised; in the body not
+    let res = composed(
+        &mut host,
+        m,
+        "all angle in Angles: angle < limit",
+        ComposeOp::Binder {
+            node: "r.0".into(),
+            form: "filter".into(),
+        },
+    );
+    assert_eq!(
+        res.source,
+        "all angle in (filter item in Angles: ?): angle < limit"
+    );
+    // the range: `node in ? .. ?`, selecting the low end
+    let res = composed(
+        &mut host,
+        m,
+        "all angle in Angles: angle",
+        ComposeOp::Range { node: "r.1".into() },
+    );
+    assert_eq!(res.source, "all angle in Angles: angle in ? .. ?");
+    assert_eq!(res.select.as_deref(), Some("r.1.1.0"));
+    // a sum as the subject needs no parentheses; a comparison does
+    let res = composed(
+        &mut host,
+        m,
+        "limit + 1 deg",
+        ComposeOp::Range { node: "r".into() },
+    );
+    assert_eq!(res.source, "limit + 1 deg in ? .. ?");
+    let res = composed(
+        &mut host,
+        m,
+        "limit < 1 deg",
+        ComposeOp::Range { node: "r".into() },
+    );
+    assert_eq!(res.source, "(limit < 1 deg) in ? .. ?");
+    // a binder as an operand is parenthesised by the operator action
+    let res = composed(
+        &mut host,
+        m,
+        "all angle in Angles: angle < limit",
+        ComposeOp::Operator {
+            node: "r".into(),
+            op: "&&".into(),
+            before: false,
+        },
+    );
+    assert_eq!(res.source, "(all angle in Angles: angle < limit) && ?");
+    // an unknown form is refused
+    assert!(matches!(
+        compose(
+            &host.snapshot(),
+            m,
+            "Angles",
+            &ComposeOp::Binder {
+                node: "r".into(),
+                form: "each".into()
+            }
+        ),
+        Err(QueryError::NotApplicable { .. })
+    ));
+    let _ = r.tilt;
+}
+
+#[test]
+fn natural_form_mistakes_sit_on_their_nodes_in_the_projection() {
+    let r = readings();
+    let mut host = IdeHost::new(r.snapshot.clone());
+    host.set_definition_draft(r.angles_ok, "all x in 5: true");
+    let p = formula_projection(&host.snapshot(), r.angles_ok).expect("projection");
+    let coll = node(&p, "r.0");
+    assert!(
+        coll.diagnostics
+            .iter()
+            .any(|d| d.code == "formula.binder.not_a_collection"),
+        "{p:#?}"
+    );
+    host.set_definition_draft(r.angles_ok, "all angle in Angles: angle in 2 s .. 3 s");
+    let p = formula_projection(&host.snapshot(), r.angles_ok).expect("projection");
+    let lo = node(&p, "r.1.1.0");
+    assert!(
+        lo.diagnostics
+            .iter()
+            .any(|d| d.code == "formula.range.endpoint"
+                && d.message == "This range endpoint must be an angle."),
+        "{p:#?}"
+    );
+    // a local outside its body is unknown, and the fix names the locals
+    // in scope where one exists
+    host.set_definition_draft(r.angles_ok, "(all angle in Angles: true) && angle < limit");
+    let p = formula_projection(&host.snapshot(), r.angles_ok).expect("projection");
+    let stray = node(&p, "r.1.0");
+    assert!(matches!(
+        &stray.kind,
+        NodeKind::Reference { local: false, .. }
+    ));
+    assert!(stray
+        .diagnostics
+        .iter()
+        .any(|d| d.code == "formula.name.unknown"));
+    host.set_definition_draft(r.angles_ok, "all angle in Angles: angel < limit");
+    let p = formula_projection(&host.snapshot(), r.angles_ok).expect("projection");
+    let typo = node(&p, "r.1.0");
+    let d = typo
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "formula.name.unknown")
+        .expect("unknown");
+    assert!(
+        d.fixes.iter().any(|f| f.contains("Locals in scope: angle")),
+        "{:?}",
+        d.fixes
+    );
+}
+
+#[test]
+fn completion_offers_binder_locals_in_bodies_and_binder_templates_over_collections() {
+    let r = readings();
+    let mut host = IdeHost::new(r.snapshot.clone());
+    let src = "all angle in Angles: an";
+    host.set_definition_draft(r.angles_ok, src);
+    let snap = host.snapshot();
+    let items = completion(
+        &snap,
+        &CompletionContext::Formula {
+            mapping: r.angles_ok,
+            offset: src.len() as u32,
+        },
+    );
+    let local = items
+        .iter()
+        .find(|i| i.kind == CompletionKind::Local)
+        .expect("the local");
+    assert_eq!(local.label, "angle");
+    assert!(items
+        .iter()
+        .all(|i| i.kind != CompletionKind::Local || i.label == "angle"));
+    assert!(
+        local.relevance
+            > items
+                .iter()
+                .filter(|i| i.label == "angles")
+                .map(|i| i.relevance)
+                .max()
+                .unwrap_or(0)
+    );
+    // not in the collection position
+    let src = "all angle in an";
+    host.set_definition_draft(r.angles_ok, src);
+    let items = completion(
+        &host.snapshot(),
+        &CompletionContext::Formula {
+            mapping: r.angles_ok,
+            offset: src.len() as u32,
+        },
+    );
+    assert!(
+        items.iter().all(|i| i.kind != CompletionKind::Local),
+        "{items:#?}"
+    );
+    // the template, with the one collection in scope filled in when
+    // there is exactly one (here there are two: the input and `angles`)
+    let src = "al";
+    host.set_definition_draft(r.angles_ok, src);
+    let items = completion(
+        &host.snapshot(),
+        &CompletionContext::Formula {
+            mapping: r.angles_ok,
+            offset: 2,
+        },
+    );
+    let t = items
+        .iter()
+        .find(|i| i.kind == CompletionKind::Keyword && i.label.starts_with("all "))
+        .expect("template");
+    assert_eq!(t.label, "all item in collection: …");
+    assert_eq!(t.insert, "all item in ");
+    // a mapping without a collection in sight offers no template
+    let lamp = lamp();
+    let mut host2 = IdeHost::new(lamp.snapshot.clone());
+    host2.set_definition_draft(lamp.dim_by_tilt, "al");
+    let items = completion(
+        &host2.snapshot(),
+        &CompletionContext::Formula {
+            mapping: lamp.dim_by_tilt,
+            offset: 2,
+        },
+    );
+    assert!(
+        items.iter().all(|i| !i.label.starts_with("all ")),
+        "{items:#?}"
+    );
 }

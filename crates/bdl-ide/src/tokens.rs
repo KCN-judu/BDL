@@ -6,6 +6,7 @@
 //! other means.
 
 use bdl_ide_db::{AnalysisSnapshot, DocumentId, EntityKind, EntityRole, TextRange};
+use bdl_syntax::ast::AstNode;
 use bdl_syntax::SyntaxKind;
 use serde::{Deserialize, Serialize};
 
@@ -104,6 +105,40 @@ pub fn semantic_tokens(snapshot: &AnalysisSnapshot, document: DocumentId) -> Vec
                 // parameter list; a constructor under `ConstructorPattern`.
                 match t.parent().map(|p| p.kind()) {
                     Some(SyntaxKind::UnitSuffix) => TokenKind::Unit,
+                    // `all x in xs: …`: the word is a construct here (and
+                    // an ordinary name anywhere else); the local it
+                    // declares is a parameter
+                    Some(SyntaxKind::BinderExpr) => TokenKind::Keyword,
+                    Some(SyntaxKind::Name)
+                        if t.parent()
+                            .and_then(|p| p.parent())
+                            .is_some_and(|g| g.kind() == SyntaxKind::BinderExpr) =>
+                    {
+                        push(
+                            &mut out,
+                            SemanticToken {
+                                range: TextRange::new(
+                                    t.text_range().start().into(),
+                                    t.text_range().end().into(),
+                                ),
+                                kind: TokenKind::Parameter,
+                                modifiers: TokenModifiers {
+                                    declaration: true,
+                                    unresolved: false,
+                                },
+                            },
+                        );
+                        continue;
+                    }
+                    // a use of a local — of a binder, a rule, a pattern
+                    Some(SyntaxKind::NameRef)
+                        if t.parent()
+                            .and_then(|p| p.parent())
+                            .and_then(bdl_syntax::ast::NameExpr::cast)
+                            .is_some_and(|n| n.local_binding().is_some()) =>
+                    {
+                        TokenKind::Parameter
+                    }
                     Some(SyntaxKind::Name)
                         if t.parent().and_then(|p| p.parent()).is_some_and(|g| {
                             matches!(

@@ -12,8 +12,8 @@
 
 use bdl_check::pretty;
 use bdl_ide_db::{AnalysisSnapshot, DocumentId, EntityKind, EntityRef, EntityRole, TextRange};
-use bdl_model::surface::{Definition, Representation};
-use bdl_model::{DeclId, Dim};
+use bdl_model::surface::{Definition, Design, Representation};
+use bdl_model::{DeclId, Dim, SemanticId};
 use serde::{Deserialize, Serialize};
 
 /// Where completion is asked.
@@ -46,6 +46,9 @@ pub enum CompletionKind {
     /// An equation of the library (`min`, `any`, `clamp`): applied to
     /// values, never a value; inlined at analysis time.
     Equation,
+    /// A local of the formula in scope here: a binder's or rule's
+    /// parameter, a pattern's name (P11).
+    Local,
 }
 
 /// What the compiler expects at the completion point, when it knows.
@@ -373,6 +376,86 @@ fn formula_completions(
         }
     }
 
+    // The locals in scope at the point: a binder's element inside its
+    // body, a rule's parameters, a pattern's names.  They shadow the
+    // design, so they rank above its names.
+    if !unit_position {
+        for local in locals_in_scope(source, offset) {
+            if !matches(&local) {
+                continue;
+            }
+            out.push(SemanticCompletion {
+                label: local.clone(),
+                kind: CompletionKind::Local,
+                entity: None,
+                resulting_type: None,
+                replace,
+                insert: local,
+                relevance: 70,
+                documentation: Some("local of this formula: one element, or a rule's input".into()),
+                template: None,
+            });
+        }
+    }
+
+    // The natural forms, when there is a collection to read: `all reading
+    // in readings: …` — with the one collection in scope filled in when
+    // there is exactly one, and a readable local name.
+    if !unit_position {
+        let collections: Vec<String> = visible_collections(design, block, scope);
+        if !collections.is_empty() {
+            let coll = if collections.len() == 1 {
+                collections[0].clone()
+            } else {
+                String::new()
+            };
+            let taken: Vec<String> = design.mappings.values().map(|m| m.name.clone()).collect();
+            let local = crate::formula::fresh_local_name(&coll, &taken);
+            for (word, doc, ty) in [
+                (
+                    "all",
+                    "whether every element satisfies the condition",
+                    Some(ExpectedType::Boolean),
+                ),
+                (
+                    "any",
+                    "whether some element satisfies the condition",
+                    Some(ExpectedType::Boolean),
+                ),
+                ("map", "the collection with every element transformed", None),
+                ("filter", "the elements that satisfy the condition", None),
+            ] {
+                if !matches(word) {
+                    continue;
+                }
+                let relevance = match &ty {
+                    Some(t) => 30 + rank(&expected, t) / 3,
+                    None => 30,
+                };
+                out.push(SemanticCompletion {
+                    label: format!(
+                        "{word} {local} in {}: …",
+                        if coll.is_empty() { "collection" } else { &coll }
+                    ),
+                    kind: CompletionKind::Keyword,
+                    entity: None,
+                    resulting_type: ty.map(|t| t.describe()),
+                    replace,
+                    insert: format!(
+                        "{word} {local} in {coll}{}",
+                        if coll.is_empty() { "" } else { ": " }
+                    ),
+                    relevance,
+                    documentation: Some(format!(
+                        "{doc}: `{word} {local} in {}: …` reads each {local} of the collection",
+                        if coll.is_empty() { "xs" } else { &coll }
+                    )),
+                    template: None,
+                });
+            }
+        }
+    }
+
     // The equation library, in the designer's words: `min(a, b)` — the
     // smaller of two values of the same ordered kind.  A relationship of
     // the design with the same name is offered above and wins.
@@ -441,6 +524,147 @@ fn formula_completions(
                 documentation: None,
                 template: None,
             });
+        }
+    }
+    out
+}
+
+/// The locals a name at `offset` could be: parameters of the binders and
+/// rules enclosing the point (body only for a binder), pattern names of
+/// enclosing match arms, `let`s earlier in enclosing blocks — innermost
+/// first, each name once.
+pub(crate) fn locals_in_scope(source: &str, offset: u32) -> Vec<String> {
+    use bdl_syntax::ast::{self, AstNode};
+    use bdl_syntax::SyntaxKind;
+    let parse = bdl_syntax::parse_formula(source);
+    let root = parse.syntax_node();
+    let at = offset.min(source.len() as u32);
+    let holds = |n: &bdl_syntax::SyntaxNode| {
+        let r = n.text_range();
+        u32::from(r.start()) <= at && at <= u32::from(r.end())
+    };
+    // the innermost node whose range holds the offset (a node ending at
+    // the offset counts, so a name being typed sees its scope)
+    let mut node = root.descendants().filter(holds).last();
+    let mut out: Vec<String> = Vec::new();
+    let mut push = |n: String| {
+        if !n.is_empty() && !out.contains(&n) {
+            out.push(n);
+        }
+    };
+    while let Some(n) = node {
+        match n.kind() {
+            SyntaxKind::BinderExpr => {
+                if let Some(b) = ast::BinderExpr::cast(n.clone()) {
+                    let in_body = match b.body() {
+                        Some(body) => u32::from(body.syntax().text_range().start()) <= at,
+                        // no body yet: right after the colon counts
+                        None => b
+                            .syntax()
+                            .children_with_tokens()
+                            .filter_map(|el| el.into_token())
+                            .any(|t| {
+                                t.kind() == SyntaxKind::Colon
+                                    && u32::from(t.text_range().end()) <= at
+                            }),
+                    };
+                    if in_body {
+                        if let Some(p) = b.param() {
+                            push(p.as_str());
+                        }
+                    }
+                }
+            }
+            SyntaxKind::LambdaExpr => {
+                if let Some(l) = ast::LambdaExpr::cast(n.clone()) {
+                    for p in l.params() {
+                        push(p.as_str());
+                    }
+                }
+            }
+            SyntaxKind::MatchArm => {
+                if let Some(a) = ast::MatchArm::cast(n.clone()) {
+                    let in_body = a
+                        .body()
+                        .is_some_and(|body| u32::from(body.syntax().text_range().start()) <= at);
+                    if in_body {
+                        if let Some(p) = a.pattern() {
+                            for ip in p.syntax().descendants().filter_map(ast::IdentPattern::cast) {
+                                if let Some(name) = ip.name() {
+                                    push(name.as_str());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            SyntaxKind::BlockExpr => {
+                if let Some(b) = ast::BlockExpr::cast(n.clone()) {
+                    let earlier: Vec<ast::LetStmt> = b
+                        .lets()
+                        .filter(|l| u32::from(l.syntax().text_range().end()) <= at)
+                        .collect();
+                    for l in earlier.into_iter().rev() {
+                        if let Some(p) = l.pattern() {
+                            for ip in p.syntax().descendants().filter_map(ast::IdentPattern::cast) {
+                                if let Some(name) = ip.name() {
+                                    push(name.as_str());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        node = n.parent();
+    }
+    out
+}
+
+/// The collections a formula can read by name: inputs and relationships
+/// without inputs whose representation is a list, by the spelling the
+/// body uses.
+fn visible_collections(
+    design: &Design,
+    block: &bdl_model::surface::MappingBlock,
+    scope: Option<&bdl_model::surface::FormulaScope>,
+) -> Vec<String> {
+    let is_list = |c: &SemanticId| {
+        design
+            .concepts
+            .get(c)
+            .and_then(|c| c.representation.as_ref())
+            .is_some_and(|r| matches!(r, Representation::List { .. }))
+    };
+    let mut out = Vec::new();
+    for (i, c) in block.signature.inputs.iter().enumerate() {
+        if !is_list(c) {
+            continue;
+        }
+        let name = scope
+            .and_then(|s| s.inputs.get(i).cloned())
+            .or_else(|| block.parameters.get(i).filter(|p| !p.is_empty()).cloned())
+            .or_else(|| design.concepts.get(c).map(|c| c.name.clone()));
+        if let Some(n) = name {
+            out.push(n);
+        }
+    }
+    let visible: Vec<(String, &bdl_model::surface::MappingBlock)> = match scope {
+        Some(s) => s
+            .mappings
+            .iter()
+            .filter_map(|(name, id)| design.mappings.get(id).map(|m| (name.clone(), m)))
+            .collect(),
+        None => design
+            .mappings
+            .values()
+            .map(|m| (m.name.clone(), m))
+            .collect(),
+    };
+    for (name, m) in visible {
+        if m.id != block.id && m.signature.inputs.is_empty() && is_list(&m.signature.output) {
+            out.push(name);
         }
     }
     out

@@ -65,6 +65,10 @@ pub struct TypeView {
     /// concept here.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub nominal: bool,
+    /// For a collection: what one element is (a binder's local, a `map`
+    /// body's result).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub element: Option<Box<TypeView>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -86,6 +90,7 @@ impl TypeView {
             dim: Some(dim),
             concept: None,
             nominal: false,
+            element: None,
         }
     }
     fn boolean() -> TypeView {
@@ -95,6 +100,7 @@ impl TypeView {
             dim: None,
             concept: None,
             nominal: false,
+            element: None,
         }
     }
     fn count() -> TypeView {
@@ -104,6 +110,7 @@ impl TypeView {
             dim: None,
             concept: None,
             nominal: false,
+            element: None,
         }
     }
     fn of_ty(ir: &DesignIr, design: &Design, t: &Ty) -> TypeView {
@@ -127,14 +134,58 @@ impl TypeView {
                     concept: Some(*id),
                     // a closed concept type is a concept value: nominal
                     nominal: true,
+                    // a concept over a collection: its elements are the
+                    // representation's, plain (a binder's local)
+                    element: match ir.representation_of(*id) {
+                        Some(Ty::List { elem }) => {
+                            Some(Box::new(TypeView::of_ty(ir, design, elem)))
+                        }
+                        _ => None,
+                    },
                 }
             }
+            Ty::List { elem } => TypeView {
+                description: format!(
+                    "a collection of {}",
+                    plural_of(&TypeView::of_ty(ir, design, elem))
+                ),
+                kind: TypeKindView::Structured,
+                dim: None,
+                concept: None,
+                nominal: false,
+                element: Some(Box::new(TypeView::of_ty(ir, design, elem))),
+            },
             other => TypeView {
                 description: pretty::kernel(other),
                 kind: TypeKindView::Structured,
                 dim: None,
                 concept: None,
                 nominal: false,
+                element: None,
+            },
+        }
+    }
+    /// A plain representation (no concept) as a view.
+    fn of_representation_value(r: &Representation) -> TypeView {
+        match r {
+            Representation::Quantity { dim } => TypeView::quantity(*dim),
+            Representation::Boolean => TypeView::boolean(),
+            Representation::Count => TypeView::count(),
+            Representation::List { element } => TypeView {
+                description: describe_representation(r),
+                kind: TypeKindView::Structured,
+                dim: None,
+                concept: None,
+                nominal: false,
+                element: Some(Box::new(TypeView::of_representation_value(element))),
+            },
+            other => TypeView {
+                description: describe_representation(other),
+                kind: TypeKindView::Structured,
+                dim: None,
+                concept: None,
+                nominal: false,
+                element: None,
             },
         }
     }
@@ -148,6 +199,7 @@ impl TypeView {
                 dim: Some(*dim),
                 concept: Some(concept),
                 nominal: false,
+                element: None,
             },
             Representation::Boolean => TypeView {
                 description: format!("a {} (true or false)", c.name),
@@ -155,6 +207,7 @@ impl TypeView {
                 dim: None,
                 concept: Some(concept),
                 nominal: false,
+                element: None,
             },
             Representation::Count => TypeView {
                 description: format!("a {} (a count)", c.name),
@@ -162,6 +215,15 @@ impl TypeView {
                 dim: None,
                 concept: Some(concept),
                 nominal: false,
+                element: None,
+            },
+            Representation::List { element } => TypeView {
+                description: format!("a {} ({})", c.name, describe_representation(rep)),
+                kind: TypeKindView::Concept,
+                dim: None,
+                concept: Some(concept),
+                nominal: false,
+                element: Some(Box::new(TypeView::of_representation_value(element))),
             },
             other => TypeView {
                 description: format!("a {} ({})", c.name, describe_representation(other)),
@@ -169,6 +231,7 @@ impl TypeView {
                 dim: None,
                 concept: Some(concept),
                 nominal: false,
+                element: None,
             },
         })
         .inspect(|_| {
@@ -186,7 +249,22 @@ pub enum NodeKind {
         name: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         entity: Option<EntityRef>,
+        /// Bound by an enclosing binder (`all x in xs: …`) or rule: a
+        /// local of the formula, not an entity of the design.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        local: bool,
     },
+    /// `all x in xs: body` and its siblings; children: the collection,
+    /// the body.  `param` is the local the body reads.
+    Binder {
+        form: String,
+        param: String,
+        /// What the local is: one element of the collection.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        param_type: Option<TypeView>,
+    },
+    /// `lo .. hi`; children: the two ends.  Meaningful after `in`.
+    Range,
     /// A number with no unit, as spelled.
     Number {
         text: String,
@@ -386,6 +464,7 @@ pub fn formula_projection(
             block,
             source: &source,
             types: &types,
+            locals: Vec::new(),
         };
         let mut node = b.node(surface, "r".into());
         b.solve(&mut node, result.as_ref(), "".into());
@@ -443,6 +522,8 @@ struct Builder<'a> {
     block: &'a MappingBlock,
     source: &'a str,
     types: &'a BTreeMap<(u32, u32), &'a TypeTrace>,
+    /// The binder locals in scope while building, innermost last.
+    locals: Vec<String>,
 }
 
 fn binary_symbol(op: BinaryOp) -> (&'static str, bool) {
@@ -460,6 +541,7 @@ fn binary_symbol(op: BinaryOp) -> (&'static str, bool) {
         BinaryOp::And => ("&&", false),
         BinaryOp::Or => ("||", false),
         BinaryOp::In => ("in", false),
+        BinaryOp::Coalesce => ("??", false),
     }
 }
 
@@ -481,6 +563,7 @@ impl Builder<'_> {
                 dim: None,
                 concept: None,
                 nominal: false,
+                element: None,
             },
         })
     }
@@ -520,12 +603,47 @@ impl Builder<'_> {
         let child = |b: &mut Self, c: &SurfaceExpr, i: usize| b.node(c, format!("{id}.{i}"));
         let (kind, children) = match &e.kind {
             ExprKind::Hole => (NodeKind::Slot, Vec::new()),
-            ExprKind::Name(name) => (
-                NodeKind::Reference {
-                    name: name.clone(),
-                    entity: self.reference_entity(name),
-                },
-                Vec::new(),
+            ExprKind::Name(name) => {
+                let local = self.locals.iter().any(|l| l == name);
+                (
+                    NodeKind::Reference {
+                        name: name.clone(),
+                        entity: if local {
+                            None
+                        } else {
+                            self.reference_entity(name)
+                        },
+                        local,
+                    },
+                    Vec::new(),
+                )
+            }
+            ExprKind::Binder {
+                form,
+                param,
+                collection,
+                body,
+            } => {
+                let coll = child(self, collection, 0);
+                let param_type = coll
+                    .actual
+                    .as_ref()
+                    .and_then(|t| t.element.as_deref().cloned());
+                self.locals.push(param.name.clone());
+                let body_node = child(self, body, 1);
+                self.locals.pop();
+                (
+                    NodeKind::Binder {
+                        form: form.word().into(),
+                        param: param.name.clone(),
+                        param_type,
+                    },
+                    vec![coll, body_node],
+                )
+            }
+            ExprKind::Range { lo, hi } => (
+                NodeKind::Range,
+                vec![child(self, lo, 0), child(self, hi, 1)],
             ),
             ExprKind::Number { literal, unit } => (
                 match unit {
@@ -738,8 +856,35 @@ impl Builder<'_> {
                         Some(TypeView::boolean()),
                         "both sides of a logical operator are true or false".to_string(),
                     )
+                } else if op == "??" {
+                    let why = match expected {
+                        Some(t) => format!(
+                            "`??` gives {} or, when it is absent, the default",
+                            t.description
+                        ),
+                        None => String::new(),
+                    };
+                    (None, expected.cloned(), why)
                 } else if op == "in" {
-                    (None, None, String::new())
+                    // `x in lo .. hi`: both ends must be comparable with x —
+                    // the same concept when x is one, else its dimension
+                    if matches!(node.children[1].kind, NodeKind::Range) {
+                        let subject = node.children[0].actual.clone().map(|mut t| {
+                            t.nominal = t.kind == TypeKindView::Concept;
+                            t
+                        });
+                        let why = match &subject {
+                            Some(t) => format!(
+                                "both ends of the range must be comparable with {} ({})",
+                                node.children[0].text.trim(),
+                                t.description
+                            ),
+                            None => String::new(),
+                        };
+                        (None, subject, why)
+                    } else {
+                        (None, None, String::new())
+                    }
                 } else {
                     match (a, b) {
                         (Some(a), _) => (
@@ -762,6 +907,32 @@ impl Builder<'_> {
                 let (l, rr) = node.children.split_at_mut(1);
                 self.solve(&mut l[0], ea.as_ref(), why.clone());
                 self.solve(&mut rr[0], eb.as_ref(), why);
+            }
+            NodeKind::Range => {
+                // what the test expects, passed to both ends
+                let why = node.because.clone();
+                for c in node.children.iter_mut() {
+                    self.solve(c, expected, why.clone());
+                }
+            }
+            NodeKind::Binder { form, param, .. } => {
+                let (form, param) = (form.clone(), param.clone());
+                let coll_why = format!("{form} reads every element of a collection");
+                let (body_expected, body_why) = match form.as_str() {
+                    "map" => (
+                        expected.and_then(|t| t.element.as_deref().cloned()),
+                        format!("map makes a collection of what the body gives for each {param}"),
+                    ),
+                    _ => (
+                        Some(TypeView::boolean()),
+                        format!(
+                            "{form} asks a question of every {param}: the body is true or false"
+                        ),
+                    ),
+                };
+                let (c, b) = node.children.split_at_mut(1);
+                self.solve(&mut c[0], None, coll_why);
+                self.solve(&mut b[0], body_expected.as_ref(), body_why);
             }
             NodeKind::Unary { op } => {
                 let (e, why) = if op == "!" {
@@ -880,6 +1051,23 @@ impl Builder<'_> {
                 }
             })
             .collect()
+    }
+}
+
+fn plural_of(t: &TypeView) -> String {
+    match (t.kind, t.dim) {
+        (TypeKindView::Quantity, Some(d)) => plural(d),
+        (TypeKindView::Concept, _) => format!(
+            "{} values",
+            t.description
+                .trim_start_matches("a ")
+                .split(" (")
+                .next()
+                .unwrap_or("")
+        ),
+        (TypeKindView::Boolean, _) => "truth values".into(),
+        (TypeKindView::Count, _) => "counts".into(),
+        _ => format!("values ({})", t.description),
     }
 }
 
@@ -1265,6 +1453,11 @@ pub enum ComposeOp {
     /// The node becomes a slot again; a slot that is an operand of `+ - *
     /// /` removes the operator with it.
     Remove { node: String },
+    /// `node` becomes `form item in node: ?` with a fresh local name
+    /// (`all`, `any`, `map` or `filter`).
+    Binder { node: String, form: String },
+    /// `node` becomes `node in ? .. ?`.
+    Range { node: String },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -1280,20 +1473,27 @@ pub struct ComposeResult {
 /// Precedence of a node as an operand: what needs parentheses under what.
 fn precedence(kind: &NodeKind) -> u8 {
     match kind {
+        // a binder extends as far right as its body: an operand only in
+        // parentheses
+        NodeKind::Binder { .. } => 0,
         NodeKind::Compare { op } if matches!(op.as_str(), "&&" | "||") => 1,
+        NodeKind::Compare { op } if op == "??" => 4,
         NodeKind::Compare { .. } => 2,
-        NodeKind::Binary { op } if matches!(op.as_str(), "+" | "-") => 3,
-        NodeKind::Binary { .. } => 4,
-        NodeKind::Unary { .. } => 5,
-        _ => 6,
+        NodeKind::Range => 3,
+        NodeKind::Binary { op } if matches!(op.as_str(), "+" | "-") => 5,
+        NodeKind::Binary { .. } => 6,
+        NodeKind::Unary { .. } => 7,
+        _ => 8,
     }
 }
 
 fn op_precedence(op: &str) -> u8 {
     match op {
         "&&" | "||" => 1,
-        "+" | "-" => 3,
-        "*" | "/" => 4,
+        ".." => 3,
+        "??" => 4,
+        "+" | "-" => 5,
+        "*" | "/" => 6,
         _ => 2,
     }
 }
@@ -1344,6 +1544,12 @@ fn kind_of_text(text: &str) -> NodeKind {
                 }
             }
             ExprKind::Unary { .. } => NodeKind::Unary { op: "-".into() },
+            ExprKind::Binder { .. } => NodeKind::Binder {
+                form: String::new(),
+                param: String::new(),
+                param_type: None,
+            },
+            ExprKind::Range { .. } => NodeKind::Range,
             _ => NodeKind::Slot,
         },
         Err(_) => NodeKind::Slot,
@@ -1389,6 +1595,7 @@ pub fn compose(
         block,
         source: &base,
         types: &types,
+        locals: Vec::new(),
     };
     let root = b.node(surface, "r".into());
     let node_id = match op {
@@ -1397,7 +1604,9 @@ pub fn compose(
         | ComposeOp::Call { node, .. }
         | ComposeOp::SetUnit { node, .. }
         | ComposeOp::SetCoordinate { node, .. }
-        | ComposeOp::Remove { node } => node.as_str(),
+        | ComposeOp::Remove { node }
+        | ComposeOp::Binder { node, .. }
+        | ComposeOp::Range { node } => node.as_str(),
     };
     let Some(node) = root.find(node_id) else {
         return Err(QueryError::NotApplicable {
@@ -1415,7 +1624,12 @@ pub fn compose(
                 NodeKind::Binary { op } | NodeKind::Compare { op } => {
                     op_precedence(op) + if i == 1 { 1 } else { 0 }
                 }
-                NodeKind::Unary { .. } => 6,
+                NodeKind::Range => 4,
+                NodeKind::Unary { .. } => 8,
+                // a binder's collection stops at the colon: a comparison,
+                // a range or another binder there needs parentheses; its
+                // body extends to the end and needs none
+                NodeKind::Binder { .. } if i == 0 => 3,
                 _ => 0,
             })
             .unwrap_or(0)
@@ -1447,6 +1661,25 @@ pub fn compose(
                 format!("{operand} {op} ?")
             };
             (node.range, grouped(text, p))
+        }
+        ComposeOp::Binder { form, .. } => {
+            if bdl_syntax::BinderForm::from_word(form).is_none() {
+                return Err(QueryError::NotApplicable {
+                    reason: format!("`{form}` is not a binder form"),
+                });
+            }
+            let local = fresh_local(design, block, &root, &node.text);
+            // the collection is parsed up to the colon: a comparison or a
+            // range there needs parentheses
+            let coll = operand(node, 3);
+            (
+                node.range,
+                grouped(format!("{form} {local} in {coll}: ?"), 0),
+            )
+        }
+        ComposeOp::Range { .. } => {
+            let subject = operand(node, 3);
+            (node.range, grouped(format!("{subject} in ? .. ?"), 2))
         }
         ComposeOp::Call { name, arity, .. } => {
             let mut args = vec![node.text.trim().to_owned()];
@@ -1545,6 +1778,7 @@ pub fn compose(
             block,
             source: &out,
             types: &BTreeMap::new(),
+            locals: Vec::new(),
         };
         let root = b.node(&e, "r".into());
         let first_slot_in = |id: &str| -> Option<String> {
@@ -1558,6 +1792,8 @@ pub fn compose(
                 Some(format!("{node_id}.{}", if *before { 0 } else { 1 }))
             }
             ComposeOp::Call { arity, .. } if *arity > 1 => Some(format!("{node_id}.1")),
+            ComposeOp::Binder { .. } => Some(format!("{node_id}.1")),
+            ComposeOp::Range { .. } => Some(format!("{node_id}.1.0")),
             ComposeOp::Fill { .. } => first_slot_in(node_id).or_else(|| {
                 // no slot in what was written: the next slot after it, the
                 // Tab order, else the node itself
@@ -1594,6 +1830,67 @@ pub fn compose(
         },
         select,
     })
+}
+
+/// A readable fresh name for a binder's local: the collection's name
+/// without its plural `s` when that is a free identifier (`readings` →
+/// `reading`), else `item`, `item2`, … — never a name in scope (an input,
+/// a relationship, a concept, an enclosing local, a word of the language).
+fn fresh_local(
+    design: &Design,
+    block: &MappingBlock,
+    root: &FormulaNode,
+    collection: &str,
+) -> String {
+    let mut taken: Vec<String> = Vec::new();
+    taken.extend(design.mappings.values().map(|m| m.name.clone()));
+    taken.extend(design.concepts.values().map(|c| c.name.clone()));
+    taken.extend(block.parameters.iter().cloned());
+    fn locals(n: &FormulaNode, out: &mut Vec<String>) {
+        if let NodeKind::Binder { param, .. } = &n.kind {
+            out.push(param.clone());
+        }
+        n.children.iter().for_each(|c| locals(c, out));
+    }
+    locals(root, &mut taken);
+    fresh_local_name(collection, &taken)
+}
+
+/// The fresh name itself: `readings` → `reading` when that is free, else
+/// `item`, `item2`, …  `taken` lists the names of the design and the
+/// formula; the words of the language and the equations are always taken.
+pub(crate) fn fresh_local_name(collection: &str, taken: &[String]) -> String {
+    let mut taken: std::collections::BTreeSet<String> = taken.iter().cloned().collect();
+    taken.extend(
+        [
+            "all", "any", "map", "filter", "in", "if", "then", "else", "match", "let", "true",
+            "false", "delay", "sync", "None", "Some", "ordered", "concept", "mapping",
+        ]
+        .map(String::from),
+    );
+    taken.extend(equations::names().into_iter().map(String::from));
+    let free = |n: &str| !taken.contains(n) && bdl_syntax::formula(n).is_ok();
+    let name = collection.trim();
+    if name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        if let Some(singular) = name.strip_suffix('s') {
+            // a local reads as a value, so `Readings` gives `reading`
+            let mut chars = singular.chars();
+            let singular: String = match chars.next() {
+                Some(c) => c.to_lowercase().chain(chars).collect(),
+                None => String::new(),
+            };
+            if singular.len() >= 2 && !singular.ends_with('s') && free(&singular) {
+                return singular;
+            }
+        }
+    }
+    if free("item") {
+        return "item".into();
+    }
+    (2..)
+        .map(|i| format!("item{i}"))
+        .find(|n| free(n))
+        .unwrap_or_else(|| "item".into())
 }
 
 /// A converted coordinate as source text: shortest round-trip form,

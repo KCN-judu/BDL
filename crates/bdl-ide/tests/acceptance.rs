@@ -725,3 +725,139 @@ fn every_library_template_is_a_textual_completion_from_the_same_data() {
         lib.templates().iter().map(|t| t.id.as_str()).collect();
     assert_eq!(offered, expected);
 }
+
+// ---- P11: binder locals are the formula's own --------------------------------------
+
+/// `all tilt in readings: tilt < Tilt` — the local `tilt` is not the
+/// concept `Tilt` (the elaborator resolves names case-insensitively when
+/// unique), so a rename of the concept leaves it alone; references never
+/// count it; the tokens say parameter for it, keyword for the word and
+/// operator for `..`.
+#[test]
+fn a_binder_local_is_never_a_reference_to_the_design() {
+    let lamp = lamp();
+    let s = edit(
+        &lamp.snapshot,
+        formula(
+            lamp.dim_by_tilt,
+            "if all tilt in [Tilt, Tilt]: tilt in 0 deg .. 90 deg then 1 else 0",
+        ),
+    );
+    let mut host = IdeHost::new(s.clone());
+    let uri = DocumentUri::new("file:///lamp.bdl");
+    let text = render_module(&s.design);
+    host.set_text_document(&uri, text.clone());
+    let snap = host.snapshot();
+    let doc = snap.document_by_uri(&uri).expect("document");
+
+    let plan = plan_rename(&snap, EntityRef::Concept(lamp.tilt), "Lean").expect("plan");
+    let edits = plan.text_edits(doc);
+    let replaced: Vec<&str> = edits
+        .iter()
+        .map(|e| &text[e.range.start as usize..e.range.end as usize])
+        .collect();
+    // `concept Tilt`, `: Tilt ->`, and the two `Tilt` in the collection —
+    // never the local's declaration or its uses
+    assert_eq!(
+        replaced,
+        vec!["Tilt", "Tilt", "Tilt", "Tilt"],
+        "{replaced:?}"
+    );
+    let new_text = TextEdit::apply_all(
+        &text,
+        &edits.iter().map(|e| (*e).clone()).collect::<Vec<_>>(),
+    )
+    .expect("apply");
+    assert!(
+        new_text.contains("all tilt in [Lean, Lean]: tilt in 0 deg .. 90 deg"),
+        "{new_text}"
+    );
+    // references to the concept: the mapping reads it (its input), and the
+    // text sites are the two spellings in the collection, not the local
+    let refs = references(&snap, EntityRef::Concept(lamp.tilt));
+    let body_sites: Vec<&str> = refs
+        .anchors
+        .iter()
+        .filter_map(|a| a.text_range())
+        .map(|r| &text[r.start as usize..r.end as usize])
+        .collect();
+    assert!(body_sites.iter().all(|s| *s == "Tilt"), "{body_sites:?}");
+
+    let tokens = semantic_tokens(&snap, doc);
+    let classes: Vec<(&str, TokenKind, bool)> = tokens
+        .iter()
+        .map(|t| {
+            (
+                &text[t.range.start as usize..t.range.end as usize],
+                t.kind,
+                t.modifiers.declaration,
+            )
+        })
+        .collect();
+    assert!(
+        classes.contains(&("all", TokenKind::Keyword, false)),
+        "{classes:?}"
+    );
+    assert!(
+        classes.contains(&("tilt", TokenKind::Parameter, true)),
+        "{classes:?}"
+    );
+    assert!(
+        classes.contains(&("tilt", TokenKind::Parameter, false)),
+        "{classes:?}"
+    );
+    assert!(
+        classes.contains(&("..", TokenKind::Operator, false)),
+        "{classes:?}"
+    );
+    assert!(
+        classes
+            .iter()
+            .filter(|c| c.0 == "tilt" && c.1 == TokenKind::Parameter)
+            .count()
+            == 2,
+        "{classes:?}"
+    );
+    // `in` is a keyword in both places; `Tilt` in the collection stays the concept
+    assert!(
+        classes
+            .iter()
+            .filter(|c| c.0 == "in" && c.1 == TokenKind::Keyword)
+            .count()
+            == 2
+    );
+    assert!(
+        classes
+            .iter()
+            .filter(|c| c.0 == "Tilt" && c.1 == TokenKind::Concept)
+            .count()
+            >= 3
+    );
+
+    // the word is an ordinary name when it is one: a mapping called `all`
+    let s2 = edit(&lamp.snapshot, mapping("all", vec![], lamp.brightness));
+    let all_id = s2
+        .design
+        .mappings
+        .values()
+        .find(|m| m.name == "all")
+        .map(|m| m.id)
+        .expect("all");
+    let s2 = edit(&s2, formula(all_id, "1"));
+    let s2 = edit(&s2, formula(lamp.dim_by_tilt, "all + 1"));
+    let mut host2 = IdeHost::new(s2.clone());
+    let text2 = render_module(&s2.design);
+    host2.set_text_document(&uri, text2.clone());
+    let snap2 = host2.snapshot();
+    let doc2 = snap2.document_by_uri(&uri).expect("document");
+    let tokens2 = semantic_tokens(&snap2, doc2);
+    let all_tokens: Vec<TokenKind> = tokens2
+        .iter()
+        .filter(|t| &text2[t.range.start as usize..t.range.end as usize] == "all")
+        .map(|t| t.kind)
+        .collect();
+    assert!(
+        all_tokens.iter().all(|k| *k == TokenKind::Mapping),
+        "{all_tokens:?}"
+    );
+}
