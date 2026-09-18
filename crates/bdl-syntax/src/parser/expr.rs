@@ -384,10 +384,14 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
     }
 }
 
-/// `ParenExpr ::= "(" Expr ")"` or `TupleExpr ::= "(" Expr ("," Expr)+ ","? ")"`
+/// `ParenExpr ::= "(" Expr ")"`, `TupleExpr ::= "(" Expr ("," Expr)+ ","? ")"`
+/// or `UnitExpr ::= "(" ")"` — the unique value of the empty product.
 fn paren_expr(p: &mut Parser<'_>) -> CompletedMarker {
     let m = p.start();
     p.bump(); // (
+    if p.eat(RParen) {
+        return m.complete(p, UnitExpr);
+    }
     if expr(p).is_none() {
         let msg = no_expression_message(p);
         p.error(SyntaxErrorCode::Expected, msg);

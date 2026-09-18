@@ -786,12 +786,13 @@ impl<'a> Builder<'a> {
 
     fn unknown_concept(&mut self, file: usize, t: &SurfaceType) {
         let text = &self.texts[file][t.span.start as usize..t.span.end as usize];
-        self.fault(
-            file,
-            t.span,
-            "text.unknown_concept",
-            format!("`{text}` is not a concept of this project; declare it with `concept {text} : …` or pick an existing one."),
-        );
+        let message = match &t.kind {
+            // `()` is a domain, never a concept: it can only open a signature
+            TypeKind::Unit => "`()` is the empty product, the domain of a relationship without inputs: it opens a signature (`mapping f : () -> B`) and is not a concept.".to_string(),
+            TypeKind::Tuple(_) => "`(A, B)` spells a relationship's inputs and can only open a signature; each part must be a concept.".to_string(),
+            _ => format!("`{text}` is not a concept of this project; declare it with `concept {text} : …` or pick an existing one."),
+        };
+        self.fault(file, t.span, "text.unknown_concept", message);
     }
 
     fn unknown_clock(&mut self, file: usize, span: Span, name: &str) {
@@ -2095,6 +2096,12 @@ pub fn representation_of_type(t: &SurfaceType) -> Result<Representation, Represe
         },
         TypeKind::Function { .. } => Err(RepresentationError::Shape(
             "a concept's value form is a value, never a relationship type.".into(),
+        )),
+        TypeKind::Unit => Err(RepresentationError::Shape(
+            "`()` is the empty product — the domain of a relationship without inputs — never a concept's value form.".into(),
+        )),
+        TypeKind::Tuple(_) => Err(RepresentationError::Shape(
+            "a grouped value form is written `Pair<A, B>`; `(A, B)` spells a relationship's inputs.".into(),
         )),
     }
 }

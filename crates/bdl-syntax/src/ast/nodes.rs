@@ -492,8 +492,26 @@ ast_enum!(
         Named(NamedType),
         Function(FunctionType),
         Paren(ParenType),
+        Unit(UnitType),
+        Tuple(TupleType),
     }
 );
+ast_node!(
+    /// `()` — the empty product, the domain of a relationship without inputs.
+    UnitType,
+    UnitType
+);
+ast_node!(
+    /// `(A, B)` — a product domain; `(A, B) -> C` reads `A -> B -> C`.
+    TupleType,
+    TupleType
+);
+
+impl TupleType {
+    pub fn parts(&self) -> impl Iterator<Item = Type> {
+        children(&self.0)
+    }
+}
 
 ast_node!(
     /// `Name` or `Name<Args>`
@@ -545,14 +563,21 @@ impl TypeList {
 }
 
 impl Type {
-    /// `A -> B -> C` as `([A, B], C)`; a non-function type is `([], T)`.
+    /// The inputs and output a signature spells: `A -> B -> C` and
+    /// `(A, B) -> C` are `([A, B], C)`, `() -> B` and a bare `B` are
+    /// `([], B)` — the one canonical type `domain(inputs) -> B`
+    /// (docs/spec/textual-syntax.md §4.2).  A `()` after an input is left
+    /// as an input for lowering to refuse.
     pub fn uncurry(&self) -> (Vec<Type>, Type) {
         let mut inputs = Vec::new();
         let mut current = self.clone();
         while let Type::Function(f) = &current {
             let Some(cod) = f.codomain() else { break };
-            if let Some(dom) = f.domain() {
-                inputs.push(dom);
+            match f.domain() {
+                Some(Type::Unit(_)) if inputs.is_empty() => {}
+                Some(Type::Tuple(t)) if inputs.is_empty() => inputs.extend(t.parts()),
+                Some(dom) => inputs.push(dom),
+                None => {}
             }
             current = cod;
         }
@@ -578,6 +603,7 @@ ast_enum!(
         Tuple(TupleExpr),
         Lambda(LambdaExpr),
         Slot(SlotExpr),
+        Unit(UnitExpr),
         Binder(BinderExpr),
         Range(RangeExpr),
     }
@@ -586,6 +612,12 @@ ast_node!(
     /// `?` — a slot: an expression not yet written.
     SlotExpr,
     SlotExpr
+);
+ast_node!(
+    /// `()` — the unique value of the empty product: the argument of a
+    /// relationship without inputs, `f(())`.
+    UnitExpr,
+    UnitExpr
 );
 ast_node!(
     /// `all x in xs: body` — a binder over a collection.

@@ -70,6 +70,7 @@ fn show(e: &SurfaceExpr) -> String {
             show(body)
         ),
         ExprKind::Hole => "?".into(),
+        ExprKind::Unit => "()".into(),
         ExprKind::Binder {
             form,
             param,
@@ -130,6 +131,14 @@ fn type_text(t: &ast::Type) -> String {
             f.codomain().map(|c| type_text(&c)).unwrap_or_default()
         ),
         ast::Type::Paren(p) => p.inner().map(|i| type_text(&i)).unwrap_or_default(),
+        ast::Type::Unit(_) => "()".into(),
+        ast::Type::Tuple(t) => format!(
+            "({})",
+            t.parts()
+                .map(|p| type_text(&p))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
     }
 }
 
@@ -1021,5 +1030,90 @@ fn coalesce_binds_between_comparison_and_arithmetic() {
     assert_eq!(
         crate::format::format_module("mapping f : A\nf() = x??0\n").as_deref(),
         Some("mapping f : A\nf() = x ?? 0\n")
+    );
+}
+
+/// `()` is the empty product: as a type it opens a signature (`mapping f
+/// : () -> B`, the same as the shorthand `mapping f : B`), as a value it is
+/// the argument of a relationship without inputs (`f(())`).  A product
+/// domain `(A, B) -> C` reads as `A -> B -> C`.  None of it disturbs
+/// grouping, tuples, empty argument lists or calls.
+#[test]
+fn the_empty_product_is_a_type_and_a_value_and_a_product_domain_is_a_signature() {
+    let sig = |src: &str| {
+        let m = module_ok(src);
+        let d = m.mappings().next().expect("mapping");
+        let (inputs, output) = d.signature().expect("type").uncurry();
+        (
+            inputs.iter().map(type_text).collect::<Vec<_>>(),
+            type_text(&output),
+        )
+    };
+    assert_eq!(
+        sig("mapping TempSensor : RoomTemp"),
+        (vec![], "RoomTemp".into())
+    );
+    assert_eq!(
+        sig("mapping TempSensor : () -> RoomTemp"),
+        (vec![], "RoomTemp".into())
+    );
+    assert_eq!(sig("mapping f : () -> ()"), (vec![], "()".into()));
+    assert_eq!(
+        sig("mapping f : (Angle, Time) -> Speed"),
+        (
+            vec!["Angle".to_string(), "Time".to_string()],
+            "Speed".into()
+        )
+    );
+    assert_eq!(
+        sig("mapping f : Angle -> Time -> Speed"),
+        (
+            vec!["Angle".to_string(), "Time".to_string()],
+            "Speed".into()
+        )
+    );
+    // a parenthesised type is still a grouping, not a product
+    assert_eq!(
+        sig("mapping f : (Angle) -> Speed"),
+        (vec!["Angle".into()], "Speed".into())
+    );
+    // `()` after an input stays for lowering to refuse
+    assert_eq!(
+        sig("mapping f : Angle -> () -> Speed"),
+        (vec!["Angle".into(), "()".into()], "Speed".into())
+    );
+    let m = module_ok("mapping f : () -> RoomTemp");
+    let d = m.mappings().next().expect("mapping");
+    assert_eq!(type_text(&d.signature().expect("type")), "(() -> RoomTemp)");
+    // the value: an argument, never confused with an empty argument list,
+    // a grouping, a grouped value or a slot
+    assert_eq!(ok("f(())"), "f[()]");
+    assert_eq!(ok("f()"), "f[]");
+    assert_eq!(ok("(a)"), "a");
+    assert_eq!(ok("(a, b)"), "<a, b>");
+    assert_eq!(ok("f(?)"), "f[?]");
+    assert_eq!(ok("() == ()"), "(() == ())");
+    // the formatter keeps the spelling that was written
+    for src in [
+        "mapping TempSensor : RoomTemp\n",
+        "mapping TempSensor : () -> RoomTemp\n",
+        "mapping f : (Angle, Time) -> Speed\n",
+        "mapping f : Angle -> Time -> Speed\n",
+        "mapping f : () -> ()\nf() = ()\n",
+        "mapping f : A\nf() = g(())\n",
+    ] {
+        assert_eq!(
+            crate::format::format_module(src).as_deref(),
+            Some(src),
+            "{src:?}"
+        );
+    }
+    assert_eq!(
+        crate::format::format_module("mapping f : (  Angle,Time )->Speed\n").as_deref(),
+        Some("mapping f : (Angle, Time) -> Speed\n")
+    );
+    assert_eq!(
+        crate::format::format_module("mapping f : (  ) -> Speed\n").as_deref(),
+        Some("mapping f : () -> Speed\n")
     );
 }

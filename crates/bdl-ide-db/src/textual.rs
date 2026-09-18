@@ -434,14 +434,19 @@ impl Binder<'_> {
     }
 
     fn unknown_concept(&mut self, t: &ast::Type) {
-        self.faults.push(BindingFault {
-            code: "binding.unknown_concept".into(),
-            range: t.span().into(),
-            message: format!(
+        let message = match t {
+            ast::Type::Unit(_) => "`()` is the empty product, the domain of a relationship without inputs: it opens a signature (`mapping f : () -> B`) and is not a concept.".to_string(),
+            ast::Type::Tuple(_) => "`(A, B)` spells a relationship's inputs and can only open a signature; each part must be a concept.".to_string(),
+            _ => format!(
                 "`{}` is not a concept of this project; declare it with `concept {} : …` or pick an existing one.",
                 t.text().trim(),
                 t.text().trim()
             ),
+        };
+        self.faults.push(BindingFault {
+            code: "binding.unknown_concept".into(),
+            range: t.span().into(),
+            message,
             entity: None,
             open: false,
         });
@@ -455,7 +460,9 @@ pub fn representation_of(t: &ast::Type) -> Option<Representation> {
     let t = match t {
         ast::Type::Paren(p) => return representation_of(&p.inner()?),
         ast::Type::Named(n) => n.clone(),
-        ast::Type::Function(_) => return None,
+        // a relationship type, the empty product or a product domain: never
+        // a value form
+        ast::Type::Function(_) | ast::Type::Unit(_) | ast::Type::Tuple(_) => return None,
     };
     let name = t.name()?.as_str();
     if !t.has_type_args() {
@@ -645,6 +652,58 @@ mod tests {
         assert_eq!(state.binding_faults.len(), 2);
         assert_eq!(state.binding_faults[0].code, "binding.unknown_concept");
         assert!(design.mappings.is_empty());
+    }
+
+    /// `mapping TempSensor : RoomTemp` is shorthand for `mapping TempSensor :
+    /// () -> RoomTemp`: the two bind to the same signature, elaborate to the
+    /// same interface and have the one canonical type `() -> RoomTemp`;
+    /// `(Angle, Time) -> Speed` is `Angle -> Time -> Speed`.  `()` anywhere
+    /// but at the head of a signature is a binding fault that says so.
+    #[test]
+    fn the_shorthand_and_the_explicit_unit_domain_are_one_declaration() {
+        let bind = |src: &str| {
+            let mut design = Design::empty("x");
+            let (state, _) = bind_document(&mut design, DocumentId(0), src);
+            (design, state)
+        };
+        let concepts = "concept RoomTemp : Temperature\nconcept Angle : Angle\nconcept Time : Time\nconcept Speed : Speed\n";
+        let (short, s1) = bind(&format!("{concepts}mapping TempSensor : RoomTemp\n"));
+        let (explicit, s2) = bind(&format!("{concepts}mapping TempSensor : () -> RoomTemp\n"));
+        assert!(s1.binding_faults.is_empty() && s2.binding_faults.is_empty());
+        let sig = |d: &Design| d.mappings.values().next().unwrap().signature.clone();
+        assert_eq!(sig(&short), sig(&explicit));
+        assert!(sig(&short).is_unit_domain());
+        let e1 = bdl_elab::elaborate_design(&short);
+        let e2 = bdl_elab::elaborate_design(&explicit);
+        let iface =
+            |e: &bdl_elab::Elaboration| e.ir.decls.values().next().unwrap().interface.clone();
+        assert_eq!(iface(&e1), iface(&e2));
+        let room = sig(&short).output;
+        assert_eq!(iface(&e1).expected_type, bdl_ir::Ty::sem(room));
+        assert_eq!(
+            bdl_ir::Ty::of_signature(&sig(&short).inputs, room),
+            bdl_ir::Ty::arr(bdl_ir::Ty::Unit, bdl_ir::Ty::sem(room))
+        );
+        assert_eq!(
+            iface(&e1).expected_type.canonical_mapping_ty(),
+            bdl_ir::Ty::of_signature(&sig(&short).inputs, room)
+        );
+        // a product domain is the curried signature
+        let (prod, _) = bind(&format!("{concepts}mapping f : (Angle, Time) -> Speed\n"));
+        let (curried, _) = bind(&format!("{concepts}mapping f : Angle -> Time -> Speed\n"));
+        assert_eq!(sig(&prod), sig(&curried));
+        assert_eq!(sig(&prod).inputs.len(), 2);
+        // `()` is a domain, not a concept: after an input, or as the output
+        let (_, bad) = bind(&format!("{concepts}mapping f : Angle -> () -> Speed\n"));
+        assert_eq!(bad.binding_faults.len(), 1);
+        assert!(bad.binding_faults[0].message.contains("empty product"));
+        let (_, bad) = bind(&format!("{concepts}mapping f : () -> ()\n"));
+        assert_eq!(bad.binding_faults.len(), 1);
+        assert!(bad.binding_faults[0].message.contains("not a concept"));
+        // never a concept's value form, never an option
+        let (d, bad) = bind("concept Nothing : ()\n");
+        assert!(d.concepts.values().next().unwrap().representation.is_none());
+        assert!(!bad.binding_faults.is_empty() || d.concepts.len() == 1);
     }
 
     #[test]

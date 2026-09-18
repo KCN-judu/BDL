@@ -2,8 +2,10 @@
 //!
 //! ```text
 //! Type      ::= TypeAtom ("->" Type)?          -- right-associative
-//! TypeAtom  ::= NamedType | ParenType
+//! TypeAtom  ::= NamedType | ParenType | UnitType | TupleType
 //! NamedType ::= NameRef TypeArgList?
+//! UnitType  ::= "(" ")"                       -- the empty product
+//! TupleType ::= "(" Type ("," Type)+ ","? ")" -- a product domain
 //! ```
 
 use super::{grammar, Parser};
@@ -46,8 +48,27 @@ fn type_atom(p: &mut Parser<'_>) -> Option<super::CompletedMarker> {
         LParen => {
             let m = p.start();
             p.bump();
+            // `()`: the empty product, the domain of a relationship
+            // without inputs
+            if p.eat(RParen) {
+                return Some(m.complete(p, UnitType));
+            }
             if !type_(p) {
                 p.error_expecting("expected a type inside the parentheses", &[Ident, LParen]);
+            }
+            if p.at(Comma) {
+                // `(A, B)`: a product domain
+                while p.eat(Comma) {
+                    if p.at(RParen) {
+                        break;
+                    }
+                    if !type_(p) {
+                        p.error_expecting("expected a type after `,`", &[Ident, LParen]);
+                        break;
+                    }
+                }
+                p.expect(RParen, "expected `)` to close the product");
+                return Some(m.complete(p, TupleType));
             }
             p.expect(RParen, "expected `)` to close the parenthesised type");
             Some(m.complete(p, ParenType))

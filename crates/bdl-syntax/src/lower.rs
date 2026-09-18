@@ -74,6 +74,9 @@ pub enum ExprKind {
     /// Composer's hole; elaboration refuses it (`formula.slot.empty`) and
     /// nothing downstream of the surface ever sees one.
     Hole,
+    /// `()`: the unique value of the empty product — the argument of a
+    /// relationship without inputs (`f(())`, for which `f` is the sugar).
+    Unit,
     /// `all x in xs: body` — the binder family: sugar for the equation
     /// `all(xs, x => body)` (likewise `any`, `map`, `filter`); the binder is
     /// the rule's parameter, scoped to the body.
@@ -177,7 +180,11 @@ impl SurfaceExpr {
     pub fn walk<'a>(&'a self, f: &mut dyn FnMut(&'a SurfaceExpr)) {
         f(self);
         match &self.kind {
-            ExprKind::Name(_) | ExprKind::Number { .. } | ExprKind::Bool(_) | ExprKind::Hole => {}
+            ExprKind::Name(_)
+            | ExprKind::Number { .. }
+            | ExprKind::Bool(_)
+            | ExprKind::Hole
+            | ExprKind::Unit => {}
             ExprKind::Binder {
                 collection, body, ..
             } => {
@@ -234,15 +241,28 @@ pub enum TypeKind {
         domain: Box<SurfaceType>,
         codomain: Box<SurfaceType>,
     },
+    /// `()`: the empty product, the domain of a relationship without
+    /// inputs (`docs/spec/textual-syntax.md` §4.2).
+    Unit,
+    /// `(A, B)`: a product, spelled as a relationship's domain.
+    Tuple(Vec<SurfaceType>),
 }
 
 impl SurfaceType {
-    /// `A -> B -> C` as `([A, B], C)`.
+    /// The inputs and output a signature spells, as the one canonical
+    /// type `domain(inputs) -> B`: `A -> B -> C` and `(A, B) -> C` are
+    /// `([A, B], C)`; `() -> B` and a bare `B` are `([], B)` — `mapping f :
+    /// B` is shorthand for `mapping f : () -> B`.  A `()` after an input,
+    /// or a product after one, stays an input for the caller to refuse.
     pub fn uncurry(&self) -> (Vec<&SurfaceType>, &SurfaceType) {
-        let mut inputs = Vec::new();
+        let mut inputs: Vec<&SurfaceType> = Vec::new();
         let mut t = self;
         while let TypeKind::Function { domain, codomain } = &t.kind {
-            inputs.push(domain.as_ref());
+            match &domain.kind {
+                TypeKind::Unit if inputs.is_empty() => {}
+                TypeKind::Tuple(parts) if inputs.is_empty() => inputs.extend(parts.iter()),
+                _ => inputs.push(domain.as_ref()),
+            }
             t = codomain;
         }
         (inputs, t)
@@ -925,6 +945,14 @@ fn type_(t: &ast::Type) -> Option<SurfaceType> {
             kind: type_(&p.inner()?)?.kind,
             span,
         },
+        ast::Type::Unit(_) => SurfaceType {
+            kind: TypeKind::Unit,
+            span,
+        },
+        ast::Type::Tuple(t) => SurfaceType {
+            kind: TypeKind::Tuple(t.parts().map(|p| type_(&p)).collect::<Option<Vec<_>>>()?),
+            span,
+        },
     })
 }
 
@@ -991,6 +1019,7 @@ fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
         },
         ast::Expr::Paren(p) => expr(&p.inner()?)?.kind,
         ast::Expr::Slot(_) => ExprKind::Hole,
+        ast::Expr::Unit(_) => ExprKind::Unit,
         ast::Expr::Binder(b) => ExprKind::Binder {
             form: BinderForm::from_word(b.word()?.text())?,
             param: ident(&b.param()?)?,

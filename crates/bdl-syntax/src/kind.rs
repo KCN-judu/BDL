@@ -130,6 +130,10 @@ pub enum SyntaxKind {
     NamedType,
     FunctionType,
     ParenType,
+    /// `()`: the empty product as a type (docs/spec/textual-syntax.md §4.2).
+    UnitType,
+    /// `(A, B)`: a product domain, `(A, B) -> C` = `A -> B -> C`.
+    TupleType,
     NameExpr,
     LiteralExpr,
     ParenExpr,
@@ -155,6 +159,8 @@ pub enum SyntaxKind {
     LambdaParams,
     /// `?` — a slot: an expression not yet written, never elaborated.
     SlotExpr,
+    /// `()`: the unique value of the empty product (§4.2).
+    UnitExpr,
     /// `all x in xs: body` — a binder form over a collection (§17).
     BinderExpr,
     /// `lo .. hi` — a closed range, meaningful after `in` (§17).
@@ -495,6 +501,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     NamedType,
     FunctionType,
     ParenType,
+    UnitType,
+    TupleType,
     NameExpr,
     LiteralExpr,
     ParenExpr,
@@ -516,6 +524,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     LambdaExpr,
     LambdaParams,
     SlotExpr,
+    UnitExpr,
     BinderExpr,
     RangeExpr,
     ErrorNode,

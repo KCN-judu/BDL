@@ -154,6 +154,8 @@ fn lamp_program_lowers_to_the_surface_tree() {
             .map(|t| match &t.kind {
                 TypeKind::Named { name, .. } => name.clone(),
                 TypeKind::Function { .. } => "fn".into(),
+                TypeKind::Unit => "()".into(),
+                TypeKind::Tuple(_) => "tuple".into(),
             })
             .collect()
     };
