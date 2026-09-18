@@ -239,7 +239,16 @@ pub struct SystemState {
     /// Sources accepted from the Code view since the last save: their
     /// text is in `text` but not on disk yet.
     dirty_sources: BTreeSet<String>,
+    /// The unfinished edits as last saved (or loaded): source drafts by
+    /// path and definition drafts by scope and relationship.  Dirty is
+    /// "the persistent state differs from this".
+    saved_source_drafts: BTreeMap<String, String>,
+    saved_definition_drafts: BTreeMap<DraftKey, String>,
 }
+
+/// A definition draft's identity: the relationship, in the scope it
+/// belongs to (a component body's are component-local).
+pub type DraftKey = (Option<ComponentId>, DeclId);
 
 /// A text draft the semantic project has not accepted.
 #[derive(Clone, Debug)]
@@ -298,6 +307,13 @@ pub struct SourceEdit {
 }
 
 impl SystemState {
+    fn source_draft_texts(&self) -> BTreeMap<String, String> {
+        self.drafts
+            .iter()
+            .map(|(k, v)| (k.clone(), v.text.clone()))
+            .collect()
+    }
+
     /// After a commit: every component host sees its body at the new
     /// revision; hosts of components that no longer exist go.  Overlays
     /// (drafts) survive, as on the project host.
@@ -357,12 +373,45 @@ impl OpenProject {
             None => !self.redo.is_empty(),
         }
     }
+    /// Whether the persistent state — the system, the layout, the text of
+    /// every file (typed or accepted), the definition drafts — differs from
+    /// what was last saved or loaded.  One question, one answer: nothing a
+    /// designer can see and edit is left out because it does not build.
     pub fn dirty(&self) -> bool {
         let content = match &self.system {
-            Some(s) => s.current.system != s.saved || !s.dirty_sources.is_empty(),
+            Some(s) => {
+                s.current.system != s.saved
+                    || !s.dirty_sources.is_empty()
+                    || s.source_draft_texts() != s.saved_source_drafts
+                    || self.definition_drafts() != s.saved_definition_drafts
+            }
             None => self.current.design != self.saved,
         };
         content || self.layout != self.saved_layout
+    }
+
+    /// Every definition draft held for this project, by scope and
+    /// relationship: the IDE overlays of the project host and of each
+    /// component body's host.
+    pub fn definition_drafts(&self) -> BTreeMap<DraftKey, String> {
+        let mut out = BTreeMap::new();
+        for e in self.ide.overlays().iter() {
+            if let bdl_ide_db::Overlay::MappingDefinitionDraft { mapping, source } = &e.overlay {
+                out.insert((None, *mapping), source.clone());
+            }
+        }
+        if let Some(s) = &self.system {
+            for (component, host) in &s.component_ide {
+                for e in host.overlays().iter() {
+                    if let bdl_ide_db::Overlay::MappingDefinitionDraft { mapping, source } =
+                        &e.overlay
+                    {
+                        out.insert((Some(*component), *mapping), source.clone());
+                    }
+                }
+            }
+        }
+        out
     }
     pub fn is_system(&self) -> bool {
         self.system.is_some()
@@ -494,6 +543,53 @@ impl Session {
         let flattened = flatten(&system);
         let snapshot = flattened.snapshot.clone();
         self.install(root, snapshot, layout);
+        // The unfinished edits the project was saved with come back exactly
+        // as they were: the typed text of every file that does not build
+        // (judged again, for its reasons) and every definition draft.
+        let (source_drafts, definition_drafts) = match &text {
+            Some(loaded) => (
+                loaded
+                    .drafts
+                    .sources
+                    .iter()
+                    .map(|(path, typed)| {
+                        let mut files = loaded.files.clone();
+                        if let Some(f) = files.iter_mut().find(|f| f.path == *path) {
+                            f.text = typed.clone();
+                        }
+                        let name = system.system.base.name.clone();
+                        let build = bdl_text::load_workspace(&name, &files, &loaded.build.table);
+                        let diagnostics = build
+                            .faults
+                            .iter()
+                            .map(|f| source_diagnostic(&files, f))
+                            .collect();
+                        (
+                            path.clone(),
+                            SourceDraft {
+                                text: typed.clone(),
+                                diagnostics,
+                            },
+                        )
+                    })
+                    .collect::<BTreeMap<_, _>>(),
+                loaded
+                    .drafts
+                    .definitions
+                    .iter()
+                    .map(|d| {
+                        (
+                            (
+                                d.component.map(ComponentId::from_raw),
+                                DeclId::from_raw(d.mapping),
+                            ),
+                            d.source.clone(),
+                        )
+                    })
+                    .collect::<BTreeMap<DraftKey, String>>(),
+            ),
+            None => (BTreeMap::new(), BTreeMap::new()),
+        };
         if let Some(p) = self.project.as_mut() {
             p.system = Some(SystemState {
                 saved: system.system.clone(),
@@ -504,9 +600,19 @@ impl Session {
                 undo: Vec::new(),
                 redo: Vec::new(),
                 text,
-                drafts: BTreeMap::new(),
+                saved_source_drafts: source_drafts
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.text.clone()))
+                    .collect(),
+                drafts: source_drafts,
                 dirty_sources: BTreeSet::new(),
+                saved_definition_drafts: definition_drafts.clone(),
             });
+        }
+        for ((scope, mapping), source) in definition_drafts {
+            if let Ok(host) = self.ide_in(scope) {
+                host.set_definition_draft(mapping, source);
+            }
         }
     }
 
@@ -541,27 +647,39 @@ impl Session {
                 return Err(SessionError::ChangedOnDisk { files: changed });
             }
         }
+        let definition_drafts = self.project()?.definition_drafts();
         let p = self.project_mut()?;
         match p.system.as_mut() {
             Some(s) if s.text.is_some() => {
                 // Text is the only truth written: the system goes back as
-                // item-level edits of the sources, then the sources are
-                // re-read so anchors and stamps describe what is on disk.
+                // item-level edits of the sources — a file whose typed text
+                // does not build is written as typed, its last good text
+                // beside it — then the sources are re-read so anchors and
+                // stamps describe what is on disk.  Text accepted from the
+                // Code view is already in the files the splice started
+                // from; `rewrite` takes it to disk.
                 let loaded = s.text.as_ref().expect("checked");
-                let wb = bdl_text::save_project(
+                let drafts = bdl_text::Drafts {
+                    sources: s.source_draft_texts(),
+                    definitions: definition_drafts
+                        .iter()
+                        .map(|((scope, mapping), source)| bdl_text::DefinitionDraftFile {
+                            component: scope.map(|c| c.raw()),
+                            mapping: mapping.raw(),
+                            source: source.clone(),
+                        })
+                        .collect(),
+                };
+                let rewrite: Vec<String> = s.dirty_sources.iter().cloned().collect();
+                bdl_text::save_project_with(
                     &p.root,
                     loaded,
                     &s.current.system,
                     &p.layout,
+                    &drafts,
+                    &rewrite,
                     &version,
                 )?;
-                // Text accepted from the Code view is already in the files
-                // the splice started from; it reaches disk here.
-                for (i, f) in wb.files.iter().enumerate() {
-                    if s.dirty_sources.contains(&f.path) && !wb.changed.contains(&i) {
-                        persist::write_atomic(&p.root.join(&f.path), f.text.as_bytes())?;
-                    }
-                }
                 s.dirty_sources.clear();
                 let reloaded = bdl_text::load_project_with(&p.root, &version)?;
                 if reloaded.build.system != s.current.system {
@@ -572,6 +690,8 @@ impl Session {
                 }
                 s.text = Some(reloaded);
                 s.saved = s.current.system.clone();
+                s.saved_source_drafts = drafts.sources;
+                s.saved_definition_drafts = definition_drafts;
             }
             // Every open project has sources (ADR-0023); these arms are the
             // type's, not a second persistence.

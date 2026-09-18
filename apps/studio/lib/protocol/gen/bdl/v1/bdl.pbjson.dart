@@ -4905,6 +4905,14 @@ const SystemView$json = {
       '10': 'boundaries'
     },
     {'1': 'dirty', '3': 13, '4': 1, '5': 8, '10': 'dirty'},
+    {
+      '1': 'definition_drafts',
+      '3': 14,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.DefinitionDraftView',
+      '10': 'definitionDrafts'
+    },
   ],
 };
 
@@ -4920,7 +4928,27 @@ final $typed_data.Uint8List systemViewDescriptor = $convert
         'QSMQoGZ3JvdXBzGAogAygLMhkuYmRsLnYxLkJlaGF2aW9yR3JvdXBWaWV3UgZncm91cHMSMQoU'
         'YXV0aG9yaW5nX2dlbmVyYXRpb24YCyABKARSE2F1dGhvcmluZ0dlbmVyYXRpb24SQQoKYm91bm'
         'RhcmllcxgMIAMoCzIhLmJkbC52MS5CZWhhdmlvckdyb3VwQm91bmRhcnlWaWV3Ugpib3VuZGFy'
-        'aWVzEhQKBWRpcnR5GA0gASgIUgVkaXJ0eQ==');
+        'aWVzEhQKBWRpcnR5GA0gASgIUgVkaXJ0eRJIChFkZWZpbml0aW9uX2RyYWZ0cxgOIAMoCzIbLm'
+        'JkbC52MS5EZWZpbml0aW9uRHJhZnRWaWV3UhBkZWZpbml0aW9uRHJhZnRz');
+
+@$core.Deprecated('Use definitionDraftViewDescriptor instead')
+const DefinitionDraftView$json = {
+  '1': 'DefinitionDraftView',
+  '2': [
+    {'1': 'component', '3': 1, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `DefinitionDraftView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List definitionDraftViewDescriptor = $convert
+    .base64Decode('ChNEZWZpbml0aW9uRHJhZnRWaWV3EiEKCWNvbXBvbmVudBgBIAEoBEgAUgljb21wb25lbnSIAQ'
+        'ESHQoKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEhYKBnNvdXJjZRgDIAEoCVIGc291cmNl'
+        'QgwKCl9jb21wb25lbnQ=');
 
 @$core.Deprecated('Use behaviorGroupViewDescriptor instead')
 const BehaviorGroupView$json = {

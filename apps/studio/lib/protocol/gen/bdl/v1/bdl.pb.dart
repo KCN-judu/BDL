@@ -17762,6 +17762,7 @@ class SystemView extends $pb.GeneratedMessage {
     $fixnum.Int64? authoringGeneration,
     $core.Iterable<BehaviorGroupBoundaryView>? boundaries,
     $core.bool? dirty,
+    $core.Iterable<DefinitionDraftView>? definitionDrafts,
   }) {
     final result = SystemView._();
     if (revision != null) result.revision = revision;
@@ -17777,6 +17778,7 @@ class SystemView extends $pb.GeneratedMessage {
     if (authoringGeneration != null) result.authoringGeneration = authoringGeneration;
     if (boundaries != null) result.boundaries.addAll(boundaries);
     if (dirty != null) result.dirty = dirty;
+    if (definitionDrafts != null) result.definitionDrafts.addAll(definitionDrafts);
     return result;
   }
 
@@ -17813,6 +17815,8 @@ class SystemView extends $pb.GeneratedMessage {
     ..pPM<BehaviorGroupBoundaryView>(12, _omitFieldNames ? '' : 'boundaries',
         subBuilder: BehaviorGroupBoundaryView.$_createMessage)
     ..aOB(13, _omitFieldNames ? '' : 'dirty')
+    ..pPM<DefinitionDraftView>(14, _omitFieldNames ? '' : 'definitionDrafts',
+        subBuilder: DefinitionDraftView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -17923,6 +17927,96 @@ class SystemView extends $pb.GeneratedMessage {
   $core.bool hasDirty() => $_has(12);
   @$pb.TagNumber(13)
   void clearDirty() => $_clearField(13);
+
+  /// The definition drafts the project holds (0.15): text typed for a
+  /// relationship and not committed, saved with the project and restored on
+  /// open.  A client seeds its editors from these when it opens the project
+  /// and keeps them current through AnalyzeDefinitionDraft /
+  /// DiscardDefinitionDraft; the daemon persists whatever it holds.
+  @$pb.TagNumber(14)
+  $pb.PbList<DefinitionDraftView> get definitionDrafts => $_getList(13);
+}
+
+class DefinitionDraftView extends $pb.GeneratedMessage {
+  factory DefinitionDraftView({
+    $fixnum.Int64? component,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+  }) {
+    final result = DefinitionDraftView._();
+    if (component != null) result.component = component;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    return result;
+  }
+
+  DefinitionDraftView._();
+
+  factory DefinitionDraftView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DefinitionDraftView()..mergeFromBuffer(data, registry);
+  factory DefinitionDraftView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      DefinitionDraftView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DefinitionDraftView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: DefinitionDraftView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DefinitionDraftView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DefinitionDraftView copyWith(void Function(DefinitionDraftView) updates) =>
+      super.copyWith((message) => updates(message as DefinitionDraftView)) as DefinitionDraftView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use DefinitionDraftView() / DefinitionDraftView.new instead')
+  static DefinitionDraftView create() => DefinitionDraftView._();
+  static $pb.GeneratedMessage $_createMessage() => DefinitionDraftView._();
+  @$core.override
+  DefinitionDraftView createEmptyInstance() => DefinitionDraftView._();
+  @$core.pragma('dart2js:noInline')
+  static DefinitionDraftView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DefinitionDraftView>(DefinitionDraftView.$_createMessage);
+  static DefinitionDraftView? _defaultInstance;
+
+  /// The component whose body the relationship belongs to; absent for the
+  /// system's own design.  Ids are then component-local.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get component => $_getI64(0);
+  @$pb.TagNumber(1)
+  set component($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasComponent() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearComponent() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
 }
 
 /// A group is authoring metadata: identity, scope, name, description,

@@ -1498,9 +1498,18 @@ pub mod system {
         authoring_generation: u64,
         boundaries: &BTreeMap<BehaviorGroupId, GroupBoundary>,
         dirty: bool,
+        definition_drafts: &BTreeMap<(Option<ComponentId>, DeclId), String>,
     ) -> pb::SystemView {
         let s: &BehaviorSystem = &snapshot.system;
         pb::SystemView {
+            definition_drafts: definition_drafts
+                .iter()
+                .map(|((component, mapping), source)| pb::DefinitionDraftView {
+                    component: component.map(|c| c.raw()),
+                    mapping_id: mapping.raw(),
+                    source: source.clone(),
+                })
+                .collect(),
             revision: snapshot.revision.raw(),
             name: s.base.name.clone(),
             base: Some(design_projection(&s.base)),

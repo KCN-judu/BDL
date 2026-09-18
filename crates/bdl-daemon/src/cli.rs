@@ -62,11 +62,51 @@ fn text_faults(session: &Session) -> Vec<(String, Diagnostic)> {
             + 1;
         format!("{}:{line}:{col}", loaded.files[file].path)
     };
-    loaded
-        .build
-        .faults
-        .iter()
-        .map(|f| match f {
+    // A file saved while it did not build: its typed text is the file on
+    // disk and what `check` judges; its faults come from the session.
+    let drafts: Vec<(String, Diagnostic)> = session
+        .sources()
+        .map(|s| {
+            s.diagnostics
+                .iter()
+                .map(|d| {
+                    let text = s
+                        .files
+                        .iter()
+                        .find(|f| f.path == d.path)
+                        .map(|f| f.text.as_str())
+                        .unwrap_or("");
+                    let upto = &text[..(d.start as usize).min(text.len())];
+                    let line = upto.matches('\n').count() + 1;
+                    let col = upto
+                        .rsplit('\n')
+                        .next()
+                        .map(|s| s.chars().count())
+                        .unwrap_or(0)
+                        + 1;
+                    (
+                        format!("{}:{line}:{col}", d.path),
+                        if d.open {
+                            Diagnostic::warning(
+                                Code(d.code.clone()),
+                                Entity::Project,
+                                d.message.clone(),
+                            )
+                        } else {
+                            Diagnostic::error(
+                                Code(d.code.clone()),
+                                Entity::Project,
+                                d.message.clone(),
+                            )
+                        },
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    drafts
+        .into_iter()
+        .chain(loaded.build.faults.iter().map(|f| match f {
             bdl_text::TextFault::Syntax { file, error } => (
                 line_of(*file, error.span.start),
                 Diagnostic::error(error.code.as_str(), Entity::Project, error.message.clone()),
@@ -79,7 +119,7 @@ fn text_faults(session: &Session) -> Vec<(String, Diagnostic)> {
                     Diagnostic::error(Code(l.code.clone()), Entity::Project, l.message.clone())
                 },
             ),
-        })
+        }))
         .collect()
 }
 

@@ -1159,6 +1159,7 @@ fn system_view(session: &mut Session) -> Result<pb::SystemView, SessionError> {
         sys.authoring_generation,
         &boundaries,
         p.dirty(),
+        &p.definition_drafts(),
     ))
 }
 

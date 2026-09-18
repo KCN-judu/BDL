@@ -797,3 +797,180 @@ fn code_view_edits_flow_through_the_model_and_keep_identities() {
     assert!(!main.text.contains("output light"), "{}", main.text);
     assert!(main.text.contains("// a note the model does not keep"));
 }
+
+/// Saving saves the whole authoring state: a definition draft (valid,
+/// invalid or empty) and text that does not build survive save, close and
+/// reopen exactly as typed; the graph keeps its identities; dirty is one
+/// question — does the persistent state differ from what is saved.
+#[test]
+fn unfinished_edits_survive_save_close_and_reopen() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut c = Client::spawn();
+    let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "lamp".into(),
+    })) else {
+        panic!()
+    };
+    c.last_revision = p.project.unwrap().revision;
+    let tilt = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Tilt".into(),
+            description: String::new(),
+            representation: quantity(angle()),
+        }))
+        .created_concept
+        .unwrap();
+    let bright = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Brightness".into(),
+            description: String::new(),
+            representation: quantity(pb::Dim::default()),
+        }))
+        .created_concept
+        .unwrap();
+    let dim = c
+        .base(pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "dimByTilt".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![tilt],
+                output: bright,
+            }),
+        }))
+        .created_mapping
+        .unwrap();
+    let level = c
+        .base(pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "level".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![],
+                output: bright,
+            }),
+        }))
+        .created_mapping
+        .unwrap();
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+
+    // a valid draft, an invalid one, an empty one: each dirties the project
+    for (id, text) in [(dim, "Tilt / 90 deg"), (level, "Tilt +"), (level, "")] {
+        let Resp::DefinitionDraft(_) = c.call(Req::AnalyzeDefinitionDraft(
+            pb::AnalyzeDefinitionDraftRequest {
+                revision: c.last_revision,
+                mapping_id: id,
+                generation: 1,
+                source: text.into(),
+                component: None,
+            },
+        )) else {
+            panic!("draft {text:?}")
+        };
+    }
+    assert!(c.project().dirty, "a draft is unsaved work");
+
+    // text that does not build, in the Code view
+    let typed = format!(
+        "{}\n// a note\noutput light : Brightness\ndrive light =\n",
+        c.sources().files[0].text.trim_end()
+    );
+    let refused = c.source_edit("src/main.bdl", &typed);
+    assert!(!refused.accepted);
+    assert!(c.project().dirty);
+
+    // save: everything as typed
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty, "saved: nothing differs");
+    assert_eq!(
+        std::fs::read_to_string(root.join("src/main.bdl")).unwrap(),
+        typed,
+        "the typed text is the file"
+    );
+    let Resp::System(s) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
+        panic!()
+    };
+    let drafts = s.system.unwrap().definition_drafts;
+    assert_eq!(drafts.len(), 2);
+    assert!(drafts
+        .iter()
+        .any(|d| d.mapping_id == dim && d.source == "Tilt / 90 deg"));
+    assert!(drafts
+        .iter()
+        .any(|d| d.mapping_id == level && d.source.is_empty()));
+
+    // close, reopen: the same state, the same ids, still clean
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let p = c.open(&root);
+    assert!(!p.dirty);
+    assert_eq!(
+        p.mappings
+            .iter()
+            .find(|m| m.name == "dimByTilt")
+            .unwrap()
+            .id,
+        dim
+    );
+    assert!(
+        p.mappings.iter().all(|m| m.definition.is_none()),
+        "nothing committed"
+    );
+    let sources = c.sources();
+    let main = sources
+        .files
+        .iter()
+        .find(|f| f.path == "src/main.bdl")
+        .unwrap();
+    assert!(main.draft);
+    assert_eq!(main.text, typed, "exactly the typed text");
+    assert!(
+        sources.diagnostics.iter().any(|d| !d.open),
+        "with its reasons"
+    );
+    let Resp::System(s) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
+        panic!()
+    };
+    let mut again = s.system.unwrap().definition_drafts;
+    again.sort_by_key(|d| d.mapping_id);
+    assert_eq!(again.len(), 2);
+    assert_eq!(again[0].mapping_id, dim);
+    assert_eq!(again[0].source, "Tilt / 90 deg");
+    assert_eq!(again[1].mapping_id, level);
+    assert_eq!(again[1].source, "");
+
+    // discarding a draft, or fixing the text, is unsaved work again
+    c.call(Req::DiscardDefinitionDraft(
+        pb::DiscardDefinitionDraftRequest {
+            mapping_id: level,
+            component: None,
+        },
+    ));
+    assert!(c.project().dirty);
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+    let fixed = typed.replace("drive light =\n", "drive light = level\n");
+    let applied = c.source_edit("src/main.bdl", &fixed);
+    assert!(applied.accepted, "{:?}", applied.sources);
+    assert!(c.project().dirty);
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+    assert_eq!(
+        std::fs::read_to_string(root.join("src/main.bdl")).unwrap(),
+        fixed
+    );
+    let sidecar = std::fs::read_to_string(root.join(".bdl/authoring.json")).unwrap();
+    assert!(!sidecar.contains("last_good"), "no draft left: {sidecar}");
+    assert!(
+        sidecar.contains("Tilt / 90 deg"),
+        "the definition draft stays: {sidecar}"
+    );
+}

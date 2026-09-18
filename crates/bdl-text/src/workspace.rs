@@ -66,12 +66,46 @@ pub enum TextError {
     Rewrite { path: PathBuf, message: String },
 }
 
-/// `.bdl/authoring.json`: what is authored but not semantic.
+/// `.bdl/authoring.json`: what is authored but not semantic — groups, and
+/// the unfinished edits a save keeps exactly as the designer left them.
+/// Saving never requires a file to build or a formula to check: the
+/// project is what was being worked on, the compiler says what it means.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthoringFile {
     pub schema_version: u32,
     #[serde(default)]
     pub groups: BTreeMap<BehaviorGroupId, BehaviorGroup>,
+    /// Source files whose text on disk does not build, by path: the text
+    /// under `src/` is what the designer typed; `last_good` is the last
+    /// text of that file that built, which the graph and the identity
+    /// table describe until the typed text builds again.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub source_drafts: BTreeMap<String, SourceDraftFile>,
+    /// Definition text the designer typed and has not committed, by
+    /// relationship (component-local ids inside a component body).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub definition_drafts: Vec<DefinitionDraftFile>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SourceDraftFile {
+    pub last_good: String,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct DefinitionDraftFile {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub component: Option<u64>,
+    pub mapping: u64,
+    pub source: String,
+}
+
+/// The unfinished edits a project carries beside its sources.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Drafts {
+    /// Path → the text typed for that file (what `src/` holds on disk).
+    pub sources: BTreeMap<String, String>,
+    pub definitions: Vec<DefinitionDraftFile>,
 }
 
 /// A project as loaded: sources, the build, and the sidecars.
@@ -79,9 +113,13 @@ pub struct AuthoringFile {
 pub struct LoadedWorkspace {
     pub root: PathBuf,
     pub manifest: Manifest,
+    /// The files the build read: a file whose typed text does not build
+    /// carries its last good text here, the typed text in `drafts`.
     pub files: Vec<SourceFile>,
     pub build: BuildResult,
     pub layout: Layout,
+    /// The unfinished edits found beside the sources.
+    pub drafts: Drafts,
     /// Modification times of every file read, to notice external edits.
     pub stamps: Vec<(String, Option<std::time::SystemTime>)>,
     /// What opening did to a legacy project, when it migrated one.
@@ -159,11 +197,36 @@ fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<Option<T>, Tex
 
 /// Write the authoring sidecar (groups) of a system.
 pub fn write_authoring(root: &Path, system: &BehaviorSystem) -> Result<(), TextError> {
+    write_authoring_with(root, system, &BTreeMap::new(), &[])
+}
+
+/// The authoring sidecar: the system's groups, the last good text of
+/// every file whose typed text does not build, the definition drafts.
+pub fn write_authoring_with(
+    root: &Path,
+    system: &BehaviorSystem,
+    last_good: &BTreeMap<String, String>,
+    definition_drafts: &[DefinitionDraftFile],
+) -> Result<(), TextError> {
+    let mut definitions = definition_drafts.to_vec();
+    definitions.sort();
     write_json(
         &root.join(AUTHORING_FILE),
         &AuthoringFile {
             schema_version: AUTHORING_SCHEMA_VERSION,
             groups: system.groups.clone(),
+            source_drafts: last_good
+                .iter()
+                .map(|(path, text)| {
+                    (
+                        path.clone(),
+                        SourceDraftFile {
+                            last_good: text.clone(),
+                        },
+                    )
+                })
+                .collect(),
+            definition_drafts: definitions,
         },
     )
 }
@@ -203,7 +266,7 @@ pub fn load_authoring(root: &Path) -> Result<AuthoringFile, TextError> {
         }
         None => Ok(AuthoringFile {
             schema_version: AUTHORING_SCHEMA_VERSION,
-            groups: BTreeMap::new(),
+            ..AuthoringFile::default()
         }),
     }
 }
@@ -243,9 +306,33 @@ pub fn load_project_with(
 ) -> Result<LoadedWorkspace, TextError> {
     let migrated = crate::migrate::migrate_legacy(root, compiler_version)?;
     let manifest = persist::read_manifest(root)?;
-    let files = discover_sources(root)?;
+    let on_disk = discover_sources(root)?;
     let table = load_identities(root)?;
     let authoring = load_authoring(root)?;
+    // A file saved while it did not build: the typed text stays a draft
+    // and the last good text is what the build reads — unless the typed
+    // text builds now (fixed in an editor), which ends the draft.
+    let mut files = on_disk.clone();
+    let mut drafts = Drafts {
+        sources: BTreeMap::new(),
+        definitions: authoring.definition_drafts.clone(),
+    };
+    if !authoring.source_drafts.is_empty() {
+        let probe = load_workspace(&manifest.name, &on_disk, &table);
+        for (i, f) in on_disk.iter().enumerate() {
+            let Some(saved) = authoring.source_drafts.get(&f.path) else {
+                continue;
+            };
+            let broken = probe
+                .faults
+                .iter()
+                .any(|fault| fault.file() == i && !fault.is_open());
+            if broken {
+                drafts.sources.insert(f.path.clone(), f.text.clone());
+                files[i].text = saved.last_good.clone();
+            }
+        }
+    }
     let mut build = load_workspace(&manifest.name, &files, &table);
     // Groups are authoring metadata: merged in, never read by the build.
     let known: std::collections::BTreeSet<bdl_model::DeclId> =
@@ -271,6 +358,7 @@ pub fn load_project_with(
         files,
         build,
         layout,
+        drafts,
         stamps,
         migrated,
     })
@@ -311,13 +399,48 @@ pub fn save_project(
     layout: &Layout,
     compiler_version: &str,
 ) -> Result<WriteBack, TextError> {
+    save_project_with(
+        root,
+        previous,
+        system,
+        layout,
+        &Drafts::default(),
+        &[],
+        compiler_version,
+    )
+}
+
+/// [`save_project`] with the unfinished edits: a file with a source draft
+/// is written as typed (its last good text goes to the authoring sidecar);
+/// `rewrite` names files whose text must reach disk even when the splice
+/// changed nothing (text accepted from the Code view).  Every file is
+/// written before the sidecars, and the manifest last, so an interrupted
+/// save never leaves a manifest pointing at a half-written project.
+pub fn save_project_with(
+    root: &Path,
+    previous: &LoadedWorkspace,
+    system: &BehaviorSystem,
+    layout: &Layout,
+    drafts: &Drafts,
+    rewrite: &[String],
+    compiler_version: &str,
+) -> Result<WriteBack, TextError> {
     let wb = write_back(&previous.build, &previous.files, system);
-    for i in &wb.changed {
-        let f = &wb.files[*i];
-        persist::write_atomic(&root.join(&f.path), f.text.as_bytes())?;
+    let mut last_good = BTreeMap::new();
+    for (i, f) in wb.files.iter().enumerate() {
+        let path = root.join(&f.path);
+        if let Some(typed) = drafts.sources.get(&f.path) {
+            last_good.insert(f.path.clone(), f.text.clone());
+            let on_disk = std::fs::read_to_string(&path).ok();
+            if on_disk.as_deref() != Some(typed.as_str()) {
+                persist::write_atomic(&path, typed.as_bytes())?;
+            }
+        } else if wb.changed.contains(&i) || rewrite.contains(&f.path) {
+            persist::write_atomic(&path, f.text.as_bytes())?;
+        }
     }
     write_json(&root.join(IDENTITIES_FILE), &wb.table)?;
-    write_authoring(root, system)?;
+    write_authoring_with(root, system, &last_good, &drafts.definitions)?;
     persist::save_layout(root, layout)?;
     persist::write_manifest(
         root,
@@ -353,7 +476,7 @@ pub fn init_project(
         &root.join(AUTHORING_FILE),
         &AuthoringFile {
             schema_version: AUTHORING_SCHEMA_VERSION,
-            groups: BTreeMap::new(),
+            ..AuthoringFile::default()
         },
     )?;
     persist::save_layout(root, &Layout::default())?;

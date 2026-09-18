@@ -1817,6 +1817,20 @@ message SystemView {
   // Whether the authored system differs from what is saved — a group edit
   // dirties the project without moving the revision.
   bool dirty = 13;
+  // The definition drafts the project holds (0.15): text typed for a
+  // relationship and not committed, saved with the project and restored on
+  // open.  A client seeds its editors from these when it opens the project
+  // and keeps them current through AnalyzeDefinitionDraft /
+  // DiscardDefinitionDraft; the daemon persists whatever it holds.
+  repeated DefinitionDraftView definition_drafts = 14;
+}
+
+message DefinitionDraftView {
+  // The component whose body the relationship belongs to; absent for the
+  // system's own design.  Ids are then component-local.
+  optional uint64 component = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
 }
 
 // A group is authoring metadata: identity, scope, name, description,
