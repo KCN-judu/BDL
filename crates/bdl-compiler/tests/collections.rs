@@ -261,3 +261,58 @@ fn the_window_capacity_comes_from_the_schedule_and_is_compared_with_the_bound() 
     let r = collections_report(art.exec_ir.as_ref().unwrap(), Some(&s));
     assert_eq!(r.windows[0].required, Some(2));
 }
+
+/// The structural cost limits of docs/architecture/codegen-rust.md §Cost
+/// discipline, on the generated text: a fold step never clones its
+/// accumulator (so `map`, `filter`, `append` are linear), a tick never
+/// clones the whole state, and a list read for its length or first
+/// element goes through a borrow.
+#[test]
+fn the_generated_core_moves_accumulators_and_copies_no_state_per_tick() {
+    let case = corpus().into_iter().find(|c| c.name == "list_ops").unwrap();
+    let art = compile_case(&case);
+    let core = art.generated.as_ref().unwrap().core_source().to_owned();
+    let mut folds = 0;
+    for line in core.lines() {
+        let mut rest = line;
+        while let Some(i) = rest.find("list::fold(") {
+            rest = &rest[i + "list::fold(".len()..];
+            let Some(bar) = rest.find('|') else { break };
+            let params = &rest[bar + 1..];
+            let Some(end) = params.find('|') else { break };
+            let names: Vec<&str> = params[..end].split(',').map(str::trim).collect();
+            let acc = names[1];
+            let body = &params[end + 1..];
+            assert!(
+                !body.contains(&format!("{acc}.clone()")),
+                "the accumulator {acc} is cloned in a fold step: {line}"
+            );
+            folds += 1;
+        }
+    }
+    assert!(
+        folds >= 5,
+        "map, filter, append, zip, sum, contains: {folds} folds"
+    );
+    assert!(
+        !core.contains("state.cells.clone()"),
+        "no whole-state copy per tick"
+    );
+    // zip is the documented exception: its pair accumulator is cloned
+    assert!(
+        core.contains(".clone().0"),
+        "ISS-0013: zip still clones its pair"
+    );
+    // a borrowed read: `length` and `head` of a declaration copy nothing
+    let case = corpus()
+        .into_iter()
+        .find(|c| c.name == "collections")
+        .unwrap();
+    let core = compile_case(&case)
+        .generated
+        .unwrap()
+        .core_source()
+        .to_owned();
+    assert!(core.contains("list::length_of(read_decl_ref("), "{core}");
+    assert!(core.contains("list::head_of(read_decl_ref("));
+}
