@@ -165,7 +165,10 @@ class _FormulaComposerState extends State<FormulaComposer> {
         ),
         child: Opacity(
           opacity: widget.outOfSync ? 0.5 : 1,
-          child: root == null
+          child: root == null && widget.outOfSync
+              // nothing readable to show: the notice below says why
+              ? const SizedBox(height: 22)
+              : root == null
               // an empty formula is one slot: the first action is to fill it
               ? _EmptySlot(
                   selected: selected == 'r',
@@ -193,9 +196,11 @@ class _FormulaComposerState extends State<FormulaComposer> {
               children: [
                 Expanded(
                   child: Text(
-                    p == null
+                    // three stale states, one policy: no answer yet, an
+                    // answer for older text, text the compiler cannot read
+                    p == null || p.source != widget.source
                         ? 'Waiting for the compiler to read the formula…'
-                        : 'The text cannot be read as a formula; the last readable form is shown.',
+                        : 'The text cannot be read as a formula.',
                     key: const ValueKey('composer-out-of-sync'),
                     style: TextStyle(fontSize: 11, color: t.textSecondary),
                   ),

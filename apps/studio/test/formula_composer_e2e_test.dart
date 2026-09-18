@@ -9,6 +9,7 @@ library;
 import 'dart:io';
 
 import 'package:bdl_studio/app/actions.dart';
+import 'package:bdl_studio/app/composer.dart' show composerInSync;
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -53,8 +54,11 @@ void main() {
     return s.editor.composer.slot!;
   }
 
+  /// A structured action, sent once the projection on screen is current
+  /// (the stale-projection policy: the UI offers no action before that).
   Future<String> composed(pb.ComposeAction action) async {
     final id = mappingId();
+    await store.until((s) => composerInSync(s, id));
     final before = store.state.draft(id)?.source ?? '';
     store.dispatch(ComposeRequested(mappingId: id, action: action));
     final s = await store.until(

@@ -29,6 +29,19 @@ pb.FormulaProjection? composerProjection(AppState s, int mappingId) {
   return c.mappingId == mappingId ? c.projection : null;
 }
 
+/// The stale-projection policy: a projection is *current* only when it is
+/// of exactly the text on screen and that text parsed.  Anything else —
+/// no answer yet, an older answer, text that cannot be read — is shown
+/// dimmed as context and never edited structurally: a node id of one text
+/// means nothing in another.  An empty draft is one slot and needs no
+/// projection.
+bool composerInSync(AppState s, int mappingId) {
+  final source = composerSource(s, mappingId);
+  if (source.trim().isEmpty) return true;
+  final p = composerProjection(s, mappingId);
+  return p != null && p.source == source && p.parseOk;
+}
+
 Transition formulaModeChanged(AppState s, bool formulaMode) {
   final c = s.editor.composer;
   if (c.formulaMode == formulaMode) return Transition(s);
@@ -139,17 +152,28 @@ Transition formulaSlotReceived(AppState s, int generation, pb.FormulaSlotRespons
 }
 
 /// A structured action: sent with the source it acts on; the answer
-/// becomes the draft's text through the ordinary change path.
+/// becomes the draft's text through the ordinary change path.  Refused
+/// (nothing sent) while the projection on screen is not current — a node
+/// id from stale structure never edits the current text — while another
+/// action is in flight, and while the draft is in conflict or saving.
 Transition composeRequested(AppState s, int mappingId, pb.ComposeAction action) {
   if (s.project == null || s.mapping(mappingId) == null) return Transition(s);
   final d = s.draft(mappingId);
   if (d != null && (d.conflict || d.pendingCommit != null)) return Transition(s);
-  final generation = s.editor.toolingGeneration + 1;
+  if (!composerInSync(s, mappingId)) return Transition(s);
   final c = s.editor.composer;
+  if (c.pendingCompose) return Transition(s);
+  final generation = s.editor.toolingGeneration + 1;
+  final source = composerSource(s, mappingId);
   return Transition(
     s.copyWith(
       editor: s.editor.copyWith(
-        composer: c.copyWith(mappingId: mappingId, pendingCompose: true),
+        composer: c.copyWith(
+          mappingId: mappingId,
+          pendingCompose: true,
+          composeGeneration: generation,
+          composeSource: source,
+        ),
         toolingGeneration: generation,
       ),
     ),
@@ -157,7 +181,7 @@ Transition composeRequested(AppState s, int mappingId, pb.ComposeAction action) 
       ComposeFormula(
         revision: s.revision,
         mappingId: mappingId,
-        source: composerSource(s, mappingId),
+        source: source,
         action: action,
         generation: generation,
         component: s.editor.componentScope,
@@ -169,16 +193,26 @@ Transition composeRequested(AppState s, int mappingId, pb.ComposeAction action) 
 Transition composeReceived(AppState s, int generation, pb.ComposeFormulaResponse r) {
   final c = s.editor.composer;
   final mappingId = r.mappingId.toInt();
-  if (c.mappingId != mappingId || r.revision.toInt() != s.revision) {
+  // the answer is applied only to the text it was computed against, for
+  // the request still awaited, at the revision held: anything else is an
+  // answer to a formula that no longer exists and is discarded
+  if (c.mappingId != mappingId ||
+      c.composeGeneration != generation ||
+      r.revision.toInt() != s.revision ||
+      c.composeSource != composerSource(s, mappingId)) {
     return Transition(
-      s.copyWith(editor: s.editor.copyWith(composer: c.copyWith(pendingCompose: false))),
+      s.copyWith(
+        editor: s.editor.copyWith(
+          composer: c.composeGeneration == generation ? c.copyWith(clearCompose: true) : c,
+        ),
+      ),
     );
   }
   // the answer is a draft change like any typing; then select what the
-  // service says comes next (the first new slot, else the edited node)
+  // service says comes next (the new slot, else the edited node)
   final t = draftChanged(s, mappingId, r.source);
   final next = r.select.isEmpty ? null : r.select;
-  final settled = t.state.editor.composer.copyWith(pendingCompose: false, clearSelection: true);
+  final settled = t.state.editor.composer.copyWith(clearCompose: true, clearSelection: true);
   final withSelection = Transition(
     t.state.copyWith(editor: t.state.editor.copyWith(composer: settled)),
     t.effects,
@@ -195,7 +229,7 @@ EditorState composerAfterFailure(EditorState e, int generation) {
   var next = c;
   if (c.slotGeneration == generation) next = next.copyWith(clearSlot: true);
   if (c.projectionGeneration == generation) next = next.copyWith(clearProjection: true);
-  if (c.pendingCompose) next = next.copyWith(pendingCompose: false);
+  if (c.composeGeneration == generation) next = next.copyWith(clearCompose: true);
   return identical(next, c) ? e : e.copyWith(composer: next);
 }
 

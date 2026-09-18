@@ -6,6 +6,7 @@
 library;
 
 import 'package:bdl_studio/app/actions.dart';
+import 'package:bdl_studio/app/composer.dart' show composerInSync;
 import 'package:bdl_studio/app/effects.dart';
 import 'package:bdl_studio/app/reducer.dart';
 import 'package:bdl_studio/app/state.dart';
@@ -181,6 +182,17 @@ pb.FormulaSlotResponse angleSlot(String node) => pb.FormulaSlotResponse(
   ],
 );
 
+/// A draft that the compiler has answered: the text, and a projection of
+/// exactly that text (the tree's shape does not matter to the reducer).
+AppState drafted(AppState s, String source, {pb.FormulaProjection? projection}) {
+  final t = reduce(s, DefinitionDraftChanged(mappingId: dim, source: source)).state;
+  final p = projection ?? pb.FormulaProjection(source: source, parseOk: true, complete: true);
+  return reduce(
+    t,
+    DraftAnalysisReceived(verdict(generation: t.draft(dim)!.generation, projection: p)),
+  ).state;
+}
+
 pb.DefinitionDraftAnalysis verdict({
   required int generation,
   required pb.FormulaProjection projection,
@@ -308,8 +320,7 @@ void main() {
     });
 
     test('a composed answer is a draft change, then the next slot is selected', () {
-      var s = connected(lamp());
-      s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt')).state;
+      final s = drafted(connected(lamp()), 'Tilt');
       final t = reduce(
         s,
         ComposeRequested(
@@ -354,8 +365,7 @@ void main() {
     });
 
     test('a stale compose answer and a failure release the pending action', () {
-      var s = connected(lamp());
-      s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt')).state;
+      final s = drafted(connected(lamp()), 'Tilt');
       final t = reduce(
         s,
         ComposeRequested(
@@ -407,6 +417,133 @@ void main() {
         const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / (50 deg)'),
       ).state;
       expect(reduce(withDraft, const FormulaProjectionRequested(dim)).effects, isEmpty);
+    });
+  });
+
+  group('stale structure never edits current text', () {
+    test('a compose answer for older text is discarded when the draft moved on', () {
+      // generation N: `Tilt / ?`, an action on r.1 sent
+      var s = drafted(connected(lamp()), 'Tilt / ?', projection: tiltOverSlot());
+      s = reduce(s, const FormulaNodeSelected(mappingId: dim, nodeId: 'r.1')).state;
+      final t = reduce(
+        s,
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(nodeId: 'r.1', fill: '90 deg'),
+        ),
+      );
+      final e = t.effects.single as ComposeFormula;
+      expect(e.source, 'Tilt / ?');
+      // the designer types before the answer arrives (generation N+1):
+      // the selection of the old tree is dropped with the old text
+      var typed = reduce(
+        t.state,
+        const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / 45 deg'),
+      ).state;
+      expect(typed.editor.composer.selectedNode, isNull);
+      // the old answer arrives: right generation, wrong text — discarded,
+      // and the pending action is released
+      typed = reduce(
+        typed,
+        ComposeReceived(
+          generation: e.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: 'Tilt / 90 deg',
+            select: 'r.1',
+          ),
+        ),
+      ).state;
+      expect(typed.draft(dim)!.source, 'Tilt / 45 deg', reason: 'the typed text stands');
+      expect(typed.editor.composer.pendingCompose, isFalse);
+      expect(typed.editor.composer.selectedNode, isNull, reason: 'no node of old text is selected');
+    });
+
+    test('a structured action on a stale or unreadable projection is refused, not sent', () {
+      // projection of `Tilt / ?`, but the text has moved on: nothing is sent
+      var s = drafted(connected(lamp()), 'Tilt / ?', projection: tiltOverSlot());
+      s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / 4')).state;
+      expect(s.draft(dim)!.projection, isNull, reason: 'a new generation drops the projection');
+      var t = reduce(
+        s,
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(nodeId: 'r.1', fill: '1'),
+        ),
+      );
+      expect(t.effects, isEmpty);
+      expect(t.state.editor.composer.pendingCompose, isFalse);
+      // unreadable text: a projection without a tree is not current either
+      s = drafted(
+        connected(lamp()),
+        'Tilt / (',
+        projection: pb.FormulaProjection(source: 'Tilt / (', parseOk: false),
+      );
+      t = reduce(
+        s,
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(nodeId: 'r', remove: pb.Unit()),
+        ),
+      );
+      expect(t.effects, isEmpty);
+      // two actions never fly at once: the second waits for the first
+      s = drafted(connected(lamp()), 'Tilt');
+      t = reduce(
+        s,
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(
+            nodeId: 'r',
+            operator: pb.ComposeOperator(op: '/'),
+          ),
+        ),
+      );
+      expect(t.effects, hasLength(1));
+      final again = reduce(
+        t.state,
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(
+            nodeId: 'r',
+            operator: pb.ComposeOperator(op: '*'),
+          ),
+        ),
+      );
+      expect(again.effects, isEmpty);
+    });
+
+    test('valid → invalid → valid: the exact text stands, the projection follows the verdict', () {
+      var s = drafted(connected(lamp()), 'Tilt / (45 deg)', projection: tiltOver45());
+      expect(composerInSync(s, dim), isTrue);
+      // invalid: the typed text is the draft; the projection is gone until
+      // the verdict says the text cannot be read
+      s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / (')).state;
+      expect(s.draft(dim)!.source, 'Tilt / (');
+      expect(composerInSync(s, dim), isFalse);
+      s = reduce(
+        s,
+        DraftAnalysisReceived(
+          verdict(
+            generation: s.draft(dim)!.generation,
+            parseOk: false,
+            projection: pb.FormulaProjection(source: 'Tilt / (', parseOk: false),
+          ),
+        ),
+      ).state;
+      expect(composerInSync(s, dim), isFalse);
+      // a late answer for the *valid* generation arrives during the
+      // invalid one: dropped (its generation is old)
+      final late = reduce(
+        s,
+        DraftAnalysisReceived(verdict(generation: 1, projection: tiltOver45())),
+      ).state;
+      expect(late.draft(dim)!.projection!.source, 'Tilt / (');
+      // valid again: the verdict's projection is of the new text
+      s = drafted(s, 'Tilt / (30 deg)');
+      expect(composerInSync(s, dim), isTrue);
+      expect(s.draft(dim)!.projection!.source, 'Tilt / (30 deg)');
     });
   });
 
@@ -577,6 +714,38 @@ void main() {
         final c = h.effects.whereType<ComposeFormula>().single;
         expect(c.action.setUnit.unitId, 'angle.rad');
         expect(c.action.setUnit.preserveValue, isTrue, reason: 'the quantity is kept');
+        // the answer lands, the verdict projects the new text; only then is
+        // the next structured action possible
+        h.answer(
+          ComposeReceived(
+            generation: c.generation,
+            result: pb.ComposeFormulaResponse(
+              revision: Int64(1),
+              mappingId: Int64(dim),
+              source: 'Tilt / 0.7853981633974483 rad',
+              select: 'r.1',
+            ),
+          ),
+        );
+        final p = tiltOver45()
+          ..source = 'Tilt / 0.7853981633974483 rad'
+          ..root.text = 'Tilt / 0.7853981633974483 rad'
+          ..root.children[1].coordinate = '0.7853981633974483'
+          ..root.children[1].unit = 'rad'
+          ..root.children[1].unitId = 'angle.rad'
+          ..root.children[1].text = '0.7853981633974483 rad'
+          ..root.children[1].range = pb.SourceSpan(start: 7, end: 29);
+        h.answer(
+          DraftAnalysisReceived(
+            verdict(
+              generation: h.state.draft(dim)!.generation,
+              projection: p,
+              status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
+            ),
+          ),
+        );
+        await t.pump();
+        expect(find.text('0.7853981633974483'), findsOneWidget);
         // typing a coordinate and Return is the other action
         await t.enterText(
           find.descendant(
@@ -642,6 +811,48 @@ void main() {
       await t.tap(find.text('Edit as text'));
       await t.pump();
       expect(t.widget<TextField>(field).controller!.text, 'Tilt / (');
+      // Text → Formula while still invalid: no structured action is offered
+      // (the chips are inert and no slot panel opens), the notice stays
+      await t.tap(find.text('Formula'));
+      await t.pump();
+      expect(find.text('The text cannot be read as a formula.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('node-r')), findsNothing, reason: 'no tree is invented');
+      expect(find.byKey(const ValueKey('node-r.1')), findsNothing);
+      expect(h.effects.whereType<GetFormulaSlot>().where((e) => e.source == 'Tilt / ('), isEmpty);
+      // recovery: the text is fixed; until the verdict of *that* text arrives
+      // the Composer waits rather than showing the old tree as current
+      await t.tap(find.text('Text'));
+      await t.pump();
+      await t.enterText(field, 'Tilt / (60 deg)');
+      await t.pump();
+      await t.tap(find.text('Formula'));
+      await t.pump();
+      expect(find.text('Waiting for the compiler to read the formula…'), findsOneWidget);
+      // a stale answer (the invalid generation's) during recovery changes nothing
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(
+            generation: h.state.draft(dim)!.generation - 1,
+            parseOk: false,
+            projection: pb.FormulaProjection(source: 'Tilt / (', parseOk: false),
+          ),
+        ),
+      );
+      await t.pump();
+      expect(find.text('Waiting for the compiler to read the formula…'), findsOneWidget);
+      final fixed = tiltOver45()
+        ..source = 'Tilt / (60 deg)'
+        ..root.text = 'Tilt / (60 deg)'
+        ..root.children[1].coordinate = '60'
+        ..root.children[1].text = '(60 deg)';
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(generation: h.state.draft(dim)!.generation, projection: fixed),
+        ),
+      );
+      await t.pump();
+      expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
+      expect(find.text('60'), findsOneWidget);
     });
 
     testWidgets('save, revert and a conflict work the same in Formula mode', (t) async {

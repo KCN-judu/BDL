@@ -672,6 +672,8 @@ class ComposerState {
     this.projection,
     this.projectionGeneration,
     this.pendingCompose = false,
+    this.composeGeneration,
+    this.composeSource,
   });
 
   /// Formula (structured) or Text — a preference of the editor, not of
@@ -693,8 +695,12 @@ class ComposerState {
   final pb.FormulaProjection? projection;
   final int? projectionGeneration;
 
-  /// A structured action is being answered.
+  /// A structured action is being answered: its request tag and the draft
+  /// text it was computed against.  An answer is applied only while both
+  /// still hold — a newer keystroke or action makes it stale.
   final bool pendingCompose;
+  final int? composeGeneration;
+  final String? composeSource;
 
   ComposerState copyWith({
     bool? formulaMode,
@@ -709,6 +715,9 @@ class ComposerState {
     bool clearProjection = false,
     int? projectionGeneration,
     bool? pendingCompose,
+    int? composeGeneration,
+    String? composeSource,
+    bool clearCompose = false,
   }) => ComposerState(
     formulaMode: formulaMode ?? this.formulaMode,
     mappingId: clearMapping ? null : (mappingId ?? this.mappingId),
@@ -721,7 +730,9 @@ class ComposerState {
     projectionGeneration: clearProjection
         ? null
         : (projectionGeneration ?? this.projectionGeneration),
-    pendingCompose: pendingCompose ?? this.pendingCompose,
+    pendingCompose: clearCompose ? false : (pendingCompose ?? this.pendingCompose),
+    composeGeneration: clearCompose ? null : (composeGeneration ?? this.composeGeneration),
+    composeSource: clearCompose ? null : (composeSource ?? this.composeSource),
   );
 }
 

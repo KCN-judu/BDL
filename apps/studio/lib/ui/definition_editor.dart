@@ -394,10 +394,13 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
 
     final formulaMode = widget.composer.formulaMode;
     final projection = widget.projection;
-    // the projection is of the text on screen when its source is that text;
-    // otherwise (not yet answered, or the text does not parse) it is stale
-    final inSync = projection != null && projection.source == m.text && projection.parseOk;
+    // the stale-projection policy (app/composer.dart `composerInSync`): the
+    // projection is current only when it is of exactly the text on screen
+    // and that text parsed; otherwise it is shown dimmed as context and no
+    // structured action is offered.  An empty draft is one slot.
     final emptyFormula = m.text.trim().isEmpty;
+    final inSync =
+        emptyFormula || (projection != null && projection.source == m.text && projection.parseOk);
     return CallbackShortcuts(
       bindings: {
         // The pop-up takes the navigation keys only while it is open; Esc
@@ -441,11 +444,11 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
               key: ValueKey('composer-${widget.mappingId}'),
               mappingId: widget.mappingId,
               source: m.text,
-              projection: inSync || emptyFormula ? projection : projection,
+              projection: projection,
               composer: widget.composer,
               concepts: widget.concepts,
               dispatch: widget.dispatch,
-              outOfSync: !inSync && !emptyFormula,
+              outOfSync: !inSync,
               onEditAsText: () => widget.dispatch(const FormulaModeChanged(false)),
             )
           else

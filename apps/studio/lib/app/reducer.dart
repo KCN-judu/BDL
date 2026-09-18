@@ -158,10 +158,15 @@ Transition reduce(AppState s, AppAction action) {
     ),
 
     // ---- definition drafts (app/drafts.dart) --------------------------------
-    DefinitionDraftChanged(:final mappingId, :final source) => _whenProject(
-      s,
-      () => draftChanged(s, mappingId, source),
-    ),
+    // typing changes the text the Composer's selection was about: the
+    // selection goes with it (a composed answer re-selects on its own)
+    DefinitionDraftChanged(:final mappingId, :final source) => _whenProject(s, () {
+      final t = draftChanged(s, mappingId, source);
+      return Transition(
+        t.state.copyWith(editor: withoutComposerSelection(t.state.editor)),
+        t.effects,
+      );
+    }),
     DefinitionDraftReverted(:final mappingId) ||
     DefinitionDraftReloaded(:final mappingId) => draftDropped(s, mappingId),
     DefinitionDraftKept(:final mappingId) => draftKept(s, mappingId),
