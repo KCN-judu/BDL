@@ -41,23 +41,40 @@ Not a proof — the correspondence the differential tests check.
 
 | Reference evaluator (`bdl-reactive::eval`)                                    | Executable IR                                         | Generated Rust                                                                                                                              |
 | ----------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Expr::DeclRef d` → `decl_value(d)` (memoised)                                | `ReadDecl i`                                          | `read_decl(decl_n, n)?` — a `let decl_n: Option<T>` bound earlier in `step`                                                                 |
-| unresolved declaration → `input.values[d]` or `MissingInput`                  | `DeclKind::Input { slot }`                            | `Inputs.decl_n: Option<T>`; `read_input(inputs.decl_n, n)?` when due                                                                        |
+| `Expr::DeclRef d` → `decl_value(d)` (memoised)                                | `ReadDecl i`                                          | `read_decl(&decl_n, n)?` — a `let decl_n: Option<T>` bound earlier in `step`, cloned out                                                    |
+| unresolved declaration → `input.values[d]` or `MissingInput`                  | `DeclKind::Input { slot }`                            | `Inputs.decl_n: Option<T>`; `read_input(&inputs.decl_n, n)?` when due                                                                       |
 | `evaluated_this_tick`: domain active, or agnostic and anything active         | `Activation` + `has_domains`                          | `if active.is_active(CLOCK_k) { Some(…) } else { None }` / `prim::or(active.any(), !HAS_DOMAINS)`                                           |
-| `Expr::Delay/Sync` read: `prev.cells[(d,path)]` else `init`                   | `ReadCell { slot, init }`                             | `match prev.cell_k { Some(v) => v, None => init }`                                                                                          |
+| `Expr::Delay/Sync` read: `prev.cells[(d,path)]` else `init`                   | `ReadCell { slot, init }`                             | `match &prev.cell_k { Some(v) => v.clone(), None => init }`                                                                                 |
 | write phase: `temporal_sites` whose writer is active → `next[(d,path)] = e`   | `CellPlan { writer, operand }` in `StateCellId` order | `if active.is_active(CLOCK_w) { next.cell_k = Some(operand); }`                                                                             |
 | `TickOutcome.next` replaces state after the tick                              | —                                                     | `state.cells = next` after the write phase; on `Err` untouched                                                                              |
 | `Expr::Mk s e` / `Expr::Rep e`                                                | `Wrap` / `Unwrap`                                     | `SemN(e)` / `e.0` — `pub struct SemN(pub Repr)` per concept                                                                                 |
 | `apply_prim` (strict, finite-checked)                                         | `Prim { op, args }`                                   | `num::add/sub/mul/div(a, b, decl)?`, `(a < b)`, `(a == b)`, `(!a)`, `prim::and/or/ite/get_d`, `Some(x)`, `x.is_some()`, `Option::<T>::None` |
 | `Expr::Lam` / `Expr::App`                                                     | inlined: `Let`                                        | `{ let l0 = …; body }`                                                                                                                      |
+| `Expr::Fold f z l` (finite iteration from the last element)                   | `Fold { elem, acc, step, init, list }`                | `list::fold(xs, init, \|l1, l2\| Ok(step))?` — one closure per recursor, applied by the runtime, never a closure value                      |
+| `nil`/`cons`/`length`/`take`/`drop`/`reverse`/`head`/`toList`                 | `PrimOp::{Nil, Cons, …}`                              | `list::nil::<T>()`, `list::cons(x, xs)`, `list::length(xs)`, … (`runtime/bdl-runtime-core`, feature `collections`)                          |
+| `pair`/`fst`/`snd`; `Value::Pair`                                             | `PrimOp::{Pair, Fst, Snd}`                            | `(a, b)`, `p.0`, `p.1`                                                                                                                      |
+| `Prim::Eq { ty }` (`Value::structurally_equal`)                               | `PrimOp::Eq`                                          | `(a == b)` — `PartialEq` on `f64`, `bool`, `u64`, `SemN`, `Option`, `Vec`, tuples is the same elementwise equality                          |
 | `ClockId` (nominal)                                                           | `ClockSlot` (dense)                                   | `pub const CLOCK_k: ClockSlot`; `ActiveDomains` bitset                                                                                      |
-| `output_values(sample, valid_bindings)`                                       | `OutputPlan { driver }`                               | `Outputs.output_n = decl_driver`, built after the write phase                                                                               |
+| `output_values(sample, valid_bindings)`                                       | `OutputPlan { driver }`                               | `Outputs.output_n = decl_driver.clone()`, built after the write phase                                                                       |
 | `RuntimeError::{MissingInput, DivisionByZero, NonFinite}` with `decl`, `tick` | same                                                  | `bdl_runtime_core::RuntimeError` with `decl` (raw `DeclId`); the host adds the tick                                                         |
 
 The runtime vocabulary — `ActiveDomains`, `ClockSlot`, `RuntimeError`, the
 checked numerics and the strict primitive helpers — lives in
-`runtime/bdl-runtime-core` (`no_std`, allocation-free, `unsafe`-free, knows no
-device kind, board, transport or editor).
+`runtime/bdl-runtime-core` (`no_std`, `unsafe`-free, knows no device kind,
+board, transport or editor). It is allocation-free unless its `collections`
+feature is on: then `list` provides the list operators and the recursor over
+`alloc::vec::Vec`, and a target needs a global allocator (ADR-0024). The
+generator turns the feature on exactly when the plan carries a list
+(`ExecIr::uses_lists`) and records it as `requires_allocator` in the manifest.
+
+**Lists in the core are stored last element first.** `cons` pushes, the recursor
+consumes from the front, so the library's `map`, `filter` and `append` — folds
+that `cons` onto the accumulator — stay linear; `==` is elementwise as in the
+list's order; `take`/`drop`/`head`/`reverse` translate accordingly. The host
+bridge reverses at the boundary (`list::from_ordered`, `into_ordered`); nothing
+inside the core observes the storage order. One known cost remains: `filter`
+copies its accumulator once per element because `ite` is strict and both
+branches are built (ISS-0013).
 
 ## The generated core
 
@@ -75,13 +92,17 @@ pub fn init() -> State;
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError>;
 ```
 
-Everything is `Copy`, statically sized, and laid out by the compiler: no graph,
-no map, no allocation, no traversal at runtime. Symbols derive from stable ids
-(`decl_17`, `Sem3`, `cell_0`, `output_4`, `CLOCK_2`), never from display names,
-which appear in comments and the manifest only. Types: `q d` → `f64` (the
-dimension is static; it is in the manifest), `bool`, `nat` → `u64`, `sem s` →
-`SemN`, `opt τ` → `Option<T>`; a function type has no runtime representation
-(its declaration is inlined).
+A program without lists is `Copy`, statically sized, and laid out by the
+compiler: no graph, no map, no allocation, no traversal at runtime. A program
+with lists derives `Clone` instead of `Copy` on its records and concepts, starts
+with `extern crate alloc;`, and reads declarations and cells by clone (the same
+generated code either way). Symbols derive from stable ids (`decl_17`, `Sem3`,
+`cell_0`, `output_4`, `CLOCK_2`), never from display names, which appear in
+comments and the manifest only. Types: `q d` → `f64` (the dimension is static;
+it is in the manifest), `bool`, `nat` → `u64`, `sem s` → `SemN`, `opt τ` →
+`Option<T>`, `list τ` → `Vec<T>` (last element first), `τ × σ` → `(T, S)`; a
+function type has no runtime representation (its declaration is inlined; a rule
+given to an equation is inlined into the fold's closure).
 
 The core is `#![no_std] #![forbid(unsafe_code)]` and mentions no HAL, pin,
 peripheral or board; `cargo check --lib` of every corpus crate is a test.
@@ -115,16 +136,19 @@ For the same design, schedule and input trace, the reference evaluator and the
 generated program must agree — value by value, tick by tick:
 
 - **corpus** (`tests/support/mod.rs`): lamp (and lamp with an output), pure
-  arithmetic with dimensions and a Count, semantic `rep`/`mk` with a Boolean
-  concept, booleans/comparisons/strict `if`/options, `delay`, a cycle broken by
-  `delay`, `sync` across two domains in both directions with the slow domain on
-  period 2 (so source and destination share some ticks), a domain-agnostic
-  declaration shared by two domains, division by zero, non-finite result,
-  missing input, a design with no domain. Every case is generated,
-  `cargo check`ed as a `no_std` library, built with its bridge, run, and
-  compared; golden files under `tests/golden/<case>/` pin the exact generated
-  bytes (`BDL_UPDATE_GOLDEN=1` to accept changes) and generating twice must give
-  identical output.
+  arithmetic with dimensions and a Count, `collections` (the library's `any`,
+  `sum`, `map`, `filter`, `zip`, `contains`, `clamp`, `getOrElse`/`head`,
+  structural equality, a list in a state cell) and `buffer` (the Phase-9a
+  lossless window as five declarations over `delay`/`sync`), semantic `rep`/`mk`
+  with a Boolean concept, booleans/comparisons/strict `if`/options, `delay`, a
+  cycle broken by `delay`, `sync` across two domains in both directions with the
+  slow domain on period 2 (so source and destination share some ticks), a
+  domain-agnostic declaration shared by two domains, division by zero,
+  non-finite result, missing input, a design with no domain. Every case is
+  generated, `cargo check`ed as a `no_std` library, built with its bridge, run,
+  and compared; golden files under `tests/golden/<case>/` pin the exact
+  generated bytes (`BDL_UPDATE_GOLDEN=1` to accept changes) and generating twice
+  must give identical output.
 - **property-based**: a small subset (dimensionless quantities, constants,
   references to earlier declarations, `+ - * /`, `delay`, inputs, one or two
   domains with a period-2 slow domain). In process, reference vs the exec-IR
@@ -183,6 +207,11 @@ constant is the same `f64` the elaborator produced.
 | non_finite    | 87         | 6230        | 0                    | 2     | 417             |
 | missing_input | 87         | 6243        | 0                    | 2     | 375             |
 | no_domains    | 82         | 5782        | 0                    | 2     | 334             |
+| collections   | 124        | 14340       | 24                   | 4     | 104042          |
+| buffer        | 115        | 10061       | 64                   | 7     | 57458           |
+
+(`collections` and `buffer` — the list, pair and fold cases — allocate; their
+timings are of a debug build with `Vec` clones on every declaration read.)
 
 (`every_corpus_case_agrees_with_the_reference -- --nocapture` prints the current
 numbers.) Timings are of a debug build and include the closure of

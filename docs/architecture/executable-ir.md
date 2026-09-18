@@ -53,16 +53,33 @@ ExecExpr ::= Bool b | Nat n | Quantity dim v
            | Wrap sem e | Unwrap e       -- mk / rep, the nominal boundary kept
            | Prim op [e…]                -- saturated only
            | ReadCell slot init          -- committed value, else init evaluated now
+           | Fold elem acc step init list  -- the recursor, its step inlined over two locals
 ```
 
-No binders. `Lam`/`App` are gone: a lambda applied to arguments becomes `Let`s
+No closures. `Lam`/`App` are gone: a lambda applied to arguments becomes `Let`s
 (arguments bound outermost first, in the caller's environment, with their own
 expression paths so a `delay` passed as an argument keeps its `StateCellId`); a
 reference to a declaration whose realization is a lambda is inlined at each
-saturated application (through alias chains). Anything that would need a closure
-at runtime — a lambda as a value, a partially applied primitive, a relationship
-passed as an argument, a function-typed input — is refused with
+saturated application (through alias chains). A **function argument** — the rule
+given to `any`, the step of a `fold`, a partially applied primitive such as
+`add 5` — is not lowered to a value: the lowerer carries it as a _binding_
+(`Fun::Lam` with the environment it closes over, or `Fun::Prim` with the
+arguments so far) and inlines it wherever the receiving lambda applies it, so
+every combinator of the equation library lowers to first-order code. The
+kernel's `fold f z l` becomes `Fold`: `step` is `f` applied to the two locals
+`elem` and `acc`, evaluated once per element from the last one (finite
+iteration, never a frame per element). Anything that would still need a closure
+at runtime — a lambda as a value, a partially applied primitive in value
+position, a function-typed input — is refused with
 `backend.unsupported_higher_order` (DI-24).
+
+Collections and grouped values **stay structured values** here (`Vec`/tuples in
+the generated core, `Value::List`/`Value::Pair` in the interpreter): lowering
+them further would be a second interpretation of collection behaviour. The list
+operators are `PrimOp`s (`Nil`, `Cons`, `Length`, `Take`, `Drop`, `Reverse`,
+`Head`, `ToList`, `Pair`, `Fst`, `Snd`); `Eq` is structural.
+`ExecIr::uses_lists()` says whether the program carries a list anywhere — what
+decides the runtime's `collections` feature.
 
 `Prim` is strict: every operand is evaluated first, then the primitive is
 applied — including `Ite`, `And`, `Or` — because that is what the reference
@@ -86,6 +103,6 @@ reference disagree, one of them is wrong.
 
 ## Versioning
 
-`ExecIr.version` = `EXEC_IR_VERSION` (1). The IR is serde data
-(JSON-serialisable) so an artefact can carry it; it is not a stable external
-format yet.
+`ExecIr.version` = `EXEC_IR_VERSION` (2: `Fold`, the list and pair operators).
+The IR is serde data (JSON-serialisable) so an artefact can carry it; it is not
+a stable external format yet.

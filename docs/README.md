@@ -29,7 +29,7 @@ header that `just docs-check` verifies against its folder.
 
 | I want…                                                          | Read                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **current language truth**                                       | [spec/kernel.md](spec/kernel.md) · [spec/textual-syntax.md](spec/textual-syntax.md) · [spec/runtime-semantics.md](spec/runtime-semantics.md)                                                                                                                                                       |
+| **current language truth**                                       | [spec/kernel.md](spec/kernel.md) · [spec/textual-syntax.md](spec/textual-syntax.md) · [spec/runtime-semantics.md](spec/runtime-semantics.md) · [spec/equation-library.md](spec/equation-library.md)                                                                                                |
 | **current file and wire formats**                                | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/concept-library.md](spec/concept-library.md)                                                                                                    |
 | **current architecture**                                         | [architecture/overview.md](architecture/overview.md), then the page for the area                                                                                                                                                                                                                   |
 | **why a decision exists**                                        | [decisions/README.md](decisions/README.md)                                                                                                                                                                                                                                                         |
@@ -47,15 +47,16 @@ header that `just docs-check` verifies against its folder.
 
 ### Specification
 
-| Page                                              | Area        | What it fixes                                                                     |
-| ------------------------------------------------- | ----------- | --------------------------------------------------------------------------------- |
-| [kernel.md](spec/kernel.md)                       | language    | the kernel contract, transcribed from the Lean development (Chinese)              |
-| [textual-syntax.md](spec/textual-syntax.md)       | textual     | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix             |
-| [runtime-semantics.md](spec/runtime-semantics.md) | runtime     | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve |
-| [project-format.md](spec/project-format.md)       | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules              |
-| [protocol.md](spec/protocol.md)                   | protocol    | the Studio ↔ bdld messages, current version 0.9, compatibility rule               |
-| [hardware-model.md](spec/hardware-model.md)       | deployment  | capabilities, requirements, board description files                               |
-| [concept-library.md](spec/concept-library.md)     | language    | concept template libraries and their file format                                  |
+| Page                                              | Area        | What it fixes                                                                                            |
+| ------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| [kernel.md](spec/kernel.md)                       | language    | the kernel contract, transcribed from the Lean development (Chinese)                                     |
+| [textual-syntax.md](spec/textual-syntax.md)       | textual     | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix                                    |
+| [runtime-semantics.md](spec/runtime-semantics.md) | runtime     | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve                        |
+| [project-format.md](spec/project-format.md)       | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules                                     |
+| [protocol.md](spec/protocol.md)                   | protocol    | the Studio ↔ bdld messages, current version 0.9, compatibility rule                                      |
+| [hardware-model.md](spec/hardware-model.md)       | deployment  | capabilities, requirements, board description files                                                      |
+| [concept-library.md](spec/concept-library.md)     | language    | concept template libraries and their file format                                                         |
+| [equation-library.md](spec/equation-library.md)   | language    | the data core (collections, grouped and optional values), the equations, equality and order, diagnostics |
 
 ### Architecture
 
@@ -125,15 +126,20 @@ each of its questions was answered is in the
   ADR-0020's text mechanisms kept), 0015/0016 (target-relative deployment;
   generated Rust implements the evaluator), 0021/0022/0019 (flattening; stored
   contracts; groups as metadata), 0017/0018 (LSP is an adapter; three
-  information levels).
-- **Unresolved:** ten design issues — occurrence windows, candidate definitions,
-  the evidence model, affine units, user enums, `f32` on device, nested
-  packaging, a structural output entity, projection deltas, temporal modifiers.
+  information levels), 0024/0025 (collections need an allocator; equations are
+  definitional families and order is a declaration).
+- **Unresolved:** thirteen design issues — occurrence windows, candidate
+  definitions, the evidence model, affine units, user enums, `f32` on device,
+  nested packaging, a structural output entity, projection deltas, temporal
+  modifiers, capacity validation, the mixed concept comparison, `filter`'s cost
+  in the core.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** one BDL project — sources canonical, legacy JSON
-  migrated on open, the layout service, the Code and Split views, protocol 0.10;
-  text projects and protocol 0.9; the engineering records themselves.
+- **Recently changed:** the data core and the equation library (FV Phases 9a–9c
+  consumed: collections, grouped and optional values, `fold`, equality on data,
+  order by declaration, the equations, protocol 0.11, ADR-0024/0025); one BDL
+  project — sources canonical, legacy JSON migrated on open, the layout service,
+  the Code and Split views, protocol 0.10.
   [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph

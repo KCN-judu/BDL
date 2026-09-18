@@ -32,6 +32,12 @@ Which information lives where is a per-fact rule (ADR-0023 §2):
 | authoring metadata — behavior groups and membership                                                                                                                        | `.bdl/authoring.json`  | source; layout                |
 | presentation — positions, viewports, group boxes, component-body canvases                                                                                                  | `ui/layout.json`       | source; the revision          |
 
+A concept's value form in the source is `Bool`, `Count`, a quantity name, or
+`List<R>` / `Pair<R₁, R₂>` / `Option<R>` over those; `ordered concept C : …`
+records that the designer declared the concept's values ordered
+(`docs/spec/textual-syntax.md` §15). Both are semantic facts and live in the
+source only.
+
 Erasing both sidecars and the layout changes no semantic fact (identities and
 positions are re-derived: fresh ids, the layout service's placement); erasing
 the sources loses the design.

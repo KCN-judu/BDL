@@ -129,6 +129,32 @@ the backend does today (DI-28). Floating-point non-associativity means symbolic
 normalization may not silently rewrite formulas; any rewrite records a numeric
 obligation (DESIGN_ISSUES DI-1); the backend performs no rewrite.
 
+## Collections, grouped values and the recursor
+
+A collection (`list τ`), a grouped value (`τ × σ`) and an optional value are
+data like any other: a declaration may hold one, a `delay` remembers one, a
+`sync` transports one — under the rules above unchanged, so a transported
+collection is the source's collection at its last activation _strictly before_
+now, never the same tick's. That is what lets the Phase-9a lossless window be
+written as five ordinary declarations (`log @src := cons x (delay [] log)`,
+`logD @dst := sync src [] log`, `seen := length logD`, `cursor := delay 0 seen`,
+`window := reverse (take (seen − cursor) logD)`; corpus case `buffer`): no
+buffer primitive, no scheduler order, no same-tick visibility, no implicit
+overflow. Capacity — that no window exceeds what a deployment can hold — is a
+validation obligation the toolchain does not compute yet (ISS-0011).
+
+`fold f z [x₁, …, xₙ] = f x₁ (… (f xₙ z))` is finite iteration from the last
+element: one application of `f` per element, no frame per element, and it is the
+only place a function value is applied during evaluation. Every equation of the
+library (`docs/spec/equation-library.md`) is a definition over it; the reference
+evaluator, the executable-IR interpreter and the generated core compute it the
+same way, and the corpus case `collections` holds them to each other. A list
+operator's count (`take`, `drop`, `length`) is a dimensionless `f64` read as a
+whole number towards zero, never below zero (the numeric deviation above).
+Equality on data is structural (exact `f64` equality on quantities); no data
+kind but a quantity has an order at runtime — an ordered concept compares
+through its quantity representation, decided at elaboration.
+
 ## Semantic newtypes
 
 Generated Rust keeps one newtype per concept — `pub struct Sem0(pub f64)` for

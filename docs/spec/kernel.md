@@ -51,12 +51,15 @@ Dim.zero, Dim.add, Dim.sub, Dim.Length, Dim.Time, Dim.Angle
 
 ```text
 Ty ::= bool | nat | arr Ty Ty | sem SemanticId | q Dim | opt Ty
+     | list Ty            -- Phase 9a：有限序列数据
+     | prod Ty Ty         -- Phase 9b：值级的积（对偶），绝不是接口或输出束
 ```
 
 谓词：
 
-- `Ty.SemFree`：不含 `sem`（递归进 arr/opt）
-- `Ty.Data`：不含 `arr`（递归进 opt）
+- `Ty.SemFree`：不含 `sem`（递归进 arr/opt/list/prod）
+- `Ty.Data`：不含 `arr`（递归进 opt/list/prod）——`list τ` 是数据当且仅当 `τ`
+  是（`list_data`），`prod a b` 当且仅当两者都是（`prod_data`）
 
 原语及其类型（量纲代数**全部**在这里）：
 
@@ -373,6 +376,47 @@ shareable = [i2cSDA, i2cSCL]
 - 两个 I2C 传感器都在 A4/A5：接受（总线共享）
 - 4×pwm group `distinct`：Nano 只有 3 个定时器 → UNSAT
 - TX/RX group `same`：保持在同一 UART
+
+## 9b. 数据核心与等式语言（Phase 9a/9b/9c，`ListData`, `Surface/Poly`, `Surface/Stdlib`）
+
+内核在 `Base`/`Typing`/`Reactive` 上的全部新增：
+
+```text
+Prim  += nil τ | cons τ | length τ | take τ | reverse τ | head τ     -- 9a
+       | drop τ | toList τ | pair a b | fst a b | snd a b             -- 9b
+       ; eq τ (h : τ.Data)   -- 任何数据类型上的结构相等（9b）
+       ; lt d                -- 只在量 q d 上（9c 撤回了 9b 的结构序）
+Expr  += fold f z l          -- 列表递归子：fold f z [x₁,…,xₙ] = f x₁ (… (f xₙ z))
+Value += list vs | pair a b
+```
+
+- `length : list τ → q 0`；`take`/`drop : q 0 → list τ → list τ`；
+  `head : list τ → opt τ`；`toList : opt τ → list τ`（选项是长度 ≤
+  1 的列表，于是 `fold` 也消去选项）。
+- 类型规则 `HasType.fold`：`f : τ → σ → σ`，`z : σ`，`l : list τ` ⊢
+  `fold f z l : σ`；求值 `Ev.foldNil`/`Ev.foldCons`
+  是通过环境的语法展开，`fold_total`/ `mfold_total` 给出有限列表上的全性。`fold`
+  是唯一在求值中应用函数值的项构造子；注册算子从不应用闭包。
+- `Value.beq`：数据值上的可判定结构相等（闭包比较为 `false`，类型从不询问）；
+  **没有**结构序（`Value.blt` 已删除）。
+- `Clocked` 没有列表规则（`list_clock_conservative`）：`cons`
+  包住的跨域读取仍被拒绝。
+- 多态在**表面层**（`Poly.lean`）：模式 `PTy`（类型变量、维度变量
+  `PDim.dvar`）、一阶匹配
+  `matchTy`（`matchTy_sound`/`matchTy_complete`：唯一代换、无合一、无泛化）、封闭能力词汇
+  `Cap = data | eq | ord`（`Cap.eq_iff_data`；`Ty.ordB O Θ`：量，或声明为 ordered 且由量表示的概念——`OrdDecl`
+  是表面元数据）。
+- 等式库（`Stdlib.lean`）：每个条目是封闭的 de Bruijn 组合子（`idF`, `minF o`,
+  `clampF o`, `inRangeF o`, `minByF`, `foldrF`, `anyF`, `allF`, `containsF h`,
+  `mapF`, `filterF`, `appendF`, `sumF d`, `optElimF`, `mapOptF`, `zipF`……），
+  `lib_expansion`：内联组合子不增加任何特权（类型、构造、时钟都只属于参数）。
+- 缓冲（9a，`Surface/Buffer.lean`）：五个声明 `log`/`logD`/`seen`/`cursor`/
+  `window` 在 `delay`/`sync` 与列表数据之上写出无损跨域窗口（定理 M
+  `buffer_window_correspondence`）；容量是验证义务（`Validation/Capacity.lean`），溢出策略显式且只有拒绝部署保持语义。
+
+生产对应见 `docs/spec/equation-library.md` 与
+`docs/project/formal-correspondence.md`；生产偏差（`f64`
+计数、检查器而非证明字段拒绝非数据上的 `eq`）记录在 `docs/architecture/ir.md`。
 
 ## 10. 全局良构条件汇总（"可执行设计"要同时满足）
 

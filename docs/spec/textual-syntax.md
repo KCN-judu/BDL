@@ -97,6 +97,8 @@ Reserved and lexed as keyword tokens (never identifiers):
 | `let`              | let statements                        |
 | `if` `then` `else` | if expressions                        |
 | `true` `false`     | boolean literals and literal patterns |
+| `in`               | membership: `x in [a, b]` (§15)       |
+| `ordered`          | `ordered concept …` (§15)             |
 
 **Future-reserved** — lexed as keyword tokens today so that no v0.1 program uses
 them as names, but with no grammar production. Writing one where a name is
@@ -113,6 +115,7 @@ tokens, so `a->b` lexes as `a` `->` `b` and `a- >b` as `a` `-` `>` `b`.
 | ----------- | --------------------------------------------- | --------------- | ----------------------------- |
 | `(` `)`     | `LParen` `RParen`                             | `+` `-` `*` `/` | `Plus` `Minus` `Star` `Slash` |
 | `{` `}`     | `LBrace` `RBrace`                             | `!`             | `Bang`                        |
+| `[` `]`     | `LBracket` `RBracket` (collections, §15)      |                 |                               |
 | `<` `>`     | `Lt` `Gt` (comparison _and_ generic brackets) | `<=` `>=`       | `Le` `Ge`                     |
 | `:` `,` `;` | `Colon` `Comma` `Semi`                        | `==` `!=`       | `EqEq` `Ne`                   |
 | `=`         | `Eq`                                          | `&&` `\|\|`     | `AndAnd` `OrOr`               |
@@ -189,6 +192,7 @@ Name  NameRef  UnitSuffix
 NamedType  FunctionType  ParenType
 NameExpr  LiteralExpr  ParenExpr  CallExpr  UnaryExpr  BinaryExpr
 IfExpr  MatchExpr  MatchArmList  MatchArm  BlockExpr  LetStmt
+ListExpr  TupleExpr  LambdaExpr  LambdaParams
 WildcardPattern  IdentPattern  LiteralPattern  ConstructorPattern
 ErrorNode
 ```
@@ -220,7 +224,7 @@ Module          ::= Item* EOF
 
 Item            ::= ConceptDecl | MappingDecl | EnumDecl
 
-ConceptDecl     ::= "concept" Name ( ":" Type )?
+ConceptDecl     ::= "ordered"? "concept" Name ( ":" Type )?
 
 MappingDecl     ::= "mapping" Name ":" Type MappingDef?
 MappingDef      ::= NameRef "(" ParamList? ")" "=" Expr
@@ -252,10 +256,10 @@ ParenType       ::= "(" Type ")"
 
 `A -> B -> C` is `A -> (B -> C)`; `(A -> B) -> C` needs the parentheses. A
 concept is written by its name (`Tilt`), never `Sem<Tilt>` — `sem`, `q`, `rep`,
-`mk` are kernel and explanation vocabulary. Generic forms such as
-`Option<Brightness>` and `Result<Value, Error>` are syntax only; which of them
-exist and what they mean is decided by elaboration. There is no type-level
-computation.
+`mk` are kernel and explanation vocabulary. Generic forms are syntax only; which
+of them exist and what they mean is decided by elaboration: in a concept's value
+form `List<R>`, `Pair<R₁, R₂>` and `Option<R>` over value forms (§15); anything
+else (`Result<A, B>`) parses and is refused. There is no type-level computation.
 
 ### 4.3 Expressions
 
@@ -265,7 +269,7 @@ Expr            ::= OrExpr
 OrExpr          ::= AndExpr ( "||" AndExpr )*
 AndExpr         ::= EqExpr ( "&&" EqExpr )*
 EqExpr          ::= RelExpr ( ( "==" | "!=" ) RelExpr )?          (* non-associative *)
-RelExpr         ::= AddExpr ( ( "<" | "<=" | ">" | ">=" ) AddExpr )?  (* non-associative *)
+RelExpr         ::= AddExpr ( ( "<" | "<=" | ">" | ">=" | "in" ) AddExpr )?  (* non-associative *)
 AddExpr         ::= MulExpr ( ( "+" | "-" ) MulExpr )*
 MulExpr         ::= UnaryExpr ( ( "*" | "/" ) UnaryExpr )*
 UnaryExpr       ::= ( "!" | "-" ) UnaryExpr | PostfixExpr
@@ -273,11 +277,16 @@ PostfixExpr     ::= PrimaryExpr CallSuffix*
 CallSuffix      ::= "(" ArgList? ")"
 ArgList         ::= Expr ( "," Expr )* ","?
 
-PrimaryExpr     ::= NameExpr | LiteralExpr | ParenExpr | IfExpr | MatchExpr | BlockExpr
+PrimaryExpr     ::= NameExpr | LiteralExpr | ParenExpr | TupleExpr | ListExpr
+                  | LambdaExpr | IfExpr | MatchExpr | BlockExpr
 NameExpr        ::= NameRef
 LiteralExpr     ::= Number UnitSuffix? | "true" | "false"
 UnitSuffix      ::= Ident
 ParenExpr       ::= "(" Expr ")"
+TupleExpr       ::= "(" Expr ( "," Expr )+ ","? ")"                 (* §15 *)
+ListExpr        ::= "[" ( Expr ( "," Expr )* ","? )? "]"           (* §15 *)
+LambdaExpr      ::= LambdaParams "=>" Expr                          (* §15 *)
+LambdaParams    ::= Name | "(" Name ( "," Name )* ","? ")"
 IfExpr          ::= "if" Expr "then" Expr "else" Expr
 MatchExpr       ::= "match" Expr "{" MatchArm* "}"
 MatchArm        ::= Pattern "=>" Expr ","?
@@ -316,7 +325,7 @@ From loosest to tightest:
 | 1     | `\|\|`                                  | left          | `BinaryExpr` |
 | 2     | `&&`                                    | left          | `BinaryExpr` |
 | 3     | `==` `!=`                               | **none**      | `BinaryExpr` |
-| 4     | `<` `<=` `>` `>=`                       | **none**      | `BinaryExpr` |
+| 4     | `<` `<=` `>` `>=` `in`                  | **none**      | `BinaryExpr` |
 | 5     | `+` `-`                                 | left          | `BinaryExpr` |
 | 6     | `*` `/`                                 | left          | `BinaryExpr` |
 | 7     | prefix `!` `-`                          | —             | `UnaryExpr`  |
@@ -335,6 +344,8 @@ Reading rules:
   expressions extend as far right as possible: `if c then a else b + 1` is
   `if c then a else (b + 1)`, and `1 + if c then a else b` is legal.
 - A unit suffix binds to its number only: `90 deg / 2` is `(90 deg) / 2`.
+- A rule extends as far right as possible, like `if`:
+  `any(xs, x => x < 30 deg && held)` gives the whole conjunction to the rule.
 
 ### 5.1 Comparisons do not chain
 
@@ -435,6 +446,14 @@ produces negative numbers — and `LiteralPattern(Minus, Number)` in patterns.
 
 `1 then`, `1,`, `1;`, `1)` — a unit suffix is only an `Ident` token, and
 keywords are not identifiers, so no keyword is ever read as a unit.
+
+### 8.7 `(` starts a parenthesis, a grouped value or a rule
+
+After `(`: an expression followed by `)` is a parenthesis, followed by `,` a
+grouped value. A rule's parameter list is recognised by lookahead — `(` Name
+(`,` Name)\* `,`? `)` `=>` — before any expression is parsed, so `(a, b)` and
+`(a, b) => a` never compete; `x => e` is recognised by `Ident` `=>` at the start
+of an expression.
 
 ---
 
@@ -592,24 +611,30 @@ Core IR
 | `Some(e)`, `None`                                                                                                                                                                                                                                                                                                                       | option constructors                       | `some e`, `none`; the payload is a representation value                                                                                                         |
 | `match s { Some(x) => a, None => b }`                                                                                                                                                                                                                                                                                                   | match                                     | `app (λs. ite (isSome s) (app (λx. a) (getD s d)) b) s` — the scrutinee is bound once, tests are `isSome` / `eq` / the Boolean, bindings are `getD` projections |
 | `delay(init, v)`, `sync(domain, init, v)`                                                                                                                                                                                                                                                                                               | memory                                    | `delay init v`, `sync domain init v` — legal only outside every binder                                                                                          |
+| `[a, b]`, `(a, b)`                                                                                                                                                                                                                                                                                                                      | a collection, a grouped value             | `cons a (cons b nil)`, `pair a b` (§15)                                                                                                                         |
+| `min(a, b)`, `any(xs, x => p)`, `x in xs`, …                                                                                                                                                                                                                                                                                            | an equation of the library                | the library's closed combinator applied to the arguments, its scheme matched against their kinds (`docs/spec/equation-library.md`)                              |
+| `ordered concept C : Scalar`; `concept C : List<R>` / `Pair<R₁, R₂>` / `Option<R>`                                                                                                                                                                                                                                                      | `Concept { ordered, representation }`     | `OrdDecl C`; `Θ C = list R` / `R₁ × R₂` / `opt R`                                                                                                               |
 | `enum`, constructor patterns other than `Some`/`None`                                                                                                                                                                                                                                                                                   | not in the surface model                  | not in the kernel (no sum types) — syntax only; `formula.constructor.unknown` (DI-19)                                                                           |
 
 ### 11.1 Implementation support matrix
 
-| construct                                                                                            | syntactically accepted | semantically elaborated                                                                                                                | backend executable                    |
-| ---------------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| names, literals, units, `+ - * /`, comparisons, `&& \|\| !`                                          | yes                    | yes                                                                                                                                    | yes                                   |
-| `if … then … else`                                                                                   | yes                    | yes                                                                                                                                    | yes (strict)                          |
-| `f(a, …)` with semantic arguments; `level`                                                           | yes                    | yes (`formula.call.*` diagnostics)                                                                                                     | yes — inlined, no closures            |
-| `{ let x = …; e }`, nested, shadowing                                                                | yes                    | yes (lexical; a `let` may shadow an input or an outer `let`)                                                                           | yes (`Let`)                           |
-| `Some(e)` / `None`                                                                                   | yes                    | yes (`None` takes its payload type from a sibling branch or arm; `formula.option.undetermined` otherwise)                              | yes                                   |
-| `match` on Bool, Option (nested), dimensionless numbers, a semantic value through its representation | yes                    | yes, with conservative exhaustiveness (`formula.match.non_exhaustive`) and unreachable-arm warnings                                    | yes                                   |
-| `_`, name, `true`/`false`, whole-number, `Some(p)`, `None` patterns                                  | yes                    | yes; duplicate binders refused                                                                                                         | yes                                   |
-| number patterns on counts                                                                            | yes                    | no — `formula.unsupported` (no `nat` equality, DI-12)                                                                                  | —                                     |
-| `delay` / `sync` in a `let` value, a scrutinee, an `if` branch                                       | yes                    | yes                                                                                                                                    | yes — one state cell per written form |
-| `delay` / `sync` in a block's result, an arm, a formula with inputs                                  | yes                    | no — `formula.temporal.under_binder` / `under_inputs`                                                                                  | —                                     |
-| `enum` items, other constructors                                                                     | yes (CST, lowering)    | no — `formula.constructor.unknown` (DI-19)                                                                                             | —                                     |
-| a relationship as a value, `f(x)(y)`, calling an input                                               | yes                    | no — `formula.mapping.needs_arguments`, `formula.call.not_a_relationship` (the higher-order boundary, DI-24, is closed at the surface) | —                                     |
+| construct                                                                                            | syntactically accepted | semantically elaborated                                                                                                                | backend executable                                  |
+| ---------------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| names, literals, units, `+ - * /`, comparisons, `&& \|\| !`                                          | yes                    | yes                                                                                                                                    | yes                                                 |
+| `if … then … else`                                                                                   | yes                    | yes                                                                                                                                    | yes (strict)                                        |
+| `f(a, …)` with semantic arguments; `level`                                                           | yes                    | yes (`formula.call.*` diagnostics)                                                                                                     | yes — inlined, no closures                          |
+| `{ let x = …; e }`, nested, shadowing                                                                | yes                    | yes (lexical; a `let` may shadow an input or an outer `let`)                                                                           | yes (`Let`)                                         |
+| `Some(e)` / `None`                                                                                   | yes                    | yes (`None` takes its payload type from a sibling branch or arm; `formula.option.undetermined` otherwise)                              | yes                                                 |
+| `match` on Bool, Option (nested), dimensionless numbers, a semantic value through its representation | yes                    | yes, with conservative exhaustiveness (`formula.match.non_exhaustive`) and unreachable-arm warnings                                    | yes                                                 |
+| `_`, name, `true`/`false`, whole-number, `Some(p)`, `None` patterns                                  | yes                    | yes; duplicate binders refused                                                                                                         | yes                                                 |
+| `delay` / `sync` in a `let` value, a scrutinee, an `if` branch                                       | yes                    | yes                                                                                                                                    | yes — one state cell per written form               |
+| `delay` / `sync` in a block's result, an arm, a formula with inputs                                  | yes                    | no — `formula.temporal.under_binder` / `under_inputs`                                                                                  | —                                                   |
+| `enum` items, other constructors                                                                     | yes (CST, lowering)    | no — `formula.constructor.unknown` (DI-19)                                                                                             | —                                                   |
+| a relationship as a value, `f(x)(y)`, calling an input                                               | yes                    | no — `formula.mapping.needs_arguments`, `formula.call.not_a_relationship` (the higher-order boundary, DI-24, is closed at the surface) | —                                                   |
+| `[a, b]`, `(a, b)`, `x in xs`, the equations, a rule `x => e` as an equation's argument              | yes                    | yes (`docs/spec/equation-library.md` §5 diagnostics; `formula.rule.not_a_value` for a rule anywhere else)                              | yes — collections need an allocator (`collections`) |
+| `==` on truth values, counts, optional values, collections, grouped values, concept values           | yes                    | yes (structural; across concepts `semantic.concept_mismatch`)                                                                          | yes                                                 |
+| `<` / `min` on concept values                                                                        | yes                    | only for `ordered concept`s represented by a quantity (`semantic.no_order` otherwise)                                                  | yes                                                 |
+| number patterns on counts                                                                            | yes                    | yes (a whole, non-negative number)                                                                                                     | yes                                                 |
 
 The formula field in Studio and a `.bdl` file's definition bodies go through the
 same elaborator (`bdl-elab::formula`), so this matrix holds for both. A textual
@@ -845,3 +870,35 @@ separated by `,`; a port's definition follows on the next line like a mapping's.
 A component's items are printed in the order concepts, `use`, clocks, ports,
 mappings, outputs, drives, devices when a tool renders them; a formatter never
 reorders what a person wrote.
+
+---
+
+## 15. Collections, grouped values, rules, membership, ordered concepts
+
+The equation language (`docs/spec/equation-library.md`) adds five forms; all
+lower to the existing Core.
+
+- **Collection literal** `[a, b, c]`, `[]` — `ListExpr`. Elements are brought to
+  one kind like the branches of an `if`; `[]` takes its element kind from the
+  context or a sibling, like `None`.
+- **Grouped value** `(a, b)` — `TupleExpr`; three or more parts nest to the
+  right, `(a, b, c)` = `(a, (b, c))`. `(a)` stays a parenthesis. Parts keep
+  their own kinds; `first(p)` and `second(p)` take them apart. There is no
+  pattern for a grouped value.
+- **Rule** `x => e`, `(x, acc) => e` — `LambdaExpr`; only ever an argument to an
+  equation (`any`, `all`, `map`, `filter`, `foldr`, `minBy`, `maxBy`, `optElim`,
+  `mapOpt`). Its parameters are lexical bindings that shadow outer names; it may
+  not hold `delay`/`sync`. Written anywhere else it is
+  `formula.rule.not_a_value`.
+- **Membership** `x in xs` — a comparison-level binary operator (it does not
+  chain, §5.1) that is the equation `contains(x, xs)`.
+- **Ordered concept** `ordered concept Brightness : Scalar` — the designer
+  declares that two values of the concept can be put in order; only a quantity
+  value form carries it. Every other concept's values compare for equality only.
+  `ordered` is a keyword.
+- **Value forms** in `concept C : …`: `List<R>`, `Pair<R₁, R₂>`, `Option<R>`
+  over value forms (`Bool`, `Count`, a quantity name, or one of these);
+  `text.unknown_representation` names the shape otherwise.
+
+Canonical formatting: no space inside `[` `]`; `(a, b)` as a call's arguments;
+`x => e` with spaces around `=>`; `in` spaced like a comparison.

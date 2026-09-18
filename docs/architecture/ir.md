@@ -64,12 +64,20 @@ only, never consulted by any judgment.
 ## Reactive Core IR (`bdl-ir::expr`, `bdl-ir::ty`)
 
 ```text
-Ty   ::= bool | nat | arr | sem s | q d | opt
+Ty   ::= bool | nat | arr | sem s | q d | opt τ | list τ | prod τ σ
 Expr ::= var i | boolLit | natLit | lam | app | declRef d | rep e | mk s e | prim p
-       | delay init e | sync src init e
-Prim ::= lit d n | add d | sub d | mul d₁ d₂ | div d₁ d₂ | lt d | eq d | not | and | or
+       | delay init e | sync src init e | fold f z l
+Prim ::= lit d n | add d | sub d | mul d₁ d₂ | div d₁ d₂ | lt d | eq τ | not | and | or
        | ite τ | none τ | some τ | isSome τ | getD τ
+       | nil τ | cons τ | length τ | take τ | drop τ | reverse τ | head τ | toList τ
+       | pair τ σ | fst τ σ | snd τ σ
 ```
+
+`fold f z l` (child paths `f` = 0, `z` = 1, `l` = 2) is the list recursor — the
+one term former that applies a function value, never general recursion. `eq τ`
+is structural equality at any data type; `lt d` compares quantities only (Phase
+9c). The checker (`bdl-check`) has the `fold` rule and refuses `eq` at a
+function type (`EqualityNotData`).
 
 Surface concepts (`previous`, `hold`, `count`, `rise`, contexts, priority,
 blend) do not exist here. This is the alignment point between the formal
@@ -90,23 +98,43 @@ result is constructed with `mk` under the declaration's own grant, units are
 scaled literals, and every primitive is dimension-indexed so the checker's
 ordinary application rule enforces dimensions.
 
+### Elaboration of an equation (implemented)
+
+`allBelow : Held` with `all(temps, t => t < 30 K)`, `temps : Readings`,
+`Readings : List<Temperature>`: the library's `allF` at `list q[K]`, applied to
+the observed collection and the rule as a closed lambda —
+
+```text
+(mk sem#Held ((λ(list q[K]). λ(q[K] → bool). (fold (λ(q[K]). λ(bool). (and (#2 #1) #0)) true #1))
+   (rep decl#temps) (λ(q[K]). (lt[K] #0 30[K]))))
+```
+
+The scheme is matched against the arguments' closed types in argument order
+(`crates/bdl-equations`); the kernel never sees a type variable
+(`docs/spec/equation-library.md`).
+
 ## Executable IR (`bdl-exec-ir`) and the Rust AST (`bdl-codegen-rust::ast`)
 
 After analysis, `bdl-lower` turns a checked Design IR into a plan with dense
-clock/input/state/output slots, first-order expressions (lambdas inlined) and an
-evaluation order — `docs/architecture/executable-ir.md`. The Rust backend prints
-it through a small owned AST — `docs/architecture/codegen-rust.md`. Neither is a
-semantic layer: the reference evaluator over the Design IR remains the
-definition, and the differential tests hold the rest to it.
+clock/input/state/output slots, first-order expressions (lambdas inlined, a
+function argument carried as a binding and inlined where the receiver applies
+it, `fold` as `ExecExpr::Fold` over two locals) and an evaluation order —
+`docs/architecture/executable-ir.md`. The Rust backend prints it through a small
+owned AST — `docs/architecture/codegen-rust.md`. Neither is a semantic layer:
+the reference evaluator over the Design IR remains the definition, and the
+differential tests hold the rest to it.
 
 ## Deliberate deviations from the Lean development
 
 Recorded so nobody mistakes them for the formal model (see
 `docs/archive/design-issues-ledger.md`):
 
-|                  | Lean                              | Here                                                         | Why                                                        |
-| ---------------- | --------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
-| numeric literals | `Nat` (truncating `-`, floor `/`) | `Scalar(f64)` with bit-pattern equality                      | products measure reals; DI-1                               |
-| base dimensions  | length, time, angle               | 7 SI + angle (`i8` exponents)                                | the paper says three were "enough to test the abstraction" |
-| commitments      | abstract `PropertyId`             | closed enum `{Monotone, Deterministic, Total, BoundedRange}` | needs a vocabulary; grows with the validation layer        |
-| environments     | functions `DeclId → Option _`     | `BTreeMap`                                                   | determinism, serialization                                 |
+|                  | Lean                                                           | Here                                                                                 | Why                                                                 |
+| ---------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| numeric literals | `Nat` (truncating `-`, floor `/`)                              | `Scalar(f64)` with bit-pattern equality                                              | products measure reals; DI-1                                        |
+| base dimensions  | length, time, angle                                            | 7 SI + angle (`i8` exponents)                                                        | the paper says three were "enough to test the abstraction"          |
+| commitments      | abstract `PropertyId`                                          | closed enum `{Monotone, Deterministic, Total, BoundedRange}`                         | needs a vocabulary; grows with the validation layer                 |
+| environments     | functions `DeclId → Option _`                                  | `BTreeMap`                                                                           | determinism, serialization                                          |
+| list counts      | `length : list τ → q 0` over `Nat`; `take`/`drop` read a `Nat` | a dimensionless `f64`, read as a whole number towards zero, never below zero         | the numeric deviation above (ADR-0011); `bdl_reactive::eval::count` |
+| `eq` off data    | unwritable: `eq τ (h : τ.Data)` carries the proof              | `Prim::Eq { ty }` is writable; `bdl-check` refuses it (`EqualityNotData`)            | no proof fields in Rust data; the checker is the authority          |
+| list values      | `Value.list (vs : List Value)`                                 | a shared, immutable cons list (`bdl_reactive::value::List`) with `O(1)` `cons`/clone | the library's `map`/`filter`/`append` stay linear in the evaluator  |

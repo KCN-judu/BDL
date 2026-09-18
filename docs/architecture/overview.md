@@ -62,7 +62,8 @@ crates/
   bdl-ir           Design IR · Reactive Core IR (the kernel's Ty/Expr/envs)      (→ bdl-model)
   bdl-diagnostics  Diagnostic · Span · stable codes · deterministic order        (→ bdl-model)
   bdl-syntax       Logos lexer · event parser (RD + Pratt) · Rowan CST · typed AST · lowering (→ diagnostics)
-  bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core      (→ ir, syntax, check)
+  bdl-equations    the equation library: rank-1 schemes (type and dimension variables, {Data, Eq, Ord}), first-order matching, one closed Core builder per equation (→ ir, check)
+  bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core (equations inlined at their instance) (→ ir, syntax, check, equations)
   bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
   bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)
   bdl-output       DriveWF · SingleDriver · CompleteOutputs · output_values       (→ ir, reactive)
@@ -84,7 +85,7 @@ crates/
 planned:
   bdl-component  supplied Rust component contracts (docs/architecture/component-boundary.md)
 runtime/
-  bdl-runtime-core   no_std vocabulary of every generated core: ActiveDomains, ClockSlot, RuntimeError, checked numerics (no deps)
+  bdl-runtime-core   no_std vocabulary of every generated core: ActiveDomains, ClockSlot, RuntimeError, checked numerics; feature `collections`: the list operators and the recursor over alloc::Vec (no deps)
   bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver (→ runtime-core)
 planned:
   bdl-runtime-embassy  first platform adapter (docs/project/roadmap.md, priority 1)
@@ -94,7 +95,7 @@ Editor integration outside the workspace: `editors/vscode` (a thin client of
 `bdl-lsp`).
 
 Dependency direction is strict and acyclic:
-`model → ir → {syntax → elab, check → reactive → output} → compiler → ide-db → ide → {lsp, daemon}`
+`model → ir → {syntax → elab, check → equations → elab, check → reactive → output} → compiler → ide-db → ide → {lsp, daemon}`
 (`protocol` sits between `compiler` and `daemon`; `text` and `layout` hang off
 `system` and are joined by `daemon`, `lsp` and `cli`); `hardware` depends on
 `model` only (it never sees `Δ`) and `compiler` joins the two; `lower → codegen`

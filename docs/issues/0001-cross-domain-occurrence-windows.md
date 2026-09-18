@@ -4,17 +4,20 @@ state: open
 area: language
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/archive/design-issues-ledger.md#di-3"]
+related: ["docs/archive/design-issues-ledger.md#di-3", "ISS-0011", "ADR-0025"]
 ---
 
 # ISS-0001: Cross-domain occurrence windows
 
 ## Problem
 
-The production kernel (`bdl-ir`) has no list type, so a value carried across
-timing domains by `sync` is _latest-value_ transport: occurrences of the source
-between two activations of the destination are not observable. The paper and the
-formal development call the general form a _window_ model.
+A value carried across timing domains by `sync` is _latest-value_ transport:
+occurrences of the source between two activations of the destination are not
+observable unless the design keeps a log. The kernel now has list data and the
+lossless window can be written as five ordinary declarations, but there is no
+surface form for "the occurrences since the last activation" and no capacity
+check. The paper and the formal development call the general form a _window_
+model.
 
 ## Why it matters
 
@@ -30,15 +33,20 @@ sampled value.
 - Formal: BDL_FV Phase 9a (`fad79d9`, `BDL/Core/ListData.lean`,
   `BDL/Validation/Buffer.lean`, `BDL/Validation/Capacity.lean`) adds list data
   and lossless buffered transport with capacity obligations to the kernel.
-  Production has not mirrored it; `docs/spec/kernel.md` still transcribes the
-  pre-9a kernel.
+- Production since 2026-09-18 (ADR-0025): `bdl-ir` has `list τ` and the list
+  operators; the five-declaration buffer (`log`, `logD`, `seen`, `cursor`,
+  `window`) runs in all three engines — corpus case `buffer` in
+  `crates/bdl-compiler/tests/support/mod.rs`,
+  `the_lossless_buffer_window_is_the_source_activations_since_the_last_slow_tick`;
+  `docs/spec/kernel.md` §9b transcribes Phase 9a–9c. Capacity checking does not
+  exist (ISS-0011).
 
 ## Dependencies
 
-- A production mirror of Phase 9a (`bdl-ir` list type, buffer primitives,
-  capacity checking) — a kernel extension, so Lean first (ADR-0010).
-- A surface form for a windowed read and its Studio presentation
-  (`docs/architecture/studio-ui.md` has no mark for it).
+- A surface form for a windowed read (a `window(source)` phrase that elaborates
+  to the five declarations, or the designer writes them) and its Studio
+  presentation (`docs/architecture/studio-ui.md` has no mark for it).
+- Capacity validation — ISS-0011.
 
 ## Resolution
 

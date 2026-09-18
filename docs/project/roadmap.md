@@ -28,8 +28,13 @@ nothing here has a status column.
 Not ordered against the priorities above; each moves when a concrete need or a
 formal result arrives.
 
-- Cross-domain occurrence windows: mirror BDL_FV Phase 9a in production and give
-  it a surface form — ISS-0001.
+- Cross-domain occurrence windows: a surface form for the window the design can
+  already write (ISS-0001); capacity validation for collections (ISS-0011).
+- The equation language's remaining edges: the mixed concept-beside-value
+  comparison (ISS-0012); `filter`'s cost in the generated core (ISS-0013); hover
+  on an equation's name (completion carries its meaning today); record syntax
+  lowering to nested grouped values, `forall`/`exists` sugar — only if a case
+  asks.
 - User-defined enums — ISS-0005; affine units — ISS-0004; temporal modifiers and
   contexts — ISS-0010: each starts as a proposal.
 - Studio gaps listed in `docs/architecture/studio-compiler-integration.md` §3
