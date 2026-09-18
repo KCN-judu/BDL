@@ -381,15 +381,20 @@ expression for any other reason. Rules:
   Use parentheses and arithmetic: `distance / (2 s)`,
   `(tilt + offset) / (90 deg)`.
 - The unit vocabulary is the registry in `bdl-elab::units` (FV Phase 10,
-  `Surface/Units.lean`): each unit has a stable id (`angle.deg`), a symbol, a
-  dimension and a linear chart onto the canonical magnitude (radians, metres,
-  seconds, kilograms, …). Registered today: `rad deg turn` (angle),
-  `mm cm m km inch ft` (length), `ms s min h` (time), `g kg` (mass), `A mA`,
-  `K`, `cd`, `mol`, and the derived `Hz N Pa kPa W V mV lx`. Inch is spelled
-  `inch` because `in` is the membership keyword. °C and °F are affine, not
-  linear, and are not registered (ISS-0004). A literal `n u` elaborates to the
-  kernel literal `n × scale(u)` of the unit's dimension — `withUnit` — and
-  nothing about a unit reaches `Ty`, `Value` or the runtime.
+  `Surface/Units.lean`; Phase 10b `Surface/Charts.lean`): each unit has a stable
+  id (`angle.deg`), a symbol, a dimension and a **chart** onto the canonical
+  magnitude (radians, metres, seconds, kilograms, …) — linear (`scale`) or
+  affine (`scale`, `offset`); the chart owns the conversion, and
+  `convert(x, from, to)` is `coord_to ∘ reconstruct_from` for either shape.
+  Every unit a formula can write is linear today; the affine temperature charts
+  exist as tested infrastructure outside the registry. Registered today:
+  `rad deg turn` (angle), `mm cm m km inch ft` (length), `ms s min h` (time),
+  `g kg` (mass), `A mA`, `K`, `cd`, `mol`, and the derived
+  `Hz N Pa kPa W V mV lx`. Inch is spelled `inch` because `in` is the membership
+  keyword. °C and °F are affine, not linear, and are not registered (ISS-0004).
+  A literal `n u` elaborates to the kernel literal `n × scale(u)` of the unit's
+  dimension — `withUnit` — and nothing about a unit reaches `Ty`, `Value` or the
+  runtime.
 - There is no expression-level unit cast (`(x) deg`), and none is planned.
 - One lookahead exception, for recovery only: a name followed by `=>` or `(` is
   never taken as a unit, because nothing but an operator may follow a unit. So a

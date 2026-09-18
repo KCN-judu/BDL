@@ -388,11 +388,17 @@ _References_ by type and _Equations_ folded; for a component, **+ − × ÷**,
 **Compare**, **Function** (the equations whose result fits, wrapping the
 component as the first argument) and **Remove**. Keys: Tab across components in
 reading order; on a selected component `+ − * /` and ⌫; digits and Return in a
-number entry; Esc clears the selection. Text that does not parse keeps the exact
-text, shows the last readable form dimmed with _The text cannot be read as a
-formula; the last readable form is shown._ and **Edit as text**. Save, revert,
-conflict and detach are §4a's, unchanged: a formula with a slot may be saved and
-is _invalid_ until filled.
+number entry; Esc clears the selection. The stale-projection policy
+(`app/composer.dart` `composerInSync`): a projection is current only when it is
+of exactly the text on screen and that text parsed; otherwise the field is
+dimmed with a notice — _Waiting for the compiler to read the formula…_ while the
+verdict for this text is on its way, _The text cannot be read as a formula._
+when it never will be (then no tree is shown: none is invented) — no component
+answers a click, no slot panel opens, no key acts, and the reducer refuses a
+structured action (or a second one in flight) and discards an answer for text
+that has moved on; **Edit as text** is the way out. Save, revert, conflict and
+detach are §4a's, unchanged: a formula with a slot may be saved and is _invalid_
+until filled.
 
 Screenshot: `docs/user-guide/assets/studio/formula-composer.png`
 (`docs/user-guide/screenshots/manifest.json`, `formula-composer`).

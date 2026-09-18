@@ -64,8 +64,11 @@ exactly so in the **Text** view, and a formula typed as text appears in the
 `match`, a block with `let`, a rule `x => …`, a collection or grouped literal,
 `delay` / `sync` — are shown as text in the Formula view and edited in the Text
 view. Text that cannot be read as a formula keeps exactly what you typed; the
-Formula view shows the last readable form dimmed, says so, and offers **Edit as
-text**.
+Formula view shows no parts for it, says _The text cannot be read as a formula._
+and offers **Edit as text**. After any change the Formula view waits for the
+compiler's reading of the new text — _Waiting for the compiler to read the
+formula…_, the parts dimmed — before it offers the next action, so nothing you
+click ever acts on text that has already changed.
 
 ## The text field and its verdict
 

@@ -106,3 +106,38 @@ text and every structured action is a byte-range edit of it.
   `docs/project/formal-correspondence.md`;
   `docs/user-guide/studio/formula-editor.md`; the change fragment
   `2026-09-formula-composer.md`.
+
+## Amendment (2026-09-18, P10b — Composer hardening)
+
+Extends the decision; every sentence above stays true.
+
+- **The chart owns conversion.** `UnitDef { id, symbol, dim, chart }`; the chart
+  is `Linear { factor }` or `Affine { scale, offset }` and `convert` is
+  `coord_v ∘ reconstruct_u` for either (FV Phase 10b `Charts.lean`: identity,
+  composition, inverse, the display switch preserving the quantity and the
+  difference map being the linear part are property-tested on `f64` for every
+  registered chart and the affine temperature charts). No historical `factor`
+  field survives outside the linear variant. **Affine charts are infrastructure
+  only**: `°C`/`°F` are tested against the formal values (0 °C = 32 °F, 100 °C =
+  212 °F, −40 °C = −40 °F) but are not in the registry a formula or a picker
+  sees — conversion and display are safe, arithmetic on absolute temperatures is
+  a separate validation concern (ISS-0004).
+- **The stale-projection policy.** A projection is _current_ only when it is of
+  exactly the text on screen and that text parsed; an empty draft is one slot.
+  Anything else is shown dimmed as context with a notice and no structured
+  action is offered or sent: Studio refuses a `ComposeRequested` while out of
+  sync or while another action is in flight, drops the selection when the text
+  changes, and applies a `ComposeFormula` answer only for the request awaited
+  and the text it was computed against. Unreadable text shows no tree at all —
+  none is invented.
+- **Nominal positions.** An expectation records whether only _that concept_ fits
+  (a relationship's input, an equation's argument bound to a concept by another
+  argument) or any value of the representation does (the formula's result,
+  ADR-0013); dimension equality never admits another concept in a nominal
+  position. An equation's arguments already written bind its variables before
+  the expected result does.
+- **Grouping is by position.** A composed text is parenthesised by what its
+  position demands — a right operand of `−` or `/` may not bind equally, a new
+  operator under a unary minus or beside a stronger one is grouped — and
+  property tests hold the meaning fixed across a no-op fill and a
+  wrap-then-remove.
