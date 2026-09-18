@@ -391,14 +391,15 @@ fn connect_driver(snapshot: &AnalysisSnapshot, o: OutputId, code: &str) -> Seman
     let design = &snapshot.effective().design;
     let oname = name(snapshot, EntityRef::Output(o));
     let out = design.outputs.get(&o);
-    // Candidates: nullary mappings producing what the sink accepts, in the
-    // sink's domain (or agnostic), not already driving something (DI-20).
+    // Candidates: relationships with the unit domain (values) producing
+    // what the sink accepts, in the sink's domain (or agnostic), not already
+    // driving something (DI-20).
     let options: Vec<ActionChoice> = design
         .mappings
         .values()
         .filter(|m| {
             out.is_some_and(|x| {
-                m.signature.inputs.is_empty()
+                m.signature.is_unit_domain()
                     && m.signature.output == x.accepts
                     && m.drives.is_none()
                     && (m.clock.is_none() || m.clock == x.clock)

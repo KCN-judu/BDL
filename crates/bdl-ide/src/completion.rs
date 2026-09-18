@@ -292,8 +292,8 @@ fn formula_completions(
         });
     }
 
-    // Other relationships (DI-17): a value when it has no inputs, a call to
-    // complete when it has some.  The mapping's own name is not offered
+    // Other relationships (DI-17): a value when its domain is `()`, a call
+    // to complete when it has inputs.  The mapping's own name is not offered
     // (an instantaneous self-reference is a cycle; memory uses `delay`).
     if !unit_position {
         let visible: Vec<(String, &bdl_model::surface::MappingBlock)> = match scope {
@@ -330,7 +330,7 @@ fn formula_completions(
                     .get(&m.signature.output)
                     .and_then(|c| c.representation.as_ref()),
             );
-            let callable = !m.signature.inputs.is_empty();
+            let callable = !m.signature.is_unit_domain();
             out.push(SemanticCompletion {
                 label: if callable {
                     format!("{}({})", name, params.join(", "))
@@ -359,7 +359,7 @@ fn formula_completions(
             ("delay", "delay(init, value): the value at the previous activation; init at the first"),
             ("sync", "sync(domain, init, value): the value at the source domain's last activation strictly before now"),
         ] {
-            if !matches(name) || !block.signature.inputs.is_empty() {
+            if !matches(name) || !block.signature.is_unit_domain() {
                 continue;
             }
             out.push(SemanticCompletion {
@@ -663,7 +663,7 @@ fn visible_collections(
             .collect(),
     };
     for (name, m) in visible {
-        if m.id != block.id && m.signature.inputs.is_empty() && is_list(&m.signature.output) {
+        if m.id != block.id && m.signature.is_unit_domain() && is_list(&m.signature.output) {
             out.push(name);
         }
     }

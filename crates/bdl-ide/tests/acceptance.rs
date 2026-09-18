@@ -861,3 +861,101 @@ fn a_binder_local_is_never_a_reference_to_the_design() {
         "{all_tokens:?}"
     );
 }
+
+// ---- the unit domain: `mapping f : B` is `mapping f : () -> B` --------------------
+
+/// A relationship without inputs has the canonical type `() -> B`: hover
+/// and Explain say so in the designer's spelling — `()`, never the word
+/// "unit" — while the surface line keeps the shorthand, the Composer offers
+/// the relationship as a plain reference (no synthetic argument), and its
+/// definition draft accepts `f`, `f()` and `f(())` alike.
+#[test]
+fn a_relationship_without_inputs_has_the_unit_domain_in_hover_explain_and_the_composer() {
+    let lamp = lamp();
+    let s = edit(&lamp.snapshot, mapping("ambient", vec![], lamp.tilt));
+    let ambient = s
+        .design
+        .mappings
+        .values()
+        .find(|m| m.name == "ambient")
+        .map(|m| m.id)
+        .expect("ambient");
+    let mut host = IdeHost::new(s.clone());
+    let snap = host.snapshot();
+    let h = hover(&snap, EntityRef::Mapping(ambient)).expect("hover");
+    assert_eq!(h.signature.as_deref(), Some("mapping ambient : Tilt"));
+    let ty = h
+        .details
+        .iter()
+        .find(|d| d.label == "type")
+        .map(|d| d.value.as_str());
+    assert_eq!(ty, Some("() -> Tilt"));
+    assert!(h
+        .details
+        .iter()
+        .all(|d| !d.value.to_lowercase().contains("unit")));
+    let h2 = hover(&snap, EntityRef::Mapping(lamp.dim_by_tilt)).expect("hover");
+    let ty2 = h2
+        .details
+        .iter()
+        .find(|d| d.label == "type")
+        .map(|d| d.value.as_str());
+    assert_eq!(ty2, Some("Tilt -> Brightness"));
+    let x = explain(&snap, EntityRef::Mapping(ambient)).expect("explain");
+    let sem = x
+        .sections
+        .iter()
+        .find(|s| s.heading == "Semantics")
+        .expect("semantics");
+    let line = |label: &str| {
+        sem.lines
+            .iter()
+            .find(|(l, _)| l == label)
+            .map(|(_, v)| v.as_str())
+    };
+    assert_eq!(line("canonical type"), Some("() -> Tilt"));
+    assert!(line("domain").is_some_and(|d| d.contains("empty product")));
+    // the kernel interface stays the value's type: `() -> B` encoded as `B`
+    assert_eq!(line("interface"), Some(&*format!("{}", lamp.tilt)));
+    let x2 = explain(&snap, EntityRef::Mapping(lamp.dim_by_tilt)).expect("explain");
+    let sem2 = x2
+        .sections
+        .iter()
+        .find(|s| s.heading == "Semantics")
+        .expect("semantics");
+    assert!(sem2.lines.iter().all(|(l, _)| l != "domain"));
+
+    // the Composer: `ambient` is a reference candidate as itself
+    host.set_definition_draft(lamp.dim_by_tilt, "? / 90 deg");
+    let snap = host.snapshot();
+    let slot = formula_slot(&snap, lamp.dim_by_tilt, "r.0").expect("slot");
+    let amb = slot
+        .references
+        .iter()
+        .find(|r| r.label == "ambient")
+        .expect("ambient offered");
+    assert_eq!(amb.insert, "ambient");
+    // the three spellings of the one application are one draft verdict
+    for src in [
+        "ambient / 90 deg",
+        "ambient() / 90 deg",
+        "ambient(()) / 90 deg",
+    ] {
+        host.set_definition_draft(lamp.dim_by_tilt, src);
+        let v = draft_verdict(&host.snapshot(), lamp.dim_by_tilt).expect("verdict");
+        assert!(v.parse_ok, "{src}");
+        assert!(
+            v.diagnostics.iter().all(|d| !d.is_error()),
+            "{src}: {:?}",
+            v.diagnostics
+        );
+    }
+    host.set_definition_draft(lamp.dim_by_tilt, "ambient(Tilt) / 90 deg");
+    let v = draft_verdict(&host.snapshot(), lamp.dim_by_tilt).expect("verdict");
+    assert!(
+        v.diagnostics
+            .iter()
+            .any(|d| d.code == "formula.call.arity"
+                && d.message.contains("its only argument is `()`"))
+    );
+}

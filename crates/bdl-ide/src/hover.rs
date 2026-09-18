@@ -196,6 +196,12 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             let mut sig = inputs.clone();
             sig.push(cname(m.signature.output));
             let mut details = Vec::new();
+            // the canonical type: `() -> B` for a relationship without
+            // inputs (the surface line above keeps the shorthand)
+            details.push(detail(
+                "type",
+                pretty::mapping_type(ir, &m.signature.inputs, m.signature.output),
+            ));
             match &m.definition {
                 Some(Definition::Formula { source })
                 | Some(Definition::ScopedFormula { source, .. }) => {

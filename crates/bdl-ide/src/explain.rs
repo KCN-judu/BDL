@@ -73,9 +73,21 @@ pub fn explain(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Explana
 
     if let EntityRef::Mapping(id) = entity {
         if let Some(a) = analysis.mappings.get(&id) {
-            let mut sem = ExplanationSection::new("Semantics")
-                .line("status", h.status.label())
-                .line("interface", pretty::kernel(&a.interface.expected_type));
+            let m = design.mappings.get(&id);
+            let mut sem = ExplanationSection::new("Semantics").line("status", h.status.label());
+            if let Some(m) = m {
+                sem = sem.line(
+                    "canonical type",
+                    pretty::mapping_type(ir, &m.signature.inputs, m.signature.output),
+                );
+                if m.signature.is_unit_domain() {
+                    sem = sem.line(
+                        "domain",
+                        "This relationship has no explicit inputs. Its canonical domain is (), the empty product; the kernel encodes `() -> B` as `B` (unit elimination).",
+                    );
+                }
+            }
+            sem = sem.line("interface", pretty::kernel(&a.interface.expected_type));
             let grant: Vec<String> = a
                 .interface
                 .expected_type

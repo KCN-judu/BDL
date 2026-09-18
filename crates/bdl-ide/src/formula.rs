@@ -79,6 +79,9 @@ pub enum TypeKindView {
     Count,
     Concept,
     Structured,
+    /// The empty product `()`: a relationship's domain when it has no
+    /// inputs.  Never a physical measurement unit.
+    Unit,
     Unknown,
 }
 
@@ -118,6 +121,16 @@ impl TypeView {
             Ty::Q { dim } => TypeView::quantity(*dim),
             Ty::Bool => TypeView::boolean(),
             Ty::Nat => TypeView::count(),
+            // the empty product: a relationship's domain, never a slot's
+            // expectation
+            Ty::Unit => TypeView {
+                description: "()".into(),
+                kind: TypeKindView::Unit,
+                dim: None,
+                concept: None,
+                nominal: false,
+                element: None,
+            },
             Ty::Sem { id } => {
                 let name = design
                     .concepts
@@ -742,6 +755,14 @@ impl Builder<'_> {
                 },
                 Vec::new(),
             ),
+            // `f(())`: the explicit application to the unique argument; the
+            // Composer offers `f` and never writes this form itself
+            ExprKind::Unit => (
+                NodeKind::Opaque {
+                    what: "the empty product ()".into(),
+                },
+                Vec::new(),
+            ),
             ExprKind::Lambda { .. } => (
                 NodeKind::Opaque {
                     what: "a rule".into(),
@@ -1330,7 +1351,9 @@ fn reference_candidates(
         ) else {
             continue;
         };
-        let callable = !m.signature.inputs.is_empty();
+        // a relationship with the unit domain is read as a value: its
+        // unique argument is nothing to fill
+        let callable = !m.signature.is_unit_domain();
         let slots = vec!["?"; m.signature.inputs.len()].join(", ");
         out.push(ReferenceCandidate {
             label: if callable {
