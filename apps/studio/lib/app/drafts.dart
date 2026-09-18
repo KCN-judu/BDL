@@ -119,6 +119,11 @@ Transition draftAnalysisReceived(AppState s, pb.DefinitionDraftAnalysis r) {
       r.revision.toInt() != d.baseRevision) {
     return Transition(s);
   }
+  if (d.source.trim().isEmpty) {
+    return Transition(
+      _withDraft(s, d.copyWith(check: DraftCheck.checked, clearAnalysis: true, parseOk: true)),
+    );
+  }
   return Transition(
     _withDraft(
       s,
@@ -213,18 +218,18 @@ Map<int, DefinitionDraft> dirtyDrafts(AppState s) => {
     if (e.value.dirtyAgainst(s.committedDefinition(e.key))) e.key: e.value,
 };
 
-List<Effect> _checkEffects(int revision, DefinitionDraft d, int? component) =>
-    d.source.trim().isEmpty
-    ? const []
-    : [
-        AnalyzeDraft(
-          revision: revision,
-          mappingId: d.mappingId,
-          generation: d.generation,
-          source: d.source,
-          component: component,
-        ),
-      ];
+/// Every draft reaches the project — an empty one too, since the project
+/// saves it — and comes back with a verdict; an empty draft's verdict is
+/// not kept (an empty field has nothing to judge).
+List<Effect> _checkEffects(int revision, DefinitionDraft d, int? component) => [
+  AnalyzeDraft(
+    revision: revision,
+    mappingId: d.mappingId,
+    generation: d.generation,
+    source: d.source,
+    component: component,
+  ),
+];
 
 AppState _withDraft(AppState s, DefinitionDraft d) =>
     s.copyWith(editor: s.editor.copyWith(drafts: {...s.editor.drafts, d.mappingId: d}));

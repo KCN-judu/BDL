@@ -11,6 +11,7 @@ library;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'effects.dart';
+import 'lifecycle.dart' show afterSourceEditSettled;
 import 'reducer.dart' show Transition, decPending, pending, projectReceived;
 import 'state.dart';
 
@@ -128,8 +129,11 @@ Transition sourceEditApplied(AppState s, pb.SourceEditApplied applied) {
         editor: state.editor.copyWith(sources: sources.copyWith(sent: held.buffer)),
       ),
     );
+    return Transition(state, effects);
   }
-  return Transition(state, effects);
+  // nothing left to send: a save or an unload that waited for this edit
+  final settled = afterSourceEditSettled(state);
+  return Transition(settled.state, [...effects, ...settled.effects]);
 }
 
 /// The anchor of the canvas selection in the open file, for the Split

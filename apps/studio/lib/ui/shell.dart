@@ -13,6 +13,7 @@ import '../platform/desktop.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../protocol/versions.dart';
 import 'mac/controls.dart';
+import 'close_guard.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 import 'pages/deploy_page.dart';
@@ -57,6 +58,11 @@ class StudioShell extends ConsumerWidget {
             dispatch(const PageSelected(StudioPage.deploy)),
         const SingleActivator(LogicalKeyboardKey.digit4, meta: true): () =>
             dispatch(const PageSelected(StudioPage.monitor)),
+        // Every way out of a project goes through the same guard.
+        const SingleActivator(LogicalKeyboardKey.keyW, meta: true): () =>
+            dispatch(const CloseProjectRequested()),
+        const SingleActivator(LogicalKeyboardKey.keyQ, meta: true): () =>
+            dispatch(const QuitRequested()),
       },
       child: Focus(
         autofocus: true,
@@ -64,43 +70,60 @@ class StudioShell extends ConsumerWidget {
           backgroundColor: t.window,
           // Two screens, as in Resolve: the project manager until a project
           // is open, then the page workspace.
-          body: project == null
-              ? Column(
-                  children: [
-                    if (state.editor.lastError case final err?)
-                      _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
-                    Expanded(
-                      child: WelcomePage(state: state, dispatch: dispatch),
-                    ),
-                    Divider(color: t.hairline),
-                    _StatusLine(state: state),
-                  ],
-                )
-              : Column(
-                  children: [
-                    _Toolbar(state: state, dispatch: dispatch),
-                    Divider(color: t.hairline),
-                    if (state.editor.lastError case final err?)
-                      _Banner(
-                        error: err,
-                        onDismiss: () => dispatch(const ErrorDismissed()),
-                        dispatch: dispatch,
-                      ),
-                    Expanded(child: page),
-                    Divider(color: t.hairline),
-                    _StatusLine(state: state),
-                    Divider(color: t.hairline),
-                    _PageBar(
-                      current: state.editor.page,
-                      projectOpen: true,
-                      connected: state.connection is Connected,
-                      dispatch: dispatch,
-                    ),
-                  ],
-                ),
+          body: Stack(
+            children: [
+              _screen(context, state, dispatch, project, page),
+              if (state.editor.closeGuard != null)
+                CloseGuardSheet(state: state, dispatch: dispatch),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _screen(
+    BuildContext context,
+    AppState state,
+    void Function(AppAction) dispatch,
+    pb.ProjectProjection? project,
+    Widget page,
+  ) {
+    final t = MacTokens.of(context);
+    return project == null
+        ? Column(
+            children: [
+              if (state.editor.lastError case final err?)
+                _Banner(error: err, onDismiss: () => dispatch(const ErrorDismissed())),
+              Expanded(
+                child: WelcomePage(state: state, dispatch: dispatch),
+              ),
+              Divider(color: t.hairline),
+              _StatusLine(state: state),
+            ],
+          )
+        : Column(
+            children: [
+              _Toolbar(state: state, dispatch: dispatch),
+              Divider(color: t.hairline),
+              if (state.editor.lastError case final err?)
+                _Banner(
+                  error: err,
+                  onDismiss: () => dispatch(const ErrorDismissed()),
+                  dispatch: dispatch,
+                ),
+              Expanded(child: page),
+              Divider(color: t.hairline),
+              _StatusLine(state: state),
+              Divider(color: t.hairline),
+              _PageBar(
+                current: state.editor.page,
+                projectOpen: true,
+                connected: state.connection is Connected,
+                dispatch: dispatch,
+              ),
+            ],
+          );
   }
 }
 

@@ -14,6 +14,7 @@ import 'actions.dart';
 import 'composer.dart';
 import 'deploy.dart';
 import 'drafts.dart';
+import 'lifecycle.dart';
 import 'sources.dart';
 import 'effects.dart';
 import 'simulation.dart';
@@ -35,38 +36,32 @@ Transition reduce(AppState s, AppAction action) {
     AppStarted() || ConnectRequested() => _connect(s),
 
     // ---- project lifecycle -------------------------------------------------
-    OpenProjectPickRequested() => _whenConnected(
-      s,
-      () => s.project == null ? Transition(s, const [PickProjectToOpen()]) : Transition(s),
-    ),
-    NewProjectPickRequested() => _whenConnected(
-      s,
-      () => s.project == null ? Transition(s, const [PickNewProjectLocation()]) : Transition(s),
-    ),
+    // Every path that unloads a project goes through one guard
+    // (app/lifecycle.dart); with no project open the intent runs at once.
+    OpenProjectPickRequested() => _whenConnected(s, () => unloadRequested(s, const PickAnother())),
+    NewProjectPickRequested() => _whenConnected(s, () => unloadRequested(s, const PickNew())),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
-      () => Transition(pending(s), [OpenProject(rootPath)]),
+      () => s.project == null
+          ? Transition(pending(s), [OpenProject(rootPath)])
+          : unloadRequested(s, OpenAnother(rootPath)),
     ),
     NewProjectRequested(:final rootPath, :final name) => _whenConnected(
       s,
-      () => Transition(pending(s), [InitProject(rootPath: rootPath, name: name)]),
+      () => s.project == null
+          ? Transition(pending(s), [InitProject(rootPath: rootPath, name: name)])
+          : unloadRequested(s, CreateAnother(rootPath: rootPath, name: name)),
     ),
-    SaveRequested(:final force) => _whenProject(
-      s,
-      () => Transition(pending(s.copyWith(editor: s.editor.copyWith(clearError: true))), [
-        SaveProject(force: force),
-      ]),
-    ),
+    QuitRequested() => unloadRequested(s, const Quit()),
+    CloseGuardAnswered(:final answer) => closeGuardAnswered(s, answer),
+    SaveRequested(:final force) => _whenProject(s, () => saveRequested(s, force: force)),
     ReloadProjectRequested() => _whenProject(
       s,
       () => Transition(pending(s.copyWith(editor: s.editor.copyWith(clearError: true))), const [
         ReloadProject(),
       ]),
     ),
-    CloseProjectRequested() => _whenProject(
-      s,
-      () => Transition(pending(s), const [CloseProject()]),
-    ),
+    CloseProjectRequested() => _whenProject(s, () => unloadRequested(s, const CloseOnly())),
     UndoRequested() => _whenProject(
       s,
       () => s.project!.canUndo ? Transition(pending(s), const [Undo()]) : Transition(s),
@@ -581,7 +576,13 @@ Transition reduce(AppState s, AppAction action) {
           clearPendingBind: true,
           queuedSystemEdits: const [],
           drafts: const {},
-          stashedDrafts: _stash(s),
+          stashedDrafts: const {},
+          draftsSeeded: false,
+          clearCloseGuard: true,
+          clearUnloading: true,
+          clearAfterClose: true,
+          clearCloseAfterSave: true,
+          clearPendingSave: true,
           deploy: deployWithoutProject(s.editor.deploy).copyWith(targetsLoaded: false),
           simulation: const SimulationState(),
         ),
@@ -618,7 +619,7 @@ Transition reduce(AppState s, AppAction action) {
       generation,
       message,
     ),
-    ProjectClosed() => Transition(
+    ProjectClosed() => afterClosed(
       s.copyWith(
         clearProject: true,
         editor: s.editor.copyWith(
@@ -633,7 +634,8 @@ Transition reduce(AppState s, AppAction action) {
           queuedSystemEdits: const [],
           clearOutcome: true,
           drafts: const {},
-          stashedDrafts: _stash(s),
+          stashedDrafts: const {},
+          draftsSeeded: false,
           deploy: deployWithoutProject(s.editor.deploy),
           simulation: const SimulationState(),
         ),
@@ -660,8 +662,8 @@ Transition reduce(AppState s, AppAction action) {
         );
       }
       return Transition(
-        s.copyWith(
-          editor: s.editor.copyWith(
+        unloadAbandoned(s).copyWith(
+          editor: unloadAbandoned(s).editor.copyWith(
             sources: sources,
             // the failed request settles; a counted refetch takes its place
             pendingRequests: decPending(s) + (refetch ? 1 : 0),
@@ -831,22 +833,6 @@ final pb.EditOp _markRequired = pb.EditOp(
   setOutputRequired: pb.SetOutputRequired(id: Int64(-1), required: true),
 );
 
-/// Dirty drafts of the project being closed, filed under its path so a
-/// reopen restores them.
-Map<String, Map<int, DefinitionDraft>> _stash(AppState s) {
-  final root = s.project?.rootPath;
-  if (root == null) return s.editor.stashedDrafts;
-  final key = draftKey(root, s.editor.context);
-  final dirty = dirtyDrafts(s);
-  final next = {...s.editor.stashedDrafts};
-  if (dirty.isEmpty) {
-    next.remove(key);
-  } else {
-    next[key] = dirty;
-  }
-  return next;
-}
-
 AppState pending(AppState s) =>
     s.copyWith(editor: s.editor.copyWith(pendingRequests: s.editor.pendingRequests + 1));
 
@@ -935,12 +921,11 @@ Transition projectReceived(
   final renamingValid = renaming != null && nodeExists(next, renaming);
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
-  // Drafts: rebased on every new revision; restored from the stash when a
-  // project is (re)opened.  Same revision (a save) changes nothing.
-  final stashed = s.editor.stashedDrafts;
-  final key = draftKey(incoming.rootPath, context);
+  // Drafts: rebased on every new revision.  Same revision (a save) changes
+  // nothing.  A (re)opened project's drafts are the project's own — they
+  // come with its system view and are seeded there.
   final ({Map<int, DefinitionDraft> drafts, List<Effect> effects}) drafts = !sameProject
-      ? rebaseDrafts(stashed[key] ?? const {}, view, component: s.editor.componentScope)
+      ? (drafts: const <int, DefinitionDraft>{}, effects: const <Effect>[])
       : incoming.revision == current.revision
       ? (drafts: s.editor.drafts, effects: const <Effect>[])
       : rebaseDrafts(s.editor.drafts, view, component: s.editor.componentScope);
@@ -948,52 +933,68 @@ Transition projectReceived(
       ? s.editor
       : withoutTooling(s.editor)
             .copyWith(simulation: simulationAfterRevision(s.editor.simulation, incoming));
-  return Transition(
-        next.copyWith(
-          recent: recent,
-          clearAnalysis: !analysisStillValid,
-          editor: editor.copyWith(
-            // the system is part of the project: its fetch is pending too
-            pendingRequests: pendingCount + (needsSystem ? 1 : 0),
-            selection: selection,
-            layout: layout,
-            layouts: layoutsOut,
-            context: context,
-            lastOutcome: outcome,
-            drafts: drafts.drafts,
-            stashedDrafts: sameProject ? stashed : ({...stashed}..remove(key)),
-            clearPendingInsert: fromRequest,
-            renaming: renamingValid ? renaming : null,
-            clearRenaming: !renamingValid,
-            clearExtraction: !sameProject,
-            clearPendingBind: !sameProject,
-          ),
-        ),
-        // A freshly opened project needs a subscription for pushed changes, an
-        // analysis of what was just opened, and goes to the top of Recent.
-        // After an edit the daemon pushes AnalysisReady on its own.  A
-        // system project also needs its system and its system analysis at
-        // every new revision.
-        [
-          if (!sameProject) ...[
-            const SubscribeProject(),
-            const RunAnalysis(),
-            SaveRecentProjects(recent),
-          ],
-          if (needsSystem) const GetSystem(),
-          if (isSystem && (!sameProject || incoming.revision != current.revision))
-            const RunSystemAnalysis(),
-          // the Code view shows this revision's text (ADR-0023 §4)
-          if (s.editor.showsCode &&
-              (!sameProject || incoming.revision.toInt() != s.editor.sources.revision))
-            const GetSources(),
-          if (placed) SetLayout(layoutToPb(layoutsOut)),
-          ...drafts.effects,
-        ],
-      )
-      .thenQueued(fromRequest && sameProject ? outcome : null)
-      .thenActions(changed: !sameProject || incoming.revision != current.revision)
-      .thenDeployment(changed: !sameProject || incoming.revision != current.revision);
+  // Where the designer was in this project last time (a per-user note,
+  // never project data): the view, the page, the file in the editor.
+  final workspace = sameProject ? null : workspaceFor(s, incoming.rootPath);
+  final keptView = DesignView.values.where((v) => v.name == workspace?.view).firstOrNull;
+  final keptPage = StudioPage.values.where((p) => p.name == workspace?.page).firstOrNull;
+  final transition =
+      Transition(
+            next.copyWith(
+              recent: recent,
+              clearAnalysis: !analysisStillValid,
+              editor: editor.copyWith(
+                // the system is part of the project: its fetch is pending too
+                pendingRequests: pendingCount + (needsSystem ? 1 : 0),
+                selection: selection,
+                layout: layout,
+                layouts: layoutsOut,
+                context: context,
+                lastOutcome: outcome,
+                drafts: drafts.drafts,
+                stashedDrafts: sameProject ? s.editor.stashedDrafts : const {},
+                draftsSeeded: sameProject && s.editor.draftsSeeded,
+                view: keptView,
+                page: keptPage,
+                sources: sameProject ? null : SourcesState(openPath: workspace?.openSource),
+                clearPendingInsert: fromRequest,
+                renaming: renamingValid ? renaming : null,
+                clearRenaming: !renamingValid,
+                clearExtraction: !sameProject,
+                clearPendingBind: !sameProject,
+              ),
+            ),
+            // A freshly opened project needs a subscription for pushed changes, an
+            // analysis of what was just opened, and goes to the top of Recent.
+            // After an edit the daemon pushes AnalysisReady on its own.  A
+            // system project also needs its system and its system analysis at
+            // every new revision.
+            [
+              if (!sameProject) ...[
+                const SubscribeProject(),
+                const RunAnalysis(),
+                SaveRecentProjects(recent),
+              ],
+              if (needsSystem) const GetSystem(),
+              if (isSystem && (!sameProject || incoming.revision != current.revision))
+                const RunSystemAnalysis(),
+              // the Code view shows this revision's text (ADR-0023 §4)
+              if ((keptView ?? s.editor.view) != DesignView.design &&
+                  (!sameProject || incoming.revision.toInt() != s.editor.sources.revision))
+                const GetSources(),
+              if (placed) SetLayout(layoutToPb(layoutsOut)),
+              ...drafts.effects,
+            ],
+          )
+          .thenQueued(fromRequest && sameProject ? outcome : null)
+          .thenActions(changed: !sameProject || incoming.revision != current.revision)
+          .thenDeployment(changed: !sameProject || incoming.revision != current.revision);
+  // An unload or a guarded save waited on this answer (app/lifecycle.dart).
+  final decided =
+      unloadDecided(transition.state, incoming, fromRequest) ??
+      closeAfterSaved(transition.state, incoming, fromRequest);
+  if (decided == null) return transition;
+  return Transition(decided.state, [...transition.effects, ...decided.effects]);
 }
 
 extension on Transition {

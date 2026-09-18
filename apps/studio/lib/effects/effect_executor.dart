@@ -8,6 +8,10 @@ import 'dart:async';
 
 import 'package:file_selector/file_selector.dart' as fs;
 import 'package:fixnum/fixnum.dart';
+
+import 'dart:ui' show AppExitType;
+
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/actions.dart';
@@ -48,6 +52,23 @@ class EffectExecutor {
 
   /// One pending (debounced) draft check per mapping; a newer one replaces it.
   final Map<int, Timer> _draftTimers = {};
+
+  /// The debounced draft checks, by mapping, so a save or an unload can
+  /// send them now instead of waiting: what is saved is what was typed.
+  final Map<int, Future<void> Function()> _pendingDrafts = {};
+
+  /// Send every debounced draft now and wait for the project to hold it.
+  Future<void> _flushDrafts() async {
+    for (final t in _draftTimers.values) {
+      t.cancel();
+    }
+    _draftTimers.clear();
+    final sends = _pendingDrafts.values.toList();
+    _pendingDrafts.clear();
+    for (final send in sends) {
+      await send();
+    }
+  }
 
   Future<void> run(Effect effect) async {
     switch (effect) {
@@ -104,7 +125,14 @@ class EffectExecutor {
           (r) => _dispatch(SourceEditApplied(r.sourceEditApplied)),
         );
       case SaveProject(:final force):
+        // What is saved is what was typed: a debounced draft goes first.
+        await _flushDrafts();
         await _project(pb.ClientMessage(saveProject: pb.SaveProjectRequest(force: force)));
+      case GetProject():
+        await _flushDrafts();
+        await _project(pb.ClientMessage(getProject: pb.GetProjectRequest()));
+      case QuitApplication():
+        await _quit();
       case ReloadProject():
         await _project(pb.ClientMessage(reloadProject: pb.ReloadProjectRequest()));
       case CloseProject():
@@ -231,9 +259,12 @@ class EffectExecutor {
         :final component,
       ):
         _draftTimers.remove(mappingId)?.cancel();
+        _pendingDrafts[mappingId] = () =>
+            _analyzeDraft(revision, mappingId, generation, source, component);
         _draftTimers[mappingId] = Timer(draftDebounce, () {
           _draftTimers.remove(mappingId);
-          _analyzeDraft(revision, mappingId, generation, source, component);
+          final send = _pendingDrafts.remove(mappingId);
+          if (send != null) send();
         });
       case CompleteDraft(
         :final revision,
@@ -645,11 +676,20 @@ class EffectExecutor {
     }
   }
 
+  /// How the application is left once the guard has run: the framework's
+  /// own exit, which the desktop embedders honour.  Replaceable for tests.
+  Future<void> Function() quit = () async {
+    await ServicesBinding.instance.exitApplication(AppExitType.required);
+  };
+
+  Future<void> _quit() => quit();
+
   Future<void> dispose() async {
     for (final t in _draftTimers.values) {
       t.cancel();
     }
     _draftTimers.clear();
+    _pendingDrafts.clear();
     for (final s in _subs) {
       await s.cancel();
     }

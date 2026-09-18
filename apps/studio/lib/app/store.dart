@@ -9,12 +9,18 @@ import 'actions.dart';
 import 'reducer.dart';
 import 'state.dart';
 
+typedef ExecutorFactory = EffectExecutor Function(void Function(AppAction) dispatch);
+
 class AppStore extends Notifier<AppState> {
+  AppStore([this._executorFactory]);
+
+  /// How the executor is made — the real one, or a test's (a fake daemon).
+  final ExecutorFactory? _executorFactory;
   late final EffectExecutor _executor;
 
   @override
   AppState build() {
-    _executor = EffectExecutor(dispatch);
+    _executor = (_executorFactory ?? EffectExecutor.new)(dispatch);
     ref.onDispose(_executor.dispose);
     return const AppState();
   }

@@ -27,6 +27,113 @@ extension SignatureDomain on pb.Signature {
 /// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
+/// What the designer wanted to do that needs the open project unloaded
+/// first.  Every project-unloading path — Close, the project manager, Open
+/// or New while a project is open, ⌘W, ⌘Q, the window's close button —
+/// goes through one guard: a clean project unloads at once, a dirty one
+/// asks *Save / Don't Save / Cancel* and the intent runs after the close.
+@immutable
+sealed class UnloadIntent {
+  const UnloadIntent();
+}
+
+class CloseOnly extends UnloadIntent {
+  const CloseOnly();
+  @override
+  bool operator ==(Object other) => other is CloseOnly;
+  @override
+  int get hashCode => 1;
+}
+
+class OpenAnother extends UnloadIntent {
+  const OpenAnother(this.rootPath);
+  final String rootPath;
+  @override
+  bool operator ==(Object other) => other is OpenAnother && other.rootPath == rootPath;
+  @override
+  int get hashCode => Object.hash(OpenAnother, rootPath);
+}
+
+class CreateAnother extends UnloadIntent {
+  const CreateAnother({required this.rootPath, required this.name});
+  final String rootPath;
+  final String name;
+  @override
+  bool operator ==(Object other) =>
+      other is CreateAnother && other.rootPath == rootPath && other.name == name;
+  @override
+  int get hashCode => Object.hash(CreateAnother, rootPath, name);
+}
+
+/// Then show the OS picker to open a project.
+class PickAnother extends UnloadIntent {
+  const PickAnother();
+  @override
+  bool operator ==(Object other) => other is PickAnother;
+  @override
+  int get hashCode => 2;
+}
+
+/// Then show the OS save dialog to create a project.
+class PickNew extends UnloadIntent {
+  const PickNew();
+  @override
+  bool operator ==(Object other) => other is PickNew;
+  @override
+  int get hashCode => 3;
+}
+
+class Quit extends UnloadIntent {
+  const Quit();
+  @override
+  bool operator ==(Object other) => other is Quit;
+  @override
+  int get hashCode => 4;
+}
+
+/// The one question a dirty project asks before it is unloaded.
+enum CloseGuardAnswer { save, dontSave, cancel }
+
+/// Where the designer was in a project, kept per user (never in the
+/// project): the view, the source file in the editor, the component whose
+/// source was open, the page.
+@immutable
+class ProjectWorkspace {
+  const ProjectWorkspace({this.view, this.openSource, this.component, this.page});
+  final String? view;
+  final String? openSource;
+  final int? component;
+  final String? page;
+
+  Map<String, Object> toJson() => {
+    if (view != null) 'view': view!,
+    if (openSource != null) 'open_source': openSource!,
+    if (component != null) 'component': component!,
+    if (page != null) 'page': page!,
+  };
+
+  static ProjectWorkspace? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final component = json['component'];
+    return ProjectWorkspace(
+      view: json['view'] is String ? json['view'] as String : null,
+      openSource: json['open_source'] is String ? json['open_source'] as String : null,
+      component: component is num ? component.toInt() : null,
+      page: json['page'] is String ? json['page'] as String : null,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProjectWorkspace &&
+      other.view == view &&
+      other.openSource == openSource &&
+      other.component == component &&
+      other.page == page;
+  @override
+  int get hashCode => Object.hash(view, openSource, component, page);
+}
+
 /// How the Design page shows the one open project (ADR-0023 §3): as the
 /// graph, as its source files, or both side by side.  A view, never a
 /// kind of project.
@@ -266,15 +373,24 @@ class CanvasLayout {
 /// A project the user opened before.  App-level preference, not project data.
 @immutable
 class RecentProject {
-  const RecentProject({required this.path, required this.name, required this.lastOpened});
+  const RecentProject({
+    required this.path,
+    required this.name,
+    required this.lastOpened,
+    this.workspace,
+  });
   final String path;
   final String name;
   final DateTime lastOpened;
+
+  /// Where the designer was when the project was last closed.
+  final ProjectWorkspace? workspace;
 
   Map<String, Object> toJson() => {
     'path': path,
     'name': name,
     'last_opened': lastOpened.toUtc().toIso8601String(),
+    if (workspace != null) 'workspace': workspace!.toJson(),
   };
 
   static RecentProject? fromJson(Object? json) {
@@ -283,8 +399,16 @@ class RecentProject {
     final name = json['name'];
     final when = DateTime.tryParse(json['last_opened']?.toString() ?? '');
     if (path is! String || name is! String || when == null) return null;
-    return RecentProject(path: path, name: name, lastOpened: when);
+    return RecentProject(
+      path: path,
+      name: name,
+      lastOpened: when,
+      workspace: ProjectWorkspace.fromJson(json['workspace']),
+    );
   }
+
+  RecentProject withWorkspace(ProjectWorkspace? workspace) =>
+      RecentProject(path: path, name: name, lastOpened: lastOpened, workspace: workspace);
 }
 
 @immutable
@@ -1001,9 +1125,37 @@ class EditorState {
     this.view = DesignView.design,
     this.sources = const SourcesState(),
     this.composer = const ComposerState(),
+    this.closeGuard,
+    this.unloading,
+    this.afterClose,
+    this.closeAfterSave,
+    this.pendingSave,
+    this.draftsSeeded = false,
   });
 
   final StudioPage page;
+
+  /// The *Save changes?* sheet is up for this intent.
+  final UnloadIntent? closeGuard;
+
+  /// An unload was asked for and the project is being asked whether it
+  /// differs from what is saved (its edits flushed first); the answer
+  /// closes it or raises [closeGuard].
+  final UnloadIntent? unloading;
+
+  /// What to do once the project has closed.
+  final UnloadIntent? afterClose;
+
+  /// The guard's *Save*: unload once the save has succeeded, never before.
+  final UnloadIntent? closeAfterSave;
+
+  /// A save asked for while typed text was still unsent: sent after that
+  /// text has reached the project.
+  final bool? pendingSave;
+
+  /// The definition drafts the project was saved with have been taken
+  /// into the editors once for this open.
+  final bool draftsSeeded;
 
   /// The Formula Composer's editor state (mode, selection, open slot).
   final ComposerState composer;
@@ -1151,6 +1303,17 @@ class EditorState {
     DesignView? view,
     SourcesState? sources,
     ComposerState? composer,
+    UnloadIntent? closeGuard,
+    bool clearCloseGuard = false,
+    UnloadIntent? unloading,
+    bool clearUnloading = false,
+    UnloadIntent? afterClose,
+    bool clearAfterClose = false,
+    UnloadIntent? closeAfterSave,
+    bool clearCloseAfterSave = false,
+    bool? pendingSave,
+    bool clearPendingSave = false,
+    bool? draftsSeeded,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -1185,8 +1348,19 @@ class EditorState {
       view: view ?? this.view,
       sources: sources ?? this.sources,
       composer: composer ?? this.composer,
+      closeGuard: clearCloseGuard ? null : (closeGuard ?? this.closeGuard),
+      unloading: clearUnloading ? null : (unloading ?? this.unloading),
+      afterClose: clearAfterClose ? null : (afterClose ?? this.afterClose),
+      closeAfterSave: clearCloseAfterSave ? null : (closeAfterSave ?? this.closeAfterSave),
+      pendingSave: clearPendingSave ? null : (pendingSave ?? this.pendingSave),
+      draftsSeeded: draftsSeeded ?? this.draftsSeeded,
     );
   }
+
+  /// Whether an unload is in progress in any phase — asking, sheet up,
+  /// saving first, or closing — so a second request does not start another.
+  bool get unloadInProgress =>
+      closeGuard != null || unloading != null || afterClose != null || closeAfterSave != null;
 
   /// Whether the Code view is on screen (alone or beside the graph).
   bool get showsCode => view != DesignView.design;

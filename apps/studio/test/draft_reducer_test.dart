@@ -101,14 +101,28 @@ void main() {
       expect(s.draft(dim), isNull);
     });
 
-    test('whitespace-only text is a draft that is not sent for checking', () {
+    test('whitespace-only text is a draft: sent (the project saves it), never judged', () {
       final t = reduce(
         connected(lamp()),
         const DefinitionDraftChanged(mappingId: dim, source: ' '),
       );
-      expect(t.effects, isEmpty);
+      expect(t.effects.whereType<AnalyzeDraft>().single.source, ' ');
       expect(t.state.draft(dim)!.check, DraftCheck.checked);
-      expect(t.state.draft(dim)!.analysis, isNull);
+      // the verdict on an empty field is not kept: nothing to judge
+      final v = reduce(
+        t.state,
+        DraftAnalysisReceived(
+          pb.DefinitionDraftAnalysis(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            generation: Int64(t.state.draft(dim)!.generation),
+            parseOk: false,
+            analysis: pb.MappingAnalysis(id: Int64(dim)),
+          ),
+        ),
+      ).state;
+      expect(v.draft(dim)!.analysis, isNull);
+      expect(v.draft(dim)!.parseOk, isTrue);
     });
 
     test('typing for an unknown mapping or without a project does nothing', () {
@@ -453,46 +467,71 @@ void main() {
   });
 
   group('close and reopen', () {
-    test('dirty drafts are stashed on close and restored on reopen of the same project', () {
+    // Drafts are project state: the project saves them and hands them back
+    // with its system view (app/lifecycle.dart `seedDrafts`); Studio keeps
+    // no stash of its own across a close.
+    test('closing keeps no drafts in Studio; the project’s own come back with its system', () {
       var s = type(connected(lamp()), 'Tilt / 90 deg');
-      s = reduce(s, const CloseProjectRequested()).state;
       s = reduce(s, const ProjectClosed()).state;
       expect(s.project, isNull);
       expect(s.editor.drafts, isEmpty);
-      expect(s.editor.stashedDrafts['/p']![dim]!.source, 'Tilt / 90 deg');
+      expect(s.editor.stashedDrafts, isEmpty);
 
-      // another project: nothing restored
-      final other = reduce(s, ProjectReceived(lamp(root: '/q'))).state;
-      expect(other.editor.drafts, isEmpty);
-      expect(other.editor.stashedDrafts.containsKey('/p'), isTrue);
-
-      // the same project: restored, rebased on its opening revision, checked
-      final t = reduce(s, ProjectReceived(lamp(revision: 0)));
+      s = reduce(s, ProjectReceived(lamp(revision: 0))).state;
+      expect(s.editor.drafts, isEmpty, reason: 'nothing until the project says');
+      final t = reduce(
+        s,
+        SystemReceived(
+          pb.SystemView(
+            revision: Int64(0),
+            definitionDrafts: [
+              pb.DefinitionDraftView(mappingId: Int64(dim), source: 'Tilt / 90 deg'),
+              pb.DefinitionDraftView(component: Int64(7), mappingId: Int64(3), source: 'x'),
+            ],
+          ),
+        ),
+      );
       final d = t.state.draft(dim)!;
       expect(d.source, 'Tilt / 90 deg');
       expect(d.baseRevision, 0);
       expect(d.check, DraftCheck.checking);
       expect(t.effects.whereType<AnalyzeDraft>().single.revision, 0);
-      expect(t.state.editor.stashedDrafts.containsKey('/p'), isFalse);
+      // a component body's draft waits in the stash for its context
+      expect(t.state.editor.stashedDrafts['/p#component:7']![3]!.source, 'x');
+      expect(t.state.editor.draftsSeeded, isTrue);
+      // the system view at a later revision does not seed again
+      final again = reduce(
+        t.state,
+        SystemReceived(
+          pb.SystemView(
+            revision: Int64(0),
+            definitionDrafts: [pb.DefinitionDraftView(mappingId: Int64(dim), source: 'other')],
+          ),
+          fromRequest: false,
+        ),
+      ).state;
+      expect(again.draft(dim)!.source, 'Tilt / 90 deg');
     });
 
-    test('a stashed draft whose definition was committed meanwhile is a conflict on reopen', () {
-      var s = type(connected(lamp(definition: 'a')), 'b');
-      s = reduce(s, const ProjectClosed()).state;
-      s = reduce(s, ProjectReceived(lamp(revision: 0, definition: 'c'))).state;
-      expect(s.draft(dim)!.conflict, isTrue);
-      // …and one that now equals the committed text is not a draft at all
-      var s2 = type(connected(lamp(definition: 'a')), 'b');
-      s2 = reduce(s2, const ProjectClosed()).state;
-      s2 = reduce(s2, ProjectReceived(lamp(revision: 0, definition: 'b'))).state;
-      expect(s2.draft(dim), isNull);
+    test('a saved draft that now equals the committed text is not a draft at all', () {
+      var s = reduce(connected(lamp()), ProjectReceived(lamp(revision: 0, definition: 'b'))).state;
+      s = reduce(
+        s,
+        SystemReceived(
+          pb.SystemView(
+            revision: Int64(0),
+            definitionDrafts: [pb.DefinitionDraftView(mappingId: Int64(dim), source: 'b')],
+          ),
+        ),
+      ).state;
+      expect(s.draft(dim), isNull);
     });
 
-    test('the daemon exiting stashes drafts too', () {
+    test('the daemon exiting drops the drafts: they are the project’s, not Studio’s', () {
       var s = type(connected(lamp()), 'Tilt');
       s = reduce(s, const DaemonExited(1)).state;
       expect(s.editor.drafts, isEmpty);
-      expect(s.editor.stashedDrafts['/p'], isNotNull);
+      expect(s.editor.stashedDrafts, isEmpty);
     });
 
     test('drafts are per mapping: another mapping keeps its own text', () {

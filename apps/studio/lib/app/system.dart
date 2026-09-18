@@ -17,6 +17,7 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
 import 'drafts.dart';
 import 'effects.dart';
+import 'lifecycle.dart' show seedDrafts, workspaceFor;
 import 'reducer.dart' show Transition, decPending, pending, projectReceived;
 import 'state.dart';
 import 'tooling.dart' show withoutTooling;
@@ -666,7 +667,35 @@ Transition systemReceived(AppState s, pb.SystemView system, {required bool fromR
       const SystemContext(),
     final c => c,
   };
-  final next = withView(s.copyWith(system: system), context: context);
+  var next = withView(s.copyWith(system: system), context: context);
+  // The definition drafts the project was saved with, once per open: into
+  // the editors of the context on screen, into the stash for the others;
+  // then the context the designer left the project in.
+  final seedEffects = <Effect>[];
+  if (!next.editor.draftsSeeded) {
+    final seeded = seedDrafts(next, system);
+    final rebased = rebaseDrafts(
+      seeded.drafts,
+      next.project!,
+      component: next.editor.componentScope,
+    );
+    next = next.copyWith(
+      editor: next.editor.copyWith(
+        drafts: rebased.drafts,
+        stashedDrafts: seeded.stashed,
+        draftsSeeded: true,
+      ),
+    );
+    seedEffects.addAll(rebased.effects);
+    final remembered = workspaceFor(next, flat.rootPath)?.component;
+    if (remembered != null && next.component(remembered) != null) {
+      final t = contextChanged(next, ComponentContext(remembered));
+      return Transition(
+        t.state.copyWith(editor: t.state.editor.copyWith(pendingRequests: pendingCount)),
+        [...seedEffects, ...t.effects],
+      );
+    }
+  }
   var selection = selectionStillValid(next, next.editor.selection)
       ? next.editor.selection
       : const NoSelection();
@@ -711,7 +740,7 @@ Transition systemReceived(AppState s, pb.SystemView system, {required bool fromR
         renameNextGroup: renameNext,
       ),
     ),
-    [if (layoutChanged) SetLayout(layoutToPb(layouts))],
+    [...seedEffects, if (layoutChanged) SetLayout(layoutToPb(layouts))],
   );
 }
 

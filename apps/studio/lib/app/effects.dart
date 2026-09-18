@@ -77,6 +77,18 @@ class CloseProject extends Effect {
   const CloseProject();
 }
 
+/// Ask the project whether it differs from what is saved, after every
+/// unsent edit (typing that has not been sent yet) has reached it.
+/// Answered by `ProjectReceived`.
+class GetProject extends Effect {
+  const GetProject();
+}
+
+/// Leave the application: the guard has run, nothing unsaved is open.
+class QuitApplication extends Effect {
+  const QuitApplication();
+}
+
 class SubscribeProject extends Effect {
   const SubscribeProject();
 }

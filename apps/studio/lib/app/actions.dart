@@ -60,6 +60,18 @@ class NewProjectRequested extends UserAction {
 /// Save.  A text project whose sources changed on disk since they were
 /// loaded refuses (`project.changed_on_disk`) unless [force]; the banner
 /// offers reloading instead.
+/// The designer answered *Save changes to “…”?*.
+class CloseGuardAnswered extends UserAction {
+  const CloseGuardAnswered(this.answer);
+  final CloseGuardAnswer answer;
+}
+
+/// ⌘Q, the menu's Quit, the window's close button: leave the app — after
+/// the open project has been unloaded through the guard.
+class QuitRequested extends UserAction {
+  const QuitRequested();
+}
+
 class SaveRequested extends UserAction {
   const SaveRequested({this.force = false});
   final bool force;

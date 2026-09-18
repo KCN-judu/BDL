@@ -181,7 +181,7 @@ void main() {
     await store.dispose();
   });
 
-  test('the daemon exiting stashes the draft; the source survives', () async {
+  test('the daemon exiting drops the draft with the project', () async {
     final daemon = FakeDaemon((m) {
       if (m.hasHandshake()) return okHandshake();
       return pb.Response(ack: pb.Ack());
@@ -190,7 +190,8 @@ void main() {
     store.dispatch(const DefinitionDraftChanged(mappingId: dim, source: 'Tilt'));
     store.dispatch(const DaemonExited(9));
     expect(store.state.project, isNull);
-    expect(store.state.editor.stashedDrafts['/p']![dim]!.source, 'Tilt');
+    expect(store.state.editor.drafts, isEmpty);
+    expect(store.state.editor.stashedDrafts, isEmpty);
     await store.dispose();
   });
 }
