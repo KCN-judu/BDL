@@ -180,8 +180,14 @@ impl Project {
         Project { _dir: dir, root }
     }
 
+    /// A `file://` URI for a file of the project (`file:///C:/…` on Windows).
     fn uri(&self, rel: &str) -> String {
-        format!("file://{}", self.root.join(rel).to_string_lossy())
+        let s = self.root.join(rel).to_string_lossy().replace('\\', "/");
+        if s.starts_with('/') {
+            format!("file://{s}")
+        } else {
+            format!("file:///{s}")
+        }
     }
 
     fn text(&self, rel: &str) -> String {
