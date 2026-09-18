@@ -3162,11 +3162,24 @@ const FormulaNode$json = {
     {'1': 'because', '3': 13, '4': 1, '5': 9, '10': 'because'},
     {'1': 'diagnostics', '3': 14, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
     {'1': 'children', '3': 15, '4': 3, '5': 11, '6': '.bdl.v1.FormulaNode', '10': 'children'},
+    {'1': 'local', '3': 16, '4': 1, '5': 8, '10': 'local'},
+    {'1': 'param', '3': 17, '4': 1, '5': 9, '10': 'param'},
+    {
+      '1': 'param_type',
+      '3': 18,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 3,
+      '10': 'paramType',
+      '17': true
+    },
   ],
   '8': [
     {'1': '_entity'},
     {'1': '_actual'},
     {'1': '_expected'},
+    {'1': '_param_type'},
   ],
 };
 
@@ -3181,7 +3194,9 @@ final $typed_data.Uint8List formulaNodeDescriptor = $convert
         'CghleHBlY3RlZBgMIAEoCzIQLmJkbC52MS5UeXBlVmlld0gCUghleHBlY3RlZIgBARIYCgdiZW'
         'NhdXNlGA0gASgJUgdiZWNhdXNlEjQKC2RpYWdub3N0aWNzGA4gAygLMhIuYmRsLnYxLkRpYWdu'
         'b3N0aWNSC2RpYWdub3N0aWNzEi8KCGNoaWxkcmVuGA8gAygLMhMuYmRsLnYxLkZvcm11bGFOb2'
-        'RlUghjaGlsZHJlbkIJCgdfZW50aXR5QgkKB19hY3R1YWxCCwoJX2V4cGVjdGVk');
+        'RlUghjaGlsZHJlbhIUCgVsb2NhbBgQIAEoCFIFbG9jYWwSFAoFcGFyYW0YESABKAlSBXBhcmFt'
+        'EjQKCnBhcmFtX3R5cGUYEiABKAsyEC5iZGwudjEuVHlwZVZpZXdIA1IJcGFyYW1UeXBliAEBQg'
+        'kKB19lbnRpdHlCCQoHX2FjdHVhbEILCglfZXhwZWN0ZWRCDQoLX3BhcmFtX3R5cGU=');
 
 @$core.Deprecated('Use typeViewDescriptor instead')
 const TypeView$json = {
@@ -3191,10 +3206,21 @@ const TypeView$json = {
     {'1': 'kind', '3': 2, '4': 1, '5': 9, '10': 'kind'},
     {'1': 'dim', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '9': 0, '10': 'dim', '17': true},
     {'1': 'concept_id', '3': 4, '4': 1, '5': 4, '9': 1, '10': 'conceptId', '17': true},
+    {
+      '1': 'element',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 2,
+      '10': 'element',
+      '17': true
+    },
   ],
   '8': [
     {'1': '_dim'},
     {'1': '_concept_id'},
+    {'1': '_element'},
   ],
 };
 
@@ -3202,7 +3228,8 @@ const TypeView$json = {
 final $typed_data.Uint8List typeViewDescriptor = $convert
     .base64Decode('CghUeXBlVmlldxIgCgtkZXNjcmlwdGlvbhgBIAEoCVILZGVzY3JpcHRpb24SEgoEa2luZBgCIA'
         'EoCVIEa2luZBIiCgNkaW0YAyABKAsyCy5iZGwudjEuRGltSABSA2RpbYgBARIiCgpjb25jZXB0'
-        'X2lkGAQgASgESAFSCWNvbmNlcHRJZIgBAUIGCgRfZGltQg0KC19jb25jZXB0X2lk');
+        'X2lkGAQgASgESAFSCWNvbmNlcHRJZIgBARIvCgdlbGVtZW50GAUgASgLMhAuYmRsLnYxLlR5cG'
+        'VWaWV3SAJSB2VsZW1lbnSIAQFCBgoEX2RpbUINCgtfY29uY2VwdF9pZEIKCghfZWxlbWVudA==');
 
 @$core.Deprecated('Use getFormulaSlotRequestDescriptor instead')
 const GetFormulaSlotRequest$json = {
@@ -3391,6 +3418,8 @@ const ComposeAction$json = {
     },
     {'1': 'set_coordinate', '3': 6, '4': 1, '5': 9, '9': 0, '10': 'setCoordinate'},
     {'1': 'remove', '3': 7, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'remove'},
+    {'1': 'binder', '3': 8, '4': 1, '5': 11, '6': '.bdl.v1.ComposeBinder', '9': 0, '10': 'binder'},
+    {'1': 'range', '3': 9, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'range'},
   ],
   '8': [
     {'1': 'action'},
@@ -3404,7 +3433,21 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'ZXJhdG9yEikKBGNhbGwYBCABKAsyEy5iZGwudjEuQ29tcG9zZUNhbGxIAFIEY2FsbBIzCghzZX'
         'RfdW5pdBgFIAEoCzIWLmJkbC52MS5Db21wb3NlU2V0VW5pdEgAUgdzZXRVbml0EicKDnNldF9j'
         'b29yZGluYXRlGAYgASgJSABSDXNldENvb3JkaW5hdGUSJgoGcmVtb3ZlGAcgASgLMgwuYmRsLn'
-        'YxLlVuaXRIAFIGcmVtb3ZlQggKBmFjdGlvbg==');
+        'YxLlVuaXRIAFIGcmVtb3ZlEi8KBmJpbmRlchgIIAEoCzIVLmJkbC52MS5Db21wb3NlQmluZGVy'
+        'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlQggKBmFjdG'
+        'lvbg==');
+
+@$core.Deprecated('Use composeBinderDescriptor instead')
+const ComposeBinder$json = {
+  '1': 'ComposeBinder',
+  '2': [
+    {'1': 'form', '3': 1, '4': 1, '5': 9, '10': 'form'},
+  ],
+};
+
+/// Descriptor for `ComposeBinder`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeBinderDescriptor =
+    $convert.base64Decode('Cg1Db21wb3NlQmluZGVyEhIKBGZvcm0YASABKAlSBGZvcm0=');
 
 @$core.Deprecated('Use composeOperatorDescriptor instead')
 const ComposeOperator$json = {

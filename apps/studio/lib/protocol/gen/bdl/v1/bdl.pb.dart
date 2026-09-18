@@ -9958,6 +9958,9 @@ class FormulaNode extends $pb.GeneratedMessage {
     $core.String? because,
     $core.Iterable<Diagnostic>? diagnostics,
     $core.Iterable<FormulaNode>? children,
+    $core.bool? local,
+    $core.String? param,
+    TypeView? paramType,
   }) {
     final result = FormulaNode._();
     if (id != null) result.id = id;
@@ -9975,6 +9978,9 @@ class FormulaNode extends $pb.GeneratedMessage {
     if (because != null) result.because = because;
     if (diagnostics != null) result.diagnostics.addAll(diagnostics);
     if (children != null) result.children.addAll(children);
+    if (local != null) result.local = local;
+    if (param != null) result.param = param;
+    if (paramType != null) result.paramType = paramType;
     return result;
   }
 
@@ -10007,6 +10013,9 @@ class FormulaNode extends $pb.GeneratedMessage {
         subBuilder: Diagnostic.$_createMessage)
     ..pPM<FormulaNode>(15, _omitFieldNames ? '' : 'children',
         subBuilder: FormulaNode.$_createMessage)
+    ..aOB(16, _omitFieldNames ? '' : 'local')
+    ..aOS(17, _omitFieldNames ? '' : 'param')
+    ..aOM<TypeView>(18, _omitFieldNames ? '' : 'paramType', subBuilder: TypeView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -10050,7 +10059,7 @@ class FormulaNode extends $pb.GeneratedMessage {
   SourceSpan ensureRange() => $_ensure(1);
 
   /// "reference", "number", "quantity", "bool", "unary", "binary",
-  /// "compare", "call", "slot", "opaque".
+  /// "compare", "call", "slot", "opaque", "binder", "range" (0.13).
   @$pb.TagNumber(3)
   $core.String get kind => $_getSZ(2);
   @$pb.TagNumber(3)
@@ -10071,7 +10080,8 @@ class FormulaNode extends $pb.GeneratedMessage {
   void clearText() => $_clearField(4);
 
   /// The reference's or call's name, the operator's symbol, what an
-  /// opaque region is ("a match"), or a bool literal's value.
+  /// opaque region is ("a match"), a bool literal's value, or a binder's
+  /// word ("all", "any", "map", "filter").
   @$pb.TagNumber(5)
   $core.String get name => $_getSZ(4);
   @$pb.TagNumber(5)
@@ -10170,6 +10180,40 @@ class FormulaNode extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(15)
   $pb.PbList<FormulaNode> get children => $_getList(14);
+
+  /// A reference bound by an enclosing binder (`all x in xs: …`): a local
+  /// of the formula, not an entity of the design (0.13).
+  @$pb.TagNumber(16)
+  $core.bool get local => $_getBF(15);
+  @$pb.TagNumber(16)
+  set local($core.bool value) => $_setBool(15, value);
+  @$pb.TagNumber(16)
+  $core.bool hasLocal() => $_has(15);
+  @$pb.TagNumber(16)
+  void clearLocal() => $_clearField(16);
+
+  /// A binder's local name and what it is (one element of the collection;
+  /// absent while the collection is unknown).  Children: the collection,
+  /// the body (0.13).
+  @$pb.TagNumber(17)
+  $core.String get param => $_getSZ(16);
+  @$pb.TagNumber(17)
+  set param($core.String value) => $_setString(16, value);
+  @$pb.TagNumber(17)
+  $core.bool hasParam() => $_has(16);
+  @$pb.TagNumber(17)
+  void clearParam() => $_clearField(17);
+
+  @$pb.TagNumber(18)
+  TypeView get paramType => $_getN(17);
+  @$pb.TagNumber(18)
+  set paramType(TypeView value) => $_setField(18, value);
+  @$pb.TagNumber(18)
+  $core.bool hasParamType() => $_has(17);
+  @$pb.TagNumber(18)
+  void clearParamType() => $_clearField(18);
+  @$pb.TagNumber(18)
+  TypeView ensureParamType() => $_ensure(17);
 }
 
 class TypeView extends $pb.GeneratedMessage {
@@ -10178,12 +10222,14 @@ class TypeView extends $pb.GeneratedMessage {
     $core.String? kind,
     Dim? dim,
     $fixnum.Int64? conceptId,
+    TypeView? element,
   }) {
     final result = TypeView._();
     if (description != null) result.description = description;
     if (kind != null) result.kind = kind;
     if (dim != null) result.dim = dim;
     if (conceptId != null) result.conceptId = conceptId;
+    if (element != null) result.element = element;
     return result;
   }
 
@@ -10204,6 +10250,7 @@ class TypeView extends $pb.GeneratedMessage {
     ..aOM<Dim>(3, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
     ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<TypeView>(5, _omitFieldNames ? '' : 'element', subBuilder: TypeView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -10265,6 +10312,18 @@ class TypeView extends $pb.GeneratedMessage {
   $core.bool hasConceptId() => $_has(3);
   @$pb.TagNumber(4)
   void clearConceptId() => $_clearField(4);
+
+  /// For a collection: what one element is (0.13).
+  @$pb.TagNumber(5)
+  TypeView get element => $_getN(4);
+  @$pb.TagNumber(5)
+  set element(TypeView value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasElement() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearElement() => $_clearField(5);
+  @$pb.TagNumber(5)
+  TypeView ensureElement() => $_ensure(4);
 }
 
 /// What a slot (or any node's position) of the draft `source` expects and
@@ -10919,7 +10978,17 @@ class ComposeFormulaRequest extends $pb.GeneratedMessage {
   void clearComponent() => $_clearField(5);
 }
 
-enum ComposeAction_Action { fill, operator, call, setUnit, setCoordinate, remove, notSet }
+enum ComposeAction_Action {
+  fill,
+  operator,
+  call,
+  setUnit,
+  setCoordinate,
+  remove,
+  binder,
+  range,
+  notSet
+}
 
 class ComposeAction extends $pb.GeneratedMessage {
   factory ComposeAction({
@@ -10930,6 +10999,8 @@ class ComposeAction extends $pb.GeneratedMessage {
     ComposeSetUnit? setUnit,
     $core.String? setCoordinate,
     Unit? remove,
+    ComposeBinder? binder,
+    Unit? range,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -10939,6 +11010,8 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (setUnit != null) result.setUnit = setUnit;
     if (setCoordinate != null) result.setCoordinate = setCoordinate;
     if (remove != null) result.remove = remove;
+    if (binder != null) result.binder = binder;
+    if (range != null) result.range = range;
     return result;
   }
 
@@ -10958,12 +11031,14 @@ class ComposeAction extends $pb.GeneratedMessage {
     5: ComposeAction_Action.setUnit,
     6: ComposeAction_Action.setCoordinate,
     7: ComposeAction_Action.remove,
+    8: ComposeAction_Action.binder,
+    9: ComposeAction_Action.range,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -10973,6 +11048,9 @@ class ComposeAction extends $pb.GeneratedMessage {
         subBuilder: ComposeSetUnit.$_createMessage)
     ..aOS(6, _omitFieldNames ? '' : 'setCoordinate')
     ..aOM<Unit>(7, _omitFieldNames ? '' : 'remove', subBuilder: Unit.$_createMessage)
+    ..aOM<ComposeBinder>(8, _omitFieldNames ? '' : 'binder',
+        subBuilder: ComposeBinder.$_createMessage)
+    ..aOM<Unit>(9, _omitFieldNames ? '' : 'range', subBuilder: Unit.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -11001,6 +11079,8 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   @$pb.TagNumber(6)
   @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -11008,6 +11088,8 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   @$pb.TagNumber(6)
   @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -11088,6 +11170,85 @@ class ComposeAction extends $pb.GeneratedMessage {
   void clearRemove() => $_clearField(7);
   @$pb.TagNumber(7)
   Unit ensureRemove() => $_ensure(6);
+
+  /// `form item in node: ?` with a fresh local name (0.13).
+  @$pb.TagNumber(8)
+  ComposeBinder get binder => $_getN(7);
+  @$pb.TagNumber(8)
+  set binder(ComposeBinder value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasBinder() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearBinder() => $_clearField(8);
+  @$pb.TagNumber(8)
+  ComposeBinder ensureBinder() => $_ensure(7);
+
+  /// `node in ? .. ?` (0.13).
+  @$pb.TagNumber(9)
+  Unit get range => $_getN(8);
+  @$pb.TagNumber(9)
+  set range(Unit value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasRange() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearRange() => $_clearField(9);
+  @$pb.TagNumber(9)
+  Unit ensureRange() => $_ensure(8);
+}
+
+class ComposeBinder extends $pb.GeneratedMessage {
+  factory ComposeBinder({
+    $core.String? form,
+  }) {
+    final result = ComposeBinder._();
+    if (form != null) result.form = form;
+    return result;
+  }
+
+  ComposeBinder._();
+
+  factory ComposeBinder.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComposeBinder()..mergeFromBuffer(data, registry);
+  factory ComposeBinder.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComposeBinder()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeBinder',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ComposeBinder.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'form')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComposeBinder clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComposeBinder copyWith(void Function(ComposeBinder) updates) =>
+      super.copyWith((message) => updates(message as ComposeBinder)) as ComposeBinder;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ComposeBinder() / ComposeBinder.new instead')
+  static ComposeBinder create() => ComposeBinder._();
+  static $pb.GeneratedMessage $_createMessage() => ComposeBinder._();
+  @$core.override
+  ComposeBinder createEmptyInstance() => ComposeBinder._();
+  @$core.pragma('dart2js:noInline')
+  static ComposeBinder getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ComposeBinder>(ComposeBinder.$_createMessage);
+  static ComposeBinder? _defaultInstance;
+
+  /// "all", "any", "map" or "filter".
+  @$pb.TagNumber(1)
+  $core.String get form => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set form($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasForm() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearForm() => $_clearField(1);
 }
 
 class ComposeOperator extends $pb.GeneratedMessage {

@@ -917,12 +917,13 @@ message FormulaNode {
   string id = 1;
   SourceSpan range = 2;
   // "reference", "number", "quantity", "bool", "unary", "binary",
-  // "compare", "call", "slot", "opaque".
+  // "compare", "call", "slot", "opaque", "binder", "range" (0.13).
   string kind = 3;
   // The source text of the node.
   string text = 4;
   // The reference's or call's name, the operator's symbol, what an
-  // opaque region is ("a match"), or a bool literal's value.
+  // opaque region is ("a match"), a bool literal's value, or a binder's
+  // word ("all", "any", "map", "filter").
   string name = 5;
   // A quantity literal's parts: `90 deg` → "90", "deg", "angle.deg".
   string coordinate = 6;
@@ -940,6 +941,14 @@ message FormulaNode {
   // The diagnostics whose span is this node's and no child's.
   repeated Diagnostic diagnostics = 14;
   repeated FormulaNode children = 15;
+  // A reference bound by an enclosing binder (`all x in xs: …`): a local
+  // of the formula, not an entity of the design (0.13).
+  bool local = 16;
+  // A binder's local name and what it is (one element of the collection;
+  // absent while the collection is unknown).  Children: the collection,
+  // the body (0.13).
+  string param = 17;
+  optional TypeView param_type = 18;
 }
 
 message TypeView {
@@ -949,6 +958,8 @@ message TypeView {
   string kind = 2;
   optional Dim dim = 3;
   optional uint64 concept_id = 4;
+  // For a collection: what one element is (0.13).
+  optional TypeView element = 5;
 }
 
 // What a slot (or any node's position) of the draft `source` expects and
@@ -1028,7 +1039,16 @@ message ComposeAction {
     string set_coordinate = 6;
     // The node becomes a slot again; a slot operand removes its operator.
     Unit remove = 7;
+    // `form item in node: ?` with a fresh local name (0.13).
+    ComposeBinder binder = 8;
+    // `node in ? .. ?` (0.13).
+    Unit range = 9;
   }
+}
+
+message ComposeBinder {
+  // "all", "any", "map" or "filter".
+  string form = 1;
 }
 
 message ComposeOperator {

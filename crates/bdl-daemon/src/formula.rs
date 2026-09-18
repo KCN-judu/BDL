@@ -28,12 +28,24 @@ fn type_view_to_pb(t: &TypeView) -> pb::TypeView {
         kind: format!("{:?}", t.kind).to_lowercase(),
         dim: t.dim.map(convert::dim_to_pb),
         concept_id: t.concept.map(|c| c.raw()),
+        element: t.element.as_deref().map(|e| Box::new(type_view_to_pb(e))),
     }
 }
 
 fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
+    let (local, param, param_type) = match &n.kind {
+        NodeKind::Reference { local, .. } => (*local, String::new(), None),
+        NodeKind::Binder {
+            param, param_type, ..
+        } => (
+            false,
+            param.clone(),
+            param_type.as_ref().map(type_view_to_pb),
+        ),
+        _ => (false, String::new(), None),
+    };
     let (kind, name, coordinate, unit, unit_id, equation, entity) = match &n.kind {
-        NodeKind::Reference { name, entity } => (
+        NodeKind::Reference { name, entity, .. } => (
             "reference",
             name.clone(),
             String::new(),
@@ -41,6 +53,24 @@ fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
             String::new(),
             false,
             *entity,
+        ),
+        NodeKind::Binder { form, .. } => (
+            "binder",
+            form.clone(),
+            String::new(),
+            String::new(),
+            String::new(),
+            false,
+            None,
+        ),
+        NodeKind::Range => (
+            "range",
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            false,
+            None,
         ),
         NodeKind::Number { text } => (
             "number",
@@ -155,6 +185,9 @@ fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
             .map(semantic_diagnostic_to_pb)
             .collect(),
         children: n.children.iter().map(node_to_pb).collect(),
+        local,
+        param,
+        param_type,
     }
 }
 
@@ -258,5 +291,10 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
             text: text.clone(),
         },
         Action::Remove(_) => ComposeOp::Remove { node },
+        Action::Binder(b) => ComposeOp::Binder {
+            node,
+            form: b.form.clone(),
+        },
+        Action::Range(_) => ComposeOp::Range { node },
     })
 }
