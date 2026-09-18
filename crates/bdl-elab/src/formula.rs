@@ -190,6 +190,23 @@ struct Elab<'a> {
     spans: BTreeMap<ExprPath, Span>,
     /// The type of every surface expression elaborated, in post-order.
     trace: Vec<TypeTrace>,
+    /// The natural surface form an equation is being elaborated for, so
+    /// its diagnostics speak of the form the designer wrote (§P11), not of
+    /// the equation it lowers to.
+    surface: Option<SurfaceForm>,
+}
+
+/// A natural form that lowers to an equation: the binder family and the
+/// closed range (docs/spec/textual-syntax.md §17).
+#[derive(Clone, Debug)]
+enum SurfaceForm {
+    /// `x ?? d`.
+    Coalesce,
+    /// `all x in xs: body` and its siblings.
+    Binder { word: &'static str },
+    /// `x in lo .. hi`: the subject's description, for the endpoint
+    /// diagnostics.
+    Range { subject: String },
 }
 
 /// Elaborate `mapping`'s formula `source` into `λ x₁ … xₙ. mk B (…)`.
@@ -299,6 +316,7 @@ fn run(
         diags: Vec::new(),
         spans: BTreeMap::new(),
         trace: Vec::new(),
+        surface: None,
     };
 
     // Path of the body: under n lambdas, then under `mk`.
@@ -790,6 +808,18 @@ impl<'a> Elab<'a> {
             ExprKind::Block { lets, tail } => self.block(lets, tail, e.span, path, expect),
             ExprKind::List(items) => self.list(items, e.span, path, expect),
             ExprKind::Tuple(items) => self.tuple(items, e.span, path, expect),
+            ExprKind::Binder { .. } => self.binder(e, path, expect),
+            ExprKind::Range { .. } => {
+                let d = self
+                    .error(
+                        "formula.range.outside_in",
+                        e.span,
+                        "A range is written after `in`: `x in lo .. hi`.",
+                    )
+                    .explain("`lo .. hi` says which values a test admits — every value from lo to hi inclusive — and is not a value itself.");
+                self.push(d);
+                self.placeholder()
+            }
             ExprKind::Lambda { .. } => {
                 let d = self
                     .error(
@@ -910,6 +940,18 @@ impl<'a> Elab<'a> {
         let inputs = self.inputs.names();
         let mappings = names::mapping_names(self.design);
         let mut parts = Vec::new();
+        // the locals a binder or rule put in scope here, innermost first
+        let mut locals: Vec<&str> = Vec::new();
+        for b in self.env.iter().rev() {
+            if let Some(n) = b.name.as_deref() {
+                if !locals.contains(&n) {
+                    locals.push(n);
+                }
+            }
+        }
+        if !locals.is_empty() {
+            parts.push(format!("Locals in scope: {}", locals.join(", ")));
+        }
         if inputs.is_empty() {
             parts.push("This mapping reads nothing; connect a concept to it first".to_string());
         } else {
@@ -1435,6 +1477,44 @@ impl<'a> Elab<'a> {
     /// argument is elaborated once its parameter kinds are known), check
     /// the capabilities, then apply the closed combinator built at that
     /// instance: `app (… (app comb a₁) …) aₙ`, `aᵢ` at `[0]*(n-1-i) ++ [1]`.
+    /// `all x in xs: body` — the one desugaring: the library equation of
+    /// the same name applied to the collection and the rule `x => body`
+    /// (`all(xs, x => body)`), whatever a relationship of the design is
+    /// called; the binder is the rule's parameter, scoped to the body by
+    /// the rule's own binding.
+    fn binder(
+        &mut self,
+        e: &SurfaceExpr,
+        path: &mut ExprPath,
+        expect: Option<&STy>,
+    ) -> (Expr, STy) {
+        let ExprKind::Binder {
+            form,
+            param,
+            collection,
+            body,
+        } = &e.kind
+        else {
+            return self.placeholder();
+        };
+        let span = e.span;
+        let word = form.word();
+        let Some(entry) = equations::lookup(word) else {
+            return self.placeholder();
+        };
+        let rule = SurfaceExpr {
+            kind: ExprKind::Lambda {
+                params: vec![param.clone()],
+                body: body.clone(),
+            },
+            span: Span::new(param.span.start, body.span.end),
+        };
+        let outer = self.surface.replace(SurfaceForm::Binder { word });
+        let out = self.equation(entry, &[(**collection).clone(), rule], span, path, expect);
+        self.surface = outer;
+        out
+    }
+
     fn equation(
         &mut self,
         entry: &'static Entry,
@@ -1534,7 +1614,11 @@ impl<'a> Elab<'a> {
                 }
                 _ => {
                     let want = equations::instantiate(pat, &provisional).and_then(|t| STy::of(&t));
+                    // the natural form's words are for its own mismatches,
+                    // not for anything nested in an argument
+                    let surface = self.surface.take();
                     let (e, t) = self.expr(arg, &mut ap, want.as_ref());
+                    self.surface = surface;
                     if t.is_error() {
                         failed = true;
                     } else if !t.is_known() {
@@ -1786,7 +1870,9 @@ impl<'a> Elab<'a> {
         let mut bp = path.clone();
         bp.extend(std::iter::repeat_n(0u8, params.len()));
         let expect = equations::instantiate(cod, &instance.subst).and_then(|t| STy::of(&t));
+        let surface = self.surface.take();
         let (be, bt) = self.expr(body, &mut bp, expect.as_ref());
+        self.surface = surface;
         self.env.truncate(self.env.len() - params.len());
         if bt.is_error() {
             return (be, STy::Error);
@@ -1873,6 +1959,119 @@ impl<'a> Elab<'a> {
         } else {
             format!("`{}`", entry.params.get(arg).copied().unwrap_or("this"))
         };
+        // the natural forms speak of themselves, not of the equation
+        match &self.surface {
+            Some(SurfaceForm::Binder { word }) => {
+                let word = *word;
+                if arg == 0 {
+                    if let MatchError::Shape { .. } = err {
+                        let d = self
+                            .error(
+                                "formula.binder.not_a_collection",
+                                span,
+                                format!("{word} expects a collection after 'in'."),
+                            )
+                            .explain(format!(
+                                "`{word} x in xs: …` reads every element x of the collection xs."
+                            ));
+                        self.push(d);
+                        return;
+                    }
+                }
+                if arg == usize::MAX && matches!(pat, PTy::Bool) {
+                    let d = self
+                        .error(
+                            "formula.binder.body",
+                            span,
+                            format!("The body of '{word}' must be true or false."),
+                        )
+                        .explain(format!(
+                            "{word} asks a question of every element; the body answers it for one."
+                        ));
+                    self.push(d);
+                    return;
+                }
+            }
+            Some(SurfaceForm::Coalesce) => {
+                let d = if arg == 0 {
+                    self.error(
+                        "formula.coalesce.not_optional",
+                        span,
+                        "The value before `??` must be one that may be absent.",
+                    )
+                    .explain("`x ?? d` gives x when it is present and d when it is absent.")
+                } else {
+                    let what = self.describe_pattern(pat, instance);
+                    self.error(
+                        "formula.coalesce.default",
+                        span,
+                        format!("The default after `??` must be {what}, like the value before it."),
+                    )
+                };
+                self.push(d);
+                return;
+            }
+            Some(SurfaceForm::Range { subject }) if arg == 1 || arg == 2 => {
+                let subject = subject.clone();
+                // the subject's dimension when it has one — a concept of a
+                // quantity met by a plain quantity of another kind is a
+                // dimension mistake, in the designer's words
+                let subject_dim = |bound: &Ty| match bound {
+                    Ty::Q { dim } => Some(*dim),
+                    Ty::Sem { id } => match self.ir.representation_of(*id) {
+                        Some(Ty::Q { dim }) => Some(*dim),
+                        _ => None,
+                    },
+                    _ => None,
+                };
+                let d = match err {
+                    MatchError::TyConflict { bound, found, .. }
+                        if !matches!(found, Ty::Sem { .. }) && subject_dim(bound).is_some() =>
+                    {
+                        let dim = subject_dim(bound).unwrap_or(Dim::ZERO);
+                        self.error(
+                            "formula.range.endpoint",
+                            span,
+                            format!("This range endpoint must be {}.", pretty::describe_dim(dim)),
+                        )
+                        .explain(format!(
+                            "Both ends of the range must be comparable with {subject}."
+                        ))
+                    }
+                    MatchError::DimConflict { bound: dim, .. } => self
+                        .error(
+                            "formula.range.endpoint",
+                            span,
+                            format!(
+                                "This range endpoint must be {}.",
+                                pretty::describe_dim(*dim)
+                            ),
+                        )
+                        .explain(format!(
+                            "Both ends of the range must be comparable with {subject}."
+                        )),
+                    MatchError::TyConflict {
+                        bound: Ty::Sem { id },
+                        ..
+                    } => {
+                        let name = self.concept_name(*id);
+                        self.error(
+                            "semantic.concept_mismatch",
+                            span,
+                            format!("Both ends of the range must be comparable with {subject}: a {name}."),
+                        )
+                    }
+                    _ => self.error(
+                        "formula.range.endpoint",
+                        span,
+                        format!("Both ends of the range must be comparable with {subject}."),
+                    ),
+                };
+                self.push(d);
+                return;
+            }
+            _ => {}
+        }
         let d = match err {
             MatchError::TyConflict { bound, found, .. } => {
                 match (bound, found) {
@@ -2792,6 +2991,38 @@ impl<'a> Elab<'a> {
         path: &mut ExprPath,
     ) -> (Expr, STy) {
         use BinaryOp::*;
+        // `x in lo .. hi` is the library's `inRange(x, lo, hi)`: the closed
+        // range, `lo <= x && x <= hi` under the ordering policy (§17).
+        if op == In {
+            if let ExprKind::Range { lo, hi } = &r.kind {
+                if let Some(entry) = equations::lookup("inRange") {
+                    let subject = match &l.kind {
+                        ExprKind::Name(n) => n.clone(),
+                        _ => "the value".to_string(),
+                    };
+                    let outer = self.surface.replace(SurfaceForm::Range { subject });
+                    let out = self.equation(
+                        entry,
+                        &[l.clone(), (**lo).clone(), (**hi).clone()],
+                        span,
+                        path,
+                        None,
+                    );
+                    self.surface = outer;
+                    return out;
+                }
+            }
+        }
+        // `x ?? d` is the library's `getOrElse(x, d)`: the value when
+        // present, the default when absent (§17).
+        if op == Coalesce {
+            if let Some(entry) = equations::lookup("getOrElse") {
+                let outer = self.surface.replace(SurfaceForm::Coalesce);
+                let out = self.equation(entry, &[l.clone(), r.clone()], span, path, None);
+                self.surface = outer;
+                return out;
+            }
+        }
         // `x in xs` is the library's `contains(x, xs)`; the application
         // shape `app (app f l) r` is the one below, so the paths agree.
         if op == In {
@@ -2987,7 +3218,7 @@ impl<'a> Elab<'a> {
                 let p = if op == And { Prim::And } else { Prim::Or };
                 (Expr::apps(Expr::prim(p), [le, re]), STy::Bool)
             }
-            In => self.placeholder(),
+            In | Coalesce => self.placeholder(),
         }
     }
 

@@ -905,3 +905,281 @@ fn capability_failures_speak_product_language() {
         }
     }
 }
+
+// ---- P11: the natural forms ----------------------------------------------------
+
+/// `all x in xs: body` and `x in lo .. hi` are surface syntax: they lower
+/// to the very Core the call forms lower to — the same expression, the
+/// same typing, the same values.
+#[test]
+fn natural_forms_lower_to_the_same_core_as_the_call_forms() {
+    let mut f = Fixture::new();
+    let hum = f.mapping("hum", &[], "Humidity", None);
+    let temps = f.mapping("temps", &[], "Readings", None);
+    let faults = f.mapping("faults", &[], "Severities", None);
+    let pairs = [
+        (
+            "Held",
+            "all t in temps: t < 300 K",
+            "all(temps, t => t < 300 K)",
+        ),
+        ("Held", "any s in faults: s > 2", "any(faults, s => s > 2)"),
+        (
+            "Severities",
+            "map s in faults: s / 4",
+            "map(faults, s => s / 4)",
+        ),
+        (
+            "Readings",
+            "filter t in temps: t in 250 K .. 300 K",
+            "filter(temps, t => inRange(t, 250 K, 300 K))",
+        ),
+        ("Held", "hum in 30 .. 60", "inRange(hum, 30, 60)"),
+        (
+            "Held",
+            "hum + 5 in 30 - 1 .. 60 + 1",
+            "inRange(hum + 5, 30 - 1, 60 + 1)",
+        ),
+        (
+            "Held",
+            "all t in temps: any s in faults: t < 300 K && s > 2",
+            "all(temps, t => any(faults, s => t < 300 K && s > 2))",
+        ),
+    ];
+    let mut ids = Vec::new();
+    for (i, (out, natural, call)) in pairs.iter().enumerate() {
+        let a = f.mapping(&format!("n{i}"), &[], out, Some(natural));
+        let b = f.mapping(&format!("c{i}"), &[], out, Some(call));
+        ids.push((a, b));
+    }
+    let (e, d) = f.elaborate();
+    for ((a, b), (_, natural, call)) in ids.iter().zip(&pairs) {
+        assert!(d[a].iter().all(|x| !x.is_error()), "{natural}: {:?}", d[a]);
+        let (RealizationOutcome::Elaborated(ra), RealizationOutcome::Elaborated(rb)) =
+            (&e.mappings[a].outcome, &e.mappings[b].outcome)
+        else {
+            panic!("{natural} / {call}")
+        };
+        assert_eq!(
+            pretty::expr(&ra.expr),
+            pretty::expr(&rb.expr),
+            "{natural} vs {call}"
+        );
+        assert_eq!(ra.expr, rb.expr, "{natural} vs {call}");
+    }
+    // and the values agree, tick for tick
+    let inputs = [
+        (hum, sem(&f, "Humidity", q(45.0))),
+        (
+            temps,
+            sem(&f, "Readings", Value::list([k(260.0), k(310.0)])),
+        ),
+        (faults, sem(&f, "Severities", Value::list([q(1.0), q(3.0)]))),
+    ];
+    let v = f.run(&inputs);
+    for (a, b) in &ids {
+        assert_eq!(v[a], v[b]);
+    }
+    assert_eq!(inner(&v[&ids[0].0]), Value::boolean(false));
+    assert_eq!(inner(&v[&ids[1].0]), Value::boolean(true));
+    assert_eq!(inner(&v[&ids[3].0]), Value::list([k(260.0)]));
+    assert_eq!(inner(&v[&ids[4].0]), Value::boolean(true));
+    // the closed range: both ends belong
+    let edge = f.mapping("edge", &[], "Held", Some("hum in 45 .. 60"));
+    let edge2 = f.mapping("edge2", &[], "Held", Some("hum in 30 .. 45"));
+    let v = f.run(&inputs);
+    assert_eq!(inner(&v[&edge]), Value::boolean(true));
+    assert_eq!(inner(&v[&edge2]), Value::boolean(true));
+}
+
+/// `x ?? d` is `getOrElse(x, d)`: the same Core, the same values, and its
+/// own words when misused.
+#[test]
+fn coalesce_lowers_to_get_or_else() {
+    let mut f = Fixture::new();
+    let maybe = f.mapping("maybe", &[], "MaybeTemp", None);
+    let hum = f.mapping("hum", &[], "Humidity", None);
+    let a = f.mapping("a", &[], "Temperature", Some("maybe ?? 280 K"));
+    let b = f.mapping("b", &[], "Temperature", Some("getOrElse(maybe, 280 K)"));
+    let (e, d) = f.elaborate();
+    assert!(d[&a].iter().all(|x| !x.is_error()), "{:?}", d[&a]);
+    let (RealizationOutcome::Elaborated(ra), RealizationOutcome::Elaborated(rb)) =
+        (&e.mappings[&a].outcome, &e.mappings[&b].outcome)
+    else {
+        panic!()
+    };
+    assert_eq!(ra.expr, rb.expr);
+    let v = f.run(&[
+        (maybe, sem(&f, "MaybeTemp", Value::some(k(290.0)))),
+        (hum, sem(&f, "Humidity", q(1.0))),
+    ]);
+    assert_eq!(v[&a], v[&b]);
+    assert_eq!(inner(&v[&a]), k(290.0));
+    let v = f.run(&[
+        (maybe, sem(&f, "MaybeTemp", Value::None)),
+        (hum, sem(&f, "Humidity", q(1.0))),
+    ]);
+    assert_eq!(inner(&v[&a]), k(280.0));
+    // misuse, in its own words
+    let not_opt = f.mapping("notOpt", &[], "Humidity", Some("hum ?? 0"));
+    assert_eq!(f.codes(not_opt), vec!["formula.coalesce.not_optional"]);
+    assert!(
+        f.message(not_opt)
+            .contains("must be one that may be absent"),
+        "{}",
+        f.message(not_opt)
+    );
+    let bad_default = f.mapping("badDefault", &[], "Temperature", Some("maybe ?? 3 s"));
+    assert_eq!(f.codes(bad_default), vec!["formula.coalesce.default"]);
+    assert!(
+        f.message(bad_default).contains("must be a temperature"),
+        "{}",
+        f.message(bad_default)
+    );
+}
+
+/// The binder's local is one element of the collection — a temperature
+/// for Readings — and lives only in the body; an inner binder shadows an
+/// outer one lexically.
+#[test]
+fn binder_locals_are_elements_scoped_to_the_body() {
+    let mut f = Fixture::new();
+    f.mapping("temps", &[], "Readings", None);
+    f.mapping("hum", &[], "Humidity", None);
+    let typed = f.mapping("typed", &[], "Held", Some("all t in temps: t < 30"));
+    assert_eq!(f.codes(typed), vec!["dimension.mismatch"]);
+    assert!(
+        f.message(typed).contains("a temperature"),
+        "{}",
+        f.message(typed)
+    );
+    // the local is not visible outside the body
+    let outside = f.mapping(
+        "outside",
+        &[],
+        "Held",
+        Some("(all t in temps: t < 300 K) && t < 300 K"),
+    );
+    assert_eq!(f.codes(outside), vec!["formula.name.unknown"]);
+    // shadowing: the inner `t` is the inner collection's element
+    let shadow = f.mapping(
+        "shadow",
+        &[],
+        "Held",
+        Some("all t in temps: any t in [1, 2]: t > hum"),
+    );
+    f.ok(shadow);
+    // a local may shadow a mapping, lexically
+    let over = f.mapping("over", &[], "Held", Some("any hum in temps: hum > 1 K"));
+    f.ok(over);
+    // a name used as a plain mapping stays callable: `map`, `all`
+    let named = f.mapping("all", &[], "Held", Some("true"));
+    f.ok(named);
+    let uses = f.mapping(
+        "uses",
+        &[],
+        "Held",
+        Some("all && (all t in temps: t < 300 K)"),
+    );
+    f.ok(uses);
+}
+
+#[test]
+fn natural_form_mistakes_are_named_in_their_own_words() {
+    let mut f = Fixture::new();
+    f.mapping("temps", &[], "Readings", None);
+    f.mapping("hum", &[], "Humidity", None);
+    f.mapping("len", &[], "Length", None);
+    f.mapping("m1", &[], "Mode", None);
+    f.mapping("m2", &[], "Mode", None);
+    let cases = [
+        (
+            "notColl",
+            "Held",
+            "all x in 5: true",
+            "formula.binder.not_a_collection",
+            "all expects a collection after 'in'.",
+        ),
+        (
+            "notBool",
+            "Readings",
+            "filter x in temps: 3",
+            "formula.binder.body",
+            "The body of 'filter' must be true or false.",
+        ),
+        (
+            "endpoint",
+            "Held",
+            "len in 2 s .. 3 s",
+            "formula.range.endpoint",
+            "This range endpoint must be a length.",
+        ),
+        // Mode values against Mode values: no default order (met by plain
+        // numbers they are observed, exactly as `m1 < 1` is — ADR-0013)
+        (
+            "unordered",
+            "Held",
+            "m1 in m2 .. m2",
+            "semantic.no_order",
+            "no default order",
+        ),
+        (
+            "bare",
+            "Held",
+            "1 .. 2",
+            "formula.range.outside_in",
+            "A range is written after `in`",
+        ),
+        (
+            "mapBody",
+            "Severities",
+            "map t in temps: nothing",
+            "formula.name.unknown",
+            "nothing",
+        ),
+    ];
+    for (name, out, src, code, words) in cases {
+        let id = f.mapping(name, &[], out, Some(src));
+        assert!(
+            f.codes(id).contains(&code.to_string()),
+            "{name}: {:?} {}",
+            f.codes(id),
+            f.message(id)
+        );
+        assert!(f.message(id).contains(words), "{name}: {}", f.message(id));
+    }
+    let (_, d) = f.elaborate();
+    let endpoint = d
+        .values()
+        .flatten()
+        .find(|x| x.code.as_str() == "formula.range.endpoint")
+        .unwrap();
+    assert_eq!(
+        endpoint.explanation,
+        "Both ends of the range must be comparable with len."
+    );
+    // a mismatch inside a binder's body is the body's own, in the
+    // equation's words, not the binder's
+    let inner_ = f.mapping(
+        "inner",
+        &[],
+        "Held",
+        Some("all t in temps: inRange(t, 1, 2)"),
+    );
+    assert!(
+        !f.codes(inner_)
+            .contains(&"formula.binder.not_a_collection".to_string()),
+        "{:?}",
+        f.codes(inner_)
+    );
+    // memory stays outside every binder, natural or not
+    let mem = f.mapping(
+        "mem",
+        &[],
+        "Held",
+        Some("any t in temps: delay(false, true)"),
+    );
+    assert!(f
+        .codes(mem)
+        .contains(&"formula.temporal.under_binder".to_string()));
+}
