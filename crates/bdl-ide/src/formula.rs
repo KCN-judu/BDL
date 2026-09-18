@@ -58,6 +58,13 @@ pub struct TypeView {
     /// The concept, when the value is a concept value.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub concept: Option<SemanticId>,
+    /// Only a value of *this* concept fits the position — a relationship's
+    /// or an equation's argument bound to it — as opposed to the formula's
+    /// result, where any value of the representation is observed and
+    /// wrapped (ADR-0013).  Dimension equality never admits another
+    /// concept here.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub nominal: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,6 +85,7 @@ impl TypeView {
             kind: TypeKindView::Quantity,
             dim: Some(dim),
             concept: None,
+            nominal: false,
         }
     }
     fn boolean() -> TypeView {
@@ -86,6 +94,7 @@ impl TypeView {
             kind: TypeKindView::Boolean,
             dim: None,
             concept: None,
+            nominal: false,
         }
     }
     fn count() -> TypeView {
@@ -94,6 +103,7 @@ impl TypeView {
             kind: TypeKindView::Count,
             dim: None,
             concept: None,
+            nominal: false,
         }
     }
     fn of_ty(ir: &DesignIr, design: &Design, t: &Ty) -> TypeView {
@@ -115,6 +125,8 @@ impl TypeView {
                         _ => None,
                     },
                     concept: Some(*id),
+                    // a closed concept type is a concept value: nominal
+                    nominal: true,
                 }
             }
             other => TypeView {
@@ -122,6 +134,7 @@ impl TypeView {
                 kind: TypeKindView::Structured,
                 dim: None,
                 concept: None,
+                nominal: false,
             },
         }
     }
@@ -134,24 +147,28 @@ impl TypeView {
                 kind: TypeKindView::Concept,
                 dim: Some(*dim),
                 concept: Some(concept),
+                nominal: false,
             },
             Representation::Boolean => TypeView {
                 description: format!("a {} (true or false)", c.name),
                 kind: TypeKindView::Concept,
                 dim: None,
                 concept: Some(concept),
+                nominal: false,
             },
             Representation::Count => TypeView {
                 description: format!("a {} (a count)", c.name),
                 kind: TypeKindView::Concept,
                 dim: None,
                 concept: Some(concept),
+                nominal: false,
             },
             other => TypeView {
                 description: format!("a {} ({})", c.name, describe_representation(other)),
                 kind: TypeKindView::Concept,
                 dim: None,
                 concept: Some(concept),
+                nominal: false,
             },
         })
         .inspect(|_| {
@@ -463,6 +480,7 @@ impl Builder<'_> {
                 kind: TypeKindView::Unknown,
                 dim: None,
                 concept: None,
+                nominal: false,
             },
         })
     }
@@ -778,9 +796,13 @@ impl Builder<'_> {
                         .map(|m| m.signature.inputs.clone())
                         .unwrap_or_default();
                     for (i, c) in node.children.iter_mut().enumerate() {
-                        let e = inputs
-                            .get(i)
-                            .and_then(|s| TypeView::of_representation(self.ir, self.design, *s));
+                        // a relationship reads its input *concepts*: only a
+                        // value of that concept fits (DI-17), never another
+                        // concept of the same representation
+                        let e = inputs.get(i).and_then(|s| {
+                            TypeView::of_representation(self.ir, self.design, *s)
+                                .map(|v| TypeView { nominal: true, ..v })
+                        });
                         self.solve(
                             c,
                             e.as_ref(),
@@ -818,19 +840,27 @@ impl Builder<'_> {
         let Some(entry) = equations::lookup(name) else {
             return Vec::new();
         };
+        // the arguments already written bind the variables first — a
+        // concept value binds its concept, as the elaborator's instance
+        // resolution keeps it; the expected result seeds only what they
+        // leave open (its concept is observed there, ADR-0013)
         let mut subst = equations::Subst::default();
-        if let Some(t) = expected.and_then(closed_ty) {
-            let mut s = subst.clone();
-            if equations::match_ty(&entry.scheme.result, &t, &mut s).is_ok() {
-                subst = s;
-            }
-        }
         for (c, pat) in node.children.iter().zip(&entry.scheme.params) {
-            if let Some(t) = c.actual.as_ref().and_then(closed_ty) {
+            let known = c.actual.as_ref().and_then(|t| match t.kind {
+                TypeKindView::Concept => t.concept.map(|id| Ty::Sem { id }),
+                _ => closed_ty(t),
+            });
+            if let Some(t) = known {
                 let mut s = subst.clone();
                 if equations::match_ty(pat, &t, &mut s).is_ok() {
                     subst = s;
                 }
+            }
+        }
+        if let Some(t) = expected.and_then(closed_ty) {
+            let mut s = subst.clone();
+            if equations::match_ty(&entry.scheme.result, &t, &mut s).is_ok() {
+                subst = s;
             }
         }
         entry
@@ -995,7 +1025,7 @@ pub fn formula_slot(
             .into_iter()
             .map(|u| UnitCandidate {
                 id: u.id.to_owned(),
-                symbol: u.name.to_owned(),
+                symbol: u.symbol.to_owned(),
                 measures: pretty::describe_dim(u.dim),
             })
             .collect(),
@@ -1030,6 +1060,11 @@ fn fit(
     };
     if e.concept.is_some() && e.concept == concept {
         return Some(100);
+    }
+    if e.nominal && e.concept.is_some() {
+        // another concept, or a plain value where a concept value is read:
+        // nominally wrong however the representations compare
+        return None;
     }
     match (e.kind, rep) {
         (
@@ -1263,10 +1298,33 @@ fn op_precedence(op: &str) -> u8 {
     }
 }
 
+/// Whether one pair of parentheses encloses the whole text (`(a + b)`,
+/// not `(a) + b`).
+fn wholly_parenthesised(text: &str) -> bool {
+    let text = text.trim();
+    if !text.starts_with('(') || !text.ends_with(')') {
+        return false;
+    }
+    let mut depth = 0usize;
+    for (i, c) in text.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return i == text.len() - 1;
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
 /// The node's text, parenthesised when it would bind weaker than `under`.
 fn operand(node: &FormulaNode, under: u8) -> String {
     let text = node.text.trim();
-    if precedence(&node.kind) < under && !text.starts_with('(') {
+    if precedence(&node.kind) < under && !wholly_parenthesised(text) {
         format!("({text})")
     } else {
         text.to_owned()
@@ -1347,34 +1405,48 @@ pub fn compose(
         });
     };
     let parent = root.parent_of(node_id);
+    // What the position of `node` demands of whatever stands there: the
+    // precedence its parent binds with (a right operand of `-` or `/` may
+    // not bind equally: `a - (b - c)`), everything under a unary minus, and
+    // nothing at the root or as a call's argument.
+    let context = |parent: Option<(&FormulaNode, usize)>| -> u8 {
+        parent
+            .map(|(p, i)| match &p.kind {
+                NodeKind::Binary { op } | NodeKind::Compare { op } => {
+                    op_precedence(op) + if i == 1 { 1 } else { 0 }
+                }
+                NodeKind::Unary { .. } => 6,
+                _ => 0,
+            })
+            .unwrap_or(0)
+    };
+    let under = context(parent);
+    let grouped = |text: String, prec: u8| -> String {
+        if prec < under && !wholly_parenthesised(&text) {
+            format!("({text})")
+        } else {
+            text
+        }
+    };
     let (range, new_text): (TextRange, String) = match op {
         ComposeOp::Fill { text, .. } => {
-            let under = parent
-                .map(|(p, _)| match &p.kind {
-                    NodeKind::Binary { op } | NodeKind::Compare { op } => op_precedence(op) + 1,
-                    NodeKind::Unary { .. } => 6,
-                    _ => 0,
-                })
-                .unwrap_or(0);
             let text = text.trim();
-            let wrapped = if precedence(&kind_of_text(text)) < under {
-                format!("({text})")
-            } else {
-                text.to_owned()
-            };
-            (node.range, wrapped)
+            (
+                node.range,
+                grouped(text.to_owned(), precedence(&kind_of_text(text))),
+            )
         }
         ComposeOp::Operator { op, before, .. } => {
             let p = op_precedence(op);
-            let operand = operand(node, p);
-            (
-                node.range,
-                if *before {
-                    format!("? {op} {operand}")
-                } else {
-                    format!("{operand} {op} ?")
-                },
-            )
+            // as the left operand the node may bind equally (`a - b - ?` is
+            // `(a - b) - ?`); as the right one it may not (`? / (a / b)`)
+            let operand = operand(node, if *before { p + 1 } else { p });
+            let text = if *before {
+                format!("? {op} {operand}")
+            } else {
+                format!("{operand} {op} ?")
+            };
+            (node.range, grouped(text, p))
         }
         ComposeOp::Call { name, arity, .. } => {
             let mut args = vec![node.text.trim().to_owned()];
@@ -1416,9 +1488,9 @@ pub fn compose(
                             return Err(QueryError::NotApplicable {
                                 reason: format!(
                                     "{} measures {}, {} measures {}: the value cannot be kept",
-                                    from.name,
+                                    from.symbol,
                                     pretty::describe_dim(from.dim),
-                                    to.name,
+                                    to.symbol,
                                     pretty::describe_dim(to.dim)
                                 ),
                             })
@@ -1427,7 +1499,7 @@ pub fn compose(
                 }
                 _ => coordinate,
             };
-            (node.range, format!("{coordinate} {}", to.name))
+            (node.range, format!("{coordinate} {}", to.symbol))
         }
         ComposeOp::SetCoordinate { text, .. } => {
             let text = text.trim();
@@ -1452,8 +1524,10 @@ pub fn compose(
                     && matches!(p.kind, NodeKind::Binary { .. }) =>
             {
                 // removing an empty operand removes the operator: the
-                // other operand stands alone
-                (p.range, p.children[1 - i].text.trim().to_owned())
+                // other operand stands alone, grouped as *its* new
+                // position demands
+                let other = &p.children[1 - i];
+                (p.range, operand(other, context(root.parent_of(&p.id))))
             }
             _ => (node.range, "?".to_owned()),
         },
@@ -1461,7 +1535,9 @@ pub fn compose(
     let edit = TextEdit::replace(range, new_text.clone());
     let mut out = base.clone();
     out.replace_range(range.start as usize..range.end as usize, &new_text);
-    // the node to select next: the first slot at or after the edit
+    // the node to select next: what the action made — the new slot of an
+    // operator or call, the first slot inside a filled text, the edited
+    // node otherwise (never a slot that was already there elsewhere)
     let select = bdl_syntax::formula(&out).ok().map(|e| {
         let mut b = Builder {
             design,
@@ -1471,15 +1547,40 @@ pub fn compose(
             types: &BTreeMap::new(),
         };
         let root = b.node(&e, "r".into());
-        let mut slots = Vec::new();
-        root.slots(&mut slots);
-        let after = range.start;
-        slots
-            .iter()
-            .find(|s| root.find(s).is_some_and(|n| n.range.start >= after))
-            .or(slots.first())
-            .cloned()
-            .unwrap_or_else(|| node_id.to_owned())
+        let first_slot_in = |id: &str| -> Option<String> {
+            let n = root.find(id)?;
+            let mut slots = Vec::new();
+            n.slots(&mut slots);
+            slots.into_iter().next()
+        };
+        match op {
+            ComposeOp::Operator { before, .. } => {
+                Some(format!("{node_id}.{}", if *before { 0 } else { 1 }))
+            }
+            ComposeOp::Call { arity, .. } if *arity > 1 => Some(format!("{node_id}.1")),
+            ComposeOp::Fill { .. } => first_slot_in(node_id).or_else(|| {
+                // no slot in what was written: the next slot after it, the
+                // Tab order, else the node itself
+                let mut slots = Vec::new();
+                root.slots(&mut slots);
+                slots
+                    .into_iter()
+                    .find(|s| root.find(s).is_some_and(|n| n.range.start >= range.end))
+                    .or_else(|| Some(node_id.to_owned()))
+            }),
+            ComposeOp::Remove { .. } => match parent {
+                Some((p, _))
+                    if matches!(node.kind, NodeKind::Slot)
+                        && matches!(p.kind, NodeKind::Binary { .. }) =>
+                {
+                    Some(p.id.clone())
+                }
+                _ => Some(node_id.to_owned()),
+            },
+            _ => Some(node_id.to_owned()),
+        }
+        .filter(|id| root.find(id).is_some())
+        .unwrap_or_else(|| node_id.to_owned())
     });
     Ok(ComposeResult {
         source: out,

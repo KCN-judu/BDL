@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 533b0f2562d889db7c116ce7f4514b8376e5617e26e281b1f1e3715d6ba89a92 # shrinks to src = "Tilt - ?", op = "+"
+cc 22fbf80522735dc2a30b1a3fe90d4fa831970f09eb1e56bd61aedaf843e0c6c2 # shrinks to src = "(Tilt) * Tilt", op = "+"

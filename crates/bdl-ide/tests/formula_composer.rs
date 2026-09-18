@@ -257,7 +257,7 @@ fn unit_candidates_are_exactly_the_registered_units_of_the_slots_dimension() {
             slot.units.iter().any(|c| c.id == u.id),
             u.dim == Dim::ANGLE,
             "{}",
-            u.name
+            u.symbol
         );
     }
     // a literal's own pop-up offers the units of *its* dimension — the
@@ -700,4 +700,542 @@ fn a_slot_on_a_project_with_a_scoped_or_unknown_mapping_never_panics() {
     let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
     assert!(p.complete && p.draft_generation.is_none());
     let _ = EditOp::DeleteConcept { id: lamp.tilt };
+}
+
+// ---- P10b hardening ------------------------------------------------------------------
+
+/// A relationship's argument is nominal: `dimByTilt(?)` reads a Tilt, so a
+/// concept of the same representation (`Yaw : Angle`) is never offered,
+/// nor is a plain angle-valued relationship; the formula's *result*
+/// position observes any value of the representation (ADR-0013), so
+/// there both fit.
+#[test]
+fn dimension_equality_never_admits_a_nominally_wrong_reference() {
+    let lamp = lamp();
+    let s = edit(
+        &lamp.snapshot,
+        concept("Yaw", Some(Representation::Quantity { dim: Dim::ANGLE })),
+    );
+    let yaw = s
+        .design
+        .concepts
+        .values()
+        .find(|c| c.name == "Yaw")
+        .expect("Yaw")
+        .id;
+    let s = edit(&s, mapping("heading", vec![], yaw));
+    let s = edit(&s, mapping("spin", vec![], lamp.tilt));
+    let s = edit(&s, mapping("level", vec![], lamp.brightness));
+    let level = s
+        .design
+        .mappings
+        .values()
+        .find(|m| m.name == "level")
+        .expect("level")
+        .id;
+    let mut host = IdeHost::new(s);
+    // the argument of a relationship: only Tilt values
+    host.set_definition_draft(level, "dimByTilt(?)");
+    let slot = formula_slot(&host.snapshot(), level, "r.0").expect("slot");
+    assert!(
+        slot.expected
+            .as_ref()
+            .is_some_and(|t| t.nominal && t.concept == Some(lamp.tilt)),
+        "{:?}",
+        slot.expected
+    );
+    let labels: Vec<&str> = slot.references.iter().map(|r| r.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        vec!["spin"],
+        "heading (a Yaw) is an angle but not a Tilt"
+    );
+    // an equation's argument bound to a concept by the other argument
+    host.set_definition_draft(level, "min(spin, ?)");
+    let slot = formula_slot(&host.snapshot(), level, "r.1").expect("slot");
+    let labels: Vec<&str> = slot.references.iter().map(|r| r.label.as_str()).collect();
+    assert_eq!(labels, vec!["spin"]);
+    // units of the dimension are still offered: a literal is observed with it
+    assert_eq!(
+        slot.units
+            .iter()
+            .map(|u| u.symbol.as_str())
+            .collect::<Vec<_>>(),
+        vec!["rad", "deg", "turn"]
+    );
+    // the result position: any dimensionless value, ranked — Brightness first
+    host.set_definition_draft(level, "?");
+    let slot = formula_slot(&host.snapshot(), level, "r").expect("slot");
+    assert!(slot.expected.as_ref().is_some_and(|t| !t.nominal));
+    assert!(slot.references.iter().any(|r| r.label == "dimByTilt(…)"));
+    assert!(
+        !slot.references.iter().any(|r| r.label == "spin"),
+        "an angle is not dimensionless"
+    );
+}
+
+/// Only a literal owns a unit: a reference, a slot, a call or an operator
+/// never takes one, and a literal's unit switch keeps the quantity by
+/// default while its coordinate edit changes it.
+#[test]
+fn only_a_quantity_literal_has_an_editable_unit() {
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    let m = lamp.dim_by_tilt;
+    host.set_definition_draft(m, "clamp(Tilt / 90 deg, ?, 1)");
+    let p = formula_projection(&host.snapshot(), m).expect("projection");
+    // the projection: a unit only on the literal
+    fn units(n: &FormulaNode, out: &mut Vec<(String, String)>) {
+        if let NodeKind::Quantity { unit, .. } = &n.kind {
+            out.push((n.id.clone(), unit.clone()));
+        }
+        n.children.iter().for_each(|c| units(c, out));
+    }
+    let mut found = Vec::new();
+    units(p.root.as_ref().unwrap(), &mut found);
+    assert_eq!(found, vec![("r.0.1".to_string(), "deg".to_string())]);
+    assert!(matches!(node(&p, "r.0.0").kind, NodeKind::Reference { .. }));
+    // SetUnit on anything but a number is refused
+    for id in ["r", "r.0", "r.0.0", "r.1"] {
+        let err = compose(
+            &host.snapshot(),
+            m,
+            "clamp(Tilt / 90 deg, ?, 1)",
+            &ComposeOp::SetUnit {
+                node: id.into(),
+                unit_id: "angle.rad".into(),
+                preserve_value: true,
+            },
+        )
+        .expect_err(id);
+        assert!(matches!(err, QueryError::NotApplicable { .. }), "{id}");
+    }
+    // a slot: no unit until a number is written; a bare number takes one
+    let r = composed(
+        &mut host,
+        m,
+        "clamp(Tilt / 90 deg, ?, 1)",
+        ComposeOp::Fill {
+            node: "r.1".into(),
+            text: "0".into(),
+        },
+    );
+    assert_eq!(r.source, "clamp(Tilt / 90 deg, 0, 1)");
+    // the coordinate edit is a different quantity in the same unit
+    let r = composed(
+        &mut host,
+        m,
+        "Tilt / 90 deg",
+        ComposeOp::SetCoordinate {
+            node: "r.1".into(),
+            text: "45".into(),
+        },
+    );
+    assert_eq!(r.source, "Tilt / 45 deg");
+    // the unit switch keeps the quantity (the default of every picker)
+    let r = composed(
+        &mut host,
+        m,
+        "Tilt / 90 deg",
+        ComposeOp::SetUnit {
+            node: "r.1".into(),
+            unit_id: "angle.turn".into(),
+            preserve_value: true,
+        },
+    );
+    assert_eq!(r.source, "Tilt / 0.25 turn");
+    // a unit switch never lands on an affine chart: none is registered
+    let err = compose(
+        &host.snapshot(),
+        m,
+        "Tilt / 90 deg",
+        &ComposeOp::SetUnit {
+            node: "r.1".into(),
+            unit_id: "temperature.celsius".into(),
+            preserve_value: true,
+        },
+    )
+    .expect_err("affine");
+    assert!(matches!(err, QueryError::NotApplicable { .. }));
+}
+
+/// Precedence: every composed source means what the structure meant.
+#[test]
+fn composed_sources_keep_the_intended_precedence() {
+    let ph = physics();
+    let mut host = IdeHost::new(ph.snapshot.clone());
+    let m = ph.torque_of;
+    let cases: &[(&str, ComposeOp, &str)] = &[
+        // wrapping a sum under a product parenthesises the sum
+        (
+            "a + b * c",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "*".into(),
+                before: false,
+            },
+            "(a + b * c) * ?",
+        ),
+        // wrapping only the product: the product is a child of the sum, and
+        // the new sum on the right side of a sum is grouped (`a + (x + ?)`)
+        (
+            "a + b * c",
+            ComposeOp::Operator {
+                node: "r.1".into(),
+                op: "/".into(),
+                before: false,
+            },
+            "a + b * c / ?",
+        ),
+        (
+            "a + b * c",
+            ComposeOp::Operator {
+                node: "r.1".into(),
+                op: "+".into(),
+                before: false,
+            },
+            "a + (b * c + ?)",
+        ),
+        (
+            "a + b * c",
+            ComposeOp::Operator {
+                node: "r.0".into(),
+                op: "-".into(),
+                before: false,
+            },
+            "a - ? + b * c",
+        ),
+        // an explicit group stays a group
+        (
+            "(a + b) * c",
+            ComposeOp::Operator {
+                node: "r.0".into(),
+                op: "-".into(),
+                before: false,
+            },
+            "((a + b) - ?) * c",
+        ),
+        // a quotient of a quotient keeps its nesting
+        (
+            "a / (b / c)",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "/".into(),
+                before: true,
+            },
+            "? / (a / (b / c))",
+        ),
+        (
+            "a / (b / c)",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "b * c".into(),
+            },
+            "a / (b * c)",
+        ),
+        (
+            "a / (b / c)",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "b".into(),
+            },
+            "a / b",
+        ),
+        // unary minus binds tighter than any operator
+        (
+            "-a",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "*".into(),
+                before: false,
+            },
+            "-a * ?",
+        ),
+        (
+            "a * ?",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "-b".into(),
+            },
+            "a * -b",
+        ),
+        // a comparison under arithmetic is grouped; arithmetic under a comparison is not
+        (
+            "a < b",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "+".into(),
+                before: false,
+            },
+            "(a < b) + ?",
+        ),
+        (
+            "a + b",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "<".into(),
+                before: false,
+            },
+            "a + b < ?",
+        ),
+        (
+            "a < ?",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "b + c".into(),
+            },
+            "a < b + c",
+        ),
+        (
+            "a * ?",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "b < c".into(),
+            },
+            "a * (b < c)",
+        ),
+        // nested calls: an argument is never parenthesised, a call is an atom
+        (
+            "min(a, b)",
+            ComposeOp::Operator {
+                node: "r".into(),
+                op: "*".into(),
+                before: false,
+            },
+            "min(a, b) * ?",
+        ),
+        (
+            "min(a, ?)",
+            ComposeOp::Fill {
+                node: "r.1".into(),
+                text: "b + c".into(),
+            },
+            "min(a, b + c)",
+        ),
+        (
+            "min(a, b)",
+            ComposeOp::Call {
+                node: "r.1".into(),
+                name: "max".into(),
+                arity: 2,
+            },
+            "min(a, max(b, ?))",
+        ),
+        (
+            "a * b",
+            ComposeOp::Call {
+                node: "r".into(),
+                name: "clamp".into(),
+                arity: 3,
+            },
+            "clamp(a * b, ?, ?)",
+        ),
+    ];
+    for (source, op, want) in cases {
+        let r =
+            compose(&host.snapshot(), m, source, op).unwrap_or_else(|e| panic!("{source}: {e:?}"));
+        assert_eq!(&r.source, want, "{source} + {op:?}");
+        // and the result parses to what the text says
+        assert!(bdl_syntax::formula(&r.source).is_ok(), "{}", r.source);
+    }
+    let _ = &mut host;
+}
+
+/// An unsupported form is an opaque node: its exact source, selectable,
+/// and the structure around it stays editable.
+#[test]
+fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable() {
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    let m = lamp.dim_by_tilt;
+    let src = "(if Tilt < 10 deg then 1 else 0) * ?";
+    host.set_definition_draft(m, src);
+    let p = formula_projection(&host.snapshot(), m).expect("projection");
+    let opaque = node(&p, "r.0");
+    assert!(matches!(&opaque.kind, NodeKind::Opaque { what } if what.contains("choice")));
+    assert_eq!(
+        &src[opaque.range.start as usize..opaque.range.end as usize],
+        "(if Tilt < 10 deg then 1 else 0)"
+    );
+    assert!(opaque.children.is_empty());
+    assert_eq!(
+        dim_of(&node(&p, "r.1").expected),
+        Some(Dim::ZERO),
+        "the slot beside it is still inferred"
+    );
+    // the slot beside it is filled; the opaque text is untouched, byte for byte
+    let r = composed(
+        &mut host,
+        m,
+        src,
+        ComposeOp::Fill {
+            node: "r.1".into(),
+            text: "2".into(),
+        },
+    );
+    assert_eq!(r.source, "(if Tilt < 10 deg then 1 else 0) * 2");
+    // the opaque node itself can be replaced or removed as a whole
+    let r = composed(&mut host, m, src, ComposeOp::Remove { node: "r.0".into() });
+    assert_eq!(r.source, "? * ?");
+    let r = composed(
+        &mut host,
+        m,
+        src,
+        ComposeOp::Operator {
+            node: "r.0".into(),
+            op: "+".into(),
+            before: false,
+        },
+    );
+    assert_eq!(r.source, "((if Tilt < 10 deg then 1 else 0) + ?) * ?");
+    // a temporal form and a rule are opaque too, with their own sentence
+    host.set_definition_draft(lamp.dim_by_tilt, "delay(0, Tilt)");
+    let p = formula_projection(&host.snapshot(), m).expect("projection");
+    assert!(
+        matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("remembered"))
+    );
+}
+
+mod round_trip {
+    use super::*;
+    use proptest::prelude::*;
+
+    /// Small arithmetic over the lamp's names, numbers and units.
+    fn arb_expr() -> impl Strategy<Value = String> {
+        let leaf = prop_oneof![
+            Just("Tilt".to_string()),
+            Just("1".to_string()),
+            Just("2.5".to_string()),
+            Just("90 deg".to_string()),
+            Just("?".to_string()),
+        ];
+        leaf.prop_recursive(3, 24, 2, |inner| {
+            prop_oneof![
+                (
+                    inner.clone(),
+                    prop_oneof![Just("+"), Just("-"), Just("*"), Just("/"), Just("<")],
+                    inner.clone()
+                )
+                    .prop_map(|(a, op, b)| format!("{a} {op} {b}")),
+                inner.clone().prop_map(|a| format!("({a})")),
+                inner.clone().prop_map(|a| format!("-{a}")),
+                (inner.clone(), inner).prop_map(|(a, b)| format!("min({a}, {b})")),
+            ]
+        })
+    }
+
+    /// The tree without spans: what a formula means syntactically.
+    fn shape(e: &bdl_syntax::SurfaceExpr) -> String {
+        use bdl_syntax::ExprKind as K;
+        match &e.kind {
+            K::Name(n) => n.clone(),
+            K::Number { literal, unit } => match unit {
+                Some(u) => format!("{}{}", literal.as_str(), u.name),
+                None => literal.as_str().to_owned(),
+            },
+            K::Hole => "?".into(),
+            K::Unary { op, expr } => format!("({op:?} {})", shape(expr)),
+            K::Binary { op, lhs, rhs } => format!("({} {op:?} {})", shape(lhs), shape(rhs)),
+            K::Call { callee, args } => format!(
+                "{}[{}]",
+                shape(callee),
+                args.iter().map(shape).collect::<Vec<_>>().join(",")
+            ),
+            other => format!("{other:?}"),
+        }
+    }
+
+    fn all_ids(n: &FormulaNode, out: &mut Vec<String>) {
+        out.push(n.id.clone());
+        n.children.iter().for_each(|c| all_ids(c, out));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(200))]
+
+        /// parse → project → a no-op structured edit (fill every node with
+        /// its own text) → parse: the same tree.
+        #[test]
+        fn filling_a_node_with_its_own_text_is_a_no_op(src in arb_expr()) {
+            let lamp = lamp();
+            let mut host = IdeHost::new(lamp.snapshot.clone());
+            let m = lamp.dim_by_tilt;
+            let Ok(before) = bdl_syntax::formula(&src) else { return Ok(()) };
+            host.set_definition_draft(m, &src);
+            let p = formula_projection(&host.snapshot(), m).expect("projection");
+            let root = p.root.expect("tree");
+            let mut ids = Vec::new();
+            all_ids(&root, &mut ids);
+            for id in ids {
+                let n = root.find(&id).unwrap();
+                let r = compose(&host.snapshot(), m, &src, &ComposeOp::Fill { node: id.clone(), text: n.text.clone() }).expect("compose");
+                let after = bdl_syntax::formula(&r.source).unwrap_or_else(|e| panic!("{}: {e:?}", r.source));
+                prop_assert_eq!(shape(&after), shape(&before), "{} ← {} at {}", r.source, src, id);
+            }
+        }
+
+        /// Wrapping a node in an operator and removing the new slot gives
+        /// the original meaning back; a unit switch there and back keeps
+        /// the tree's shape (the coordinate may be rewritten).
+        #[test]
+        fn wrap_then_remove_restores_the_meaning(src in arb_expr(), op in prop_oneof![Just("+"), Just("*"), Just("/")]) {
+            let lamp = lamp();
+            let mut host = IdeHost::new(lamp.snapshot.clone());
+            let m = lamp.dim_by_tilt;
+            let Ok(before) = bdl_syntax::formula(&src) else { return Ok(()) };
+            host.set_definition_draft(m, &src);
+            let p = formula_projection(&host.snapshot(), m).expect("projection");
+            let root = p.root.expect("tree");
+            let mut ids = Vec::new();
+            all_ids(&root, &mut ids);
+            for id in ids {
+                let w = compose(&host.snapshot(), m, &src, &ComposeOp::Operator { node: id.clone(), op: op.to_string(), before: false }).expect("wrap");
+                let slot = w.select.clone().expect("a new slot");
+                let back = compose(&host.snapshot(), m, &w.source, &ComposeOp::Remove { node: slot }).expect("remove");
+                let after = bdl_syntax::formula(&back.source).unwrap_or_else(|e| panic!("{}: {e:?}", back.source));
+                prop_assert_eq!(shape(&after), shape(&before), "{} ← {} ← {} at {}", back.source, w.source, src, id);
+            }
+        }
+    }
+}
+
+/// Cost evidence, not a threshold: `cargo test -p bdl-ide --test
+/// formula_composer composer_latency -- --ignored --nocapture` prints the
+/// projection and slot-query times for a small, a nested and a
+/// candidate-rich formula.  A projection re-elaborates one formula over
+/// the snapshot's analysis; nothing else is recomputed.
+#[test]
+#[ignore]
+fn composer_latency_measurement() {
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    let m = lamp.dim_by_tilt;
+    let nested = "clamp(((Tilt + 1 deg) * 2 - (Tilt / (90 deg)) * 3) / (1 + 2 * (3 - min(Tilt, 4 deg) / (5 deg))), min(0, max(1, 2)), 1)";
+    for (label, src, node) in [
+        ("small", "Tilt / ?", "r.1"),
+        ("nested", nested, "r.0.0.0.0"),
+        ("candidate-rich", "min(?, ?)", "r.0"),
+    ] {
+        host.set_definition_draft(m, src);
+        let snap = host.snapshot();
+        let n = 200;
+        let t0 = std::time::Instant::now();
+        for _ in 0..n {
+            let _ = formula_projection(&snap, m).expect("projection");
+        }
+        let proj = t0.elapsed() / n;
+        let t0 = std::time::Instant::now();
+        for _ in 0..n {
+            let _ = formula_slot(&snap, m, node).expect("slot");
+        }
+        let slot = t0.elapsed() / n;
+        let t0 = std::time::Instant::now();
+        let s = host.snapshot();
+        let snapshot = t0.elapsed();
+        eprintln!(
+            "latency {label}: projection {:?}, slot query {:?}, snapshot (unchanged overlay) {:?}, source {} bytes",
+            proj, slot, snapshot, src.len()
+        );
+        let _ = s;
+    }
 }
