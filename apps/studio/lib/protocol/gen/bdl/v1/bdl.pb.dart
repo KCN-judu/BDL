@@ -6247,6 +6247,10 @@ class MappingView extends $pb.GeneratedMessage {
   void clearDrivesOutputId() => $_clearField(8);
 }
 
+/// `(A₁, …, Aₙ) -> B` over concept ids: the relationship's canonical type is
+/// `domain(inputs) -> B`, where no inputs give the empty product `()` (a
+/// relationship read as a value, `() -> B`).  A presentation encoding — the
+/// empty list is that domain; nothing here is a synthetic input.
 class Signature extends $pb.GeneratedMessage {
   factory Signature({
     $core.Iterable<$fixnum.Int64>? inputs,
@@ -10283,7 +10287,9 @@ class TypeView extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearDescription() => $_clearField(1);
 
-  /// "quantity", "boolean", "count", "concept", "structured", "unknown".
+  /// "quantity", "boolean", "count", "concept", "structured", "unknown",
+  /// "unit" (0.14: the empty product `()`, a relationship's domain when it
+  /// has no inputs — never a measurement unit).
   @$pb.TagNumber(2)
   $core.String get kind => $_getSZ(1);
   @$pb.TagNumber(2)

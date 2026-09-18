@@ -512,6 +512,10 @@ enum AcceptanceState {
   ACCEPTANCE_STATE_HARDWARE_FEASIBLE = 7;
 }
 
+// `(A₁, …, Aₙ) -> B` over concept ids: the relationship's canonical type is
+// `domain(inputs) -> B`, where no inputs give the empty product `()` (a
+// relationship read as a value, `() -> B`).  A presentation encoding — the
+// empty list is that domain; nothing here is a synthetic input.
 message Signature {
   repeated uint64 inputs = 1;
   uint64 output = 2;
@@ -954,7 +958,9 @@ message FormulaNode {
 message TypeView {
   // "an angle", "a Brightness (a dimensionless quantity)", "true or false".
   string description = 1;
-  // "quantity", "boolean", "count", "concept", "structured", "unknown".
+  // "quantity", "boolean", "count", "concept", "structured", "unknown",
+  // "unit" (0.14: the empty product `()`, a relationship's domain when it
+  // has no inputs — never a measurement unit).
   string kind = 2;
   optional Dim dim = 3;
   optional uint64 concept_id = 4;
