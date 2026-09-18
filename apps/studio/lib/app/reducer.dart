@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
+import 'composer.dart';
 import 'deploy.dart';
 import 'drafts.dart';
 import 'sources.dart';
@@ -362,6 +363,27 @@ Transition reduce(AppState s, AppAction action) {
     ),
     HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
     ToolingFailed(:final generation) => toolingFailed(s, generation),
+
+    // ---- the Formula Composer (app/composer.dart) ---------------------------------
+    FormulaModeChanged(:final formulaMode) => formulaModeChanged(s, formulaMode),
+    FormulaNodeSelected(:final mappingId, :final nodeId) => formulaNodeSelected(
+      s,
+      mappingId,
+      nodeId,
+    ),
+    ComposeRequested(:final mappingId, :final action) => composeRequested(s, mappingId, action),
+    FormulaProjectionRequested(:final mappingId) => formulaProjectionRequested(s, mappingId),
+    FormulaSlotReceived(:final generation, :final result) => formulaSlotReceived(
+      s,
+      generation,
+      result,
+    ),
+    FormulaProjectionReceived(:final generation, :final result) => formulaProjectionReceived(
+      s,
+      generation,
+      result,
+    ),
+    ComposeReceived(:final generation, :final result) => composeReceived(s, generation, result),
 
     // ---- simulation (app/simulation.dart) ---------------------------------------
     SimulationInputChanged(:final mappingId, :final value) => simulationInputChanged(

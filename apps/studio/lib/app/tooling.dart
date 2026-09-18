@@ -8,6 +8,7 @@
 library;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'composer.dart' show composerAfterFailure, withoutComposerSelection;
 import 'effects.dart';
 import 'reducer.dart' show Transition, sendEdit;
 import 'state.dart';
@@ -145,14 +146,18 @@ Transition toolingFailed(AppState s, int generation) {
   var next = e;
   if (e.completion?.generation == generation) next = next.copyWith(clearCompletion: true);
   if (e.hover?.generation == generation) next = next.copyWith(clearHover: true);
+  next = composerAfterFailure(next, generation);
   return Transition(identical(next, e) ? s : s.copyWith(editor: next));
 }
 
 /// Tooling is about the current text of the current revision: a new
 /// projection or a change of selection drops whatever is on screen.
-EditorState withoutTooling(EditorState e) => e.completion == null && e.hover == null
-    ? e
-    : e.copyWith(clearCompletion: true, clearHover: true);
+EditorState withoutTooling(EditorState e) {
+  final base = e.completion == null && e.hover == null
+      ? e
+      : e.copyWith(clearCompletion: true, clearHover: true);
+  return withoutComposerSelection(base);
+}
 
 // ---- semantic actions --------------------------------------------------------
 

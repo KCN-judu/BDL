@@ -203,6 +203,55 @@ class CompleteDraft extends Effect {
 }
 
 /// The hover card for a formula name (draft overlay) — uncounted.
+/// The Formula Composer's requests (protocol 0.12), tagged like the other
+/// tooling requests.
+class GetFormulaProjection extends Effect {
+  const GetFormulaProjection({
+    required this.revision,
+    required this.mappingId,
+    required this.generation,
+    this.component,
+  });
+  final int revision;
+  final int mappingId;
+  final int generation;
+  final int? component;
+}
+
+class GetFormulaSlot extends Effect {
+  const GetFormulaSlot({
+    required this.revision,
+    required this.mappingId,
+    required this.source,
+    required this.nodeId,
+    required this.generation,
+    this.component,
+  });
+  final int revision;
+  final int mappingId;
+  final String source;
+  final String nodeId;
+  final int generation;
+  final int? component;
+}
+
+class ComposeFormula extends Effect {
+  const ComposeFormula({
+    required this.revision,
+    required this.mappingId,
+    required this.source,
+    required this.action,
+    required this.generation,
+    this.component,
+  });
+  final int revision;
+  final int mappingId;
+  final String source;
+  final pb.ComposeAction action;
+  final int generation;
+  final int? component;
+}
+
 class HoverDraft extends Effect {
   const HoverDraft({
     required this.revision,

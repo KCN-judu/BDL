@@ -39,7 +39,11 @@ AppState connected(pb.ProjectProjection project) => AppState(
     handshake: pb.HandshakeResponse(compatible: true, protocolVersion: pb.Version()),
   ),
   project: project,
-  editor: const EditorState(selection: MappingSelected(dim)),
+  editor: const EditorState(
+    selection: MappingSelected(dim),
+    // these tests exercise the Text projection of the draft
+    composer: ComposerState(formulaMode: false),
+  ),
 );
 
 pb.DraftCompletionItem item(String label, {String kind = 'input', int start = 0, int end = 0}) =>

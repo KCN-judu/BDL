@@ -545,6 +545,36 @@ class FormulaHoverRequested extends UserAction {
   final int? offset;
 }
 
+// ---- the Formula Composer (app/composer.dart) --------------------------------
+
+/// Formula (structured) or Text: which projection of the definition draft
+/// the inspector edits.  Both edit the same draft.
+class FormulaModeChanged extends UserAction {
+  const FormulaModeChanged(this.formulaMode);
+  final bool formulaMode;
+}
+
+/// Select a node of the mapping's projection (`null` clears); the
+/// service is asked what the position expects and what fits.
+class FormulaNodeSelected extends UserAction {
+  const FormulaNodeSelected({required this.mappingId, required this.nodeId});
+  final int mappingId;
+  final String? nodeId;
+}
+
+/// A structured action on the draft, answered with the text it makes.
+class ComposeRequested extends UserAction {
+  const ComposeRequested({required this.mappingId, required this.action});
+  final int mappingId;
+  final pb.ComposeAction action;
+}
+
+/// Ask for the projection of the committed definition (no draft).
+class FormulaProjectionRequested extends UserAction {
+  const FormulaProjectionRequested(this.mappingId);
+  final int mappingId;
+}
+
 /// Hover an entity (a canvas node, a library row); `null` ends the hover.
 class EntityHoverRequested extends UserAction {
   const EntityHoverRequested(this.entity);
@@ -993,6 +1023,24 @@ class HoverReceived extends ResponseAction {
   const HoverReceived({required this.generation, required this.result});
   final int generation;
   final pb.DraftHoverResponse result;
+}
+
+class FormulaSlotReceived extends ResponseAction {
+  const FormulaSlotReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.FormulaSlotResponse result;
+}
+
+class FormulaProjectionReceived extends ResponseAction {
+  const FormulaProjectionReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.FormulaProjectionResponse result;
+}
+
+class ComposeReceived extends ResponseAction {
+  const ComposeReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.ComposeFormulaResponse result;
 }
 
 /// A tooling request (completion, hover) failed; the pop-up or card just

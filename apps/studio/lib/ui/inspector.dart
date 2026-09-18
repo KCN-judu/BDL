@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../app/actions.dart';
+import '../app/composer.dart' show composerProjection;
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel, socketKind, statusWord, SocketKind;
@@ -66,6 +67,8 @@ class Inspector extends StatelessWidget {
           draft: state.draft(id),
           completion: state.editor.completion?.mappingId == id ? state.editor.completion : null,
           hover: state.editor.hover?.mappingId == id ? state.editor.hover : null,
+          composer: state.editor.composer,
+          projection: composerProjection(state, id),
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
           clocks: project.clocks,
@@ -583,6 +586,8 @@ class _MappingInspector extends StatelessWidget {
     required this.outputs,
     required this.actions,
     required this.dispatch,
+    this.composer = const ComposerState(),
+    this.projection,
     this.boundTo,
     this.boundLabel,
     this.portWord,
@@ -614,6 +619,10 @@ class _MappingInspector extends StatelessWidget {
   final DefinitionDraft? draft;
   final CompletionState? completion;
   final HoverState? hover;
+
+  /// The Formula Composer's state and the projection it draws.
+  final ComposerState composer;
+  final pb.FormulaProjection? projection;
   final int revision;
 
   /// The last change, for its formal classification in Explain.
@@ -797,6 +806,9 @@ class _MappingInspector extends StatelessWidget {
                 inputNames: inputs.map(_name).toList(),
                 completion: completion,
                 hover: hover,
+                composer: composer,
+                projection: projection,
+                concepts: {for (final c in concepts) c.id.toInt(): c},
                 dispatch: dispatch,
               ),
             for (final d in broader)

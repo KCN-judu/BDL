@@ -566,6 +566,7 @@ class DefinitionDraft {
     this.conflict = false,
     this.pendingCommit,
     this.commitError,
+    this.projection,
   });
 
   final int mappingId;
@@ -611,6 +612,11 @@ class DefinitionDraft {
   /// next source change or commit.
   final String? commitError;
 
+  /// The Formula Composer's view of [source], from the same verdict
+  /// (protocol 0.12).  A projection of the text, never a second store:
+  /// it is dropped with [analysis] on every change and never edited here.
+  final pb.FormulaProjection? projection;
+
   /// True when the source differs from the definition committed now.
   bool dirtyAgainst(String? committed) => source != (committed ?? '');
 
@@ -631,6 +637,7 @@ class DefinitionDraft {
     bool clearPendingCommit = false,
     String? commitError,
     bool clearCommitError = false,
+    pb.FormulaProjection? projection,
   }) {
     return DefinitionDraft(
       mappingId: mappingId,
@@ -645,8 +652,77 @@ class DefinitionDraft {
       conflict: conflict ?? this.conflict,
       pendingCommit: clearPendingCommit ? null : (pendingCommit ?? this.pendingCommit),
       commitError: clearCommitError ? null : (commitError ?? this.commitError),
+      projection: clearAnalysis ? null : (projection ?? this.projection),
     );
   }
+}
+
+/// The Formula Composer: which editing projection of the definition is on
+/// screen and what is selected in the structured one.  Studio owns the
+/// selection, the mode and the open pop-up; the compiler owns the tree,
+/// every expected type and every candidate (protocol 0.12).
+@immutable
+class ComposerState {
+  const ComposerState({
+    this.formulaMode = true,
+    this.mappingId,
+    this.selectedNode,
+    this.slot,
+    this.slotGeneration,
+    this.projection,
+    this.projectionGeneration,
+    this.pendingCompose = false,
+  });
+
+  /// Formula (structured) or Text — a preference of the editor, not of
+  /// any mapping.
+  final bool formulaMode;
+
+  /// The mapping the selection, slot and committed projection belong to.
+  final int? mappingId;
+
+  /// The selected node of the projection, by its path; `null` when none.
+  final String? selectedNode;
+
+  /// What the selected position expects and what fits, once answered.
+  final pb.FormulaSlotResponse? slot;
+  final int? slotGeneration;
+
+  /// The projection of the *committed* definition, fetched while there is
+  /// no draft (a draft carries its own).
+  final pb.FormulaProjection? projection;
+  final int? projectionGeneration;
+
+  /// A structured action is being answered.
+  final bool pendingCompose;
+
+  ComposerState copyWith({
+    bool? formulaMode,
+    int? mappingId,
+    bool clearMapping = false,
+    String? selectedNode,
+    bool clearSelection = false,
+    pb.FormulaSlotResponse? slot,
+    bool clearSlot = false,
+    int? slotGeneration,
+    pb.FormulaProjection? projection,
+    bool clearProjection = false,
+    int? projectionGeneration,
+    bool? pendingCompose,
+  }) => ComposerState(
+    formulaMode: formulaMode ?? this.formulaMode,
+    mappingId: clearMapping ? null : (mappingId ?? this.mappingId),
+    selectedNode: clearSelection ? null : (selectedNode ?? this.selectedNode),
+    slot: clearSlot || clearSelection ? null : (slot ?? this.slot),
+    slotGeneration: clearSelection
+        ? null
+        : (slotGeneration ?? (clearSlot ? null : this.slotGeneration)),
+    projection: clearProjection ? null : (projection ?? this.projection),
+    projectionGeneration: clearProjection
+        ? null
+        : (projectionGeneration ?? this.projectionGeneration),
+    pendingCompose: pendingCompose ?? this.pendingCompose,
+  );
 }
 
 /// A completion pop-up over the definition field: the service's candidates
@@ -904,9 +980,13 @@ class EditorState {
     this.renameNextGroup = false,
     this.view = DesignView.design,
     this.sources = const SourcesState(),
+    this.composer = const ComposerState(),
   });
 
   final StudioPage page;
+
+  /// The Formula Composer's editor state (mode, selection, open slot).
+  final ComposerState composer;
   final Selection selection;
 
   /// Design, Code or Split: views of the one project (ADR-0023 §3).
@@ -1050,6 +1130,7 @@ class EditorState {
     bool? renameNextGroup,
     DesignView? view,
     SourcesState? sources,
+    ComposerState? composer,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -1083,6 +1164,7 @@ class EditorState {
       renameNextGroup: renameNextGroup ?? this.renameNextGroup,
       view: view ?? this.view,
       sources: sources ?? this.sources,
+      composer: composer ?? this.composer,
     );
   }
 

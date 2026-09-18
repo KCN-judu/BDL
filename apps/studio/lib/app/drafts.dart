@@ -127,6 +127,7 @@ Transition draftAnalysisReceived(AppState s, pb.DefinitionDraftAnalysis r) {
         analysis: r.analysis,
         parseOk: r.parseOk,
         clearCheckError: true,
+        projection: r.hasProjection() ? r.projection : null,
       ),
     ),
   );

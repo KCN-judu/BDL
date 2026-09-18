@@ -277,6 +277,67 @@ class EffectExecutor {
           ),
           (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
         );
+      case GetFormulaProjection(
+        :final revision,
+        :final mappingId,
+        :final generation,
+        :final component,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            getFormulaProjection: pb.GetFormulaProjectionRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          (r) => _dispatch(
+            FormulaProjectionReceived(generation: generation, result: r.formulaProjection),
+          ),
+        );
+      case GetFormulaSlot(
+        :final revision,
+        :final mappingId,
+        :final source,
+        :final nodeId,
+        :final generation,
+        :final component,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            getFormulaSlot: pb.GetFormulaSlotRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              source: source,
+              nodeId: nodeId,
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          (r) => _dispatch(FormulaSlotReceived(generation: generation, result: r.formulaSlot)),
+        );
+      case ComposeFormula(
+        :final revision,
+        :final mappingId,
+        :final source,
+        :final action,
+        :final generation,
+        :final component,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            composeFormula: pb.ComposeFormulaRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              source: source,
+              action: action,
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          (r) => _dispatch(ComposeReceived(generation: generation, result: r.composeFormula)),
+        );
       case HoverEntity(:final revision, :final entity, :final generation):
         await _tooling(
           generation,

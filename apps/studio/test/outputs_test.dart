@@ -483,6 +483,9 @@ void main() {
       expect(find.text('Drives'), findsOneWidget);
       expect(find.text('nothing'), findsOneWidget);
       expect(find.textContaining('ClockId'), findsNothing, reason: 'ids live in Explain only');
+      // the inspector scrolls (the definition editor sits above): bring
+      // the control into view before tapping it
+      await t.ensureVisible(find.text('any domain'));
       await t.tap(find.text('any domain'));
       await t.pumpAndSettle();
       await t.tap(find.text('main').last);

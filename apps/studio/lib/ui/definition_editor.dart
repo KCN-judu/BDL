@@ -32,6 +32,7 @@ import 'package:flutter/services.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'formula_composer.dart';
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
@@ -195,9 +196,18 @@ class DefinitionEditor extends StatefulWidget {
     required this.dispatch,
     this.completion,
     this.hover,
+    this.composer = const ComposerState(),
+    this.projection,
+    this.concepts = const {},
   });
 
   final int mappingId;
+
+  /// The Formula Composer's editor state, and the projection on screen
+  /// (the draft's own, else the committed definition's).
+  final ComposerState composer;
+  final pb.FormulaProjection? projection;
+  final Map<int, pb.ConceptView> concepts;
 
   /// The committed formula, `null` when the mapping has none.
   final String? committed;
@@ -223,9 +233,27 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
   String get _desiredText => widget.draft?.source ?? widget.committed ?? '';
 
   @override
+  void initState() {
+    super.initState();
+    _needProjection();
+  }
+
+  @override
   void didUpdateWidget(DefinitionEditor old) {
     super.didUpdateWidget(old);
     _syncText();
+    _needProjection();
+  }
+
+  /// Formula mode over a committed definition with no draft: the
+  /// projection is fetched once per mapping (a draft carries its own).
+  void _needProjection() {
+    final c = widget.composer;
+    if (!c.formulaMode || widget.draft != null || widget.committed == null) return;
+    if (c.mappingId == widget.mappingId && c.projectionGeneration != null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.dispatch(FormulaProjectionRequested(widget.mappingId));
+    });
   }
 
   /// The field follows the state (revert, reload, a confirmed commit, a
@@ -364,6 +392,12 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
     final completion = widget.completion;
     final card = widget.hover?.card;
 
+    final formulaMode = widget.composer.formulaMode;
+    final projection = widget.projection;
+    // the projection is of the text on screen when its source is that text;
+    // otherwise (not yet answered, or the text does not parse) it is stale
+    final inSync = projection != null && projection.source == m.text && projection.parseOk;
+    final emptyFormula = m.text.trim().isEmpty;
     return CallbackShortcuts(
       bindings: {
         // The pop-up takes the navigation keys only while it is open; Esc
@@ -386,22 +420,53 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Listener(
-            onPointerHover: _onHover,
-            child: MouseRegion(
-              onExit: (_) => _endHover(),
-              child: MacTextField(
-                key: const ValueKey('definition-field'),
-                controller: _controller,
-                focusNode: _focus,
-                maxLines: 4,
-                monospace: true,
-                hint: m.hint,
-                onChanged: _onChanged,
+          // Formula | Text: two projections of the one draft (§4b).  Local
+          // to this editor; never a project-level view.
+          Row(
+            children: [
+              SizedBox(
+                width: 132,
+                child: MacSegmented<bool>(
+                  key: const ValueKey('definition-mode'),
+                  value: formulaMode,
+                  options: const {true: 'Formula', false: 'Text'},
+                  onChanged: (v) => widget.dispatch(FormulaModeChanged(v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: MacMetrics.gapTight),
+          if (formulaMode)
+            FormulaComposer(
+              key: ValueKey('composer-${widget.mappingId}'),
+              mappingId: widget.mappingId,
+              source: m.text,
+              projection: inSync || emptyFormula ? projection : projection,
+              composer: widget.composer,
+              concepts: widget.concepts,
+              dispatch: widget.dispatch,
+              outOfSync: !inSync && !emptyFormula,
+              onEditAsText: () => widget.dispatch(const FormulaModeChanged(false)),
+            )
+          else
+            Listener(
+              onPointerHover: _onHover,
+              child: MouseRegion(
+                onExit: (_) => _endHover(),
+                child: MacTextField(
+                  key: const ValueKey('definition-field'),
+                  controller: _controller,
+                  focusNode: _focus,
+                  maxLines: 4,
+                  monospace: true,
+                  hint: m.hint,
+                  onChanged: _onChanged,
+                ),
               ),
             ),
-          ),
-          if (completion != null && (completion.items.isNotEmpty || completion.pending))
+          if (!formulaMode &&
+              completion != null &&
+              (completion.items.isNotEmpty || completion.pending))
             _CompletionPopup(
               completion: completion,
               onPick: (i) {
@@ -409,7 +474,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
                 _accept();
               },
             ),
-          if (card != null && card.found) _HoverCard(card: card),
+          if (!formulaMode && card != null && card.found) _HoverCard(card: card),
           const SizedBox(height: MacMetrics.gapTight),
           if (m.conflict)
             _ConflictNotice(
