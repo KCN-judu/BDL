@@ -899,6 +899,20 @@ class _MappingInspector extends StatelessWidget {
           title: 'Explain',
           children: [
             ExplainLine('DeclId ${mapping.id}'),
+            // the canonical type: the domain of no inputs is (), the empty
+            // product — the canvas draws that domain as no socket
+            ExplainLine(
+              'type: ${switch (inputs.length) {
+                0 => '()',
+                1 => _concept(inputs.single)?.name ?? '?',
+                _ => '(${inputs.map((i) => _concept(i)?.name ?? '?').join(', ')})',
+              }} -> ${_concept(output)?.name ?? '?'}',
+            ),
+            if (inputs.isEmpty)
+              const ExplainLine(
+                'no explicit inputs: the canonical domain is (), the empty product; '
+                'the kernel encodes () -> B as B',
+              ),
             if (clockId != null) ExplainLine('Κ = ClockId $clockId (${clockName(clockId)})'),
             if (drives != null) ExplainLine('β: drives OutputId $drives (${outputName(drives)})'),
             ExplainLine(
@@ -1093,7 +1107,7 @@ class _OutputInspector extends StatelessWidget {
                 ],
                 labelOf: mappingName,
                 detailOf: (m) =>
-                    p.mappings.firstWhere((x) => x.id.toInt() == m).signature.inputs.isEmpty
+                    p.mappings.firstWhere((x) => x.id.toInt() == m).signature.isUnitDomain
                     ? ''
                     : 'has inputs',
                 onChanged: (m) => dispatch(SetMappingDriveRequested(mappingId: m, outputId: id)),

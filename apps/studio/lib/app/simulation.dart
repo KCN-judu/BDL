@@ -16,11 +16,12 @@ import 'effects.dart';
 import 'reducer.dart' show Transition;
 import 'state.dart';
 
-/// Unresolved mappings without inputs: the declarations the evaluator
-/// needs a value for at every tick.  (Read off the projection.)
+/// Unresolved relationships with the unit domain `()` — values the design
+/// reads and does not define: the declarations the evaluator needs a value
+/// for at every tick.  (Read off the projection.)
 List<pb.MappingView> simulationInputs(pb.ProjectProjection p) => [
   for (final m in p.mappings)
-    if (!m.hasDefinition() && m.signature.inputs.isEmpty) m,
+    if (!m.hasDefinition() && m.signature.isUnitDomain) m,
 ];
 
 Transition simulationInputChanged(AppState s, int mappingId, pb.Value value) {
@@ -95,7 +96,7 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
     final status = a.mappings.where((x) => x.id == m.id).firstOrNull?.status;
     if (status == pb.MappingStatus.MAPPING_STATUS_INVALID) {
       out.add(SimulationBlocker('${m.name} has no valid definition.', mappingId: m.id.toInt()));
-    } else if (!m.hasDefinition() && m.signature.inputs.isNotEmpty) {
+    } else if (!m.hasDefinition() && !m.signature.isUnitDomain) {
       out.add(
         SimulationBlocker(
           '${m.name} has no definition. A relationship that reads something needs one '
@@ -137,7 +138,7 @@ pb.Value? sampleOf(SimulationState sim, pb.ProjectProjection p, pb.TickSample t,
   final computed = t.values.where((v) => v.mappingId.toInt() == mappingId).firstOrNull;
   if (computed != null) return computed.value;
   final m = p.mappings.where((m) => m.id.toInt() == mappingId).firstOrNull;
-  if (m == null || m.hasDefinition() || m.signature.inputs.isNotEmpty) return null;
+  if (m == null || m.hasDefinition() || !m.signature.isUnitDomain) return null;
   final active = m.hasClockId()
       ? t.activeClockIds.contains(m.clockId)
       : t.activeClockIds.isNotEmpty || p.clocks.isEmpty;

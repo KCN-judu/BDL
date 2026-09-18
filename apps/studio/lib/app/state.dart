@@ -15,6 +15,15 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
+/// A relationship's domain is the empty product `()`: it reads nothing, so
+/// it is read as a value — the candidate for a physical output, a
+/// parameter, a transport, and, unresolved, a simulation input.  The
+/// canonical type is `() -> B` (`crates/bdl-ir/src/ty.rs`); on the canvas
+/// the unit domain is drawn as no input socket at all.
+extension SignatureDomain on pb.Signature {
+  bool get isUnitDomain => inputs.isEmpty;
+}
+
 /// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 

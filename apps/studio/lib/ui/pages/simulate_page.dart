@@ -177,7 +177,7 @@ class _InputsSection extends StatelessWidget {
     final inputs = simulationInputs(project);
     final functions = [
       for (final m in project.mappings)
-        if (!m.hasDefinition() && m.signature.inputs.isNotEmpty) m,
+        if (!m.hasDefinition() && !m.signature.isUnitDomain) m,
     ];
     return InspectorSection(
       title: 'Inputs',
@@ -505,7 +505,7 @@ class _Trace extends StatelessWidget {
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     final columns = [
       for (final m in p.mappings)
-        if (m.signature.inputs.isEmpty) m,
+        if (m.signature.isUnitDomain) m,
     ];
     final outputs = [
       for (final o in p.outputs)
@@ -638,7 +638,7 @@ class _Probe extends StatelessWidget {
         final c = p.concepts.firstWhere((c) => c.id.toInt() == id);
         final producers = [
           for (final m in p.mappings)
-            if (m.signature.inputs.isEmpty && m.signature.output.toInt() == id) m,
+            if (m.signature.isUnitDomain && m.signature.output.toInt() == id) m,
         ];
         body = InspectorSection(
           title: c.name,
@@ -657,7 +657,7 @@ class _Probe extends StatelessWidget {
       case MappingSelected(:final id):
         final m = p.mappings.firstWhere((m) => m.id.toInt() == id);
         final c = p.concepts.where((c) => c.id == m.signature.output).firstOrNull;
-        final isValue = m.signature.inputs.isEmpty;
+        final isValue = m.signature.isUnitDomain;
         body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
