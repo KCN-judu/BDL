@@ -1,10 +1,10 @@
 ---
 id: ISS-0011
-state: open
+state: resolved
 area: deployment
 opened: 2026-09-18
-resolved-by: []
-related: ["ISS-0001", "ADR-0024"]
+resolved-by: ["ADR-0027"]
+related: ["ISS-0001", "ADR-0024", "ADR-0027"]
 ---
 
 # ISS-0011: Capacity validation for collections and the lossless buffer
@@ -41,4 +41,12 @@ to refuse the deployment (FV D-86), and today nothing refuses.
 
 ## Resolution
 
-Open.
+Resolved by ADR-0027 (2026-09-18): the design writes its bounds (`take cap`),
+the toolchain computes a sound static bound per declaration and cell
+(`bdl-exec-ir::bounds`), the required window capacity per crossing under the
+deployment schedule (`bdl-reactive::capacity`, the production `Capacity.lean`),
+and a report with diagnostics (`bdl-compiler::collections`); an unbounded state
+refuses a bounded-memory deployment. Specification:
+`docs/spec/deployment-capacity.md`. What remains — a target memory model beyond
+the byte estimates, the adapter's arena and input bounds — is roadmap
+priority 1.

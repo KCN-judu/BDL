@@ -101,6 +101,22 @@ the differential tests (reference ↔ exec IR, hundreds of generated designs per
 run) and a debugging aid. It is not a second semantics: where it and the
 reference disagree, one of them is wrong.
 
+## Bounds
+
+`bdl_exec_ir::bounds::analyse(ir)` gives every declaration and every state cell
+a [`Shape`] — the value's structure with a `Bound` at each list position:
+`finite { elements }`, `input` (as large as the host supplies) or `unbounded`
+(the design grows it over time). It is an abstract interpretation of the plan:
+`cons` adds one, `take k` narrows, a fold is run twice abstractly to tell a
+stable accumulator from one growing by a constant per element, a cell is the
+fixpoint of its operand with a widening to `unbounded` and one narrowing pass.
+Sound (an upper bound of every length the reference produces, tested on every
+corpus case), not tight (`take` is the one narrowing operator). It runs on the
+plan because the equation library has been inlined there: `map`, `filter`,
+`append`, `zip` are folds and need no cases of their own. Consumers: the codegen
+manifest (`collections`) and `bdl-compiler::collections`
+(docs/spec/deployment-capacity.md).
+
 ## Versioning
 
 `ExecIr.version` = `EXEC_IR_VERSION` (2: `Fold`, the list and pair operators).

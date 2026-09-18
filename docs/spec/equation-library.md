@@ -88,7 +88,14 @@ made unwritable by a proof field.
   choose with a rule). Declaring order is never inferred from the value form;
   `Concept::ordered` is stored in the project (`docs/spec/project-format.md`)
   and is an _edit_, not a refinement: it reopens every relationship that
-  mentions the concept.
+  mentions the concept. **The order invariant**: a concept is ordered only while
+  its value form is a quantity (FV `Ty.ordB`). The model keeps it — declaring
+  order over a count, a truth value, an optional value, a collection or a
+  grouped value is refused (`edit.order_needs_quantity`), and so is changing an
+  ordered concept's value form to one of those (clear the order first); the text
+  loader reports `ordered concept Mode : Count` as `text.order_needs_quantity`
+  and loads it unordered; Studio offers the _Order_ checkbox only for a
+  quantity.
 
 - **The comparator escape hatch.** `minBy(a, b, (x, y) => …)` and `maxBy` choose
   by a rule the designer writes and need no declaration (FV
@@ -103,8 +110,28 @@ made unwritable by a proof field.
   equation needs the collection (`all(readings, …)` over
   `Readings : List<Temperature>`), and a formula's result is observed deeply
   where the produced concept's form needs it (`(t, h)` for
-  `Climate : Pair<Temperature, Scalar>`). The mixed case is the one path that
-  does not consult the order declaration — ISS-0012 records it.
+  `Climate : Pair<Temperature, Scalar>`).
+
+### Mixed comparisons (ADR-0026)
+
+The rule in three clauses, tested as a matrix over Brightness (ordered),
+Opacity, Temperature and Mode
+(`mixed_comparisons_over_overlapping_representations`):
+
+| Operands                                                   | `==`                        | `<` `min` `max` `clamp` `inRange`                                   | `minBy` `maxBy`             |
+| ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------- | --------------------------- |
+| two values of one concept                                  | yes                         | only while the concept is declared ordered                          | yes                         |
+| two values of different concepts (any representations)     | `semantic.concept_mismatch` | `semantic.concept_mismatch`                                         | `semantic.concept_mismatch` |
+| a concept value beside a plain value of its representation | yes, as the representation  | yes, as the representation (the order declaration is not consulted) | yes                         |
+| a concept value beside a plain value of another dimension  | `dimension.mismatch`        | `dimension.mismatch`                                                | —                           |
+
+The order declaration answers one question — may two values of _this concept_ be
+put in order — and nothing else. A plain value beside a concept is the
+designer's own statement about the representation; `min`/`max`/`clamp` then
+produce the plain representation, re-wrapped only by a mapping whose declared
+result is that concept. The one asymmetry this leaves — `min(o1, o2)` refused
+while `Opacity` is unordered, `min(o1, 0.5)` accepted — is the rule itself, and
+Explain shows the observation (`rep o1`) that was made.
 
 ## 3. The equations
 
@@ -194,11 +221,14 @@ library's `map`, `filter` and `append` are linear. Generated Rust represents a
 collection as a `Vec` behind the runtime's `collections` feature (an allocator
 on the target — ADR-0024; the manifest says `requires_allocator`) and a grouped
 value as a tuple; `docs/architecture/codegen-rust.md` has the correspondence and
-the known cost of `filter` there (ISS-0013). Collections and grouped values in
-`delay`/`sync` follow the existing rules unchanged — a transported collection is
-the source's collection at its last activation strictly before now — which is
-what lets the Phase-9a lossless buffer be written as five ordinary declarations
-(`docs/spec/runtime-semantics.md`).
+the cost discipline (`map`, `filter`, `append` linear; `zip` quadratic,
+ISS-0013). How large a collection can get, what a cross-domain window needs and
+what a bounded-memory target refuses is `docs/spec/deployment-capacity.md` — a
+validation obligation, never a property of a list value. Collections and grouped
+values in `delay`/`sync` follow the existing rules unchanged — a transported
+collection is the source's collection at its last activation strictly before now
+— which is what lets the Phase-9a lossless buffer be written as five ordinary
+declarations (`docs/spec/runtime-semantics.md`).
 
 ## 7. What is deliberately absent
 

@@ -15,13 +15,13 @@ nothing here has a status column.
 
 ## Priorities
 
-| #   | Outcome                                                                                                           | Waits on                                                                                                  | Records            |
-| --- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------ |
-| 1   | First embedded platform adapter (Embassy): target I/O, clock activation, the numeric policy on device             | the generated `no_std` core (exists); ISS-0006 (`f32` on device)                                          | ADR-0004, ADR-0016 |
-| 2   | Build orchestration in `bdld`: `cargo check` / build of the generated crate with structured progress and failures | priority 1                                                                                                | —                  |
-| 3   | Flash through `probe-rs`                                                                                          | priority 2; board files (`hardware/boards/`), an RP2040 board file, runtime loading of `hardware/boards/` | ADR-0015           |
-| 4   | Telemetry back into Studio and the Monitor page (today a placeholder)                                             | priority 3; a stable identity manifest (`bdl-manifest.json`)                                              | —                  |
-| 5   | Second embedded target (ESP32-S3) to prove HAL independence                                                       | priority 1                                                                                                | —                  |
+| #   | Outcome                                                                                                                                                                                                                     | Waits on                                                                                                                              | Records                      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 1   | First embedded platform adapter (Embassy): target I/O, clock activation, the numeric policy on device, a global allocator over an arena sized from the manifest's `collections` bounds, the most it supplies per list input | the generated `no_std` core (exists); the collections report (exists, `docs/spec/deployment-capacity.md`); ISS-0006 (`f32` on device) | ADR-0004, ADR-0016, ADR-0027 |
+| 2   | Build orchestration in `bdld`: `cargo check` / build of the generated crate with structured progress and failures                                                                                                           | priority 1                                                                                                                            | —                            |
+| 3   | Flash through `probe-rs`                                                                                                                                                                                                    | priority 2; board files (`hardware/boards/`), an RP2040 board file, runtime loading of `hardware/boards/`                             | ADR-0015                     |
+| 4   | Telemetry back into Studio and the Monitor page (today a placeholder)                                                                                                                                                       | priority 3; a stable identity manifest (`bdl-manifest.json`)                                                                          | —                            |
+| 5   | Second embedded target (ESP32-S3) to prove HAL independence                                                                                                                                                                 | priority 1                                                                                                                            | —                            |
 
 ## Language and toolchain
 
@@ -29,12 +29,15 @@ Not ordered against the priorities above; each moves when a concrete need or a
 formal result arrives.
 
 - Cross-domain occurrence windows: a surface form for the window the design can
-  already write (ISS-0001); capacity validation for collections (ISS-0011).
-- The equation language's remaining edges: the mixed concept-beside-value
-  comparison (ISS-0012); `filter`'s cost in the generated core (ISS-0013); hover
-  on an equation's name (completion carries its meaning today); record syntax
-  lowering to nested grouped values, `forall`/`exists` sugar — only if a case
-  asks.
+  already write, bounded (ISS-0001) — with it, a compiler-recognised bounded
+  transport becomes possible (ADR-0027's rejected ring buffer).
+- The equation language's remaining edges: `zip`'s cost in the generated core
+  (ISS-0013); hover on an equation's name (completion carries its meaning
+  today); record syntax lowering to nested grouped values, `forall`/`exists`
+  sugar — only if a case asks.
+- Studio: the collections report (readiness, byte bounds, window requirements)
+  on the Deploy page, and the schedule as deployment data there — today
+  `bdld compile --period` only.
 - User-defined enums — ISS-0005; affine units — ISS-0004; temporal modifiers and
   contexts — ISS-0010: each starts as a proposal.
 - Studio gaps listed in `docs/architecture/studio-compiler-integration.md` §3

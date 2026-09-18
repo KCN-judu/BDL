@@ -141,7 +141,10 @@ written as five ordinary declarations (`log @src := cons x (delay [] log)`,
 `window := reverse (take (seen − cursor) logD)`; corpus case `buffer`): no
 buffer primitive, no scheduler order, no same-tick visibility, no implicit
 overflow. Capacity — that no window exceeds what a deployment can hold — is a
-validation obligation the toolchain does not compute yet (ISS-0011).
+validation obligation, computed on the lowered plan and the deployment schedule
+and never a change to these rules (`docs/spec/deployment-capacity.md`,
+ADR-0027); the deployable form bounds the log with `take cap` and keeps the
+count apart.
 
 `fold f z [x₁, …, xₙ] = f x₁ (… (f xₙ z))` is finite iteration from the last
 element: one application of `f` per element, no frame per element, and it is the

@@ -77,7 +77,7 @@ a (design, target) pair, and neither is a rung a single mapping can climb.
 
 ```text
 compile(&ProjectSnapshot, &CompileOptions) -> CompileArtifact
-    { analysis, exec_ir?, generated?: GeneratedCrate { files, manifest }, diagnostics }
+    { analysis, exec_ir?, generated?: GeneratedCrate { files, manifest }, collections?, diagnostics }
 ```
 
 runs `analyze`, then passes 15–17: readiness on the authoritative analysis
@@ -89,6 +89,16 @@ firmware-oriented artefacts. The result is deterministic byte for byte;
 and is proven against the reference evaluator by differential tests
 (`docs/architecture/codegen-rust.md`); deployment feasibility is not a readiness
 condition here.
+
+Collections are the one deployment fact decided in `compile`, because they are
+decided on the lowered plan: `bdl-compiler::collections` computes the
+`CollectionsReport` (readiness `scalar_only` / `bounded` / `input_bounded` /
+`unbounded`, per-cell and per-tick byte bounds, the required capacity of every
+list-carrying crossing under `CompileOptions::schedule`) and its `deployment.*`
+diagnostics; under `CompileOptions::memory = MemoryPolicy::Bounded` an unbounded
+remembered collection is an error and no artefact is generated
+(docs/spec/deployment-capacity.md;
+`bdld compile --bounded-memory --period domain=N`).
 
 ### Deployment is a second function
 
@@ -146,6 +156,9 @@ exposes it as `AnalyzeDeployment { target_id }` and lists targets with
 | `backend.not_ready` (one, listing every unmet condition)                                                                                                                                                                                                                                                                                                                                                        | readiness                                       | error (project)                                                                     |
 | `backend.unsupported_higher_order` (a relationship as a value, a partial application, a function-typed input)                                                                                                                                                                                                                                                                                                   | lowering                                        | error (on the mapping)                                                              |
 | `backend.internal_lowering` (an invariant analysis should have established is missing; a compiler bug)                                                                                                                                                                                                                                                                                                          | lowering / codegen                              | error                                                                               |
+| `deployment.unbounded_list_state` (a remembered collection the design grows without bound)                                                                                                                                                                                                                                                                                                                      | collections (on the lowered plan)               | warning on a host; error under `MemoryPolicy::Bounded` (on the mapping)             |
+| `deployment.list_input_unbounded` (an unresolved declaration of list type: the platform bounds it)                                                                                                                                                                                                                                                                                                              | collections                                     | warning, under `MemoryPolicy::Bounded` only                                         |
+| `deployment.window_capacity` (a synced list keeps fewer values than the crossing produces under the schedule)                                                                                                                                                                                                                                                                                                   | collections, with `CompileOptions::schedule`    | warning (on the mapping)                                                            |
 | `type.argument_mismatch` · `type.expected_function` · `type.rep_of_non_semantic` · `type.temporal_*` · `type.unbound_variable` · `type.unknown_declaration`                                                                                                                                                                                                                                                     | check                                           | error                                                                               |
 
 ## Incremental invalidation

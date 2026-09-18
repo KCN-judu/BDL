@@ -1,10 +1,10 @@
 ---
 id: ISS-0012
-state: open
+state: resolved
 area: language
 opened: 2026-09-18
-resolved-by: []
-related: ["ADR-0025", "ADR-0013"]
+resolved-by: ["ADR-0026"]
+related: ["ADR-0025", "ADR-0013", "ADR-0026"]
 ---
 
 # ISS-0012: A concept beside a plain value compares by representation, whatever the concept's order declaration
@@ -43,4 +43,12 @@ before `tilt < 10 deg` is legal, which every existing design writes.
 
 ## Resolution
 
-Open.
+Resolved by ADR-0026 (2026-09-18): the mixed case stays a representation
+comparison by design — the order declaration answers exactly one question, may
+two values of this concept be put in order — and the full matrix (same concept
+ordered/unordered, different concepts, a concept beside its plain
+representation, over Brightness, Opacity, Temperature, Mode) is the test
+`mixed_comparisons_over_overlapping_representations` in
+`crates/bdl-elab/tests/equations.rs`. The audit found no ambiguous case: every
+pairing has one answer, and the one asymmetry (`min(o1, o2)` refused,
+`min(o1, 0.5)` observed) is the rule itself.

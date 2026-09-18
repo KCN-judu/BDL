@@ -894,8 +894,9 @@ lower to the existing Core.
   chain, §5.1) that is the equation `contains(x, xs)`.
 - **Ordered concept** `ordered concept Brightness : Scalar` — the designer
   declares that two values of the concept can be put in order; only a quantity
-  value form carries it. Every other concept's values compare for equality only.
-  `ordered` is a keyword.
+  value form carries it: `ordered concept Mode : Count` is a load fault
+  (`text.order_needs_quantity`) and the concept is loaded unordered. Every other
+  concept's values compare for equality only. `ordered` is a keyword.
 - **Value forms** in `concept C : …`: `List<R>`, `Pair<R₁, R₂>`, `Option<R>`
   over value forms (`Bool`, `Count`, a quantity name, or one of these);
   `text.unknown_representation` names the shape otherwise.

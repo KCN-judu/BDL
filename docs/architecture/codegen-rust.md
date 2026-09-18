@@ -39,24 +39,25 @@ require it later.
 
 Not a proof — the correspondence the differential tests check.
 
-| Reference evaluator (`bdl-reactive::eval`)                                    | Executable IR                                         | Generated Rust                                                                                                                              |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Expr::DeclRef d` → `decl_value(d)` (memoised)                                | `ReadDecl i`                                          | `read_decl(&decl_n, n)?` — a `let decl_n: Option<T>` bound earlier in `step`, cloned out                                                    |
-| unresolved declaration → `input.values[d]` or `MissingInput`                  | `DeclKind::Input { slot }`                            | `Inputs.decl_n: Option<T>`; `read_input(&inputs.decl_n, n)?` when due                                                                       |
-| `evaluated_this_tick`: domain active, or agnostic and anything active         | `Activation` + `has_domains`                          | `if active.is_active(CLOCK_k) { Some(…) } else { None }` / `prim::or(active.any(), !HAS_DOMAINS)`                                           |
-| `Expr::Delay/Sync` read: `prev.cells[(d,path)]` else `init`                   | `ReadCell { slot, init }`                             | `match &prev.cell_k { Some(v) => v.clone(), None => init }`                                                                                 |
-| write phase: `temporal_sites` whose writer is active → `next[(d,path)] = e`   | `CellPlan { writer, operand }` in `StateCellId` order | `if active.is_active(CLOCK_w) { next.cell_k = Some(operand); }`                                                                             |
-| `TickOutcome.next` replaces state after the tick                              | —                                                     | `state.cells = next` after the write phase; on `Err` untouched                                                                              |
-| `Expr::Mk s e` / `Expr::Rep e`                                                | `Wrap` / `Unwrap`                                     | `SemN(e)` / `e.0` — `pub struct SemN(pub Repr)` per concept                                                                                 |
-| `apply_prim` (strict, finite-checked)                                         | `Prim { op, args }`                                   | `num::add/sub/mul/div(a, b, decl)?`, `(a < b)`, `(a == b)`, `(!a)`, `prim::and/or/ite/get_d`, `Some(x)`, `x.is_some()`, `Option::<T>::None` |
-| `Expr::Lam` / `Expr::App`                                                     | inlined: `Let`                                        | `{ let l0 = …; body }`                                                                                                                      |
-| `Expr::Fold f z l` (finite iteration from the last element)                   | `Fold { elem, acc, step, init, list }`                | `list::fold(xs, init, \|l1, l2\| Ok(step))?` — one closure per recursor, applied by the runtime, never a closure value                      |
-| `nil`/`cons`/`length`/`take`/`drop`/`reverse`/`head`/`toList`                 | `PrimOp::{Nil, Cons, …}`                              | `list::nil::<T>()`, `list::cons(x, xs)`, `list::length(xs)`, … (`runtime/bdl-runtime-core`, feature `collections`)                          |
-| `pair`/`fst`/`snd`; `Value::Pair`                                             | `PrimOp::{Pair, Fst, Snd}`                            | `(a, b)`, `p.0`, `p.1`                                                                                                                      |
-| `Prim::Eq { ty }` (`Value::structurally_equal`)                               | `PrimOp::Eq`                                          | `(a == b)` — `PartialEq` on `f64`, `bool`, `u64`, `SemN`, `Option`, `Vec`, tuples is the same elementwise equality                          |
-| `ClockId` (nominal)                                                           | `ClockSlot` (dense)                                   | `pub const CLOCK_k: ClockSlot`; `ActiveDomains` bitset                                                                                      |
-| `output_values(sample, valid_bindings)`                                       | `OutputPlan { driver }`                               | `Outputs.output_n = decl_driver.clone()`, built after the write phase                                                                       |
-| `RuntimeError::{MissingInput, DivisionByZero, NonFinite}` with `decl`, `tick` | same                                                  | `bdl_runtime_core::RuntimeError` with `decl` (raw `DeclId`); the host adds the tick                                                         |
+| Reference evaluator (`bdl-reactive::eval`)                                    | Executable IR                                         | Generated Rust                                                                                                                                                                             |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Expr::DeclRef d` → `decl_value(d)` (memoised)                                | `ReadDecl i`                                          | `read_decl(&decl_n, n)?` — a `let decl_n: Option<T>` bound earlier in `step`, cloned out; `read_decl_ref(&decl_n, n)?` where a borrow suffices                                             |
+| unresolved declaration → `input.values[d]` or `MissingInput`                  | `DeclKind::Input { slot }`                            | `Inputs.decl_n: Option<T>`; `read_input(&inputs.decl_n, n)?` when due                                                                                                                      |
+| `evaluated_this_tick`: domain active, or agnostic and anything active         | `Activation` + `has_domains`                          | `if active.is_active(CLOCK_k) { Some(…) } else { None }` / `prim::or(active.any(), !HAS_DOMAINS)`                                                                                          |
+| `Expr::Delay/Sync` read: `prev.cells[(d,path)]` else `init`                   | `ReadCell { slot, init }`                             | `match &prev.cell_k { Some(v) => v.clone(), None => init }`                                                                                                                                |
+| write phase: `temporal_sites` whose writer is active → `next[(d,path)] = e`   | `CellPlan { writer, operand }` in `StateCellId` order | `let write_k: Option<T> = if active.is_active(CLOCK_w) { Some(operand) } else { None };` — every operand before any commit                                                                 |
+| `TickOutcome.next` replaces state after the tick                              | —                                                     | commit: `if write_k.is_some() { state.cells.cell_k = write_k; }` per cell; unchanged cells are never copied; on `Err` untouched                                                            |
+| `Expr::Mk s e` / `Expr::Rep e`                                                | `Wrap` / `Unwrap`                                     | `SemN(e)` / `e.0` — `pub struct SemN(pub Repr)` per concept                                                                                                                                |
+| `apply_prim` (strict, finite-checked)                                         | `Prim { op, args }`                                   | `num::add/sub/mul/div(a, b, decl)?`, `(&a < &b)`, `(&a == &b)`, `(!a)`, `prim::and/or/ite/get_d`, `Some(x)`, `x.is_some()`, `Option::<T>::None`                                            |
+| `ite c x y` with `x`, `y` total (nothing in them can fail)                    | `Prim { Ite }` (still strict)                         | `if c { x } else { y }` — observationally the strict `ite`, without building both branches                                                                                                 |
+| `Expr::Lam` / `Expr::App`                                                     | inlined: `Let`                                        | `{ let l0 = …; body }`; a local referenced once in its own scope is moved, any other reference is `.clone()`                                                                               |
+| `Expr::Fold f z l` (finite iteration from the last element)                   | `Fold { elem, acc, step, init, list }`                | `list::fold(xs, init, \|l1, l2\| Ok(step))?` — one closure per recursor, applied by the runtime, never a closure value                                                                     |
+| `nil`/`cons`/`length`/`take`/`drop`/`reverse`/`head`/`toList`                 | `PrimOp::{Nil, Cons, …}`                              | `list::nil::<T>()`, `list::cons(x, xs)`, `list::length_of(&xs)`, `list::head_of(&xs)`, `list::take_of(k, &xs)`, `list::drop(k, xs)`, … (`runtime/bdl-runtime-core`, feature `collections`) |
+| `pair`/`fst`/`snd`; `Value::Pair`                                             | `PrimOp::{Pair, Fst, Snd}`                            | `(a, b)`, `p.0`, `p.1`                                                                                                                                                                     |
+| `Prim::Eq { ty }` (`Value::structurally_equal`)                               | `PrimOp::Eq`                                          | `(a == b)` — `PartialEq` on `f64`, `bool`, `u64`, `SemN`, `Option`, `Vec`, tuples is the same elementwise equality                                                                         |
+| `ClockId` (nominal)                                                           | `ClockSlot` (dense)                                   | `pub const CLOCK_k: ClockSlot`; `ActiveDomains` bitset                                                                                                                                     |
+| `output_values(sample, valid_bindings)`                                       | `OutputPlan { driver }`                               | `Outputs.output_n = decl_driver.clone()`, built after the write phase                                                                                                                      |
+| `RuntimeError::{MissingInput, DivisionByZero, NonFinite}` with `decl`, `tick` | same                                                  | `bdl_runtime_core::RuntimeError` with `decl` (raw `DeclId`); the host adds the tick                                                                                                        |
 
 The runtime vocabulary — `ActiveDomains`, `ClockSlot`, `RuntimeError`, the
 checked numerics and the strict primitive helpers — lives in
@@ -72,9 +73,43 @@ consumes from the front, so the library's `map`, `filter` and `append` — folds
 that `cons` onto the accumulator — stay linear; `==` is elementwise as in the
 list's order; `take`/`drop`/`head`/`reverse` translate accordingly. The host
 bridge reverses at the boundary (`list::from_ordered`, `into_ordered`); nothing
-inside the core observes the storage order. One known cost remains: `filter`
-copies its accumulator once per element because `ite` is strict and both
-branches are built (ISS-0013).
+inside the core observes the storage order — the audit
+`runtime/bdl-runtime-core/tests/lists.rs` compares every operator, the library's
+folds and equality against a list-order model on generated lists.
+
+### Cost discipline
+
+What the emitter guarantees about copies, so a bounded design has a bounded,
+predictable cost per tick (docs/spec/deployment-capacity.md §6):
+
+- **Moves, not clones.** A use analysis per expression tree counts the
+  references to each local, the two branches of a lazy `if` counting once as the
+  larger; a local referenced once in the scope that binds it is moved, any other
+  reference clones, and a local captured by a fold's closure is always cloned
+  (the closure runs per element). A fold step that `cons`es onto its accumulator
+  therefore moves it: `map`, `filter`, `append`, `sum`, `any`, `all`, `contains`
+  clone nothing per element (tested with a clone-counting element in
+  `tests/lists.rs`; measured on the generated core at 2 000 → 32 000 elements:
+  ×15, docs/evidence/testing.md).
+- **A total conditional is lazy.** A strict `ite` both of whose branches cannot
+  fail (no arithmetic, no declaration read, transitively) is emitted as a Rust
+  `if`: the reference evaluates both branches, but with nothing that can fail in
+  either, choosing first is not observable; a branch that can fail keeps
+  `prim::ite` and its strictness (corpus `ite_strictness`).
+- **Borrowed reads.** `length`, `head`, `take`, `==` and `<` take their operands
+  by reference — a local as `&l`, a declaration through `read_decl_ref` — so a
+  list read for its size, first element, prefix or comparison is never copied.
+- **Commit-only writes.** A tick clones no cell it does not read: the write
+  phase evaluates every active writer's operand into a local, the commit moves
+  those into the state, and unchanged cells are untouched. Reading a cell
+  (`ReadCell`) still clones it into the declaration's value — the value is
+  observable in `Tick.values` — as does `read_decl` where an owned value is
+  needed.
+
+What remains: `zip` clones its accumulator pair per element, because the pair's
+`rest` is used twice in one step (ISS-0013); `read_decl` and `ReadCell` clone
+where an owned value is consumed; no fusion of `map → filter` chains — each is
+linear and measured, and a fused emission was not justified by the numbers.
 
 ## The generated core
 
@@ -95,12 +130,16 @@ pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result
 A program without lists is `Copy`, statically sized, and laid out by the
 compiler: no graph, no map, no allocation, no traversal at runtime. A program
 with lists derives `Clone` instead of `Copy` on its records and concepts, starts
-with `extern crate alloc;`, and reads declarations and cells by clone (the same
-generated code either way). Symbols derive from stable ids (`decl_17`, `Sem3`,
-`cell_0`, `output_4`, `CLOCK_2`), never from display names, which appear in
-comments and the manifest only. Types: `q d` → `f64` (the dimension is static;
-it is in the manifest), `bool`, `nat` → `u64`, `sem s` → `SemN`, `opt τ` →
-`Option<T>`, `list τ` → `Vec<T>` (last element first), `τ × σ` → `(T, S)`; a
+with `extern crate alloc;`, and reads declarations and cells by clone where an
+owned value is consumed (the same generated code either way). Its manifest
+carries a `collections` entry — per cell the bound of its outermost list
+(`finite`/`input`/`unbounded`), the list-typed input slots, `state_bytes_max`,
+`tick_bytes_max`, `unbounded` — computed by `bdl-exec-ir::bounds`
+(docs/spec/deployment-capacity.md). Symbols derive from stable ids (`decl_17`,
+`Sem3`, `cell_0`, `output_4`, `CLOCK_2`), never from display names, which appear
+in comments and the manifest only. Types: `q d` → `f64` (the dimension is
+static; it is in the manifest), `bool`, `nat` → `u64`, `sem s` → `SemN`, `opt τ`
+→ `Option<T>`, `list τ` → `Vec<T>` (last element first), `τ × σ` → `(T, S)`; a
 function type has no runtime representation (its declaration is inlined; a rule
 given to an equation is inlined into the fold's closure).
 
@@ -211,7 +250,9 @@ constant is the same `f64` the elaborator produced.
 | buffer        | 115        | 10061       | 64                   | 7     | 57458           |
 
 (`collections` and `buffer` — the list, pair and fold cases — allocate; their
-timings are of a debug build with `Vec` clones on every declaration read.)
+timings are of a debug build, recorded before the moved-local emission.) The
+per-operation scaling of the generated core is in docs/evidence/testing.md
+§Collections cost (`collections_cost_measurement`, ignored by default).
 
 (`every_corpus_case_agrees_with_the_reference -- --nocapture` prints the current
 numbers.) Timings are of a debug build and include the closure of
@@ -219,10 +260,10 @@ numbers.) Timings are of a debug build and include the closure of
 
 ## What is deliberately not here
 
-No optimisation (CSE, fusion, inlining beyond what removes binders,
-reassociation). No supplied components — the architecture leaves the
-`BdlPureComponent<I, O>` boundary open, and generated semantic code will never
-call a HAL through it. No platform adapter: the Nano allocation and any
-`DeploymentAnalysis` stay out of the semantic core by construction
-(`bdl-codegen-rust` does not depend on `bdl-hardware`). The reference evaluator
-is not replaced by generated code; it stays the oracle.
+No optimisation beyond the cost discipline above (no CSE, fusion, inlining
+beyond what removes binders, reassociation). No supplied components — the
+architecture leaves the `BdlPureComponent<I, O>` boundary open, and generated
+semantic code will never call a HAL through it. No platform adapter: the Nano
+allocation and any `DeploymentAnalysis` stay out of the semantic core by
+construction (`bdl-codegen-rust` does not depend on `bdl-hardware`). The
+reference evaluator is not replaced by generated code; it stays the oracle.
