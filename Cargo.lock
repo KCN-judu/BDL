@@ -225,6 +225,7 @@ dependencies = [
  "bdl-syntax",
  "bdl-system",
  "bdl-text",
+ "proptest",
  "serde",
  "thiserror",
 ]
