@@ -186,10 +186,26 @@ pub struct Concept {
     /// compared with `<`, `min`, `max`, `clamp`, `inRange` — through the
     /// quantity that represents them.  Never inferred from the
     /// representation (a `Mode` encoded as a number has no order); the
-    /// formal `OrdDecl` (Phase 9c).  Meaningful only with a quantity
-    /// representation; equality needs no declaration.
+    /// formal `OrdDecl` (Phase 9c).  Invariant: `ordered` only while the
+    /// representation [`Representation::supports_order`] — every edit
+    /// keeps it (`EditError::OrderNeedsQuantity`), the text loader reports
+    /// and drops a declaration that breaks it.  Equality needs no
+    /// declaration.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub ordered: bool,
+}
+
+impl Concept {
+    /// The order invariant: an ordered concept is represented by a
+    /// quantity (FV `Ty.ordB`: `.sem s` is ordered iff declared *and*
+    /// `Θ s = .q _`).
+    pub fn order_is_valid(&self) -> bool {
+        !self.ordered
+            || self
+                .representation
+                .as_ref()
+                .is_some_and(Representation::supports_order)
+    }
 }
 
 /// What a concept is represented by.  Must be a semantic-free *data* type
@@ -234,6 +250,12 @@ impl Representation {
             first: Box::new(first),
             second: Box::new(second),
         }
+    }
+    /// Whether values of this form have a designer-meaningful order to
+    /// declare: quantities only — never counts, truth values, options,
+    /// collections or grouped values (FV `Ty.ordB`).
+    pub fn supports_order(&self) -> bool {
+        matches!(self, Representation::Quantity { .. })
     }
     /// The quantity dimension when the representation is a plain quantity.
     pub fn as_quantity(&self) -> Option<Dim> {

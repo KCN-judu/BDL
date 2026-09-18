@@ -724,6 +724,31 @@ climate() = (getOrElse(head(temps), 0 K), length(temps))
             .any(|f| f.code() == "text.unknown_representation"
                 && f.message().contains("List<Scalar>"))
     );
+    // an order declared over a value form without one is reported and
+    // dropped: the model never holds an order nothing can compare by
+    let bad = load_workspace(
+        "eq",
+        &files(&[(
+            "src/main.bdl",
+            "ordered concept Mode : Count
+ordered concept Held : Bool
+ordered concept Tilt : Angle
+",
+        )]),
+        &IdentityTable::default(),
+    );
+    let faults: Vec<_> = bad
+        .faults
+        .iter()
+        .filter(|f| f.code() == "text.order_needs_quantity")
+        .map(|f| f.message().to_owned())
+        .collect();
+    assert_eq!(faults.len(), 2, "{faults:?}");
+    assert!(faults[0].starts_with("Mode is declared ordered, but only a quantity value form"));
+    for c in bad.system.base.concepts.values() {
+        assert!(c.order_is_valid(), "{}", c.name);
+        assert_eq!(c.ordered, c.name == "Tilt");
+    }
 }
 
 /// Loading stays proportional to the source: a project of many files

@@ -41,14 +41,18 @@ pub enum EditOp {
         description: String,
     },
     /// Bind (write-once) or rebind a concept's representation.  Binding an
-    /// unbound concept is a refinement; rebinding is an edit.
+    /// unbound concept is a refinement; rebinding is an edit.  Refused
+    /// while the concept is declared ordered and the new representation
+    /// is not a quantity (`EditError::OrderNeedsQuantity`): undeclare the
+    /// order first.
     SetConceptRepresentation {
         id: SemanticId,
         representation: Option<Representation>,
     },
     /// Declare or undeclare the concept ordered (`Concept::ordered`).  An
     /// edit, not a refinement: a formula that compares two values of the
-    /// concept types only while it is ordered.
+    /// concept types only while it is ordered.  Refused unless the
+    /// representation is a quantity (`EditError::OrderNeedsQuantity`).
     SetConceptOrdered {
         id: SemanticId,
         ordered: bool,
@@ -263,6 +267,8 @@ pub enum EditError {
     UnknownConcept { id: SemanticId },
     #[error("unknown mapping {id}")]
     UnknownMapping { id: DeclId },
+    #[error("concept {id} can only be ordered while its value form is a quantity; clear the order before choosing another value form")]
+    OrderNeedsQuantity { id: SemanticId },
     #[error("concept {id} is still used by {} mapping(s)", used_by.len())]
     ConceptInUse {
         id: SemanticId,
@@ -345,6 +351,13 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
         }
         EditOp::SetConceptRepresentation { id, representation } => {
             let concept = concept_mut(&mut design, *id)?;
+            if concept.ordered
+                && !representation
+                    .as_ref()
+                    .is_some_and(Representation::supports_order)
+            {
+                return Err(EditError::OrderNeedsQuantity { id: *id });
+            }
             let was_bound = concept.representation.is_some();
             concept.representation = representation.clone();
             if was_bound {
@@ -360,6 +373,14 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
         }
         EditOp::SetConceptOrdered { id, ordered } => {
             let concept = concept_mut(&mut design, *id)?;
+            if *ordered
+                && !concept
+                    .representation
+                    .as_ref()
+                    .is_some_and(Representation::supports_order)
+            {
+                return Err(EditError::OrderNeedsQuantity { id: *id });
+            }
             if concept.ordered == *ordered {
                 EditOutcome::refinement()
             } else {
@@ -821,6 +842,67 @@ mod tests {
         assert_eq!(s1.design.concepts[&tilt].name, "Tilt");
         // input untouched
         assert!(s0.design.concepts.is_empty());
+    }
+
+    /// The order invariant (`Concept::order_is_valid`): no edit leaves a
+    /// concept ordered over a value form that has no order.
+    #[test]
+    fn an_order_declaration_needs_a_quantity_and_keeps_it() {
+        let (s, mode) = create_concept(&empty(), "Mode");
+        let set = |s: &ProjectSnapshot, r: Option<Representation>| {
+            apply_edit(
+                s,
+                &EditOp::SetConceptRepresentation {
+                    id: mode,
+                    representation: r,
+                },
+            )
+        };
+        let order = |s: &ProjectSnapshot, ordered: bool| {
+            apply_edit(s, &EditOp::SetConceptOrdered { id: mode, ordered })
+        };
+        // unbound: cannot be ordered
+        assert_eq!(
+            order(&s, true).unwrap_err(),
+            EditError::OrderNeedsQuantity { id: mode }
+        );
+        // a count, a truth value, a collection: no order to declare
+        for r in [
+            Representation::Count,
+            Representation::Boolean,
+            Representation::list(Representation::quantity(crate::Dim::ZERO)),
+        ] {
+            let s = set(&s, Some(r)).unwrap().snapshot;
+            assert_eq!(
+                order(&s, true).unwrap_err(),
+                EditError::OrderNeedsQuantity { id: mode }
+            );
+            // undeclaring is always fine
+            assert!(order(&s, false).is_ok());
+        }
+        // a quantity: ordered, and the representation may then only
+        // change to another quantity
+        let s = set(&s, Some(Representation::quantity(crate::Dim::ZERO)))
+            .unwrap()
+            .snapshot;
+        let s = order(&s, true).unwrap().snapshot;
+        assert!(s.design.concepts[&mode].ordered);
+        assert!(s.design.concepts[&mode].order_is_valid());
+        assert_eq!(
+            set(&s, Some(Representation::Count)).unwrap_err(),
+            EditError::OrderNeedsQuantity { id: mode }
+        );
+        assert_eq!(
+            set(&s, None).unwrap_err(),
+            EditError::OrderNeedsQuantity { id: mode }
+        );
+        let s = set(&s, Some(Representation::quantity(crate::Dim::TIME)))
+            .unwrap()
+            .snapshot;
+        assert!(s.design.concepts[&mode].ordered);
+        // undeclare, then any form again
+        let s = order(&s, false).unwrap().snapshot;
+        assert!(set(&s, Some(Representation::Count)).is_ok());
     }
 
     #[test]

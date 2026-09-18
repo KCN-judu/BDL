@@ -514,6 +514,7 @@ pub fn edit_error_to_pb(e: &EditError) -> pb::Error {
         EditError::DuplicateMappingName { .. } => "edit.duplicate_mapping_name",
         EditError::UnknownConcept { .. } => "edit.unknown_concept",
         EditError::UnknownMapping { .. } => "edit.unknown_mapping",
+        EditError::OrderNeedsQuantity { .. } => "edit.order_needs_quantity",
         EditError::ConceptInUse { .. } => "edit.concept_in_use",
         EditError::AlreadyDefined { .. } => "edit.already_defined",
         EditError::NotDefined { .. } => "edit.not_defined",

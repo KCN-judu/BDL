@@ -361,6 +361,8 @@ impl<'a> Builder<'a> {
                     }
                     let id = SemanticId::from_raw(self.id(&key));
                     let repr = self.representation(file, c.representation.as_ref());
+                    let ordered =
+                        self.ordered(file, c.span, &c.name.name, c.ordered, repr.as_ref());
                     self.system.base.concepts.insert(
                         id,
                         Concept {
@@ -368,7 +370,7 @@ impl<'a> Builder<'a> {
                             name: c.name.name.clone(),
                             description: String::new(),
                             representation: repr,
-                            ordered: c.ordered,
+                            ordered,
                         },
                     );
                     self.base.concepts.insert(c.name.name.clone(), id);
@@ -742,6 +744,35 @@ impl<'a> Builder<'a> {
         }
     }
 
+    /// The order invariant of the model (`Concept::order_is_valid`): an
+    /// `ordered concept` needs a quantity value form.  Anything else is
+    /// reported and loaded unordered, so the model never holds an order
+    /// nothing can compare by.
+    fn ordered(
+        &mut self,
+        file: usize,
+        span: Span,
+        name: &str,
+        declared: bool,
+        repr: Option<&Representation>,
+    ) -> bool {
+        if !declared {
+            return false;
+        }
+        if repr.is_some_and(Representation::supports_order) {
+            return true;
+        }
+        self.fault(
+            file,
+            span,
+            "text.order_needs_quantity",
+            format!(
+                "{name} is declared ordered, but only a quantity value form has an order to declare; it is loaded without one."
+            ),
+        );
+        false
+    }
+
     fn top_concept(&mut self, file: usize, t: &SurfaceType) -> Option<SemanticId> {
         let name = single_name(t);
         match name.and_then(|n| self.base.concepts.get(n).copied()) {
@@ -983,6 +1014,8 @@ impl<'a> Builder<'a> {
                     }
                     let id = SemanticId::from_raw(self.id(&key));
                     let repr = self.representation(file, x.representation.as_ref());
+                    let ordered =
+                        self.ordered(file, x.span, &x.name.name, x.ordered, repr.as_ref());
                     body.concepts.insert(
                         id,
                         Concept {
@@ -990,7 +1023,7 @@ impl<'a> Builder<'a> {
                             name: x.name.name.clone(),
                             description: String::new(),
                             representation: repr,
-                            ordered: x.ordered,
+                            ordered,
                         },
                     );
                     names.concepts.insert(x.name.name.clone(), id);

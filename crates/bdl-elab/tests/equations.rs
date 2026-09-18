@@ -673,3 +673,235 @@ fn a_large_collection_folds_maps_filters_and_appends_in_linear_time() {
         "{elapsed:?}: pathological collection behaviour"
     );
 }
+
+// ---- ISS-0012 audit: every mixed comparison over overlapping representations ----
+
+/// Brightness (ordered) and Opacity (not) are both dimensionless
+/// quantities, Temperature is a kelvin quantity, Mode a count: the
+/// representations overlap, the concepts never do.  Every pairing of the
+/// comparison forms is pinned here so the mixed-comparison rule of
+/// `docs/spec/equation-library.md` §Mixed comparisons is a tested fact:
+///
+/// * two values of one concept: `==` always; `<`, `min`, `max`, `clamp`
+///   only while the concept is declared ordered; `minBy` always;
+/// * two different concepts: never, whatever the representations;
+/// * a concept beside a plain value of its representation: the concept
+///   is observed and the comparison is the representation's — the
+///   order declaration is not consulted (ADR-0013, the arithmetic rule),
+///   and the result of `min`/`max`/`clamp` is the plain representation,
+///   re-wrapped only by a mapping whose result is that concept.
+#[test]
+fn mixed_comparisons_over_overlapping_representations() {
+    let mut f = Fixture::new();
+    let b1 = f.mapping("b1", &[], "Brightness", None);
+    let b2 = f.mapping("b2", &[], "Brightness", None);
+    let o1 = f.mapping("o1", &[], "Opacity", None);
+    let o2 = f.mapping("o2", &[], "Opacity", None);
+    let t1 = f.mapping("t1", &[], "Temperature", None);
+    let m1 = f.mapping("m1", &[], "Mode", None);
+    let m2 = f.mapping("m2", &[], "Mode", None);
+    let inputs = [
+        (b1, sem(&f, "Brightness", q(0.7))),
+        (b2, sem(&f, "Brightness", q(0.4))),
+        (o1, sem(&f, "Opacity", q(0.7))),
+        (o2, sem(&f, "Opacity", q(0.2))),
+        (t1, sem(&f, "Temperature", k(300.0))),
+        (m1, sem(&f, "Mode", q(2.0))),
+        (m2, sem(&f, "Mode", q(1.0))),
+    ];
+    // ---- same concept ----
+    let table: &[(&str, &str, &str, Option<&str>)] = &[
+        // ordered Brightness: everything
+        ("bEq", "Held", "b1 == b2", None),
+        ("bLt", "Held", "b1 < b2", None),
+        ("bMin", "Brightness", "min(b1, b2)", None),
+        ("bMax", "Brightness", "max(b1, b2)", None),
+        ("bClamp", "Brightness", "clamp(b1, b2, b2)", None),
+        (
+            "bMinBy",
+            "Brightness",
+            "minBy(b1, b2, (x, y) => x == b2)",
+            None,
+        ),
+        // unordered Opacity: equality and the comparator only
+        ("oEq", "Held", "o1 == o2", None),
+        ("oLt", "Held", "o1 < o2", Some("semantic.no_order")),
+        ("oMin", "Opacity", "min(o1, o2)", Some("semantic.no_order")),
+        ("oMax", "Opacity", "max(o1, o2)", Some("semantic.no_order")),
+        (
+            "oClamp",
+            "Opacity",
+            "clamp(o1, o2, o2)",
+            Some("semantic.no_order"),
+        ),
+        (
+            "oMinBy",
+            "Opacity",
+            "minBy(o1, o2, (x, y) => x == o2)",
+            None,
+        ),
+        // unordered Mode (a count encoding): the same
+        ("mEq", "Held", "m1 == m2", None),
+        ("mLt", "Held", "m1 < m2", Some("semantic.no_order")),
+        ("mMin", "Mode", "min(m1, m2)", Some("semantic.no_order")),
+        ("mMinBy", "Mode", "minBy(m1, m2, (x, y) => x == m2)", None),
+        // ---- different concepts, same representation: never ----
+        (
+            "boEq",
+            "Held",
+            "b1 == o1",
+            Some("semantic.concept_mismatch"),
+        ),
+        ("boLt", "Held", "b1 < o1", Some("semantic.concept_mismatch")),
+        (
+            "boMin",
+            "Brightness",
+            "min(b1, o1)",
+            Some("semantic.concept_mismatch"),
+        ),
+        (
+            "boMax",
+            "Brightness",
+            "max(b1, o1)",
+            Some("semantic.concept_mismatch"),
+        ),
+        (
+            "boClamp",
+            "Brightness",
+            "clamp(b1, o1, o2)",
+            Some("semantic.concept_mismatch"),
+        ),
+        (
+            "boMinBy",
+            "Brightness",
+            "minBy(b1, o1, (x, y) => true)",
+            Some("semantic.concept_mismatch"),
+        ),
+        (
+            "bmEq",
+            "Held",
+            "b1 == m1",
+            Some("semantic.concept_mismatch"),
+        ),
+        ("btLt", "Held", "b1 < t1", Some("semantic.concept_mismatch")),
+        // ---- a concept beside its plain representation: observed ----
+        ("bPlainEq", "Held", "b1 == 0.7", None),
+        ("bPlainLt", "Held", "b1 < 0.5", None),
+        ("bPlainMin", "Brightness", "min(b1, 0.5)", None),
+        ("oPlainEq", "Held", "o1 == 0.7", None),
+        ("oPlainLt", "Held", "o1 < 0.5", None),
+        ("oPlainMin", "Opacity", "min(o1, 0.5)", None),
+        ("oPlainClamp", "Opacity", "clamp(o1, 0.1, 0.5)", None),
+        ("mPlainLt", "Held", "m1 < 3", None),
+        ("mPlainMin", "Mode", "min(m1, 3)", None),
+        ("tPlainLt", "Held", "t1 < 310 K", None),
+        // a plain value of another dimension: the dimension check
+        ("tWrongDim", "Held", "t1 < 3", Some("dimension.mismatch")),
+    ];
+    let mut ids = BTreeMap::new();
+    for (name, out, src, _) in table {
+        ids.insert(*name, f.mapping(name, &[], out, Some(src)));
+    }
+    for (name, _, src, want) in table {
+        let codes = f.codes(ids[name]);
+        match want {
+            None => assert!(codes.is_empty(), "{name} `{src}`: {}", f.message(ids[name])),
+            Some(code) => assert_eq!(codes, vec![code.to_string()], "{name} `{src}`"),
+        }
+    }
+    // the accepted ones evaluate as the representation says, and a
+    // concept-typed result is the concept again
+    let mut ok = Fixture::new();
+    let b1 = ok.mapping("b1", &[], "Brightness", None);
+    let b2 = ok.mapping("b2", &[], "Brightness", None);
+    let o1 = ok.mapping("o1", &[], "Opacity", None);
+    let m1 = ok.mapping("m1", &[], "Mode", None);
+    let b_min = ok.mapping("bMin", &[], "Brightness", Some("min(b1, b2)"));
+    let b_plain_min = ok.mapping("bPlainMin", &[], "Brightness", Some("min(b1, 0.5)"));
+    let b_plain_lt = ok.mapping("bPlainLt", &[], "Held", Some("b1 < 0.5"));
+    let o_plain_min = ok.mapping("oPlainMin", &[], "Opacity", Some("min(o1, 0.5)"));
+    let o_plain_clamp = ok.mapping("oPlainClamp", &[], "Opacity", Some("clamp(o1, 0.1, 0.5)"));
+    let m_plain_lt = ok.mapping("mPlainLt", &[], "Held", Some("m1 < 3"));
+    let v = ok.run(&[
+        (b1, sem(&ok, "Brightness", q(0.7))),
+        (b2, sem(&ok, "Brightness", q(0.4))),
+        (o1, sem(&ok, "Opacity", q(0.7))),
+        (m1, sem(&ok, "Mode", q(2.0))),
+    ]);
+    assert_eq!(v[&b_min], sem(&ok, "Brightness", q(0.4)));
+    assert_eq!(v[&b_plain_min], sem(&ok, "Brightness", q(0.5)));
+    assert_eq!(inner(&v[&b_plain_lt]), Value::boolean(false));
+    assert_eq!(v[&o_plain_min], sem(&ok, "Opacity", q(0.5)));
+    assert_eq!(v[&o_plain_clamp], sem(&ok, "Opacity", q(0.5)));
+    assert_eq!(inner(&v[&m_plain_lt]), Value::boolean(true));
+    let _ = inputs;
+}
+
+/// §17 of the hardening brief: a designer who fails a capability (Data,
+/// Eq, Ord) reads what the value cannot do, never how the elaborator
+/// found out.  Implementation vocabulary is confined to the technical
+/// line.
+#[test]
+fn capability_failures_speak_product_language() {
+    let mut f = Fixture::new();
+    f.mapping("m1", &[], "Mode", None);
+    f.mapping("m2", &[], "Mode", None);
+    f.mapping("o", &[], "Opacity", None);
+    f.mapping("b", &[], "Brightness", None);
+    f.mapping("th", &[], "Climate", None);
+    f.mapping("temps", &[], "Readings", None);
+    f.mapping("held", &[], "Held", None);
+    let cases = [
+        ("a", "Held", "m1 < m2"),
+        ("b2", "Mode", "min(m1, m2)"),
+        ("c2", "Mode", "clamp(m1, m2, m2)"),
+        ("d", "Held", "th < th"),
+        ("e2", "Held", "temps < temps"),
+        ("f2", "Held", "held < true"),
+        ("g", "Held", "b == o"),
+        ("h2", "Brightness", "min(b, o)"),
+        ("i2", "Held", "m1 == (x => x)"),
+        ("j2", "Held", "any(temps, 3)"),
+        ("k2", "Held", "contains(3, temps)"),
+        ("l2", "Held", "inRange(m1, m2, m2)"),
+    ];
+    let ids: Vec<_> = cases
+        .iter()
+        .map(|(n, out, src)| f.mapping(n, &[], out, Some(src)))
+        .collect();
+    let (_, diags) = f.elaborate();
+    let forbidden = [
+        "scheme",
+        "Scheme",
+        "capability",
+        "Capability",
+        "solver",
+        "α",
+        "Ord ",
+        "Ord(",
+        "Cap::",
+        "PTy",
+        "instantiate",
+        "subst",
+        "Var(",
+        "ordB",
+        "Data",
+    ];
+    for ((name, _, src), id) in cases.iter().zip(&ids) {
+        let ds = &diags[id];
+        assert!(!ds.is_empty(), "{name} `{src}` should fail");
+        for d in ds {
+            for text in [&d.message, &d.explanation]
+                .into_iter()
+                .chain(d.fixes.iter())
+            {
+                for word in forbidden {
+                    assert!(
+                        !text.contains(word),
+                        "{name} `{src}`: `{word}` in designer-facing text: {text}"
+                    );
+                }
+            }
+        }
+    }
+}
