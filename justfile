@@ -34,6 +34,28 @@ docs-check: docs-lint
     python3 scripts/validate_docs.py
     python3 -m unittest scripts/test_validate_docs.py
     python3 scripts/check_screenshots.py
+    python3 scripts/check_l10n.py
+    python3 -m unittest scripts/test_docs_l10n.py
+
+# ---- Localization ---------------------------------------------------------
+
+# Regenerate the user-guide catalogs (POT, the two POs) and the localized
+# pages under locale/user-guide/ from docs/user-guide/ (see
+# docs/project/localization-style.md).  Commit the result.
+docs-l10n:
+    python3 scripts/docs_l10n.py all
+
+# Regenerate Studio's localization classes from the ARB catalogs.
+studio-l10n:
+    cd {{studio}} && {{flutter}} gen-l10n
+
+# Catalog completeness: every English key in zh-Hans and ja, placeholders
+# matching, glossary well-formed, user-guide PO files in step with the POT,
+# and the rendered pages current.
+l10n-check:
+    python3 scripts/check_l10n.py
+    python3 scripts/docs_l10n.py all
+    git diff --exit-code -- locale/
 
 # Capture the user guide's screenshots from the real Studio against the real
 # bdld on docs/fixtures/*, as docs/user-guide/screenshots/manifest.json says

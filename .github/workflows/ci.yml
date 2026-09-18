@@ -30,6 +30,12 @@ jobs:
       - run: python3 scripts/validate_docs.py
       - run: python3 -m unittest scripts/test_validate_docs.py
       - run: python3 scripts/check_screenshots.py
+      - name: Localization catalogs complete and rendered pages current
+        run: |
+          python3 scripts/check_l10n.py
+          python3 -m unittest scripts/test_docs_l10n.py
+          python3 scripts/docs_l10n.py all
+          git diff --exit-code -- locale/
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - name: Upload bdld for the Flutter job

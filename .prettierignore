@@ -6,3 +6,5 @@ apps/studio/build/
 apps/studio/.dart_tool/
 reference/
 editors/vscode/out/
+# Generated from docs/user-guide by scripts/docs_l10n.py; not hand-written.
+locale/user-guide/**/*.md
