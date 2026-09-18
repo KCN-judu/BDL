@@ -265,14 +265,14 @@ class _StatusLine extends StatelessWidget {
           ),
         );
       }
-      // Unsaved definition drafts: Studio's, not the project's dirty flag.
+      // Definition drafts: saved with the project, not yet added to it.
       final drafts = state.editor.drafts.values
           .where((d) => d.dirtyAgainst(state.committedDefinition(d.mappingId)))
           .length;
       if (drafts > 0) {
         facts.add(
           Text(
-            drafts == 1 ? '1 unsaved definition' : '$drafts unsaved definitions',
+            drafts == 1 ? '1 definition not added' : '$drafts definitions not added',
             style: small.copyWith(color: t.open),
           ),
         );

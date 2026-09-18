@@ -72,19 +72,29 @@ and nothing that has a position is moved ([Canvas](../studio/canvas.md)).
 - the **simulation** — inputs, periods and trace;
 - the **analysis** — every verdict is recomputed on open;
 - the **revision history** — undo is per session;
-- text in the Code view that **does not build yet** — the file on disk
-  is the last version that did.
+- where you were — the view, the page, the open file, the component whose
+  source was open — Studio notes that for itself, per user, and returns
+  you there on the next open.
 
-Formula **drafts** are not in the project either; Studio keeps unsaved
-drafts on its side, by project path, and restores them when you reopen.
+Everything you can see and edit is in the project. A formula you typed
+and did not add — even one that does not check yet, even an empty field
+— is saved as it is and comes back in the editor. Text in the Code view
+that does not build yet is saved exactly as typed: the file on disk is
+what you typed, and the design keeps showing the last version of it that
+built until it builds again ([Design, Code and Split](../studio/code-view.md)).
 
 ## Saving
 
-**⌘S** or **Save** writes the changed source files as item-level edits
-— a save changes the items you changed and leaves the rest of the text,
-comments, blank lines and your ordering as it was — then the sidecars,
-the layout and the manifest, each through a temporary file and an atomic
-rename, so an interrupted save never leaves a half-written project. New
+**⌘S** or **Save** writes the whole current state: the changed source
+files as item-level edits — a save changes the items you changed and
+leaves the rest of the text, comments, blank lines and your ordering as
+it was; a file that does not build yet is written as typed — then the
+sidecars (identities, groups, your unfinished formulas and the last good
+text of a file that does not build), the layout and the manifest, each
+through a temporary file and an atomic rename, so an interrupted save
+never leaves a half-written project. Saving never needs a formula to
+check or a file to build. _Saved_ in the status line means every one of
+those files was written; until then the project is _Edited_. New
 items made on the canvas go to the end of `src/main.bdl` (or of the first
 file in path order when there is no `main.bdl`), or to the end of the
 component body they belong to. Newer file versions are refused rather

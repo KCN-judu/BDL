@@ -138,7 +138,8 @@ each of its questions was answered is in the
   proof.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** `() -> A` as the preferred spelling of a relationship
+- **Recently changed:** complete-project persistence and the save guard
+  (ADR-0030, protocol 0.15); `() -> A` as the preferred spelling of a relationship
   without inputs (ADR-0029 amendment: the shorthand a hint with a quick fix,
   never generated, `bdld migrate-unit-domain` opt-in); the Unit-domain
   normalization (ADR-0029: one canonical type per relationship, `() -> B` for no

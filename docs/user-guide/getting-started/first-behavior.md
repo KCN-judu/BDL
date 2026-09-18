@@ -210,7 +210,7 @@ or is an input, checks, has a rhythm, and the output has exactly one driver.
 - **`brightness` will not connect to the output.** Check its _Updates in_
   matches the output's, and that it reads nothing. See
   [Connections](../troubleshooting/connection-errors.md).
-- **The status line says _N unsaved definitions_.** A formula is typed but not
+- **The status line says _N definitions not added_.** A formula is typed but not
   added; select the node and press _Add definition_ or _Revert_.
 - **Nothing checks and the bottom line says _Compiler not connected_.** See
   [Install and launch](install-and-launch.md).

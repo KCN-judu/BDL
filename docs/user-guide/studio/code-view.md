@@ -61,9 +61,11 @@ shows it. The selection is the same object in both views.
 
 ## Saving
 
-**⌘S** writes the files as the editor shows them, then the layout and the
-sidecars ([Project files](../reference/project-files.md)). A file that does not
-build yet is not written; fix it first.
+**⌘S** writes the files exactly as the editor shows them — a file that does not
+build yet included — then the layout and the sidecars
+([Project files](../reference/project-files.md)). Reopening the project shows
+the same text, with the same banners, and the design as the last version that
+built.
 
 ## Not built yet
 

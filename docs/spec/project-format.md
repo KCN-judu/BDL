@@ -16,7 +16,7 @@ project/
 ├── bdl.toml                 manifest: schema_version = 2, name, compiler_version — no kind
 ├── src/**/*.bdl             the authored design and system — the semantic source
 ├── .bdl/identities.json     source key → stable id, allocators, flat ids — tool-owned
-├── .bdl/authoring.json      behavior groups (authoring metadata, ADR-0019) — tool-owned
+├── .bdl/authoring.json      behavior groups; the unfinished edits a save keeps (ADR-0019, ADR-0030) — tool-owned
 ├── ui/layout.json           canvas positions, viewports, group boxes — presentation
 ├── components/              supplied Rust components (planned)
 └── Bdl.lock                 pinned toolchain / runtime versions (planned)
@@ -24,13 +24,15 @@ project/
 
 Which information lives where is a per-fact rule (ADR-0023 §2):
 
-| Kind of fact                                                                                                                                                               | Lives in               | Never in                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------- |
-| semantic — concepts, relationships and their signatures, formulas, timing domains, outputs, drives, devices, components, ports and contracts, instances, bindings, exports | `src/**/*.bdl`         | layout; the authoring sidecar |
-| identity — the stable id behind each entity; the allocators; the flat-id table                                                                                             | `.bdl/identities.json` | the source text               |
-| lexical — comments, whitespace, formatting, item order, the partition into files                                                                                           | `src/**/*.bdl`         | the model; the identity table |
-| authoring metadata — behavior groups and membership                                                                                                                        | `.bdl/authoring.json`  | source; layout                |
-| presentation — positions, viewports, group boxes, component-body canvases                                                                                                  | `ui/layout.json`       | source; the revision          |
+| Kind of fact                                                                                                                                                               | Lives in                                                     | Never in                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------- |
+| semantic — concepts, relationships and their signatures, formulas, timing domains, outputs, drives, devices, components, ports and contracts, instances, bindings, exports | `src/**/*.bdl`                                               | layout; the authoring sidecar    |
+| identity — the stable id behind each entity; the allocators; the flat-id table                                                                                             | `.bdl/identities.json`                                       | the source text                  |
+| lexical — comments, whitespace, formatting, item order, the partition into files                                                                                           | `src/**/*.bdl`                                               | the model; the identity table    |
+| authoring metadata — behavior groups and membership                                                                                                                        | `.bdl/authoring.json`                                        | source; layout                   |
+| unfinished edits — the last good text of a file whose typed text does not build; definition drafts (typed, not committed)                                                  | `.bdl/authoring.json` (`source_drafts`, `definition_drafts`) | the identity table; the revision |
+| where the designer was — view, page, open file, open component source                                                                                                      | the per-user recent list, never the project                  | the project directory            |
+| presentation — positions, viewports, group boxes, component-body canvases                                                                                                  | `ui/layout.json`                                             | source; the revision             |
 
 A concept's value form in the source is `Bool`, `Count`, a quantity name, or
 `List<R>` / `Pair<R₁, R₂>` / `Option<R>` over those; `ordered concept C : …`
@@ -137,6 +139,35 @@ relationship ids of the scope's design, in authoring order — and nothing else
 `{ "kind": "system_base" }` or `{ "kind": "component", "component": <id> }`
 (component-local member ids). A member whose relationship the sources no longer
 declare is dropped on load.
+
+Two optional sections keep the unfinished edits a save never drops (ADR-0030; a
+file without them reads as before):
+
+```json
+{
+  "source_drafts": {
+    "src/main.bdl": { "last_good": "concept Tilt : Angle\n…" }
+  },
+  "definition_drafts": [
+    { "mapping": 3, "source": "Tilt / 90 deg" },
+    { "component": 0, "mapping": 1, "source": "" }
+  ]
+}
+```
+
+`source_drafts` names every file whose text under `src/` does not build:
+`src/<path>` holds the text exactly as typed and `last_good` the last text of
+that file that built, which the build reads — so the graph, the identity table
+and every reference keep describing the project — until the typed text builds
+again. On open the typed text is judged first; when it builds (fixed in an
+editor) the draft ends and `last_good` is dropped on the next save.
+`definition_drafts` holds the text typed for a relationship and not committed —
+valid, invalid or empty — by relationship id, with `component` set (and
+component-local ids) for a component body's. A draft whose relationship the
+sources no longer declare is dropped when the project's IDE state commits.
+
+Saving requires nothing to build, check or be attached: what is saved is what
+the designer was working on; what it means is the compiler's answer (ADR-0030).
 
 ## Rules that do not change
 

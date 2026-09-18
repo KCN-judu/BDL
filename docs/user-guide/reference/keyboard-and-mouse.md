@@ -8,11 +8,13 @@ the toolbar and menus.
 
 | Keys | Does |
 | --- | --- |
-| ⌘S | Save the project (never a formula draft) |
+| ⌘S | Save the project — everything as it is, unfinished formulas and text that does not build included |
+| ⌘W | Close the project — asks _Save changes?_ when it is edited |
+| ⌘Q | Quit — the same question first |
 | ⌘Z / ⇧⌘Z | Undo / Redo — design edits and behavior-group edits, one history |
 | ⌘1 · ⌘2 · ⌘3 · ⌘4 | Design · Simulate · Deploy · Monitor |
 
-*New Project…* (⌘N) and *Open Project…* (⌘O) on the project manager show
+_New Project…_ (⌘N) and _Open Project…_ (⌘O) on the project manager show
 their shortcuts but are reached by clicking today.
 
 ## Canvas

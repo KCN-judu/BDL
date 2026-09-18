@@ -811,6 +811,38 @@ the sources…_. Incomplete-but-valid (open faults): listed with the hollow ring
 the graph in step. Not building: the banners and the list. Disconnected: the
 editor is read-only.
 
+**Saved as typed.** A save keeps the text of the editor whether or not it
+builds, and every formula draft (ADR-0030); reopening returns to it, the banners
+included. Nothing the designer can see and edit is "unsavable" because it is
+incomplete.
+
+## 13. Leaving a project: one guard
+
+Every path that unloads a project — the toolbar's _Close_, the project manager
+button, _Open Project…_ / _New Project…_ while one is open, ⌘W, ⌘Q, the menu's
+_Quit_, the window's close button — dispatches through one guard
+(`app/lifecycle.dart`). Studio keeps no dirty flag of its own: it sends whatever
+typing has not reached the project (the Code view's unsent text, a debounced
+formula draft), asks the project for its projection and reads `dirty` off it.
+Clean: the project unloads at once and the intent (open the other project, quit)
+runs after the close. Dirty: a sheet — the platform's shape for a document about
+to be lost —
+
+> Save changes to “lamp”? [Don't Save] [Cancel] [Save]
+
+_Don't Save_ apart on the left; _Cancel_ beside the default; _Save_ is the
+default (Return), _Cancel_ answers Esc. _Save_ unloads only after the save
+succeeded; a refused save (a source changed on disk) keeps the project open with
+the existing conflict banner. _Don't Save_ unloads; the next open returns to
+what was saved. _Cancel_ leaves everything as it was. The window's close button
+and the application's exit request are declined (`didRequestAppExit` → cancel;
+the macOS runner turns the close button into a terminate request) until the
+guard has run, so nothing is torn down while the question is open.
+
+Where the designer was — the view, the page, the open file, the component whose
+source was open — is a per-user note in the recent list (`recent.json`),
+restored on the next open of that project; never project data.
+
 **Not built.** Inline squiggles on the fault's range (the list and the caret
 jump stand in); completion and hover in the Code pane (the language server has
 them; the pane does not yet ask); a _Format_ command (`bdl-ide::format` exists);

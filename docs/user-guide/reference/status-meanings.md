@@ -30,7 +30,7 @@ colour means *selected* and nothing else.
 | *N concepts · M mappings* | counts |
 | *N not yet defined* (orange) | relationships without a formula |
 | *N definitions do not check* (red) | invalid formulas |
-| *N unsaved definitions* | formula drafts not yet added — yours, not the project's |
+| *N definitions not added* | formula drafts not yet added — saved with the project, not the project's |
 | *not causal* (red) | an instantaneous cycle |
 | *reads across domains* (red) | a value reads another domain's value without `sync` |
 | *outputs incomplete* (orange) | a required output undriven, an output open, or a connection that does not fit |

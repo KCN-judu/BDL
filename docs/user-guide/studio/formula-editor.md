@@ -108,10 +108,12 @@ what Brightness is and what the formula produces instead._
 
 ## Drafts
 
-Typing creates a **draft**. The draft is yours: it survives switching selection,
-switching pages and closing the project (it comes back when you reopen). The
-status line counts _N unsaved definitions_. The canvas does not change — a draft
-must not make an unresolved relationship look defined.
+Typing creates a **draft**. The draft is part of the project: it survives
+switching selection and switching pages, is saved with the project (whether or
+not it checks, and even when the field is empty), and comes back in the editor
+when you reopen. The status line counts _N definitions not added_; adding it is
+a design change. The canvas does not change — a draft must not make an
+unresolved relationship look defined.
 
 When the design changes under a draft — you changed a concept's unit, or undo
 replaced the saved formula — the draft is re-checked against the new design, and

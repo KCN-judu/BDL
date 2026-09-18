@@ -29,9 +29,9 @@ what a change affects. See [Inspector](inspector.md).
 
 **Status line** — the document state (_Saved_ / _Edited_), then counts and what
 is still open (_1 not yet defined_, _outputs incomplete_, _not causal_, _reads
-across domains_, _N unsaved definitions_), then the compiler connection. Errors
-from a refused action appear as a **banner** above the page content with a
-_Dismiss_ link — never as a dialog.
+across domains_, _N definitions not added_), then the compiler connection.
+Errors from a refused action appear as a **banner** above the page content with
+a _Dismiss_ link — never as a dialog.
 
 **Page bar** — the pages, in the order you use them:
 
@@ -48,13 +48,28 @@ settings page yet; while the compiler is disconnected it reconnects.
 
 ## Saving, undo, revisions
 
-**⌘S** or **Save** writes the project to its folder. A design change is recorded
-as a new _revision_ of the project; **⌘Z** / **⇧⌘Z** step through them. Moving
-nodes, resizing panels and collapsing groups are not design changes: they are
-saved but make no revision. A typed formula that has not been added is a _draft_
-— it is kept when you switch selection, switch pages, or even close the project,
-and the status line counts it as _unsaved definition_ until you add or revert
-it.
+**⌘S** or **Save** writes the whole project to its folder — the design, the
+layout, and every unfinished edit: a formula typed and not added, text in the
+Code view that does not build yet. A design change is recorded as a new
+_revision_ of the project; **⌘Z** / **⇧⌘Z** step through them. Moving nodes,
+resizing panels and collapsing groups are not design changes: they are saved but
+make no revision. A typed formula that has not been added is a _draft_ — it is
+kept when you switch selection or pages, saved with the project, and the status
+line counts it as _definition not added_ until you add or revert it.
+
+## Closing a project
+
+**Close**, the project manager button (⊞), **⌘W**, **⌘Q**, the menu's Quit, the
+window's close button, and opening or creating another project all ask the same
+question when the project differs from what is saved:
+
+> Save changes to “lamp”? **Don't Save** · **Cancel** · **Save**
+
+**Save** saves everything as it is now and then closes; if the save is refused
+(a file changed on disk — see the banner), the project stays open. **Don't
+Save** closes; the next open returns to what was last saved. **Cancel** (Esc)
+changes nothing. A project that is _Saved_ closes at once. Nothing asks twice,
+and nothing closes while the question is open.
 
 ## The three levels of information
 

@@ -113,7 +113,7 @@ void main() {
       ),
     );
     await tester.pumpWidget(_app(state));
-    expect(find.text('1 unsaved definition'), findsOneWidget);
+    expect(find.text('1 definition not added'), findsOneWidget);
     expect(find.text('not causal'), findsOneWidget);
     expect(find.text('outputs incomplete'), findsOneWidget);
     expect(find.text('reads across domains'), findsNothing);
