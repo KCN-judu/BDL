@@ -260,17 +260,80 @@ class _FormulaComposerState extends State<FormulaComposer> {
             key: ValueKey('node-${n.id}'),
             selected: isSelected,
             error: hasError,
+            local: n.local,
             onTap: enabled ? () => _select(n.id) : null,
-            semantics: '${n.name}${n.hasActual() ? ', ${n.actual.description}' : ''}',
+            semantics:
+                '${n.local ? 'local ' : ''}${n.name}${n.hasActual() ? ', ${n.actual.description}' : ''}',
             child: Row(
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
                 if (concept != null) SocketGlyph.of(concept, t, size: 9),
-                Text(n.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                Text(n.name, style: _nameStyle(t, local: n.local)),
               ],
             ),
           ),
+        ];
+      case 'binder':
+        // `all reading in readings:` on one line, the body indented under
+        // it — the local is declared by the head and read by the body
+        final head = Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            _Glyph(
+              n.name,
+              key: ValueKey('node-${n.id}'),
+              selected: isSelected,
+              error: hasError,
+              keyword: true,
+              onTap: enabled ? () => _select(n.id) : null,
+            ),
+            _Chip(
+              key: ValueKey('binder-local-${n.id}'),
+              selected: isSelected,
+              local: true,
+              onTap: enabled ? () => _select(n.id) : null,
+              semantics:
+                  'local ${n.param}${n.hasParamType() ? ', each ${n.paramType.description}' : ''}',
+              child: Text(n.param, style: _nameStyle(t, local: true)),
+            ),
+            _Glyph('in', selected: false, keyword: true),
+            ..._pieces(n.children[0], selected, enabled),
+            _Glyph(':', selected: isSelected, onTap: enabled ? () => _select(n.id) : null),
+          ],
+        );
+        inner = [
+          Column(
+            key: ValueKey('binder-${n.id}'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              head,
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 4),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: _pieces(n.children[1], selected, enabled),
+                ),
+              ),
+            ],
+          ),
+        ];
+      case 'range':
+        inner = [
+          ..._pieces(n.children[0], selected, enabled),
+          _Glyph(
+            '..',
+            key: ValueKey('node-${n.id}'),
+            selected: isSelected,
+            error: hasError,
+            onTap: enabled ? () => _select(n.id) : null,
+          ),
+          ..._pieces(n.children[1], selected, enabled),
         ];
       case 'number' || 'quantity':
         inner = [
@@ -356,6 +419,15 @@ class _FormulaComposerState extends State<FormulaComposer> {
   }
 }
 
+/// A name: a design entity upright; a local of the formula in italics,
+/// so what the formula itself binds is told apart from what the design
+/// provides.
+TextStyle _nameStyle(MacTokens t, {required bool local}) => TextStyle(
+  fontSize: 12,
+  color: t.textPrimary,
+  fontStyle: local ? FontStyle.italic : FontStyle.normal,
+);
+
 String _operatorGlyph(String op) => switch (op) {
   '*' => '×',
   '/' => '÷',
@@ -375,12 +447,16 @@ class _Chip extends StatelessWidget {
     required this.semantics,
     this.error = false,
     this.dashed = false,
+    this.local = false,
     this.onTap,
   });
   final Widget child;
   final bool selected;
   final bool error;
   final bool dashed;
+
+  /// A local of the formula: a lighter frame than a design entity's.
+  final bool local;
   final String semantics;
   final VoidCallback? onTap;
 
@@ -398,7 +474,7 @@ class _Chip extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
-            border: dashed ? null : Border.all(color: t.hairline),
+            border: dashed ? null : Border.all(color: local ? t.textTertiary : t.hairline),
           ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -420,10 +496,20 @@ class _Chip extends StatelessWidget {
 
 /// An operator or punctuation glyph, selectable when it names a node.
 class _Glyph extends StatelessWidget {
-  const _Glyph(this.text, {super.key, required this.selected, this.error = false, this.onTap});
+  const _Glyph(
+    this.text, {
+    super.key,
+    required this.selected,
+    this.error = false,
+    this.keyword = false,
+    this.onTap,
+  });
   final String text;
   final bool selected;
   final bool error;
+
+  /// A word of the language (`all`, `in`) rather than a symbol.
+  final bool keyword;
   final VoidCallback? onTap;
 
   @override
@@ -432,9 +518,9 @@ class _Glyph extends StatelessWidget {
     final label = Text(
       text,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: keyword ? 12 : 13,
         color: error ? t.error : t.textSecondary,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+        fontWeight: selected || keyword ? FontWeight.w600 : FontWeight.w400,
       ),
     );
     if (onTap == null) {
@@ -827,6 +913,39 @@ class _SlotPanelState extends State<_SlotPanel> {
                     ),
                   ),
                 ),
+              // the natural forms: read every element of a collection,
+              // or ask whether a value lies between two ends
+              if (n == null || !n.hasActual() || n.actual.hasElement())
+                MacDropdown<String>(
+                  key: const ValueKey('op-binder'),
+                  compact: true,
+                  value: null,
+                  hint: 'Each element',
+                  items: const ['all', 'any', 'map', 'filter'],
+                  labelOf: (f) => switch (f) {
+                    'all' => 'all … satisfy',
+                    'any' => 'any … satisfies',
+                    'map' => 'map each …',
+                    _ => 'filter …',
+                  },
+                  onChanged: (f) => widget.onCompose(
+                    pb.ComposeAction(
+                      nodeId: widget.nodeId,
+                      binder: pb.ComposeBinder(form: f),
+                    ),
+                  ),
+                ),
+              if (n == null || !n.hasActual() || n.actual.kind != 'boolean')
+                MacButton(
+                  key: const ValueKey('op-range'),
+                  label: 'Range',
+                  tooltip: 'Between two ends: in … .. …',
+                  onPressed: widget.pending
+                      ? null
+                      : () => widget.onCompose(
+                          pb.ComposeAction(nodeId: widget.nodeId, range: pb.Unit()),
+                        ),
+                ),
               MacButton(
                 key: const ValueKey('op-remove'),
                 label: 'Remove',
@@ -842,6 +961,17 @@ class _SlotPanelState extends State<_SlotPanel> {
             Padding(
               padding: const EdgeInsets.only(top: MacMetrics.gapTight),
               child: Text('This part is edited as text.', style: small),
+            ),
+          if (n != null && n.kind == 'binder')
+            Padding(
+              padding: const EdgeInsets.only(top: MacMetrics.gapTight),
+              child: Text(
+                n.hasParamType()
+                    ? '${n.param} is each element: ${n.paramType.description}.'
+                    : '${n.param} is each element of the collection.',
+                key: const ValueKey('binder-local-note'),
+                style: small,
+              ),
             ),
         ],
         // the objections on this component are the red underline on it

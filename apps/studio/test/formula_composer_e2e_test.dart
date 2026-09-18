@@ -195,6 +195,103 @@ void main() {
     }
   });
 
+  test(
+    'a natural formula round-trips through the Composer and its actions keep the form',
+    () async {
+      if (bdld == null) {
+        markTestSkipped('bdld not built');
+        return;
+      }
+      store = TestStore(
+        spawn: DaemonClient.spawn,
+        executable: bdld,
+        draftDebounce: const Duration(milliseconds: 10),
+      );
+      store.dispatch(const AppStarted());
+      await store.until((s) => s.connection is Connected || s.connection is ConnectionFailed);
+      dir = await Directory.systemTemp.createTemp('bdl-studio-composer');
+      try {
+        store.dispatch(NewProjectRequested(rootPath: p.join(dir.path, 'rig'), name: 'rig'));
+        await store.until((s) => s.project != null);
+        store.dispatch(
+          CreateConceptRequested(
+            name: 'Angles',
+            representation: pb.Representation(list: pb.Representation(quantity: pb.Dim(angle: 1))),
+          ),
+        );
+        await settled();
+        store.dispatch(
+          CreateConceptRequested(
+            name: 'Safe',
+            representation: pb.Representation(boolean: pb.Unit()),
+          ),
+        );
+        await settled();
+        store.dispatch(
+          CreateMappingRequested(
+            name: 'safe',
+            inputs: [conceptId('Angles')],
+            output: conceptId('Safe'),
+          ),
+        );
+        await settled();
+        final id = store.state.project!.mappings.single.id.toInt();
+        store.dispatch(SelectionChanged(MappingSelected(id)));
+        // typed as text in the natural form: the projection is structural
+        const natural = 'all angle in Angles: angle in -45 deg .. 45 deg';
+        store.dispatch(DefinitionDraftChanged(mappingId: id, source: natural));
+        final s = await store.until((s) => s.draft(id)?.projection?.source == natural);
+        final root = s.draft(id)!.projection!.root;
+        expect(root.kind, 'binder');
+        expect((root.name, root.param), ('all', 'angle'));
+        expect(root.paramType.description, 'an angle');
+        expect(root.children[1].kind, 'compare');
+        expect(root.children[1].children[0].local, isTrue);
+        expect(root.children[1].children[1].kind, 'range');
+        expect(s.draft(id)!.projection!.complete, isTrue);
+        // the text the Composer holds is the text typed: Text → Formula → Text
+        expect(s.draft(id)!.source, natural);
+        // a structured action on the body keeps the natural form around it
+        await store.until((s) => composerInSync(s, id));
+        store.dispatch(
+          ComposeRequested(
+            mappingId: id,
+            action: pb.ComposeAction(
+              nodeId: 'r.1',
+              operator: pb.ComposeOperator(op: '&&', before: false),
+            ),
+          ),
+        );
+        final s2 = await store.until((s) => (s.draft(id)?.source ?? '') != natural);
+        expect(s2.draft(id)!.source, 'all angle in Angles: angle in -45 deg .. 45 deg && ?');
+        // the new slot is a truth value, being the other side of `&&`
+        final slot = await store.until((s) => s.editor.composer.slot?.nodeId == 'r.1.1');
+        expect(slot.editor.composer.slot!.expected.description, 'true or false');
+        // wrap the whole thing again: a fresh, non-capturing local
+        await store.until((s) => composerInSync(s, id));
+        store.dispatch(
+          ComposeRequested(
+            mappingId: id,
+            action: pb.ComposeAction(
+              nodeId: 'r.0',
+              binder: pb.ComposeBinder(form: 'filter'),
+            ),
+          ),
+        );
+        final s3 = await store.until(
+          (s) => (s.draft(id)?.source ?? '').startsWith('all angle in (filter'),
+        );
+        expect(
+          s3.draft(id)!.source,
+          'all angle in (filter item in Angles: ?): angle in -45 deg .. 45 deg && ?',
+        );
+      } finally {
+        await store.dispose();
+        await dir.delete(recursive: true);
+      }
+    },
+  );
+
   test('a torque slot infers a length and a product of two unknowns is not guessed', () async {
     if (bdld == null) {
       markTestSkipped('bdld not built');

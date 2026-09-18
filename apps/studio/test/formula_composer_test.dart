@@ -152,6 +152,103 @@ pb.FormulaProjection tiltOver45() => pb.FormulaProjection(
   ),
 );
 
+pb.TypeView boolean() => pb.TypeView(description: 'true or false', kind: 'boolean');
+
+/// `all angle in [Tilt, Tilt]: angle in -45 deg .. ?` as the compiler
+/// projects it: a binder over a collection literal (opaque here), a local
+/// read by the body, a range with one end still empty.
+pb.FormulaProjection binderOverRange() => pb.FormulaProjection(
+  source: 'all angle in [Tilt, Tilt]: angle in -45 deg .. ?',
+  parseOk: true,
+  complete: false,
+  slots: ['r.1.1.1'],
+  root: pb.FormulaNode(
+    id: 'r',
+    kind: 'binder',
+    name: 'all',
+    param: 'angle',
+    paramType: angle(),
+    text: 'all angle in [Tilt, Tilt]: angle in -45 deg .. ?',
+    range: pb.SourceSpan(start: 0, end: 48),
+    actual: boolean(),
+    children: [
+      pb.FormulaNode(
+        id: 'r.0',
+        kind: 'opaque',
+        name: 'a collection',
+        text: '[Tilt, Tilt]',
+        range: pb.SourceSpan(start: 13, end: 25),
+        actual: pb.TypeView(
+          description: 'a collection of angles',
+          kind: 'structured',
+          element: angle(),
+        ),
+        because: 'all reads every element of a collection',
+      ),
+      pb.FormulaNode(
+        id: 'r.1',
+        kind: 'compare',
+        name: 'in',
+        text: 'angle in -45 deg .. ?',
+        range: pb.SourceSpan(start: 27, end: 48),
+        expected: boolean(),
+        because: 'all asks a question of every angle: the body is true or false',
+        children: [
+          pb.FormulaNode(
+            id: 'r.1.0',
+            kind: 'reference',
+            name: 'angle',
+            local: true,
+            text: 'angle',
+            range: pb.SourceSpan(start: 27, end: 32),
+            actual: angle(),
+          ),
+          pb.FormulaNode(
+            id: 'r.1.1',
+            kind: 'range',
+            text: '-45 deg .. ?',
+            range: pb.SourceSpan(start: 36, end: 48),
+            expected: angle(),
+            because: 'both ends of the range must be comparable with angle (an angle)',
+            children: [
+              pb.FormulaNode(
+                id: 'r.1.1.0',
+                kind: 'unary',
+                name: '-',
+                text: '-45 deg',
+                range: pb.SourceSpan(start: 36, end: 43),
+                actual: angle(),
+                expected: angle(),
+                children: [
+                  pb.FormulaNode(
+                    id: 'r.1.1.0.0',
+                    kind: 'quantity',
+                    text: '45 deg',
+                    coordinate: '45',
+                    unit: 'deg',
+                    unitId: 'angle.deg',
+                    range: pb.SourceSpan(start: 37, end: 43),
+                    actual: angle(),
+                    expected: angle(),
+                  ),
+                ],
+              ),
+              pb.FormulaNode(
+                id: 'r.1.1.1',
+                kind: 'slot',
+                text: '?',
+                range: pb.SourceSpan(start: 47, end: 48),
+                expected: angle(),
+                because: 'both ends of the range must be comparable with angle (an angle)',
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  ),
+);
+
 pb.FormulaSlotResponse angleSlot(String node) => pb.FormulaSlotResponse(
   revision: Int64(1),
   mappingId: Int64(dim),
@@ -212,6 +309,13 @@ pb.DefinitionDraftAnalysis verdict({
   ),
   projection: projection,
 );
+
+/// A node re-rooted under `id` (its children renumbered below it).
+pb.FormulaNode _shift(pb.FormulaNode n, String id) => pb.FormulaNode()
+  ..mergeFromMessage(n)
+  ..id = id
+  ..children.clear()
+  ..children.addAll([for (var i = 0; i < n.children.length; i++) _shift(n.children[i], '$id.$i')]);
 
 List<pb.Diagnostic> _findings(pb.FormulaNode n) => [
   ...n.diagnostics,
@@ -853,6 +957,228 @@ void main() {
       await t.pump();
       expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
       expect(find.text('60'), findsOneWidget);
+    });
+
+    testWidgets('a binder is a head over an indented body; its local is visibly the formula\'s', (
+      t,
+    ) async {
+      var s = connected(lamp());
+      s = drafted(s, binderOverRange().source, projection: binderOverRange());
+      final h = await pump(t, s);
+      // the head: the word, the local, `in`, the collection, the colon
+      expect(find.byKey(const ValueKey('binder-r')), findsOneWidget);
+      expect(find.text('all'), findsOneWidget);
+      expect(find.byKey(const ValueKey('binder-local-r')), findsOneWidget);
+      expect(find.text('in'), findsWidgets);
+      expect(find.text('[Tilt, Tilt]'), findsOneWidget);
+      // the local's declaration and its use are both italic; the design's
+      // `Tilt` never appears as a chip here (it is inside the opaque region)
+      final declared = t.widget<Text>(
+        find.descendant(
+          of: find.byKey(const ValueKey('binder-local-r')),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(declared.style!.fontStyle, FontStyle.italic);
+      final used = t.widget<Text>(
+        find.descendant(of: find.byKey(const ValueKey('node-r.1.0')), matching: find.byType(Text)),
+      );
+      expect(used.style!.fontStyle, FontStyle.italic);
+      expect(used.data, 'angle');
+      // the range: lo, `..`, the slot
+      expect(find.byKey(const ValueKey('node-r.1.1')), findsOneWidget);
+      expect(find.text('..'), findsOneWidget);
+      expect(find.byKey(const ValueKey('node-r.1.1.1')), findsOneWidget);
+      // selecting the local selects the binder: the panel says what it is
+      await t.tap(find.byKey(const ValueKey('binder-local-r')));
+      await t.pump();
+      expect(h.state.editor.composer.selectedNode, 'r');
+      expect(find.byKey(const ValueKey('binder-local-note')), findsOneWidget);
+      expect(find.text('angle is each element: an angle.'), findsOneWidget);
+      // selecting the use selects the reference node, never a design entity
+      await t.tap(find.byKey(const ValueKey('node-r.1.0')));
+      await t.pump();
+      expect(h.state.editor.composer.selectedNode, 'r.1.0');
+      final e = h.effects.whereType<GetFormulaSlot>().last;
+      expect(e.nodeId, 'r.1.0');
+    });
+
+    testWidgets('a range endpoint slot offers the subject\'s units; the literal end has a picker', (
+      t,
+    ) async {
+      var s = connected(lamp());
+      s = drafted(s, binderOverRange().source, projection: binderOverRange());
+      final h = await pump(t, s);
+      await t.tap(find.byKey(const ValueKey('node-r.1.1.1')));
+      await t.pump();
+      final e = h.effects.whereType<GetFormulaSlot>().single;
+      expect(e.nodeId, 'r.1.1.1');
+      h.answer(
+        FormulaSlotReceived(
+          generation: e.generation,
+          result: angleSlot('r.1.1.1')..explanation = 'Expected: an angle, because both ends of the range must be comparable with angle (an angle).',
+        ),
+      );
+      await t.pump();
+      expect(find.textContaining('both ends of the range'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('slot-unit')));
+      await t.pumpAndSettle();
+      expect(find.text('turn'), findsOneWidget);
+      expect(find.text('mm'), findsNothing);
+      await t.tap(find.text('deg').last);
+      await t.pumpAndSettle();
+      await t.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('slot-number')),
+          matching: find.byType(TextField),
+        ),
+        '45',
+      );
+      await t.tap(find.text('Insert'));
+      await t.pump();
+      final c = h.effects.whereType<ComposeFormula>().single;
+      expect((c.action.nodeId, c.action.fill), ('r.1.1.1', '45 deg'));
+      // the literal end: selecting it shows its own unit picker
+      h.answer(
+        ComposeReceived(
+          generation: c.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: 'all angle in [Tilt, Tilt]: angle in -45 deg .. 45 deg',
+          ),
+        ),
+      );
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'all angle in [Tilt, Tilt]: angle in -45 deg .. 45 deg');
+    });
+
+    testWidgets('wrapping in a binder and inserting a range are structured actions', (t) async {
+      var s = connected(lamp());
+      s = drafted(s, 'Tilt / (45 deg)', projection: tiltOver45());
+      final h = await pump(t, s);
+      // a quantity: the range action; no binder action (it is no collection)
+      await t.tap(find.byKey(const ValueKey('coordinate-r.1')));
+      await t.pump();
+      final e = h.effects.whereType<GetFormulaSlot>().single;
+      h.answer(FormulaSlotReceived(generation: e.generation, result: angleSlot('r.1')));
+      await t.pump();
+      expect(find.byKey(const ValueKey('op-range')), findsOneWidget);
+      expect(find.byKey(const ValueKey('op-binder')), findsNothing);
+      await t.tap(find.byKey(const ValueKey('op-range')));
+      await t.pump();
+      final c = h.effects.whereType<ComposeFormula>().single;
+      expect(c.action.nodeId, 'r.1');
+      expect(c.action.hasRange(), isTrue);
+      // a collection: the binder action, sent as the form chosen
+      h.answer(
+        ComposeReceived(
+          generation: c.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: 'Tilt / (45 deg in ? .. ?)',
+          ),
+        ),
+      );
+      await t.pump();
+      final coll = binderOverRange();
+      final again = await pump(
+        t,
+        drafted(
+          connected(lamp()),
+          coll.root.children[0].text,
+          projection: pb.FormulaProjection(
+            source: coll.root.children[0].text,
+            parseOk: true,
+            complete: true,
+            root: coll.root.children[0]..id = 'r',
+          ),
+        ),
+      );
+      await t.tap(find.byKey(const ValueKey('node-r')));
+      await t.pump();
+      final e2 = again.effects.whereType<GetFormulaSlot>().single;
+      again.answer(
+        FormulaSlotReceived(
+          generation: e2.generation,
+          result: pb.FormulaSlotResponse(revision: Int64(1), mappingId: Int64(dim), nodeId: 'r'),
+        ),
+      );
+      await t.pump();
+      expect(find.byKey(const ValueKey('op-binder')), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('op-binder')));
+      await t.pumpAndSettle();
+      await t.tap(find.text('any … satisfies').last);
+      await t.pumpAndSettle();
+      final c2 = again.effects.whereType<ComposeFormula>().single;
+      expect((c2.action.nodeId, c2.action.binder.form), ('r', 'any'));
+    });
+
+    testWidgets('nested binders render nested; an unreadable binder falls back to text', (t) async {
+      final inner = binderOverRange();
+      final nested = pb.FormulaProjection(
+        source: 'any row in rows: ${inner.source}',
+        parseOk: true,
+        complete: false,
+        root: pb.FormulaNode(
+          id: 'r',
+          kind: 'binder',
+          name: 'any',
+          param: 'row',
+          text: 'any row in rows: ${inner.source}',
+          range: pb.SourceSpan(start: 0, end: 17 + 48),
+          children: [
+            pb.FormulaNode(
+              id: 'r.0',
+              kind: 'reference',
+              name: 'rows',
+              text: 'rows',
+              range: pb.SourceSpan(start: 11, end: 15),
+            ),
+            _shift(inner.root, 'r.1'),
+          ],
+        ),
+      );
+      var s = connected(lamp());
+      s = drafted(s, nested.source, projection: nested);
+      final h = await pump(t, s);
+      expect(find.byKey(const ValueKey('binder-r')), findsOneWidget);
+      expect(find.byKey(const ValueKey('binder-r.1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('binder-local-r')), findsOneWidget);
+      expect(find.byKey(const ValueKey('binder-local-r.1')), findsOneWidget);
+      // the inner binder's body is inside the outer's body
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('binder-r')),
+          matching: find.byKey(const ValueKey('node-r.1.1.1.1')),
+        ),
+        findsOneWidget,
+      );
+      // typing an unfinished binder: the text cannot be read, so the
+      // structure is dimmed and nothing is editable structurally
+      h.dispatch(const DefinitionDraftChanged(mappingId: dim, source: 'all angle in'));
+      await t.pump();
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(
+            generation: h.state.draft(dim)!.generation,
+            projection: pb.FormulaProjection(source: 'all angle in', parseOk: false),
+            parseOk: false,
+          ),
+        ),
+      );
+      await t.pump();
+      expect(composerInSync(h.state, dim), isFalse);
+      expect(find.text('The text cannot be read as a formula.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('binder-r')), findsNothing);
+      h.dispatch(
+        ComposeRequested(
+          mappingId: dim,
+          action: pb.ComposeAction(nodeId: 'r', range: pb.Unit()),
+        ),
+      );
+      expect(h.effects.whereType<ComposeFormula>(), isEmpty);
     });
 
     testWidgets('save, revert and a conflict work the same in Formula mode', (t) async {
