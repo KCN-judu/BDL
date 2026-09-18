@@ -7,6 +7,7 @@
 #![forbid(unsafe_code)]
 
 mod cli;
+mod formula;
 mod rename;
 mod server;
 mod session;

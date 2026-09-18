@@ -543,6 +543,33 @@ const ClientMessage$json = {
       '10': 'listSemanticActions'
     },
     {
+      '1': 'get_formula_projection',
+      '3': 34,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.GetFormulaProjectionRequest',
+      '9': 0,
+      '10': 'getFormulaProjection'
+    },
+    {
+      '1': 'get_formula_slot',
+      '3': 35,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.GetFormulaSlotRequest',
+      '9': 0,
+      '10': 'getFormulaSlot'
+    },
+    {
+      '1': 'compose_formula',
+      '3': 36,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ComposeFormulaRequest',
+      '9': 0,
+      '10': 'composeFormula'
+    },
+    {
       '1': 'list_concept_templates',
       '3': 40,
       '4': 1,
@@ -689,25 +716,29 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'ZXJEZWZpbml0aW9uRHJhZnRSZXF1ZXN0SABSFGhvdmVyRGVmaW5pdGlvbkRyYWZ0Ej8KDGhvdm'
         'VyX2VudGl0eRggIAEoCzIaLmJkbC52MS5Ib3ZlckVudGl0eVJlcXVlc3RIAFILaG92ZXJFbnRp'
         'dHkSWAoVbGlzdF9zZW1hbnRpY19hY3Rpb25zGCEgASgLMiIuYmRsLnYxLkxpc3RTZW1hbnRpY0'
-        'FjdGlvbnNSZXF1ZXN0SABSE2xpc3RTZW1hbnRpY0FjdGlvbnMSWwoWbGlzdF9jb25jZXB0X3Rl'
-        'bXBsYXRlcxgoIAEoCzIjLmJkbC52MS5MaXN0Q29uY2VwdFRlbXBsYXRlc1JlcXVlc3RIAFIUbG'
-        'lzdENvbmNlcHRUZW1wbGF0ZXMSbQocaW5zdGFudGlhdGVfY29uY2VwdF90ZW1wbGF0ZRgpIAEo'
-        'CzIpLmJkbC52MS5JbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZVJlcXVlc3RIAFIaaW5zdGFudG'
-        'lhdGVDb25jZXB0VGVtcGxhdGUSUgoTaW5pdF9zeXN0ZW1fcHJvamVjdBgyIAEoCzIgLmJkbC52'
-        'MS5Jbml0U3lzdGVtUHJvamVjdFJlcXVlc3RIAFIRaW5pdFN5c3RlbVByb2plY3QSOQoKZ2V0X3'
-        'N5c3RlbRgzIAEoCzIYLmJkbC52MS5HZXRTeXN0ZW1SZXF1ZXN0SABSCWdldFN5c3RlbRJMChFh'
-        'cHBseV9zeXN0ZW1fZWRpdBg0IAEoCzIeLmJkbC52MS5BcHBseVN5c3RlbUVkaXRSZXF1ZXN0SA'
-        'BSD2FwcGx5U3lzdGVtRWRpdBJSChNydW5fc3lzdGVtX2FuYWx5c2lzGDUgASgLMiAuYmRsLnYx'
-        'LlJ1blN5c3RlbUFuYWx5c2lzUmVxdWVzdEgAUhFydW5TeXN0ZW1BbmFseXNpcxJJChBhcHBseV'
-        '9ncm91cF9lZGl0GDYgASgLMh0uYmRsLnYxLkFwcGx5R3JvdXBFZGl0UmVxdWVzdEgAUg5hcHBs'
-        'eUdyb3VwRWRpdBJtChxwcmV2aWV3X2NvbXBvbmVudF9leHRyYWN0aW9uGDcgASgLMikuYmRsLn'
-        'YxLlByZXZpZXdDb21wb25lbnRFeHRyYWN0aW9uUmVxdWVzdEgAUhpwcmV2aWV3Q29tcG9uZW50'
-        'RXh0cmFjdGlvbhJMChFpbml0X3RleHRfcHJvamVjdBg8IAEoCzIeLmJkbC52MS5Jbml0VGV4dF'
-        'Byb2plY3RSZXF1ZXN0SABSD2luaXRUZXh0UHJvamVjdBJFCg5yZWxvYWRfcHJvamVjdBg9IAEo'
-        'CzIcLmJkbC52MS5SZWxvYWRQcm9qZWN0UmVxdWVzdEgAUg1yZWxvYWRQcm9qZWN0EjwKC2dldF'
-        '9zb3VyY2VzGD4gASgLMhkuYmRsLnYxLkdldFNvdXJjZXNSZXF1ZXN0SABSCmdldFNvdXJjZXMS'
-        'TAoRYXBwbHlfc291cmNlX2VkaXQYPyABKAsyHi5iZGwudjEuQXBwbHlTb3VyY2VFZGl0UmVxdW'
-        'VzdEgAUg9hcHBseVNvdXJjZUVkaXRCCQoHcGF5bG9hZA==');
+        'FjdGlvbnNSZXF1ZXN0SABSE2xpc3RTZW1hbnRpY0FjdGlvbnMSWwoWZ2V0X2Zvcm11bGFfcHJv'
+        'amVjdGlvbhgiIAEoCzIjLmJkbC52MS5HZXRGb3JtdWxhUHJvamVjdGlvblJlcXVlc3RIAFIUZ2'
+        'V0Rm9ybXVsYVByb2plY3Rpb24SSQoQZ2V0X2Zvcm11bGFfc2xvdBgjIAEoCzIdLmJkbC52MS5H'
+        'ZXRGb3JtdWxhU2xvdFJlcXVlc3RIAFIOZ2V0Rm9ybXVsYVNsb3QSSAoPY29tcG9zZV9mb3JtdW'
+        'xhGCQgASgLMh0uYmRsLnYxLkNvbXBvc2VGb3JtdWxhUmVxdWVzdEgAUg5jb21wb3NlRm9ybXVs'
+        'YRJbChZsaXN0X2NvbmNlcHRfdGVtcGxhdGVzGCggASgLMiMuYmRsLnYxLkxpc3RDb25jZXB0VG'
+        'VtcGxhdGVzUmVxdWVzdEgAUhRsaXN0Q29uY2VwdFRlbXBsYXRlcxJtChxpbnN0YW50aWF0ZV9j'
+        'b25jZXB0X3RlbXBsYXRlGCkgASgLMikuYmRsLnYxLkluc3RhbnRpYXRlQ29uY2VwdFRlbXBsYX'
+        'RlUmVxdWVzdEgAUhppbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZRJSChNpbml0X3N5c3RlbV9w'
+        'cm9qZWN0GDIgASgLMiAuYmRsLnYxLkluaXRTeXN0ZW1Qcm9qZWN0UmVxdWVzdEgAUhFpbml0U3'
+        'lzdGVtUHJvamVjdBI5CgpnZXRfc3lzdGVtGDMgASgLMhguYmRsLnYxLkdldFN5c3RlbVJlcXVl'
+        'c3RIAFIJZ2V0U3lzdGVtEkwKEWFwcGx5X3N5c3RlbV9lZGl0GDQgASgLMh4uYmRsLnYxLkFwcG'
+        'x5U3lzdGVtRWRpdFJlcXVlc3RIAFIPYXBwbHlTeXN0ZW1FZGl0ElIKE3J1bl9zeXN0ZW1fYW5h'
+        'bHlzaXMYNSABKAsyIC5iZGwudjEuUnVuU3lzdGVtQW5hbHlzaXNSZXF1ZXN0SABSEXJ1blN5c3'
+        'RlbUFuYWx5c2lzEkkKEGFwcGx5X2dyb3VwX2VkaXQYNiABKAsyHS5iZGwudjEuQXBwbHlHcm91'
+        'cEVkaXRSZXF1ZXN0SABSDmFwcGx5R3JvdXBFZGl0Em0KHHByZXZpZXdfY29tcG9uZW50X2V4dH'
+        'JhY3Rpb24YNyABKAsyKS5iZGwudjEuUHJldmlld0NvbXBvbmVudEV4dHJhY3Rpb25SZXF1ZXN0'
+        'SABSGnByZXZpZXdDb21wb25lbnRFeHRyYWN0aW9uEkwKEWluaXRfdGV4dF9wcm9qZWN0GDwgAS'
+        'gLMh4uYmRsLnYxLkluaXRUZXh0UHJvamVjdFJlcXVlc3RIAFIPaW5pdFRleHRQcm9qZWN0EkUK'
+        'DnJlbG9hZF9wcm9qZWN0GD0gASgLMhwuYmRsLnYxLlJlbG9hZFByb2plY3RSZXF1ZXN0SABSDX'
+        'JlbG9hZFByb2plY3QSPAoLZ2V0X3NvdXJjZXMYPiABKAsyGS5iZGwudjEuR2V0U291cmNlc1Jl'
+        'cXVlc3RIAFIKZ2V0U291cmNlcxJMChFhcHBseV9zb3VyY2VfZWRpdBg/IAEoCzIeLmJkbC52MS'
+        '5BcHBseVNvdXJjZUVkaXRSZXF1ZXN0SABSD2FwcGx5U291cmNlRWRpdEIJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -896,6 +927,33 @@ const Response$json = {
       '9': 0,
       '10': 'sourceEditApplied'
     },
+    {
+      '1': 'formula_projection',
+      '3': 46,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaProjectionResponse',
+      '9': 0,
+      '10': 'formulaProjection'
+    },
+    {
+      '1': 'formula_slot',
+      '3': 47,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaSlotResponse',
+      '9': 0,
+      '10': 'formulaSlot'
+    },
+    {
+      '1': 'compose_formula',
+      '3': 48,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ComposeFormulaResponse',
+      '9': 0,
+      '10': 'composeFormula'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -927,7 +985,11 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'X3ByZXZpZXcYKyABKAsyIS5iZGwudjEuRXh0cmFjdGlvblByZXZpZXdSZXNwb25zZUgAUhFleH'
         'RyYWN0aW9uUHJldmlldxIzCgdzb3VyY2VzGCwgASgLMhcuYmRsLnYxLlNvdXJjZXNSZXNwb25z'
         'ZUgAUgdzb3VyY2VzEksKE3NvdXJjZV9lZGl0X2FwcGxpZWQYLSABKAsyGS5iZGwudjEuU291cm'
-        'NlRWRpdEFwcGxpZWRIAFIRc291cmNlRWRpdEFwcGxpZWRCCQoHcGF5bG9hZA==');
+        'NlRWRpdEFwcGxpZWRIAFIRc291cmNlRWRpdEFwcGxpZWQSUgoSZm9ybXVsYV9wcm9qZWN0aW9u'
+        'GC4gASgLMiEuYmRsLnYxLkZvcm11bGFQcm9qZWN0aW9uUmVzcG9uc2VIAFIRZm9ybXVsYVByb2'
+        'plY3Rpb24SQAoMZm9ybXVsYV9zbG90GC8gASgLMhsuYmRsLnYxLkZvcm11bGFTbG90UmVzcG9u'
+        'c2VIAFILZm9ybXVsYVNsb3QSSQoPY29tcG9zZV9mb3JtdWxhGDAgASgLMh4uYmRsLnYxLkNvbX'
+        'Bvc2VGb3JtdWxhUmVzcG9uc2VIAFIOY29tcG9zZUZvcm11bGFCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -2945,6 +3007,14 @@ const DefinitionDraftAnalysis$json = {
     {'1': 'generation', '3': 3, '4': 1, '5': 4, '10': 'generation'},
     {'1': 'parse_ok', '3': 4, '4': 1, '5': 8, '10': 'parseOk'},
     {'1': 'analysis', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.MappingAnalysis', '10': 'analysis'},
+    {
+      '1': 'projection',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaProjection',
+      '10': 'projection'
+    },
   ],
 };
 
@@ -2953,7 +3023,464 @@ final $typed_data.Uint8List definitionDraftAnalysisDescriptor = $convert
     .base64Decode('ChdEZWZpbml0aW9uRHJhZnRBbmFseXNpcxIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHQ'
         'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEh4KCmdlbmVyYXRpb24YAyABKARSCmdlbmVy'
         'YXRpb24SGQoIcGFyc2Vfb2sYBCABKAhSB3BhcnNlT2sSMwoIYW5hbHlzaXMYBSABKAsyFy5iZG'
-        'wudjEuTWFwcGluZ0FuYWx5c2lzUghhbmFseXNpcw==');
+        'wudjEuTWFwcGluZ0FuYWx5c2lzUghhbmFseXNpcxI5Cgpwcm9qZWN0aW9uGAYgASgLMhkuYmRs'
+        'LnYxLkZvcm11bGFQcm9qZWN0aW9uUgpwcm9qZWN0aW9u');
+
+@$core.Deprecated('Use getFormulaProjectionRequestDescriptor instead')
+const GetFormulaProjectionRequest$json = {
+  '1': 'GetFormulaProjectionRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'component', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `GetFormulaProjectionRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getFormulaProjectionRequestDescriptor = $convert
+    .base64Decode('ChtHZXRGb3JtdWxhUHJvamVjdGlvblJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW'
+        '9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIhCgljb21wb25lbnQYAyABKARIAFIJ'
+        'Y29tcG9uZW50iAEBQgwKCl9jb21wb25lbnQ=');
+
+@$core.Deprecated('Use formulaProjectionResponseDescriptor instead')
+const FormulaProjectionResponse$json = {
+  '1': 'FormulaProjectionResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {
+      '1': 'projection',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaProjection',
+      '10': 'projection'
+    },
+  ],
+};
+
+/// Descriptor for `FormulaProjectionResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaProjectionResponseDescriptor = $convert
+    .base64Decode('ChlGb3JtdWxhUHJvamVjdGlvblJlc3BvbnNlEhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbh'
+        'IdCgptYXBwaW5nX2lkGAIgASgEUgltYXBwaW5nSWQSOQoKcHJvamVjdGlvbhgDIAEoCzIZLmJk'
+        'bC52MS5Gb3JtdWxhUHJvamVjdGlvblIKcHJvamVjdGlvbg==');
+
+@$core.Deprecated('Use formulaProjectionDescriptor instead')
+const FormulaProjection$json = {
+  '1': 'FormulaProjection',
+  '2': [
+    {'1': 'source', '3': 1, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'parse_ok', '3': 2, '4': 1, '5': 8, '10': 'parseOk'},
+    {'1': 'complete', '3': 3, '4': 1, '5': 8, '10': 'complete'},
+    {
+      '1': 'root',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaNode',
+      '9': 0,
+      '10': 'root',
+      '17': true
+    },
+    {
+      '1': 'result',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 1,
+      '10': 'result',
+      '17': true
+    },
+    {'1': 'slots', '3': 6, '4': 3, '5': 9, '10': 'slots'},
+    {'1': 'unplaced', '3': 7, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'unplaced'},
+    {'1': 'draft_generation', '3': 8, '4': 1, '5': 4, '9': 2, '10': 'draftGeneration', '17': true},
+  ],
+  '8': [
+    {'1': '_root'},
+    {'1': '_result'},
+    {'1': '_draft_generation'},
+  ],
+};
+
+/// Descriptor for `FormulaProjection`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaProjectionDescriptor = $convert
+    .base64Decode('ChFGb3JtdWxhUHJvamVjdGlvbhIWCgZzb3VyY2UYASABKAlSBnNvdXJjZRIZCghwYXJzZV9vax'
+        'gCIAEoCFIHcGFyc2VPaxIaCghjb21wbGV0ZRgDIAEoCFIIY29tcGxldGUSLAoEcm9vdBgEIAEo'
+        'CzITLmJkbC52MS5Gb3JtdWxhTm9kZUgAUgRyb290iAEBEi0KBnJlc3VsdBgFIAEoCzIQLmJkbC'
+        '52MS5UeXBlVmlld0gBUgZyZXN1bHSIAQESFAoFc2xvdHMYBiADKAlSBXNsb3RzEi4KCHVucGxh'
+        'Y2VkGAcgAygLMhIuYmRsLnYxLkRpYWdub3N0aWNSCHVucGxhY2VkEi4KEGRyYWZ0X2dlbmVyYX'
+        'Rpb24YCCABKARIAlIPZHJhZnRHZW5lcmF0aW9uiAEBQgcKBV9yb290QgkKB19yZXN1bHRCEwoR'
+        'X2RyYWZ0X2dlbmVyYXRpb24=');
+
+@$core.Deprecated('Use formulaNodeDescriptor instead')
+const FormulaNode$json = {
+  '1': 'FormulaNode',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'range', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.SourceSpan', '10': 'range'},
+    {'1': 'kind', '3': 3, '4': 1, '5': 9, '10': 'kind'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'name', '3': 5, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'coordinate', '3': 6, '4': 1, '5': 9, '10': 'coordinate'},
+    {'1': 'unit', '3': 7, '4': 1, '5': 9, '10': 'unit'},
+    {'1': 'unit_id', '3': 8, '4': 1, '5': 9, '10': 'unitId'},
+    {'1': 'equation', '3': 9, '4': 1, '5': 8, '10': 'equation'},
+    {
+      '1': 'entity',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.EntityRef',
+      '9': 0,
+      '10': 'entity',
+      '17': true
+    },
+    {
+      '1': 'actual',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 1,
+      '10': 'actual',
+      '17': true
+    },
+    {
+      '1': 'expected',
+      '3': 12,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 2,
+      '10': 'expected',
+      '17': true
+    },
+    {'1': 'because', '3': 13, '4': 1, '5': 9, '10': 'because'},
+    {'1': 'diagnostics', '3': 14, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+    {'1': 'children', '3': 15, '4': 3, '5': 11, '6': '.bdl.v1.FormulaNode', '10': 'children'},
+  ],
+  '8': [
+    {'1': '_entity'},
+    {'1': '_actual'},
+    {'1': '_expected'},
+  ],
+};
+
+/// Descriptor for `FormulaNode`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaNodeDescriptor = $convert
+    .base64Decode('CgtGb3JtdWxhTm9kZRIOCgJpZBgBIAEoCVICaWQSKAoFcmFuZ2UYAiABKAsyEi5iZGwudjEuU2'
+        '91cmNlU3BhblIFcmFuZ2USEgoEa2luZBgDIAEoCVIEa2luZBISCgR0ZXh0GAQgASgJUgR0ZXh0'
+        'EhIKBG5hbWUYBSABKAlSBG5hbWUSHgoKY29vcmRpbmF0ZRgGIAEoCVIKY29vcmRpbmF0ZRISCg'
+        'R1bml0GAcgASgJUgR1bml0EhcKB3VuaXRfaWQYCCABKAlSBnVuaXRJZBIaCghlcXVhdGlvbhgJ'
+        'IAEoCFIIZXF1YXRpb24SLgoGZW50aXR5GAogASgLMhEuYmRsLnYxLkVudGl0eVJlZkgAUgZlbn'
+        'RpdHmIAQESLQoGYWN0dWFsGAsgASgLMhAuYmRsLnYxLlR5cGVWaWV3SAFSBmFjdHVhbIgBARIx'
+        'CghleHBlY3RlZBgMIAEoCzIQLmJkbC52MS5UeXBlVmlld0gCUghleHBlY3RlZIgBARIYCgdiZW'
+        'NhdXNlGA0gASgJUgdiZWNhdXNlEjQKC2RpYWdub3N0aWNzGA4gAygLMhIuYmRsLnYxLkRpYWdu'
+        'b3N0aWNSC2RpYWdub3N0aWNzEi8KCGNoaWxkcmVuGA8gAygLMhMuYmRsLnYxLkZvcm11bGFOb2'
+        'RlUghjaGlsZHJlbkIJCgdfZW50aXR5QgkKB19hY3R1YWxCCwoJX2V4cGVjdGVk');
+
+@$core.Deprecated('Use typeViewDescriptor instead')
+const TypeView$json = {
+  '1': 'TypeView',
+  '2': [
+    {'1': 'description', '3': 1, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'kind', '3': 2, '4': 1, '5': 9, '10': 'kind'},
+    {'1': 'dim', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '9': 0, '10': 'dim', '17': true},
+    {'1': 'concept_id', '3': 4, '4': 1, '5': 4, '9': 1, '10': 'conceptId', '17': true},
+  ],
+  '8': [
+    {'1': '_dim'},
+    {'1': '_concept_id'},
+  ],
+};
+
+/// Descriptor for `TypeView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List typeViewDescriptor = $convert
+    .base64Decode('CghUeXBlVmlldxIgCgtkZXNjcmlwdGlvbhgBIAEoCVILZGVzY3JpcHRpb24SEgoEa2luZBgCIA'
+        'EoCVIEa2luZBIiCgNkaW0YAyABKAsyCy5iZGwudjEuRGltSABSA2RpbYgBARIiCgpjb25jZXB0'
+        'X2lkGAQgASgESAFSCWNvbmNlcHRJZIgBAUIGCgRfZGltQg0KC19jb25jZXB0X2lk');
+
+@$core.Deprecated('Use getFormulaSlotRequestDescriptor instead')
+const GetFormulaSlotRequest$json = {
+  '1': 'GetFormulaSlotRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'node_id', '3': 4, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `GetFormulaSlotRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getFormulaSlotRequestDescriptor = $convert
+    .base64Decode('ChVHZXRGb3JtdWxhU2xvdFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh0KCm'
+        '1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNvdXJjZRIXCgdu'
+        'b2RlX2lkGAQgASgJUgZub2RlSWQSIQoJY29tcG9uZW50GAUgASgESABSCWNvbXBvbmVudIgBAU'
+        'IMCgpfY29tcG9uZW50');
+
+@$core.Deprecated('Use formulaSlotResponseDescriptor instead')
+const FormulaSlotResponse$json = {
+  '1': 'FormulaSlotResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'node_id', '3': 3, '4': 1, '5': 9, '10': 'nodeId'},
+    {
+      '1': 'expected',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TypeView',
+      '9': 0,
+      '10': 'expected',
+      '17': true
+    },
+    {'1': 'explanation', '3': 5, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'technical', '3': 6, '4': 1, '5': 9, '10': 'technical'},
+    {'1': 'insufficient', '3': 7, '4': 1, '5': 8, '10': 'insufficient'},
+    {'1': 'units', '3': 8, '4': 3, '5': 11, '6': '.bdl.v1.UnitCandidate', '10': 'units'},
+    {
+      '1': 'references',
+      '3': 9,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ReferenceCandidate',
+      '10': 'references'
+    },
+    {
+      '1': 'equations',
+      '3': 10,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.EquationCandidate',
+      '10': 'equations'
+    },
+  ],
+  '8': [
+    {'1': '_expected'},
+  ],
+};
+
+/// Descriptor for `FormulaSlotResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaSlotResponseDescriptor = $convert
+    .base64Decode('ChNGb3JtdWxhU2xvdFJlc3BvbnNlEhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbhIdCgptYX'
+        'BwaW5nX2lkGAIgASgEUgltYXBwaW5nSWQSFwoHbm9kZV9pZBgDIAEoCVIGbm9kZUlkEjEKCGV4'
+        'cGVjdGVkGAQgASgLMhAuYmRsLnYxLlR5cGVWaWV3SABSCGV4cGVjdGVkiAEBEiAKC2V4cGxhbm'
+        'F0aW9uGAUgASgJUgtleHBsYW5hdGlvbhIcCgl0ZWNobmljYWwYBiABKAlSCXRlY2huaWNhbBIi'
+        'CgxpbnN1ZmZpY2llbnQYByABKAhSDGluc3VmZmljaWVudBIrCgV1bml0cxgIIAMoCzIVLmJkbC'
+        '52MS5Vbml0Q2FuZGlkYXRlUgV1bml0cxI6CgpyZWZlcmVuY2VzGAkgAygLMhouYmRsLnYxLlJl'
+        'ZmVyZW5jZUNhbmRpZGF0ZVIKcmVmZXJlbmNlcxI3CgllcXVhdGlvbnMYCiADKAsyGS5iZGwudj'
+        'EuRXF1YXRpb25DYW5kaWRhdGVSCWVxdWF0aW9uc0ILCglfZXhwZWN0ZWQ=');
+
+@$core.Deprecated('Use unitCandidateDescriptor instead')
+const UnitCandidate$json = {
+  '1': 'UnitCandidate',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'symbol', '3': 2, '4': 1, '5': 9, '10': 'symbol'},
+    {'1': 'measures', '3': 3, '4': 1, '5': 9, '10': 'measures'},
+  ],
+};
+
+/// Descriptor for `UnitCandidate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List unitCandidateDescriptor = $convert
+    .base64Decode('Cg1Vbml0Q2FuZGlkYXRlEg4KAmlkGAEgASgJUgJpZBIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbB'
+        'IaCghtZWFzdXJlcxgDIAEoCVIIbWVhc3VyZXM=');
+
+@$core.Deprecated('Use referenceCandidateDescriptor instead')
+const ReferenceCandidate$json = {
+  '1': 'ReferenceCandidate',
+  '2': [
+    {'1': 'label', '3': 1, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'insert', '3': 2, '4': 1, '5': 9, '10': 'insert'},
+    {
+      '1': 'entity',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.EntityRef',
+      '9': 0,
+      '10': 'entity',
+      '17': true
+    },
+    {'1': 'produces', '3': 4, '4': 1, '5': 9, '10': 'produces'},
+    {'1': 'relevance', '3': 5, '4': 1, '5': 13, '10': 'relevance'},
+  ],
+  '8': [
+    {'1': '_entity'},
+  ],
+};
+
+/// Descriptor for `ReferenceCandidate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List referenceCandidateDescriptor = $convert
+    .base64Decode('ChJSZWZlcmVuY2VDYW5kaWRhdGUSFAoFbGFiZWwYASABKAlSBWxhYmVsEhYKBmluc2VydBgCIA'
+        'EoCVIGaW5zZXJ0Ei4KBmVudGl0eRgDIAEoCzIRLmJkbC52MS5FbnRpdHlSZWZIAFIGZW50aXR5'
+        'iAEBEhoKCHByb2R1Y2VzGAQgASgJUghwcm9kdWNlcxIcCglyZWxldmFuY2UYBSABKA1SCXJlbG'
+        'V2YW5jZUIJCgdfZW50aXR5');
+
+@$core.Deprecated('Use equationCandidateDescriptor instead')
+const EquationCandidate$json = {
+  '1': 'EquationCandidate',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'shape', '3': 2, '4': 1, '5': 9, '10': 'shape'},
+    {'1': 'insert', '3': 3, '4': 1, '5': 9, '10': 'insert'},
+    {'1': 'summary', '3': 4, '4': 1, '5': 9, '10': 'summary'},
+  ],
+};
+
+/// Descriptor for `EquationCandidate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List equationCandidateDescriptor = $convert
+    .base64Decode('ChFFcXVhdGlvbkNhbmRpZGF0ZRISCgRuYW1lGAEgASgJUgRuYW1lEhQKBXNoYXBlGAIgASgJUg'
+        'VzaGFwZRIWCgZpbnNlcnQYAyABKAlSBmluc2VydBIYCgdzdW1tYXJ5GAQgASgJUgdzdW1tYXJ5');
+
+@$core.Deprecated('Use composeFormulaRequestDescriptor instead')
+const ComposeFormulaRequest$json = {
+  '1': 'ComposeFormulaRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'action', '3': 4, '4': 1, '5': 11, '6': '.bdl.v1.ComposeAction', '10': 'action'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `ComposeFormulaRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeFormulaRequestDescriptor = $convert
+    .base64Decode('ChVDb21wb3NlRm9ybXVsYVJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh0KCm'
+        '1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNvdXJjZRItCgZh'
+        'Y3Rpb24YBCABKAsyFS5iZGwudjEuQ29tcG9zZUFjdGlvblIGYWN0aW9uEiEKCWNvbXBvbmVudB'
+        'gFIAEoBEgAUgljb21wb25lbnSIAQFCDAoKX2NvbXBvbmVudA==');
+
+@$core.Deprecated('Use composeActionDescriptor instead')
+const ComposeAction$json = {
+  '1': 'ComposeAction',
+  '2': [
+    {'1': 'node_id', '3': 1, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'fill', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'fill'},
+    {
+      '1': 'operator',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ComposeOperator',
+      '9': 0,
+      '10': 'operator'
+    },
+    {'1': 'call', '3': 4, '4': 1, '5': 11, '6': '.bdl.v1.ComposeCall', '9': 0, '10': 'call'},
+    {
+      '1': 'set_unit',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ComposeSetUnit',
+      '9': 0,
+      '10': 'setUnit'
+    },
+    {'1': 'set_coordinate', '3': 6, '4': 1, '5': 9, '9': 0, '10': 'setCoordinate'},
+    {'1': 'remove', '3': 7, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'remove'},
+  ],
+  '8': [
+    {'1': 'action'},
+  ],
+};
+
+/// Descriptor for `ComposeAction`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeActionDescriptor = $convert
+    .base64Decode('Cg1Db21wb3NlQWN0aW9uEhcKB25vZGVfaWQYASABKAlSBm5vZGVJZBIUCgRmaWxsGAIgASgJSA'
+        'BSBGZpbGwSNQoIb3BlcmF0b3IYAyABKAsyFy5iZGwudjEuQ29tcG9zZU9wZXJhdG9ySABSCG9w'
+        'ZXJhdG9yEikKBGNhbGwYBCABKAsyEy5iZGwudjEuQ29tcG9zZUNhbGxIAFIEY2FsbBIzCghzZX'
+        'RfdW5pdBgFIAEoCzIWLmJkbC52MS5Db21wb3NlU2V0VW5pdEgAUgdzZXRVbml0EicKDnNldF9j'
+        'b29yZGluYXRlGAYgASgJSABSDXNldENvb3JkaW5hdGUSJgoGcmVtb3ZlGAcgASgLMgwuYmRsLn'
+        'YxLlVuaXRIAFIGcmVtb3ZlQggKBmFjdGlvbg==');
+
+@$core.Deprecated('Use composeOperatorDescriptor instead')
+const ComposeOperator$json = {
+  '1': 'ComposeOperator',
+  '2': [
+    {'1': 'op', '3': 1, '4': 1, '5': 9, '10': 'op'},
+    {'1': 'before', '3': 2, '4': 1, '5': 8, '10': 'before'},
+  ],
+};
+
+/// Descriptor for `ComposeOperator`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeOperatorDescriptor = $convert
+    .base64Decode('Cg9Db21wb3NlT3BlcmF0b3ISDgoCb3AYASABKAlSAm9wEhYKBmJlZm9yZRgCIAEoCFIGYmVmb3'
+        'Jl');
+
+@$core.Deprecated('Use composeCallDescriptor instead')
+const ComposeCall$json = {
+  '1': 'ComposeCall',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'arity', '3': 2, '4': 1, '5': 13, '10': 'arity'},
+  ],
+};
+
+/// Descriptor for `ComposeCall`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeCallDescriptor = $convert
+    .base64Decode('CgtDb21wb3NlQ2FsbBISCgRuYW1lGAEgASgJUgRuYW1lEhQKBWFyaXR5GAIgASgNUgVhcml0eQ'
+        '==');
+
+@$core.Deprecated('Use composeSetUnitDescriptor instead')
+const ComposeSetUnit$json = {
+  '1': 'ComposeSetUnit',
+  '2': [
+    {'1': 'unit_id', '3': 1, '4': 1, '5': 9, '10': 'unitId'},
+    {'1': 'preserve_value', '3': 2, '4': 1, '5': 8, '10': 'preserveValue'},
+  ],
+};
+
+/// Descriptor for `ComposeSetUnit`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeSetUnitDescriptor = $convert
+    .base64Decode('Cg5Db21wb3NlU2V0VW5pdBIXCgd1bml0X2lkGAEgASgJUgZ1bml0SWQSJQoOcHJlc2VydmVfdm'
+        'FsdWUYAiABKAhSDXByZXNlcnZlVmFsdWU=');
+
+@$core.Deprecated('Use composeFormulaResponseDescriptor instead')
+const ComposeFormulaResponse$json = {
+  '1': 'ComposeFormulaResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'edits', '3': 4, '4': 3, '5': 11, '6': '.bdl.v1.DraftTextEdit', '10': 'edits'},
+    {'1': 'select', '3': 5, '4': 1, '5': 9, '10': 'select'},
+  ],
+};
+
+/// Descriptor for `ComposeFormulaResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeFormulaResponseDescriptor = $convert
+    .base64Decode('ChZDb21wb3NlRm9ybXVsYVJlc3BvbnNlEhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbhIdCg'
+        'ptYXBwaW5nX2lkGAIgASgEUgltYXBwaW5nSWQSFgoGc291cmNlGAMgASgJUgZzb3VyY2USKwoF'
+        'ZWRpdHMYBCADKAsyFS5iZGwudjEuRHJhZnRUZXh0RWRpdFIFZWRpdHMSFgoGc2VsZWN0GAUgAS'
+        'gJUgZzZWxlY3Q=');
+
+@$core.Deprecated('Use draftTextEditDescriptor instead')
+const DraftTextEdit$json = {
+  '1': 'DraftTextEdit',
+  '2': [
+    {'1': 'start', '3': 1, '4': 1, '5': 13, '10': 'start'},
+    {'1': 'end', '3': 2, '4': 1, '5': 13, '10': 'end'},
+    {'1': 'new_text', '3': 3, '4': 1, '5': 9, '10': 'newText'},
+  ],
+};
+
+/// Descriptor for `DraftTextEdit`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List draftTextEditDescriptor = $convert
+    .base64Decode('Cg1EcmFmdFRleHRFZGl0EhQKBXN0YXJ0GAEgASgNUgVzdGFydBIQCgNlbmQYAiABKA1SA2VuZB'
+        'IZCghuZXdfdGV4dBgDIAEoCVIHbmV3VGV4dA==');
 
 @$core.Deprecated('Use discardDefinitionDraftRequestDescriptor instead')
 const DiscardDefinitionDraftRequest$json = {

@@ -5,6 +5,7 @@
 //! session and handles requests strictly in order.  Nothing else ever
 //! touches the session.
 
+use crate::formula;
 use crate::session::{Committed, Session, SessionError, SimulationRun};
 use crate::COMPILER_VERSION;
 use bdl_protocol::convert::{self, SessionInfo};
@@ -406,6 +407,9 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
         Req::HoverEntity(r) => (hover_entity(session, &r), None),
         Req::ListSemanticActions(r) => (list_semantic_actions(session, &r), None),
+        Req::GetFormulaProjection(r) => (get_formula_projection(session, &r), None),
+        Req::GetFormulaSlot(r) => (get_formula_slot(session, &r), None),
+        Req::ComposeFormula(r) => (compose_formula(session, &r), None),
         Req::ListConceptTemplates(_) => (
             Resp::ConceptTemplates(convert::concept_templates_response(libraries())),
             None,
@@ -428,12 +432,81 @@ fn analyze_definition_draft(session: &mut Session, r: &pb::AnalyzeDefinitionDraf
     }
     let id = bdl_model::DeclId::from_raw(r.mapping_id);
     match session.draft_verdict(component_scope(r.component), id, &r.source) {
-        Ok(v) => Resp::DefinitionDraft(pb::DefinitionDraftAnalysis {
-            revision: v.stamp.revision.raw(),
+        Ok(v) => {
+            // the Composer's view of the same world: a projection failure
+            // (a definition by reference) leaves the field unset
+            let projection = session
+                .formula_projection(component_scope(r.component), id)
+                .ok()
+                .map(|p| formula::projection_to_pb(&p));
+            Resp::DefinitionDraft(pb::DefinitionDraftAnalysis {
+                revision: v.stamp.revision.raw(),
+                mapping_id: r.mapping_id,
+                generation: r.generation,
+                parse_ok: v.parse_ok,
+                analysis: Some(convert::mapping_analysis_to_pb(&v.analysis)),
+                projection,
+            })
+        }
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn get_formula_projection(session: &mut Session, r: &pb::GetFormulaProjectionRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.formula_projection(component_scope(r.component), id) {
+        Ok(p) => Resp::FormulaProjection(pb::FormulaProjectionResponse {
+            revision: r.revision,
             mapping_id: r.mapping_id,
-            generation: r.generation,
-            parse_ok: v.parse_ok,
-            analysis: Some(convert::mapping_analysis_to_pb(&v.analysis)),
+            projection: Some(formula::projection_to_pb(&p)),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn get_formula_slot(session: &mut Session, r: &pb::GetFormulaSlotRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.formula_slot(component_scope(r.component), id, &r.source, &r.node_id) {
+        Ok(slot) => Resp::FormulaSlot(formula::slot_to_pb(&slot, r.revision, r.mapping_id)),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn compose_formula(session: &mut Session, r: &pb::ComposeFormulaRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    let op = match r.action.as_ref().and_then(formula::action_from_pb) {
+        Some(op) => op,
+        None => {
+            return Resp::Error(error(
+                "protocol.missing_field",
+                "a compose action with a node is required",
+            ))
+        }
+    };
+    match session.compose_formula(component_scope(r.component), id, &r.source, &op) {
+        Ok(c) => Resp::ComposeFormula(pb::ComposeFormulaResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            source: c.source,
+            edits: c
+                .edits
+                .iter()
+                .map(|e| pb::DraftTextEdit {
+                    start: e.range.start,
+                    end: e.range.end,
+                    new_text: e.new_text.clone(),
+                })
+                .collect(),
+            select: c.select.unwrap_or_default(),
         }),
         Err(e) => Resp::Error(session_error(&e)),
     }
@@ -525,7 +598,7 @@ fn entity_from_pb(e: Option<&pb::EntityRef>) -> Result<bdl_ide::EntityRef, pb::E
     })
 }
 
-fn entity_to_pb(e: bdl_ide::EntityRef) -> pb::EntityRef {
+pub(crate) fn entity_to_pb(e: bdl_ide::EntityRef) -> pb::EntityRef {
     use pb::entity_ref::Kind;
     pb::EntityRef {
         kind: Some(match e {
@@ -1135,6 +1208,9 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::Ide(bdl_ide::QueryError::UnknownEntity { .. }) => {
             error("draft.unknown_mapping", &e.to_string())
         }
+        SessionError::Ide(bdl_ide::QueryError::NotApplicable { reason }) => {
+            error("formula.not_applicable", reason)
+        }
         SessionError::Ide(_) => error("draft.unavailable", &e.to_string()),
     }
 }
@@ -1267,6 +1343,9 @@ fn payload_name(p: &Req) -> &'static str {
         Req::HoverDefinitionDraft(_) => "hover_definition_draft",
         Req::HoverEntity(_) => "hover_entity",
         Req::ListSemanticActions(_) => "list_semantic_actions",
+        Req::GetFormulaProjection(_) => "get_formula_projection",
+        Req::GetFormulaSlot(_) => "get_formula_slot",
+        Req::ComposeFormula(_) => "compose_formula",
         Req::ListConceptTemplates(_) => "list_concept_templates",
         Req::InstantiateConceptTemplate(_) => "instantiate_concept_template",
         Req::Shutdown(_) => "shutdown",

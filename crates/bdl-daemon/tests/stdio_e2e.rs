@@ -981,6 +981,93 @@ fn definition_drafts_over_stdio() {
     };
     assert!(!none.found, "a number is not an entity");
 
+    // the Formula Composer (0.12): the draft analysis carries the
+    // projection of the same world, a slot says what it expects and what
+    // fits, and a structured action answers with the text it makes
+    let Resp::DefinitionDraft(d) = draft(&mut c, &mut events, revision, mapping, 10, "Tilt / ?")
+    else {
+        panic!("expected a draft analysis")
+    };
+    let p = d.projection.expect("projection with the draft");
+    assert!(!p.complete && p.parse_ok);
+    assert_eq!(p.slots, vec!["r.1".to_string()]);
+    let tree = p.root.as_ref().expect("tree");
+    assert_eq!((tree.kind.as_str(), tree.name.as_str()), ("binary", "/"));
+    assert_eq!(tree.children[0].kind, "reference");
+    assert_eq!(tree.children[1].kind, "slot");
+    assert_eq!(
+        tree.children[1]
+            .expected
+            .as_ref()
+            .map(|t| t.description.as_str()),
+        Some("an angle")
+    );
+    assert!(tree.children[1]
+        .diagnostics
+        .iter()
+        .any(|d| d.code == "formula.slot.empty"));
+    let Resp::FormulaSlot(slot) = c.call(
+        Req::GetFormulaSlot(pb::GetFormulaSlotRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "Tilt / ?".into(),
+            node_id: "r.1".into(),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a slot")
+    };
+    let symbols: Vec<&str> = slot.units.iter().map(|u| u.symbol.as_str()).collect();
+    assert_eq!(symbols, vec!["rad", "deg", "turn"]);
+    assert!(slot.explanation.starts_with("Expected: an angle"));
+    assert!(slot.references.iter().any(|r| r.label == "Tilt"));
+    assert!(slot.equations.iter().any(|e| e.name == "clamp"));
+    let Resp::ComposeFormula(composed) = c.call(
+        Req::ComposeFormula(pb::ComposeFormulaRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "Tilt / 180 deg".into(),
+            action: Some(pb::ComposeAction {
+                node_id: "r.1".into(),
+                action: Some(pb::compose_action::Action::SetUnit(pb::ComposeSetUnit {
+                    unit_id: "angle.rad".into(),
+                    preserve_value: true,
+                })),
+            }),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a composed formula")
+    };
+    assert_eq!(composed.source, "Tilt / 3.141592653589793 rad");
+    assert_eq!(composed.edits.len(), 1);
+    assert_eq!((composed.edits[0].start, composed.edits[0].end), (7, 14));
+    // the committed definition projects without a draft; a stale revision is refused
+    let Resp::FormulaProjection(fp) = c.call(
+        Req::GetFormulaProjection(pb::GetFormulaProjectionRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a projection")
+    };
+    assert_eq!(fp.projection.unwrap().source, "Tilt / 180 deg");
+    let Resp::Error(e) = c.call(
+        Req::GetFormulaProjection(pb::GetFormulaProjectionRequest {
+            component: None,
+            revision: revision + 99,
+            mapping_id: mapping,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a refusal")
+    };
+    assert_eq!(e.code, "draft.stale_revision");
+
     // an open draft: a concept without a representation is Open, not an error
     let warmth = apply(
         &mut c,

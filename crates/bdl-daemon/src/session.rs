@@ -1100,6 +1100,44 @@ impl Session {
         ))
     }
 
+    /// The Formula Composer's view of the mapping's effective definition
+    /// (its draft overlay when one exists, else the committed formula);
+    /// sets no overlay.
+    pub fn formula_projection(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+    ) -> Result<bdl_ide::FormulaProjection, SessionError> {
+        let snapshot = self.ide_in(scope)?.snapshot();
+        Ok(bdl_ide::formula_projection(&snapshot, mapping)?)
+    }
+
+    /// What a slot of the draft expects and what fits.
+    pub fn formula_slot(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+        node: &str,
+    ) -> Result<bdl_ide::SlotInfo, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        Ok(bdl_ide::formula_slot(&snapshot, mapping, node)?)
+    }
+
+    /// A structured action on the draft, answered with the text it makes;
+    /// the overlay is *not* moved to the answer — Studio puts it into the
+    /// draft and the ordinary analysis follows.
+    pub fn compose_formula(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+        op: &bdl_ide::ComposeOp,
+    ) -> Result<bdl_ide::ComposeResult, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        Ok(bdl_ide::compose(&snapshot, mapping, source, op)?)
+    }
+
     /// The concept named at a byte offset into the draft, explained by the
     /// IDE service; `None` when nothing semantic is under the cursor.
     pub fn draft_hover(
