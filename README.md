@@ -38,7 +38,8 @@ runtime/            bdl-runtime-core (no_std vocabulary of generated cores), bdl
 hardware/boards/    board descriptions as data (arduino_nano, big_board)
 library/std/        the Standard Concept Library (concepts.toml)
 examples/           smart_lamp — the canonical Design → Simulate → Deploy example
-docs/               architecture, formats, pipeline, ADRs, paper digest
+docs/               architecture, formats, pipeline, ADRs, paper digest, the user guide
+locale/             the terminology glossary and the user guide's zh-Hans / ja catalogs and pages
 reference/paper/    the BDL paper
 ```
 
@@ -58,8 +59,12 @@ just bdld           # run the daemon on stdio for manual experiments
 
 ## Reading order
 
-Using the tool rather than building it? Start with the
-[user guide](docs/user-guide/README.md).
+Using the tool rather than building it? Start with the user guide —
+[English](docs/user-guide/README.md) ·
+[简体中文](locale/user-guide/zh_Hans/README.md) ·
+[日本語](locale/user-guide/ja/README.md). Studio itself speaks the same three
+languages (_Preferences…_); the rules are in
+[localization-style.md](docs/project/localization-style.md).
 
 Building it? Start at the
 [engineering documentation front door](docs/README.md), which routes every

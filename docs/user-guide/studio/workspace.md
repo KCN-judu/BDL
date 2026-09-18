@@ -43,8 +43,10 @@ a _Dismiss_ link — never as a dialog.
 | **Monitor**  | what is it doing right now — _not built yet_; the page says live values arrive with telemetry | ⌘4       |
 
 The button at the left of the page bar (⊞) closes the project and returns to the
-project manager. The gear at the right is labelled _Project settings_ but has no
-settings page yet; while the compiler is disconnected it reconnects.
+project manager. The gear at the right opens **Preferences…**: the language
+Studio speaks (System Default, English, 简体中文, 日本語), which changes only
+what Studio shows — never the BDL source, the project files or the compiler. The
+same link is on the project manager.
 
 ## Saving, undo, revisions
 

@@ -42,6 +42,7 @@ header that `just docs-check` verifies against its folder.
 | **which test backs a claim**                                     | [evidence/testing.md](evidence/testing.md) · [evidence/behavior-systems-correspondence.md](evidence/behavior-systems-correspondence.md) · [architecture/studio-compiler-integration.md §3](architecture/studio-compiler-integration.md) · [user-guide/VERIFICATION.md](user-guide/VERIFICATION.md) |
 | **how to enter the codebase**                                    | [guides/getting-started.md](guides/getting-started.md)                                                                                                                                                                                                                                             |
 | **how these records work**                                       | [project/governance.md](project/governance.md) · [project/research.md](project/research.md) · [project/migration-report.md](project/migration-report.md)                                                                                                                                           |
+| **how Studio and the guide are translated**                      | [project/localization-style.md](project/localization-style.md) · `locale/glossary.json`                                                                                                                                                                                                            |
 
 ## Pages
 
@@ -49,7 +50,7 @@ header that `just docs-check` verifies against its folder.
 
 | Page                                                  | Area        | What it fixes                                                                                            |
 | ----------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
-| [kernel.md](spec/kernel.md)                           | language    | the kernel contract, transcribed from the Lean development (Chinese)                                     |
+| [kernel.md](spec/kernel.md)                           | language    | the kernel contract, transcribed from the Lean development                                               |
 | [textual-syntax.md](spec/textual-syntax.md)           | textual     | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix                                    |
 | [runtime-semantics.md](spec/runtime-semantics.md)     | runtime     | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve                        |
 | [project-format.md](spec/project-format.md)           | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules                                     |
@@ -81,7 +82,9 @@ header that `just docs-check` verifies against its folder.
 [governance.md](project/governance.md) ·
 [formal-correspondence.md](project/formal-correspondence.md) ·
 [research.md](project/research.md) ·
-[migration-report.md](project/migration-report.md)
+[migration-report.md](project/migration-report.md) ·
+[localization-style.md](project/localization-style.md) — the three locales, what
+never changes with them, the glossary and the two pipelines
 
 ### Evidence
 
@@ -100,9 +103,8 @@ one design out to a pin.
 ### Background
 
 [paper-digest.md](background/paper-digest.md) — the paper's engineering-binding
-content (Chinese) ·
-[ide-service-research.md](background/ide-service-research.md) — the precedents
-behind the IDE service.
+content · [ide-service-research.md](background/ide-service-research.md) — the
+precedents behind the IDE service.
 
 ### Archive
 

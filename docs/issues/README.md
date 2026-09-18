@@ -22,6 +22,7 @@ to implement its tentative answer. When a concrete alternative exists, a
 | [ISS-0010](0010-temporal-modifiers-and-contexts-in-the-surface.md)      | Temporal modifiers and contexts in the surface                      | open     | language         | a surface shape per modifier                                                                        |
 | [ISS-0013](0013-filter-copies-its-accumulator-in-the-generated-core.md) | `zip` copies its accumulator in the generated core                  | open     | codegen          | a last-use ordering in the emitter, or another `zip` expansion                                      |
 | [ISS-0014](0014-unit-domain-normalization-in-the-formal-kernel.md)      | Prove the Unit-domain normalization of relationships without inputs | open     | formal           | a formal phase: `Ty.unit` with `arr unit B ≅ B`, or a conservativity proof over the existing kernel |
+| [ISS-0015](0015-daemon-diagnostics-are-english.md)                      | The compiler's diagnostic sentences are English in every locale     | open     | daemon           | structured diagnostic arguments in the protocol, then a Studio catalog entry per code               |
 
 ## Resolved
 
