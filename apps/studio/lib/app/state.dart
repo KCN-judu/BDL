@@ -106,10 +106,10 @@ class ProjectWorkspace {
   final String? page;
 
   Map<String, Object> toJson() => {
-    if (view != null) 'view': view!,
-    if (openSource != null) 'open_source': openSource!,
-    if (component != null) 'component': component!,
-    if (page != null) 'page': page!,
+    'view': ?view,
+    'open_source': ?openSource,
+    'component': ?component,
+    'page': ?page,
   };
 
   static ProjectWorkspace? fromJson(Object? json) {

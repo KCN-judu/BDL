@@ -35,10 +35,11 @@ class _Daemon {
   int saves = 0;
   late final FakeDaemon link = FakeDaemon((m) {
     if (m.hasHandshake()) return okHandshake();
-    if (m.hasGetProject())
+    if (m.hasGetProject()) {
       return pb.Response(
         project: pb.ProjectResponse(project: lamp(dirty: dirty)),
       );
+    }
     if (m.hasSaveProject()) {
       saves++;
       if (saveFails) return errorResponse('project.changed_on_disk', 'changed on disk');
