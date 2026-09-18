@@ -130,6 +130,7 @@ dependencies = [
  "anyhow",
  "bdl-compiler",
  "bdl-diagnostics",
+ "bdl-exec-ir",
  "bdl-hardware",
  "bdl-ide",
  "bdl-ide-db",
