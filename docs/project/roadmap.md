@@ -33,8 +33,9 @@ formal result arrives.
   transport becomes possible (ADR-0027's rejected ring buffer).
 - The equation language's remaining edges: `zip`'s cost in the generated core
   (ISS-0013); hover on an equation's name (completion carries its meaning
-  today); record syntax lowering to nested grouped values, `forall`/`exists`
-  sugar — only if a case asks.
+  today); record syntax lowering to nested grouped values — only if a case asks
+  (the binder, range and `??` forms landed in P11; FV Phase 11 removes the
+  general quantifier and comprehension).
 - The Formula Composer's next slices: `if` / `match` / blocks / rules as
   structured components (opaque text today); a preferred display unit per
   concept and per simulation input (presentation only, FV Phase 10 §9); hover

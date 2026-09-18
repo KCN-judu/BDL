@@ -108,18 +108,20 @@ expected reports _`context` is reserved for a future version of BDL_:
 
 ### 2.2 Punctuation and operators
 
-Longest match wins; `->`, `=>`, `==`, `!=`, `<=`, `>=`, `&&`, `||` are single
-tokens, so `a->b` lexes as `a` `->` `b` and `a- >b` as `a` `-` `>` `b`.
+Longest match wins; `->`, `=>`, `==`, `!=`, `<=`, `>=`, `&&`, `||`, `..`, `??`
+are single tokens, so `a->b` lexes as `a` `->` `b` and `a- >b` as `a` `-` `>`
+`b`.
 
-| token       | kind                                          | token           | kind                          |
-| ----------- | --------------------------------------------- | --------------- | ----------------------------- |
-| `(` `)`     | `LParen` `RParen`                             | `+` `-` `*` `/` | `Plus` `Minus` `Star` `Slash` |
-| `{` `}`     | `LBrace` `RBrace`                             | `!`             | `Bang`                        |
-| `[` `]`     | `LBracket` `RBracket` (collections, §15)      |                 |                               |
-| `<` `>`     | `Lt` `Gt` (comparison _and_ generic brackets) | `<=` `>=`       | `Le` `Ge`                     |
-| `:` `,` `;` | `Colon` `Comma` `Semi`                        | `==` `!=`       | `EqEq` `Ne`                   |
-| `=`         | `Eq`                                          | `&&` `\|\|`     | `AndAnd` `OrOr`               |
-| `->`        | `Arrow`                                       | `=>`            | `FatArrow`                    |
+| token       | kind                                          | token           | kind                              |
+| ----------- | --------------------------------------------- | --------------- | --------------------------------- |
+| `(` `)`     | `LParen` `RParen`                             | `+` `-` `*` `/` | `Plus` `Minus` `Star` `Slash`     |
+| `{` `}`     | `LBrace` `RBrace`                             | `!`             | `Bang`                            |
+| `[` `]`     | `LBracket` `RBracket` (collections, §15)      |                 |                                   |
+| `<` `>`     | `Lt` `Gt` (comparison _and_ generic brackets) | `<=` `>=`       | `Le` `Ge`                         |
+| `:` `,` `;` | `Colon` `Comma` `Semi`                        | `==` `!=`       | `EqEq` `Ne`                       |
+| `=`         | `Eq`                                          | `&&` `\|\|`     | `AndAnd` `OrOr`                   |
+| `->`        | `Arrow`                                       | `=>`            | `FatArrow`                        |
+| `?`         | `Question` (a slot, §16)                      | `..` `??`       | `DotDot` `QuestionQuestion` (§17) |
 
 There is no `>>` token: `Option<Result<A, B>>` lexes as two `Gt` tokens. A lone
 `&`, `|`, `.`, `#`, `@`, or any character outside the table is an `Error` token;
@@ -192,7 +194,7 @@ Name  NameRef  UnitSuffix
 NamedType  FunctionType  ParenType
 NameExpr  LiteralExpr  ParenExpr  CallExpr  UnaryExpr  BinaryExpr
 IfExpr  MatchExpr  MatchArmList  MatchArm  BlockExpr  LetStmt
-ListExpr  TupleExpr  LambdaExpr  LambdaParams
+ListExpr  TupleExpr  LambdaExpr  LambdaParams  BinderExpr  RangeExpr
 WildcardPattern  IdentPattern  LiteralPattern  ConstructorPattern
 ErrorNode
 ```
@@ -269,7 +271,9 @@ Expr            ::= OrExpr
 OrExpr          ::= AndExpr ( "||" AndExpr )*
 AndExpr         ::= EqExpr ( "&&" EqExpr )*
 EqExpr          ::= RelExpr ( ( "==" | "!=" ) RelExpr )?          (* non-associative *)
-RelExpr         ::= AddExpr ( ( "<" | "<=" | ">" | ">=" | "in" ) AddExpr )?  (* non-associative *)
+RelExpr         ::= RangeExpr ( ( "<" | "<=" | ">" | ">=" | "in" ) RangeExpr )?  (* non-associative *)
+RangeExpr       ::= CoalesceExpr ( ".." CoalesceExpr )?              (* §17; only after "in" *)
+CoalesceExpr    ::= AddExpr ( "??" CoalesceExpr )?                    (* §17; right *)
 AddExpr         ::= MulExpr ( ( "+" | "-" ) MulExpr )*
 MulExpr         ::= UnaryExpr ( ( "*" | "/" ) UnaryExpr )*
 UnaryExpr       ::= ( "!" | "-" ) UnaryExpr | PostfixExpr
@@ -279,7 +283,9 @@ ArgList         ::= Expr ( "," Expr )* ","?
 
 PrimaryExpr     ::= NameExpr | LiteralExpr | ParenExpr | TupleExpr | ListExpr
                   | LambdaExpr | IfExpr | MatchExpr | BlockExpr | SlotExpr
+                  | BinderExpr
 SlotExpr        ::= "?"                                             (* §16 *)
+BinderExpr      ::= ( "all" | "any" | "map" | "filter" ) Name "in" RangeExpr ":" Expr  (* §17 *)
 NameExpr        ::= NameRef
 LiteralExpr     ::= Number UnitSuffix? | "true" | "false"
 UnitSuffix      ::= Ident
@@ -327,6 +333,8 @@ From loosest to tightest:
 | 2     | `&&`                                    | left          | `BinaryExpr` |
 | 3     | `==` `!=`                               | **none**      | `BinaryExpr` |
 | 4     | `<` `<=` `>` `>=` `in`                  | **none**      | `BinaryExpr` |
+| 4a    | `..`                                    | **none**      | `RangeExpr`  |
+| 4b    | `??`                                    | right         | `BinaryExpr` |
 | 5     | `+` `-`                                 | left          | `BinaryExpr` |
 | 6     | `*` `/`                                 | left          | `BinaryExpr` |
 | 7     | prefix `!` `-`                          | —             | `UnaryExpr`  |
@@ -334,7 +342,10 @@ From loosest to tightest:
 | 9     | `if` `match` `{ }` `( )` literals names | primary       | —            |
 
 Pratt binding powers used by the parser: `||` 1/2, `&&` 3/4, `==` `!=` 5/6, `<`…
-7/8, `+` `-` 9/10, `*` `/` 11/12, unary 13, call 15.
+7/8, `..` 8/9, `??` 10/9, `+` `-` 11/12, `*` `/` 13/14, unary 15, call 17. A
+binder (`all x in xs: body`, §17) is a primary expression whose body extends as
+far right as possible, like `if`; its collection is parsed at the binding power
+of `..`, so it stops at the colon.
 
 Reading rules:
 
@@ -347,6 +358,10 @@ Reading rules:
 - A unit suffix binds to its number only: `90 deg / 2` is `(90 deg) / 2`.
 - A rule extends as far right as possible, like `if`:
   `any(xs, x => x < 30 deg && held)` gives the whole conjunction to the rule.
+- `x in lo .. hi` is `x in (lo .. hi)`; `x + y in lo .. hi` is
+  `(x + y) in (lo .. hi)`; `x in lo + d .. hi - d` is
+  `x in ((lo + d) .. (hi - d))`; `x ?? d + 1` is `x ?? (d + 1)` and `x ?? 0 < 1`
+  is `(x ?? 0) < 1` (§17).
 
 ### 5.1 Comparisons do not chain
 
@@ -936,3 +951,62 @@ does not check, like any other draft that is not finished, and no slot ever
 reaches Core, the checker, the evaluator or generated code. A slot may be typed
 as text and saved (an incomplete definition is a legal state of a design); it is
 never a value, an operator or a unit (`1 ? 2` is a syntax error).
+
+## 17. Natural forms: binders, ranges, defaults
+
+```ebnf
+BinderExpr ::= ( "all" | "any" | "map" | "filter" ) Name "in" RangeExpr ":" Expr
+RangeExpr  ::= CoalesceExpr ".." CoalesceExpr
+CoalesceExpr ::= AddExpr "??" CoalesceExpr
+```
+
+Three surface forms over the equation language of §15 — a way of writing
+`all(xs, x => body)`, `inRange(x, lo, hi)` and `getOrElse(x, d)` in the order a
+designer says them. Each is **desugared once, by the elaborator**, to the
+library equation it names applied to the same arguments; the parser keeps the
+natural form as its own node, the formatter keeps whichever spelling was
+written, and nothing new reaches Core, the checker, the evaluator or generated
+code (FV Phase 11, `BDL/Surface/Natural.lean`: `desugar` is one-way; typing,
+evaluation and clocks are the library's — `binder_*_typed`, `binder_*_eval`,
+`range_typed`, `range_eval`, `binder_clock`, `range_clock`, `coalesce_typed`).
+
+- **Binder** `all reading in readings: reading < limit` — `BinderExpr`. The
+  first word is a **contextual keyword**: `all`, `any`, `map`, `filter` are
+  binders only in the head position `word Name in …`; anywhere else they are
+  ordinary names, so a relationship called `map` stays callable (`map(x)`,
+  `all(x, y)`, `all + 1`, `all in xs` are what they were). The local `reading`
+  is the rule's parameter (`readings`, `reading => reading < limit`): visible in
+  the body only, one element of the collection (`binder_local_type`), shadowing
+  an outer name of the same spelling lexically, and shadowed by an inner binder
+  (`all x in xs: any x in ys: x` reads `ys`'s `x`); it is never a name of the
+  design, so references, rename and semantic tokens treat it as a parameter. The
+  collection is an expression short of the colon (a comparison, a range or
+  another binder there needs parentheses); the body is the rest, like a rule's.
+  `all`/`any`/`filter` need a `true`/`false` body; `map` makes a collection of
+  what the body gives. There is no comprehension language: no generators,
+  `yield`, `where` or unbounded quantifiers — nested binders cover those cases.
+- **Range** `x in lo .. hi` — `RangeExpr` as the right operand of `in`, the
+  closed range `inRange(x, lo, hi)` (both ends belong). `..` binds tighter than
+  `in` and weaker than `+ -`, and does not chain (`1 .. 2 .. 3` is
+  `syntax.chained_comparison`). A range is not a value: written anywhere but
+  after `in` it is `formula.range.outside_in`. Both ends must be comparable with
+  the subject — the same concept when the subject is a concept value, its
+  dimension otherwise, under the ordering policy of §15 (`Mode` values against
+  `Mode` values have no order). The lexer keeps numbers whole: `1.0..2.0` is
+  `1.0` `..` `2.0`, `1..2` is `1` `..` `2`; there is no unary `+`.
+- **Default** `x ?? d` — `getOrElse(x, d)`: `x` when present, `d` when absent.
+  Right-associative, between `..` and `+ -`.
+
+Diagnostics speak of the form, not of the equation it becomes:
+`formula.binder.not_a_collection` — _all expects a collection after 'in'._;
+`formula.binder.body` — _The body of 'filter' must be true or false._;
+`formula.range.endpoint` — _This range endpoint must be an angle._ (explanation
+_Both ends of the range must be comparable with angle._); `semantic.no_order`
+for an unordered concept; `formula.coalesce.not_optional` /
+`formula.coalesce.default`; a local used outside its body is
+`formula.name.unknown`, whose fix lists the locals in scope where there are any.
+
+Canonical formatting: one space around `in`, `..` and `??`; no space before the
+binder's colon, one after: `all reading in readings: reading < limit`. Nothing
+is indentation-sensitive. The call forms of §15 are never rewritten to these
+forms, nor the reverse.

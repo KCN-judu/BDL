@@ -332,7 +332,7 @@ entity, role) and the same ladder status.
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.
 
-### The Formula Composer (protocol 0.12)
+### The Formula Composer (protocol 0.12, 0.13)
 
 `bdl-ide::formula` gives the Studio definition editor its structured projection,
 on the same overlay path (docs/architecture/studio-ui.md §4b, ADR-0028):
@@ -365,6 +365,38 @@ the denominator `numerator − result`; two unknown operands are _insufficient
 information_, never searched. Candidate units are exactly the registered units
 of the solved dimension (`unitsFor`); for a literal, of its own dimension (a
 switch keeps the quantity). Tests: `crates/bdl-ide/tests/formula_composer.rs`.
+
+The natural forms (docs/spec/textual-syntax.md §17) reach the projection as
+their own nodes, never desugared there:
+`NodeKind::Binder { form, param, param_type }` with the collection and the body
+as children, `NodeKind::Range` with the two ends, `??` as a `Compare` node. The
+builder keeps a scope of binder locals so a `Reference` bound by an enclosing
+binder carries `local: true` and no entity; `param_type` is the collection's
+element (`TypeView.element`, from the list type or a concept's list
+representation). `solve` reads a binder as the elaborator types it: the
+collection expects a collection, the body of `all`/`any`/`filter` expects
+`true`/`false`, the body of `map` expects one element of what the position
+expects; `x in lo .. hi` passes the subject's actual kind — nominal when it is a
+concept value — to both ends. Two actions: `ComposeOp::Binder { node, form }`
+makes `form local in node: ?` with a fresh local (`fresh_local`: the
+collection's name without its plural `s`, lowercased, when that is free —
+`readings` → `reading`, `Angles` → `angle` — else `item`, `item2`, …; never a
+name of the design, a local of the formula, a word of the language or an
+equation), `ComposeOp::Range { node }` makes `node in ? .. ?`; grouping treats a
+binder as weaker than every operator (an operand only in parentheses) and its
+collection position as the range level (a comparison, a range or another binder
+there is parenthesised), `..` between `in` and `??`, `??` between `..` and
+`+ −`. Completion offers the locals in scope at the point
+(`CompletionKind::Local`: a binder's element inside its body, a rule's
+parameters, a pattern's names) above the design's names, and the four binder
+templates only when a collection is in sight (an input or a nullary relationship
+of a list kind), with the one collection filled in when there is exactly one.
+References, rename and semantic tokens never take a local for an entity:
+`ast::NameExpr::local_binding` (the nearest enclosing binder body, rule, match
+arm or earlier `let` that binds the spelling) is consulted by the index, the
+textual anchors and the token classifier — the binder word is a keyword only in
+the head position, the local a parameter (declaration and uses), `..` an
+operator.
 
 ### Component-scoped drafts (system projects)
 

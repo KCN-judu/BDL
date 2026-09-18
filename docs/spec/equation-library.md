@@ -185,28 +185,44 @@ the relationship, and the equation is not offered.
 
 Following FV D-95/D-96: a finite set is membership in a collection literal
 (`x in [a, b, c]`; duplicates change nothing); an interval is a grouped value
-`(low, high)` with `inInterval`; a record would be a right-nested grouped value
-(no record syntax exists); finite quantification is `all`/`any` over a
-collection (no `forall`/`exists` syntax exists — ISS-0001 and ISS-0010 list the
+`(low, high)` with `inInterval`, or the surface range `x in lo .. hi` that is
+`inRange(x, lo, hi)` and never a value; a record would be a right-nested grouped
+value (no record syntax exists); finite quantification is `all`/`any` over a
+collection, written as a call or as the binder form `all x in xs: body` (no
+unbounded `forall`/`exists` — FV Phase 11 D-111..D-114 remove the general
+quantifier, comprehension and interval type; ISS-0001 and ISS-0010 list the
 surface forms still open); user enums are unchanged (ISS-0005; the formal
 recommendation is a tag paired with an optional payload). No `Set`, interval,
 record or sum type exists in the kernel.
 
+The natural forms (`docs/spec/textual-syntax.md` §17) are spellings of four
+equations of §3 and nothing more: `all/any/map/filter x in xs: body` is the
+equation of that name applied to `xs` and the rule `x => body`; `x in lo .. hi`
+is `inRange(x, lo, hi)`; `x ?? d` is `getOrElse(x, d)`. The elaborator lowers
+each to the same Core the call would produce (tested equal in
+`crates/bdl-elab/tests/equations.rs`), so typing, nominality, order evidence,
+evaluation and clocks are the equation's.
+
 ## 5. Diagnostics
 
-| code                                    | when                                                               | message shape                                                               |
-| --------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `formula.equation.arity`                | wrong number of arguments                                          | _min takes 2 values (a, b), but 3 are given here._ fix: _Write min(a, b)._  |
-| `formula.equation.argument`             | an argument does not fit the shape the earlier ones fixed          | _any expects a collection for `collection`, but this is a quantity._        |
-| `semantic.concept_mismatch`             | two concepts where one kind is needed, or `==`/`<` across concepts | _Brightness and Opacity are different concepts._                            |
-| `dimension.mismatch`                    | two dimensions where one is needed                                 | _min mixes values with different physical dimensions: a length and a time._ |
-| `semantic.no_order`                     | order asked of something without one                               | _Mode values can be compared for equality, but they have no default order._ |
-| `type.equality_not_data`                | equality on rules                                                  | _Rules cannot be compared for equality._                                    |
-| `formula.rule.expected` / `.unexpected` | a rule missing where needed, or given where a value is read        | _any needs a rule for `condition` here, written `x => …`._                  |
-| `formula.rule.arity` / `.undetermined`  | wrong parameter count; the rule's inputs' kinds cannot be told yet | _The kind of `x` cannot be told here._                                      |
-| `formula.rule.not_a_value`              | a rule outside an equation                                         | _A rule (`x => …`) is not a value on its own._                              |
-| `formula.option.undetermined`           | `[]` or `None` whose kind nothing fixes                            | (as before)                                                                 |
-| `type.fold_mismatch`                    | the checker's own fold rule (never reached from the surface)       | technical                                                                   |
+| code                                         | when                                                               | message shape                                                               |
+| -------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `formula.equation.arity`                     | wrong number of arguments                                          | _min takes 2 values (a, b), but 3 are given here._ fix: _Write min(a, b)._  |
+| `formula.equation.argument`                  | an argument does not fit the shape the earlier ones fixed          | _any expects a collection for `collection`, but this is a quantity._        |
+| `semantic.concept_mismatch`                  | two concepts where one kind is needed, or `==`/`<` across concepts | _Brightness and Opacity are different concepts._                            |
+| `dimension.mismatch`                         | two dimensions where one is needed                                 | _min mixes values with different physical dimensions: a length and a time._ |
+| `semantic.no_order`                          | order asked of something without one                               | _Mode values can be compared for equality, but they have no default order._ |
+| `type.equality_not_data`                     | equality on rules                                                  | _Rules cannot be compared for equality._                                    |
+| `formula.rule.expected` / `.unexpected`      | a rule missing where needed, or given where a value is read        | _any needs a rule for `condition` here, written `x => …`._                  |
+| `formula.rule.arity` / `.undetermined`       | wrong parameter count; the rule's inputs' kinds cannot be told yet | _The kind of `x` cannot be told here._                                      |
+| `formula.rule.not_a_value`                   | a rule outside an equation                                         | _A rule (`x => …`) is not a value on its own._                              |
+| `formula.binder.not_a_collection`            | `all x in 5: …` — the collection of a binder is no collection      | _all expects a collection after 'in'._                                      |
+| `formula.binder.body`                        | the body of `all`/`any`/`filter` is not `true`/`false`             | _The body of 'filter' must be true or false._                               |
+| `formula.range.endpoint`                     | an end of `lo .. hi` is not comparable with the subject            | _This range endpoint must be an angle._                                     |
+| `formula.range.outside_in`                   | `lo .. hi` anywhere but after `in`                                 | _A range is written after `in`: `x in lo .. hi`._                           |
+| `formula.coalesce.not_optional` / `.default` | `x ?? d` where `x` cannot be absent, or `d` is not `x`'s kind      | _The value before `??` must be one that may be absent._                     |
+| `formula.option.undetermined`                | `[]` or `None` whose kind nothing fixes                            | (as before)                                                                 |
+| `type.fold_mismatch`                         | the checker's own fold rule (never reached from the surface)       | technical                                                                   |
 
 Every message speaks of values, collections, grouped values, rules and concepts;
 _scheme_, _fold_, _product_, _Data_ and _type variable_ appear only in the

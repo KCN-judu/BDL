@@ -141,3 +141,31 @@ Extends the decision; every sentence above stays true.
   operator under a unary minus or beside a stronger one is grouped — and
   property tests hold the meaning fixed across a no-op fill and a
   wrap-then-remove.
+
+## Amendment (2026-09-18, P11 — the natural expression surface)
+
+Extends the decision; every sentence above stays true.
+
+- **Natural forms are surface syntax with one desugaring.**
+  `all/any/map/filter x in xs: body`, `x in lo .. hi` and `x ?? d` are parsed as
+  their own nodes, kept by the formatter as written, and lowered once — by the
+  elaborator — to the library equation each names applied to the same arguments
+  (`all(xs, x => body)`, `inRange(x, lo, hi)`, `getOrElse(x, d)`). No kernel
+  type, expression, value, evaluator rule, clock rule or capability is added (FV
+  Phase 11, `BDL/Surface/Natural.lean`: the elaborations are equal by `rfl`;
+  typing, evaluation and clocks are the library's; D-111..D-114 remove the
+  interval type, comprehension and the unbounded quantifier). The call forms
+  stay valid and are never rewritten to the natural forms, nor the reverse.
+- **The Composer projects the form, not its lowering.** A binder is a node with
+  its local and the element type, a range a node with two ends; a reference
+  bound by a binder is marked local and carries no entity. Slot inference reads
+  the form as the elaborator types it (a body of `all`/`any`/`filter` is
+  `true`/`false`, a `map` body one element of the result, a range's ends the
+  subject's — nominal — kind). Wrapping in a binder chooses a fresh, readable,
+  non-capturing local (`readings` → `reading`, else `item`, `item2`, …);
+  `desugar_rename` makes the choice semantically invisible.
+- **Contextual words, lexical locals.** `all`, `any`, `map`, `filter` are
+  binders only in the head position and ordinary names elsewhere; a binder local
+  is the rule's parameter — visible in the body, shadowing lexically — and is a
+  local symbol to references, rename, completion and semantic tokens, never an
+  entity of the design.

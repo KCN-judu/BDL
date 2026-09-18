@@ -39,10 +39,13 @@ there and offers what fits:
 Click a part that is already there and the compiler says what it is. Above it,
 the actions on that part: **+ − × ÷** put that operator after it with a new slot
 for the other side, **Compare** likewise for `<`, `==` and the rest,
-**Function** wraps it in an equation (`clamp(…, ?, ?)`), and **Remove** turns it
-back into a slot — removing the slot next to an operator removes the operator
-with it. Parentheses are added where the operators need them: a sum divided by
-something becomes `(a + b) / ?`.
+**Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads
+a collection element by element (`all reading in readings: ?` — the editor picks
+a readable name for the element, `reading` for `readings`, `item` otherwise),
+**Range** asks whether the value lies between two ends (`… in ? .. ?`), and
+**Remove** turns it back into a slot — removing the slot next to an operator
+removes the operator with it. Parentheses are added where the operators need
+them: a sum divided by something becomes `(a + b) / ?`.
 
 The line under the field — _Expected: an angle, because an angle ÷ an angle = a
 dimensionless quantity._ — is the compiler's reasoning in plain words. It works
@@ -58,17 +61,26 @@ keeps the quantity and rewrites the number: `180 deg` becomes
 `3.141592653589793 rad`. The two are different things, and the pop-up never does
 the first.
 
+A formula over a collection is drawn the way it reads:
+`all reading in readings:` on one line and the condition indented under it. The
+element's name is in italics wherever it appears — it belongs to this formula,
+not to the design, so renaming a concept never touches it — and selecting it
+says what one element is. A range is its two ends around `..`; each end expects
+the same kind as the value before `in`, so its unit pop-up lists that kind's
+units.
+
 The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads
 exactly so in the **Text** view, and a formula typed as text appears in the
-**Formula** view — with `?` wherever text left a slot. Some forms — `if`,
-`match`, a block with `let`, a rule `x => …`, a collection or grouped literal,
-`delay` / `sync` — are shown as text in the Formula view and edited in the Text
-view. Text that cannot be read as a formula keeps exactly what you typed; the
-Formula view shows no parts for it, says _The text cannot be read as a formula._
-and offers **Edit as text**. After any change the Formula view waits for the
-compiler's reading of the new text — _Waiting for the compiler to read the
-formula…_, the parts dimmed — before it offers the next action, so nothing you
-click ever acts on text that has already changed.
+**Formula** view — with `?` wherever text left a slot;
+`all reading in readings: reading < limit` typed as text comes back as the same
+words. Some forms — `if`, `match`, a block with `let`, a rule `x => …`, a
+collection or grouped literal, `delay` / `sync` — are shown as text in the
+Formula view and edited in the Text view. Text that cannot be read as a formula
+keeps exactly what you typed; the Formula view shows no parts for it, says _The
+text cannot be read as a formula._ and offers **Edit as text**. After any change
+the Formula view waits for the compiler's reading of the new text — _Waiting for
+the compiler to read the formula…_, the parts dimmed — before it offers the next
+action, so nothing you click ever acts on text that has already changed.
 
 ## The text field and its verdict
 

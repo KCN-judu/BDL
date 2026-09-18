@@ -34,7 +34,9 @@ a syntax error. A quantity's dimension comes from arithmetic — write
 | or | `\|\|` | |
 | and | `&&` | |
 | equality | `==` `!=` | same dimension both sides; no chaining |
-| comparison | `<` `<=` `>` `>=` | same dimension both sides; no chaining (`a < b && b < c`) |
+| comparison | `<` `<=` `>` `>=` `in` | same dimension both sides; no chaining (`a < b && b < c`); `x in xs` is membership, `x in lo .. hi` a closed range |
+| range | `lo .. hi` | only after `in`; both ends must be comparable with the value: `angle in -45 deg .. 45 deg` |
+| default | `x ?? d` | `x` when it has a value, `d` when it is absent |
 | additive | `+` `-` | same dimension both sides |
 | multiplicative | `*` `/` | dimensions combine: `m / s` is a speed |
 | prefix | `!` `-` | |
@@ -54,6 +56,8 @@ have the value form of the concept the relationship produces.
 | match | `match reading { Some(v) => v, None => 0 }` | on true/false, options, whole numbers, or a concept's value; must be exhaustive (`_ =>` catches the rest) |
 | memory | `delay(0, acc + x)` | last tick's value of the expression; `0` before there was one |
 | across domains | `sync(interaction, 0, brightness)` | the source domain's last value strictly before this tick; `0` before the source has run |
+| every / some element | `all reading in readings: reading < limit` · `any fault in faults: fault > 2` | true or false for a whole collection; the name after the word stands for one element inside the body only |
+| transform / keep | `map reading in readings: reading / 2` · `filter reading in readings: reading in 10 K .. 40 K` | a new collection: each element transformed, or the elements that pass |
 
 `delay` and `sync` belong in a **value's** formula (no inputs), at the top
 level or in a `let`, an `if` branch or a `match` scrutinee — not in a
@@ -66,7 +70,8 @@ its own memory cell. The relationship must have a timing domain.
 | --- | --- |
 | dimensions | *This expression adds values with different physical dimensions: an angle and a time.* |
 | the produced concept | *Brightness is a dimensionless quantity, but this formula produces an angle.* |
-| names in scope | *`x` is not something this mapping reads or can call.* |
+| names in scope | *`x` is not something this mapping reads or can call.* — inside `all x in xs: …` the fix lists the locals in scope |
+| binders and ranges | *all expects a collection after 'in'.* · *The body of 'filter' must be true or false.* · *This range endpoint must be an angle.* |
 | concept identity in calls | *dimByTilt reads Tilt here, but this is Brightness.* |
 | arity and shape | *dimByTilt reads Tilt; give it those values.* · *tilt reads nothing; it is a value, not something to apply.* |
 | placement of memory | *`delay` can only be used in a relationship without inputs.* |

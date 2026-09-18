@@ -375,9 +375,17 @@ unit pop-up: a reference's kind is its declaration's, and the Composer never
 rewrites it. **Operators** are their glyphs (× ÷ − ≤ ≥ ≠), a **call** its name
 and parentheses, an **unsupported form** (`if`, `match`, a block, a rule, a
 collection or grouped literal, `delay`/`sync`) its text in monospace, selectable
-and edited as text. Selection is the selection tint; keyboard focus the accent
-ring; a finding is a red underline on the component _and_ its row under the
-field — one diagnostic, two projections.
+and edited as text. A **binder** (`all reading in readings: …`) is a head row —
+the word in bold, the local as an italic chip with a lighter frame, `in`, the
+collection, the colon — over its body indented beneath it; the local's uses in
+the body are the same italic chip, so what the formula itself binds is told
+apart from what the design provides (a design reference stays upright with its
+socket glyph); selecting the declaration selects the binder and the panel says
+_angle is each element: an angle._ A **range** is its two ends around a `..`
+glyph; each end is an ordinary component (a literal end has its own unit pop-up,
+an empty end a slot expecting the subject's kind). Selection is the selection
+tint; keyboard focus the accent ring; a finding is a red underline on the
+component _and_ its row under the field — one diagnostic, two projections.
 
 Beneath the field, for the selected component: the compiler's sentence —
 _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._ —
@@ -386,19 +394,21 @@ unit pop-up holds the units of the expected dimension (none for a dimensionless
 slot; none, with a sentence, when the position is not determined), then
 _References_ by type and _Equations_ folded; for a component, **+ − × ÷**,
 **Compare**, **Function** (the equations whose result fits, wrapping the
-component as the first argument) and **Remove**. Keys: Tab across components in
-reading order; on a selected component `+ − * /` and ⌫; digits and Return in a
-number entry; Esc clears the selection. The stale-projection policy
-(`app/composer.dart` `composerInSync`): a projection is current only when it is
-of exactly the text on screen and that text parsed; otherwise the field is
-dimmed with a notice — _Waiting for the compiler to read the formula…_ while the
-verdict for this text is on its way, _The text cannot be read as a formula._
-when it never will be (then no tree is shown: none is invented) — no component
-answers a click, no slot panel opens, no key acts, and the reducer refuses a
-structured action (or a second one in flight) and discards an answer for text
-that has moved on; **Edit as text** is the way out. Save, revert, conflict and
-detach are §4a's, unchanged: a formula with a slot may be saved and is _invalid_
-until filled.
+component as the first argument), **Each element** (all / any / map / filter —
+offered when the component is a collection or its kind is unknown; the compiler
+picks the local's name), **Range** (`… in ? .. ?`, not offered on a truth value)
+and **Remove**. Keys: Tab across components in reading order; on a selected
+component `+ − * /` and ⌫; digits and Return in a number entry; Esc clears the
+selection. The stale-projection policy (`app/composer.dart` `composerInSync`): a
+projection is current only when it is of exactly the text on screen and that
+text parsed; otherwise the field is dimmed with a notice — _Waiting for the
+compiler to read the formula…_ while the verdict for this text is on its way,
+_The text cannot be read as a formula._ when it never will be (then no tree is
+shown: none is invented) — no component answers a click, no slot panel opens, no
+key acts, and the reducer refuses a structured action (or a second one in
+flight) and discards an answer for text that has moved on; **Edit as text** is
+the way out. Save, revert, conflict and detach are §4a's, unchanged: a formula
+with a slot may be saved and is _invalid_ until filled.
 
 Screenshot: `docs/user-guide/assets/studio/formula-composer.png`
 (`docs/user-guide/screenshots/manifest.json`, `formula-composer`).
