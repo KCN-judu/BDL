@@ -287,9 +287,14 @@ fn text_ground(
 }
 
 /// A `file://` URI for an absolute path (spaces and `%` escaped).
+/// A `file://` URI for an absolute path.  A Windows path `C:\a\b` is
+/// `file:///C:/a/b`: forward slashes, one leading slash before the drive.
 fn path_to_uri(path: &Path) -> Option<Uri> {
-    let s = path.to_string_lossy();
+    let s = path.to_string_lossy().replace('\\', "/");
     let mut out = String::from("file://");
+    if !s.starts_with('/') {
+        out.push('/');
+    }
     for ch in s.chars() {
         match ch {
             ' ' => out.push_str("%20"),
@@ -308,6 +313,13 @@ fn uri_to_path(uri: &Uri) -> Option<PathBuf> {
     }
     let path = uri.path().as_str();
     let decoded = percent_decode(path);
+    // `/C:/a/b` is the URI form of a Windows drive path.
+    let decoded = match decoded.as_bytes() {
+        [b'/', drive, b':', b'/', ..] if drive.is_ascii_alphabetic() && cfg!(windows) => {
+            decoded[1..].replace('/', "\\")
+        }
+        _ => decoded,
+    };
     Some(PathBuf::from(decoded))
 }
 

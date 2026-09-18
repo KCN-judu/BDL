@@ -13,6 +13,16 @@ use std::time::Duration;
 
 const SRC: &str = "// Lampe — ångström ✓\nconcept Tilt : Angle\nconcept Brightness : Scalar\n\n// 日本語のコメント\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(tilt) =\n  tilt / (90 deg)\n\nmapping broken : Tilt -> Brightness\nbroken(tilt) =\n  tilt + 1 s\n";
 
+/// A `file://` URI for a path on this platform (`file:///C:/…` on Windows).
+fn file_uri(path: &std::path::Path) -> String {
+    let s = path.to_string_lossy().replace('\\', "/");
+    if s.starts_with('/') {
+        format!("file://{s}")
+    } else {
+        format!("file:///{s}")
+    }
+}
+
 struct Client {
     conn: Connection,
     next: i32,
@@ -396,7 +406,7 @@ fn opens_a_project_directory_as_committed_state() {
         "migrated on open"
     );
     assert!(!dir.path().join("design/project.bdl.json").exists());
-    let uri = format!("file://{}/src/extra.bdl", dir.path().display());
+    let uri = file_uri(&dir.path().join("src").join("extra.bdl"));
     // The buffer names the committed concept without declaring it:
     // binding finds it in the project.
     c.open(&uri, "mapping isHeld : Held -> Held\n");
