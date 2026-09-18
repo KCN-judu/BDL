@@ -278,7 +278,8 @@ CallSuffix      ::= "(" ArgList? ")"
 ArgList         ::= Expr ( "," Expr )* ","?
 
 PrimaryExpr     ::= NameExpr | LiteralExpr | ParenExpr | TupleExpr | ListExpr
-                  | LambdaExpr | IfExpr | MatchExpr | BlockExpr
+                  | LambdaExpr | IfExpr | MatchExpr | BlockExpr | SlotExpr
+SlotExpr        ::= "?"                                             (* §16 *)
 NameExpr        ::= NameRef
 LiteralExpr     ::= Number UnitSuffix? | "true" | "false"
 UnitSuffix      ::= Ident
@@ -379,6 +380,16 @@ expression for any other reason. Rules:
 - Dimensioned expressions get their dimension from typing, never from a postfix.
   Use parentheses and arithmetic: `distance / (2 s)`,
   `(tilt + offset) / (90 deg)`.
+- The unit vocabulary is the registry in `bdl-elab::units` (FV Phase 10,
+  `Surface/Units.lean`): each unit has a stable id (`angle.deg`), a symbol, a
+  dimension and a linear chart onto the canonical magnitude (radians, metres,
+  seconds, kilograms, …). Registered today: `rad deg turn` (angle),
+  `mm cm m km inch ft` (length), `ms s min h` (time), `g kg` (mass), `A mA`,
+  `K`, `cd`, `mol`, and the derived `Hz N Pa kPa W V mV lx`. Inch is spelled
+  `inch` because `in` is the membership keyword. °C and °F are affine, not
+  linear, and are not registered (ISS-0004). A literal `n u` elaborates to the
+  kernel literal `n × scale(u)` of the unit's dimension — `withUnit` — and
+  nothing about a unit reaches `Ty`, `Value` or the runtime.
 - There is no expression-level unit cast (`(x) deg`), and none is planned.
 - One lookahead exception, for recovery only: a name followed by `=>` or `(` is
   never taken as a unit, because nothing but an operator may follow a unit. So a
@@ -903,3 +914,20 @@ lower to the existing Core.
 
 Canonical formatting: no space inside `[` `]`; `(a, b)` as a call's arguments;
 `x => e` with spaces around `=>`; `in` spaced like a comparison.
+
+## 16. Slots
+
+```ebnf
+SlotExpr ::= "?"
+```
+
+A **slot** is an expression not yet written: `tilt / ?`, `clamp(?, 0, 1)`. It
+parses wherever a value may stand and formats as itself. It is the Formula
+Composer's hole (docs/architecture/studio-ui.md §4b, FV Phase 10
+`Composer.lean`'s `PExpr.hole`) and belongs to authoring: elaboration refuses it
+with `formula.slot.empty` — _This slot is empty; it expects an angle._ when the
+context says what it expects — so a formula with a slot is a definition that
+does not check, like any other draft that is not finished, and no slot ever
+reaches Core, the checker, the evaluator or generated code. A slot may be typed
+as text and saved (an incomplete definition is a legal state of a design); it is
+never a value, an operator or a unit (`1 ? 2` is a syntax error).

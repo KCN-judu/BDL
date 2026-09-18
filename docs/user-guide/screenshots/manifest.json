@@ -114,6 +114,9 @@
           }
         },
         {
+          "mode": "text"
+        },
+        {
           "draft": {
             "mapping": "dimByTilt",
             "source": "Tilt / 90 s"
@@ -143,6 +146,67 @@
       "caption": "The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead.",
       "alt": "The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.",
       "purpose": "How a formula is checked as you type, before anything is saved."
+    },
+    {
+      "id": "formula-composer",
+      "pages": [
+        "studio/formula-editor.md",
+        "getting-started/first-behavior.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "mapping": "dimByTilt"
+          }
+        },
+        {
+          "mode": "formula"
+        },
+        {
+          "draft": {
+            "mapping": "dimByTilt",
+            "source": "Tilt / ?"
+          }
+        },
+        {
+          "slot": {
+            "mapping": "dimByTilt",
+            "node": "r.1"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Formula",
+          "Text",
+          "Tilt",
+          "÷",
+          "?",
+          "Insert",
+          "References"
+        ],
+        "textsContaining": [
+          "Expected: an angle",
+          "Equations ("
+        ]
+      },
+      "crop": {
+        "union": [
+          {
+            "text": "Relationship"
+          },
+          {
+            "widget": "DefinitionEditor"
+          }
+        ],
+        "pad": 8
+      },
+      "output": "studio/formula-composer.png",
+      "caption": "The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits.",
+      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.",
+      "purpose": "How a formula is assembled without typing, and how the compiler guides each slot."
     },
     {
       "id": "complete-lamp",

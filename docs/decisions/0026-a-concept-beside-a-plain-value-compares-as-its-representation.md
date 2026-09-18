@@ -9,8 +9,8 @@ related: ["ADR-0013", "ADR-0025", "ISS-0012"]
 fv:
   [
     "informed by FV: BDL_FV Phase 9c (`Poly.lean`, `Ty.ordB`) puts the order
-    policy on comparisons *between concept values*; `rep` is free everywhere
-    and `lt d (rep a) (rep b)` is a legal kernel term whatever `OrdDecl` says",
+    policy on comparisons *between concept values*; `rep` is free everywhere and
+    `lt d (rep a) (rep b)` is a legal kernel term whatever `OrdDecl` says",
   ]
 ---
 
@@ -22,24 +22,23 @@ Accepted (2026-09-18, the P9 hardening pass; closes ISS-0012).
 
 ## Context
 
-Phase 9c made order a declaration: `b1 < b2`, `min(b1, b2)`, `clamp(b1, lo,
-hi)` between values of a concept are legal only while the concept is declared
+Phase 9c made order a declaration: `b1 < b2`, `min(b1, b2)`, `clamp(b1, lo, hi)`
+between values of a concept are legal only while the concept is declared
 ordered, and a numeric encoding is never a magnitude (`Mode < Mode` is refused
-however `Mode` is represented). A concept value beside a *plain* value of its
-own representation — `tilt < 10 deg`, `min(brightness, 0.5)`, `mode < 3` —
-has always been observed and compared as that representation (ADR-0013, the
+however `Mode` is represented). A concept value beside a _plain_ value of its
+own representation — `tilt < 10 deg`, `min(brightness, 0.5)`, `mode < 3` — has
+always been observed and compared as that representation (ADR-0013, the
 arithmetic rule), so the declaration is not consulted on that path. ISS-0012
 asked whether that is coherent, and listed three answers: order a
 quantity-represented concept by default (contradicting "never inferred"),
-require the declaration for every mixed comparison (every physical design
-writes `tilt < 10 deg` today), or keep the mixed case a representation
-comparison by design.
+require the declaration for every mixed comparison (every physical design writes
+`tilt < 10 deg` today), or keep the mixed case a representation comparison by
+design.
 
 ## Decision
 
-The mixed case stays a representation comparison, as a rule with three
-clauses, tested as a matrix
-(`crates/bdl-elab/tests/equations.rs`,
+The mixed case stays a representation comparison, as a rule with three clauses,
+tested as a matrix (`crates/bdl-elab/tests/equations.rs`,
 `mixed_comparisons_over_overlapping_representations`):
 
 - Two values of **one concept** compare as that concept: `==` always; `<`,
@@ -50,12 +49,11 @@ clauses, tested as a matrix
 - A concept value beside a **plain value of its representation** is observed
   (`rep`), and the comparison is the representation's: the designer wrote a
   number, which is a statement about the representation. The result of `min`,
-  `max`, `clamp` in that case is the plain representation, re-wrapped only by
-  a mapping whose declared result is that concept — as arithmetic has always
-  been.
+  `max`, `clamp` in that case is the plain representation, re-wrapped only by a
+  mapping whose declared result is that concept — as arithmetic has always been.
 
-The order declaration therefore answers exactly one question — *may two values
-of this concept be put in order?* — and nothing else. A declaration is needed
+The order declaration therefore answers exactly one question — _may two values
+of this concept be put in order?_ — and nothing else. A declaration is needed
 only where the representation could not answer for the designer (a concept
 against itself); a plain value beside a concept carries the designer's own
 answer.
@@ -68,8 +66,8 @@ answer.
 - **The declaration for every mixed comparison**: rejected — a migration of
   every existing design for no gained meaning: `tilt < 10 deg` is unambiguous.
 - **Refuse `min(o, 0.5)` while `Opacity` is unordered but allow `o < 0.5`**:
-  rejected — one rule for `<` and the equations that are defined by it
-  (`min`, `max`, `clamp` are `lt` at the instance, ADR-0025).
+  rejected — one rule for `<` and the equations that are defined by it (`min`,
+  `max`, `clamp` are `lt` at the instance, ADR-0025).
 
 ## Consequences
 

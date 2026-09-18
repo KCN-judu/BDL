@@ -352,6 +352,51 @@ a line. The canvas draws committed state only; the status line counts _N unsaved
 definitions_. Closing a project stashes dirty drafts by path and reopening
 restores them — no modal.
 
+### 4b. The Formula view
+
+The definition editor has two projections of the one draft, chosen with a
+**Formula | Text** segmented control at its top (`lib/ui/formula_composer.dart`;
+ADR-0028): the Text view is the field of §4a; the Formula view draws the
+compiler's `FormulaProjection` as the expression it is —
+`clamp( [Tilt] ÷ [90][deg ▾], [0], [1] )` — never as a graph inside the node.
+Studio owns the mode, the selected component and the open pop-up; the compiler
+owns the tree, every expected type, every candidate and the text every action
+makes (`ComposeFormula` → `DefinitionDraftChanged` → the ordinary verdict).
+
+Encodings, by channel (the table in §3 gains these rows): a **slot** — an
+expression not yet written, `?` in the text — is a dashed hollow chip (dashed =
+not decided, as the canvas's _declared_ node); a **reference** is a chip with
+its concept's socket glyph (shape = kind of value, as on the canvas); a
+**literal** is two fields, the coordinate and a unit pop-up listing the
+compiler's units for the literal's own dimension — the pop-up switches the unit
+and keeps the quantity (`180 deg` → `3.141592653589793 rad`); the coordinate
+field is the other action (a new quantity, the same unit). Only a literal has a
+unit pop-up: a reference's kind is its declaration's, and the Composer never
+rewrites it. **Operators** are their glyphs (× ÷ − ≤ ≥ ≠), a **call** its name
+and parentheses, an **unsupported form** (`if`, `match`, a block, a rule, a
+collection or grouped literal, `delay`/`sync`) its text in monospace, selectable
+and edited as text. Selection is the selection tint; keyboard focus the accent
+ring; a finding is a red underline on the component _and_ its row under the
+field — one diagnostic, two projections.
+
+Beneath the field, for the selected component: the compiler's sentence —
+_Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._ —
+with the kernel's notation behind **Explain**; for a slot, a number entry whose
+unit pop-up holds the units of the expected dimension (none for a dimensionless
+slot; none, with a sentence, when the position is not determined), then
+_References_ by type and _Equations_ folded; for a component, **+ − × ÷**,
+**Compare**, **Function** (the equations whose result fits, wrapping the
+component as the first argument) and **Remove**. Keys: Tab across components in
+reading order; on a selected component `+ − * /` and ⌫; digits and Return in a
+number entry; Esc clears the selection. Text that does not parse keeps the exact
+text, shows the last readable form dimmed with _The text cannot be read as a
+formula; the last readable form is shown._ and **Edit as text**. Save, revert,
+conflict and detach are §4a's, unchanged: a formula with a slot may be saved and
+is _invalid_ until filled.
+
+Screenshot: `docs/user-guide/assets/studio/formula-composer.png`
+(`docs/user-guide/screenshots/manifest.json`, `formula-composer`).
+
 ## 5. Sheets teach by showing, not by example text
 
 A creation sheet never carries a sample value as a hint ("Tilt") — that repeats

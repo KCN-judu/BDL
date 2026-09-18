@@ -137,14 +137,18 @@ each of its questions was answered is in the
   modifiers, `zip`'s cost in the core.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** the P9 hardening pass (linear folds and commit-only
-  writes in the generated core, static list bounds and window capacity as
-  deployment validation, `bdld compile --bounded-memory --period`, the order
-  invariant in the model, ADR-0026/0027); the data core and the equation library
-  (FV Phases 9a–9c consumed: collections, grouped and optional values, `fold`,
-  equality on data, order by declaration, the equations, protocol 0.11,
-  ADR-0024/0025); one BDL project — sources canonical, legacy JSON migrated on
-  open, the layout service, the Code and Split views, protocol 0.10.
+- **Recently changed:** the Formula Composer foundation (P10a, FV Phase 10
+  consumed: the `?` slot, the unit registry with charts and one conversion, the
+  projection / slot / compose queries of the IDE service, protocol 0.12, the
+  Formula | Text views of the definition editor, ADR-0028); the P9 hardening
+  pass (linear folds and commit-only writes in the generated core, static list
+  bounds and window capacity as deployment validation,
+  `bdld compile --bounded-memory --period`, the order invariant in the model,
+  ADR-0026/0027); the data core and the equation library (FV Phases 9a–9c
+  consumed: collections, grouped and optional values, `fold`, equality on data,
+  order by declaration, the equations, protocol 0.11, ADR-0024/0025); one BDL
+  project — sources canonical, legacy JSON migrated on open, the layout service,
+  the Code and Split views, protocol 0.10.
   [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph

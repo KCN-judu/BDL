@@ -4,7 +4,70 @@ The **Relationship** section of a relationship's inspector is where a formula is
 written. It is not a plain text box: the compiler checks what you type as you
 type it, and nothing reaches the design until you say so.
 
-## The field and its verdict
+The editor has two views of the same formula, chosen with the **Formula | Text**
+switch at its top. **Formula** shows the expression as parts you assemble —
+references, numbers with their units, operators, functions — and tells you what
+each empty slot expects. **Text** is the formula as written. Switching does
+nothing to the formula: both edit one draft, and what you build in one is what
+you read in the other.
+
+## Assembling a formula
+
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.](../assets/studio/formula-composer.png)
+
+_The Formula view with the denominator slot selected: the compiler says the slot
+expects an angle and why, and offers a number with the angle units, the
+references that fit and the equations whose result fits._
+
+An empty formula is one **slot** — a dashed box reading `?`, the place where a
+value is still to be written. Click a slot and the compiler says what it expects
+there and offers what fits:
+
+- **A number.** Type it, choose its unit from the pop-up, press Return or
+  **Insert**. The pop-up lists only the units of the kind of value the slot
+  expects — for an angle, _rad_, _deg_, _turn_; never a length or a time. A slot
+  that expects a plain number has no unit to choose.
+- **A reference.** The concepts this relationship reads and the design's
+  relationships whose value is the right kind — each with what it produces. A
+  reference is inserted as it is: its kind comes from its declaration, and it
+  gets no unit pop-up.
+- **An equation.** Folded under _Equations_: the library's equations whose
+  result can be the value expected here (for an angle, `min`, `max`, `clamp`,
+  `sum` …; not `any`, which produces true or false). Choosing one inserts it
+  with a slot per argument.
+
+Click a part that is already there and the compiler says what it is. Above it,
+the actions on that part: **+ − × ÷** put that operator after it with a new slot
+for the other side, **Compare** likewise for `<`, `==` and the rest,
+**Function** wraps it in an equation (`clamp(…, ?, ?)`), and **Remove** turns it
+back into a slot — removing the slot next to an operator removes the operator
+with it. Parentheses are added where the operators need them: a sum divided by
+something becomes `(a + b) / ?`.
+
+The line under the field — _Expected: an angle, because an angle ÷ an angle = a
+dimensionless quantity._ — is the compiler's reasoning in plain words. It works
+out what a slot must be from what is around it: the result the relationship must
+produce, and the other side of the operator. `? / 1 s` for a speed expects a
+length; `Force * ?` for a torque expects a length. When nothing around a slot is
+known yet — a product of two slots — it says so and offers no unit; fill the
+other side first. **Explain** shows the same in the compiler's notation.
+
+A **number with a unit** is two fields: the number and its unit. Editing the
+number is a new quantity in the same unit. Choosing another unit from the pop-up
+keeps the quantity and rewrites the number: `180 deg` becomes
+`3.141592653589793 rad`. The two are different things, and the pop-up never does
+the first.
+
+The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads
+exactly so in the **Text** view, and a formula typed as text appears in the
+**Formula** view — with `?` wherever text left a slot. Some forms — `if`,
+`match`, a block with `let`, a rule `x => …`, a collection or grouped literal,
+`delay` / `sync` — are shown as text in the Formula view and edited in the Text
+view. Text that cannot be read as a formula keeps exactly what you typed; the
+Formula view shows the last readable form dimmed, says so, and offers **Edit as
+text**.
+
+## The text field and its verdict
 
 ![The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.](../assets/studio/formula-verdict.png)
 
@@ -25,7 +88,8 @@ what Brightness is and what the formula produces instead._
 - **The buttons**: **Add definition** when the relationship has no formula yet,
   **Save definition** when it has one; **Revert** while the text differs from
   what is saved; **Detach definition** to remove the formula and return the
-  relationship to _declared_.
+  relationship to _declared_. They are the same in both views: a formula with a
+  slot still in it can be saved, and is _invalid_ until the slot is filled.
 
 ## Drafts
 
@@ -50,18 +114,20 @@ it is right, just as a concept may exist before its value form is chosen.
 | --------------------------- | ----------------------------------------------------------------------------------------------------- |
 | **⌘↩**                      | Add / Save the definition                                                                             |
 | **Esc**                     | Revert a draft (a second Esc when completion is open closes it first)                                 |
-| **Return**                  | a new line — formulas may span lines                                                                  |
-| **⌃Space**                  | open completion                                                                                       |
+| **Return**                  | in the Text view a new line — formulas may span lines; in a number entry, insert the number           |
+| **⌃Space**                  | open completion (Text view)                                                                           |
 | **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                           |
+| **Tab**                     | in the Formula view, move to the next part                                                            |
+| **+ − \* /**, **⌫**         | on a selected part in the Formula view: put that operator after it; remove it                         |
 | **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states |
 
 ## Completion and hover
 
-**⌃Space** opens a list at the caret: the concepts in scope, the design's
-relationships (rules come with a `(`), units after a number, keywords, and
-`delay(…)` / `sync(…)` where they are allowed. The list is the compiler's,
-filtered and ordered by it; each row shows the kind and the resulting type. It
-re-asks on every keystroke while open.
+In the Text view, **⌃Space** opens a list at the caret: the concepts in scope,
+the design's relationships (rules come with a `(`), units after a number,
+keywords, and `delay(…)` / `sync(…)` where they are allowed. The list is the
+compiler's, filtered and ordered by it; each row shows the kind and the
+resulting type. It re-asks on every keystroke while open.
 
 Resting the pointer on a name for a moment shows a **card**: what the name is,
 its value form, its status, a description. Never a formal term — those are in

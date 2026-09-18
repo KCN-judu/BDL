@@ -66,31 +66,48 @@ _A declared relationship: dashed outline and the word declared in its header._
 ## 4. Write the formula
 
 1. Click the `dimByTilt` node. The inspector shows it.
-2. In the **Relationship** section, type into the field:
+2. In the **Relationship** section, the editor opens in its **Formula** view: an
+   empty slot, `?`, and the words _produces a Brightness_. Click the slot. Under
+   it, _References_ lists **Tilt** — click it. The slot becomes `Tilt`.
+3. Click `Tilt` and press **÷**. The formula reads `Tilt ÷ ?`, and the new slot
+   is selected: _Expected: an angle, because an angle ÷ an angle = a
+   dimensionless quantity._
+4. In the number entry type `90`, choose **deg** from the unit pop-up (only
+   angle units are offered), and press Return. The formula reads `Tilt ÷ 90 deg`
+   and the line under the field says _Valid definition_.
+
+   If you would rather type, switch to **Text** and write it as text:
 
    ```text
    Tilt / 90 deg
    ```
 
-   As you type, the line under the field says _Checking…_ and then _Valid
-   definition_. Press **⌘↩** or click **Add definition**.
+   Both views edit the same formula. Press **⌘↩** or click **Add definition**.
+
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.](../assets/studio/formula-composer.png)
+
+_The Formula view with the denominator slot selected: the compiler says the slot
+expects an angle and why, and offers a number with the angle units, the
+references that fit and the equations whose result fits._
 
 The node now shows its formula in the body and is drawn solid.
 
 **What you made.** A rule: brightness is the tilt divided by ninety degrees. Try
-changing `90 deg` to `90 s` and watch the line under the field turn red: it says
-what Brightness is and what the formula produces instead — an angle divided by a
-time is not a plain number. Put `deg` back. Every formula is checked this way,
-for units and for meaning, as you type — and nothing is saved to the design
-until you press _Add definition_.
+it in the **Text** view: change `90 deg` to `90 s` and watch the line under the
+field turn red: it says what Brightness is and what the formula produces instead
+— an angle divided by a time is not a plain number. Put `deg` back. Every
+formula is checked this way, for units and for meaning, as you type or as you
+assemble it — and nothing is saved to the design until you press _Add
+definition_.
 
 ![The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.](../assets/studio/formula-verdict.png)
 
 _The formula field with a draft that does not check: the red verdict line says
 what Brightness is and what the formula produces instead._
 
-> **⌃Space** in the field opens completion: the names you can use here (_Tilt_),
-> units after a number, keywords. Hovering a name for a moment shows what it is.
+> In the Text view, **⌃Space** opens completion: the names you can use here
+> (_Tilt_), units after a number, keywords. Hovering a name for a moment shows
+> what it is. The Formula view asks for nothing: each slot lists what fits.
 
 ## 5. Bring the tilt in from outside
 

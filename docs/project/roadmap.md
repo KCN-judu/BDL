@@ -35,6 +35,11 @@ formal result arrives.
   (ISS-0013); hover on an equation's name (completion carries its meaning
   today); record syntax lowering to nested grouped values, `forall`/`exists`
   sugar — only if a case asks.
+- The Formula Composer's next slices: `if` / `match` / blocks / rules as
+  structured components (opaque text today); a preferred display unit per
+  concept and per simulation input (presentation only, FV Phase 10 §9); hover
+  cards on components; affine units (°C, °F) once the formal point/difference
+  follow-up lands (ISS-0004); drag-and-drop from the palette.
 - Studio: the collections report (readiness, byte bounds, window requirements)
   on the Deploy page, and the schedule as deployment data there — today
   `bdld compile --period` only.

@@ -332,6 +332,40 @@ entity, role) and the same ladder status.
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.
 
+### The Formula Composer (protocol 0.12)
+
+`bdl-ide::formula` gives the Studio definition editor its structured projection,
+on the same overlay path (docs/architecture/studio-ui.md §4b, ADR-0028):
+
+```text
+FormulaProjection      formula_projection(&snapshot, mapping)
+                       = trace_formula_in (bdl-elab: the surface tree and the type of every
+                         sub-expression, on success and on failure)
+                       → FormulaNode tree: tree-path ids, byte ranges, kinds, actual types,
+                         expected types by local dimension inference (solve), diagnostics
+                         placed on the innermost node, the slots in source order
+SlotInfo               formula_slot(&snapshot, mapping, node)
+                       = the projection's expectation at `node` + units_for(dim) +
+                         reference candidates by type + equations by scheme match and capability
+ComposeResult          compose(&snapshot, mapping, source, ComposeOp)
+                       = the text a structured action makes: byte-range edits of the draft,
+                         parenthesised by precedence, a unit switched with the value kept
+```
+
+The projection is a _view_: it is rebuilt from the text on every request and
+never stored; a slot is the surface's `?` (docs/spec/textual-syntax.md §16), so
+an incomplete structured formula is ordinary draft text that does not check.
+`bdld` carries the projection with every `DefinitionDraftAnalysis` (one round
+trip per keystroke, the same generation) and answers `GetFormulaProjection` (the
+committed definition, no overlay), `GetFormulaSlot` and `ComposeFormula` (both
+set the overlay to the request's source, like completion). Local inference is
+`Composer.lean`'s `solve`: `+ −` propagate the result to both sides, `×` gives
+the unknown side `result − known`, `÷` the numerator `result + denominator` and
+the denominator `numerator − result`; two unknown operands are _insufficient
+information_, never searched. Candidate units are exactly the registered units
+of the solved dimension (`unitsFor`); for a literal, of its own dimension (a
+switch keeps the quantity). Tests: `crates/bdl-ide/tests/formula_composer.rs`.
+
 ### Component-scoped drafts (system projects)
 
 A component's body is an ordinary design, so the same service serves it — in the
