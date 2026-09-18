@@ -218,6 +218,10 @@ impl ConceptDecl {
     pub fn name(&self) -> Option<Name> {
         child(&self.0)
     }
+    /// `ordered concept …`: the designer declared the concept ordered.
+    pub fn is_ordered(&self) -> bool {
+        token(&self.0, SyntaxKind::KwOrdered).is_some()
+    }
     /// The representation type after `:`; `None` for an open concept.
     pub fn representation(&self) -> Option<Type> {
         child(&self.0)
@@ -570,8 +574,50 @@ ast_enum!(
         If(IfExpr),
         Match(MatchExpr),
         Block(BlockExpr),
+        List(ListExpr),
+        Tuple(TupleExpr),
+        Lambda(LambdaExpr),
     }
 );
+ast_node!(
+    /// `[a, b, c]`
+    ListExpr,
+    ListExpr
+);
+ast_node!(
+    /// `(a, b)`
+    TupleExpr,
+    TupleExpr
+);
+ast_node!(
+    /// `x => e` / `(x, y) => e`
+    LambdaExpr,
+    LambdaExpr
+);
+ast_node!(LambdaParams, LambdaParams);
+
+impl ListExpr {
+    pub fn items(&self) -> impl Iterator<Item = Expr> {
+        children(&self.0)
+    }
+}
+
+impl TupleExpr {
+    pub fn items(&self) -> impl Iterator<Item = Expr> {
+        children(&self.0)
+    }
+}
+
+impl LambdaExpr {
+    pub fn params(&self) -> impl Iterator<Item = Name> {
+        child::<LambdaParams>(&self.0)
+            .into_iter()
+            .flat_map(|p| children::<Name>(&p.0))
+    }
+    pub fn body(&self) -> Option<Expr> {
+        child(&self.0)
+    }
+}
 
 ast_node!(NameExpr, NameExpr);
 ast_node!(
@@ -705,6 +751,8 @@ pub enum BinaryOp {
     Ne,
     And,
     Or,
+    /// `x in xs`: membership in a collection.
+    In,
 }
 
 impl BinaryOp {
@@ -722,6 +770,7 @@ impl BinaryOp {
             SyntaxKind::Ne => BinaryOp::Ne,
             SyntaxKind::AndAnd => BinaryOp::And,
             SyntaxKind::OrOr => BinaryOp::Or,
+            SyntaxKind::KwIn => BinaryOp::In,
             _ => return None,
         })
     }
@@ -740,13 +789,20 @@ impl BinaryOp {
             BinaryOp::Ne => "!=",
             BinaryOp::And => "&&",
             BinaryOp::Or => "||",
+            BinaryOp::In => "in",
         }
     }
 
     pub fn is_comparison(self) -> bool {
         matches!(
             self,
-            BinaryOp::Lt | BinaryOp::Le | BinaryOp::Gt | BinaryOp::Ge | BinaryOp::Eq | BinaryOp::Ne
+            BinaryOp::Lt
+                | BinaryOp::Le
+                | BinaryOp::Gt
+                | BinaryOp::Ge
+                | BinaryOp::Eq
+                | BinaryOp::Ne
+                | BinaryOp::In
         )
     }
 }

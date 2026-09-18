@@ -25,7 +25,7 @@ pub fn module(m: &Module) -> String {
     }
     let mut first = true;
     for it in &m.items {
-        let is_use = matches!(it, Item::Use(_));
+        let is_use = matches!(it, Item::Use(_) | Item::ExternCrate(_));
         if !(first || (is_use && p.last_was_use)) {
             p.blank();
         }
@@ -67,6 +67,7 @@ impl Printer {
                     self.line(&format!("// {l}"));
                 }
             }
+            Item::ExternCrate(c) => self.line(&format!("extern crate {c};")),
             Item::Use(p) => self.line(&format!("use {p};")),
             Item::Const {
                 doc,
@@ -206,6 +207,7 @@ pub fn ty_str(t: &Type) -> String {
     match t {
         Type::Path(p) => p.clone(),
         Type::Option(i) => format!("Option<{}>", ty_str(i)),
+        Type::Vec(i) => format!("Vec<{}>", ty_str(i)),
         Type::Ref { mutable, inner } => {
             format!("&{}{}", if *mutable { "mut " } else { "" }, ty_str(inner))
         }
@@ -285,7 +287,15 @@ pub fn expr_str(e: &Expr) -> String {
         Expr::Assign { target, value } => format!("{} = {}", expr_str(target), expr_str(value)),
         Expr::Cast { e, ty } => format!("({} as {})", expr_str(e), ty_str(ty)),
         Expr::VecMacro(es) => format!("vec![{}]", args_str(es)),
-        Expr::Closure { param, body } => format!("|{param}| {}", expr_str(body)),
+        Expr::Closure { params, ret, body } => match ret {
+            None => format!("|{}| {}", params.join(", "), expr_str(body)),
+            Some(t) => format!(
+                "|{}| -> {} {{ {} }}",
+                params.join(", "),
+                ty_str(t),
+                expr_str(body)
+            ),
+        },
     }
 }
 

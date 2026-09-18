@@ -1285,6 +1285,9 @@ class _CanvasPainter extends CustomPainter {
           SocketKind.quantity => 'a quantity',
           SocketKind.onOff => 'on or off',
           SocketKind.count => 'a count',
+          SocketKind.collection => 'a collection',
+          SocketKind.grouped => 'a grouped value',
+          SocketKind.optional => 'an optional value',
         };
         return '${n.title}, concept, $form';
       case NodeKind.mapping:
@@ -1700,6 +1703,31 @@ class NodePainter {
       case SocketKind.count:
         final h = r * 0.92;
         return Path()..addRect(Rect.fromCenter(center: c, width: 2 * h, height: 2 * h));
+      case SocketKind.collection:
+        // a stack: two rings, the second offset behind the first
+        final d = r * 0.45;
+        return Path()
+          ..addOval(Rect.fromCircle(center: c + Offset(d, -d), radius: r * 0.85))
+          ..addOval(Rect.fromCircle(center: c + Offset(-d, d), radius: r * 0.85));
+      case SocketKind.grouped:
+        // two cells side by side: a wide box with a divider
+        final h = r * 0.85;
+        final w = r * 1.35;
+        return Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromCenter(center: c, width: 2 * w, height: 2 * h),
+              const Radius.circular(1.5),
+            ),
+          )
+          ..moveTo(c.dx, c.dy - h)
+          ..lineTo(c.dx, c.dy + h);
+      case SocketKind.optional:
+        // a ring with a hole: the value may be absent
+        return Path()
+          ..fillType = PathFillType.evenOdd
+          ..addOval(Rect.fromCircle(center: c, radius: r))
+          ..addOval(Rect.fromCircle(center: c, radius: r * 0.42));
     }
   }
 

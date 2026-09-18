@@ -5,7 +5,7 @@
 
 use crate::{Activation, ClockSlot, DeclKind, ExecExpr, ExecIr, LocalId, PrimOp};
 use bdl_model::DeclId;
-use bdl_reactive::eval::RuntimeError;
+use bdl_reactive::eval::{count, RuntimeError};
 use bdl_reactive::Value;
 use std::collections::BTreeMap;
 
@@ -146,6 +146,24 @@ impl Cx<'_> {
                 }
                 self.apply(op, vs)?
             }
+            ExecExpr::Fold {
+                elem,
+                acc,
+                step,
+                init,
+                list,
+            } => {
+                let mut value = self.eval(init)?;
+                let Value::List { items } = self.eval(list)? else {
+                    return Err(self.internal("fold over a non-list".into()));
+                };
+                for x in items.iter_from_last() {
+                    self.locals.insert(*elem, x.clone());
+                    self.locals.insert(*acc, value);
+                    value = self.eval(step)?;
+                }
+                value
+            }
         })
     }
 
@@ -182,7 +200,7 @@ impl Cx<'_> {
                 finite(*d1 - *d2, x / y, "div")?
             }
             (PrimOp::Lt, [a, c]) => Value::boolean(q(a)?.1 < q(c)?.1),
-            (PrimOp::Eq, [a, c]) => Value::boolean(q(a)?.1 == q(c)?.1),
+            (PrimOp::Eq, [a, c]) => Value::boolean(a.structurally_equal(c)),
             (PrimOp::Not, [a]) => Value::boolean(!b(a)?),
             (PrimOp::And, [a, c]) => Value::boolean(b(a)? && b(c)?),
             (PrimOp::Or, [a, c]) => Value::boolean(b(a)? || b(c)?),
@@ -200,6 +218,29 @@ impl Cx<'_> {
                 Value::Some { value } => (**value).clone(),
                 _ => dflt.clone(),
             },
+            (PrimOp::Nil { .. }, []) => Value::list([]),
+            (PrimOp::Cons { .. }, [x, Value::List { items }]) => Value::List {
+                items: bdl_reactive::value::List::cons(x.clone(), items.clone()),
+            },
+            (PrimOp::Length { .. }, [Value::List { items }]) => Value::scalar(items.len() as f64),
+            (PrimOp::Take { .. }, [k, Value::List { items }]) => Value::List {
+                items: items.take(count(q(k)?.1)),
+            },
+            (PrimOp::Drop { .. }, [k, Value::List { items }]) => Value::List {
+                items: items.drop(count(q(k)?.1)),
+            },
+            (PrimOp::Reverse { .. }, [Value::List { items }]) => Value::List {
+                items: items.reversed(),
+            },
+            (PrimOp::Head { .. }, [Value::List { items }]) => match items.first() {
+                Some(x) => Value::some(x.clone()),
+                None => Value::None,
+            },
+            (PrimOp::ToList { .. }, [Value::Some { value }]) => Value::list([(**value).clone()]),
+            (PrimOp::ToList { .. }, [Value::None]) => Value::list([]),
+            (PrimOp::Pair { .. }, [a, c]) => Value::pair(a.clone(), c.clone()),
+            (PrimOp::Fst { .. }, [Value::Pair { fst, .. }]) => (**fst).clone(),
+            (PrimOp::Snd { .. }, [Value::Pair { snd, .. }]) => (**snd).clone(),
             _ => {
                 return Err(RuntimeError::Internal(format!(
                     "ill-shaped primitive application {op:?} {args:?}"

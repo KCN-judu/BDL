@@ -1,0 +1,16 @@
+[package]
+name = "bdl-equations"
+description = "The equation library: rank-1 definitional schemes over the Core IR, instantiated by first-order matching at closed types (FV Phase 9b/9c: Poly, Stdlib)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-model = { workspace = true }
+bdl-ir = { workspace = true }
+bdl-check = { workspace = true }
+
+[lints]
+workspace = true

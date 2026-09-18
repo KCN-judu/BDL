@@ -85,16 +85,16 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells;
+    let mut next: Cells = state.cells.clone();
     // read phase
     // tilt (decl#0)
-    let decl_0: Option<Sem0> = if active.is_active(CLOCK_0) { Some(read_input(inputs.decl_0, 0_u64)?) } else { None };
+    let decl_0: Option<Sem0> = if active.is_active(CLOCK_0) { Some(read_input(&inputs.decl_0, 0_u64)?) } else { None };
     // steep (decl#1)
-    let decl_1: Option<Sem1> = if active.is_active(CLOCK_0) { Some(Sem1((0.5_f64 < read_decl(decl_0, 0_u64)?.0))) } else { None };
+    let decl_1: Option<Sem1> = if active.is_active(CLOCK_0) { Some(Sem1((0.5_f64 < read_decl(&decl_0, 0_u64)?.0))) } else { None };
     // held (decl#2)
-    let decl_2: Option<Sem1> = if active.is_active(CLOCK_0) { Some(read_input(inputs.decl_2, 2_u64)?) } else { None };
+    let decl_2: Option<Sem1> = if active.is_active(CLOCK_0) { Some(read_input(&inputs.decl_2, 2_u64)?) } else { None };
     // both (decl#3)
-    let decl_3: Option<bool> = if active.is_active(CLOCK_0) { Some(prim::and(read_decl(decl_1, 1_u64)?.0, read_decl(decl_2, 2_u64)?.0)) } else { None };
+    let decl_3: Option<bool> = if active.is_active(CLOCK_0) { Some(prim::and(read_decl(&decl_1, 1_u64)?.0, read_decl(&decl_2, 2_u64)?.0)) } else { None };
     // write phase: into the next state only
     // commit
     state.cells = next;

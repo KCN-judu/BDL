@@ -1,0 +1,185 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "collections",
+  "package": "bdl_design_collections",
+  "exec_ir_version": 2,
+  "has_domains": true,
+  "requires_allocator": true,
+  "clocks": [
+    {
+      "slot": 0,
+      "clock_id": 0,
+      "name": "main",
+      "symbol": "CLOCK_0"
+    }
+  ],
+  "concepts": [],
+  "inputs": [
+    {
+      "slot": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "xs",
+      "ty": "list q[1]"
+    }
+  ],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "xs",
+      "ty": "list q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": 0
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "above",
+      "ty": "bool",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "total",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 3,
+      "decl_id": 3,
+      "symbol": "decl_3",
+      "name": "shifted",
+      "ty": "list q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 4,
+      "decl_id": 4,
+      "symbol": "decl_4",
+      "name": "stats",
+      "ty": "(q[1] × q[1])",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 5,
+      "decl_id": 5,
+      "symbol": "decl_5",
+      "name": "first",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 6,
+      "decl_id": 6,
+      "symbol": "decl_6",
+      "name": "same",
+      "ty": "bool",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 7,
+      "decl_id": 7,
+      "symbol": "decl_7",
+      "name": "remembered",
+      "ty": "list q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 8,
+      "decl_id": 8,
+      "symbol": "decl_8",
+      "name": "pairs",
+      "ty": "list (q[1] × q[1])",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 9,
+      "decl_id": 9,
+      "symbol": "decl_9",
+      "name": "has2",
+      "ty": "bool",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 10,
+      "decl_id": 10,
+      "symbol": "decl_10",
+      "name": "clipped",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 11,
+      "decl_id": 11,
+      "symbol": "decl_11",
+      "name": "kept",
+      "ty": "list q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [
+    {
+      "slot": 0,
+      "symbol": "cell_0",
+      "decl_id": 7,
+      "path": [],
+      "writer_clock_slot": 0,
+      "ty": "list q[1]"
+    }
+  ],
+  "outputs": [],
+  "functions": []
+}

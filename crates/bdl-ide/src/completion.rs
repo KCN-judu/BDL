@@ -49,18 +49,28 @@ pub enum CompletionKind {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "expected", rename_all = "snake_case")]
 pub enum ExpectedType {
-    Quantity { dim: Dim },
+    Quantity {
+        dim: Dim,
+    },
     Boolean,
     Count,
+    /// A value that may be absent, a collection or a grouped value, in
+    /// the designer's words.
+    Structured {
+        description: String,
+    },
     Unknown,
 }
 
 impl ExpectedType {
-    pub(crate) fn of(r: Option<Representation>) -> ExpectedType {
+    pub(crate) fn of(r: Option<&Representation>) -> ExpectedType {
         match r {
-            Some(Representation::Quantity { dim }) => ExpectedType::Quantity { dim },
+            Some(Representation::Quantity { dim }) => ExpectedType::Quantity { dim: *dim },
             Some(Representation::Boolean) => ExpectedType::Boolean,
             Some(Representation::Count) => ExpectedType::Count,
+            Some(other) => ExpectedType::Structured {
+                description: describe_representation(other),
+            },
             None => ExpectedType::Unknown,
         }
     }
@@ -69,8 +79,34 @@ impl ExpectedType {
             ExpectedType::Quantity { dim } => pretty::describe_dim(*dim),
             ExpectedType::Boolean => "true or false".into(),
             ExpectedType::Count => "a count".into(),
+            ExpectedType::Structured { description } => description.clone(),
             ExpectedType::Unknown => "unknown".into(),
         }
+    }
+}
+
+/// A representation in the designer's words: "an angle", "a collection of
+/// temperatures", "a grouped value (a temperature and a dimensionless
+/// quantity)".
+pub fn describe_representation(r: &Representation) -> String {
+    match r {
+        Representation::Quantity { dim } => pretty::describe_dim(*dim),
+        Representation::Boolean => "true or false".into(),
+        Representation::Count => "a count".into(),
+        Representation::Optional { inner } => {
+            format!("an optional value ({})", describe_representation(inner))
+        }
+        Representation::List { element } => {
+            format!(
+                "a collection of values ({})",
+                describe_representation(element)
+            )
+        }
+        Representation::Pair { first, second } => format!(
+            "a grouped value ({} and {})",
+            describe_representation(first),
+            describe_representation(second)
+        ),
     }
 }
 
@@ -169,7 +205,7 @@ fn formula_completions(
         design
             .concepts
             .get(&block.signature.output)
-            .and_then(|c| c.representation),
+            .and_then(|c| c.representation.as_ref()),
     );
     let matches = |label: &str| {
         prefix.is_empty()
@@ -200,7 +236,7 @@ fn formula_completions(
         if !matches(&name) {
             continue;
         }
-        let ty = ExpectedType::of(concept.representation);
+        let ty = ExpectedType::of(concept.representation.as_ref());
         let relevance = if unit_position {
             10
         } else {
@@ -264,7 +300,7 @@ fn formula_completions(
                 design
                     .concepts
                     .get(&m.signature.output)
-                    .and_then(|c| c.representation),
+                    .and_then(|c| c.representation.as_ref()),
             );
             let callable = !m.signature.inputs.is_empty();
             out.push(SemanticCompletion {
@@ -441,7 +477,7 @@ fn document_completions(
                 label: insert.clone(),
                 kind: CompletionKind::Template,
                 entity: None,
-                resulting_type: Some(ExpectedType::of(t.representation()).describe()),
+                resulting_type: Some(ExpectedType::of(t.representation().as_ref()).describe()),
                 replace,
                 insert,
                 // A name already in the project ranks below the rest: the
@@ -472,7 +508,7 @@ fn document_completions(
                         kind: CompletionKind::Representation,
                         entity: None,
                         resulting_type: bdl_ide_db::textual::representation_named(name)
-                            .map(|r| ExpectedType::of(Some(r)).describe()),
+                            .map(|r| ExpectedType::of(Some(&r)).describe()),
                         replace,
                         insert: name.into(),
                         relevance: 50,
@@ -487,12 +523,12 @@ fn document_completions(
                     let rep = e
                         .as_concept()
                         .and_then(|c| snapshot.effective().design.concepts.get(&c))
-                        .and_then(|c| c.representation);
+                        .and_then(|c| c.representation.clone());
                     out.push(SemanticCompletion {
                         label: name.to_owned(),
                         kind: CompletionKind::Concept,
                         entity: Some(e),
-                        resulting_type: Some(ExpectedType::of(rep).describe()),
+                        resulting_type: Some(ExpectedType::of(rep.as_ref()).describe()),
                         replace,
                         insert: name.to_owned(),
                         relevance: 50,

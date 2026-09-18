@@ -15,6 +15,8 @@ pub struct Module {
 pub enum Item {
     /// A `//` comment line (or several) between items.
     Comment(Vec<String>),
+    /// `extern crate name;`
+    ExternCrate(String),
     Use(String),
     Const {
         doc: Vec<String>,
@@ -98,7 +100,12 @@ pub enum Stmt {
 pub enum Type {
     Path(String),
     Option(Box<Type>),
-    Ref { mutable: bool, inner: Box<Type> },
+    /// `Vec<T>` — the generated core's list, behind `collections`.
+    Vec(Box<Type>),
+    Ref {
+        mutable: bool,
+        inner: Box<Type>,
+    },
     Tuple(Vec<Type>),
 }
 
@@ -108,6 +115,9 @@ impl Type {
     }
     pub fn option(t: Type) -> Type {
         Type::Option(Box::new(t))
+    }
+    pub fn vec(t: Type) -> Type {
+        Type::Vec(Box::new(t))
     }
     pub fn reference(t: Type, mutable: bool) -> Type {
         Type::Ref {
@@ -194,9 +204,10 @@ pub enum Expr {
     },
     /// `vec![…]` — host bridge only, never in the core.
     VecMacro(Vec<Expr>),
-    /// A closure with one parameter: `|name| body`.
+    /// A closure: `|p₁, p₂| body`, optionally `|p| -> T { body }`.
     Closure {
-        param: String,
+        params: Vec<String>,
+        ret: Option<Type>,
         body: Box<Expr>,
     },
 }
@@ -264,6 +275,17 @@ impl Expr {
     }
     pub fn if_else(cond: Expr, then: Expr, else_: Expr) -> Expr {
         Expr::if_(cond, Block::expr(then), Some(Block::expr(else_)))
+    }
+    pub fn closure(
+        params: impl IntoIterator<Item = String>,
+        ret: Option<Type>,
+        body: Expr,
+    ) -> Expr {
+        Expr::Closure {
+            params: params.into_iter().collect(),
+            ret,
+            body: Box::new(body),
+        }
     }
     pub fn strukt(
         path: impl Into<String>,

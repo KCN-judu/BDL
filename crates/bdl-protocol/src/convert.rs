@@ -52,12 +52,18 @@ pub fn dim_from_pb(d: &pb::Dim) -> Result<Dim, ConvertError> {
     })
 }
 
-pub fn representation_to_pb(r: Representation) -> pb::Representation {
+pub fn representation_to_pb(r: &Representation) -> pb::Representation {
     use pb::representation::Kind;
     let kind = match r {
-        Representation::Quantity { dim } => Kind::Quantity(dim_to_pb(dim)),
+        Representation::Quantity { dim } => Kind::Quantity(dim_to_pb(*dim)),
         Representation::Boolean => Kind::Boolean(pb::Unit {}),
         Representation::Count => Kind::Count(pb::Unit {}),
+        Representation::Optional { inner } => Kind::Optional(Box::new(representation_to_pb(inner))),
+        Representation::List { element } => Kind::List(Box::new(representation_to_pb(element))),
+        Representation::Pair { first, second } => Kind::Pair(Box::new(pb::PairRepresentation {
+            first: Some(Box::new(representation_to_pb(first))),
+            second: Some(Box::new(representation_to_pb(second))),
+        })),
     };
     pb::Representation { kind: Some(kind) }
 }
@@ -74,6 +80,20 @@ pub fn representation_from_pb(r: &pb::Representation) -> Result<Representation, 
         }),
         Kind::Boolean(_) => Ok(Representation::Boolean),
         Kind::Count(_) => Ok(Representation::Count),
+        Kind::Optional(inner) => Ok(Representation::optional(representation_from_pb(inner)?)),
+        Kind::List(element) => Ok(Representation::list(representation_from_pb(element)?)),
+        Kind::Pair(p) => Ok(Representation::pair(
+            representation_from_pb(
+                p.first
+                    .as_ref()
+                    .ok_or(ConvertError::Missing("representation.pair.first"))?,
+            )?,
+            representation_from_pb(
+                p.second
+                    .as_ref()
+                    .ok_or(ConvertError::Missing("representation.pair.second"))?,
+            )?,
+        )),
     }
 }
 
@@ -169,6 +189,10 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
                     .as_ref()
                     .map(representation_from_pb)
                     .transpose()?,
+            },
+            Op::SetConceptOrdered(m) => EditOp::SetConceptOrdered {
+                id: sem(m.id),
+                ordered: m.ordered,
             },
             Op::DeleteConcept(m) => EditOp::DeleteConcept { id: sem(m.id) },
             Op::CreateMapping(m) => EditOp::CreateMapping {
@@ -287,7 +311,7 @@ pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
         } => Op::CreateConcept(pb::CreateConcept {
             name: name.clone(),
             description: description.clone(),
-            representation: representation.map(representation_to_pb),
+            representation: representation.as_ref().map(representation_to_pb),
         }),
         EditOp::RenameConcept { id, name } => Op::RenameConcept(pb::RenameConcept {
             id: id.raw(),
@@ -302,9 +326,13 @@ pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
         EditOp::SetConceptRepresentation { id, representation } => {
             Op::SetConceptRepresentation(pb::SetConceptRepresentation {
                 id: id.raw(),
-                representation: representation.map(representation_to_pb),
+                representation: representation.as_ref().map(representation_to_pb),
             })
         }
+        EditOp::SetConceptOrdered { id, ordered } => Op::SetConceptOrdered(pb::SetConceptOrdered {
+            id: id.raw(),
+            ordered: *ordered,
+        }),
         EditOp::DeleteConcept { id } => Op::DeleteConcept(pb::DeleteConcept { id: id.raw() }),
         EditOp::CreateMapping {
             name,
@@ -684,7 +712,8 @@ pub fn design_projection(design: &bdl_model::surface::Design) -> pb::ProjectProj
                 id: c.id.raw(),
                 name: c.name.clone(),
                 description: c.description.clone(),
-                representation: c.representation.map(representation_to_pb),
+                representation: c.representation.as_ref().map(representation_to_pb),
+                ordered: c.ordered,
             })
             .collect(),
         mappings: design
@@ -890,7 +919,7 @@ pub fn concept_template_view(t: &bdl_library::ConceptTemplate) -> pb::ConceptTem
         description: t.description.clone(),
         category: t.category.clone(),
         role_hint: role_hint_to_pb(t.role_hint).into(),
-        representation: t.representation().map(representation_to_pb),
+        representation: t.representation().as_ref().map(representation_to_pb),
         type_name: t.type_name().unwrap_or("").to_owned(),
         unit: t.unit_symbol().to_owned(),
         keywords: t.keywords.clone(),
@@ -1157,6 +1186,13 @@ pub fn value_to_pb(v: &Value) -> pb::Value {
         Value::Some { value } => Kind::Some(Box::new(value_to_pb(value))),
         Value::Closure { .. } => Kind::Opaque("<function>".into()),
         Value::Prim { prim, .. } => Kind::Opaque(format!("<{prim:?}>")),
+        Value::List { items } => Kind::List(pb::ValueList {
+            items: items.iter().map(value_to_pb).collect(),
+        }),
+        Value::Pair { fst, snd } => Kind::Pair(Box::new(pb::ValuePair {
+            fst: Some(Box::new(value_to_pb(fst))),
+            snd: Some(Box::new(value_to_pb(snd))),
+        })),
     };
     pb::Value { kind: Some(kind) }
 }
@@ -1192,6 +1228,21 @@ pub fn value_from_pb(v: &pb::Value) -> Result<Value, ConvertError> {
                     "value: opaque values cannot be supplied",
                 ))
             }
+            Kind::List(l) => Value::List {
+                items: l
+                    .items
+                    .iter()
+                    .map(value_from_pb)
+                    .collect::<Result<bdl_reactive::value::List, _>>()?,
+            },
+            Kind::Pair(p) => Value::Pair {
+                fst: Box::new(value_from_pb(
+                    p.fst.as_ref().ok_or(ConvertError::Missing("pair.fst"))?,
+                )?),
+                snd: Box::new(value_from_pb(
+                    p.snd.as_ref().ok_or(ConvertError::Missing("pair.snd"))?,
+                )?),
+            },
         },
     )
 }
@@ -2422,6 +2473,7 @@ mod tests {
                 name: "Tilt".into(),
                 description: String::new(),
                 representation: None,
+                ordered: false,
             },
         );
         c.body.clocks.insert(

@@ -1448,6 +1448,15 @@ const EditOp$json = {
       '9': 0,
       '10': 'deleteDevice'
     },
+    {
+      '1': 'set_concept_ordered',
+      '3': 30,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SetConceptOrdered',
+      '9': 0,
+      '10': 'setConceptOrdered'
+    },
   ],
   '8': [
     {'1': 'op'},
@@ -1493,7 +1502,8 @@ final $typed_data.Uint8List editOpDescriptor = $convert
         'KAsyFy5iZGwudjEuU2V0RGV2aWNlT3V0cHV0SABSD3NldERldmljZU91dHB1dBI8Cg5zZXRfZG'
         'V2aWNlX3BpbhgcIAEoCzIULmJkbC52MS5TZXREZXZpY2VQaW5IAFIMc2V0RGV2aWNlUGluEjsK'
         'DWRlbGV0ZV9kZXZpY2UYHSABKAsyFC5iZGwudjEuRGVsZXRlRGV2aWNlSABSDGRlbGV0ZURldm'
-        'ljZUIECgJvcA==');
+        'ljZRJLChNzZXRfY29uY2VwdF9vcmRlcmVkGB4gASgLMhkuYmRsLnYxLlNldENvbmNlcHRPcmRl'
+        'cmVkSABSEXNldENvbmNlcHRPcmRlcmVkQgQKAm9w');
 
 @$core.Deprecated('Use createConceptDescriptor instead')
 const CreateConcept$json = {
@@ -1576,6 +1586,20 @@ final $typed_data.Uint8List setConceptRepresentationDescriptor = $convert
     .base64Decode('ChhTZXRDb25jZXB0UmVwcmVzZW50YXRpb24SDgoCaWQYASABKARSAmlkEkMKDnJlcHJlc2VudG'
         'F0aW9uGAIgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0aW9uSABSDnJlcHJlc2VudGF0aW9uiAEB'
         'QhEKD19yZXByZXNlbnRhdGlvbg==');
+
+@$core.Deprecated('Use setConceptOrderedDescriptor instead')
+const SetConceptOrdered$json = {
+  '1': 'SetConceptOrdered',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'ordered', '3': 2, '4': 1, '5': 8, '10': 'ordered'},
+  ],
+};
+
+/// Descriptor for `SetConceptOrdered`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List setConceptOrderedDescriptor = $convert
+    .base64Decode('ChFTZXRDb25jZXB0T3JkZXJlZBIOCgJpZBgBIAEoBFICaWQSGAoHb3JkZXJlZBgCIAEoCFIHb3'
+        'JkZXJlZA==');
 
 @$core.Deprecated('Use deleteConceptDescriptor instead')
 const DeleteConcept$json = {
@@ -2132,6 +2156,7 @@ const ConceptView$json = {
       '10': 'representation',
       '17': true
     },
+    {'1': 'ordered', '3': 5, '4': 1, '5': 8, '10': 'ordered'},
   ],
   '8': [
     {'1': '_representation'},
@@ -2142,8 +2167,8 @@ const ConceptView$json = {
 final $typed_data.Uint8List conceptViewDescriptor = $convert
     .base64Decode('CgtDb25jZXB0VmlldxIOCgJpZBgBIAEoBFICaWQSEgoEbmFtZRgCIAEoCVIEbmFtZRIgCgtkZX'
         'NjcmlwdGlvbhgDIAEoCVILZGVzY3JpcHRpb24SQwoOcmVwcmVzZW50YXRpb24YBCABKAsyFi5i'
-        'ZGwudjEuUmVwcmVzZW50YXRpb25IAFIOcmVwcmVzZW50YXRpb26IAQFCEQoPX3JlcHJlc2VudG'
-        'F0aW9u');
+        'ZGwudjEuUmVwcmVzZW50YXRpb25IAFIOcmVwcmVzZW50YXRpb26IAQESGAoHb3JkZXJlZBgFIA'
+        'EoCFIHb3JkZXJlZEIRCg9fcmVwcmVzZW50YXRpb24=');
 
 @$core.Deprecated('Use mappingViewDescriptor instead')
 const MappingView$json = {
@@ -2271,6 +2296,17 @@ const Representation$json = {
     {'1': 'quantity', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '9': 0, '10': 'quantity'},
     {'1': 'boolean', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'boolean'},
     {'1': 'count', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'count'},
+    {
+      '1': 'optional',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Representation',
+      '9': 0,
+      '10': 'optional'
+    },
+    {'1': 'list', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.Representation', '9': 0, '10': 'list'},
+    {'1': 'pair', '3': 6, '4': 1, '5': 11, '6': '.bdl.v1.PairRepresentation', '9': 0, '10': 'pair'},
   ],
   '8': [
     {'1': 'kind'},
@@ -2281,7 +2317,25 @@ const Representation$json = {
 final $typed_data.Uint8List representationDescriptor = $convert
     .base64Decode('Cg5SZXByZXNlbnRhdGlvbhIpCghxdWFudGl0eRgBIAEoCzILLmJkbC52MS5EaW1IAFIIcXVhbn'
         'RpdHkSKAoHYm9vbGVhbhgCIAEoCzIMLmJkbC52MS5Vbml0SABSB2Jvb2xlYW4SJAoFY291bnQY'
-        'AyABKAsyDC5iZGwudjEuVW5pdEgAUgVjb3VudEIGCgRraW5k');
+        'AyABKAsyDC5iZGwudjEuVW5pdEgAUgVjb3VudBI0CghvcHRpb25hbBgEIAEoCzIWLmJkbC52MS'
+        '5SZXByZXNlbnRhdGlvbkgAUghvcHRpb25hbBIsCgRsaXN0GAUgASgLMhYuYmRsLnYxLlJlcHJl'
+        'c2VudGF0aW9uSABSBGxpc3QSMAoEcGFpchgGIAEoCzIaLmJkbC52MS5QYWlyUmVwcmVzZW50YX'
+        'Rpb25IAFIEcGFpckIGCgRraW5k');
+
+@$core.Deprecated('Use pairRepresentationDescriptor instead')
+const PairRepresentation$json = {
+  '1': 'PairRepresentation',
+  '2': [
+    {'1': 'first', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Representation', '10': 'first'},
+    {'1': 'second', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Representation', '10': 'second'},
+  ],
+};
+
+/// Descriptor for `PairRepresentation`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List pairRepresentationDescriptor = $convert
+    .base64Decode('ChJQYWlyUmVwcmVzZW50YXRpb24SLAoFZmlyc3QYASABKAsyFi5iZGwudjEuUmVwcmVzZW50YX'
+        'Rpb25SBWZpcnN0Ei4KBnNlY29uZBgCIAEoCzIWLmJkbC52MS5SZXByZXNlbnRhdGlvblIGc2Vj'
+        'b25k');
 
 @$core.Deprecated('Use unitDescriptor instead')
 const Unit$json = {
@@ -2492,6 +2546,8 @@ const Value$json = {
     {'1': 'none', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'none'},
     {'1': 'some', '3': 6, '4': 1, '5': 11, '6': '.bdl.v1.Value', '9': 0, '10': 'some'},
     {'1': 'opaque', '3': 7, '4': 1, '5': 9, '9': 0, '10': 'opaque'},
+    {'1': 'list', '3': 8, '4': 1, '5': 11, '6': '.bdl.v1.ValueList', '9': 0, '10': 'list'},
+    {'1': 'pair', '3': 9, '4': 1, '5': 11, '6': '.bdl.v1.ValuePair', '9': 0, '10': 'pair'},
   ],
   '8': [
     {'1': 'kind'},
@@ -2504,7 +2560,35 @@ final $typed_data.Uint8List valueDescriptor = $convert
         '91bnQSLgoIcXVhbnRpdHkYAyABKAsyEC5iZGwudjEuUXVhbnRpdHlIAFIIcXVhbnRpdHkSMwoI'
         'c2VtYW50aWMYBCABKAsyFS5iZGwudjEuU2VtYW50aWNWYWx1ZUgAUghzZW1hbnRpYxIiCgRub2'
         '5lGAUgASgLMgwuYmRsLnYxLlVuaXRIAFIEbm9uZRIjCgRzb21lGAYgASgLMg0uYmRsLnYxLlZh'
-        'bHVlSABSBHNvbWUSGAoGb3BhcXVlGAcgASgJSABSBm9wYXF1ZUIGCgRraW5k');
+        'bHVlSABSBHNvbWUSGAoGb3BhcXVlGAcgASgJSABSBm9wYXF1ZRInCgRsaXN0GAggASgLMhEuYm'
+        'RsLnYxLlZhbHVlTGlzdEgAUgRsaXN0EicKBHBhaXIYCSABKAsyES5iZGwudjEuVmFsdWVQYWly'
+        'SABSBHBhaXJCBgoEa2luZA==');
+
+@$core.Deprecated('Use valueListDescriptor instead')
+const ValueList$json = {
+  '1': 'ValueList',
+  '2': [
+    {'1': 'items', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.Value', '10': 'items'},
+  ],
+};
+
+/// Descriptor for `ValueList`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List valueListDescriptor =
+    $convert.base64Decode('CglWYWx1ZUxpc3QSIwoFaXRlbXMYASADKAsyDS5iZGwudjEuVmFsdWVSBWl0ZW1z');
+
+@$core.Deprecated('Use valuePairDescriptor instead')
+const ValuePair$json = {
+  '1': 'ValuePair',
+  '2': [
+    {'1': 'fst', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Value', '10': 'fst'},
+    {'1': 'snd', '3': 2, '4': 1, '5': 11, '6': '.bdl.v1.Value', '10': 'snd'},
+  ],
+};
+
+/// Descriptor for `ValuePair`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List valuePairDescriptor = $convert
+    .base64Decode('CglWYWx1ZVBhaXISHwoDZnN0GAEgASgLMg0uYmRsLnYxLlZhbHVlUgNmc3QSHwoDc25kGAIgAS'
+        'gLMg0uYmRsLnYxLlZhbHVlUgNzbmQ=');
 
 @$core.Deprecated('Use quantityDescriptor instead')
 const Quantity$json = {

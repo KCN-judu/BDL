@@ -23,6 +23,7 @@ serde = { workspace = true }
 
 [dev-dependencies]
 bdl-runtime-host = { workspace = true }
+bdl-equations = { workspace = true }
 # the examples test migrates the legacy form it writes (a dev-only cycle)
 bdl-text = { path = "../bdl-text" }
 proptest = { workspace = true }

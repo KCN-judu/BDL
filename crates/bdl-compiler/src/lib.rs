@@ -547,6 +547,20 @@ fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagno
             d("type.temporal_not_data", format!("Only values can be remembered over time, not relationships ({}).", pretty::describe(ir, found)))
         }
         TypeErrorKind::TemporalUnderBinder => d("type.temporal_under_binder", "Memory belongs to a relationship, not to a formula argument.".into()),
+        TypeErrorKind::EqualityNotData { found } => {
+            d("type.equality_not_data", format!("Rules cannot be compared for equality ({}).", pretty::describe(ir, found)))
+                .technical(format!("eq at {}: not Data", pretty::kernel(found)))
+        }
+        TypeErrorKind::FoldMismatch { step, init, list } => d(
+            "type.fold_mismatch",
+            format!(
+                "This collection rule does not fit: the step is {}, the starting value {}, the collection {}.",
+                pretty::describe(ir, step),
+                pretty::describe(ir, init),
+                pretty::describe(ir, list)
+            ),
+        )
+        .technical(format!("fold: step {}, init {}, list {}", pretty::kernel(step), pretty::kernel(init), pretty::kernel(list))),
     }
 }
 

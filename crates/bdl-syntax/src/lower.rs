@@ -61,6 +61,15 @@ pub enum ExprKind {
         lets: Vec<SurfaceLet>,
         tail: Box<SurfaceExpr>,
     },
+    /// `[a, b, c]` — a collection literal.
+    List(Vec<SurfaceExpr>),
+    /// `(a, b)` — a grouped value; three or more parts nest to the right.
+    Tuple(Vec<SurfaceExpr>),
+    /// `x => e` — a rule given to an equation; never a value on its own.
+    Lambda {
+        params: Vec<Ident>,
+        body: Box<SurfaceExpr>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -143,6 +152,8 @@ impl SurfaceExpr {
                 lets.iter().for_each(|l| l.value.walk(f));
                 tail.walk(f);
             }
+            ExprKind::List(items) | ExprKind::Tuple(items) => items.iter().for_each(|i| i.walk(f)),
+            ExprKind::Lambda { body, .. } => body.walk(f),
         }
     }
 }
@@ -379,6 +390,8 @@ pub struct ConceptItem {
     pub name: Ident,
     /// `None` for an open concept (`concept Tilt`).
     pub representation: Option<SurfaceType>,
+    /// `ordered concept …`.
+    pub ordered: bool,
     pub span: Span,
 }
 
@@ -592,6 +605,7 @@ fn concept(c: &ast::ConceptDecl) -> Option<ConceptItem> {
     Some(ConceptItem {
         name,
         representation,
+        ordered: c.is_ordered(),
         span: c.span(),
     })
 }
@@ -953,6 +967,21 @@ fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
             ExprKind::Match {
                 scrutinee: Box::new(expr(&m.scrutinee()?)?),
                 arms: arms?,
+            }
+        }
+        ast::Expr::List(l) => {
+            let items: Option<Vec<SurfaceExpr>> = l.items().map(|i| expr(&i)).collect();
+            ExprKind::List(items?)
+        }
+        ast::Expr::Tuple(t) => {
+            let items: Option<Vec<SurfaceExpr>> = t.items().map(|i| expr(&i)).collect();
+            ExprKind::Tuple(items?)
+        }
+        ast::Expr::Lambda(l) => {
+            let params: Option<Vec<Ident>> = l.params().map(|n| ident(&n)).collect();
+            ExprKind::Lambda {
+                params: params?,
+                body: Box::new(expr(&l.body()?)?),
             }
         }
         ast::Expr::Block(b) => {

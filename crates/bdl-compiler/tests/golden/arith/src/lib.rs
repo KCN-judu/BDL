@@ -74,7 +74,7 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells;
+    let mut next: Cells = state.cells.clone();
     // read phase
     // area (decl#0)
     let decl_0: Option<f64> = if active.is_active(CLOCK_0) { Some(num::mul(2.5_f64, 4.0_f64, 0_u64)?) } else { None };

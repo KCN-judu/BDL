@@ -574,6 +574,12 @@ class SetConceptRepresentationRequested extends UserAction {
   final pb.Representation? representation;
 }
 
+class SetConceptOrderedRequested extends UserAction {
+  const SetConceptOrderedRequested({required this.id, required this.ordered});
+  final int id;
+  final bool ordered;
+}
+
 class DeleteConceptRequested extends UserAction {
   const DeleteConceptRequested(this.id);
   final int id;

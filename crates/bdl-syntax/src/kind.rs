@@ -52,12 +52,17 @@ pub enum SyntaxKind {
     // future-reserved (§2.1): lexed, no grammar
     KwContext,
     KwRequire,
+    // equations (§15): membership, the ordered-concept modifier
+    KwIn,
+    KwOrdered,
 
     // punctuation and operators
     LParen,
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
     Lt,
     Gt,
     Le,
@@ -135,6 +140,13 @@ pub enum SyntaxKind {
     IdentPattern,
     LiteralPattern,
     ConstructorPattern,
+    /// `[a, b, c]`
+    ListExpr,
+    /// `(a, b)` — a grouped value
+    TupleExpr,
+    /// `x => e` or `(x, y) => e` — a rule passed to an equation
+    LambdaExpr,
+    LambdaParams,
     /// Skipped tokens during recovery, kept so the tree stays lossless.
     ErrorNode,
     /// Placeholder for an abandoned marker; never appears in a tree.
@@ -179,6 +191,8 @@ impl SyntaxKind {
                 | KwUse
                 | KwContext
                 | KwRequire
+                | KwIn
+                | KwOrdered
         )
     }
 
@@ -192,6 +206,7 @@ impl SyntaxKind {
         matches!(
             self,
             KwConcept
+                | KwOrdered
                 | KwMapping
                 | KwEnum
                 | KwClock
@@ -210,6 +225,7 @@ impl SyntaxKind {
         matches!(
             self,
             KwConcept
+                | KwOrdered
                 | KwMapping
                 | KwEnum
                 | KwClock
@@ -250,6 +266,8 @@ impl SyntaxKind {
             "use" => KwUse,
             "context" => KwContext,
             "require" => KwRequire,
+            "in" => KwIn,
+            "ordered" => KwOrdered,
             _ => return None,
         })
     }
@@ -281,11 +299,15 @@ impl SyntaxKind {
             KwUse => "use",
             KwContext => "context",
             KwRequire => "require",
+            KwIn => "in",
+            KwOrdered => "ordered",
             Underscore => "_",
             LParen => "(",
             RParen => ")",
             LBrace => "{",
             RBrace => "}",
+            LBracket => "[",
+            RBracket => "]",
             Lt => "<",
             Gt => ">",
             Le => "<=",
@@ -389,10 +411,14 @@ const ALL_KINDS: &[SyntaxKind] = &[
     KwUse,
     KwContext,
     KwRequire,
+    KwIn,
+    KwOrdered,
     LParen,
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
     Lt,
     Gt,
     Le,
@@ -467,6 +493,10 @@ const ALL_KINDS: &[SyntaxKind] = &[
     IdentPattern,
     LiteralPattern,
     ConstructorPattern,
+    ListExpr,
+    TupleExpr,
+    LambdaExpr,
+    LambdaParams,
     ErrorNode,
     Tombstone,
 ];

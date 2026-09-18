@@ -228,6 +228,7 @@ message EditOp {
     SetDeviceOutput set_device_output = 27;
     SetDevicePin set_device_pin = 28;
     DeleteDevice delete_device = 29;
+    SetConceptOrdered set_concept_ordered = 30;
   }
 }
 
@@ -247,6 +248,13 @@ message SetConceptDescription {
 message SetConceptRepresentation {
   uint64 id = 1;
   optional Representation representation = 2;
+}
+// Declare (or undeclare) a concept ordered: its values may then be compared
+// with `<`, `min`, `max`, `clamp`, `inRange` through the quantity that
+// represents them.  Never inferred from the representation (0.11).
+message SetConceptOrdered {
+  uint64 id = 1;
+  bool ordered = 2;
 }
 message DeleteConcept {
   uint64 id = 1;
@@ -468,6 +476,8 @@ message ConceptView {
   string name = 2;
   string description = 3;
   optional Representation representation = 4;
+  // The designer declared the concept ordered (0.11).
+  bool ordered = 5;
 }
 
 message MappingView {
@@ -524,7 +534,16 @@ message Representation {
     Dim quantity = 1;
     Unit boolean = 2;
     Unit count = 3;
+    // 0.11: a value that may be absent, a collection, a grouped value.
+    Representation optional = 4;
+    Representation list = 5;
+    PairRepresentation pair = 6;
   }
+}
+
+message PairRepresentation {
+  Representation first = 1;
+  Representation second = 2;
 }
 
 message Unit {}
@@ -620,7 +639,19 @@ message Value {
     Value some = 6;
     // A function or partially applied primitive: shown, never transported.
     string opaque = 7;
+    // 0.11: collections and grouped values.
+    ValueList list = 8;
+    ValuePair pair = 9;
   }
+}
+
+message ValueList {
+  repeated Value items = 1;
+}
+
+message ValuePair {
+  Value fst = 1;
+  Value snd = 2;
 }
 
 message Quantity {

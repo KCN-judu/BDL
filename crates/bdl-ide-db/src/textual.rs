@@ -226,6 +226,7 @@ impl Binder<'_> {
                         name: name_text.clone(),
                         description: String::new(),
                         representation: None,
+                        ordered: false,
                     },
                 );
                 id
@@ -443,10 +444,29 @@ impl Binder<'_> {
     }
 }
 
-/// The representation a type name in a `concept` declaration stands for.
+/// The representation a type in a `concept` declaration stands for: a
+/// plain name, or `List<…>`, `Pair<…, …>`, `Option<…>` over those.
 /// The textual vocabulary of representations (`docs/spec/textual-syntax.md` §1).
 pub fn representation_of(t: &ast::Type) -> Option<Representation> {
-    representation_named(&named_type(t)?.name()?.as_str())
+    let t = match t {
+        ast::Type::Paren(p) => return representation_of(&p.inner()?),
+        ast::Type::Named(n) => n.clone(),
+        ast::Type::Function(_) => return None,
+    };
+    let name = t.name()?.as_str();
+    if !t.has_type_args() {
+        return representation_named(&name);
+    }
+    let args: Vec<ast::Type> = t.type_args().collect();
+    match (name.as_str(), args.as_slice()) {
+        ("List", [e]) => Some(Representation::list(representation_of(e)?)),
+        ("Option", [e]) => Some(Representation::optional(representation_of(e)?)),
+        ("Pair", [a, b]) => Some(Representation::pair(
+            representation_of(a)?,
+            representation_of(b)?,
+        )),
+        _ => None,
+    }
 }
 
 /// The plain named type inside any parentheses; `None` for a function
@@ -475,13 +495,20 @@ pub fn representation_named(name: &str) -> Option<Representation> {
 /// [`representation_named`] for named quantities; a dimension no quantity
 /// names renders as `Scalar` with a comment, since the syntax has no
 /// dimension literals yet.
-pub fn representation_name(r: Representation) -> String {
+pub fn representation_name(r: &Representation) -> String {
     match r {
         Representation::Boolean => "Bool".into(),
         Representation::Count => "Count".into(),
-        Representation::Quantity { dim } => bdl_model::quantity::by_dim(dim)
+        Representation::Quantity { dim } => bdl_model::quantity::by_dim(*dim)
             .map(|q| q.type_name.to_owned())
             .unwrap_or_else(|| "Scalar /* unnamed dimension */".into()),
+        Representation::Optional { inner } => format!("Option<{}>", representation_name(inner)),
+        Representation::List { element } => format!("List<{}>", representation_name(element)),
+        Representation::Pair { first, second } => format!(
+            "Pair<{}, {}>",
+            representation_name(first),
+            representation_name(second)
+        ),
     }
 }
 
@@ -507,13 +534,18 @@ pub fn render_module(design: &Design) -> String {
             .unwrap_or_else(|| format!("Concept{}", id.raw()))
     };
     for c in design.concepts.values() {
-        match c.representation {
+        let keyword = if c.ordered {
+            "ordered concept"
+        } else {
+            "concept"
+        };
+        match &c.representation {
             Some(r) => out.push_str(&format!(
-                "concept {} : {}\n",
+                "{keyword} {} : {}\n",
                 c.name,
                 representation_name(r)
             )),
-            None => out.push_str(&format!("concept {}\n", c.name)),
+            None => out.push_str(&format!("{keyword} {}\n", c.name)),
         }
     }
     for m in design.mappings.values() {
@@ -553,6 +585,7 @@ mod tests {
                 id: tilt,
                 name: "Tilt".into(),
                 description: "committed".into(),
+                ordered: false,
                 representation: Some(Representation::Quantity { dim: Dim::ANGLE }),
             },
         );

@@ -77,12 +77,17 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let mut values = Vec::new();
     for d in &ir.decls {
         values.push(Expr::method(
-            Expr::field(Expr::field(Expr::path("tick"), "values"), names::decl(d.id)),
+            Expr::method(
+                Expr::field(Expr::field(Expr::path("tick"), "values"), names::decl(d.id)),
+                "clone",
+                [],
+            ),
             "map",
-            [Expr::Closure {
-                param: "v".into(),
-                body: Box::new(to_dyn(&reps, &d.ty)?),
-            }],
+            [Expr::closure(
+                ["v".to_string()],
+                None,
+                to_dyn(&reps, &d.ty)?,
+            )],
         ));
     }
     let values_fn = Function {
@@ -97,15 +102,20 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let mut outputs = Vec::new();
     for o in &ir.outputs {
         outputs.push(Expr::method(
-            Expr::field(
-                Expr::field(Expr::path("tick"), "outputs"),
-                names::output(o.id),
+            Expr::method(
+                Expr::field(
+                    Expr::field(Expr::path("tick"), "outputs"),
+                    names::output(o.id),
+                ),
+                "clone",
+                [],
             ),
             "map",
-            [Expr::Closure {
-                param: "v".into(),
-                body: Box::new(to_dyn(&reps, &o.ty)?),
-            }],
+            [Expr::closure(
+                ["v".to_string()],
+                None,
+                to_dyn(&reps, &o.ty)?,
+            )],
         ));
     }
     let outputs_fn = Function {
@@ -221,8 +231,72 @@ fn from_dyn(reps: &Reps, ty: &Ty, slot: usize) -> Result<Expr, EmitError> {
                 ("Some(v)".into(), Expr::some(from_dyn(reps, inner, slot)?)),
             ],
         },
+        // The core stores lists last element first (`bdl_runtime_core::list`):
+        // bdl_runtime_core::list::from_ordered(v.list(slot)?.iter().map(|v| -> Result<T, BridgeError> { Ok(…) }).collect::<Result<Vec<_>, BridgeError>>()?)
+        Ty::List { elem } => Expr::call(
+            "bdl_runtime_core::list::from_ordered",
+            [Expr::try_(Expr::method(
+                Expr::method(
+                    Expr::method(
+                        Expr::try_(Expr::method(Expr::path("v"), "list", [s])),
+                        "iter",
+                        [],
+                    ),
+                    "map",
+                    [Expr::closure(
+                        ["v".to_string()],
+                        Some(Type::path(format!(
+                            "Result<{}, BridgeError>",
+                            crate::print::ty_str(&crate::emit::rust_type(elem).map(host_type)?)
+                        ))),
+                        Expr::call("Ok", [from_dyn(reps, elem, slot)?]),
+                    )],
+                ),
+                "collect::<Result<Vec<_>, BridgeError>>",
+                [],
+            ))],
+        ),
+        Ty::Prod { fst, snd } => Expr::Block(Block::new(
+            vec![Stmt::Let {
+                name: "(a, b)".into(),
+                mutable: false,
+                ty: None,
+                value: Expr::try_(Expr::method(Expr::path("v"), "pair", [s])),
+            }],
+            Some(Expr::Tuple(vec![
+                Expr::Block(Block::new(
+                    vec![Stmt::Let {
+                        name: "v".into(),
+                        mutable: false,
+                        ty: None,
+                        value: Expr::path("a"),
+                    }],
+                    Some(from_dyn(reps, fst, slot)?),
+                )),
+                Expr::Block(Block::new(
+                    vec![Stmt::Let {
+                        name: "v".into(),
+                        mutable: false,
+                        ty: None,
+                        value: Expr::path("b"),
+                    }],
+                    Some(from_dyn(reps, snd, slot)?),
+                )),
+            ])),
+        )),
         Ty::Arr { .. } => return Err(EmitError("function-typed input".into())),
     })
+}
+
+/// The core's types as the host names them: `SemN` is `design::SemN`.
+fn host_type(t: Type) -> Type {
+    match t {
+        Type::Path(p) if p.starts_with("Sem") => Type::Path(format!("design::{p}")),
+        Type::Option(i) => Type::Option(Box::new(host_type(*i))),
+        Type::Vec(i) => Type::Vec(Box::new(host_type(*i))),
+        Type::Tuple(ts) => Type::Tuple(ts.into_iter().map(host_type).collect()),
+        other => other,
+    }
 }
 
 /// `v: T` → `DynValue`.
@@ -257,6 +331,56 @@ fn to_dyn(reps: &Reps, ty: &Ty) -> Result<Expr, EmitError> {
                 ),
             ],
         },
+        Ty::List { elem } => Expr::strukt(
+            "DynValue::List",
+            [(
+                "items".to_string(),
+                Expr::method(
+                    Expr::method(
+                        Expr::method(
+                            Expr::call("bdl_runtime_core::list::into_ordered", [Expr::path("v")]),
+                            "into_iter",
+                            [],
+                        ),
+                        "map",
+                        [Expr::closure(["v".to_string()], None, to_dyn(reps, elem)?)],
+                    ),
+                    "collect",
+                    [],
+                ),
+            )],
+        ),
+        Ty::Prod { fst, snd } => Expr::Block(Block::new(
+            vec![Stmt::Let {
+                name: "(a, b)".into(),
+                mutable: false,
+                ty: None,
+                value: Expr::path("v"),
+            }],
+            Some(Expr::call(
+                "DynValue::pair_of",
+                [
+                    Expr::Block(Block::new(
+                        vec![Stmt::Let {
+                            name: "v".into(),
+                            mutable: false,
+                            ty: None,
+                            value: Expr::path("a"),
+                        }],
+                        Some(to_dyn(reps, fst)?),
+                    )),
+                    Expr::Block(Block::new(
+                        vec![Stmt::Let {
+                            name: "v".into(),
+                            mutable: false,
+                            ty: None,
+                            value: Expr::path("b"),
+                        }],
+                        Some(to_dyn(reps, snd)?),
+                    )),
+                ],
+            )),
+        )),
         Ty::Arr { .. } => return Err(EmitError("function-typed value".into())),
     })
 }

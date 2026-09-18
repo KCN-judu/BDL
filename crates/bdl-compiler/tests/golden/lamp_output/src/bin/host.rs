@@ -32,11 +32,11 @@ impl HostProgram for Bridge {
     }
 
     fn values_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
-        vec![tick.values.decl_0.map(|v| DynValue::sem(0_u64, { let v = v.0; DynValue::Quantity { value: v } })), tick.values.decl_2.map(|v| DynValue::sem(1_u64, { let v = v.0; DynValue::Quantity { value: v } }))]
+        vec![tick.values.decl_0.clone().map(|v| DynValue::sem(0_u64, { let v = v.0; DynValue::Quantity { value: v } })), tick.values.decl_2.clone().map(|v| DynValue::sem(1_u64, { let v = v.0; DynValue::Quantity { value: v } }))]
     }
 
     fn outputs_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
-        vec![tick.outputs.output_4.map(|v| DynValue::sem(1_u64, { let v = v.0; DynValue::Quantity { value: v } }))]
+        vec![tick.outputs.output_4.clone().map(|v| DynValue::sem(1_u64, { let v = v.0; DynValue::Quantity { value: v } }))]
     }
 
     fn state_bytes() -> usize {

@@ -347,7 +347,7 @@ fn match_on_bool_option_and_representations() {
     // a literal pattern on a dimensionless quantity; a catch-all binds the value
     assert_eq!(
         l.nullary("match level { 0 => 1, x => x }").core(),
-        "(mk sem#3 (λ(sem#3). (ite[q[1]] (eq[1] (rep #0) 0[1]) 1[1] (rep (λ(sem#3). #0 #0))) decl#1))"
+        "(mk sem#3 (λ(sem#3). (ite[q[1]] (eq[q[1]] (rep #0) 0[1]) 1[1] (rep (λ(sem#3). #0 #0))) decl#1))"
     );
     // a semantic scrutinee met by a literal pattern is observed
     assert_eq!(
@@ -437,8 +437,13 @@ fn match_exhaustiveness_reachability_and_pattern_diagnostics() {
         .expect_error("formula.constructor.arity", Span::new(0, 7));
     l.with_inputs("Some")
         .expect_error("formula.constructor.arity", Span::new(0, 4));
-    l.with_inputs("Some(1) == None")
-        .expect_error("type.operand_kind", Span::new(0, 15));
+    // equality is structural at any data kind (Phase 9b): an optional
+    // value compares with a bare `None`, which takes its kind from the
+    // other side; only the mapping's Brightness result is then wrong
+    assert_eq!(
+        l.with_inputs("Some(1) == None").codes(),
+        vec!["realization.type_mismatch"]
+    );
 }
 
 #[test]

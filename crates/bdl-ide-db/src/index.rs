@@ -262,6 +262,7 @@ mod tests {
                     id,
                     name: name.into(),
                     description: String::new(),
+                    ordered: false,
                     representation: Some(bdl_model::Representation::Quantity { dim: Dim::ANGLE }),
                 },
             );

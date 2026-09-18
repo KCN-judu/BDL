@@ -104,7 +104,7 @@ impl Out {
         entity: Option<EntityRef>,
         rep: Option<bdl_model::surface::Representation>,
     ) {
-        let ty = ExpectedType::of(rep).describe();
+        let ty = ExpectedType::of(rep.as_ref()).describe();
         self.push(
             name,
             CompletionKind::Concept,
@@ -116,7 +116,7 @@ impl Out {
     }
     fn concepts_of(&mut self, design: &Design) {
         for c in design.concepts.values() {
-            self.concept(&c.name, None, c.representation);
+            self.concept(&c.name, None, c.representation.clone());
         }
     }
     fn mappings_of(&mut self, design: &Design, entity: bool) {
@@ -171,7 +171,7 @@ impl Out {
     fn representations(&mut self) {
         for name in bdl_ide_db::textual::representation_names() {
             let ty = bdl_ide_db::textual::representation_named(name)
-                .map(|r| ExpectedType::of(Some(r)).describe());
+                .map(|r| ExpectedType::of(Some(&r)).describe());
             self.push(
                 name,
                 CompletionKind::Representation,
@@ -432,7 +432,11 @@ impl Out {
             if shared.contains(&c.id) {
                 continue;
             }
-            self.concept(&c.name, Some(EntityRef::Concept(c.id)), c.representation);
+            self.concept(
+                &c.name,
+                Some(EntityRef::Concept(c.id)),
+                c.representation.clone(),
+            );
         }
     }
 }

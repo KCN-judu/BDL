@@ -8,12 +8,18 @@
 //! | `ConceptPlan` | `pub struct SemN(pub Repr)` |
 //! | `DeclPlan` (input) | `Inputs.decl_n: Option<T>`; `read_input(…)?` when due |
 //! | `DeclPlan` (computed) | `let decl_n: Option<T> = if due { Some(body?) } else { None };` |
-//! | `ReadDecl` | `read_decl(decl_n, n)?` |
+//! | `ReadDecl` | `read_decl(&decl_n, n)?` |
 //! | `CellPlan` | `Cells.cell_k: Option<T>`; write `next.cell_k = Some(operand)` when writer active |
-//! | `ReadCell` | `match prev.cell_k { Some(v) => v, None => init }` |
+//! | `ReadCell` | `match &prev.cell_k { Some(v) => v.clone(), None => init }` |
 //! | `Wrap` / `Unwrap` | `SemN(e)` / `e.0` |
-//! | `PrimOp` | `num::add(a, b, decl)?` … / `(a < b)` / `prim::ite(c, x, y)` |
-//! | `OutputPlan` | `Outputs.output_n = decl_driver` after the write phase |
+//! | `PrimOp` | `num::add(a, b, decl)?` … / `(a < b)` / `prim::ite(c, x, y)` / `list::cons(x, xs)` |
+//! | `Fold` | `list::fold(xs, init, \|elem, acc\| Ok(step))?` — one closure per recursor, no closure value escapes |
+//! | `Ty::List` / `Ty::Prod` | `Vec<T>` (feature `collections`, `extern crate alloc`) / `(A, B)` |
+//! | `OutputPlan` | `Outputs.output_n = decl_driver.clone()` after the write phase |
+//!
+//! A program without lists derives `Copy` on its records and never
+//! allocates; one with lists derives `Clone` only and turns the runtime's
+//! `collections` feature on (recorded in the manifest).
 
 use crate::ast::*;
 use crate::names;
@@ -31,6 +37,8 @@ pub fn rust_type(t: &Ty) -> Result<Type, EmitError> {
         Ty::Q { .. } => Type::path("f64"),
         Ty::Sem { id } => Type::path(names::concept(*id)),
         Ty::Opt { inner } => Type::option(rust_type(inner)?),
+        Ty::List { elem } => Type::vec(rust_type(elem)?),
+        Ty::Prod { fst, snd } => Type::Tuple(vec![rust_type(fst)?, rust_type(snd)?]),
         Ty::Arr { .. } => {
             return Err(EmitError(format!(
                 "function type {} has no runtime representation",
@@ -43,13 +51,25 @@ pub fn rust_type(t: &Ty) -> Result<Type, EmitError> {
 const DERIVES_VALUE: &[&str] = &["Clone", "Copy", "Debug", "PartialEq"];
 const DERIVES_RECORD: &[&str] = &["Clone", "Copy", "Debug", "PartialEq", "Default"];
 
-fn derives(d: &[&str]) -> Vec<String> {
-    d.iter().map(|s| s.to_string()).collect()
+/// The derives of a record or concept: `Copy` only when nothing in the
+/// program owns a list.
+fn derives(d: &[&str], copy: bool) -> Vec<String> {
+    d.iter()
+        .filter(|s| copy || **s != "Copy")
+        .map(|s| s.to_string())
+        .collect()
 }
 
 /// The core module.
 pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
-    let mut items = vec![
+    let copy = !ir.uses_lists();
+    let mut items = Vec::new();
+    if !copy {
+        items.push(Item::ExternCrate("alloc".into()));
+        items.push(Item::Use("alloc::vec::Vec".into()));
+        items.push(Item::Use("bdl_runtime_core::list".into()));
+    }
+    items.extend([
         Item::Use("bdl_runtime_core::num".into()),
         Item::Use("bdl_runtime_core::prim".into()),
         Item::Use("bdl_runtime_core::read_decl".into()),
@@ -75,7 +95,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
             ty: Type::path("u16"),
             value: Expr::Lit(Lit::U16(ir.clocks.len() as u16)),
         },
-    ];
+    ]);
     for c in &ir.clocks {
         items.push(Item::Const {
             doc: vec![format!("Clock domain `{}` ({}).", c.name, c.id)],
@@ -93,7 +113,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
                 c.id,
                 bdl_check::pretty::kernel(&c.representation)
             )],
-            derives: derives(DERIVES_VALUE),
+            derives: derives(DERIVES_VALUE, copy),
             name: names::concept(c.id),
             fields: Fields::Tuple(vec![rust_type(&c.representation)?]),
         });
@@ -109,13 +129,13 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
             "Temporal state: one slot per `delay`/`sync` site, `None` until first written.".into(),
             "Slot ↔ `StateCellId` in `bdl-manifest.json`.".into(),
         ],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "Cells".into(),
         fields: Fields::Named(cell_fields),
     });
     items.push(Item::Struct {
         doc: vec!["Everything that survives from one tick to the next.".into()],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "State".into(),
         fields: Fields::Named(vec![("cells".into(), Type::path("Cells"))]),
     });
@@ -131,7 +151,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
             "Values for the unresolved declarations at one tick.".into(),
             "A `None` for a declaration that is due is `RuntimeError::MissingInput`, never a default.".into(),
         ],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "Inputs".into(),
         fields: Fields::Named(input_fields),
     });
@@ -141,7 +161,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
     }
     items.push(Item::Struct {
         doc: vec!["Every declaration's value at one tick; `None` when it was not due.".into()],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "Values".into(),
         fields: Fields::Named(value_fields),
     });
@@ -151,13 +171,13 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
     }
     items.push(Item::Struct {
         doc: vec!["Physical outputs committed at one tick: the single driver's value, `None` when the driver was not due.".into()],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "Outputs".into(),
         fields: Fields::Named(output_fields),
     });
     items.push(Item::Struct {
         doc: vec!["The observable result of one tick.".into()],
-        derives: derives(DERIVES_RECORD),
+        derives: derives(DERIVES_RECORD, copy),
         name: "Tick".into(),
         fields: Fields::Named(vec![
             ("values".into(), Type::path("Values")),
@@ -230,7 +250,7 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
         name: "next".into(),
         mutable: true,
         ty: Some(Type::path("Cells")),
-        value: Expr::field(Expr::path("state"), "cells"),
+        value: Expr::method(Expr::field(Expr::path("state"), "cells"), "clone", []),
     });
     stmts.push(Stmt::Comment("read phase".into()));
     for d in &ir.decls {
@@ -239,7 +259,10 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
             DeclKind::Input { .. } => Expr::try_(Expr::call(
                 "read_input",
                 [
-                    Expr::field(Expr::path("inputs"), names::decl(d.id)),
+                    Expr::Ref {
+                        mutable: false,
+                        e: Box::new(Expr::field(Expr::path("inputs"), names::decl(d.id))),
+                    },
                     Expr::u64(raw),
                 ],
             )),
@@ -299,7 +322,10 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
                 .decl(o.driver)
                 .map(|d| names::decl(d.id))
                 .unwrap_or_default();
-            (names::output(o.id), Expr::path(driver))
+            (
+                names::output(o.id),
+                Expr::method(Expr::path(driver), "clone", []),
+            )
         }),
     );
     let tail = Expr::call(
@@ -335,20 +361,51 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
 
 /// An expression of declaration `owner` (for error attribution).
 pub fn expr(ir: &ExecIr, e: &ExecExpr, owner: DeclId) -> Result<Expr, EmitError> {
+    expr_in(ir, e, owner, false)
+}
+
+/// `in_closure`: inside a fold step, where a local of the enclosing scope
+/// is captured and must be cloned rather than moved.
+fn expr_in(ir: &ExecIr, e: &ExecExpr, owner: DeclId, in_closure: bool) -> Result<Expr, EmitError> {
     let decl = Expr::u64(owner.raw());
+    let expr = |e: &ExecExpr| expr_in(ir, e, owner, in_closure);
     Ok(match e {
         ExecExpr::Bool { value } => Expr::bool(*value),
         ExecExpr::Nat { value } => Expr::u64(*value),
         ExecExpr::Quantity { value, .. } => Expr::f64(value.0),
-        ExecExpr::Local { id } => Expr::path(names::local(*id)),
+        ExecExpr::Local { id } => {
+            if in_closure {
+                Expr::method(Expr::path(names::local(*id)), "clone", [])
+            } else {
+                Expr::path(names::local(*id))
+            }
+        }
         ExecExpr::Let { local, value, body } => Expr::Block(Block::new(
             vec![Stmt::Let {
                 name: names::local(*local),
                 mutable: false,
                 ty: None,
-                value: expr(ir, value, owner)?,
+                value: expr(value)?,
             }],
-            Some(expr(ir, body, owner)?),
+            Some(expr(body)?),
+        )),
+        ExecExpr::Fold {
+            elem,
+            acc,
+            step,
+            init,
+            list,
+        } => Expr::try_(Expr::call(
+            "list::fold",
+            [
+                expr(list)?,
+                expr(init)?,
+                Expr::closure(
+                    [names::local(*elem), names::local(*acc)],
+                    None,
+                    Expr::call("Ok", [expr_in(ir, step, owner, true)?]),
+                ),
+            ],
         )),
         ExecExpr::ReadDecl { decl: d } => {
             let target = ir
@@ -357,24 +414,30 @@ pub fn expr(ir: &ExecIr, e: &ExecExpr, owner: DeclId) -> Result<Expr, EmitError>
             Expr::try_(Expr::call(
                 "read_decl",
                 [
-                    Expr::path(names::decl(target.id)),
+                    Expr::Ref {
+                        mutable: false,
+                        e: Box::new(Expr::path(names::decl(target.id))),
+                    },
                     Expr::u64(target.id.raw()),
                 ],
             ))
         }
-        ExecExpr::Wrap { sem, e } => Expr::call(names::concept(*sem), [expr(ir, e, owner)?]),
-        ExecExpr::Unwrap { e } => Expr::field(expr(ir, e, owner)?, "0"),
+        ExecExpr::Wrap { sem, e } => Expr::call(names::concept(*sem), [expr(e)?]),
+        ExecExpr::Unwrap { e } => Expr::field(expr(e)?, "0"),
         ExecExpr::ReadCell { slot, init } => Expr::Match {
-            scrutinee: Box::new(Expr::field(Expr::path("prev"), names::cell(*slot))),
+            scrutinee: Box::new(Expr::Ref {
+                mutable: false,
+                e: Box::new(Expr::field(Expr::path("prev"), names::cell(*slot))),
+            }),
             arms: vec![
-                ("Some(v)".into(), Expr::path("v")),
-                ("None".into(), expr(ir, init, owner)?),
+                ("Some(v)".into(), Expr::method(Expr::path("v"), "clone", [])),
+                ("None".into(), expr(init)?),
             ],
         },
         ExecExpr::Prim { op, args } => {
             let mut a = Vec::with_capacity(args.len());
             for x in args {
-                a.push(expr(ir, x, owner)?);
+                a.push(expr(x)?);
             }
             let arity = op.arity();
             if a.len() != arity {
@@ -414,6 +477,20 @@ pub fn expr(ir: &ExecIr, e: &ExecExpr, owner: DeclId) -> Result<Expr, EmitError>
                 PrimOp::Some { .. } => Expr::some(next()?),
                 PrimOp::IsSome { .. } => Expr::method(next()?, "is_some", []),
                 PrimOp::GetD { .. } => Expr::call("prim::get_d", [next()?, next()?]),
+                PrimOp::Nil { ty } => Expr::call(
+                    format!("list::nil::<{}>", crate::print::ty_str(&rust_type(ty)?)),
+                    [],
+                ),
+                PrimOp::Cons { .. } => Expr::call("list::cons", [next()?, next()?]),
+                PrimOp::Length { .. } => Expr::call("list::length", [next()?]),
+                PrimOp::Take { .. } => Expr::call("list::take", [next()?, next()?]),
+                PrimOp::Drop { .. } => Expr::call("list::drop", [next()?, next()?]),
+                PrimOp::Reverse { .. } => Expr::call("list::reverse", [next()?]),
+                PrimOp::Head { .. } => Expr::call("list::head", [next()?]),
+                PrimOp::ToList { .. } => Expr::call("list::to_list", [next()?]),
+                PrimOp::Pair { .. } => Expr::Tuple(vec![next()?, next()?]),
+                PrimOp::Fst { .. } => Expr::field(next()?, "0"),
+                PrimOp::Snd { .. } => Expr::field(next()?, "1"),
             }
         }
     })

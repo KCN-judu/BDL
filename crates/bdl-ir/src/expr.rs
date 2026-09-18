@@ -43,21 +43,99 @@ impl Ord for Scalar {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(tag = "prim", rename_all = "snake_case")]
 pub enum Prim {
-    Lit { dim: Dim, value: Scalar },
-    Add { dim: Dim },
-    Sub { dim: Dim },
-    Mul { d1: Dim, d2: Dim },
-    Div { d1: Dim, d2: Dim },
-    Lt { dim: Dim },
-    Eq { dim: Dim },
+    Lit {
+        dim: Dim,
+        value: Scalar,
+    },
+    Add {
+        dim: Dim,
+    },
+    Sub {
+        dim: Dim,
+    },
+    Mul {
+        d1: Dim,
+        d2: Dim,
+    },
+    Div {
+        d1: Dim,
+        d2: Dim,
+    },
+    /// Ordering is a *quantity* comparison only (Phase 9c): a magnitude of
+    /// dimension `dim`.  Concepts, pairs, lists, options and truth values
+    /// have no order in the kernel; an ordered concept compares through its
+    /// representation at elaboration.
+    Lt {
+        dim: Dim,
+    },
+    /// Structural equality at any *data* type (Phase 9b).  The kernel
+    /// carries the proof `τ.Data` in the syntax; here the checker refuses
+    /// `Eq` at a function type instead (`TypeErrorKind::EqualityNotData`).
+    Eq {
+        ty: Ty,
+    },
     Not,
     And,
     Or,
-    Ite { ty: Ty },
-    None { ty: Ty },
-    Some { ty: Ty },
-    IsSome { ty: Ty },
-    GetD { ty: Ty },
+    Ite {
+        ty: Ty,
+    },
+    None {
+        ty: Ty,
+    },
+    Some {
+        ty: Ty,
+    },
+    IsSome {
+        ty: Ty,
+    },
+    GetD {
+        ty: Ty,
+    },
+    // Phase 9a: list data — constructors and a first-order eliminator set.
+    Nil {
+        ty: Ty,
+    },
+    Cons {
+        ty: Ty,
+    },
+    /// `list τ → q 0`: the length as a dimensionless quantity.
+    Length {
+        ty: Ty,
+    },
+    /// `q 0 → list τ → list τ`: the first `k` elements.
+    Take {
+        ty: Ty,
+    },
+    /// `q 0 → list τ → list τ`: all but the first `k` elements (Phase 9b).
+    Drop {
+        ty: Ty,
+    },
+    Reverse {
+        ty: Ty,
+    },
+    /// `list τ → opt τ`.
+    Head {
+        ty: Ty,
+    },
+    /// `opt τ → list τ`: an option is a list of length at most one, so
+    /// `fold` eliminates options too (Phase 9b).
+    ToList {
+        ty: Ty,
+    },
+    // Phase 9b: products — construction and the two projections.
+    Pair {
+        fst: Ty,
+        snd: Ty,
+    },
+    Fst {
+        fst: Ty,
+        snd: Ty,
+    },
+    Snd {
+        fst: Ty,
+        snd: Ty,
+    },
 }
 
 impl Prim {
@@ -75,9 +153,8 @@ impl Prim {
             Prim::Div { d1, d2 } => {
                 Ty::arrows([Q { dim: *d1 }, Q { dim: *d2 }], Q { dim: *d1 - *d2 })
             }
-            Prim::Lt { dim } | Prim::Eq { dim } => {
-                Ty::arrows([Q { dim: *dim }, Q { dim: *dim }], Bool)
-            }
+            Prim::Lt { dim } => Ty::arrows([Q { dim: *dim }, Q { dim: *dim }], Bool),
+            Prim::Eq { ty } => Ty::arrows([ty.clone(), ty.clone()], Bool),
             Prim::Not => Ty::arr(Bool, Bool),
             Prim::And | Prim::Or => Ty::arrows([Bool, Bool], Bool),
             Prim::Ite { ty } => Ty::arrows([Bool, ty.clone(), ty.clone()], ty.clone()),
@@ -85,13 +162,39 @@ impl Prim {
             Prim::Some { ty } => Ty::arr(ty.clone(), Ty::opt(ty.clone())),
             Prim::IsSome { ty } => Ty::arr(Ty::opt(ty.clone()), Bool),
             Prim::GetD { ty } => Ty::arrows([Ty::opt(ty.clone()), ty.clone()], ty.clone()),
+            Prim::Nil { ty } => Ty::list(ty.clone()),
+            Prim::Cons { ty } => {
+                Ty::arrows([ty.clone(), Ty::list(ty.clone())], Ty::list(ty.clone()))
+            }
+            Prim::Length { ty } => Ty::arr(Ty::list(ty.clone()), Q { dim: Dim::ZERO }),
+            Prim::Take { ty } | Prim::Drop { ty } => Ty::arrows(
+                [Q { dim: Dim::ZERO }, Ty::list(ty.clone())],
+                Ty::list(ty.clone()),
+            ),
+            Prim::Reverse { ty } => Ty::arr(Ty::list(ty.clone()), Ty::list(ty.clone())),
+            Prim::Head { ty } => Ty::arr(Ty::list(ty.clone()), Ty::opt(ty.clone())),
+            Prim::ToList { ty } => Ty::arr(Ty::opt(ty.clone()), Ty::list(ty.clone())),
+            Prim::Pair { fst, snd } => Ty::arrows(
+                [fst.clone(), snd.clone()],
+                Ty::prod(fst.clone(), snd.clone()),
+            ),
+            Prim::Fst { fst, snd } => Ty::arr(Ty::prod(fst.clone(), snd.clone()), fst.clone()),
+            Prim::Snd { fst, snd } => Ty::arr(Ty::prod(fst.clone(), snd.clone()), snd.clone()),
         }
     }
 
     pub fn arity(&self) -> usize {
         match self {
-            Prim::Lit { .. } | Prim::None { .. } => 0,
-            Prim::Not | Prim::IsSome { .. } | Prim::Some { .. } => 1,
+            Prim::Lit { .. } | Prim::None { .. } | Prim::Nil { .. } => 0,
+            Prim::Not
+            | Prim::IsSome { .. }
+            | Prim::Some { .. }
+            | Prim::Length { .. }
+            | Prim::Reverse { .. }
+            | Prim::Head { .. }
+            | Prim::ToList { .. }
+            | Prim::Fst { .. }
+            | Prim::Snd { .. } => 1,
             Prim::Add { .. }
             | Prim::Sub { .. }
             | Prim::Mul { .. }
@@ -100,7 +203,11 @@ impl Prim {
             | Prim::Eq { .. }
             | Prim::And
             | Prim::Or
-            | Prim::GetD { .. } => 2,
+            | Prim::GetD { .. }
+            | Prim::Cons { .. }
+            | Prim::Take { .. }
+            | Prim::Drop { .. }
+            | Prim::Pair { .. } => 2,
             Prim::Ite { .. } => 3,
         }
     }
@@ -156,6 +263,16 @@ pub enum Expr {
         init: Box<Expr>,
         e: Box<Expr>,
     },
+    /// The list recursor (Phase 9b): `fold f z [x₁, …, xₙ] = f x₁ (… (f xₙ z))`.
+    /// The one term former that applies a function value in the course of
+    /// evaluation; registered operators never do.  Every collection
+    /// operation of the equation library is a definition over it.  It is
+    /// not general recursion: a finite list folds in finitely many steps.
+    Fold {
+        f: Box<Expr>,
+        z: Box<Expr>,
+        l: Box<Expr>,
+    },
 }
 
 impl Expr {
@@ -193,6 +310,22 @@ impl Expr {
             e: Box::new(e),
         }
     }
+    pub fn fold(f: Expr, z: Expr, l: Expr) -> Expr {
+        Expr::Fold {
+            f: Box::new(f),
+            z: Box::new(z),
+            l: Box::new(l),
+        }
+    }
+    pub fn lam(dom: Ty, body: Expr) -> Expr {
+        Expr::Lam {
+            dom,
+            body: Box::new(body),
+        }
+    }
+    pub fn var(index: u32) -> Expr {
+        Expr::Var { index }
+    }
 
     /// `Expr.refs`: every declaration referenced (with multiplicity).
     pub fn refs(&self) -> Vec<DeclId> {
@@ -227,6 +360,11 @@ impl Expr {
                     e.collect_refs(instantaneous_only, out);
                 }
             }
+            Expr::Fold { f, z, l } => {
+                f.collect_refs(instantaneous_only, out);
+                z.collect_refs(instantaneous_only, out);
+                l.collect_refs(instantaneous_only, out);
+            }
         }
     }
 
@@ -237,6 +375,7 @@ impl Expr {
             Expr::Lam { body, .. } => body.is_delay_free(),
             Expr::App { f, a } => f.is_delay_free() && a.is_delay_free(),
             Expr::Rep { e } | Expr::Mk { e, .. } => e.is_delay_free(),
+            Expr::Fold { f, z, l } => f.is_delay_free() && z.is_delay_free() && l.is_delay_free(),
             Expr::Var { .. }
             | Expr::BoolLit { .. }
             | Expr::NatLit { .. }

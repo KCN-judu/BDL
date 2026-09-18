@@ -165,7 +165,7 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                             .technical(format!("{} shared_concepts[{}] = {g}, absent from base", component.id, c.id)),
                     ),
                     Some(sys) => {
-                        if let (Some(a), Some(b)) = (c.representation, sys.representation) {
+                        if let (Some(a), Some(b)) = (&c.representation, &sys.representation) {
                             if a != b {
                                 diags.push(
                                     Diagnostic::error("system.shared_concept_disagrees", Entity::Concept { id: *g }, format!("{} means {} differently from the system.", inst.name, sys.name))
@@ -185,7 +185,8 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                                 id: f,
                                 name: ren.name(&c.name),
                                 description: c.description.clone(),
-                                representation: c.representation,
+                                representation: c.representation.clone(),
+                                ordered: c.ordered,
                             },
                         );
                     }

@@ -32,7 +32,7 @@ impl HostProgram for Bridge {
     }
 
     fn values_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
-        vec![tick.values.decl_0.map(|v| DynValue::Quantity { value: v }), tick.values.decl_1.map(|v| DynValue::Bool { value: v }), tick.values.decl_2.map(|v| DynValue::Quantity { value: v }), tick.values.decl_3.map(|v| match v { None => DynValue::None, Some(v) => DynValue::some(DynValue::Quantity { value: v }) }), tick.values.decl_4.map(|v| DynValue::Quantity { value: v }), tick.values.decl_5.map(|v| DynValue::Bool { value: v })]
+        vec![tick.values.decl_0.clone().map(|v| DynValue::Quantity { value: v }), tick.values.decl_1.clone().map(|v| DynValue::Bool { value: v }), tick.values.decl_2.clone().map(|v| DynValue::Quantity { value: v }), tick.values.decl_3.clone().map(|v| match v { None => DynValue::None, Some(v) => DynValue::some(DynValue::Quantity { value: v }) }), tick.values.decl_4.clone().map(|v| DynValue::Quantity { value: v }), tick.values.decl_5.clone().map(|v| DynValue::Bool { value: v })]
     }
 
     fn outputs_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {

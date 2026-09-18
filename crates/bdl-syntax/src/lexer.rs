@@ -49,6 +49,10 @@ enum Raw {
     LBrace,
     #[token("}")]
     RBrace,
+    #[token("[")]
+    LBracket,
+    #[token("]")]
+    RBracket,
     #[token("<")]
     Lt,
     #[token(">")]
@@ -146,6 +150,8 @@ pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
             Ok(Raw::RParen) => SyntaxKind::RParen,
             Ok(Raw::LBrace) => SyntaxKind::LBrace,
             Ok(Raw::RBrace) => SyntaxKind::RBrace,
+            Ok(Raw::LBracket) => SyntaxKind::LBracket,
+            Ok(Raw::RBracket) => SyntaxKind::RBracket,
             Ok(Raw::Lt) => SyntaxKind::Lt,
             Ok(Raw::Gt) => SyntaxKind::Gt,
             Ok(Raw::Le) => SyntaxKind::Le,

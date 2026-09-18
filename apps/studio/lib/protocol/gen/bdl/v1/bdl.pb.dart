@@ -2456,6 +2456,7 @@ enum EditOp_Op {
   setDeviceOutput,
   setDevicePin,
   deleteDevice,
+  setConceptOrdered,
   notSet
 }
 
@@ -2490,6 +2491,7 @@ class EditOp extends $pb.GeneratedMessage {
     SetDeviceOutput? setDeviceOutput,
     SetDevicePin? setDevicePin,
     DeleteDevice? deleteDevice,
+    SetConceptOrdered? setConceptOrdered,
   }) {
     final result = EditOp._();
     if (createConcept != null) result.createConcept = createConcept;
@@ -2522,6 +2524,7 @@ class EditOp extends $pb.GeneratedMessage {
     if (setDeviceOutput != null) result.setDeviceOutput = setDeviceOutput;
     if (setDevicePin != null) result.setDevicePin = setDevicePin;
     if (deleteDevice != null) result.deleteDevice = deleteDevice;
+    if (setConceptOrdered != null) result.setConceptOrdered = setConceptOrdered;
     return result;
   }
 
@@ -2564,6 +2567,7 @@ class EditOp extends $pb.GeneratedMessage {
     27: EditOp_Op.setDeviceOutput,
     28: EditOp_Op.setDevicePin,
     29: EditOp_Op.deleteDevice,
+    30: EditOp_Op.setConceptOrdered,
     0: EditOp_Op.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'EditOp',
@@ -2598,7 +2602,8 @@ class EditOp extends $pb.GeneratedMessage {
       26,
       27,
       28,
-      29
+      29,
+      30
     ])
     ..aOM<CreateConcept>(1, _omitFieldNames ? '' : 'createConcept',
         subBuilder: CreateConcept.$_createMessage)
@@ -2658,6 +2663,8 @@ class EditOp extends $pb.GeneratedMessage {
         subBuilder: SetDevicePin.$_createMessage)
     ..aOM<DeleteDevice>(29, _omitFieldNames ? '' : 'deleteDevice',
         subBuilder: DeleteDevice.$_createMessage)
+    ..aOM<SetConceptOrdered>(30, _omitFieldNames ? '' : 'setConceptOrdered',
+        subBuilder: SetConceptOrdered.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2709,6 +2716,7 @@ class EditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(27)
   @$pb.TagNumber(28)
   @$pb.TagNumber(29)
+  @$pb.TagNumber(30)
   EditOp_Op whichOp() => _EditOp_OpByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
@@ -2739,6 +2747,7 @@ class EditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(27)
   @$pb.TagNumber(28)
   @$pb.TagNumber(29)
+  @$pb.TagNumber(30)
   void clearOp() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -3059,6 +3068,17 @@ class EditOp extends $pb.GeneratedMessage {
   void clearDeleteDevice() => $_clearField(29);
   @$pb.TagNumber(29)
   DeleteDevice ensureDeleteDevice() => $_ensure(28);
+
+  @$pb.TagNumber(30)
+  SetConceptOrdered get setConceptOrdered => $_getN(29);
+  @$pb.TagNumber(30)
+  set setConceptOrdered(SetConceptOrdered value) => $_setField(30, value);
+  @$pb.TagNumber(30)
+  $core.bool hasSetConceptOrdered() => $_has(29);
+  @$pb.TagNumber(30)
+  void clearSetConceptOrdered() => $_clearField(30);
+  @$pb.TagNumber(30)
+  SetConceptOrdered ensureSetConceptOrdered() => $_ensure(29);
 }
 
 class CreateConcept extends $pb.GeneratedMessage {
@@ -3350,6 +3370,76 @@ class SetConceptRepresentation extends $pb.GeneratedMessage {
   void clearRepresentation() => $_clearField(2);
   @$pb.TagNumber(2)
   Representation ensureRepresentation() => $_ensure(1);
+}
+
+/// Declare (or undeclare) a concept ordered: its values may then be compared
+/// with `<`, `min`, `max`, `clamp`, `inRange` through the quantity that
+/// represents them.  Never inferred from the representation (0.11).
+class SetConceptOrdered extends $pb.GeneratedMessage {
+  factory SetConceptOrdered({
+    $fixnum.Int64? id,
+    $core.bool? ordered,
+  }) {
+    final result = SetConceptOrdered._();
+    if (id != null) result.id = id;
+    if (ordered != null) result.ordered = ordered;
+    return result;
+  }
+
+  SetConceptOrdered._();
+
+  factory SetConceptOrdered.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetConceptOrdered()..mergeFromBuffer(data, registry);
+  factory SetConceptOrdered.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetConceptOrdered()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SetConceptOrdered',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SetConceptOrdered.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(2, _omitFieldNames ? '' : 'ordered')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetConceptOrdered clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetConceptOrdered copyWith(void Function(SetConceptOrdered) updates) =>
+      super.copyWith((message) => updates(message as SetConceptOrdered)) as SetConceptOrdered;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SetConceptOrdered() / SetConceptOrdered.new instead')
+  static SetConceptOrdered create() => SetConceptOrdered._();
+  static $pb.GeneratedMessage $_createMessage() => SetConceptOrdered._();
+  @$core.override
+  SetConceptOrdered createEmptyInstance() => SetConceptOrdered._();
+  @$core.pragma('dart2js:noInline')
+  static SetConceptOrdered getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SetConceptOrdered>(SetConceptOrdered.$_createMessage);
+  static SetConceptOrdered? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get ordered => $_getBF(1);
+  @$pb.TagNumber(2)
+  set ordered($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasOrdered() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearOrdered() => $_clearField(2);
 }
 
 class DeleteConcept extends $pb.GeneratedMessage {
@@ -5790,12 +5880,14 @@ class ConceptView extends $pb.GeneratedMessage {
     $core.String? name,
     $core.String? description,
     Representation? representation,
+    $core.bool? ordered,
   }) {
     final result = ConceptView._();
     if (id != null) result.id = id;
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (representation != null) result.representation = representation;
+    if (ordered != null) result.ordered = ordered;
     return result;
   }
 
@@ -5817,6 +5909,7 @@ class ConceptView extends $pb.GeneratedMessage {
     ..aOS(3, _omitFieldNames ? '' : 'description')
     ..aOM<Representation>(4, _omitFieldNames ? '' : 'representation',
         subBuilder: Representation.$_createMessage)
+    ..aOB(5, _omitFieldNames ? '' : 'ordered')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5876,6 +5969,16 @@ class ConceptView extends $pb.GeneratedMessage {
   void clearRepresentation() => $_clearField(4);
   @$pb.TagNumber(4)
   Representation ensureRepresentation() => $_ensure(3);
+
+  /// The designer declared the concept ordered (0.11).
+  @$pb.TagNumber(5)
+  $core.bool get ordered => $_getBF(4);
+  @$pb.TagNumber(5)
+  set ordered($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOrdered() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOrdered() => $_clearField(5);
 }
 
 class MappingView extends $pb.GeneratedMessage {
@@ -6309,18 +6412,24 @@ class TransportSpec extends $pb.GeneratedMessage {
   void clearInit() => $_clearField(2);
 }
 
-enum Representation_Kind { quantity, boolean, count, notSet }
+enum Representation_Kind { quantity, boolean, count, optional, list, pair, notSet }
 
 class Representation extends $pb.GeneratedMessage {
   factory Representation({
     Dim? quantity,
     Unit? boolean,
     Unit? count,
+    Representation? optional,
+    Representation? list,
+    PairRepresentation? pair,
   }) {
     final result = Representation._();
     if (quantity != null) result.quantity = quantity;
     if (boolean != null) result.boolean = boolean;
     if (count != null) result.count = count;
+    if (optional != null) result.optional = optional;
+    if (list != null) result.list = list;
+    if (pair != null) result.pair = pair;
     return result;
   }
 
@@ -6337,15 +6446,24 @@ class Representation extends $pb.GeneratedMessage {
     1: Representation_Kind.quantity,
     2: Representation_Kind.boolean,
     3: Representation_Kind.count,
+    4: Representation_Kind.optional,
+    5: Representation_Kind.list,
+    6: Representation_Kind.pair,
     0: Representation_Kind.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Representation',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Representation.$_createMessage)
-    ..oo(0, [1, 2, 3])
+    ..oo(0, [1, 2, 3, 4, 5, 6])
     ..aOM<Dim>(1, _omitFieldNames ? '' : 'quantity', subBuilder: Dim.$_createMessage)
     ..aOM<Unit>(2, _omitFieldNames ? '' : 'boolean', subBuilder: Unit.$_createMessage)
     ..aOM<Unit>(3, _omitFieldNames ? '' : 'count', subBuilder: Unit.$_createMessage)
+    ..aOM<Representation>(4, _omitFieldNames ? '' : 'optional',
+        subBuilder: Representation.$_createMessage)
+    ..aOM<Representation>(5, _omitFieldNames ? '' : 'list',
+        subBuilder: Representation.$_createMessage)
+    ..aOM<PairRepresentation>(6, _omitFieldNames ? '' : 'pair',
+        subBuilder: PairRepresentation.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6371,10 +6489,16 @@ class Representation extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
   Representation_Kind whichKind() => _Representation_KindByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
   void clearKind() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -6409,6 +6533,112 @@ class Representation extends $pb.GeneratedMessage {
   void clearCount() => $_clearField(3);
   @$pb.TagNumber(3)
   Unit ensureCount() => $_ensure(2);
+
+  /// 0.11: a value that may be absent, a collection, a grouped value.
+  @$pb.TagNumber(4)
+  Representation get optional => $_getN(3);
+  @$pb.TagNumber(4)
+  set optional(Representation value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasOptional() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOptional() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Representation ensureOptional() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  Representation get list => $_getN(4);
+  @$pb.TagNumber(5)
+  set list(Representation value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasList() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearList() => $_clearField(5);
+  @$pb.TagNumber(5)
+  Representation ensureList() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  PairRepresentation get pair => $_getN(5);
+  @$pb.TagNumber(6)
+  set pair(PairRepresentation value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasPair() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearPair() => $_clearField(6);
+  @$pb.TagNumber(6)
+  PairRepresentation ensurePair() => $_ensure(5);
+}
+
+class PairRepresentation extends $pb.GeneratedMessage {
+  factory PairRepresentation({
+    Representation? first,
+    Representation? second,
+  }) {
+    final result = PairRepresentation._();
+    if (first != null) result.first = first;
+    if (second != null) result.second = second;
+    return result;
+  }
+
+  PairRepresentation._();
+
+  factory PairRepresentation.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PairRepresentation()..mergeFromBuffer(data, registry);
+  factory PairRepresentation.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PairRepresentation()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PairRepresentation',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: PairRepresentation.$_createMessage)
+    ..aOM<Representation>(1, _omitFieldNames ? '' : 'first',
+        subBuilder: Representation.$_createMessage)
+    ..aOM<Representation>(2, _omitFieldNames ? '' : 'second',
+        subBuilder: Representation.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PairRepresentation clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PairRepresentation copyWith(void Function(PairRepresentation) updates) =>
+      super.copyWith((message) => updates(message as PairRepresentation)) as PairRepresentation;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use PairRepresentation() / PairRepresentation.new instead')
+  static PairRepresentation create() => PairRepresentation._();
+  static $pb.GeneratedMessage $_createMessage() => PairRepresentation._();
+  @$core.override
+  PairRepresentation createEmptyInstance() => PairRepresentation._();
+  @$core.pragma('dart2js:noInline')
+  static PairRepresentation getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<PairRepresentation>(PairRepresentation.$_createMessage);
+  static PairRepresentation? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Representation get first => $_getN(0);
+  @$pb.TagNumber(1)
+  set first(Representation value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFirst() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFirst() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Representation ensureFirst() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  Representation get second => $_getN(1);
+  @$pb.TagNumber(2)
+  set second(Representation value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSecond() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSecond() => $_clearField(2);
+  @$pb.TagNumber(2)
+  Representation ensureSecond() => $_ensure(1);
 }
 
 class Unit extends $pb.GeneratedMessage {
@@ -7225,7 +7455,7 @@ class DaemonLog extends $pb.GeneratedMessage {
   void clearMessage() => $_clearField(2);
 }
 
-enum Value_Kind { boolean, count, quantity, semantic, none, some, opaque, notSet }
+enum Value_Kind { boolean, count, quantity, semantic, none, some, opaque, list, pair, notSet }
 
 /// A runtime value in the design's own terms.
 class Value extends $pb.GeneratedMessage {
@@ -7237,6 +7467,8 @@ class Value extends $pb.GeneratedMessage {
     Unit? none,
     Value? some,
     $core.String? opaque,
+    ValueList? list,
+    ValuePair? pair,
   }) {
     final result = Value._();
     if (boolean != null) result.boolean = boolean;
@@ -7246,6 +7478,8 @@ class Value extends $pb.GeneratedMessage {
     if (none != null) result.none = none;
     if (some != null) result.some = some;
     if (opaque != null) result.opaque = opaque;
+    if (list != null) result.list = list;
+    if (pair != null) result.pair = pair;
     return result;
   }
 
@@ -7266,12 +7500,14 @@ class Value extends $pb.GeneratedMessage {
     5: Value_Kind.none,
     6: Value_Kind.some,
     7: Value_Kind.opaque,
+    8: Value_Kind.list,
+    9: Value_Kind.pair,
     0: Value_Kind.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Value',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Value.$_createMessage)
-    ..oo(0, [1, 2, 3, 4, 5, 6, 7])
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9])
     ..aOB(1, _omitFieldNames ? '' : 'boolean')
     ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'count', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -7281,6 +7517,8 @@ class Value extends $pb.GeneratedMessage {
     ..aOM<Unit>(5, _omitFieldNames ? '' : 'none', subBuilder: Unit.$_createMessage)
     ..aOM<Value>(6, _omitFieldNames ? '' : 'some', subBuilder: Value.$_createMessage)
     ..aOS(7, _omitFieldNames ? '' : 'opaque')
+    ..aOM<ValueList>(8, _omitFieldNames ? '' : 'list', subBuilder: ValueList.$_createMessage)
+    ..aOM<ValuePair>(9, _omitFieldNames ? '' : 'pair', subBuilder: ValuePair.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -7310,6 +7548,8 @@ class Value extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   @$pb.TagNumber(6)
   @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
   Value_Kind whichKind() => _Value_KindByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
@@ -7318,6 +7558,8 @@ class Value extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   @$pb.TagNumber(6)
   @$pb.TagNumber(7)
+  @$pb.TagNumber(8)
+  @$pb.TagNumber(9)
   void clearKind() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -7391,6 +7633,147 @@ class Value extends $pb.GeneratedMessage {
   $core.bool hasOpaque() => $_has(6);
   @$pb.TagNumber(7)
   void clearOpaque() => $_clearField(7);
+
+  /// 0.11: collections and grouped values.
+  @$pb.TagNumber(8)
+  ValueList get list => $_getN(7);
+  @$pb.TagNumber(8)
+  set list(ValueList value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasList() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearList() => $_clearField(8);
+  @$pb.TagNumber(8)
+  ValueList ensureList() => $_ensure(7);
+
+  @$pb.TagNumber(9)
+  ValuePair get pair => $_getN(8);
+  @$pb.TagNumber(9)
+  set pair(ValuePair value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasPair() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearPair() => $_clearField(9);
+  @$pb.TagNumber(9)
+  ValuePair ensurePair() => $_ensure(8);
+}
+
+class ValueList extends $pb.GeneratedMessage {
+  factory ValueList({
+    $core.Iterable<Value>? items,
+  }) {
+    final result = ValueList._();
+    if (items != null) result.items.addAll(items);
+    return result;
+  }
+
+  ValueList._();
+
+  factory ValueList.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueList()..mergeFromBuffer(data, registry);
+  factory ValueList.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueList()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ValueList',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ValueList.$_createMessage)
+    ..pPM<Value>(1, _omitFieldNames ? '' : 'items', subBuilder: Value.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueList clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueList copyWith(void Function(ValueList) updates) =>
+      super.copyWith((message) => updates(message as ValueList)) as ValueList;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ValueList() / ValueList.new instead')
+  static ValueList create() => ValueList._();
+  static $pb.GeneratedMessage $_createMessage() => ValueList._();
+  @$core.override
+  ValueList createEmptyInstance() => ValueList._();
+  @$core.pragma('dart2js:noInline')
+  static ValueList getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ValueList>(ValueList.$_createMessage);
+  static ValueList? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<Value> get items => $_getList(0);
+}
+
+class ValuePair extends $pb.GeneratedMessage {
+  factory ValuePair({
+    Value? fst,
+    Value? snd,
+  }) {
+    final result = ValuePair._();
+    if (fst != null) result.fst = fst;
+    if (snd != null) result.snd = snd;
+    return result;
+  }
+
+  ValuePair._();
+
+  factory ValuePair.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValuePair()..mergeFromBuffer(data, registry);
+  factory ValuePair.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValuePair()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ValuePair',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ValuePair.$_createMessage)
+    ..aOM<Value>(1, _omitFieldNames ? '' : 'fst', subBuilder: Value.$_createMessage)
+    ..aOM<Value>(2, _omitFieldNames ? '' : 'snd', subBuilder: Value.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValuePair clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValuePair copyWith(void Function(ValuePair) updates) =>
+      super.copyWith((message) => updates(message as ValuePair)) as ValuePair;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ValuePair() / ValuePair.new instead')
+  static ValuePair create() => ValuePair._();
+  static $pb.GeneratedMessage $_createMessage() => ValuePair._();
+  @$core.override
+  ValuePair createEmptyInstance() => ValuePair._();
+  @$core.pragma('dart2js:noInline')
+  static ValuePair getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ValuePair>(ValuePair.$_createMessage);
+  static ValuePair? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Value get fst => $_getN(0);
+  @$pb.TagNumber(1)
+  set fst(Value value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFst() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFst() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Value ensureFst() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  Value get snd => $_getN(1);
+  @$pb.TagNumber(2)
+  set snd(Value value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSnd() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSnd() => $_clearField(2);
+  @$pb.TagNumber(2)
+  Value ensureSnd() => $_ensure(1);
 }
 
 class Quantity extends $pb.GeneratedMessage {

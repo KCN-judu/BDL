@@ -246,30 +246,92 @@ pub fn parse_input(design: &Design, spec: &str) -> Result<(DeclId, Value), Strin
         .concepts
         .get(&m.signature.output)
         .ok_or_else(|| format!("`{}` has no concept", m.name))?;
-    let repr = match concept.representation {
+    let repr = match &concept.representation {
         Some(r) => r,
         None => return Err(format!("concept `{}` has no value form yet", concept.name)),
     };
+    let inner = parse_value(repr, value.trim())?;
+    Ok((m.id, Value::sem(concept.id, inner)))
+}
+
+/// A constant input as written on the command line: `true`, `3`, `0.5`,
+/// `[1, 2, 3]`, `(20, 45)`, `none`, `some(1)` — following the value form.
+fn parse_value(repr: &bdl_model::surface::Representation, value: &str) -> Result<Value, String> {
+    use bdl_model::surface::Representation;
     let value = value.trim();
-    let inner = match repr {
-        bdl_model::surface::Representation::Boolean => match value {
+    Ok(match repr {
+        Representation::Boolean => match value {
             "true" => Value::boolean(true),
             "false" => Value::boolean(false),
             other => return Err(format!("`{other}`: expected true or false")),
         },
-        bdl_model::surface::Representation::Count => Value::Nat {
+        Representation::Count => Value::Nat {
             value: value
                 .parse()
                 .map_err(|_| format!("`{value}`: expected a whole number"))?,
         },
-        bdl_model::surface::Representation::Quantity { dim } => Value::q(
-            dim,
+        Representation::Quantity { dim } => Value::q(
+            *dim,
             value
                 .parse()
                 .map_err(|_| format!("`{value}`: expected a number"))?,
         ),
-    };
-    Ok((m.id, Value::sem(concept.id, inner)))
+        Representation::Optional { inner } => {
+            if value == "none" {
+                Value::None
+            } else if let Some(x) = value
+                .strip_prefix("some(")
+                .and_then(|v| v.strip_suffix(')'))
+            {
+                Value::some(parse_value(inner, x)?)
+            } else {
+                return Err(format!("`{value}`: expected none or some(…)"));
+            }
+        }
+        Representation::List { element } => {
+            let Some(body) = value.strip_prefix('[').and_then(|v| v.strip_suffix(']')) else {
+                return Err(format!("`{value}`: expected a collection [a, b, …]"));
+            };
+            let mut items = Vec::new();
+            for part in split_top_level(body) {
+                items.push(parse_value(element, part)?);
+            }
+            Value::list(items)
+        }
+        Representation::Pair { first, second } => {
+            let Some(body) = value.strip_prefix('(').and_then(|v| v.strip_suffix(')')) else {
+                return Err(format!("`{value}`: expected a grouped value (a, b)"));
+            };
+            let parts = split_top_level(body);
+            let [a, b] = parts.as_slice() else {
+                return Err(format!("`{value}`: a grouped value has two parts"));
+            };
+            Value::pair(parse_value(first, a)?, parse_value(second, b)?)
+        }
+    })
+}
+
+/// Split on commas outside brackets and parentheses; nothing for an
+/// empty body.
+fn split_top_level(body: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut depth = 0usize;
+    let mut start = 0;
+    for (i, ch) in body.char_indices() {
+        match ch {
+            '[' | '(' => depth += 1,
+            ']' | ')' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => {
+                out.push(&body[start..i]);
+                start = i + ch.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    if !body[start..].trim().is_empty() {
+        out.push(&body[start..]);
+    }
+    out
 }
 
 /// `simulate`: run `ticks` activations with constant inputs and print

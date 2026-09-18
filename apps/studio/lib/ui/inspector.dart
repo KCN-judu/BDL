@@ -328,6 +328,35 @@ class _ConceptInspector extends StatelessWidget {
               onChanged: (r) =>
                   dispatch(SetConceptRepresentationRequested(id: id, representation: r)),
             ),
+            // Whether two values of this concept can be put in order: what
+            // `<`, `min`, `max`, `clamp` and `inRange` between them need.
+            // Never inferred from the value form — a Mode encoded as a
+            // number is not a magnitude.  Only a quantity can carry it.
+            if (bound && concept.representation.hasQuantity())
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: FormRow(
+                  label: 'Order',
+                  child: Row(
+                    spacing: MacMetrics.gap,
+                    children: [
+                      Checkbox(
+                        value: concept.ordered,
+                        onChanged: (v) =>
+                            dispatch(SetConceptOrderedRequested(id: id, ordered: v ?? false)),
+                      ),
+                      Expanded(
+                        child: Text(
+                          concept.ordered
+                              ? 'values are magnitudes: <, smallest, largest, clamp, in range'
+                              : 'values are compared for equality only',
+                          style: TextStyle(fontSize: 11, color: t.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             // The consequence, only when there is one: rebinding a chosen
             // value form reopens every relationship typed against it.
             if (bound && users.isNotEmpty)
@@ -395,52 +424,136 @@ String _tyNotation(pb.Representation r) => switch (r.whichKind()) {
   pb.Representation_Kind.quantity => 'q[${dimLabel(r.quantity)}]',
   pb.Representation_Kind.boolean => 'bool',
   pb.Representation_Kind.count => 'nat',
+  pb.Representation_Kind.list => 'list ${_tyNotation(r.list)}',
+  pb.Representation_Kind.pair => '(${_tyNotation(r.pair.first)} × ${_tyNotation(r.pair.second)})',
+  pb.Representation_Kind.optional => 'opt ${_tyNotation(r.optional)}',
   pb.Representation_Kind.notSet => 'none',
 };
 
-/// The value form, in the same words and order as the creation sheet:
-/// Quantity / On–off / Count / Decide later, then a quantity's unit.
+/// A value form as the pop-up offers it.  The structured forms wrap a
+/// further form, chosen in the row below.
+enum _Form { quantity, onOff, count, collection, grouped, optional, later }
+
+_Form _formOf(pb.Representation? r) => switch (r?.whichKind()) {
+  pb.Representation_Kind.quantity => _Form.quantity,
+  pb.Representation_Kind.boolean => _Form.onOff,
+  pb.Representation_Kind.count => _Form.count,
+  pb.Representation_Kind.list => _Form.collection,
+  pb.Representation_Kind.pair => _Form.grouped,
+  pb.Representation_Kind.optional => _Form.optional,
+  _ => _Form.later,
+};
+
+/// The default value of a form when it is first chosen: a dimensionless
+/// quantity, and structured forms holding one.
+pb.Representation? _defaultOf(_Form f) => switch (f) {
+  _Form.later => null,
+  _Form.quantity => pb.Representation(quantity: pb.Dim()),
+  _Form.onOff => pb.Representation(boolean: pb.Unit()),
+  _Form.count => pb.Representation(count: pb.Unit()),
+  _Form.collection => pb.Representation(list: pb.Representation(quantity: pb.Dim())),
+  _Form.optional => pb.Representation(optional: pb.Representation(quantity: pb.Dim())),
+  _Form.grouped => pb.Representation(
+    pair: pb.PairRepresentation(
+      first: pb.Representation(quantity: pb.Dim()),
+      second: pb.Representation(quantity: pb.Dim()),
+    ),
+  ),
+};
+
+const _formWords = {
+  _Form.quantity: 'Quantity',
+  _Form.onOff: 'On / off',
+  _Form.count: 'Count',
+  _Form.collection: 'Collection of…',
+  _Form.grouped: 'Grouped value',
+  _Form.optional: 'Optional…',
+  _Form.later: 'Decide later',
+};
+
+/// The value form: a pop-up (seven choices are too many for a segmented
+/// control), then what the form needs — a quantity's unit, a collection's
+/// or optional value's element form, a grouped value's two parts.  Nested
+/// forms are the same editor one level in, without "Decide later": a part
+/// of a chosen form is chosen.
 class _ValueEditor extends StatelessWidget {
-  const _ValueEditor({required this.current, required this.presets, required this.onChanged});
+  const _ValueEditor({
+    required this.current,
+    required this.presets,
+    required this.onChanged,
+    this.nested = false,
+  });
   final pb.Representation? current;
   final List<UnitPreset> presets;
   final void Function(pb.Representation?) onChanged;
+  final bool nested;
 
   @override
   Widget build(BuildContext context) {
-    final kind = current?.whichKind() ?? pb.Representation_Kind.notSet;
-    final dim = kind == pb.Representation_Kind.quantity ? current!.quantity : null;
-    final preset = dim == null ? null : unitPresetFor(presets, dim);
+    final form = _formOf(current);
+    final forms = [
+      for (final f in _Form.values)
+        if (!nested || f != _Form.later) f,
+    ];
+    Widget part(String label, pb.Representation r, void Function(pb.Representation) set) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: FormRow(
+        label: label,
+        child: _ValueEditor(
+          current: r,
+          presets: presets,
+          nested: true,
+          onChanged: (v) => set(v ?? pb.Representation(quantity: pb.Dim())),
+        ),
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        MacSegmented<pb.Representation_Kind>(
-          value: kind,
-          options: const {
-            pb.Representation_Kind.quantity: 'Quantity',
-            pb.Representation_Kind.boolean: 'On / off',
-            pb.Representation_Kind.count: 'Count',
-            pb.Representation_Kind.notSet: 'Decide later',
+        MacDropdown<_Form>(
+          value: form,
+          items: forms,
+          labelOf: (f) => _formWords[f]!,
+          onChanged: (f) {
+            if (f != form) onChanged(_defaultOf(f));
           },
-          onChanged: (k) => onChanged(switch (k) {
-            pb.Representation_Kind.notSet => null,
-            pb.Representation_Kind.quantity => pb.Representation(quantity: pb.Dim()),
-            pb.Representation_Kind.boolean => pb.Representation(boolean: pb.Unit()),
-            pb.Representation_Kind.count => pb.Representation(count: pb.Unit()),
-          }),
         ),
-        if (kind == pb.Representation_Kind.quantity) ...[
+        if (form == _Form.quantity) ...[
           const SizedBox(height: 8),
           FormRow(
             label: 'Unit',
             child: MacDropdown<UnitPreset>(
-              value: preset,
+              value: unitPresetFor(presets, current!.quantity),
               // a dimension outside the presets is still shown, as its symbol
-              hint: dim == null ? null : dimLabel(dim),
+              hint: dimLabel(current!.quantity),
               items: presets,
               labelOf: (p) => p.name,
               detailOf: (p) => p.symbol,
               onChanged: (p) => onChanged(pb.Representation(quantity: p.dim)),
+            ),
+          ),
+        ],
+        if (form == _Form.collection)
+          part('Each', current!.list, (v) => onChanged(pb.Representation(list: v))),
+        if (form == _Form.optional)
+          part('When present', current!.optional, (v) => onChanged(pb.Representation(optional: v))),
+        if (form == _Form.grouped) ...[
+          part(
+            'First',
+            current!.pair.first,
+            (v) => onChanged(
+              pb.Representation(
+                pair: pb.PairRepresentation(first: v, second: current!.pair.second),
+              ),
+            ),
+          ),
+          part(
+            'Second',
+            current!.pair.second,
+            (v) => onChanged(
+              pb.Representation(
+                pair: pb.PairRepresentation(first: current!.pair.first, second: v),
+              ),
             ),
           ),
         ],

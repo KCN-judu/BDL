@@ -110,17 +110,41 @@ class SocketRef {
 }
 
 /// The value form of the concept a socket carries — drawn as the socket's
-/// shape: ○ quantity, ◇ on–off, □ count; a hollow ring while undecided.
-enum SocketKind { open, quantity, onOff, count }
+/// shape: ○ quantity, ◇ on–off, □ count, ⧉ collection (a stack), ▯ grouped
+/// value (a split square), ◎ optional value (a ring with a hole); a hollow
+/// ring while undecided.  What a collection holds is the inspector's
+/// word, not a second shape.
+enum SocketKind { open, quantity, onOff, count, collection, grouped, optional }
 
 SocketKind socketKind(pb.ConceptView c) {
   if (!c.hasRepresentation()) return SocketKind.open;
-  return switch (c.representation.whichKind()) {
-    pb.Representation_Kind.quantity => SocketKind.quantity,
-    pb.Representation_Kind.boolean => SocketKind.onOff,
-    pb.Representation_Kind.count => SocketKind.count,
-    pb.Representation_Kind.notSet => SocketKind.open,
+  return socketKindOf(c.representation);
+}
+
+SocketKind socketKindOf(pb.Representation r) => switch (r.whichKind()) {
+  pb.Representation_Kind.quantity => SocketKind.quantity,
+  pb.Representation_Kind.boolean => SocketKind.onOff,
+  pb.Representation_Kind.count => SocketKind.count,
+  pb.Representation_Kind.list => SocketKind.collection,
+  pb.Representation_Kind.pair => SocketKind.grouped,
+  pb.Representation_Kind.optional => SocketKind.optional,
+  pb.Representation_Kind.notSet => SocketKind.open,
+};
+
+/// The value form in the designer's words: "a quantity", "a collection of
+/// temperatures", "a grouped value (a temperature and a quantity)".
+String representationWords(pb.Representation r, {String Function(pb.Dim)? unit}) {
+  String go(pb.Representation r) => switch (r.whichKind()) {
+    pb.Representation_Kind.quantity =>
+      unit == null ? 'a quantity' : 'a quantity in ${unit(r.quantity)}',
+    pb.Representation_Kind.boolean => 'on or off',
+    pb.Representation_Kind.count => 'a count',
+    pb.Representation_Kind.list => 'a collection of values (${go(r.list)})',
+    pb.Representation_Kind.pair => 'a grouped value (${go(r.pair.first)} and ${go(r.pair.second)})',
+    pb.Representation_Kind.optional => 'an optional value (${go(r.optional)})',
+    pb.Representation_Kind.notSet => 'not decided',
   };
+  return go(r);
 }
 
 class SocketShape {

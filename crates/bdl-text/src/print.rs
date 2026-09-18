@@ -33,9 +33,14 @@ fn doc(description: &str, item: String) -> String {
 }
 
 pub fn concept(c: &Concept) -> String {
-    let item = match c.representation {
-        Some(r) => format!("concept {} : {}", ident(&c.name), representation_name(r)),
-        None => format!("concept {}", ident(&c.name)),
+    let keyword = if c.ordered {
+        "ordered concept"
+    } else {
+        "concept"
+    };
+    let item = match &c.representation {
+        Some(r) => format!("{keyword} {} : {}", ident(&c.name), representation_name(r)),
+        None => format!("{keyword} {}", ident(&c.name)),
     };
     doc(&c.description, item)
 }

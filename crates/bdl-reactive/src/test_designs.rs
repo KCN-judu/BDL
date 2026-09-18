@@ -55,6 +55,7 @@ pub fn lamp_concepts(ir: &mut DesignIr) {
             id: s(0),
             name: "Tilt".into(),
             representation: Some(Ty::q(Dim::ANGLE)),
+            ordered: false,
         },
     );
     ir.concepts.insert(
@@ -63,6 +64,20 @@ pub fn lamp_concepts(ir: &mut DesignIr) {
             id: s(1),
             name: "Brightness".into(),
             representation: Some(Ty::q(Dim::ZERO)),
+            ordered: false,
         },
     );
+}
+
+/// `[e₁, …, eₙ]` at `q[1]`.
+pub fn list_lit(items: impl IntoIterator<Item = Expr>) -> Expr {
+    let q0 = Ty::q(Dim::ZERO);
+    items
+        .into_iter()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .fold(Expr::prim(Prim::Nil { ty: q0.clone() }), |tail, x| {
+            Expr::apps(Expr::prim(Prim::Cons { ty: q0.clone() }), [x, tail])
+        })
 }

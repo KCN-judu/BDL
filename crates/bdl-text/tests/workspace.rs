@@ -408,6 +408,7 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
             name: "Held".into(),
             description: String::new(),
             representation: Some(Representation::Boolean),
+            ordered: false,
         },
     );
     let (dev, ids) = edited.base.ids.fresh_device();

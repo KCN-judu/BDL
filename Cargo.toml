@@ -5,6 +5,7 @@ members = [
     "crates/bdl-ir",
     "crates/bdl-diagnostics",
     "crates/bdl-syntax",
+    "crates/bdl-equations",
     "crates/bdl-elab",
     "crates/bdl-check",
     "crates/bdl-reactive",
@@ -39,6 +40,7 @@ bdl-model = { path = "crates/bdl-model" }
 bdl-ir = { path = "crates/bdl-ir" }
 bdl-diagnostics = { path = "crates/bdl-diagnostics" }
 bdl-syntax = { path = "crates/bdl-syntax" }
+bdl-equations = { path = "crates/bdl-equations" }
 bdl-elab = { path = "crates/bdl-elab" }
 bdl-check = { path = "crates/bdl-check" }
 bdl-reactive = { path = "crates/bdl-reactive" }

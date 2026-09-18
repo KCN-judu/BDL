@@ -19,6 +19,10 @@ pub struct Manifest {
     pub package: String,
     pub exec_ir_version: u32,
     pub has_domains: bool,
+    /// The program carries list values: the core is built with the
+    /// runtime's `collections` feature and its target needs an allocator.
+    #[serde(default)]
+    pub requires_allocator: bool,
     pub clocks: Vec<ClockEntry>,
     pub concepts: Vec<ConceptEntry>,
     pub inputs: Vec<InputEntry>,
@@ -111,6 +115,7 @@ pub fn manifest(ir: &ExecIr, package: &str, generator: &str) -> Manifest {
         package: package.into(),
         exec_ir_version: ir.version,
         has_domains: ir.has_domains,
+        requires_allocator: ir.uses_lists(),
         clocks: ir
             .clocks
             .iter()

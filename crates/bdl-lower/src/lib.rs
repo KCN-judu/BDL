@@ -24,9 +24,14 @@
 //!   domains).  They are never assigned a domain (DI-16).
 //! * **Higher-order forms are inlined.** A formula lambda applied to
 //!   arguments becomes `Let`s; a reference to a declaration whose
-//!   realization is a lambda is inlined at each saturated application.
-//!   Anything else that would need a closure at runtime is refused with
-//!   `backend.unsupported_higher_order` (option A of the brief; DI-24).
+//!   realization is a lambda is inlined at each saturated application; a
+//!   function passed as an argument (a predicate to `any`, a step to
+//!   `fold`) is carried as a *binding* and inlined wherever the receiver
+//!   applies it, so the equation library's combinators lower to first-order
+//!   code.  The kernel's `fold` becomes [`ExecExpr::Fold`] with its step
+//!   inlined over two locals.  Anything else that would need a closure at
+//!   runtime is refused with `backend.unsupported_higher_order` (option A
+//!   of the brief; DI-24).
 //!
 //! Lowering trusts the analysis that ran before it: types, causality,
 //! clock consistency and `DriveWF`/`SingleDriver` are inputs, not re-derived.
@@ -89,13 +94,33 @@ struct Lowerer<'a> {
     index: BTreeMap<DeclId, DeclIndex>,
 }
 
-enum Head<'e> {
-    Prim(&'e Prim),
-    /// The lambda itself (its body is entered per bound argument).
+/// What a de Bruijn variable stands for while lowering: a runtime local,
+/// or a function known syntactically that is inlined where it is applied.
+#[derive(Clone)]
+enum Bind<'e> {
+    Val(LocalId),
+    Fun(Fun<'e>),
+}
+
+/// A function known at lowering time.
+#[derive(Clone)]
+enum Fun<'e> {
+    /// A lambda with the bindings it closes over, and the locals that its
+    /// partially applied arguments were bound to (re-bound around every
+    /// inlined use: the values are pure, so the result is the same).
     Lam {
-        body: &'e Expr,
+        lam: &'e Expr,
+        env: Vec<Bind<'e>>,
+        lets: Vec<(LocalId, ExecExpr)>,
     },
-    Other(&'e Expr),
+    /// A primitive with the arguments already given.
+    Prim { p: &'e Prim, args: Vec<ExecExpr> },
+}
+
+/// An argument at an application site.
+enum Arg<'e> {
+    Val(ExecExpr),
+    Fun(Fun<'e>),
 }
 
 impl<'a> Lowerer<'a> {
@@ -367,29 +392,59 @@ impl<'a> Lowerer<'a> {
 
     /// Lower one expression of `cx.owner` at `path`.  `None` after a
     /// diagnostic was recorded.
-    fn expr(&mut self, cx: &mut ExprCx, e: &Expr, path: &mut ExprPath) -> Option<ExecExpr> {
+    fn expr(&mut self, cx: &mut ExprCx<'a>, e: &'a Expr, path: &mut ExprPath) -> Option<ExecExpr> {
         match e {
             Expr::BoolLit { value } => Some(ExecExpr::Bool { value: *value }),
             Expr::NatLit { value } => Some(ExecExpr::Nat { value: *value }),
-            Expr::Var { index } => {
-                let n = cx.env.len();
-                match n
-                    .checked_sub(1 + *index as usize)
-                    .and_then(|i| cx.env.get(i))
-                {
-                    Some(l) => Some(ExecExpr::Local { id: *l }),
-                    None => {
-                        self.internal(
-                            Some(cx.owner),
-                            format!("unbound variable {index} at {path:?}"),
-                        );
-                        None
-                    }
+            Expr::Var { index } => match cx.lookup(*index) {
+                Some(Bind::Val(l)) => Some(ExecExpr::Local { id: *l }),
+                Some(Bind::Fun(_)) => {
+                    self.unsupported(cx.owner, path, "a rule used as a value");
+                    None
                 }
-            }
+                None => {
+                    self.internal(
+                        Some(cx.owner),
+                        format!("unbound variable {index} at {path:?}"),
+                    );
+                    None
+                }
+            },
             Expr::Lam { .. } => {
                 self.unsupported(cx.owner, path, "a lambda used as a value");
                 None
+            }
+            Expr::Fold { f, z, l } => {
+                path.push(0);
+                let fun = self.fun(cx, f, path);
+                path.pop();
+                path.push(1);
+                let init = self.expr(cx, z, path);
+                path.pop();
+                path.push(2);
+                let list = self.expr(cx, l, path);
+                path.pop();
+                let (fun, init, list) = (fun?, init?, list?);
+                let elem = self.fresh_local();
+                let acc = self.fresh_local();
+                let mut step_path = path.clone();
+                step_path.push(0);
+                let step = self.apply(
+                    cx,
+                    fun,
+                    vec![
+                        Arg::Val(ExecExpr::Local { id: elem }),
+                        Arg::Val(ExecExpr::Local { id: acc }),
+                    ],
+                    &step_path,
+                )?;
+                Some(ExecExpr::Fold {
+                    elem,
+                    acc,
+                    step: Box::new(step),
+                    init: Box::new(init),
+                    list: Box::new(list),
+                })
             }
             Expr::Prim { p } => {
                 if p.arity() == 0 {
@@ -502,10 +557,12 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// A (possibly nested) application: flatten to head + arguments, then
-    /// saturate a primitive, or inline a lambda / function declaration.
-    fn app(&mut self, cx: &mut ExprCx, e: &Expr, path: &mut ExprPath) -> Option<ExecExpr> {
-        // Flatten.  Arguments keep their own paths for temporal identity.
+    /// Flatten a (possibly nested) application into its head and its
+    /// arguments, each with its own path (for temporal identity).
+    fn flatten<'e>(
+        e: &'e Expr,
+        path: &ExprPath,
+    ) -> (&'e Expr, ExprPath, Vec<(&'e Expr, ExprPath)>) {
         let mut args: Vec<(&Expr, ExprPath)> = Vec::new();
         let mut head = e;
         let mut hp = path.clone();
@@ -517,68 +574,269 @@ impl<'a> Lowerer<'a> {
             head = f;
         }
         args.reverse();
-        let (head, closed) = match head {
-            Expr::Prim { p } => (Head::Prim(p), false),
-            lam @ Expr::Lam { .. } => (Head::Lam { body: lam }, false),
+        (head, hp, args)
+    }
+
+    /// The function an expression stands for, when it is known
+    /// syntactically: a lambda, a primitive, a function declaration, a
+    /// variable bound to one of those, or a partial application of one.
+    /// `None` after a diagnostic.
+    fn fun(&mut self, cx: &mut ExprCx<'a>, e: &'a Expr, path: &ExprPath) -> Option<Fun<'a>> {
+        match e {
+            lam @ Expr::Lam { .. } => Some(Fun::Lam {
+                lam,
+                env: cx.env.clone(),
+                lets: Vec::new(),
+            }),
+            Expr::Prim { p } if p.arity() > 0 => Some(Fun::Prim {
+                p,
+                args: Vec::new(),
+            }),
+            Expr::Var { index } => match cx.lookup(*index) {
+                Some(Bind::Fun(f)) => Some(f.clone()),
+                Some(Bind::Val(_)) => {
+                    self.unsupported(cx.owner, path, "a value applied as a relationship");
+                    None
+                }
+                None => {
+                    self.internal(
+                        Some(cx.owner),
+                        format!("unbound variable {index} at {path:?}"),
+                    );
+                    None
+                }
+            },
             Expr::DeclRef { id } if !self.index.contains_key(id) => {
                 match resolve_function(self.ir, *id) {
-                    Some(lam @ Expr::Lam { .. }) => (Head::Lam { body: lam }, true),
+                    Some(lam @ Expr::Lam { .. }) => Some(Fun::Lam {
+                        lam,
+                        env: Vec::new(),
+                        lets: Vec::new(),
+                    }),
                     _ => {
                         self.unsupported(
                             cx.owner,
-                            &hp,
+                            path,
                             "an application of something that is not a lambda or a primitive",
                         );
-                        return None;
+                        None
                     }
                 }
             }
-            other => (Head::Other(other), false),
-        };
-        match head {
-            Head::Prim(p) => {
-                if args.len() != p.arity() {
-                    self.unsupported(cx.owner, &hp, "a partially applied primitive");
-                    return None;
-                }
-                let mut lowered = Vec::with_capacity(args.len());
-                for (a, mut ap) in args {
-                    lowered.push(self.expr(cx, a, &mut ap)?);
-                }
-                self.prim(cx, p, lowered, &hp)
+            Expr::App { .. } => {
+                let (head, hp, args) = Self::flatten(e, path);
+                let fun = self.fun(cx, head, &hp)?;
+                let args = self.args(cx, args)?;
+                self.partial(cx, fun, args, &hp)
             }
-            Head::Lam { body } => {
-                // Arguments are lowered in the caller's environment and
-                // bound outermost first; the body runs in an environment
-                // of its parameters over the caller's (a literal lambda)
-                // or over nothing (an inlined declaration is closed).
-                let mut env = if closed { Vec::new() } else { cx.env.clone() };
-                let mut bound = Vec::new();
-                let mut lambda: &Expr = body;
-                let n = args.len();
-                for (i, (a, mut ap)) in args.into_iter().enumerate() {
-                    let value = self.expr(cx, a, &mut ap)?;
-                    let l = self.fresh_local();
-                    bound.push((l, value));
-                    env.push(l);
-                    if i + 1 < n {
-                        match lambda {
-                            Expr::Lam { body: inner, .. } => lambda = inner,
-                            _ => {
-                                self.unsupported(
-                                    cx.owner,
-                                    &hp,
-                                    "more arguments than lambda parameters",
-                                );
-                                return None;
-                            }
+            _ => {
+                self.unsupported(cx.owner, path, "an application of a non-function");
+                None
+            }
+        }
+    }
+
+    /// Whether an expression is a function syntactically — what decides
+    /// whether an argument is carried as a binding or lowered to a value.
+    fn is_function(&self, cx: &ExprCx<'a>, e: &Expr) -> bool {
+        match e {
+            Expr::Lam { .. } => true,
+            Expr::Prim { p } => p.arity() > 0,
+            Expr::Var { index } => matches!(cx.lookup(*index), Some(Bind::Fun(_))),
+            Expr::DeclRef { id } => {
+                !self.index.contains_key(id) && resolve_function(self.ir, *id).is_some()
+            }
+            Expr::App { .. } => {
+                let (head, _, args) = Self::flatten(e, &Vec::new());
+                if !self.is_function(cx, head) {
+                    return false;
+                }
+                match self.params_of(cx, head) {
+                    Some(n) => args.len() < n,
+                    None => false,
+                }
+            }
+            _ => false,
+        }
+    }
+
+    /// How many arguments a syntactic function takes before it yields a
+    /// value: a primitive's arity, a lambda's nesting depth.
+    fn params_of(&self, cx: &ExprCx<'a>, head: &Expr) -> Option<usize> {
+        fn depth(mut e: &Expr) -> usize {
+            let mut n = 0;
+            while let Expr::Lam { body, .. } = e {
+                n += 1;
+                e = body;
+            }
+            n
+        }
+        match head {
+            Expr::Lam { .. } => Some(depth(head)),
+            Expr::Prim { p } => Some(p.arity()),
+            Expr::Var { index } => match cx.lookup(*index) {
+                Some(Bind::Fun(Fun::Lam { lam, .. })) => Some(depth(lam)),
+                Some(Bind::Fun(Fun::Prim { p, args })) => {
+                    Some(p.arity().saturating_sub(args.len()))
+                }
+                _ => None,
+            },
+            Expr::DeclRef { id } => resolve_function(self.ir, *id).map(depth),
+            _ => None,
+        }
+    }
+
+    fn args(
+        &mut self,
+        cx: &mut ExprCx<'a>,
+        args: Vec<(&'a Expr, ExprPath)>,
+    ) -> Option<Vec<Arg<'a>>> {
+        let mut out = Vec::with_capacity(args.len());
+        let mut failed = false;
+        for (a, mut ap) in args {
+            if self.is_function(cx, a) {
+                match self.fun(cx, a, &ap) {
+                    Some(f) => out.push(Arg::Fun(f)),
+                    None => failed = true,
+                }
+            } else {
+                match self.expr(cx, a, &mut ap) {
+                    Some(v) => out.push(Arg::Val(v)),
+                    None => failed = true,
+                }
+            }
+        }
+        if failed {
+            None
+        } else {
+            Some(out)
+        }
+    }
+
+    /// A (possibly nested) application in value position: saturate a
+    /// primitive, or inline a lambda / function declaration.
+    fn app(&mut self, cx: &mut ExprCx<'a>, e: &'a Expr, path: &mut ExprPath) -> Option<ExecExpr> {
+        let (head, hp, args) = Self::flatten(e, path);
+        let fun = self.fun(cx, head, &hp)?;
+        let args = self.args(cx, args)?;
+        self.apply(cx, fun, args, &hp)
+    }
+
+    /// Give a function fewer arguments than it takes: the result is still a
+    /// function.  (Exactly as many is [`Self::apply`].)
+    fn partial(
+        &mut self,
+        cx: &mut ExprCx<'a>,
+        fun: Fun<'a>,
+        args: Vec<Arg<'a>>,
+        path: &ExprPath,
+    ) -> Option<Fun<'a>> {
+        match fun {
+            Fun::Prim { p, args: mut pre } => {
+                for a in args {
+                    match a {
+                        Arg::Val(v) => pre.push(v),
+                        Arg::Fun(_) => {
+                            self.unsupported(cx.owner, path, "a primitive over relationships");
+                            return None;
                         }
                     }
                 }
-                let Expr::Lam { body: last, .. } = lambda else {
-                    self.unsupported(cx.owner, &hp, "more arguments than lambda parameters");
+                if pre.len() >= p.arity() {
+                    self.unsupported(cx.owner, path, "a primitive applied to too many arguments");
                     return None;
-                };
+                }
+                Some(Fun::Prim { p, args: pre })
+            }
+            Fun::Lam {
+                mut lam,
+                mut env,
+                mut lets,
+            } => {
+                for a in args {
+                    let Expr::Lam { body, .. } = lam else {
+                        self.unsupported(cx.owner, path, "more arguments than lambda parameters");
+                        return None;
+                    };
+                    match a {
+                        Arg::Val(v) => {
+                            let l = self.fresh_local();
+                            lets.push((l, v));
+                            env.push(Bind::Val(l));
+                        }
+                        Arg::Fun(f) => env.push(Bind::Fun(f)),
+                    }
+                    lam = body;
+                }
+                if !matches!(lam, Expr::Lam { .. }) {
+                    self.unsupported(
+                        cx.owner,
+                        path,
+                        "a fully applied rule where a rule was expected",
+                    );
+                    return None;
+                }
+                Some(Fun::Lam { lam, env, lets })
+            }
+        }
+    }
+
+    /// Apply a known function to exactly the arguments that make it a
+    /// value: a saturated primitive, or a lambda body lowered in an
+    /// environment of its parameters (values bound by `Let`, functions
+    /// carried as bindings).
+    fn apply(
+        &mut self,
+        cx: &mut ExprCx<'a>,
+        fun: Fun<'a>,
+        args: Vec<Arg<'a>>,
+        path: &ExprPath,
+    ) -> Option<ExecExpr> {
+        match fun {
+            Fun::Prim { p, args: mut pre } => {
+                for a in args {
+                    match a {
+                        Arg::Val(v) => pre.push(v),
+                        Arg::Fun(_) => {
+                            self.unsupported(cx.owner, path, "a primitive over relationships");
+                            return None;
+                        }
+                    }
+                }
+                if pre.len() != p.arity() {
+                    self.unsupported(cx.owner, path, "a partially applied primitive");
+                    return None;
+                }
+                self.prim(cx, p, pre, path)
+            }
+            Fun::Lam {
+                mut lam,
+                mut env,
+                mut lets,
+            } => {
+                // Arguments are bound outermost first; the body runs in an
+                // environment of its parameters over the lambda's own
+                // (a literal lambda's is the caller's; an inlined
+                // declaration's is empty).
+                for a in args {
+                    let Expr::Lam { body, .. } = lam else {
+                        self.unsupported(cx.owner, path, "more arguments than lambda parameters");
+                        return None;
+                    };
+                    match a {
+                        Arg::Val(v) => {
+                            let l = self.fresh_local();
+                            lets.push((l, v));
+                            env.push(Bind::Val(l));
+                        }
+                        Arg::Fun(f) => env.push(Bind::Fun(f)),
+                    }
+                    lam = body;
+                }
+                if matches!(lam, Expr::Lam { .. }) {
+                    self.unsupported(cx.owner, path, "a lambda used as a value");
+                    return None;
+                }
                 let mut inner = ExprCx {
                     owner: cx.owner,
                     grant: cx.grant.clone(),
@@ -586,28 +844,20 @@ impl<'a> Lowerer<'a> {
                 };
                 // Paths inside an inlined body carry no temporal identity
                 // (typing forbids temporal forms under binders).
-                let mut body_path = hp.clone();
+                let mut body_path = path.clone();
                 body_path.push(0);
-                let mut result = self.expr(&mut inner, last, &mut body_path)?;
-                for (l, v) in bound.into_iter().rev() {
+                let mut result = self.expr(&mut inner, lam, &mut body_path)?;
+                for (l, v) in lets.into_iter().rev() {
                     result = ExecExpr::let_(l, v, result);
                 }
                 Some(result)
-            }
-            Head::Other(h) => {
-                let what = match h {
-                    Expr::Var { .. } => "an application of a relationship passed as an argument",
-                    _ => "an application of a non-function",
-                };
-                self.unsupported(cx.owner, &hp, what);
-                None
             }
         }
     }
 
     fn prim(
         &mut self,
-        cx: &mut ExprCx,
+        cx: &mut ExprCx<'a>,
         p: &Prim,
         args: Vec<ExecExpr>,
         path: &ExprPath,
@@ -624,7 +874,13 @@ impl<'a> Lowerer<'a> {
             Prim::Mul { d1, d2 } => PrimOp::Mul { d1: *d1, d2: *d2 },
             Prim::Div { d1, d2 } => PrimOp::Div { d1: *d1, d2: *d2 },
             Prim::Lt { .. } => PrimOp::Lt,
-            Prim::Eq { .. } => PrimOp::Eq,
+            Prim::Eq { ty } => {
+                if !ty.is_data() {
+                    self.unsupported(cx.owner, path, "equality over relationships");
+                    return None;
+                }
+                PrimOp::Eq
+            }
             Prim::Not => PrimOp::Not,
             Prim::And => PrimOp::And,
             Prim::Or => PrimOp::Or,
@@ -633,34 +889,83 @@ impl<'a> Lowerer<'a> {
             Prim::Some { ty } => PrimOp::Some { ty: ty.clone() },
             Prim::IsSome { ty } => PrimOp::IsSome { ty: ty.clone() },
             Prim::GetD { ty } => PrimOp::GetD { ty: ty.clone() },
+            Prim::Nil { ty } => PrimOp::Nil { ty: ty.clone() },
+            Prim::Cons { ty } => PrimOp::Cons { ty: ty.clone() },
+            Prim::Length { ty } => PrimOp::Length { ty: ty.clone() },
+            Prim::Take { ty } => PrimOp::Take { ty: ty.clone() },
+            Prim::Drop { ty } => PrimOp::Drop { ty: ty.clone() },
+            Prim::Reverse { ty } => PrimOp::Reverse { ty: ty.clone() },
+            Prim::Head { ty } => PrimOp::Head { ty: ty.clone() },
+            Prim::ToList { ty } => PrimOp::ToList { ty: ty.clone() },
+            Prim::Pair { fst, snd } => PrimOp::Pair {
+                fst: fst.clone(),
+                snd: snd.clone(),
+            },
+            Prim::Fst { fst, snd } => PrimOp::Fst {
+                fst: fst.clone(),
+                snd: snd.clone(),
+            },
+            Prim::Snd { fst, snd } => PrimOp::Snd {
+                fst: fst.clone(),
+                snd: snd.clone(),
+            },
         };
-        if let Some(t) = prim_result_ty(&op) {
-            if matches!(t, Ty::Arr { .. }) {
-                self.unsupported(cx.owner, path, "a primitive over relationships");
-                return None;
-            }
+        if prim_result_ty(&op).iter().any(mentions_arrow) {
+            self.unsupported(cx.owner, path, "a primitive over relationships");
+            return None;
         }
         Some(ExecExpr::Prim { op, args })
     }
 }
 
 #[derive(Clone)]
-struct ExprCx {
+struct ExprCx<'e> {
     owner: DeclId,
     grant: Grant,
-    /// De Bruijn environment: the local bound by each enclosing lambda
-    /// parameter, outermost first.
-    env: Vec<LocalId>,
+    /// De Bruijn environment: what each enclosing lambda parameter stands
+    /// for, outermost first.
+    env: Vec<Bind<'e>>,
 }
 
-fn prim_result_ty(op: &PrimOp) -> Option<Ty> {
+impl<'e> ExprCx<'e> {
+    fn lookup(&self, index: u32) -> Option<&Bind<'e>> {
+        self.env
+            .len()
+            .checked_sub(1 + index as usize)
+            .and_then(|i| self.env.get(i))
+    }
+}
+
+/// The types a primitive's arguments or result range over, for the
+/// "no relationship as a value" check.
+fn prim_result_ty(op: &PrimOp) -> Vec<Ty> {
     match op {
         PrimOp::Ite { ty }
         | PrimOp::GetD { ty }
         | PrimOp::Some { ty }
         | PrimOp::None { ty }
-        | PrimOp::IsSome { ty } => Some(ty.clone()),
-        _ => None,
+        | PrimOp::IsSome { ty }
+        | PrimOp::Nil { ty }
+        | PrimOp::Cons { ty }
+        | PrimOp::Length { ty }
+        | PrimOp::Take { ty }
+        | PrimOp::Drop { ty }
+        | PrimOp::Reverse { ty }
+        | PrimOp::Head { ty }
+        | PrimOp::ToList { ty } => vec![ty.clone()],
+        PrimOp::Pair { fst, snd } | PrimOp::Fst { fst, snd } | PrimOp::Snd { fst, snd } => {
+            vec![fst.clone(), snd.clone()]
+        }
+        _ => Vec::new(),
+    }
+}
+
+fn mentions_arrow(t: &Ty) -> bool {
+    match t {
+        Ty::Arr { .. } => true,
+        Ty::Opt { inner } | Ty::List { elem: inner } => mentions_arrow(inner),
+        Ty::Prod { fst, snd } => mentions_arrow(fst) || mentions_arrow(snd),
+        Ty::Bool | Ty::Nat | Ty::Q { .. } | Ty::Sem { .. } => false,
     }
 }
 
@@ -689,7 +994,11 @@ fn collect_sems(t: &Ty, out: &mut BTreeSet<SemanticId>) {
             collect_sems(dom, out);
             collect_sems(cod, out);
         }
-        Ty::Opt { inner } => collect_sems(inner, out),
+        Ty::Opt { inner } | Ty::List { elem: inner } => collect_sems(inner, out),
+        Ty::Prod { fst, snd } => {
+            collect_sems(fst, out);
+            collect_sems(snd, out);
+        }
         Ty::Bool | Ty::Nat | Ty::Q { .. } => {}
     }
 }
@@ -711,6 +1020,11 @@ fn collect_sync_sources(e: &Expr, out: &mut BTreeSet<ClockId>) {
             collect_sync_sources(a, out);
         }
         Expr::Rep { e } | Expr::Mk { e, .. } => collect_sync_sources(e, out),
+        Expr::Fold { f, z, l } => {
+            collect_sync_sources(f, out);
+            collect_sync_sources(z, out);
+            collect_sync_sources(l, out);
+        }
         _ => {}
     }
 }
@@ -756,6 +1070,13 @@ fn collect_sites(
             path.push(0);
             collect_sites(owner, e, path, out);
             path.pop();
+        }
+        Expr::Fold { f, z, l } => {
+            for (i, sub) in [(0u8, f), (1, z), (2, l)] {
+                path.push(i);
+                collect_sites(owner, sub, path, out);
+                path.pop();
+            }
         }
         _ => {}
     }
@@ -825,6 +1146,11 @@ fn inst_refs_through_functions(
             }
         }
         Expr::Rep { e } | Expr::Mk { e, .. } => inst_refs_through_functions(ir, e, out, expanding),
+        Expr::Fold { f, z, l } => {
+            inst_refs_through_functions(ir, f, out, expanding);
+            inst_refs_through_functions(ir, z, out, expanding);
+            inst_refs_through_functions(ir, l, out, expanding);
+        }
         Expr::Delay { init, .. } | Expr::Sync { init, .. } => {
             inst_refs_through_functions(ir, init, out, expanding)
         }
@@ -1118,6 +1444,178 @@ mod tests {
                 .as_str(),
             "backend.unsupported_higher_order"
         );
+    }
+
+    #[test]
+    fn folds_lists_pairs_and_function_arguments_lower_first_order_and_agree() {
+        let q0 = Ty::q(Dim::ZERO);
+        let list = |items: Vec<Expr>| {
+            items
+                .into_iter()
+                .rev()
+                .fold(Expr::prim(Prim::Nil { ty: q0.clone() }), |tail, x| {
+                    Expr::apps(Expr::prim(Prim::Cons { ty: q0.clone() }), [x, tail])
+                })
+        };
+        // any := λp. λxs. fold (λx. λacc. or (p x) acc) false xs  — the library's `any`
+        let any = Expr::lam(
+            Ty::arr(q0.clone(), Ty::Bool),
+            Expr::lam(
+                Ty::list(q0.clone()),
+                Expr::fold(
+                    Expr::lam(
+                        q0.clone(),
+                        Expr::lam(
+                            Ty::Bool,
+                            Expr::apps(
+                                Expr::prim(Prim::Or),
+                                [Expr::app(Expr::var(3), Expr::var(1)), Expr::var(0)],
+                            ),
+                        ),
+                    ),
+                    Expr::BoolLit { value: false },
+                    Expr::var(0),
+                ),
+            ),
+        );
+        // above := any (λx. 2 < x) xs   — a lambda passed as an argument
+        let above = Expr::apps(
+            any,
+            [
+                Expr::lam(
+                    q0.clone(),
+                    Expr::apps(
+                        Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+                        [lit(2.0), Expr::var(0)],
+                    ),
+                ),
+                Expr::decl(d(0)),
+            ],
+        );
+        // total := fold add 0 xs  — a primitive as the step
+        let total = Expr::fold(
+            Expr::prim(Prim::Add { dim: Dim::ZERO }),
+            lit(0.0),
+            Expr::decl(d(0)),
+        );
+        // shifted := fold (λx. λacc. cons (add 5 x) acc) [] xs  — `map (+5)` by hand,
+        // with `add 5` a partially applied primitive
+        let shifted = Expr::fold(
+            Expr::lam(
+                q0.clone(),
+                Expr::lam(
+                    Ty::list(q0.clone()),
+                    Expr::apps(
+                        Expr::prim(Prim::Cons { ty: q0.clone() }),
+                        [
+                            Expr::app(
+                                Expr::app(Expr::prim(Prim::Add { dim: Dim::ZERO }), lit(5.0)),
+                                Expr::var(1),
+                            ),
+                            Expr::var(0),
+                        ],
+                    ),
+                ),
+            ),
+            Expr::prim(Prim::Nil { ty: q0.clone() }),
+            Expr::decl(d(0)),
+        );
+        // pairs := (head xs or 0, length xs)  and its first part
+        let pair = Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: q0.clone(),
+                snd: q0.clone(),
+            }),
+            [
+                Expr::apps(
+                    Expr::prim(Prim::GetD { ty: q0.clone() }),
+                    [
+                        Expr::app(Expr::prim(Prim::Head { ty: q0.clone() }), Expr::decl(d(0))),
+                        lit(0.0),
+                    ],
+                ),
+                Expr::app(
+                    Expr::prim(Prim::Length { ty: q0.clone() }),
+                    Expr::decl(d(0)),
+                ),
+            ],
+        );
+        let first = Expr::app(
+            Expr::prim(Prim::Fst {
+                fst: q0.clone(),
+                snd: q0.clone(),
+            }),
+            Expr::decl(d(4)),
+        );
+        // same := xs == reverse (reverse xs)  — structural equality on lists
+        let same = Expr::apps(
+            Expr::prim(Prim::Eq {
+                ty: Ty::list(q0.clone()),
+            }),
+            [
+                Expr::decl(d(0)),
+                Expr::app(
+                    Expr::prim(Prim::Reverse { ty: q0.clone() }),
+                    Expr::app(
+                        Expr::prim(Prim::Reverse { ty: q0.clone() }),
+                        Expr::decl(d(0)),
+                    ),
+                ),
+            ],
+        );
+        // remembered := delay [] xs — a list in a state cell
+        let remembered = Expr::delay(list(vec![]), Expr::decl(d(0)));
+        let mut ir = ir_with(&[
+            (0, None, Some(0)),
+            (1, Some(above), Some(0)),
+            (2, Some(total), Some(0)),
+            (3, Some(shifted), Some(0)),
+            (4, Some(pair), Some(0)),
+            (5, Some(first), Some(0)),
+            (6, Some(same), Some(0)),
+            (7, Some(remembered), Some(0)),
+        ]);
+        let set_ty = |ir: &mut DesignIr, n: u64, ty: Ty| {
+            ir.decls.get_mut(&d(n)).unwrap().interface.expected_type = ty;
+        };
+        set_ty(&mut ir, 0, Ty::list(q0.clone()));
+        set_ty(&mut ir, 1, Ty::Bool);
+        set_ty(&mut ir, 3, Ty::list(q0.clone()));
+        set_ty(&mut ir, 4, Ty::prod(q0.clone(), q0.clone()));
+        set_ty(&mut ir, 6, Ty::Bool);
+        set_ty(&mut ir, 7, Ty::list(q0.clone()));
+        let xs = |t: u64| Value::list((0..t + 1).map(|i| Value::scalar(i as f64)));
+        let out = agree(&ir, 4, &|t, id| (id == d(0)).then(|| xs(t)));
+        let q = |x: f64| Value::scalar(x);
+        assert_eq!(out[0].values[1], Some(Value::boolean(false)));
+        assert_eq!(out[3].values[1], Some(Value::boolean(true)));
+        assert_eq!(out[3].values[2], Some(q(6.0)));
+        assert_eq!(out[1].values[3], Some(Value::list([q(5.0), q(6.0)])));
+        assert_eq!(out[2].values[4], Some(Value::pair(q(0.0), q(3.0))));
+        assert_eq!(out[2].values[5], Some(q(0.0)));
+        assert_eq!(out[2].values[6], Some(Value::boolean(true)));
+        assert_eq!(out[1].values[7], Some(xs(0)));
+        // the plan is first-order: no closure anywhere, one Fold per recursor
+        let exec = lower(&ir, "t", &BTreeMap::new()).unwrap();
+        assert!(exec.uses_lists());
+        let folds = exec
+            .decls
+            .iter()
+            .filter(|p| {
+                matches!(
+                    &p.kind,
+                    DeclKind::Computed {
+                        body: ExecExpr::Fold { .. }
+                    }
+                )
+            })
+            .count();
+        assert_eq!(folds, 2);
+        assert!(matches!(
+            &exec.decls[1].kind,
+            DeclKind::Computed { body: ExecExpr::Let { body, .. } }
+                if matches!(**body, ExecExpr::Fold { .. })
+        ));
     }
 
     #[test]

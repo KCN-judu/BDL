@@ -48,6 +48,27 @@ fn show(e: &SurfaceExpr) -> String {
                 .join(" "),
             show(tail)
         ),
+        ExprKind::List(items) => {
+            format!(
+                "[{}]",
+                items.iter().map(show).collect::<Vec<_>>().join(", ")
+            )
+        }
+        ExprKind::Tuple(items) => {
+            format!(
+                "<{}>",
+                items.iter().map(show).collect::<Vec<_>>().join(", ")
+            )
+        }
+        ExprKind::Lambda { params, body } => format!(
+            "(\\{} => {})",
+            params
+                .iter()
+                .map(|p| p.name.as_str())
+                .collect::<Vec<_>>()
+                .join(","),
+            show(body)
+        ),
     }
 }
 
@@ -768,4 +789,45 @@ proptest::proptest! {
         let e = parse(&format!("{a} + {b} * {c}")).expect("parses");
         proptest::prop_assert_eq!(show(&e), format!("({a} + ({b} * {c}))"));
     }
+}
+
+#[test]
+fn collections_grouped_values_rules_and_membership() {
+    assert_eq!(ok("[1, 2, 3]"), "[1, 2, 3]");
+    assert_eq!(ok("[]"), "[]");
+    assert_eq!(ok("[a, ]"), "[a]");
+    assert_eq!(ok("(a, b)"), "<a, b>");
+    assert_eq!(ok("(a, b, c)"), "<a, b, c>");
+    assert_eq!(ok("(a)"), "a");
+    assert_eq!(ok("mode in [1, 2]"), "(mode in [1, 2])");
+    assert_eq!(ok("x in xs && y"), "((x in xs) && y)");
+    // a rule extends as far right as possible and is an argument
+    assert_eq!(
+        ok("any(xs, x => x < 30 deg)"),
+        "any[xs, (\\x => (x < 30deg))]"
+    );
+    assert_eq!(
+        ok("foldr(xs, 0, (x, acc) => x + acc)"),
+        "foldr[xs, 0, (\\x,acc => (x + acc))]"
+    );
+    assert_eq!(
+        ok("map(xs, x => (x, x * 2))"),
+        "map[xs, (\\x => <x, (x * 2)>)]"
+    );
+    // `in` is a comparison: it does not chain
+    assert!(errors("mapping f : A -> B\nf(a) = a in b in c\n")
+        .iter()
+        .any(|(c, _, _)| *c == SyntaxErrorCode::ChainedComparison));
+    // `ordered concept` is an item
+    let m = parse_module("ordered concept Brightness : Scalar\nconcept Mode : Count\n");
+    assert!(m.errors().is_empty());
+    let items: Vec<bool> = ast::Module::cast(m.syntax_node())
+        .unwrap()
+        .concepts()
+        .map(|c| c.is_ordered())
+        .collect();
+    assert_eq!(items, vec![true, false]);
+    assert!(errors("ordered mapping f : A\n")
+        .iter()
+        .any(|(_, _, m)| m.contains("expected `concept` after `ordered`")));
 }

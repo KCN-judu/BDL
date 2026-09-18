@@ -25,6 +25,11 @@
 //! | `Some(e)` / `None` | `some e` / `none` over representations |
 //! | `match s { p₁ => e₁, … }` | `app (λs. ite test₁ (lets… e₁) (ite test₂ … eₙ)) s` |
 //! | `delay(init, v)` / `sync(d, init, v)` | `delay init v` / `sync d init v` |
+//! | `[a, b]` / `(a, b)` | `cons a (cons b nil)` / `pair a b` |
+//! | `min(a, b)`, `any(xs, x => p)`, … | the equation library's closed combinator applied: `app (app minF a) b` (`bdl-equations`) |
+//! | `x in [a, b]` | `contains x [a, b]` |
+//! | `a == b` on concept values | `eq (sem A) a b` — the same concept, or a nominal error |
+//! | `a < b` on concept values | `lt d (rep a) (rep b)` — only for a concept declared ordered |
 //!
 //! `match` binds the scrutinee once, so a temporal form inside it keeps one
 //! `ExprPath` (one state cell) whichever arm is taken; arm bindings are
@@ -40,9 +45,11 @@ use crate::units;
 use bdl_check::pretty;
 use bdl_check::ExprPath;
 use bdl_diagnostics::{Diagnostic, Entity, Severity, Span};
+use bdl_equations::{self as equations, Cap, Entry, Instance, MatchError, Ordered, PDim, PTy};
 use bdl_ir::{DesignIr, Expr, Prim, Scalar, Ty};
 use bdl_model::surface::{Design, MappingBlock};
 use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_syntax::lower::Ident;
 use bdl_syntax::lower::{SurfaceArm, SurfaceLet};
 use bdl_syntax::{BinaryOp, ExprKind, PatternKind, SurfaceExpr, SurfacePattern, UnaryOp};
 use std::collections::{BTreeMap, BTreeSet};
@@ -65,7 +72,12 @@ enum STy {
     Sem(SemanticId),
     /// An optional representation value.
     Opt(Box<STy>),
-    /// The payload of a bare `None` before context fixes it.
+    /// A collection (`list τ`); elements may be semantic values.
+    List(Box<STy>),
+    /// A grouped value (`τ × σ`); parts may be semantic values.
+    Pair(Box<STy>, Box<STy>),
+    /// The payload of a bare `None` (or the elements of `[]`) before
+    /// context fixes it.
     Unknown,
     /// Already reported; silences cascades.
     Error,
@@ -79,6 +91,10 @@ impl STy {
             Ty::Nat => Some(STy::Nat),
             Ty::Sem { id } => Some(STy::Sem(*id)),
             Ty::Opt { inner } => STy::of(inner).map(|t| STy::Opt(Box::new(t))),
+            Ty::List { elem } => STy::of(elem).map(|t| STy::List(Box::new(t))),
+            Ty::Prod { fst, snd } => {
+                Some(STy::Pair(Box::new(STy::of(fst)?), Box::new(STy::of(snd)?)))
+            }
             Ty::Arr { .. } => None,
         }
     }
@@ -90,6 +106,8 @@ impl STy {
             STy::Nat => Ty::Nat,
             STy::Sem(s) => Ty::sem(*s),
             STy::Opt(t) => Ty::opt(t.to_ty()?),
+            STy::List(t) => Ty::list(t.to_ty()?),
+            STy::Pair(a, b) => Ty::prod(a.to_ty()?, b.to_ty()?),
             STy::Unknown | STy::Error => return None,
         })
     }
@@ -97,7 +115,8 @@ impl STy {
     /// Fully determined: no `Unknown`, no `Error`.
     fn is_known(&self) -> bool {
         match self {
-            STy::Opt(t) => t.is_known(),
+            STy::Opt(t) | STy::List(t) => t.is_known(),
+            STy::Pair(a, b) => a.is_known() && b.is_known(),
             STy::Unknown | STy::Error => false,
             _ => true,
         }
@@ -112,6 +131,11 @@ impl STy {
         match (a, b) {
             (STy::Unknown, t) | (t, STy::Unknown) => Some(t.clone()),
             (STy::Opt(x), STy::Opt(y)) => STy::unify(x, y).map(|t| STy::Opt(Box::new(t))),
+            (STy::List(x), STy::List(y)) => STy::unify(x, y).map(|t| STy::List(Box::new(t))),
+            (STy::Pair(a1, b1), STy::Pair(a2, b2)) => Some(STy::Pair(
+                Box::new(STy::unify(a1, a2)?),
+                Box::new(STy::unify(b1, b2)?),
+            )),
             _ if a == b => Some(a.clone()),
             _ => None,
         }
@@ -208,6 +232,18 @@ pub fn elaborate_formula_in(
     // The result is constructed as the output concept.
     let out = mapping.signature.output;
     let out_rep = ir.representation_of(out).and_then(STy::of);
+    // Concept values inside a grouped value or a collection are observed
+    // where the output's representation needs their representations:
+    // `(t, h)` for a `Pair<Temperature, Scalar>` concept.
+    let (body, body_ty) = match &out_rep {
+        Some(want) if !body_ty.is_error() && &body_ty != want => {
+            match el.coerce(body.clone(), &body_ty, want) {
+                Some(e) => (e, want.clone()),
+                None => (body, body_ty),
+            }
+        }
+        _ => (body, body_ty),
+    };
     match (&out_rep, &body_ty) {
         (None, _) => el.diags.push(el.unbound(out, surface.span, "produces")),
         (Some(_), STy::Error) => {}
@@ -285,6 +321,8 @@ enum Test {
     Bool(Access, bool),
     /// Dimensionless quantity equals the literal.
     Eq(Access, f64),
+    /// Count equals the whole number.
+    EqNat(Access, u64),
 }
 
 #[derive(Clone, Debug)]
@@ -348,8 +386,41 @@ impl<'a> Elab<'a> {
                 STy::Unknown => "an optional value of a kind not yet known".into(),
                 inner => format!("an optional value ({})", self.describe(inner)),
             },
+            STy::List(inner) => match inner.as_ref() {
+                STy::Unknown => "an empty collection".into(),
+                inner => format!("a collection of {}", self.describe_plural(inner)),
+            },
+            STy::Pair(a, b) => format!(
+                "a grouped value ({} and {})",
+                self.describe(a),
+                self.describe(b)
+            ),
             STy::Unknown => "a value of a kind not yet known".into(),
             STy::Error => "an erroneous value".into(),
+        }
+    }
+
+    /// "angles", "Brightness values", "counts": what a collection holds.
+    fn describe_plural(&self, t: &STy) -> String {
+        match t {
+            STy::Q(d) => {
+                let one = pretty::describe_dim(*d);
+                let noun = one
+                    .strip_prefix("an ")
+                    .or_else(|| one.strip_prefix("a "))
+                    .unwrap_or(&one);
+                if noun.starts_with("quantity of") {
+                    format!("quantities {}", &noun["quantity ".len()..])
+                } else if noun.starts_with("dimensionless") {
+                    "dimensionless quantities".into()
+                } else {
+                    format!("{noun}s")
+                }
+            }
+            STy::Bool => "truth values".into(),
+            STy::Nat => "counts".into(),
+            STy::Sem(s) => format!("{} values", self.concept_name(*s)),
+            other => format!("values ({})", self.describe(other)),
         }
     }
 
@@ -399,6 +470,16 @@ impl<'a> Elab<'a> {
             STy::Opt(inner) => Expr::prim(Prim::None {
                 ty: inner.to_ty().unwrap_or(Ty::Nat),
             }),
+            STy::List(inner) => Expr::prim(Prim::Nil {
+                ty: inner.to_ty().unwrap_or(Ty::Nat),
+            }),
+            STy::Pair(a, b) => Expr::apps(
+                Expr::prim(Prim::Pair {
+                    fst: a.to_ty().unwrap_or(Ty::Nat),
+                    snd: b.to_ty().unwrap_or(Ty::Nat),
+                }),
+                [self.default_of(a), self.default_of(b)],
+            ),
             // Options carry representations only (`some` observes its
             // operand), so no default of a semantic type is ever needed.
             STy::Sem(_) | STy::Unknown | STy::Error => self.lit(Dim::ZERO, 0.0),
@@ -431,6 +512,99 @@ impl<'a> Elab<'a> {
             self.spans.insert(nk, s);
         }
         self.record(path, span);
+    }
+
+    /// Every concept value in a type replaced by its representation: what
+    /// an equation over collections sees of `Readings : List<Temperature>`.
+    fn fully_observed(&self, t: &STy) -> Option<STy> {
+        Some(match t {
+            STy::Sem(s) => STy::of(self.ir.representation_of(*s)?)?,
+            STy::Opt(i) => STy::Opt(Box::new(self.fully_observed(i)?)),
+            STy::List(i) => STy::List(Box::new(self.fully_observed(i)?)),
+            STy::Pair(a, b) => STy::Pair(
+                Box::new(self.fully_observed(a)?),
+                Box::new(self.fully_observed(b)?),
+            ),
+            other => other.clone(),
+        })
+    }
+
+    /// Rebuild `e : from` as a value of `want`, observing concept values
+    /// wherever `want` has their representation — at the top (`rep e`),
+    /// inside a pair (through the projections), inside a collection or an
+    /// optional value (through a fold).  `None` when the two types differ
+    /// in any other way.
+    fn coerce(&self, e: Expr, from: &STy, want: &STy) -> Option<Expr> {
+        if from == want {
+            return Some(e);
+        }
+        match (from, want) {
+            (STy::Sem(s), want) => {
+                let rep = STy::of(self.ir.representation_of(*s)?)?;
+                if &rep == want {
+                    Some(Expr::rep(e))
+                } else {
+                    let inner = self.coerce(Expr::rep(e), &rep, want)?;
+                    Some(inner)
+                }
+            }
+            (STy::Pair(a, b), STy::Pair(wa, wb)) => {
+                let (ta, tb) = (a.to_ty()?, b.to_ty()?);
+                let fst = Expr::app(
+                    Expr::prim(Prim::Fst {
+                        fst: ta.clone(),
+                        snd: tb.clone(),
+                    }),
+                    e.clone(),
+                );
+                let snd = Expr::app(Expr::prim(Prim::Snd { fst: ta, snd: tb }), e);
+                let fa = self.coerce(fst, a, wa)?;
+                let fb = self.coerce(snd, b, wb)?;
+                Some(Expr::apps(
+                    Expr::prim(Prim::Pair {
+                        fst: wa.to_ty()?,
+                        snd: wb.to_ty()?,
+                    }),
+                    [fa, fb],
+                ))
+            }
+            (STy::List(a), STy::List(wa)) => {
+                // fold (λx. λacc. cons (coerce x) acc) nil e
+                let (ta, twa) = (a.to_ty()?, wa.to_ty()?);
+                let x = self.coerce(Expr::var(1), a, wa)?;
+                Some(Expr::fold(
+                    Expr::lam(
+                        ta,
+                        Expr::lam(
+                            Ty::list(twa.clone()),
+                            Expr::apps(
+                                Expr::prim(Prim::Cons { ty: twa.clone() }),
+                                [x, Expr::var(0)],
+                            ),
+                        ),
+                    ),
+                    Expr::prim(Prim::Nil { ty: twa }),
+                    e,
+                ))
+            }
+            (STy::Opt(a), STy::Opt(wa)) => {
+                // fold (λx. λacc. some (coerce x)) none (toList e)
+                let (ta, twa) = (a.to_ty()?, wa.to_ty()?);
+                let x = self.coerce(Expr::var(1), a, wa)?;
+                Some(Expr::fold(
+                    Expr::lam(
+                        ta.clone(),
+                        Expr::lam(
+                            Ty::opt(twa.clone()),
+                            Expr::app(Expr::prim(Prim::Some { ty: twa.clone() }), x),
+                        ),
+                    ),
+                    Expr::prim(Prim::None { ty: twa }),
+                    Expr::app(Expr::prim(Prim::ToList { ty: ta }), e),
+                ))
+            }
+            _ => None,
+        }
     }
 
     /// Observe a semantic value where a representation is needed.
@@ -500,6 +674,19 @@ impl<'a> Elab<'a> {
                 self.match_(scrutinee, arms, e.span, path, expect)
             }
             ExprKind::Block { lets, tail } => self.block(lets, tail, e.span, path, expect),
+            ExprKind::List(items) => self.list(items, e.span, path, expect),
+            ExprKind::Tuple(items) => self.tuple(items, e.span, path, expect),
+            ExprKind::Lambda { .. } => {
+                let d = self
+                    .error(
+                        "formula.rule.not_a_value",
+                        e.span,
+                        "A rule (`x => …`) is not a value on its own.",
+                    )
+                    .explain("A rule is given to an equation that applies it, such as any, all, map, filter or foldr; it cannot be stored, returned or compared.");
+                self.push(d);
+                self.placeholder()
+            }
         }
     }
 
@@ -617,7 +804,8 @@ impl<'a> Elab<'a> {
         if !mappings.is_empty() {
             parts.push(format!("relationships: {}", mappings.join(", ")));
         }
-        parts.push("constructors: Some(…), None".into());
+        parts.push("constructors: Some(…), None, [a, b], (a, b)".into());
+        parts.push(format!("equations: {}", equations::names().join(", ")));
         format!("{}.", parts.join("; "))
     }
 
@@ -703,7 +891,13 @@ impl<'a> Elab<'a> {
             self.push(d);
             return self.placeholder();
         }
-        let id = match self.inputs.resolve(self.design, name) {
+        let resolved = self.inputs.resolve(self.design, name);
+        if !matches!(resolved, Lookup::Mapping(_)) {
+            if let Some(entry) = equations::lookup(name) {
+                return self.equation(entry, args, span, path, expect);
+            }
+        }
+        let id = match resolved {
             Lookup::Mapping(id) => id,
             Lookup::Input(i) => {
                 let cname = self.concept_name(self.mapping.signature.inputs[i]);
@@ -1005,6 +1199,704 @@ impl<'a> Elab<'a> {
             Some(src) => Expr::sync(src, ie, ve),
         };
         (term, ty)
+    }
+
+    // ---- collections, grouped values, equations ----------------------------------
+
+    /// `[a, b, c]`: `cons a (cons b (cons c nil))` — element `i` at
+    /// `[1]*i ++ [0, 1]`.  Elements are brought to one type like the
+    /// branches of an `if`: concept values of one concept stay concept
+    /// values, otherwise every element is observed.  `[]` takes its element
+    /// type from the context, like a bare `None`.
+    fn list(
+        &mut self,
+        items: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+        expect: Option<&STy>,
+    ) -> (Expr, STy) {
+        let inner_expect = match expect {
+            Some(STy::List(inner)) => Some(inner.as_ref().clone()),
+            _ => None,
+        };
+        if items.is_empty() {
+            return match inner_expect {
+                Some(t) if t.is_known() => (
+                    Expr::prim(Prim::Nil {
+                        ty: t.to_ty().unwrap_or(Ty::Nat),
+                    }),
+                    STy::List(Box::new(t)),
+                ),
+                _ => (
+                    Expr::prim(Prim::Nil { ty: Ty::Nat }),
+                    STy::List(Box::new(STy::Unknown)),
+                ),
+            };
+        }
+        let mut branches = Vec::with_capacity(items.len());
+        for (i, item) in items.iter().enumerate() {
+            let mut ip = path.clone();
+            ip.extend(std::iter::repeat_n(1u8, i));
+            ip.extend([0, 1]);
+            let (e, t) = self.expr(item, &mut ip, inner_expect.as_ref());
+            branches.push(Branch {
+                span: item.span,
+                path: ip,
+                expr: e,
+                ty: t,
+            });
+        }
+        let Some(elem) = self.join(&mut branches, "collection", span, &mut |el, i, want, p| {
+            let mut p = p.clone();
+            el.expr(&items[i], &mut p, Some(want))
+        }) else {
+            return self.placeholder();
+        };
+        let Some(elem_ty) = elem.to_ty() else {
+            return self.undetermined(span);
+        };
+        let mut list = Expr::prim(Prim::Nil {
+            ty: elem_ty.clone(),
+        });
+        for b in branches.into_iter().rev() {
+            list = Expr::apps(
+                Expr::prim(Prim::Cons {
+                    ty: elem_ty.clone(),
+                }),
+                [b.expr, list],
+            );
+        }
+        (list, STy::List(Box::new(elem)))
+    }
+
+    /// `(a, b)`: `pair a b` — `a` at `[0, 1]`, `b` at `[1]`; three or more
+    /// parts nest to the right, `(a, (b, c))`.  Parts keep their own kinds:
+    /// a pair of two concept values keeps both identities.
+    fn tuple(
+        &mut self,
+        items: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+        expect: Option<&STy>,
+    ) -> (Expr, STy) {
+        let Some((first, rest)) = items.split_first() else {
+            return self.placeholder();
+        };
+        if rest.is_empty() {
+            return self.expr(first, path, expect);
+        }
+        let (fe, se) = match expect {
+            Some(STy::Pair(a, b)) => (Some(a.as_ref().clone()), Some(b.as_ref().clone())),
+            _ => (None, None),
+        };
+        let mut fp = path.clone();
+        fp.extend([0, 1]);
+        let (a, ta) = self.expr(first, &mut fp, fe.as_ref());
+        let mut sp = path.clone();
+        sp.push(1);
+        let (b, tb) = if rest.len() == 1 {
+            self.expr(&rest[0], &mut sp, se.as_ref())
+        } else {
+            self.tuple(rest, span, &mut sp, se.as_ref())
+        };
+        if ta.is_error() || tb.is_error() {
+            return self.placeholder();
+        }
+        let (Some(fst), Some(snd)) = (ta.to_ty(), tb.to_ty()) else {
+            return self.undetermined(span);
+        };
+        (
+            Expr::apps(Expr::prim(Prim::Pair { fst, snd }), [a, b]),
+            STy::Pair(Box::new(ta), Box::new(tb)),
+        )
+    }
+
+    /// A call of an equation of the library: match the scheme's parameter
+    /// patterns against the arguments' closed types in order (a rule
+    /// argument is elaborated once its parameter kinds are known), check
+    /// the capabilities, then apply the closed combinator built at that
+    /// instance: `app (… (app comb a₁) …) aₙ`, `aᵢ` at `[0]*(n-1-i) ++ [1]`.
+    fn equation(
+        &mut self,
+        entry: &'static Entry,
+        args: &[SurfaceExpr],
+        span: Span,
+        path: &mut ExprPath,
+        expect: Option<&STy>,
+    ) -> (Expr, STy) {
+        let n = entry.scheme.params.len();
+        if args.len() != n {
+            let d = self
+                .error(
+                    "formula.equation.arity",
+                    span,
+                    format!(
+                        "{} takes {} value{} ({}), but {} {} given here.",
+                        entry.name,
+                        n,
+                        if n == 1 { "" } else { "s" },
+                        entry.params.join(", "),
+                        args.len(),
+                        if args.len() == 1 { "is" } else { "are" }
+                    ),
+                )
+                .fix(format!("Write {}.", entry.shape()));
+            self.push(d);
+            return self.placeholder();
+        }
+        // The result of the whole call may fix a variable the arguments
+        // leave open (`[]` given to `append`); seed it from the context.
+        let mut seed = equations::Subst::default();
+        if let Some(want) = expect.and_then(STy::to_ty) {
+            let mut seeded = seed.clone();
+            if equations::match_ty(&entry.scheme.result, &want, &mut seeded).is_ok() {
+                seed = seeded;
+            }
+        }
+        // Pass 1: the value arguments, in order, each with the expectation
+        // the arguments before it fixed (what a bare `None` or `[]` needs).
+        struct ArgOut {
+            expr: Expr,
+            ty: STy,
+            path: ExprPath,
+        }
+        let mut outs: Vec<Option<ArgOut>> = Vec::with_capacity(n);
+        let mut failed = false;
+        let mut provisional = seed.clone();
+        for (i, (arg, pat)) in args.iter().zip(&entry.scheme.params).enumerate() {
+            let mut ap = path.clone();
+            ap.extend(std::iter::repeat_n(0u8, n - 1 - i));
+            ap.push(1);
+            match (&arg.kind, pat) {
+                (ExprKind::Lambda { .. }, PTy::Arr(..)) => outs.push(None),
+                (ExprKind::Lambda { .. }, _) => {
+                    let d = self
+                        .error(
+                            "formula.rule.unexpected",
+                            arg.span,
+                            format!(
+                                "{} reads {} here, not a rule.",
+                                entry.name,
+                                self.describe_pattern(pat, &Instance::default())
+                            ),
+                        )
+                        .fix(format!("Write {}.", entry.shape()));
+                    self.push(d);
+                    failed = true;
+                    outs.push(None);
+                }
+                (_, PTy::Arr(..)) => {
+                    let (doms, _) = pat.uncurry();
+                    let shown = match doms.len() {
+                        1 => "x => …".to_string(),
+                        2 => "(x, y) => …".to_string(),
+                        k => format!(
+                            "({}) => …",
+                            (0..k)
+                                .map(|j| format!("x{}", j + 1))
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        ),
+                    };
+                    let d = self
+                        .error(
+                            "formula.rule.expected",
+                            arg.span,
+                            format!(
+                                "{} needs a rule for `{}` here, written `{shown}`.",
+                                entry.name,
+                                entry.params.get(i).copied().unwrap_or("rule")
+                            ),
+                        )
+                        .explain("A rule names its inputs and gives their result, as in `x => x < 30 deg`.");
+                    self.push(d);
+                    failed = true;
+                    outs.push(None);
+                }
+                _ => {
+                    let want = equations::instantiate(pat, &provisional).and_then(|t| STy::of(&t));
+                    let (e, t) = self.expr(arg, &mut ap, want.as_ref());
+                    if t.is_error() {
+                        failed = true;
+                    } else if !t.is_known() {
+                        self.undetermined(arg.span);
+                        failed = true;
+                    } else if let Some(ty) = t.to_ty() {
+                        let mut tentative = provisional.clone();
+                        if equations::match_ty(pat, &ty, &mut tentative).is_ok() {
+                            provisional = tentative;
+                        }
+                    }
+                    outs.push(Some(ArgOut {
+                        expr: e,
+                        ty: t,
+                        path: ap,
+                    }));
+                }
+            }
+        }
+        if failed {
+            return self.placeholder();
+        }
+        // The instance: match every value argument's closed type.  A concept
+        // value met by a plain representation of its own kind (`mode in
+        // [1, 2]`, `min(brightness, 0.5)`) is observed, as it is by the
+        // operators (ADR-0013); two concept values stay concept values.
+        let mut instance = Instance::default();
+        loop {
+            instance.subst = seed.clone();
+            let mut observe: Option<usize> = None;
+            for (i, (out, pat)) in outs.iter().zip(&entry.scheme.params).enumerate() {
+                let Some(out) = out else { continue };
+                let Some(ty) = out.ty.to_ty() else {
+                    return self.placeholder();
+                };
+                match equations::match_ty(pat, &ty, &mut instance.subst) {
+                    Ok(()) => {}
+                    Err(MatchError::TyConflict { bound, found, .. })
+                        if observable(self.ir, &bound, &found)
+                            || observable(self.ir, &found, &bound) =>
+                    {
+                        // Which argument holds the concept value to observe:
+                        // this one, or the earlier one that bound the variable.
+                        let sem_here = matches!(found, Ty::Sem { .. });
+                        let candidate = if sem_here {
+                            Some(i)
+                        } else {
+                            outs.iter().position(|o| {
+                                o.as_ref()
+                                    .is_some_and(|o| o.ty == STy::of(&bound).unwrap_or(STy::Error))
+                            })
+                        };
+                        match candidate {
+                            Some(c) => {
+                                observe = Some(c);
+                                break;
+                            }
+                            None => {
+                                let err = MatchError::TyConflict {
+                                    var: 0,
+                                    bound,
+                                    found,
+                                };
+                                self.match_error(entry, i, pat, &err, &instance, args[i].span);
+                                return self.placeholder();
+                            }
+                        }
+                    }
+                    Err(MatchError::Shape { .. })
+                        if mentions_concept(&out.ty)
+                            && !matches!(pat, PTy::Var(_) | PTy::Sem(_))
+                            && self.fully_observed(&out.ty).is_some_and(|t| t != out.ty) =>
+                    {
+                        // `Readings : List<Temperature>` where a collection
+                        // is expected: the concept value is observed deeply.
+                        observe = Some(i);
+                        break;
+                    }
+                    Err(err) => {
+                        self.match_error(entry, i, pat, &err, &instance, args[i].span);
+                        return self.placeholder();
+                    }
+                }
+            }
+            let Some(i) = observe else { break };
+            let Some(out) = outs[i].as_mut() else {
+                return self.placeholder();
+            };
+            let (e, t) = if matches!(out.ty, STy::Sem(_)) {
+                self.observe(
+                    std::mem::replace(&mut out.expr, Expr::NatLit { value: 0 }),
+                    out.ty.clone(),
+                    &out.path,
+                    args[i].span,
+                )
+            } else {
+                let Some(want) = self.fully_observed(&out.ty) else {
+                    return self.placeholder();
+                };
+                match self.coerce(
+                    std::mem::replace(&mut out.expr, Expr::NatLit { value: 0 }),
+                    &out.ty,
+                    &want,
+                ) {
+                    Some(e) => (e, want),
+                    None => return self.placeholder(),
+                }
+            };
+            if t.is_error() {
+                return self.placeholder();
+            }
+            out.expr = e;
+            out.ty = t;
+        }
+        // Pass 2: the rules, now that their parameter kinds are fixed.
+        let mut lowered: Vec<Expr> = Vec::with_capacity(n);
+        for (i, (arg, pat)) in args.iter().zip(&entry.scheme.params).enumerate() {
+            match outs[i].take() {
+                Some(out) => lowered.push(out.expr),
+                None => {
+                    let ExprKind::Lambda { params, body } = &arg.kind else {
+                        return self.placeholder();
+                    };
+                    let mut ap = path.clone();
+                    ap.extend(std::iter::repeat_n(0u8, n - 1 - i));
+                    ap.push(1);
+                    let (e, t) =
+                        self.rule(entry, params, body, pat, &mut ap, &mut instance, arg.span);
+                    if t.is_error() {
+                        failed = true;
+                    }
+                    lowered.push(e);
+                }
+            }
+        }
+        if failed {
+            return self.placeholder();
+        }
+        // Capabilities: the weakest each variable needs.
+        for (var, cap) in &entry.scheme.caps {
+            let Some(ty) = instance.subst.tys.get(var).cloned() else {
+                continue;
+            };
+            match cap {
+                Cap::Data | Cap::Eq => {
+                    if !ty.is_data() {
+                        let d = self.error(
+                            "type.equality_not_data",
+                            span,
+                            "Rules cannot be compared for equality.",
+                        );
+                        self.push(d);
+                        return self.placeholder();
+                    }
+                }
+                Cap::Ord => match self.ordered_evidence(&ty) {
+                    Some(o) => {
+                        instance.ordered.insert(*var, o);
+                    }
+                    None => {
+                        self.no_order(entry.name, &ty, span);
+                        return self.placeholder();
+                    }
+                },
+            }
+        }
+        let Some(result) =
+            equations::instantiate(&entry.scheme.result, &instance.subst).and_then(|t| STy::of(&t))
+        else {
+            return self.undetermined(span);
+        };
+        let comb = (entry.build)(&instance);
+        let mut head_path = path.clone();
+        head_path.extend(std::iter::repeat_n(0u8, n));
+        self.record(&head_path, span);
+        (Expr::apps(comb, lowered), result)
+    }
+
+    /// A rule `x => e` given to an equation whose parameter is an arrow
+    /// pattern: its parameters take the pattern's domains (which the
+    /// earlier arguments must have fixed), its body is elaborated under
+    /// them and matched against the codomain.  Yields `λx:τ. e`.
+    #[allow(clippy::too_many_arguments)]
+    fn rule(
+        &mut self,
+        entry: &'static Entry,
+        params: &[Ident],
+        body: &SurfaceExpr,
+        pat: &PTy,
+        path: &mut ExprPath,
+        instance: &mut Instance,
+        span: Span,
+    ) -> (Expr, STy) {
+        let (doms, cod) = pat.uncurry();
+        if params.len() != doms.len() {
+            let d = self
+                .error(
+                    "formula.rule.arity",
+                    span,
+                    format!(
+                        "This rule names {} value{}, but {} gives it {}.",
+                        params.len(),
+                        if params.len() == 1 { "" } else { "s" },
+                        entry.name,
+                        doms.len()
+                    ),
+                )
+                .fix(format!("Write {}.", entry.shape()));
+            self.push(d);
+            return (self.lit(Dim::ZERO, 0.0), STy::Error);
+        }
+        let mut dom_tys = Vec::with_capacity(doms.len());
+        for (p, dp) in params.iter().zip(&doms) {
+            let Some(ty) = equations::instantiate(dp, &instance.subst).and_then(|t| STy::of(&t))
+            else {
+                let d = self
+                    .error(
+                        "formula.rule.undetermined",
+                        p.span,
+                        format!("The kind of `{}` cannot be told here.", p.name),
+                    )
+                    .explain(format!(
+                        "{} decides what its rule reads from the values given before the rule; give it the collection first.",
+                        entry.name
+                    ));
+                self.push(d);
+                return (self.lit(Dim::ZERO, 0.0), STy::Error);
+            };
+            dom_tys.push(ty);
+        }
+        for (p, ty) in params.iter().zip(&dom_tys) {
+            if is_reserved_name(&p.name) {
+                let d = self.error(
+                    "formula.pattern.constructor_binding",
+                    p.span,
+                    format!(
+                        "`{}` cannot name a rule's input; it is a constructor or a temporal form.",
+                        p.name
+                    ),
+                );
+                self.push(d);
+                return (self.lit(Dim::ZERO, 0.0), STy::Error);
+            }
+            self.env.push(Binding {
+                name: Some(p.name.clone()),
+                ty: ty.clone(),
+            });
+        }
+        let mut bp = path.clone();
+        bp.extend(std::iter::repeat_n(0u8, params.len()));
+        let expect = equations::instantiate(cod, &instance.subst).and_then(|t| STy::of(&t));
+        let (be, bt) = self.expr(body, &mut bp, expect.as_ref());
+        self.env.truncate(self.env.len() - params.len());
+        if bt.is_error() {
+            return (be, STy::Error);
+        }
+        if !bt.is_known() {
+            let (e, _) = self.undetermined(body.span);
+            return (e, STy::Error);
+        }
+        let Some(bty) = bt.to_ty() else {
+            return (be, STy::Error);
+        };
+        if let Err(err) = equations::match_ty(cod, &bty, &mut instance.subst) {
+            self.match_error(entry, usize::MAX, cod, &err, instance, body.span);
+            return (be, STy::Error);
+        }
+        let mut lam = be;
+        for ty in dom_tys.iter().rev() {
+            lam = Expr::lam(ty.to_ty().unwrap_or(Ty::Nat), lam);
+        }
+        (lam, bt)
+    }
+
+    /// "a collection of angles", "a value of the same kind as `a`", …
+    fn describe_pattern(&self, p: &PTy, instance: &Instance) -> String {
+        match p {
+            PTy::Var(v) => match instance.subst.tys.get(v).and_then(STy::of) {
+                Some(t) => self.describe(&t),
+                None => "a value".into(),
+            },
+            PTy::Bool => "true or false".into(),
+            PTy::Nat => "a count".into(),
+            PTy::Sem(s) => format!("a {}", self.concept_name(*s)),
+            PTy::Q(PDim::Const(d)) => pretty::describe_dim(*d),
+            PTy::Q(PDim::Var(v)) => match instance.subst.dims.get(v) {
+                Some(d) => pretty::describe_dim(*d),
+                None => "a quantity".into(),
+            },
+            PTy::Opt(inner) => format!(
+                "an optional value ({})",
+                self.describe_pattern(inner, instance)
+            ),
+            PTy::List(inner) => match inner.as_ref() {
+                PTy::Var(v) if !instance.subst.tys.contains_key(v) => "a collection".into(),
+                inner => format!(
+                    "a collection of {}",
+                    self.describe_pattern_plural(inner, instance)
+                ),
+            },
+            PTy::Prod(a, b) => format!(
+                "a grouped value ({} and {})",
+                self.describe_pattern(a, instance),
+                self.describe_pattern(b, instance)
+            ),
+            PTy::Arr(..) => "a rule".into(),
+        }
+    }
+
+    fn describe_pattern_plural(&self, p: &PTy, instance: &Instance) -> String {
+        match p {
+            PTy::Var(v) => match instance.subst.tys.get(v).and_then(STy::of) {
+                Some(t) => self.describe_plural(&t),
+                None => "values".into(),
+            },
+            other => {
+                let one = self.describe_pattern(other, instance);
+                format!("values ({one})")
+            }
+        }
+    }
+
+    /// A parameter of an equation did not fit: the shape, the concept or
+    /// the dimension differs from what the earlier arguments fixed.
+    fn match_error(
+        &mut self,
+        entry: &'static Entry,
+        arg: usize,
+        pat: &PTy,
+        err: &MatchError,
+        instance: &Instance,
+        span: Span,
+    ) {
+        let where_ = if arg == usize::MAX {
+            "the rule's result".to_string()
+        } else {
+            format!("`{}`", entry.params.get(arg).copied().unwrap_or("this"))
+        };
+        let d = match err {
+            MatchError::TyConflict { bound, found, .. } => {
+                match (bound, found) {
+                    (Ty::Sem { id: a }, Ty::Sem { id: b }) => self
+                        .error(
+                            "semantic.concept_mismatch",
+                            span,
+                            format!(
+                                "{} and {} are different concepts.",
+                                self.concept_name(*a),
+                                self.concept_name(*b)
+                            ),
+                        )
+                        .explain(format!(
+                            "{} works on values of one kind; a concept's identity is never exchanged for another's, whatever the representation.",
+                            entry.name
+                        )),
+                    (Ty::Q { dim: a }, Ty::Q { dim: b }) => Diagnostic::error(
+                        "dimension.mismatch",
+                        self.entity(),
+                        format!(
+                            "{} mixes values with different physical dimensions: {} and {}.",
+                            entry.name,
+                            pretty::describe_dim(*a),
+                            pretty::describe_dim(*b)
+                        ),
+                    )
+                    .at(span)
+                    .explain("An equation over quantities keeps one dimension throughout."),
+                    (bound, found) => {
+                        let (b, f) = (
+                            STy::of(bound).map(|t| self.describe(&t)).unwrap_or_else(|| pretty::kernel(bound)),
+                            STy::of(found).map(|t| self.describe(&t)).unwrap_or_else(|| pretty::kernel(found)),
+                        );
+                        self.error(
+                            "formula.equation.argument",
+                            span,
+                            format!("{} expects {b} for {where_}, but this is {f}.", entry.name),
+                        )
+                    }
+                }
+            }
+            MatchError::DimConflict { bound, found, .. } => Diagnostic::error(
+                "dimension.mismatch",
+                self.entity(),
+                format!(
+                    "{} mixes values with different physical dimensions: {} and {}.",
+                    entry.name,
+                    pretty::describe_dim(*bound),
+                    pretty::describe_dim(*found)
+                ),
+            )
+            .at(span),
+            MatchError::Shape { found, .. } => {
+                let f = STy::of(found)
+                    .map(|t| self.describe(&t))
+                    .unwrap_or_else(|| pretty::kernel(found));
+                self.error(
+                    "formula.equation.argument",
+                    span,
+                    format!(
+                        "{} expects {} for {where_}, but this is {f}.",
+                        entry.name,
+                        self.describe_pattern(pat, instance)
+                    ),
+                )
+                .fix(format!("Write {}.", entry.shape()))
+            }
+        };
+        self.push(d);
+    }
+
+    /// `Ty.ordB`: the evidence that a type has a designer-meaningful order.
+    fn ordered_evidence(&self, ty: &Ty) -> Option<Ordered> {
+        match ty {
+            Ty::Q { dim } => Some(Ordered::Q(*dim)),
+            Ty::Sem { id } if self.ir.is_ordered(ty) => match self.ir.representation_of(*id) {
+                Some(Ty::Q { dim }) => Some(Ordered::Sem(*id, *dim)),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    /// The `Ord` capability failed: say what the value is and why it has
+    /// no order, in the designer's words (Phase 9c).
+    fn no_order(&mut self, what: &str, ty: &Ty, span: Span) {
+        let d = match ty {
+            Ty::Sem { id } => {
+                let name = self.concept_name(*id);
+                let numeric = matches!(self.ir.representation_of(*id), Some(Ty::Q { .. }));
+                let d = self.error(
+                    "semantic.no_order",
+                    span,
+                    format!("{name} values can be compared for equality, but they have no default order."),
+                );
+                if numeric {
+                    d.explain(format!(
+                        "A concept's values are ordered only when the designer says so; a numeric encoding does not make {name} a magnitude."
+                    ))
+                    .fix(format!(
+                        "Declare it ordered (`ordered concept {name} : …`) if its values are magnitudes, or choose with a rule: minBy(a, b, (x, y) => …)."
+                    ))
+                } else {
+                    d.explain(format!(
+                        "{name} is not represented by a quantity, so nothing orders its values."
+                    ))
+                    .fix("Choose with a rule: minBy(a, b, (x, y) => …).")
+                }
+            }
+            Ty::Prod { .. } => self
+                .error(
+                    "semantic.no_order",
+                    span,
+                    "A grouped value has no order — compare its parts.",
+                )
+                .fix(format!("Apply {what} to one part: first(…) or second(…).")),
+            Ty::List { .. } => self
+                .error(
+                    "semantic.no_order",
+                    span,
+                    "A collection has no order — compare its elements or its length.",
+                )
+                .fix("Use length(…), or any/all over the elements."),
+            Ty::Opt { .. } => self
+                .error(
+                    "semantic.no_order",
+                    span,
+                    "An optional value has no order — take it apart with `match` first.",
+                )
+                .fix("Write `match o { Some(x) => …, None => … }`."),
+            Ty::Bool => self.error("semantic.no_order", span, "true and false have no order."),
+            Ty::Nat => self
+                .error(
+                    "semantic.no_order",
+                    span,
+                    "Counts are not ordered magnitudes here.",
+                )
+                .fix("Compare quantities instead."),
+            Ty::Arr { .. } => self.error("semantic.no_order", span, "Rules have no order."),
+            Ty::Q { .. } => self.error("semantic.no_order", span, "This value has no order."),
+        };
+        self.push(d);
     }
 
     // ---- blocks ----------------------------------------------------------------
@@ -1517,8 +2409,14 @@ impl<'a> Elab<'a> {
             Test::Bool(a, true) => self.materialize(a),
             Test::Bool(a, false) => Expr::app(Expr::prim(Prim::Not), self.materialize(a)),
             Test::Eq(a, v) => Expr::apps(
-                Expr::prim(Prim::Eq { dim: Dim::ZERO }),
+                Expr::prim(Prim::Eq {
+                    ty: Ty::q(Dim::ZERO),
+                }),
                 [self.materialize(a), self.lit(Dim::ZERO, *v)],
+            ),
+            Test::EqNat(a, v) => Expr::apps(
+                Expr::prim(Prim::Eq { ty: Ty::Nat }),
+                [self.materialize(a), Expr::NatLit { value: *v }],
             ),
         }
     }
@@ -1606,15 +2504,25 @@ impl<'a> Elab<'a> {
                     }
                 }
                 STy::Nat => {
-                    out.failed = true;
-                    let d = self
-                        .error(
-                            "formula.unsupported",
-                            p.span,
-                            "A count cannot be matched against a number yet.",
-                        )
-                        .explain("The kernel has no equality on counts (DI-12); bind the count with a name and use it as a value.");
-                    self.push(d);
+                    // Structural equality on counts (Phase 9b): a whole,
+                    // non-negative number.
+                    let whole = literal
+                        .decimal()
+                        .filter(|d| d.normalized().exponent >= 0)
+                        .and_then(|_| literal.to_f64())
+                        .filter(|v| !*negative && v.fract() == 0.0 && *v <= u64::MAX as f64);
+                    match whole {
+                        Some(v) => out.tests.push(Test::EqNat(access, v as u64)),
+                        None => {
+                            out.failed = true;
+                            let d = self.error(
+                                "formula.pattern.kind",
+                                p.span,
+                                "A count is matched against a whole, non-negative number.",
+                            );
+                            self.push(d);
+                        }
+                    }
                 }
                 STy::Sem(s) => self.through_rep(p, *s, access, out),
                 other => self.pattern_kind_error(p, "a number", other, out),
@@ -1764,21 +2672,76 @@ impl<'a> Elab<'a> {
         span: Span,
         path: &mut ExprPath,
     ) -> (Expr, STy) {
+        use BinaryOp::*;
+        // `x in xs` is the library's `contains(x, xs)`; the application
+        // shape `app (app f l) r` is the one below, so the paths agree.
+        if op == In {
+            if let Some(entry) = equations::lookup("contains") {
+                return self.equation(entry, &[l.clone(), r.clone()], span, path, None);
+            }
+        }
         // app (app (prim op) l) r — l at [0,1], r at [1]
         path.push(0);
         path.push(1);
+        let lp = path.clone();
         let (le, lt) = self.expr(l, path, None);
-        let (le, lt) = self.observe(le, lt, path, l.span);
         path.pop();
         path.pop();
         path.push(1);
+        let rp = path.clone();
         let (re, rt) = self.expr(r, path, None);
-        let (re, rt) = self.observe(re, rt, path, r.span);
         path.pop();
         if lt.is_error() || rt.is_error() {
             return (Expr::apps(Expr::prim(Prim::And), [le, re]), STy::Error);
         }
-        use BinaryOp::*;
+        // Two concept values compare as concepts: the same concept, or a
+        // nominal error — never through their representations.
+        // (Arithmetic stays on representations, ADR-0013.)
+        if let (STy::Sem(a), STy::Sem(b), Eq | Ne | Lt | Le | Gt | Ge) = (&lt, &rt, op) {
+            if a != b {
+                let (an, bn) = (self.concept_name(*a), self.concept_name(*b));
+                let d = self
+                    .error(
+                        "semantic.concept_mismatch",
+                        span,
+                        format!("{an} and {bn} are different concepts."),
+                    )
+                    .explain("A concept's identity is never exchanged for another's, whatever the representation; only values of one concept compare.")
+                    .fix(format!("Compare {an} with {an}, or map one concept to the other through a relationship."));
+                self.push(d);
+                return (le, STy::Error);
+            }
+            match op {
+                Eq | Ne => {
+                    let eq = Expr::apps(Expr::prim(Prim::Eq { ty: Ty::sem(*a) }), [le, re]);
+                    return (
+                        if op == Ne {
+                            Expr::app(Expr::prim(Prim::Not), eq)
+                        } else {
+                            eq
+                        },
+                        STy::Bool,
+                    );
+                }
+                Lt | Le | Gt | Ge => {
+                    let Some(o) = self.ordered_evidence(&Ty::sem(*a)) else {
+                        self.no_order(op.symbol(), &Ty::sem(*a), span);
+                        return (le, STy::Error);
+                    };
+                    let d = o.dim();
+                    self.shift_under(&lp, l.span);
+                    self.shift_under(&rp, r.span);
+                    let (le, re) = (Expr::rep(le), Expr::rep(re));
+                    return (compare(op, d, le, re), STy::Bool);
+                }
+                _ => {}
+            }
+        }
+        let (le, lt) = self.observe(le, lt, &lp, l.span);
+        let (re, rt) = self.observe(re, rt, &rp, r.span);
+        if lt.is_error() || rt.is_error() {
+            return (Expr::apps(Expr::prim(Prim::And), [le, re]), STy::Error);
+        }
         match op {
             Add | Sub | Mul | Div | Lt | Le | Gt | Ge => {
                 let (STy::Q(dl), STy::Q(dr)) = (&lt, &rt) else {
@@ -1787,6 +2750,19 @@ impl<'a> Elab<'a> {
                     } else {
                         (&rt, r.span)
                     };
+                    if matches!(op, Lt | Le | Gt | Ge) {
+                        let ty = match bad.0 {
+                            STy::Opt(_) => Some(bad.0.to_ty().unwrap_or(Ty::opt(Ty::Nat))),
+                            STy::List(_) => Some(bad.0.to_ty().unwrap_or(Ty::list(Ty::Nat))),
+                            other => other.to_ty(),
+                        };
+                        if let Some(ty) = ty {
+                            if !matches!(ty, Ty::Q { .. }) {
+                                self.no_order(op.symbol(), &ty, bad.1);
+                                return (le, STy::Error);
+                            }
+                        }
+                    }
                     self.kind_error(
                         span,
                         &format!("`{}` needs quantities on both sides", op.symbol()),
@@ -1819,69 +2795,52 @@ impl<'a> Elab<'a> {
                                 Expr::apps(Expr::prim(Prim::Sub { dim: dl }), [le, re]),
                                 STy::Q(dl),
                             ),
-                            Lt => (
-                                Expr::apps(Expr::prim(Prim::Lt { dim: dl }), [le, re]),
-                                STy::Bool,
-                            ),
-                            // a > b  ≡  b < a
-                            Gt => (
-                                Expr::apps(Expr::prim(Prim::Lt { dim: dl }), [re, le]),
-                                STy::Bool,
-                            ),
-                            // a <= b ≡ !(b < a);  a >= b ≡ !(a < b)
-                            Le => (
-                                Expr::app(
-                                    Expr::prim(Prim::Not),
-                                    Expr::apps(Expr::prim(Prim::Lt { dim: dl }), [re, le]),
-                                ),
-                                STy::Bool,
-                            ),
-                            Ge => (
-                                Expr::app(
-                                    Expr::prim(Prim::Not),
-                                    Expr::apps(Expr::prim(Prim::Lt { dim: dl }), [le, re]),
-                                ),
-                                STy::Bool,
-                            ),
-                            _ => unreachable!("arithmetic/comparison operators only"),
+                            _ => (compare(op, dl, le, re), STy::Bool),
                         }
                     }
                 }
             }
             Eq | Ne => {
-                let eq = match (&lt, &rt) {
-                    (STy::Q(dl), STy::Q(dr)) => {
-                        if dl != dr {
-                            self.dimension_mismatch(op, span, *dl, *dr);
-                            return (le, STy::Error);
-                        }
-                        Expr::apps(Expr::prim(Prim::Eq { dim: *dl }), [le, re])
-                    }
-                    (STy::Bool, STy::Bool) => {
-                        // (a && b) || (!a && !b); the kernel has no boolean equality
-                        let both = Expr::apps(Expr::prim(Prim::And), [le.clone(), re.clone()]);
-                        let neither = Expr::apps(
-                            Expr::prim(Prim::And),
-                            [
-                                Expr::app(Expr::prim(Prim::Not), le),
-                                Expr::app(Expr::prim(Prim::Not), re),
-                            ],
-                        );
-                        Expr::apps(Expr::prim(Prim::Or), [both, neither])
-                    }
-                    _ => {
-                        let (a, b) = (self.describe(&lt), self.describe(&rt));
-                        let d = self
-                            .error(
-                                "type.operand_kind",
-                                span,
-                                format!("`{}` compares {a} with {b}.", op.symbol()),
-                            )
-                            .explain("Both sides of a comparison must be the same kind of value; an optional value is taken apart with `match`.");
-                        self.push(d);
+                // Structural equality at any data kind (Phase 9b): the two
+                // sides must be one kind; a bare `None` or `[]` takes the
+                // other side's.
+                let Some(target) = STy::unify(&lt, &rt) else {
+                    let (a, b) = (self.describe(&lt), self.describe(&rt));
+                    let d = self
+                        .error(
+                            "type.operand_kind",
+                            span,
+                            format!("`{}` compares {a} with {b}.", op.symbol()),
+                        )
+                        .explain("Both sides of a comparison must be the same kind of value.");
+                    self.push(d);
+                    return (le, STy::Error);
+                };
+                if let (STy::Q(dl), STy::Q(dr)) = (&lt, &rt) {
+                    if dl != dr {
+                        self.dimension_mismatch(op, span, *dl, *dr);
                         return (le, STy::Error);
                     }
+                }
+                let Some(ty) = target.to_ty() else {
+                    return self.undetermined(span);
                 };
+                let (le, lt2) = if lt.is_known() {
+                    (le, lt)
+                } else {
+                    let mut p = lp.clone();
+                    self.expr(l, &mut p, Some(&target))
+                };
+                let (re, rt2) = if rt.is_known() {
+                    (re, rt)
+                } else {
+                    let mut p = rp.clone();
+                    self.expr(r, &mut p, Some(&target))
+                };
+                if lt2.is_error() || rt2.is_error() {
+                    return (le, STy::Error);
+                }
+                let eq = Expr::apps(Expr::prim(Prim::Eq { ty }), [le, re]);
                 (
                     if op == Ne {
                         Expr::app(Expr::prim(Prim::Not), eq)
@@ -1909,6 +2868,7 @@ impl<'a> Elab<'a> {
                 let p = if op == And { Prim::And } else { Prim::Or };
                 (Expr::apps(Expr::prim(p), [le, re]), STy::Bool)
             }
+            In => self.placeholder(),
         }
     }
 
@@ -1944,6 +2904,38 @@ impl<'a> Elab<'a> {
             .explain("Only quantities of the same dimension can be added, subtracted or compared. Multiplying or dividing combines dimensions.")
             .technical(format!("{} : q[{}] → q[{}] → …, found q[{}]", op.symbol(), pretty::symbol(l), pretty::symbol(l), pretty::symbol(r))),
         );
+    }
+}
+
+/// Whether a type mentions a concept anywhere.
+fn mentions_concept(t: &STy) -> bool {
+    match t {
+        STy::Sem(_) => true,
+        STy::Opt(i) | STy::List(i) => mentions_concept(i),
+        STy::Pair(a, b) => mentions_concept(a) || mentions_concept(b),
+        _ => false,
+    }
+}
+
+/// Whether `sem` is a concept value whose representation is exactly
+/// `rep`: the case an equation observes rather than refuses.
+fn observable(ir: &DesignIr, sem: &Ty, rep: &Ty) -> bool {
+    match sem {
+        Ty::Sem { id } => !matches!(rep, Ty::Sem { .. }) && ir.representation_of(*id) == Some(rep),
+        _ => false,
+    }
+}
+
+/// A quantity comparison of dimension `d`: `lt` directly, the others by
+/// swapping and negating — `a > b ≡ b < a`, `a <= b ≡ !(b < a)`, `a >= b ≡ !(a < b)`.
+fn compare(op: BinaryOp, d: Dim, l: Expr, r: Expr) -> Expr {
+    let lt = |a: Expr, b: Expr| Expr::apps(Expr::prim(Prim::Lt { dim: d }), [a, b]);
+    match op {
+        BinaryOp::Lt => lt(l, r),
+        BinaryOp::Gt => lt(r, l),
+        BinaryOp::Le => Expr::app(Expr::prim(Prim::Not), lt(r, l)),
+        BinaryOp::Ge => Expr::app(Expr::prim(Prim::Not), lt(l, r)),
+        _ => Expr::apps(Expr::prim(Prim::And), [l, r]),
     }
 }
 

@@ -107,6 +107,12 @@ Transition reduce(AppState s, AppAction action) {
         ),
       ),
     ),
+    SetConceptOrderedRequested(:final id, :final ordered) => _edit(
+      s,
+      pb.EditOp(
+        setConceptOrdered: pb.SetConceptOrdered(id: Int64(id), ordered: ordered),
+      ),
+    ),
     DeleteConceptRequested(:final id) => _edit(
       s,
       pb.EditOp(deleteConcept: pb.DeleteConcept(id: Int64(id))),

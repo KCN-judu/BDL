@@ -17,7 +17,7 @@ import '../../app/actions.dart';
 import '../../app/simulation.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
-import '../canvas/canvas_geometry.dart' show dimLabel;
+import '../canvas/canvas_geometry.dart' show dimLabel, representationWords;
 import '../canvas/concept_glyphs.dart';
 import '../mac/controls.dart';
 import '../mac/interactive.dart';
@@ -301,6 +301,24 @@ class _InputControl extends StatelessWidget {
                   value: _semantic(pb.Value(count: Int64(n))),
                 ),
               );
+            },
+          );
+        case pb.Representation_Kind.list:
+        case pb.Representation_Kind.pair:
+        case pb.Representation_Kind.optional:
+          // A structured value, written the way the design shows it:
+          // `[1, 2, 3]`, `(20, 45)`, `none` / `some(1)`, nested as the
+          // form nests.  Only the value's shape is read here; what it
+          // means stays with the compiler.
+          final r = concept.representation;
+          control = CommitTextField(
+            key: ValueKey('input-$id'),
+            value: repr == null ? '' : renderValue(repr),
+            hint: representationWords(r, unit: dimLabel),
+            onCommit: (v) {
+              final parsed = parseValue(r, v);
+              if (parsed == null) return;
+              dispatch(SimulationInputChanged(mappingId: id, value: _semantic(parsed)));
             },
           );
         case pb.Representation_Kind.notSet:
@@ -782,4 +800,90 @@ class _Series extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A structured input value as text, the inverse of [parseValue].
+String renderValue(pb.Value v) => switch (v.whichKind()) {
+  pb.Value_Kind.boolean => v.boolean ? 'true' : 'false',
+  pb.Value_Kind.count => v.count.toString(),
+  pb.Value_Kind.quantity => _fmt(v.quantity.value),
+  pb.Value_Kind.semantic => v.semantic.hasRepr() ? renderValue(v.semantic.repr) : '',
+  pb.Value_Kind.none => 'none',
+  pb.Value_Kind.some => 'some(${renderValue(v.some)})',
+  pb.Value_Kind.list => '[${v.list.items.map(renderValue).join(', ')}]',
+  pb.Value_Kind.pair => '(${renderValue(v.pair.fst)}, ${renderValue(v.pair.snd)})',
+  pb.Value_Kind.opaque => v.opaque,
+  pb.Value_Kind.notSet => '',
+};
+
+/// Read a value of form [r] from text: `true`, `3`, `0.5`, `[a, b]`,
+/// `(a, b)`, `none`, `some(a)`.  `null` when the text does not have the
+/// form's shape.
+pb.Value? parseValue(pb.Representation r, String text) {
+  final t = text.trim();
+  switch (r.whichKind()) {
+    case pb.Representation_Kind.quantity:
+      final n = double.tryParse(t);
+      return n == null
+          ? null
+          : pb.Value(
+              quantity: pb.Quantity(dim: r.quantity, value: n),
+            );
+    case pb.Representation_Kind.boolean:
+      return switch (t) {
+        'true' => pb.Value(boolean: true),
+        'false' => pb.Value(boolean: false),
+        _ => null,
+      };
+    case pb.Representation_Kind.count:
+      final n = int.tryParse(t);
+      return n == null || n < 0 ? null : pb.Value(count: Int64(n));
+    case pb.Representation_Kind.optional:
+      if (t == 'none') return pb.Value(none: pb.Unit());
+      if (t.startsWith('some(') && t.endsWith(')')) {
+        final inner = parseValue(r.optional, t.substring(5, t.length - 1));
+        return inner == null ? null : pb.Value(some: inner);
+      }
+      return null;
+    case pb.Representation_Kind.list:
+      if (!t.startsWith('[') || !t.endsWith(']')) return null;
+      final items = <pb.Value>[];
+      for (final part in _splitTopLevel(t.substring(1, t.length - 1))) {
+        final v = parseValue(r.list, part);
+        if (v == null) return null;
+        items.add(v);
+      }
+      return pb.Value(list: pb.ValueList(items: items));
+    case pb.Representation_Kind.pair:
+      if (!t.startsWith('(') || !t.endsWith(')')) return null;
+      final parts = _splitTopLevel(t.substring(1, t.length - 1));
+      if (parts.length != 2) return null;
+      final a = parseValue(r.pair.first, parts[0]);
+      final b = parseValue(r.pair.second, parts[1]);
+      return a == null || b == null
+          ? null
+          : pb.Value(
+              pair: pb.ValuePair(fst: a, snd: b),
+            );
+    case pb.Representation_Kind.notSet:
+      return null;
+  }
+}
+
+/// Split on commas outside brackets and parentheses; nothing for an empty body.
+List<String> _splitTopLevel(String body) {
+  final out = <String>[];
+  var depth = 0;
+  var start = 0;
+  for (var i = 0; i < body.length; i++) {
+    final ch = body[i];
+    if (ch == '[' || ch == '(') depth++;
+    if (ch == ']' || ch == ')') depth = depth > 0 ? depth - 1 : 0;
+    if (ch == ',' && depth == 0) {
+      out.add(body.substring(start, i));
+      start = i + 1;
+    }
+  }
+  if (body.substring(start).trim().isNotEmpty) out.add(body.substring(start));
+  return out;
 }

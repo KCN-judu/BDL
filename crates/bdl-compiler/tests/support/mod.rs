@@ -93,6 +93,7 @@ pub fn concept(ir: &mut DesignIr, n: u64, name: &str, rep: Ty) {
             id: s(n),
             name: name.into(),
             representation: Some(rep),
+            ordered: false,
         },
     );
 }
@@ -323,7 +324,9 @@ pub fn corpus() -> Vec<Case> {
             }),
             [
                 Expr::apps(
-                    Expr::prim(Prim::Eq { dim: Dim::ZERO }),
+                    Expr::prim(Prim::Eq {
+                        ty: Ty::q(Dim::ZERO),
+                    }),
                     [Expr::decl(d(0)), lit(0.0)],
                 ),
                 Expr::prim(Prim::None { ty: q.clone() }),
@@ -516,6 +519,244 @@ pub fn corpus() -> Vec<Case> {
     case.inputs.set(d(0), 2, Value::scalar(3.0));
     cases.push(case);
 
+    // Collections and grouped values (Phase 9a/9b): the library's
+    // combinators at closed instances, the recursor with a primitive step,
+    // structural equality, a list in a state cell.
+    let mut ir = DesignIr::default();
+    let q = Ty::q(Dim::ZERO);
+    let lq = Ty::list(q.clone());
+    let mut inst = bdl_equations::Instance::default();
+    inst.subst.tys.insert(0, q.clone());
+    inst.subst.tys.insert(1, q.clone());
+    inst.subst.dims.insert(0, Dim::ZERO);
+    inst.ordered.insert(0, bdl_equations::Ordered::Q(Dim::ZERO));
+    let lib = |name: &str| (bdl_equations::lookup(name).unwrap().build)(&inst);
+    decl(&mut ir, 0, "xs", lq.clone(), None, Some(0));
+    // above := any(xs, x => 2 < x)
+    decl(
+        &mut ir,
+        1,
+        "above",
+        Ty::Bool,
+        Some(Expr::apps(
+            lib("any"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(
+                    q.clone(),
+                    Expr::apps(
+                        Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+                        [lit(2.0), Expr::var(0)],
+                    ),
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    // total := sum(xs)
+    qdecl(
+        &mut ir,
+        2,
+        "total",
+        Some(Expr::app(lib("sum"), Expr::decl(d(0)))),
+        Some(0),
+    );
+    // shifted := map(xs, x => x + 5)
+    decl(
+        &mut ir,
+        3,
+        "shifted",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("map"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(q.clone(), add(Expr::var(0), lit(5.0))),
+            ],
+        )),
+        Some(0),
+    );
+    // stats := (getOrElse(head(xs), 0), length(xs))
+    decl(
+        &mut ir,
+        4,
+        "stats",
+        Ty::prod(q.clone(), q.clone()),
+        Some(Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: q.clone(),
+                snd: q.clone(),
+            }),
+            [
+                Expr::apps(
+                    lib("getOrElse"),
+                    [Expr::app(lib("head"), Expr::decl(d(0))), lit(0.0)],
+                ),
+                Expr::app(lib("length"), Expr::decl(d(0))),
+            ],
+        )),
+        Some(0),
+    );
+    // first := first(stats)
+    qdecl(
+        &mut ir,
+        5,
+        "first",
+        Some(Expr::app(lib("first"), Expr::decl(d(4)))),
+        Some(0),
+    );
+    // same := xs == reverse(reverse(xs))
+    decl(
+        &mut ir,
+        6,
+        "same",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Eq { ty: lq.clone() }),
+            [
+                Expr::decl(d(0)),
+                Expr::app(lib("reverse"), Expr::app(lib("reverse"), Expr::decl(d(0)))),
+            ],
+        )),
+        Some(0),
+    );
+    // remembered := delay [] xs
+    decl(
+        &mut ir,
+        7,
+        "remembered",
+        lq.clone(),
+        Some(Expr::delay(
+            Expr::prim(Prim::Nil { ty: q.clone() }),
+            Expr::decl(d(0)),
+        )),
+        Some(0),
+    );
+    // pairs := zip(xs, shifted)
+    decl(
+        &mut ir,
+        8,
+        "pairs",
+        Ty::list(Ty::prod(q.clone(), q.clone())),
+        Some(Expr::apps(lib("zip"), [Expr::decl(d(0)), Expr::decl(d(3))])),
+        Some(0),
+    );
+    // has2 := contains(2, xs)
+    decl(
+        &mut ir,
+        9,
+        "has2",
+        Ty::Bool,
+        Some(Expr::apps(lib("contains"), [lit(2.0), Expr::decl(d(0))])),
+        Some(0),
+    );
+    // clipped := clamp(total, 1, 4); kept := filter(xs, x => x < 2)
+    qdecl(
+        &mut ir,
+        10,
+        "clipped",
+        Some(Expr::apps(
+            lib("clamp"),
+            [Expr::decl(d(2)), lit(1.0), lit(4.0)],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        11,
+        "kept",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("filter"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(
+                    q.clone(),
+                    Expr::apps(
+                        Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+                        [Expr::var(0), lit(2.0)],
+                    ),
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    ir.clock_names.insert(c(0), "main".into());
+    let mut case = Case::new("collections", ir, 4);
+    case.inputs.series(
+        d(0),
+        (0..4).map(|t| Value::list((0..t).map(|i| Value::scalar(i as f64)))),
+    );
+    cases.push(case);
+
+    // The Phase-9a buffer: a lossless cross-domain window as five
+    // declarations over `delay`/`sync` and list data — no buffer primitive.
+    //   log   @fast := cons x (delay [] log)
+    //   logD  @slow := sync fast [] log
+    //   seen  @slow := length logD
+    //   cursor@slow := delay 0 seen
+    //   window@slow := reverse (take (seen − cursor) logD)
+    let mut ir = DesignIr::default();
+    let nil = Expr::prim(Prim::Nil { ty: q.clone() });
+    qdecl(&mut ir, 0, "x", None, Some(0));
+    decl(
+        &mut ir,
+        1,
+        "log",
+        lq.clone(),
+        Some(Expr::apps(
+            Expr::prim(Prim::Cons { ty: q.clone() }),
+            [Expr::decl(d(0)), Expr::delay(nil.clone(), Expr::decl(d(1)))],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        2,
+        "logD",
+        lq.clone(),
+        Some(Expr::sync(c(0), nil.clone(), Expr::decl(d(1)))),
+        Some(1),
+    );
+    qdecl(
+        &mut ir,
+        3,
+        "seen",
+        Some(Expr::app(
+            Expr::prim(Prim::Length { ty: q.clone() }),
+            Expr::decl(d(2)),
+        )),
+        Some(1),
+    );
+    qdecl(
+        &mut ir,
+        4,
+        "cursor",
+        Some(Expr::delay(lit(0.0), Expr::decl(d(3)))),
+        Some(1),
+    );
+    decl(
+        &mut ir,
+        5,
+        "window",
+        lq.clone(),
+        Some(Expr::app(
+            Expr::prim(Prim::Reverse { ty: q.clone() }),
+            Expr::apps(
+                Expr::prim(Prim::Take { ty: q.clone() }),
+                [sub(Expr::decl(d(3)), Expr::decl(d(4))), Expr::decl(d(2))],
+            ),
+        )),
+        Some(1),
+    );
+    ir.clock_names.insert(c(0), "fast".into());
+    ir.clock_names.insert(c(1), "slow".into());
+    let mut case = Case::new("buffer", ir, 7);
+    case.schedule.periods.insert(c(1), 3);
+    case.inputs
+        .series(d(0), (0..7).map(|n| Value::scalar(n as f64 + 1.0)));
+    cases.push(case);
+
     // A design with no clock domain at all.
     let mut ir = DesignIr::default();
     qdecl(&mut ir, 0, "one", Some(lit(1.0)), None);
@@ -662,6 +903,10 @@ pub fn dyn_of(v: &Value) -> DynValue {
         Value::Semantic { id, repr } => DynValue::sem(id.raw(), dyn_of(repr)),
         Value::None => DynValue::None,
         Value::Some { value } => DynValue::some(dyn_of(value)),
+        Value::List { items } => DynValue::List {
+            items: items.iter().map(dyn_of).collect(),
+        },
+        Value::Pair { fst, snd } => DynValue::pair_of(dyn_of(fst), dyn_of(snd)),
         Value::Closure { .. } | Value::Prim { .. } => panic!("function values are never compared"),
     }
 }

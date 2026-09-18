@@ -96,6 +96,81 @@ fn sync_observes_only_prior_source_activations_whatever_the_order() {
 }
 
 #[test]
+fn collections_and_grouped_values_agree_and_stay_first_order() {
+    let case = corpus()
+        .into_iter()
+        .find(|c| c.name == "collections")
+        .unwrap();
+    let (art, trace) = differential(&case);
+    let exec = art.exec_ir.as_ref().unwrap();
+    assert!(exec.uses_lists());
+    assert!(art.generated.as_ref().unwrap().manifest.requires_allocator);
+    // no closure anywhere: every combinator lowered to first-order code
+    let src = art.generated.as_ref().unwrap().core_source();
+    assert!(src.contains("list::fold("), "{src}");
+    assert!(src.contains("extern crate alloc;"));
+    // tick 3: xs = [0, 1, 2]
+    let at = |decl: u64| value_of(&trace, &art, d(decl))[3].clone().unwrap();
+    assert_eq!(at(1), DynValue::Bool { value: false }); // any(x > 2)
+    assert_eq!(at(2), DynValue::Quantity { value: 3.0 }); // sum
+    assert_eq!(
+        at(3),
+        DynValue::List {
+            items: vec![
+                DynValue::Quantity { value: 5.0 },
+                DynValue::Quantity { value: 6.0 },
+                DynValue::Quantity { value: 7.0 }
+            ]
+        }
+    );
+    assert_eq!(
+        at(4),
+        DynValue::pair_of(
+            DynValue::Quantity { value: 0.0 },
+            DynValue::Quantity { value: 3.0 }
+        )
+    );
+    assert_eq!(at(6), DynValue::Bool { value: true }); // xs == reverse(reverse(xs))
+                                                       // remembered: the previous tick's list, [] at tick 0
+    assert_eq!(
+        value_of(&trace, &art, d(7))[0].clone().unwrap(),
+        DynValue::List { items: vec![] }
+    );
+    assert_eq!(
+        value_of(&trace, &art, d(7))[3].clone().unwrap(),
+        DynValue::List {
+            items: vec![
+                DynValue::Quantity { value: 0.0 },
+                DynValue::Quantity { value: 1.0 }
+            ]
+        }
+    );
+    assert_eq!(at(9), DynValue::Bool { value: true }); // contains 2
+    assert_eq!(at(10), DynValue::Quantity { value: 3.0 }); // clamp(3, 1, 4)
+}
+
+#[test]
+fn the_lossless_buffer_window_is_the_source_activations_since_the_last_slow_tick() {
+    // Phase 9a, Theorem M: with `slow` every 3 ticks and `fast` every tick,
+    // the window at a slow activation holds the fast values *strictly
+    // before* it since the previous slow activation, oldest first.
+    let case = corpus().into_iter().find(|c| c.name == "buffer").unwrap();
+    let (art, trace) = differential(&case);
+    let window = value_of(&trace, &art, d(5));
+    let list = |xs: &[f64]| DynValue::List {
+        items: xs
+            .iter()
+            .map(|v| DynValue::Quantity { value: *v })
+            .collect(),
+    };
+    // x = 1, 2, 3, …; slow active at ticks 0, 3, 6
+    assert_eq!(window[0], Some(list(&[])));
+    assert_eq!(window[1], None);
+    assert_eq!(window[3], Some(list(&[1.0, 2.0, 3.0])));
+    assert_eq!(window[6], Some(list(&[4.0, 5.0, 6.0])));
+}
+
+#[test]
 fn every_corpus_case_agrees_with_the_reference() {
     for case in corpus() {
         let (art, trace) = differential(&case);
@@ -219,10 +294,15 @@ fn every_corpus_core_checks_as_a_no_std_library_on_its_own() {
             g.core_source().contains("#![no_std]")
                 && g.core_source().contains("#![forbid(unsafe_code)]")
         );
-        // no std, no alloc, no collections, no target crate
-        for forbidden in [
-            "std::", "alloc::", "Vec<", "BTreeMap", "HashMap", "embassy", "hal", "Box<",
-        ] {
+        // no std, no target crate; `alloc` and `Vec` only in a program
+        // that carries lists, and then declared in the manifest
+        let lists = art.exec_ir.as_ref().unwrap().uses_lists();
+        assert_eq!(g.manifest.requires_allocator, lists, "{}", case.name);
+        let mut forbidden = vec!["std::", "BTreeMap", "HashMap", "embassy", "hal", "Box<"];
+        if !lists {
+            forbidden.extend(["alloc::", "Vec<", "list::"]);
+        }
+        for forbidden in forbidden {
             assert!(
                 !g.core_source().contains(forbidden),
                 "{}: core mentions {forbidden}",

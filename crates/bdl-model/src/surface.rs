@@ -182,11 +182,19 @@ pub struct Concept {
     pub description: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub representation: Option<Representation>,
+    /// The designer declared this concept *ordered*: its values may be
+    /// compared with `<`, `min`, `max`, `clamp`, `inRange` — through the
+    /// quantity that represents them.  Never inferred from the
+    /// representation (a `Mode` encoded as a number has no order); the
+    /// formal `OrdDecl` (Phase 9c).  Meaningful only with a quantity
+    /// representation; equality needs no declaration.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub ordered: bool,
 }
 
 /// What a concept is represented by.  Must be a semantic-free *data* type
 /// (kernel `ConceptEnv.WF`); the enum makes that unrepresentable otherwise.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Representation {
     /// A physical quantity of dimension `dim` (`q dim`).  Dimensionless
@@ -196,6 +204,44 @@ pub enum Representation {
     Boolean,
     /// A count (`nat`).
     Count,
+    /// A value that may be absent (`opt R`).
+    Optional { inner: Box<Representation> },
+    /// A finite collection of values, in order (`list R`, Phase 9a).
+    List { element: Box<Representation> },
+    /// A grouped value: two parts side by side (`R₁ × R₂`, Phase 9b).
+    Pair {
+        first: Box<Representation>,
+        second: Box<Representation>,
+    },
+}
+
+impl Representation {
+    pub fn quantity(dim: Dim) -> Representation {
+        Representation::Quantity { dim }
+    }
+    pub fn optional(inner: Representation) -> Representation {
+        Representation::Optional {
+            inner: Box::new(inner),
+        }
+    }
+    pub fn list(element: Representation) -> Representation {
+        Representation::List {
+            element: Box::new(element),
+        }
+    }
+    pub fn pair(first: Representation, second: Representation) -> Representation {
+        Representation::Pair {
+            first: Box::new(first),
+            second: Box::new(second),
+        }
+    }
+    /// The quantity dimension when the representation is a plain quantity.
+    pub fn as_quantity(&self) -> Option<Dim> {
+        match self {
+            Representation::Quantity { dim } => Some(*dim),
+            _ => None,
+        }
+    }
 }
 
 /// A mapping block: a declaration with a signature over concepts and an

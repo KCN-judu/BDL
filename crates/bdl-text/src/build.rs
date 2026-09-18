@@ -368,6 +368,7 @@ impl<'a> Builder<'a> {
                             name: c.name.name.clone(),
                             description: String::new(),
                             representation: repr,
+                            ordered: c.ordered,
                         },
                     );
                     self.base.concepts.insert(c.name.name.clone(), id);
@@ -715,34 +716,27 @@ impl<'a> Builder<'a> {
 
     fn representation(&mut self, file: usize, t: Option<&SurfaceType>) -> Option<Representation> {
         let t = t?;
-        match &t.kind {
-            TypeKind::Named { name, args } if args.is_empty() => match representation_named(name) {
-                Some(r) => Some(r),
-                None => {
-                    self.fault(
-                            file,
-                            t.span,
-                            "text.unknown_representation",
-                            format!(
-                                "`{name}` is not a value form; write Bool, Count or a quantity such as {}.",
-                                bdl_model::quantity::QUANTITIES
-                                    .iter()
-                                    .take(4)
-                                    .map(|q| q.type_name)
-                                    .collect::<Vec<_>>()
-                                    .join(", ")
-                            ),
-                        );
-                    None
-                }
-            },
-            _ => {
+        match representation_of_type(t) {
+            Ok(r) => Some(r),
+            Err(RepresentationError::UnknownName(name)) => {
                 self.fault(
                     file,
                     t.span,
                     "text.unknown_representation",
-                    "a concept's value form is a single name (Bool, Count or a quantity).".into(),
+                    format!(
+                        "`{name}` is not a value form; write Bool, Count, a quantity such as {}, or List<…>, Pair<…, …>, Option<…> of those.",
+                        bdl_model::quantity::QUANTITIES
+                            .iter()
+                            .take(4)
+                            .map(|q| q.type_name)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ),
                 );
+                None
+            }
+            Err(RepresentationError::Shape(what)) => {
+                self.fault(file, t.span, "text.unknown_representation", what);
                 None
             }
         }
@@ -996,6 +990,7 @@ impl<'a> Builder<'a> {
                             name: x.name.name.clone(),
                             description: String::new(),
                             representation: repr,
+                            ordered: x.ordered,
                         },
                     );
                     names.concepts.insert(x.name.name.clone(), id);
@@ -1027,7 +1022,11 @@ impl<'a> Builder<'a> {
                         continue;
                     };
                     let id = SemanticId::from_raw(self.id(&key));
-                    let repr = self.system.base.concepts[&system_id].representation;
+                    let shared_concept = &self.system.base.concepts[&system_id];
+                    let (repr, ordered) = (
+                        shared_concept.representation.clone(),
+                        shared_concept.ordered,
+                    );
                     body.concepts.insert(
                         id,
                         Concept {
@@ -1035,6 +1034,7 @@ impl<'a> Builder<'a> {
                             name: u.name.name.clone(),
                             description: String::new(),
                             representation: repr,
+                            ordered,
                         },
                     );
                     shared.insert(id, system_id);
@@ -2030,6 +2030,42 @@ pub fn representation_named(name: &str) -> Option<Representation> {
     })
 }
 
+/// Why a written type is not a value form.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RepresentationError {
+    UnknownName(String),
+    Shape(String),
+}
+
+/// The value form a written type stands for: a plain name, or `List<R>`,
+/// `Pair<R₁, R₂>`, `Option<R>` over value forms — never a concept, never a
+/// relationship type.
+pub fn representation_of_type(t: &SurfaceType) -> Result<Representation, RepresentationError> {
+    match &t.kind {
+        TypeKind::Named { name, args } if args.is_empty() => {
+            representation_named(name).ok_or_else(|| RepresentationError::UnknownName(name.clone()))
+        }
+        TypeKind::Named { name, args } => match (name.as_str(), args.as_slice()) {
+            ("List", [e]) => Ok(Representation::list(representation_of_type(e)?)),
+            ("Option", [e]) => Ok(Representation::optional(representation_of_type(e)?)),
+            ("Pair", [a, b]) => Ok(Representation::pair(
+                representation_of_type(a)?,
+                representation_of_type(b)?,
+            )),
+            ("List" | "Option", _) => Err(RepresentationError::Shape(format!(
+                "`{name}` takes one value form: `{name}<Scalar>`."
+            ))),
+            ("Pair", _) => Err(RepresentationError::Shape(
+                "`Pair` takes two value forms: `Pair<Temperature, Scalar>`.".into(),
+            )),
+            _ => Err(RepresentationError::UnknownName(name.clone())),
+        },
+        TypeKind::Function { .. } => Err(RepresentationError::Shape(
+            "a concept's value form is a value, never a relationship type.".into(),
+        )),
+    }
+}
+
 /// A device kind by its snake-case name (the serde spelling).
 pub fn device_kind_named(name: &str) -> Option<DeviceKind> {
     Some(match name {
@@ -2056,13 +2092,20 @@ pub fn device_kind_name(kind: DeviceKind) -> &'static str {
 }
 
 /// The textual spelling of a value form, inverse of
-/// [`representation_named`] for named quantities.
-pub fn representation_name(r: Representation) -> String {
+/// [`representation_of_type`].
+pub fn representation_name(r: &Representation) -> String {
     match r {
         Representation::Boolean => "Bool".into(),
         Representation::Count => "Count".into(),
-        Representation::Quantity { dim } => bdl_model::quantity::by_dim(dim)
+        Representation::Quantity { dim } => bdl_model::quantity::by_dim(*dim)
             .map(|q| q.type_name.to_owned())
             .unwrap_or_else(|| "Scalar".into()),
+        Representation::Optional { inner } => format!("Option<{}>", representation_name(inner)),
+        Representation::List { element } => format!("List<{}>", representation_name(element)),
+        Representation::Pair { first, second } => format!(
+            "Pair<{}, {}>",
+            representation_name(first),
+            representation_name(second)
+        ),
     }
 }

@@ -33,6 +33,9 @@ class SocketGlyph extends StatelessWidget {
         SocketKind.quantity => 'quantity',
         SocketKind.onOff => 'on or off',
         SocketKind.count => 'count',
+        SocketKind.collection => 'collection',
+        SocketKind.grouped => 'grouped value',
+        SocketKind.optional => 'optional value',
       },
       child: CustomPaint(size: Size.square(size), painter: _SocketGlyphPainter(t, kind, color)),
     );

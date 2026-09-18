@@ -106,6 +106,7 @@ dependencies = [
  "bdl-codegen-rust",
  "bdl-diagnostics",
  "bdl-elab",
+ "bdl-equations",
  "bdl-exec-ir",
  "bdl-hardware",
  "bdl-ir",
@@ -163,11 +164,22 @@ version = "0.1.0"
 dependencies = [
  "bdl-check",
  "bdl-diagnostics",
+ "bdl-equations",
  "bdl-ir",
  "bdl-model",
+ "bdl-reactive",
  "bdl-syntax",
  "proptest",
  "serde",
+]
+
+[[package]]
+name = "bdl-equations"
+version = "0.1.0"
+dependencies = [
+ "bdl-check",
+ "bdl-ir",
+ "bdl-model",
 ]
 
 [[package]]

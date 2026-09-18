@@ -69,12 +69,12 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells;
+    let mut next: Cells = state.cells.clone();
     // read phase
     // one (decl#0)
     let decl_0: Option<f64> = if prim::or(active.any(), (!HAS_DOMAINS)) { Some(1.0_f64) } else { None };
     // two (decl#1)
-    let decl_1: Option<f64> = if prim::or(active.any(), (!HAS_DOMAINS)) { Some(num::add(read_decl(decl_0, 0_u64)?, read_decl(decl_0, 0_u64)?, 1_u64)?) } else { None };
+    let decl_1: Option<f64> = if prim::or(active.any(), (!HAS_DOMAINS)) { Some(num::add(read_decl(&decl_0, 0_u64)?, read_decl(&decl_0, 0_u64)?, 1_u64)?) } else { None };
     // write phase: into the next state only
     // commit
     state.cells = next;

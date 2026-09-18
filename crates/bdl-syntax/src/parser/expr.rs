@@ -7,7 +7,7 @@ use crate::kind::SyntaxKind::{self, *};
 use crate::syntax::SyntaxErrorCode;
 use bdl_diagnostics::Span;
 
-const ITEM_START: &[SyntaxKind] = &[KwConcept, KwMapping, KwEnum];
+const ITEM_START: &[SyntaxKind] = &[KwConcept, KwOrdered, KwMapping, KwEnum];
 
 /// Binding powers (left, right) and whether the operator is a comparison
 /// (§5: comparisons are non-associative).
@@ -16,7 +16,7 @@ fn infix(kind: SyntaxKind) -> Option<(u8, u8, bool)> {
         OrOr => (1, 2, false),
         AndAnd => (3, 4, false),
         EqEq | Ne => (5, 6, true),
-        Lt | Le | Gt | Ge => (7, 8, true),
+        Lt | Le | Gt | Ge | KwIn => (7, 8, true),
         Plus | Minus => (9, 10, false),
         Star | Slash => (11, 12, false),
         _ => return None,
@@ -28,7 +28,17 @@ const UNARY_BP: u8 = 13;
 pub(super) fn can_start(kind: SyntaxKind) -> bool {
     matches!(
         kind,
-        Ident | Number | KwTrue | KwFalse | LParen | LBrace | KwIf | KwMatch | Bang | Minus
+        Ident
+            | Number
+            | KwTrue
+            | KwFalse
+            | LParen
+            | LBrace
+            | LBracket
+            | KwIf
+            | KwMatch
+            | Bang
+            | Minus
     ) || kind.is_future_reserved()
 }
 
@@ -67,6 +77,11 @@ pub(super) fn unexpected_after_expr(p: &mut Parser<'_>, expected: &str) {
 /// Returns the completed node and, when it is an unparenthesised
 /// comparison, the span of its operator (for the chaining diagnostic).
 fn expr_bp(p: &mut Parser<'_>, min_bp: u8) -> Option<(CompletedMarker, Option<Span>)> {
+    // `x => e`: a rule with one parameter.  A lambda extends as far right
+    // as possible, like `if`; it is only ever an argument.
+    if p.at(Ident) && p.nth(1) == FatArrow {
+        return Some((lambda(p), None));
+    }
     let mut lhs = unary(p)?;
     let mut lhs_cmp: Option<Span> = None;
     loop {
@@ -196,7 +211,61 @@ fn arg_list(p: &mut Parser<'_>) {
     m.complete(p, ArgList);
 }
 
-/// `PrimaryExpr ::= NameExpr | LiteralExpr | ParenExpr | IfExpr | MatchExpr | BlockExpr`
+/// `LambdaExpr ::= (Name | "(" Name ("," Name)* ","? ")") "=>" Expr`
+fn lambda(p: &mut Parser<'_>) -> CompletedMarker {
+    let m = p.start();
+    let params = p.start();
+    if p.at(LParen) {
+        p.bump(); // (
+        loop {
+            if p.at(RParen) || p.at_eof() {
+                break;
+            }
+            if !grammar::name(p, "expected a parameter name") {
+                break;
+            }
+            if !p.eat(Comma) {
+                break;
+            }
+        }
+        p.expect(RParen, "expected `)` to close the parameters");
+    } else {
+        grammar::name(p, "expected a parameter name");
+    }
+    params.complete(p, LambdaParams);
+    p.expect(FatArrow, "expected `=>` after the parameters");
+    if expr(p).is_none() {
+        p.error_expecting("expected the rule's result after `=>`", &[]);
+        p.hint("A rule names its inputs and gives their result: `x => x < 30 deg`.");
+    }
+    m.complete(p, LambdaExpr)
+}
+
+/// Whether `(` starts the parameter list of a rule: `(a, b) => …`.
+fn at_lambda_params(p: &Parser<'_>) -> bool {
+    if !p.at(LParen) {
+        return false;
+    }
+    let mut i = 1;
+    loop {
+        if p.nth(i) != Ident {
+            return false;
+        }
+        i += 1;
+        match p.nth(i) {
+            Comma => {
+                i += 1;
+                if p.nth(i) == RParen {
+                    return p.nth(i + 1) == FatArrow;
+                }
+            }
+            RParen => return p.nth(i + 1) == FatArrow,
+            _ => return false,
+        }
+    }
+}
+
+/// `PrimaryExpr ::= NameExpr | LiteralExpr | ParenExpr | TupleExpr | ListExpr | IfExpr | MatchExpr | BlockExpr`
 fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
     loop {
         return Some(match p.current() {
@@ -236,7 +305,9 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
                 p.bump();
                 m.complete(p, LiteralExpr)
             }
+            LParen if at_lambda_params(p) => lambda(p),
             LParen => paren_expr(p),
+            LBracket => list_expr(p),
             KwIf => if_expr(p),
             KwMatch => match_expr(p),
             LBrace => block_expr(p),
@@ -245,6 +316,7 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
     }
 }
 
+/// `ParenExpr ::= "(" Expr ")"` or `TupleExpr ::= "(" Expr ("," Expr)+ ","? ")"`
 fn paren_expr(p: &mut Parser<'_>) -> CompletedMarker {
     let m = p.start();
     p.bump(); // (
@@ -252,8 +324,58 @@ fn paren_expr(p: &mut Parser<'_>) -> CompletedMarker {
         let msg = no_expression_message(p);
         p.error(SyntaxErrorCode::Expected, msg);
     }
+    if p.at(Comma) {
+        // a grouped value: (a, b), (a, b, c)
+        while p.eat(Comma) {
+            if p.at(RParen) {
+                break;
+            }
+            if expr(p).is_none() {
+                p.error_expecting("expected a value after `,` in this grouped value", &[]);
+                break;
+            }
+        }
+        p.expect(RParen, "expected `)` to close the grouped value");
+        return m.complete(p, TupleExpr);
+    }
     p.expect(RParen, "expected `)` to close the parenthesis");
     m.complete(p, ParenExpr)
+}
+
+/// `ListExpr ::= "[" (Expr ("," Expr)* ","?)? "]"`
+fn list_expr(p: &mut Parser<'_>) -> CompletedMarker {
+    let m = p.start();
+    p.bump(); // [
+    loop {
+        if p.at(RBracket) || p.at_eof() {
+            break;
+        }
+        if expr(p).is_none() {
+            if p.at(Comma) {
+                p.error_and_bump(SyntaxErrorCode::Expected, "expected a value before `,`");
+                continue;
+            }
+            if p.at(Error) {
+                p.bump_as_error();
+                continue;
+            }
+            p.error_expecting("expected `]` to close this collection", &[RBracket, Comma]);
+            return m.complete(p, ListExpr);
+        }
+        if p.at(RBracket) {
+            break;
+        }
+        if !p.eat(Comma) {
+            if can_start(p.current()) {
+                unexpected_after_expr(p, "`,` between the values of a collection");
+                continue;
+            }
+            p.error_expecting("expected `]` to close this collection", &[RBracket, Comma]);
+            return m.complete(p, ListExpr);
+        }
+    }
+    p.expect(RBracket, "expected `]` to close this collection");
+    m.complete(p, ListExpr)
 }
 
 /// `IfExpr ::= "if" Expr "then" Expr "else" Expr`
@@ -341,7 +463,7 @@ fn match_arm(p: &mut Parser<'_>) {
             unexpected_after_expr(p, "`,` after this match arm");
         } else {
             unexpected_after_expr(p, "`,` or `}` after this match arm");
-            p.skip_until(&[Comma, RBrace, KwConcept, KwMapping, KwEnum]);
+            p.skip_until(&[Comma, RBrace, KwConcept, KwOrdered, KwMapping, KwEnum]);
             p.eat(Comma);
         }
     }

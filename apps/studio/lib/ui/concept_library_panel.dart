@@ -46,6 +46,9 @@ String representationWord(pb.ConceptTemplateView t) {
     pb.Representation_Kind.quantity => t.unit.isEmpty ? 'no unit' : t.unit,
     pb.Representation_Kind.boolean => 'on–off',
     pb.Representation_Kind.count => 'count',
+    pb.Representation_Kind.list => 'collection',
+    pb.Representation_Kind.pair => 'grouped value',
+    pb.Representation_Kind.optional => 'optional value',
     pb.Representation_Kind.notSet => 'decide later',
   };
 }

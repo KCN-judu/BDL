@@ -13,13 +13,19 @@ use bdl_model::surface::{Definition, Design, MappingBlock, Representation, Trans
 use bdl_model::DeclId;
 use std::collections::BTreeMap;
 
-/// `Quantity dim → q dim`, `Boolean → bool`, `Count → nat`.  Every case is
-/// semantic-free data, as `ConceptEnv.WF` requires.
-pub fn representation_ty(r: Representation) -> Ty {
+/// `Quantity dim → q dim`, `Boolean → bool`, `Count → nat`, `Optional →
+/// opt`, `List → list`, `Pair → prod`.  Every case is semantic-free data,
+/// as `ConceptEnv.WF` requires.
+pub fn representation_ty(r: &Representation) -> Ty {
     match r {
-        Representation::Quantity { dim } => Ty::q(dim),
+        Representation::Quantity { dim } => Ty::q(*dim),
         Representation::Boolean => Ty::Bool,
         Representation::Count => Ty::Nat,
+        Representation::Optional { inner } => Ty::opt(representation_ty(inner)),
+        Representation::List { element } => Ty::list(representation_ty(element)),
+        Representation::Pair { first, second } => {
+            Ty::prod(representation_ty(first), representation_ty(second))
+        }
     }
 }
 
@@ -67,7 +73,8 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
             ConceptBinding {
                 id: c.id,
                 name: c.name.clone(),
-                representation: c.representation.map(representation_ty),
+                representation: c.representation.as_ref().map(representation_ty),
+                ordered: c.ordered,
             },
         );
     }

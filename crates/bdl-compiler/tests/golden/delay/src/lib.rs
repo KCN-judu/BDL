@@ -77,17 +77,17 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells;
+    let mut next: Cells = state.cells.clone();
     // read phase
     // x (decl#0)
-    let decl_0: Option<f64> = if active.is_active(CLOCK_0) { Some(read_input(inputs.decl_0, 0_u64)?) } else { None };
+    let decl_0: Option<f64> = if active.is_active(CLOCK_0) { Some(read_input(&inputs.decl_0, 0_u64)?) } else { None };
     // acc (decl#1)
-    let decl_1: Option<f64> = if active.is_active(CLOCK_0) { Some(match prev.cell_0 { Some(v) => v, None => 0.0_f64 }) } else { None };
+    let decl_1: Option<f64> = if active.is_active(CLOCK_0) { Some(match &prev.cell_0 { Some(v) => v.clone(), None => 0.0_f64 }) } else { None };
     // twice (decl#2)
-    let decl_2: Option<f64> = if active.is_active(CLOCK_0) { Some(num::mul(read_decl(decl_1, 1_u64)?, 2.0_f64, 2_u64)?) } else { None };
+    let decl_2: Option<f64> = if active.is_active(CLOCK_0) { Some(num::mul(read_decl(&decl_1, 1_u64)?, 2.0_f64, 2_u64)?) } else { None };
     // write phase: into the next state only
     // cell_0 at [] in acc (decl#1)
-    if active.is_active(CLOCK_0) { next.cell_0 = Some(num::add(read_decl(decl_1, 1_u64)?, read_decl(decl_0, 0_u64)?, 1_u64)?); }
+    if active.is_active(CLOCK_0) { next.cell_0 = Some(num::add(read_decl(&decl_1, 1_u64)?, read_decl(&decl_0, 0_u64)?, 1_u64)?); }
     // commit
     state.cells = next;
     Ok(Tick { values: Values { decl_0: decl_0, decl_1: decl_1, decl_2: decl_2 }, outputs: Outputs {} })

@@ -117,12 +117,8 @@ fn detail(label: &str, value: impl Into<String>) -> HoverDetail {
     }
 }
 
-fn rep_name(r: Representation) -> String {
-    match r {
-        Representation::Quantity { dim } => pretty::describe_dim(dim),
-        Representation::Boolean => "true or false".into(),
-        Representation::Count => "a count".into(),
-    }
+fn rep_name(r: &Representation) -> String {
+    crate::completion::describe_representation(r)
 }
 
 /// The hover card for an entity; `None` when the entity does not exist
@@ -150,7 +146,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             let c = design.concepts.get(&id)?;
             let users = snapshot.index().references_to(entity).len();
             let mut details = vec![detail("used by", format!("{users} reference(s)"))];
-            if let Some(r) = c.representation {
+            if let Some(r) = &c.representation {
                 details.push(detail(
                     "kernel",
                     format!(
@@ -159,20 +155,31 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                     ),
                 ));
             }
+            if c.ordered {
+                details.push(detail(
+                    "order",
+                    "declared ordered: its values compare with <, min, max, clamp, inRange",
+                ));
+            }
             SemanticHover {
                 entity,
                 kind: EntityKind::Concept,
                 title: c.name.clone(),
-                signature: Some(match c.representation {
+                signature: Some(match &c.representation {
                     Some(r) => format!(
-                        "concept {} : {}",
+                        "{} {} : {}",
+                        if c.ordered {
+                            "ordered concept"
+                        } else {
+                            "concept"
+                        },
                         c.name,
                         bdl_ide_db::textual::representation_name(r)
                     ),
                     None => format!("concept {}", c.name),
                 }),
                 semantic_type: Some(format!("sem {}", c.name)),
-                representation: c.representation.map(rep_name),
+                representation: c.representation.as_ref().map(rep_name),
                 status: if c.representation.is_some() {
                     EntityStatus::Bound
                 } else {
@@ -258,8 +265,8 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 representation: design
                     .concepts
                     .get(&m.signature.output)
-                    .and_then(|c| c.representation)
-                    .map(|r| format!("produces {}", rep_name(r))),
+                    .and_then(|c| c.representation.clone())
+                    .map(|r| format!("produces {}", rep_name(&r))),
                 status: a
                     .map(|a| EntityStatus::of_mapping(a.status))
                     .unwrap_or(EntityStatus::Declared),

@@ -140,6 +140,15 @@ fn clocked(
             clocked(ir, owner, c, e, path, out);
             path.pop();
         }
+        // No clock rule for the recursor: its three operands are clocked
+        // like any operands (`list_clock_conservative`).
+        Expr::Fold { f, z, l } => {
+            for (i, sub) in [(0u8, f), (1, z), (2, l)] {
+                path.push(i);
+                clocked(ir, owner, c, sub, path, out);
+                path.pop();
+            }
+        }
         Expr::DeclRef { id } => {
             let target = ir.clocks.get(id).copied();
             if !(target.is_none() || target == c) {

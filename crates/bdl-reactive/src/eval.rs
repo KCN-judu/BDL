@@ -140,6 +140,13 @@ fn temporal_sites(ir: &DesignIr) -> Vec<TemporalSite> {
                 walk(owner, own, e, path, out);
                 path.pop();
             }
+            Expr::Fold { f, z, l } => {
+                for (i, sub) in [(0u8, f), (1, z), (2, l)] {
+                    path.push(i);
+                    walk(owner, own, sub, path, out);
+                    path.pop();
+                }
+            }
             _ => {}
         }
     }
@@ -253,6 +260,9 @@ fn at_path<'a>(mut e: &'a Expr, path: &[u8]) -> Option<&'a Expr> {
             (Expr::Rep { e }, 0) | (Expr::Mk { e, .. }, 0) => e,
             (Expr::Delay { init, .. }, 0) | (Expr::Sync { init, .. }, 0) => init,
             (Expr::Delay { e, .. }, 1) | (Expr::Sync { e, .. }, 1) => e,
+            (Expr::Fold { f, .. }, 0) => f,
+            (Expr::Fold { z, .. }, 1) => z,
+            (Expr::Fold { l, .. }, 2) => l,
             _ => return None,
         };
     }
@@ -328,23 +338,32 @@ impl Cx<'_> {
                 p.push(1);
                 let av = self.eval(owner, &p, a, env)?;
                 p.pop();
-                match fv {
-                    Value::Closure { env: cenv, body } => {
-                        let mut inner = Vec::with_capacity(cenv.len() + 1);
-                        inner.push(av);
-                        inner.extend(cenv);
-                        // A closure body has no temporal forms (typing), so its
-                        // path is irrelevant to state.
-                        self.eval(owner, &[], &body, &inner)
-                    }
-                    Value::Prim { prim, mut args } => {
-                        args.push(av);
-                        self.apply_prim(owner, prim, args)
-                    }
-                    other => Err(RuntimeError::Internal(format!(
-                        "applied a non-function {other:?}"
-                    ))),
+                self.apply(owner, fv, av)
+            }
+            // `fold f z [x₁, …, xₙ] = f x₁ (… (f xₙ z))`, computed by finite
+            // iteration from the last element: never a stack of `n` frames
+            // and never more steps than the list has elements.
+            Expr::Fold { f, z, l } => {
+                p.push(0);
+                let fv = self.eval(owner, &p, f, env)?;
+                p.pop();
+                p.push(1);
+                let zv = self.eval(owner, &p, z, env)?;
+                p.pop();
+                p.push(2);
+                let lv = self.eval(owner, &p, l, env)?;
+                p.pop();
+                let Value::List { items } = lv else {
+                    return Err(RuntimeError::Internal(format!(
+                        "fold over a non-list {lv:?}"
+                    )));
+                };
+                let mut acc = zv;
+                for x in items.iter_from_last() {
+                    let step = self.apply(owner, fv.clone(), x.clone())?;
+                    acc = self.apply(owner, step, acc)?;
                 }
+                Ok(acc)
             }
             Expr::DeclRef { id } => self.decl_value(*id),
             Expr::Rep { e } => {
@@ -378,6 +397,28 @@ impl Cx<'_> {
                     }
                 }
             }
+        }
+    }
+
+    /// Apply a function value to an argument: enter a closure's body, or
+    /// extend a partial primitive.
+    fn apply(&mut self, owner: DeclId, fv: Value, av: Value) -> Result<Value, RuntimeError> {
+        match fv {
+            Value::Closure { env: cenv, body } => {
+                let mut inner = Vec::with_capacity(cenv.len() + 1);
+                inner.push(av);
+                inner.extend(cenv);
+                // A closure body has no temporal forms (typing), so its
+                // path is irrelevant to state.
+                self.eval(owner, &[], &body, &inner)
+            }
+            Value::Prim { prim, mut args } => {
+                args.push(av);
+                self.apply_prim(owner, prim, args)
+            }
+            other => Err(RuntimeError::Internal(format!(
+                "applied a non-function {other:?}"
+            ))),
         }
     }
 
@@ -424,7 +465,7 @@ impl Cx<'_> {
                 finite(*d1 - *d2, x / y, "div")?
             }
             (Prim::Lt { .. }, [a, c]) => Value::boolean(q(a)?.1 < q(c)?.1),
-            (Prim::Eq { .. }, [a, c]) => Value::boolean(q(a)?.1 == q(c)?.1),
+            (Prim::Eq { .. }, [a, c]) => Value::boolean(a.structurally_equal(c)),
             (Prim::Not, [a]) => Value::boolean(!b(a)?),
             (Prim::And, [a, c]) => Value::boolean(b(a)? && b(c)?),
             (Prim::Or, [a, c]) => Value::boolean(b(a)? || b(c)?),
@@ -442,12 +483,46 @@ impl Cx<'_> {
                 Value::Some { value } => (**value).clone(),
                 _ => dflt.clone(),
             },
+            (Prim::Nil { .. }, []) => Value::list([]),
+            (Prim::Cons { .. }, [x, Value::List { items }]) => Value::List {
+                items: crate::value::List::cons(x.clone(), items.clone()),
+            },
+            (Prim::Length { .. }, [Value::List { items }]) => Value::scalar(items.len() as f64),
+            (Prim::Take { .. }, [k, Value::List { items }]) => Value::List {
+                items: items.take(count(q(k)?.1)),
+            },
+            (Prim::Drop { .. }, [k, Value::List { items }]) => Value::List {
+                items: items.drop(count(q(k)?.1)),
+            },
+            (Prim::Reverse { .. }, [Value::List { items }]) => Value::List {
+                items: items.reversed(),
+            },
+            (Prim::Head { .. }, [Value::List { items }]) => match items.first() {
+                Some(x) => Value::some(x.clone()),
+                None => Value::None,
+            },
+            (Prim::ToList { .. }, [Value::Some { value }]) => Value::list([(**value).clone()]),
+            (Prim::ToList { .. }, [Value::None]) => Value::list([]),
+            (Prim::Pair { .. }, [a, c]) => Value::pair(a.clone(), c.clone()),
+            (Prim::Fst { .. }, [Value::Pair { fst, .. }]) => (**fst).clone(),
+            (Prim::Snd { .. }, [Value::Pair { snd, .. }]) => (**snd).clone(),
             _ => {
                 return Err(RuntimeError::Internal(format!(
                     "ill-shaped primitive application {prim:?} {args:?}"
                 )))
             }
         })
+    }
+}
+
+/// A list position from a dimensionless quantity: the kernel's `Nat` is a
+/// count; production's `f64` (ADR-0011) is read as a whole number, rounding
+/// towards zero, and never below zero.  `take 2.7 xs` is `take 2 xs`.
+pub fn count(k: f64) -> usize {
+    if k.is_finite() && k > 0.0 {
+        k.trunc() as usize
+    } else {
+        0
     }
 }
 
@@ -535,6 +610,250 @@ mod tests {
         assert_eq!(o[0].values[&d(0)], Value::scalar(20.0));
         assert_eq!(o[0].values[&d(1)], Value::scalar(5.0));
         assert_eq!(o[0].values[&d(2)], Value::scalar(9.0));
+    }
+
+    #[test]
+    fn lists_pairs_and_the_recursor() {
+        let q0 = Ty::q(Dim::ZERO);
+        // sum := fold add 0 [1, 2, 3]  — foldr: 1 + (2 + (3 + 0))
+        let sum = Expr::fold(
+            Expr::prim(Prim::Add { dim: Dim::ZERO }),
+            lit(0.0),
+            list_lit([lit(1.0), lit(2.0), lit(3.0)]),
+        );
+        // order := fold (λx. λacc. cons x acc) [] [1, 2, 3] — a copy, in order
+        let copy = Expr::fold(
+            Expr::lam(
+                q0.clone(),
+                Expr::lam(
+                    Ty::list(q0.clone()),
+                    Expr::apps(
+                        Expr::prim(Prim::Cons { ty: q0.clone() }),
+                        [Expr::var(1), Expr::var(0)],
+                    ),
+                ),
+            ),
+            Expr::prim(Prim::Nil { ty: q0.clone() }),
+            list_lit([lit(1.0), lit(2.0), lit(3.0)]),
+        );
+        // empty := fold add 7 []  — the initial value
+        let empty = Expr::fold(
+            Expr::prim(Prim::Add { dim: Dim::ZERO }),
+            lit(7.0),
+            list_lit([]),
+        );
+        // ops := (length, take 2, drop 2, reverse, head, head [])
+        let xs = list_lit([lit(1.0), lit(2.0), lit(3.0)]);
+        let length = Expr::app(Expr::prim(Prim::Length { ty: q0.clone() }), xs.clone());
+        let take = Expr::apps(
+            Expr::prim(Prim::Take { ty: q0.clone() }),
+            [lit(2.0), xs.clone()],
+        );
+        let drop = Expr::apps(
+            Expr::prim(Prim::Drop { ty: q0.clone() }),
+            [lit(2.0), xs.clone()],
+        );
+        let rev = Expr::app(Expr::prim(Prim::Reverse { ty: q0.clone() }), xs.clone());
+        let head = Expr::app(Expr::prim(Prim::Head { ty: q0.clone() }), xs.clone());
+        let head_nil = Expr::app(Expr::prim(Prim::Head { ty: q0.clone() }), list_lit([]));
+        let to_list = Expr::app(
+            Expr::prim(Prim::ToList { ty: q0.clone() }),
+            Expr::app(Expr::prim(Prim::Some { ty: q0.clone() }), lit(4.0)),
+        );
+        let pair = Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: q0.clone(),
+                snd: Ty::Bool,
+            }),
+            [lit(5.0), Expr::BoolLit { value: true }],
+        );
+        let fst = Expr::app(
+            Expr::prim(Prim::Fst {
+                fst: q0.clone(),
+                snd: Ty::Bool,
+            }),
+            pair.clone(),
+        );
+        let snd = Expr::app(
+            Expr::prim(Prim::Snd {
+                fst: q0.clone(),
+                snd: Ty::Bool,
+            }),
+            pair.clone(),
+        );
+        let ir = ir_with_decls(&[
+            (0, Some(sum)),
+            (1, Some(copy)),
+            (2, Some(empty)),
+            (3, Some(length)),
+            (4, Some(take)),
+            (5, Some(drop)),
+            (6, Some(rev)),
+            (7, Some(head)),
+            (8, Some(head_nil)),
+            (9, Some(to_list)),
+            (10, Some(pair)),
+            (11, Some(fst)),
+            (12, Some(snd)),
+        ]);
+        let o = run(&ir, &[(input(&[]), active(&[0]))]);
+        let v = |n: u64| o[0].values[&d(n)].clone();
+        let q = |x: f64| Value::scalar(x);
+        assert_eq!(v(0), q(6.0));
+        assert_eq!(v(1), Value::list([q(1.0), q(2.0), q(3.0)]));
+        assert_eq!(v(2), q(7.0));
+        assert_eq!(v(3), q(3.0));
+        assert_eq!(v(4), Value::list([q(1.0), q(2.0)]));
+        assert_eq!(v(5), Value::list([q(3.0)]));
+        assert_eq!(v(6), Value::list([q(3.0), q(2.0), q(1.0)]));
+        assert_eq!(v(7), Value::some(q(1.0)));
+        assert_eq!(v(8), Value::None);
+        assert_eq!(v(9), Value::list([q(4.0)]));
+        assert_eq!(v(10), Value::pair(q(5.0), Value::boolean(true)));
+        assert_eq!(v(11), q(5.0));
+        assert_eq!(v(12), Value::boolean(true));
+    }
+
+    #[test]
+    fn fold_is_finite_iteration_not_a_stack() {
+        // a 100 000-element input list folds without a frame per element
+        let sum = Expr::fold(
+            Expr::prim(Prim::Add { dim: Dim::ZERO }),
+            lit(0.0),
+            Expr::decl(d(0)),
+        );
+        let mut ir = ir_with_decls(&[(0, None), (1, Some(sum))]);
+        ir.decls.get_mut(&d(0)).unwrap().interface.expected_type = Ty::list(Ty::q(Dim::ZERO));
+        let xs = Value::list((0..100_000).map(|_| Value::scalar(1.0)));
+        let o = run(&ir, &[(input(&[(0, xs)]), active(&[0]))]);
+        assert_eq!(o[0].values[&d(1)], Value::scalar(100_000.0));
+    }
+
+    #[test]
+    fn structural_equality_on_data_and_no_order() {
+        let q0 = Ty::q(Dim::ZERO);
+        let eq = |ty: Ty, a: Expr, b: Expr| Expr::apps(Expr::prim(Prim::Eq { ty }), [a, b]);
+        let pair = |a: f64, b: f64| {
+            Expr::apps(
+                Expr::prim(Prim::Pair {
+                    fst: q0.clone(),
+                    snd: q0.clone(),
+                }),
+                [lit(a), lit(b)],
+            )
+        };
+        let some = |a: f64| Expr::app(Expr::prim(Prim::Some { ty: q0.clone() }), lit(a));
+        let ir = ir_with_decls(&[
+            (
+                0,
+                Some(eq(
+                    Ty::list(q0.clone()),
+                    list_lit([lit(1.0), lit(2.0)]),
+                    list_lit([lit(1.0), lit(2.0)]),
+                )),
+            ),
+            (
+                1,
+                Some(eq(
+                    Ty::list(q0.clone()),
+                    list_lit([lit(1.0), lit(2.0)]),
+                    list_lit([lit(2.0), lit(1.0)]),
+                )),
+            ),
+            (
+                2,
+                Some(eq(
+                    Ty::prod(q0.clone(), q0.clone()),
+                    pair(1.0, 2.0),
+                    pair(1.0, 2.0),
+                )),
+            ),
+            (
+                3,
+                Some(eq(
+                    Ty::prod(q0.clone(), q0.clone()),
+                    pair(1.0, 2.0),
+                    pair(2.0, 1.0),
+                )),
+            ),
+            (4, Some(eq(Ty::opt(q0.clone()), some(1.0), some(1.0)))),
+            (
+                5,
+                Some(eq(
+                    Ty::opt(q0.clone()),
+                    some(1.0),
+                    Expr::prim(Prim::None { ty: q0.clone() }),
+                )),
+            ),
+            (
+                6,
+                Some(eq(
+                    Ty::Bool,
+                    Expr::BoolLit { value: false },
+                    Expr::BoolLit { value: false },
+                )),
+            ),
+        ]);
+        let o = run(&ir, &[(input(&[]), active(&[0]))]);
+        let b = |n: u64| o[0].values[&d(n)].as_bool().unwrap();
+        assert!(b(0) && !b(1) && b(2) && !b(3) && b(4) && !b(5) && b(6));
+        // semantic values compare by concept and representation
+        assert!(Value::sem(s(0), Value::scalar(1.0))
+            .structurally_equal(&Value::sem(s(0), Value::scalar(1.0))));
+        assert!(!Value::sem(s(0), Value::scalar(1.0))
+            .structurally_equal(&Value::sem(s(1), Value::scalar(1.0))));
+        // no order anywhere but on quantities: `Lt` is dimension-indexed
+        assert!(matches!(
+            bdl_ir::Prim::Lt { dim: Dim::ZERO }.ty(),
+            Ty::Arr { dom, .. } if matches!(*dom, Ty::Q { .. })
+        ));
+    }
+
+    #[test]
+    fn lists_and_pairs_are_delayed_and_transported_like_any_data() {
+        // fast (c0): log := cons x (delay [] log)   — the 9a accumulator
+        // slow (c1): seen := sync c0 [] log         — strictly before
+        let q0 = Ty::q(Dim::ZERO);
+        let nil = Expr::prim(Prim::Nil { ty: q0.clone() });
+        let mut ir = ir_with_decls(&[
+            (0, None),
+            (
+                1,
+                Some(Expr::apps(
+                    Expr::prim(Prim::Cons { ty: q0.clone() }),
+                    [Expr::decl(d(0)), Expr::delay(nil.clone(), Expr::decl(d(1)))],
+                )),
+            ),
+            (2, Some(Expr::sync(c(0), nil, Expr::decl(d(1))))),
+        ]);
+        ir.clocks.insert(d(2), c(1));
+        let ticks: Vec<_> = [1.0, 2.0, 3.0]
+            .into_iter()
+            .map(|v| (input(&[(0, Value::scalar(v))]), active(&[0, 1])))
+            .collect();
+        let o = run(&ir, &ticks);
+        let q = |x: f64| Value::scalar(x);
+        assert_eq!(o[0].values[&d(1)], Value::list([q(1.0)]));
+        assert_eq!(o[2].values[&d(1)], Value::list([q(3.0), q(2.0), q(1.0)]));
+        // the slow domain sees the log of the previous fast activation only
+        assert_eq!(o[0].values[&d(2)], Value::list([]));
+        assert_eq!(o[1].values[&d(2)], Value::list([q(1.0)]));
+        assert_eq!(o[2].values[&d(2)], Value::list([q(2.0), q(1.0)]));
+        // a pair delayed: (x, previous x)
+        let pair = Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: q0.clone(),
+                snd: q0.clone(),
+            }),
+            [Expr::decl(d(0)), Expr::delay(lit(0.0), Expr::decl(d(0)))],
+        );
+        let ir = ir_with_decls(&[(0, None), (1, Some(pair))]);
+        let ticks: Vec<_> = [1.0, 2.0]
+            .into_iter()
+            .map(|v| (input(&[(0, Value::scalar(v))]), active(&[0])))
+            .collect();
+        let o = run(&ir, &ticks);
+        assert_eq!(o[1].values[&d(1)], Value::pair(q(2.0), q(1.0)));
     }
 
     #[test]

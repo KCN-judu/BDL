@@ -268,6 +268,7 @@ mod tests {
                 id: s(0),
                 name: "Brightness".into(),
                 representation: Some(Ty::q(Dim::ZERO)),
+                ordered: false,
             },
         );
         ir.concepts.insert(
@@ -276,6 +277,7 @@ mod tests {
                 id: s(1),
                 name: "MotorAngle".into(),
                 representation: Some(Ty::q(Dim::ANGLE)),
+                ordered: false,
             },
         );
         ir.outputs.insert(

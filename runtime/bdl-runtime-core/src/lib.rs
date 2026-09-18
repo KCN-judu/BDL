@@ -1,8 +1,10 @@
 //! The runtime vocabulary every generated BDL semantic core is written
-//! against.  `no_std`, allocation-free, `unsafe`-free, and ignorant of any
-//! board, device kind, transport or editor: it knows *slots* (clock, input,
-//! state, output), *active domains*, *checked numerics* and *structured
-//! runtime errors* — nothing else.
+//! against.  `no_std`, `unsafe`-free, allocation-free unless the
+//! `collections` feature is on, and ignorant of any board, device kind,
+//! transport or editor: it knows *slots* (clock, input, state, output),
+//! *active domains*, *checked numerics*, *structured runtime errors* and —
+//! with `collections` — the list operators and the list recursor over
+//! `alloc::vec::Vec` — nothing else.
 //!
 //! The numeric helpers implement exactly the reference evaluator's policy
 //! (`docs/spec/runtime-semantics.md`, DI-15): IEEE `f64`; division by zero and
@@ -12,6 +14,9 @@
 
 #![no_std]
 #![forbid(unsafe_code)]
+
+#[cfg(feature = "collections")]
+extern crate alloc;
 
 /// Dense index of a clock domain inside one generated program.  The
 /// nominal `ClockId` it stands for is recorded in the program's manifest.
@@ -168,16 +173,110 @@ pub mod prim {
     }
 }
 
+/// The list operators and the recursor (`collections`).  Each is the
+/// reference evaluator's `apply_prim` case, operator by operator.
+///
+/// A list is a `Vec` stored **last element first**: `cons` pushes, the
+/// recursor consumes from the front, so the library's `map`, `filter` and
+/// `append` (folds that `cons` onto the accumulator) stay linear, and
+/// equality is elementwise as in the list's order.  The host bridge
+/// reverses at the boundary; nothing inside the core observes the storage
+/// order.  A count argument (`take`, `drop`) is a dimensionless `f64` read
+/// as a whole number towards zero, never below zero
+/// (`bdl_reactive::eval::count`).
+#[cfg(feature = "collections")]
+pub mod list {
+    use super::RuntimeError;
+    use alloc::vec::Vec;
+
+    #[inline]
+    pub fn count(k: f64) -> usize {
+        if k.is_finite() && k > 0.0 {
+            k as usize
+        } else {
+            0
+        }
+    }
+    /// A list from its elements in list order.
+    pub fn from_ordered<T>(items: Vec<T>) -> Vec<T> {
+        let mut v = items;
+        v.reverse();
+        v
+    }
+    /// The elements in list order.
+    pub fn into_ordered<T>(xs: Vec<T>) -> Vec<T> {
+        let mut v = xs;
+        v.reverse();
+        v
+    }
+    #[inline]
+    pub fn nil<T>() -> Vec<T> {
+        Vec::new()
+    }
+    #[inline]
+    pub fn cons<T>(x: T, mut xs: Vec<T>) -> Vec<T> {
+        xs.push(x);
+        xs
+    }
+    #[inline]
+    pub fn length<T>(xs: Vec<T>) -> f64 {
+        xs.len() as f64
+    }
+    /// The first `k` elements of the list.
+    #[inline]
+    pub fn take<T>(k: f64, mut xs: Vec<T>) -> Vec<T> {
+        let keep = count(k).min(xs.len());
+        xs.split_off(xs.len() - keep)
+    }
+    /// All but the first `k` elements of the list.
+    #[inline]
+    pub fn drop<T>(k: f64, mut xs: Vec<T>) -> Vec<T> {
+        let keep = xs.len().saturating_sub(count(k));
+        xs.truncate(keep);
+        xs
+    }
+    #[inline]
+    pub fn reverse<T>(mut xs: Vec<T>) -> Vec<T> {
+        xs.reverse();
+        xs
+    }
+    #[inline]
+    pub fn head<T>(mut xs: Vec<T>) -> Option<T> {
+        xs.pop()
+    }
+    #[inline]
+    pub fn to_list<T>(x: Option<T>) -> Vec<T> {
+        match x {
+            Some(v) => alloc::vec![v],
+            None => Vec::new(),
+        }
+    }
+    /// `fold f z [x₁, …, xₙ] = f x₁ (… (f xₙ z))`: one step per element,
+    /// from the last; a step may fail like any primitive.
+    #[inline]
+    pub fn fold<T, A>(
+        xs: Vec<T>,
+        init: A,
+        mut step: impl FnMut(T, A) -> Result<A, RuntimeError>,
+    ) -> Result<A, RuntimeError> {
+        let mut acc = init;
+        for x in xs {
+            acc = step(x, acc)?;
+        }
+        Ok(acc)
+    }
+}
+
 /// Read a declaration evaluated earlier this tick.
 #[inline]
-pub fn read_decl<T: Copy>(v: Option<T>, decl: u64) -> Result<T, RuntimeError> {
-    v.ok_or(RuntimeError::NotEvaluated { decl })
+pub fn read_decl<T: Clone>(v: &Option<T>, decl: u64) -> Result<T, RuntimeError> {
+    v.clone().ok_or(RuntimeError::NotEvaluated { decl })
 }
 
 /// Read the input supplied for an unresolved declaration due this tick.
 #[inline]
-pub fn read_input<T: Copy>(v: Option<T>, decl: u64) -> Result<T, RuntimeError> {
-    v.ok_or(RuntimeError::MissingInput { decl })
+pub fn read_input<T: Clone>(v: &Option<T>, decl: u64) -> Result<T, RuntimeError> {
+    v.clone().ok_or(RuntimeError::MissingInput { decl })
 }
 
 #[cfg(test)]
@@ -193,6 +292,34 @@ mod tests {
         assert_eq!(a.with(ClockSlot(64)), a);
     }
 
+    #[cfg(feature = "collections")]
+    #[test]
+    fn list_operators_follow_the_reference_evaluator() {
+        use alloc::vec;
+        // the list [1, 2, 3], stored last first
+        let xs = list::from_ordered(vec![1.0, 2.0, 3.0]);
+        let ordered = |v: alloc::vec::Vec<f64>| list::into_ordered(v);
+        assert_eq!(
+            ordered(list::cons(0.0, xs.clone())),
+            vec![0.0, 1.0, 2.0, 3.0]
+        );
+        assert_eq!(list::length(xs.clone()), 3.0);
+        assert_eq!(ordered(list::take(2.7, xs.clone())), vec![1.0, 2.0]);
+        assert_eq!(ordered(list::take(9.0, xs.clone())), vec![1.0, 2.0, 3.0]);
+        assert_eq!(ordered(list::drop(-1.0, xs.clone())), vec![1.0, 2.0, 3.0]);
+        assert_eq!(ordered(list::drop(2.0, xs.clone())), vec![3.0]);
+        assert_eq!(ordered(list::reverse(xs.clone())), vec![3.0, 2.0, 1.0]);
+        assert_eq!(list::head(xs.clone()), Some(1.0));
+        assert_eq!(list::head(list::nil::<f64>()), None);
+        assert_eq!(ordered(list::to_list(Some(4.0))), vec![4.0]);
+        // foldr: 1 - (2 - (3 - 0))
+        let r = list::fold(xs.clone(), 0.0, |x, acc| num::sub(x, acc, 0));
+        assert_eq!(r, Ok(2.0));
+        // map through fold keeps the order: cons onto the accumulator
+        let mapped = list::fold(xs, list::nil(), |x, acc| Ok(list::cons(x * 2.0, acc)));
+        assert_eq!(ordered(mapped.unwrap()), vec![2.0, 4.0, 6.0]);
+    }
+
     #[test]
     fn numerics_follow_the_reference_policy() {
         assert_eq!(
@@ -206,7 +333,7 @@ mod tests {
         assert_eq!(num::add(1.0, 2.0, 0), Ok(3.0));
         assert_eq!(num::div(1.0, 3.0, 0), Ok(1.0 / 3.0));
         assert_eq!(
-            read_input::<f64>(None, 3),
+            read_input::<f64>(&None, 3),
             Err(RuntimeError::MissingInput { decl: 3 })
         );
     }

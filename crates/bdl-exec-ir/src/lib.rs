@@ -1,10 +1,17 @@
 //! The executable IR: what is left of a Design IR once everything a backend
 //! does not need has been lowered away.
 //!
-//! * No binders.  Formula lambdas and declaration-level functions are
-//!   inlined at their (saturated) application sites as `Let`s; a design
-//!   that needs a closure at runtime is refused by lowering, not
-//!   half-supported here.
+//! * No closures.  Formula lambdas and declaration-level functions are
+//!   inlined at their (saturated) application sites as `Let`s, and a
+//!   function passed to a library combinator is inlined where the
+//!   combinator applies it; a design that needs a closure *value* at
+//!   runtime is refused by lowering, not half-supported here.  The one
+//!   binding form besides `Let` is [`ExecExpr::Fold`], whose step is a
+//!   first-order expression over two locals — the kernel's list recursor
+//!   with its function argument already inlined.
+//! * Lists and pairs stay structured values (`Vec`, tuples in the generated
+//!   core; `Value::List`/`Value::Pair` in the interpreter): lowering them
+//!   further would be a second interpretation of collection behaviour.
 //! * Every temporal form is a **state slot** (`ReadCell` in expressions,
 //!   a `CellPlan` with its writer domain and write operand in the plan).
 //! * Every clock domain is a dense **clock slot**; every unresolved
@@ -28,7 +35,7 @@ use bdl_reactive::StateCellId;
 use serde::{Deserialize, Serialize};
 
 /// Bumped on any change to this representation.
-pub const EXEC_IR_VERSION: u32 = 1;
+pub const EXEC_IR_VERSION: u32 = 2;
 
 macro_rules! slot {
     ($(#[$m:meta])* $name:ident($t:ty)) => {
@@ -234,13 +241,60 @@ pub enum PrimOp {
     GetD {
         ty: Ty,
     },
+    /// The empty list of `ty`.
+    Nil {
+        ty: Ty,
+    },
+    Cons {
+        ty: Ty,
+    },
+    /// The length as a dimensionless quantity.
+    Length {
+        ty: Ty,
+    },
+    /// `take k xs`: `k` a dimensionless quantity read as a count.
+    Take {
+        ty: Ty,
+    },
+    Drop {
+        ty: Ty,
+    },
+    Reverse {
+        ty: Ty,
+    },
+    Head {
+        ty: Ty,
+    },
+    ToList {
+        ty: Ty,
+    },
+    Pair {
+        fst: Ty,
+        snd: Ty,
+    },
+    Fst {
+        fst: Ty,
+        snd: Ty,
+    },
+    Snd {
+        fst: Ty,
+        snd: Ty,
+    },
 }
 
 impl PrimOp {
     pub fn arity(&self) -> usize {
         match self {
-            PrimOp::None { .. } => 0,
-            PrimOp::Not | PrimOp::Some { .. } | PrimOp::IsSome { .. } => 1,
+            PrimOp::None { .. } | PrimOp::Nil { .. } => 0,
+            PrimOp::Not
+            | PrimOp::Some { .. }
+            | PrimOp::IsSome { .. }
+            | PrimOp::Length { .. }
+            | PrimOp::Reverse { .. }
+            | PrimOp::Head { .. }
+            | PrimOp::ToList { .. }
+            | PrimOp::Fst { .. }
+            | PrimOp::Snd { .. } => 1,
             PrimOp::Add { .. }
             | PrimOp::Sub { .. }
             | PrimOp::Mul { .. }
@@ -249,7 +303,11 @@ impl PrimOp {
             | PrimOp::Eq
             | PrimOp::And
             | PrimOp::Or
-            | PrimOp::GetD { .. } => 2,
+            | PrimOp::GetD { .. }
+            | PrimOp::Cons { .. }
+            | PrimOp::Take { .. }
+            | PrimOp::Drop { .. }
+            | PrimOp::Pair { .. } => 2,
             PrimOp::Ite { .. } => 3,
         }
     }
@@ -296,6 +354,17 @@ pub enum ExecExpr {
     ReadCell {
         slot: StateSlot,
         init: Box<ExecExpr>,
+    },
+    /// The list recursor with its step inlined: `fold f z [x₁, …, xₙ] =
+    /// f x₁ (… (f xₙ z))`, computed as finite iteration from the last
+    /// element with `elem` bound to the element and `acc` to the value so
+    /// far.  Never general recursion: exactly one step per element.
+    Fold {
+        elem: LocalId,
+        acc: LocalId,
+        step: Box<ExecExpr>,
+        init: Box<ExecExpr>,
+        list: Box<ExecExpr>,
     },
 }
 
@@ -353,6 +422,74 @@ impl ExecExpr {
             ExecExpr::Wrap { e, .. } | ExecExpr::Unwrap { e } => e.reads(out),
             ExecExpr::Prim { args, .. } => args.iter().for_each(|a| a.reads(out)),
             ExecExpr::ReadCell { init, .. } => init.reads(out),
+            ExecExpr::Fold {
+                step, init, list, ..
+            } => {
+                step.reads(out);
+                init.reads(out);
+                list.reads(out);
+            }
         }
+    }
+
+    /// Whether the expression mentions a list type anywhere (a `Nil`,
+    /// `Cons`, … operator or a fold) — what decides whether a generated
+    /// core needs an allocator.
+    pub fn uses_lists(&self) -> bool {
+        match self {
+            ExecExpr::Bool { .. }
+            | ExecExpr::Nat { .. }
+            | ExecExpr::Quantity { .. }
+            | ExecExpr::Local { .. }
+            | ExecExpr::ReadDecl { .. } => false,
+            ExecExpr::Let { value, body, .. } => value.uses_lists() || body.uses_lists(),
+            ExecExpr::Wrap { e, .. } | ExecExpr::Unwrap { e } => e.uses_lists(),
+            ExecExpr::Prim { op, args } => {
+                matches!(
+                    op,
+                    PrimOp::Nil { .. }
+                        | PrimOp::Cons { .. }
+                        | PrimOp::Length { .. }
+                        | PrimOp::Take { .. }
+                        | PrimOp::Drop { .. }
+                        | PrimOp::Reverse { .. }
+                        | PrimOp::Head { .. }
+                        | PrimOp::ToList { .. }
+                ) || args.iter().any(ExecExpr::uses_lists)
+            }
+            ExecExpr::ReadCell { init, .. } => init.uses_lists(),
+            ExecExpr::Fold { .. } => true,
+        }
+    }
+}
+
+/// Whether a type mentions a list anywhere.
+pub fn ty_uses_lists(t: &Ty) -> bool {
+    match t {
+        Ty::List { .. } => true,
+        Ty::Opt { inner } => ty_uses_lists(inner),
+        Ty::Prod { fst, snd } => ty_uses_lists(fst) || ty_uses_lists(snd),
+        Ty::Arr { dom, cod } => ty_uses_lists(dom) || ty_uses_lists(cod),
+        Ty::Bool | Ty::Nat | Ty::Q { .. } | Ty::Sem { .. } => false,
+    }
+}
+
+impl ExecIr {
+    /// Whether the program carries list values anywhere — in a
+    /// declaration, cell, output, concept representation or expression —
+    /// and so needs an allocator on its target.
+    pub fn uses_lists(&self) -> bool {
+        self.decls.iter().any(|d| {
+            ty_uses_lists(&d.ty)
+                || matches!(&d.kind, DeclKind::Computed { body } if body.uses_lists())
+        }) || self
+            .cells
+            .iter()
+            .any(|c| ty_uses_lists(&c.ty) || c.operand.uses_lists())
+            || self.outputs.iter().any(|o| ty_uses_lists(&o.ty))
+            || self
+                .concepts
+                .iter()
+                .any(|c| ty_uses_lists(&c.representation))
     }
 }

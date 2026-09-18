@@ -305,6 +305,8 @@ impl Formatter {
                 | K::KwElse
                 | K::KwIf
                 | K::KwMatch
+                | K::KwIn
+                | K::LBracket
         )
     }
 
@@ -319,10 +321,13 @@ impl Formatter {
         if prefix_minus {
             return false;
         }
-        if matches!(t.kind(), K::RParen | K::Comma | K::Dot | K::Semi) {
+        if matches!(
+            t.kind(),
+            K::RParen | K::RBracket | K::Comma | K::Dot | K::Semi
+        ) {
             return false;
         }
-        if matches!(p.kind(), K::LParen | K::Dot | K::At | K::Bang) {
+        if matches!(p.kind(), K::LParen | K::LBracket | K::Dot | K::At | K::Bang) {
             return false;
         }
         if t.kind() == K::LParen && p.kind() == K::Ident {

@@ -25,6 +25,17 @@ pub enum Ty {
     Opt {
         inner: Box<Ty>,
     },
+    /// Ordinary list data (Phase 9a).  A list is data exactly when its
+    /// elements are; the cross-domain window of occurrences is one.
+    List {
+        elem: Box<Ty>,
+    },
+    /// A product (Phase 9b): value-level composition only.  Never a
+    /// component interface, an output bundle or a system boundary.
+    Prod {
+        fst: Box<Ty>,
+        snd: Box<Ty>,
+    },
 }
 
 impl Ty {
@@ -37,6 +48,17 @@ impl Ty {
     pub fn opt(inner: Ty) -> Ty {
         Ty::Opt {
             inner: Box::new(inner),
+        }
+    }
+    pub fn list(elem: Ty) -> Ty {
+        Ty::List {
+            elem: Box::new(elem),
+        }
+    }
+    pub fn prod(fst: Ty, snd: Ty) -> Ty {
+        Ty::Prod {
+            fst: Box::new(fst),
+            snd: Box::new(snd),
         }
     }
     pub fn sem(id: SemanticId) -> Ty {
@@ -60,7 +82,8 @@ impl Ty {
         match self {
             Ty::Sem { .. } => false,
             Ty::Arr { dom, cod } => dom.is_sem_free() && cod.is_sem_free(),
-            Ty::Opt { inner } => inner.is_sem_free(),
+            Ty::Opt { inner } | Ty::List { elem: inner } => inner.is_sem_free(),
+            Ty::Prod { fst, snd } => fst.is_sem_free() && snd.is_sem_free(),
             Ty::Bool | Ty::Nat | Ty::Q { .. } => true,
         }
     }
@@ -69,9 +92,32 @@ impl Ty {
     pub fn is_data(&self) -> bool {
         match self {
             Ty::Arr { .. } => false,
-            Ty::Opt { inner } => inner.is_data(),
+            Ty::Opt { inner } | Ty::List { elem: inner } => inner.is_data(),
+            Ty::Prod { fst, snd } => fst.is_data() && snd.is_data(),
             Ty::Bool | Ty::Nat | Ty::Sem { .. } | Ty::Q { .. } => true,
         }
+    }
+
+    /// Every semantic concept the type mentions, in traversal order.
+    pub fn concepts(&self) -> Vec<SemanticId> {
+        fn go(t: &Ty, out: &mut Vec<SemanticId>) {
+            match t {
+                Ty::Sem { id } => out.push(*id),
+                Ty::Arr { dom, cod } => {
+                    go(dom, out);
+                    go(cod, out);
+                }
+                Ty::Opt { inner } | Ty::List { elem: inner } => go(inner, out),
+                Ty::Prod { fst, snd } => {
+                    go(fst, out);
+                    go(snd, out);
+                }
+                Ty::Bool | Ty::Nat | Ty::Q { .. } => {}
+            }
+        }
+        let mut out = Vec::new();
+        go(self, &mut out);
+        out
     }
 
     /// `Ty.grant`: the concepts in result position of a signature — exactly
@@ -105,6 +151,18 @@ mod tests {
         assert!(!Ty::sem(SemanticId::from_raw(0)).is_sem_free());
         assert!(Ty::opt(Ty::Bool).is_data());
         assert!(!Ty::arr(Ty::Bool, Ty::Bool).is_data());
+        // lists and pairs are data exactly when their parts are
+        assert!(Ty::list(Ty::q(Dim::ZERO)).is_data());
+        assert!(!Ty::list(Ty::arr(Ty::Bool, Ty::Bool)).is_data());
+        assert!(Ty::prod(Ty::Bool, Ty::opt(Ty::Nat)).is_data());
+        assert!(!Ty::prod(Ty::Bool, Ty::arr(Ty::Bool, Ty::Bool)).is_data());
+        assert!(Ty::list(Ty::q(Dim::ZERO)).is_sem_free());
+        assert!(!Ty::prod(Ty::Bool, Ty::sem(SemanticId::from_raw(0))).is_sem_free());
+        // a pair grants nothing: only result position of a signature does
+        assert_eq!(
+            Ty::prod(Ty::sem(SemanticId::from_raw(1)), Ty::Bool).grant(),
+            Vec::<SemanticId>::new()
+        );
     }
 
     #[test]

@@ -8,6 +8,7 @@ use crate::syntax::SyntaxErrorCode;
 /// The keywords a top-level item may start with (§14.1).
 const ITEM_START: &[SyntaxKind] = &[
     KwConcept,
+    KwOrdered,
     KwMapping,
     KwEnum,
     KwClock,
@@ -23,8 +24,8 @@ const ITEM_START: &[SyntaxKind] = &[
 /// The keywords a component item may start with, plus the brace that
 /// closes the body (§14.2).
 const COMPONENT_ITEM_START: &[SyntaxKind] = &[
-    KwConcept, KwMapping, KwEnum, KwClock, KwOutput, KwDrive, KwDevice, KwUse, KwParam, KwRequires,
-    KwProvides, RBrace,
+    KwConcept, KwOrdered, KwMapping, KwEnum, KwClock, KwOutput, KwDrive, KwDevice, KwUse, KwParam,
+    KwRequires, KwProvides, RBrace,
 ];
 
 /// Where a top-level item is: the anchors recovery stops at.
@@ -53,7 +54,7 @@ impl Scope {
 pub(super) fn module(p: &mut Parser<'_>) {
     while !p.at_eof() {
         match p.current() {
-            KwConcept => concept_decl(p, Scope::Module),
+            KwConcept | KwOrdered => concept_decl(p, Scope::Module),
             KwMapping => mapping_decl(p, Scope::Module),
             KwEnum => enum_decl(p, Scope::Module),
             KwClock => clock_decl(p, Scope::Module),
@@ -111,9 +112,16 @@ pub(super) fn formula(p: &mut Parser<'_>) {
     }
 }
 
-/// `ConceptDecl ::= "concept" Name (":" Type)?`
+/// `ConceptDecl ::= "ordered"? "concept" Name (":" Type)?`
 fn concept_decl(p: &mut Parser<'_>, scope: Scope) {
     let m = p.start();
+    if p.eat(KwOrdered) && !p.at(KwConcept) {
+        p.error_expecting("expected `concept` after `ordered`", &[KwConcept]);
+        p.hint("`ordered` says a concept's values have an order: `ordered concept Brightness : Scalar`.");
+        recover_item(p, scope);
+        m.complete(p, ConceptDecl);
+        return;
+    }
     p.bump(); // concept
     if !name(p, "expected the concept's name after `concept`") {
         recover_item(p, scope);
@@ -461,7 +469,7 @@ fn component_decl(p: &mut Parser<'_>) {
     loop {
         match p.current() {
             RBrace | Eof => break,
-            KwConcept => concept_decl(p, Scope::Component),
+            KwConcept | KwOrdered => concept_decl(p, Scope::Component),
             KwMapping => mapping_decl(p, Scope::Component),
             KwEnum => enum_decl(p, Scope::Component),
             KwClock => clock_decl(p, Scope::Component),

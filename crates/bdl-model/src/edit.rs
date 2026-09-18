@@ -46,6 +46,13 @@ pub enum EditOp {
         id: SemanticId,
         representation: Option<Representation>,
     },
+    /// Declare or undeclare the concept ordered (`Concept::ordered`).  An
+    /// edit, not a refinement: a formula that compares two values of the
+    /// concept types only while it is ordered.
+    SetConceptOrdered {
+        id: SemanticId,
+        ordered: bool,
+    },
     /// Refused while any mapping mentions the concept.
     DeleteConcept {
         id: SemanticId,
@@ -311,7 +318,8 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     id,
                     name,
                     description: description.clone(),
-                    representation: *representation,
+                    representation: representation.clone(),
+                    ordered: false,
                 },
             );
             EditOutcome {
@@ -338,7 +346,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
         EditOp::SetConceptRepresentation { id, representation } => {
             let concept = concept_mut(&mut design, *id)?;
             let was_bound = concept.representation.is_some();
-            concept.representation = *representation;
+            concept.representation = representation.clone();
             if was_bound {
                 // Rebinding breaks every realization typed against the old
                 // representation.
@@ -348,6 +356,18 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                 o
             } else {
                 EditOutcome::refinement()
+            }
+        }
+        EditOp::SetConceptOrdered { id, ordered } => {
+            let concept = concept_mut(&mut design, *id)?;
+            if concept.ordered == *ordered {
+                EditOutcome::refinement()
+            } else {
+                concept.ordered = *ordered;
+                let users: Vec<DeclId> = design.mappings_using(*id).map(|m| m.id).collect();
+                let mut o = EditOutcome::edit([Invalidation::Semantic, Invalidation::Realization]);
+                o.origin_decls.extend(users);
+                o
             }
         }
         EditOp::DeleteConcept { id } => {

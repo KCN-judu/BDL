@@ -22,12 +22,30 @@ use std::io::{Read, Write};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum DynValue {
-    Bool { value: bool },
-    Nat { value: u64 },
-    Quantity { value: f64 },
-    Semantic { id: u64, repr: Box<DynValue> },
+    Bool {
+        value: bool,
+    },
+    Nat {
+        value: u64,
+    },
+    Quantity {
+        value: f64,
+    },
+    Semantic {
+        id: u64,
+        repr: Box<DynValue>,
+    },
     None,
-    Some { value: Box<DynValue> },
+    Some {
+        value: Box<DynValue>,
+    },
+    List {
+        items: Vec<DynValue>,
+    },
+    Pair {
+        fst: Box<DynValue>,
+        snd: Box<DynValue>,
+    },
 }
 
 /// A value of the wrong shape reached a typed input slot.
@@ -82,6 +100,30 @@ impl DynValue {
                 slot,
                 expected: "option".into(),
             }),
+        }
+    }
+    pub fn list(&self, slot: usize) -> Result<&[DynValue], BridgeError> {
+        match self {
+            DynValue::List { items } => Ok(items),
+            _ => Err(BridgeError {
+                slot,
+                expected: "list".into(),
+            }),
+        }
+    }
+    pub fn pair(&self, slot: usize) -> Result<(&DynValue, &DynValue), BridgeError> {
+        match self {
+            DynValue::Pair { fst, snd } => Ok((fst, snd)),
+            _ => Err(BridgeError {
+                slot,
+                expected: "pair".into(),
+            }),
+        }
+    }
+    pub fn pair_of(fst: DynValue, snd: DynValue) -> DynValue {
+        DynValue::Pair {
+            fst: Box::new(fst),
+            snd: Box::new(snd),
         }
     }
     pub fn sem(id: u64, repr: DynValue) -> DynValue {
@@ -290,7 +332,7 @@ mod tests {
             if !active.is_active(ClockSlot(0)) {
                 return Ok((None, None));
             }
-            let x = bdl_runtime_core::read_input(*inputs, 0)?;
+            let x = bdl_runtime_core::read_input(inputs, 0)?;
             let y = bdl_runtime_core::num::mul(x, 2.0, 1)?;
             Ok((Some(x), Some(y)))
         }

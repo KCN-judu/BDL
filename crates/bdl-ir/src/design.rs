@@ -63,6 +63,11 @@ pub struct ConceptBinding {
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub representation: Option<Ty>,
+    /// The formal `OrdDecl s` (Phase 9c): the designer declared the concept
+    /// ordered.  Surface metadata read by elaboration only; the kernel has
+    /// no order on concepts.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub ordered: bool,
 }
 
 /// `OutputSpec`: what a sink accepts and in which domain.
@@ -111,6 +116,20 @@ impl DesignIr {
         self.concepts
             .get(&s)
             .and_then(|c| c.representation.as_ref())
+    }
+
+    /// `Ty.ordB O Θ` (Phase 9c): the type has a designer-meaningful order —
+    /// a quantity, or a concept declared ordered and represented by one.
+    /// Never truth values, options, lists, pairs or undeclared concepts.
+    pub fn is_ordered(&self, ty: &Ty) -> bool {
+        match ty {
+            Ty::Q { .. } => true,
+            Ty::Sem { id } => self
+                .concepts
+                .get(id)
+                .is_some_and(|c| c.ordered && matches!(c.representation, Some(Ty::Q { .. }))),
+            _ => false,
+        }
     }
 
     /// `ConceptEnv.WF`: every bound representation is sem-free data.

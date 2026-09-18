@@ -9,5 +9,13 @@ repository.workspace = true
 
 [dependencies]
 
+[features]
+default = []
+# Finite collections (`list τ`): `alloc::vec::Vec` in the generated core.
+# Enabled by the generator exactly when the design carries list values; a
+# target then needs a global allocator.  Everything else stays
+# allocation-free.
+collections = []
+
 [lints]
 workspace = true

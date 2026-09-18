@@ -148,6 +148,7 @@ mod tests {
                     name: name.into(),
                     description: String::new(),
                     representation: Some(Representation::Quantity { dim }),
+                    ordered: false,
                 },
             );
         }

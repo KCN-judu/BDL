@@ -17,6 +17,14 @@ pub fn describe(ir: &DesignIr, ty: &Ty) -> String {
             .unwrap_or_else(|| format!("concept {id}")),
         Ty::Q { dim } => describe_dim(*dim),
         Ty::Opt { inner } => format!("an occurrence of {}", describe(ir, inner)),
+        Ty::List { elem } => format!("a collection of {}", describe(ir, elem)),
+        Ty::Prod { fst, snd } => {
+            format!(
+                "a grouped value ({} and {})",
+                describe(ir, fst),
+                describe(ir, snd)
+            )
+        }
         Ty::Arr { .. } => {
             let mut parts = Vec::new();
             let mut t = ty;
@@ -84,6 +92,8 @@ pub fn kernel(ty: &Ty) -> String {
         Ty::Sem { id } => id.to_string(),
         Ty::Q { dim } => format!("q[{}]", symbol(*dim)),
         Ty::Opt { inner } => format!("opt {}", kernel(inner)),
+        Ty::List { elem } => format!("list {}", kernel(elem)),
+        Ty::Prod { fst, snd } => format!("({} × {})", kernel(fst), kernel(snd)),
         Ty::Arr { dom, cod } => {
             let d = match **dom {
                 Ty::Arr { .. } => format!("({})", kernel(dom)),
@@ -106,7 +116,7 @@ pub fn expr(e: &bdl_ir::Expr) -> String {
             Prim::Mul { d1, d2 } => format!("mul[{},{}]", symbol(*d1), symbol(*d2)),
             Prim::Div { d1, d2 } => format!("div[{},{}]", symbol(*d1), symbol(*d2)),
             Prim::Lt { dim } => format!("lt[{}]", symbol(*dim)),
-            Prim::Eq { dim } => format!("eq[{}]", symbol(*dim)),
+            Prim::Eq { ty } => format!("eq[{}]", kernel(ty)),
             Prim::Not => "not".into(),
             Prim::And => "and".into(),
             Prim::Or => "or".into(),
@@ -115,6 +125,17 @@ pub fn expr(e: &bdl_ir::Expr) -> String {
             Prim::Some { ty } => format!("some[{}]", kernel(ty)),
             Prim::IsSome { ty } => format!("isSome[{}]", kernel(ty)),
             Prim::GetD { ty } => format!("getD[{}]", kernel(ty)),
+            Prim::Nil { ty } => format!("nil[{}]", kernel(ty)),
+            Prim::Cons { ty } => format!("cons[{}]", kernel(ty)),
+            Prim::Length { ty } => format!("length[{}]", kernel(ty)),
+            Prim::Take { ty } => format!("take[{}]", kernel(ty)),
+            Prim::Drop { ty } => format!("drop[{}]", kernel(ty)),
+            Prim::Reverse { ty } => format!("reverse[{}]", kernel(ty)),
+            Prim::Head { ty } => format!("head[{}]", kernel(ty)),
+            Prim::ToList { ty } => format!("toList[{}]", kernel(ty)),
+            Prim::Pair { fst, snd } => format!("pair[{},{}]", kernel(fst), kernel(snd)),
+            Prim::Fst { fst, snd } => format!("fst[{},{}]", kernel(fst), kernel(snd)),
+            Prim::Snd { fst, snd } => format!("snd[{},{}]", kernel(fst), kernel(snd)),
         }
     }
     fn go(e: &Expr, out: &mut String) {
@@ -167,6 +188,15 @@ pub fn expr(e: &bdl_ir::Expr) -> String {
                 go(init, out);
                 out.push(' ');
                 go(e, out);
+                out.push(')');
+            }
+            Expr::Fold { f, z, l } => {
+                out.push_str("(fold ");
+                go(f, out);
+                out.push(' ');
+                go(z, out);
+                out.push(' ');
+                go(l, out);
                 out.push(')');
             }
         }

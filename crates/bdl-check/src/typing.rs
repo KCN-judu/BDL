@@ -86,6 +86,17 @@ pub enum TypeErrorKind {
         expected: Ty,
         found: Ty,
     },
+    /// `eq` at a type that is not data (a function type): the kernel's one
+    /// capability proof (`eq τ (h : τ.Data)`), checked here.
+    EqualityNotData {
+        found: Ty,
+    },
+    /// `fold f z l`: `f` is not `τ → σ → σ` for the list's `τ` and `z`'s `σ`.
+    FoldMismatch {
+        step: Ty,
+        init: Ty,
+        list: Ty,
+    },
 }
 
 /// `infer Θ Δ G Γ e`.  `ctx` is the de Bruijn context, innermost first.
@@ -197,7 +208,40 @@ fn infer_at(
             }
             Ok(Ty::sem(*s))
         }
-        Expr::Prim { p } => Ok(p.ty()),
+        Expr::Prim { p } => {
+            if let bdl_ir::Prim::Eq { ty } = p {
+                if !ty.is_data() {
+                    return Err(err(
+                        TypeErrorKind::EqualityNotData { found: ty.clone() },
+                        path,
+                    ));
+                }
+            }
+            Ok(p.ty())
+        }
+        Expr::Fold { f, z, l } => {
+            let tf = child(ir, grant, ctx, f, path, 0)?;
+            let tz = child(ir, grant, ctx, z, path, 1)?;
+            let tl = child(ir, grant, ctx, l, path, 2)?;
+            let ok = match (&tf, &tl) {
+                (Ty::Arr { dom, cod }, Ty::List { elem }) => match cod.as_ref() {
+                    Ty::Arr { dom: acc, cod: res } => **dom == **elem && **acc == tz && **res == tz,
+                    _ => false,
+                },
+                _ => false,
+            };
+            if !ok {
+                return Err(err(
+                    TypeErrorKind::FoldMismatch {
+                        step: tf,
+                        init: tz,
+                        list: tl,
+                    },
+                    path,
+                ));
+            }
+            Ok(tz)
+        }
         Expr::Delay { init, e } | Expr::Sync { init, e, .. } => {
             if !ctx.is_empty() {
                 return Err(err(TypeErrorKind::TemporalUnderBinder, path));
@@ -273,6 +317,7 @@ mod tests {
                     id: sem(id),
                     name: name.into(),
                     representation: rep,
+                    ordered: false,
                 },
             );
         }
@@ -502,6 +547,77 @@ mod tests {
             infer(&ir(), &Grant::None, &[], &closure).unwrap_err().kind,
             TypeErrorKind::TemporalNotData { .. }
         ));
+    }
+
+    #[test]
+    fn fold_types_like_the_kernel_and_equality_needs_data() {
+        let q0 = Ty::q(Dim::ZERO);
+        // fold (add) 0 [1, 2]  : q 0
+        let list = Expr::apps(
+            Expr::prim(Prim::Cons { ty: q0.clone() }),
+            [
+                lit(Dim::ZERO, 1.0),
+                Expr::apps(
+                    Expr::prim(Prim::Cons { ty: q0.clone() }),
+                    [
+                        lit(Dim::ZERO, 2.0),
+                        Expr::prim(Prim::Nil { ty: q0.clone() }),
+                    ],
+                ),
+            ],
+        );
+        let sum = Expr::fold(
+            Expr::prim(Prim::Add { dim: Dim::ZERO }),
+            lit(Dim::ZERO, 0.0),
+            list.clone(),
+        );
+        assert_eq!(infer(&ir(), &Grant::None, &[], &sum).unwrap(), q0);
+        // the step must consume the element type and thread the accumulator
+        let bad = Expr::fold(Expr::prim(Prim::And), Expr::BoolLit { value: true }, list);
+        assert!(matches!(
+            infer(&ir(), &Grant::None, &[], &bad).unwrap_err().kind,
+            TypeErrorKind::FoldMismatch { .. }
+        ));
+        // structural equality at any data type, refused at a function type
+        let pair = Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: Ty::Bool,
+                snd: q0.clone(),
+            }),
+            [Expr::BoolLit { value: true }, lit(Dim::ZERO, 1.0)],
+        );
+        let eq_pair = Expr::apps(
+            Expr::prim(Prim::Eq {
+                ty: Ty::prod(Ty::Bool, q0.clone()),
+            }),
+            [pair.clone(), pair],
+        );
+        assert_eq!(infer(&ir(), &Grant::None, &[], &eq_pair).unwrap(), Ty::Bool);
+        let eq_fn = Expr::prim(Prim::Eq {
+            ty: Ty::arr(Ty::Bool, Ty::Bool),
+        });
+        assert!(matches!(
+            infer(&ir(), &Grant::None, &[], &eq_fn).unwrap_err().kind,
+            TypeErrorKind::EqualityNotData { .. }
+        ));
+        // a pair of two concepts keeps both identities in its type
+        let two = Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: Ty::sem(sem(0)),
+                snd: Ty::sem(sem(1)),
+            }),
+            [Expr::Var { index: 0 }, Expr::Var { index: 1 }],
+        );
+        assert_eq!(
+            infer(
+                &ir(),
+                &Grant::None,
+                &[Ty::sem(sem(0)), Ty::sem(sem(1))],
+                &two
+            )
+            .unwrap(),
+            Ty::prod(Ty::sem(sem(0)), Ty::sem(sem(1)))
+        );
     }
 
     proptest::proptest! {

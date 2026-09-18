@@ -319,8 +319,8 @@ fn smart_lamp_is_authored_from_the_surface_and_does_everything_the_compiler_know
             Value::sem(
                 lux.id,
                 Value::q(
-                    match lux.representation.unwrap() {
-                        Representation::Quantity { dim } => dim,
+                    match &lux.representation {
+                        Some(Representation::Quantity { dim }) => *dim,
                         _ => unreachable!(),
                     },
                     *lx,
