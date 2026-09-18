@@ -70,6 +70,10 @@ pub enum ExprKind {
         params: Vec<Ident>,
         body: Box<SurfaceExpr>,
     },
+    /// `?` — a slot: an expression not yet written.  The Formula
+    /// Composer's hole; elaboration refuses it (`formula.slot.empty`) and
+    /// nothing downstream of the surface ever sees one.
+    Hole,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -129,7 +133,7 @@ impl SurfaceExpr {
     pub fn walk<'a>(&'a self, f: &mut dyn FnMut(&'a SurfaceExpr)) {
         f(self);
         match &self.kind {
-            ExprKind::Name(_) | ExprKind::Number { .. } | ExprKind::Bool(_) => {}
+            ExprKind::Name(_) | ExprKind::Number { .. } | ExprKind::Bool(_) | ExprKind::Hole => {}
             ExprKind::Unary { expr, .. } => expr.walk(f),
             ExprKind::Binary { lhs, rhs, .. } => {
                 lhs.walk(f);
@@ -932,6 +936,7 @@ fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
             },
         },
         ast::Expr::Paren(p) => expr(&p.inner()?)?.kind,
+        ast::Expr::Slot(_) => ExprKind::Hole,
         ast::Expr::Call(c) => {
             let args: Option<Vec<SurfaceExpr>> = c.arguments().map(|a| expr(&a)).collect();
             ExprKind::Call {

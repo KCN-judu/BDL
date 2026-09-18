@@ -23,4 +23,4 @@ pub use design::{
     elaborate_design, elaborate_interface, representation_ty, Elaboration, MappingElab,
     RealizationOutcome,
 };
-pub use formula::{elaborate_formula, Realized};
+pub use formula::{elaborate_formula, trace_formula_in, FormulaTrace, Realized, TypeTrace};

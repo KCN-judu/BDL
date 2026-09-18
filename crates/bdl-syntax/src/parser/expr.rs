@@ -39,6 +39,7 @@ pub(super) fn can_start(kind: SyntaxKind) -> bool {
             | KwMatch
             | Bang
             | Minus
+            | Question
     ) || kind.is_future_reserved()
 }
 
@@ -304,6 +305,14 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
                 let m = p.start();
                 p.bump();
                 m.complete(p, LiteralExpr)
+            }
+            Question => {
+                // `?`: a slot — an expression not yet written.  Parses
+                // wherever a value may stand; elaboration refuses it with
+                // what the slot expects (`formula.slot.empty`).
+                let m = p.start();
+                p.bump();
+                m.complete(p, SlotExpr)
             }
             LParen if at_lambda_params(p) => lambda(p),
             LParen => paren_expr(p),

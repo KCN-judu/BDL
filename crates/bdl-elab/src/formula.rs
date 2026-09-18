@@ -52,7 +52,37 @@ use bdl_model::{ClockId, DeclId, Dim, SemanticId};
 use bdl_syntax::lower::Ident;
 use bdl_syntax::lower::{SurfaceArm, SurfaceLet};
 use bdl_syntax::{BinaryOp, ExprKind, PatternKind, SurfaceExpr, SurfacePattern, UnaryOp};
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+
+/// The type the elaborator gave one surface expression, for tooling that
+/// projects the formula structurally (the Formula Composer): the span, the
+/// closed kernel type when there is one, and the designer-language
+/// description either way.  Recorded for every sub-expression, on success
+/// and on failure alike.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TypeTrace {
+    pub span: Span,
+    /// The closed type; `None` for an erroneous, unknown or rule-typed
+    /// expression.
+    pub ty: Option<Ty>,
+    /// "an angle", "a Brightness", "a value of a kind not yet known", …
+    pub description: String,
+    /// Whether the expression failed to type (its own error, or one of
+    /// its parts').
+    pub error: bool,
+}
+
+/// What `trace_formula_in` returns: the surface tree (when the source
+/// parsed), the type of every sub-expression, every diagnostic, and
+/// whether the whole formula elaborated.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FormulaTrace {
+    pub surface: Option<SurfaceExpr>,
+    pub types: Vec<TypeTrace>,
+    pub diagnostics: Vec<Diagnostic>,
+    pub ok: bool,
+}
 
 /// A successfully elaborated realization.
 #[derive(Clone, Debug, PartialEq)]
@@ -158,6 +188,8 @@ struct Elab<'a> {
     env: Vec<Binding>,
     diags: Vec<Diagnostic>,
     spans: BTreeMap<ExprPath, Span>,
+    /// The type of every surface expression elaborated, in post-order.
+    trace: Vec<TypeTrace>,
 }
 
 /// Elaborate `mapping`'s formula `source` into `λ x₁ … xₙ. mk B (…)`.
@@ -185,24 +217,69 @@ pub fn elaborate_formula_in(
     source: &str,
     names: InputEnv,
 ) -> Result<(Realized, Vec<Diagnostic>), Vec<Diagnostic>> {
+    run(design, ir, mapping, source, names).0
+}
+
+/// [`elaborate_formula_in`] keeping the surface tree and the type of every
+/// sub-expression — the Formula Composer's view (`bdl-ide::formula`).
+/// Never fails: a source that does not parse gives no tree and the parse
+/// diagnostics; one that does not elaborate gives the tree, the types
+/// found so far and the diagnostics.
+pub fn trace_formula_in(
+    design: &Design,
+    ir: &DesignIr,
+    mapping: &MappingBlock,
+    source: &str,
+    names: InputEnv,
+) -> FormulaTrace {
+    let (result, surface, types) = run(design, ir, mapping, source, names);
+    let (ok, diagnostics) = match result {
+        Ok((_, warnings)) => (true, warnings),
+        Err(errors) => (false, errors),
+    };
+    FormulaTrace {
+        surface,
+        types,
+        diagnostics,
+        ok,
+    }
+}
+
+type Run = (
+    Result<(Realized, Vec<Diagnostic>), Vec<Diagnostic>>,
+    Option<SurfaceExpr>,
+    Vec<TypeTrace>,
+);
+
+fn run(
+    design: &Design,
+    ir: &DesignIr,
+    mapping: &MappingBlock,
+    source: &str,
+    names: InputEnv,
+) -> Run {
     let entity = Entity::Mapping { id: mapping.id };
     let surface = match bdl_syntax::formula(source) {
         Ok(e) => e,
         Err(errors) => {
-            return Err(errors
-                .into_iter()
-                .map(|e| {
-                    let technical = format!("{}: {}", e.code.as_str(), e.technical());
-                    let mut d =
-                        Diagnostic::error("formula.parse.unexpected_token", entity, e.message)
-                            .at(e.span)
-                            .technical(technical);
-                    if let Some(hint) = e.hint {
-                        d = d.fix(hint);
-                    }
-                    d
-                })
-                .collect())
+            return (
+                Err(errors
+                    .into_iter()
+                    .map(|e| {
+                        let technical = format!("{}: {}", e.code.as_str(), e.technical());
+                        let mut d =
+                            Diagnostic::error("formula.parse.unexpected_token", entity, e.message)
+                                .at(e.span)
+                                .technical(technical);
+                        if let Some(hint) = e.hint {
+                            d = d.fix(hint);
+                        }
+                        d
+                    })
+                    .collect()),
+                None,
+                Vec::new(),
+            );
         }
     };
 
@@ -221,6 +298,7 @@ pub fn elaborate_formula_in(
             .collect(),
         diags: Vec::new(),
         spans: BTreeMap::new(),
+        trace: Vec::new(),
     };
 
     // Path of the body: under n lambdas, then under `mk`.
@@ -273,7 +351,7 @@ pub fn elaborate_formula_in(
     if el.diags.iter().any(Diagnostic::is_error) || out_rep.is_none() || input_unbound {
         let mut d = el.diags;
         bdl_diagnostics::sort_diagnostics(&mut d);
-        return Err(d);
+        return (Err(d), Some(surface), el.trace);
     }
 
     // λ x₁ : sem A₁. … λ xₙ : sem Aₙ. mk B body
@@ -287,13 +365,17 @@ pub fn elaborate_formula_in(
     }
     let mut warnings = el.diags;
     bdl_diagnostics::sort_diagnostics(&mut warnings);
-    Ok((
-        Realized {
-            expr,
-            spans: el.spans,
-        },
-        warnings,
-    ))
+    (
+        Ok((
+            Realized {
+                expr,
+                spans: el.spans,
+            },
+            warnings,
+        )),
+        Some(surface),
+        el.trace,
+    )
 }
 
 // ---- pattern compilation ----------------------------------------------------
@@ -629,8 +711,40 @@ impl<'a> Elab<'a> {
     /// is a type the context already knows (it fixes the payload of a bare
     /// `None`); it is never a requirement.
     fn expr(&mut self, e: &SurfaceExpr, path: &mut ExprPath, expect: Option<&STy>) -> (Expr, STy) {
+        let (term, ty) = self.expr_untraced(e, path, expect);
+        self.trace.push(TypeTrace {
+            span: e.span,
+            ty: ty.to_ty(),
+            description: self.describe(&ty),
+            error: ty.is_error(),
+        });
+        (term, ty)
+    }
+
+    fn expr_untraced(
+        &mut self,
+        e: &SurfaceExpr,
+        path: &mut ExprPath,
+        expect: Option<&STy>,
+    ) -> (Expr, STy) {
         self.record(path, e.span);
         match &e.kind {
+            ExprKind::Hole => {
+                let d = self
+                    .error(
+                        "formula.slot.empty",
+                        e.span,
+                        match expect {
+                            Some(t) if t.is_known() => {
+                                format!("This slot is empty; it expects {}.", self.describe(t))
+                            }
+                            _ => "This slot is empty.".to_string(),
+                        },
+                    )
+                    .explain("A `?` stands where a value is still to be written. Fill it in the Formula view — it says what the slot expects and offers what fits — or write the value in the text.");
+                self.push(d);
+                self.placeholder()
+            }
             ExprKind::Bool(b) => (Expr::BoolLit { value: *b }, STy::Bool),
             ExprKind::Number { literal, unit } => {
                 // The syntax keeps the exact spelling; the machine number is

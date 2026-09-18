@@ -577,7 +577,13 @@ ast_enum!(
         List(ListExpr),
         Tuple(TupleExpr),
         Lambda(LambdaExpr),
+        Slot(SlotExpr),
     }
+);
+ast_node!(
+    /// `?` — a slot: an expression not yet written.
+    SlotExpr,
+    SlotExpr
 );
 ast_node!(
     /// `[a, b, c]`

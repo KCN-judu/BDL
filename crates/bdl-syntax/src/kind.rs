@@ -84,6 +84,8 @@ pub enum SyntaxKind {
     OrOr,
     At,
     Dot,
+    /// `?` — a slot (docs/spec/textual-syntax.md §16).
+    Question,
 
     // ---- nodes -----------------------------------------------------------
     Module,
@@ -147,6 +149,8 @@ pub enum SyntaxKind {
     /// `x => e` or `(x, y) => e` — a rule passed to an equation
     LambdaExpr,
     LambdaParams,
+    /// `?` — a slot: an expression not yet written, never elaborated.
+    SlotExpr,
     /// Skipped tokens during recovery, kept so the tree stays lossless.
     ErrorNode,
     /// Placeholder for an abandoned marker; never appears in a tree.
@@ -329,6 +333,7 @@ impl SyntaxKind {
             OrOr => "||",
             At => "@",
             Dot => ".",
+            Question => "?",
             _ => return None,
         })
     }
@@ -440,6 +445,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     OrOr,
     At,
     Dot,
+    Question,
     Module,
     Formula,
     ConceptDecl,
@@ -497,6 +503,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     TupleExpr,
     LambdaExpr,
     LambdaParams,
+    SlotExpr,
     ErrorNode,
     Tombstone,
 ];

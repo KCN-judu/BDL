@@ -69,6 +69,7 @@ fn show(e: &SurfaceExpr) -> String {
                 .join(","),
             show(body)
         ),
+        ExprKind::Hole => "?".into(),
     }
 }
 
@@ -830,4 +831,35 @@ fn collections_grouped_values_rules_and_membership() {
     assert!(errors("ordered mapping f : A\n")
         .iter()
         .any(|(_, _, m)| m.contains("expected `concept` after `ordered`")));
+}
+
+/// `?` is a slot: an expression not yet written, legal wherever a value
+/// may stand (the Formula Composer's hole), formatted as itself.
+#[test]
+fn a_slot_parses_wherever_a_value_may_stand_and_formats_as_itself() {
+    assert_eq!(ok("?"), "?");
+    assert_eq!(ok("tilt / ?"), "(tilt / ?)");
+    assert_eq!(ok("clamp(? / (90 deg), ?, 1)"), "clamp[(? / 90deg), ?, 1]");
+    assert_eq!(ok("? * ?"), "(? * ?)");
+    assert_eq!(ok("-?"), "(-?)");
+    // never an operator, never a unit
+    assert!(!errors(
+        "mapping f : A
+f() = 1 ? 2
+"
+    )
+    .is_empty());
+    assert_eq!(
+        crate::format::format_module(
+            "mapping f : A
+f() = tilt/?
+"
+        )
+        .as_deref(),
+        Some(
+            "mapping f : A
+f() = tilt / ?
+"
+        )
+    );
 }

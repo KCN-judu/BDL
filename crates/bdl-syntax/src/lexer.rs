@@ -95,6 +95,9 @@ enum Raw {
     At,
     #[token(".")]
     Dot,
+    /// `?` — a slot: an expression not yet written (a Composer hole).
+    #[token("?")]
+    Question,
 }
 
 fn line_comment(lex: &mut logos::Lexer<Raw>) {
@@ -173,6 +176,7 @@ pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
             Ok(Raw::OrOr) => SyntaxKind::OrOr,
             Ok(Raw::At) => SyntaxKind::At,
             Ok(Raw::Dot) => SyntaxKind::Dot,
+            Ok(Raw::Question) => SyntaxKind::Question,
             Err(()) => {
                 errors.push(SyntaxError::new(
                     SyntaxErrorCode::InvalidCharacter,

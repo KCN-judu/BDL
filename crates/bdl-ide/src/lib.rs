@@ -15,6 +15,7 @@
 //! | invalidation preview | [`invalidation`] | what an edit would reopen, before it is made |
 //! | symbols, tokens | [`symbols`], [`tokens`] | outline and classification for textual surfaces |
 //! | draft verdict | [`draft`] | the Studio formula editor's answer |
+//! | formula projection, slots, composing | [`formula`] | the Formula Composer's structured view, what a slot expects and fits, the text edit an action makes |
 //!
 //! Pull-style: nothing here pushes.  Cancellation is a token the caller
 //! passes; staleness is the stamp every result carries.  No query panics
@@ -31,6 +32,7 @@ pub mod draft;
 pub mod edit_plan;
 pub mod explain;
 pub mod format;
+pub mod formula;
 pub mod hover;
 pub mod inlay;
 pub mod invalidation;
@@ -61,6 +63,11 @@ pub use draft::{draft_verdict, DraftVerdict};
 pub use edit_plan::{Precondition, SemanticEditPlan, SemanticOperation};
 pub use explain::{explain, Explanation, ExplanationSection};
 pub use format::format_document;
+pub use formula::{
+    compose, formula_projection, formula_slot, ComposeOp, ComposeResult, EquationCandidate,
+    FormulaNode, FormulaProjection, NodeKind, ReferenceCandidate, SlotInfo, TypeKindView, TypeView,
+    UnitCandidate,
+};
 pub use hover::{hover, EntityStatus, HoverDetail, SemanticHover};
 pub use inlay::{inlay_hints, InlayHint, InlayKind};
 pub use invalidation::{preview_change, Fact, Invalidated, InvalidationPreview, StatusChange};
