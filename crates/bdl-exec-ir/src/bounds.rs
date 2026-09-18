@@ -127,7 +127,9 @@ impl Shape {
     /// The largest shape of a type: every list as large as an input.
     pub fn top(t: &Ty) -> Shape {
         match t {
-            Ty::Bool | Ty::Nat | Ty::Q { .. } | Ty::Sem { .. } | Ty::Arr { .. } => Shape::Scalar,
+            Ty::Bool | Ty::Nat | Ty::Unit | Ty::Q { .. } | Ty::Sem { .. } | Ty::Arr { .. } => {
+                Shape::Scalar
+            }
             Ty::Opt { inner } => Shape::opt(Shape::top(inner)),
             Ty::List { elem } => Shape::list(Bound::Input, Shape::top(elem)),
             Ty::Prod { fst, snd } => Shape::pair(Shape::top(fst), Shape::top(snd)),

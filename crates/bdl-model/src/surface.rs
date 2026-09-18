@@ -301,8 +301,15 @@ impl MappingBlock {
     }
 }
 
-/// `(A₁, …, Aₙ) -> B` over concepts.  A nullary signature `() -> B` is a
-/// value declaration of type `B`.
+/// `(A₁, …, Aₙ) -> B` over concepts: the relationship's canonical type is
+/// `domain(inputs) -> B`, where the domain of no inputs is the empty
+/// product `()` — `mapping f : B` is shorthand for `mapping f : () -> B`
+/// and has type `() -> B` (`bdl_ir::Ty::of_signature`; the laws are in
+/// `bdl_ir::ty`).  A relationship with the unit domain is not a category of
+/// its own: it keeps its identity, realization, timing domain,
+/// dependencies and commitments; only its unique argument carries nothing,
+/// so it is read as a value (`f`, sugar for `f(())`) and stands as a
+/// simulation input when unresolved.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Signature {
     pub inputs: Vec<SemanticId>,
@@ -312,6 +319,13 @@ pub struct Signature {
 impl Signature {
     pub fn mentions(&self, concept: SemanticId) -> bool {
         self.output == concept || self.inputs.contains(&concept)
+    }
+
+    /// The domain is the empty product `()`: the relationship reads
+    /// nothing, so it is referenced as a value and, unresolved, is a
+    /// simulation input.
+    pub fn is_unit_domain(&self) -> bool {
+        self.inputs.is_empty()
     }
 }
 

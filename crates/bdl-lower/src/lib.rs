@@ -965,7 +965,7 @@ fn mentions_arrow(t: &Ty) -> bool {
         Ty::Arr { .. } => true,
         Ty::Opt { inner } | Ty::List { elem: inner } => mentions_arrow(inner),
         Ty::Prod { fst, snd } => mentions_arrow(fst) || mentions_arrow(snd),
-        Ty::Bool | Ty::Nat | Ty::Q { .. } | Ty::Sem { .. } => false,
+        Ty::Bool | Ty::Nat | Ty::Unit | Ty::Q { .. } | Ty::Sem { .. } => false,
     }
 }
 
@@ -999,7 +999,7 @@ fn collect_sems(t: &Ty, out: &mut BTreeSet<SemanticId>) {
             collect_sems(fst, out);
             collect_sems(snd, out);
         }
-        Ty::Bool | Ty::Nat | Ty::Q { .. } => {}
+        Ty::Bool | Ty::Nat | Ty::Unit | Ty::Q { .. } => {}
     }
 }
 

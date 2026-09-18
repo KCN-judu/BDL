@@ -471,7 +471,7 @@ pub fn ty_uses_lists(t: &Ty) -> bool {
         Ty::Opt { inner } => ty_uses_lists(inner),
         Ty::Prod { fst, snd } => ty_uses_lists(fst) || ty_uses_lists(snd),
         Ty::Arr { dom, cod } => ty_uses_lists(dom) || ty_uses_lists(cod),
-        Ty::Bool | Ty::Nat | Ty::Q { .. } | Ty::Sem { .. } => false,
+        Ty::Bool | Ty::Nat | Ty::Unit | Ty::Q { .. } | Ty::Sem { .. } => false,
     }
 }
 

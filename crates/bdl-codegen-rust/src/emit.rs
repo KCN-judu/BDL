@@ -50,6 +50,10 @@ pub fn rust_type(t: &Ty) -> Result<Type, EmitError> {
         Ty::Opt { inner } => Type::option(rust_type(inner)?),
         Ty::List { elem } => Type::vec(rust_type(elem)?),
         Ty::Prod { fst, snd } => Type::Tuple(vec![rust_type(fst)?, rust_type(snd)?]),
+        // the empty product: never a value the generated core carries (the
+        // unit argument of a relationship without inputs is erased), but a
+        // type with a Rust spelling all the same
+        Ty::Unit => Type::Tuple(Vec::new()),
         Ty::Arr { .. } => {
             return Err(EmitError(format!(
                 "function type {} has no runtime representation",

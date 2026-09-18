@@ -10,6 +10,7 @@ pub fn describe(ir: &DesignIr, ty: &Ty) -> String {
     match ty {
         Ty::Bool => "true or false".into(),
         Ty::Nat => "a count".into(),
+        Ty::Unit => "()".into(),
         Ty::Sem { id } => ir
             .concepts
             .get(id)
@@ -35,6 +36,29 @@ pub fn describe(ir: &DesignIr, ty: &Ty) -> String {
             format!("({}) → {}", parts.join(", "), describe(ir, t))
         }
     }
+}
+
+/// A relationship's canonical type in the designer's spelling — `() ->
+/// RoomTemp`, `Angle -> Brightness`, `(Angle, Time) -> Speed` — from its
+/// signature (`bdl_ir::ty`: the domain of no inputs is `()`, the empty
+/// product; never the word "unit", which names a measurement unit here).
+pub fn mapping_type(
+    ir: &DesignIr,
+    inputs: &[bdl_model::SemanticId],
+    output: bdl_model::SemanticId,
+) -> String {
+    let name = |id: &bdl_model::SemanticId| {
+        ir.concepts
+            .get(id)
+            .map(|c| c.name.clone())
+            .unwrap_or_else(|| format!("concept {id}"))
+    };
+    let domain = match inputs {
+        [] => "()".to_string(),
+        [a] => name(a),
+        many => format!("({})", many.iter().map(name).collect::<Vec<_>>().join(", ")),
+    };
+    format!("{domain} -> {}", name(&output))
 }
 
 /// "an angle", "a length", "a dimensionless quantity", "a quantity of m·s⁻²".
@@ -89,6 +113,7 @@ pub fn kernel(ty: &Ty) -> String {
     match ty {
         Ty::Bool => "bool".into(),
         Ty::Nat => "nat".into(),
+        Ty::Unit => "()".into(),
         Ty::Sem { id } => id.to_string(),
         Ty::Q { dim } => format!("q[{}]", symbol(*dim)),
         Ty::Opt { inner } => format!("opt {}", kernel(inner)),

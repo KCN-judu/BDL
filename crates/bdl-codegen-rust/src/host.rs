@@ -285,6 +285,11 @@ fn from_dyn(reps: &Reps, ty: &Ty, slot: usize) -> Result<Expr, EmitError> {
             ])),
         )),
         Ty::Arr { .. } => return Err(EmitError("function-typed input".into())),
+        Ty::Unit => {
+            return Err(EmitError(
+                "the empty product is never a runtime value".into(),
+            ))
+        }
     })
 }
 
@@ -382,5 +387,10 @@ fn to_dyn(reps: &Reps, ty: &Ty) -> Result<Expr, EmitError> {
             )),
         )),
         Ty::Arr { .. } => return Err(EmitError("function-typed value".into())),
+        Ty::Unit => {
+            return Err(EmitError(
+                "the empty product is never a runtime value".into(),
+            ))
+        }
     })
 }
