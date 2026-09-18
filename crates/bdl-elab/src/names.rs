@@ -193,7 +193,7 @@ pub fn mapping_names(design: &Design) -> Vec<String> {
         .mappings
         .values()
         .map(|m| {
-            if m.signature.inputs.is_empty() {
+            if m.signature.is_unit_domain() {
                 m.name.clone()
             } else {
                 format!("{}(…)", m.name)

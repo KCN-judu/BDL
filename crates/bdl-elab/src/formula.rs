@@ -125,7 +125,9 @@ impl STy {
             Ty::Prod { fst, snd } => {
                 Some(STy::Pair(Box::new(STy::of(fst)?), Box::new(STy::of(snd)?)))
             }
-            Ty::Arr { .. } => None,
+            // the empty product is a relationship's domain, never a value
+            // a formula holds
+            Ty::Arr { .. } | Ty::Unit => None,
         }
     }
 
@@ -763,6 +765,20 @@ impl<'a> Elab<'a> {
                 self.push(d);
                 self.placeholder()
             }
+            ExprKind::Unit => {
+                // the unique value of the empty product stands only as the
+                // argument of a relationship without inputs (`f(())`, the
+                // call form of `f`); nothing else holds it
+                let d = self
+                    .error(
+                        "formula.unit.not_a_value",
+                        e.span,
+                        "`()` carries no value here.",
+                    )
+                    .explain("`()` is the unique value of the empty product: the argument of a relationship without inputs, as in `f(())` — the same as writing `f`. It is not a quantity, a truth value, an absent value or a measurement unit.");
+                self.push(d);
+                self.placeholder()
+            }
             ExprKind::Bool(b) => (Expr::BoolLit { value: *b }, STy::Bool),
             ExprKind::Number { literal, unit } => {
                 // The syntax keeps the exact spelling; the machine number is
@@ -878,7 +894,7 @@ impl<'a> Elab<'a> {
                 let Some(m) = self.design.mappings.get(&id) else {
                     return self.placeholder();
                 };
-                if !m.signature.inputs.is_empty() {
+                if !m.signature.is_unit_domain() {
                     let reads: Vec<String> = m
                         .signature
                         .inputs
@@ -896,6 +912,8 @@ impl<'a> Elab<'a> {
                     self.push(d);
                     return self.placeholder();
                 }
+                // `f : () -> B` read as a value: the application to the
+                // unique argument, erased
                 (Expr::decl(id), STy::Sem(m.signature.output))
             }
             Lookup::Ambiguous(candidates) => {
@@ -1103,16 +1121,33 @@ impl<'a> Elab<'a> {
         let params: Vec<SemanticId> = m.signature.inputs.clone();
         let output = m.signature.output;
         let mname = m.name.clone();
-        if params.is_empty() && !args.is_empty() {
-            let d = self
-                .error(
-                    "formula.call.arity",
-                    span,
-                    format!("{mname} reads nothing; it is a value, not something to apply."),
-                )
-                .fix(format!("Write {mname} without parentheses."));
-            self.push(d);
-            return self.placeholder();
+        if m.signature.is_unit_domain() {
+            // `f : () -> B`: `f`, `f()` and `f(())` are the one application to
+            // the unique argument, which carries nothing and is erased
+            // (`bdl_ir::ty`, unit elimination)
+            match args {
+                [] => {}
+                [SurfaceExpr {
+                    kind: ExprKind::Unit,
+                    ..
+                }] => {}
+                _ => {
+                    let d = self
+                        .error(
+                            "formula.call.arity",
+                            span,
+                            format!("{mname} reads nothing: its only argument is `()`."),
+                        )
+                        .explain(format!(
+                            "{mname} has the type `() -> {}`: it is read as a value.",
+                            self.concept_name(output)
+                        ))
+                        .fix(format!("Write {mname}."));
+                    self.push(d);
+                    return self.placeholder();
+                }
+            }
+            return (Expr::decl(id), STy::Sem(output));
         }
         if args.len() != params.len() {
             let reads: Vec<String> = params.iter().map(|c| self.concept_name(*c)).collect();
@@ -1250,7 +1285,7 @@ impl<'a> Elab<'a> {
             self.push(d);
             return self.placeholder();
         }
-        if !self.mapping.signature.inputs.is_empty() {
+        if !self.mapping.signature.is_unit_domain() {
             let d = self
                 .error(
                     "formula.temporal.under_inputs",
@@ -2212,7 +2247,9 @@ impl<'a> Elab<'a> {
                 )
                 .fix("Compare quantities instead."),
             Ty::Arr { .. } => self.error("semantic.no_order", span, "Rules have no order."),
-            Ty::Q { .. } => self.error("semantic.no_order", span, "This value has no order."),
+            Ty::Q { .. } | Ty::Unit => {
+                self.error("semantic.no_order", span, "This value has no order.")
+            }
         };
         self.push(d);
     }

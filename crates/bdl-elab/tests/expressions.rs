@@ -236,7 +236,48 @@ fn call_diagnostics_have_precise_spans() {
         .expect_error("formula.mapping.needs_arguments", Span::new(4, 13));
     let o = l.nullary("boost(1)");
     o.expect_error("formula.call.arity", Span::new(0, 8));
-    assert!(o.first().fixes[0].contains("without parentheses"));
+    assert!(o.first().message.contains("its only argument is `()`"));
+    assert!(o.first().fixes[0].contains("Write boost."));
+}
+
+/// A relationship without inputs has the canonical type `() -> B`: the
+/// reference `boost`, the empty call `boost()` and the explicit application
+/// to the unique argument `boost(())` are one term of Core — `declRef` —
+/// with the unit erased (`bdl_ir::ty`); `()` is a value nowhere else and is
+/// never an absent value, a quantity or a measurement unit.
+#[test]
+fn a_unit_domain_relationship_is_read_as_a_value_and_its_argument_is_erased() {
+    let mut l = Lamp::new();
+    let plain = l.nullary("boost").core();
+    assert_eq!(l.nullary("boost()").core(), plain);
+    assert_eq!(l.nullary("boost(())").core(), plain);
+    assert_eq!(
+        l.nullary("boost(()) + boost").core(),
+        l.nullary("boost + boost()").core()
+    );
+    // `()` on its own is not a value
+    let o = l.nullary("()");
+    o.expect_error("formula.unit.not_a_value", Span::new(0, 2));
+    l.nullary("1 + ()")
+        .expect_error("formula.unit.not_a_value", Span::new(4, 6));
+    // not an absent value, not a truth value, not a unit suffix
+    let o = l.nullary("() == None");
+    assert!(o.core.is_none());
+    assert!(
+        o.codes().contains(&"formula.unit.not_a_value"),
+        "{:?}",
+        o.codes()
+    );
+    l.nullary("if () then 1 else 2")
+        .expect_error("formula.unit.not_a_value", Span::new(3, 5));
+    let o = l.with_inputs("dimByTilt(())");
+    assert!(o.core.is_none());
+    assert!(
+        o.codes().contains(&"formula.unit.not_a_value")
+            || o.codes().contains(&"formula.call.argument"),
+        "{:?}",
+        o.codes()
+    );
 }
 
 // ---- blocks and let ------------------------------------------------------------

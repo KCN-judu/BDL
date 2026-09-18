@@ -174,9 +174,9 @@ pub fn realizes(c: &BehaviorComponent) -> Vec<Diagnostic> {
                             .technical(format!("{} port {} decl {} has a definition", c.id, p.id, p.decl)),
                     );
                 }
-                if !p.contract.signature.inputs.is_empty() {
+                if !p.contract.signature.is_unit_domain() {
                     out.push(
-                        d("component.parameter_invalid", format!("{}'s parameter {} takes inputs; a parameter is a value.", c.name, p.name))
+                        d("component.parameter_invalid", format!("{}'s parameter {} takes inputs; a parameter is a value (its domain is `()`).", c.name, p.name))
                             .technical(format!("{} port {} has {} inputs", c.id, p.id, p.contract.signature.inputs.len())),
                     );
                 }
@@ -318,6 +318,8 @@ pub struct ResolvedEnd {
 }
 
 impl ResolvedEnd {
+    /// The end reads inputs: it is a relationship, not a value that a
+    /// transport can carry (a value's domain is `()`).
     pub fn has_inputs(&self) -> bool {
         !self.signature.0.is_empty()
     }

@@ -144,7 +144,7 @@ pub fn check_outputs(ir: &DesignIr, required: &BTreeSet<OutputId>) -> OutputAnal
                     format!("{} expects {}, but {} produces {}.", out_name(*o), pretty::describe(ir, &spec.accepts), decl_name(*d), pretty::describe(ir, ty)),
                 )
                 .explain(if matches!(ty, bdl_ir::Ty::Arr { .. }) {
-                    "A relationship with inputs is not a value: an output takes the value of a relationship that has no inputs. Connect the relationship that combines the sources into the final value."
+                    "A relationship with inputs is not a value: an output takes the value of a relationship whose domain is `()` — one that reads nothing. Connect the relationship that combines the sources into the final value."
                 } else {
                     "A connection to a physical output converts nothing: the relationship must already produce exactly what the output accepts."
                 })

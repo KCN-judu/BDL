@@ -58,7 +58,7 @@ pub enum PackageError {
 /// no error, and every chosen port is realised by the flattened design in
 /// the advertised shape (the FV's open `Realizes` obligation, discharged
 /// here by construction: required ⇒ unresolved, provided ⇒ present,
-/// parameter ⇒ unresolved and nullary).
+/// parameter ⇒ unresolved with the unit domain).
 pub fn package_system(
     snapshot: &SystemSnapshot,
     name: &str,
@@ -99,7 +99,7 @@ pub fn package_system(
         let ok = match p.kind {
             PortKind::Required => m.definition.is_none(),
             PortKind::Provided => true,
-            PortKind::Parameter => m.definition.is_none() && m.signature.inputs.is_empty(),
+            PortKind::Parameter => m.definition.is_none() && m.signature.is_unit_domain(),
         };
         if !ok {
             return Err(PackageError::PortShape {

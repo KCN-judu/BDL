@@ -29,11 +29,15 @@ pub fn representation_ty(r: &Representation) -> Ty {
     }
 }
 
-/// `(A₁, …, Aₙ) -> B`  ⇒  `sem A₁ → … → sem Aₙ → sem B`, no commitments.
+/// The kernel interface of a relationship: its canonical type
+/// `domain(inputs) -> B` (`Ty::of_signature`; `() -> B` for no inputs) in
+/// the kernel's encoding — curried, the unit domain eliminated:
+/// `sem A₁ → … → sem Aₙ → sem B`, and `sem B` when there are no inputs
+/// (`bdl_ir::ty`, Lean's `expectedType`).  No commitments.
 pub fn elaborate_interface(mapping: &MappingBlock) -> Interface {
     let sig = &mapping.signature;
     Interface {
-        expected_type: Ty::arrows(sig.inputs.iter().map(|c| Ty::sem(*c)), Ty::sem(sig.output)),
+        expected_type: Ty::kernel_of_signature(&sig.inputs, sig.output),
         commitments: Vec::new(),
     }
 }
@@ -165,7 +169,7 @@ pub fn elaborate_design(design: &Design) -> Elaboration {
 /// `Definition::Reference`: the kernel's `declRef target`, or
 /// `sync src init (declRef target)`.  No name is resolved; the target is an
 /// identity.  The transport's initial value is a closed formula: it is
-/// elaborated as a nullary formula of this mapping's own signature and
+/// elaborated as a formula of this mapping's own (unit-domain) signature and
 /// must mention no relationship and no temporal form, so a display name
 /// can never influence a binding.  Typing is left to the checker, as for
 /// every other realization.
@@ -194,13 +198,13 @@ pub fn elaborate_reference(
             spans: BTreeMap::new(),
         });
     };
-    if !mapping.signature.inputs.is_empty() {
+    if !mapping.signature.is_unit_domain() {
         return Err(vec![Diagnostic::error(
             "reference.transport_of_relationship",
             entity,
             format!("{} has inputs, so its value cannot be carried across timing domains.", mapping.name),
         )
-        .explain("Only a value can be remembered and transported; a relationship with inputs is not a value.")
+        .explain("Only a value can be remembered and transported: a relationship whose domain is `()` is read as one; a relationship with inputs is not.")
         .technical("sync needs a data operand (TemporalNotData)")]);
     }
     let closed = MappingBlock {

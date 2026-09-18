@@ -28,8 +28,8 @@ pub enum PortKind {
     Required,
     /// A declaration of the body offered to others (FV `provided`).
     Provided,
-    /// An unresolved nullary declaration bound to a closed constant at
-    /// instantiation (FV `params`).
+    /// An unresolved declaration with the unit domain `()` (a value), bound
+    /// to a closed constant at instantiation (FV `params`).
     Parameter,
 }
 
@@ -182,7 +182,7 @@ impl BehaviorComponent {
 }
 
 /// A closed constant for a parameter, as the designer writes it (`0.5`,
-/// `30 deg`).  Elaborated as a nullary formula of the port's own
+/// `30 deg`).  Elaborated as a closed formula of the port's own (unit-domain)
 /// signature with no relationship in scope.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParameterValue {
