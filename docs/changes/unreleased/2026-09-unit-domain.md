@@ -12,14 +12,14 @@
   `mapping TempSensor : () -> RoomTemp`, and both are one declaration with one
   canonical type `domain(inputs) -> B`, the domain of no inputs being the empty
   product `()`. Two inputs may be spelled `(A, B) -> C` (= `A -> B -> C`). The
-  kernel encodes the canonical type by currying and unit elimination
-  (`() -> B` as `B`), so nothing in Core, the evaluator or the generated code
-  changes; the unique argument is erased (`bdl_ir::ty`).
-- **`()` is the empty product** — as a type it opens a signature, as a value
-  it is the argument of a relationship without inputs: `f`, `f()` and `f(())`
-  are one reference. Elsewhere `()` is refused (_`()` carries no value here._);
-  as a concept's value form, after an input or as an output it is refused in
-  those words. Never the word _unit_ (a measurement unit), never `_`.
+  kernel encodes the canonical type by currying and unit elimination (`() -> B`
+  as `B`), so nothing in Core, the evaluator or the generated code changes; the
+  unique argument is erased (`bdl_ir::ty`).
+- **`()` is the empty product** — as a type it opens a signature, as a value it
+  is the argument of a relationship without inputs: `f`, `f()` and `f(())` are
+  one reference. Elsewhere `()` is refused (_`()` carries no value here._); as a
+  concept's value form, after an input or as an output it is refused in those
+  words. Never the word _unit_ (a measurement unit), never `_`.
 - **No special category.** Everything that follows from the unit domain — read
   as a value, may drive an output, be a parameter, be transported, hold memory,
   stand as a simulation input when unresolved — asks one predicate
@@ -32,11 +32,11 @@
 
 ## Compatibility and migration
 
-- Designers: every existing project parses and means what it did; the
-  formatter never rewrites `mapping f : B` to `() -> B` or back. Nothing to do.
+- Designers: every existing project parses and means what it did; the formatter
+  never rewrites `mapping f : B` to `() -> B` or back. Nothing to do.
 - Project files: nothing.
-- Protocol clients: protocol **0.14**, additive — `TypeView.kind` may be
-  `unit`; `Signature` is unchanged (an empty `inputs` is the unit domain).
+- Protocol clients: protocol **0.14**, additive — `TypeView.kind` may be `unit`;
+  `Signature` is unchanged (an empty `inputs` is the unit domain).
 - Developers: `bdl_ir::Ty::Unit`, `Ty::of_signature`, `Ty::kernel_of_signature`,
   `Ty::canonical_mapping_ty`, `Ty::domain_of`, `Ty::uncurry`;
   `Signature::is_unit_domain`; `bdl_syntax::TypeKind::{Unit, Tuple}`,

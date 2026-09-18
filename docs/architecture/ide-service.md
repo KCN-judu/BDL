@@ -332,6 +332,17 @@ entity, role) and the same ladder status.
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.
 
+### The canonical type of a relationship
+
+Hover carries `type: () -> RoomTemp` / `Angle -> Brightness` /
+`(Angle, Time) -> Speed` (`pretty::mapping_type`) beside the surface line that
+keeps the declared shorthand; Explain adds `canonical type`, the empty-product
+sentence for a relationship without inputs, and the kernel `interface`
+(`() -> B` encoded as `B`; ADR-0029). Reference candidates, completion, the
+output-driver action and the simulation-input readiness ask
+`Signature::is_unit_domain` — the one predicate for "read as a value" — never a
+separate kind of mapping.
+
 ### The Formula Composer (protocol 0.12, 0.13)
 
 `bdl-ide::formula` gives the Studio definition editor its structured projection,

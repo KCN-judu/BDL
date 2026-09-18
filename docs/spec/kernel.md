@@ -55,6 +55,12 @@ Ty ::= bool | nat | arr Ty Ty | sem SemanticId | q Dim | opt Ty
      | prod Ty Ty         -- Phase 9b：值级的积（对偶），绝不是接口或输出束
 ```
 
+生产侧的 `bdl_ir::Ty` 另有 `Unit`（空积 `()`）：关系的规范类型是
+`domain(inputs) -> B`，无输入时 domain 为
+`()`。内核没有 unit 类型，接口类型（`expectedType`）按内核编码给出——柯里化，并消去 unit（`() -> B`
+编码为 `B`）；`Unit`
+从不出现在任何 Core 项、表示或运行时值中（ADR-0029；形式化跟进 ISS-0014）。
+
 谓词：
 
 - `Ty.SemFree`：不含 `sem`（递归进 arr/opt/list/prod）

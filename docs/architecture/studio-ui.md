@@ -126,6 +126,13 @@ header word precedence is `declared` › port word › sink state › `required`
         └─────────────────────────┘
 ```
 
+- **A relationship without inputs has no input socket.** Its canonical type is
+  `() -> B` (ADR-0029); the unit domain `()` is a type-theoretic normalization,
+  not a design input, so the node shows one output socket and nothing on the
+  left — the Explain disclosure says `type: () -> Brightness` and that the
+  domain is the empty product. Studio asks `Signature.isUnitDomain`
+  (`app/state.dart`) wherever "read as a value" matters (simulation inputs,
+  output drivers, the value/rule word), never a separate kind of node.
 - **Header colour** = category: concept (grey-blue, the whole one-row object),
   mapping (blue strip), context (violet), output (amber), transport (teal).
   Muted, low-saturation, with the title in 12.5 pt semibold. Identity hues are

@@ -12,7 +12,9 @@ in a `.bdl` definition body, which share one grammar and one checker.
 
 A rule sees only what it reads; a value sees the design's other values
 and rules. A rule is always applied (`f(x)`), never named alone; a value
-is always named alone, never called (`tilt`, not `tilt()`).
+is named alone (`tilt`). A value is a relationship whose domain is `()` —
+it reads nothing, its type is `() -> Tilt` — so `tilt()` and `tilt(())` mean
+the same as `tilt`; write `tilt`.
 
 ## Literals
 

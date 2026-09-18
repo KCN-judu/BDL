@@ -195,6 +195,7 @@ NamedType  FunctionType  ParenType
 NameExpr  LiteralExpr  ParenExpr  CallExpr  UnaryExpr  BinaryExpr
 IfExpr  MatchExpr  MatchArmList  MatchArm  BlockExpr  LetStmt
 ListExpr  TupleExpr  LambdaExpr  LambdaParams  BinderExpr  RangeExpr
+UnitType  TupleType  UnitExpr
 WildcardPattern  IdentPattern  LiteralPattern  ConstructorPattern
 ErrorNode
 ```
@@ -243,25 +244,47 @@ NameRef         ::= Ident
 
 A `MappingDef` belongs to the `MappingDecl` immediately before it. Its `NameRef`
 is expected to repeat the declared name; the parser accepts any identifier and
-lowering reports a mismatch (§8.2). A nullary mapping is declared
-`mapping level : Brightness` and defined `level() = 0`.
+lowering reports a mismatch (§8.2). A relationship without inputs is declared
+`mapping level : Brightness` — shorthand for `mapping level : () -> Brightness`,
+the canonical form (§4.2) — and defined `level() = 0`.
 
 ### 4.2 Types
 
 ```ebnf
 Type            ::= TypeAtom ( "->" Type )?              (* "->" is right-associative *)
-TypeAtom        ::= NamedType | ParenType
+TypeAtom        ::= NamedType | ParenType | UnitType | TupleType
 NamedType       ::= NameRef TypeArgList?
 TypeArgList     ::= "<" Type ( "," Type )* ","? ">"
 ParenType       ::= "(" Type ")"
+UnitType        ::= "(" ")"                              (* the empty product *)
+TupleType       ::= "(" Type ( "," Type )+ ","? ")"      (* a product domain *)
 ```
 
 `A -> B -> C` is `A -> (B -> C)`; `(A -> B) -> C` needs the parentheses. A
-concept is written by its name (`Tilt`), never `Sem<Tilt>` — `sem`, `q`, `rep`,
-`mk` are kernel and explanation vocabulary. Generic forms are syntax only; which
-of them exist and what they mean is decided by elaboration: in a concept's value
-form `List<R>`, `Pair<R₁, R₂>` and `Option<R>` over value forms (§15); anything
-else (`Result<A, B>`) parses and is refused. There is no type-level computation.
+relationship's type is one thing, `domain(inputs) -> B`, however it is spelled:
+
+```text
+domain([])        = ()                 the empty product
+domain([A])       = A
+domain([A, B, …]) = (A, B, …)          ≅  A -> B -> …  by currying
+```
+
+so `mapping f : () -> B` and its shorthand `mapping f : B` declare the one type
+`() -> B`, and `mapping f : (A, B) -> C` is `mapping f : A -> B -> C`. `()` is
+the empty product — `Product([]) ≅ ()` — never the word _unit_ (a measurement
+unit in BDL) and never `_`; it can only open a signature: after an input
+(`A -> () -> B`), as the output, or as a concept's value form it is refused
+(`text.unknown_concept` / `binding.unknown_concept`, in those words). The kernel
+has no unit type: it encodes `() -> B` as `B` (unit elimination, the unique
+argument erased) and `(A, B) -> C` as `A -> B -> C` (`bdl_ir::ty`, ADR-0029), so
+a relationship without inputs is not a category of its own — it keeps its
+identity, realization, timing domain and dependencies, and is read as a value
+(`f`, the application to the unique argument, §4.3). A concept is written by its
+name (`Tilt`), never `Sem<Tilt>` — `sem`, `q`, `rep`, `mk` are kernel and
+explanation vocabulary. Generic forms are syntax only; which of them exist and
+what they mean is decided by elaboration: in a concept's value form `List<R>`,
+`Pair<R₁, R₂>` and `Option<R>` over value forms (§15); anything else
+(`Result<A, B>`) parses and is refused. There is no type-level computation.
 
 ### 4.3 Expressions
 
@@ -283,8 +306,9 @@ ArgList         ::= Expr ( "," Expr )* ","?
 
 PrimaryExpr     ::= NameExpr | LiteralExpr | ParenExpr | TupleExpr | ListExpr
                   | LambdaExpr | IfExpr | MatchExpr | BlockExpr | SlotExpr
-                  | BinderExpr
+                  | UnitExpr | BinderExpr
 SlotExpr        ::= "?"                                             (* §16 *)
+UnitExpr        ::= "(" ")"                                         (* the unique value of () *)
 BinderExpr      ::= ( "all" | "any" | "map" | "filter" ) Name "in" RangeExpr ":" Expr  (* §17 *)
 NameExpr        ::= NameRef
 LiteralExpr     ::= Number UnitSuffix? | "true" | "false"
@@ -356,6 +380,10 @@ Reading rules:
   expressions extend as far right as possible: `if c then a else b + 1` is
   `if c then a else (b + 1)`, and `1 + if c then a else b` is legal.
 - A unit suffix binds to its number only: `90 deg / 2` is `(90 deg) / 2`.
+- `()` is the unique value of the empty product: `f(())` applies a relationship
+  of type `() -> B` to it and means exactly `f` (and `f()`); anywhere else `()`
+  is `formula.unit.not_a_value`. It is never an empty argument list (`f()` has
+  none), a grouping (`(a)`), a grouped value (`(a, b)`) or a slot (`?`).
 - A rule extends as far right as possible, like `if`:
   `any(xs, x => x < 30 deg && held)` gives the whole conjunction to the rule.
 - `x in lo .. hi` is `x in (lo .. hi)`; `x + y in lo .. hi` is
@@ -631,12 +659,13 @@ Core IR
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `concept C : R` — `R` is `Bool`, `Count`, or a quantity name from the shared vocabulary (`bdl_model::quantity`: `Scalar`, `Angle`, `Length`, `Time`, `Mass`, `Current`, `Temperature`, `Amount`, `Luminous`, `Speed`, `Acceleration`, `AngularVelocity`, `Frequency`, `Force`, `Pressure`, `Torque`, `Power`, `Voltage`, `Illuminance`) | `Concept { name, representation }`        | `Θ C = some R`                                                                                                                                                  |
 | `concept C`                                                                                                                                                                                                                                                                                                                             | `Concept { representation: None }`        | `Θ C = none` (open)                                                                                                                                             |
-| `mapping f : A -> B -> C`                                                                                                                                                                                                                                                                                                               | `MappingBlock { signature: (A, B) -> C }` | `DesignDecl` with `expectedType = sem A → sem B → sem C`                                                                                                        |
+| `mapping f : A -> B -> C`, `mapping f : (A, B) -> C`                                                                                                                                                                                                                                                                                    | `MappingBlock { signature: (A, B) -> C }` | `DesignDecl` with `expectedType = sem A → sem B → sem C` (the canonical `(A, B) -> C`, curried)                                                                 |
+| `mapping f : B`, `mapping f : () -> B`                                                                                                                                                                                                                                                                                                  | `MappingBlock { signature: () -> B }`     | `DesignDecl` with `expectedType = sem B` (the canonical `() -> B`, the unit eliminated — ADR-0029)                                                              |
 | no definition                                                                                                                                                                                                                                                                                                                           | `definition: None`                        | unresolved declaration — a legal state                                                                                                                          |
 | `f(a, b) = e`                                                                                                                                                                                                                                                                                                                           | `Definition::Formula`                     | realization `λa.λb. mk C (…)`                                                                                                                                   |
 | `90 deg`                                                                                                                                                                                                                                                                                                                                | number `90` with unit `deg`               | scaled dimensioned literal (linear units only, DI-7)                                                                                                            |
 | `f(x)`                                                                                                                                                                                                                                                                                                                                  | call of a relationship                    | `app (declRef f) x`; arguments are semantic values (an input, a relationship's value), never bare numbers                                                       |
-| `level` (relationship without inputs)                                                                                                                                                                                                                                                                                                   | reference                                 | `declRef level`                                                                                                                                                 |
+| `level`, `level()`, `level(())` (relationship without inputs, `() -> B`)                                                                                                                                                                                                                                                                | reference                                 | `declRef level` — the application to the unique argument, erased                                                                                                |
 | `{ let x = v; e }`                                                                                                                                                                                                                                                                                                                      | block                                     | `app (λx:τ. e) v` — a beta-redex; lowering makes it a `Let`                                                                                                     |
 | `if c then a else b`                                                                                                                                                                                                                                                                                                                    | conditional                               | `ite c a b` (strict: both branches are evaluated, DI-26)                                                                                                        |
 | `Some(e)`, `None`                                                                                                                                                                                                                                                                                                                       | option constructors                       | `some e`, `none`; the payload is a representation value                                                                                                         |

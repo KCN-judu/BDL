@@ -8,10 +8,10 @@ superseded-by: []
 related: ["ADR-0010", "ADR-0013", "ADR-0025", "ISS-0014"]
 fv:
   [
-    "engineering choice: the kernel (`BDL/Core/Base.lean`) has no unit type
-    and types a declaration without inputs at its output; the production
-    canonical type `() -> B` is a normalization above the kernel, encoded
-    into it by unit elimination — ISS-0014 asks for the theorem",
+    "engineering choice: the kernel (`BDL/Core/Base.lean`) has no unit type and
+    types a declaration without inputs at its output; the production canonical
+    type `() -> B` is a normalization above the kernel, encoded into it by unit
+    elimination — ISS-0014 asks for the theorem",
   ]
 ---
 
@@ -31,9 +31,9 @@ unresolved, a legal driver of an output, a legal parameter port, a legal
 transport end, no `delay` under inputs), and no record said what the type of
 such a relationship _is_. The formal kernel types a declaration at its
 `expectedType`, which for no inputs is the output type `B` — the kernel has no
-unit type, its arrows are binary, and `delay` is typed only outside every
-binder (`Typing.lean`), so a realization of `B` can never be a lambda over a
-unit argument without changing the reactive semantics of memory.
+unit type, its arrows are binary, and `delay` is typed only outside every binder
+(`Typing.lean`), so a realization of `B` can never be a lambda over a unit
+argument without changing the reactive semantics of memory.
 
 ## Decision
 
@@ -48,10 +48,10 @@ unit argument without changing the reactive semantics of memory.
   two isomorphisms the kernel works with directly: currying
   (`(A × B) -> C ≅ A -> B -> C`) and unit elimination (`() -> B ≅ B`).
   `Ty::kernel_of_signature` and `Ty::canonical_mapping_ty` are the two
-  directions and are inverse over signatures. `Ty::Unit` never appears in a
-  Core term, a representation or a runtime value; the generated core erases
-  the unique argument (a zero-argument accessor) — representation erasure, not
-  a semantic exception.
+  directions and are inverse over signatures. `Ty::Unit` never appears in a Core
+  term, a representation or a runtime value; the generated core erases the
+  unique argument (a zero-argument accessor) — representation erasure, not a
+  semantic exception.
 - The surface spells the empty product `()` — as a type it opens a signature
   (`mapping f : () -> B`), as a value it is the argument of a relationship
   without inputs (`f(())`, the same as `f` and `f()`); a product domain
@@ -60,12 +60,12 @@ unit argument without changing the reactive semantics of memory.
 - A relationship without inputs is **not a category**: it keeps its identity,
   realization, timing domain, dependencies, commitments and roles. Everything
   that follows from its domain being `()` — it is read as a value, it may drive
-  an output, be a parameter, be transported, hold memory, stand as a
-  simulation input when unresolved — is asked of the signature through one
-  predicate (`Signature::is_unit_domain`, Studio's `isUnitDomain`), never of a
-  separate kind. On the canvas the unit domain is drawn as no socket; the
-  Composer offers the relationship as itself; Explain shows
-  `canonical type: () -> B` and the empty-product sentence.
+  an output, be a parameter, be transported, hold memory, stand as a simulation
+  input when unresolved — is asked of the signature through one predicate
+  (`Signature::is_unit_domain`, Studio's `isUnitDomain`), never of a separate
+  kind. On the canvas the unit domain is drawn as no socket; the Composer offers
+  the relationship as itself; Explain shows `canonical type: () -> B` and the
+  empty-product sentence.
 
 ## Alternatives
 
@@ -73,8 +73,8 @@ unit argument without changing the reactive semantics of memory.
   `app (declRef f) ()`, `Ty::Unit` and a unit literal in Core. Rejected: `delay`
   and `sync` are typed only outside binders and memory is a property of the
   declaration evaluated once per activation; a lambda realization would be
-  re-applied per reference and would depart from `Reactive.lean`. The kernel
-  is the authority (ADR-0010); the normalization lives above it.
+  re-applied per reference and would depart from `Reactive.lean`. The kernel is
+  the authority (ADR-0010); the normalization lives above it.
 - **A product domain in the kernel encoding** (`prod A B -> C`): would change
   every realization, call and the Lean correspondence for no semantic gain;
   currying is the equivalent encoding the kernel already uses.
@@ -88,11 +88,11 @@ unit argument without changing the reactive semantics of memory.
 
 - `docs/spec/textual-syntax.md` §4.1–4.3 and §11 record the shorthand law, the
   `()` and `(A, B)` spellings and the kernel encoding; `docs/spec/kernel.md`
-  notes `Ty::Unit` as a production extension beyond the Lean `Ty`; ISS-0014
-  asks the formal development for the theorem that the normalization makes no
-  typing, evaluation or clock distinction.
-- Diagnostics say `()`: _f reads nothing: its only argument is `()`._,
-  _`()` carries no value here._; hover carries `type: () -> RoomTemp`.
+  notes `Ty::Unit` as a production extension beyond the Lean `Ty`; ISS-0014 asks
+  the formal development for the theorem that the normalization makes no typing,
+  evaluation or clock distinction.
+- Diagnostics say `()`: _f reads nothing: its only argument is `()`._, _`()`
+  carries no value here._; hover carries `type: () -> RoomTemp`.
 - Protocol 0.14 (additive): `TypeView.kind` may be `unit`; `Signature` is
   documented as the presentation of the canonical type.
 - Remaining `inputs.is_empty()` tests are presentation (socket rows, dialog

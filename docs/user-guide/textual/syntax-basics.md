@@ -53,10 +53,14 @@ level() = 0.5
 
 The definition repeats the name and gives one parameter per input. A
 relationship that reads nothing is written `mapping level : Brightness` and
-defined `level() = …`. Without a definition, the relationship is _declared_ — an
-input, or work still to do. `@domain` after the signature puts the relationship
-in a timing domain ([Timing domains](../concepts/timing.md)); without it the
-relationship serves any domain.
+defined `level() = …`; that is shorthand for `mapping level : () -> Brightness`,
+where `()` is the empty domain — the two spellings are the same declaration with
+the same type, `() -> Brightness`, and the formatter keeps whichever you wrote.
+Two inputs may be spelled `(A, B) -> C` as well as `A -> B -> C`. (`()` is not a
+measurement unit and not `_`.) Without a definition, the relationship is
+_declared_ — an input, or work still to do. `@domain` after the signature puts
+the relationship in a timing domain ([Timing domains](../concepts/timing.md));
+without it the relationship serves any domain.
 
 **Checked?** Yes. The parameter names are the names the body uses:
 `dimByTilt(t) = t / (90 deg)` reads its input as `t`. Renaming the concept does
