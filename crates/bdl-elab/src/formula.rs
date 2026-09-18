@@ -764,7 +764,7 @@ impl<'a> Elab<'a> {
                 match unit {
                     None => (self.lit(Dim::ZERO, value), STy::Q(Dim::ZERO)),
                     Some(u) => match units::lookup(&u.name) {
-                        Some(def) => (self.lit(def.dim, value * def.factor), STy::Q(def.dim)),
+                        Some(def) => (self.lit(def.dim, def.to_canonical(value)), STy::Q(def.dim)),
                         None => {
                             let d = self
                                 .error(

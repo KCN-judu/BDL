@@ -394,7 +394,7 @@ fn formula_completions(
     }
 
     for u in bdl_elab::units::UNITS {
-        if !matches(u.name) {
+        if !matches(u.symbol) {
             continue;
         }
         let ty = ExpectedType::Quantity { dim: u.dim };
@@ -404,12 +404,12 @@ fn formula_completions(
             10 + rank(&expected, &ty) / 4
         };
         out.push(SemanticCompletion {
-            label: u.name.to_owned(),
+            label: u.symbol.to_owned(),
             kind: CompletionKind::Unit,
             entity: None,
             resulting_type: Some(pretty::describe_dim(u.dim)),
             replace,
-            insert: u.name.to_owned(),
+            insert: u.symbol.to_owned(),
             relevance,
             template: None,
             documentation: Some(format!("unit of {}", pretty::describe_dim(u.dim))),

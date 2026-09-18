@@ -526,10 +526,10 @@ fn body_formula_names(out: &mut Out, system: &BehaviorSystem, component: Compone
     }
     for u in bdl_elab::units::UNITS {
         out.push(
-            u.name,
+            u.symbol,
             CompletionKind::Unit,
             None,
-            u.name.to_owned(),
+            u.symbol.to_owned(),
             10,
             None,
         );
