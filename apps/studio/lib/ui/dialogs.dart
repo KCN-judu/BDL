@@ -12,6 +12,7 @@ library;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/concept_glyphs.dart';
@@ -34,51 +35,61 @@ Future<T?> showMacSheet<T>(
   required Widget content,
   required List<Widget> actions,
   double width = 480,
+
+  /// When given, the title and the actions are built inside the sheet
+  /// (per frame) instead of taken from [title] and [actions] once — so a
+  /// sheet that changes the language re-renders its own chrome.
+  String Function(BuildContext)? titleOf,
+  List<Widget> Function(BuildContext)? actionsOf,
 }) {
   return showDialog<T>(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.25),
-    builder: (ctx) {
-      final t = MacTokens.of(ctx);
-      return Dialog(
-        backgroundColor: t.window,
-        surfaceTintColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: t.hairline),
-        ),
-        child: SizedBox(
-          width: width,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: Theme.of(ctx).textTheme.titleMedium),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(fontSize: 11, color: t.textSecondary)),
-                ],
-                const SizedBox(height: 14),
-                content,
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    for (var i = 0; i < actions.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 8),
-                      actions[i],
-                    ],
+    builder: (ctx) => Builder(
+      builder: (ctx) {
+        final t = MacTokens.of(ctx);
+        final title_ = titleOf?.call(ctx) ?? title;
+        final actions_ = actionsOf?.call(ctx) ?? actions;
+        return Dialog(
+          backgroundColor: t.window,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: t.hairline),
+          ),
+          child: SizedBox(
+            width: width,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(title_, style: Theme.of(ctx).textTheme.titleMedium),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontSize: 11, color: t.textSecondary)),
                   ],
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  content,
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      for (var i = 0; i < actions_.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
+                        actions_[i],
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
+        );
+      },
+    ),
   );
 }
 
@@ -89,7 +100,7 @@ Future<String?> showPathSheet(BuildContext context, {required String title}) {
     context,
     title: title,
     content: FormRow(
-      label: 'Folder',
+      label: context.l10n.folder,
       child: MacTextField(
         controller: path,
         autofocus: true,
@@ -97,8 +108,11 @@ Future<String?> showPathSheet(BuildContext context, {required String title}) {
       ),
     ),
     actions: [
-      MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
-      MacButton.primary(label: 'Choose', onPressed: () => Navigator.pop(context, path.text.trim())),
+      MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
+      MacButton.primary(
+        label: context.l10n.choose,
+        onPressed: () => Navigator.pop(context, path.text.trim()),
+      ),
     ],
   );
 }
@@ -116,7 +130,7 @@ Future<String?> showNameSheet(
     title: title,
     subtitle: subtitle,
     content: FormRow(
-      label: 'Name',
+      label: context.l10n.name,
       child: MacTextField(
         controller: name,
         hint: hint,
@@ -125,8 +139,11 @@ Future<String?> showNameSheet(
       ),
     ),
     actions: [
-      MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
-      MacButton.primary(label: 'Create', onPressed: () => Navigator.pop(context, name.text.trim())),
+      MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
+      MacButton.primary(
+        label: context.l10n.create,
+        onPressed: () => Navigator.pop(context, name.text.trim()),
+      ),
     ],
   );
 }
@@ -140,9 +157,9 @@ typedef NewConceptResult = ({String name, String description, pb.Representation?
 Future<NewConceptResult?> showNewConceptSheet(BuildContext context, {List<UnitPreset>? presets}) {
   return showMacSheet<NewConceptResult>(
     context,
-    title: 'New concept',
-    subtitle: 'Something the product senses, decides or shows.',
-    content: _NewConceptForm(presets: presets ?? builtinUnitPresets),
+    title: context.l10n.newConcept,
+    subtitle: context.l10n.somethingTheProductSensesDecidesOrShows,
+    content: _NewConceptForm(presets: presets ?? builtinUnitPresets(context.l10n)),
     actions: const [],
   );
 }
@@ -189,7 +206,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
       ..concepts.add(
         pb.ConceptView(
           id: Int64(0),
-          name: name.isEmpty ? 'Name' : name,
+          name: name.isEmpty ? context.l10n.name : name,
           representation: _representation,
         ),
       );
@@ -198,7 +215,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FormRow(
-          label: 'Name',
+          label: context.l10n.name,
           child: MacTextField(
             controller: _name,
             autofocus: true,
@@ -207,21 +224,21 @@ class _NewConceptFormState extends State<_NewConceptForm> {
           ),
         ),
         FormRow(
-          label: 'Value',
+          label: context.l10n.value,
           child: MacSegmented<_Kind>(
             value: _kind,
-            options: const {
-              _Kind.quantity: 'Quantity',
-              _Kind.boolean: 'On / off',
-              _Kind.count: 'Count',
-              _Kind.open: 'Decide later',
+            options: {
+              _Kind.quantity: context.l10n.quantity,
+              _Kind.boolean: context.l10n.onOff,
+              _Kind.count: context.l10n.count,
+              _Kind.open: context.l10n.decideLater,
             },
             onChanged: (k) => setState(() => _kind = k),
           ),
         ),
         if (_kind == _Kind.quantity)
           FormRow(
-            label: 'Unit',
+            label: context.l10n.unit,
             child: MacDropdown<UnitPreset>(
               value: _unit,
               items: widget.presets,
@@ -232,7 +249,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
             ),
           ),
         FormRow(
-          label: 'Meaning',
+          label: context.l10n.meaning,
           child: MacTextField(controller: _description, maxLines: 2, onSubmitted: (_) => _submit()),
         ),
         const SizedBox(height: 6),
@@ -247,20 +264,18 @@ class _NewConceptFormState extends State<_NewConceptForm> {
         const SizedBox(height: 4),
         // The caption names the mark the designer will meet on the canvas.
         Text(switch (_kind) {
-          _Kind.open =>
-            'Hollow ring: the value can be decided later; relationships can already use it.',
-          _Kind.quantity =>
-            'Round socket: a measured quantity. Its unit is checked in every formula.',
-          _Kind.boolean => 'Diamond socket: on or off — activates contexts, gates behaviour.',
-          _Kind.count => 'Square socket: a whole number — occurrences, steps, items.',
+          _Kind.open => context.l10n.hollowRingTheValueCanBeDecided,
+          _Kind.quantity => context.l10n.roundSocketAMeasuredQuantityItsUnit,
+          _Kind.boolean => context.l10n.diamondSocketOnOrOffActivatesContexts,
+          _Kind.count => context.l10n.squareSocketAWholeNumberOccurrencesSteps,
         }, style: TextStyle(fontSize: 11, color: t.textSecondary)),
         const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
             const SizedBox(width: 8),
-            MacButton.primary(label: 'Create', onPressed: name.isEmpty ? null : _submit),
+            MacButton.primary(label: context.l10n.create, onPressed: name.isEmpty ? null : _submit),
           ],
         ),
       ],
@@ -277,8 +292,8 @@ typedef NewMappingResult = ({String name, List<int> inputs, int output});
 Future<NewMappingResult?> showNewMappingSheet(BuildContext context, List<pb.ConceptView> concepts) {
   return showMacSheet<NewMappingResult>(
     context,
-    title: 'New mapping',
-    subtitle: 'A relationship between concepts. It can exist before it is defined.',
+    title: context.l10n.newMapping,
+    subtitle: context.l10n.aRelationshipBetweenConceptsItCanExist,
     content: _NewMappingForm(concepts: concepts),
     actions: const [],
     width: 520,
@@ -323,7 +338,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
       ..mappings.add(
         pb.MappingView(
           id: Int64(0),
-          name: name.isEmpty ? 'Name' : name,
+          name: name.isEmpty ? context.l10n.name : name,
           signature: pb.Signature(
             inputs: _inputs.map(Int64.new),
             output: Int64(_output ?? _unchosen),
@@ -336,7 +351,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FormRow(
-          label: 'Name',
+          label: context.l10n.name,
           child: MacTextField(
             controller: _name,
             autofocus: true,
@@ -345,7 +360,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           ),
         ),
         FormRow(
-          label: 'Reads',
+          label: context.l10n.reads,
           child: Wrap(
             spacing: 4,
             runSpacing: 4,
@@ -362,7 +377,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           ),
         ),
         FormRow(
-          label: 'Produces',
+          label: context.l10n.produces,
           child: MacDropdown<int>(
             value: _output,
             hint: 'choose',
@@ -385,19 +400,18 @@ class _NewMappingFormState extends State<_NewMappingForm> {
         const SizedBox(height: 4),
         Text(
           _output == null
-              ? 'Choose what it produces: the output socket takes that concept’s colour and shape.'
-              : 'Dashed: declared, not yet defined. Attach a formula from the inspector whenever '
-                    'you are ready.',
+              ? context.l10n.chooseWhatItProducesTheOutputSocket
+              : context.l10n.dashedDeclaredNotYetDefinedAttachA,
           style: TextStyle(fontSize: 11, color: t.textSecondary),
         ),
         const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
             const SizedBox(width: 8),
             MacButton.primary(
-              label: 'Create',
+              label: context.l10n.create,
               onPressed: name.isEmpty || _output == null ? null : _submit,
             ),
           ],
@@ -422,7 +436,7 @@ class _ConceptToggle extends StatelessWidget {
     final color = t.conceptColor(concept.id.toInt());
     return Semantics(
       toggled: selected,
-      label: 'read ${concept.name}',
+      label: context.l10n.readConcept(concept.name),
       child: MacInteractive(
         onTap: () => onChanged(!selected),
         child: AnimatedContainer(
@@ -475,10 +489,8 @@ class _PreviewBox extends StatelessWidget {
 Future<String?> showNewClockSheet(BuildContext context, List<pb.ClockView> existing) {
   return showMacSheet<String>(
     context,
-    title: 'New timing domain',
-    subtitle:
-        'When a group of relationships and outputs update together. A name, not a rate: how '
-        'often it activates is decided when the design runs.',
+    title: context.l10n.newTimingDomain,
+    subtitle: context.l10n.whenAGroupOfRelationshipsAndOutputs,
     content: _NewClockForm(existing: existing),
     actions: const [],
     width: 440,
@@ -511,27 +523,30 @@ class _NewClockFormState extends State<_NewClockForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FormRow(
-          label: 'Name',
+          label: context.l10n.name,
           child: MacTextField(
             controller: _name,
             autofocus: true,
-            hint: 'interaction, ambient, …',
+            hint: context.l10n.interactionAmbient,
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _submit(),
           ),
         ),
         if (_taken)
           Text(
-            'A domain named $name already exists.',
+            context.l10n.domainAlreadyExists(name),
             style: TextStyle(fontSize: 11, color: t.open),
           ),
         const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
             const SizedBox(width: 8),
-            MacButton.primary(label: 'Create', onPressed: name.isEmpty || _taken ? null : _submit),
+            MacButton.primary(
+              label: context.l10n.create,
+              onPressed: name.isEmpty || _taken ? null : _submit,
+            ),
           ],
         ),
       ],
@@ -549,8 +564,8 @@ Future<NewOutputResult?> showNewOutputSheet(
 ) {
   return showMacSheet<NewOutputResult>(
     context,
-    title: 'New output',
-    subtitle: 'Where a value leaves the design for the world: a light, a motor, a display.',
+    title: context.l10n.newOutput,
+    subtitle: context.l10n.whereAValueLeavesTheDesignFor,
     content: _NewOutputForm(concepts: concepts, clocks: clocks),
     actions: const [],
     width: 480,
@@ -587,7 +602,7 @@ class _NewOutputFormState extends State<_NewOutputForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FormRow(
-          label: 'Name',
+          label: context.l10n.name,
           child: MacTextField(
             controller: _name,
             autofocus: true,
@@ -596,10 +611,10 @@ class _NewOutputFormState extends State<_NewOutputForm> {
           ),
         ),
         FormRow(
-          label: 'Accepts',
+          label: context.l10n.accepts,
           child: MacDropdown<int>(
             value: _accepts,
-            hint: 'the concept this output takes',
+            hint: context.l10n.theConceptThisOutputTakes,
             items: [for (final c in widget.concepts) c.id.toInt()],
             labelOf: (c) => concept(c).name,
             leadingOf: (c) => SocketGlyph.of(concept(c), t, size: 11),
@@ -607,17 +622,18 @@ class _NewOutputFormState extends State<_NewOutputForm> {
           ),
         ),
         FormRow(
-          label: 'Updates in',
+          label: context.l10n.updatesIn,
           child: MacDropdown<int>(
             value: _clock ?? -1,
             items: [-1, for (final c in widget.clocks) c.id.toInt()],
-            labelOf: (c) =>
-                c < 0 ? 'decide later' : widget.clocks.firstWhere((x) => x.id.toInt() == c).name,
+            labelOf: (c) => c < 0
+                ? context.l10n.decideLaterLower
+                : widget.clocks.firstWhere((x) => x.id.toInt() == c).name,
             onChanged: (c) => setState(() => _clock = c < 0 ? null : c),
           ),
         ),
         FormRow(
-          label: 'Required',
+          label: context.l10n.required,
           child: Align(
             alignment: Alignment.centerLeft,
             child: Row(
@@ -629,7 +645,7 @@ class _NewOutputFormState extends State<_NewOutputForm> {
                 ),
                 Expanded(
                   child: Text(
-                    'the design is incomplete until something drives it',
+                    context.l10n.theDesignIsIncompleteUntilSomethingDrives,
                     style: TextStyle(fontSize: 11, color: t.textSecondary),
                   ),
                 ),
@@ -641,10 +657,10 @@ class _NewOutputFormState extends State<_NewOutputForm> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            MacButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+            MacButton(label: context.l10n.cancel, onPressed: () => Navigator.pop(context)),
             const SizedBox(width: 8),
             MacButton.primary(
-              label: 'Create',
+              label: context.l10n.create,
               onPressed: name.isEmpty || _accepts == null ? null : _submit,
             ),
           ],

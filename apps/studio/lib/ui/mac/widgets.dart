@@ -5,6 +5,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/diagnostics.dart';
+import '../../l10n/l10n.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../source_span.dart';
 import 'controls.dart';
@@ -508,7 +510,10 @@ class DiagnosticCard extends StatelessWidget {
               spacing: MacMetrics.gapTight,
               children: [
                 if (showMessage)
-                  Text(d.message, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                  Text(
+                    localizedMessage(context.l10n, d.code, d.message),
+                    style: TextStyle(fontSize: 12, color: t.textPrimary),
+                  ),
                 if (excerpt != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

@@ -30,6 +30,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -173,7 +174,9 @@ class _FormulaComposerState extends State<FormulaComposer> {
               ? _EmptySlot(
                   selected: selected == 'r',
                   onTap: widget.outOfSync ? null : () => _select('r'),
-                  hint: p?.hasResult() == true ? 'produces ${p!.result.description}' : 'expression',
+                  hint: p?.hasResult() == true
+                      ? context.l10n.producesDescription(p!.result.description)
+                      : context.l10n.expressionHint,
                 )
               : Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -199,14 +202,14 @@ class _FormulaComposerState extends State<FormulaComposer> {
                     // three stale states, one policy: no answer yet, an
                     // answer for older text, text the compiler cannot read
                     p == null || p.source != widget.source
-                        ? 'Waiting for the compiler to read the formula…'
-                        : 'The text cannot be read as a formula.',
+                        ? context.l10n.waitingForTheCompilerToReadThe
+                        : context.l10n.theTextCannotBeReadAsA,
                     key: const ValueKey('composer-out-of-sync'),
                     style: TextStyle(fontSize: 11, color: t.textSecondary),
                   ),
                 ),
                 if (widget.onEditAsText != null)
-                  MacButton(label: 'Edit as text', onPressed: widget.onEditAsText),
+                  MacButton(label: context.l10n.editAsText, onPressed: widget.onEditAsText),
               ],
             ),
           ),
@@ -773,14 +776,14 @@ class _SlotPanelState extends State<_SlotPanel> {
           children: [
             Expanded(
               child: Text(
-                s == null ? 'Asking what fits here…' : s.explanation,
+                s == null ? context.l10n.askingWhatFitsHere : s.explanation,
                 key: const ValueKey('slot-explanation'),
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
             if (s != null && s.technical.isNotEmpty)
               MacLink(
-                label: _explain ? 'Hide detail' : 'Explain',
+                label: _explain ? context.l10n.hideDetail : context.l10n.explain,
                 onTap: () => setState(() => _explain = !_explain),
               ),
           ],
@@ -797,7 +800,7 @@ class _SlotPanelState extends State<_SlotPanel> {
         if (n != null && n.hasActual() && !_isSlot)
           Padding(
             padding: const EdgeInsets.only(top: MacMetrics.gapTight),
-            child: Text('This is ${n.actual.description}.', style: small),
+            child: Text(context.l10n.thisIs(n.actual.description), style: small),
           ),
         const SizedBox(height: MacMetrics.gap),
         // 2. what to put here: a number (with its unit, 18C), a reference,
@@ -828,17 +831,20 @@ class _SlotPanelState extends State<_SlotPanel> {
                   items: [for (final u in units) u.symbol],
                   onChanged: (v) => setState(() => _unit = v),
                 ),
-              MacButton(label: 'Insert', onPressed: widget.pending ? null : _insertNumber),
+              MacButton(
+                label: context.l10n.insert,
+                onPressed: widget.pending ? null : _insertNumber,
+              ),
             ],
           ),
           if (s != null && s.insufficient)
             Padding(
               padding: const EdgeInsets.only(top: MacMetrics.gapTight),
-              child: Text('No unit is suggested: fill the other side first.', style: small),
+              child: Text(context.l10n.noUnitIsSuggestedFillTheOther, style: small),
             ),
           if (s != null && s.references.isNotEmpty) ...[
             const SizedBox(height: MacMetrics.gap),
-            Text('References', style: small),
+            Text(context.l10n.references, style: small),
             for (final r in s.references)
               _CandidateRow(
                 key: ValueKey('ref-${r.label}'),
@@ -852,7 +858,7 @@ class _SlotPanelState extends State<_SlotPanel> {
             // the library is long: folded until asked for
             MacDisclosure(
               key: const ValueKey('slot-equations'),
-              title: 'Equations (${s.equations.length})',
+              title: context.l10n.equationsCount(s.equations.length),
               children: [
                 for (final e in s.equations)
                   _CandidateRow(
@@ -874,7 +880,7 @@ class _SlotPanelState extends State<_SlotPanel> {
                 MacButton(
                   key: ValueKey('op-$op'),
                   label: glyph,
-                  tooltip: 'Insert $glyph after this',
+                  tooltip: context.l10n.insertAfterThis(glyph),
                   onPressed: widget.pending
                       ? null
                       : () => widget.onCompose(
@@ -888,7 +894,7 @@ class _SlotPanelState extends State<_SlotPanel> {
                 key: const ValueKey('op-compare'),
                 compact: true,
                 value: null,
-                hint: 'Compare',
+                hint: context.l10n.compare,
                 items: const ['<', '<=', '>', '>=', '==', '!='],
                 labelOf: _operatorGlyph,
                 onChanged: (op) => widget.onCompose(
@@ -903,7 +909,7 @@ class _SlotPanelState extends State<_SlotPanel> {
                   key: const ValueKey('op-function'),
                   compact: true,
                   value: null,
-                  hint: 'Function',
+                  hint: context.l10n.function,
                   items: s.equations,
                   labelOf: (e) => e.shape,
                   onChanged: (e) => widget.onCompose(
@@ -920,13 +926,13 @@ class _SlotPanelState extends State<_SlotPanel> {
                   key: const ValueKey('op-binder'),
                   compact: true,
                   value: null,
-                  hint: 'Each element',
+                  hint: context.l10n.eachElement,
                   items: const ['all', 'any', 'map', 'filter'],
                   labelOf: (f) => switch (f) {
-                    'all' => 'all … satisfy',
-                    'any' => 'any … satisfies',
-                    'map' => 'map each …',
-                    _ => 'filter …',
+                    'all' => context.l10n.allSatisfy,
+                    'any' => context.l10n.anySatisfies,
+                    'map' => context.l10n.mapEach,
+                    _ => context.l10n.filter,
                   },
                   onChanged: (f) => widget.onCompose(
                     pb.ComposeAction(
@@ -938,8 +944,8 @@ class _SlotPanelState extends State<_SlotPanel> {
               if (n == null || !n.hasActual() || n.actual.kind != 'boolean')
                 MacButton(
                   key: const ValueKey('op-range'),
-                  label: 'Range',
-                  tooltip: 'Between two ends: in … .. …',
+                  label: context.l10n.range,
+                  tooltip: context.l10n.betweenTwoEndsIn,
                   onPressed: widget.pending
                       ? null
                       : () => widget.onCompose(
@@ -948,7 +954,7 @@ class _SlotPanelState extends State<_SlotPanel> {
                 ),
               MacButton(
                 key: const ValueKey('op-remove'),
-                label: 'Remove',
+                label: context.l10n.remove,
                 onPressed: widget.pending
                     ? null
                     : () => widget.onCompose(
@@ -960,15 +966,15 @@ class _SlotPanelState extends State<_SlotPanel> {
           if (n != null && n.kind == 'opaque')
             Padding(
               padding: const EdgeInsets.only(top: MacMetrics.gapTight),
-              child: Text('This part is edited as text.', style: small),
+              child: Text(context.l10n.thisPartIsEditedAsText, style: small),
             ),
           if (n != null && n.kind == 'binder')
             Padding(
               padding: const EdgeInsets.only(top: MacMetrics.gapTight),
               child: Text(
                 n.hasParamType()
-                    ? '${n.param} is each element: ${n.paramType.description}.'
-                    : '${n.param} is each element of the collection.',
+                    ? context.l10n.paramIsEachElementOf(n.param, n.paramType.description)
+                    : context.l10n.paramIsEachElement(n.param),
                 key: const ValueKey('binder-local-note'),
                 style: small,
               ),

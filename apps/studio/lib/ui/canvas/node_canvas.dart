@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show SemanticsProperties;
 import 'package:flutter/services.dart';
 
+import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -261,7 +262,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       if (_groupsEnabled && multi is MultiSelected && groupable > 0) ...[
         MenuItemButton(
           onPressed: () => widget.dispatch(const GroupSelectionRequested()),
-          child: Text('Group as Behavior ($groupable relationship${groupable == 1 ? '' : 's'})'),
+          child: Text(context.l10n.groupAsBehaviorCount(groupable)),
         ),
         const Divider(height: 8),
       ],
@@ -269,7 +270,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         if (node.kind != NodeKind.output)
           MenuItemButton(
             onPressed: () => widget.dispatch(InlineRenameStarted(node)),
-            child: const Text('Rename'),
+            child: Text(context.l10n.rename),
           ),
         if (node.kind == NodeKind.instance)
           MenuItemButton(
@@ -281,7 +282,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                 widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
               }
             },
-            child: const Text('Edit Source'),
+            child: Text(context.l10n.editSource),
           ),
         if (node.kind == NodeKind.group) ...[
           MenuItemButton(
@@ -299,26 +300,32 @@ class _NodeCanvasState extends State<NodeCanvas> {
               widget.dispatch(GroupCollapsedChanged(id: node.id, collapsed: !collapsed));
             },
             child: Text(
-              (widget.system.groupBoxes[node.id]?.collapsed ?? false) ? 'Expand' : 'Collapse',
+              (widget.system.groupBoxes[node.id]?.collapsed ?? false)
+                  ? context.l10n.expand
+                  : context.l10n.collapse,
             ),
           ),
           if (_isSystemCanvas)
             MenuItemButton(
               onPressed: () => widget.dispatch(ExtractionSheetOpened(node.id)),
-              child: const Text('Package as Reusable Component…'),
+              child: Text(context.l10n.packageAsReusableComponent),
             ),
           MenuItemButton(
             onPressed: () => widget.dispatch(UngroupRequested(node.id)),
-            child: const Text('Ungroup'),
+            child: Text(context.l10n.ungroup),
           ),
         ],
         if (_groupsEnabled && node.kind == NodeKind.mapping) ...[
           if (groupOf == null) ...[
             MenuItemButton(
               onPressed: () => widget.dispatch(
-                CreateGroupRequested(name: 'Behavior', members: [node.id], renameAfter: true),
+                CreateGroupRequested(
+                  name: context.l10n.behavior,
+                  members: [node.id],
+                  renameAfter: true,
+                ),
               ),
-              child: const Text('Group as Behavior'),
+              child: Text(context.l10n.groupAsBehavior),
             ),
             if (widget.groups.isNotEmpty)
               SubmenuButton(
@@ -331,20 +338,20 @@ class _NodeCanvasState extends State<NodeCanvas> {
                       child: Text(g.name),
                     ),
                 ],
-                child: const Text('Add to Group'),
+                child: Text(context.l10n.addToGroup),
               ),
           ] else
             MenuItemButton(
               onPressed: () => widget.dispatch(
                 RemoveGroupMemberRequested(group: groupOf.id.toInt(), decl: node.id),
               ),
-              child: Text('Remove from ${groupOf.name}'),
+              child: Text(context.l10n.removeFromGroup(groupOf.name)),
             ),
         ],
         if (node.kind != NodeKind.group)
           MenuItemButton(
             onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         const Divider(height: 8),
       ],
@@ -364,7 +371,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                   child: Text(c.name),
                 ),
             ],
-            child: const Text('Add Instance'),
+            child: Text(context.l10n.addInstance),
           ),
         const Divider(height: 8),
       ],
@@ -372,32 +379,38 @@ class _NodeCanvasState extends State<NodeCanvas> {
         MenuItemButton(
           onPressed: () =>
               widget.dispatch(CreateGroupRequested(name: _freshGroupName(), renameAfter: true)),
-          child: const Text('New Behavior Group'),
+          child: Text(context.l10n.newBehaviorGroup),
         ),
         const Divider(height: 8),
       ],
       SubmenuButton(
         menuChildren: [
           if (recent.isNotEmpty) ...[
-            SubmenuButton(menuChildren: group(recent), child: const Text('Recent')),
+            SubmenuButton(menuChildren: group(recent), child: Text(context.l10n.recent)),
             const Divider(height: 8),
           ],
-          SubmenuButton(menuChildren: group(inputs), child: const Text('Input')),
-          SubmenuButton(menuChildren: group(outputs), child: const Text('Output')),
+          SubmenuButton(menuChildren: group(inputs), child: Text(context.l10n.input)),
+          SubmenuButton(menuChildren: group(outputs), child: Text(context.l10n.output)),
           const Divider(height: 8),
           SubmenuButton(
             menuChildren: group(environment),
-            child: Text(categoryLabel('environment')),
+            child: Text(categoryLabel(context.l10n, 'environment')),
           ),
-          SubmenuButton(menuChildren: group(motion), child: Text(categoryLabel('motion'))),
-          SubmenuButton(menuChildren: group(human), child: Text(categoryLabel('human'))),
+          SubmenuButton(
+            menuChildren: group(motion),
+            child: Text(categoryLabel(context.l10n, 'motion')),
+          ),
+          SubmenuButton(
+            menuChildren: group(human),
+            child: Text(categoryLabel(context.l10n, 'human')),
+          ),
           const Divider(height: 8),
           MenuItemButton(
             onPressed: () => widget.dispatch(const SidebarTabSelected(SidebarTab.library)),
-            child: const Text('More…'),
+            child: Text(context.l10n.more),
           ),
         ],
-        child: const Text('Add Concept'),
+        child: Text(context.l10n.addConcept),
       ),
     ];
   }
@@ -405,7 +418,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   /// `Behavior`, `Behavior 2`: a default name the designer renames inline.
   String _freshGroupName() {
     final taken = widget.groups.map((g) => g.name).toSet();
-    if (!taken.contains('Behavior')) return 'Behavior';
+    if (!taken.contains(context.l10n.behavior)) return context.l10n.behavior;
     var i = 2;
     while (taken.contains('Behavior $i')) {
       i++;
@@ -758,7 +771,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final name = concept?.name ?? '';
     return switch (s.role) {
       SocketRole.realise => 'definition',
-      _ => s.side == SocketSide.input ? 'reads $name' : 'produces $name',
+      _ =>
+        s.side == SocketSide.input
+            ? context.l10n.readsSocket(name)
+            : context.l10n.producesSocket(name),
     };
   }
 
@@ -962,6 +978,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                               painter: _CanvasPainter(
                                 scene: scene,
                                 tokens: t,
+                                l10n: context.l10n,
                                 pan: _pan,
                                 zoom: _zoom,
                                 selected: selected,
@@ -1131,6 +1148,7 @@ class _CanvasPainter extends CustomPainter {
   _CanvasPainter({
     required this.scene,
     required this.tokens,
+    required this.l10n,
     required this.pan,
     required this.zoom,
     required this.selected,
@@ -1146,6 +1164,7 @@ class _CanvasPainter extends CustomPainter {
 
   final CanvasScene scene;
   final MacTokens tokens;
+  final AppLocalizations l10n;
   final Offset pan;
   final double zoom;
   final NodeRef? selected;
@@ -1170,6 +1189,7 @@ class _CanvasPainter extends CustomPainter {
     // Group regions first: backgrounds, not boxes (node-editor rule 8).
     final painter = NodePainter(
       tokens,
+      l10n: l10n,
       hoveredSocket: hoveredSocket,
       dropOk: dropOk,
       compatible: linkDrag == null ? const {} : compatibleSockets(scene, linkDrag!.from),
@@ -1234,7 +1254,7 @@ class _CanvasPainter extends CustomPainter {
     if (scene.nodes.isEmpty) {
       final tp = TextPainter(
         text: TextSpan(
-          text: 'Add a concept from the Library to start',
+          text: l10n.addAConceptFromTheLibraryTo,
           style: TextStyle(
             fontFamily: '.AppleSystemUIFont',
             fontSize: 13,
@@ -1281,13 +1301,13 @@ class _CanvasPainter extends CustomPainter {
       case NodeKind.concept:
         final kind = n.sockets.first.kind;
         final form = switch (kind) {
-          SocketKind.open => 'value not decided',
-          SocketKind.quantity => 'a quantity',
-          SocketKind.onOff => 'on or off',
-          SocketKind.count => 'a count',
-          SocketKind.collection => 'a collection',
-          SocketKind.grouped => 'a grouped value',
-          SocketKind.optional => 'an optional value',
+          SocketKind.open => l10n.valueNotDecided,
+          SocketKind.quantity => l10n.aQuantity,
+          SocketKind.onOff => l10n.onOrOff,
+          SocketKind.count => l10n.aCount,
+          SocketKind.collection => l10n.aCollection,
+          SocketKind.grouped => l10n.aGroupedValue,
+          SocketKind.optional => l10n.anOptionalValue,
         };
         return '${n.title}, concept, $form';
       case NodeKind.mapping:
@@ -1300,23 +1320,23 @@ class _CanvasPainter extends CustomPainter {
             .map((s) => n.socketLabels[s.ref] ?? '')
             .join(', ');
         final state = n.declared
-            ? 'declared, not yet defined'
+            ? l10n.declaredNotYetDefined
             : n.wrong
-            ? 'definition does not check'
-            : 'defined';
+            ? l10n.definitionDoesNotCheck
+            : l10n.stateDefined;
         return '${n.title}, relationship, reads $reads, produces $produces, $state';
       case NodeKind.output:
         final accepts = n.socketLabels.values.join(', ');
         final state = switch (n.sink) {
-          SinkState.open => 'no timing domain yet',
-          SinkState.undriven => 'undriven',
-          SinkState.driven => 'driven',
-          SinkState.illFormed => 'driven by an ill-formed connection',
-          SinkState.contested => 'contested by several drivers',
+          SinkState.open => l10n.noTimingDomainYet,
+          SinkState.undriven => l10n.stateUndriven,
+          SinkState.driven => l10n.stateDriven,
+          SinkState.illFormed => l10n.drivenByAnIllFormedConnection,
+          SinkState.contested => l10n.contestedBySeveralDrivers,
           null => '',
         };
         return '${n.title}, physical output, accepts $accepts, '
-            '${n.required ? 'required' : 'optional'}, $state';
+            '${n.required ? l10n.stateRequired : l10n.stateOptional}, $state';
       case NodeKind.instance:
         final requires = n.sockets
             .where((s) => s.ref.side == SocketSide.input)
@@ -1373,12 +1393,18 @@ class _CanvasPainter extends CustomPainter {
 class NodePainter {
   NodePainter(
     this.tokens, {
+    AppLocalizations? l10n,
     this.hoveredSocket,
     this.dropOk,
     this.compatible = const {},
     Color Function(int)? conceptColor,
-  }) : conceptColor = conceptColor ?? tokens.conceptColor;
+  }) : conceptColor = conceptColor ?? tokens.conceptColor,
+       l10n = l10n ?? kEnglish;
   final MacTokens tokens;
+
+  /// The words drawn on nodes (a declared mapping's *declared*, a sink's
+  /// *contested*); English when no locale is in scope (previews, tests).
+  final AppLocalizations l10n;
   final SocketRef? hoveredSocket;
   final SocketRef? dropOk;
 
@@ -1467,14 +1493,14 @@ class NodePainter {
     // sink, a required sink, a port-backed relationship in a component's
     // source.
     final headerWord = n.declared
-        ? 'declared'
+        ? l10n.stateDeclared
         : n.headerWord.isNotEmpty
         ? n.headerWord
         : switch (n.sink) {
-            SinkState.open => 'no domain',
-            SinkState.contested => 'contested',
-            SinkState.illFormed => 'ill-formed',
-            _ => n.required ? 'required' : '',
+            SinkState.open => l10n.noDomain,
+            SinkState.contested => l10n.stateContested,
+            SinkState.illFormed => l10n.stateIllFormed,
+            _ => n.required ? l10n.stateRequired : '',
           };
     if (headerWord.isNotEmpty) {
       _text(

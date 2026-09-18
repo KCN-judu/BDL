@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:file_selector/file_selector.dart' as fs;
 import 'package:fixnum/fixnum.dart';
 
-import 'dart:ui' show AppExitType;
+import 'dart:ui' show AppExitType, PlatformDispatcher;
 
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -20,6 +20,9 @@ import '../daemon/daemon_client.dart';
 import '../daemon/daemon_locator.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../protocol/versions.dart';
+import '../l10n/diagnostics.dart';
+import '../l10n/l10n.dart';
+import 'preferences_store.dart';
 import 'recent_store.dart';
 
 typedef Dispatch = void Function(AppAction action);
@@ -36,16 +39,24 @@ class EffectExecutor {
     this._dispatch, {
     String Function()? locate,
     RecentStore? recent,
+    PreferencesStore? preferences,
     SpawnDaemon? spawn,
     this.draftDebounce = kDraftDebounce,
   }) : _locate = locate ?? locateDaemon,
        _recent = recent ?? RecentStore(),
+       _preferences = preferences ?? PreferencesStore(),
        _spawn = spawn ?? DaemonClient.spawn;
 
   final Dispatch _dispatch;
   final String Function() _locate;
   final RecentStore _recent;
+  final PreferencesStore _preferences;
   final SpawnDaemon _spawn;
+
+  /// The language the OS dialogs are labelled in: what the preferences say,
+  /// tracked here because the executor sees them load and save.
+  LanguagePreference _language = LanguagePreference.system;
+  AppLocalizations get _l10n => catalogFor(_language, PlatformDispatcher.instance.locale);
   final Duration draftDebounce;
   DaemonLink? _client;
   final List<StreamSubscription<Object?>> _subs = [];
@@ -76,6 +87,17 @@ class EffectExecutor {
         await _connect();
       case LoadRecentProjects():
         _dispatch(RecentProjectsLoaded(await _recent.load()));
+      case LoadPreferences():
+        final loaded = await _preferences.load();
+        _language = loaded.language;
+        _dispatch(PreferencesLoaded(loaded));
+      case SavePreferences(:final preferences):
+        _language = preferences.language;
+        try {
+          await _preferences.save(preferences);
+        } catch (e) {
+          _dispatch(DaemonLogged('could not save preferences: $e'));
+        }
       case SaveRecentProjects(:final recent):
         try {
           await _recent.save(recent);
@@ -83,15 +105,17 @@ class EffectExecutor {
           _dispatch(DaemonLogged('could not save recent projects: $e'));
         }
       case PickProjectToOpen():
-        final dir = await _picker(() => fs.getDirectoryPath(confirmButtonText: 'Open Project'));
+        final dir = await _picker(
+          () => fs.getDirectoryPath(confirmButtonText: _l10n.dialogOpenProject),
+        );
         if (dir != null) _dispatch(OpenProjectRequested(dir));
       case PickNewProjectLocation():
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
         final loc = await _picker(
           () => fs.getSaveLocation(
-            suggestedName: 'Untitled Project',
-            confirmButtonText: 'Create Project',
+            suggestedName: _l10n.dialogUntitledProject,
+            confirmButtonText: _l10n.dialogCreateProject,
           ),
         );
         if (loc != null) {

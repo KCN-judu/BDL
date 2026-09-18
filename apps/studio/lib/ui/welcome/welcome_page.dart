@@ -11,7 +11,9 @@ import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../platform/desktop.dart';
 import '../../protocol/versions.dart';
+import '../../l10n/l10n.dart';
 import '../dialogs.dart';
+import '../preferences_sheet.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
@@ -101,18 +103,18 @@ class _Start extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Start', style: Theme.of(context).textTheme.titleSmall),
+        Text(context.l10n.start, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         MacLink(
           icon: Icons.add_box_outlined,
-          label: 'New Project…',
+          label: context.l10n.newProject,
           shortcut: shortcut('N'),
           enabled: connected,
           onTap: () => dispatch(const NewProjectPickRequested()),
         ),
         MacLink(
           icon: Icons.folder_open_outlined,
-          label: 'Open Project…',
+          label: context.l10n.openProject,
           shortcut: shortcut('O'),
           enabled: connected,
           onTap: () => dispatch(const OpenProjectPickRequested()),
@@ -120,19 +122,19 @@ class _Start extends StatelessWidget {
         if (pathFallback) ...[
           MacLink(
             icon: Icons.keyboard_outlined,
-            label: 'Open by path…',
+            label: context.l10n.openByPath,
             enabled: connected,
             onTap: () async {
-              final path = await showPathSheet(context, title: 'Open project by path');
+              final path = await showPathSheet(context, title: context.l10n.openProjectByPath);
               if (path != null && path.isNotEmpty) dispatch(OpenProjectRequested(path));
             },
           ),
           MacLink(
             icon: Icons.keyboard_outlined,
-            label: 'New at path…',
+            label: context.l10n.newAtPath,
             enabled: connected,
             onTap: () async {
-              final path = await showPathSheet(context, title: 'Create project at path');
+              final path = await showPathSheet(context, title: context.l10n.createProjectAtPath);
               if (path != null && path.isNotEmpty) {
                 dispatch(
                   NewProjectRequested(rootPath: path, name: path.split(RegExp(r'[/\\]')).last),
@@ -141,11 +143,16 @@ class _Start extends StatelessWidget {
             },
           ),
         ],
+        MacLink(
+          icon: Icons.language_outlined,
+          label: context.l10n.preferencesMenu,
+          onTap: () => showPreferencesSheet(context, dispatch: dispatch),
+        ),
         if (!connected)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Waiting for the compiler. The status line shows the connection.',
+              context.l10n.waitingForTheCompilerTheStatusLine,
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
           ),
@@ -166,12 +173,12 @@ class _Recent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Recent', style: Theme.of(context).textTheme.titleSmall),
+        Text(context.l10n.recent, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         Expanded(
           child: state.recent.isEmpty
               ? Text(
-                  'Projects you open will appear here.',
+                  context.l10n.projectsYouOpenWillAppearHere,
                   style: TextStyle(fontSize: 12, color: t.textTertiary),
                 )
               : ListView(
@@ -251,7 +258,8 @@ class _RecentRowState extends State<_RecentRow> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (missing) Text('not found', style: TextStyle(fontSize: 11, color: t.open)),
+                    if (missing)
+                      Text(context.l10n.notFound, style: TextStyle(fontSize: 11, color: t.open)),
                   ],
                 ),
               ],
@@ -266,13 +274,13 @@ class _RecentRowState extends State<_RecentRow> {
                     alignment: Alignment.centerRight,
                     child: IconButton(
                       icon: const Icon(Icons.close, size: 14),
-                      tooltip: 'Remove from Recent',
+                      tooltip: context.l10n.removeFromRecent,
                       onPressed: widget.onRemove,
                       constraints: const BoxConstraints.tightFor(width: 22, height: 22),
                     ),
                   )
                 : Text(
-                    relativeTime(r.lastOpened),
+                    relativeTime(r.lastOpened, l10n: context.l10n),
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       fontSize: 11,
@@ -288,13 +296,14 @@ class _RecentRowState extends State<_RecentRow> {
 }
 
 /// "just now", "3 h ago", "yesterday", "5 d ago", "2026-08-01".
-String relativeTime(DateTime when, {DateTime? now}) {
+String relativeTime(DateTime when, {DateTime? now, AppLocalizations? l10n}) {
+  l10n ??= kEnglish;
   final d = (now ?? DateTime.now()).difference(when);
-  if (d.inMinutes < 1) return 'just now';
-  if (d.inHours < 1) return '${d.inMinutes} min ago';
-  if (d.inDays < 1) return '${d.inHours} h ago';
-  if (d.inDays == 1) return 'yesterday';
-  if (d.inDays < 30) return '${d.inDays} d ago';
+  if (d.inMinutes < 1) return l10n.justNow;
+  if (d.inHours < 1) return l10n.minutesAgo(d.inMinutes);
+  if (d.inDays < 1) return l10n.hoursAgo(d.inHours);
+  if (d.inDays == 1) return l10n.yesterday;
+  if (d.inDays < 30) return l10n.daysAgo(d.inDays);
   final local = when.toLocal();
   return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
 }

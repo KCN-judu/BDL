@@ -14,6 +14,9 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'preferences.dart';
+
+export 'preferences.dart';
 
 /// A relationship's domain is the empty product `()`: it reads nothing, so
 /// it is read as a value — the candidate for a physical output, a
@@ -1405,10 +1408,15 @@ class AppState {
     this.analysis,
     this.systemAnalysis,
     this.recent = const [],
+    this.preferences = const AppPreferences(),
     this.library,
     this.editor = const EditorState(),
     this.render = const RenderState(),
   });
+
+  /// Application preferences (language): the user's environment, persisted
+  /// by the effect executor; never part of a project.
+  final AppPreferences preferences;
 
   final DaemonConnection connection;
 
@@ -1568,6 +1576,7 @@ class AppState {
     pb.SystemAnalysisView? systemAnalysis,
     bool clearSystemAnalysis = false,
     List<RecentProject>? recent,
+    AppPreferences? preferences,
     pb.ConceptTemplatesResponse? library,
     EditorState? editor,
     RenderState? render,
@@ -1582,6 +1591,7 @@ class AppState {
           ? null
           : (systemAnalysis ?? this.systemAnalysis),
       recent: recent ?? this.recent,
+      preferences: preferences ?? this.preferences,
       library: library ?? this.library,
       editor: editor ?? this.editor,
       render: render ?? this.render,

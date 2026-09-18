@@ -1,11 +1,14 @@
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/actions.dart';
 import '../app/store.dart';
+import '../l10n/l10n.dart';
 import 'mac/theme.dart';
+import 'preferences_sheet.dart';
 import 'shell.dart';
 
 class StudioApp extends ConsumerStatefulWidget {
@@ -49,11 +52,26 @@ class _StudioAppState extends ConsumerState<StudioApp> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
+    // The language is an application preference: `null` follows the system
+    // locale, resolved to one of the three supported locales or English.
+    // Locale is presentation only — the project, its files and the
+    // compiler never see it.
+    final language = ref.watch(appStoreProvider.select((s) => s.preferences.language));
     return MaterialApp(
-      title: 'BDL Studio',
+      onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,
       theme: macTheme(Brightness.light),
       darkTheme: macTheme(Brightness.dark),
+      locale: language.locale,
+      supportedLocales: kSupportedLocales,
+      localizationsDelegates: const [
+        ...AppLocalizations.localizationsDelegates,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeResolutionCallback: resolveLocale,
+      builder: (context, child) => LanguageScope(language: language, child: child!),
       home: const StudioShell(),
     );
   }

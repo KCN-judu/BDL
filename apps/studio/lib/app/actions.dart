@@ -1107,6 +1107,18 @@ class ConceptTemplatesReceived extends ResponseAction {
   final pb.ConceptTemplatesResponse library;
 }
 
+/// The user chose a display language in Preferences.  An application
+/// preference: the UI re-renders, nothing in the project changes.
+class LanguageChanged extends UserAction {
+  const LanguageChanged(this.language);
+  final LanguagePreference language;
+}
+
+class PreferencesLoaded extends ResponseAction {
+  const PreferencesLoaded(this.preferences);
+  final AppPreferences preferences;
+}
+
 class RecentProjectsLoaded extends ResponseAction {
   const RecentProjectsLoaded(this.recent);
   final List<RecentProject> recent;

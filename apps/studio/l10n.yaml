@@ -1,0 +1,10 @@
+# Studio localization (docs/project/localization-style.md).
+# English is the template; zh-Hans and ja are the supported translations;
+# a key missing from a translation falls back to English.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+format: true
+untranslated-messages-file: build/l10n_untranslated.json

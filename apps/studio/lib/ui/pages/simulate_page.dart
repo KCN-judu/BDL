@@ -13,6 +13,7 @@ library;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/simulation.dart';
 import '../../app/state.dart';
@@ -37,7 +38,7 @@ class SimulatePage extends StatelessWidget {
       return Container(
         color: t.canvas,
         alignment: Alignment.center,
-        child: Text('No project open.', style: TextStyle(color: t.textTertiary)),
+        child: Text(context.l10n.noProjectOpen, style: TextStyle(color: t.textTertiary)),
       );
     }
     final sim = state.editor.simulation;
@@ -136,7 +137,7 @@ class _Blockers extends StatelessWidget {
                       Text(b.message, style: const TextStyle(fontSize: 12)),
                       if (b.conceptId != null || b.mappingId != null)
                         MacLink(
-                          label: 'Show',
+                          label: context.l10n.show,
                           onTap: () => dispatch(
                             SelectionChanged(
                               b.conceptId != null
@@ -180,14 +181,9 @@ class _InputsSection extends StatelessWidget {
         if (!m.hasDefinition() && !m.signature.isUnitDomain) m,
     ];
     return InspectorSection(
-      title: 'Inputs',
+      title: context.l10n.inputs,
       children: [
-        if (inputs.isEmpty)
-          Text(
-            'No inputs: a relationship without inputs and without a definition is one. '
-            'Values then come from outside the design, one per tick.',
-            style: small,
-          ),
+        if (inputs.isEmpty) Text(context.l10n.noInputsARelationshipWithoutInputsAnd, style: small),
         for (final m in inputs)
           _InputControl(
             mapping: m,
@@ -200,8 +196,9 @@ class _InputsSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: MacMetrics.gap),
             child: Text(
-              '${functions.map((m) => m.name).join(', ')}: a relationship with inputs needs a '
-              'definition before it can run.',
+              context.l10n.relationshipsWithInputsNeedADefinition(
+                functions.map((m) => m.name).join(', '),
+              ),
               style: small,
             ),
           ),
@@ -236,7 +233,7 @@ class _InputControl extends StatelessWidget {
     final id = mapping.id.toInt();
     final Widget control;
     if (!concept.hasRepresentation()) {
-      control = Text('${concept.name} has no value form yet.', style: small);
+      control = Text(context.l10n.hasNoValueFormYet(concept.name), style: small);
     } else {
       switch (concept.representation.whichKind()) {
         case pb.Representation_Kind.quantity:
@@ -291,7 +288,7 @@ class _InputControl extends StatelessWidget {
           control = CommitTextField(
             key: ValueKey('input-$id'),
             value: repr != null && repr.hasCount() ? repr.count.toString() : '',
-            hint: 'whole number',
+            hint: context.l10n.wholeNumber,
             onCommit: (v) {
               final n = int.tryParse(v.trim());
               if (n == null || n < 0) return;
@@ -322,7 +319,7 @@ class _InputControl extends StatelessWidget {
             },
           );
         case pb.Representation_Kind.notSet:
-          control = Text('${concept.name} has no value form yet.', style: small);
+          control = Text(context.l10n.hasNoValueFormYet(concept.name), style: small);
       }
     }
     return Padding(
@@ -377,12 +374,12 @@ class _DomainsSection extends StatelessWidget {
     final t = MacTokens.of(context);
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     return InspectorSection(
-      title: 'Timing domains',
+      title: context.l10n.timingDomains,
       children: [
         if (project.clocks.isEmpty)
-          Text('No domains: every relationship is evaluated at every tick.', style: small)
+          Text(context.l10n.noDomainsEveryRelationshipIsEvaluatedAt, style: small)
         else
-          Text('Activation period, in ticks. Changing one starts the run over.', style: small),
+          Text(context.l10n.activationPeriodInTicksChangingOneStarts, style: small),
         for (final c in project.clocks)
           Padding(
             padding: const EdgeInsets.only(top: MacMetrics.gap),
@@ -428,12 +425,12 @@ class _Controls extends StatelessWidget {
     final (String line, Color color) = sim.failure != null
         ? (sim.failure!, t.error)
         : sim.error != null
-        ? (_errorSentence(state, sim.error!), t.error)
+        ? (_errorSentence(context.l10n, state, sim.error!), t.error)
         : sim.pending
-        ? ('Evaluating…', t.textTertiary)
+        ? (context.l10n.evaluating, t.textTertiary)
         : sim.hasRun
-        ? ('${sim.nextTick} tick${sim.nextTick == 1 ? '' : 's'} evaluated.', t.textSecondary)
-        : (blocked ? '' : 'Set the inputs, then step.', t.textSecondary);
+        ? (context.l10n.ticksEvaluated(sim.nextTick), t.textSecondary)
+        : (blocked ? '' : context.l10n.setTheInputsThenStep, t.textSecondary);
     // Refused before any request while something blocks (listed below).
     final canStep = !sim.pending && !blocked && state.connection is Connected;
     return Container(
@@ -445,20 +442,20 @@ class _Controls extends StatelessWidget {
         spacing: MacMetrics.gap,
         children: [
           MacButton.primary(
-            label: 'Step',
+            label: context.l10n.step,
             onPressed: canStep ? () => dispatch(const SimulationStepRequested(1)) : null,
           ),
           MacButton(
-            label: 'Step ×10',
+            label: context.l10n.stepTen,
             onPressed: canStep ? () => dispatch(const SimulationStepRequested(10)) : null,
           ),
           MacButton(
-            label: 'Reset',
+            label: context.l10n.reset,
             onPressed: sim.hasRun ? () => dispatch(const SimulationResetRequested()) : null,
           ),
           const SizedBox(width: MacMetrics.gap),
           Text(
-            'tick ${sim.nextTick}',
+            context.l10n.tickN(sim.nextTick),
             style: TextStyle(fontSize: 12, color: t.textSecondary, fontFeatures: kTabularFigures),
           ),
           const SizedBox(width: MacMetrics.gap),
@@ -478,13 +475,15 @@ class _Controls extends StatelessWidget {
 
 /// The evaluator's structured failure, worded for the designer.  The
 /// code says what happened, the entity who; the tick is the row.
-String _errorSentence(AppState s, pb.Diagnostic d) {
-  final who = d.hasMappingId() ? (s.mapping(d.mappingId.toInt())?.name ?? '?') : 'A relationship';
+String _errorSentence(AppLocalizations l10n, AppState s, pb.Diagnostic d) {
+  final who = d.hasMappingId()
+      ? (s.mapping(d.mappingId.toInt())?.name ?? '?')
+      : l10n.aRelationshipCapital;
   return switch (d.code) {
-    'simulation.missing_input' => '$who needs a value for this step.',
-    'simulation.division_by_zero' => '$who divided by zero.',
-    'simulation.non_finite' => '$who produced a value that is not a number.',
-    'simulation.not_causal' => 'The design contains an instantaneous cycle.',
+    'simulation.missing_input' => l10n.needsAValueForThisStep(who),
+    'simulation.division_by_zero' => l10n.dividedByZero(who),
+    'simulation.non_finite' => l10n.producedAValueThatIsNotANumber(who),
+    'simulation.not_causal' => l10n.theDesignContainsAnInstantaneousCycle,
     _ => d.message,
   };
 }
@@ -516,7 +515,7 @@ class _Trace extends StatelessWidget {
         p.clocks.where((c) => c.id == id).map((c) => c.name).firstOrNull ?? '?';
     if (sim.samples.isEmpty) {
       return Center(
-        child: Text('No ticks evaluated yet.', style: TextStyle(color: t.textTertiary)),
+        child: Text(context.l10n.noTicksEvaluatedYet, style: TextStyle(color: t.textTertiary)),
       );
     }
     final mono = TextStyle(fontFamily: 'Menlo', fontSize: 12, color: t.textPrimary);
@@ -630,7 +629,7 @@ class _Probe extends StatelessWidget {
         body = Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            'Select an input, a column or a concept.',
+            context.l10n.selectAnInputAColumnOrA,
             style: TextStyle(color: t.textTertiary),
           ),
         );
@@ -645,7 +644,7 @@ class _Probe extends StatelessWidget {
           trailing: SocketGlyph.of(c, t),
           children: [
             if (producers.isEmpty)
-              Text('No value declaration produces ${c.name}.', style: small)
+              Text(context.l10n.noValueDeclarationProduces(c.name), style: small)
             else
               for (final m in producers)
                 FormRow(
@@ -666,16 +665,12 @@ class _Probe extends StatelessWidget {
               trailing: c == null ? null : SocketGlyph.of(c, t),
               children: [
                 if (!isValue)
-                  Text(
-                    'A relationship: it is applied inside other relationships and has no '
-                    'value of its own to sample.',
-                    style: small,
-                  )
+                  Text(context.l10n.aRelationshipItIsAppliedInsideOther, style: small)
                 else
                   FormRow(
-                    label: 'Now',
+                    label: context.l10n.now,
                     child: Text(
-                      _latest(sim, p, id) ?? (sim.hasRun ? '—' : 'not stepped yet'),
+                      _latest(sim, p, id) ?? (sim.hasRun ? '—' : context.l10n.notSteppedYet),
                       style: value,
                     ),
                   ),
@@ -683,7 +678,7 @@ class _Probe extends StatelessWidget {
             ),
             if (isValue && sim.hasRun) _Series(sim: sim, project: p, mappingId: id),
             MacDisclosure(
-              title: 'Explain',
+              title: context.l10n.explain,
               children: [
                 ExplainLine('DeclId ${m.id}'),
                 if (sim.revision case final r?) ExplainLine('run at revision $r'),
@@ -713,16 +708,19 @@ class _Probe extends StatelessWidget {
               title: o.name,
               children: [
                 FormRow(
-                  label: 'Final target',
+                  label: context.l10n.finalTarget,
                   child: driverName == null
-                      ? Text('none yet', style: TextStyle(fontSize: 13, color: t.textTertiary))
+                      ? Text(
+                          context.l10n.noneYet,
+                          style: TextStyle(fontSize: 13, color: t.textTertiary),
+                        )
                       : MacLink(
                           label: driverName,
                           onTap: () => dispatch(SelectionChanged(MappingSelected(driver!))),
                         ),
                 ),
                 FormRow(
-                  label: 'Now',
+                  label: context.l10n.now,
                   child: Text(
                     driver == null ? '—' : (_latest(sim, p, driver) ?? '—'),
                     style: value,
@@ -739,7 +737,7 @@ class _Probe extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PanelHeader('Probe'),
+          PanelHeader(context.l10n.probe),
           Expanded(child: SingleChildScrollView(child: body)),
         ],
       ),
@@ -785,11 +783,11 @@ class _Series extends StatelessWidget {
           [Text('${s.tick}', style: cell), Text(_plainText(v), style: cell)],
     ];
     return InspectorSection(
-      title: 'Over the run',
+      title: context.l10n.overTheRun,
       children: [
         if (rows.isEmpty)
           Text(
-            'Not evaluated at any tick yet.',
+            context.l10n.notEvaluatedAtAnyTickYet,
             style: TextStyle(fontSize: 11, color: t.textSecondary),
           )
         else

@@ -25,6 +25,15 @@ class SaveRecentProjects extends Effect {
   final List<RecentProject> recent;
 }
 
+class LoadPreferences extends Effect {
+  const LoadPreferences();
+}
+
+class SavePreferences extends Effect {
+  const SavePreferences(this.preferences);
+  final AppPreferences preferences;
+}
+
 /// Show the OS folder picker; the executor dispatches `OpenProjectRequested`
 /// with the choice, or nothing when cancelled.
 class PickProjectToOpen extends Effect {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -139,7 +140,7 @@ class _OutOfSync extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Showing the last version that built; the text has changes that do not build yet.',
+              context.l10n.showingTheLastVersionThatBuiltThe,
               style: TextStyle(fontSize: 12, color: t.textPrimary),
             ),
           ),
@@ -160,7 +161,7 @@ class _Empty extends StatelessWidget {
       color: t.canvas,
       alignment: Alignment.center,
       child: Text(
-        'No project open.',
+        context.l10n.noProjectOpen,
         textAlign: TextAlign.center,
         style: TextStyle(color: t.textTertiary),
       ),
@@ -218,37 +219,35 @@ class _ContextBar extends StatelessWidget {
         children: [
           if (comp == null) ...[
             Text(
-              'System',
+              context.l10n.system,
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
             ),
             const SizedBox(width: 8),
             Text(
-              '${state.system?.instances.length ?? 0} instance'
-              '${(state.system?.instances.length ?? 0) == 1 ? '' : 's'} · '
-              '${state.system?.components.length ?? 0} component'
-              '${(state.system?.components.length ?? 0) == 1 ? '' : 's'}',
+              '${context.l10n.instancesCount(state.system?.instances.length ?? 0)} · '
+              '${context.l10n.componentsCount(state.system?.components.length ?? 0)}',
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
           ] else ...[
             MacButton(
-              label: '‹ System',
+              label: context.l10n.backToSystem,
               onPressed: () => dispatch(const ContextChanged(SystemContext())),
             ),
             const SizedBox(width: 10),
             Text(
-              'Editing ${comp.name}',
+              context.l10n.editingComponent(comp.name),
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
             ),
             const SizedBox(width: 8),
             Text(
-              used == 0 ? 'not placed yet' : 'used by $used instance${used == 1 ? '' : 's'}',
+              used == 0 ? context.l10n.notPlacedYet : context.l10n.usedByInstances(used),
               style: TextStyle(fontSize: 11, color: t.textTertiary),
             ),
             const SizedBox(width: 8),
             // The one sentence that may give way when the bar is narrow.
             Flexible(
               child: Text(
-                '— its promise is what instances see; edits here reach every instance.',
+                context.l10n.itsPromiseIsWhatInstancesSeeEdits,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 11, color: t.textTertiary),
               ),
@@ -262,10 +261,10 @@ class _ContextBar extends StatelessWidget {
             width: 200,
             child: MacSegmented<DesignView>(
               value: state.editor.view,
-              options: const {
-                DesignView.design: 'Design',
-                DesignView.code: 'Code',
-                DesignView.split: 'Split',
+              options: {
+                DesignView.design: context.l10n.design,
+                DesignView.code: context.l10n.code,
+                DesignView.split: context.l10n.split,
               },
               onChanged: (v) => dispatch(DesignViewChanged(v)),
             ),

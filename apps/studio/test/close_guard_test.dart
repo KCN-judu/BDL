@@ -166,7 +166,8 @@ void main() {
     await settle(tester, a.container);
     expect(a.daemon.closes, 0);
     expect(a.container.read(appStoreProvider).project, isNotNull);
-    expect(find.text('changed on disk'), findsOneWidget);
+    // The banner words the code itself; the daemon's text is the tooltip's detail.
+    expect(find.textContaining('changed on disk'), findsOneWidget);
     expect(sheet, findsNothing);
   });
 

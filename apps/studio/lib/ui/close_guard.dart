@@ -11,6 +11,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import 'mac/controls.dart';
@@ -25,15 +26,15 @@ class CloseGuardSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final name = state.project?.name ?? 'this project';
+    final name = state.project?.name ?? context.l10n.thisProject;
     final what = switch (state.editor.closeGuard) {
       Quit() => 'quit',
-      OpenAnother() || PickAnother() => 'open another project',
-      CreateAnother() || PickNew() => 'create another project',
-      _ => 'close it',
+      OpenAnother() || PickAnother() => context.l10n.openAnotherProject,
+      CreateAnother() || PickNew() => context.l10n.createAnotherProject,
+      _ => context.l10n.closeIt,
     };
     return SheetScrim(
-      title: 'Save changes to “$name”?',
+      title: context.l10n.saveChangesTo(name),
       width: 440,
       child: CallbackShortcuts(
         bindings: {
@@ -49,26 +50,24 @@ class CloseGuardSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'The project has changes that are not saved. Saving keeps everything as it is '
-                'now — unfinished formulas and text that does not build yet included. '
-                'If you don’t save and $what, the project returns to what was last saved.',
+                context.l10n.unsavedChangesExplanation(what),
                 style: TextStyle(fontSize: 12, color: t.textSecondary),
               ),
               const SizedBox(height: 18),
               Row(
                 children: [
                   MacButton(
-                    label: 'Don’t Save',
+                    label: context.l10n.donTSave,
                     onPressed: () => dispatch(const CloseGuardAnswered(CloseGuardAnswer.dontSave)),
                   ),
                   const Spacer(),
                   MacButton(
-                    label: 'Cancel',
+                    label: context.l10n.cancel,
                     onPressed: () => dispatch(const CloseGuardAnswered(CloseGuardAnswer.cancel)),
                   ),
                   const SizedBox(width: 8),
                   MacButton.primary(
-                    label: 'Save',
+                    label: context.l10n.save,
                     onPressed: () => dispatch(const CloseGuardAnswered(CloseGuardAnswer.save)),
                   ),
                 ],

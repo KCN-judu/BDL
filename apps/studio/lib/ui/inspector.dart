@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/composer.dart' show composerProjection;
 import '../app/state.dart';
@@ -42,8 +43,8 @@ class Inspector extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Text(
             state.isSystem
-                ? 'Select a concept, a relationship, an output, an instance or a group.'
-                : 'Select a concept, a mapping or an output.',
+                ? context.l10n.selectAConceptARelationshipAnOutput
+                : context.l10n.selectAConceptAMappingOrAn,
             style: TextStyle(color: t.textTertiary),
           ),
         ),
@@ -56,7 +57,7 @@ class Inspector extends StatelessWidget {
           producers: project.mappings.where((m) => m.signature.output.toInt() == id).toList(),
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
-          presets: unitPresetsFrom(state.library?.quantities ?? const []),
+          presets: unitPresetsFrom(state.library?.quantities ?? const [], context.l10n),
           dispatch: dispatch,
         ),
         MappingSelected(:final id) => _MappingInspector(
@@ -138,7 +139,7 @@ class Inspector extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PanelHeader('Inspector'),
+          PanelHeader(context.l10n.inspector),
           Expanded(child: SingleChildScrollView(child: body)),
           if (state.editor.lastOutcome case final o?)
             if (project != null) _ChangeNote(outcome: o, project: project, dispatch: dispatch),
@@ -171,22 +172,27 @@ class _ChangeNote extends StatelessWidget {
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     final Widget sentence;
     if (outcome.kind == pb.EditKind.EDIT_KIND_REFINEMENT) {
-      sentence = Text('Nothing else needs rechecking.', style: small);
+      sentence = Text(context.l10n.nothingElseNeedsRechecking, style: small);
     } else if (affected.isEmpty) {
-      sentence = Text('This will be checked again.', style: small);
+      sentence = Text(context.l10n.thisWillBeCheckedAgain, style: small);
     } else {
       sentence = Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: MacMetrics.gapTight,
         children: [
-          Text(affected.length == 1 ? 'This change affects' : 'This change affects', style: small),
+          Text(
+            affected.length == 1 ? context.l10n.thisChangeAffects : context.l10n.thisChangeAffects,
+            style: small,
+          ),
           for (final m in affected)
             MacLink(
               label: m.name,
               onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
             ),
           Text(
-            affected.length == 1 ? '— it will be checked again.' : '— they will be checked again.',
+            affected.length == 1
+                ? context.l10n.itWillBeCheckedAgain
+                : context.l10n.theyWillBeCheckedAgain,
             style: small,
           ),
         ],
@@ -201,7 +207,7 @@ class _ChangeNote extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: MacMetrics.gapTight,
         children: [
-          Text('Last change', style: Theme.of(context).textTheme.titleSmall),
+          Text(context.l10n.lastChange, style: Theme.of(context).textTheme.titleSmall),
           sentence,
         ],
       ),
@@ -222,6 +228,8 @@ String _outcomeNotation(pb.EditOutcome o) {
   return 'last change: ${_kindWord(o.kind)}${cats.isEmpty ? '' : ' · invalidates $cats'}';
 }
 
+// Explain's formal vocabulary (kernel names): not localized by design
+// (docs/project/localization-style.md).
 String _invalidationWord(pb.Invalidation i) => switch (i) {
   pb.Invalidation.INVALIDATION_INTERFACE => 'Interface',
   pb.Invalidation.INVALIDATION_REALIZATION => 'Realization',
@@ -302,18 +310,18 @@ class _ConceptInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Meaning',
+          title: context.l10n.meaning,
           trailing: SocketGlyph.of(concept, t),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: concept.name,
                 onCommit: (v) => dispatch(RenameConceptRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Meaning',
+              label: context.l10n.meaning,
               child: CommitTextField(
                 value: concept.description,
                 maxLines: 3,
@@ -323,7 +331,7 @@ class _ConceptInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Value',
+          title: context.l10n.value,
           children: [
             _ValueEditor(
               current: bound ? concept.representation : null,
@@ -339,7 +347,7 @@ class _ConceptInspector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: FormRow(
-                  label: 'Order',
+                  label: context.l10n.order,
                   child: Row(
                     spacing: MacMetrics.gap,
                     children: [
@@ -351,8 +359,8 @@ class _ConceptInspector extends StatelessWidget {
                       Expanded(
                         child: Text(
                           concept.ordered
-                              ? 'values are magnitudes: <, smallest, largest, clamp, in range'
-                              : 'values are compared for equality only',
+                              ? context.l10n.valuesAreMagnitudesSmallestLargestClampIn
+                              : context.l10n.valuesAreComparedForEqualityOnly,
                           style: TextStyle(fontSize: 11, color: t.textSecondary),
                         ),
                       ),
@@ -366,22 +374,30 @@ class _ConceptInspector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Changing this re-checks ${_names(users)}.',
+                  context.l10n.changingThisRechecks(_names(users)),
                   style: TextStyle(fontSize: 11, color: t.textSecondary),
                 ),
               ),
           ],
         ),
         InspectorSection(
-          title: 'Relationships',
+          title: context.l10n.relationships,
           children: [
             FormRow(
-              label: 'Produced by',
-              child: _NameLinks(mappings: producers, dispatch: dispatch, empty: 'nothing yet'),
+              label: context.l10n.producedBy,
+              child: _NameLinks(
+                mappings: producers,
+                dispatch: dispatch,
+                empty: context.l10n.nothingYet,
+              ),
             ),
             FormRow(
-              label: 'Used by',
-              child: _NameLinks(mappings: readers, dispatch: dispatch, empty: 'nothing yet'),
+              label: context.l10n.usedBy,
+              child: _NameLinks(
+                mappings: readers,
+                dispatch: dispatch,
+                empty: context.l10n.nothingYet,
+              ),
             ),
           ],
         ),
@@ -392,21 +408,21 @@ class _ConceptInspector extends StatelessWidget {
             spacing: MacMetrics.gapTight,
             children: [
               DestructiveButton(
-                label: 'Delete ${concept.name}',
+                label: context.l10n.deleteNamed(concept.name),
                 enabled: users.isEmpty,
                 onPressed: () => dispatch(DeleteConceptRequested(id)),
               ),
               // A disabled control says why, at rest.
               if (users.isNotEmpty)
                 Text(
-                  'Still used by ${_names(users)}.',
+                  context.l10n.stillUsedBy(_names(users)),
                   style: TextStyle(fontSize: 11, color: t.textSecondary),
                 ),
             ],
           ),
         ),
         MacDisclosure(
-          title: 'Explain',
+          title: context.l10n.explain,
           children: [
             ExplainLine('SemanticId ${concept.id}'),
             ExplainLine(
@@ -464,14 +480,14 @@ pb.Representation? _defaultOf(_Form f) => switch (f) {
   ),
 };
 
-const _formWords = {
-  _Form.quantity: 'Quantity',
-  _Form.onOff: 'On / off',
-  _Form.count: 'Count',
-  _Form.collection: 'Collection of…',
-  _Form.grouped: 'Grouped value',
-  _Form.optional: 'Optional…',
-  _Form.later: 'Decide later',
+Map<_Form, String> _formWords(AppLocalizations l10n) => {
+  _Form.quantity: l10n.quantity,
+  _Form.onOff: l10n.onOff,
+  _Form.count: l10n.count,
+  _Form.collection: l10n.collectionOf,
+  _Form.grouped: l10n.groupedValueTitle,
+  _Form.optional: l10n.optional,
+  _Form.later: l10n.decideLater,
 };
 
 /// The value form: a pop-up (seven choices are too many for a segmented
@@ -516,7 +532,7 @@ class _ValueEditor extends StatelessWidget {
         MacDropdown<_Form>(
           value: form,
           items: forms,
-          labelOf: (f) => _formWords[f]!,
+          labelOf: (f) => _formWords(context.l10n)[f]!,
           onChanged: (f) {
             if (f != form) onChanged(_defaultOf(f));
           },
@@ -524,7 +540,7 @@ class _ValueEditor extends StatelessWidget {
         if (form == _Form.quantity) ...[
           const SizedBox(height: 8),
           FormRow(
-            label: 'Unit',
+            label: context.l10n.unit,
             child: MacDropdown<UnitPreset>(
               value: unitPresetFor(presets, current!.quantity),
               // a dimension outside the presets is still shown, as its symbol
@@ -537,12 +553,16 @@ class _ValueEditor extends StatelessWidget {
           ),
         ],
         if (form == _Form.collection)
-          part('Each', current!.list, (v) => onChanged(pb.Representation(list: v))),
+          part(context.l10n.each, current!.list, (v) => onChanged(pb.Representation(list: v))),
         if (form == _Form.optional)
-          part('When present', current!.optional, (v) => onChanged(pb.Representation(optional: v))),
+          part(
+            context.l10n.whenPresent,
+            current!.optional,
+            (v) => onChanged(pb.Representation(optional: v)),
+          ),
         if (form == _Form.grouped) ...[
           part(
-            'First',
+            context.l10n.first,
             current!.pair.first,
             (v) => onChanged(
               pb.Representation(
@@ -551,7 +571,7 @@ class _ValueEditor extends StatelessWidget {
             ),
           ),
           part(
-            'Second',
+            context.l10n.second,
             current!.pair.second,
             (v) => onChanged(
               pb.Representation(
@@ -669,21 +689,21 @@ class _MappingInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Meaning',
+          title: context.l10n.meaning,
           trailing: MappingGlyph(
             declared: declared,
             wrong: a?.status == pb.MappingStatus.MAPPING_STATUS_INVALID,
           ),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: mapping.name,
                 onCommit: (v) => dispatch(RenameMappingRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Meaning',
+              label: context.l10n.meaning,
               child: CommitTextField(
                 value: mapping.description,
                 maxLines: 3,
@@ -693,7 +713,7 @@ class _MappingInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Reads',
+          title: context.l10n.reads,
           children: [
             Wrap(
               spacing: 4,
@@ -723,7 +743,7 @@ class _MappingInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Produces',
+          title: context.l10n.produces,
           children: [
             MacDropdown<int>(
               value: output,
@@ -736,20 +756,15 @@ class _MappingInspector extends StatelessWidget {
         ),
         if (portWord != null || group != null)
           InspectorSection(
-            title: 'Place',
+            title: context.l10n.place,
             children: [
-              if (portWord case final w?)
-                Text(
-                  'Backs the port "$w": what instances see of it is the promise, kept on the '
-                  'component, not this definition.',
-                  style: small,
-                ),
+              if (portWord case final w?) Text(context.l10n.backsThePort(w), style: small),
               if (group case final g?)
                 Row(
                   children: [
-                    Expanded(child: Text('In group ${g.name}.', style: small)),
+                    Expanded(child: Text(context.l10n.inGroup(g.name), style: small)),
                     MacButton(
-                      label: 'Show Group',
+                      label: context.l10n.showGroup,
                       onPressed: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
                     ),
                   ],
@@ -757,7 +772,7 @@ class _MappingInspector extends StatelessWidget {
             ],
           ),
         InspectorSection(
-          title: 'Relationship',
+          title: context.l10n.relationship,
           // The one state word, only while there is nothing to show; an
           // unsaved draft is the editor's state, not the mapping's.
           trailing: boundTo != null
@@ -773,26 +788,30 @@ class _MappingInspector extends StatelessWidget {
             // commit.  It is shown and traced, never typed into.
             if (boundTo case final b?) ...[
               Text(
-                'Takes its value from ${boundLabel?.call(b) ?? '?'}'
-                '${b.hasTransportInit() ? ', carried across timing domains starting at ${b.transportInit}' : ''}.',
+                b.hasTransportInit()
+                    ? context.l10n.takesItsValueFromTransported(
+                        boundLabel?.call(b) ?? '?',
+                        b.transportInit,
+                      )
+                    : context.l10n.takesItsValueFrom(boundLabel?.call(b) ?? '?'),
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
                   MacButton(
-                    label: 'Show Binding',
+                    label: context.l10n.showBinding,
                     onPressed: () => dispatch(SelectionChanged(BindingSelected(b.id.toInt()))),
                   ),
                   const SizedBox(width: 8),
                   MacButton(
-                    label: 'Disconnect',
+                    label: context.l10n.disconnect,
                     onPressed: () => dispatch(UnbindRequested(b.id.toInt())),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Disconnect it to define the relationship yourself.', style: small),
+              Text(context.l10n.disconnectItToDefineTheRelationshipYourself, style: small),
             ] else
               // The editor shows formula-local findings under the text they
               // point into.  What remains here is about the mapping's place
@@ -820,21 +839,21 @@ class _MappingInspector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  "Checked once ${waitingOn.join(' and ')}'s value is decided.",
+                  context.l10n.checkedOnceValueDecided(waitingOn.join(' and ')),
                   style: small,
                 ),
               ),
           ],
         ),
         InspectorSection(
-          title: 'Timing',
+          title: context.l10n.timing,
           children: [
             FormRow(
-              label: 'Updates in',
+              label: context.l10n.updatesIn,
               child: MacDropdown<int>(
                 value: clockId ?? -1,
                 items: [-1, for (final c in clocks) c.id.toInt()],
-                labelOf: (c) => c < 0 ? 'any domain' : clockName(c),
+                labelOf: (c) => c < 0 ? context.l10n.anyDomain : clockName(c),
                 detailOf: (c) => c < 0 ? 'pure' : '',
                 onChanged: (c) =>
                     dispatch(SetMappingClockRequested(mappingId: id, clockId: c < 0 ? null : c)),
@@ -842,9 +861,8 @@ class _MappingInspector extends StatelessWidget {
             ),
             Text(
               clockId == null
-                  ? 'A relationship in no domain is pure: it is evaluated wherever it is read.'
-                  : 'Evaluated at each activation of ${clockName(clockId)}; a value read from '
-                        'another domain needs an explicit transport.',
+                  ? context.l10n.aRelationshipInNoDomainIsPure
+                  : context.l10n.evaluatedAtEachActivationOf(clockName(clockId)),
               style: small,
             ),
             for (final d in timingIssues)
@@ -855,10 +873,10 @@ class _MappingInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Drives',
+          title: context.l10n.drives,
           children: [
             FormRow(
-              label: 'Output',
+              label: context.l10n.output,
               child: MacDropdown<int>(
                 value: drives ?? -1,
                 items: [-1, for (final o in outputs) o.id.toInt()],
@@ -870,11 +888,9 @@ class _MappingInspector extends StatelessWidget {
             Text(
               drives == null
                   ? inputs.isEmpty
-                        ? 'This value can commit to a physical output.'
-                        : 'Only a relationship without inputs can drive an output: connect the '
-                              'one that combines the sources.'
-                  : 'Each activation commits this value to ${outputName(drives)}. One driver per '
-                        'output: a second one is a conflict, never a priority.',
+                        ? context.l10n.thisValueCanCommitToAPhysical
+                        : context.l10n.onlyARelationshipWithoutInputsCanDrive
+                  : context.l10n.eachActivationCommitsThisValueTo(outputName(drives)),
               style: small,
             ),
             for (final d in driveIssues)
@@ -890,13 +906,13 @@ class _MappingInspector extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: DestructiveButton(
-              label: 'Delete ${mapping.name}',
+              label: context.l10n.deleteNamed(mapping.name),
               onPressed: () => dispatch(DeleteMappingRequested(id)),
             ),
           ),
         ),
         MacDisclosure(
-          title: 'Explain',
+          title: context.l10n.explain,
           children: [
             ExplainLine('DeclId ${mapping.id}'),
             // the canonical type: the domain of no inputs is (), the empty
@@ -908,11 +924,7 @@ class _MappingInspector extends StatelessWidget {
                 _ => '(${inputs.map((i) => _concept(i)?.name ?? '?').join(', ')})',
               }} -> ${_concept(output)?.name ?? '?'}',
             ),
-            if (inputs.isEmpty)
-              const ExplainLine(
-                'no explicit inputs: the canonical domain is (), the empty product; '
-                'the kernel encodes () -> B as B',
-              ),
+            if (inputs.isEmpty) ExplainLine(context.l10n.noExplicitInputsTheCanonicalDomainIs),
             if (clockId != null) ExplainLine('Κ = ClockId $clockId (${clockName(clockId)})'),
             if (drives != null) ExplainLine('β: drives OutputId $drives (${outputName(drives)})'),
             ExplainLine(
@@ -925,7 +937,7 @@ class _MappingInspector extends StatelessWidget {
               for (final d in a.diagnostics)
                 ExplainLine('${d.code}${d.technical.isEmpty ? '' : ': ${d.technical}'}'),
             ] else
-              ExplainLine('status: ${declared ? 'declared' : 'pending analysis'}'),
+              ExplainLine('status: ${declared ? 'declared' : context.l10n.pendingAnalysis}'),
             ExplainLine('revision $revision'),
             if (outcome case final o?) ExplainLine(_outcomeNotation(o)),
           ],
@@ -981,45 +993,45 @@ class _OutputInspector extends StatelessWidget {
             .where((d) => d.code.startsWith('output.')),
     ];
     final (String stateText, Color stateColor) = clockId == null
-        ? (
-            'No timing domain yet: not part of the design\'s commitment until one is chosen.',
-            t.open,
-          )
+        ? (context.l10n.noTimingDomainYetNotPartOf, t.open)
         : switch (a?.state) {
-            pb.OutputState.OUTPUT_STATE_DRIVEN => ('Driven by ${mappingName(driver!)}.', t.settled),
+            pb.OutputState.OUTPUT_STATE_DRIVEN => (
+              context.l10n.drivenBy(mappingName(driver!)),
+              t.settled,
+            ),
             pb.OutputState.OUTPUT_STATE_UNDRIVEN => (
               output.required
-                  ? 'Undriven — the design is incomplete without a driver.'
-                  : 'Undriven.',
+                  ? context.l10n.undrivenTheDesignIsIncompleteWithoutA
+                  : context.l10n.undriven,
               t.open,
             ),
             pb.OutputState.OUTPUT_STATE_CONFLICT => (
-              '${output.name} already has a final target: ${claimants.map((m) => m.name).join(' and ')} both claim it.',
+              context.l10n.contestedOutput(output.name, claimants.map((m) => m.name).join(' and ')),
               t.error,
             ),
             pb.OutputState.OUTPUT_STATE_ILL_FORMED => (
-              'The connection does not fit: see the driver\'s findings below.',
+              context.l10n.theConnectionDoesNotFitSeeThe,
               t.error,
             ),
-            _ => ('Checking…', t.textTertiary),
+            _ => (context.l10n.checking, t.textTertiary),
           };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Output',
+          title: context.l10n.output,
           trailing: Text(output.required ? 'required' : 'optional', style: small),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: output.name,
                 onCommit: (v) => dispatch(RenameOutputRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Accepts',
+              label: context.l10n.accepts,
               child: MacDropdown<int>(
                 value: output.accepts.toInt(),
                 items: [for (final c in p.concepts) c.id.toInt()],
@@ -1029,17 +1041,17 @@ class _OutputInspector extends StatelessWidget {
               ),
             ),
             FormRow(
-              label: 'Updates in',
+              label: context.l10n.updatesIn,
               child: MacDropdown<int>(
                 value: clockId ?? -1,
                 items: [-1, for (final c in p.clocks) c.id.toInt()],
-                labelOf: (c) => c < 0 ? 'no domain yet' : state.clockName(c) ?? '?',
+                labelOf: (c) => c < 0 ? context.l10n.noDomainYet : state.clockName(c) ?? '?',
                 onChanged: (c) =>
                     dispatch(SetOutputClockRequested(id: id, clockId: c < 0 ? null : c)),
               ),
             ),
             FormRow(
-              label: 'Required',
+              label: context.l10n.required,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
@@ -1051,7 +1063,7 @@ class _OutputInspector extends StatelessWidget {
                           dispatch(SetOutputRequiredRequested(id: id, required: v ?? false)),
                     ),
                     Expanded(
-                      child: Text('the design is incomplete until this is driven', style: small),
+                      child: Text(context.l10n.theDesignIsIncompleteUntilThisIs, style: small),
                     ),
                   ],
                 ),
@@ -1060,7 +1072,7 @@ class _OutputInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Driver',
+          title: context.l10n.driver,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1097,10 +1109,10 @@ class _OutputInspector extends StatelessWidget {
                 ],
               ),
             FormRow(
-              label: 'Connect',
+              label: context.l10n.connect,
               child: MacDropdown<int>(
                 value: null,
-                hint: 'a relationship…',
+                hint: context.l10n.aRelationship,
                 items: [
                   for (final m in p.mappings)
                     if (!claimants.contains(m)) m.id.toInt(),
@@ -1109,7 +1121,7 @@ class _OutputInspector extends StatelessWidget {
                 detailOf: (m) =>
                     p.mappings.firstWhere((x) => x.id.toInt() == m).signature.isUnitDomain
                     ? ''
-                    : 'has inputs',
+                    : context.l10n.hasInputs,
                 onChanged: (m) => dispatch(SetMappingDriveRequested(mappingId: m, outputId: id)),
               ),
             ),
@@ -1126,17 +1138,17 @@ class _OutputInspector extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: DestructiveButton(
-              label: 'Delete ${output.name}',
+              label: context.l10n.deleteNamed(output.name),
               enabled: claimants.isEmpty,
               tooltip: claimants.isEmpty
                   ? null
-                  : 'Still driven by ${claimants.map((m) => m.name).join(', ')}',
+                  : context.l10n.stillDrivenBy(claimants.map((m) => m.name).join(', ')),
               onPressed: () => dispatch(DeleteOutputRequested(id)),
             ),
           ),
         ),
         MacDisclosure(
-          title: 'Explain',
+          title: context.l10n.explain,
           children: [
             ExplainLine('OutputId ${output.id}'),
             ExplainLine('Ω accepts = sem#${output.accepts}'),

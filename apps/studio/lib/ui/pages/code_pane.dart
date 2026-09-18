@@ -20,6 +20,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/diagnostics.dart';
+import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/sources.dart';
 import '../../app/state.dart';
@@ -160,7 +162,7 @@ class _CodePaneState extends State<CodePane> {
       return Container(
         color: t.content,
         alignment: Alignment.center,
-        child: Text('Reading the sources…', style: TextStyle(color: t.textTertiary)),
+        child: Text(context.l10n.readingTheSources, style: TextStyle(color: t.textTertiary)),
       );
     }
     final diagnostics = sources.diagnosticsOf(file.path);
@@ -178,16 +180,13 @@ class _CodePaneState extends State<CodePane> {
         if (file.draft)
           _Banner(
             icon: Icons.sync_problem_outlined,
-            text: errors == 1
-                ? 'This file does not build yet: the design shows the last version that did.'
-                : 'This file does not build yet ($errors problems): the design shows the last '
-                      'version that did.',
+            text: context.l10n.thisFileDoesNotBuildYet(errors),
           ),
         Expanded(
           child: Container(
             color: t.content,
             child: Semantics(
-              label: 'Source of ${file.path}',
+              label: context.l10n.sourceOf(file.path),
               child: TextField(
                 controller: _c,
                 focusNode: _focus,
@@ -271,7 +270,7 @@ class _FileBar extends StatelessWidget {
                 value: sources.openPath ?? files.first.path,
                 items: [for (final f in files) f.path],
                 onChanged: onOpen,
-                labelOf: (p) => sources.file(p)?.draft == true ? '$p — not built' : p,
+                labelOf: (p) => sources.file(p)?.draft == true ? context.l10n.notBuiltSuffix(p) : p,
               ),
             ),
         ],
@@ -362,7 +361,7 @@ class _Diagnostics extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          d.message,
+                          localizedMessage(context.l10n, d.code, d.message),
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 12, color: t.textPrimary),
                         ),

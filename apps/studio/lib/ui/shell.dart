@@ -9,12 +9,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../app/store.dart';
+import '../l10n/diagnostics.dart';
+import '../l10n/l10n.dart';
 import '../platform/desktop.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../protocol/versions.dart';
 import 'mac/controls.dart';
 import 'close_guard.dart';
 import 'mac/tokens.dart';
+import 'preferences_sheet.dart';
 import 'mac/widgets.dart';
 import 'pages/deploy_page.dart';
 import 'pages/design_page.dart';
@@ -36,9 +39,9 @@ class StudioShell extends ConsumerWidget {
       StudioPage.design => DesignPage(state: state, dispatch: dispatch),
       StudioPage.simulate => SimulatePage(state: state, dispatch: dispatch),
       StudioPage.deploy => DeployPage(state: state, dispatch: dispatch),
-      StudioPage.monitor => const PlaceholderPage(
-        title: 'Monitor',
-        body: 'Live values on the canvas arrive with telemetry (roadmap step S).',
+      StudioPage.monitor => PlaceholderPage(
+        title: context.l10n.monitor,
+        body: context.l10n.liveValuesOnTheCanvasArriveWith,
       ),
     };
 
@@ -144,31 +147,34 @@ class _Toolbar extends StatelessWidget {
         children: [
           // Room for the macOS traffic lights when the title bar is hidden later.
           if (isMacOS) const SizedBox(width: 64),
-          Text(p == null ? 'BDL Studio' : p.name, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            p == null ? context.l10n.bdlStudio : p.name,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           if (p != null && p.dirty)
             Padding(
               padding: const EdgeInsets.only(left: MacMetrics.gap),
-              child: Text('Edited', style: TextStyle(color: t.textTertiary)),
+              child: Text(context.l10n.edited, style: TextStyle(color: t.textTertiary)),
             ),
           const Spacer(),
           ToolbarButton(
             icon: Icons.undo,
-            tooltip: 'Undo (${shortcut('Z')})',
+            tooltip: context.l10n.undoTooltip(shortcut('Z')),
             onPressed: p?.canUndo == true ? () => dispatch(const UndoRequested()) : null,
           ),
           ToolbarButton(
             icon: Icons.redo,
-            tooltip: 'Redo (${shortcut('Z', shift: true)})',
+            tooltip: context.l10n.redoTooltip(shortcut('Z', shift: true)),
             onPressed: p?.canRedo == true ? () => dispatch(const RedoRequested()) : null,
           ),
           const SizedBox(width: 12),
           MacButton(
-            label: 'Save',
+            label: context.l10n.save,
             onPressed: p != null && p.dirty ? () => dispatch(const SaveRequested()) : null,
           ),
           const SizedBox(width: 8),
           MacButton(
-            label: 'Close',
+            label: context.l10n.close,
             onPressed: p != null ? () => dispatch(const CloseProjectRequested()) : null,
           ),
         ],
@@ -198,11 +204,13 @@ class _Banner extends StatelessWidget {
         children: [
           // The machine code is the explanation layer's: behind the icon.
           Tooltip(
-            message: error.code,
+            message: isStudioWorded(error.code) && error.message.isNotEmpty
+                ? '${error.code}\n${error.message}'
+                : error.code,
             child: Icon(Icons.error_outline, size: 16, color: t.error),
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(error.message)),
+          Expanded(child: Text(localizedMessage(context.l10n, error.code, error.message))),
           const SizedBox(width: 8),
           // A conflict has two honest answers: take the disk's version
           // (dropping the edits here) or keep this one (writing over the
@@ -210,14 +218,14 @@ class _Banner extends StatelessWidget {
           if (conflict) ...[
             TextButton(
               onPressed: () => dispatch!(const ReloadProjectRequested()),
-              child: const Text('Reload from disk'),
+              child: Text(context.l10n.reloadFromDisk),
             ),
             TextButton(
               onPressed: () => dispatch!(const SaveRequested(force: true)),
-              child: const Text('Overwrite'),
+              child: Text(context.l10n.overwrite),
             ),
           ],
-          TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
+          TextButton(onPressed: onDismiss, child: Text(context.l10n.dismiss)),
         ],
       ),
     );
@@ -243,7 +251,7 @@ class _StatusLine extends StatelessWidget {
     // revision).
     final facts = <Widget>[];
     if (p == null) {
-      facts.add(Text('No project', style: small));
+      facts.add(Text(context.l10n.noProject, style: small));
     } else {
       final declared = p.mappings.where((m) => !m.hasDefinition()).length;
       final wrong =
@@ -251,16 +259,18 @@ class _StatusLine extends StatelessWidget {
               .where((m) => m.status == pb.MappingStatus.MAPPING_STATUS_INVALID)
               .length ??
           0;
-      facts.add(Text(p.dirty ? 'Edited' : 'Saved', style: small));
-      facts.add(_Fact(count: p.concepts.length, noun: 'concept', style: small));
-      facts.add(_Fact(count: p.mappings.length, noun: 'mapping', style: small));
+      facts.add(Text(p.dirty ? context.l10n.edited : context.l10n.saved, style: small));
+      facts.add(Text(context.l10n.conceptsCount(p.concepts.length), style: small));
+      facts.add(Text(context.l10n.mappingsCount(p.mappings.length), style: small));
       if (declared > 0) {
-        facts.add(Text('$declared not yet defined', style: small.copyWith(color: t.open)));
+        facts.add(
+          Text(context.l10n.notYetDefinedCount(declared), style: small.copyWith(color: t.open)),
+        );
       }
       if (wrong > 0) {
         facts.add(
           Text(
-            wrong == 1 ? '1 definition does not check' : '$wrong definitions do not check',
+            context.l10n.definitionsDoNotCheckCount(wrong),
             style: small.copyWith(color: t.error),
           ),
         );
@@ -271,21 +281,20 @@ class _StatusLine extends StatelessWidget {
           .length;
       if (drafts > 0) {
         facts.add(
-          Text(
-            drafts == 1 ? '1 definition not added' : '$drafts definitions not added',
-            style: small.copyWith(color: t.open),
-          ),
+          Text(context.l10n.definitionsNotAddedCount(drafts), style: small.copyWith(color: t.open)),
         );
       }
       // Whole-design verdicts of the reactive and output passes, when the
       // analysis is the one for this revision (docs/architecture/studio-compiler-integration.md).
       if (state.analysis case final a? when a.revision == p.revision) {
-        if (!a.causal) facts.add(Text('not causal', style: small.copyWith(color: t.error)));
+        if (!a.causal) {
+          facts.add(Text(context.l10n.notCausal, style: small.copyWith(color: t.error)));
+        }
         if (!a.clockConsistent) {
-          facts.add(Text('reads across domains', style: small.copyWith(color: t.error)));
+          facts.add(Text(context.l10n.readsAcrossDomains, style: small.copyWith(color: t.error)));
         }
         if (!a.outputComplete) {
-          facts.add(Text('outputs incomplete', style: small.copyWith(color: t.open)));
+          facts.add(Text(context.l10n.outputsIncomplete, style: small.copyWith(color: t.open)));
         }
       }
       // Deployment is target-relative: named with its board, never folded
@@ -295,27 +304,30 @@ class _StatusLine extends StatelessWidget {
         final board = deploy.target?.name ?? d.target;
         facts.add(switch (d.status) {
           pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE => Text(
-            'feasible on $board',
+            context.l10n.feasibleOnBoard(board),
             style: small.copyWith(color: t.settled),
           ),
           pb.DeploymentStatus.DEPLOYMENT_STATUS_INFEASIBLE => Text(
-            'not feasible on $board',
+            context.l10n.notFeasibleOnBoard(board),
             style: small.copyWith(color: t.error),
           ),
-          _ => Text('incomplete on $board', style: small.copyWith(color: t.open)),
+          _ => Text(context.l10n.incompleteOnBoard(board), style: small.copyWith(color: t.open)),
         });
       }
     }
 
     final (Color dot, List<Widget> connCells) = switch (conn) {
-      Disconnected() => (t.textTertiary, [Text('Compiler not connected', style: small)]),
-      Connecting() => (t.open, [Text('Connecting to the compiler', style: small)]),
+      Disconnected() => (t.textTertiary, [Text(context.l10n.compilerNotConnected, style: small)]),
+      Connecting() => (t.open, [Text(context.l10n.connectingToTheCompiler, style: small)]),
       Connected(:final handshake) => (
         t.settled,
         [
-          Text('Compiler ${handshake.compilerVersion}', style: small),
+          Text(context.l10n.compilerVersion(handshake.compilerVersion), style: small),
           if (!handshake.compatible)
-            Text('protocol ${formatVersion(handshake.protocolVersion)}', style: dim),
+            Text(
+              context.l10n.protocolVersion(formatVersion(handshake.protocolVersion)),
+              style: dim,
+            ),
         ],
       ),
       ConnectionFailed(:final reason) => (t.error, [Text(reason, style: small)]),
@@ -361,17 +373,6 @@ class _StatusLine extends StatelessWidget {
   }
 }
 
-/// "4 concepts": the number in tabular figures, the noun pluralised.
-class _Fact extends StatelessWidget {
-  const _Fact({required this.count, required this.noun, required this.style});
-  final int count;
-  final String noun;
-  final TextStyle style;
-
-  @override
-  Widget build(BuildContext context) => Text('$count $noun${count == 1 ? '' : 's'}', style: style);
-}
-
 /// Resolve's page bar: pages in workflow order, project manager left,
 /// settings right.
 class _PageBar extends StatelessWidget {
@@ -386,16 +387,16 @@ class _PageBar extends StatelessWidget {
   final bool connected;
   final void Function(AppAction) dispatch;
 
-  static const _pages = [
-    (StudioPage.design, Icons.account_tree_outlined, 'Design'),
-    (StudioPage.simulate, Icons.show_chart, 'Simulate'),
-    (StudioPage.deploy, Icons.memory_outlined, 'Deploy'),
-    (StudioPage.monitor, Icons.sensors, 'Monitor'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    final pages = [
+      (StudioPage.design, Icons.account_tree_outlined, l10n.design),
+      (StudioPage.simulate, Icons.show_chart, l10n.simulate),
+      (StudioPage.deploy, Icons.memory_outlined, l10n.deploy),
+      (StudioPage.monitor, Icons.sensors, l10n.monitor),
+    ];
     return Container(
       height: MacMetrics.pageBarHeight,
       color: t.window,
@@ -404,11 +405,11 @@ class _PageBar extends StatelessWidget {
           const SizedBox(width: 8),
           ToolbarButton(
             icon: Icons.grid_view_outlined,
-            tooltip: 'Project manager (closes this project)',
+            tooltip: context.l10n.projectManagerClosesThisProject,
             onPressed: projectOpen ? () => dispatch(const CloseProjectRequested()) : null,
           ),
           const Spacer(),
-          for (final (page, icon, label) in _pages)
+          for (final (page, icon, label) in pages)
             _PageButton(
               icon: icon,
               label: label,
@@ -418,8 +419,8 @@ class _PageBar extends StatelessWidget {
           const Spacer(),
           ToolbarButton(
             icon: Icons.settings_outlined,
-            tooltip: 'Project settings',
-            onPressed: connected && !projectOpen ? null : () => dispatch(const ConnectRequested()),
+            tooltip: context.l10n.preferencesMenu,
+            onPressed: () => showPreferencesSheet(context, dispatch: dispatch),
           ),
           const SizedBox(width: 8),
         ],
@@ -447,22 +448,28 @@ class _PageButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 96,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+      // At least the English width; a longer label (a translation) widens
+      // the tab rather than wrapping or clipping.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 96),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

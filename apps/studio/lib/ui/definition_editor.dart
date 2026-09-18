@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -64,14 +65,16 @@ class DefinitionEditorModel {
     required DefinitionDraft? draft,
     required pb.MappingAnalysis? committedAnalysis,
     required List<String> inputNames,
+    AppLocalizations? l10n,
   }) {
+    l10n ??= kEnglish;
     final text = draft?.source ?? committed ?? '';
     final dirty = draft != null && draft.dirtyAgainst(committed);
     final conflict = draft?.conflict ?? false;
     final saving = draft?.pendingCommit != null;
     final hint = inputNames.isEmpty
-        ? 'expression with no inputs'
-        : 'expression over ${inputNames.join(', ')}';
+        ? l10n.expressionWithNoInputs
+        : l10n.expressionOver(inputNames.join(', '));
 
     // Which verdict is on show: the draft's when there is a draft, else the
     // committed one.  Committed diagnostics without a span are about the
@@ -83,48 +86,44 @@ class DefinitionEditorModel {
     if (draft == null) {
       if (committed == null) {
         diagnostics = const [];
-        statusText =
-            'No definition yet. A legal state: other relationships may already depend '
-            'on the signature.';
+        statusText = l10n.noDefinitionYetALegalStateOther;
         tone = VerdictTone.none;
       } else if (committedAnalysis == null) {
         diagnostics = const [];
-        statusText = 'Checking…';
+        statusText = l10n.checking;
         tone = VerdictTone.checking;
       } else {
         diagnostics = committedAnalysis.diagnostics.where((d) => d.hasSpan()).toList();
-        (statusText, tone) = _summarise(committedAnalysis, parseOk: true);
+        (statusText, tone) = _summarise(l10n, committedAnalysis, parseOk: true);
       }
     } else if (draft.source.trim().isEmpty) {
       diagnostics = const [];
-      statusText = committed == null
-          ? 'Nothing to add yet.'
-          : 'Empty. Detach to remove the definition.';
+      statusText = committed == null ? l10n.nothingToAddYet : l10n.emptyDetachToRemoveTheDefinition;
       tone = VerdictTone.none;
     } else if (saving) {
       diagnostics = draft.analysis?.diagnostics ?? const [];
-      statusText = 'Saving…';
+      statusText = l10n.saving;
       tone = VerdictTone.checking;
     } else if (draft.commitError case final e?) {
       diagnostics = draft.analysis?.diagnostics ?? const [];
-      statusText = 'Not saved: $e';
+      statusText = l10n.notSaved(e);
       tone = VerdictTone.error;
     } else {
       switch (draft.check) {
         case DraftCheck.checking:
           diagnostics = const [];
-          statusText = 'Checking…';
+          statusText = l10n.checking;
           tone = VerdictTone.checking;
         case DraftCheck.unavailable:
           diagnostics = const [];
-          statusText = 'Not checked: ${draft.checkError ?? 'the compiler service is unavailable'}';
+          statusText = l10n.notChecked(draft.checkError ?? l10n.compilerServiceUnavailable);
           tone = VerdictTone.open;
         case DraftCheck.checked:
           final a = draft.analysis;
           diagnostics = a?.diagnostics ?? const [];
           (statusText, tone) = a == null
-              ? ('Checking…', VerdictTone.checking)
-              : _summarise(a, parseOk: draft.parseOk);
+              ? (l10n.checking, VerdictTone.checking)
+              : _summarise(l10n, a, parseOk: draft.parseOk);
       }
     }
     return DefinitionEditorModel._(
@@ -137,7 +136,7 @@ class DefinitionEditorModel {
       tone: tone,
       diagnostics: diagnostics,
       canCommit: dirty && !conflict && !saving && text.trim().isNotEmpty,
-      commitLabel: committed == null ? 'Add definition' : 'Save definition',
+      commitLabel: committed == null ? l10n.addDefinition : l10n.saveDefinition,
       hint: hint,
     );
   }
@@ -161,7 +160,11 @@ class DefinitionEditorModel {
 
   /// One line for the ladder verdict.  Open is not an error: it says what is
   /// still to be decided.  Invalid says the first thing that is wrong.
-  static (String, VerdictTone) _summarise(pb.MappingAnalysis a, {required bool parseOk}) {
+  static (String, VerdictTone) _summarise(
+    AppLocalizations l10n,
+    pb.MappingAnalysis a, {
+    required bool parseOk,
+  }) {
     final errors = a.diagnostics.where(
       (d) => d.severity == pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR,
     );
@@ -170,17 +173,20 @@ class DefinitionEditorModel {
     );
     return switch (a.status) {
       pb.MappingStatus.MAPPING_STATUS_INVALID => (
-        errors.firstOrNull?.message ?? (parseOk ? 'Invalid definition.' : 'Cannot be read.'),
+        errors.firstOrNull?.message ?? (parseOk ? l10n.invalidDefinition : l10n.cannotBeRead),
         VerdictTone.error,
       ),
       pb.MappingStatus.MAPPING_STATUS_OPEN => (
-        others.firstOrNull?.message ?? 'Open: something it needs is not decided yet.',
+        others.firstOrNull?.message ?? l10n.openSomethingItNeedsIsNotDecided,
         VerdictTone.open,
       ),
       pb.MappingStatus.MAPPING_STATUS_TYPE_VALID ||
       pb.MappingStatus.MAPPING_STATUS_TEMPORALLY_VALID ||
-      pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT => ('Valid definition', VerdictTone.settled),
-      _ => ('No definition.', VerdictTone.none),
+      pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT => (
+        l10n.validDefinition,
+        VerdictTone.settled,
+      ),
+      _ => (l10n.noDefinition, VerdictTone.none),
     };
   }
 }
@@ -372,6 +378,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final m = DefinitionEditorModel(
+      l10n: context.l10n,
       committed: widget.committed,
       draft: widget.draft,
       committedAnalysis: widget.committedAnalysis,
@@ -432,7 +439,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
                 child: MacSegmented<bool>(
                   key: const ValueKey('definition-mode'),
                   value: formulaMode,
-                  options: const {true: 'Formula', false: 'Text'},
+                  options: {true: context.l10n.formula, false: context.l10n.textMode},
                   onChanged: (v) => widget.dispatch(FormulaModeChanged(v)),
                 ),
               ),
@@ -525,7 +532,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
               spacing: MacMetrics.gap,
               runSpacing: MacMetrics.gap,
               children: [
-                if (m.canRevert) MacButton(label: 'Revert', onPressed: _revert),
+                if (m.canRevert) MacButton(label: context.l10n.revert, onPressed: _revert),
                 MacButton.primary(
                   label: m.commitLabel,
                   onPressed: m.canCommit ? _commit : null,
@@ -537,14 +544,14 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
           const SizedBox(height: MacMetrics.gap),
           if (m.committed == null)
             Text(
-              'Adding a definition is a refinement: nothing established elsewhere is reopened.',
+              context.l10n.addingADefinitionIsARefinementNothing,
               style: TextStyle(fontSize: 11, color: t.textSecondary),
             )
           else ...[
             Align(
               alignment: Alignment.centerLeft,
               child: MacButton(
-                label: 'Detach definition',
+                label: context.l10n.detachDefinition,
                 onPressed: m.canDetach
                     ? () => widget.dispatch(DetachDefinitionRequested(widget.mappingId))
                     : null,
@@ -552,8 +559,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
             ),
             const SizedBox(height: MacMetrics.gapTight),
             Text(
-              'Replacing or detaching is an edit: this definition and the simulation are '
-              're-checked.',
+              context.l10n.replacingOrDetachingIsAnEditThis,
               style: TextStyle(fontSize: 11, color: t.textSecondary),
             ),
           ],
@@ -593,7 +599,7 @@ class _ConflictNotice extends StatelessWidget {
             ),
             Expanded(
               child: Text(
-                'This relationship\'s definition changed while you were editing it.',
+                context.l10n.thisRelationshipSDefinitionChangedWhileYou,
                 key: const ValueKey('definition-status'),
                 style: TextStyle(fontSize: 11, color: t.open),
               ),
@@ -605,14 +611,14 @@ class _ConflictNotice extends StatelessWidget {
           runSpacing: MacMetrics.gap,
           children: [
             MacButton(
-              label: 'Reload',
+              label: context.l10n.reload,
               onPressed: onReload,
-              tooltip: 'Show the definition committed meanwhile; drop what you typed',
+              tooltip: context.l10n.showTheDefinitionCommittedMeanwhileDropWhat,
             ),
             MacButton(
-              label: 'Keep mine',
+              label: context.l10n.keepMine,
               onPressed: onKeep,
-              tooltip: 'Keep what you typed; save will replace the committed definition',
+              tooltip: context.l10n.keepWhatYouTypedSaveWillReplace,
             ),
           ],
         ),
@@ -649,7 +655,10 @@ class _CompletionPopup extends StatelessWidget {
       child: items.isEmpty
           ? Padding(
               padding: const EdgeInsets.all(6),
-              child: Text('Looking…', style: TextStyle(fontSize: 11, color: t.textTertiary)),
+              child: Text(
+                context.l10n.looking,
+                style: TextStyle(fontSize: 11, color: t.textTertiary),
+              ),
             )
           : ListView.builder(
               shrinkWrap: true,

@@ -13,6 +13,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -22,12 +23,12 @@ import '../mac/tokens.dart';
 import '../mac/widgets.dart';
 
 /// Product words for a device kind (presentation of the protocol enum).
-String deviceKindLabel(pb.DeviceKind k) => switch (k) {
-  pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL => 'PWM channel',
-  pb.DeviceKind.DEVICE_KIND_DIGITAL_OUTPUT => 'Digital output',
-  pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL => 'H-bridge channel',
-  pb.DeviceKind.DEVICE_KIND_I2C_SENSOR => 'I²C sensor',
-  pb.DeviceKind.DEVICE_KIND_QUADRATURE_ENCODER => 'Quadrature encoder',
+String deviceKindLabel(AppLocalizations l10n, pb.DeviceKind k) => switch (k) {
+  pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL => l10n.pwmChannel,
+  pb.DeviceKind.DEVICE_KIND_DIGITAL_OUTPUT => l10n.digitalOutput,
+  pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL => l10n.hBridgeChannel,
+  pb.DeviceKind.DEVICE_KIND_I2C_SENSOR => l10n.iCSensor,
+  pb.DeviceKind.DEVICE_KIND_QUADRATURE_ENCODER => l10n.quadratureEncoder,
   pb.DeviceKind.DEVICE_KIND_UART => 'UART',
   _ => 'unspecified',
 };
@@ -54,7 +55,7 @@ class DeployPage extends StatelessWidget {
       return Container(
         color: t.canvas,
         alignment: Alignment.center,
-        child: Text('No project open.', style: TextStyle(color: t.textTertiary)),
+        child: Text(context.l10n.noProjectOpen, style: TextStyle(color: t.textTertiary)),
       );
     }
     final d = state.editor.deploy;
@@ -92,19 +93,20 @@ class _TargetRow extends StatelessWidget {
     return Row(
       spacing: MacMetrics.gapGroup,
       children: [
-        Text('Target', style: Theme.of(context).textTheme.titleSmall),
+        Text(context.l10n.target, style: Theme.of(context).textTheme.titleSmall),
         SizedBox(
           width: 260,
           child: MacDropdown<String>(
             key: const ValueKey('target-picker'),
             value: deploy.targetId,
             hint: deploy.targetsLoaded
-                ? (deploy.targets.isEmpty ? 'no boards known' : 'choose a board…')
-                : 'loading boards…',
+                ? (deploy.targets.isEmpty ? context.l10n.noBoardsKnown : context.l10n.chooseABoard)
+                : context.l10n.loadingBoards,
             items: [for (final x in deploy.targets) x.id],
             labelOf: (id) => deploy.targets.firstWhere((x) => x.id == id).name,
-            detailOf: (id) =>
-                '${deploy.targets.firstWhere((x) => x.id == id).resourceCount} resources',
+            detailOf: (id) => context.l10n.resourcesCount(
+              deploy.targets.firstWhere((x) => x.id == id).resourceCount,
+            ),
             onChanged: (id) => dispatch(TargetSelected(id)),
           ),
         ),
@@ -133,22 +135,25 @@ class _Verdict extends StatelessWidget {
     final a = deploy.analysis;
     final board = deploy.target?.name;
     final (String text, Color color) = deploy.error != null
-        ? ('Could not analyse: ${deploy.error}', t.error)
+        ? (context.l10n.couldNotAnalyse(deploy.error!), t.error)
         : board == null
-        ? ('Choose a board to see whether this design fits it.', t.textSecondary)
+        ? (context.l10n.chooseABoardToSeeWhetherThis, t.textSecondary)
         : a == null || a.revision.toInt() != project.revision.toInt()
-        ? ('Checking $board…', t.textTertiary)
+        ? (context.l10n.checkingBoard(board), t.textTertiary)
         : switch (a.status) {
-            pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE => ('Feasible on $board.', t.settled),
+            pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE => (
+              context.l10n.feasibleOnBoardSentence(board),
+              t.settled,
+            ),
             pb.DeploymentStatus.DEPLOYMENT_STATUS_INCOMPLETE => (
-              'Fits $board so far — the binding is not finished.',
+              context.l10n.fitsBoardSoFar(board),
               t.open,
             ),
             pb.DeploymentStatus.DEPLOYMENT_STATUS_INFEASIBLE => (
-              'Not feasible on $board.',
+              context.l10n.notFeasibleOnBoardSentence(board),
               t.error,
             ),
-            _ => ('Checking $board…', t.textTertiary),
+            _ => (context.l10n.checkingBoard(board), t.textTertiary),
           };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,10 +193,10 @@ class _Devices extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('Devices', style: Theme.of(context).textTheme.titleSmall),
+            Text(context.l10n.devices, style: Theme.of(context).textTheme.titleSmall),
             const Spacer(),
             MacButton(
-              label: 'Add device',
+              label: context.l10n.addDevice,
               onPressed: () => dispatch(
                 CreateDeviceRequested(
                   name: _freshName(),
@@ -202,12 +207,7 @@ class _Devices extends StatelessWidget {
             ),
           ],
         ),
-        if (project.devices.isEmpty)
-          Text(
-            'No device yet. A device realises one output on the board; its kind says what it '
-            'needs from the board.',
-            style: small,
-          ),
+        if (project.devices.isEmpty) Text(context.l10n.noDeviceYetADeviceRealisesOne, style: small),
         for (final dv in project.devices)
           _DeviceCard(device: dv, project: project, dispatch: dispatch),
       ],
@@ -260,7 +260,7 @@ class _DeviceCard extends StatelessWidget {
                 child: MacDropdown<pb.DeviceKind>(
                   value: device.kind,
                   items: deviceKinds,
-                  labelOf: deviceKindLabel,
+                  labelOf: (k) => deviceKindLabel(context.l10n, k),
                   onChanged: (k) => dispatch(SetDeviceKindRequested(id: id, kind: k)),
                 ),
               ),
@@ -270,13 +270,13 @@ class _DeviceCard extends StatelessWidget {
                   value: device.hasOutputId() ? device.outputId.toInt() : -1,
                   items: [-1, for (final o in project.outputs) o.id.toInt()],
                   labelOf: (o) => o < 0
-                      ? 'no output'
+                      ? context.l10n.noOutput
                       : project.outputs.firstWhere((x) => x.id.toInt() == o).name,
                   onChanged: (o) =>
                       dispatch(SetDeviceOutputRequested(id: id, outputId: o < 0 ? null : o)),
                 ),
               ),
-              MacLink(label: 'Remove', onTap: () => dispatch(DeleteDeviceRequested(id))),
+              MacLink(label: context.l10n.remove, onTap: () => dispatch(DeleteDeviceRequested(id))),
             ],
           ),
           if (device.requirements.isNotEmpty)
@@ -345,7 +345,7 @@ class _Result extends StatelessWidget {
       spacing: MacMetrics.gapGroup,
       children: [
         if (a.assignment.isNotEmpty) ...[
-          Text('Placement on ${a.target}', style: Theme.of(context).textTheme.titleSmall),
+          Text(context.l10n.placementOn(a.target), style: Theme.of(context).textTheme.titleSmall),
           MacTable(
             columns: const [MacColumn(width: 160), MacColumn(width: 200), MacColumn()],
             rows: [
@@ -367,12 +367,17 @@ class _Result extends StatelessWidget {
           if (d.code != 'deploy.infeasible') DiagnosticCard(diagnostic: d, source: ''),
         if (a.unboundDevices.isNotEmpty)
           Text(
-            'Not connected to an output: ${a.unboundDevices.map((d) => _device(d.toInt())).join(', ')}.',
+            context.l10n.notConnectedToAnOutput(
+              a.unboundDevices.map((d) => _device(d.toInt())).join(', '),
+            ),
             style: small,
           ),
         if (a.unrealisedOutputs.isNotEmpty)
           Text(
-            'No device on ${a.target} for: ${a.unrealisedOutputs.map((o) => _output(o.toInt())).join(', ')}.',
+            context.l10n.noDeviceOnBoardFor(
+              a.target,
+              a.unrealisedOutputs.map((o) => _output(o.toInt())).join(', '),
+            ),
             style: small,
           ),
       ],
@@ -398,7 +403,7 @@ class _DeadEndView extends StatelessWidget {
     final req = analysis.requirements
         .where((r) => r.deviceId == deadEnd.deviceId && r.index == deadEnd.index)
         .firstOrNull;
-    final what = req?.label ?? 'requirement ${deadEnd.index}';
+    final what = req?.label ?? context.l10n.requirementN(deadEnd.index);
     final who = device(deadEnd.deviceId.toInt());
     final headline = analysis.diagnostics
         .where((d) => d.code == 'deploy.infeasible')
@@ -421,18 +426,18 @@ class _DeadEndView extends StatelessWidget {
         spacing: MacMetrics.gap,
         children: [
           Text(
-            headline ?? 'Could not place $what of $who.',
+            headline ?? context.l10n.couldNotPlaceOf(what, who),
             key: const ValueKey('dead-end-headline'),
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
           ),
           if (explanation != null && explanation.isNotEmpty) Text(explanation, style: small),
           switch (deadEnd.whichReason()) {
             pb.DeadEnd_Reason.noCapableResource => Text(
-              'Nothing on ${analysis.target} can carry $what.',
+              context.l10n.nothingOnBoardCanCarry(analysis.target, what),
               style: small,
             ),
             pb.DeadEnd_Reason.fixedUnavailable => Text(
-              'The pin chosen by hand, ${deadEnd.fixedUnavailable}, cannot carry $what here.',
+              context.l10n.fixedPinCannotCarry(deadEnd.fixedUnavailable, what),
               style: small,
             ),
             pb.DeadEnd_Reason.blocked => MacTable(
@@ -453,9 +458,11 @@ class _DeadEndView extends StatelessWidget {
           },
           if (deadEnd.placed.isNotEmpty)
             Text(
-              'Placed before the dead end: '
-              '${deadEnd.placed.map((p) => '${device(p.deviceId.toInt())} → ${p.resource}').join(', ')}. '
-              'This is one conflict under the solver\'s order, not necessarily the only one.',
+              context.l10n.placedBeforeTheDeadEnd(
+                deadEnd.placed
+                    .map((p) => '${device(p.deviceId.toInt())} → ${p.resource}')
+                    .join(', '),
+              ),
               style: small,
             ),
         ],

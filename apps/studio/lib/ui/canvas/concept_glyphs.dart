@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
@@ -29,13 +30,13 @@ class SocketGlyph extends StatelessWidget {
     final t = MacTokens.of(context);
     return Semantics(
       label: switch (kind) {
-        SocketKind.open => 'value not decided',
+        SocketKind.open => context.l10n.valueNotDecided,
         SocketKind.quantity => 'quantity',
-        SocketKind.onOff => 'on or off',
+        SocketKind.onOff => context.l10n.onOrOff,
         SocketKind.count => 'count',
         SocketKind.collection => 'collection',
-        SocketKind.grouped => 'grouped value',
-        SocketKind.optional => 'optional value',
+        SocketKind.grouped => context.l10n.groupedValue,
+        SocketKind.optional => context.l10n.optionalValue,
       },
       child: CustomPaint(size: Size.square(size), painter: _SocketGlyphPainter(t, kind, color)),
     );
@@ -81,9 +82,9 @@ class MappingGlyph extends StatelessWidget {
     final t = MacTokens.of(context);
     return Semantics(
       label: declared
-          ? 'declared, not yet defined'
+          ? context.l10n.declaredNotYetDefined
           : wrong
-          ? 'definition does not check'
+          ? context.l10n.definitionDoesNotCheck
           : 'defined',
       child: CustomPaint(
         size: Size(size + 2, size),

@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../app/system.dart' show freshGroupName;
@@ -36,7 +37,10 @@ class Library extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(MacMetrics.gap, MacMetrics.gap, MacMetrics.gap, 0),
             child: MacSegmented<SidebarTab>(
               value: state.editor.sidebar,
-              options: const {SidebarTab.project: 'Project', SidebarTab.library: 'Library'},
+              options: {
+                SidebarTab.project: context.l10n.project,
+                SidebarTab.library: context.l10n.library,
+              },
               onChanged: (tab) => dispatch(SidebarTabSelected(tab)),
             ),
           ),
@@ -70,11 +74,11 @@ class _ProjectObjects extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               children: [
                 _Section(
-                  title: 'Concepts',
+                  title: context.l10n.concepts,
                   onAdd: () async {
                     final r = await showNewConceptSheet(
                       context,
-                      presets: unitPresetsFrom(state.library?.quantities ?? const []),
+                      presets: unitPresetsFrom(state.library?.quantities ?? const [], context.l10n),
                     );
                     if (r != null) {
                       dispatch(
@@ -95,7 +99,7 @@ class _ProjectObjects extends StatelessWidget {
                     onTap: () => dispatch(SelectionChanged(ConceptSelected(c.id.toInt()))),
                   ),
                 _Section(
-                  title: 'Mappings',
+                  title: context.l10n.mappings,
                   onAdd: p.concepts.isEmpty
                       ? null
                       : () async {
@@ -124,7 +128,7 @@ class _ProjectObjects extends StatelessWidget {
                     onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
                   ),
                 _Section(
-                  title: 'Timing domains',
+                  title: context.l10n.timingDomains,
                   onAdd: () async {
                     final name = await showNewClockSheet(context, p.clocks);
                     if (name != null) dispatch(CreateClockDomainRequested(name));
@@ -139,7 +143,7 @@ class _ProjectObjects extends StatelessWidget {
                     dispatch: dispatch,
                   ),
                 _Section(
-                  title: 'Outputs',
+                  title: context.l10n.outputs,
                   onAdd: p.concepts.isEmpty
                       ? null
                       : () async {
@@ -166,17 +170,17 @@ class _ProjectObjects extends StatelessWidget {
                     selected: sel is OutputSelected && sel.id == o.id.toInt(),
                     onTap: () => dispatch(SelectionChanged(OutputSelected(o.id.toInt()))),
                   ),
-                const _Section(title: 'Contexts'),
+                _Section(title: context.l10n.contexts),
                 if (state.isSystem) ...[
                   // ---- the system's own objects (docs/architecture/studio-ui.md §11) ----
                   _Section(
-                    title: 'Components',
+                    title: context.l10n.components,
                     onAdd: () async {
                       final name = await showNameSheet(
                         context,
-                        title: 'New component',
-                        subtitle: 'A reusable behaviour with a promise (its ports) and a source of its own.',
-                        hint: 'AdaptiveLamp',
+                        title: context.l10n.newComponent,
+                        subtitle: context.l10n.aReusableBehaviourWithAPromiseIts,
+                        hint: context.l10n.adaptivelamp,
                       );
                       if (name != null && name.isNotEmpty) {
                         dispatch(CreateComponentRequested(name: name));
@@ -199,7 +203,7 @@ class _ProjectObjects extends StatelessWidget {
                       onTap: () => dispatch(SelectionChanged(ComponentSelected(c.id.toInt()))),
                     ),
                   if (state.editor.context is SystemContext) ...[
-                    const _Section(title: 'Instances'),
+                    _Section(title: context.l10n.instances),
                     for (final i in state.system!.instances)
                       _Row(
                         glyph: _InstanceGlyph(),
@@ -211,7 +215,7 @@ class _ProjectObjects extends StatelessWidget {
                   // Behaviours of the design on screen: the system's own,
                   // or the open component's.
                   _Section(
-                    title: 'Behaviors',
+                    title: context.l10n.behaviors,
                     onAdd: () => dispatch(
                       CreateGroupRequested(name: freshGroupName(state), renameAfter: true),
                     ),
@@ -227,7 +231,7 @@ class _ProjectObjects extends StatelessWidget {
                       onTap: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
                     ),
                 ] else
-                  const _Section(title: 'Components'),
+                  _Section(title: context.l10n.components),
               ],
             ),
     );
@@ -247,7 +251,11 @@ class _Section extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           const Spacer(),
-          IconButton(icon: const Icon(Icons.add, size: 14), onPressed: onAdd, tooltip: 'Add'),
+          IconButton(
+            icon: const Icon(Icons.add, size: 14),
+            onPressed: onAdd,
+            tooltip: context.l10n.add,
+          ),
         ],
       ),
     );
@@ -319,7 +327,7 @@ class _ClockRow extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close, size: 12),
             onPressed: inUse ? null : () => dispatch(DeleteClockDomainRequested(id)),
-            tooltip: inUse ? 'Still in use' : 'Delete ${clock.name}',
+            tooltip: inUse ? context.l10n.stillInUse : context.l10n.deleteNamed(clock.name),
             constraints: const BoxConstraints.tightFor(width: 20, height: 20),
             padding: EdgeInsets.zero,
           ),

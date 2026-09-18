@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -102,7 +103,9 @@ class _PendingBindSheetState extends State<PendingBindSheet> {
     final existing = b.replaces == null ? null : s.binding(b.replaces!);
     final ready = !b.needsTransport || _init.text.trim().isNotEmpty;
     return SheetScrim(
-      title: b.replaces != null ? 'Replace the connection?' : 'Carry across timing domains',
+      title: b.replaces != null
+          ? context.l10n.replaceTheConnection
+          : context.l10n.carryAcrossTimingDomains,
       subtitle: '$from → $to',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -110,24 +113,21 @@ class _PendingBindSheetState extends State<PendingBindSheet> {
         children: [
           if (existing != null)
             Text(
-              '$to already takes its value from ${endLabel(s, existing.source)}. A required port '
-              'takes one source; the current connection would be removed first.',
+              context.l10n.alreadyTakesItsValueFrom(to, endLabel(s, existing.source)),
               style: small,
             ),
           if (b.needsTransport) ...[
             if (existing != null) const SizedBox(height: 8),
             Text(
-              '$from updates in ${b.sourceDomain}, $to in ${b.destinationDomain}. The value is '
-              'carried across: $to sees the last value committed strictly before its own '
-              'activation, and needs a value to start from.',
+              context.l10n.transportExplanation(from, b.sourceDomain, to, b.destinationDomain),
               style: small,
             ),
             const SizedBox(height: 10),
             FormRow(
-              label: 'Starts at',
+              label: context.l10n.startsAt,
               child: MacTextField(
                 controller: _init,
-                hint: 'a constant in the destination\'s units, e.g. 0',
+                hint: context.l10n.aConstantInTheDestinationSUnits,
                 monospace: true,
                 onChanged: (_) => setState(() {}),
               ),
@@ -138,12 +138,12 @@ class _PendingBindSheetState extends State<PendingBindSheet> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               MacButton(
-                label: 'Cancel',
+                label: context.l10n.cancel,
                 onPressed: () => widget.dispatch(const PendingBindCancelled()),
               ),
               const SizedBox(width: 8),
               MacButton.primary(
-                label: existing != null ? 'Disconnect and Connect' : 'Connect',
+                label: existing != null ? context.l10n.disconnectAndConnect : context.l10n.connect,
                 onPressed: ready
                     ? () => widget.dispatch(
                         PendingBindConfirmed(
@@ -191,7 +191,7 @@ class ExtractionSheet extends StatelessWidget {
     String declName(int id) =>
         project?.mappings.where((m) => m.id.toInt() == id).firstOrNull?.name ?? '?';
     return SheetScrim(
-      title: 'Package as Reusable Component',
+      title: context.l10n.packageAsReusableComponentTitle,
       subtitle: state.group(x.groupId)?.name,
       width: 560,
       child: SingleChildScrollView(
@@ -199,14 +199,14 @@ class ExtractionSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FormRow(
-              label: 'Component',
+              label: context.l10n.componentTitle,
               child: CommitTextField(
                 value: x.name,
                 onCommit: (v) => dispatch(ExtractionChoicesChanged(name: v)),
               ),
             ),
             FormRow(
-              label: 'Instance',
+              label: context.l10n.instanceTitle,
               child: CommitTextField(
                 value: x.instanceName.isEmpty ? (p?.instanceName ?? '') : x.instanceName,
                 hint: p?.instanceName,
@@ -219,11 +219,11 @@ class ExtractionSheet extends StatelessWidget {
                 child: Text(x.error!, style: TextStyle(fontSize: 12, color: t.error)),
               ),
             if (p == null && x.error == null)
-              Text('Working out the boundary…', style: small)
+              Text(context.l10n.workingOutTheBoundary, style: small)
             else if (p != null) ...[
-              _Heading('Requires', 'what the members read from outside'),
+              _Heading(context.l10n.requires, context.l10n.whatTheMembersReadFromOutside),
               if (p.required.isEmpty)
-                Text('nothing — the component is self-contained', style: small)
+                Text(context.l10n.nothingTheComponentIsSelfContained, style: small)
               else
                 for (final port in p.required)
                   _PortLine(
@@ -232,9 +232,9 @@ class ExtractionSheet extends StatelessWidget {
                     color: t.conceptColor(port.concept.toInt()),
                   ),
               const SizedBox(height: 10),
-              _Heading('Provides', 'what outside reads from the members'),
+              _Heading(context.l10n.provides, context.l10n.whatOutsideReadsFromTheMembers),
               if (p.provided.isEmpty)
-                Text('nothing yet — nothing outside reads the group', style: small)
+                Text(context.l10n.nothingYetNothingOutsideReadsTheGroup, style: small)
               else
                 for (final port in p.provided)
                   _PortLine(
@@ -244,7 +244,7 @@ class ExtractionSheet extends StatelessWidget {
                   ),
               if (p.openMembers.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                _Heading('Open relationships', 'declared inside, not yet defined'),
+                _Heading(context.l10n.openRelationships, context.l10n.declaredInsideNotYetDefined),
                 for (final o in p.openMembers)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
@@ -255,7 +255,10 @@ class ExtractionSheet extends StatelessWidget {
                           width: 250,
                           child: MacSegmented<bool>(
                             value: o.asInput,
-                            options: const {true: 'Treat as input', false: 'Keep internal'},
+                            options: {
+                              true: context.l10n.treatAsInput,
+                              false: context.l10n.keepInternal,
+                            },
                             onChanged: (v) {
                               final keep = {...x.keepInternal};
                               if (v) {
@@ -273,7 +276,10 @@ class ExtractionSheet extends StatelessWidget {
               ],
               if (p.sinks.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                _Heading('Physical outputs', 'driven by members; the drive stays with them'),
+                _Heading(
+                  context.l10n.physicalOutputs,
+                  context.l10n.drivenByMembersTheDriveStaysWith,
+                ),
                 for (final d in p.sinks)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
@@ -289,7 +295,10 @@ class ExtractionSheet extends StatelessWidget {
                           width: 250,
                           child: MacSegmented<bool>(
                             value: d.internal,
-                            options: const {false: 'Stays the system\'s', true: 'Moves inside'},
+                            options: {
+                              false: context.l10n.staysTheSystemS,
+                              true: context.l10n.movesInside,
+                            },
                             onChanged: (v) {
                               final inside = {...x.internalizeSinks};
                               if (v) {
@@ -306,16 +315,16 @@ class ExtractionSheet extends StatelessWidget {
                   ),
               ],
               const SizedBox(height: 10),
-              _Heading('Timing parameters', 'every domain the members use'),
+              _Heading(context.l10n.timingParameters, context.l10n.everyDomainTheMembersUse),
               Text(
                 p.clocks.isEmpty
-                    ? 'none — pure'
+                    ? context.l10n.nonePure
                     : p.clocks.map((c) => clockName(c.toInt())).join(', '),
                 style: body,
               ),
               if (p.private.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                _Heading('Internal', 'read by members only'),
+                _Heading(context.l10n.internal, context.l10n.readByMembersOnly),
                 Text(p.private.map((d) => declName(d.toInt())).join(', '), style: body),
               ],
               for (final w in p.warnings)
@@ -325,22 +334,18 @@ class ExtractionSheet extends StatelessWidget {
                 ),
             ],
             const SizedBox(height: 14),
-            Text(
-              'The design computes the same values afterwards; the group becomes one instance '
-              'in its place, and the component can be placed again.',
-              style: small,
-            ),
+            Text(context.l10n.theDesignComputesTheSameValuesAfterwards, style: small),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 MacButton(
-                  label: 'Cancel',
+                  label: context.l10n.cancel,
                   onPressed: () => dispatch(const ExtractionSheetClosed()),
                 ),
                 const SizedBox(width: 8),
                 MacButton.primary(
-                  label: 'Package',
+                  label: context.l10n.package,
                   onPressed: p == null || x.pending || x.error != null
                       ? null
                       : () => dispatch(const ExtractionConfirmed()),

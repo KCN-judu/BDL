@@ -11,6 +11,7 @@ import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/concept_library_panel.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:bdl_studio/l10n/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/test_store.dart';
@@ -291,12 +292,12 @@ void main() {
   });
 
   test('rows say what a value is measured as in the contract\'s words', () {
-    expect(representationWord(temperature), 'K');
-    expect(representationWord(motorSpeed), 'no unit');
-    expect(representationWord(pressed), 'on–off');
-    expect(representationWord(open), 'decide later');
-    expect(categoryLabel('human'), 'Human interaction');
-    expect(categoryLabel('custom'), 'Custom');
+    expect(representationWord(kEnglish, temperature), 'K');
+    expect(representationWord(kEnglish, motorSpeed), 'no unit');
+    expect(representationWord(kEnglish, pressed), 'on–off');
+    expect(representationWord(kEnglish, open), 'decide later');
+    expect(categoryLabel(kEnglish, 'human'), 'Human interaction');
+    expect(categoryLabel(kEnglish, 'custom'), 'Custom');
   });
 
   test('selecting anything else closes an inline rename', () {

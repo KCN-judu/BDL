@@ -9,6 +9,7 @@ library;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -40,11 +41,12 @@ String contractText(pb.PortView p) {
 }
 
 /// "Updates in tick (parameter)", "Updates in its own tick", "Any domain".
-String contractTiming(pb.PortView p) => switch (p.contract.clockKind) {
-  pb.ClockContractKind.CLOCK_CONTRACT_KIND_PARAMETER =>
-    'Updates in ${p.contract.clockName} (a parameter of the component)',
-  pb.ClockContractKind.CLOCK_CONTRACT_KIND_PRIVATE => 'Updates in its own ${p.contract.clockName}',
-  _ => 'Any timing domain',
+String contractTiming(AppLocalizations l10n, pb.PortView p) => switch (p.contract.clockKind) {
+  pb.ClockContractKind.CLOCK_CONTRACT_KIND_PARAMETER => l10n.updatesInClockParameter(
+    p.contract.clockName,
+  ),
+  pb.ClockContractKind.CLOCK_CONTRACT_KIND_PRIVATE => l10n.updatesInOwnClock(p.contract.clockName),
+  _ => l10n.anyTimingDomain,
 };
 
 String endLabel(AppState s, pb.PortRefView e) {
@@ -57,20 +59,20 @@ String endLabel(AppState s, pb.PortRefView e) {
 }
 
 /// The status word of a port at an instance, from the system analysis.
-String portStatusWord(AppState s, int instance, int port) {
+String portStatusWord(AppLocalizations l10n, AppState s, int instance, int port) {
   final st = s.systemAnalysis?.ports
       .where((p) => p.port.instance.toInt() == instance && p.port.port.toInt() == port)
       .firstOrNull;
   if (st == null) return '';
   return switch (st.status) {
-    pb.PortStatusKind.PORT_STATUS_KIND_PROVIDED => 'provided',
+    pb.PortStatusKind.PORT_STATUS_KIND_PROVIDED => l10n.portProvided,
     pb.PortStatusKind.PORT_STATUS_KIND_BOUND => () {
       final b = s.binding(st.binding.toInt());
-      return b == null ? 'bound' : 'bound to ${endLabel(s, b.source)}';
+      return b == null ? l10n.portBound : l10n.portBoundTo(endLabel(s, b.source));
     }(),
-    pb.PortStatusKind.PORT_STATUS_KIND_EXPORTED => 'system input',
-    pb.PortStatusKind.PORT_STATUS_KIND_VALUED => 'given a value',
-    pb.PortStatusKind.PORT_STATUS_KIND_OPEN => 'open',
+    pb.PortStatusKind.PORT_STATUS_KIND_EXPORTED => l10n.systemInput,
+    pb.PortStatusKind.PORT_STATUS_KIND_VALUED => l10n.givenAValue,
+    pb.PortStatusKind.PORT_STATUS_KIND_OPEN => l10n.portOpen,
     _ => '',
   };
 }
@@ -121,39 +123,35 @@ class InstanceInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Instance',
+          title: context.l10n.instanceTitle,
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: inst.name,
                 onCommit: (v) => dispatch(RenameInstanceRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Of',
+              label: context.l10n.ofComponent,
               child: Row(
                 children: [
                   Expanded(
                     child: Text(comp.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
                   ),
                   MacButton(
-                    label: 'Edit Source',
+                    label: context.l10n.editSource,
                     onPressed: () => dispatch(ContextChanged(ComponentContext(comp.id.toInt()))),
                   ),
                 ],
               ),
             ),
-            Text(
-              'One of $used instance${used == 1 ? '' : 's'} of ${comp.name}. What you see here is '
-              'its promise; its source is shared by all of them.',
-              style: small,
-            ),
+            Text(context.l10n.oneOfNInstancesOf(used, comp.name), style: small),
             if (realizes == false)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  "${comp.name}'s source no longer keeps its promise; open it to see why.",
+                  context.l10n.promiseBrokenOpenSource(comp.name),
                   style: TextStyle(fontSize: 11, color: t.error),
                 ),
               ),
@@ -161,10 +159,10 @@ class InstanceInspector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: FormRow(
-                  label: 'Replace with',
+                  label: context.l10n.replaceWith,
                   child: MacDropdown<int>(
                     value: null,
-                    hint: 'another component…',
+                    hint: context.l10n.anotherComponent,
                     items: [for (final c in others) c.id.toInt()],
                     labelOf: (c) => state.component(c)?.name ?? '?',
                     onChanged: (c) =>
@@ -176,7 +174,7 @@ class InstanceInspector extends StatelessWidget {
         ),
         if (comp.clockParams.isNotEmpty)
           InspectorSection(
-            title: 'Timing',
+            title: context.l10n.timing,
             children: [
               for (final c in comp.clockParams)
                 FormRow(
@@ -187,7 +185,7 @@ class InstanceInspector extends StatelessWidget {
                         -1,
                     items: [-1, for (final k in sys.base.clocks) k.id.toInt()],
                     labelOf: (k) => k < 0
-                        ? 'not assigned'
+                        ? context.l10n.notAssigned
                         : sys.base.clocks.where((x) => x.id.toInt() == k).firstOrNull?.name ?? '?',
                     onChanged: (k) => dispatch(
                       SetClockArgumentRequested(
@@ -205,16 +203,16 @@ class InstanceInspector extends StatelessWidget {
             ],
           ),
         InspectorSection(
-          title: 'Ports',
+          title: context.l10n.ports,
           children: [
-            if (ports.isEmpty) Text('No ports yet.', style: small),
+            if (ports.isEmpty) Text(context.l10n.noPortsYet, style: small),
             for (final p in ports)
               _PortRow(state: state, instance: inst, port: p, dispatch: dispatch),
           ],
         ),
         if (instanceDiagnostics(state, id) case final ds when ds.isNotEmpty)
           InspectorSection(
-            title: 'Findings',
+            title: context.l10n.findings,
             children: [
               for (final d in ds)
                 Padding(
@@ -224,13 +222,13 @@ class InstanceInspector extends StatelessWidget {
             ],
           ),
         InspectorSection(
-          title: 'Remove',
+          title: context.l10n.remove,
           children: [
             DestructiveButton(
-              label: 'Delete ${inst.name}',
+              label: context.l10n.deleteNamed(inst.name),
               onPressed: () => dispatch(DeleteInstanceRequested(id)),
             ),
-            Text('Disconnect its ports first; the component stays.', style: small),
+            Text(context.l10n.disconnectItsPortsFirstTheComponentStays, style: small),
           ],
         ),
       ],
@@ -255,7 +253,7 @@ class _PortRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final status = portStatusWord(state, instance.id.toInt(), port.id.toInt());
+    final status = portStatusWord(context.l10n, state, instance.id.toInt(), port.id.toInt());
     final open = status == 'open';
     final comp = state.component(instance.component.toInt());
     final concept = comp?.body.concepts
@@ -320,7 +318,7 @@ class PortInspector extends StatelessWidget {
     final p = state.port(instance, port);
     if (inst == null || comp == null || p == null) return const SizedBox.shrink();
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
-    final status = portStatusWord(state, instance, port);
+    final status = portStatusWord(context.l10n, state, instance, port);
     final binding = state.system!.bindings
         .where(
           (b) =>
@@ -335,36 +333,39 @@ class PortInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Port',
+          title: context.l10n.port,
           trailing: Text(status, style: small),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: Text(
                 '${inst.name}.${p.name}',
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
             FormRow(
-              label: 'Promise',
+              label: context.l10n.promise,
               child: Text(contractText(p), style: TextStyle(fontSize: 12, color: t.textPrimary)),
             ),
             FormRow(
-              label: 'Timing',
-              child: Text(contractTiming(p), style: TextStyle(fontSize: 12, color: t.textPrimary)),
+              label: context.l10n.timing,
+              child: Text(
+                contractTiming(context.l10n, p),
+                style: TextStyle(fontSize: 12, color: t.textPrimary),
+              ),
             ),
             FormRow(
-              label: 'Implemented by',
+              label: context.l10n.implementedBy,
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      impl?.name ?? 'nothing (the promise has no backing)',
+                      impl?.name ?? context.l10n.nothingThePromiseHasNoBacking,
                       style: TextStyle(fontSize: 12, color: impl == null ? t.error : t.textPrimary),
                     ),
                   ),
                   MacButton(
-                    label: 'Go to Source',
+                    label: context.l10n.goToSource,
                     onPressed: () {
                       dispatch(ContextChanged(ComponentContext(comp.id.toInt())));
                       if (impl != null) {
@@ -380,13 +381,13 @@ class PortInspector extends StatelessWidget {
         ),
         if (p.kind == pb.PortKind.PORT_KIND_PARAMETER)
           InspectorSection(
-            title: 'Value',
+            title: context.l10n.value,
             children: [
               FormRow(
-                label: 'Value',
+                label: context.l10n.value,
                 child: CommitTextField(
                   value: value?.source ?? '',
-                  hint: 'a constant, e.g. 0.5',
+                  hint: context.l10n.aConstantEG05,
                   monospace: true,
                   onCommit: (v) => dispatch(
                     SetParameterArgumentRequested(
@@ -397,44 +398,40 @@ class PortInspector extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                'A closed constant in the port\'s units, or bind the port instead.',
-                style: small,
-              ),
+              Text(context.l10n.aClosedConstantInThePortS, style: small),
             ],
           ),
         if (p.kind != pb.PortKind.PORT_KIND_PROVIDED)
           InspectorSection(
-            title: 'Connection',
+            title: context.l10n.connection,
             children: [
               if (binding != null) ...[
                 Text(
-                  'Bound to ${endLabel(state, binding.source)}'
-                  '${binding.hasTransportInit() ? ', carried across timing domains starting at ${binding.transportInit}' : ''}.',
+                  binding.hasTransportInit()
+                      ? context.l10n.boundToTransported(
+                          endLabel(state, binding.source),
+                          binding.transportInit,
+                        )
+                      : context.l10n.boundTo(endLabel(state, binding.source)),
                   style: TextStyle(fontSize: 12, color: t.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     MacButton(
-                      label: 'Show Binding',
+                      label: context.l10n.showBinding,
                       onPressed: () =>
                           dispatch(SelectionChanged(BindingSelected(binding.id.toInt()))),
                     ),
                     const SizedBox(width: 8),
                     MacButton(
-                      label: 'Disconnect',
+                      label: context.l10n.disconnect,
                       onPressed: () => dispatch(UnbindRequested(binding.id.toInt())),
                     ),
                   ],
                 ),
               ] else
-                Text(
-                  'Open: nothing supplies it yet. Draw a link from a provided port or a top-level '
-                  'relationship of the same concept. A design with open ports still simulates, '
-                  'with the port as an input.',
-                  style: small,
-                ),
+                Text(context.l10n.openNothingSuppliesItYetDrawA, style: small),
             ],
           ),
       ],
@@ -471,43 +468,42 @@ class BindingInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Binding',
+          title: context.l10n.binding,
           children: [
             FormRow(
-              label: 'From',
+              label: context.l10n.from,
               child: Text(
                 endLabel(state, b.source),
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
             FormRow(
-              label: 'To',
+              label: context.l10n.to,
               child: Text(
                 endLabel(state, b.destination),
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
             FormRow(
-              label: 'Timing',
+              label: context.l10n.timing,
               child: Text(
                 b.hasTransportInit()
-                    ? 'Carried across timing domains: the destination sees the last value '
-                          'committed strictly before its own activation, starting at ${b.transportInit}.'
-                    : 'Direct: the destination reads the value as it is.',
+                    ? context.l10n.carriedAcrossTimingDomains(b.transportInit)
+                    : context.l10n.directTheDestinationReadsTheValueAs,
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
-            Text(
-              'A binding converts nothing: both ends carry the same concept, by identity.',
-              style: small,
-            ),
+            Text(context.l10n.aBindingConvertsNothingBothEndsCarry, style: small),
             for (final d in issues)
               Padding(
                 padding: const EdgeInsets.only(top: MacMetrics.gap),
                 child: DiagnosticCard(diagnostic: d, source: ''),
               ),
             const SizedBox(height: 8),
-            MacButton(label: 'Disconnect', onPressed: () => dispatch(UnbindRequested(id))),
+            MacButton(
+              label: context.l10n.disconnect,
+              onPressed: () => dispatch(UnbindRequested(id)),
+            ),
           ],
         ),
       ],
@@ -552,23 +548,23 @@ class ComponentInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Component',
+          title: context.l10n.componentTitle,
           trailing: realizes == null
               ? null
               : Text(
-                  realizes ? 'keeps its promise' : 'promise broken',
+                  realizes ? context.l10n.keepsItsPromise : context.l10n.promiseBroken,
                   style: TextStyle(fontSize: 11, color: realizes ? t.textSecondary : t.error),
                 ),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: comp.name,
                 onCommit: (v) => dispatch(RenameComponentRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Meaning',
+              label: context.l10n.meaning,
               child: CommitTextField(
                 value: comp.description,
                 maxLines: 3,
@@ -577,9 +573,11 @@ class ComponentInspector extends StatelessWidget {
             ),
             Text(
               instances.isEmpty
-                  ? 'Not placed yet.'
-                  : 'Used by ${instances.length} instance${instances.length == 1 ? '' : 's'}: '
-                        '${instances.map((i) => i.name).join(', ')}.',
+                  ? context.l10n.notPlacedYetSentence
+                  : context.l10n.usedByInstancesNamed(
+                      instances.length,
+                      instances.map((i) => i.name).join(', '),
+                    ),
               style: small,
             ),
             const SizedBox(height: 8),
@@ -588,20 +586,20 @@ class ComponentInspector extends StatelessWidget {
               runSpacing: 6,
               children: [
                 MacButton(
-                  label: editing ? 'Back to System' : 'Edit Source',
+                  label: editing ? context.l10n.backToSystem : context.l10n.editSource,
                   onPressed: () => dispatch(
                     ContextChanged(editing ? const SystemContext() : ComponentContext(id)),
                   ),
                 ),
                 MacButton(
-                  label: 'Duplicate as Version',
+                  label: context.l10n.duplicateAsVersion,
                   onPressed: () => dispatch(
                     DuplicateComponentRequested(id: id, name: _versionName(sys, comp.name)),
                   ),
                 ),
                 if (state.editor.context is SystemContext)
                   MacButton(
-                    label: 'Place Instance',
+                    label: context.l10n.placeInstance,
                     onPressed: () => dispatch(
                       CreateInstanceRequested(component: id, name: _instanceName(sys, comp.name)),
                     ),
@@ -611,13 +609,11 @@ class ComponentInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Promise',
+          title: context.l10n.promise,
           children: [
             if (ports.isEmpty)
               Text(
-                editing
-                    ? 'No ports yet. Select a relationship of the source and declare it a port.'
-                    : 'No ports yet.',
+                editing ? context.l10n.noPortsYetSelectARelationshipOf : context.l10n.noPortsYet,
                 style: small,
               ),
             for (final p in ports)
@@ -627,7 +623,7 @@ class ComponentInspector extends StatelessWidget {
         if (editing) ...[
           if (bodyClocks.isNotEmpty)
             InspectorSection(
-              title: 'Timing parameters',
+              title: context.l10n.timingParameters,
               children: [
                 for (final c in bodyClocks)
                   FormRow(
@@ -635,8 +631,9 @@ class ComponentInspector extends StatelessWidget {
                     child: MacDropdown<bool>(
                       value: comp.clockParams.contains(c.id),
                       items: const [true, false],
-                      labelOf: (v) =>
-                          v ? 'a parameter (the system assigns it)' : 'private to each instance',
+                      labelOf: (v) => v
+                          ? context.l10n.aParameterTheSystemAssignsIt
+                          : context.l10n.privateToEachInstance,
                       onChanged: (v) => dispatch(
                         SetClockParameterRequested(
                           component: id,
@@ -650,7 +647,7 @@ class ComponentInspector extends StatelessWidget {
             ),
           if (bodyConcepts.isNotEmpty)
             InspectorSection(
-              title: 'Shared concepts',
+              title: context.l10n.sharedConcepts,
               children: [
                 for (final c in bodyConcepts)
                   FormRow(
@@ -665,8 +662,11 @@ class ComponentInspector extends StatelessWidget {
                           -1,
                       items: [-1, for (final s in sys.base.concepts) s.id.toInt()],
                       labelOf: (s) => s < 0
-                          ? 'private (fresh per instance)'
-                          : 'stands for ${sys.base.concepts.where((x) => x.id.toInt() == s).firstOrNull?.name ?? '?'}',
+                          ? context.l10n.privateFreshPerInstance
+                          : context.l10n.standsFor(
+                              sys.base.concepts.where((x) => x.id.toInt() == s).firstOrNull?.name ??
+                                  '?',
+                            ),
                       onChanged: (s) => dispatch(
                         ShareConceptRequested(
                           component: id,
@@ -676,15 +676,12 @@ class ComponentInspector extends StatelessWidget {
                       ),
                     ),
                   ),
-                Text(
-                  'A shared concept is the same identity everywhere; a private one is this component\'s own, fresh in every instance.',
-                  style: small,
-                ),
+                Text(context.l10n.aSharedConceptIsTheSameIdentity, style: small),
               ],
             ),
           if (bodyOutputs.isNotEmpty)
             InspectorSection(
-              title: 'Physical outputs',
+              title: context.l10n.physicalOutputs,
               children: [
                 for (final o in bodyOutputs)
                   FormRow(
@@ -699,8 +696,11 @@ class ComponentInspector extends StatelessWidget {
                           -1,
                       items: [-1, for (final s in sys.base.outputs) s.id.toInt()],
                       labelOf: (s) => s < 0
-                          ? 'private (one per instance)'
-                          : 'the system\'s ${sys.base.outputs.where((x) => x.id.toInt() == s).firstOrNull?.name ?? '?'}',
+                          ? context.l10n.privateOnePerInstance
+                          : context.l10n.theSystemsOutput(
+                              sys.base.outputs.where((x) => x.id.toInt() == s).firstOrNull?.name ??
+                                  '?',
+                            ),
                       onChanged: (s) => dispatch(
                         ExternalizeOutputRequested(
                           component: id,
@@ -714,7 +714,7 @@ class ComponentInspector extends StatelessWidget {
             ),
           if (bodyMappings.any((m) => ports.every((p) => p.decl != m.id)))
             InspectorSection(
-              title: 'Declare a port',
+              title: context.l10n.declareAPort,
               children: [
                 for (final m in bodyMappings.where((m) => ports.every((p) => p.decl != m.id)))
                   Padding(
@@ -726,7 +726,7 @@ class ComponentInspector extends StatelessWidget {
                         ),
                         MacDropdown<pb.PortKind>(
                           value: null,
-                          hint: 'expose as…',
+                          hint: context.l10n.exposeAs,
                           compact: true,
                           items: const [
                             pb.PortKind.PORT_KIND_REQUIRED,
@@ -746,16 +746,13 @@ class ComponentInspector extends StatelessWidget {
                       ],
                     ),
                   ),
-                Text(
-                  'The promise is taken from the relationship as it is now, and kept until you change it here.',
-                  style: small,
-                ),
+                Text(context.l10n.thePromiseIsTakenFromTheRelationship, style: small),
               ],
             ),
         ],
         if (componentDiagnostics(state, comp) case final ds when ds.isNotEmpty)
           InspectorSection(
-            title: 'Findings',
+            title: context.l10n.findings,
             children: [
               for (final d in ds)
                 Padding(
@@ -765,14 +762,14 @@ class ComponentInspector extends StatelessWidget {
             ],
           ),
         InspectorSection(
-          title: 'Remove',
+          title: context.l10n.remove,
           children: [
             DestructiveButton(
-              label: 'Delete ${comp.name}',
+              label: context.l10n.deleteNamed(comp.name),
               enabled: instances.isEmpty,
               onPressed: () => dispatch(DeleteComponentRequested(id)),
             ),
-            if (instances.isNotEmpty) Text('Delete its instances first.', style: small),
+            if (instances.isNotEmpty) Text(context.l10n.deleteItsInstancesFirst, style: small),
           ],
         ),
       ],
@@ -872,19 +869,24 @@ class _ContractEditor extends StatelessWidget {
           if (!editing)
             Padding(
               padding: const EdgeInsets.only(left: 18, top: 2),
-              child: Text(contractTiming(port), style: small),
+              child: Text(contractTiming(context.l10n, port), style: small),
             ),
           if (editing) ...[
             const SizedBox(height: 6),
             FormRow(
-              label: 'Timing',
+              label: context.l10n.timing,
               child: MacDropdown<int>(
                 value: timingValue,
                 items: timingItems,
                 labelOf: (c) => c < 0
-                    ? 'any domain'
-                    : '${body.clocks.where((x) => x.id.toInt() == c).firstOrNull?.name ?? '?'}'
-                          '${component.clockParams.any((p) => p.toInt() == c) ? ' (parameter)' : ' (private)'}',
+                    ? context.l10n.anyDomain
+                    : component.clockParams.any((p) => p.toInt() == c)
+                    ? context.l10n.clockParameterSuffix(
+                        body.clocks.where((x) => x.id.toInt() == c).firstOrNull?.name ?? '?',
+                      )
+                    : context.l10n.clockPrivateSuffix(
+                        body.clocks.where((x) => x.id.toInt() == c).firstOrNull?.name ?? '?',
+                      ),
                 onChanged: (c) {
                   final k = port.contract.deepCopy();
                   if (c < 0) {
@@ -903,10 +905,10 @@ class _ContractEditor extends StatelessWidget {
               ),
             ),
             FormRow(
-              label: 'Implemented by',
+              label: context.l10n.implementedBy,
               child: MacDropdown<int>(
                 value: impl?.id.toInt(),
-                hint: 'a relationship of the source',
+                hint: context.l10n.aRelationshipOfTheSource,
                 items: [for (final m in body.mappings) m.id.toInt()],
                 labelOf: (m) =>
                     body.mappings.where((x) => x.id.toInt() == m).firstOrNull?.name ?? '?',
@@ -918,7 +920,7 @@ class _ContractEditor extends StatelessWidget {
             Row(
               children: [
                 MacButton(
-                  label: 'Retire port',
+                  label: context.l10n.retirePort,
                   onPressed: () =>
                       dispatch(RetirePortRequested(component: id, port: port.id.toInt())),
                 ),
@@ -969,21 +971,18 @@ class GroupInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: 'Group',
-          trailing: Text(
-            '${members.length} relationship${members.length == 1 ? '' : 's'}',
-            style: small,
-          ),
+          title: context.l10n.group,
+          trailing: Text(context.l10n.relationshipsCount(members.length), style: small),
           children: [
             FormRow(
-              label: 'Name',
+              label: context.l10n.name,
               child: CommitTextField(
                 value: g.name,
                 onCommit: (v) => dispatch(RenameGroupRequested(id: id, name: v)),
               ),
             ),
             FormRow(
-              label: 'Meaning',
+              label: context.l10n.meaning,
               child: CommitTextField(
                 value: g.description,
                 maxLines: 3,
@@ -992,22 +991,19 @@ class GroupInspector extends StatelessWidget {
             ),
             Text(
               g.hasComponent()
-                  ? "A behavior is a way of seeing this component's source: grouping, moving, "
-                        'splitting or dissolving it changes nothing about what the component '
-                        'promises or does.'
-                  : 'A behavior is a way of seeing the design: grouping, moving, splitting or '
-                        'dissolving it changes nothing about what the design means.',
+                  ? context.l10n.aBehaviorInAComponentIsAWayOfSeeing
+                  : context.l10n.aBehaviorIsAWayOfSeeing,
               style: small,
             ),
           ],
         ),
         InspectorSection(
-          title: 'Relationships',
+          title: context.l10n.relationships,
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: MacButton(
-                label: '+ Add relationship',
+                label: context.l10n.addRelationship,
                 onPressed: p.concepts.isEmpty
                     ? null
                     : () async {
@@ -1025,7 +1021,7 @@ class GroupInspector extends StatelessWidget {
                       },
               ),
             ),
-            if (members.isEmpty) Text('Empty. Drag relationships in, or add one.', style: small),
+            if (members.isEmpty) Text(context.l10n.emptyDragRelationshipsInOrAddOne, style: small),
             for (final m in members)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -1051,7 +1047,7 @@ class GroupInspector extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, size: 14),
-                      tooltip: 'Remove from group',
+                      tooltip: context.l10n.removeFromGroupButton,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
                       onPressed: () => dispatch(RemoveGroupMemberRequested(group: id, decl: m)),
@@ -1062,80 +1058,77 @@ class GroupInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: 'Boundary',
+          title: context.l10n.boundary,
           children: [
             if (b == null)
-              Text('Computed once the analysis arrives.', style: small)
+              Text(context.l10n.computedOnceTheAnalysisArrives, style: small)
             else ...[
-              FormRow(label: 'Inputs', child: names(b.externalInputs.map((d) => d.toInt()))),
-              FormRow(label: 'Outputs', child: names(b.externalOutputs.map((d) => d.toInt()))),
-              FormRow(label: 'Open', child: names(b.openMembers.map((d) => d.toInt()))),
               FormRow(
-                label: 'Physical outputs',
+                label: context.l10n.inputs,
+                child: names(b.externalInputs.map((d) => d.toInt())),
+              ),
+              FormRow(
+                label: context.l10n.outputs,
+                child: names(b.externalOutputs.map((d) => d.toInt())),
+              ),
+              FormRow(label: context.l10n.open, child: names(b.openMembers.map((d) => d.toInt()))),
+              FormRow(
+                label: context.l10n.physicalOutputs,
                 child: names(b.drivenMembers.map((d) => d.toInt())),
               ),
-              FormRow(label: 'Internal', child: names(b.privateCandidates.map((d) => d.toInt()))),
-              Text(
-                'Read off the dependency graph: what the members read from outside, what outside '
-                'reads from them. A picture of the cut, not a connection of its own.',
-                style: small,
+              FormRow(
+                label: context.l10n.internal,
+                child: names(b.privateCandidates.map((d) => d.toInt())),
               ),
+              Text(context.l10n.readOffTheDependencyGraphWhatThe, style: small),
             ],
           ],
         ),
         if (!g.hasComponent())
           InspectorSection(
-            title: 'Package',
+            title: context.l10n.package,
             children: [
               MacButton.primary(
-                label: 'Package as Reusable Component…',
+                label: context.l10n.packageAsReusableComponent,
                 onPressed: members.isEmpty ? null : () => dispatch(ExtractionSheetOpened(id)),
               ),
               const SizedBox(height: 6),
-              Text(
-                'Turns the behavior into a component and one instance in its place; the design '
-                'computes the same values.',
-                style: small,
-              ),
+              Text(context.l10n.turnsTheBehaviorIntoAComponentAnd, style: small),
             ],
           )
         else
           InspectorSection(
-            title: 'Package',
-            children: [
-              Text(
-                'A behavior inside a component stays a way of seeing its source. Packaging it '
-                'as a component of its own comes with nested components; until then, edit and '
-                'move it freely.',
-                style: small,
-              ),
-            ],
+            title: context.l10n.package,
+            children: [Text(context.l10n.aBehaviorInsideAComponentStaysA, style: small)],
           ),
         InspectorSection(
-          title: 'Canvas',
+          title: context.l10n.canvas,
           children: [
             MacButton(
-              label: (box?.collapsed ?? false) ? 'Expand' : 'Collapse',
+              label: (box?.collapsed ?? false) ? context.l10n.expand : context.l10n.collapse,
               onPressed: () =>
                   dispatch(GroupCollapsedChanged(id: id, collapsed: !(box?.collapsed ?? false))),
             ),
           ],
         ),
         InspectorSection(
-          title: 'Remove',
+          title: context.l10n.remove,
           children: [
             Wrap(
               spacing: 8,
               runSpacing: 6,
               children: [
-                MacButton(label: 'Ungroup', onPressed: () => dispatch(UngroupRequested(id))),
+                MacButton(
+                  label: context.l10n.ungroup,
+                  onPressed: () => dispatch(UngroupRequested(id)),
+                ),
                 DestructiveButton(
-                  label: 'Delete group and relationships',
+                  label: context.l10n.deleteGroupAndRelationships,
                   onPressed: () => dispatch(DeleteGroupWithMembersRequested(id)),
                 ),
               ],
             ),
-            Text('Ungroup keeps every relationship where it is.', style: small),
+            Text(context.l10n.ungroupKeepsEveryRelationshipWhereItIs, style: small),
           ],
         ),
       ],
@@ -1185,11 +1178,13 @@ class MultiInspector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
-          title: '${nodes.length} selected',
+          title: context.l10n.selectedCount(nodes.length),
           children: [
             Text(
-              '${mappings.length} relationship${mappings.length == 1 ? '' : 's'}'
-              '${others > 0 ? ', $others other${others == 1 ? '' : 's'}' : ''}.',
+              context.l10n.selectionSummary(
+                context.l10n.relationshipsCount(mappings.length),
+                others,
+              ),
               style: TextStyle(fontSize: 12, color: t.textPrimary),
             ),
             for (final m in mappings)
@@ -1204,29 +1199,29 @@ class MultiInspector extends StatelessWidget {
         ),
         if (state.isSystem && free.isNotEmpty)
           InspectorSection(
-            title: 'Behavior',
+            title: context.l10n.behavior,
             children: [
               if (suggest)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(
                     related
-                        ? 'These relationships read each other.'
-                        : 'These relationships update in one timing domain.',
+                        ? context.l10n.theseRelationshipsReadEachOther
+                        : context.l10n.theseRelationshipsUpdateInOneTimingDomain,
                     style: small,
                   ),
                 ),
               MacButton(
                 label: free.length == 1
-                    ? 'Group as Behavior'
-                    : 'Group ${free.length} relationships as Behavior',
+                    ? context.l10n.groupAsBehavior
+                    : context.l10n.groupNAsBehavior(free.length),
                 onPressed: () => dispatch(const GroupSelectionRequested()),
               ),
               if (free.length < mappings.length)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '${mappings.length - free.length} already in a behavior; move them from there.',
+                    context.l10n.alreadyInABehavior(mappings.length - free.length),
                     style: small,
                   ),
                 ),

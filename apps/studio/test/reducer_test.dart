@@ -25,7 +25,7 @@ void main() {
   test('app start asks for a daemon connection exactly once', () {
     final t1 = reduce(const AppState(), const AppStarted());
     expect(t1.state.connection, isA<Connecting>());
-    expect(t1.effects, [isA<ConnectDaemon>(), isA<LoadRecentProjects>()]);
+    expect(t1.effects, [isA<ConnectDaemon>(), isA<LoadRecentProjects>(), isA<LoadPreferences>()]);
     final t2 = reduce(t1.state, const ConnectRequested());
     expect(t2.effects, isEmpty);
   });

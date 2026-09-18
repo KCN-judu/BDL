@@ -17,6 +17,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -26,37 +27,42 @@ import 'mac/tokens.dart';
 
 /// Product wording for a library category id.  One place, used by the
 /// panel's section headers and the canvas menu alike.
-String categoryLabel(String category) => switch (category) {
-  'environment' => 'Environment',
-  'human' => 'Human interaction',
-  'motion' => 'Geometry & motion',
-  'mechanical' => 'Mechanical',
-  'electrical' => 'Electrical & system',
-  'visual' => 'Visual & display',
-  'actuation' => 'Actuation',
-  'audio' => 'Audio',
+String categoryLabel(AppLocalizations l10n, String category) => switch (category) {
+  'environment' => l10n.environment,
+  'human' => l10n.humanInteraction,
+  'motion' => l10n.geometryMotion,
+  'mechanical' => l10n.mechanical,
+  'electrical' => l10n.electricalSystem,
+  'visual' => l10n.visualDisplay,
+  'actuation' => l10n.actuation,
+  'audio' => l10n.audio,
   _ => category.isEmpty ? category : category[0].toUpperCase() + category.substring(1),
 };
 
 /// What a template's value is measured as, in the words the sheet and the
 /// inspector use.
-String representationWord(pb.ConceptTemplateView t) {
-  if (!t.hasRepresentation()) return 'decide later';
+String representationWord(AppLocalizations l10n, pb.ConceptTemplateView t) {
+  if (!t.hasRepresentation()) return l10n.decideLaterLower;
   return switch (t.representation.whichKind()) {
-    pb.Representation_Kind.quantity => t.unit.isEmpty ? 'no unit' : t.unit,
-    pb.Representation_Kind.boolean => 'on–off',
-    pb.Representation_Kind.count => 'count',
-    pb.Representation_Kind.list => 'collection',
-    pb.Representation_Kind.pair => 'grouped value',
-    pb.Representation_Kind.optional => 'optional value',
-    pb.Representation_Kind.notSet => 'decide later',
+    pb.Representation_Kind.quantity => t.unit.isEmpty ? l10n.noUnit : t.unit,
+    pb.Representation_Kind.boolean => l10n.formOnOffShort,
+    pb.Representation_Kind.count => l10n.formCountShort,
+    pb.Representation_Kind.list => l10n.formCollectionShort,
+    pb.Representation_Kind.pair => l10n.groupedValue,
+    pb.Representation_Kind.optional => l10n.optionalValue,
+    pb.Representation_Kind.notSet => l10n.decideLaterLower,
   };
 }
 
 /// The templates matching [query], in library order.  Matches the display
 /// name, default name, keywords, category and unit, case-insensitively —
 /// authoring convenience, never resolution.
-List<pb.ConceptTemplateView> searchTemplates(Iterable<pb.ConceptTemplateView> all, String query) {
+List<pb.ConceptTemplateView> searchTemplates(
+  Iterable<pb.ConceptTemplateView> all,
+  String query, {
+  AppLocalizations? l10n,
+}) {
+  l10n ??= kEnglish;
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return all.toList();
   bool hit(String s) => s.toLowerCase().contains(q);
@@ -65,7 +71,7 @@ List<pb.ConceptTemplateView> searchTemplates(Iterable<pb.ConceptTemplateView> al
       if (hit(t.displayName) ||
           hit(t.defaultName) ||
           hit(t.category) ||
-          hit(categoryLabel(t.category)) ||
+          hit(categoryLabel(l10n, t.category)) ||
           hit(t.unit) ||
           t.keywords.any(hit))
         t,
@@ -115,7 +121,7 @@ class _ConceptLibraryPanelState extends State<ConceptLibraryPanel> {
     final canInsert = s.project != null && s.editor.pendingInsert == null;
     final query = s.editor.librarySearch;
     final all = s.templates.toList();
-    final shown = searchTemplates(all, query);
+    final shown = searchTemplates(all, query, l10n: context.l10n);
     final categories = <String>[];
     for (final x in shown) {
       if (!categories.contains(x.category)) categories.add(x.category);
@@ -128,7 +134,7 @@ class _ConceptLibraryPanelState extends State<ConceptLibraryPanel> {
           padding: const EdgeInsets.fromLTRB(MacMetrics.gap, MacMetrics.gap, MacMetrics.gap, 0),
           child: MacTextField(
             controller: _search,
-            hint: 'Search concepts',
+            hint: context.l10n.searchConcepts,
             onChanged: (q) => widget.dispatch(LibrarySearchChanged(q)),
           ),
         ),
@@ -136,16 +142,16 @@ class _ConceptLibraryPanelState extends State<ConceptLibraryPanel> {
           child: library == null
               ? _Note(
                   s.connection is Connected
-                      ? 'Loading the concept library…'
-                      : 'The concept library arrives with the compiler service.',
+                      ? context.l10n.loadingTheConceptLibrary
+                      : context.l10n.theConceptLibraryArrivesWithTheCompiler,
                 )
               : shown.isEmpty
-              ? _Note('No concept matches “${query.trim()}”.')
+              ? _Note(context.l10n.noConceptMatches(query.trim()))
               : ListView(
                   padding: const EdgeInsets.symmetric(vertical: MacMetrics.gapTight),
                   children: [
                     for (final c in categories) ...[
-                      _CategoryHeader(categoryLabel(c)),
+                      _CategoryHeader(categoryLabel(context.l10n, c)),
                       for (final tpl in shown)
                         if (tpl.category == c)
                           _TemplateRow(
@@ -154,7 +160,7 @@ class _ConceptLibraryPanelState extends State<ConceptLibraryPanel> {
                             onInsert: () => widget.dispatch(InsertConceptTemplateRequested(tpl.id)),
                           ),
                     ],
-                    if (s.project == null) const _Note('Open a project to add concepts from here.'),
+                    if (s.project == null) _Note(context.l10n.openAProjectToAddConceptsFrom),
                   ],
                 ),
         ),
@@ -214,7 +220,7 @@ class _TemplateRow extends StatelessWidget {
           const SizedBox(width: MacMetrics.gap),
           Expanded(child: Text(template.displayName, overflow: TextOverflow.ellipsis)),
           Text(
-            representationWord(template),
+            representationWord(context.l10n, template),
             style: TextStyle(
               fontSize: 10,
               color: t.textTertiary,

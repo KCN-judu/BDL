@@ -1,0 +1,2564 @@
+{
+  "@@locale": "en",
+  "appTitle": "BDL Studio",
+  "@appTitle": {
+    "description": "Window title."
+  },
+  "preferencesTitle": "Preferences",
+  "@preferencesTitle": {
+    "description": "Title of the application preferences sheet (not project settings)."
+  },
+  "preferencesMenu": "Preferences…",
+  "@preferencesMenu": {
+    "description": "Menu/link/tooltip that opens the preferences sheet; the ellipsis means a sheet follows."
+  },
+  "done": "Done",
+  "languageLabel": "Language",
+  "@languageLabel": {
+    "description": "Form label for the display-language menu."
+  },
+  "languageSystemDefault": "System Default",
+  "@languageSystemDefault": {
+    "description": "Menu entry: follow the operating system's language."
+  },
+  "languageHelp": "Changes the words Studio uses. BDL source, project files and the compiler are unaffected.",
+  "@languageHelp": {
+    "description": "Help line under the language menu; states that the language is presentation only."
+  },
+  "monitor": "Monitor",
+  "@monitor": {
+    "description": "Page name: Monitor (live telemetry; a placeholder today)."
+  },
+  "liveValuesOnTheCanvasArriveWith": "Live values on the canvas arrive with telemetry (roadmap step S).",
+  "@liveValuesOnTheCanvasArriveWith": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "bdlStudio": "BDL Studio",
+  "@bdlStudio": {
+    "description": "Product name: keep as is."
+  },
+  "edited": "Edited",
+  "@edited": {
+    "description": "Status line word: the project has unsaved changes."
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "reloadFromDisk": "Reload from disk",
+  "@reloadFromDisk": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "overwrite": "Overwrite",
+  "@overwrite": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "dismiss": "Dismiss",
+  "@dismiss": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "noProject": "No project",
+  "@noProject": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "saved": "Saved",
+  "@saved": {
+    "description": "Status line word: everything is saved."
+  },
+  "notCausal": "not causal",
+  "@notCausal": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "readsAcrossDomains": "reads across domains",
+  "@readsAcrossDomains": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "outputsIncomplete": "outputs incomplete",
+  "@outputsIncomplete": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "compilerNotConnected": "Compiler not connected",
+  "@compilerNotConnected": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "connectingToTheCompiler": "Connecting to the compiler",
+  "@connectingToTheCompiler": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "design": "Design",
+  "@design": {
+    "description": "Page name and view mode: Design (the canvas)."
+  },
+  "simulate": "Simulate",
+  "@simulate": {
+    "description": "Page name: Simulate."
+  },
+  "deploy": "Deploy",
+  "@deploy": {
+    "description": "Page name: Deploy."
+  },
+  "projectManagerClosesThisProject": "Project manager (closes this project)",
+  "@projectManagerClosesThisProject": {
+    "description": "Studio UI text (shell.dart)."
+  },
+  "start": "Start",
+  "@start": {
+    "description": "Welcome page section: start actions."
+  },
+  "newProject": "New Project…",
+  "@newProject": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "openProject": "Open Project…",
+  "@openProject": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "openByPath": "Open by path…",
+  "@openByPath": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "openProjectByPath": "Open project by path",
+  "@openProjectByPath": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "newAtPath": "New at path…",
+  "@newAtPath": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "createProjectAtPath": "Create project at path",
+  "@createProjectAtPath": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "waitingForTheCompilerTheStatusLine": "Waiting for the compiler. The status line shows the connection.",
+  "@waitingForTheCompilerTheStatusLine": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "recent": "Recent",
+  "@recent": {
+    "description": "Welcome page: recently opened projects; canvas menu: recently used templates."
+  },
+  "projectsYouOpenWillAppearHere": "Projects you open will appear here.",
+  "@projectsYouOpenWillAppearHere": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "notFound": "not found",
+  "@notFound": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "removeFromRecent": "Remove from Recent",
+  "@removeFromRecent": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "justNow": "just now",
+  "@justNow": {
+    "description": "Studio UI text (welcome_page.dart)."
+  },
+  "thisProject": "this project",
+  "@thisProject": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "openAnotherProject": "open another project",
+  "@openAnotherProject": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "createAnotherProject": "create another project",
+  "@createAnotherProject": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "closeIt": "close it",
+  "@closeIt": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "donTSave": "Don’t Save",
+  "@donTSave": {
+    "description": "Studio UI text (close_guard.dart)."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "folder": "Folder",
+  "@folder": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "choose": "Choose",
+  "@choose": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "name": "Name",
+  "@name": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "newConcept": "New concept",
+  "@newConcept": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "somethingTheProductSensesDecidesOrShows": "Something the product senses, decides or shows.",
+  "@somethingTheProductSensesDecidesOrShows": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "value": "Value",
+  "@value": {
+    "description": "Concept inspector: the value form (quantity, on/off, count, …)."
+  },
+  "quantity": "Quantity",
+  "@quantity": {
+    "description": "Value form: a measured quantity with a unit."
+  },
+  "onOff": "On / off",
+  "@onOff": {
+    "description": "Value form: on / off (a Boolean)."
+  },
+  "count": "Count",
+  "@count": {
+    "description": "Value form: a whole number (a count). Noun."
+  },
+  "decideLater": "Decide later",
+  "@decideLater": {
+    "description": "Value form choice: leave the value form undecided for now (a legal state)."
+  },
+  "unit": "Unit",
+  "@unit": {
+    "description": "Physical measurement unit of a quantity (m, s, deg). Never the type-theoretic unit ()."
+  },
+  "meaning": "Meaning",
+  "@meaning": {
+    "description": "Inspector label for the description (free text explaining what a thing means)."
+  },
+  "hollowRingTheValueCanBeDecided": "Hollow ring: the value can be decided later; relationships can already use it.",
+  "@hollowRingTheValueCanBeDecided": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "roundSocketAMeasuredQuantityItsUnit": "Round socket: a measured quantity. Its unit is checked in every formula.",
+  "@roundSocketAMeasuredQuantityItsUnit": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "diamondSocketOnOrOffActivatesContexts": "Diamond socket: on or off — activates contexts, gates behaviour.",
+  "@diamondSocketOnOrOffActivatesContexts": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "squareSocketAWholeNumberOccurrencesSteps": "Square socket: a whole number — occurrences, steps, items.",
+  "@squareSocketAWholeNumberOccurrencesSteps": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "newMapping": "New mapping",
+  "@newMapping": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "aRelationshipBetweenConceptsItCanExist": "A relationship between concepts. It can exist before it is defined.",
+  "@aRelationshipBetweenConceptsItCanExist": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "reads": "Reads",
+  "@reads": {
+    "description": "Mapping sheet / inspector label: the concepts this relationship reads (its inputs)."
+  },
+  "produces": "Produces",
+  "@produces": {
+    "description": "Mapping sheet / inspector label: the concept this relationship produces (its output)."
+  },
+  "chooseWhatItProducesTheOutputSocket": "Choose what it produces: the output socket takes that concept’s colour and shape.",
+  "@chooseWhatItProducesTheOutputSocket": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "dashedDeclaredNotYetDefinedAttachA": "Dashed: declared, not yet defined. Attach a formula from the inspector whenever you are ready.",
+  "@dashedDeclaredNotYetDefinedAttachA": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "newTimingDomain": "New timing domain",
+  "@newTimingDomain": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "whenAGroupOfRelationshipsAndOutputs": "When a group of relationships and outputs update together. A name, not a rate: how often it activates is decided when the design runs.",
+  "@whenAGroupOfRelationshipsAndOutputs": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "interactionAmbient": "interaction, ambient, …",
+  "@interactionAmbient": {
+    "description": "Example timing-domain names shown as a placeholder hint. Identifiers: keep as is in every locale."
+  },
+  "newOutput": "New output",
+  "@newOutput": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "whereAValueLeavesTheDesignFor": "Where a value leaves the design for the world: a light, a motor, a display.",
+  "@whereAValueLeavesTheDesignFor": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "accepts": "Accepts",
+  "@accepts": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "theConceptThisOutputTakes": "the concept this output takes",
+  "@theConceptThisOutputTakes": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "updatesIn": "Updates in",
+  "@updatesIn": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "required": "Required",
+  "@required": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "theDesignIsIncompleteUntilSomethingDrives": "the design is incomplete until something drives it",
+  "@theDesignIsIncompleteUntilSomethingDrives": {
+    "description": "Studio UI text (dialogs.dart)."
+  },
+  "showingTheLastVersionThatBuiltThe": "Showing the last version that built; the text has changes that do not build yet.",
+  "@showingTheLastVersionThatBuiltThe": {
+    "description": "Studio UI text (design_page.dart)."
+  },
+  "noProjectOpen": "No project open.",
+  "@noProjectOpen": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "system": "System",
+  "@system": {
+    "description": "The system: the top level of a system project; also a sidebar section."
+  },
+  "notPlacedYet": "not placed yet",
+  "@notPlacedYet": {
+    "description": "Studio UI text (design_page.dart)."
+  },
+  "itsPromiseIsWhatInstancesSeeEdits": "— its promise is what instances see; edits here reach every instance.",
+  "@itsPromiseIsWhatInstancesSeeEdits": {
+    "description": "Studio UI text (design_page.dart)."
+  },
+  "code": "Code",
+  "@code": {
+    "description": "View mode: Code (the source text)."
+  },
+  "split": "Split",
+  "@split": {
+    "description": "View mode: canvas and code side by side."
+  },
+  "project": "Project",
+  "@project": {
+    "description": "Sidebar tab: this project’s own concepts, relationships, domains and outputs."
+  },
+  "library": "Library",
+  "@library": {
+    "description": "Sidebar tab: the concept Library (templates)."
+  },
+  "concepts": "Concepts",
+  "@concepts": {
+    "description": "Sidebar section: concepts."
+  },
+  "mappings": "Mappings",
+  "@mappings": {
+    "description": "Sidebar section: relationships (Studio’s label is Mappings)."
+  },
+  "timingDomains": "Timing domains",
+  "@timingDomains": {
+    "description": "Sidebar section: timing domains."
+  },
+  "outputs": "Outputs",
+  "@outputs": {
+    "description": "Boundary section: what outside reads from the members."
+  },
+  "contexts": "Contexts",
+  "@contexts": {
+    "description": "Sidebar section (reserved): contexts."
+  },
+  "components": "Components",
+  "@components": {
+    "description": "Sidebar section: components."
+  },
+  "newComponent": "New component",
+  "@newComponent": {
+    "description": "Studio UI text (library.dart)."
+  },
+  "aReusableBehaviourWithAPromiseIts": "A reusable behaviour with a promise (its ports) and a source of its own.",
+  "@aReusableBehaviourWithAPromiseIts": {
+    "description": "Studio UI text (library.dart)."
+  },
+  "adaptivelamp": "AdaptiveLamp",
+  "@adaptivelamp": {
+    "description": "Example component name shown as a placeholder hint. An identifier: keep as is in every locale."
+  },
+  "instances": "Instances",
+  "@instances": {
+    "description": "Sidebar section: instances."
+  },
+  "behaviors": "Behaviors",
+  "@behaviors": {
+    "description": "Sidebar section: behavior groups."
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Button: add a template to the project."
+  },
+  "stillInUse": "Still in use",
+  "@stillInUse": {
+    "description": "Studio UI text (library.dart)."
+  },
+  "environment": "Environment",
+  "@environment": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "humanInteraction": "Human interaction",
+  "@humanInteraction": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "geometryMotion": "Geometry & motion",
+  "@geometryMotion": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "mechanical": "Mechanical",
+  "@mechanical": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "electricalSystem": "Electrical & system",
+  "@electricalSystem": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "visualDisplay": "Visual & display",
+  "@visualDisplay": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "actuation": "Actuation",
+  "@actuation": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "audio": "Audio",
+  "@audio": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "noUnit": "no unit",
+  "@noUnit": {
+    "description": "A quantity with no measurement unit (dimensionless). Not the empty product."
+  },
+  "groupedValue": "grouped value",
+  "@groupedValue": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "optionalValue": "optional value",
+  "@optionalValue": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "searchConcepts": "Search concepts",
+  "@searchConcepts": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "loadingTheConceptLibrary": "Loading the concept library…",
+  "@loadingTheConceptLibrary": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "theConceptLibraryArrivesWithTheCompiler": "The concept library arrives with the compiler service.",
+  "@theConceptLibraryArrivesWithTheCompiler": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "openAProjectToAddConceptsFrom": "Open a project to add concepts from here.",
+  "@openAProjectToAddConceptsFrom": {
+    "description": "Studio UI text (concept_library_panel.dart)."
+  },
+  "selectAConceptARelationshipAnOutput": "Select a concept, a relationship, an output, an instance or a group.",
+  "@selectAConceptARelationshipAnOutput": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "selectAConceptAMappingOrAn": "Select a concept, a mapping or an output.",
+  "@selectAConceptAMappingOrAn": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "inspector": "Inspector",
+  "@inspector": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "nothingElseNeedsRechecking": "Nothing else needs rechecking.",
+  "@nothingElseNeedsRechecking": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "thisWillBeCheckedAgain": "This will be checked again.",
+  "@thisWillBeCheckedAgain": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "thisChangeAffects": "This change affects",
+  "@thisChangeAffects": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "itWillBeCheckedAgain": "— it will be checked again.",
+  "@itWillBeCheckedAgain": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "theyWillBeCheckedAgain": "— they will be checked again.",
+  "@theyWillBeCheckedAgain": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "lastChange": "Last change",
+  "@lastChange": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "interface": "Interface",
+  "@interface": {
+    "description": "Formal word: a declaration’s interface (signature and commitments)."
+  },
+  "realization": "Realization",
+  "@realization": {
+    "description": "Formal word: the definition that realizes an interface; an invalidation category."
+  },
+  "semantic": "Semantic",
+  "@semantic": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "reactive": "Reactive",
+  "@reactive": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "clock": "Clock",
+  "@clock": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "output": "Output",
+  "@output": {
+    "description": "Noun: a physical output (a light, a motor) — the thing a value leaves the design through. Never \"output\" as a computation result."
+  },
+  "deployment": "Deployment",
+  "@deployment": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "unspecified": "Unspecified",
+  "@unspecified": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "order": "Order",
+  "@order": {
+    "description": "Concept inspector section: whether values of this concept are ordered (compared as magnitudes) — not a sequence."
+  },
+  "valuesAreMagnitudesSmallestLargestClampIn": "values are magnitudes: <, smallest, largest, clamp, in range",
+  "@valuesAreMagnitudesSmallestLargestClampIn": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "valuesAreComparedForEqualityOnly": "values are compared for equality only",
+  "@valuesAreComparedForEqualityOnly": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "relationships": "Relationships",
+  "@relationships": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "producedBy": "Produced by",
+  "@producedBy": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "nothingYet": "nothing yet",
+  "@nothingYet": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "usedBy": "Used by",
+  "@usedBy": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "explain": "Explain",
+  "@explain": {
+    "description": "Button: open the Explain disclosure (why the compiler judged this so)."
+  },
+  "collectionOf": "Collection of…",
+  "@collectionOf": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "optional": "Optional…",
+  "@optional": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "each": "Each",
+  "@each": {
+    "description": "Collection representation: the element type (each element)."
+  },
+  "whenPresent": "When present",
+  "@whenPresent": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "first": "First",
+  "@first": {
+    "description": "Pair representation: the first component of a grouped value."
+  },
+  "second": "Second",
+  "@second": {
+    "description": "Pair representation: the second component of a grouped value."
+  },
+  "place": "Place",
+  "@place": {
+    "description": "Inspector section on a relationship inside a component: its place (domain and group). Noun."
+  },
+  "showGroup": "Show Group",
+  "@showGroup": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "relationship": "Relationship",
+  "@relationship": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "showBinding": "Show Binding",
+  "@showBinding": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "disconnect": "Disconnect",
+  "@disconnect": {
+    "description": "Button: remove the binding / driver connection."
+  },
+  "disconnectItToDefineTheRelationshipYourself": "Disconnect it to define the relationship yourself.",
+  "@disconnectItToDefineTheRelationshipYourself": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "timing": "Timing",
+  "@timing": {
+    "description": "Inspector section: timing (the timing domain the thing updates in)."
+  },
+  "anyDomain": "any domain",
+  "@anyDomain": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aRelationshipInNoDomainIsPure": "A relationship in no domain is pure: it is evaluated wherever it is read.",
+  "@aRelationshipInNoDomainIsPure": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "drives": "Drives",
+  "@drives": {
+    "description": "Inspector section label on a relationship: the physical output this relationship is the final driver of."
+  },
+  "thisValueCanCommitToAPhysical": "This value can commit to a physical output.",
+  "@thisValueCanCommitToAPhysical": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "onlyARelationshipWithoutInputsCanDrive": "Only a relationship without inputs can drive an output: connect the one that combines the sources.",
+  "@onlyARelationshipWithoutInputsCanDrive": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "noExplicitInputsTheCanonicalDomainIs": "no explicit inputs: the canonical domain is (), the empty product; the kernel encodes () -> B as B",
+  "@noExplicitInputsTheCanonicalDomainIs": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "pendingAnalysis": "pending analysis",
+  "@pendingAnalysis": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "noTimingDomainYetNotPartOf": "No timing domain yet: not part of the design's commitment until one is chosen.",
+  "@noTimingDomainYetNotPartOf": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "undrivenTheDesignIsIncompleteWithoutA": "Undriven — the design is incomplete without a driver.",
+  "@undrivenTheDesignIsIncompleteWithoutA": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "undriven": "Undriven.",
+  "@undriven": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "theConnectionDoesNotFitSeeThe": "The connection does not fit: see the driver's findings below.",
+  "@theConnectionDoesNotFitSeeThe": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "checking": "Checking…",
+  "@checking": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "noDomainYet": "no domain yet",
+  "@noDomainYet": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "theDesignIsIncompleteUntilThisIs": "the design is incomplete until this is driven",
+  "@theDesignIsIncompleteUntilThisIs": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "driver": "Driver",
+  "@driver": {
+    "description": "Output inspector label: the relationship that drives this physical output."
+  },
+  "connect": "Connect",
+  "@connect": {
+    "description": "Output inspector: connect a driver."
+  },
+  "aRelationship": "a relationship…",
+  "@aRelationship": {
+    "description": "Output inspector Connect menu hint: choose a relationship…"
+  },
+  "hasInputs": "has inputs",
+  "@hasInputs": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "anyTimingDomain": "Any timing domain",
+  "@anyTimingDomain": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "systemInput": "system input",
+  "@systemInput": {
+    "description": "Port status: exported as an input of the whole system."
+  },
+  "givenAValue": "given a value",
+  "@givenAValue": {
+    "description": "Port status: a parameter port given a constant."
+  },
+  "editSource": "Edit Source",
+  "@editSource": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "replaceWith": "Replace with",
+  "@replaceWith": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "anotherComponent": "another component…",
+  "@anotherComponent": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "notAssigned": "not assigned",
+  "@notAssigned": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "ports": "Ports",
+  "@ports": {
+    "description": "Instance inspector section: the instance’s ports."
+  },
+  "noPortsYet": "No ports yet.",
+  "@noPortsYet": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "findings": "Findings",
+  "@findings": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "remove": "Remove",
+  "@remove": {
+    "description": "Button: remove (an instance, a device, a group member)."
+  },
+  "disconnectItsPortsFirstTheComponentStays": "Disconnect its ports first; the component stays.",
+  "@disconnectItsPortsFirstTheComponentStays": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "port": "Port",
+  "@port": {
+    "description": "Inspector title for a port."
+  },
+  "promise": "Promise",
+  "@promise": {
+    "description": "Component inspector section: the component’s promise (its ports)."
+  },
+  "implementedBy": "Implemented by",
+  "@implementedBy": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "nothingThePromiseHasNoBacking": "nothing (the promise has no backing)",
+  "@nothingThePromiseHasNoBacking": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "goToSource": "Go to Source",
+  "@goToSource": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aConstantEG05": "a constant, e.g. 0.5",
+  "@aConstantEG05": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aClosedConstantInThePortS": "A closed constant in the port's units, or bind the port instead.",
+  "@aClosedConstantInThePortS": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "connection": "Connection",
+  "@connection": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "openNothingSuppliesItYetDrawA": "Open: nothing supplies it yet. Draw a link from a provided port or a top-level relationship of the same concept. A design with open ports still simulates, with the port as an input.",
+  "@openNothingSuppliesItYetDrawA": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "binding": "Binding",
+  "@binding": {
+    "description": "A binding: the connection of an instance’s port to a relationship or to another port."
+  },
+  "from": "From",
+  "@from": {
+    "description": "Binding inspector: the source end of the binding."
+  },
+  "to": "To",
+  "@to": {
+    "description": "Binding inspector: the destination end of the binding."
+  },
+  "directTheDestinationReadsTheValueAs": "Direct: the destination reads the value as it is.",
+  "@directTheDestinationReadsTheValueAs": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aBindingConvertsNothingBothEndsCarry": "A binding converts nothing: both ends carry the same concept, by identity.",
+  "@aBindingConvertsNothingBothEndsCarry": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "keepsItsPromise": "keeps its promise",
+  "@keepsItsPromise": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "promiseBroken": "promise broken",
+  "@promiseBroken": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "backToSystem": "‹ System",
+  "@backToSystem": {
+    "description": "Breadcrumb from a component’s source back to the system level; ‹ is a chevron."
+  },
+  "duplicateAsVersion": "Duplicate as Version",
+  "@duplicateAsVersion": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "placeInstance": "Place Instance",
+  "@placeInstance": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "noPortsYetSelectARelationshipOf": "No ports yet. Select a relationship of the source and declare it a port.",
+  "@noPortsYetSelectARelationshipOf": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "timingParameters": "Timing parameters",
+  "@timingParameters": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "aParameterTheSystemAssignsIt": "a parameter (the system assigns it)",
+  "@aParameterTheSystemAssignsIt": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "privateToEachInstance": "private to each instance",
+  "@privateToEachInstance": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "sharedConcepts": "Shared concepts",
+  "@sharedConcepts": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "privateFreshPerInstance": "private (fresh per instance)",
+  "@privateFreshPerInstance": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aSharedConceptIsTheSameIdentity": "A shared concept is the same identity everywhere; a private one is this component's own, fresh in every instance.",
+  "@aSharedConceptIsTheSameIdentity": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "physicalOutputs": "Physical outputs",
+  "@physicalOutputs": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "privateOnePerInstance": "private (one per instance)",
+  "@privateOnePerInstance": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "declareAPort": "Declare a port",
+  "@declareAPort": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "exposeAs": "expose as…",
+  "@exposeAs": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "thePromiseIsTakenFromTheRelationship": "The promise is taken from the relationship as it is now, and kept until you change it here.",
+  "@thePromiseIsTakenFromTheRelationship": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "deleteItsInstancesFirst": "Delete its instances first.",
+  "@deleteItsInstancesFirst": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aRelationshipOfTheSource": "a relationship of the source",
+  "@aRelationshipOfTheSource": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "retirePort": "Retire port",
+  "@retirePort": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "group": "Group",
+  "@group": {
+    "description": "Inspector title for a behavior group."
+  },
+  "aBehaviorIsAWayOfSeeing": "A behavior is a way of seeing the design: grouping, moving, splitting or dissolving it changes nothing about what the design means.",
+  "@aBehaviorIsAWayOfSeeing": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "addRelationship": "+ Add relationship",
+  "@addRelationship": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "emptyDragRelationshipsInOrAddOne": "Empty. Drag relationships in, or add one.",
+  "@emptyDragRelationshipsInOrAddOne": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "removeFromGroup": "Remove from {group}",
+  "@removeFromGroup": {
+    "description": "Canvas context menu.",
+    "placeholders": {
+      "group": {
+        "type": "Object"
+      }
+    }
+  },
+  "boundary": "Boundary",
+  "@boundary": {
+    "description": "Group inspector section: the boundary of the group (what crosses it)."
+  },
+  "computedOnceTheAnalysisArrives": "Computed once the analysis arrives.",
+  "@computedOnceTheAnalysisArrives": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "inputs": "Inputs",
+  "@inputs": {
+    "description": "Simulate section: the inputs (relationships without a definition that take values); boundary section: what members read from outside."
+  },
+  "open": "Open",
+  "@open": {
+    "description": "Boundary section: the open (unbound) members — a legal state, not an error."
+  },
+  "internal": "Internal",
+  "@internal": {
+    "description": "Boundary section: edges among members only."
+  },
+  "readOffTheDependencyGraphWhatThe": "Read off the dependency graph: what the members read from outside, what outside reads from them. A picture of the cut, not a connection of its own.",
+  "@readOffTheDependencyGraphWhatThe": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "package": "Package",
+  "@package": {
+    "description": "Verb/button: package the behavior as a reusable component."
+  },
+  "packageAsReusableComponent": "Package as Reusable Component…",
+  "@packageAsReusableComponent": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "turnsTheBehaviorIntoAComponentAnd": "Turns the behavior into a component and one instance in its place; the design computes the same values.",
+  "@turnsTheBehaviorIntoAComponentAnd": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "aBehaviorInsideAComponentStaysA": "A behavior inside a component stays a way of seeing its source. Packaging it as a component of its own comes with nested components; until then, edit and move it freely.",
+  "@aBehaviorInsideAComponentStaysA": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "canvas": "Canvas",
+  "@canvas": {
+    "description": "Group inspector section: canvas presentation."
+  },
+  "expand": "Expand",
+  "@expand": {
+    "description": "Group: expand the collapsed box."
+  },
+  "collapse": "Collapse",
+  "@collapse": {
+    "description": "Group: collapse the box."
+  },
+  "ungroup": "Ungroup",
+  "@ungroup": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "deleteGroupAndRelationships": "Delete group and relationships",
+  "@deleteGroupAndRelationships": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "ungroupKeepsEveryRelationshipWhereItIs": "Ungroup keeps every relationship where it is.",
+  "@ungroupKeepsEveryRelationshipWhereItIs": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "behavior": "Behavior",
+  "@behavior": {
+    "description": "A behavior group: a named set of relationships drawn together on the canvas; authoring metadata, not semantics."
+  },
+  "theseRelationshipsReadEachOther": "These relationships read each other.",
+  "@theseRelationshipsReadEachOther": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "theseRelationshipsUpdateInOneTimingDomain": "These relationships update in one timing domain.",
+  "@theseRelationshipsUpdateInOneTimingDomain": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "groupAsBehavior": "Group as Behavior",
+  "@groupAsBehavior": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "replaceTheConnection": "Replace the connection?",
+  "@replaceTheConnection": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "carryAcrossTimingDomains": "Carry across timing domains",
+  "@carryAcrossTimingDomains": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "startsAt": "Starts at",
+  "@startsAt": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "aConstantInTheDestinationSUnits": "a constant in the destination's units, e.g. 0",
+  "@aConstantInTheDestinationSUnits": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "disconnectAndConnect": "Disconnect and Connect",
+  "@disconnectAndConnect": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "workingOutTheBoundary": "Working out the boundary…",
+  "@workingOutTheBoundary": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "requires": "Requires",
+  "@requires": {
+    "description": "Packaging sheet: what the new component requires (its required ports)."
+  },
+  "whatTheMembersReadFromOutside": "what the members read from outside",
+  "@whatTheMembersReadFromOutside": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "nothingTheComponentIsSelfContained": "nothing — the component is self-contained",
+  "@nothingTheComponentIsSelfContained": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "provides": "Provides",
+  "@provides": {
+    "description": "Packaging sheet: what the new component provides (its provided ports)."
+  },
+  "whatOutsideReadsFromTheMembers": "what outside reads from the members",
+  "@whatOutsideReadsFromTheMembers": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "nothingYetNothingOutsideReadsTheGroup": "nothing yet — nothing outside reads the group",
+  "@nothingYetNothingOutsideReadsTheGroup": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "openRelationships": "Open relationships",
+  "@openRelationships": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "declaredInsideNotYetDefined": "declared inside, not yet defined",
+  "@declaredInsideNotYetDefined": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "treatAsInput": "Treat as input",
+  "@treatAsInput": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "keepInternal": "Keep internal",
+  "@keepInternal": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "drivenByMembersTheDriveStaysWith": "driven by members; the drive stays with them",
+  "@drivenByMembersTheDriveStaysWith": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "staysTheSystemS": "Stays the system's",
+  "@staysTheSystemS": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "movesInside": "Moves inside",
+  "@movesInside": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "everyDomainTheMembersUse": "every domain the members use",
+  "@everyDomainTheMembersUse": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "nonePure": "none — pure",
+  "@nonePure": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "readByMembersOnly": "read by members only",
+  "@readByMembersOnly": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "theDesignComputesTheSameValuesAfterwards": "The design computes the same values afterwards; the group becomes one instance in its place, and the component can be placed again.",
+  "@theDesignComputesTheSameValuesAfterwards": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "expressionWithNoInputs": "expression with no inputs",
+  "@expressionWithNoInputs": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "noDefinitionYetALegalStateOther": "No definition yet. A legal state: other relationships may already depend on the signature.",
+  "@noDefinitionYetALegalStateOther": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "nothingToAddYet": "Nothing to add yet.",
+  "@nothingToAddYet": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "emptyDetachToRemoveTheDefinition": "Empty. Detach to remove the definition.",
+  "@emptyDetachToRemoveTheDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "saving": "Saving…",
+  "@saving": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "addDefinition": "Add definition",
+  "@addDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "saveDefinition": "Save definition",
+  "@saveDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "invalidDefinition": "Invalid definition.",
+  "@invalidDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "cannotBeRead": "Cannot be read.",
+  "@cannotBeRead": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "openSomethingItNeedsIsNotDecided": "Open: something it needs is not decided yet.",
+  "@openSomethingItNeedsIsNotDecided": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "validDefinition": "Valid definition",
+  "@validDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "noDefinition": "No definition.",
+  "@noDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "formula": "Formula",
+  "@formula": {
+    "description": "Definition editor mode switch: the Formula composer (structured editing)."
+  },
+  "revert": "Revert",
+  "@revert": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "addingADefinitionIsARefinementNothing": "Adding a definition is a refinement: nothing established elsewhere is reopened.",
+  "@addingADefinitionIsARefinementNothing": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "detachDefinition": "Detach definition",
+  "@detachDefinition": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "replacingOrDetachingIsAnEditThis": "Replacing or detaching is an edit: this definition and the simulation are re-checked.",
+  "@replacingOrDetachingIsAnEditThis": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "thisRelationshipSDefinitionChangedWhileYou": "This relationship's definition changed while you were editing it.",
+  "@thisRelationshipSDefinitionChangedWhileYou": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "reload": "Reload",
+  "@reload": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "showTheDefinitionCommittedMeanwhileDropWhat": "Show the definition committed meanwhile; drop what you typed",
+  "@showTheDefinitionCommittedMeanwhileDropWhat": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "keepMine": "Keep mine",
+  "@keepMine": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "keepWhatYouTypedSaveWillReplace": "Keep what you typed; save will replace the committed definition",
+  "@keepWhatYouTypedSaveWillReplace": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "looking": "Looking…",
+  "@looking": {
+    "description": "Studio UI text (definition_editor.dart)."
+  },
+  "waitingForTheCompilerToReadThe": "Waiting for the compiler to read the formula…",
+  "@waitingForTheCompilerToReadThe": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "theTextCannotBeReadAsA": "The text cannot be read as a formula.",
+  "@theTextCannotBeReadAsA": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "editAsText": "Edit as text",
+  "@editAsText": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "askingWhatFitsHere": "Asking what fits here…",
+  "@askingWhatFitsHere": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "hideDetail": "Hide detail",
+  "@hideDetail": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "insert": "Insert",
+  "@insert": {
+    "description": "Composer button: insert the chosen equation or reference."
+  },
+  "noUnitIsSuggestedFillTheOther": "No unit is suggested: fill the other side first.",
+  "@noUnitIsSuggestedFillTheOther": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "references": "References",
+  "@references": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "compare": "Compare",
+  "@compare": {
+    "description": "Composer operator group: comparisons."
+  },
+  "function": "Function",
+  "@function": {
+    "description": "Composer operator group: apply a relationship."
+  },
+  "eachElement": "Each element",
+  "@eachElement": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "allSatisfy": "all … satisfy",
+  "@allSatisfy": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "anySatisfies": "any … satisfies",
+  "@anySatisfies": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "mapEach": "map each …",
+  "@mapEach": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "filter": "filter …",
+  "@filter": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "range": "Range",
+  "@range": {
+    "description": "Composer: a closed range in … .. …."
+  },
+  "betweenTwoEndsIn": "Between two ends: in … .. …",
+  "@betweenTwoEndsIn": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "thisPartIsEditedAsText": "This part is edited as text.",
+  "@thisPartIsEditedAsText": {
+    "description": "Studio UI text (formula_composer.dart)."
+  },
+  "readingTheSources": "Reading the sources…",
+  "@readingTheSources": {
+    "description": "Studio UI text (code_pane.dart)."
+  },
+  "show": "Show",
+  "@show": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "noInputsARelationshipWithoutInputsAnd": "No inputs: a relationship without inputs and without a definition is one. Values then come from outside the design, one per tick.",
+  "@noInputsARelationshipWithoutInputsAnd": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "wholeNumber": "whole number",
+  "@wholeNumber": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "noDomainsEveryRelationshipIsEvaluatedAt": "No domains: every relationship is evaluated at every tick.",
+  "@noDomainsEveryRelationshipIsEvaluatedAt": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "activationPeriodInTicksChangingOneStarts": "Activation period, in ticks. Changing one starts the run over.",
+  "@activationPeriodInTicksChangingOneStarts": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "evaluating": "Evaluating…",
+  "@evaluating": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "setTheInputsThenStep": "Set the inputs, then step.",
+  "@setTheInputsThenStep": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "step": "Step",
+  "@step": {
+    "description": "Simulate button: evaluate one tick."
+  },
+  "reset": "Reset",
+  "@reset": {
+    "description": "Simulate button: start the run over."
+  },
+  "theDesignContainsAnInstantaneousCycle": "The design contains an instantaneous cycle.",
+  "@theDesignContainsAnInstantaneousCycle": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "noTicksEvaluatedYet": "No ticks evaluated yet.",
+  "@noTicksEvaluatedYet": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "selectAnInputAColumnOrA": "Select an input, a column or a concept.",
+  "@selectAnInputAColumnOrA": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "aRelationshipItIsAppliedInsideOther": "A relationship: it is applied inside other relationships and has no value of its own to sample.",
+  "@aRelationshipItIsAppliedInsideOther": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "now": "Now",
+  "@now": {
+    "description": "Simulate probe: the current value."
+  },
+  "notSteppedYet": "not stepped yet",
+  "@notSteppedYet": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "finalTarget": "Final target",
+  "@finalTarget": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "noneYet": "none yet",
+  "@noneYet": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "probe": "Probe",
+  "@probe": {
+    "description": "Simulate: the probe panel (inspect one value over the run)."
+  },
+  "overTheRun": "Over the run",
+  "@overTheRun": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "notEvaluatedAtAnyTickYet": "Not evaluated at any tick yet.",
+  "@notEvaluatedAtAnyTickYet": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "pwmChannel": "PWM channel",
+  "@pwmChannel": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "digitalOutput": "Digital output",
+  "@digitalOutput": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "hBridgeChannel": "H-bridge channel",
+  "@hBridgeChannel": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "iCSensor": "I²C sensor",
+  "@iCSensor": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "quadratureEncoder": "Quadrature encoder",
+  "@quadratureEncoder": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "target": "Target",
+  "@target": {
+    "description": "Deploy page: the target board."
+  },
+  "noBoardsKnown": "no boards known",
+  "@noBoardsKnown": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "chooseABoard": "choose a board…",
+  "@chooseABoard": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "loadingBoards": "loading boards…",
+  "@loadingBoards": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "chooseABoardToSeeWhetherThis": "Choose a board to see whether this design fits it.",
+  "@chooseABoardToSeeWhetherThis": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "devices": "Devices",
+  "@devices": {
+    "description": "Deploy section: the devices on the board."
+  },
+  "addDevice": "Add device",
+  "@addDevice": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "noDeviceYetADeviceRealisesOne": "No device yet. A device realises one output on the board; its kind says what it needs from the board.",
+  "@noDeviceYetADeviceRealisesOne": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "noOutput": "no output",
+  "@noOutput": {
+    "description": "Studio UI text (deploy_page.dart)."
+  },
+  "placedBeforeTheDeadEnd": "Placed before the dead end: {placements}. This is one conflict under the solver’s order, not necessarily the only one.",
+  "@placedBeforeTheDeadEnd": {
+    "description": "Deploy dead-end explanation; placements is a comma-joined list of \"device → resource\".",
+    "placeholders": {
+      "placements": {
+        "type": "Object"
+      }
+    }
+  },
+  "fixes": "Fixes",
+  "@fixes": {
+    "description": "Inspector section: the fixes the compiler offers for a finding."
+  },
+  "rename": "Rename",
+  "@rename": {
+    "description": "Context menu: rename."
+  },
+  "addToGroup": "Add to Group",
+  "@addToGroup": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "addInstance": "Add Instance",
+  "@addInstance": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "newBehaviorGroup": "New Behavior Group",
+  "@newBehaviorGroup": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "input": "Input",
+  "@input": {
+    "description": "Canvas add-menu group: concepts that are inputs (values entering from the environment)."
+  },
+  "more": "More…",
+  "@more": {
+    "description": "Menu: more…"
+  },
+  "addConcept": "Add Concept",
+  "@addConcept": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "addAConceptFromTheLibraryTo": "Add a concept from the Library to start",
+  "@addAConceptFromTheLibraryTo": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "valueNotDecided": "value not decided",
+  "@valueNotDecided": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "aQuantity": "a quantity",
+  "@aQuantity": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "onOrOff": "on or off",
+  "@onOrOff": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "aCount": "a count",
+  "@aCount": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "aCollection": "a collection",
+  "@aCollection": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "aGroupedValue": "a grouped value",
+  "@aGroupedValue": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "anOptionalValue": "an optional value",
+  "@anOptionalValue": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "declaredNotYetDefined": "declared, not yet defined",
+  "@declaredNotYetDefined": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "definitionDoesNotCheck": "definition does not check",
+  "@definitionDoesNotCheck": {
+    "description": "Studio UI text (concept_glyphs.dart)."
+  },
+  "noTimingDomainYet": "no timing domain yet",
+  "@noTimingDomainYet": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "drivenByAnIllFormedConnection": "driven by an ill-formed connection",
+  "@drivenByAnIllFormedConnection": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "contestedBySeveralDrivers": "contested by several drivers",
+  "@contestedBySeveralDrivers": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "noDomain": "no domain",
+  "@noDomain": {
+    "description": "Studio UI text (node_canvas.dart)."
+  },
+  "luminousIntensity": "luminous intensity",
+  "@luminousIntensity": {
+    "description": "Studio UI text (units.dart)."
+  },
+  "amountOfSubstance": "amount of substance",
+  "@amountOfSubstance": {
+    "description": "Studio UI text (units.dart)."
+  },
+  "backsThePort": "Backs the port \"{port}\": what instances see of it is the promise, kept on the component, not this definition.",
+  "@backsThePort": {
+    "description": "Inspector note on a relationship that implements a component port.",
+    "placeholders": {
+      "port": {
+        "type": "Object"
+      }
+    }
+  },
+  "evaluatedAtEachActivationOf": "Evaluated at each activation of {domain}; a value read from another domain needs an explicit transport.",
+  "@evaluatedAtEachActivationOf": {
+    "description": "Inspector timing note for a relationship in a timing domain.",
+    "placeholders": {
+      "domain": {
+        "type": "Object"
+      }
+    }
+  },
+  "eachActivationCommitsThisValueTo": "Each activation commits this value to {output}. One driver per output: a second one is a conflict, never a priority.",
+  "@eachActivationCommitsThisValueTo": {
+    "description": "Inspector note on a relationship that drives a physical output.",
+    "placeholders": {
+      "output": {
+        "type": "Object"
+      }
+    }
+  },
+  "relationshipsWithInputsNeedADefinition": "{names}: a relationship with inputs needs a definition before it can run.",
+  "@relationshipsWithInputsNeedADefinition": {
+    "description": "Simulate readiness note; names is a comma-joined list of relationship names.",
+    "placeholders": {
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "oneOfNInstancesOf": "{count, plural, =1{One of {count} instance of {component}. What you see here is its promise; its source is shared by all of them.} other{One of {count} instances of {component}. What you see here is its promise; its source is shared by all of them.}}",
+  "@oneOfNInstancesOf": {
+    "description": "Instance inspector: this instance is one of count instances of the component.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "component": {
+        "type": "Object"
+      }
+    }
+  },
+  "carriedAcrossTimingDomains": "Carried across timing domains: the destination sees the last value committed strictly before its own activation, starting at {init}.",
+  "@carriedAcrossTimingDomains": {
+    "description": "Binding inspector: a transported binding; init is the starting value.",
+    "placeholders": {
+      "init": {
+        "type": "Object"
+      }
+    }
+  },
+  "aBehaviorInAComponentIsAWayOfSeeing": "A behavior is a way of seeing this component's source: grouping, moving, splitting or dissolving it changes nothing about what the component promises or does.",
+  "@aBehaviorInAComponentIsAWayOfSeeing": {
+    "description": "Group inspector note for a group inside a component."
+  },
+  "alreadyTakesItsValueFrom": "{to} already takes its value from {source}. A required port takes one source; the current connection would be removed first.",
+  "@alreadyTakesItsValueFrom": {
+    "description": "Connect sheet: replacing an existing binding.",
+    "placeholders": {
+      "to": {
+        "type": "Object"
+      },
+      "source": {
+        "type": "Object"
+      }
+    }
+  },
+  "transportExplanation": "{from} updates in {fromDomain}, {to} in {toDomain}. The value is carried across: {to} sees the last value committed strictly before its own activation, and needs a value to start from.",
+  "@transportExplanation": {
+    "description": "Connect sheet: why a binding across timing domains needs a starting value.",
+    "placeholders": {
+      "from": {
+        "type": "Object"
+      },
+      "fromDomain": {
+        "type": "Object"
+      },
+      "to": {
+        "type": "Object"
+      },
+      "toDomain": {
+        "type": "Object"
+      }
+    }
+  },
+  "unsavedChangesExplanation": "The project has changes that are not saved. Saving keeps everything as it is now — unfinished formulas and text that does not build yet included. If you don’t save and {action}, the project returns to what was last saved.",
+  "@unsavedChangesExplanation": {
+    "description": "Save-changes sheet body; action is one of the closeAction* phrases (e.g. \"close it\").",
+    "placeholders": {
+      "action": {
+        "type": "Object"
+      }
+    }
+  },
+  "thisFileDoesNotBuildYet": "{count, plural, =1{This file does not build yet: the design shows the last version that did.} other{This file does not build yet ({count} problems): the design shows the last version that did.}}",
+  "@thisFileDoesNotBuildYet": {
+    "description": "Code view banner; count is the number of problems.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ofComponent": "Of",
+  "@ofComponent": {
+    "description": "Instance inspector label: which component the instance is of."
+  },
+  "stateDefined": "defined",
+  "@stateDefined": {
+    "description": "Relationship state word (accessibility): has a definition."
+  },
+  "stateUndriven": "undriven",
+  "@stateUndriven": {
+    "description": "Physical output state: nothing drives it yet."
+  },
+  "stateDriven": "driven",
+  "@stateDriven": {
+    "description": "Physical output state: a relationship drives it."
+  },
+  "stateRequired": "required",
+  "@stateRequired": {
+    "description": "Physical output header word: the design is incomplete until it is driven."
+  },
+  "stateOptional": "optional",
+  "@stateOptional": {
+    "description": "Physical output state: may stay undriven."
+  },
+  "stateDeclared": "declared",
+  "@stateDeclared": {
+    "description": "Relationship header word on the canvas: declared, not yet defined."
+  },
+  "stateContested": "contested",
+  "@stateContested": {
+    "description": "Physical output header word: several relationships claim to drive it."
+  },
+  "stateIllFormed": "ill-formed",
+  "@stateIllFormed": {
+    "description": "Physical output header word: driven by a connection that does not fit."
+  },
+  "formOnOffShort": "on–off",
+  "@formOnOffShort": {
+    "description": "Short value-form word in the concept library row: a Boolean value."
+  },
+  "formCountShort": "count",
+  "@formCountShort": {
+    "description": "Short value-form word: a whole number."
+  },
+  "formCollectionShort": "collection",
+  "@formCollectionShort": {
+    "description": "Short value-form word: a list of values."
+  },
+  "expressionOver": "expression over {inputs}",
+  "@expressionOver": {
+    "description": "Definition editor placeholder hint: the inputs the formula may read, comma-joined.",
+    "placeholders": {
+      "inputs": {
+        "type": "Object"
+      }
+    }
+  },
+  "needsAValueForThisStep": "{who} needs a value for this step.",
+  "@needsAValueForThisStep": {
+    "description": "Simulation stop reason: an input relationship has no value at this tick.",
+    "placeholders": {
+      "who": {
+        "type": "Object"
+      }
+    }
+  },
+  "dividedByZero": "{who} divided by zero.",
+  "@dividedByZero": {
+    "description": "Simulation stop reason.",
+    "placeholders": {
+      "who": {
+        "type": "Object"
+      }
+    }
+  },
+  "producedAValueThatIsNotANumber": "{who} produced a value that is not a number.",
+  "@producedAValueThatIsNotANumber": {
+    "description": "Simulation stop reason (NaN or infinity).",
+    "placeholders": {
+      "who": {
+        "type": "Object"
+      }
+    }
+  },
+  "updatesInClockParameter": "Updates in {clock} (a parameter of the component)",
+  "@updatesInClockParameter": {
+    "description": "Port timing: the port updates in a clock parameter the instance assigns.",
+    "placeholders": {
+      "clock": {
+        "type": "Object"
+      }
+    }
+  },
+  "updatesInOwnClock": "Updates in its own {clock}",
+  "@updatesInOwnClock": {
+    "description": "Port timing: the port updates in a domain private to the component.",
+    "placeholders": {
+      "clock": {
+        "type": "Object"
+      }
+    }
+  },
+  "portProvided": "provided",
+  "@portProvided": {
+    "description": "Port status word: the port is provided by the component."
+  },
+  "portBound": "bound",
+  "@portBound": {
+    "description": "Port status word: the port is bound (source unknown)."
+  },
+  "portBoundTo": "bound to {source}",
+  "@portBoundTo": {
+    "description": "Port status word: bound to a relationship or another port.",
+    "placeholders": {
+      "source": {
+        "type": "Object"
+      }
+    }
+  },
+  "portOpen": "open",
+  "@portOpen": {
+    "description": "Port status word: nothing supplies the port yet — a legal state, not an error."
+  },
+  "dimAngle": "angle",
+  "@dimAngle": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: angle."
+  },
+  "dimLength": "length",
+  "@dimLength": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: length."
+  },
+  "dimTime": "time",
+  "@dimTime": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: time."
+  },
+  "dimMass": "mass",
+  "@dimMass": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: mass."
+  },
+  "dimTemperature": "temperature",
+  "@dimTemperature": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: temperature."
+  },
+  "dimCurrent": "current",
+  "@dimCurrent": {
+    "description": "Quantity kind (physical dimension) shown in the unit picker: current."
+  },
+  "minutesAgo": "{count, plural, =1{1 min ago} other{{count} min ago}}",
+  "@minutesAgo": {
+    "description": "Recent-projects row: how long ago it was opened.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{count, plural, =1{1 h ago} other{{count} h ago}}",
+  "@hoursAgo": {
+    "description": "Recent-projects row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{count, plural, =1{1 d ago} other{{count} d ago}}",
+  "@daysAgo": {
+    "description": "Recent-projects row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yesterday": "yesterday",
+  "@yesterday": {
+    "description": "Recent-projects row."
+  },
+  "undoTooltip": "Undo ({shortcut})",
+  "@undoTooltip": {
+    "description": "Toolbar tooltip; shortcut is the platform key combination, e.g. ⌘Z.",
+    "placeholders": {
+      "shortcut": {
+        "type": "Object"
+      }
+    }
+  },
+  "redoTooltip": "Redo ({shortcut})",
+  "@redoTooltip": {
+    "description": "Toolbar tooltip.",
+    "placeholders": {
+      "shortcut": {
+        "type": "Object"
+      }
+    }
+  },
+  "notYetDefinedCount": "{count} not yet defined",
+  "@notYetDefinedCount": {
+    "description": "Status line: number of relationships declared without a definition (not an error).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "definitionsDoNotCheckCount": "{count, plural, =1{1 definition does not check} other{{count} definitions do not check}}",
+  "@definitionsDoNotCheckCount": {
+    "description": "Status line: definitions with errors.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "definitionsNotAddedCount": "{count, plural, =1{1 definition not added} other{{count} definitions not added}}",
+  "@definitionsNotAddedCount": {
+    "description": "Status line: definition drafts typed but not yet added to the project.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feasibleOnBoard": "feasible on {board}",
+  "@feasibleOnBoard": {
+    "description": "Status line: deployment verdict for the chosen board.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "notFeasibleOnBoard": "not feasible on {board}",
+  "@notFeasibleOnBoard": {
+    "description": "Status line: deployment verdict.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "incompleteOnBoard": "incomplete on {board}",
+  "@incompleteOnBoard": {
+    "description": "Status line: deployment verdict — the design is not finished enough to place.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "compilerVersion": "Compiler {version}",
+  "@compilerVersion": {
+    "description": "Status line: the connected compiler service and its version.",
+    "placeholders": {
+      "version": {
+        "type": "Object"
+      }
+    }
+  },
+  "protocolVersion": "protocol {version}",
+  "@protocolVersion": {
+    "description": "Status line: the protocol version (technical; the word \"protocol\" may stay English).",
+    "placeholders": {
+      "version": {
+        "type": "Object"
+      }
+    }
+  },
+  "conceptsCount": "{count, plural, =1{1 concept} other{{count} concepts}}",
+  "@conceptsCount": {
+    "description": "Status line fact.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mappingsCount": "{count, plural, =1{1 mapping} other{{count} mappings}}",
+  "@mappingsCount": {
+    "description": "Status line fact; Studio calls a relationship a mapping in this row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saveChangesTo": "Save changes to “{name}”?",
+  "@saveChangesTo": {
+    "description": "Title of the save-changes sheet; name is the project name.",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "readConcept": "read {concept}",
+  "@readConcept": {
+    "description": "Chip in the new-mapping sheet: the mapping reads this concept.",
+    "placeholders": {
+      "concept": {
+        "type": "Object"
+      }
+    }
+  },
+  "domainAlreadyExists": "A domain named {name} already exists.",
+  "@domainAlreadyExists": {
+    "description": "Validation note in the new-timing-domain sheet.",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "instancesCount": "{count, plural, =1{1 instance} other{{count} instances}}",
+  "@instancesCount": {
+    "description": "Design page system header.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "componentsCount": "{count, plural, =1{1 component} other{{count} components}}",
+  "@componentsCount": {
+    "description": "Design page system header.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editingComponent": "Editing {component}",
+  "@editingComponent": {
+    "description": "Design page header while a component’s source is open.",
+    "placeholders": {
+      "component": {
+        "type": "Object"
+      }
+    }
+  },
+  "usedByInstances": "{count, plural, =1{used by 1 instance} other{used by {count} instances}}",
+  "@usedByInstances": {
+    "description": "Design page: how many instances of the component being edited exist.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noConceptMatches": "No concept matches “{query}”.",
+  "@noConceptMatches": {
+    "description": "Library search empty state.",
+    "placeholders": {
+      "query": {
+        "type": "Object"
+      }
+    }
+  },
+  "deleteNamed": "Delete {name}",
+  "@deleteNamed": {
+    "description": "Tooltip/menu: delete the named thing (a concept, a relationship, an output, a domain, an instance, a component).",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "changingThisRechecks": "Changing this re-checks {names}.",
+  "@changingThisRechecks": {
+    "description": "Concept inspector: relationships re-checked by a value-form change; names comma-joined.",
+    "placeholders": {
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "stillUsedBy": "Still used by {names}.",
+  "@stillUsedBy": {
+    "description": "Why a concept cannot be deleted yet.",
+    "placeholders": {
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "inGroup": "In group {group}.",
+  "@inGroup": {
+    "description": "Relationship inspector: the behavior group it belongs to.",
+    "placeholders": {
+      "group": {
+        "type": "Object"
+      }
+    }
+  },
+  "takesItsValueFrom": "Takes its value from {source}.",
+  "@takesItsValueFrom": {
+    "description": "Relationship inspector: bound to a port or relationship (direct).",
+    "placeholders": {
+      "source": {
+        "type": "Object"
+      }
+    }
+  },
+  "takesItsValueFromTransported": "Takes its value from {source}, carried across timing domains starting at {init}.",
+  "@takesItsValueFromTransported": {
+    "description": "Relationship inspector: bound across domains with a starting value.",
+    "placeholders": {
+      "source": {
+        "type": "Object"
+      },
+      "init": {
+        "type": "Object"
+      }
+    }
+  },
+  "checkedOnceValueDecided": "Checked once {names}’s value is decided.",
+  "@checkedOnceValueDecided": {
+    "description": "Relationship inspector: open because a concept has no value form yet; names joined with \"and\".",
+    "placeholders": {
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "drivenBy": "Driven by {driver}.",
+  "@drivenBy": {
+    "description": "Output inspector: the relationship that drives the output.",
+    "placeholders": {
+      "driver": {
+        "type": "Object"
+      }
+    }
+  },
+  "contestedOutput": "{output} already has a final target: {claimants} both claim it.",
+  "@contestedOutput": {
+    "description": "Output inspector: two relationships drive one output; claimants joined with \"and\".",
+    "placeholders": {
+      "output": {
+        "type": "Object"
+      },
+      "claimants": {
+        "type": "Object"
+      }
+    }
+  },
+  "stillDrivenBy": "Still driven by {names}",
+  "@stillDrivenBy": {
+    "description": "Why an output cannot be deleted yet.",
+    "placeholders": {
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "promiseBrokenOpenSource": "{component}’s source no longer keeps its promise; open it to see why.",
+  "@promiseBrokenOpenSource": {
+    "description": "Instance inspector warning.",
+    "placeholders": {
+      "component": {
+        "type": "Object"
+      }
+    }
+  },
+  "boundTo": "Bound to {source}.",
+  "@boundTo": {
+    "description": "Port inspector: what supplies the port (direct).",
+    "placeholders": {
+      "source": {
+        "type": "Object"
+      }
+    }
+  },
+  "boundToTransported": "Bound to {source}, carried across timing domains starting at {init}.",
+  "@boundToTransported": {
+    "description": "Port inspector: supplied across domains with a starting value.",
+    "placeholders": {
+      "source": {
+        "type": "Object"
+      },
+      "init": {
+        "type": "Object"
+      }
+    }
+  },
+  "usedByInstancesNamed": "{count, plural, =1{Used by 1 instance: {names}.} other{Used by {count} instances: {names}.}}",
+  "@usedByInstancesNamed": {
+    "description": "Component inspector: the instances of this component.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "Object"
+      }
+    }
+  },
+  "standsFor": "stands for {concept}",
+  "@standsFor": {
+    "description": "Component inspector, shared concepts: the system concept a body concept stands for.",
+    "placeholders": {
+      "concept": {
+        "type": "Object"
+      }
+    }
+  },
+  "theSystemsOutput": "the system’s {output}",
+  "@theSystemsOutput": {
+    "description": "Component inspector, physical outputs: a body output that is the system’s.",
+    "placeholders": {
+      "output": {
+        "type": "Object"
+      }
+    }
+  },
+  "clockParameterSuffix": "{clock} (parameter)",
+  "@clockParameterSuffix": {
+    "description": "Port timing menu entry: a clock parameter of the component.",
+    "placeholders": {
+      "clock": {
+        "type": "Object"
+      }
+    }
+  },
+  "clockPrivateSuffix": "{clock} (private)",
+  "@clockPrivateSuffix": {
+    "description": "Port timing menu entry: a clock private to the component.",
+    "placeholders": {
+      "clock": {
+        "type": "Object"
+      }
+    }
+  },
+  "relationshipsCount": "{count, plural, =1{1 relationship} other{{count} relationships}}",
+  "@relationshipsCount": {
+    "description": "Count of relationships (group inspector, multi-selection).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "description": "Multi-selection inspector title.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionSummary": "{relationships}{others, plural, =0{} =1{, 1 other} other{, {others} others}}.",
+  "@selectionSummary": {
+    "description": "Multi-selection: \"3 relationships, 2 others.\" — relationships is the relationshipsCount text.",
+    "placeholders": {
+      "relationships": {
+        "type": "Object"
+      },
+      "others": {
+        "type": "int"
+      }
+    }
+  },
+  "groupNAsBehavior": "Group {count} relationships as Behavior",
+  "@groupNAsBehavior": {
+    "description": "Multi-selection button when only some of the selected relationships are free.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyInABehavior": "{count} already in a behavior; move them from there.",
+  "@alreadyInABehavior": {
+    "description": "Multi-selection note.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notSaved": "Not saved: {error}",
+  "@notSaved": {
+    "description": "Definition editor status after a failed save; error is the daemon’s message.",
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "notChecked": "Not checked: {reason}",
+  "@notChecked": {
+    "description": "Definition editor status when the draft could not be checked.",
+    "placeholders": {
+      "reason": {
+        "type": "Object"
+      }
+    }
+  },
+  "compilerServiceUnavailable": "the compiler service is unavailable",
+  "@compilerServiceUnavailable": {
+    "description": "Reason fragment used in notChecked when no other reason is known."
+  },
+  "producesDescription": "produces {what}",
+  "@producesDescription": {
+    "description": "Composer result slot hint: what the whole formula produces.",
+    "placeholders": {
+      "what": {
+        "type": "Object"
+      }
+    }
+  },
+  "expressionHint": "expression",
+  "@expressionHint": {
+    "description": "Composer slot hint when nothing is known about the result."
+  },
+  "thisIs": "This is {what}.",
+  "@thisIs": {
+    "description": "Composer detail line: the type of the selected part.",
+    "placeholders": {
+      "what": {
+        "type": "Object"
+      }
+    }
+  },
+  "equationsCount": "Equations ({count})",
+  "@equationsCount": {
+    "description": "Composer section: the equations that fit here.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "insertAfterThis": "Insert {operator} after this",
+  "@insertAfterThis": {
+    "description": "Composer operator button tooltip; operator is a glyph such as +.",
+    "placeholders": {
+      "operator": {
+        "type": "Object"
+      }
+    }
+  },
+  "paramIsEachElementOf": "{param} is each element: {type}.",
+  "@paramIsEachElementOf": {
+    "description": "Composer note on a binder parameter.",
+    "placeholders": {
+      "param": {
+        "type": "Object"
+      },
+      "type": {
+        "type": "Object"
+      }
+    }
+  },
+  "paramIsEachElement": "{param} is each element of the collection.",
+  "@paramIsEachElement": {
+    "description": "Composer note on a binder parameter of unknown element type.",
+    "placeholders": {
+      "param": {
+        "type": "Object"
+      }
+    }
+  },
+  "sourceOf": "Source of {file}",
+  "@sourceOf": {
+    "description": "Code view accessibility label.",
+    "placeholders": {
+      "file": {
+        "type": "Object"
+      }
+    }
+  },
+  "notBuiltSuffix": "{file} — not built",
+  "@notBuiltSuffix": {
+    "description": "Code view file menu: a file whose text does not build yet.",
+    "placeholders": {
+      "file": {
+        "type": "Object"
+      }
+    }
+  },
+  "hasNoValueFormYet": "{concept} has no value form yet.",
+  "@hasNoValueFormYet": {
+    "description": "Simulate inputs: a concept without a value form cannot take a value.",
+    "placeholders": {
+      "concept": {
+        "type": "Object"
+      }
+    }
+  },
+  "ticksEvaluated": "{count, plural, =1{1 tick evaluated.} other{{count} ticks evaluated.}}",
+  "@ticksEvaluated": {
+    "description": "Simulate status line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tickN": "tick {n}",
+  "@tickN": {
+    "description": "Simulate: the next tick number.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noValueDeclarationProduces": "No value declaration produces {concept}.",
+  "@noValueDeclarationProduces": {
+    "description": "Simulate probe: nothing to sample for this concept.",
+    "placeholders": {
+      "concept": {
+        "type": "Object"
+      }
+    }
+  },
+  "resourcesCount": "{count, plural, =1{1 resource} other{{count} resources}}",
+  "@resourcesCount": {
+    "description": "Deploy target menu detail.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotAnalyse": "Could not analyse: {error}",
+  "@couldNotAnalyse": {
+    "description": "Deploy verdict when the analysis request failed.",
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "checkingBoard": "Checking {board}…",
+  "@checkingBoard": {
+    "description": "Deploy verdict while the analysis runs.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "feasibleOnBoardSentence": "Feasible on {board}.",
+  "@feasibleOnBoardSentence": {
+    "description": "Deploy verdict.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "fitsBoardSoFar": "Fits {board} so far — the binding is not finished.",
+  "@fitsBoardSoFar": {
+    "description": "Deploy verdict for an incomplete design.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "notFeasibleOnBoardSentence": "Not feasible on {board}.",
+  "@notFeasibleOnBoardSentence": {
+    "description": "Deploy verdict.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "placementOn": "Placement on {board}",
+  "@placementOn": {
+    "description": "Deploy section title: where each requirement landed.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      }
+    }
+  },
+  "notConnectedToAnOutput": "Not connected to an output: {devices}.",
+  "@notConnectedToAnOutput": {
+    "description": "Deploy finding: devices without an output; devices comma-joined.",
+    "placeholders": {
+      "devices": {
+        "type": "Object"
+      }
+    }
+  },
+  "noDeviceOnBoardFor": "No device on {board} for: {outputs}.",
+  "@noDeviceOnBoardFor": {
+    "description": "Deploy finding: outputs without a device.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      },
+      "outputs": {
+        "type": "Object"
+      }
+    }
+  },
+  "requirementN": "requirement {n}",
+  "@requirementN": {
+    "description": "Deploy dead end: an unnamed requirement by index.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotPlaceOf": "Could not place {what} of {who}.",
+  "@couldNotPlaceOf": {
+    "description": "Deploy dead-end headline.",
+    "placeholders": {
+      "what": {
+        "type": "Object"
+      },
+      "who": {
+        "type": "Object"
+      }
+    }
+  },
+  "nothingOnBoardCanCarry": "Nothing on {board} can carry {what}.",
+  "@nothingOnBoardCanCarry": {
+    "description": "Deploy dead-end reason.",
+    "placeholders": {
+      "board": {
+        "type": "Object"
+      },
+      "what": {
+        "type": "Object"
+      }
+    }
+  },
+  "fixedPinCannotCarry": "The pin chosen by hand, {pin}, cannot carry {what} here.",
+  "@fixedPinCannotCarry": {
+    "description": "Deploy dead-end reason.",
+    "placeholders": {
+      "pin": {
+        "type": "Object"
+      },
+      "what": {
+        "type": "Object"
+      }
+    }
+  },
+  "groupAsBehaviorCount": "{count, plural, =1{Group as Behavior (1 relationship)} other{Group as Behavior ({count} relationships)}}",
+  "@groupAsBehaviorCount": {
+    "description": "Canvas context menu on a multi-selection.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readsSocket": "reads {name}",
+  "@readsSocket": {
+    "description": "Canvas socket tooltip.",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "producesSocket": "produces {name}",
+  "@producesSocket": {
+    "description": "Canvas socket tooltip.",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "removeFromGroupButton": "Remove from group",
+  "@removeFromGroupButton": {
+    "description": "Group inspector: remove this relationship from the group."
+  },
+  "decideLaterLower": "decide later",
+  "@decideLaterLower": {
+    "description": "Same as decideLater, lowercase, inline in a row."
+  },
+  "groupedValueTitle": "Grouped value",
+  "@groupedValueTitle": {
+    "description": "Studio UI text (inspector.dart)."
+  },
+  "instanceTitle": "Instance",
+  "@instanceTitle": {
+    "description": "Packaging sheet field: the name of the instance to create."
+  },
+  "componentTitle": "Component",
+  "@componentTitle": {
+    "description": "Packaging sheet field: the name of the component to create."
+  },
+  "notPlacedYetSentence": "Not placed yet.",
+  "@notPlacedYetSentence": {
+    "description": "Studio UI text (system_inspector.dart)."
+  },
+  "packageAsReusableComponentTitle": "Package as Reusable Component",
+  "@packageAsReusableComponentTitle": {
+    "description": "Studio UI text (system_sheets.dart)."
+  },
+  "textMode": "Text",
+  "@textMode": {
+    "description": "Definition editor mode switch: edit as text (versus the Formula composer)."
+  },
+  "stepTen": "Step ×10",
+  "@stepTen": {
+    "description": "Simulate button: evaluate ten ticks."
+  },
+  "aRelationshipCapital": "A relationship",
+  "@aRelationshipCapital": {
+    "description": "Simulate error sentence subject when the relationship is unknown."
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Context-menu verb."
+  },
+  "diagNotConnected": "The compiler service is not connected.",
+  "@diagNotConnected": {
+    "description": "Error banner: the daemon process is not reachable."
+  },
+  "diagTransport": "The compiler service could not be reached.",
+  "@diagTransport": {
+    "description": "Error banner: a request to the daemon failed in transit."
+  },
+  "diagPickerUnavailable": "The system file dialog could not be shown. This happens when Studio is launched from a sandboxed host (an embedded terminal, for example). Launch it from Finder or Terminal, or enter a path below.",
+  "@diagPickerUnavailable": {
+    "description": "Error banner."
+  },
+  "diagChangedOnDisk": "The project changed on disk since it was opened.",
+  "@diagChangedOnDisk": {
+    "description": "Conflict banner; the daemon's file list is shown as detail."
+  },
+  "diagPersist": "The project could not be written to disk.",
+  "@diagPersist": {
+    "description": "Error banner."
+  },
+  "diagStaleRevision": "The edit targeted an older revision of the project; it was not applied.",
+  "@diagStaleRevision": {
+    "description": "Error banner."
+  },
+  "diagNothingToUndo": "Nothing to undo.",
+  "@diagNothingToUndo": {
+    "description": "Error banner."
+  },
+  "diagNothingToRedo": "Nothing to redo.",
+  "@diagNothingToRedo": {
+    "description": "Error banner."
+  },
+  "diagNoProject": "No project is open.",
+  "@diagNoProject": {
+    "description": "Error banner."
+  },
+  "diagAlreadyOpen": "A project is already open; close it first.",
+  "@diagAlreadyOpen": {
+    "description": "Error banner."
+  },
+  "diagNotASystem": "This project is a flat design, not a behavior system.",
+  "@diagNotASystem": {
+    "description": "Error banner."
+  },
+  "diagSimulationNotStarted": "Start a simulation first.",
+  "@diagSimulationNotStarted": {
+    "description": "Error banner."
+  },
+  "dialogOpenProject": "Open Project",
+  "@dialogOpenProject": {
+    "description": "OS file dialog confirm button."
+  },
+  "dialogCreateProject": "Create Project",
+  "@dialogCreateProject": {
+    "description": "OS save dialog confirm button."
+  },
+  "dialogUntitledProject": "Untitled Project",
+  "@dialogUntitledProject": {
+    "description": "Suggested name in the OS save dialog for a new project directory."
+  }
+}

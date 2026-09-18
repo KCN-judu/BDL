@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -37,7 +38,7 @@ class FixList extends StatelessWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     return InspectorSection(
-      title: 'Fixes',
+      title: context.l10n.fixes,
       children: [
         for (final x in items)
           Padding(

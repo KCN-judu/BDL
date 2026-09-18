@@ -433,6 +433,11 @@ Transition reduce(AppState s, AppAction action) {
       return Transition(s.copyWith(recent: recent), [SaveRecentProjects(recent)]);
     }(),
     RecentProjectsLoaded(:final recent) => Transition(s.copyWith(recent: recent)),
+    PreferencesLoaded(:final preferences) => Transition(s.copyWith(preferences: preferences)),
+    LanguageChanged(:final language) => () {
+      final next = s.preferences.copyWith(language: language);
+      return Transition(s.copyWith(preferences: next), [SavePreferences(next)]);
+    }(),
     AnalysisReceived(:final analysis, :final fromRequest) => () {
       final pending = fromRequest ? decPending(s) : s.editor.pendingRequests;
       // Keep only an analysis of the revision we hold; older ones are stale,
@@ -696,6 +701,7 @@ Transition _connect(AppState s) {
   return Transition(s.copyWith(connection: const Connecting('')), const [
     ConnectDaemon(),
     LoadRecentProjects(),
+    LoadPreferences(),
   ]);
 }
 
