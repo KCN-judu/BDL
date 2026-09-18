@@ -1160,14 +1160,19 @@ impl<'a> Elab<'a> {
         } else {
             (&args[0], &args[1])
         };
-        // Delay { init, e } / Sync { src, init, e }: init at [0], e at [1]
-        let mut ip = path.clone();
-        ip.push(0);
-        let (ie, it) = self.expr(init, &mut ip, expect);
+        // Delay { init, e } / Sync { src, init, e }: init at [0], e at [1].
+        // The remembered value first: it is what the relationship is
+        // about and usually a name with a type of its own; the initial
+        // value — often a bare `0`, `[]` or `None` — takes that type as
+        // its expectation rather than a provisional one from the context
+        // (an equation still resolving which concept it is at).
         let mut vp = path.clone();
         vp.push(1);
-        let hint = if it.is_known() { Some(&it) } else { expect };
-        let (ve, vt) = self.expr(value, &mut vp, hint);
+        let (ve, vt) = self.expr(value, &mut vp, expect);
+        let mut ip = path.clone();
+        ip.push(0);
+        let hint = if vt.is_known() { Some(&vt) } else { expect };
+        let (ie, it) = self.expr(init, &mut ip, hint);
         let mut branches = vec![
             Branch {
                 span: init.span,

@@ -97,3 +97,98 @@ fn a_fault_in_the_sources_fails_check_with_its_position() {
     assert_eq!(code, 2);
     assert!(err.starts_with("error:"), "{err}");
 }
+
+/// The deployable window in text (docs/spec/deployment-capacity.md):
+/// `compile --period` reports what the schedule requires of each
+/// cross-domain window, and `--bounded-memory` refuses a collection the
+/// design grows without bound instead of generating a core that drops
+/// values.
+#[test]
+fn compile_reports_collection_bounds_and_refuses_unbounded_state_on_bounded_memory() {
+    const WINDOW: &str = "\
+concept Reading : Scalar
+concept Readings : List<Scalar>
+concept Count : Scalar
+clock fast
+clock slow
+mapping x : Reading @fast
+mapping count : Count @fast
+count() = 1 + delay(0, count)
+mapping log : Readings @fast
+log() = take(3, cons(x, delay([], log)))
+mapping logD : Readings @slow
+logD() = sync(fast, [], log)
+mapping seen : Count @slow
+seen() = sync(fast, 0, count)
+mapping cursor : Count @slow
+cursor() = delay(0, seen)
+mapping window : Readings @slow
+window() = reverse(take(seen - cursor, logD))
+";
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("window");
+    std::fs::create_dir_all(root.join("src")).expect("mkdir");
+    std::fs::write(
+        root.join("bdl.toml"),
+        "schema_version = 1\nname = \"window\"\ncompiler_version = \"test\"\nkind = \"text\"\n",
+    )
+    .expect("manifest");
+    std::fs::write(root.join("src/main.bdl"), WINDOW).expect("write");
+    let r = root.to_string_lossy().into_owned();
+    let out_dir = dir.path().join("gen");
+    let o = out_dir.to_str().expect("utf8");
+
+    // sufficient: the design keeps 3, slow sees at most 3 per activation
+    let (code, out, err) = bdld(&[
+        "compile", &r, "--out", o, "--period", "fast=1", "--period", "slow=3",
+    ]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out.contains("collections: bounded by the design"), "{out}");
+    assert!(
+        out.contains(
+            "window fast → slow: up to 3 value(s) between two activations of slow; logD keeps 3"
+        ),
+        "{out}"
+    );
+    assert!(!out.contains("warning["), "{out}");
+    let manifest: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(out_dir.join("bdl-manifest.json")).expect("manifest"),
+    )
+    .expect("json");
+    assert_eq!(manifest["collections"]["unbounded"], false);
+    assert!(manifest["collections"]["state_bytes_max"]
+        .as_u64()
+        .is_some());
+
+    // insufficient: said, not silent
+    let (code, out, _) = bdld(&[
+        "compile", &r, "--out", o, "--period", "fast=1", "--period", "slow=5",
+    ]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("warning[deployment.window_capacity] mapping logD: Between two activations of slow, fast produces up to 5 values, but logD keeps 3."),
+        "{out}"
+    );
+
+    // an unbounded log: a host warns, a bounded-memory target refuses
+    let grown =
+        format!("{WINDOW}mapping grown : Readings @fast\ngrown() = cons(x, delay([], grown))\n");
+    std::fs::write(root.join("src/main.bdl"), grown).expect("write");
+    let (code, out, _) = bdld(&["compile", &r, "--out", o]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("warning[deployment.unbounded_list_state] mapping grown: grown keeps every value it has ever received."),
+        "{out}"
+    );
+    let (code, out, _) = bdld(&["compile", &r, "--out", o, "--bounded-memory"]);
+    assert_ne!(code, 0, "{out}");
+    assert!(
+        out.contains("error[deployment.unbounded_list_state]"),
+        "{out}"
+    );
+    assert!(out.contains("This target has finite memory"), "{out}");
+    // a period for an unknown domain is refused up front
+    let (code, _, err) = bdld(&["compile", &r, "--out", o, "--period", "nope=2"]);
+    assert_ne!(code, 0);
+    assert!(err.contains("no timing domain named `nope`"), "{err}");
+}

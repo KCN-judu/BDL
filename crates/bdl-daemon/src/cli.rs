@@ -182,8 +182,47 @@ pub fn check(root: &Path, version: &str, json: bool) -> Result<(), Failure> {
     }
 }
 
+/// The deployment facts `compile` takes on the command line.
+#[derive(Clone, Debug, Default)]
+pub struct CompileCli {
+    pub bounded_memory: bool,
+    /// `domain=period`, one per entry.
+    pub periods: Vec<String>,
+}
+
+/// `--period name=N`: a timing domain of the design and its activation
+/// period (1 = every tick).
+pub fn parse_period(design: &Design, spec: &str) -> Result<(bdl_model::ClockId, u64), String> {
+    let (name, period) = spec
+        .split_once('=')
+        .ok_or_else(|| format!("`{spec}`: expected domain=period"))?;
+    let clock = design
+        .clocks
+        .values()
+        .find(|c| c.name == name.trim())
+        .ok_or_else(|| format!("no timing domain named `{}`", name.trim()))?;
+    let period: u64 = period
+        .trim()
+        .parse()
+        .ok()
+        .filter(|p| *p > 0)
+        .ok_or_else(|| {
+            format!(
+                "`{}`: a period is a whole number of ticks, at least 1",
+                period.trim()
+            )
+        })?;
+    Ok((clock.id, period))
+}
+
 /// `compile`: generate the Rust crate into `out`.
-pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(), Failure> {
+pub fn compile(
+    root: &Path,
+    version: &str,
+    out: &Path,
+    cli: &CompileCli,
+    json: bool,
+) -> Result<(), Failure> {
     let session = open(root, version)?;
     let project = session
         .project()
@@ -193,10 +232,34 @@ pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(),
     if fault_errors > 0 {
         return Err(Failure::Errors(fault_errors));
     }
+    let schedule = if cli.periods.is_empty() {
+        None
+    } else {
+        let mut s = bdl_reactive::Schedule {
+            periods: project
+                .current
+                .design
+                .clocks
+                .keys()
+                .map(|c| (*c, 1))
+                .collect(),
+        };
+        for spec in &cli.periods {
+            let (clock, period) =
+                parse_period(&project.current.design, spec).map_err(Failure::Open)?;
+            s.periods.insert(clock, period);
+        }
+        Some(s)
+    };
     let options = bdl_compiler::CompileOptions {
         require_complete: true,
         codegen: Default::default(),
-        ..Default::default()
+        memory: if cli.bounded_memory {
+            bdl_compiler::MemoryPolicy::Bounded
+        } else {
+            bdl_compiler::MemoryPolicy::Host
+        },
+        schedule,
     };
     let artifact = bdl_compiler::compile(&project.current, &options);
     let all: Vec<(String, Diagnostic)> = artifact
@@ -205,6 +268,11 @@ pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(),
         .map(|d| (String::new(), d.clone()))
         .collect();
     let errors = print_diagnostics(&project.current.design, &all, json);
+    if !json {
+        if let Some(c) = &artifact.collections {
+            println!("{}", collections_summary(c));
+        }
+    }
     let Some(generated) = artifact.generated else {
         return Err(Failure::Errors(errors.max(1)));
     };
@@ -218,7 +286,7 @@ pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(),
     if json {
         println!(
             "{}",
-            serde_json::json!({ "package": generated.package, "files": generated.files.keys().collect::<Vec<_>>(), "out": out })
+            serde_json::json!({ "package": generated.package, "files": generated.files.keys().collect::<Vec<_>>(), "out": out, "collections": artifact.collections })
         );
     } else {
         println!(
@@ -229,6 +297,47 @@ pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(),
         );
     }
     Ok(())
+}
+
+/// One line on what the design's collections need of a target
+/// (docs/spec/deployment-capacity.md).
+pub fn collections_summary(c: &bdl_compiler::CollectionsReport) -> String {
+    use bdl_compiler::CollectionsReadiness as R;
+    let mut s = match c.readiness {
+        R::ScalarOnly => "collections: none — the core allocates nothing".to_owned(),
+        R::Bounded => format!(
+            "collections: bounded by the design — state at most {} bytes, one tick's values at most {} bytes; the target needs an allocator",
+            c.state_bytes_max.unwrap_or(0),
+            c.tick_bytes_max.unwrap_or(0)
+        ),
+        R::InputBounded => "collections: as large as the inputs — the platform bounds them; the target needs an allocator".to_owned(),
+        R::Unbounded => "collections: a remembered collection grows without bound — not deployable on finite memory as written".to_owned(),
+    };
+    for w in &c.windows {
+        s.push_str(&format!(
+            "\nwindow {} → {}: {}",
+            w.source_name,
+            w.destination_name,
+            match w.required {
+                Some(n) => format!(
+                    "up to {n} value(s) between two activations of {}",
+                    w.destination_name
+                ),
+                None => "give --period for each domain to know what it needs".to_owned(),
+            }
+        ));
+        for (_, name, b) in &w.carried {
+            s.push_str(&format!(
+                "; {name} keeps {}",
+                match b {
+                    bdl_exec_ir::bounds::Bound::Finite { elements } => elements.to_string(),
+                    bdl_exec_ir::bounds::Bound::Input => "as many as supplied".to_owned(),
+                    bdl_exec_ir::bounds::Bound::Unbounded => "everything".to_owned(),
+                }
+            ));
+        }
+    }
+    s
 }
 
 /// One `--input name=value` argument: a relationship of the design and a

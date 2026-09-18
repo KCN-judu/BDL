@@ -23,6 +23,7 @@ bdl-library = { workspace = true }
 bdl-ide-db = { workspace = true }
 bdl-hardware = { workspace = true }
 bdl-reactive = { workspace = true }
+bdl-exec-ir = { workspace = true }
 bdl-diagnostics = { workspace = true }
 prost = { workspace = true }
 bytes = { workspace = true }

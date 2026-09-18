@@ -44,6 +44,14 @@ enum Command {
         /// Where the generated crate goes.
         #[arg(long, default_value = "target/bdl")]
         out: std::path::PathBuf,
+        /// The target has finite memory: a collection the design grows
+        /// without bound refuses the artefact instead of being reported.
+        #[arg(long)]
+        bounded_memory: bool,
+        /// The deployment schedule, `domain=period` (1 = every tick);
+        /// repeatable.  Decides what each cross-domain window needs.
+        #[arg(long = "period")]
+        periods: Vec<String>,
         #[arg(long)]
         json: bool,
     },
@@ -85,8 +93,18 @@ fn main() -> anyhow::Result<()> {
             rt.block_on(server::serve_stdio())
         }
         Command::Check { root, json } => exit_with(cli::check(&root, COMPILER_VERSION, json)),
-        Command::Compile { root, out, json } => {
-            exit_with(cli::compile(&root, COMPILER_VERSION, &out, json))
+        Command::Compile {
+            root,
+            out,
+            bounded_memory,
+            periods,
+            json,
+        } => {
+            let options = cli::CompileCli {
+                bounded_memory,
+                periods,
+            };
+            exit_with(cli::compile(&root, COMPILER_VERSION, &out, &options, json))
         }
         Command::Simulate {
             root,
