@@ -1,0 +1,4 @@
+# Every text file is checked out with LF on every platform: the golden
+# files (generated crates, manifests) are compared byte for byte on
+# Windows too, and the Markdown formatter and linters assume LF.
+* text=auto eol=lf

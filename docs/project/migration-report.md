@@ -6,7 +6,7 @@ status: current
 
 # Engineering-record migration report
 
-The records model in [governance.md](GOVERNANCE.md) was applied to the
+The records model in [governance.md](governance.md) was applied to the
 repository at `d606405` (main, 2026-09-17). This report lets a reviewer verify
 that nothing disappeared: every engineering document that existed is listed with
 its old role, what was done to it and where its content now lives. User-guide
