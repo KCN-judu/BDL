@@ -13,8 +13,8 @@ concept Tilt : Angle
 concept Brightness : Scalar
 clock interaction
 
-mapping tilt : Tilt @interaction               // supplied from outside
-mapping brightness : Brightness @interaction
+mapping tilt : () -> Tilt @interaction         // supplied from outside
+mapping brightness : () -> Brightness @interaction
 brightness() = dimByTilt(tilt)
 
 /// How bright the lamp is for a tilt.

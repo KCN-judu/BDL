@@ -25,7 +25,7 @@ mapping chooseBrightness : Held -> Tilt -> Brightness
 chooseBrightness(held, tilt) =
   if held then dimByTilt(tilt) else 0
 
-mapping level : Brightness           // reads nothing: a value
+mapping level : () -> Brightness     // reads nothing: a value
 level() = 0.5
 ```
 
@@ -47,20 +47,25 @@ form is decided later.
 ```text
 mapping name : A -> B -> C          // the signature: reads A and B, produces C
 name(a, b) = expr                   // the definition; optional
-mapping level : Brightness @main    // reads nothing: a value, in the timing domain `main`
+mapping level : () -> Brightness @main   // reads nothing: a value, in the timing domain `main`
 level() = 0.5
 ```
 
 The definition repeats the name and gives one parameter per input. A
-relationship that reads nothing is written `mapping level : Brightness` and
-defined `level() = …`; that is shorthand for `mapping level : () -> Brightness`,
-where `()` is the empty domain — the two spellings are the same declaration with
-the same type, `() -> Brightness`, and the formatter keeps whichever you wrote.
-Two inputs may be spelled `(A, B) -> C` as well as `A -> B -> C`. (`()` is not a
-measurement unit and not `_`.) Without a definition, the relationship is
-_declared_ — an input, or work still to do. `@domain` after the signature puts
-the relationship in a timing domain ([Timing domains](../concepts/timing.md));
-without it the relationship serves any domain.
+relationship that reads nothing is written `mapping level : () -> Brightness`
+and defined `level() = …`: `()` is the empty domain, and `() -> Brightness` is
+the relationship's type. Older files write the same thing as
+`mapping level : Brightness`; that shorthand still opens and means the same
+declaration, the editor marks it with a hint — _A relationship with no inputs is
+written explicitly as `() -> Brightness`. The output-only shorthand is
+deprecated._ — with the fix **Make empty domain explicit**, and
+`bdld migrate-unit-domain <project>` rewrites a whole project when you ask; the
+formatter never rewrites it for you. Two inputs may be spelled `(A, B) -> C` as
+well as `A -> B -> C`. (`()` is not a measurement unit and not `_`.) Without a
+definition, the relationship is _declared_ — an input, or work still to do.
+`@domain` after the signature puts the relationship in a timing domain
+([Timing domains](../concepts/timing.md)); without it the relationship serves
+any domain.
 
 **Checked?** Yes. The parameter names are the names the body uses:
 `dimByTilt(t) = t / (90 deg)` reads its input as `t`. Renaming the concept does
@@ -124,8 +129,8 @@ component AdaptiveLamp {
 instance lampA : AdaptiveLamp { main = interaction, gain = 2 }
 instance lampB : AdaptiveLamp { main = interaction, gain = 1 }
 
-mapping tiltValue : Tilt @interaction
-mapping slow : Brightness @display
+mapping tiltValue : () -> Tilt @interaction
+mapping slow : () -> Brightness @display
 
 bind lampA.tiltValue = tiltValue          // a required port reads a relationship
 bind lampB.tiltValue = tiltValue

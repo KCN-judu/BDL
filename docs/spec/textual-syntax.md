@@ -245,8 +245,32 @@ NameRef         ::= Ident
 A `MappingDef` belongs to the `MappingDecl` immediately before it. Its `NameRef`
 is expected to repeat the declared name; the parser accepts any identifier and
 lowering reports a mismatch (§8.2). A relationship without inputs is declared
-`mapping level : Brightness` — shorthand for `mapping level : () -> Brightness`,
-the canonical form (§4.2) — and defined `level() = 0`.
+`mapping level : () -> Brightness` — the **preferred spelling**: the empty
+domain written out (§4.2) — and defined `level() = 0`.
+
+**The legacy output-only shorthand.** `mapping level : Brightness` is
+compatibility syntax for the same declaration: it parses, binds and elaborates
+identically (one `Signature`, one canonical type `() -> Brightness`), and
+nothing generated ever writes it — `bdl-text` (the Code view, write-back, a
+migrated legacy project), the IDE's renderers and every example write `() -> B`.
+The IDE reports it as a hint, never an error (`text.legacy_unit_domain`: _A
+relationship with no inputs is written explicitly as `() -> RoomTemp`. The
+output-only shorthand is deprecated._) with the quick fix _Make empty domain
+explicit_ — one insertion of `() ->` before the signature; hover and Explain
+show the declared spelling beside the canonical type. The hint is raised only
+where a bare type means this shorthand — a `mapping`'s signature — never in a
+concept's value form, an output's or a port's type. The formatter preserves the
+authored spelling (§10): formatting is never a migration. Opt-in,
+`bdld migrate-unit-domain <project>` rewrites every legacy signature of a
+project losslessly (`bdl_syntax::migrate`: one insertion per signature, comments
+and trivia untouched, identities and the design checked unchanged before
+anything is written). Staged policy (ADR-0029 amendment): stage 1 — this; stage
+2 — the hint becomes a warning, generated code never emits the shorthand
+(already so); stage 3 — a language edition may remove it, with the migration
+automatic. No removal is scheduled: there is no versioning policy for the
+language yet. Port types (`requires n : T`, `param n : T`, `provides n : T`)
+keep the bare output — a port's grammar has no domain to spell, and the policy
+is about `mapping`.
 
 ### 4.2 Types
 
@@ -269,20 +293,21 @@ domain([A])       = A
 domain([A, B, …]) = (A, B, …)          ≅  A -> B -> …  by currying
 ```
 
-so `mapping f : () -> B` and its shorthand `mapping f : B` declare the one type
-`() -> B`, and `mapping f : (A, B) -> C` is `mapping f : A -> B -> C`. `()` is
-the empty product — `Product([]) ≅ ()` — never the word _unit_ (a measurement
-unit in BDL) and never `_`; it can only open a signature: after an input
-(`A -> () -> B`), as the output, or as a concept's value form it is refused
-(`text.unknown_concept` / `binding.unknown_concept`, in those words). The kernel
-has no unit type: it encodes `() -> B` as `B` (unit elimination, the unique
-argument erased) and `(A, B) -> C` as `A -> B -> C` (`bdl_ir::ty`, ADR-0029), so
-a relationship without inputs is not a category of its own — it keeps its
-identity, realization, timing domain and dependencies, and is read as a value
-(`f`, the application to the unique argument, §4.3). A concept is written by its
-name (`Tilt`), never `Sem<Tilt>` — `sem`, `q`, `rep`, `mk` are kernel and
-explanation vocabulary. Generic forms are syntax only; which of them exist and
-what they mean is decided by elaboration: in a concept's value form `List<R>`,
+so `mapping f : () -> B` — and the legacy shorthand `mapping f : B`, §4.1 —
+declare the one type `() -> B`, and `mapping f : (A, B) -> C` is
+`mapping f : A -> B -> C`. `()` is the empty product — `Product([]) ≅ ()` —
+never the word _unit_ (a measurement unit in BDL) and never `_`; it can only
+open a signature: after an input (`A -> () -> B`), as the output, or as a
+concept's value form it is refused (`text.unknown_concept` /
+`binding.unknown_concept`, in those words). The kernel has no unit type: it
+encodes `() -> B` as `B` (unit elimination, the unique argument erased) and
+`(A, B) -> C` as `A -> B -> C` (`bdl_ir::ty`, ADR-0029), so a relationship
+without inputs is not a category of its own — it keeps its identity,
+realization, timing domain and dependencies, and is read as a value (`f`, the
+application to the unique argument, §4.3). A concept is written by its name
+(`Tilt`), never `Sem<Tilt>` — `sem`, `q`, `rep`, `mk` are kernel and explanation
+vocabulary. Generic forms are syntax only; which of them exist and what they
+mean is decided by elaboration: in a concept's value form `List<R>`,
 `Pair<R₁, R₂>` and `Option<R>` over value forms (§15); anything else
 (`Result<A, B>`) parses and is refused. There is no type-level computation.
 
@@ -631,6 +656,9 @@ formatter no decisions to invent.
   operators are surrounded by single spaces; unary operators touch their
   operand; a unit follows its number with one space.
 - Parentheses the author wrote are kept (`ParenExpr` is in the tree).
+- A signature's spelling is kept: `mapping f : B` is not rewritten to
+  `mapping f : () -> B` by formatting (§4.1); that is the migration's job, on
+  request.
 
 ---
 
@@ -783,8 +811,8 @@ PinFix        ::= "pin" Number "=" Ident
 ```bdl
 clock interaction
 
-mapping tilt : Tilt @interaction                 // a value, supplied from outside
-mapping brightness : Brightness @interaction
+mapping tilt : () -> Tilt @interaction           // a value, supplied from outside
+mapping brightness : () -> Brightness @interaction
 brightness() = dimByTilt(tilt)
 
 output light : Brightness @interaction            // a physical output, required by default

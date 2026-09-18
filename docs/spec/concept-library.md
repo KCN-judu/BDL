@@ -160,10 +160,15 @@ has answered.
 position it offers `AmbientLight : Illuminance` (every template whose name or
 keyword matches; a name already taken in the project ranks lower), as
 `CompletionKind::Template` carrying the template id. Accepting one writes
-ordinary syntax — no metadata, no marker; the source stays plain BDL. The LSP
-adapter renders it as a class item labelled with the library id; the test
-asserts that every template of the embedded library is offered from the same
-data, never from a second list.
+ordinary syntax — no metadata, no marker; the source stays plain BDL. The
+library holds concept templates only; a relationship that supplies one of them
+from outside is an ordinary relationship without inputs, written in the
+preferred spelling — `mapping tempSensor : () -> Temperature`,
+`mapping tilt : () -> Tilt` — by whoever generates it (Studio's write-back, the
+migration, an example); no template privileges a source. The LSP adapter renders
+it as a class item labelled with the library id; the test asserts that every
+template of the embedded library is offered from the same data, never from a
+second list.
 
 ## Protocol
 

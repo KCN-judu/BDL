@@ -138,27 +138,29 @@ each of its questions was answered is in the
   proof.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** the Unit-domain normalization (ADR-0029: one canonical
-  type per relationship, `() -> B` for no inputs, `()` and `(A, B) -> C`
-  spellings, protocol 0.14, ISS-0014 for the formal follow-up); the natural
-  expression surface (P11, FV Phase 11 consumed: binders `all x in xs: body`,
-  closed ranges `x in lo .. hi` and `x ?? d` as one-way desugaring to the
-  equation library, locals as the formula's own symbols, the Composer drawing
-  and composing them, protocol 0.13, ADR-0028's second amendment); the Composer
-  hardening pass (P10b: the chart model, the stale-projection policy, nominal
-  positions, grouping by position); the Formula Composer foundation (P10a, FV
-  Phase 10 consumed: the `?` slot, the unit registry with charts and one
-  conversion, the projection / slot / compose queries of the IDE service,
-  protocol 0.12, the Formula | Text views of the definition editor, ADR-0028);
-  the P9 hardening pass (linear folds and commit-only writes in the generated
-  core, static list bounds and window capacity as deployment validation,
-  `bdld compile --bounded-memory --period`, the order invariant in the model,
-  ADR-0026/0027); the data core and the equation library (FV Phases 9a–9c
-  consumed: collections, grouped and optional values, `fold`, equality on data,
-  order by declaration, the equations, protocol 0.11, ADR-0024/0025); one BDL
-  project — sources canonical, legacy JSON migrated on open, the layout service,
-  the Code and Split views, protocol 0.10.
-  [changes/unreleased/](changes/unreleased/).
+- **Recently changed:** `() -> A` as the preferred spelling of a relationship
+  without inputs (ADR-0029 amendment: the shorthand a hint with a quick fix,
+  never generated, `bdld migrate-unit-domain` opt-in); the Unit-domain
+  normalization (ADR-0029: one canonical type per relationship, `() -> B` for no
+  inputs, `()` and `(A, B) -> C` spellings, protocol 0.14, ISS-0014 for the
+  formal follow-up); the natural expression surface (P11, FV Phase 11 consumed:
+  binders `all x in xs: body`, closed ranges `x in lo .. hi` and `x ?? d` as
+  one-way desugaring to the equation library, locals as the formula's own
+  symbols, the Composer drawing and composing them, protocol 0.13, ADR-0028's
+  second amendment); the Composer hardening pass (P10b: the chart model, the
+  stale-projection policy, nominal positions, grouping by position); the Formula
+  Composer foundation (P10a, FV Phase 10 consumed: the `?` slot, the unit
+  registry with charts and one conversion, the projection / slot / compose
+  queries of the IDE service, protocol 0.12, the Formula | Text views of the
+  definition editor, ADR-0028); the P9 hardening pass (linear folds and
+  commit-only writes in the generated core, static list bounds and window
+  capacity as deployment validation, `bdld compile --bounded-memory --period`,
+  the order invariant in the model, ADR-0026/0027); the data core and the
+  equation library (FV Phases 9a–9c consumed: collections, grouped and optional
+  values, `fold`, equality on data, order by declaration, the equations,
+  protocol 0.11, ADR-0024/0025); one BDL project — sources canonical, legacy
+  JSON migrated on open, the layout service, the Code and Split views, protocol
+  0.10. [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph
 

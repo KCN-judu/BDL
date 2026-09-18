@@ -11,15 +11,15 @@
   `mapping f : () -> A`. The historical `mapping f : A` still opens and means
   the same declaration (the one canonical type `() -> A`), as compatibility
   syntax only.
-- **Nothing generates the shorthand any more.** The Code view, source
-  write-back and legacy-project migration (`bdl-text`), the IDE's rendered
-  projection and hover, the Smart Lamp example and the documentation write
-  `() -> A` from the start.
+- **Nothing generates the shorthand any more.** The Code view, source write-back
+  and legacy-project migration (`bdl-text`), the IDE's rendered projection and
+  hover, the Smart Lamp example and the documentation write `() -> A` from the
+  start.
 - **A hint, never an error.** The IDE reports the shorthand as
   `text.legacy_unit_domain` — _A relationship with no inputs is written
-  explicitly as `() -> RoomTemp`. The output-only shorthand is deprecated._ —
-  at the signature of a `mapping` only, with the quick fix **Make empty domain
-  explicit** (one insertion of `() -> `). Hover and Explain show
+  explicitly as `() -> RoomTemp`. The output-only shorthand is deprecated._ — at
+  the signature of a `mapping` only, with the quick fix **Make empty domain
+  explicit** (one insertion of `() ->`). Hover and Explain show
   `declared spelling: RoomTemp` beside `type: () -> RoomTemp` and say that the
   omitted domain is the empty product.
 - **The formatter is not a migration**: it keeps whichever spelling was
@@ -34,12 +34,15 @@
 
 ## Compatibility and migration
 
-- Designers: existing projects are not rewritten; a hint appears in the
-  editor on each legacy signature, with a fix. Run `bdld migrate-unit-domain`
-  on a project to rewrite it all at once, or leave it: stage 1 of the policy
-  in ADR-0029's amendment changes nothing else.
-- Project files: nothing. Protocol: nothing (0.14 already carries the unit
-  kind; a spelling is source syntax, not protocol state).
+- Designers: existing projects are not rewritten; a hint appears in the editor
+  on each legacy signature, with a fix. Run `bdld migrate-unit-domain` on a
+  project to rewrite it all at once, or leave it: stage 1 of the policy in
+  ADR-0029's amendment changes nothing else. An item Studio rewrites anyway — a
+  relationship whose signature mentions a renamed concept — comes back in the
+  preferred spelling, as every re-rendered item always has; untouched items stay
+  byte for byte.
+- Project files: nothing. Protocol: nothing (0.14 already carries the unit kind;
+  a spelling is source syntax, not protocol state).
 - Developers: `SemanticSeverity::Hint` (LSP `Hint` + `Deprecated`; daemon
   `Info`); `bdl_syntax::migrate`; `bdl_text::make_unit_domains_explicit`;
   `bdl_text::print` writes `() -> A` for mappings (ports unchanged);

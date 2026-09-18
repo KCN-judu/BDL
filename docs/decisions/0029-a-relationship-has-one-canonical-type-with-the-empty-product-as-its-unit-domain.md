@@ -97,3 +97,38 @@ argument without changing the reactive semantics of memory.
   documented as the presentation of the canonical type.
 - Remaining `inputs.is_empty()` tests are presentation (socket rows, dialog
   heights, `f(…)` vs `f` labels) or the named predicate.
+
+## Amendment (2026-09-18, the preferred spelling)
+
+Extends the decision; every sentence above stays true.
+
+- **`() -> A` is the preferred textual spelling** of a relationship without
+  inputs; `mapping f : A` is compatibility syntax only — accepted, meaning the
+  same declaration, no longer described as an equal alternative. Everything that
+  generates source (`bdl-text::print` for the Code view, write-back and
+  legacy-project migration; the IDE's `render_module`; hover's surface line;
+  examples and documentation) writes `() -> A`. Port types keep the bare output:
+  a port's grammar has no domain to spell.
+- **The shorthand is a hint with a quick fix**, never an error:
+  `text.legacy_unit_domain` (`SemanticSeverity::Hint`, LSP hint tagged
+  deprecated) at the signature of a `mapping` written with a bare type, and
+  nowhere else; _Make empty domain explicit_ inserts `() ->` and nothing else.
+  Hover and Explain show `declared spelling` beside the canonical type.
+- **Formatting is never a migration**: the formatter keeps the authored
+  spelling. The migration is opt-in, `bdld migrate-unit-domain`
+  (`bdl_syntax::migrate`, `bdl_text::make_unit_domains_explicit`): lossless
+  outside the inserted text, identities and the design verified unchanged before
+  a byte is written.
+- **Source is a role, not a type.** A `() -> A` relationship may be shown as a
+  source on the canvas (no input socket) and offered as a value; `Source` is not
+  a type constructor and not part of the textual type. The reference spelling
+  stays `f`: the signature exposes the empty domain, the observation of the
+  value erases the unique argument — `f()` and `f(())` remain accepted and are
+  not preferred.
+- **Staged policy.** Stage 1 (now): explicit form preferred, shorthand accepted,
+  hint + quick fix, opt-in migration. Stage 2: the hint becomes a warning;
+  generated code never emits the shorthand (already the case). Stage 3: a
+  language edition or major syntax revision may remove the shorthand with the
+  migration applied automatically. No removal version is scheduled — the
+  language has no versioning policy yet; scheduling one is a decision of its
+  own.

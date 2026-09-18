@@ -31,6 +31,10 @@ formal result arrives.
 - Cross-domain occurrence windows: a surface form for the window the design can
   already write, bounded (ISS-0001) — with it, a compiler-recognised bounded
   transport becomes possible (ADR-0027's rejected ring buffer).
+- The unit-domain spelling, stage 2 and 3 (ADR-0029 amendment): the hint on
+  `mapping f : A` becomes a warning, the Code view shows it too, and a language
+  edition may remove the shorthand with `bdld migrate-unit-domain` applied
+  automatically — after a versioning policy for the language exists.
 - The equation language's remaining edges: `zip`'s cost in the generated core
   (ISS-0013); hover on an equation's name (completion carries its meaning
   today); record syntax lowering to nested grouped values — only if a case asks

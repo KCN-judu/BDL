@@ -402,6 +402,17 @@ there is parenthesised), `..` between `in` and `??`, `??` between `..` and
 parameters, a pattern's names) above the design's names, and the four binder
 templates only when a collection is in sight (an input or a nullary relationship
 of a list kind), with the one collection filled in when there is exactly one.
+The legacy output-only shorthand `mapping f : A` is `text.legacy_unit_domain` —
+`SemanticSeverity::Hint`, the one severity that is neither wrong nor unfinished
+(LSP `Hint` tagged `Deprecated`; the daemon's formula adapter maps it to `Info`)
+— raised from `bdl_syntax::migrate::legacy_unit_domain_signatures` over the
+document (a `mapping`'s bare signature, nothing else), anchored to the bound
+mapping with `EntityRole::Signature`; `actions_for` answers it with _Make empty
+domain explicit_, a `SemanticOperation::Text` inserting `() ->`.
+`hover::declared_spelling` reads the anchored signature text so hover and
+Explain can show the declared spelling beside the canonical type. The Studio
+Code view (fed by `bdl-text` load faults, not this service) shows no hint today.
+
 References, rename and semantic tokens never take a local for an entity:
 `ast::NameExpr::local_binding` (the nearest enclosing binder body, rule, match
 arm or earlier `let` that binds the spelling) is consulted by the index, the
