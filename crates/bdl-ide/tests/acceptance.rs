@@ -571,6 +571,54 @@ fn completion_ranks_by_expected_dimension_and_units_after_numbers() {
     assert!(items.iter().all(|i| i.replace == TextRange::new(0, 0)));
 }
 
+#[test]
+fn equations_of_the_library_complete_by_prefix_in_the_designers_words() {
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    host.set_definition_draft(lamp.dim_by_tilt, "cl");
+    let snap = host.snapshot();
+    let items = completion(
+        &snap,
+        &CompletionContext::Formula {
+            mapping: lamp.dim_by_tilt,
+            offset: 2,
+        },
+    );
+    let clamp = items
+        .iter()
+        .find(|i| i.kind == CompletionKind::Equation && i.label == "clamp(x, low, high)")
+        .expect("clamp");
+    assert_eq!(clamp.insert, "clamp(");
+    let doc = clamp.documentation.as_deref().unwrap_or("");
+    assert!(doc.contains("held between"), "{doc}");
+    assert!(doc.contains("ordered kind"), "{doc}");
+    // the designer's own relationship shadows a library name
+    let s = edit(
+        &lamp.snapshot,
+        EditOp::CreateMapping {
+            name: "clamp".into(),
+            description: String::new(),
+            signature: bdl_model::surface::Signature {
+                inputs: vec![],
+                output: lamp.brightness,
+            },
+        },
+    );
+    let mut host = IdeHost::new(s);
+    host.set_definition_draft(lamp.dim_by_tilt, "cl");
+    let items = completion(
+        &host.snapshot(),
+        &CompletionContext::Formula {
+            mapping: lamp.dim_by_tilt,
+            offset: 2,
+        },
+    );
+    assert!(items
+        .iter()
+        .any(|i| i.kind == CompletionKind::Mapping && i.label == "clamp"));
+    assert!(!items.iter().any(|i| i.kind == CompletionKind::Equation));
+}
+
 // ---- robustness -------------------------------------------------------------------
 
 #[test]

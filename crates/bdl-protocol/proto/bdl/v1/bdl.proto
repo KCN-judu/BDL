@@ -886,7 +886,8 @@ message DraftCompletionResponse {
 
 message DraftCompletionItem {
   string label = 1;
-  // "input", "unit", "keyword", "concept", "representation", "mapping".
+  // "input", "unit", "keyword", "concept", "representation", "mapping",
+  // "template", "equation" (an equation of the library, 0.11).
   string kind = 2;
   // Replace the byte range [replace_start, replace_end) of the source
   // with `insert`.

@@ -43,6 +43,9 @@ pub enum CompletionKind {
     /// ordinary declaration (`AmbientLight : Illuminance`); `template`
     /// carries the library id for clients that show provenance.
     Template,
+    /// An equation of the library (`min`, `any`, `clamp`): applied to
+    /// values, never a value; inlined at analysis time.
+    Equation,
 }
 
 /// What the compiler expects at the completion point, when it knows.
@@ -132,7 +135,29 @@ pub struct SemanticCompletion {
     pub template: Option<String>,
 }
 
-const KEYWORDS: &[&str] = &["if", "then", "else", "true", "false"];
+const KEYWORDS: &[&str] = &["if", "then", "else", "true", "false", "in"];
+
+/// The hover and completion text of an equation: its designer-facing
+/// summary, its shape and what its values must be able to do.
+pub fn equation_documentation(e: &bdl_equations::Entry) -> String {
+    use bdl_equations::Cap;
+    let needs: Vec<&str> = e
+        .scheme
+        .caps
+        .iter()
+        .map(|(_, c)| match c {
+            Cap::Ord => "values of an ordered kind: a quantity, or a concept declared ordered",
+            Cap::Eq | Cap::Data => {
+                "values that can be compared for equality (any value that is not a rule)"
+            }
+        })
+        .collect();
+    let mut s = format!("{} — {}", e.shape(), e.summary);
+    if !needs.is_empty() {
+        s.push_str(&format!(" Needs {}.", needs.join("; ")));
+    }
+    s
+}
 
 /// Candidates at the context, best first.  Empty when nothing sensible
 /// applies; never an error.
@@ -346,6 +371,26 @@ fn formula_completions(
                 template: None,
             });
         }
+    }
+
+    // The equation library, in the designer's words: `min(a, b)` — the
+    // smaller of two values of the same ordered kind.  A relationship of
+    // the design with the same name is offered above and wins.
+    for e in bdl_equations::entries() {
+        if !matches(e.name) || design.mappings.values().any(|m| m.name == e.name) {
+            continue;
+        }
+        out.push(SemanticCompletion {
+            label: e.shape(),
+            kind: CompletionKind::Equation,
+            entity: None,
+            resulting_type: None,
+            replace,
+            insert: format!("{}(", e.name),
+            relevance: 12,
+            documentation: Some(equation_documentation(e)),
+            template: None,
+        });
     }
 
     for u in bdl_elab::units::UNITS {

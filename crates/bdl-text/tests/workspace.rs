@@ -628,6 +628,102 @@ fn text_and_model_agree_down_to_the_executable_plan() {
     assert_eq!(ca.generated.map(|g| g.files), cb.generated.map(|g| g.files));
 }
 
+/// The equation vocabulary in text: structured value forms, an ordered
+/// concept, collections and rules in formulas — loaded, rendered back
+/// canonically, loaded again, and compiled to the same plan.
+#[test]
+fn equations_collections_and_ordered_concepts_round_trip_through_text() {
+    const SRC: &str = "\
+ordered concept Brightness : Scalar
+concept Mode : Scalar
+concept Temperature : Temperature
+concept Readings : List<Temperature>
+concept Climate : Pair<Temperature, Scalar>
+concept Held : Bool
+concept MaybeTemp : Option<Temperature>
+
+clock main
+
+mapping temps : Readings @main
+mapping bIn : Brightness @main
+mapping mode : Mode @main
+
+mapping allBelow : Held @main
+allBelow() = all(temps, t => t < 30 K)
+
+mapping hottest : MaybeTemp @main
+hottest() = head(reverse(temps))
+
+mapping dimmed : Brightness @main
+dimmed() = clamp(bIn, 0.1, 0.9)
+
+mapping isAuto : Held @main
+isAuto() = mode in [1, 2]
+
+mapping climate : Climate @main
+climate() = (getOrElse(head(temps), 0 K), length(temps))
+";
+    let fs = files(&[("src/main.bdl", SRC)]);
+    let first = load_workspace("eq", &fs, &IdentityTable::default());
+    assert!(
+        first.faults.iter().all(|f| f.is_open()),
+        "{:#?}",
+        first.faults
+    );
+    let base = &first.system.base;
+    let concept = |n: &str| base.concepts.values().find(|c| c.name == n).unwrap();
+    assert!(concept("Brightness").ordered);
+    assert!(!concept("Mode").ordered);
+    assert_eq!(
+        concept("Readings").representation,
+        Some(Representation::list(Representation::Quantity {
+            dim: Dim::TEMPERATURE
+        }))
+    );
+    assert_eq!(
+        concept("Climate").representation,
+        Some(Representation::pair(
+            Representation::Quantity {
+                dim: Dim::TEMPERATURE
+            },
+            Representation::Quantity { dim: Dim::ZERO }
+        ))
+    );
+    assert_eq!(
+        concept("MaybeTemp").representation,
+        Some(Representation::optional(Representation::Quantity {
+            dim: Dim::TEMPERATURE
+        }))
+    );
+    let rendered = bdl_text::print::render_system(&first.system);
+    assert!(rendered.contains("ordered concept Brightness : Scalar"));
+    assert!(rendered.contains("concept Readings : List<Temperature>"));
+    assert!(rendered.contains("concept Climate : Pair<Temperature, Scalar>"));
+    assert!(rendered.contains("concept MaybeTemp : Option<Temperature>"));
+    let again = load_workspace("eq", &files(&[("src/main.bdl", &rendered)]), &first.table);
+    assert_eq!(again.system, first.system);
+    // every formula elaborates and the whole design compiles to a plan
+    let flat = bdl_system::flatten(&SystemSnapshot::new(first.system.clone())).snapshot;
+    let options = bdl_compiler::CompileOptions {
+        require_complete: false,
+        codegen: Default::default(),
+    };
+    let c = bdl_compiler::compile(&flat, &options);
+    assert!(c.exec_ir.is_some(), "{:#?}", c.diagnostics);
+    // a mistaken value form is a fault with the vocabulary in it
+    let bad = load_workspace(
+        "eq",
+        &files(&[("src/main.bdl", "concept X : List<Tilt, Scalar>\n")]),
+        &IdentityTable::default(),
+    );
+    assert!(
+        bad.faults
+            .iter()
+            .any(|f| f.code() == "text.unknown_representation"
+                && f.message().contains("List<Scalar>"))
+    );
+}
+
 /// Loading stays proportional to the source: a project of many files
 /// and thousands of items builds in well under the time a person waits
 /// for an editor.

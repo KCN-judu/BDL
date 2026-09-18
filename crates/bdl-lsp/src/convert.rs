@@ -124,6 +124,7 @@ pub fn completion_item(c: &SemanticCompletion, index: &LineIndex) -> CompletionI
         // A library template writes a plain declaration; the item is a
         // class with the library named beside it, not a snippet.
         CompletionKind::Template => CompletionItemKind::CLASS,
+        CompletionKind::Equation => CompletionItemKind::FUNCTION,
     };
     CompletionItem {
         label: c.label.clone(),
@@ -315,6 +316,7 @@ pub const TOKEN_TYPES: &[SemanticTokenType] = &[
     SemanticTokenType::NUMBER,
     SemanticTokenType::COMMENT,
     SemanticTokenType::OPERATOR,
+    SemanticTokenType::MACRO, // equation of the library
 ];
 
 pub const TOKEN_MODIFIERS: &[SemanticTokenModifier] = &[
@@ -343,6 +345,7 @@ fn token_type(k: TokenKind) -> u32 {
         TokenKind::Number => 9,
         TokenKind::Comment => 10,
         TokenKind::Operator => 11,
+        TokenKind::Equation => 12,
     }
 }
 

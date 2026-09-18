@@ -213,6 +213,7 @@ dependencies = [
  "bdl-compiler",
  "bdl-diagnostics",
  "bdl-elab",
+ "bdl-equations",
  "bdl-ide-db",
  "bdl-ir",
  "bdl-library",

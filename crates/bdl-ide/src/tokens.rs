@@ -24,6 +24,8 @@ pub enum TokenKind {
     Number,
     Comment,
     Operator,
+    /// A name of the equation library applied in a formula (`min`, `any`).
+    Equation,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -103,11 +105,26 @@ pub fn semantic_tokens(snapshot: &AnalysisSnapshot, document: DocumentId) -> Vec
                 match t.parent().map(|p| p.kind()) {
                     Some(SyntaxKind::UnitSuffix) => TokenKind::Unit,
                     Some(SyntaxKind::Name)
-                        if t.parent()
-                            .and_then(|p| p.parent())
-                            .is_some_and(|g| g.kind() == SyntaxKind::IdentPattern) =>
+                        if t.parent().and_then(|p| p.parent()).is_some_and(|g| {
+                            matches!(
+                                g.kind(),
+                                SyntaxKind::IdentPattern | SyntaxKind::LambdaParams
+                            )
+                        }) =>
                     {
                         TokenKind::Parameter
+                    }
+                    // `min(a, b)`, `any(xs, …)`: the callee is an equation of
+                    // the library when no relationship of the design shadows it
+                    // (an entity anchor was pushed first and wins).
+                    Some(SyntaxKind::NameRef)
+                        if t.parent()
+                            .and_then(|p| p.parent())
+                            .and_then(|n| n.parent())
+                            .is_some_and(|c| c.kind() == SyntaxKind::CallExpr)
+                            && bdl_equations::lookup(t.text()).is_some() =>
+                    {
+                        TokenKind::Equation
                     }
                     Some(SyntaxKind::NameRef)
                         if t.parent()

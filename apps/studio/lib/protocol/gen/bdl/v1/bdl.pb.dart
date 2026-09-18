@@ -9828,7 +9828,8 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearLabel() => $_clearField(1);
 
-  /// "input", "unit", "keyword", "concept", "representation", "mapping".
+  /// "input", "unit", "keyword", "concept", "representation", "mapping",
+  /// "template", "equation" (an equation of the library, 0.11).
   @$pb.TagNumber(2)
   $core.String get kind => $_getSZ(1);
   @$pb.TagNumber(2)
