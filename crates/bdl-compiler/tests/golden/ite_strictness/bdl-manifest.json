@@ -1,0 +1,68 @@
+{
+  "manifest_version": 1,
+  "generator": "bdl-codegen-rust 0.1.0",
+  "design": "ite_strictness",
+  "package": "bdl_design_ite_strictness",
+  "exec_ir_version": 2,
+  "has_domains": true,
+  "requires_allocator": false,
+  "clocks": [
+    {
+      "slot": 0,
+      "clock_id": 0,
+      "name": "main",
+      "symbol": "CLOCK_0"
+    }
+  ],
+  "concepts": [],
+  "inputs": [
+    {
+      "slot": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "x",
+      "ty": "q[1]"
+    }
+  ],
+  "decls": [
+    {
+      "index": 0,
+      "decl_id": 0,
+      "symbol": "decl_0",
+      "name": "x",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": 0
+    },
+    {
+      "index": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "sign",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    },
+    {
+      "index": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "inverse",
+      "ty": "q[1]",
+      "activation": {
+        "kind": "domain",
+        "clock_slot": 0
+      },
+      "input_slot": null
+    }
+  ],
+  "cells": [],
+  "outputs": [],
+  "functions": []
+}

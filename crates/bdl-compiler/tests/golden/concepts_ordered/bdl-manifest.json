@@ -1,28 +1,11 @@
 {
   "manifest_version": 1,
   "generator": "bdl-codegen-rust 0.1.0",
-  "design": "collections",
-  "package": "bdl_design_collections",
+  "design": "concepts_ordered",
+  "package": "bdl_design_concepts_ordered",
   "exec_ir_version": 2,
   "has_domains": true,
-  "requires_allocator": true,
-  "collections": {
-    "cells": [
-      {
-        "slot": 0,
-        "bound": {
-          "kind": "input"
-        },
-        "bytes": null
-      }
-    ],
-    "input_slots": [
-      0
-    ],
-    "state_bytes_max": null,
-    "tick_bytes_max": null,
-    "unbounded": false
-  },
+  "requires_allocator": false,
   "clocks": [
     {
       "slot": 0,
@@ -31,14 +14,61 @@
       "symbol": "CLOCK_0"
     }
   ],
-  "concepts": [],
+  "concepts": [
+    {
+      "semantic_id": 0,
+      "name": "Brightness",
+      "symbol": "Sem0",
+      "representation": "q[1]"
+    },
+    {
+      "semantic_id": 1,
+      "name": "Opacity",
+      "symbol": "Sem1",
+      "representation": "q[1]"
+    },
+    {
+      "semantic_id": 2,
+      "name": "Mode",
+      "symbol": "Sem2",
+      "representation": "nat"
+    }
+  ],
   "inputs": [
     {
       "slot": 0,
       "decl_id": 0,
       "symbol": "decl_0",
-      "name": "xs",
-      "ty": "list q[1]"
+      "name": "b1",
+      "ty": "sem#0"
+    },
+    {
+      "slot": 1,
+      "decl_id": 1,
+      "symbol": "decl_1",
+      "name": "b2",
+      "ty": "sem#0"
+    },
+    {
+      "slot": 2,
+      "decl_id": 2,
+      "symbol": "decl_2",
+      "name": "o",
+      "ty": "sem#1"
+    },
+    {
+      "slot": 3,
+      "decl_id": 3,
+      "symbol": "decl_3",
+      "name": "m1",
+      "ty": "sem#2"
+    },
+    {
+      "slot": 4,
+      "decl_id": 4,
+      "symbol": "decl_4",
+      "name": "m2",
+      "ty": "sem#2"
     }
   ],
   "decls": [
@@ -46,8 +76,8 @@
       "index": 0,
       "decl_id": 0,
       "symbol": "decl_0",
-      "name": "xs",
-      "ty": "list q[1]",
+      "name": "b1",
+      "ty": "sem#0",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -58,56 +88,56 @@
       "index": 1,
       "decl_id": 1,
       "symbol": "decl_1",
-      "name": "above",
-      "ty": "bool",
+      "name": "b2",
+      "ty": "sem#0",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
       },
-      "input_slot": null
+      "input_slot": 1
     },
     {
       "index": 2,
       "decl_id": 2,
       "symbol": "decl_2",
-      "name": "total",
-      "ty": "q[1]",
+      "name": "o",
+      "ty": "sem#1",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
       },
-      "input_slot": null
+      "input_slot": 2
     },
     {
       "index": 3,
       "decl_id": 3,
       "symbol": "decl_3",
-      "name": "shifted",
-      "ty": "list q[1]",
+      "name": "m1",
+      "ty": "sem#2",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
       },
-      "input_slot": null
+      "input_slot": 3
     },
     {
       "index": 4,
       "decl_id": 4,
       "symbol": "decl_4",
-      "name": "stats",
-      "ty": "(q[1] × q[1])",
+      "name": "m2",
+      "ty": "sem#2",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
       },
-      "input_slot": null
+      "input_slot": 4
     },
     {
       "index": 5,
       "decl_id": 5,
       "symbol": "decl_5",
-      "name": "first",
-      "ty": "q[1]",
+      "name": "dimmer",
+      "ty": "sem#0",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -118,8 +148,8 @@
       "index": 6,
       "decl_id": 6,
       "symbol": "decl_6",
-      "name": "same",
-      "ty": "bool",
+      "name": "clipped",
+      "ty": "sem#0",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -130,8 +160,8 @@
       "index": 7,
       "decl_id": 7,
       "symbol": "decl_7",
-      "name": "remembered",
-      "ty": "list q[1]",
+      "name": "sameB",
+      "ty": "bool",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -142,8 +172,8 @@
       "index": 8,
       "decl_id": 8,
       "symbol": "decl_8",
-      "name": "pairs",
-      "ty": "list (q[1] × q[1])",
+      "name": "sameMode",
+      "ty": "bool",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -154,7 +184,7 @@
       "index": 9,
       "decl_id": 9,
       "symbol": "decl_9",
-      "name": "has2",
+      "name": "below",
       "ty": "bool",
       "activation": {
         "kind": "domain",
@@ -166,8 +196,8 @@
       "index": 10,
       "decl_id": 10,
       "symbol": "decl_10",
-      "name": "clipped",
-      "ty": "q[1]",
+      "name": "asOpacity",
+      "ty": "sem#1",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -178,8 +208,8 @@
       "index": 11,
       "decl_id": 11,
       "symbol": "decl_11",
-      "name": "kept",
-      "ty": "list q[1]",
+      "name": "sameAsO",
+      "ty": "bool",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -187,16 +217,7 @@
       "input_slot": null
     }
   ],
-  "cells": [
-    {
-      "slot": 0,
-      "symbol": "cell_0",
-      "decl_id": 7,
-      "path": [],
-      "writer_clock_slot": 0,
-      "ty": "list q[1]"
-    }
-  ],
+  "cells": [],
   "outputs": [],
   "functions": []
 }

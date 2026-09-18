@@ -16,6 +16,7 @@ use bdl_runtime_core::list;
 use bdl_runtime_core::num;
 use bdl_runtime_core::prim;
 use bdl_runtime_core::read_decl;
+use bdl_runtime_core::read_decl_ref;
 use bdl_runtime_core::read_input;
 use bdl_runtime_core::ActiveDomains;
 use bdl_runtime_core::ClockSlot;
@@ -89,36 +90,35 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells.clone();
     // read phase
     // xs (decl#0)
     let decl_0: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some(read_input(&inputs.decl_0, 0_u64)?) } else { None };
     // above (decl#1)
-    let decl_1: Option<bool> = if active.is_active(CLOCK_0) { Some({ let l0 = read_decl(&decl_0, 0_u64)?; list::fold(l0, false, |l1, l2| Ok({ let l3 = l1.clone(); { let l4 = l2.clone(); prim::or({ let l5 = l3.clone(); (2.0_f64 < l5.clone()) }, l4.clone()) } }))? }) } else { None };
+    let decl_1: Option<bool> = if active.is_active(CLOCK_0) { Some({ let l0 = read_decl(&decl_0, 0_u64)?; list::fold(l0, false, |l1, l2| Ok({ let l3 = l1; { let l4 = l2; prim::or({ let l5 = l3; (&2.0_f64 < &l5) }, l4) } }))? }) } else { None };
     // total (decl#2)
-    let decl_2: Option<f64> = if active.is_active(CLOCK_0) { Some({ let l6 = read_decl(&decl_0, 0_u64)?; list::fold(l6, 0.0_f64, |l7, l8| Ok(num::add(l7.clone(), l8.clone(), 2_u64)?))? }) } else { None };
+    let decl_2: Option<f64> = if active.is_active(CLOCK_0) { Some({ let l6 = read_decl(&decl_0, 0_u64)?; list::fold(l6, 0.0_f64, |l7, l8| Ok(num::add(l7, l8, 2_u64)?))? }) } else { None };
     // shifted (decl#3)
-    let decl_3: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some({ let l9 = read_decl(&decl_0, 0_u64)?; list::fold(l9, list::nil::<f64>(), |l10, l11| Ok({ let l12 = l10.clone(); { let l13 = l11.clone(); list::cons({ let l14 = l12.clone(); num::add(l14.clone(), 5.0_f64, 3_u64)? }, l13.clone()) } }))? }) } else { None };
+    let decl_3: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some({ let l9 = read_decl(&decl_0, 0_u64)?; list::fold(l9, list::nil::<f64>(), |l10, l11| Ok({ let l12 = l10; { let l13 = l11; list::cons({ let l14 = l12; num::add(l14, 5.0_f64, 3_u64)? }, l13) } }))? }) } else { None };
     // stats (decl#4)
-    let decl_4: Option<(f64, f64)> = if active.is_active(CLOCK_0) { Some((prim::get_d(list::head(read_decl(&decl_0, 0_u64)?), 0.0_f64), list::length(read_decl(&decl_0, 0_u64)?))) } else { None };
+    let decl_4: Option<(f64, f64)> = if active.is_active(CLOCK_0) { Some((prim::get_d(list::head_of(read_decl_ref(&decl_0, 0_u64)?), 0.0_f64), list::length_of(read_decl_ref(&decl_0, 0_u64)?))) } else { None };
     // first (decl#5)
     let decl_5: Option<f64> = if active.is_active(CLOCK_0) { Some(read_decl(&decl_4, 4_u64)?.0) } else { None };
     // same (decl#6)
-    let decl_6: Option<bool> = if active.is_active(CLOCK_0) { Some((read_decl(&decl_0, 0_u64)? == list::reverse(list::reverse(read_decl(&decl_0, 0_u64)?)))) } else { None };
+    let decl_6: Option<bool> = if active.is_active(CLOCK_0) { Some((read_decl_ref(&decl_0, 0_u64)? == &list::reverse(list::reverse(read_decl(&decl_0, 0_u64)?)))) } else { None };
     // remembered (decl#7)
     let decl_7: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some(match &prev.cell_0 { Some(v) => v.clone(), None => list::nil::<f64>() }) } else { None };
     // pairs (decl#8)
-    let decl_8: Option<Vec<(f64, f64)>> = if active.is_active(CLOCK_0) { Some({ let l15 = read_decl(&decl_0, 0_u64)?; { let l16 = read_decl(&decl_3, 3_u64)?; list::reverse(list::fold(list::reverse(l15), (l16, list::nil::<(f64, f64)>()), |l17, l18| Ok({ let l19 = l17.clone(); { let l20 = l18.clone(); (list::drop(1.0_f64, l20.clone().0), list::fold(list::fold(list::take(1.0_f64, l20.clone().0), list::nil::<(f64, f64)>(), |l21, l22| Ok({ let l23 = l21.clone(); { let l24 = l22.clone(); list::cons((l19.clone(), l23.clone()), l24.clone()) } }))?, l20.clone().1, |l25, l26| Ok(list::cons(l25.clone(), l26.clone())))?) } }))?.1) } }) } else { None };
+    let decl_8: Option<Vec<(f64, f64)>> = if active.is_active(CLOCK_0) { Some({ let l15 = read_decl(&decl_0, 0_u64)?; { let l16 = read_decl(&decl_3, 3_u64)?; list::reverse(list::fold(list::reverse(l15), (l16, list::nil::<(f64, f64)>()), |l17, l18| Ok({ let l19 = l17; { let l20 = l18; (list::drop(1.0_f64, l20.clone().0), list::fold(list::fold(list::take_of(1.0_f64, &l20.clone().0), list::nil::<(f64, f64)>(), |l21, l22| Ok({ let l23 = l21; { let l24 = l22; list::cons((l19.clone(), l23), l24) } }))?, l20.clone().1, |l25, l26| Ok(list::cons(l25, l26)))?) } }))?.1) } }) } else { None };
     // has2 (decl#9)
-    let decl_9: Option<bool> = if active.is_active(CLOCK_0) { Some({ let l27 = 2.0_f64; { let l28 = read_decl(&decl_0, 0_u64)?; list::fold(l28, false, |l29, l30| Ok({ let l31 = l29.clone(); { let l32 = l30.clone(); prim::or((l27.clone() == l31.clone()), l32.clone()) } }))? } }) } else { None };
+    let decl_9: Option<bool> = if active.is_active(CLOCK_0) { Some({ let l27 = 2.0_f64; { let l28 = read_decl(&decl_0, 0_u64)?; list::fold(l28, false, |l29, l30| Ok({ let l31 = l29; { let l32 = l30; prim::or((&l27 == &l31), l32) } }))? } }) } else { None };
     // clipped (decl#10)
-    let decl_10: Option<f64> = if active.is_active(CLOCK_0) { Some({ let l33 = read_decl(&decl_2, 2_u64)?; { let l34 = 1.0_f64; { let l35 = 4.0_f64; { let l38 = l34; { let l39 = { let l36 = l33; { let l37 = l35; prim::ite((l36 < l37), l36, l37) } }; prim::ite((l38 < l39), l39, l38) } } } } }) } else { None };
+    let decl_10: Option<f64> = if active.is_active(CLOCK_0) { Some({ let l33 = read_decl(&decl_2, 2_u64)?; { let l34 = 1.0_f64; { let l35 = 4.0_f64; { let l38 = l34; { let l39 = { let l36 = l33; { let l37 = l35; if (&l36 < &l37) { l36.clone() } else { l37.clone() } } }; if (&l38 < &l39) { l39.clone() } else { l38.clone() } } } } } }) } else { None };
     // kept (decl#11)
-    let decl_11: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some({ let l40 = read_decl(&decl_0, 0_u64)?; list::fold(l40, list::nil::<f64>(), |l41, l42| Ok({ let l43 = l41.clone(); { let l44 = l42.clone(); prim::ite({ let l45 = l43.clone(); (l45.clone() < 2.0_f64) }, list::cons(l43.clone(), l44.clone()), l44.clone()) } }))? }) } else { None };
-    // write phase: into the next state only
+    let decl_11: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some({ let l40 = read_decl(&decl_0, 0_u64)?; list::fold(l40, list::nil::<f64>(), |l41, l42| Ok({ let l43 = l41; { let l44 = l42; if { let l45 = l43.clone(); (&l45 < &2.0_f64) } { list::cons(l43.clone(), l44) } else { l44 } } }))? }) } else { None };
+    // write phase: every active writer's operand, before any commit
     // cell_0 at [] in remembered (decl#7)
-    if active.is_active(CLOCK_0) { next.cell_0 = Some(read_decl(&decl_0, 0_u64)?); }
-    // commit
-    state.cells = next;
+    let write_0: Option<Vec<f64>> = if active.is_active(CLOCK_0) { Some(read_decl(&decl_0, 0_u64)?) } else { None };
+    // commit: only the cells written this tick change; nothing else is copied
+    if write_0.is_some() { state.cells.cell_0 = write_0; }
     Ok(Tick { values: Values { decl_0: decl_0, decl_1: decl_1, decl_2: decl_2, decl_3: decl_3, decl_4: decl_4, decl_5: decl_5, decl_6: decl_6, decl_7: decl_7, decl_8: decl_8, decl_9: decl_9, decl_10: decl_10, decl_11: decl_11 }, outputs: Outputs {} })
 }

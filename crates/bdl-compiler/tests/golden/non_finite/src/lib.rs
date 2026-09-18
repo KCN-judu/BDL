@@ -13,6 +13,7 @@
 use bdl_runtime_core::num;
 use bdl_runtime_core::prim;
 use bdl_runtime_core::read_decl;
+use bdl_runtime_core::read_decl_ref;
 use bdl_runtime_core::read_input;
 use bdl_runtime_core::ActiveDomains;
 use bdl_runtime_core::ClockSlot;
@@ -74,14 +75,12 @@ pub fn init() -> State {
 /// On `Err` the state is unchanged.
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError> {
     let prev: &Cells = &state.cells;
-    let mut next: Cells = state.cells.clone();
     // read phase
     // x (decl#0)
     let decl_0: Option<f64> = if active.is_active(CLOCK_0) { Some(read_input(&inputs.decl_0, 0_u64)?) } else { None };
     // huge (decl#1)
     let decl_1: Option<f64> = if active.is_active(CLOCK_0) { Some(num::mul(read_decl(&decl_0, 0_u64)?, 1e308_f64, 1_u64)?) } else { None };
-    // write phase: into the next state only
-    // commit
-    state.cells = next;
+    // write phase: every active writer's operand, before any commit
+    // commit: only the cells written this tick change; nothing else is copied
     Ok(Tick { values: Values { decl_0: decl_0, decl_1: decl_1 }, outputs: Outputs {} })
 }

@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "generator": "bdl-codegen-rust 0.1.0",
-  "design": "buffer",
-  "package": "bdl_design_buffer",
+  "design": "list_state",
+  "package": "bdl_design_list_state",
   "exec_ir_version": 2,
   "has_domains": true,
   "requires_allocator": true,
@@ -11,14 +11,14 @@
       {
         "slot": 0,
         "bound": {
-          "kind": "unbounded"
+          "kind": "input"
         },
         "bytes": null
       },
       {
         "slot": 1,
         "bound": {
-          "kind": "unbounded"
+          "kind": "input"
         },
         "bytes": null
       },
@@ -26,15 +26,25 @@
         "slot": 2,
         "bound": {
           "kind": "finite",
-          "elements": 0
+          "elements": 3
         },
-        "bytes": 8
+        "bytes": 48
+      },
+      {
+        "slot": 3,
+        "bound": {
+          "kind": "finite",
+          "elements": 3
+        },
+        "bytes": 48
       }
     ],
-    "input_slots": [],
+    "input_slots": [
+      0
+    ],
     "state_bytes_max": null,
     "tick_bytes_max": null,
-    "unbounded": true
+    "unbounded": false
   },
   "clocks": [
     {
@@ -56,8 +66,8 @@
       "slot": 0,
       "decl_id": 0,
       "symbol": "decl_0",
-      "name": "x",
-      "ty": "q[1]"
+      "name": "xs",
+      "ty": "list q[1]"
     }
   ],
   "decls": [
@@ -65,8 +75,8 @@
       "index": 0,
       "decl_id": 0,
       "symbol": "decl_0",
-      "name": "x",
-      "ty": "q[1]",
+      "name": "xs",
+      "ty": "list q[1]",
       "activation": {
         "kind": "domain",
         "clock_slot": 0
@@ -77,7 +87,7 @@
       "index": 1,
       "decl_id": 1,
       "symbol": "decl_1",
-      "name": "log",
+      "name": "prevXs",
       "ty": "list q[1]",
       "activation": {
         "kind": "domain",
@@ -89,7 +99,7 @@
       "index": 2,
       "decl_id": 2,
       "symbol": "decl_2",
-      "name": "logD",
+      "name": "xsAtSlow",
       "ty": "list q[1]",
       "activation": {
         "kind": "domain",
@@ -101,11 +111,11 @@
       "index": 3,
       "decl_id": 3,
       "symbol": "decl_3",
-      "name": "seen",
-      "ty": "q[1]",
+      "name": "recent",
+      "ty": "list q[1]",
       "activation": {
         "kind": "domain",
-        "clock_slot": 1
+        "clock_slot": 0
       },
       "input_slot": null
     },
@@ -113,8 +123,8 @@
       "index": 4,
       "decl_id": 4,
       "symbol": "decl_4",
-      "name": "cursor",
-      "ty": "q[1]",
+      "name": "recentAtSlow",
+      "ty": "list q[1]",
       "activation": {
         "kind": "domain",
         "clock_slot": 1
@@ -125,8 +135,8 @@
       "index": 5,
       "decl_id": 5,
       "symbol": "decl_5",
-      "name": "window",
-      "ty": "list q[1]",
+      "name": "growth",
+      "ty": "q[1]",
       "activation": {
         "kind": "domain",
         "clock_slot": 1
@@ -139,9 +149,7 @@
       "slot": 0,
       "symbol": "cell_0",
       "decl_id": 1,
-      "path": [
-        1
-      ],
+      "path": [],
       "writer_clock_slot": 0,
       "ty": "list q[1]"
     },
@@ -156,10 +164,21 @@
     {
       "slot": 2,
       "symbol": "cell_2",
+      "decl_id": 3,
+      "path": [
+        1,
+        1
+      ],
+      "writer_clock_slot": 0,
+      "ty": "list q[1]"
+    },
+    {
+      "slot": 3,
+      "symbol": "cell_3",
       "decl_id": 4,
       "path": [],
-      "writer_clock_slot": 1,
-      "ty": "q[1]"
+      "writer_clock_slot": 0,
+      "ty": "list q[1]"
     }
   ],
   "outputs": [],
