@@ -943,6 +943,7 @@ fn generated_programs_of_system_and_flat_agree_on_the_host() {
             runtime_core_path: root.join("runtime/bdl-runtime-core").display().to_string(),
             runtime_host_path: root.join("runtime/bdl-runtime-host").display().to_string(),
         },
+        ..Default::default()
     };
     let s = vertical_slice();
     let f = flatten(&s.sys.snap);

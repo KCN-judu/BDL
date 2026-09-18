@@ -27,6 +27,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod bounds;
 pub mod interp;
 
 use bdl_ir::{Scalar, Ty};

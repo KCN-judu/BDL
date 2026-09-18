@@ -196,6 +196,7 @@ pub fn compile(root: &Path, version: &str, out: &Path, json: bool) -> Result<(),
     let options = bdl_compiler::CompileOptions {
         require_complete: true,
         codegen: Default::default(),
+        ..Default::default()
     };
     let artifact = bdl_compiler::compile(&project.current, &options);
     let all: Vec<(String, Diagnostic)> = artifact

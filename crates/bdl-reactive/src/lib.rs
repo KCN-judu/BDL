@@ -9,6 +9,8 @@
 //! * [`eval`]      — the reference evaluator (`MEv`) with explicit delay/sync
 //!   state cells, previous/next state, and per-domain published snapshots.
 //! * [`simulate`]  — schedules, input traces, ticks, and the resulting trace.
+//! * [`capacity`]  — cross-domain window sizes under a schedule: the
+//!   production counterpart of FV `Validation/Capacity.lean` (Phase 9a).
 //!
 //! Everything is pure and deterministic: the same design, schedule and
 //! inputs yield the same trace, whatever order a host processes
@@ -17,6 +19,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod capacity;
 pub mod causality;
 pub mod clocks;
 pub mod eval;

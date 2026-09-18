@@ -30,8 +30,13 @@
 #![forbid(unsafe_code)]
 
 pub mod backend;
+pub mod collections;
 pub mod deploy_report;
 pub use backend::{compile, compile_design_ir, readiness, CompileArtifact, CompileOptions};
+pub use collections::{
+    collections_diagnostics, collections_report, CollectionsReadiness, CollectionsReport,
+    MemoryPolicy,
+};
 pub use deploy_report::{
     deployment_report, AssignmentRow, Blocker, BlockerKind, DeploymentReport, MissingItem,
     MissingKind,

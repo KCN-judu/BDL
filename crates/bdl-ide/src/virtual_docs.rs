@@ -191,6 +191,7 @@ pub fn rust_document(snapshot: &AnalysisSnapshot) -> String {
     let options = bdl_compiler::CompileOptions {
         require_complete: false,
         codegen: Default::default(),
+        ..Default::default()
     };
     let artifact = bdl_compiler::compile(snapshot.effective(), &options);
     match &artifact.generated {

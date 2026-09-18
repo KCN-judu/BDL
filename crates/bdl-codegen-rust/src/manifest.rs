@@ -6,6 +6,7 @@
 
 use crate::names;
 use bdl_check::pretty;
+use bdl_exec_ir::bounds::{self, Bound, Shape};
 use bdl_exec_ir::{Activation, DeclKind, ExecIr};
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +24,10 @@ pub struct Manifest {
     /// runtime's `collections` feature and its target needs an allocator.
     #[serde(default)]
     pub requires_allocator: bool,
+    /// What the program's collections need of a target's memory; absent
+    /// when it carries no list (docs/spec/deployment-capacity.md).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub collections: Option<CollectionsEntry>,
     pub clocks: Vec<ClockEntry>,
     pub concepts: Vec<ConceptEntry>,
     pub inputs: Vec<InputEntry>,
@@ -31,6 +36,68 @@ pub struct Manifest {
     pub outputs: Vec<OutputEntry>,
     /// Declarations inlined away (relationships with inputs).
     pub functions: Vec<FunctionEntry>,
+}
+
+/// The static bounds of the lists a program carries: per state cell the
+/// bound of its outermost list, the list-typed inputs (the platform
+/// bounds those), and byte estimates as the core stores values (`None`
+/// when not bounded by the design).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CollectionsEntry {
+    pub cells: Vec<CellCapacityEntry>,
+    /// Input slots of list type.
+    pub input_slots: Vec<u32>,
+    pub state_bytes_max: Option<u64>,
+    pub tick_bytes_max: Option<u64>,
+    /// Any remembered collection the design grows without bound.
+    pub unbounded: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CellCapacityEntry {
+    pub slot: u32,
+    pub bound: Bound,
+    pub bytes: Option<u64>,
+}
+
+fn collections_entry(ir: &ExecIr) -> Option<CollectionsEntry> {
+    if !ir.uses_lists() {
+        return None;
+    }
+    let b = bounds::analyse(ir);
+    let outer = |s: &Shape| match s {
+        Shape::List { bound, .. } => *bound,
+        s if s.is_unbounded() => Bound::Unbounded,
+        s if s.depends_on_input() => Bound::Input,
+        _ => Bound::Finite { elements: 0 },
+    };
+    fn sum(mut it: impl Iterator<Item = Option<u64>>) -> Option<u64> {
+        it.try_fold(0u64, |a, x| Some(a.saturating_add(x?)))
+    }
+    Some(CollectionsEntry {
+        cells: ir
+            .cells
+            .iter()
+            .zip(&b.cells)
+            .map(|(c, s)| CellCapacityEntry {
+                slot: c.slot.0,
+                bound: outer(s),
+                bytes: s.bytes(&c.ty),
+            })
+            .collect(),
+        input_slots: ir
+            .inputs
+            .iter()
+            .filter(|i| {
+                ir.decl(i.decl)
+                    .is_some_and(|d| bdl_exec_ir::ty_uses_lists(&d.ty))
+            })
+            .map(|i| i.slot.0)
+            .collect(),
+        state_bytes_max: sum(ir.cells.iter().zip(&b.cells).map(|(c, s)| s.bytes(&c.ty))),
+        tick_bytes_max: sum(ir.decls.iter().zip(&b.decls).map(|(d, s)| s.bytes(&d.ty))),
+        unbounded: b.cells.iter().chain(&b.decls).any(Shape::is_unbounded),
+    })
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -116,6 +183,7 @@ pub fn manifest(ir: &ExecIr, package: &str, generator: &str) -> Manifest {
         exec_ir_version: ir.version,
         has_domains: ir.has_domains,
         requires_allocator: ir.uses_lists(),
+        collections: collections_entry(ir),
         clocks: ir
             .clocks
             .iter()

@@ -109,6 +109,9 @@ pub struct Case {
 }
 
 impl Case {
+    pub fn new_named(name: &'static str, ir: DesignIr, ticks: u64) -> Case {
+        Case::new(name, ir, ticks)
+    }
     fn new(name: &'static str, ir: DesignIr, ticks: u64) -> Case {
         let schedule = Schedule::always(&ir);
         Case {
@@ -757,6 +760,561 @@ pub fn corpus() -> Vec<Case> {
         .series(d(0), (0..7).map(|n| Value::scalar(n as f64 + 1.0)));
     cases.push(case);
 
+    // ---- P9 hardening corpus (docs/evidence/testing.md §collections) ----
+
+    // Every library list operation over a few hundred elements per tick:
+    // map, filter, append, zip, sum, any, contains — the shapes whose cost
+    // the generator must keep linear (zip excepted, ISS-0013).
+    let mut ir = DesignIr::default();
+    decl(&mut ir, 0, "xs", lq.clone(), None, Some(0));
+    decl(
+        &mut ir,
+        1,
+        "mapped",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("map"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(q.clone(), add(Expr::var(0), lit(1.0))),
+            ],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        2,
+        "kept",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("filter"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(
+                    q.clone(),
+                    Expr::apps(
+                        Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+                        [Expr::var(0), lit(100.0)],
+                    ),
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        3,
+        "joined",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("append"),
+            [Expr::decl(d(2)), Expr::decl(d(1))],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        4,
+        "pairs",
+        Ty::list(Ty::prod(q.clone(), q.clone())),
+        Some(Expr::apps(lib("zip"), [Expr::decl(d(0)), Expr::decl(d(1))])),
+        Some(0),
+    );
+    qdecl(
+        &mut ir,
+        5,
+        "total",
+        Some(Expr::app(lib("sum"), Expr::decl(d(3)))),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        6,
+        "seen150",
+        Ty::Bool,
+        Some(Expr::apps(lib("contains"), [lit(150.0), Expr::decl(d(0))])),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        7,
+        "firstTwo",
+        lq.clone(),
+        Some(Expr::apps(
+            lib("take"),
+            [lit(2.0), Expr::app(lib("reverse"), Expr::decl(d(3)))],
+        )),
+        Some(0),
+    );
+    ir.clock_names.insert(c(0), "main".into());
+    let mut case = Case::new("list_ops", ir, 3);
+    case.inputs.series(
+        d(0),
+        (0..3).map(|t| Value::list((0..200).map(|i| Value::scalar((i * 7 % 211 + t) as f64)))),
+    );
+    cases.push(case);
+
+    // Nested data: a list of pairs, a pair holding a list, a list of lists.
+    let mut ir = DesignIr::default();
+    let qq = Ty::prod(q.clone(), q.clone());
+    let mut inst2 = bdl_equations::Instance::default();
+    inst2.subst.tys.insert(0, qq.clone());
+    inst2.subst.tys.insert(1, q.clone());
+    inst2.subst.dims.insert(0, Dim::ZERO);
+    let lib2 = |name: &str| (bdl_equations::lookup(name).unwrap().build)(&inst2);
+    decl(&mut ir, 0, "ps", Ty::list(qq.clone()), None, Some(0));
+    // sums := map(ps, p => fst p + snd p)
+    decl(
+        &mut ir,
+        1,
+        "sums",
+        lq.clone(),
+        Some(Expr::apps(
+            lib2("map"),
+            [
+                Expr::decl(d(0)),
+                Expr::lam(
+                    qq.clone(),
+                    add(
+                        Expr::app(
+                            Expr::prim(Prim::Fst {
+                                fst: q.clone(),
+                                snd: q.clone(),
+                            }),
+                            Expr::var(0),
+                        ),
+                        Expr::app(
+                            Expr::prim(Prim::Snd {
+                                fst: q.clone(),
+                                snd: q.clone(),
+                            }),
+                            Expr::var(0),
+                        ),
+                    ),
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    // grouped := (sums, length ps)
+    decl(
+        &mut ir,
+        2,
+        "grouped",
+        Ty::prod(lq.clone(), q.clone()),
+        Some(Expr::apps(
+            Expr::prim(Prim::Pair {
+                fst: lq.clone(),
+                snd: q.clone(),
+            }),
+            [
+                Expr::decl(d(1)),
+                Expr::app(
+                    Expr::prim(Prim::Length { ty: qq.clone() }),
+                    Expr::decl(d(0)),
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    // rows := [sums, reverse sums]
+    decl(
+        &mut ir,
+        3,
+        "rows",
+        Ty::list(lq.clone()),
+        Some(Expr::apps(
+            Expr::prim(Prim::Cons { ty: lq.clone() }),
+            [
+                Expr::decl(d(1)),
+                Expr::apps(
+                    Expr::prim(Prim::Cons { ty: lq.clone() }),
+                    [
+                        Expr::app(
+                            Expr::prim(Prim::Reverse { ty: q.clone() }),
+                            Expr::decl(d(1)),
+                        ),
+                        Expr::prim(Prim::Nil { ty: lq.clone() }),
+                    ],
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    // firstRow := getOrElse(head rows, [])
+    decl(
+        &mut ir,
+        4,
+        "firstRow",
+        lq.clone(),
+        Some(Expr::apps(
+            Expr::prim(Prim::GetD { ty: lq.clone() }),
+            [
+                Expr::app(Expr::prim(Prim::Head { ty: lq.clone() }), Expr::decl(d(3))),
+                Expr::prim(Prim::Nil { ty: q.clone() }),
+            ],
+        )),
+        Some(0),
+    );
+    // sameRows := rows == rows
+    decl(
+        &mut ir,
+        5,
+        "sameRows",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Eq {
+                ty: Ty::list(lq.clone()),
+            }),
+            [Expr::decl(d(3)), Expr::decl(d(3))],
+        )),
+        Some(0),
+    );
+    ir.clock_names.insert(c(0), "main".into());
+    let mut case = Case::new("nested", ir, 3);
+    case.inputs.series(
+        d(0),
+        (0..3).map(|t| {
+            Value::list(
+                (0..t + 1)
+                    .map(|i| Value::pair(Value::scalar(i as f64), Value::scalar((10 * t) as f64))),
+            )
+        }),
+    );
+    cases.push(case);
+
+    // List state across time and domains: `delay` of a list, `sync` of a
+    // list, and a bounded list state (`take 3 (cons x (delay [] itself))`)
+    // whose size never grows — the deployable shape.
+    let mut ir = DesignIr::default();
+    decl(&mut ir, 0, "xs", lq.clone(), None, Some(0));
+    decl(
+        &mut ir,
+        1,
+        "prevXs",
+        lq.clone(),
+        Some(Expr::delay(
+            Expr::prim(Prim::Nil { ty: q.clone() }),
+            Expr::decl(d(0)),
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        2,
+        "xsAtSlow",
+        lq.clone(),
+        Some(Expr::sync(
+            c(0),
+            Expr::prim(Prim::Nil { ty: q.clone() }),
+            Expr::decl(d(0)),
+        )),
+        Some(1),
+    );
+    // recent @fast := take 3 (cons (getOrElse (head xs) 0) (delay [] recent))
+    decl(
+        &mut ir,
+        3,
+        "recent",
+        lq.clone(),
+        Some(Expr::apps(
+            Expr::prim(Prim::Take { ty: q.clone() }),
+            [
+                lit(3.0),
+                Expr::apps(
+                    Expr::prim(Prim::Cons { ty: q.clone() }),
+                    [
+                        Expr::apps(
+                            Expr::prim(Prim::GetD { ty: q.clone() }),
+                            [
+                                Expr::app(
+                                    Expr::prim(Prim::Head { ty: q.clone() }),
+                                    Expr::decl(d(0)),
+                                ),
+                                lit(0.0),
+                            ],
+                        ),
+                        Expr::delay(Expr::prim(Prim::Nil { ty: q.clone() }), Expr::decl(d(3))),
+                    ],
+                ),
+            ],
+        )),
+        Some(0),
+    );
+    // recentAtSlow @slow := sync fast [] recent; growth @slow := length recentAtSlow
+    decl(
+        &mut ir,
+        4,
+        "recentAtSlow",
+        lq.clone(),
+        Some(Expr::sync(
+            c(0),
+            Expr::prim(Prim::Nil { ty: q.clone() }),
+            Expr::decl(d(3)),
+        )),
+        Some(1),
+    );
+    qdecl(
+        &mut ir,
+        5,
+        "growth",
+        Some(Expr::app(
+            Expr::prim(Prim::Length { ty: q.clone() }),
+            Expr::decl(d(4)),
+        )),
+        Some(1),
+    );
+    ir.clock_names.insert(c(0), "fast".into());
+    ir.clock_names.insert(c(1), "slow".into());
+    let mut case = Case::new("list_state", ir, 9);
+    case.schedule.periods.insert(c(1), 2);
+    case.inputs.series(
+        d(0),
+        (0..9).map(|t| Value::list((0..(t % 3)).map(|i| Value::scalar((t * 10 + i) as f64)))),
+    );
+    cases.push(case);
+
+    // An ordered concept and two unordered ones sharing its representation:
+    // equality is nominal, the order is the quantity's; the same concept's
+    // values compare, min/clamp keep the concept (Phase 9c).
+    let mut ir = DesignIr::default();
+    concept(&mut ir, 0, "Brightness", q.clone());
+    ir.concepts.get_mut(&s(0)).unwrap().ordered = true;
+    concept(&mut ir, 1, "Opacity", q.clone());
+    concept(&mut ir, 2, "Mode", Ty::Nat);
+    let bri = Ty::sem(s(0));
+    decl(&mut ir, 0, "b1", bri.clone(), None, Some(0));
+    decl(&mut ir, 1, "b2", bri.clone(), None, Some(0));
+    decl(&mut ir, 2, "o", Ty::sem(s(1)), None, Some(0));
+    decl(&mut ir, 3, "m1", Ty::sem(s(2)), None, Some(0));
+    decl(&mut ir, 4, "m2", Ty::sem(s(2)), None, Some(0));
+    let mut inst3 = bdl_equations::Instance::default();
+    inst3.subst.tys.insert(0, bri.clone());
+    inst3.subst.tys.insert(1, bri.clone());
+    inst3.subst.dims.insert(0, Dim::ZERO);
+    inst3
+        .ordered
+        .insert(0, bdl_equations::Ordered::Sem(s(0), Dim::ZERO));
+    let lib3 = |name: &str| (bdl_equations::lookup(name).unwrap().build)(&inst3);
+    decl(
+        &mut ir,
+        5,
+        "dimmer",
+        bri.clone(),
+        Some(Expr::apps(
+            lib3("min"),
+            [Expr::decl(d(0)), Expr::decl(d(1))],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        6,
+        "clipped",
+        bri.clone(),
+        Some(Expr::apps(
+            lib3("clamp"),
+            [
+                Expr::decl(d(0)),
+                Expr::mk(s(0), lit(0.2)),
+                Expr::mk(s(0), lit(0.8)),
+            ],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        7,
+        "sameB",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Eq { ty: bri.clone() }),
+            [Expr::decl(d(0)), Expr::decl(d(1))],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        8,
+        "sameMode",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Eq { ty: Ty::sem(s(2)) }),
+            [Expr::decl(d(3)), Expr::decl(d(4))],
+        )),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        9,
+        "below",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+            [Expr::rep(Expr::decl(d(0))), Expr::rep(Expr::decl(d(1)))],
+        )),
+        Some(0),
+    );
+    // asOpacity := mk Opacity (rep b1): the only way across the boundary
+    decl(
+        &mut ir,
+        10,
+        "asOpacity",
+        Ty::sem(s(1)),
+        Some(Expr::mk(s(1), Expr::rep(Expr::decl(d(0))))),
+        Some(0),
+    );
+    decl(
+        &mut ir,
+        11,
+        "sameAsO",
+        Ty::Bool,
+        Some(Expr::apps(
+            Expr::prim(Prim::Eq { ty: Ty::sem(s(1)) }),
+            [Expr::decl(d(10)), Expr::decl(d(2))],
+        )),
+        Some(0),
+    );
+    ir.clock_names.insert(c(0), "main".into());
+    let mut case = Case::new("concepts_ordered", ir, 3);
+    let b = |v: f64| Value::sem(s(0), Value::scalar(v));
+    let o = |v: f64| Value::sem(s(1), Value::scalar(v));
+    let m = |v: u64| Value::sem(s(2), Value::Nat { value: v });
+    case.inputs.series(d(0), [b(0.1), b(0.5), b(0.9)]);
+    case.inputs.series(d(1), [b(0.5), b(0.5), b(0.3)]);
+    case.inputs.series(d(2), [o(0.1), o(0.4), o(0.9)]);
+    case.inputs.series(d(3), [m(1), m(2), m(2)]);
+    case.inputs.series(d(4), [m(1), m(3), m(2)]);
+    cases.push(case);
+
+    // The deployable buffer: the Phase-9a window with the log bounded by
+    // `take cap` and the count kept separately.  With `cap` at least the
+    // required capacity (three source activations per destination period)
+    // the window is the unbounded one (FV `bounded_buffer_agrees`); with a
+    // smaller `cap` the oldest values are dropped (`dropOldest`).
+    //   count  @fast := 1 + delay 0 count
+    //   log    @fast := take cap (cons x (delay [] log))
+    //   logD   @slow := sync fast [] log
+    //   seen   @slow := sync fast 0 count
+    //   cursor @slow := delay 0 seen
+    //   window @slow := reverse (take (seen − cursor) logD)
+    for (name, cap) in [("bounded_buffer", 3.0), ("overflowing_buffer", 2.0)] {
+        let mut ir = DesignIr::default();
+        let nil = Expr::prim(Prim::Nil { ty: q.clone() });
+        qdecl(&mut ir, 0, "x", None, Some(0));
+        qdecl(
+            &mut ir,
+            1,
+            "count",
+            Some(add(lit(1.0), Expr::delay(lit(0.0), Expr::decl(d(1))))),
+            Some(0),
+        );
+        decl(
+            &mut ir,
+            2,
+            "log",
+            lq.clone(),
+            Some(Expr::apps(
+                Expr::prim(Prim::Take { ty: q.clone() }),
+                [
+                    lit(cap),
+                    Expr::apps(
+                        Expr::prim(Prim::Cons { ty: q.clone() }),
+                        [Expr::decl(d(0)), Expr::delay(nil.clone(), Expr::decl(d(2)))],
+                    ),
+                ],
+            )),
+            Some(0),
+        );
+        decl(
+            &mut ir,
+            3,
+            "logD",
+            lq.clone(),
+            Some(Expr::sync(c(0), nil.clone(), Expr::decl(d(2)))),
+            Some(1),
+        );
+        qdecl(
+            &mut ir,
+            4,
+            "seen",
+            Some(Expr::sync(c(0), lit(0.0), Expr::decl(d(1)))),
+            Some(1),
+        );
+        qdecl(
+            &mut ir,
+            5,
+            "cursor",
+            Some(Expr::delay(lit(0.0), Expr::decl(d(4)))),
+            Some(1),
+        );
+        decl(
+            &mut ir,
+            6,
+            "window",
+            lq.clone(),
+            Some(Expr::app(
+                Expr::prim(Prim::Reverse { ty: q.clone() }),
+                Expr::apps(
+                    Expr::prim(Prim::Take { ty: q.clone() }),
+                    [sub(Expr::decl(d(4)), Expr::decl(d(5))), Expr::decl(d(3))],
+                ),
+            )),
+            Some(1),
+        );
+        ir.clock_names.insert(c(0), "fast".into());
+        ir.clock_names.insert(c(1), "slow".into());
+        let mut case = Case::new(name, ir, 7);
+        case.schedule.periods.insert(c(1), 3);
+        case.inputs
+            .series(d(0), (0..7).map(|n| Value::scalar(n as f64 + 1.0)));
+        cases.push(case);
+    }
+
+    // The strict conditional (DI-26): a branch that can fail fails the
+    // tick even when not chosen; one whose branches are total is chosen
+    // lazily in the generated core with the same result.
+    let mut ir = DesignIr::default();
+    qdecl(&mut ir, 0, "x", None, Some(0));
+    let is_zero = Expr::apps(
+        Expr::prim(Prim::Eq { ty: q.clone() }),
+        [Expr::decl(d(0)), lit(0.0)],
+    );
+    qdecl(
+        &mut ir,
+        1,
+        "sign",
+        Some(Expr::apps(
+            Expr::prim(Prim::Ite { ty: q.clone() }),
+            [
+                Expr::apps(
+                    Expr::prim(Prim::Lt { dim: Dim::ZERO }),
+                    [Expr::decl(d(0)), lit(0.0)],
+                ),
+                lit(-1.0),
+                lit(1.0),
+            ],
+        )),
+        Some(0),
+    );
+    qdecl(
+        &mut ir,
+        2,
+        "inverse",
+        Some(Expr::apps(
+            Expr::prim(Prim::Ite { ty: q.clone() }),
+            [is_zero, lit(0.0), div(lit(1.0), Expr::decl(d(0)))],
+        )),
+        Some(0),
+    );
+    ir.clock_names.insert(c(0), "main".into());
+    let mut case = Case::new("ite_strictness", ir, 3);
+    case.inputs.series(
+        d(0),
+        [Value::scalar(2.0), Value::scalar(-4.0), Value::scalar(0.0)],
+    );
+    cases.push(case);
+
     // A design with no clock domain at all.
     let mut ir = DesignIr::default();
     qdecl(&mut ir, 0, "one", Some(lit(1.0)), None);
@@ -789,6 +1347,7 @@ pub fn options() -> CompileOptions {
             runtime_core_path: root.join("runtime/bdl-runtime-core").display().to_string(),
             runtime_host_path: root.join("runtime/bdl-runtime-host").display().to_string(),
         },
+        ..Default::default()
     }
 }
 

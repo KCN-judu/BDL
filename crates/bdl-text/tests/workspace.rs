@@ -618,6 +618,7 @@ fn text_and_model_agree_down_to_the_executable_plan() {
     let options = bdl_compiler::CompileOptions {
         require_complete: false,
         codegen: Default::default(),
+        ..Default::default()
     };
     let (ca, cb) = (
         bdl_compiler::compile(&a, &options),
@@ -707,6 +708,7 @@ climate() = (getOrElse(head(temps), 0 K), length(temps))
     let options = bdl_compiler::CompileOptions {
         require_complete: false,
         codegen: Default::default(),
+        ..Default::default()
     };
     let c = bdl_compiler::compile(&flat, &options);
     assert!(c.exec_ir.is_some(), "{:#?}", c.diagnostics);

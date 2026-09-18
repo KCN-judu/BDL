@@ -13,13 +13,22 @@
 //! (`backend.unsupported_*`, `backend.internal_lowering`) likewise.  The
 //! generated core is target-independent: deployment feasibility is not a
 //! readiness condition here (a later, platform-adapter stage may require it).
+//!
+//! Collections are the one deployment fact decided here, because they
+//! are decided on the lowered plan: the [`crate::collections`] report is
+//! always computed, and under [`MemoryPolicy::Bounded`] an unbounded
+//! remembered collection refuses the artefact (`deployment.*`).
 
+use crate::collections::{
+    collections_diagnostics, collections_report, CollectionsReport, MemoryPolicy,
+};
 use crate::{analyze, analyze_design_ir, MappingStatus, ProjectAnalysis};
 use bdl_codegen_rust::{CodegenOptions, GeneratedCrate};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::ExecIr;
 use bdl_ir::DesignIr;
 use bdl_model::surface::ProjectSnapshot;
+use bdl_reactive::Schedule;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct CompileOptions {
@@ -29,6 +38,11 @@ pub struct CompileOptions {
     /// is validly driven).
     pub require_complete: bool,
     pub codegen: CodegenOptions,
+    /// Whether an unbounded remembered collection refuses the artefact.
+    pub memory: MemoryPolicy,
+    /// The deployment schedule, when known: decides what each
+    /// cross-domain window requires (`deployment.window_capacity`).
+    pub schedule: Option<Schedule>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -36,7 +50,11 @@ pub struct CompileArtifact {
     pub analysis: ProjectAnalysis,
     pub exec_ir: Option<ExecIr>,
     pub generated: Option<GeneratedCrate>,
-    /// Backend diagnostics only (`backend.*`); the analysis carries its own.
+    /// The collections report of the lowered plan (`None` when lowering
+    /// did not happen).
+    pub collections: Option<CollectionsReport>,
+    /// Backend diagnostics only (`backend.*`, `deployment.*`); the
+    /// analysis carries its own.
     pub diagnostics: Vec<Diagnostic>,
 }
 
@@ -143,6 +161,7 @@ fn compile_analysis(
             analysis,
             exec_ir: None,
             generated: None,
+            collections: None,
             diagnostics,
         };
     }
@@ -155,10 +174,23 @@ fn compile_analysis(
                 analysis,
                 exec_ir: None,
                 generated: None,
+                collections: None,
                 diagnostics,
             };
         }
     };
+    let collections = collections_report(&exec_ir, options.schedule.as_ref());
+    diagnostics.extend(collections_diagnostics(&collections, options.memory));
+    if diagnostics.iter().any(Diagnostic::is_error) {
+        sort_diagnostics(&mut diagnostics);
+        return CompileArtifact {
+            analysis,
+            exec_ir: Some(exec_ir),
+            generated: None,
+            collections: Some(collections),
+            diagnostics,
+        };
+    }
     let generated = match bdl_codegen_rust::generate(&exec_ir, &options.codegen) {
         Ok(g) => Some(g),
         Err(e) => {
@@ -170,10 +202,12 @@ fn compile_analysis(
             None
         }
     };
+    sort_diagnostics(&mut diagnostics);
     CompileArtifact {
         analysis,
         exec_ir: Some(exec_ir),
         generated,
+        collections: Some(collections),
         diagnostics,
     }
 }
