@@ -14,6 +14,10 @@ pub fn decl(d: DeclId) -> String {
 pub fn cell(s: StateSlot) -> String {
     format!("cell_{}", s.0)
 }
+/// The write-phase local holding a cell's new value this tick.
+pub fn write(s: StateSlot) -> String {
+    format!("write_{}", s.0)
+}
 pub fn output(o: OutputId) -> String {
     format!("output_{}", o.raw())
 }

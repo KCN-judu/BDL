@@ -222,6 +222,23 @@ pub mod list {
     pub fn length<T>(xs: Vec<T>) -> f64 {
         xs.len() as f64
     }
+    /// `length` of a list the caller keeps: no copy.
+    #[inline]
+    pub fn length_of<T>(xs: &[T]) -> f64 {
+        xs.len() as f64
+    }
+    /// `head` of a list the caller keeps: one element cloned.
+    #[inline]
+    pub fn head_of<T: Clone>(xs: &[T]) -> Option<T> {
+        xs.last().cloned()
+    }
+    /// `take` from a list the caller keeps: the `k` kept elements are
+    /// copied, nothing else.
+    #[inline]
+    pub fn take_of<T: Clone>(k: f64, xs: &[T]) -> Vec<T> {
+        let keep = count(k).min(xs.len());
+        xs[xs.len() - keep..].to_vec()
+    }
     /// The first `k` elements of the list.
     #[inline]
     pub fn take<T>(k: f64, mut xs: Vec<T>) -> Vec<T> {
@@ -271,6 +288,13 @@ pub mod list {
 #[inline]
 pub fn read_decl<T: Clone>(v: &Option<T>, decl: u64) -> Result<T, RuntimeError> {
     v.clone().ok_or(RuntimeError::NotEvaluated { decl })
+}
+
+/// Borrow a declaration evaluated earlier this tick — for an operator
+/// that only inspects its operand (`length`, `head`, `take`, `==`, `<`).
+#[inline]
+pub fn read_decl_ref<T>(v: &Option<T>, decl: u64) -> Result<&T, RuntimeError> {
+    v.as_ref().ok_or(RuntimeError::NotEvaluated { decl })
 }
 
 /// Read the input supplied for an unresolved declaration due this tick.

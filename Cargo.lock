@@ -114,6 +114,7 @@ dependencies = [
  "bdl-model",
  "bdl-output",
  "bdl-reactive",
+ "bdl-runtime-core",
  "bdl-runtime-host",
  "bdl-text",
  "proptest",
