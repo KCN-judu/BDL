@@ -25,6 +25,7 @@ pub mod kind;
 pub mod lexer;
 pub mod literal;
 pub mod lower;
+pub mod migrate;
 pub mod parser;
 pub mod syntax;
 
