@@ -257,11 +257,24 @@ The SDK archive went from 1.84 GB to 1.02 GB and its extraction from 56 s to
 per run). Windows critical path this run 6 m 16 s and runner-seconds 519 — the
 path was the Rust job's slow runner (207 s against 158–177 s on the three runs
 before), not the Flutter jobs: the Studio job that follows it is now 165 s
-against 176–192 s. With the Rust job at its usual 158–177 s the path is 5 m 25 s
-– 5 m 45 s; the remaining cost on it is compiling the 25 workspace crates on
-Windows (about 68 s), which no mtime-based cache can save — a content-hashed
-compiler cache (sccache with the Actions backend) is the next candidate, and a
-separate decision.
+against 176–192 s.
+
+Sixth run (`3fd57e4`, run 35445954449): Rust 179 s (`windows-rust-ci` 124 s),
+Studio 135 s (SDK setup 54 s, `windows-flutter-ci` 66 s), native build 267 s —
+the same 1.02 GB archive took 112 s to untar and the pub cache 36 s on that
+runner, against 25–27 s and 15–18 s on the three other warm restores: Windows
+runner disks vary by 4×, and no archive size removes that. Windows critical path
+**5 m 17 s** (13:30:16 → 13:35:33, the Rust job then the Studio job), against 5
+m 53 s – 5 m 55 s before the slim cache and 8 m 26 s – 9 m 02 s before the
+split; runner-seconds 581 (519 on the fifth run), against 515–536.
+
+Summary of the two warm runs: the SDK step is 54–63 s instead of 90–100 s on a
+normal runner, the Studio job 135–165 s instead of 176–192 s, the critical path
+5 m 17 s – 6 m 16 s instead of 5 m 53 s – 5 m 55 s, with the spread coming from
+the runners, not the workflow. What remains on the path is the Rust job's
+compile of the 25 workspace crates on Windows (about 68 s of its 158–207 s),
+which no mtime-based cache can save; a content-hashed compiler cache (sccache
+with the Actions backend) is the next candidate, and a separate decision.
 
 ## Local preflight
 
