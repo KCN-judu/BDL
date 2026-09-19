@@ -37,17 +37,29 @@ there and offers what fits:
   result can be the value expected here (for an angle, `min`, `max`, `clamp`,
   `sum` …; not `any`, which produces true or false). Choosing one inserts it
   with a slot per argument.
+- **A truth value.** Where the slot expects true or false — the side of an
+  `and`, a condition, a concept with the On / off value form — there is no
+  number to type: two buttons, **true** and **false**, stand in its place, and
+  _References_ lists the values that are true or false, the concepts this
+  relationship reads first.
+- **A form.** **Choose** opens a choice in the slot, `if ? then ? else ?`; on a
+  slot that expects true or false, **not** opens a negation, `not ?`.
 
 Click a part that is already there and the compiler says what it is. Above it,
 the actions on that part: **+ − × ÷** put that operator after it with a new slot
-for the other side, **Compare** likewise for `<`, `==` and the rest,
-**Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads
-a collection element by element (`all reading in readings: ?` — the editor picks
-a readable name for the element, `reading` for `readings`, `item` otherwise),
-**Range** asks whether the value lies between two ends (`… in ? .. ?`), and
+for the other side, **and** / **or** likewise for a part that is (or may be)
+true or false, **not** negates that part in place (no new slot), **Compare**
+puts `<`, `==` and the rest after it, **Function** wraps it in an equation
+(`clamp(…, ?, ?)`), **Each element** reads a collection element by element
+(`all reading in readings: ?` — the editor picks a readable name for the
+element, `reading` for `readings`, `item` otherwise), **Range** asks whether the
+value lies between two ends (`… in ? .. ?`), **Choose** makes the part one
+outcome of a choice (`if ? then … else ?`, the condition selected next), and
 **Remove** turns it back into a slot — removing the slot next to an operator
-removes the operator with it. Parentheses are added where the operators need
-them: a sum divided by something becomes `(a + b) / ?`.
+removes the operator with it, and an empty `not ?` goes with its slot.
+Parentheses are added where the operators need them: a sum divided by something
+becomes `(a + b) / ?`, an `or` under an `and` becomes `(a or b) and ?`, and a
+choice under anything is `(if … then … else …)`.
 
 The line under the field — _Expected: an angle, because an angle ÷ an angle = a
 dimensionless quantity._ — is the compiler's reasoning in plain words. It works
@@ -63,6 +75,14 @@ keeps the quantity and rewrites the number: `180 deg` becomes
 `3.141592653589793 rad`. The two are different things, and the pop-up never does
 the first.
 
+A choice is drawn the way it reads: `if` and its condition on one line, `then`
+and `else` with their outcomes indented under it. Each part is an ordinary
+component: the condition expects true or false, and both outcomes expect what
+the choice must give — the relationship's result at the top, or, inside a larger
+formula, whatever the other outcome already is. The logical operators are shown
+as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in
+the weight of the language's own words.
+
 A formula over a collection is drawn the way it reads:
 `all reading in readings:` on one line and the condition indented under it. The
 element's name is in italics wherever it appears — it belongs to this formula,
@@ -74,15 +94,17 @@ units.
 The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads
 exactly so in the **Text** view, and a formula typed as text appears in the
 **Formula** view — with `?` wherever text left a slot;
-`all reading in readings: reading < limit` typed as text comes back as the same
-words. Some forms — `if`, `match`, a block with `let`, a rule `x => …`, a
-collection or grouped literal, `delay` / `sync` — are shown as text in the
-Formula view and edited in the Text view. Text that cannot be read as a formula
-keeps exactly what you typed; the Formula view shows no parts for it, says _The
-text cannot be read as a formula._ and offers **Edit as text**. After any change
-the Formula view waits for the compiler's reading of the new text — _Waiting for
-the compiler to read the formula…_, the parts dimmed — before it offers the next
-action, so nothing you click ever acts on text that has already changed.
+`all reading in readings: reading < limit` and
+`if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come
+back as the same words, every part selectable. Some forms — `match`, a block
+with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` —
+are shown as text in the Formula view and edited in the Text view. Text that
+cannot be read as a formula keeps exactly what you typed; the Formula view shows
+no parts for it, says _The text cannot be read as a formula._ and offers **Edit
+as text**. After any change the Formula view waits for the compiler's reading of
+the new text — _Waiting for the compiler to read the formula…_, the parts dimmed
+— before it offers the next action, so nothing you click ever acts on text that
+has already changed.
 
 ## The text field and its verdict
 
@@ -137,7 +159,10 @@ it is right, just as a concept may exist before its value form is chosen.
 | **⌃Space**                  | open completion (Text view)                                                                           |
 | **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                           |
 | **Tab**                     | in the Formula view, move to the next part                                                            |
-| **+ − \* /**, **⌫**         | on a selected part in the Formula view: put that operator after it; remove it                         |
+| **+ − \* /**, **< >**       | on a selected part in the Formula view: put that operator after it, with a slot for the other side    |
+| **=**, **&**, **\|**        | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up             |
+| **!**                       | negate the selected part in place (`not …`)                                                           |
+| **⌫**                       | remove the selected part (an empty slot takes its operator with it)                                   |
 | **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states |
 
 ## Completion and hover

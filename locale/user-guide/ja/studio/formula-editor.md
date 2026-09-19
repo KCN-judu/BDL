@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/formula-editor.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/formula-editor.md) · [简体中文](../../zh_Hans/studio/formula-editor.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 数式エディタ
 
@@ -19,16 +21,20 @@ _分母のスロットを選択した数式ビュー：コンパイラはスロ�
 - **数。** 入力し、ポップアップから単位を選び、Return か**挿入**を押します。ポップアップにはスロットが期待する種類の値の単位だけが並びます——角度なら _rad_、_deg_、_turn_。長さや時間は決して出ません。無次元の数を期待するスロットには選ぶ単位がありません。
 - **参照。** この関係が読み取るコンセプトと、値が適切な種類である設計の関係——それぞれが生成するものとともに。参照はそのまま挿入されます。種類は宣言から来て、単位のポップアップは付きません。値——`tilt` のような入力元や計算された値——は名前だけで書きます（`tilt` であって、決して `tilt()` ではありません）。規則は引数を付けて適用します（`dimByTilt(?)`）。
 - **方程式。** _方程式_ の下に折りたたまれています。結果がここで期待される値になりうるライブラリの方程式です（角度なら `min`、`max`、`clamp`、`sum` …。真偽を生成する `any` は除く）。1 つ選ぶと、引数ごとにスロット付きで挿入されます。
+- **A truth value.** Where the slot expects true or false — the side of an `and`, a condition, a concept with the On / off value form — there is no number to type: two buttons, **true** and **false**, stand in its place, and _References_ lists the values that are true or false, the concepts this relationship reads first.
+- **A form.** **Choose** opens a choice in the slot, `if ? then ? else ?`; on a slot that expects true or false, **not** opens a negation, `not ?`.
 
-すでにある部品をクリックすると、コンパイラはそれが何かを述べます。その上に、その部品への操作があります。**+ − × ÷** はその演算子を後ろに置き、反対側に新しいスロットを作ります。**比較**は `<`、`==` などで同様。**関数**は方程式で包みます（`clamp(…, ?, ?)`）。**各要素**はコレクションを要素ごとに読みます（`all reading in readings: ?`——エディタは要素に読みやすい名前を選びます。`readings` なら `reading`、それ以外は `item`）。**範囲**は値が両端の間にあるかを問います（`… in ? .. ?`）。**削除**はスロットに戻します——演算子の隣のスロットを削除すると演算子も一緒に消えます。括弧は演算子が必要とする場所に追加されます。和を何かで割ると `(a + b) / ?` になります。
+Click a part that is already there and the compiler says what it is. Above it, the actions on that part: **+ − × ÷** put that operator after it with a new slot for the other side, **and** / **or** likewise for a part that is (or may be) true or false, **not** negates that part in place (no new slot), **Compare** puts `<`, `==` and the rest after it, **Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads a collection element by element (`all reading in readings: ?` — the editor picks a readable name for the element, `reading` for `readings`, `item` otherwise), **Range** asks whether the value lies between two ends (`… in ? .. ?`), **Choose** makes the part one outcome of a choice (`if ? then … else ?`, the condition selected next), and **Remove** turns it back into a slot — removing the slot next to an operator removes the operator with it, and an empty `not ?` goes with its slot. Parentheses are added where the operators need them: a sum divided by something becomes `(a + b) / ?`, an `or` under an `and` becomes `(a or b) and ?`, and a choice under anything is `(if … then … else …)`.
 
 フィールドの下の行——_期待：角度。角度 ÷ 角度 = 無次元量だから。_——はコンパイラの推論を平易な言葉で述べたものです。スロットが何であるべきかを周囲から導きます。関係が生成しなければならない結果と、演算子の反対側です。速度の `? / 1 s` は長さを期待し、トルクの `Force * ?` は長さを期待します。スロットの周囲がまだ何も分からないとき——2 つのスロットの積——はそう述べ、単位を提示しません。先に反対側を埋めてください。**説明**は同じことをコンパイラの記法で示します。
 
 **単位付きの数**は 2 つのフィールド、数とその単位です。数を編集すると同じ単位の新しい量になります。ポップアップから別の単位を選ぶと量は保たれ、数が書き換えられます。`180 deg` は `3.141592653589793 rad` になります。この 2 つは別のことであり、ポップアップは決して前者を行いません。
 
+A choice is drawn the way it reads: `if` and its condition on one line, `then` and `else` with their outcomes indented under it. Each part is an ordinary component: the condition expects true or false, and both outcomes expect what the choice must give — the relationship's result at the top, or, inside a larger formula, whatever the other outcome already is. The logical operators are shown as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in the weight of the language's own words.
+
 コレクションに対する数式は読むとおりに描かれます。`all reading in readings:` が 1 行、その下に条件がインデントされます。要素の名前は現れる場所すべてでイタリックです——それはこの数式に属し設計には属さないので、コンセプトの名前変更は決してそれに触れません——そして選択すると 1 つの要素が何かを述べます。範囲は `..` を挟む両端です。各端は `in` の前の値と同じ種類を期待するので、その単位ポップアップにはその種類の単位が並びます。
 
-数式の下層は普通のテキストです。`clamp(Tilt / 90 deg, 0, 1)` は**テキスト**ビューでそのとおりに読め、テキストで入力した数式は**数式**ビューに現れます——テキストがスロットを残した場所には `?` が付きます。テキストで入力した `all reading in readings: reading < limit` は同じ語で戻ってきます。いくつかの形——`if`、`match`、`let` を含むブロック、規則 `x => …`、コレクションや組のリテラル、`delay` / `sync`——は数式ビューではテキストとして表示され、テキストビューで編集します。数式として読めないテキストは入力したままを保ちます。数式ビューはその部品を表示せず、_テキストを数式として読み取れません。_ と述べて**テキストとして編集**を提示します。変更のたびに数式ビューはコンパイラが新しいテキストを読むのを待ちます——_コンパイラが数式を読み取るのを待っています…_、部品は薄く表示——それから次の操作を提示するので、クリックしたものがすでに変わったテキストに作用することはありません。
+The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads exactly so in the **Text** view, and a formula typed as text appears in the **Formula** view — with `?` wherever text left a slot; `all reading in readings: reading < limit` and `if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come back as the same words, every part selectable. Some forms — `match`, a block with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` — are shown as text in the Formula view and edited in the Text view. Text that cannot be read as a formula keeps exactly what you typed; the Formula view shows no parts for it, says _The text cannot be read as a formula._ and offers **Edit as text**. After any change the Formula view waits for the compiler's reading of the new text — _Waiting for the compiler to read the formula…_, the parts dimmed — before it offers the next action, so nothing you click ever acts on text that has already changed.
 
 ## テキストフィールドとその判定
 
@@ -59,7 +65,10 @@ _検査を通らない下書きのある数式フィールド：赤い判定行�
 | **⌃Space** | 補完を開く（テキストビュー） |
 | **↑ / ↓**、**Return / Tab** | 補完リスト内を移動し、確定する |
 | **Tab** | 数式ビューで次の部品へ移動 |
-| **+ − \* /**、**⌫** | 数式ビューで選択中の部品に対して：その演算子を後ろに置く。削除する |
+| **+ − \* /**, **< >** | on a selected part in the Formula view: put that operator after it, with a slot for the other side |
+| **=**, **&**, **\|** | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up |
+| **!** | negate the selected part in place (`not …`) |
+| **⌫** | remove the selected part (an empty slot takes its operator with it) |
 | **⌘S** | _プロジェクトを保存_——下書きは決して保存しない。未追加の数式と未保存のプロジェクトは別の状態 |
 
 ## 補完とホバー

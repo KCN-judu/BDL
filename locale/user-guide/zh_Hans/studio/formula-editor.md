@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/formula-editor.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/formula-editor.md) · 简体中文 · [日本語](../../ja/studio/formula-editor.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 公式编辑器
 
@@ -19,16 +21,20 @@ _选中分母槽位的公式视图：编译器说明该槽位期望角度及原�
 - **一个数。** 输入它，从弹出菜单选择单位，按回车或**插入**。弹出菜单只列出槽位期望的那种值的单位——角度是 _rad_、_deg_、_turn_；绝不会是长度或时间。期望纯数的槽位没有单位可选。
 - **一个引用。** 这个关系读取的概念，以及设计中值的种类合适的关系——各自附有它生成的内容。引用按原样插入：它的种类来自其声明，没有单位弹出菜单。值——像 `tilt` 这样的来源，或计算值——只用名字书写（`tilt`，绝不是 `tilt()`）；规则带着参数应用（`dimByTilt(?)`）。
 - **一个方程。** 折叠在 _方程_ 之下：库中结果可以是此处期望值的方程（角度可用 `min`、`max`、`clamp`、`sum` …；不包括生成真或假的 `any`）。选择一个会插入它，每个参数一个槽位。
+- **A truth value.** Where the slot expects true or false — the side of an `and`, a condition, a concept with the On / off value form — there is no number to type: two buttons, **true** and **false**, stand in its place, and _References_ lists the values that are true or false, the concepts this relationship reads first.
+- **A form.** **Choose** opens a choice in the slot, `if ? then ? else ?`; on a slot that expects true or false, **not** opens a negation, `not ?`.
 
-点击已有的部件，编译器会说明它是什么。它上方是针对该部件的操作：**+ − × ÷** 把该运算符放在它后面，并为另一侧添加新槽位；**比较**对 `<`、`==` 等同理；**函数**把它包进一个方程（`clamp(…, ?, ?)`）；**每个元素**逐个元素读取集合（`all reading in readings: ?`——编辑器为元素选一个可读的名字，`readings` 对应 `reading`，否则用 `item`）；**范围**询问值是否在两端之间（`… in ? .. ?`）；**移除**把它变回槽位——移除运算符旁的槽位会连同运算符一起移除。括号会在运算符需要的地方自动添加：和除以某物变成 `(a + b) / ?`。
+Click a part that is already there and the compiler says what it is. Above it, the actions on that part: **+ − × ÷** put that operator after it with a new slot for the other side, **and** / **or** likewise for a part that is (or may be) true or false, **not** negates that part in place (no new slot), **Compare** puts `<`, `==` and the rest after it, **Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads a collection element by element (`all reading in readings: ?` — the editor picks a readable name for the element, `reading` for `readings`, `item` otherwise), **Range** asks whether the value lies between two ends (`… in ? .. ?`), **Choose** makes the part one outcome of a choice (`if ? then … else ?`, the condition selected next), and **Remove** turns it back into a slot — removing the slot next to an operator removes the operator with it, and an empty `not ?` goes with its slot. Parentheses are added where the operators need them: a sum divided by something becomes `(a + b) / ?`, an `or` under an `and` becomes `(a or b) and ?`, and a choice under anything is `(if … then … else …)`.
 
 字段下方那行——_期望：角度，因为角度 ÷ 角度 = 无量纲量。_——是编译器用平实语言给出的推理。它根据槽位周围的内容推算槽位必须是什么：关系必须生成的结果，以及运算符的另一侧。速度的 `? / 1 s` 期望长度；力矩的 `Force * ?` 期望长度。当槽位周围什么都还不知道时——两个槽位的乘积——它会这样说明并且不提供单位；先填另一侧。**解释**用编译器的记号显示同样的内容。
 
 **带单位的数**是两个字段：数和它的单位。编辑数是同一单位下的一个新量。从弹出菜单选择另一个单位会保持量不变并重写数：`180 deg` 变成 `3.141592653589793 rad`。这两者是不同的事，弹出菜单永远不做前者。
 
+A choice is drawn the way it reads: `if` and its condition on one line, `then` and `else` with their outcomes indented under it. Each part is an ordinary component: the condition expects true or false, and both outcomes expect what the choice must give — the relationship's result at the top, or, inside a larger formula, whatever the other outcome already is. The logical operators are shown as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in the weight of the language's own words.
+
 作用于集合的公式按其读法绘制：`all reading in readings:` 一行，条件缩进在它下面。元素名在出现的所有地方都是斜体——它属于这个公式，而不是设计，所以重命名概念永远不会影响它——选中它会说明一个元素是什么。范围是 `..` 两侧的两端；每一端期望的种类与 `in` 之前的值相同，因此其单位弹出菜单列出该种类的单位。
 
-公式底层是普通文本：`clamp(Tilt / 90 deg, 0, 1)` 在**文本**视图中就是这样，以文本输入的公式也会出现在**公式**视图中——文本留下槽位的地方显示 `?`；以文本输入的 `all reading in readings: reading < limit` 会以同样的文字回来。有些形式——`if`、`match`、带 `let` 的块、规则 `x => …`、集合或分组字面量、`delay` / `sync`——在公式视图中以文本显示，在文本视图中编辑。无法读作公式的文本会原样保留你输入的内容；公式视图不为它显示部件，而是说 _文本无法读作公式。_ 并提供**以文本编辑**。任何更改之后，公式视图会等待编译器读取新文本——_正在等待编译器读取公式…_，部件变暗——然后才提供下一步操作，因此你点击的任何东西都不会作用于已经变化的文本。
+The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads exactly so in the **Text** view, and a formula typed as text appears in the **Formula** view — with `?` wherever text left a slot; `all reading in readings: reading < limit` and `if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come back as the same words, every part selectable. Some forms — `match`, a block with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` — are shown as text in the Formula view and edited in the Text view. Text that cannot be read as a formula keeps exactly what you typed; the Formula view shows no parts for it, says _The text cannot be read as a formula._ and offers **Edit as text**. After any change the Formula view waits for the compiler's reading of the new text — _Waiting for the compiler to read the formula…_, the parts dimmed — before it offers the next action, so nothing you click ever acts on text that has already changed.
 
 ## 文本字段及其结论
 
@@ -59,7 +65,10 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 | **⌃Space** | 打开补全（文本视图） |
 | **↑ / ↓**、**Return / Tab** | 在补全列表中移动并接受 |
 | **Tab** | 在公式视图中，移到下一个部件 |
-| **+ − \* /**、**⌫** | 在公式视图中选中的部件上：把该运算符放在它后面；移除它 |
+| **+ − \* /**, **< >** | on a selected part in the Formula view: put that operator after it, with a slot for the other side |
+| **=**, **&**, **\|** | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up |
+| **!** | negate the selected part in place (`not …`) |
+| **⌫** | remove the selected part (an empty slot takes its operator with it) |
 | **⌘S** | _保存项目_——从不保存草稿；未添加的公式和未保存的项目是两种不同的状态 |
 
 ## 补全与悬停

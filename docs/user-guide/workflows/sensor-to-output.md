@@ -28,8 +28,12 @@ Source (in a domain)  →  rule(s)  →  value (defined, in the domain)  →  ph
    if AmbientLight > 300 lx then Brightness / 2 else Brightness
    ```
 
-   _Add definition._ A rule may read and produce the same concept: this one
-   takes a brightness and returns an adjusted brightness.
+   Type it in the **Text** view, or assemble it in the **Formula** view:
+   **Choose** on the empty slot gives `if ? then ? else ?`, and each slot offers
+   what fits — AmbientLight, **>**, the number with `lx`, then Brightness,
+   **÷**, `2`, and Brightness again. _Add definition._ A rule may read and
+   produce the same concept: this one takes a brightness and returns an adjusted
+   brightness.
 
 4. **Rewire the value.** Select `brightness` and change its formula to
 
