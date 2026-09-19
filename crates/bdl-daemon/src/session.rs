@@ -860,8 +860,12 @@ impl Session {
             outcome: None,
         };
         body(&mut tx)?;
+        // One authored step is one revision, however many edits it
+        // expanded to: the working copy's counter advanced per edit.
+        let mut snapshot = tx.working;
+        snapshot.revision = base.next();
         let applied = AppliedSystem {
-            snapshot: tx.working,
+            snapshot,
             outcome: tx.outcome.unwrap_or_default(),
         };
         let previous = std::mem::replace(&mut sys.current, applied.snapshot);

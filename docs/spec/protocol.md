@@ -153,13 +153,16 @@ names and the fragment keys `names` may address, `concept` the template view of
 a Concept item — and the shared quantity vocabulary; independent of any project
 (docs/spec/concept-library.md); 0.17 | | InstantiateLibraryItem { base_revision,
 item_id, names{key → name}, component? } | SystemEditApplied | the one
-instantiation: the daemon plans the item's fragment against the project (names
-free in it, or `names` by key) and applies every step in one transaction — into
-the system's own design, or into `component`'s body — so a Source item's concept
-and its `() -> concept` relationship are one revision, one history entry, and
-the outcome carries both `created_concept` and `created_mapping`; nothing is
-applied when any step is refused; `library.unknown_item`,
-`library.invalid_plan`, `edit.stale_revision`, `edit.invalid_name`; 0.17 | |
+instantiation: the daemon plans the item's fragment against the project (default
+names made free in it; a name in `names`, by fragment key, used as given) and
+applies every step in one transaction — into the system's own design, or into
+`component`'s body — so a Source item's concept and its `() -> concept`
+relationship are exactly one revision (`base_revision + 1`), one history entry,
+and the outcome carries both `created_concept` and `created_mapping`; nothing is
+applied when any step is refused (no object, layout, history, dirtiness or
+identity); `library.unknown_item`, `library.invalid_plan` (a key the item does
+not create), `edit.stale_revision`, `edit.invalid_name`,
+`edit.duplicate_concept_name` / `edit.duplicate_mapping_name`; 0.17 | |
 ListConceptTemplates | ConceptTemplatesResponse { libraries[] { id, name,
 schema_version, version, templates[] { id, display_name, default_name,
 description, category, role_hint, representation?, type_name, unit, keywords[],

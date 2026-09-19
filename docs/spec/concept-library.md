@@ -161,20 +161,31 @@ there so the section says what it means: a Source is a boundary, not a sensor.
 
 `bdl_library::plan(design, item, names)` turns a fragment into ordered
 `PlannedStep`s against the target design: a `Concept` step carries its
-`CreateConcept` edit with a name free among the design's concepts _and_ mappings
-(`free_name`: `RoomTemp`, then `RoomTemp2`), or the caller's chosen name by key;
-a `Mapping` step carries its name, description and the `inputs`/`output`
-**keys**. The daemon (`Session::apply_library_item`) applies the steps in one
+`CreateConcept` edit, a `Mapping` step its name, description and the
+`inputs`/`output` **keys**. A default name is made free among the design's
+concepts _and_ mappings and the steps before it (`free_name`: `RoomTemp`, then
+`RoomTemp2`); a name the caller chooses by key is used exactly as given — a
+taken or unspellable name is refused by the edit it becomes, never silently
+renamed — and a key the item does not create is refused before anything is
+planned (`library.invalid_plan`). Planning is pure and deterministic; the loader
+has already refused a fragment whose mapping names a concept the fragment does
+not create before it.
+
+The daemon (`Session::apply_library_item`) applies the steps in one
 **transaction**: each step's edit goes through the ordinary `SystemEditOp` path
 (name check, rename expansion, `apply_system_edit`) on a working copy, a mapping
 step resolves its keys to the `SemanticId`s the earlier steps allocated, and the
-working copy becomes the new revision only when every step succeeded — one
-history entry (one Undo removes the whole fragment, a Redo recreates it with the
-same identities), one re-derivation, one merged outcome (`created_concept` and
+working copy becomes the new revision only when every step succeeded — **exactly
+one revision** (`base + 1`, however many edits the fragment was), one history
+entry (one Undo removes the whole fragment, a Redo recreates it with the same
+identities), one re-derivation, one merged outcome (`created_concept` and
 `created_mapping` both set for a Source). When any step is refused (a stale
-revision, an invalid chosen name, an unknown component) nothing is applied and
-the project stays at `base_revision`. The plan never leaves the daemon; fragment
-keys are never a project fact.
+revision, a taken or invalid chosen name, an unknown component) nothing is
+applied: no object, no layout placement, no history entry, no dirtiness, and no
+identity consumed — the next creation gets the id it would have got anyway. The
+plan never leaves the daemon; fragment keys are never a project fact. Inside a
+component body the keys resolve to the body's own identities: a body mapping
+never binds to a system concept that shares its local number.
 
 A Source item's result is two ordinary objects; the canvas shows the
 relationship as a Source because it reads nothing, has no definition and backs
@@ -324,16 +335,16 @@ the concept library.
 
 ## Tests
 
-| scenario                                                                                                                                               | where                                                                            |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| the embedded library loads, is 30–50 items, every quantity/unit resolves; `Brightness` is a level, not luminance; schema 1 still loads                 | `bdl-library` unit tests                                                         |
-| a Source item plans a concept and a `() -> value` mapping; names free across concepts and mappings; chosen names by key; the template projection       | `bdl-library` unit tests                                                         |
-| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                                                  | `bdl-library`, `bdld` stdio e2e, Studio e2e                                      |
-| a project persists and reloads without the library; a changed item default does not reach an existing object                                           | `bdl-library`                                                                    |
-| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema, a key no concept of the fragment has)            | `bdl-library`                                                                    |
-| every Concept item is a textual completion, from the same data                                                                                         | `bdl-ide/tests/acceptance.rs`                                                    |
-| the daemon serves the embedded library item for item, the legacy surface lists Concept items only with the 0.16 fields empty                           | `bdld/tests/stdio_e2e.rs`, `bdld/tests/text_e2e.rs`                              |
-| a Source item is one transaction: one revision, one Undo, a Redo with the same identities, nothing applied when a later step is refused; the text view | `bdld/tests/stdio_e2e.rs` (`library_items_over_stdio`), `bdld/tests/text_e2e.rs` |
-| right-click and drag are one creation path; create-then-rename; recents; inline rename; localized search; refused insertion; the Source placed left    | `apps/studio/test/library_test.dart`, `apps/studio/test/source_role_test.dart`   |
-| Studio against the real `bdld`: insert twice, rename, save, reopen; a Source item in zh-Hans                                                           | `apps/studio/test/library_e2e_test.dart`                                         |
-| the generated presentation strings follow the catalogue                                                                                                | `scripts/gen_library_l10n.py --check` (preflight `l10n`)                         |
+| scenario                                                                                                                                                                                                                                                                                                                      | where                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| the embedded library loads, is 30–50 items, every quantity/unit resolves; `Brightness` is a level, not luminance; schema 1 still loads; the registry shape (44 items: 36 Concept, 8 Source; keys `concept` / `value`, `source`)                                                                                               | `bdl-library` unit tests                                                                                                    |
+| a Source item plans a concept and a `() -> value` mapping; names free across concepts and mappings; chosen names by key; the template projection                                                                                                                                                                              | `bdl-library` unit tests                                                                                                    |
+| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                                                                                                                                                                                                                         | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                 |
+| a project persists and reloads without the library; a changed item default does not reach an existing object                                                                                                                                                                                                                  | `bdl-library`                                                                                                               |
+| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema, a key no concept of the fragment has)                                                                                                                                                                                   | `bdl-library`                                                                                                               |
+| every Concept item is a textual completion, from the same data                                                                                                                                                                                                                                                                | `bdl-ide/tests/acceptance.rs`                                                                                               |
+| the daemon serves the embedded library item for item, the legacy surface lists Concept items only with the 0.16 fields empty                                                                                                                                                                                                  | `bdld/tests/stdio_e2e.rs`, `bdld/tests/text_e2e.rs`                                                                         |
+| a Source item is one transaction: exactly one revision and one history entry; a refused step leaves no object, layout, history entry, dirtiness or consumed identity; a taken chosen name and an unknown key are refused whole; keys resolve inside a component body; the role is Source only while unresolved; the text view | `bdld/tests/stdio_e2e.rs` (`library_items_over_stdio`, `a_library_transaction_is_all_or_nothing`), `bdld/tests/text_e2e.rs` |
+| right-click and drag are one creation path; create-then-rename; recents; inline rename; localized search; refused insertion; the Source placed left                                                                                                                                                                           | `apps/studio/test/library_test.dart`, `apps/studio/test/source_role_test.dart`                                              |
+| Studio against the real `bdld`: insert twice, rename, save, reopen; a Source item in zh-Hans                                                                                                                                                                                                                                  | `apps/studio/test/library_e2e_test.dart`                                                                                    |
+| the generated presentation strings follow the catalogue; an item without translations, an orphan entry or an empty field is refused; `--check` is read-only                                                                                                                                                                   | `scripts/gen_library_l10n.py --check`, `scripts/test_gen_library_l10n.py` (preflight `l10n`)                                |

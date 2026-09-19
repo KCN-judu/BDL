@@ -3183,7 +3183,7 @@ abstract class AppLocalizations {
   /// **'A value that enters the behavior model from the environment, observed once per activation. Nothing is missing: add a definition only to compute it inside the model instead.'**
   String get sourceExplanation;
 
-  /// Library category of the standard Source templates (glossary: source). Not all are sensors.
+  /// Library section of the standard Source items (glossary: source). Not all are sensors.
   ///
   /// In en, this message translates to:
   /// **'Sources'**
@@ -3201,7 +3201,7 @@ abstract class AppLocalizations {
   /// **'A value the environment provides: it reads nothing and is observed once per activation.'**
   String get aSourceAValueTheEnvironmentProvides;
 
-  /// Canvas contextual menu: submenu of Source templates.
+  /// Canvas contextual menu: submenu of Source items.
   ///
   /// In en, this message translates to:
   /// **'Add Source'**
@@ -3219,7 +3219,7 @@ abstract class AppLocalizations {
   /// **'{name}, Source: a value entering the behavior model from the environment, provides {concept}'**
   String sourceNodeSemantics(String name, String concept);
 
-  /// Library row subtitle for a Source template: what the relationship provides.
+  /// Library row subtitle for a Source item: what the relationship provides.
   ///
   /// In en, this message translates to:
   /// **'Source of {concept}'**

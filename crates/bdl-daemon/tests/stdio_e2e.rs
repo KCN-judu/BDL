@@ -1696,3 +1696,284 @@ fn library_items_over_stdio() {
     assert_eq!(reopened.mappings.len(), 10);
     c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
 }
+
+/// What one library transaction guarantees (docs/spec/concept-library.md):
+/// a Source item is exactly one revision and one history entry; a refused
+/// step leaves nothing — no object, no layout, no history entry, no
+/// dirtiness, and no identity consumed; a request naming a key the item
+/// does not create, or choosing a name the project holds, is refused
+/// whole; and inside a component body the fragment keys resolve to the
+/// body's own identities, never to a system concept that happens to share
+/// the local number.
+#[test]
+fn a_library_transaction_is_all_or_nothing() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("rig");
+    let mut events = Vec::new();
+    let mut c = Client::spawn();
+    c.call(
+        Req::Handshake(pb::HandshakeRequest {
+            client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+            client_name: "e2e".into(),
+            client_version: "0".into(),
+        }),
+        &mut events,
+    );
+    project(c.call(
+        Req::InitProject(pb::InitProjectRequest {
+            root_path: root.to_string_lossy().into(),
+            name: "rig".into(),
+        }),
+        &mut events,
+    ));
+    let instantiate = |c: &mut Client,
+                       events: &mut Vec<pb::Event>,
+                       id: &str,
+                       names: Vec<(&str, &str)>,
+                       component: Option<u64>| {
+        let base = c.last_revision;
+        c.call(
+            Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
+                base_revision: base,
+                item_id: id.into(),
+                names: names
+                    .into_iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect(),
+                component,
+            }),
+            events,
+        )
+    };
+    let get = |c: &mut Client, events: &mut Vec<pb::Event>| {
+        project(c.call(Req::GetProject(pb::GetProjectRequest {}), events))
+    };
+
+    // exactly one revision, one history entry, both objects placed
+    let before = c.last_revision;
+    let Resp::SystemEditApplied(e) =
+        instantiate(&mut c, &mut events, "std.source.temperature", vec![], None)
+    else {
+        panic!("instantiate")
+    };
+    let p = e.project.unwrap();
+    assert_eq!(p.revision, before + 1, "one transaction, one revision");
+    let layout = p.layout.as_ref().unwrap();
+    assert_eq!(layout.concepts.len(), 1);
+    assert_eq!(layout.mappings.len(), 1);
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
+        panic!("undo")
+    };
+    let p = u.project.unwrap();
+    assert!(
+        p.concepts.is_empty() && p.mappings.is_empty(),
+        "one undo, both gone"
+    );
+    assert!(!p.can_undo, "one history entry: nothing older to undo");
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {}), &mut events) else {
+        panic!("redo")
+    };
+    let p = r.project.unwrap();
+    assert_eq!((p.concepts.len(), p.mappings.len()), (1, 1));
+    let room_temp = p.concepts[0].id;
+    let temp_sensor = p.mappings[0].id;
+
+    // the item's category forces no role: the relationship is a Source
+    // because it is unresolved at the boundary (ADR-0032), an ordinary
+    // Mapping once it has a definition, and a Source again without one
+    let role = |c: &mut Client, events: &mut Vec<pb::Event>| -> Option<String> {
+        let Resp::DraftHover(h) = c.call(
+            Req::HoverEntity(pb::HoverEntityRequest {
+                revision: c.last_revision,
+                entity: Some(pb::EntityRef {
+                    kind: Some(pb::entity_ref::Kind::MappingId(temp_sensor)),
+                }),
+            }),
+            events,
+        ) else {
+            panic!("hover")
+        };
+        assert!(h.found);
+        h.details
+            .iter()
+            .find(|d| d.label == "role")
+            .map(|d| d.value.clone())
+    };
+    assert_eq!(role(&mut c, &mut events).as_deref(), Some("Source"));
+    let base = c.last_revision;
+    let Resp::EditApplied(_) = c.call(
+        edit(
+            base,
+            pb::edit_op::Op::AttachDefinition(pb::AttachDefinition {
+                id: temp_sensor,
+                definition: Some(pb::Definition {
+                    kind: Some(pb::definition::Kind::Formula("293 K".into())),
+                }),
+            }),
+        ),
+        &mut events,
+    ) else {
+        panic!("attach")
+    };
+    assert_eq!(role(&mut c, &mut events).as_deref(), Some("Mapping"));
+    let Resp::SystemEditApplied(_) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
+        panic!("undo")
+    };
+    assert_eq!(role(&mut c, &mut events).as_deref(), Some("Source"));
+
+    // a clean slate to measure nothing against
+    let Resp::Project(_) = c.call(
+        Req::SaveProject(pb::SaveProjectRequest { force: false }),
+        &mut events,
+    ) else {
+        panic!("save")
+    };
+    let clean = get(&mut c, &mut events);
+    assert!(!clean.dirty);
+    let rev = c.last_revision;
+
+    // a refused second step: nothing of the first step survives
+    let refusals = [
+        // the language cannot spell the relationship's name
+        (
+            "std.source.tilt",
+            vec![("source", "lean sensor")],
+            "edit.invalid_name",
+        ),
+        // the chosen concept name is taken (never a silent `RoomTemp2`)
+        ("std.source.tilt", vec![("value", "RoomTemp")], "edit."),
+        // the chosen relationship name is taken, after a good first step
+        ("std.source.tilt", vec![("source", "TempSensor")], "edit."),
+        // a key the item does not create
+        (
+            "std.source.tilt",
+            vec![("sensor", "X")],
+            "library.invalid_plan",
+        ),
+    ];
+    for (id, names, code) in refusals {
+        match instantiate(&mut c, &mut events, id, names.clone(), None) {
+            Resp::Error(e) => assert!(
+                e.code.starts_with(code),
+                "{id} {names:?}: expected {code}, got {} ({})",
+                e.code,
+                e.message
+            ),
+            other => panic!("{id} {names:?}: expected a refusal, got {other:?}"),
+        }
+        assert_eq!(c.last_revision, rev);
+        let after = get(&mut c, &mut events);
+        assert_eq!(after.revision, rev);
+        assert_eq!(after.concepts, clean.concepts, "{id} {names:?}");
+        assert_eq!(after.mappings, clean.mappings, "{id} {names:?}");
+        assert_eq!(after.layout, clean.layout, "no layout half-state");
+        assert_eq!(after.can_undo, clean.can_undo, "no history entry");
+        assert!(!after.dirty, "{id} {names:?}: nothing to save");
+    }
+    // no identity was consumed by the refused first steps: the next
+    // concept gets the id it would have got anyway
+    let Resp::SystemEditApplied(e) = instantiate(
+        &mut c,
+        &mut events,
+        "std.environment.humidity",
+        vec![],
+        None,
+    ) else {
+        panic!("instantiate")
+    };
+    let humidity = e.outcome.unwrap().inner.unwrap().created_concept.unwrap();
+    assert_eq!(humidity, room_temp + 1, "sequential ids, none leaked");
+    // …and undoing now removes the humidity, not the refused attempts
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
+        panic!("undo")
+    };
+    let p = u.project.unwrap();
+    assert_eq!(p.concepts, clean.concepts);
+    assert_eq!(p.mappings, clean.mappings);
+
+    // inside a component body: the keys resolve to the body's identities
+    let base = c.last_revision;
+    let Resp::SystemEditApplied(e) = c.call(
+        Req::ApplySystemEdit(pb::ApplySystemEditRequest {
+            base_revision: base,
+            op: Some(pb::SystemEditOp {
+                op: Some(pb::system_edit_op::Op::CreateComponent(
+                    pb::CreateComponent {
+                        name: "Probe".into(),
+                        description: String::new(),
+                    },
+                )),
+            }),
+        }),
+        &mut events,
+    ) else {
+        panic!("create component")
+    };
+    let probe = e.outcome.unwrap().created_component.unwrap();
+    let base_before = get(&mut c, &mut events);
+    let Resp::SystemEditApplied(e) = instantiate(
+        &mut c,
+        &mut events,
+        "std.source.distance",
+        vec![],
+        Some(probe),
+    ) else {
+        panic!("instantiate in body")
+    };
+    let inner = e.outcome.unwrap().inner.unwrap();
+    let (local_concept, local_mapping) = (
+        inner.created_concept.unwrap(),
+        inner.created_mapping.unwrap(),
+    );
+    let Resp::System(sv) = c.call(Req::GetSystem(pb::GetSystemRequest {}), &mut events) else {
+        panic!("system")
+    };
+    let system = sv.system.unwrap();
+    let body = system
+        .components
+        .iter()
+        .find(|x| x.id == probe)
+        .unwrap()
+        .body
+        .as_ref()
+        .unwrap();
+    let distance = body
+        .concepts
+        .iter()
+        .find(|x| x.id == local_concept)
+        .unwrap();
+    assert_eq!(distance.name, "Distance");
+    let sensor = body
+        .mappings
+        .iter()
+        .find(|m| m.id == local_mapping)
+        .unwrap();
+    assert_eq!(sensor.name, "DistanceSensor");
+    assert_eq!(
+        sensor.signature.as_ref().unwrap().output,
+        local_concept,
+        "the body's own concept, not the system concept with the same local number"
+    );
+    // the system's base design is untouched: the same concepts, and its
+    // concept 0 (RoomTemp) is still RoomTemp, not bound by the body
+    let base_after = get(&mut c, &mut events);
+    assert!(base_after.concepts.iter().all(|x| base_before
+        .concepts
+        .iter()
+        .any(|b| b.id == x.id && b.name == x.name)));
+    assert!(base_after
+        .concepts
+        .iter()
+        .any(|x| x.id == room_temp && x.name == "RoomTemp"));
+    assert_eq!(
+        base_after.mappings.len(),
+        base_before.mappings.len(),
+        "a body without an instance adds nothing to the flat design"
+    );
+    // an unknown component is refused whole
+    match instantiate(&mut c, &mut events, "std.source.tilt", vec![], Some(999)) {
+        Resp::Error(e) => assert_eq!(e.code, "system.unknown_component"),
+        other => panic!("expected a refusal, got {other:?}"),
+    }
+    c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
+}

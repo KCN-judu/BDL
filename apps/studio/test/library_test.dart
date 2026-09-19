@@ -125,6 +125,25 @@ final temperatureSensor = pb.LibraryItemView(
   ],
 );
 
+/// The External Value Source item: a value whose form is left open.
+final externalValue = pb.LibraryItemView(
+  id: 'std.source.external',
+  category: 'source',
+  displayName: 'External Value',
+  description: 'A value provided from outside the product.',
+  group: 'external',
+  keywords: ['host', 'network', 'external', 'source'],
+  creates: [
+    pb.LibraryObjectView(kind: 'concept', key: 'value', name: 'ExternalValue'),
+    pb.LibraryObjectView(
+      kind: 'mapping',
+      key: 'source',
+      name: 'ExternalSource',
+      signature: '() -> ExternalValue',
+    ),
+  ],
+);
+
 pb.LibraryItemsResponse library() => pb.LibraryItemsResponse(
   libraries: [
     pb.LibraryView(
@@ -133,6 +152,8 @@ pb.LibraryItemsResponse library() => pb.LibraryItemsResponse(
       schemaVersion: 2,
       version: '0.2',
       items: [
+        externalValue,
+
         for (final t in [temperature, light, motorSpeed, motorAngle, pressed, open]) conceptItem(t),
         temperatureSensor,
       ],
@@ -208,10 +229,10 @@ void main() {
     final (store, daemon) = await connected();
     expect(store.state.templates.map((t) => t.id), contains('std.environment.temperature'));
     expect(store.state.library!.libraries.single.version, '0.2');
-    expect(
-      store.state.libraryItems.where((i) => i.category == 'source').single.id,
+    expect(store.state.libraryItems.where((i) => i.category == 'source').map((i) => i.id), [
+      'std.source.external',
       'std.source.temperature',
-    );
+    ]);
     // Closing the project does not lose the vocabulary.
     store.dispatch(const ProjectClosed());
     expect(store.state.project, isNull);
@@ -369,6 +390,20 @@ void main() {
     // the canonical English still matches in every locale
     expect(ids(zh, 'Temperature Sensor'), ['std.source.temperature']);
     expect(ids(ja, 'lux'), ['std.environment.ambient_light']);
+    // the required cases, per locale: a name, a keyword, a tag
+    expect(ids(kEnglish, 'temperature'), contains('std.source.temperature'));
+    expect(ids(kEnglish, 'sensor'), contains('std.source.temperature'));
+    expect(ids(kEnglish, 'external'), ['std.source.external']);
+    expect(ids(zh, '外部'), ['std.source.external']);
+    expect(ids(ja, '外部'), ['std.source.external']);
+    expect(ids(ja, 'センサー'), isNot(contains('std.source.external')));
+    // an open value form is said in the sheet's words, never a presumed scalar
+    expect(itemPreview(kEnglish, externalValue).first, 'value: ExternalValue (decide later)');
+    expect(
+      itemPreview(zh, externalValue).first,
+      contains('ExternalValue (${zh.decideLaterLower})'),
+    );
+    expect(itemWord(kEnglish, externalValue), '() -> ExternalValue');
     // names and descriptions in each locale; the section titles
     expect(itemName(kEnglish, temperatureSensor), 'Temperature Sensor');
     expect(itemName(zh, temperatureSensor), '温度传感器');

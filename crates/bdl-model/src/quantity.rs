@@ -3,7 +3,7 @@
 //! each with its dimension and its canonical unit symbol.
 //!
 //! This is the one table.  The textual syntax resolves representation
-//! names here, the Standard Concept Library references quantities by their
+//! names here, the Standard Library references quantities by their
 //! id, Studio's unit picker and the protocol read it, and the unit table in
 //! `bdl-elab` names its units against these dimensions.  A quantity name is
 //! *representation* vocabulary — what a value is measured as — never a

@@ -51,6 +51,46 @@ def items() -> list[dict]:
     return out
 
 
+LOCALES = tuple(loc for loc in ARBS if loc != "en")
+FIELDS = ("name", "description", "tags")
+
+
+def validate(all_items: list[dict], l10n: dict) -> None:
+    """The catalog and the library name the same items, and every item has
+    a complete entry per locale: nothing drifts silently — an item added to
+    the TOML without translations, a translation left behind by a removed
+    or renamed item, an empty field."""
+    ids = [it["id"] for it in all_items]
+    if len(set(ids)) != len(ids):
+        raise SystemExit(f"{TOML}: duplicate item ids")
+    entries = l10n.get("items")
+    if not isinstance(entries, dict):
+        raise SystemExit(f"{L10N}: expected an `items` object")
+    problems = []
+    for orphan in sorted(set(entries) - set(ids)):
+        problems.append(f"{orphan}: not an item of {TOML.name}")
+    for item_id in ids:
+        entry = entries.get(item_id)
+        if entry is None:
+            problems.append(f"{item_id}: no entry")
+            continue
+        for extra in sorted(set(entry) - set(LOCALES)):
+            problems.append(f"{item_id}: unknown locale `{extra}` (expected {', '.join(LOCALES)})")
+        for loc in LOCALES:
+            texts = entry.get(loc)
+            if not isinstance(texts, dict):
+                problems.append(f"{item_id}: no {loc} entry")
+                continue
+            for f in FIELDS:
+                v = texts.get(f)
+                if not isinstance(v, str) or not v.strip():
+                    problems.append(f"{item_id}: {loc} {f} is empty")
+            for extra in sorted(set(texts) - set(FIELDS)):
+                problems.append(f"{item_id}: {loc} has an unknown field `{extra}`")
+    if problems:
+        raise SystemExit(f"{L10N.relative_to(ROOT)}:\n  " + "\n  ".join(problems))
+
+
 def strings_for(locale: str, all_items: list[dict], l10n: dict) -> dict[str, str]:
     out: dict[str, str] = {}
     for it in all_items:
@@ -126,6 +166,7 @@ def main() -> int:
     check = "--check" in sys.argv[1:]
     all_items = items()
     l10n = json.loads(L10N.read_text(encoding="utf-8"))
+    validate(all_items, l10n)
     outputs: dict[Path, str] = {}
     for locale, name in ARBS.items():
         outputs[ARB_DIR / name] = write_arb(name, locale, strings_for(locale, all_items, l10n))

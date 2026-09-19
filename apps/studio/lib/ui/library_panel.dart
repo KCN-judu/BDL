@@ -86,11 +86,15 @@ String itemWord(AppLocalizations l10n, pb.LibraryItemView item) {
 
 /// The preview of what an item creates, one line per object: *value:
 /// RoomTemp (Temperature)*, *source: TempSensor*, *type: () -> RoomTemp*.
-/// Identifiers and types are the daemon's, never localized.
+/// Identifiers and types are the daemon's, never localized; a concept
+/// whose value form is left open says so in the sheet's words (*decide
+/// later*), never a presumed scalar.
 List<String> itemPreview(AppLocalizations l10n, pb.LibraryItemView item) => [
   for (final o in item.creates)
     if (o.kind == 'concept')
-      l10n.libraryValueOf(o.typeName.isEmpty ? o.name : '${o.name} (${o.typeName})')
+      l10n.libraryValueOf(
+        '${o.name} (${o.typeName.isNotEmpty ? o.typeName : l10n.decideLaterLower})',
+      )
     else ...[
       l10n.librarySourceOf(o.name),
       l10n.libraryTypeOf(o.signature),

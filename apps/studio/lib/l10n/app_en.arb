@@ -2575,7 +2575,7 @@
   },
   "categorySources": "Sources",
   "@categorySources": {
-    "description": "Library category of the standard Source templates (glossary: source). Not all are sensors."
+    "description": "Library section of the standard Source items (glossary: source). Not all are sensors."
   },
   "newSource": "New source",
   "@newSource": {
@@ -2587,7 +2587,7 @@
   },
   "addSource": "Add Source",
   "@addSource": {
-    "description": "Canvas contextual menu: submenu of Source templates."
+    "description": "Canvas contextual menu: submenu of Source items."
   },
   "newSourceEllipsis": "New source…",
   "@newSourceEllipsis": {
@@ -2607,7 +2607,7 @@
   },
   "sourceOfConcept": "Source of {concept}",
   "@sourceOfConcept": {
-    "description": "Library row subtitle for a Source template: what the relationship provides.",
+    "description": "Library row subtitle for a Source item: what the relationship provides.",
     "placeholders": {
       "concept": {
         "type": "String"

@@ -278,8 +278,8 @@ as a _Source_: a value the environment provides, observed once per activation
 (ADR-0032). The text has no keyword, attribute or comment for it, and none is
 read: the role is derived from the declaration's shape and state wherever it is
 shown, and adding a definition (`tilt() = …`) makes the same declaration an
-ordinary relationship. A Source template of the concept library writes exactly
-this pair — `concept RoomTemp : Temperature` and
+ordinary relationship. A Source item of the Standard Library writes exactly this
+pair — `concept RoomTemp : Temperature` and
 `mapping TempSensor : () -> RoomTemp` — in the preferred spelling.
 
 ### 4.2 Types

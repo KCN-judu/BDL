@@ -1494,7 +1494,7 @@ class AppState {
   /// per-component body verdicts), at the project's revision.
   final pb.SystemAnalysisView? systemAnalysis;
 
-  /// The concept libraries the daemon serves (the Standard Concept Library
+  /// The concept libraries the daemon serves (the Standard Library's Concept items
   /// and, later, others) plus the shared quantity vocabulary.  Authoring
   /// vocabulary, independent of any project; `null` until the daemon
   /// answered.

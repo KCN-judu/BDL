@@ -1,6 +1,6 @@
 [package]
 name = "bdl-library"
-description = "Concept libraries: data-driven templates (the Standard Concept Library and future user libraries) that instantiate ordinary Concepts through CreateConcept"
+description = "The Standard Library: data-driven items (concepts and Sources; the embedded standard library and future user libraries) that instantiate ordinary objects through CreateConcept"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

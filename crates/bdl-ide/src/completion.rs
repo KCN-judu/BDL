@@ -39,7 +39,7 @@ pub enum CompletionKind {
     /// A representation name in a `concept … :` position.
     Representation,
     Mapping,
-    /// A Standard Concept Library template: accepting it writes an
+    /// A Standard Library Concept item: accepting it writes an
     /// ordinary declaration (`AmbientLight : Illuminance`); `template`
     /// carries the library id for clients that show provenance.
     Template,
@@ -718,7 +718,7 @@ fn document_completions(
     let line = &source[line_start..replace.start as usize];
     let mut out = Vec::new();
 
-    // `concept Amb|` → Standard Concept Library templates, from the same
+    // `concept Amb|` → the Standard Library's Concept items, from the same
     // data Studio's library panel reads.  Accepting one writes ordinary
     // syntax; nothing about the template stays in the source.
     let trimmed = line.trim_start();
@@ -728,7 +728,7 @@ fn document_completions(
             .entities_of_kind(EntityKind::Concept)
             .map(|(_, n)| n)
             .collect();
-        for t in bdl_library::LibrarySet::standard().templates() {
+        for t in bdl_library::LibrarySet::shared().templates() {
             let by_name = matches(&t.default_name) || matches(&t.display_name);
             let by_keyword = !prefix.is_empty()
                 && t.keywords.iter().any(|k| {

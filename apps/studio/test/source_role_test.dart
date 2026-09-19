@@ -3,7 +3,7 @@
 /// never name-based.  The canvas draws it with a non-colour cue and no
 /// input sockets, the inspector says *Role Source · Provides · Realization*,
 /// the library serves the Sources with localized names, the simulation's
-/// inputs are exactly the Sources, and a Source template's relationship
+/// inputs are exactly the Sources, and a Source item's relationship
 /// lands beside its concept.
 library;
 
@@ -390,7 +390,7 @@ void main() {
   });
 
   group('reducer', () {
-    test('a Source template\'s relationship lands to the left of its concept', () {
+    test('a Source item\'s relationship lands to the left of its concept', () {
       final s = connected(design()).copyWith(
         editor: const EditorState(
           pendingRequests: 1,

@@ -657,12 +657,11 @@ fn hover_to_pb(h: bdl_ide::SemanticHover, revision: u64) -> pb::DraftHoverRespon
 }
 
 /// The everyday card for a canvas node or a library row.
-/// The concept libraries this daemon serves.  The Standard Concept Library
+/// The libraries this daemon serves.  The Standard Library
 /// is embedded; team/project/package libraries are a loader away
 /// (`docs/spec/concept-library.md`).
 fn libraries() -> &'static bdl_library::LibrarySet {
-    static LIBRARIES: std::sync::OnceLock<bdl_library::LibrarySet> = std::sync::OnceLock::new();
-    LIBRARIES.get_or_init(bdl_library::LibrarySet::standard)
+    bdl_library::LibrarySet::shared()
 }
 
 /// The legacy instantiation request (0.6–0.16): a concept template by id,
@@ -757,7 +756,15 @@ fn instantiate_item(
             }
         },
     };
-    let steps = bdl_library::plan(design, item, &names);
+    let steps = match bdl_library::plan(design, item, &names) {
+        Ok(steps) => steps,
+        Err(e) => {
+            return (
+                Resp::Error(error("library.invalid_plan", &e.to_string())),
+                None,
+            )
+        }
+    };
     match session.apply_library_item(revision, scope, &steps) {
         Ok(c) => {
             let view = system_view(session).ok();

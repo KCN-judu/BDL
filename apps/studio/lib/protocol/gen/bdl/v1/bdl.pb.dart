@@ -13108,7 +13108,7 @@ class HoverDetail extends $pb.GeneratedMessage {
   void clearValue() => $_clearField(2);
 }
 
-/// The concept libraries the daemon serves (the Standard Concept Library
+/// The concept libraries the daemon serves (the Standard Library's Concept items
 /// today; team/project/package libraries later), plus the shared quantity
 /// vocabulary Studio's unit picker and the library rows both read.
 /// Independent of any project: may be asked before one is open.

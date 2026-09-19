@@ -975,7 +975,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
     );
 }
 
-/// A standard Source template is an ordinary library mechanism (ADR-0032):
+/// A standard Source item is an ordinary library mechanism (ADR-0032):
 /// one commit creates a concept and an unresolved `() -> concept`
 /// relationship, the source is written in the preferred spelling, never
 /// the shorthand, and reopening re-derives the same shape from the text.
@@ -1035,6 +1035,42 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
             .templates
             .iter()
             .any(|x| x.id.starts_with("std.source.")));
+        // the legacy request knows no Source: a 0.16 `source_name` changes
+        // nothing, and a Source id is not a template
+        let Resp::Error(e) = c.call(Req::InstantiateConceptTemplate(
+            pb::InstantiateConceptTemplateRequest {
+                base_revision: c.last_revision,
+                template_id: "std.source.temperature".into(),
+                name: None,
+                component: None,
+                source_name: Some("TempSensor".into()),
+            },
+        )) else {
+            panic!("a Source is not a template")
+        };
+        assert_eq!(e.code, "library.unknown_template");
+        let Resp::SystemEditApplied(e) = c.call(Req::InstantiateConceptTemplate(
+            pb::InstantiateConceptTemplateRequest {
+                base_revision: c.last_revision,
+                template_id: "std.environment.humidity".into(),
+                name: None,
+                component: None,
+                source_name: Some("Hygrometer".into()),
+            },
+        )) else {
+            panic!("a Concept item through the legacy request")
+        };
+        let p = e.project.unwrap();
+        c.last_revision = p.revision;
+        assert!(
+            p.mappings.is_empty(),
+            "`source_name` is ignored: no relationship"
+        );
+        assert_eq!(p.concepts.len(), 1);
+        let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+            panic!()
+        };
+        c.last_revision = u.project.unwrap().revision;
     }
 
     // instantiate, naming both as a designer would

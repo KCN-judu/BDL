@@ -15,7 +15,7 @@
 //! Two categories today ([`ItemCategory`]):
 //!
 //! * **Concept** — one concept (`Temperature`, `AmbientLight`, …), the
-//!   [`ConceptTemplate`] of the original Concept Library, kept as a view.
+//!   [`ConceptTemplate`] of the original concept library, kept as a view.
 //! * **Source** — an environment-provided value entering the behavior
 //!   model: a semantic concept and an unresolved relationship without
 //!   inputs, `mapping TempSensor : () -> RoomTemp`.  Nothing about it is a
@@ -50,7 +50,7 @@ pub const SCHEMA_VERSION: u32 = 2;
 /// The oldest schema still read.
 pub const OLDEST_SCHEMA_VERSION: u32 = 1;
 
-/// The embedded Standard Concept Library.
+/// The embedded Standard Library.
 pub const STANDARD_LIBRARY_TOML: &str = include_str!("../../../library/std/concepts.toml");
 
 /// Where a template expects to be used.  Discovery only: it groups the
@@ -593,9 +593,13 @@ impl Library {
                 return Err(problem("an item creates at least one object"));
             }
             let mut keys = BTreeSet::new();
+            let mut concepts_before: BTreeSet<&str> = BTreeSet::new();
             for o in &item.fragment.objects {
                 if !keys.insert(o.key().to_string()) {
                     return Err(problem(&format!("object key `{}` appears twice", o.key())));
+                }
+                if let FragmentObject::Concept(c) = o {
+                    concepts_before.insert(c.key.as_str());
                 }
                 if !is_identifier(o.default_name()) {
                     return Err(problem(&format!(
@@ -633,10 +637,13 @@ impl Library {
                         }
                     }
                     FragmentObject::Mapping(m) => {
+                        // the concepts a mapping names are created before
+                        // it: the plan is applied in order, and a key is
+                        // resolved to an identity an earlier step allocated
                         for k in m.inputs.iter().chain(std::iter::once(&m.output)) {
-                            if item.concept(k).is_none() {
+                            if !concepts_before.contains(k.as_str()) {
                                 return Err(problem(&format!(
-                                    "mapping `{}` names `{k}`, which is no concept of the item",
+                                    "mapping `{}` names `{k}`, which no earlier concept of the item has",
                                     m.default_name
                                 )));
                             }
@@ -656,7 +663,7 @@ impl Library {
         })
     }
 
-    /// The embedded Standard Concept Library.
+    /// The embedded Standard Library.
     pub fn standard() -> Library {
         Library::from_toml(STANDARD_LIBRARY_TOML).unwrap_or_else(|e| {
             unreachable!("the embedded standard library is validated by tests: {e}")
@@ -681,21 +688,6 @@ impl Library {
         self.templates.iter().find(|t| t.id == id)
     }
 
-    /// Concept groups in first-seen order.
-    pub fn categories(&self) -> Vec<&str> {
-        let mut out: Vec<&str> = Vec::new();
-        for t in &self.templates {
-            if !out.contains(&t.category.as_str()) {
-                out.push(&t.category);
-            }
-        }
-        out
-    }
-
-    pub fn search<'a>(&'a self, query: &'a str) -> impl Iterator<Item = &'a ConceptTemplate> + 'a {
-        self.templates.iter().filter(move |t| t.matches(query))
-    }
-
     pub fn search_items<'a>(
         &'a self,
         query: &'a str,
@@ -713,11 +705,19 @@ pub struct LibrarySet {
 }
 
 impl LibrarySet {
-    /// Just the Standard Concept Library.
+    /// Just the Standard Library.
     pub fn standard() -> LibrarySet {
         LibrarySet {
             libraries: vec![Library::standard()],
         }
+    }
+
+    /// The Standard Library set, loaded once per process: what the daemon
+    /// serves and completion reads — one registry, never two parses that
+    /// could disagree.
+    pub fn shared() -> &'static LibrarySet {
+        static SHARED: std::sync::OnceLock<LibrarySet> = std::sync::OnceLock::new();
+        SHARED.get_or_init(LibrarySet::standard)
     }
 
     pub fn with(mut self, library: Library) -> LibrarySet {
@@ -744,27 +744,6 @@ impl LibrarySet {
 
     pub fn templates(&self) -> impl Iterator<Item = &ConceptTemplate> {
         self.libraries.iter().flat_map(|l| l.templates.iter())
-    }
-
-    pub fn search<'a>(&'a self, query: &'a str) -> impl Iterator<Item = &'a ConceptTemplate> + 'a {
-        self.templates().filter(move |t| t.matches(query))
-    }
-}
-
-/// The one instantiation operation of a concept template: the
-/// `CreateConcept` edit it stands for, with the template's defaults and a
-/// name that is free in `design` (`Temperature`, then `Temperature2`, …).
-/// `name` overrides the default when given.  Applying the edit allocates a
-/// fresh `SemanticId`; nothing about the template is recorded.
-pub fn instantiate(design: &Design, template: &ConceptTemplate, name: Option<&str>) -> EditOp {
-    let wanted = name
-        .map(str::trim)
-        .filter(|n| !n.is_empty())
-        .unwrap_or(&template.default_name);
-    EditOp::CreateConcept {
-        name: free_name(design, wanted),
-        description: template.description.clone(),
-        representation: template.representation(),
     }
 }
 
@@ -805,26 +784,63 @@ impl PlannedStep {
     }
 }
 
-/// The steps that instantiate `item` in `design`: every object with a
-/// name free in the design and among the steps before it (`RoomTemp`,
-/// else `RoomTemp2`, …; `names` overrides a default by fragment key).
-/// Nothing is applied here and nothing about the item is recorded: after
-/// the steps run, the project holds ordinary objects.
+/// A request `plan` cannot turn into steps.  Everything about the
+/// *objects* — a name the language cannot spell, a name already taken, a
+/// representation the concept cannot have — is left to the ordinary edit
+/// path when the steps are applied; this is only about the request's shape.
+#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+pub enum PlanError {
+    #[error("`{item}` creates no object keyed `{key}`; it creates {keys}")]
+    UnknownKey {
+        item: String,
+        key: String,
+        keys: String,
+    },
+}
+
+/// The steps that instantiate `item` in `design`, in fragment order.  A
+/// default name is made free in the design and among the steps before it
+/// (`RoomTemp`, else `RoomTemp2`, …); a name chosen in `names` (by
+/// fragment key) is used as given, so a taken or unspellable name is
+/// refused by the edit it becomes, never silently changed.  A key `names`
+/// addresses that the item does not create is refused here.  Nothing is
+/// applied and nothing about the item is recorded: after the steps run,
+/// the project holds ordinary objects.
 pub fn plan(
     design: &Design,
     item: &LibraryItem,
     names: &std::collections::BTreeMap<String, String>,
-) -> Vec<PlannedStep> {
-    let mut taken: Vec<String> = Vec::new();
+) -> Result<Vec<PlannedStep>, PlanError> {
+    for key in names.keys() {
+        if !item.fragment.objects.iter().any(|o| o.key() == key) {
+            return Err(PlanError::UnknownKey {
+                item: item.id.clone(),
+                key: key.clone(),
+                keys: item
+                    .fragment
+                    .objects
+                    .iter()
+                    .map(|o| format!("`{}`", o.key()))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            });
+        }
+    }
+    // a default never lands on a chosen name, wherever it is in the order
+    let mut taken: Vec<String> = names.values().map(|n| n.trim().to_owned()).collect();
     let mut steps = Vec::new();
     for o in &item.fragment.objects {
-        let wanted = names
+        let chosen = names
             .get(o.key())
             .map(|n| n.trim())
-            .filter(|n| !n.is_empty())
-            .unwrap_or(o.default_name());
-        let name = free_name_among(design, wanted, &taken);
-        taken.push(name.clone());
+            .filter(|n| !n.is_empty());
+        let name = match chosen {
+            Some(n) => n.to_owned(),
+            None => free_name_among(design, o.default_name(), &taken),
+        };
+        if chosen.is_none() {
+            taken.push(name.clone());
+        }
         steps.push(match o {
             FragmentObject::Concept(c) => PlannedStep::Concept {
                 key: c.key.clone(),
@@ -843,7 +859,7 @@ pub fn plan(
             },
         });
     }
-    steps
+    Ok(steps)
 }
 
 /// `wanted` if no concept or relationship has it, else the first
@@ -889,6 +905,82 @@ mod tests {
     use bdl_model::edit::apply_edit;
     use bdl_model::surface::ProjectSnapshot;
     use bdl_model::Dim;
+    use std::collections::BTreeMap;
+
+    /// The one concept edit a Concept item plans (what the daemon applies
+    /// for the legacy request), with an optional chosen name.
+    fn concept_edit(design: &Design, item: &LibraryItem, name: Option<&str>) -> EditOp {
+        let mut names = BTreeMap::new();
+        if let Some(n) = name {
+            names.insert("concept".to_string(), n.to_string());
+        }
+        let steps = plan(design, item, &names).expect("plan");
+        let [PlannedStep::Concept { op, .. }] = steps.as_slice() else {
+            panic!("a Concept item plans one concept edit, got {steps:?}");
+        };
+        op.clone()
+    }
+
+    /// The Standard Library's registry shape: the evidence for
+    /// docs/spec/concept-library.md's counts — asserted here only, never
+    /// in product logic.
+    #[test]
+    fn the_standard_library_registry_shape() {
+        let lib = Library::standard();
+        assert_eq!(lib.items().len(), 44);
+        let by_category = |c: ItemCategory| lib.items().iter().filter(|i| i.category == c).count();
+        assert_eq!(by_category(ItemCategory::Concept), 36);
+        assert_eq!(by_category(ItemCategory::Source), 8);
+        assert_eq!(lib.templates().len(), 36);
+        // every Concept item is exactly one concept keyed `concept`; every
+        // Source item a `value` concept then a `source` mapping over it
+        for i in lib.items() {
+            let keys: Vec<&str> = i.fragment.objects.iter().map(|o| o.key()).collect();
+            match i.category {
+                ItemCategory::Concept => {
+                    assert_eq!(keys, ["concept"], "{}", i.id);
+                    assert!(i.as_concept_template().is_some(), "{}", i.id);
+                }
+                ItemCategory::Source => {
+                    assert_eq!(keys, ["value", "source"], "{}", i.id);
+                    assert!(i.as_concept_template().is_none(), "{}", i.id);
+                    let FragmentObject::Mapping(m) = &i.fragment.objects[1] else {
+                        panic!("{}", i.id)
+                    };
+                    assert!(m.inputs.is_empty() && m.output == "value", "{}", i.id);
+                }
+            }
+        }
+        // groups, in first-seen order, per section
+        let groups = |c: ItemCategory| -> Vec<&str> {
+            let mut out = Vec::new();
+            for i in lib.items().iter().filter(|i| i.category == c) {
+                if !out.contains(&i.group.as_str()) {
+                    out.push(i.group.as_str());
+                }
+            }
+            out
+        };
+        assert_eq!(
+            groups(ItemCategory::Concept),
+            [
+                "environment",
+                "human",
+                "motion",
+                "mechanical",
+                "electrical",
+                "visual",
+                "actuation",
+                "audio"
+            ]
+        );
+        assert_eq!(
+            groups(ItemCategory::Source),
+            ["environment", "motion", "human", "electrical", "external"]
+        );
+        // loading is deterministic: the same file, the same library
+        assert_eq!(Library::standard(), Library::standard());
+    }
 
     #[test]
     fn the_standard_library_loads_and_is_well_formed() {
@@ -899,19 +991,6 @@ mod tests {
             (30..=50).contains(&lib.templates().len()),
             "deliberately small: {} templates",
             lib.templates().len()
-        );
-        assert_eq!(
-            lib.categories(),
-            vec![
-                "environment",
-                "human",
-                "motion",
-                "mechanical",
-                "electrical",
-                "visual",
-                "actuation",
-                "audio"
-            ]
         );
         // the Sources category: eight items, each a concept and an
         // unresolved relationship without inputs
@@ -981,7 +1060,7 @@ mod tests {
         let lib = Library::standard();
         let item = lib.item("std.source.temperature").expect("item");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
-        let steps = plan(&s.design, item, &Default::default());
+        let steps = plan(&s.design, item, &Default::default()).expect("plan");
         assert_eq!(steps.len(), 2);
         assert!(
             matches!(&steps[0], PlannedStep::Concept { key, op: EditOp::CreateConcept { name, representation: Some(Representation::Quantity { dim }), .. } }
@@ -1013,19 +1092,46 @@ mod tests {
             },
         )
         .expect("m");
-        let steps = plan(&b.snapshot.design, item, &Default::default());
+        let steps = plan(&b.snapshot.design, item, &Default::default()).expect("plan");
         assert_eq!(steps[0].name(), "RoomTemp2");
         assert_eq!(steps[1].name(), "TempSensor2");
-        // a chosen name wins; a name a concept holds is not given to a mapping
-        let mut names = std::collections::BTreeMap::new();
+        // a chosen name is used as given — a taken one is the edit path's
+        // refusal, never a silent `RoomTemp2`; a default beside it stays
+        // free of it
+        let mut names = BTreeMap::new();
         names.insert("value".to_string(), "OvenTemp".to_string());
         names.insert("source".to_string(), "RoomTemp".to_string());
-        let steps = plan(&b.snapshot.design, item, &names);
+        let steps = plan(&b.snapshot.design, item, &names).expect("plan");
         assert_eq!(steps[0].name(), "OvenTemp");
-        assert_eq!(steps[1].name(), "RoomTemp2");
+        assert_eq!(steps[1].name(), "RoomTemp");
+        let mut names = BTreeMap::new();
+        names.insert("source".to_string(), "RoomTemp".to_string());
+        let steps = plan(&s.design, item, &names).expect("plan");
+        assert_eq!(
+            steps[0].name(),
+            "RoomTemp2",
+            "the default moves off the chosen name"
+        );
+        assert_eq!(steps[1].name(), "RoomTemp");
+        // a key the item does not create is refused, with the keys it has
+        let mut names = BTreeMap::new();
+        names.insert("sensor".to_string(), "X".to_string());
+        assert_eq!(
+            plan(&s.design, item, &names),
+            Err(PlanError::UnknownKey {
+                item: "std.source.temperature".into(),
+                key: "sensor".into(),
+                keys: "`value`, `source`".into(),
+            })
+        );
+        // planning is deterministic
+        assert_eq!(
+            plan(&b.snapshot.design, item, &Default::default()),
+            plan(&b.snapshot.design, item, &Default::default())
+        );
         for id in ["std.source.analog", "std.source.external"] {
             let i = lib.item(id).expect(id);
-            let steps = plan(&s.design, i, &Default::default());
+            let steps = plan(&s.design, i, &Default::default()).expect("plan");
             assert!(matches!(
                 &steps[0],
                 PlannedStep::Concept {
@@ -1051,25 +1157,36 @@ mod tests {
     #[test]
     fn search_matches_names_keywords_units_and_categories() {
         let lib = Library::standard();
-        let ids = |q: &str| -> Vec<String> { lib.search(q).map(|t| t.id.clone()).collect() };
-        assert_eq!(ids("lux"), vec!["std.environment.ambient_light"]);
+        let ids = |q: &str| -> Vec<String> { lib.search_items(q).map(|t| t.id.clone()).collect() };
+        assert_eq!(
+            ids("lux"),
+            vec!["std.environment.ambient_light", "std.source.ambient_light"]
+        );
         assert!(ids("tilt").contains(&"std.motion.tilt".to_owned()));
+        assert!(ids("tilt").contains(&"std.source.tilt".to_owned()));
         let motor = ids("motor");
         assert!(motor.contains(&"std.actuator.motor_speed".to_owned()));
         assert!(motor.contains(&"std.actuator.motor_angle".to_owned()));
         assert!(ids("environment").len() >= 5);
-        assert_eq!(ids("").len(), lib.templates().len());
+        assert_eq!(ids("source").len(), 8, "every Source, by its section");
+        assert_eq!(ids("sensor").len(), 4, "a Source is not always a sensor");
+        assert_eq!(ids("external"), vec!["std.source.external"]);
+        assert!(ids("TempSensor").contains(&"std.source.temperature".to_owned()));
+        assert_eq!(ids("").len(), lib.items().len());
         assert!(ids("zzzz").is_empty());
     }
 
     #[test]
     fn two_instantiations_are_two_concepts_with_independent_defaults() {
         let lib = Library::standard();
-        let t = lib.get("std.environment.temperature").expect("temperature");
+        let t = lib
+            .item("std.environment.temperature")
+            .expect("temperature");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
-        let a = apply_edit(&s, &instantiate(&s.design, t, None)).expect("first");
+        let a = apply_edit(&s, &concept_edit(&s.design, t, None)).expect("first");
         let id_a = a.outcome.created_concept.expect("id");
-        let b = apply_edit(&a.snapshot, &instantiate(&a.snapshot.design, t, None)).expect("second");
+        let b =
+            apply_edit(&a.snapshot, &concept_edit(&a.snapshot.design, t, None)).expect("second");
         let id_b = b.outcome.created_concept.expect("id");
         assert_ne!(id_a, id_b);
         let d = &b.snapshot.design;
@@ -1110,7 +1227,7 @@ mod tests {
         .snapshot;
         assert_eq!(s.design.concepts[&id_b].representation, kelvin);
         // An explicit name wins over the default.
-        let op = instantiate(&s.design, t, Some("OvenTemperature"));
+        let op = concept_edit(&s.design, t, Some("OvenTemperature"));
         assert!(matches!(&op, EditOp::CreateConcept { name, .. } if name == "OvenTemperature"));
     }
 
@@ -1118,10 +1235,10 @@ mod tests {
     fn a_project_persists_without_the_library_and_a_template_change_does_not_reach_it() {
         let lib = Library::standard();
         let t = lib
-            .get("std.environment.ambient_light")
+            .item("std.environment.ambient_light")
             .expect("ambient light");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
-        let a = apply_edit(&s, &instantiate(&s.design, t, None)).expect("create");
+        let a = apply_edit(&s, &concept_edit(&s.design, t, None)).expect("create");
         let id = a.outcome.created_concept.expect("id");
         let dir = tempfile::tempdir().expect("tempdir");
         let created = bdl_model::persist::init_project(dir.path(), "lamp", "test").expect("init");
@@ -1182,6 +1299,13 @@ mod tests {
             Library::from_toml(&bad_source),
             Err(LibraryError::Template { id, .. }) if id == "std.source.temperature"
         ));
+        // a relationship must name concepts created before it, so a plan
+        // never resolves a key an earlier step has not allocated
+        let forward = "[library]\nid = \"t\"\nname = \"T\"\nschema_version = 2\nversion = \"0\"\n[[source]]\nid = \"t.s\"\ndisplay_name = \"S\"\ncategory = \"c\"\n[source.value]\ndefault_name = \"V\"\nrepresentation = \"open\"\n[source.relationship]\ndefault_name = \"R\"\n";
+        assert!(
+            Library::from_toml(forward).is_ok(),
+            "the authored order is value, then relationship"
+        );
         assert!(Library::from_toml("not toml at all [").is_err());
         // the first shipping form of a Source (a template with a `source`
         // field, `i18n` text) is refused, never loaded as a plain concept

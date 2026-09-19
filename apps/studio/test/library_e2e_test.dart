@@ -1,8 +1,8 @@
-/// The Standard Concept Library end to end: Studio's reducer and executor
+/// The Standard Library end to end: Studio's reducer and executor
 /// against the real `bdld` (skipped when it is not built).  The library
 /// Studio shows is the daemon's; inserting a template twice yields two
 /// concepts; renaming one leaves the other's defaults alone; the project
-/// saves and reopens without the library.  A Source template is one commit
+/// saves and reopens without the library.  A Source item is one transaction
 /// of two ordinary edits, written as `mapping S : () -> C`.
 @Tags(['daemon', 'filesystem', 'e2e'])
 library;
@@ -105,7 +105,7 @@ void main() {
     }
   }, skip: bdld == null ? 'bdld is not built' : false);
 
-  test('a Source template is one commit: a concept and its () -> relationship, as text', () async {
+  test('a Source item is one transaction: a concept and its () -> relationship, as text', () async {
     final store = TestStore(spawn: DaemonClient.spawn, executable: bdld!);
     final dir = await Directory.systemTemp.createTemp('bdl-studio-sources');
     try {

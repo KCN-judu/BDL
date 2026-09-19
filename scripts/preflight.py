@@ -243,7 +243,7 @@ def l10n(r: Runner) -> None:
     # lib/l10n/library_strings.dart follow library/std/concepts.toml and
     # locale/library/std.json
     r.cmd([sys.executable, "scripts/gen_library_l10n.py", "--check"], hint="just library-l10n")
-    r.cmd([sys.executable, "-m", "unittest", "scripts/test_docs_l10n.py"])
+    r.cmd([sys.executable, "-m", "unittest", "scripts/test_docs_l10n.py", "scripts/test_gen_library_l10n.py"])
     # the rendered user-guide catalogs and pages must be current: regenerate
     # into a scratch copy and compare, never into the tree
     out = scratch("locale-user-guide")
