@@ -350,3 +350,188 @@ fn arguments_in_two_domains_block_and_a_shared_domain_is_the_values() {
     assert!(reason.contains("transport"), "{reason}");
     let _ = (ac.button_held, ac.switch_state);
 }
+
+/// Candidates are matched by concept identity, never by value form: a
+/// second temperature concept with the same dimension produces no
+/// argument for `RoomTemp`.  A Source and a computed value are both
+/// candidates, each by reference; the plan is the same for the same
+/// project state.
+#[test]
+fn candidates_are_nominal_and_a_source_or_a_value_serves_alike() {
+    let ac = air_conditioner();
+    // `OutsideTemp`, a temperature too, with a value producing it
+    let (s, outside) = created_concept(
+        &ac.snapshot,
+        concept(
+            "OutsideTemp",
+            Some(Representation::Quantity {
+                dim: Dim::TEMPERATURE,
+            }),
+        ),
+    );
+    let (s, weather) = created_mapping(&s, mapping("Weather", vec![], outside));
+    let s = edit(&s, formula(weather, "290 K"));
+    let mut host = IdeHost::new(s.clone());
+    let snap = host.snapshot();
+    let a = the_action(&snap, ac.ctrl);
+    assert!(
+        a.is_ready(),
+        "OutsideTemp is not RoomTemp: {:?}",
+        a.applicability
+    );
+    let EditOp::CreateMapping { definition, .. } = a
+        .plan
+        .as_ref()
+        .expect("plan")
+        .model_edits()
+        .next()
+        .expect("edit")
+    else {
+        panic!()
+    };
+    assert_eq!(
+        *definition,
+        Some(Definition::Formula {
+            source: "AirConditionerCtrl(TempSensor, ButtonInput)".into()
+        })
+    );
+    // the same state, the same plan: deterministic
+    let again = the_action(&IdeHost::new(s.clone()).snapshot(), ac.ctrl);
+    assert_eq!(again.plan, a.plan);
+    // a computed value for ButtonHeld beside the Source: a choice between
+    // a Source and a value, each by reference, never a call
+    let (s2, held) = created_mapping(&s, mapping("HeldAWhile", vec![], ac.button_held));
+    let s2 = edit(&s2, formula(held, "delay(false, ButtonInput)"));
+    let snap = IdeHost::new(s2).snapshot();
+    let a = the_action(&snap, ac.ctrl);
+    let Applicability::NeedsChoice { options } = &a.applicability else {
+        panic!("{:?}", a.applicability)
+    };
+    let labels: Vec<&str> = options.iter().map(|o| o.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        vec![
+            "AirConditionerCtrl(TempSensor, ButtonInput)",
+            "AirConditionerCtrl(TempSensor, HeldAWhile)",
+        ]
+    );
+}
+
+/// A rule another rule applies is applied (the reverse edge is direct):
+/// the note moves to the outermost rule nothing applies, and a value
+/// applying that one settles the chain.  A rule a value already applies
+/// carries no note and offers no action.
+#[test]
+fn a_rule_applied_by_a_rule_or_a_value_is_applied() {
+    let ac = air_conditioner();
+    // `Gate : SwitchState -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput) && SwitchState`
+    let (s, gate) = created_mapping(
+        &ac.snapshot,
+        mapping("Gate", vec![ac.switch_state], ac.switch_state),
+    );
+    let s = edit(
+        &s,
+        formula(
+            gate,
+            "AirConditionerCtrl(TempSensor, ButtonInput) && SwitchState",
+        ),
+    );
+    let snap = IdeHost::new(s.clone()).snapshot();
+    assert!(
+        unapplied_note(&snap, ac.ctrl).is_none(),
+        "applied by the rule Gate"
+    );
+    assert_eq!(
+        snap.analysis().mappings[&ac.ctrl].applied_by,
+        std::collections::BTreeSet::from([gate])
+    );
+    assert!(
+        unapplied_note(&snap, gate).is_some(),
+        "Gate is the one nothing applies"
+    );
+    assert_eq!(
+        snap.analysis().mappings[&ac.ctrl].role,
+        bdl_model::RelationshipRole::Rule
+    );
+    // a value applying the rule directly: no note, no action
+    let (s3, _) = created_mapping(&ac.snapshot, mapping("acOn", vec![], ac.switch_state));
+    let ac_on = *s3.design.mappings.keys().last().unwrap();
+    let s3 = edit(
+        &s3,
+        formula(ac_on, "AirConditionerCtrl(TempSensor, ButtonInput)"),
+    );
+    let snap = IdeHost::new(s3).snapshot();
+    assert!(unapplied_note(&snap, ac.ctrl).is_none());
+    assert_eq!(
+        snap.analysis().mappings[&ac.ctrl].applied_by,
+        std::collections::BTreeSet::from([ac_on])
+    );
+    assert!(
+        diagnostics(&snap, DiagnosticScope::Entity(EntityRef::Mapping(ac.ctrl)))
+            .items
+            .iter()
+            .all(|d| d.actions.is_empty())
+    );
+}
+
+/// The value's domain is the rule's when the rule has one; an argument in
+/// another domain then blocks, since the value would read across.
+#[test]
+fn a_clocked_rule_fixes_the_domain_and_a_foreign_argument_blocks() {
+    let ac = air_conditioner();
+    let a = apply_edit(
+        &ac.snapshot,
+        &EditOp::CreateClockDomain {
+            name: "control".into(),
+        },
+    )
+    .expect("clock");
+    let control: ClockId = a.outcome.created_clock.expect("clock");
+    let s = edit(
+        &a.snapshot,
+        EditOp::SetMappingClock {
+            id: ac.ctrl,
+            clock: Some(control),
+        },
+    );
+    let snap = IdeHost::new(s.clone()).snapshot();
+    let act = the_action(&snap, ac.ctrl);
+    assert!(act.is_ready(), "{:?}", act.applicability);
+    let EditOp::CreateMapping { clock, .. } = act
+        .plan
+        .as_ref()
+        .expect("plan")
+        .model_edits()
+        .next()
+        .expect("edit")
+    else {
+        panic!()
+    };
+    assert_eq!(*clock, Some(control), "the rule's domain");
+    // an argument updating elsewhere: blocked, never coerced
+    let a = apply_edit(
+        &s,
+        &EditOp::CreateClockDomain {
+            name: "sensing".into(),
+        },
+    )
+    .expect("clock");
+    let sensing = a.outcome.created_clock.expect("clock");
+    let s = edit(
+        &a.snapshot,
+        EditOp::SetMappingClock {
+            id: ac.temp_sensor,
+            clock: Some(sensing),
+        },
+    );
+    let snap = IdeHost::new(s).snapshot();
+    let act = the_action(&snap, ac.ctrl);
+    let Applicability::Blocked { reason } = &act.applicability else {
+        panic!("{:?}", act.applicability)
+    };
+    assert!(
+        reason.contains("`TempSensor` updates in `sensing`"),
+        "{reason}"
+    );
+    assert!(reason.contains("`control`"), "{reason}");
+}

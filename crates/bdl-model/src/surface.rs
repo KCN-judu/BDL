@@ -299,6 +299,60 @@ impl MappingBlock {
     pub fn is_unresolved(&self) -> bool {
         self.definition.is_none()
     }
+
+    /// The relationship's derived role: what it is to a designer, read off
+    /// the authored shape and realization state and never stored
+    /// (ADR-0032).
+    pub fn role(&self) -> RelationshipRole {
+        if !self.signature.is_unit_domain() {
+            RelationshipRole::Rule
+        } else if self.definition.is_some() {
+            RelationshipRole::Value
+        } else {
+            RelationshipRole::Source
+        }
+    }
+}
+
+/// What a relationship *is* to a designer — one of three, derived from
+/// two authored facts and nothing else: whether its domain is the empty
+/// product, and whether it has a realization (a formula, or a reference a
+/// binding made).  The role is a projection of the authored state at a
+/// revision: it is never persisted, never authored, never an identity, and
+/// a draft that is not committed does not change it.  Everything else about
+/// a relationship — declared, invalid, open, applied, driven, clocked,
+/// bound — is a *state* that varies within a role.
+///
+/// FV Phase 12 (`BDL/Surface/UnitDomain.lean`): `Source Δ d` is "no
+/// realization" and `resolved_not_source` says a realized `() -> B` never
+/// consults the environment; a provisioned Source (Phase 13) gains a
+/// realization and is therefore a Value by this same rule.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RelationshipRole {
+    /// Unit domain, no realization: a value the environment of this design
+    /// provides, observed once per activation.  Inside a component body the
+    /// environment is the instance that binds its port.
+    Source,
+    /// A domain with inputs: a function from what it reads to what it
+    /// produces, with or without a definition.  It has no value of its own;
+    /// a value's formula applies it.
+    Rule,
+    /// Unit domain with a realization — a formula, a binding's reference,
+    /// memory (`delay`), a constant: a value of the design at every
+    /// activation of its domain.
+    Value,
+}
+
+impl RelationshipRole {
+    /// The product word (English; clients localize by the enum).
+    pub fn word(self) -> &'static str {
+        match self {
+            RelationshipRole::Source => "Source",
+            RelationshipRole::Rule => "Rule",
+            RelationshipRole::Value => "Value",
+        }
+    }
 }
 
 /// `(A₁, …, Aₙ) -> B` over concepts: the relationship's canonical type is

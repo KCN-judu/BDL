@@ -210,6 +210,16 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             if let Some(role) = role {
                 details.push(detail("role", role.word()));
             }
+            if let Some(kind) = crate::role::port_backed(snapshot, id) {
+                details.push(detail(
+                    "port",
+                    match kind {
+                        bdl_system::PortKind::Required => "required",
+                        bdl_system::PortKind::Provided => "provided",
+                        bdl_system::PortKind::Parameter => "parameter",
+                    },
+                ));
+            }
             if let Some(spelling) = declared_spelling(snapshot, id) {
                 details.push(detail("declared spelling", spelling));
             }
@@ -250,11 +260,14 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 }
                 None => details.push(detail(
                     "definition",
-                    match role {
-                        Some(crate::role::RelationshipRole::Source) => {
+                    match crate::role::provider(snapshot, id) {
+                        Some(crate::role::Provider::Environment) => {
                             "none — provided by the environment, observed once per activation"
                         }
-                        _ => "none — an open declaration",
+                        Some(crate::role::Provider::Port(_)) => {
+                            "none — provided through the port, observed once per activation"
+                        }
+                        None => "none — an open declaration",
                     },
                 )),
             }

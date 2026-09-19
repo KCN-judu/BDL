@@ -74,7 +74,7 @@ pub use inlay::{inlay_hints, InlayHint, InlayKind};
 pub use invalidation::{preview_change, Fact, Invalidated, InvalidationPreview, StatusChange};
 pub use references::{definition_of, entity_at, entity_at_formula, references, ReferenceResult};
 pub use rename::{plan_rename, RenameError};
-pub use role::{provision, relationship_role, RelationshipRole};
+pub use role::{port_backed, provider, relationship_role, Provider, RelationshipRole};
 pub use symbols::{document_symbols, symbols, SemanticSymbol};
 pub use tokens::{semantic_tokens, SemanticToken, TokenKind, TokenModifiers};
 pub use virtual_docs::{virtual_document, VirtualDocument, VirtualKind};

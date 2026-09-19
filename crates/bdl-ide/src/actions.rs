@@ -427,14 +427,34 @@ fn apply_rule(snapshot: &AnalysisSnapshot, rule: DeclId, code: &str) -> Semantic
     let explanation = format!(
         "`{rname}` is a rule: it has no value of its own.  The new value applies it to the values that produce what it reads, so it has a value at every tick — one the simulator shows and an output can read.  Nothing about `{rname}` changes."
     );
+    // A flattened design names an instance's private declarations
+    // `instance.local`: they belong to the component's own source, where
+    // a value applying the rule is written; nothing at this level can
+    // name them.
+    let private = |n: &str| bdl_text::why_not_identifier(n).is_some();
+    if private(&rname) {
+        let instance = rname.split('.').next().unwrap_or(&rname).to_owned();
+        return blocked(
+            title,
+            format!(
+                "`{rname}` lives inside the instance `{instance}`; open the component's source and add the value that applies it there"
+            ),
+            explanation,
+        );
+    }
     let concept_name = |c: bdl_model::SemanticId| name(snapshot, EntityRef::Concept(c));
-    // Per read concept, the values that produce it, in id order.
+    // Per read concept, the values that produce it at this level (a
+    // Source or a value; a rule has no value), in id order.
     let mut candidates: Vec<Vec<&bdl_model::surface::MappingBlock>> = Vec::new();
     for c in &block.signature.inputs {
         let producing: Vec<_> = design
             .mappings
             .values()
-            .filter(|m| m.signature.is_unit_domain() && m.signature.output == *c)
+            .filter(|m| {
+                m.role() != bdl_model::RelationshipRole::Rule
+                    && m.signature.output == *c
+                    && !private(&m.name)
+            })
             .collect();
         if producing.is_empty() {
             return blocked(

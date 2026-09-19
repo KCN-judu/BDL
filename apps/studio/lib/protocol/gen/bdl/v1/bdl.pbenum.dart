@@ -132,6 +132,45 @@ class ProjectKind extends $pb.ProtobufEnum {
   const ProjectKind._(super.value, super.name);
 }
 
+/// One of three, derived from two facts (`bdl_model::RelationshipRole`).
+/// FV Phase 12: `Source Δ d` is "no realization"; a realized `() -> B`
+/// never consults the environment (`resolved_not_source`).
+class RelationshipRole extends $pb.ProtobufEnum {
+  static const RelationshipRole RELATIONSHIP_ROLE_UNSPECIFIED =
+      RelationshipRole._(0, _omitEnumNames ? '' : 'RELATIONSHIP_ROLE_UNSPECIFIED');
+
+  /// Unit domain, no realization: a value provided from outside this design
+  /// — the environment, or, in a component body, the port it backs.  A
+  /// simulation input; observed once per activation.
+  static const RelationshipRole RELATIONSHIP_ROLE_SOURCE =
+      RelationshipRole._(1, _omitEnumNames ? '' : 'RELATIONSHIP_ROLE_SOURCE');
+
+  /// A domain with inputs: a function from what it reads to what it
+  /// produces, with or without a definition.  No value of its own at a
+  /// tick; a value's formula applies it.
+  static const RelationshipRole RELATIONSHIP_ROLE_RULE =
+      RelationshipRole._(2, _omitEnumNames ? '' : 'RELATIONSHIP_ROLE_RULE');
+
+  /// Unit domain with a realization — a formula, a binding's reference,
+  /// memory, a constant: a value at every activation of its domain.
+  static const RelationshipRole RELATIONSHIP_ROLE_VALUE =
+      RelationshipRole._(3, _omitEnumNames ? '' : 'RELATIONSHIP_ROLE_VALUE');
+
+  static const $core.List<RelationshipRole> values = <RelationshipRole>[
+    RELATIONSHIP_ROLE_UNSPECIFIED,
+    RELATIONSHIP_ROLE_SOURCE,
+    RELATIONSHIP_ROLE_RULE,
+    RELATIONSHIP_ROLE_VALUE,
+  ];
+
+  static final $core.List<RelationshipRole?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static RelationshipRole? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const RelationshipRole._(super.value, super.name);
+}
+
 /// The workspace states of the paper's interaction model.  Only the first two
 /// are produced before the checker exists; the rest are reserved.
 class AcceptanceState extends $pb.ProtobufEnum {

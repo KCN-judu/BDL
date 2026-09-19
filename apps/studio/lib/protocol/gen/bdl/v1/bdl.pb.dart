@@ -6225,6 +6225,7 @@ class MappingView extends $pb.GeneratedMessage {
     AcceptanceState? state,
     $fixnum.Int64? clockId,
     $fixnum.Int64? drivesOutputId,
+    RelationshipRole? role,
   }) {
     final result = MappingView._();
     if (id != null) result.id = id;
@@ -6235,6 +6236,7 @@ class MappingView extends $pb.GeneratedMessage {
     if (state != null) result.state = state;
     if (clockId != null) result.clockId = clockId;
     if (drivesOutputId != null) result.drivesOutputId = drivesOutputId;
+    if (role != null) result.role = role;
     return result;
   }
 
@@ -6262,6 +6264,7 @@ class MappingView extends $pb.GeneratedMessage {
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..a<$fixnum.Int64>(8, _omitFieldNames ? '' : 'drivesOutputId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aE<RelationshipRole>(9, _omitFieldNames ? '' : 'role', enumValues: RelationshipRole.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6359,6 +6362,21 @@ class MappingView extends $pb.GeneratedMessage {
   $core.bool hasDrivesOutputId() => $_has(7);
   @$pb.TagNumber(8)
   void clearDrivesOutputId() => $_clearField(8);
+
+  /// The derived role (ADR-0032; protocol 0.20): what this relationship is
+  /// to a designer, stated by the daemon from the authored shape and
+  /// realization state at this revision — never persisted, never authored,
+  /// never an identity.  A client presents it and never re-derives it; the
+  /// states a client also shows (declared, invalid, applied by nothing,
+  /// driven, bound) vary within a role and are separate facts.
+  @$pb.TagNumber(9)
+  RelationshipRole get role => $_getN(8);
+  @$pb.TagNumber(9)
+  set role(RelationshipRole value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasRole() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearRole() => $_clearField(9);
 }
 
 /// `(A₁, …, Aₙ) -> B` over concept ids: the relationship's canonical type is
@@ -9145,6 +9163,8 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     $core.String? coreExpr,
     $core.Iterable<Diagnostic>? diagnostics,
     $core.Iterable<$fixnum.Int64>? references,
+    $core.Iterable<$fixnum.Int64>? appliedBy,
+    RelationshipRole? role,
   }) {
     final result = MappingAnalysis._();
     if (id != null) result.id = id;
@@ -9154,6 +9174,8 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     if (coreExpr != null) result.coreExpr = coreExpr;
     if (diagnostics != null) result.diagnostics.addAll(diagnostics);
     if (references != null) result.references.addAll(references);
+    if (appliedBy != null) result.appliedBy.addAll(appliedBy);
+    if (role != null) result.role = role;
     return result;
   }
 
@@ -9178,6 +9200,8 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     ..pPM<Diagnostic>(6, _omitFieldNames ? '' : 'diagnostics',
         subBuilder: Diagnostic.$_createMessage)
     ..p<$fixnum.Int64>(7, _omitFieldNames ? '' : 'references', $pb.PbFieldType.KU6)
+    ..p<$fixnum.Int64>(8, _omitFieldNames ? '' : 'appliedBy', $pb.PbFieldType.KU6)
+    ..aE<RelationshipRole>(9, _omitFieldNames ? '' : 'role', enumValues: RelationshipRole.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9258,6 +9282,25 @@ class MappingAnalysis extends $pb.GeneratedMessage {
   /// reference edge (ADR-0034); protocol 0.18.
   @$pb.TagNumber(7)
   $pb.PbList<$fixnum.Int64> get references => $_getList(6);
+
+  /// The relationships whose definition refers to this one, by identity —
+  /// the inverse of `references` over the whole design (the dependency
+  /// graph's direct reverse edges, never transitive): for a rule, the
+  /// values and rules that apply it.  Empty when nothing does.  Stated so
+  /// a client never inverts the graph itself; protocol 0.20.
+  @$pb.TagNumber(8)
+  $pb.PbList<$fixnum.Int64> get appliedBy => $_getList(7);
+
+  /// The derived role at this revision, the same answer as
+  /// `MappingView.role` (protocol 0.20).
+  @$pb.TagNumber(9)
+  RelationshipRole get role => $_getN(8);
+  @$pb.TagNumber(9)
+  set role(RelationshipRole value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasRole() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearRole() => $_clearField(9);
 }
 
 class SourceSpan extends $pb.GeneratedMessage {

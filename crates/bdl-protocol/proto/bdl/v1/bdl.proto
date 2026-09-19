@@ -505,6 +505,31 @@ message MappingView {
   AcceptanceState state = 6;
   optional uint64 clock_id = 7;
   optional uint64 drives_output_id = 8;
+  // The derived role (ADR-0032; protocol 0.20): what this relationship is
+  // to a designer, stated by the daemon from the authored shape and
+  // realization state at this revision — never persisted, never authored,
+  // never an identity.  A client presents it and never re-derives it; the
+  // states a client also shows (declared, invalid, applied by nothing,
+  // driven, bound) vary within a role and are separate facts.
+  RelationshipRole role = 9;
+}
+
+// One of three, derived from two facts (`bdl_model::RelationshipRole`).
+// FV Phase 12: `Source Δ d` is "no realization"; a realized `() -> B`
+// never consults the environment (`resolved_not_source`).
+enum RelationshipRole {
+  RELATIONSHIP_ROLE_UNSPECIFIED = 0;
+  // Unit domain, no realization: a value provided from outside this design
+  // — the environment, or, in a component body, the port it backs.  A
+  // simulation input; observed once per activation.
+  RELATIONSHIP_ROLE_SOURCE = 1;
+  // A domain with inputs: a function from what it reads to what it
+  // produces, with or without a definition.  No value of its own at a
+  // tick; a value's formula applies it.
+  RELATIONSHIP_ROLE_RULE = 2;
+  // Unit domain with a realization — a formula, a binding's reference,
+  // memory, a constant: a value at every activation of its domain.
+  RELATIONSHIP_ROLE_VALUE = 3;
 }
 
 // The workspace states of the paper's interaction model.  Only the first two
@@ -826,6 +851,15 @@ message MappingAnalysis {
   // not elaborate, and in a draft verdict.  The canvas draws each as a
   // reference edge (ADR-0034); protocol 0.18.
   repeated uint64 references = 7;
+  // The relationships whose definition refers to this one, by identity —
+  // the inverse of `references` over the whole design (the dependency
+  // graph's direct reverse edges, never transitive): for a rule, the
+  // values and rules that apply it.  Empty when nothing does.  Stated so
+  // a client never inverts the graph itself; protocol 0.20.
+  repeated uint64 applied_by = 8;
+  // The derived role at this revision, the same answer as
+  // `MappingView.role` (protocol 0.20).
+  RelationshipRole role = 9;
 }
 
 enum DiagnosticSeverity {

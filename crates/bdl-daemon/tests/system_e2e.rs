@@ -1210,3 +1210,302 @@ fn grouping_and_extraction_over_the_wire() {
     };
     assert!(c.child.wait().unwrap().success());
 }
+
+/// The role across the component boundary (docs/spec/... relationship
+/// roles; ADR-0032): one answer per design, stated by the daemon.  Inside
+/// the body a declaration that backs a required or parameter port is a
+/// Source of the body (provided through the port); the flattening makes an
+/// instance's bound copy a Value and leaves an unbound required port a
+/// Source of the system (FV Theorem H); a base relationship a binding
+/// realises is a Value at the top level; a rule is a Rule everywhere; a
+/// flattened rule inside an instance offers no apply action here.
+#[test]
+fn the_role_is_one_answer_across_the_component_boundary() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("probe");
+    let mut c = Client::spawn();
+    c.call(Req::Handshake(pb::HandshakeRequest {
+        client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+        client_name: "e2e".into(),
+        client_version: "0".into(),
+    }));
+    let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "probe".into(),
+    })) else {
+        panic!()
+    };
+    c.last_revision = p.project.unwrap().revision;
+    let angle = pb::Dim {
+        angle: 1,
+        ..Default::default()
+    };
+    let tilt = c.base(concept("Tilt", angle)).created_concept.unwrap();
+    let bright = c
+        .base(concept("Brightness", pb::Dim::default()))
+        .created_concept
+        .unwrap();
+    // base: a Source and an open value a provided port will realise
+    let tilt_sensor = c
+        .base(mapping("tiltSensor", vec![], tilt))
+        .created_mapping
+        .unwrap();
+    let level_out = c
+        .base(mapping("level", vec![], bright))
+        .created_mapping
+        .unwrap();
+    let role_of =
+        |p: &pb::ProjectProjection, id: u64| p.mappings.iter().find(|m| m.id == id).unwrap().role();
+
+    // Probe: tiltValue (required), level (provided, defined), gain
+    // (parameter), an internal Source, a rule nothing applies
+    let probe = c
+        .sys(pb::system_edit_op::Op::CreateComponent(
+            pb::CreateComponent {
+                name: "Probe".into(),
+                description: String::new(),
+            },
+        ))
+        .outcome
+        .unwrap()
+        .created_component
+        .unwrap();
+    let p_tilt = c
+        .body(probe, concept("Tilt", angle))
+        .created_concept
+        .unwrap();
+    c.sys(pb::system_edit_op::Op::ShareConcept(pb::ShareConcept {
+        component: probe,
+        local: p_tilt,
+        system: Some(tilt),
+    }));
+    let p_bright = c
+        .body(probe, concept("Brightness", pb::Dim::default()))
+        .created_concept
+        .unwrap();
+    let p_in = c
+        .body(probe, mapping("tiltValue", vec![], p_tilt))
+        .created_mapping
+        .unwrap();
+    let p_level = c
+        .body(probe, mapping("level", vec![], p_bright))
+        .created_mapping
+        .unwrap();
+    c.body(probe, formula(p_level, "1"));
+    let p_gain = c
+        .body(probe, mapping("gain", vec![], p_bright))
+        .created_mapping
+        .unwrap();
+    let p_internal = c
+        .body(probe, mapping("internalReading", vec![], p_tilt))
+        .created_mapping
+        .unwrap();
+    let p_rule = c
+        .body(probe, mapping("dim", vec![p_tilt], p_bright))
+        .created_mapping
+        .unwrap();
+    c.body(probe, formula(p_rule, "Tilt / 90 deg"));
+    let declare = |c: &mut Client, decl: u64, name: &str, kind: pb::PortKind| -> u64 {
+        let mut dp = pb::DeclarePort {
+            component: probe,
+            decl,
+            name: name.into(),
+            description: String::new(),
+            ..Default::default()
+        };
+        dp.set_kind(kind);
+        c.sys(pb::system_edit_op::Op::DeclarePort(dp))
+            .outcome
+            .unwrap()
+            .created_port
+            .unwrap()
+    };
+    let port_in = declare(&mut c, p_in, "tiltValue", pb::PortKind::Required);
+    let port_level = declare(&mut c, p_level, "level", pb::PortKind::Provided);
+    let port_gain = declare(&mut c, p_gain, "gain", pb::PortKind::Parameter);
+
+    // inside the body: every role from the body's own state
+    let sv = c.system();
+    let body = sv.components[0].body.as_ref().unwrap();
+    assert_eq!(
+        role_of(body, p_in),
+        pb::RelationshipRole::Source,
+        "required port: a Source of the body"
+    );
+    assert_eq!(
+        role_of(body, p_gain),
+        pb::RelationshipRole::Source,
+        "parameter: a Source of the body"
+    );
+    assert_eq!(role_of(body, p_internal), pb::RelationshipRole::Source);
+    assert_eq!(
+        role_of(body, p_level),
+        pb::RelationshipRole::Value,
+        "provided, realised inside"
+    );
+    assert_eq!(role_of(body, p_rule), pb::RelationshipRole::Rule);
+    let base = sv.base.as_ref().unwrap();
+    assert_eq!(role_of(base, tilt_sensor), pb::RelationshipRole::Source);
+    assert_eq!(
+        role_of(base, level_out),
+        pb::RelationshipRole::Source,
+        "open, nothing binds it yet"
+    );
+
+    // two instances: one fully bound, one with its required port unbound
+    let inst = |c: &mut Client, name: &str| -> u64 {
+        let id = c
+            .sys(pb::system_edit_op::Op::CreateInstance(pb::CreateInstance {
+                component: probe,
+                name: name.into(),
+            }))
+            .outcome
+            .unwrap()
+            .created_instance
+            .unwrap();
+        c.sys(pb::system_edit_op::Op::SetParameterArgument(
+            pb::SetParameterArgument {
+                instance: id,
+                port: port_gain,
+                value: Some("2".into()),
+            },
+        ));
+        id
+    };
+    let bound = inst(&mut c, "bound");
+    let open = inst(&mut c, "open");
+    c.sys(pb::system_edit_op::Op::BindPorts(pb::BindPorts {
+        source: Some(pb::PortRefView {
+            instance: 0,
+            port: 0,
+            base_decl: Some(tilt_sensor),
+        }),
+        destination: port_ref(bound, port_in),
+        transport_init: None,
+    }));
+    let applied = c.sys(pb::system_edit_op::Op::BindPorts(pb::BindPorts {
+        source: port_ref(bound, port_level),
+        destination: Some(pb::PortRefView {
+            instance: 0,
+            port: 0,
+            base_decl: Some(level_out),
+        }),
+        transport_init: None,
+    }));
+
+    // the top level: the bound base relationship is a Value now
+    let sv = applied.system.unwrap();
+    let base = sv.base.as_ref().unwrap();
+    assert_eq!(
+        role_of(base, level_out),
+        pb::RelationshipRole::Value,
+        "a binding realises it"
+    );
+    assert_eq!(role_of(base, tilt_sensor), pb::RelationshipRole::Source);
+    // the flat design: the instance's bound copy a Value, the unbound one
+    // a Source of the system, the internal Source a Source, the rule a Rule
+    let flat = applied.project.unwrap();
+    let by_name = |n: &str| flat.mappings.iter().find(|m| m.name == n).unwrap().clone();
+    assert_eq!(
+        by_name("bound.tiltValue").role(),
+        pb::RelationshipRole::Value
+    );
+    assert!(matches!(
+        by_name("bound.tiltValue").definition.as_ref().unwrap().kind,
+        Some(pb::definition::Kind::Reference(_))
+    ));
+    assert_eq!(
+        by_name("open.tiltValue").role(),
+        pb::RelationshipRole::Source
+    );
+    assert_eq!(
+        by_name("bound.gain").role(),
+        pb::RelationshipRole::Value,
+        "a parameter argument realises it"
+    );
+    assert_eq!(
+        by_name("bound.internalReading").role(),
+        pb::RelationshipRole::Source
+    );
+    assert_eq!(by_name("bound.level").role(), pb::RelationshipRole::Value);
+    assert_eq!(by_name("bound.dim").role(), pb::RelationshipRole::Rule);
+    assert_eq!(by_name("level").role(), pb::RelationshipRole::Value);
+    assert_eq!(by_name("tiltSensor").role(), pb::RelationshipRole::Source);
+    // the analysis states the same roles, and who applies what
+    let Resp::Analysis(a) = c.call(Req::RunAnalysis(pb::RunAnalysisRequest {})) else {
+        panic!()
+    };
+    let a = a.analysis.unwrap();
+    for m in &flat.mappings {
+        let ma = a.mappings.iter().find(|x| x.id == m.id).unwrap();
+        assert_eq!(ma.role(), m.role(), "{}", m.name);
+    }
+    let rule = by_name("bound.dim");
+    let ma = a.mappings.iter().find(|x| x.id == rule.id).unwrap();
+    assert!(ma.applied_by.is_empty());
+    assert!(ma
+        .diagnostics
+        .iter()
+        .any(|d| d.code == "reactive.rule_unapplied"));
+    // the simulation's inputs are exactly the flat Sources
+    let sources: Vec<&str> = flat
+        .mappings
+        .iter()
+        .filter(|m| m.role() == pb::RelationshipRole::Source)
+        .map(|m| m.name.as_str())
+        .collect();
+    assert_eq!(
+        sources,
+        vec![
+            "tiltSensor",
+            "bound.internalReading",
+            "open.tiltValue",
+            "open.internalReading"
+        ]
+    );
+    // hover on the flattened bound copy: a Value, bound, backing the port
+    let Resp::DraftHover(h) = c.call(Req::HoverEntity(pb::HoverEntityRequest {
+        revision: c.last_revision,
+        entity: Some(pb::EntityRef {
+            kind: Some(pb::entity_ref::Kind::MappingId(
+                by_name("bound.tiltValue").id,
+            )),
+        }),
+    })) else {
+        panic!()
+    };
+    let detail = |k: &str| {
+        h.details
+            .iter()
+            .find(|d| d.label == k)
+            .map(|d| d.value.clone())
+    };
+    assert_eq!(detail("role").as_deref(), Some("Value"));
+    assert!(detail("definition").unwrap().starts_with("bound to"));
+    // the apply action for a rule inside an instance is blocked here: the
+    // value belongs in the component's source (DI-40)
+    let Resp::SemanticActions(acts) =
+        c.call(Req::ListSemanticActions(pb::ListSemanticActionsRequest {
+            revision: c.last_revision,
+            entity: Some(pb::EntityRef {
+                kind: Some(pb::entity_ref::Kind::MappingId(rule.id)),
+            }),
+        }))
+    else {
+        panic!()
+    };
+    let apply = acts
+        .actions
+        .iter()
+        .find(|x| x.id.starts_with("rule.apply:"))
+        .expect("the apply action is listed");
+    assert_eq!(apply.applicability(), pb::ActionApplicability::Blocked);
+    assert!(
+        apply.reason.contains("inside the instance `bound`"),
+        "{}",
+        apply.reason
+    );
+    assert!(apply.edits.is_empty());
+    let _ = (open, port_level);
+    c.call(Req::Shutdown(pb::ShutdownRequest {}));
+}

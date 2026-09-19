@@ -91,6 +91,23 @@ final $typed_data.Uint8List projectKindDescriptor = $convert
         'tJTkRfRkxBVBABEhcKE1BST0pFQ1RfS0lORF9TWVNURU0QAhIVChFQUk9KRUNUX0tJTkRfVEVY'
         'VBAD');
 
+@$core.Deprecated('Use relationshipRoleDescriptor instead')
+const RelationshipRole$json = {
+  '1': 'RelationshipRole',
+  '2': [
+    {'1': 'RELATIONSHIP_ROLE_UNSPECIFIED', '2': 0},
+    {'1': 'RELATIONSHIP_ROLE_SOURCE', '2': 1},
+    {'1': 'RELATIONSHIP_ROLE_RULE', '2': 2},
+    {'1': 'RELATIONSHIP_ROLE_VALUE', '2': 3},
+  ],
+};
+
+/// Descriptor for `RelationshipRole`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List relationshipRoleDescriptor = $convert
+    .base64Decode('ChBSZWxhdGlvbnNoaXBSb2xlEiEKHVJFTEFUSU9OU0hJUF9ST0xFX1VOU1BFQ0lGSUVEEAASHA'
+        'oYUkVMQVRJT05TSElQX1JPTEVfU09VUkNFEAESGgoWUkVMQVRJT05TSElQX1JPTEVfUlVMRRAC'
+        'EhsKF1JFTEFUSU9OU0hJUF9ST0xFX1ZBTFVFEAM=');
+
 @$core.Deprecated('Use acceptanceStateDescriptor instead')
 const AcceptanceState$json = {
   '1': 'AcceptanceState',
@@ -2303,6 +2320,7 @@ const MappingView$json = {
     {'1': 'state', '3': 6, '4': 1, '5': 14, '6': '.bdl.v1.AcceptanceState', '10': 'state'},
     {'1': 'clock_id', '3': 7, '4': 1, '5': 4, '9': 1, '10': 'clockId', '17': true},
     {'1': 'drives_output_id', '3': 8, '4': 1, '5': 4, '9': 2, '10': 'drivesOutputId', '17': true},
+    {'1': 'role', '3': 9, '4': 1, '5': 14, '6': '.bdl.v1.RelationshipRole', '10': 'role'},
   ],
   '8': [
     {'1': '_definition'},
@@ -2318,8 +2336,9 @@ final $typed_data.Uint8List mappingViewDescriptor = $convert
         'LlNpZ25hdHVyZVIJc2lnbmF0dXJlEjcKCmRlZmluaXRpb24YBSABKAsyEi5iZGwudjEuRGVmaW'
         '5pdGlvbkgAUgpkZWZpbml0aW9uiAEBEi0KBXN0YXRlGAYgASgOMhcuYmRsLnYxLkFjY2VwdGFu'
         'Y2VTdGF0ZVIFc3RhdGUSHgoIY2xvY2tfaWQYByABKARIAVIHY2xvY2tJZIgBARItChBkcml2ZX'
-        'Nfb3V0cHV0X2lkGAggASgESAJSDmRyaXZlc091dHB1dElkiAEBQg0KC19kZWZpbml0aW9uQgsK'
-        'CV9jbG9ja19pZEITChFfZHJpdmVzX291dHB1dF9pZA==');
+        'Nfb3V0cHV0X2lkGAggASgESAJSDmRyaXZlc091dHB1dElkiAEBEiwKBHJvbGUYCSABKA4yGC5i'
+        'ZGwudjEuUmVsYXRpb25zaGlwUm9sZVIEcm9sZUINCgtfZGVmaW5pdGlvbkILCglfY2xvY2tfaW'
+        'RCEwoRX2RyaXZlc19vdXRwdXRfaWQ=');
 
 @$core.Deprecated('Use signatureDescriptor instead')
 const Signature$json = {
@@ -2963,6 +2982,8 @@ const MappingAnalysis$json = {
     {'1': 'core_expr', '3': 5, '4': 1, '5': 9, '10': 'coreExpr'},
     {'1': 'diagnostics', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
     {'1': 'references', '3': 7, '4': 3, '5': 4, '10': 'references'},
+    {'1': 'applied_by', '3': 8, '4': 3, '5': 4, '10': 'appliedBy'},
+    {'1': 'role', '3': 9, '4': 1, '5': 14, '6': '.bdl.v1.RelationshipRole', '10': 'role'},
   ],
 };
 
@@ -2972,7 +2993,9 @@ final $typed_data.Uint8List mappingAnalysisDescriptor = $convert
         '52MS5NYXBwaW5nU3RhdHVzUgZzdGF0dXMSHAoJaW50ZXJmYWNlGAMgASgJUglpbnRlcmZhY2US'
         'IwoNaW5mZXJyZWRfdHlwZRgEIAEoCVIMaW5mZXJyZWRUeXBlEhsKCWNvcmVfZXhwchgFIAEoCV'
         'IIY29yZUV4cHISNAoLZGlhZ25vc3RpY3MYBiADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlh'
-        'Z25vc3RpY3MSHgoKcmVmZXJlbmNlcxgHIAMoBFIKcmVmZXJlbmNlcw==');
+        'Z25vc3RpY3MSHgoKcmVmZXJlbmNlcxgHIAMoBFIKcmVmZXJlbmNlcxIdCgphcHBsaWVkX2J5GA'
+        'ggAygEUglhcHBsaWVkQnkSLAoEcm9sZRgJIAEoDjIYLmJkbC52MS5SZWxhdGlvbnNoaXBSb2xl'
+        'UgRyb2xl');
 
 @$core.Deprecated('Use sourceSpanDescriptor instead')
 const SourceSpan$json = {

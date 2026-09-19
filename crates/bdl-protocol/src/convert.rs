@@ -740,6 +740,7 @@ pub fn design_projection(design: &bdl_model::surface::Design) -> pb::ProjectProj
                 .into(),
                 clock_id: m.clock.map(|c| c.raw()),
                 drives_output_id: m.drives.map(|o| o.raw()),
+                role: role_to_pb(m.role()).into(),
             })
             .collect(),
         layout: None,
@@ -826,11 +827,23 @@ pub fn diagnostic_to_pb(d: &bdl_diagnostics::Diagnostic) -> pb::Diagnostic {
     }
 }
 
+/// The derived role on the wire: one enum for `MappingView.role` and
+/// `MappingAnalysis.role`, both from `bdl_model::RelationshipRole`.
+pub fn role_to_pb(r: bdl_model::RelationshipRole) -> pb::RelationshipRole {
+    match r {
+        bdl_model::RelationshipRole::Source => pb::RelationshipRole::Source,
+        bdl_model::RelationshipRole::Rule => pb::RelationshipRole::Rule,
+        bdl_model::RelationshipRole::Value => pb::RelationshipRole::Value,
+    }
+}
+
 pub fn mapping_analysis_to_pb(m: &bdl_compiler::MappingAnalysis) -> pb::MappingAnalysis {
     use bdl_check::pretty;
     use bdl_compiler::MappingStatus;
     pb::MappingAnalysis {
         id: m.id.raw(),
+        role: role_to_pb(m.role).into(),
+        applied_by: m.applied_by.iter().map(|d| d.raw()).collect(),
         status: match m.status {
             MappingStatus::Declared => pb::MappingStatus::Declared,
             MappingStatus::Open => pb::MappingStatus::Open,
@@ -1563,6 +1576,26 @@ pub mod system {
         out
     }
 
+    /// The base design as the system gives it: a base relationship that a
+    /// binding realises (its flattened copy carries the binding's
+    /// reference definition, `flatten` step 3) is a Value at the top level,
+    /// whatever its authored shape says alone — the same answer the flat
+    /// design's `MappingView.role` gives for the same identity.
+    fn base_projection(s: &BehaviorSystem) -> pb::ProjectProjection {
+        let mut p = design_projection(&s.base);
+        let bound: std::collections::BTreeSet<DeclId> = s
+            .bindings
+            .values()
+            .filter_map(|b| b.destination.base_decl())
+            .collect();
+        for m in &mut p.mappings {
+            if bound.contains(&DeclId::from_raw(m.id)) {
+                m.role = pb::RelationshipRole::Value.into();
+            }
+        }
+        p
+    }
+
     pub fn system_view(
         snapshot: &SystemSnapshot,
         origins: &OriginMap,
@@ -1583,7 +1616,7 @@ pub mod system {
                 .collect(),
             revision: snapshot.revision.raw(),
             name: s.base.name.clone(),
-            base: Some(design_projection(&s.base)),
+            base: Some(base_projection(s)),
             components: s
                 .components
                 .values()

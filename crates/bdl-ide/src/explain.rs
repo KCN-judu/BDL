@@ -97,18 +97,37 @@ pub fn explain(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Explana
             sem = sem.line("interface", pretty::kernel(&a.interface.expected_type));
             if let Some(role) = crate::role::relationship_role(snapshot, id) {
                 sem = sem.line("role", role.word());
-                if let Some(p) = crate::role::provision(role) {
-                    sem = sem.line("provision", p).line(
-                        "reading",
-                        "The declaration is observed once per activation: its value is the environment's for that tick (FV Phase 12 `source_value`). The unit argument is erased above the kernel; a reference is a reading of the declaration, not an effectful zero-argument call (`refForms_agree`).",
-                    );
-                } else if matches!(role, crate::role::RelationshipRole::Mapping)
-                    && m.is_some_and(|m| m.signature.is_unit_domain())
-                {
+                if let Some(kind) = crate::role::port_backed(snapshot, id) {
                     sem = sem.line(
-                        "reading",
-                        "A realized `() -> B` never consults the environment (FV Phase 12 `resolved_not_source`): the domain shape alone makes nothing a Source.",
+                        "port",
+                        match kind {
+                            bdl_system::PortKind::Required => "required",
+                            bdl_system::PortKind::Provided => "provided",
+                            bdl_system::PortKind::Parameter => "parameter",
+                        },
                     );
+                }
+                match role {
+                    crate::role::RelationshipRole::Source => {
+                        let p = crate::role::provider(snapshot, id)
+                            .unwrap_or(crate::role::Provider::Environment);
+                        sem = sem.line("provision", p.word()).line(
+                            "reading",
+                            "The declaration is observed once per activation: its value is provided for that tick (FV Phase 12 `source_value`). The unit argument is erased above the kernel; a reference is a reading of the declaration, not an effectful zero-argument call (`refForms_agree`).",
+                        );
+                    }
+                    crate::role::RelationshipRole::Value => {
+                        sem = sem.line(
+                            "reading",
+                            "A realized `() -> B` never consults the environment (FV Phase 12 `resolved_not_source`): the domain shape alone makes nothing a Source. The value is the realization's at every activation of its domain.",
+                        );
+                    }
+                    crate::role::RelationshipRole::Rule => {
+                        sem = sem.line(
+                            "reading",
+                            "A function from what it reads to what it produces: it has no value of its own at a tick; a value's realization applies it (the dependency graph's reverse edges name the appliers).",
+                        );
+                    }
                 }
             }
             let grant: Vec<String> = a

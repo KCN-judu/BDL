@@ -1846,7 +1846,7 @@ fn a_library_transaction_is_all_or_nothing() {
     ) else {
         panic!("attach")
     };
-    assert_eq!(role(&mut c, &mut events).as_deref(), Some("Mapping"));
+    assert_eq!(role(&mut c, &mut events).as_deref(), Some("Value"));
     let Resp::SystemEditApplied(_) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
         panic!("undo")
     };

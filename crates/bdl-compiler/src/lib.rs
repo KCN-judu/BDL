@@ -51,7 +51,7 @@ use bdl_hardware::{
 };
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
-use bdl_model::{DeclId, OutputId, Revision, SemanticId};
+use bdl_model::{DeclId, OutputId, RelationshipRole, Revision, SemanticId};
 use bdl_output::{check_outputs, OutputAnalysis};
 use bdl_reactive::{
     analyze_dependencies, check_causality, check_clocks, CausalityAnalysis, ClockAnalysis,
@@ -82,9 +82,19 @@ pub enum MappingStatus {
     ClockConsistent,
 }
 
+fn default_role() -> RelationshipRole {
+    RelationshipRole::Value
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MappingAnalysis {
     pub id: DeclId,
+    /// The derived role — Source, Rule or Value — of the declaration as
+    /// authored at this revision (`MappingBlock::role`, ADR-0032): one
+    /// answer every client reads.  A state — `status`, `applied_by`, a
+    /// diagnostic — never changes it.
+    #[serde(default = "default_role")]
+    pub role: RelationshipRole,
     pub interface: Interface,
     pub status: MappingStatus,
     /// The inferred type of the realization when it checks.
@@ -221,6 +231,16 @@ fn analyze_ir(
     let mut mappings = BTreeMap::new();
     for (id, (interface, outcome, diagnostics)) in elab_mappings {
         let mut diagnostics = diagnostics;
+        // The role, from the same two facts `MappingBlock::role` reads: an
+        // arrow interface is a rule; an attached definition — elaborated
+        // or not — makes a value; none makes a Source.
+        let role = if matches!(interface.expected_type, Ty::Arr { .. }) {
+            RelationshipRole::Rule
+        } else if matches!(outcome, RealizationOutcome::Unresolved) {
+            RelationshipRole::Source
+        } else {
+            RelationshipRole::Value
+        };
         let (status, inferred_type, realization) = match outcome {
             RealizationOutcome::Unresolved => (MappingStatus::Declared, None, None),
             RealizationOutcome::Failed => {
@@ -248,6 +268,7 @@ fn analyze_ir(
             id,
             MappingAnalysis {
                 id,
+                role,
                 interface,
                 status,
                 inferred_type,
@@ -760,6 +781,72 @@ mod tests {
             .diagnostics
             .iter()
             .any(|d| d.code.as_str() == "dimension.mismatch"));
+    }
+
+    /// The role is stated on every analysis, from the same two facts the
+    /// model reads, and a state never moves it: a declared rule, an
+    /// invalid rule and an applied rule are Rules; a Source with an
+    /// invalid definition is a Value.  `reactive.rule_unapplied` is a
+    /// state beside the role — on a rule whatever its definition state,
+    /// never on a Source or a value.
+    #[test]
+    fn the_analysis_states_the_role_and_a_state_never_moves_it() {
+        let (s, rule) = lamp();
+        let a = analyze(&s);
+        assert_eq!(a.mappings[&rule].role, RelationshipRole::Rule);
+        assert_eq!(a.mappings[&rule].status, MappingStatus::Declared);
+        // an invalid definition: still a Rule, the note beside the error
+        let bad = attach(&s, rule, "Tilt + true");
+        let a = analyze(&bad);
+        assert_eq!(a.mappings[&rule].role, RelationshipRole::Rule);
+        assert_eq!(a.mappings[&rule].status, MappingStatus::Invalid);
+        let codes: Vec<&str> = a.mappings[&rule]
+            .diagnostics
+            .iter()
+            .map(|d| d.code.as_str())
+            .collect();
+        assert!(codes.contains(&"reactive.rule_unapplied"), "{codes:?}");
+        assert!(
+            codes.iter().any(|c| *c != "reactive.rule_unapplied"),
+            "{codes:?}"
+        );
+        // a Source, then the same declaration with a definition that does
+        // not check: Source, then Value (invalid) — never a Source by shape
+        let tilt = s.design.mappings[&rule].signature.inputs[0];
+        let b = edit(
+            &s,
+            EditOp::CreateMapping {
+                name: "tilt".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: tilt,
+                },
+                definition: None,
+                clock: None,
+            },
+        );
+        let src = b.outcome.created_mapping.unwrap();
+        assert_eq!(
+            analyze(&b.snapshot).mappings[&src].role,
+            RelationshipRole::Source
+        );
+        assert_eq!(
+            analyze(&b.snapshot).mappings[&src].status,
+            MappingStatus::Declared,
+            "the compiler's Declared is the realization state; the role says Source"
+        );
+        let c = attach(&b.snapshot, src, "true + 1");
+        let a = analyze(&c);
+        assert_eq!(a.mappings[&src].role, RelationshipRole::Value);
+        assert_eq!(a.mappings[&src].status, MappingStatus::Invalid);
+        assert!(a.mappings[&src]
+            .diagnostics
+            .iter()
+            .all(|d| d.code.as_str() != "reactive.rule_unapplied"));
+        // memory realizes: a Value
+        let d = attach(&b.snapshot, src, "delay(0 deg, tilt)");
+        assert_eq!(analyze(&d).mappings[&src].role, RelationshipRole::Value);
     }
 
     /// `reactive.rule_unapplied`: on a rule no realization references and

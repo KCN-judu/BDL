@@ -1133,4 +1133,95 @@ mod tests {
         let back: EditOp = serde_json::from_str(&json).unwrap();
         assert_eq!(op, back);
     }
+
+    /// `CreateMapping` with a definition and a domain is one authored step
+    /// (protocol 0.19): the structure is checked — the name, the signature,
+    /// a domain that exists — and refused whole when wrong; the definition
+    /// text is authoring state the project keeps as typed, checked by the
+    /// compiler, never here (a text project saves what does not build).
+    #[test]
+    fn create_mapping_with_definition_and_clock_checks_structure_and_keeps_the_text() {
+        let (s, tilt) = create_concept(&empty(), "Tilt");
+        let clock = apply_edit(
+            &s,
+            &EditOp::CreateClockDomain {
+                name: "main".into(),
+            },
+        )
+        .unwrap();
+        let main = clock.outcome.created_clock.unwrap();
+        let s = clock.snapshot;
+        let create = |definition: Option<Definition>, clock: Option<ClockId>| {
+            apply_edit(
+                &s,
+                &EditOp::CreateMapping {
+                    name: "reading".into(),
+                    description: String::new(),
+                    signature: Signature {
+                        inputs: vec![],
+                        output: tilt,
+                    },
+                    definition,
+                    clock,
+                },
+            )
+        };
+        // a domain that does not exist: refused, nothing created
+        let err = create(None, Some(ClockId::from_raw(99))).unwrap_err();
+        assert_eq!(
+            err,
+            EditError::UnknownClock {
+                id: ClockId::from_raw(99)
+            }
+        );
+        // a definition the language cannot read: kept as typed — a Value
+        // in the state invalid, the compiler's to say — with its domain
+        let a = create(
+            Some(Definition::Formula {
+                source: "this is not a formula ((".into(),
+            }),
+            Some(main),
+        )
+        .unwrap();
+        let id = a.outcome.created_mapping.unwrap();
+        let m = &a.snapshot.design.mappings[&id];
+        assert_eq!(
+            m.definition,
+            Some(Definition::Formula {
+                source: "this is not a formula ((".into()
+            })
+        );
+        assert_eq!(m.clock, Some(main));
+        assert_eq!(m.role(), crate::RelationshipRole::Value);
+        assert_eq!(a.outcome.kind, Some(EditKind::Refinement));
+        assert_eq!(
+            a.snapshot.revision,
+            s.revision.next(),
+            "one step, one revision"
+        );
+        // the same shape without a definition is a Source; with reads a Rule
+        let src = create(None, None).unwrap();
+        assert_eq!(
+            src.snapshot.design.mappings[&src.outcome.created_mapping.unwrap()].role(),
+            crate::RelationshipRole::Source
+        );
+        let rule = apply_edit(
+            &s,
+            &EditOp::CreateMapping {
+                name: "scale".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![tilt],
+                    output: tilt,
+                },
+                definition: None,
+                clock: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            rule.snapshot.design.mappings[&rule.outcome.created_mapping.unwrap()].role(),
+            crate::RelationshipRole::Rule
+        );
+    }
 }
