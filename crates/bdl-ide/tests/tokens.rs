@@ -10,8 +10,6 @@ use bdl_ide::tokens::encode::{byte_range, decode_data, encode_data, PositionEnco
 use bdl_ide::*;
 use bdl_ide_db::DocumentUri;
 use bdl_model::edit::EditOp;
-use bdl_model::surface::{Definition, Representation};
-use bdl_model::Dim;
 use bdl_text::{IdentityTable, SourceFile};
 use support::*;
 
@@ -54,7 +52,7 @@ fn text_host(text: &str) -> (IdeHost, DocumentId, String) {
         path: "src/main.bdl".into(),
         text: text.to_owned(),
     };
-    let mut host = IdeHost::text_workspace("lamp", vec![file], IdentityTable::default());
+    let host = IdeHost::text_workspace("lamp", vec![file], IdentityTable::default());
     let doc = host.file_document("src/main.bdl").expect("document");
     (host, doc, text.to_owned())
 }

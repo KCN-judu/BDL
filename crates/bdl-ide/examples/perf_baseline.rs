@@ -170,7 +170,9 @@ fn bench(name: &str, concepts: usize, mappings: usize, outputs: usize) {
     });
     host.set_definition_draft(m, "clamp(Concept0 / (90 deg), 0, 1)");
     let snap = host.snapshot();
-    time("formula tokens (draft)", 20, || formula_tokens(&snap, m).len());
+    time("formula tokens (draft)", 20, || {
+        formula_tokens(&snap, m).len()
+    });
     println!();
 }
 
