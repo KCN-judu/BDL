@@ -244,8 +244,24 @@ by design: Studio SDK setup 151 s (download and unzip) + 9 s slimming + 11 s
 saving the slim archive; native build 139 s + 7 s + 12 s. Windows critical path
 7 m 53 s — the one-time cost of the switch.
 
-_Measured after the change: recorded below from the first warm run on the slim
-key._
+Fifth run (`a50dbab`, run 35445570015) — the first warm run on the slim key:
+
+| Job                            | Duration | Of which                                                                                                              |
+| ------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| Windows compatibility (Rust)   | 207 s    | a slow runner (checkout 10 s, toolchain 15 s, cache 38 s), `windows-rust-ci` 135 s                                    |
+| Windows compatibility (Studio) | 165 s    | SDK setup 63 s (slim cache hit: 1.02 GB restored in 6 s, untarred in 25 s; pub cache 18 s), `windows-flutter-ci` 78 s |
+| Windows native build           | 147 s    | SDK setup 55 s (same archive, untarred in 27 s; pub cache 15 s), build 80 s                                           |
+
+The SDK archive went from 1.84 GB to 1.02 GB and its extraction from 56 s to
+25–27 s; the SDK step from 90–100 s to 55–63 s per job (−35 to −40 s each, twice
+per run). Windows critical path this run 6 m 16 s and runner-seconds 519 — the
+path was the Rust job's slow runner (207 s against 158–177 s on the three runs
+before), not the Flutter jobs: the Studio job that follows it is now 165 s
+against 176–192 s. With the Rust job at its usual 158–177 s the path is 5 m 25 s
+– 5 m 45 s; the remaining cost on it is compiling the 25 workspace crates on
+Windows (about 68 s), which no mtime-based cache can save — a content-hashed
+compiler cache (sccache with the Actions backend) is the next candidate, and a
+separate decision.
 
 ## Local preflight
 
