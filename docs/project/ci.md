@@ -230,6 +230,20 @@ with the slim cache the two parallel Flutter jobs are the cheaper path. Sharing
 one prepared SDK between the two jobs as an artifact would be the same 1–2 GB
 upload and download as the cache, with nothing gained.
 
+**Workspace-crate cache, tried and reverted.** `cache-workspace-crates: true` on
+the Windows Rust job (`f97609b`, runs 2–4): the run after it restored the 297 MB
+cache with the 25 workspace crates as a full match and recompiled all 25 anyway
+(`fd06125`, a commit with no Rust change: `windows-rust-ci` 122 s, the same as
+without). A checkout gives every source a fresh mtime, and cargo's fingerprints
+compare source mtimes with the artifacts', so a cached workspace build is always
+stale; making the mtimes older would hide real changes. The job is back to
+dependencies only (165 MB, 20 s restore, no post-job save).
+
+Fourth run (`fd06125`, run 35445084383) — the slim key's first run, a cache miss
+by design: Studio SDK setup 151 s (download and unzip) + 9 s slimming + 11 s
+saving the slim archive; native build 139 s + 7 s + 12 s. Windows critical path
+7 m 53 s — the one-time cost of the switch.
+
 _Measured after the change: recorded below from the first warm run on the slim
 key._
 

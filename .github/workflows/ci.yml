@@ -93,12 +93,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.89.0"
-      # The workspace crates are cached too: on Windows their compile is the
-      # whole cost of the job (2 m 11 s of 2 m 55 s on the first run), and
-      # cargo only rebuilds the crates whose sources changed.
+      # Dependencies only.  Caching the workspace crates as well was tried
+      # (`cache-workspace-crates: true`, runs 2–4 in docs/project/ci.md):
+      # a checkout gives every source a fresh mtime, so cargo's fingerprints
+      # rebuilt all 25 crates on every run anyway — the cache grew from 165
+      # to 297 MB and the restore and save got slower, for nothing.
       - uses: Swatinem/rust-cache@v2
-        with:
-          cache-workspace-crates: true
       # windows-rust: the crates whose tests meet paths, URIs, processes,
       # files or the host cargo (scripts/preflight.py WINDOWS_RUST_CRATES)
       - run: python scripts/preflight.py windows-rust-ci
