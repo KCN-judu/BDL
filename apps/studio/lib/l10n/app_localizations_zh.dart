@@ -941,9 +941,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get show => '显示';
 
   @override
-  String get noInputsARelationshipWithoutInputsAnd => '没有输入：没有输入且没有定义的关系就是输入。它的值来自设计之外，每个刻度一个。';
-
-  @override
   String get wholeNumber => '整数';
 
   @override
@@ -1769,6 +1766,55 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dialogUntitledProject => '未命名项目';
+
+  @override
+  String get roleSource => '来源';
+
+  @override
+  String get role => '角色';
+
+  @override
+  String get realizationEnvironment => '由环境提供；尚未绑定设备。';
+
+  @override
+  String get sourceExplanation => '由环境进入行为模型的值，每次激活观测一次。这里没有任何缺失：只有当你想改为在模型内部计算它时，才添加定义。';
+
+  @override
+  String get categorySources => '来源';
+
+  @override
+  String get newSource => '新建来源';
+
+  @override
+  String get aSourceAValueTheEnvironmentProvides => '由环境提供的值：不读取任何内容，每次激活观测一次。';
+
+  @override
+  String get addSource => '添加来源';
+
+  @override
+  String get newSourceEllipsis => '新建来源…';
+
+  @override
+  String sourceNodeSemantics(String name, String concept) {
+    return '$name，来源：由环境进入行为模型的值，提供 $concept';
+  }
+
+  @override
+  String sourceOfConcept(String concept) {
+    return '$concept 的来源';
+  }
+
+  @override
+  String get chooseWhatItProvidesTheOutputSocket => '选择它提供什么：其右侧唯一的插槽。';
+
+  @override
+  String get theEnvironmentProvidesItNoInputSockets => '由环境提供：没有输入插槽，每次激活一个值。';
+
+  @override
+  String get sources => '来源';
+
+  @override
+  String get noSourcesARelationshipWithNoReads => '没有来源：一个既不读取任何内容也没有定义的关系就是来源。它的值由环境提供，每次激活一个。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).

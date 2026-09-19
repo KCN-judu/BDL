@@ -948,10 +948,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get show => '表示';
 
   @override
-  String get noInputsARelationshipWithoutInputsAnd =>
-      '入力なし：入力も定義もない関係が入力になります。その値は設計の外から、ティックごとに 1 つ与えられます。';
-
-  @override
   String get wholeNumber => '整数';
 
   @override
@@ -1783,4 +1779,55 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dialogUntitledProject => '名称未設定プロジェクト';
+
+  @override
+  String get roleSource => '入力元';
+
+  @override
+  String get role => '役割';
+
+  @override
+  String get realizationEnvironment => '環境から与えられます。デバイスはまだ割り当てられていません。';
+
+  @override
+  String get sourceExplanation =>
+      '環境から振る舞いモデルに入る値で、アクティベーションごとに一度観測されます。欠けているものはありません。モデル内で計算したい場合にだけ定義を追加してください。';
+
+  @override
+  String get categorySources => '入力元';
+
+  @override
+  String get newSource => '新しい入力元';
+
+  @override
+  String get aSourceAValueTheEnvironmentProvides => '環境から与えられる値。何も読み取らず、アクティベーションごとに一度観測されます。';
+
+  @override
+  String get addSource => '入力元を追加';
+
+  @override
+  String get newSourceEllipsis => '新しい入力元…';
+
+  @override
+  String sourceNodeSemantics(String name, String concept) {
+    return '$name、入力元：環境から振る舞いモデルに入る値。$concept を提供';
+  }
+
+  @override
+  String sourceOfConcept(String concept) {
+    return '$concept の入力元';
+  }
+
+  @override
+  String get chooseWhatItProvidesTheOutputSocket => '何を提供するかを選んでください。右側にある唯一のソケットです。';
+
+  @override
+  String get theEnvironmentProvidesItNoInputSockets => '環境から与えられます。入力ソケットはなく、アクティベーションごとに一つの値です。';
+
+  @override
+  String get sources => '入力元';
+
+  @override
+  String get noSourcesARelationshipWithNoReads =>
+      '入力元はありません。何も読み取らず定義もない関係が入力元です。その値は環境から与えられ、アクティベーションごとに一つです。';
 }

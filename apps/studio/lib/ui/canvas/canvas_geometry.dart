@@ -182,6 +182,7 @@ class NodeShape {
     this.subtitle = '',
     this.headerWord = '',
     this.unrealized = false,
+    this.source = false,
   });
   final NodeRef ref;
   final Rect rect;
@@ -200,6 +201,11 @@ class NodeShape {
   /// An instance whose component's body no longer keeps its promise
   /// (`Realizes` fails): a red mark in the body row.
   final bool unrealized;
+
+  /// A Source (ADR-0032): a value entering the behavior model from the
+  /// environment — no input sockets, one output socket, the environment
+  /// boundary drawn on its left edge.  Not *declared*: nothing is missing.
+  final bool source;
 
   /// The timing domain the node updates in ('' when agnostic or open): a
   /// quiet word at the right of the body, never a badge.
@@ -468,8 +474,16 @@ CanvasScene buildScene(
     final sockets = <SocketShape>[];
     final labels = <SocketRef, String>{};
     // An open base relationship of a system can be realised by a provided
-    // port: a socket at its definition row, hollow until bound.
-    if (sys != null && !m.hasDefinition()) {
+    // port or by another base relationship of the same concept: a socket at
+    // its definition row, hollow until bound.  Only while something could
+    // bind to it — an instance, or another relationship producing the
+    // concept; otherwise a Source keeps its left edge clear (ADR-0032: no
+    // input sockets).
+    final realisable =
+        sys != null &&
+        (sys.instances.isNotEmpty ||
+            mappings.any((x) => x.id != m.id && x.signature.output == m.signature.output));
+    if (realisable && !m.hasDefinition()) {
       final outId = m.signature.output.toInt();
       final r = SocketRef(
         node: ref,
@@ -506,6 +520,11 @@ CanvasScene buildScene(
     socketByRef[outRef] = out;
     labels[outRef] = _conceptName(p, outId);
     final realised = realisedBy[m.id.toInt()];
+    // The role is derived (ADR-0032): unresolved, unit domain, not a port,
+    // not realised by a binding → a Source; the environment provides it.
+    final source =
+        realised == null &&
+        relationshipRole(m, portWord: system.portWords[m.id.toInt()]) == RelationshipRole.source;
     nodes.add(
       NodeShape(
         ref: ref,
@@ -516,7 +535,8 @@ CanvasScene buildScene(
             : realised == null
             ? null
             : '= $realised',
-        declared: !m.hasDefinition() && realised == null,
+        declared: !source && !m.hasDefinition() && realised == null,
+        source: source,
         wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
         socketLabels: labels,

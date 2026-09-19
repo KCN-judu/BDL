@@ -662,6 +662,11 @@ class _MappingInspector extends StatelessWidget {
     final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
     final a = analysis;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    // The role is derived (ADR-0032): an unresolved `() -> A` that backs no
+    // port and no binding is a Source — the environment provides it.
+    // Nothing is missing, so it is never *declared*.
+    final source =
+        boundTo == null && relationshipRole(mapping, portWord: portWord) == RelationshipRole.source;
     // Findings without a span, by where they belong: timing ones under
     // *Updates in*, drive ones under *Drives*, the rest (causality) with the
     // relationship itself.
@@ -693,6 +698,7 @@ class _MappingInspector extends StatelessWidget {
           trailing: MappingGlyph(
             declared: declared,
             wrong: a?.status == pb.MappingStatus.MAPPING_STATUS_INVALID,
+            source: source,
           ),
           children: [
             FormRow(
@@ -710,6 +716,14 @@ class _MappingInspector extends StatelessWidget {
                 onCommit: (v) => dispatch(SetMappingDescriptionRequested(id: id, description: v)),
               ),
             ),
+            FormRow(
+              label: context.l10n.role,
+              child: Text(
+                source ? context.l10n.roleSource : portWord ?? context.l10n.relationship,
+                style: TextStyle(fontSize: 12, color: t.textPrimary),
+              ),
+            ),
+            if (source) Text(context.l10n.sourceExplanation, style: small),
           ],
         ),
         InspectorSection(
@@ -743,7 +757,9 @@ class _MappingInspector extends StatelessWidget {
           ],
         ),
         InspectorSection(
-          title: context.l10n.produces,
+          // A Source *provides* its concept to the model; a relationship
+          // *produces* it from what it reads.
+          title: source ? context.l10n.provides : context.l10n.produces,
           children: [
             MacDropdown<int>(
               value: output,
@@ -779,10 +795,21 @@ class _MappingInspector extends StatelessWidget {
               ? Text('bound', style: small)
               : draft != null && draft!.dirtyAgainst(committed)
               ? Text('unsaved', style: small)
+              : source
+              ? Text(context.l10n.roleSource, style: small)
               : declared
               ? Text('declared', style: small)
               : null,
           children: [
+            // What realizes a Source is deployment's: until a device is
+            // bound the environment provides it, and the graph is complete.
+            if (source) ...[
+              FormRow(
+                label: context.l10n.realization,
+                child: Text(context.l10n.realizationEnvironment, style: small),
+              ),
+              const SizedBox(height: 6),
+            ],
             // A relationship realised by a binding has the system's
             // definition: a reference by identity, generated on every
             // commit.  It is shown and traced, never typed into.

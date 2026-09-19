@@ -988,10 +988,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get show => 'Show';
 
   @override
-  String get noInputsARelationshipWithoutInputsAnd =>
-      'No inputs: a relationship without inputs and without a definition is one. Values then come from outside the design, one per tick.';
-
-  @override
   String get wholeNumber => 'whole number';
 
   @override
@@ -1900,4 +1896,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dialogUntitledProject => 'Untitled Project';
+
+  @override
+  String get roleSource => 'Source';
+
+  @override
+  String get role => 'Role';
+
+  @override
+  String get realizationEnvironment => 'Provided by the environment; no device is bound yet.';
+
+  @override
+  String get sourceExplanation =>
+      'A value that enters the behavior model from the environment, observed once per activation. Nothing is missing: add a definition only to compute it inside the model instead.';
+
+  @override
+  String get categorySources => 'Sources';
+
+  @override
+  String get newSource => 'New source';
+
+  @override
+  String get aSourceAValueTheEnvironmentProvides =>
+      'A value the environment provides: it reads nothing and is observed once per activation.';
+
+  @override
+  String get addSource => 'Add Source';
+
+  @override
+  String get newSourceEllipsis => 'New source…';
+
+  @override
+  String sourceNodeSemantics(String name, String concept) {
+    return '$name, Source: a value entering the behavior model from the environment, provides $concept';
+  }
+
+  @override
+  String sourceOfConcept(String concept) {
+    return 'Source of $concept';
+  }
+
+  @override
+  String get chooseWhatItProvidesTheOutputSocket =>
+      'Choose what it provides: the one socket on its right.';
+
+  @override
+  String get theEnvironmentProvidesItNoInputSockets =>
+      'The environment provides it: no input sockets, one value per activation.';
+
+  @override
+  String get sources => 'Sources';
+
+  @override
+  String get noSourcesARelationshipWithNoReads =>
+      'No Sources: a relationship with no reads and no definition is one. The environment then provides its value, one per activation.';
 }

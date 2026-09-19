@@ -27,6 +27,70 @@ extension SignatureDomain on pb.Signature {
   bool get isUnitDomain => inputs.isEmpty;
 }
 
+/// What a relationship is, as a designer reads it — derived from the
+/// projection, never stored (ADR-0032; FV Phase 12 `Source`,
+/// `resolved_not_source`).  The same rule the IDE service uses for hover
+/// and Explain (`bdl-ide::relationship_role`).
+enum RelationshipRole {
+  /// A value entering the behavior model from the environment: no inputs,
+  /// no definition, not backing a port.  Observed once per activation.
+  source,
+
+  /// A value transformed inside the behavior model — including a resolved
+  /// `() -> B` that computes internally: the domain shape alone makes
+  /// nothing a Source.
+  mapping,
+
+  /// In a component's source: a declaration that backs a port.  The port's
+  /// own word (requires / provides / parameter) is its role.
+  port,
+}
+
+/// The role of [m].  [portWord] is the port it backs in a component's
+/// source, if any; a relationship realised by a binding has a definition
+/// in the projection (a reference) and is therefore never a Source.
+RelationshipRole relationshipRole(pb.MappingView m, {String? portWord}) {
+  if (portWord != null && portWord.isNotEmpty) return RelationshipRole.port;
+  if (!m.hasDefinition() && m.signature.isUnitDomain) return RelationshipRole.source;
+  return RelationshipRole.mapping;
+}
+
+/// Whether [m] presents as a Source where the designer is: the derived
+/// role, less what the system knows — a port it backs in the open
+/// component, a binding that realises it on the system canvas.
+extension SourceHere on AppState {
+  bool isSource(pb.MappingView m) {
+    final id = m.id.toInt();
+    final port = openComponent?.ports.where((p) => p.decl.toInt() == id).firstOrNull;
+    if (port != null) return false;
+    final bound =
+        system?.bindings.any(
+          (b) => b.destination.hasBaseDecl() && b.destination.baseDecl.toInt() == id,
+        ) ??
+        false;
+    if (bound) return false;
+    return relationshipRole(m) == RelationshipRole.source;
+  }
+}
+
+/// A library template's display name and description for [locale]
+/// (`zh-Hans`, `ja`), falling back to the English fields.  Identifiers the
+/// template generates never change with the locale.
+extension TemplateText on pb.ConceptTemplateView {
+  String displayNameIn(String locale) {
+    final l = displayNames[locale];
+    return l == null || l.isEmpty ? displayName : l;
+  }
+
+  String descriptionIn(String locale) {
+    final l = descriptions[locale];
+    return l == null || l.isEmpty ? description : l;
+  }
+
+  /// A Source template creates a concept and `<sourceDefaultName> : () -> concept`.
+  bool get isSource => sourceDefaultName.isNotEmpty;
+}
+
 /// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 

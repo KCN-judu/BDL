@@ -4,7 +4,7 @@
 /// application behaves* is readable here and testable without a widget tree.
 library;
 
-import 'dart:ui' show Rect;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
@@ -908,6 +908,15 @@ Transition projectReceived(
   var layoutsOut = layouts;
   if (created != null && dropped != null) {
     layout = {...layout, created: dropped};
+    // A Source template also created the relationship that provides the
+    // concept: it lands to the concept's left, where its one socket faces
+    // the concept — a node width and a gap away.
+    if (outcome != null && outcome.hasCreatedMapping()) {
+      layout = {
+        ...layout,
+        NodeRef.mapping(outcome.createdMapping.toInt()): dropped - const Offset(240, 0),
+      };
+    }
     layoutsOut = layouts.withNodes(context, layout);
   }
   final next = s.copyWith(

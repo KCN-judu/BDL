@@ -21,6 +21,7 @@ import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'canvas/concept_glyphs.dart' show MappingGlyph;
 import 'mac/controls.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
@@ -36,6 +37,7 @@ String categoryLabel(AppLocalizations l10n, String category) => switch (category
   'visual' => l10n.visualDisplay,
   'actuation' => l10n.actuation,
   'audio' => l10n.audio,
+  'sources' => l10n.categorySources,
   _ => category.isEmpty ? category : category[0].toUpperCase() + category.substring(1),
 };
 
@@ -66,10 +68,13 @@ List<pb.ConceptTemplateView> searchTemplates(
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return all.toList();
   bool hit(String s) => s.toLowerCase().contains(q);
+  final tag = l10n.libraryLocale;
   return [
     for (final t in all)
       if (hit(t.displayName) ||
+          hit(t.displayNameIn(tag)) ||
           hit(t.defaultName) ||
+          hit(t.sourceDefaultName) ||
           hit(t.category) ||
           hit(categoryLabel(l10n, t.category)) ||
           hit(t.unit) ||
@@ -212,13 +217,20 @@ class _TemplateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
+    final tag = context.l10n.libraryLocale;
+    // A Source template inserts a concept *and* the Source that provides
+    // it: its row wears the Source silhouette, and the tooltip says what the
+    // relationship provides before the template's own words.
     final row = SizedBox(
       height: MacMetrics.rowHeight,
       child: Row(
         children: [
-          TemplateGlyph(template: template),
+          if (template.isSource)
+            const MappingGlyph(declared: false, wrong: false, source: true)
+          else
+            TemplateGlyph(template: template),
           const SizedBox(width: MacMetrics.gap),
-          Expanded(child: Text(template.displayName, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(template.displayNameIn(tag), overflow: TextOverflow.ellipsis)),
           Text(
             representationWord(context.l10n, template),
             style: TextStyle(
@@ -231,7 +243,9 @@ class _TemplateRow extends StatelessWidget {
       ),
     );
     final interactive = Tooltip(
-      message: template.description,
+      message: template.isSource
+          ? '${context.l10n.sourceOfConcept(template.defaultName)}\n${template.descriptionIn(tag)}'
+          : template.descriptionIn(tag),
       waitDuration: const Duration(milliseconds: 600),
       child: Shortcuts(
         shortcuts: const {

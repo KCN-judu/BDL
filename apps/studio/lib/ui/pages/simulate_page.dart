@@ -181,9 +181,12 @@ class _InputsSection extends StatelessWidget {
         if (!m.hasDefinition() && !m.signature.isUnitDomain) m,
     ];
     return InspectorSection(
-      title: context.l10n.inputs,
+      // The simulation's inputs are exactly the Sources (FV Phase 12
+      // `SimulationInput = Source ∧ UnitDomain`): the values the
+      // environment provides, one per activation.
+      title: context.l10n.sources,
       children: [
-        if (inputs.isEmpty) Text(context.l10n.noInputsARelationshipWithoutInputsAnd, style: small),
+        if (inputs.isEmpty) Text(context.l10n.noSourcesARelationshipWithNoReads, style: small),
         for (final m in inputs)
           _InputControl(
             mapping: m,

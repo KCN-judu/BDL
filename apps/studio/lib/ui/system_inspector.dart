@@ -1037,6 +1037,10 @@ class GroupInspector extends StatelessWidget {
                       wrong:
                           state.mappingAnalysis(m)?.status ==
                           pb.MappingStatus.MAPPING_STATUS_INVALID,
+                      source: switch (p.mappings.where((x) => x.id.toInt() == m).firstOrNull) {
+                        null => false,
+                        final x => state.isSource(x),
+                      },
                     ),
                     const SizedBox(width: 8),
                     Expanded(

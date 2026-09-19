@@ -2,15 +2,18 @@
 /// against the real `bdld` (skipped when it is not built).  The library
 /// Studio shows is the daemon's; inserting a template twice yields two
 /// concepts; renaming one leaves the other's defaults alone; the project
-/// saves and reopens without the library.
+/// saves and reopens without the library.  A Source template is one commit
+/// of two ordinary edits, written as `mapping S : () -> C`.
 library;
 
 import 'dart:io';
 
 import 'package:bdl_studio/app/actions.dart';
+import 'package:bdl_studio/app/simulation.dart';
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -98,6 +101,87 @@ void main() {
       for (final c in reopened) {
         expect(c.representation.quantity, pb.Dim(temperature: 1));
       }
+    } finally {
+      await store.dispose();
+      await dir.delete(recursive: true);
+    }
+  }, skip: bdld == null ? 'bdld is not built' : false);
+
+  test('a Source template is one commit: a concept and its () -> relationship, as text', () async {
+    final store = TestStore(spawn: DaemonClient.spawn, executable: bdld!);
+    final dir = await Directory.systemTemp.createTemp('bdl-studio-sources');
+    try {
+      store.dispatch(const AppStarted());
+      await store.until((s) => s.library != null || s.connection is ConnectionFailed);
+      expect(store.state.connection, isA<Connected>(), reason: '${store.state.connection}');
+      // the library serves seven Sources, each with its relationship and
+      // its zh-Hans / ja names; no other template has a relationship
+      final sources = store.state.templates.where((t) => t.isSource).toList();
+      expect(sources.length, greaterThanOrEqualTo(7));
+      expect(sources.every((t) => t.category == 'sources'), isTrue);
+      expect(
+        store.state.templates.where((t) => t.category != 'sources').any((t) => t.isSource),
+        isFalse,
+      );
+      final temp = store.state.template('std.source.temperature')!;
+      expect(temp.sourceDefaultName, 'TempSensor');
+      expect(temp.displayNameIn('zh-Hans'), '温度传感器');
+      expect(temp.displayNameIn('ja'), '温度センサー');
+      expect(temp.displayNameIn('en'), 'Temperature Sensor');
+
+      final root = p.join(dir.path, 'lamp');
+      store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
+      await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
+      final before = store.state.revision;
+      store.dispatch(
+        const InsertConceptTemplateRequested('std.source.temperature', position: Offset(400, 40)),
+      );
+      var s = await store.until(
+        (x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty,
+      );
+      final concept = s.project!.concepts.single;
+      final source = s.project!.mappings.single;
+      expect(concept.name, 'RoomTemp');
+      expect(source.name, 'TempSensor');
+      expect(source.signature.inputs, isEmpty);
+      expect(source.signature.output, concept.id);
+      expect(source.hasDefinition(), isFalse);
+      expect(relationshipRole(source), RelationshipRole.source);
+      expect(s.editor.renaming, NodeRef.concept(concept.id.toInt()));
+      expect(s.editor.layout[NodeRef.mapping(source.id.toInt())], const Offset(160, 40));
+      final scene = buildScene(s.project!, s.editor.layout);
+      final node = scene.nodes.firstWhere((n) => n.ref == NodeRef.mapping(source.id.toInt()));
+      expect(node.source, isTrue);
+      expect(node.sockets.where((x) => x.ref.side == SocketSide.input), isEmpty);
+      expect(simulationInputs(s.project!).map((m) => m.id), [source.id]);
+
+      // one history entry: undo removes both, redo restores both
+      store.dispatch(const UndoRequested());
+      s = await store.until((x) => x.editor.pendingRequests == 0 && x.revision != before + 1);
+      expect(s.project!.concepts, isEmpty);
+      expect(s.project!.mappings, isEmpty);
+      store.dispatch(const RedoRequested());
+      s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty);
+      expect(s.project!.mappings.single.name, 'TempSensor');
+
+      // the text is the preferred spelling — never the shorthand
+      store.dispatch(const DesignViewChanged(DesignView.code));
+      s = await store.until((x) => x.editor.sources.revision == x.revision);
+      expect(s.editor.sources.text, contains('mapping TempSensor : () -> RoomTemp'));
+      expect(s.editor.sources.text, isNot(contains('mapping TempSensor : RoomTemp\n')));
+
+      // saved and reopened: the same shape, the role re-derived from it
+      store.dispatch(const SaveRequested());
+      await store.until((x) => x.editor.pendingRequests == 0 && !x.project!.dirty);
+      final sidecar = File(p.join(root, '.bdl', 'authoring.json')).readAsStringSync();
+      expect(sidecar.toLowerCase(), isNot(contains('source')));
+      store.dispatch(const CloseProjectRequested());
+      await store.until((x) => x.project == null);
+      store.dispatch(OpenProjectRequested(root));
+      s = await store.until((x) => x.project != null && x.editor.pendingRequests == 0);
+      final reopened = s.project!.mappings.single;
+      expect(reopened.id, source.id);
+      expect(relationshipRole(reopened), RelationshipRole.source);
     } finally {
       await store.dispose();
       await dir.delete(recursive: true);

@@ -70,35 +70,51 @@ class _SocketGlyphPainter extends CustomPainter {
 }
 
 /// A mapping at row size: the node's silhouette — dashed while declared,
-/// with the red mark when its definition does not check.
+/// with the red mark when its definition does not check; a Source wears
+/// the canvas's Source header and its left boundary bar (ADR-0032).
 class MappingGlyph extends StatelessWidget {
-  const MappingGlyph({super.key, required this.declared, required this.wrong, this.size = 12});
+  const MappingGlyph({
+    super.key,
+    required this.declared,
+    required this.wrong,
+    this.source = false,
+    this.size = 12,
+  });
   final bool declared;
   final bool wrong;
+  final bool source;
   final double size;
 
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     return Semantics(
-      label: declared
+      label: source
+          ? context.l10n.roleSource
+          : declared
           ? context.l10n.declaredNotYetDefined
           : wrong
           ? context.l10n.definitionDoesNotCheck
           : 'defined',
       child: CustomPaint(
         size: Size(size + 2, size),
-        painter: _MappingGlyphPainter(t, declared: declared, wrong: wrong),
+        painter: _MappingGlyphPainter(
+          t,
+          declared: declared && !source,
+          wrong: wrong,
+          source: source,
+        ),
       ),
     );
   }
 }
 
 class _MappingGlyphPainter extends CustomPainter {
-  _MappingGlyphPainter(this.t, {required this.declared, required this.wrong});
+  _MappingGlyphPainter(this.t, {required this.declared, required this.wrong, this.source = false});
   final MacTokens t;
   final bool declared;
   final bool wrong;
+  final bool source;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -106,11 +122,23 @@ class _MappingGlyphPainter extends CustomPainter {
       Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
       const Radius.circular(2.5),
     );
-    final header = t.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5);
+    final header = source
+        ? (t.isDark ? const Color(0xFF2F5A4A) : const Color(0xFFD2ECDD))
+        : (t.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5));
     canvas.save();
     canvas.clipRRect(rect);
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height * 0.45), Paint()..color = header);
     canvas.restore();
+    if (source) {
+      canvas.drawLine(
+        Offset(1.25, 2.5),
+        Offset(1.25, size.height - 2.5),
+        Paint()
+          ..color = t.textSecondary
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round,
+      );
+    }
     final outline = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
@@ -138,7 +166,7 @@ class _MappingGlyphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MappingGlyphPainter old) =>
-      old.declared != declared || old.wrong != wrong || old.t != t;
+      old.declared != declared || old.wrong != wrong || old.source != source || old.t != t;
 }
 
 /// A concept as a removable chip (a mapping's Reads): the socket glyph and

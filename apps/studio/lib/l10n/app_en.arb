@@ -1238,10 +1238,6 @@
   "@show": {
     "description": "Studio UI text (simulate_page.dart)."
   },
-  "noInputsARelationshipWithoutInputsAnd": "No inputs: a relationship without inputs and without a definition is one. Values then come from outside the design, one per tick.",
-  "@noInputsARelationshipWithoutInputsAnd": {
-    "description": "Studio UI text (simulate_page.dart)."
-  },
   "wholeNumber": "whole number",
   "@wholeNumber": {
     "description": "Studio UI text (simulate_page.dart)."
@@ -2560,5 +2556,78 @@
   "dialogUntitledProject": "Untitled Project",
   "@dialogUntitledProject": {
     "description": "Suggested name in the OS save dialog for a new project directory."
+  },
+  "roleSource": "Source",
+  "@roleSource": {
+    "description": "Canvas header word, inspector role and library category word for a relationship the environment provides (glossary: source). Never sensor, file or source code."
+  },
+  "role": "Role",
+  "@role": {
+    "description": "Inspector row label: what a relationship is (Source, Relationship, port)."
+  },
+  "realizationEnvironment": "Provided by the environment; no device is bound yet.",
+  "@realizationEnvironment": {
+    "description": "Inspector realization value for a Source with no deployment realization."
+  },
+  "sourceExplanation": "A value that enters the behavior model from the environment, observed once per activation. Nothing is missing: add a definition only to compute it inside the model instead.",
+  "@sourceExplanation": {
+    "description": "Inspector explanation under a Source's Role row."
+  },
+  "categorySources": "Sources",
+  "@categorySources": {
+    "description": "Library category of the standard Source templates (glossary: source). Not all are sensors."
+  },
+  "newSource": "New source",
+  "@newSource": {
+    "description": "Sheet title: create a Source."
+  },
+  "aSourceAValueTheEnvironmentProvides": "A value the environment provides: it reads nothing and is observed once per activation.",
+  "@aSourceAValueTheEnvironmentProvides": {
+    "description": "Sheet subtitle for a new Source."
+  },
+  "addSource": "Add Source",
+  "@addSource": {
+    "description": "Canvas contextual menu: submenu of Source templates."
+  },
+  "newSourceEllipsis": "New source…",
+  "@newSourceEllipsis": {
+    "description": "Canvas contextual menu / sidebar: open the new-source sheet."
+  },
+  "sourceNodeSemantics": "{name}, Source: a value entering the behavior model from the environment, provides {concept}",
+  "@sourceNodeSemantics": {
+    "description": "Accessibility label of a Source node on the canvas.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "sourceOfConcept": "Source of {concept}",
+  "@sourceOfConcept": {
+    "description": "Library row subtitle for a Source template: what the relationship provides.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseWhatItProvidesTheOutputSocket": "Choose what it provides: the one socket on its right.",
+  "@chooseWhatItProvidesTheOutputSocket": {
+    "description": "New-source sheet hint while no concept is chosen."
+  },
+  "theEnvironmentProvidesItNoInputSockets": "The environment provides it: no input sockets, one value per activation.",
+  "@theEnvironmentProvidesItNoInputSockets": {
+    "description": "New-source sheet hint once a concept is chosen."
+  },
+  "sources": "Sources",
+  "@sources": {
+    "description": "Simulate page: the section of values the environment provides during a run (the Sources)."
+  },
+  "noSourcesARelationshipWithNoReads": "No Sources: a relationship with no reads and no definition is one. The environment then provides its value, one per activation.",
+  "@noSourcesARelationshipWithNoReads": {
+    "description": "Simulate page, the Sources section while the design has none (glossary: source)."
   }
 }

@@ -300,9 +300,25 @@ Future<NewMappingResult?> showNewMappingSheet(BuildContext context, List<pb.Conc
   );
 }
 
+/// A Source: `name : () -> concept` with no definition — the same form
+/// without the *Reads* row, because the environment provides the value
+/// (ADR-0032).  What comes back is an ordinary [NewMappingResult] with no
+/// inputs; there is one creation path.
+Future<NewMappingResult?> showNewSourceSheet(BuildContext context, List<pb.ConceptView> concepts) {
+  return showMacSheet<NewMappingResult>(
+    context,
+    title: context.l10n.newSource,
+    subtitle: context.l10n.aSourceAValueTheEnvironmentProvides,
+    content: _NewMappingForm(concepts: concepts, source: true),
+    actions: const [],
+    width: 520,
+  );
+}
+
 class _NewMappingForm extends StatefulWidget {
-  const _NewMappingForm({required this.concepts});
+  const _NewMappingForm({required this.concepts, this.source = false});
   final List<pb.ConceptView> concepts;
+  final bool source;
 
   @override
   State<_NewMappingForm> createState() => _NewMappingFormState();
@@ -359,25 +375,26 @@ class _NewMappingFormState extends State<_NewMappingForm> {
             onSubmitted: (_) => _submit(),
           ),
         ),
-        FormRow(
-          label: context.l10n.reads,
-          child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final c in widget.concepts)
-                _ConceptToggle(
-                  concept: c,
-                  selected: _inputs.contains(c.id.toInt()),
-                  onChanged: (on) => setState(() {
-                    on ? _inputs.add(c.id.toInt()) : _inputs.remove(c.id.toInt());
-                  }),
-                ),
-            ],
+        if (!widget.source)
+          FormRow(
+            label: context.l10n.reads,
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final c in widget.concepts)
+                  _ConceptToggle(
+                    concept: c,
+                    selected: _inputs.contains(c.id.toInt()),
+                    onChanged: (on) => setState(() {
+                      on ? _inputs.add(c.id.toInt()) : _inputs.remove(c.id.toInt());
+                    }),
+                  ),
+              ],
+            ),
           ),
-        ),
         FormRow(
-          label: context.l10n.produces,
+          label: widget.source ? context.l10n.provides : context.l10n.produces,
           child: MacDropdown<int>(
             value: _output,
             hint: 'choose',
@@ -398,9 +415,15 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           ),
         ),
         const SizedBox(height: 4),
+        // The preview derives the role like the canvas: with no reads the
+        // node is a Source, and the hint says so instead of "dashed".
         Text(
           _output == null
-              ? context.l10n.chooseWhatItProducesTheOutputSocket
+              ? widget.source
+                    ? context.l10n.chooseWhatItProvidesTheOutputSocket
+                    : context.l10n.chooseWhatItProducesTheOutputSocket
+              : _inputs.isEmpty
+              ? context.l10n.theEnvironmentProvidesItNoInputSockets
               : context.l10n.dashedDeclaredNotYetDefinedAttachA,
           style: TextStyle(fontSize: 11, color: t.textSecondary),
         ),

@@ -1956,12 +1956,6 @@ abstract class AppLocalizations {
   /// Studio UI text (simulate_page.dart).
   ///
   /// In en, this message translates to:
-  /// **'No inputs: a relationship without inputs and without a definition is one. Values then come from outside the design, one per tick.'**
-  String get noInputsARelationshipWithoutInputsAnd;
-
-  /// Studio UI text (simulate_page.dart).
-  ///
-  /// In en, this message translates to:
   /// **'whole number'**
   String get wholeNumber;
 
@@ -3164,6 +3158,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Untitled Project'**
   String get dialogUntitledProject;
+
+  /// Canvas header word, inspector role and library category word for a relationship the environment provides (glossary: source). Never sensor, file or source code.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get roleSource;
+
+  /// Inspector row label: what a relationship is (Source, Relationship, port).
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
+  /// Inspector realization value for a Source with no deployment realization.
+  ///
+  /// In en, this message translates to:
+  /// **'Provided by the environment; no device is bound yet.'**
+  String get realizationEnvironment;
+
+  /// Inspector explanation under a Source's Role row.
+  ///
+  /// In en, this message translates to:
+  /// **'A value that enters the behavior model from the environment, observed once per activation. Nothing is missing: add a definition only to compute it inside the model instead.'**
+  String get sourceExplanation;
+
+  /// Library category of the standard Source templates (glossary: source). Not all are sensors.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get categorySources;
+
+  /// Sheet title: create a Source.
+  ///
+  /// In en, this message translates to:
+  /// **'New source'**
+  String get newSource;
+
+  /// Sheet subtitle for a new Source.
+  ///
+  /// In en, this message translates to:
+  /// **'A value the environment provides: it reads nothing and is observed once per activation.'**
+  String get aSourceAValueTheEnvironmentProvides;
+
+  /// Canvas contextual menu: submenu of Source templates.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Source'**
+  String get addSource;
+
+  /// Canvas contextual menu / sidebar: open the new-source sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'New source…'**
+  String get newSourceEllipsis;
+
+  /// Accessibility label of a Source node on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, Source: a value entering the behavior model from the environment, provides {concept}'**
+  String sourceNodeSemantics(String name, String concept);
+
+  /// Library row subtitle for a Source template: what the relationship provides.
+  ///
+  /// In en, this message translates to:
+  /// **'Source of {concept}'**
+  String sourceOfConcept(String concept);
+
+  /// New-source sheet hint while no concept is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what it provides: the one socket on its right.'**
+  String get chooseWhatItProvidesTheOutputSocket;
+
+  /// New-source sheet hint once a concept is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'The environment provides it: no input sockets, one value per activation.'**
+  String get theEnvironmentProvidesItNoInputSockets;
+
+  /// Simulate page: the section of values the environment provides during a run (the Sources).
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get sources;
+
+  /// Simulate page, the Sources section while the design has none (glossary: source).
+  ///
+  /// In en, this message translates to:
+  /// **'No Sources: a relationship with no reads and no definition is one. The environment then provides its value, one per activation.'**
+  String get noSourcesARelationshipWithNoReads;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

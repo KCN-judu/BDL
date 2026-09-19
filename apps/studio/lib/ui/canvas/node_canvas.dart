@@ -15,6 +15,7 @@ import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../concept_library_panel.dart' show ConceptTemplateDrag, categoryLabel;
+import '../dialogs.dart' show showNewSourceSheet;
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
 
@@ -238,12 +239,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final node = _menuNode;
     final all = widget.templates;
     final byId = {for (final t in all) t.id: t};
+    final tag = context.l10n.libraryLocale;
     MenuItemButton item(pb.ConceptTemplateView t) => MenuItemButton(
       onPressed: widget.canInsert ? () => _insert(t.id, _menuScene) : null,
-      child: Text(t.displayName),
+      child: Text(t.displayNameIn(tag)),
     );
     List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
     final recent = [for (final id in widget.recentTemplates) ?byId[id]];
+    final sources = all.where((t) => t.isSource);
     final environment = all.where((t) => t.category == 'environment');
     final motion = all.where((t) => t.category == 'motion');
     final human = all.where((t) => t.category == 'human');
@@ -412,7 +415,26 @@ class _NodeCanvasState extends State<NodeCanvas> {
         ],
         child: Text(context.l10n.addConcept),
       ),
+      // A Source is an ordinary relationship the environment provides
+      // (ADR-0032): the standard ones, or one over a concept already here.
+      SubmenuButton(
+        menuChildren: [
+          ...group(sources),
+          if (sources.isNotEmpty) const Divider(height: 8),
+          MenuItemButton(
+            onPressed: widget.canInsert && widget.project.concepts.isNotEmpty ? _newSource : null,
+            child: Text(context.l10n.newSourceEllipsis),
+          ),
+        ],
+        child: Text(context.l10n.addSource),
+      ),
     ];
+  }
+
+  Future<void> _newSource() async {
+    final r = await showNewSourceSheet(context, widget.project.concepts);
+    if (r == null || r.name.isEmpty) return;
+    widget.dispatch(CreateMappingRequested(name: r.name, inputs: const [], output: r.output));
   }
 
   /// `Behavior`, `Behavior 2`: a default name the designer renames inline.
@@ -1319,6 +1341,9 @@ class _CanvasPainter extends CustomPainter {
             .where((s) => s.ref.side == SocketSide.output)
             .map((s) => n.socketLabels[s.ref] ?? '')
             .join(', ');
+        // A Source is named as what it is, not as a relationship missing
+        // its reads: the environment provides what it produces.
+        if (n.source) return l10n.sourceNodeSemantics(n.title, produces);
         final state = n.declared
             ? l10n.declaredNotYetDefined
             : n.wrong
@@ -1432,6 +1457,11 @@ class NodePainter {
     // a warmer strip for the physical boundary.
     final headerColor = switch (n.ref.kind) {
       NodeKind.concept => tokens.isDark ? const Color(0xFF3A4556) : const Color(0xFFDCE3EE),
+      // A Source: the environment's side of the model — a cooler, greener
+      // strip than a relationship's, paired below with the boundary bar
+      // and the entry glyph so the category survives without colour.
+      NodeKind.mapping when n.source =>
+        tokens.isDark ? const Color(0xFF2F5A4A) : const Color(0xFFD2ECDD),
       NodeKind.mapping => tokens.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5),
       NodeKind.output => tokens.isDark ? const Color(0xFF4A4030) : const Color(0xFFEFE3CF),
       // A component instance: a teal-grey strip — a reusable behaviour,
@@ -1466,6 +1496,23 @@ class NodePainter {
     } else {
       canvas.drawRRect(rrect, outline);
     }
+    // The environment boundary: a solid bar on a Source's left edge — to the
+    // left of it is the environment, which provides the value; nothing in
+    // the model feeds it.  The mirror of the sink's bar on the right, drawn
+    // the same way; the two are opposite boundaries, never symmetric types.
+    if (n.source) {
+      canvas.drawLine(
+        n.rect.topLeft + const Offset(1, NodeMetrics.cornerRadius),
+        n.rect.bottomLeft + const Offset(1, -NodeMetrics.cornerRadius),
+        Paint()
+          ..color = selected ? tokens.accent : tokens.textSecondary
+          ..strokeWidth = 3
+          ..strokeCap = StrokeCap.round,
+      );
+      // The entry glyph: a value coming in from the left — an arrow into
+      // the header, meaning "enters the behavior model", not a sensor.
+      _entryGlyph(canvas, n.header.topLeft + const Offset(9, 8), tokens.textSecondary);
+    }
     // The physical boundary: a solid bar on the sink's right edge — to the
     // right of it is the world, and nothing reads from there.
     if (n.ref.kind == NodeKind.output) {
@@ -1482,17 +1529,19 @@ class NodePainter {
     _text(
       canvas,
       n.title,
-      n.header.topLeft + const Offset(12, 6),
+      n.header.topLeft + Offset(n.source ? 26 : 12, 6),
       FontWeight.w600,
       12.5,
       tokens.textPrimary,
-      maxWidth: n.rect.width - (n.declared ? 78 : 24),
+      maxWidth: n.rect.width - (n.declared || n.source ? 78 : 24) - (n.source ? 14 : 0),
     );
     // The header's right word is object state in words only where the
     // geometry cannot carry it: a declared mapping, an open or contested
     // sink, a required sink, a port-backed relationship in a component's
     // source.
-    final headerWord = n.declared
+    final headerWord = n.source
+        ? l10n.roleSource
+        : n.declared
         ? l10n.stateDeclared
         : n.headerWord.isNotEmpty
         ? n.headerWord
@@ -1755,6 +1804,22 @@ class NodePainter {
           ..addOval(Rect.fromCircle(center: c, radius: r))
           ..addOval(Rect.fromCircle(center: c, radius: r * 0.42));
     }
+  }
+
+  /// The Source glyph: a short shaft and an arrowhead pointing into the
+  /// node, drawn at [at] (the tip's row), 12 px wide.
+  void _entryGlyph(Canvas canvas, Offset at, Color color) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final y = at.dy + 5;
+    canvas.drawLine(Offset(at.dx, y), Offset(at.dx + 9, y), paint);
+    canvas.drawLine(Offset(at.dx + 5, y - 4), Offset(at.dx + 9, y), paint);
+    canvas.drawLine(Offset(at.dx + 5, y + 4), Offset(at.dx + 9, y), paint);
+    // the boundary tick the arrow crosses
+    canvas.drawLine(Offset(at.dx + 11.5, y - 5), Offset(at.dx + 11.5, y + 5), paint);
   }
 
   void _dashedRRect(Canvas canvas, RRect r, Paint paint) {

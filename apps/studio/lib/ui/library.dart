@@ -122,6 +122,7 @@ class _ProjectObjects extends StatelessWidget {
                       wrong:
                           state.mappingAnalysis(m.id.toInt())?.status ==
                           pb.MappingStatus.MAPPING_STATUS_INVALID,
+                      source: state.isSource(m),
                     ),
                     title: m.name,
                     selected: sel is MappingSelected && sel.id == m.id.toInt(),
