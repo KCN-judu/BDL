@@ -27,13 +27,15 @@ bdld simulate lamp --ticks 2 --input tilt=0.7853981633974483
 ```
 
 ```text
-tick 0: brightness = Brightness(0.5)  dimByTilt = <function>
-tick 1: brightness = Brightness(0.5)  dimByTilt = <function>
+tick 0: tilt = Tilt(0.785398 [rad])  dimByTilt = <function>  brightness = Brightness(0.5)
+tick 1: tilt = Tilt(0.785398 [rad])  dimByTilt = <function>  brightness = Brightness(0.5)
 ```
 
-Values print as *Concept(value)*; a relationship with inputs prints as
-`<function>` (it is applied where it is called, not sampled); an input
-you set is not listed, the relationships computed from it are.
+Values print as *Concept(value)* — a truth value as `on` / `off`, a
+number with six significant digits — the same text Studio shows; a
+relationship with inputs prints as `<function>` (it is applied where it
+is called, not sampled); an input you set is listed as the evaluator
+read it, at the ticks its domain activated.
 
 ## Related
 

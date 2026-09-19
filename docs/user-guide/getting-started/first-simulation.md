@@ -35,7 +35,8 @@ beside it — radians for an angle).
 
 Click **Step**.
 
-The trace gains its first row: tick 0, the active domain _interaction_, and the
+The trace gains its first row: tick 0, the active domain _interaction_, the
+Source as the evaluator read it — `tilt` as `Tilt(0.785398 [rad])` — and the
 values the design computed — `brightness` as `Brightness(0.5)` (or within a few
 digits of it, depending on what you typed), and the _light_ column showing the
 same value, because `brightness` drives it. A value is always written with the
@@ -50,7 +51,7 @@ recomputed from the inputs you supplied. The evaluator that produced these
 numbers is the one that defines what a BDL design means; the generated code for
 a device is held to it.
 
-![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _The Simulate page after three steps with the tilt at 45°: the Sources on the
 left, the trace in the middle, the probe on the right._
@@ -59,8 +60,8 @@ left, the trace in the middle, the probe on the right._
 
 Click the `brightness` column header, or select `brightness` on the Design page
 and come back. The **Probe** shows its value now and its values over the run,
-with the concept's glyph. Open **Explain** under it for the formal detail — the
-identity number, the run's revision, the raw rendered value.
+written as in the trace, with the concept's glyph. Open **Explain** under it for
+the formal detail — the identity number and the run's revision.
 
 ## 5. Reset and try the rhythm
 

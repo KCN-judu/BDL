@@ -1592,6 +1592,49 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get checkingTheDesign => '正在检查设计…';
+
+  @override
+  String dependOnEachOtherInTheSameInstant(String names) {
+    return '这些关系在同一瞬间相互依赖：$names。其中一个必须改为读取上一个值。';
+  }
+
+  @override
+  String hasNoValidDefinition(String name) {
+    return '$name 没有有效的定义。';
+  }
+
+  @override
+  String hasNoDefinitionReadsSomething(String name) {
+    return '$name 没有定义。读取内容的关系需要先有定义，设计才能运行。';
+  }
+
+  @override
+  String needsAValueFormBeforeInput(String concept, String input) {
+    return '$concept 需要先有值形式（量、开 / 关或计数），$input 才能被赋值。';
+  }
+
+  @override
+  String needsAValueBeforeSimulationCanStep(String name) {
+    return '仿真前进之前 $name 需要一个值。';
+  }
+
+  @override
+  String get valueHint => '值';
+
+  @override
+  String get onWord => 'on';
+
+  @override
+  String get offWord => 'off';
+
+  @override
+  String get tickColumn => '刻度';
+
+  @override
+  String get activeColumn => '激活';
+
+  @override
   String hasNoValueFormYet(Object concept) {
     return '$concept 尚无值形式。';
   }

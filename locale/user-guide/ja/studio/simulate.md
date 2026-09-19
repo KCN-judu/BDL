@@ -1,12 +1,14 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/simulate.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/simulate.md) · [简体中文](../../zh_Hans/studio/simulate.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # シミュレート
 
 シミュレートページ（⌘2）は _設計は時間とともに何をするか_ に、1 ティックずつ答えます。すべての値はコンパイラサービスの参照評価器——BDL の設計の意味の実行可能な定義——から来ます。Studio は入力した値、選んだ周期、返ってきたサンプルを保持するだけで、自分では何も計算しません。
 
-![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _傾き 45° で 3 ステップ後のシミュレートページ：左に入力元、中央にトレース、右にプローブ。_
 
@@ -41,15 +43,15 @@ _表示リンク付きの妨げ：入力元 tilt にまだ値がないので、�
 
 ## トレース（中央）
 
-行はティック。列は設計の**値**——入力のない関係——と**駆動される出力**です。規則（入力のある関係）には列がありません。関数であって値ではないからです。_起動_ 列はティックしたドメインを示します。セルは評価器自身の描画で、常にコンセプト付きです：`Brightness(0.5)`、`Held(true)`。
+行はティック。列は設計の**値**——入力のない関係——と**駆動される出力**です。規則（入力のある関係）には列がありません。関数であって値ではないからです。_起動_ 列はティックしたドメインを示します。セルは評価器自身の描画で、常にコンセプト付き、値の形式の言葉で書かれます：`Brightness(0.5)`、`Tilt(0.785398 [rad])`、`Held(on)`——真理値は _on_ / _off_、数値は有効数字 6 桁です。Studio が自分で値を描画することはありません。
 
-空のセルは、その値のドメインがそのティックで起動しなかったことを意味します。入力元のセルは与えた値を、そのドメインが起動したティックでのみ示します。列の順序は同一性によるもので、時間によるものではありません。列見出しをクリックするとその関係が選択されます。
+空のセルは、その値のドメインがそのティックで起動しなかったことを意味します。入力元のセルは与えた値で、そのドメインが起動したティックに評価器がエコーしたものです。列の順序は同一性によるもので、時間によるものではありません。列見出しをクリックするとその関係が選択されます。
 
 記憶と転送は値として現れます。`acc = delay(0, acc + x)` はティック 0 で `0`、その後は前のティックの和を読みます。遅いドメインの `y = sync(fast, -1, x)` は、自身の起動より厳密に前の入力元の最後の起動を読むので、同じ瞬間に生成された入力元の値はまだ見えません。
 
 ## プローブ（右）
 
-選択中のオブジェクトの**現在**と**実行全体**の値を、そのグリフとともに。出力なら、その駆動元も。その下の**説明**は識別番号、実行のリビジョン、描画された値、そして失敗ならコードと技術的なテキストを保持します。
+選択中のオブジェクトの**現在**と**実行全体**の値を、トレースと同じ書き方で、そのグリフとともに。出力なら、その駆動元も。その下の**説明**は識別番号、実行のリビジョン、そして失敗ならコードと技術的なテキストを保持します。
 
 ## 新しいリビジョンが行うこと
 

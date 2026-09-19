@@ -1601,6 +1601,49 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get checkingTheDesign => '設計を検査しています…';
+
+  @override
+  String dependOnEachOtherInTheSameInstant(String names) {
+    return 'これらの関係は同じ瞬間に互いに依存しています：$names。いずれかが代わりに前の値を読み取る必要があります。';
+  }
+
+  @override
+  String hasNoValidDefinition(String name) {
+    return '$name には有効な定義がありません。';
+  }
+
+  @override
+  String hasNoDefinitionReadsSomething(String name) {
+    return '$name には定義がありません。何かを読み取る関係には、設計を実行する前に定義が必要です。';
+  }
+
+  @override
+  String needsAValueFormBeforeInput(String concept, String input) {
+    return '$input に値を与えるには、先に $concept の値の形式（量、オン／オフ、個数）が必要です。';
+  }
+
+  @override
+  String needsAValueBeforeSimulationCanStep(String name) {
+    return 'シミュレーションを進めるには $name の値が必要です。';
+  }
+
+  @override
+  String get valueHint => '値';
+
+  @override
+  String get onWord => 'on';
+
+  @override
+  String get offWord => 'off';
+
+  @override
+  String get tickColumn => 'ティック';
+
+  @override
+  String get activeColumn => 'アクティブ';
+
+  @override
   String hasNoValueFormYet(Object concept) {
     return '$concept の値の形式はまだ決まっていません。';
   }

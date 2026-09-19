@@ -345,7 +345,7 @@ msgstr ""
 #: docs/user-guide/concepts/physical-outputs.md:75
 #: docs/user-guide/concepts/relationships.md:95
 #: docs/user-guide/concepts/timing.md:114
-#: docs/user-guide/reference/cli.md:38
+#: docs/user-guide/reference/cli.md:40
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:113
@@ -354,7 +354,7 @@ msgstr ""
 #: docs/user-guide/studio/formula-editor.md:168
 #: docs/user-guide/studio/inspector.md:78
 #: docs/user-guide/studio/library.md:71
-#: docs/user-guide/studio/simulate.md:99
+#: docs/user-guide/studio/simulate.md:102
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:94
 #: docs/user-guide/textual/editor-and-lsp.md:83
@@ -1738,7 +1738,7 @@ msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:209
 #: docs/user-guide/getting-started/first-deployment.md:83
-#: docs/user-guide/getting-started/first-simulation.md:82
+#: docs/user-guide/getting-started/first-simulation.md:83
 msgid "If something does not work"
 msgstr ""
 
@@ -1760,7 +1760,7 @@ msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:222
 #: docs/user-guide/getting-started/first-deployment.md:93
-#: docs/user-guide/getting-started/first-simulation.md:95
+#: docs/user-guide/getting-started/first-simulation.md:96
 #: docs/user-guide/getting-started/install-and-launch.md:71
 #: docs/user-guide/getting-started/what-is-bdl.md:77
 #: docs/user-guide/textual/overview.md:124
@@ -1954,63 +1954,68 @@ msgid "Click **Step**."
 msgstr ""
 
 #: docs/user-guide/getting-started/first-simulation.md:38
-msgid "The trace gains its first row: tick 0, the active domain _interaction_, and the values the design computed — `brightness` as `Brightness(0.5)` (or within a few digits of it, depending on what you typed), and the _light_ column showing the same value, because `brightness` drives it. A value is always written with the concept it belongs to. Click **Step** twice more: three rows, the same values, because the Source has not changed."
+msgid "The trace gains its first row: tick 0, the active domain _interaction_, the Source as the evaluator read it — `tilt` as `Tilt(0.785398 [rad])` — and the values the design computed — `brightness` as `Brightness(0.5)` (or within a few digits of it, depending on what you typed), and the _light_ column showing the same value, because `brightness` drives it. A value is always written with the concept it belongs to. Click **Step** twice more: three rows, the same values, because the Source has not changed."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:45
+#: docs/user-guide/getting-started/first-simulation.md:46
 msgid "Change the field to `1.5708` (90°) and **Step**: about `Brightness(1)`. Set `0` and step: `Brightness(0)`. Upright is off; flat is full."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:48
+#: docs/user-guide/getting-started/first-simulation.md:49
 msgid "**What happened.** Each tick, every value in the _interaction_ domain was recomputed from the inputs you supplied. The evaluator that produced these numbers is the one that defines what a BDL design means; the generated code for a device is held to it."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:55
+#: docs/user-guide/getting-started/first-simulation.md:54
+#: docs/user-guide/studio/simulate.md:9
+msgid "![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)"
+msgstr ""
+
+#: docs/user-guide/getting-started/first-simulation.md:56
 #: docs/user-guide/studio/simulate.md:11
 msgid "_The Simulate page after three steps with the tilt at 45°: the Sources on the left, the trace in the middle, the probe on the right._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:58
+#: docs/user-guide/getting-started/first-simulation.md:59
 msgid "4. Look at one value"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:60
-msgid "Click the `brightness` column header, or select `brightness` on the Design page and come back. The **Probe** shows its value now and its values over the run, with the concept's glyph. Open **Explain** under it for the formal detail — the identity number, the run's revision, the raw rendered value."
+#: docs/user-guide/getting-started/first-simulation.md:61
+msgid "Click the `brightness` column header, or select `brightness` on the Design page and come back. The **Probe** shows its value now and its values over the run, written as in the trace, with the concept's glyph. Open **Explain** under it for the formal detail — the identity number and the run's revision."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:65
+#: docs/user-guide/getting-started/first-simulation.md:66
 msgid "5. Reset and try the rhythm"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:67
+#: docs/user-guide/getting-started/first-simulation.md:68
 msgid "**Reset** returns to tick 0 and keeps your inputs."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:69
+#: docs/user-guide/getting-started/first-simulation.md:70
 msgid "Under _Timing domains_, set _interaction_ to _every 2_. **Step ×10**: the _active_ column now names _interaction_ only on every second tick, and `tilt`'s cell is shown only on those ticks — on the others the domain did not activate, so no value was read. A period is a simulation choice; the design itself only says _which_ domain a value belongs to."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:75
+#: docs/user-guide/getting-started/first-simulation.md:76
 msgid "What a step actually does"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:77
+#: docs/user-guide/getting-started/first-simulation.md:78
 msgid "Every step is a replay: the simulator restarts at tick 0 with all the inputs you have entered so far and runs to the new tick. The same design, the same inputs and the same periods give the same trace, every time. Changing the design on the Design page drops the trace; your input values stay."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:84
+#: docs/user-guide/getting-started/first-simulation.md:85
 msgid "**Step is disabled and a sentence names a relationship.** Read it: a Source without a value, a concept without a value form, a relationship without a valid definition, or relationships that depend on each other in the same instant. Each has a _Show_ link. See [Incomplete design](../troubleshooting/incomplete-design.md)."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:89
+#: docs/user-guide/getting-started/first-simulation.md:90
 msgid "**A tick stops with a message on the controls' line** (for example a division by zero). The message names the relationship. Change the formula or the inputs and step again."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:92
+#: docs/user-guide/getting-started/first-simulation.md:93
 msgid "**The trace is empty after you edited the design.** Expected — the run belongs to one version of the design. Step again."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-simulation.md:97
+#: docs/user-guide/getting-started/first-simulation.md:98
 msgid "[Your first deployment check](first-deployment.md) — does this lamp fit an Arduino Nano?"
 msgstr ""
 
@@ -2309,10 +2314,10 @@ msgid "`--input name=value` sets a relationship that reads nothing to a constant
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:34
-msgid "Values print as *Concept(value)*; a relationship with inputs prints as `<function>` (it is applied where it is called, not sampled); an input you set is not listed, the relationships computed from it are."
+msgid "Values print as *Concept(value)* — a truth value as `on` / `off`, a number with six significant digits — the same text Studio shows; a relationship with inputs prints as `<function>` (it is applied where it is called, not sampled); an input you set is listed as the evaluator read it, at the ticks its domain activated."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:40
+#: docs/user-guide/reference/cli.md:42
 msgid "[Project files](project-files.md) · [Textual BDL](../textual/overview.md)"
 msgstr ""
 
@@ -5330,42 +5335,42 @@ msgid "The trace (centre)"
 msgstr ""
 
 #: docs/user-guide/studio/simulate.md:65
-msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept: `Brightness(0.5)`, `Held(true)`."
+msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:71
-msgid "An empty cell means the value's domain did not activate at that tick. A Source's cell shows the value you fed, only at ticks where its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
+#: docs/user-guide/studio/simulate.md:73
+msgid "An empty cell means the value's domain did not activate at that tick. A Source's cell is the value you fed, echoed by the evaluator at the ticks its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:76
+#: docs/user-guide/studio/simulate.md:78
 msgid "Memory and transports show up as values: `acc = delay(0, acc + x)` reads `0` at tick 0 and last tick's sum after; `y = sync(fast, -1, x)` in a slower domain reads the source's last activation strictly before its own, so a source value produced at the same instant is not yet visible."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:81
+#: docs/user-guide/studio/simulate.md:83
 msgid "The probe (right)"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:83
-msgid "The selected object's value **now** and **over the run**, with its glyph; for an output, its driver. **Explain** under it holds the identity number, the run's revision, the rendered value and, for a failure, the code and technical text."
+#: docs/user-guide/studio/simulate.md:85
+msgid "The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:87
+#: docs/user-guide/studio/simulate.md:90
 msgid "What a new revision does"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:89
+#: docs/user-guide/studio/simulate.md:92
 msgid "Editing the design drops the samples and any answer still in flight, keeps the fed values for inputs that still exist, and re-checks readiness. A trace always belongs to one revision of the design."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:93
+#: docs/user-guide/studio/simulate.md:96
 msgid "Not on this page"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:95
+#: docs/user-guide/studio/simulate.md:98
 msgid "Values on the canvas (the trace and probe are the only views), plots (the trace is a table), and telemetry from a real device (that is Monitor, which does not exist yet)."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:101
+#: docs/user-guide/studio/simulate.md:104
 msgid "[Your first simulation](../getting-started/first-simulation.md) · [Timing](../concepts/timing.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
 msgstr ""
 

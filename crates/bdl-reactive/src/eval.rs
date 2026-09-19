@@ -54,7 +54,9 @@ pub struct State {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TickOutcome {
     pub next: State,
-    /// Every declaration evaluated this tick (active domains + agnostic).
+    /// Every declaration due this tick (active domains + agnostic) and its
+    /// value — an unresolved declaration's is the input it was fed, echoed
+    /// so a trace reads the same way for every declaration (ADR-0033).
     pub values: BTreeMap<DeclId, Value>,
 }
 
@@ -291,7 +293,7 @@ impl Cx<'_> {
             .get(&d)
             .ok_or(RuntimeError::UnknownDeclaration { decl: d })?;
         let Some(body) = &decl.realization else {
-            return self
+            let v = self
                 .input
                 .values
                 .get(&d)
@@ -299,7 +301,9 @@ impl Cx<'_> {
                 .ok_or(RuntimeError::MissingInput {
                     decl: d,
                     tick: self.tick,
-                });
+                })?;
+            self.memo.insert(d, v.clone());
+            return Ok(v);
         };
         if !self.in_progress.insert(d) {
             return Err(RuntimeError::InstantaneousCycle { decl: d });

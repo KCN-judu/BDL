@@ -43,9 +43,13 @@ for tick.
 - **Numerics (DI-15)**: IEEE `f64`. Division by zero and any non-finite result
   fail the tick with a structured error; equality is exact; traces serialise to
   JSON numbers.
-- **Traces**: `TickSample { tick, active, values }` per tick; every sample keeps
-  the `DeclId`, and semantic values render in the design's terms
-  (`Brightness(0.5)`).
+- **Traces**: `TickSample { tick, active, values }` per tick; `values` holds
+  every declaration due at the tick — a fed input echoed as it was fed, in the
+  ticks its domain activated — and every sample keeps the `DeclId`. A value has
+  one designer-facing rendering, the evaluator's (ADR-0033): in the design's
+  terms, `on` / `off` for a truth value, six significant digits
+  (`Brightness(0.5)`, `Held(on)`, `Tilt(0.785398 [rad])`); the JSON trace keeps
+  the exact numbers.
 
 The rest of this document states what the generated core must preserve — and,
 since the backend milestone, does: `bdl-lower` + `bdl-codegen-rust` produce a

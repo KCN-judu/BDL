@@ -2889,6 +2889,72 @@ abstract class AppLocalizations {
   /// **'{file} — not built'**
   String notBuiltSuffix(Object file);
 
+  /// Simulate readiness: the compiler has not answered for this revision yet; nothing is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the design…'**
+  String get checkingTheDesign;
+
+  /// Simulate readiness: an instantaneous cycle, with the relationships on it as a comma-separated list.
+  ///
+  /// In en, this message translates to:
+  /// **'These relationships depend on each other in the same instant: {names}. One of them must read the previous value instead.'**
+  String dependOnEachOtherInTheSameInstant(String names);
+
+  /// Simulate readiness: the relationship's definition does not check.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has no valid definition.'**
+  String hasNoValidDefinition(String name);
+
+  /// Simulate readiness: a declared relationship with inputs (a Source needs no definition).
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has no definition. A relationship that reads something needs one before the design can run.'**
+  String hasNoDefinitionReadsSomething(String name);
+
+  /// Simulate readiness: the concept a Source produces is still decide-later. The value form names are the New concept sheet's.
+  ///
+  /// In en, this message translates to:
+  /// **'{concept} needs a value form (Quantity, On / off or Count) before {input} can be given a value.'**
+  String needsAValueFormBeforeInput(String concept, String input);
+
+  /// Simulate readiness: a Source without a value for the run.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} needs a value before simulation can step.'**
+  String needsAValueBeforeSimulationCanStep(String name);
+
+  /// Simulate inputs: placeholder of an empty quantity field.
+  ///
+  /// In en, this message translates to:
+  /// **'value'**
+  String get valueHint;
+
+  /// Simulate inputs: the word beside an On / off switch that is on. Matches bdld's rendering of a truth value.
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get onWord;
+
+  /// Simulate inputs: the word beside an On / off switch that is off. Matches bdld's rendering of a truth value.
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get offWord;
+
+  /// Simulate trace: header of the tick column.
+  ///
+  /// In en, this message translates to:
+  /// **'tick'**
+  String get tickColumn;
+
+  /// Simulate trace: header of the column listing the domains that activated at the tick.
+  ///
+  /// In en, this message translates to:
+  /// **'active'**
+  String get activeColumn;
+
   /// Simulate inputs: a concept without a value form cannot take a value.
   ///
   /// In en, this message translates to:

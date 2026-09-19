@@ -2270,6 +2270,78 @@
       }
     }
   },
+  "checkingTheDesign": "Checking the design…",
+  "@checkingTheDesign": {
+    "description": "Simulate readiness: the compiler has not answered for this revision yet; nothing is wrong."
+  },
+  "dependOnEachOtherInTheSameInstant": "These relationships depend on each other in the same instant: {names}. One of them must read the previous value instead.",
+  "@dependOnEachOtherInTheSameInstant": {
+    "description": "Simulate readiness: an instantaneous cycle, with the relationships on it as a comma-separated list.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "hasNoValidDefinition": "{name} has no valid definition.",
+  "@hasNoValidDefinition": {
+    "description": "Simulate readiness: the relationship's definition does not check.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hasNoDefinitionReadsSomething": "{name} has no definition. A relationship that reads something needs one before the design can run.",
+  "@hasNoDefinitionReadsSomething": {
+    "description": "Simulate readiness: a declared relationship with inputs (a Source needs no definition).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "needsAValueFormBeforeInput": "{concept} needs a value form (Quantity, On / off or Count) before {input} can be given a value.",
+  "@needsAValueFormBeforeInput": {
+    "description": "Simulate readiness: the concept a Source produces is still decide-later. The value form names are the New concept sheet's.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      },
+      "input": {
+        "type": "String"
+      }
+    }
+  },
+  "needsAValueBeforeSimulationCanStep": "{name} needs a value before simulation can step.",
+  "@needsAValueBeforeSimulationCanStep": {
+    "description": "Simulate readiness: a Source without a value for the run.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "valueHint": "value",
+  "@valueHint": {
+    "description": "Simulate inputs: placeholder of an empty quantity field."
+  },
+  "onWord": "on",
+  "@onWord": {
+    "description": "Simulate inputs: the word beside an On / off switch that is on. Matches bdld's rendering of a truth value."
+  },
+  "offWord": "off",
+  "@offWord": {
+    "description": "Simulate inputs: the word beside an On / off switch that is off. Matches bdld's rendering of a truth value."
+  },
+  "tickColumn": "tick",
+  "@tickColumn": {
+    "description": "Simulate trace: header of the tick column."
+  },
+  "activeColumn": "active",
+  "@activeColumn": {
+    "description": "Simulate trace: header of the column listing the domains that activated at the tick."
+  },
   "hasNoValueFormYet": "{concept} has no value form yet.",
   "@hasNoValueFormYet": {
     "description": "Simulate inputs: a concept without a value form cannot take a value.",

@@ -69,7 +69,7 @@ impl InputTrace {
 pub struct TickSample {
     pub tick: u64,
     pub active: BTreeSet<ClockId>,
-    /// Declarations evaluated at this tick and their values.
+    /// Declarations due at this tick and their values, inputs echoed as fed.
     pub values: BTreeMap<DeclId, Value>,
 }
 

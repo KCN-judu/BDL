@@ -1711,6 +1711,49 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get checkingTheDesign => 'Checking the design…';
+
+  @override
+  String dependOnEachOtherInTheSameInstant(String names) {
+    return 'These relationships depend on each other in the same instant: $names. One of them must read the previous value instead.';
+  }
+
+  @override
+  String hasNoValidDefinition(String name) {
+    return '$name has no valid definition.';
+  }
+
+  @override
+  String hasNoDefinitionReadsSomething(String name) {
+    return '$name has no definition. A relationship that reads something needs one before the design can run.';
+  }
+
+  @override
+  String needsAValueFormBeforeInput(String concept, String input) {
+    return '$concept needs a value form (Quantity, On / off or Count) before $input can be given a value.';
+  }
+
+  @override
+  String needsAValueBeforeSimulationCanStep(String name) {
+    return '$name needs a value before simulation can step.';
+  }
+
+  @override
+  String get valueHint => 'value';
+
+  @override
+  String get onWord => 'on';
+
+  @override
+  String get offWord => 'off';
+
+  @override
+  String get tickColumn => 'tick';
+
+  @override
+  String get activeColumn => 'active';
+
+  @override
   String hasNoValueFormYet(Object concept) {
     return '$concept has no value form yet.';
   }

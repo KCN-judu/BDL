@@ -134,7 +134,7 @@ class _Blockers extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: MacMetrics.gapTight,
                     children: [
-                      Text(b.message, style: const TextStyle(fontSize: 12)),
+                      Text(blockerSentence(context.l10n, b), style: const TextStyle(fontSize: 12)),
                       if (b.conceptId != null || b.mappingId != null)
                         MacLink(
                           label: context.l10n.show,
@@ -249,7 +249,7 @@ class _InputControl extends StatelessWidget {
                 child: CommitTextField(
                   key: ValueKey('input-$id'),
                   value: repr != null && repr.hasQuantity() ? _fmt(repr.quantity.value) : '',
-                  hint: 'value',
+                  hint: context.l10n.valueHint,
                   onCommit: (v) {
                     final n = double.tryParse(v.trim());
                     if (n == null) return;
@@ -284,7 +284,7 @@ class _InputControl extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(on ? 'on' : 'off', style: small),
+              Text(on ? context.l10n.onWord : context.l10n.offWord, style: small),
             ],
           );
         case pb.Representation_Kind.count:
@@ -476,6 +476,23 @@ class _Controls extends StatelessWidget {
   }
 }
 
+/// A readiness blocker worded for the designer: the kind says what is
+/// missing, the names say of what.  Never a compiler word.
+String blockerSentence(AppLocalizations l10n, SimulationBlocker b) {
+  String name(int i) => b.names.elementAtOrNull(i) ?? '?';
+  return switch (b.kind) {
+    SimulationBlockerKind.checking => l10n.checkingTheDesign,
+    SimulationBlockerKind.instantaneousCycle => l10n.dependOnEachOtherInTheSameInstant(
+      b.names.join(', '),
+    ),
+    SimulationBlockerKind.instantaneousCycleUnnamed => l10n.theDesignContainsAnInstantaneousCycle,
+    SimulationBlockerKind.noValidDefinition => l10n.hasNoValidDefinition(name(0)),
+    SimulationBlockerKind.noDefinition => l10n.hasNoDefinitionReadsSomething(name(0)),
+    SimulationBlockerKind.noValueForm => l10n.needsAValueFormBeforeInput(name(0), name(1)),
+    SimulationBlockerKind.needsValue => l10n.needsAValueBeforeSimulationCanStep(name(0)),
+  };
+}
+
 /// The evaluator's structured failure, worded for the designer.  The
 /// code says what happened, the entity who; the tick is the row.
 String _errorSentence(AppLocalizations l10n, AppState s, pb.Diagnostic d) {
@@ -533,8 +550,8 @@ class _Trace extends StatelessWidget {
           children: [
             TableRow(
               children: [
-                _cell(Text('tick', style: head)),
-                _cell(Text('active', style: head)),
+                _cell(Text(context.l10n.tickColumn, style: head)),
+                _cell(Text(context.l10n.activeColumn, style: head)),
                 for (final m in columns)
                   _cell(
                     MacInteractive(
@@ -556,13 +573,7 @@ class _Trace extends StatelessWidget {
                 children: [
                   _cell(Text('${s.tick}', style: mono)),
                   _cell(Text(s.activeClockIds.map(clockName).join(' '), style: small)),
-                  for (final m in columns)
-                    _cell(
-                      Text(
-                        m.hasDefinition() ? _valueOf(s, m.id) : _fedValue(sim, p, s, m.id.toInt()),
-                        style: mono,
-                      ),
-                    ),
+                  for (final m in columns) _cell(Text(_valueOf(s, m.id), style: mono)),
                   for (final (_, driver) in outputs)
                     _cell(Text(_valueOf(s, Int64(driver)), style: mono)),
                 ],
@@ -573,28 +584,10 @@ class _Trace extends StatelessWidget {
     );
   }
 
-  /// An input's value at a tick is Studio's own trace (the evaluator
-  /// records computed declarations only): rendered from what was fed, at
-  /// the ticks its domain activated.
-  static String _fedValue(
-    SimulationState sim,
-    pb.ProjectProjection p,
-    pb.TickSample s,
-    int mapping,
-  ) {
-    final v = sampleOf(sim, p, s, mapping);
-    if (v == null) return '·';
-    final repr = v.hasSemantic() ? v.semantic.repr : v;
-    return switch (repr.whichKind()) {
-      pb.Value_Kind.quantity => _fmt(repr.quantity.value),
-      pb.Value_Kind.boolean => repr.boolean ? 'on' : 'off',
-      pb.Value_Kind.count => repr.count.toString(),
-      _ => '·',
-    };
-  }
-
+  /// The evaluator's rendering, or `·` where the declaration was not due
+  /// at the tick (an input is echoed only at ticks its domain activated).
   static String _valueOf(pb.TickSample s, Int64 mapping) =>
-      s.values.where((v) => v.mappingId == mapping).map((v) => v.rendered).firstOrNull ?? '·';
+      sampleOf(s, mapping.toInt())?.rendered ?? '·';
 
   static Widget _cell(Widget child) =>
       Padding(padding: const EdgeInsets.fromLTRB(0, 3, MacMetrics.gutter, 3), child: child);
@@ -604,10 +597,11 @@ class _Trace extends StatelessWidget {
 // Right: the probe of the selection
 // ---------------------------------------------------------------------------
 
-/// What the selected object is worth now and over the run.  The selection
+/// What the selected object is worth now and over the run, in the
+/// evaluator's own rendering — the same text as the trace.  The selection
 /// is the one shared with Design; the object keeps its name and glyph.
-/// Explain holds the formal detail: DeclId, the run's revision, the
-/// evaluator's rendering, an error's code and technical text.
+/// Explain holds the formal detail: DeclId, the run's revision, an error's
+/// code and technical text.
 class _Probe extends StatelessWidget {
   const _Probe({required this.state, required this.dispatch});
   final AppState state;
@@ -652,7 +646,7 @@ class _Probe extends StatelessWidget {
               for (final m in producers)
                 FormRow(
                   label: m.name,
-                  child: Text(_latest(sim, p, m.id.toInt()) ?? '—', style: value),
+                  child: Text(_latest(sim, m.id.toInt()) ?? '—', style: value),
                 ),
           ],
         );
@@ -673,22 +667,18 @@ class _Probe extends StatelessWidget {
                   FormRow(
                     label: context.l10n.now,
                     child: Text(
-                      _latest(sim, p, id) ?? (sim.hasRun ? '—' : context.l10n.notSteppedYet),
+                      _latest(sim, id) ?? (sim.hasRun ? '—' : context.l10n.notSteppedYet),
                       style: value,
                     ),
                   ),
               ],
             ),
-            if (isValue && sim.hasRun) _Series(sim: sim, project: p, mappingId: id),
+            if (isValue && sim.hasRun) _Series(sim: sim, mappingId: id),
             MacDisclosure(
               title: context.l10n.explain,
               children: [
                 ExplainLine('DeclId ${m.id}'),
                 if (sim.revision case final r?) ExplainLine('run at revision $r'),
-                if (sim.samples.isNotEmpty)
-                  if (sim.samples.last.values.where((v) => v.mappingId.toInt() == id).firstOrNull
-                      case final v?)
-                    ExplainLine('rendered: ${v.rendered}'),
                 if (sim.error case final e?) ...[
                   ExplainLine(e.code),
                   if (e.technical.isNotEmpty) ExplainLine(e.technical),
@@ -724,14 +714,11 @@ class _Probe extends StatelessWidget {
                 ),
                 FormRow(
                   label: context.l10n.now,
-                  child: Text(
-                    driver == null ? '—' : (_latest(sim, p, driver) ?? '—'),
-                    style: value,
-                  ),
+                  child: Text(driver == null ? '—' : (_latest(sim, driver) ?? '—'), style: value),
                 ),
               ],
             ),
-            if (driver != null && sim.hasRun) _Series(sim: sim, project: p, mappingId: driver),
+            if (driver != null && sim.hasRun) _Series(sim: sim, mappingId: driver),
           ],
         );
     }
@@ -748,32 +735,19 @@ class _Probe extends StatelessWidget {
   }
 }
 
-/// The latest value of a declaration in the run, as text.
-String? _latest(SimulationState sim, pb.ProjectProjection p, int mappingId) {
+/// The latest value of a declaration in the run, in the evaluator's
+/// rendering — the same text the trace shows.
+String? _latest(SimulationState sim, int mappingId) {
   for (final s in sim.samples.reversed) {
-    final v = sampleOf(sim, p, s, mappingId);
-    if (v != null) return _plainText(v);
+    if (sampleOf(s, mappingId) case final v?) return v.rendered;
   }
   return null;
 }
 
-/// A value without its identity wrapper: the number or word.
-String _plainText(pb.Value v) {
-  final r = v.hasSemantic() ? v.semantic.repr : v;
-  return switch (r.whichKind()) {
-    pb.Value_Kind.quantity => _fmt(r.quantity.value),
-    pb.Value_Kind.boolean => r.boolean ? 'on' : 'off',
-    pb.Value_Kind.count => r.count.toString(),
-    pb.Value_Kind.opaque => 'relationship',
-    _ => '·',
-  };
-}
-
 /// One declaration over the run: tick, value.
 class _Series extends StatelessWidget {
-  const _Series({required this.sim, required this.project, required this.mappingId});
+  const _Series({required this.sim, required this.mappingId});
   final SimulationState sim;
-  final pb.ProjectProjection project;
   final int mappingId;
 
   @override
@@ -782,8 +756,8 @@ class _Series extends StatelessWidget {
     final cell = TextStyle(fontSize: 12, fontFeatures: kTabularFigures, color: t.textPrimary);
     final rows = [
       for (final s in sim.samples)
-        if (sampleOf(sim, project, s, mappingId) case final v?)
-          [Text('${s.tick}', style: cell), Text(_plainText(v), style: cell)],
+        if (sampleOf(s, mappingId) case final v?)
+          [Text('${s.tick}', style: cell), Text(v.rendered, style: cell)],
     ];
     return InspectorSection(
       title: context.l10n.overTheRun,

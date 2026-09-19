@@ -276,16 +276,25 @@ impl Value {
         }
     }
 
-    /// Compact rendering for traces and diagnostics: `0.5 [rad]`, `Tilt(0.5 [rad])`.
+    /// The one designer-facing rendering of a value, for traces, probes
+    /// and diagnostics (ADR-0033): `0.5 [rad]`, `Tilt(0.5 [rad])`,
+    /// `Held(on)`.  Product words, not kernel or syntax words: a truth
+    /// value is `on` / `off` — the value form is called *On / off* — and a
+    /// number shows six significant digits, the serialised trace keeping
+    /// the exact `f64`.  Every host shows this text as it is.
     pub fn render(&self, concept_name: &dyn Fn(SemanticId) -> String) -> String {
         match self {
-            Value::Bool { value } => value.to_string(),
+            Value::Bool { value } => if *value { "on" } else { "off" }.into(),
             Value::Nat { value } => value.to_string(),
             Value::Quantity { dim, value } => {
                 if dim.is_dimensionless() {
-                    format!("{value}")
+                    render_number(*value)
                 } else {
-                    format!("{value} [{}]", bdl_check::pretty::symbol(*dim))
+                    format!(
+                        "{} [{}]",
+                        render_number(*value),
+                        bdl_check::pretty::symbol(*dim)
+                    )
                 }
             }
             Value::Semantic { id, repr } => {
@@ -311,5 +320,69 @@ impl Value {
                 )
             }
         }
+    }
+}
+/// A number as a designer reads it: an integer as an integer, otherwise six
+/// significant digits with trailing zeros dropped (`0.785398`, `1.5e-7`).
+/// The exact value stays in the serialised trace; this is text.
+pub fn render_number(v: f64) -> String {
+    if !v.is_finite() {
+        return format!("{v}");
+    }
+    if v == v.trunc() && v.abs() < 1e15 {
+        return format!("{}", v as i64);
+    }
+    let magnitude = v.abs().log10().floor() as i32;
+    if !(-5..15).contains(&magnitude) {
+        let s = format!("{:.5e}", v);
+        let (mant, exp) = s.split_once('e').unwrap_or((&s, "0"));
+        return format!("{}e{}", trim_zeros(mant), exp);
+    }
+    let decimals = (5 - magnitude).max(0) as usize;
+    trim_zeros(&format!("{v:.decimals$}")).to_string()
+}
+
+fn trim_zeros(s: &str) -> &str {
+    if s.contains('.') {
+        s.trim_end_matches('0').trim_end_matches('.')
+    } else {
+        s
+    }
+}
+
+#[cfg(test)]
+mod render_tests {
+    use super::*;
+
+    #[test]
+    fn numbers_read_as_a_designer_writes_them() {
+        assert_eq!(render_number(0.5), "0.5");
+        assert_eq!(render_number(2.0), "2");
+        assert_eq!(render_number(-3.0), "-3");
+        assert_eq!(render_number(100_000.0), "100000");
+        assert_eq!(render_number(std::f64::consts::FRAC_PI_4), "0.785398");
+        assert_eq!(render_number(1.0 / 3.0), "0.333333");
+        assert_eq!(render_number(123.456789), "123.457");
+        assert_eq!(render_number(1.5e-7), "1.5e-7");
+        assert_eq!(render_number(2.5e17), "2.5e17");
+    }
+
+    #[test]
+    fn truth_values_render_in_product_words() {
+        let name = |_: SemanticId| "Held".to_string();
+        assert_eq!(Value::boolean(true).render(&name), "on");
+        assert_eq!(Value::boolean(false).render(&name), "off");
+        assert_eq!(
+            Value::sem(SemanticId::from_raw(1), Value::boolean(true)).render(&name),
+            "Held(on)"
+        );
+        assert_eq!(
+            Value::sem(
+                SemanticId::from_raw(1),
+                Value::q(Dim::ANGLE, std::f64::consts::FRAC_PI_4)
+            )
+            .render(&name),
+            "Held(0.785398 [rad])"
+        );
     }
 }

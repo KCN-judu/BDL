@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-simulation.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-simulation.md) · 简体中文 · [日本語](../../ja/getting-started/first-simulation.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一次仿真
 
@@ -28,19 +30,19 @@
 
 点击**步进**。
 
-轨迹得到第一行：第 0 拍，活动域 _interaction_，以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为来源没变。
+轨迹得到第一行：第 0 拍，活动域 _interaction_，求值器读到的来源——`tilt` 为 `Tilt(0.785398 [rad])`——以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为来源没变。
 
 把栏改为 `1.5708`（90°）并**步进**：约为 `Brightness(1)`。设为 `0` 再步进：`Brightness(0)`。竖直时熄灭，放平时全亮。
 
 **发生了什么。** 每一拍，_interaction_ 域中的每个值都根据你提供的输入重新计算。产生这些数字的求值器就是定义 BDL 设计含义的那个；为设备生成的代码必须与之一致。
 
-![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _倾角为 45° 时步进三次后的仿真页：左侧是来源，中间是轨迹，右侧是探针。_
 
 ## 4. 查看一个值
 
-点击 `brightness` 列标题，或在设计页上选中 `brightness` 再回来。**探针**显示它现在的值和整个运行中的值，带有概念的图形符号。展开其下的**解释**可查看形式化细节——标识号、运行的修订号、原始渲染值。
+点击 `brightness` 列标题，或在设计页上选中 `brightness` 再回来。**探针**显示它现在的值和整个运行中的值，写法与轨迹中相同，带有概念的图形符号。展开其下的**解释**可查看形式化细节——标识号和运行的修订号。
 
 ## 5. 重置并试试节奏
 

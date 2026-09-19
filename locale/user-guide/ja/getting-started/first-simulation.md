@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/first-simulation.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/first-simulation.md) · [简体中文](../../zh_Hans/getting-started/first-simulation.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 最初のシミュレーション
 
@@ -28,19 +30,19 @@
 
 **ステップ**をクリックします。
 
-トレースに最初の行が現れます。ティック 0、起動したドメイン _interaction_、そして設計が計算した値——`brightness` は `Brightness(0.5)`（入力した値によっては数桁の差があります）、_light_ 列は同じ値です。`brightness` がそれを駆動するからです。値は常に、それが属するコンセプトとともに書かれます。**ステップ**をあと 2 回クリックします。3 行、同じ値。入力元が変わっていないからです。
+トレースに最初の行が現れます。ティック 0、起動したドメイン _interaction_、評価器が読み取った入力元——`tilt` は `Tilt(0.785398 [rad])`——そして設計が計算した値——`brightness` は `Brightness(0.5)`（入力した値によっては数桁の差があります）、_light_ 列は同じ値です。`brightness` がそれを駆動するからです。値は常に、それが属するコンセプトとともに書かれます。**ステップ**をあと 2 回クリックします。3 行、同じ値。入力元が変わっていないからです。
 
 フィールドを `1.5708`（90°）に変えて**ステップ**：およそ `Brightness(1)`。`0` にしてステップ：`Brightness(0)`。直立で消灯、水平で全灯です。
 
 **何が起きたか。** 各ティックで、_interaction_ ドメインのすべての値があなたの与えた入力から再計算されました。これらの数値を生み出した評価器は、BDL の設計の意味を定義するものです。デバイス用に生成されるコードはそれに従わなければなりません。
 
-![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _傾き 45° で 3 ステップ後のシミュレートページ：左に入力元、中央にトレース、右にプローブ。_
 
 ## 4. 1 つの値を見る
 
-`brightness` の列見出しをクリックするか、設計ページで `brightness` を選択して戻ってきます。**プローブ**は現在の値と実行全体の値を、コンセプトのグリフとともに示します。その下の**説明**を開くと形式的な詳細——識別番号、実行のリビジョン、生の描画値——が見られます。
+`brightness` の列見出しをクリックするか、設計ページで `brightness` を選択して戻ってきます。**プローブ**は現在の値と実行全体の値を、トレースと同じ書き方で、コンセプトのグリフとともに示します。その下の**説明**を開くと形式的な詳細——識別番号と実行のリビジョン——が見られます。
 
 ## 5. リセットしてリズムを試す
 

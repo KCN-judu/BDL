@@ -6,7 +6,7 @@ executable definition of what a BDL design means. Studio holds the inputs you
 typed, the periods you chose and the samples that came back; it computes nothing
 itself.
 
-![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)
 
 _The Simulate page after three steps with the tilt at 45°: the Sources on the
 left, the trace in the middle, the probe on the right._
@@ -66,12 +66,14 @@ Rows are ticks. Columns are the design's **values** — relationships without
 inputs — and its **driven outputs**; a rule (a relationship with inputs) has no
 column, because it is a function, not a value. The _active_ column names the
 domains that ticked. A cell is the evaluator's own rendering, always with the
-concept: `Brightness(0.5)`, `Held(true)`.
+concept and in the value form's words: `Brightness(0.5)`,
+`Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number
+shows six significant digits. Studio never renders a value itself.
 
 An empty cell means the value's domain did not activate at that tick. A Source's
-cell shows the value you fed, only at ticks where its domain activated. Column
-order is by identity, not by time; click a column header to select that
-relationship.
+cell is the value you fed, echoed by the evaluator at the ticks its domain
+activated. Column order is by identity, not by time; click a column header to
+select that relationship.
 
 Memory and transports show up as values: `acc = delay(0, acc + x)` reads `0` at
 tick 0 and last tick's sum after; `y = sync(fast, -1, x)` in a slower domain
@@ -80,9 +82,10 @@ produced at the same instant is not yet visible.
 
 ## The probe (right)
 
-The selected object's value **now** and **over the run**, with its glyph; for an
-output, its driver. **Explain** under it holds the identity number, the run's
-revision, the rendered value and, for a failure, the code and technical text.
+The selected object's value **now** and **over the run**, written as in the
+trace, with its glyph; for an output, its driver. **Explain** under it holds the
+identity number, the run's revision and, for a failure, the code and technical
+text.
 
 ## What a new revision does
 

@@ -50,17 +50,45 @@ Transition simulationPeriodChanged(AppState s, int clockId, int period) {
 // Readiness — read off the analysis and the projection, never judged here
 // ---------------------------------------------------------------------------
 
-/// Why the design cannot step yet: about a named object, saying what
-/// would let it.  Never a compiler word.
+/// What keeps the design from stepping — the fact, not its wording.  The
+/// Simulate page words each kind in the designer's language and locale
+/// (`blockerSentence`); the names are the objects' own.
+enum SimulationBlockerKind {
+  /// The compiler has not answered for this revision yet; nothing is wrong.
+  checking,
+
+  /// Relationships that depend on each other in the same instant ([names]).
+  instantaneousCycle,
+
+  /// The design has an instantaneous cycle the analysis did not name.
+  instantaneousCycleUnnamed,
+
+  /// [names]: the relationship, whose definition does not check.
+  noValidDefinition,
+
+  /// [names]: a relationship that reads something and has no definition.
+  noDefinition,
+
+  /// [names]: the concept, then the input whose value form it lacks.
+  noValueForm,
+
+  /// [names]: the input still without a value for the run.
+  needsValue,
+}
+
+/// Why the design cannot step yet: about named objects, saying what would
+/// let it.  Never a compiler word.
 @immutable
 class SimulationBlocker {
-  const SimulationBlocker(this.message, {this.mappingId, this.conceptId, this.checking = false});
-  final String message;
+  const SimulationBlocker(this.kind, {this.names = const [], this.mappingId, this.conceptId});
+  final SimulationBlockerKind kind;
+
+  /// The objects the sentence names, in the order the kind says.
+  final List<String> names;
   final int? mappingId;
   final int? conceptId;
 
-  /// The compiler has not answered for this revision yet; nothing is wrong.
-  final bool checking;
+  bool get checking => kind == SimulationBlockerKind.checking;
 }
 
 /// Facts that keep the design from running at all (an instantaneous
@@ -72,7 +100,7 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
   if (p == null) return const [];
   final a = s.analysis;
   if (a == null || a.revision != p.revision) {
-    return const [SimulationBlocker('Checking the design…', checking: true)];
+    return const [SimulationBlocker(SimulationBlockerKind.checking)];
   }
   String name(Int64 id) =>
       p.mappings.where((m) => m.id == id).map((m) => m.name).firstOrNull ?? '?';
@@ -81,26 +109,31 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
     for (final c in a.cycles) {
       out.add(
         SimulationBlocker(
-          'These relationships depend on each other in the same instant: '
-          '${c.mappingIds.map(name).join(', ')}. One of them must read the previous value '
-          'instead.',
+          SimulationBlockerKind.instantaneousCycle,
+          names: c.mappingIds.map(name).toList(),
           mappingId: c.mappingIds.firstOrNull?.toInt(),
         ),
       );
     }
     if (a.cycles.isEmpty) {
-      out.add(const SimulationBlocker('This design contains an instantaneous cycle.'));
+      out.add(const SimulationBlocker(SimulationBlockerKind.instantaneousCycleUnnamed));
     }
   }
   for (final m in p.mappings) {
     final status = a.mappings.where((x) => x.id == m.id).firstOrNull?.status;
     if (status == pb.MappingStatus.MAPPING_STATUS_INVALID) {
-      out.add(SimulationBlocker('${m.name} has no valid definition.', mappingId: m.id.toInt()));
+      out.add(
+        SimulationBlocker(
+          SimulationBlockerKind.noValidDefinition,
+          names: [m.name],
+          mappingId: m.id.toInt(),
+        ),
+      );
     } else if (!m.hasDefinition() && !m.signature.isUnitDomain) {
       out.add(
         SimulationBlocker(
-          '${m.name} has no definition. A relationship that reads something needs one '
-          'before the design can run.',
+          SimulationBlockerKind.noDefinition,
+          names: [m.name],
           mappingId: m.id.toInt(),
         ),
       );
@@ -112,8 +145,8 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
     if (!c.hasRepresentation()) {
       out.add(
         SimulationBlocker(
-          '${c.name} needs a value form (Quantity, On / off or Count) before ${m.name} can '
-          'be given a value.',
+          SimulationBlockerKind.noValueForm,
+          names: [c.name, m.name],
           conceptId: c.id.toInt(),
           mappingId: m.id.toInt(),
         ),
@@ -121,7 +154,8 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
     } else if (!s.editor.simulation.current.containsKey(m.id.toInt())) {
       out.add(
         SimulationBlocker(
-          '${m.name} needs a value before simulation can step.',
+          SimulationBlockerKind.needsValue,
+          names: [m.name],
           mappingId: m.id.toInt(),
         ),
       );
@@ -130,21 +164,13 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
   return out;
 }
 
-/// The value of a value declaration at a tick.  Computed declarations are
-/// the daemon's sample.  An input is not echoed by the evaluator, so its
-/// value is the one Studio fed for that tick — shown only at ticks where
-/// the input's domain activated, as the sample's `active_clock_ids` say.
-pb.Value? sampleOf(SimulationState sim, pb.ProjectProjection p, pb.TickSample t, int mappingId) {
-  final computed = t.values.where((v) => v.mappingId.toInt() == mappingId).firstOrNull;
-  if (computed != null) return computed.value;
-  final m = p.mappings.where((m) => m.id.toInt() == mappingId).firstOrNull;
-  if (m == null || m.hasDefinition() || !m.signature.isUnitDomain) return null;
-  final active = m.hasClockId()
-      ? t.activeClockIds.contains(m.clockId)
-      : t.activeClockIds.isNotEmpty || p.clocks.isEmpty;
-  if (!active) return null;
-  return sim.inputs[mappingId]?[t.tick.toInt()];
-}
+/// The evaluator's sample of a declaration at a tick, or `null` where the
+/// declaration was not due (its domain did not activate).  Every value on
+/// screen is the sample's own rendering — a fed input is echoed by the
+/// evaluator like any other declaration, so Studio never renders a value
+/// (ADR-0033).
+pb.DeclarationSample? sampleOf(pb.TickSample t, int mappingId) =>
+    t.values.where((v) => v.mappingId.toInt() == mappingId).firstOrNull;
 
 /// Refused — with no request — while anything blocks; the blockers are on
 /// screen, each naming its object.

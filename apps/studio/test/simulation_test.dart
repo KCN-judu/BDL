@@ -14,6 +14,7 @@ import 'package:bdl_studio/app/reducer.dart';
 import 'package:bdl_studio/app/simulation.dart';
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
+import 'package:bdl_studio/l10n/l10n.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:bdl_studio/ui/pages/simulate_page.dart';
@@ -163,6 +164,9 @@ Widget page(AppState s, void Function(AppAction) d) => MaterialApp(
   ),
 );
 
+/// A blocker as the Simulate page words it, in English.
+String words(SimulationBlocker b) => blockerSentence(kEnglish, b);
+
 void main() {
   group('reducer', () {
     test('a step extends the authored trace with the current inputs and re-runs from tick 0', () {
@@ -273,7 +277,7 @@ void main() {
 
     test('readiness: every input needs a value; a blocked step sends nothing', () {
       final s = connected(lamp());
-      expect(simulationBlockers(s).map((b) => b.message), [
+      expect(simulationBlockers(s).map(words), [
         'tilt needs a value before simulation can step.',
         'held needs a value before simulation can step.',
       ]);
@@ -291,7 +295,7 @@ void main() {
       () {
         final open = lamp()..concepts[tilt] = pb.ConceptView(id: Int64(tilt), name: 'Tilt');
         expect(
-          simulationBlockers(supplied(connected(open))).first.message,
+          words(simulationBlockers(supplied(connected(open))).first),
           'Tilt needs a value form (Quantity, On / off or Count) before tilt can be given a value.',
         );
         final invalid = supplied(connected(lamp())).copyWith(
@@ -300,43 +304,42 @@ void main() {
               pb.MappingAnalysis(id: Int64(dim), status: pb.MappingStatus.MAPPING_STATUS_INVALID),
             ),
         );
-        expect(simulationBlockers(invalid).single.message, 'dimByTilt has no valid definition.');
+        expect(words(simulationBlockers(invalid).single), 'dimByTilt has no valid definition.');
         final cyclic = supplied(connected(lamp())).copyWith(
           analysis: pb.ProjectAnalysis(revision: Int64(1), causal: false)
             ..cycles.add(pb.DeclarationCycle(mappingIds: [Int64(bright), Int64(dim)])),
         );
         expect(
-          simulationBlockers(cyclic).single.message,
+          words(simulationBlockers(cyclic).single),
           startsWith(
             'These relationships depend on each other in the same instant: brightness, dimByTilt.',
           ),
         );
         final undefined = supplied(connected(lamp()..mappings[dim].clearDefinition()));
         expect(
-          simulationBlockers(undefined).single.message,
+          words(simulationBlockers(undefined).single),
           startsWith('dimByTilt has no definition.'),
         );
         for (final st in [invalid, cyclic, undefined]) {
           for (final b in simulationBlockers(st)) {
-            expect(b.message, isNot(contains('INVALID')));
-            expect(b.message, isNot(contains('causal')));
+            expect(words(b), isNot(contains('INVALID')));
+            expect(words(b), isNot(contains('causal')));
           }
           expect(reduce(st, const SimulationStepRequested(1)).effects, isEmpty);
         }
       },
     );
 
-    test('an input is shown only at ticks where its domain activated', () {
-      var s = supplied(connected(lamp()));
-      s = reduce(s, const SimulationStepRequested(2)).state;
-      final p = s.project!;
-      final fed = s.editor.simulation;
-      final active = pb.TickSample(tick: Int64(0), activeClockIds: [Int64(interaction)]);
-      final idle = pb.TickSample(tick: Int64(1), activeClockIds: []);
-      expect(sampleOf(fed, p, active, tiltIn), isNotNull);
-      expect(sampleOf(fed, p, idle, tiltIn), isNull, reason: 'interaction did not activate');
-      expect(sampleOf(fed, p, idle, heldIn), isNull, reason: 'no domain: nothing activated');
-      expect(sampleOf(fed, p, active, heldIn), isNotNull);
+    test('an input\'s value is the evaluator\'s echo, never Studio\'s own rendering', () {
+      // The evaluator echoes a fed input in the ticks its domain activated,
+      // rendered like every other declaration; a tick without the echo has
+      // no value to show (ADR-0033).
+      final echoed = sample(0, {tiltIn: 'Tilt(0.785398 [rad])', heldIn: 'Held(on)'});
+      final idle = sample(1, {});
+      expect(sampleOf(echoed, tiltIn)?.rendered, 'Tilt(0.785398 [rad])');
+      expect(sampleOf(echoed, heldIn)?.rendered, 'Held(on)');
+      expect(sampleOf(idle, tiltIn), isNull, reason: 'interaction did not activate');
+      expect(sampleOf(idle, heldIn), isNull);
     });
   });
 
@@ -409,7 +412,7 @@ void main() {
         editor: s.editor.copyWith(simulation: const SimulationState()),
       );
       await t.pumpWidget(page(cyclic, (_) {}));
-      expect(find.text('This design contains an instantaneous cycle.'), findsOneWidget);
+      expect(find.text('The design contains an instantaneous cycle.'), findsOneWidget);
     });
 
     testWidgets('readiness names the object, links to it, and disables Step', (t) async {
@@ -487,7 +490,7 @@ void main() {
       expect(
         store.state.editor.simulation.generation,
         gen + 1,
-        reason: 'refused: ${simulationBlockers(store.state).map((b) => b.message)}',
+        reason: 'refused: ${simulationBlockers(store.state).map(words)}',
       );
       return store.until((s) => !s.editor.simulation.pending);
     }
@@ -555,10 +558,14 @@ void main() {
         expect(b[1], startsWith('Brightness(0.333'));
         expect(b[2], startsWith('Brightness(0.666'));
         expect(b[3], 'Brightness(1)');
-        // inputs are Studio's own trace (the evaluator records computed values only)
+        // the fed input is echoed by the evaluator in its one rendering:
+        // the concept's terms, six significant digits, the unit
+        expect(rendered(s, 1, tiltM), 'Tilt(0.523599 [rad])');
+        expect(rendered(s, 3, tiltM), 'Tilt(1.5708 [rad])');
         expect(
           s.editor.simulation.inputs[tiltM]![1]!.semantic.repr.quantity.value,
           closeTo(0.5236, 1e-3),
+          reason: 'the authored trace keeps the exact value',
         );
       } finally {
         await close();
@@ -657,7 +664,7 @@ void main() {
         final twice = await mapping('twice', [], level, formula: 'x * 2');
         store.dispatch(const PageSelected(StudioPage.simulate));
         await analysed();
-        expect(simulationBlockers(store.state).map((b) => b.message), [
+        expect(simulationBlockers(store.state).map(words), [
           'x needs a value before simulation can step.',
         ]);
         store.dispatch(const SimulationStepRequested(1));
@@ -728,11 +735,37 @@ void main() {
         expect(active(0), {fast, slow});
         expect(active(1), {fast});
         expect(active(2), {fast, slow});
-        final p = s.project!;
-        bool sampled(int t, int m) =>
-            sampleOf(s.editor.simulation, p, s.editor.simulation.samples[t], m) != null;
+        bool sampled(int t, int m) => sampleOf(s.editor.simulation.samples[t], m) != null;
         expect([for (var t = 0; t < 3; t++) sampled(t, a)], [true, true, true]);
         expect([for (var t = 0; t < 3; t++) sampled(t, b)], [true, false, true]);
+      } finally {
+        await close();
+      }
+    }, skip: bdld == null ? 'bdld binary not built (run `cargo build`)' : false);
+
+    test('a truth value reads on / off, fed or computed — one rendering, bdld\'s', () async {
+      await open('truth');
+      try {
+        final held = await concept('Held', pb.Representation(boolean: pb.Unit()));
+        final button = await mapping('button', [], held);
+        final released = await mapping('released', [], held, formula: '!button');
+        store.dispatch(const PageSelected(StudioPage.simulate));
+        await analysed();
+        store.dispatch(
+          SimulationInputChanged(
+            mappingId: button,
+            value: pb.Value(
+              semantic: pb.SemanticValue(conceptId: Int64(held), repr: pb.Value(boolean: true)),
+            ),
+          ),
+        );
+        final s = await step();
+        expect(s.editor.simulation.error, isNull);
+        // the echoed input and the computed value use the same words: the
+        // value form is called On / off, so a truth value is on or off,
+        // never true / false (syntax) or a kernel constructor
+        expect(rendered(s, 0, button), 'Held(on)');
+        expect(rendered(s, 0, released), 'Held(off)');
       } finally {
         await close();
       }
@@ -747,9 +780,7 @@ void main() {
         store.dispatch(const PageSelected(StudioPage.simulate));
         await analysed();
         feed(x, level, 1);
-        expect(simulationBlockers(store.state).map((b) => b.message), [
-          'bad has no valid definition.',
-        ]);
+        expect(simulationBlockers(store.state).map(words), ['bad has no valid definition.']);
         store.dispatch(const SimulationStepRequested(1));
         expect(store.state.editor.simulation.pending, isFalse);
         expect(store.state.editor.simulation.samples, isEmpty);
