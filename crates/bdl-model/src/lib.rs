@@ -1,4 +1,5 @@
-//! Canonical BDL project model.
+//! Canonical BDL project model — the one the compiler, the daemon and every
+//! editor share.
 //!
 //! This crate owns what a BDL project *is* independently of any editor:
 //!
