@@ -1,4 +1,7 @@
 // Renders the welcome screen at several window sizes.  Opt-in via SNAP_DIR.
+@Tags(['filesystem'])
+library;
+
 import 'dart:io';
 
 import 'package:bdl_studio/app/state.dart';

@@ -1,5 +1,6 @@
 /// Spawns the real `bdld` (built by `cargo build`) and drives the handshake and
 /// the first edits through the Dart client.  Skipped when the binary is absent.
+@Tags(['daemon', 'filesystem'])
 library;
 
 import 'dart:io';

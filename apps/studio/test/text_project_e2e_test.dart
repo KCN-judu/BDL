@@ -3,6 +3,7 @@
 /// on the canvas, saved as `src/*.bdl` text with identities kept, refused
 /// when the sources changed underneath, reloaded; and a hand-written
 /// project opened and simulated with nothing but its text.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:convert';

@@ -1,0 +1,20 @@
+# Test tags (https://pub.dev/packages/test#tagging-tests).  A tag names a
+# dependency of the test file on something that differs between hosts;
+# the Windows CI job and `python scripts/preflight.py platform` run the
+# tests tagged `daemon || filesystem` and nothing else, because every
+# other Studio test is pure widget/reducer logic the Linux job proves once
+# (docs/project/ci.md).  Tag a new test file when it spawns bdld, touches
+# real files or reads the platform.
+tags:
+  daemon:
+    description: >-
+      Spawns the real bdld of this host (BDLD_PATH or target/debug): process
+      launch, .exe resolution, stdio framing and project files on disk.
+  filesystem:
+    description: >-
+      Reads or writes real files or directories (temp projects, preferences,
+      fonts, fixtures): path separators, drive letters, line endings.
+  e2e:
+    description: >-
+      Drives the whole Studio stack (reducer, effect executor, daemon client)
+      end to end; slow.  Implies daemon.

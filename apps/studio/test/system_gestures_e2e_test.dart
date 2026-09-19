@@ -6,6 +6,7 @@
 /// a group inside a component's source.  No step dispatches its final
 /// reducer action directly; project *setup* does (it is not what is under
 /// test).
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

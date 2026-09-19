@@ -1,6 +1,7 @@
 /// Timing domains, physical outputs, drives and semantic actions through
 /// the real Studio stack against the real `bdld`: authored as EditOps,
 /// judged by the output pass, fixed through bdl-ide's actions, persisted.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

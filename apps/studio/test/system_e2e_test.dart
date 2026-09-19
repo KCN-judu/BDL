@@ -2,6 +2,7 @@
 /// real Studio stack against the real `bdld` (brief §79–§82): the designer
 /// flow from a top-level design to a component with two instances, with
 /// every fact read off what the daemon sent.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

@@ -3,6 +3,7 @@
 /// controls from value forms, product-language failures, the trace table),
 /// and — against the real bdld — the lamp (Tilt → Brightness through
 /// dimByTilt), a delay accumulator and a two-domain sync.
+@Tags(['daemon', 'filesystem'])
 library;
 
 import 'dart:io';

@@ -1,4 +1,7 @@
 // Renders the creation sheets over the workspace.  Opt-in via SNAP_DIR.
+@Tags(['filesystem'])
+library;
+
 import 'dart:async';
 import 'dart:io';
 

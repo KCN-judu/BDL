@@ -4,6 +4,7 @@
 /// structured actions only, saved through the ordinary definition commit.
 ///
 /// Skipped when the binary is absent (run `cargo build`).
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

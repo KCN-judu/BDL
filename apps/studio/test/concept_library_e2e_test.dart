@@ -4,6 +4,7 @@
 /// concepts; renaming one leaves the other's defaults alone; the project
 /// saves and reopens without the library.  A Source template is one commit
 /// of two ordinary edits, written as `mapping S : () -> C`.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

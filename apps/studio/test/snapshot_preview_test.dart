@@ -1,5 +1,8 @@
 // Renders the shell with real fonts to a PNG so the look can be inspected
 // without screen-recording permission.  Not a golden: opt-in via SNAP_DIR.
+@Tags(['filesystem'])
+library;
+
 import 'dart:io';
 
 import 'package:bdl_studio/app/state.dart';

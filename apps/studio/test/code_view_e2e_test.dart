@@ -3,6 +3,7 @@
 /// typed in the editor becomes a node with its identity kept; text that
 /// does not build keeps the graph at the last version that did and says
 /// why; selecting a node reveals its declaration; a save writes the text.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

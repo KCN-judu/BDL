@@ -2,6 +2,7 @@
 /// stack against the real bdld: Design (the ladder and the output pass),
 /// Simulate (tilt and ambient light → brightness), Deploy (the PWM light
 /// placed on the Nano) — one project, one set of identities, three views.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

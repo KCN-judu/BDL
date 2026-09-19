@@ -1,3 +1,6 @@
+@Tags(['filesystem'])
+library;
+
 import 'dart:io';
 
 import 'package:bdl_studio/app/actions.dart';

@@ -12,6 +12,7 @@
 ///
 /// Skipped when the binary is absent (run `cargo build`).  Timings are
 /// printed for docs/architecture/studio-compiler-integration.md.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';

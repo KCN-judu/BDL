@@ -3,6 +3,7 @@
 /// updates, complete catalogs, and — the acceptance principle — a locale
 /// that changes presentation only: never BDL source, project files,
 /// formal notation or diagnostic identity.
+@Tags(['filesystem'])
 library;
 
 import 'dart:io';

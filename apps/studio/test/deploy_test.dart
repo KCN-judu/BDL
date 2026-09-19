@@ -1,6 +1,7 @@
 /// The Deploy page: target list from bdld, target-relative analysis kept
 /// only for the revision on screen, the verdict worded per board, placement
 /// and dead end rendered from the compiler's structures.
+@Tags(['daemon', 'filesystem'])
 library;
 
 import 'dart:io';

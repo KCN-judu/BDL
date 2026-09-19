@@ -15,6 +15,7 @@
 /// writes PNGs only when `DOCS_SHOTS=1` (`just docs-shots`), together with
 /// `docs/user-guide/screenshots/captured.json`, which records the commit,
 /// the fixture and manifest hashes each image came from.
+@Tags(['daemon', 'filesystem'])
 library;
 
 import 'dart:convert';

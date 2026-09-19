@@ -3,6 +3,7 @@
 /// text typed in the Code view that does not build, and a moved node all
 /// come back exactly as they were after Save, close and reopen; and the
 /// close guard asks only when the project differs from what is saved.
+@Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
 import 'dart:io';
