@@ -842,13 +842,28 @@ pub fn mapping_analysis_to_pb(m: &bdl_compiler::MappingAnalysis) -> pb::MappingA
             .unwrap_or_default(),
         core_expr: m.realization.as_ref().map(pretty::expr).unwrap_or_default(),
         diagnostics: m.diagnostics.iter().map(diagnostic_to_pb).collect(),
+        references: Vec::new(),
     }
 }
 
 pub fn analysis_to_pb(a: &bdl_compiler::ProjectAnalysis) -> pb::ProjectAnalysis {
     pb::ProjectAnalysis {
         revision: a.revision.raw(),
-        mappings: a.mappings.values().map(mapping_analysis_to_pb).collect(),
+        mappings: a
+            .mappings
+            .values()
+            .map(|m| pb::MappingAnalysis {
+                references: a
+                    .dependencies
+                    .all
+                    .get(&m.id)
+                    .into_iter()
+                    .flatten()
+                    .map(|d| d.raw())
+                    .collect(),
+                ..mapping_analysis_to_pb(m)
+            })
+            .collect(),
         diagnostics: a.diagnostics.iter().map(diagnostic_to_pb).collect(),
         causal: a.causality.valid,
         clock_consistent: a.clocks.valid,
@@ -2265,6 +2280,105 @@ mod tests {
         let p = projection(&a.snapshot, &Layout::default(), &SessionInfo::default());
         assert_eq!(p.revision, 2);
         assert_eq!(p.mappings[0].state(), pb::AcceptanceState::Declared);
+    }
+
+    #[test]
+    fn analysis_projects_the_relationships_a_definition_applies() {
+        // brightness = twice(half): the value's analysis names the rule it
+        // applies (and the value it reads), by identity, so Studio can point
+        // from the rule to it without reading formula text.
+        let mut s = ProjectSnapshot::new(Design::empty("p"));
+        let step = |s: &ProjectSnapshot, op: EditOp| bdl_model::apply_edit(s, &op).unwrap();
+        let a = step(
+            &s,
+            EditOp::CreateConcept {
+                name: "Brightness".into(),
+                description: String::new(),
+                representation: Some(Representation::Quantity { dim: Dim::ZERO }),
+            },
+        );
+        let bright = a.outcome.created_concept.unwrap();
+        s = a.snapshot;
+        let a = step(
+            &s,
+            EditOp::CreateMapping {
+                name: "twice".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![bright],
+                    output: bright,
+                },
+            },
+        );
+        let twice = a.outcome.created_mapping.unwrap();
+        s = a.snapshot;
+        s = step(
+            &s,
+            EditOp::AttachDefinition {
+                id: twice,
+                definition: Definition::Formula {
+                    source: "Brightness * 2".into(),
+                },
+            },
+        )
+        .snapshot;
+        let a = step(
+            &s,
+            EditOp::CreateMapping {
+                name: "half".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: bright,
+                },
+            },
+        );
+        let half = a.outcome.created_mapping.unwrap();
+        s = a.snapshot;
+        s = step(
+            &s,
+            EditOp::AttachDefinition {
+                id: half,
+                definition: Definition::Formula {
+                    source: "0.5".into(),
+                },
+            },
+        )
+        .snapshot;
+        let a = step(
+            &s,
+            EditOp::CreateMapping {
+                name: "brightness".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: bright,
+                },
+            },
+        );
+        let value = a.outcome.created_mapping.unwrap();
+        s = a.snapshot;
+        s = step(
+            &s,
+            EditOp::AttachDefinition {
+                id: value,
+                definition: Definition::Formula {
+                    source: "twice(half)".into(),
+                },
+            },
+        )
+        .snapshot;
+        let a = analysis_to_pb(&bdl_compiler::analyze(&s));
+        let refs = |id: DeclId| {
+            a.mappings
+                .iter()
+                .find(|m| m.id == id.raw())
+                .unwrap()
+                .references
+                .clone()
+        };
+        assert_eq!(refs(value), vec![twice.raw(), half.raw()]);
+        assert!(refs(twice).is_empty() && refs(half).is_empty());
     }
 
     #[test]

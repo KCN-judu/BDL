@@ -23,6 +23,11 @@ const cruise = 0;
 const boost = 1;
 const motor = 0;
 const main_ = 0;
+// Extra declarations some inspector tests add: a rule over Speed, and a
+// value of another concept.
+const heading = 1;
+const scale = 2;
+const bearing = 3;
 
 pb.ProjectProjection rover({
   int revision = 1,
@@ -492,6 +497,192 @@ void main() {
       await t.pumpAndSettle();
       final op = key.currentState!.effects.whereType<ApplyEdit>().single.op;
       expect(op.setMappingClock.clockId.toInt(), main_);
+    });
+
+    testWidgets(
+      'a rule is not offered the Drives pop-up; the caption names the value that applies it',
+      (t) async {
+        // `scale` reads Speed: a rule.  `cruise` applies it (the analysis
+        // says so through the dependency edge), `boost` does not.
+        final project = rover(drivers: const [])
+          ..mappings.add(
+            pb.MappingView(
+              id: Int64(scale),
+              name: 'scale',
+              signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
+              definition: pb.Definition(formula: 'speed * 2'),
+            ),
+          );
+        final applied = pb.ProjectAnalysis(revision: Int64(1))
+          ..mappings.add(pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)]));
+        final key = GlobalKey<HarnessState>();
+        await t.pumpWidget(
+          Harness(
+            key: key,
+            initial: connected(
+              project,
+              selection: const MappingSelected(scale),
+            ).copyWith(analysis: applied),
+            child: (s, d) => Inspector(state: s, dispatch: d),
+          ),
+        );
+        expect(find.text('Drives'), findsOneWidget);
+        expect(find.text('nothing'), findsNothing, reason: 'no Output pop-up for a rule');
+        expect(find.byKey(const ValueKey('drives-caption')), findsOneWidget);
+        expect(find.textContaining('connect the value that applies this rule'), findsOneWidget);
+        expect(find.text('cruise applies it.'), findsOneWidget);
+        await t.ensureVisible(find.text('Show'));
+        await t.tap(find.text('Show'));
+        await t.pump();
+        expect(key.currentState!.state.editor.selection, const MappingSelected(cruise));
+        expect(key.currentState!.effects.whereType<ApplyEdit>(), isEmpty);
+
+        // Two values apply it, or none: the caption alone, no name to show.
+        await t.pumpWidget(
+          Harness(
+            key: UniqueKey(),
+            initial: connected(project, selection: const MappingSelected(scale)).copyWith(
+              analysis: pb.ProjectAnalysis(revision: Int64(1))
+                ..mappings.addAll([
+                  pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)]),
+                  pb.MappingAnalysis(id: Int64(boost), references: [Int64(scale)]),
+                ]),
+            ),
+            child: (s, d) => Inspector(state: s, dispatch: d),
+          ),
+        );
+        expect(find.byKey(const ValueKey('drives-caption')), findsOneWidget);
+        expect(find.textContaining('applies it.'), findsNothing);
+        expect(find.text('Show'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a text-authored rule driving an output keeps its finding card and can disconnect',
+      (t) async {
+        final project = rover(drivers: const [])
+          ..mappings.add(
+            pb.MappingView(
+              id: Int64(scale),
+              name: 'scale',
+              signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
+              definition: pb.Definition(formula: 'speed * 2'),
+              drivesOutputId: Int64(motor),
+            ),
+          );
+        final refused = pb.ProjectAnalysis(revision: Int64(1))
+          ..mappings.add(
+            pb.MappingAnalysis(
+              id: Int64(scale),
+              diagnostics: [
+                pb.Diagnostic(
+                  code: 'output.not_a_value',
+                  severity: pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR,
+                  mappingId: Int64(scale),
+                  message: 'A relationship with inputs is not a value',
+                ),
+              ],
+            ),
+          );
+        final key = GlobalKey<HarnessState>();
+        await t.pumpWidget(
+          Harness(
+            key: key,
+            initial: connected(
+              project,
+              selection: const MappingSelected(scale),
+            ).copyWith(analysis: refused),
+            child: (s, d) => Inspector(state: s, dispatch: d),
+          ),
+        );
+        expect(find.text('nothing'), findsNothing);
+        expect(find.text('Recorded as driving motor.'), findsOneWidget);
+        expect(find.textContaining('is not a value'), findsOneWidget, reason: 'the finding card');
+        await t.ensureVisible(find.text('Disconnect'));
+        await t.tap(find.text('Disconnect'));
+        await t.pump();
+        final op = key.currentState!.effects.whereType<ApplyEdit>().single.op;
+        expect(op.setMappingDrive.id.toInt(), scale);
+        expect(op.setMappingDrive.hasOutputId(), isFalse);
+      },
+    );
+
+    testWidgets('the output inspector offers values of the accepted concept only', (t) async {
+      final project = rover(drivers: const [])
+        ..concepts.add(
+          pb.ConceptView(
+            id: Int64(heading),
+            name: 'Heading',
+            representation: pb.Representation(quantity: pb.Dim()),
+          ),
+        )
+        ..mappings.addAll([
+          pb.MappingView(
+            id: Int64(scale),
+            name: 'scale',
+            signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
+            definition: pb.Definition(formula: 'speed * 2'),
+          ),
+          pb.MappingView(
+            id: Int64(bearing),
+            name: 'bearing',
+            signature: pb.Signature(inputs: [], output: Int64(heading)),
+            definition: pb.Definition(formula: '90'),
+          ),
+        ]);
+      final key = GlobalKey<HarnessState>();
+      await t.pumpWidget(
+        Harness(
+          key: key,
+          initial: connected(
+            project,
+            selection: const OutputSelected(motor),
+          ).copyWith(analysis: analysisWith(pb.OutputState.OUTPUT_STATE_UNDRIVEN)),
+          child: (s, d) => Inspector(state: s, dispatch: d),
+        ),
+      );
+      await t.ensureVisible(find.text('a value…'));
+      await t.tap(find.text('a value…'));
+      await t.pumpAndSettle();
+      expect(find.text('cruise'), findsOneWidget);
+      expect(find.text('boost'), findsOneWidget);
+      expect(find.text('scale'), findsNothing, reason: 'a rule is never offered');
+      expect(find.text('bearing'), findsNothing, reason: 'a value of another concept is not');
+      expect(find.text('has inputs'), findsNothing);
+      await t.tap(find.text('boost'));
+      await t.pumpAndSettle();
+      final op = key.currentState!.effects.whereType<ApplyEdit>().single.op;
+      expect(op.setMappingDrive.id.toInt(), boost);
+      expect(op.setMappingDrive.outputId.toInt(), motor);
+
+      // No value of Speed at all: one sentence, no pop-up listing rules.
+      final onlyRules = rover(drivers: const [])
+        ..mappings.clear()
+        ..mappings.add(
+          pb.MappingView(
+            id: Int64(scale),
+            name: 'scale',
+            signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
+            definition: pb.Definition(formula: 'speed * 2'),
+          ),
+        );
+      await t.pumpWidget(
+        Harness(
+          key: UniqueKey(),
+          initial: connected(
+            onlyRules,
+            selection: const OutputSelected(motor),
+          ).copyWith(analysis: analysisWith(pb.OutputState.OUTPUT_STATE_UNDRIVEN)),
+          child: (s, d) => Inspector(state: s, dispatch: d),
+        ),
+      );
+      expect(find.text('a value…'), findsNothing);
+      expect(find.text('Connect'), findsNothing);
+      expect(
+        t.widget<Text>(find.byKey(const ValueKey('no-candidate'))).data,
+        'No value of Speed in the design yet — a relationship that reads nothing and produces '
+        'Speed could drive this output.',
+      );
     });
 
     testWidgets('the fixes list renders ready, choice and blocked actions from the service', (

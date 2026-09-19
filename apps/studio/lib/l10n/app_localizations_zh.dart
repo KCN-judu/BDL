@@ -484,7 +484,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get thisValueCanCommitToAPhysical => '此值可以提交到一个物理输出。';
 
   @override
-  String get onlyARelationshipWithoutInputsCanDrive => '只有没有输入的关系才能驱动输出：请连接那个汇总各来源的关系。';
+  String get onlyARelationshipWithoutInputsCanDrive => '规则不能驱动输出——请连接应用此规则的值。';
+
+  @override
+  String appliedByValue(String value) {
+    return '$value 应用了它。';
+  }
+
+  @override
+  String recordedAsDriving(String output) {
+    return '已记录为驱动 $output。';
+  }
+
+  @override
+  String noValueOfConceptYet(String concept) {
+    return '设计中还没有 $concept 的值——一个不读取任何内容并产生 $concept 的关系可以驱动此输出。';
+  }
 
   @override
   String get noExplicitInputsTheCanonicalDomainIs => '没有显式输入：规范定义域是 ()，即空积；内核把 () -> B 编码为 B';
@@ -520,10 +535,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connect => '连接';
 
   @override
-  String get aRelationship => '选择一个关系…';
-
-  @override
-  String get hasInputs => '有输入';
+  String get aValue => '选择一个值…';
 
   @override
   String get anyTimingDomain => '任意时序域';

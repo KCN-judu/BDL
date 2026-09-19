@@ -2945,6 +2945,7 @@ const MappingAnalysis$json = {
     {'1': 'inferred_type', '3': 4, '4': 1, '5': 9, '10': 'inferredType'},
     {'1': 'core_expr', '3': 5, '4': 1, '5': 9, '10': 'coreExpr'},
     {'1': 'diagnostics', '3': 6, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+    {'1': 'references', '3': 7, '4': 3, '5': 4, '10': 'references'},
   ],
 };
 
@@ -2954,7 +2955,7 @@ final $typed_data.Uint8List mappingAnalysisDescriptor = $convert
         '52MS5NYXBwaW5nU3RhdHVzUgZzdGF0dXMSHAoJaW50ZXJmYWNlGAMgASgJUglpbnRlcmZhY2US'
         'IwoNaW5mZXJyZWRfdHlwZRgEIAEoCVIMaW5mZXJyZWRUeXBlEhsKCWNvcmVfZXhwchgFIAEoCV'
         'IIY29yZUV4cHISNAoLZGlhZ25vc3RpY3MYBiADKAsyEi5iZGwudjEuRGlhZ25vc3RpY1ILZGlh'
-        'Z25vc3RpY3M=');
+        'Z25vc3RpY3MSHgoKcmVmZXJlbmNlcxgHIAMoBFIKcmVmZXJlbmNlcw==');
 
 @$core.Deprecated('Use sourceSpanDescriptor instead')
 const SourceSpan$json = {

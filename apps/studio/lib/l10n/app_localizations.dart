@@ -1047,11 +1047,29 @@ abstract class AppLocalizations {
   /// **'This value can commit to a physical output.'**
   String get thisValueCanCommitToAPhysical;
 
-  /// Studio UI text (inspector.dart).
+  /// Inspector caption under Drives for a relationship with inputs: no Output pop-up is offered; the caption names what would make a connection possible.
   ///
   /// In en, this message translates to:
-  /// **'Only a relationship without inputs can drive an output: connect the one that combines the sources.'**
+  /// **'A rule cannot drive an output — connect the value that applies this rule.'**
   String get onlyARelationshipWithoutInputsCanDrive;
+
+  /// Inspector caption under Drives for a rule, when exactly one value of the design applies it; followed by a Show link to that value.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} applies it.'**
+  String appliedByValue(String value);
+
+  /// Inspector caption under Drives for a rule that a text-authored design connects to an output; the finding card below says why it is refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded as driving {output}.'**
+  String recordedAsDriving(String output);
+
+  /// Output inspector, in place of the Connect pop-up when no value of the accepted concept exists.
+  ///
+  /// In en, this message translates to:
+  /// **'No value of {concept} in the design yet — a relationship that reads nothing and produces {concept} could drive this output.'**
+  String noValueOfConceptYet(String concept);
 
   /// Studio UI text (inspector.dart).
   ///
@@ -1119,17 +1137,11 @@ abstract class AppLocalizations {
   /// **'Connect'**
   String get connect;
 
-  /// Output inspector Connect menu hint: choose a relationship…
+  /// Output inspector Connect menu hint: choose a value (a relationship without inputs) of the accepted concept.
   ///
   /// In en, this message translates to:
-  /// **'a relationship…'**
-  String get aRelationship;
-
-  /// Studio UI text (inspector.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'has inputs'**
-  String get hasInputs;
+  /// **'a value…'**
+  String get aValue;
 
   /// Studio UI text (system_inspector.dart).
   ///

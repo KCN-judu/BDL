@@ -629,9 +629,36 @@
   "@thisValueCanCommitToAPhysical": {
     "description": "Studio UI text (inspector.dart)."
   },
-  "onlyARelationshipWithoutInputsCanDrive": "Only a relationship without inputs can drive an output: connect the one that combines the sources.",
+  "onlyARelationshipWithoutInputsCanDrive": "A rule cannot drive an output — connect the value that applies this rule.",
   "@onlyARelationshipWithoutInputsCanDrive": {
-    "description": "Studio UI text (inspector.dart)."
+    "description": "Inspector caption under Drives for a relationship with inputs: no Output pop-up is offered; the caption names what would make a connection possible."
+  },
+  "appliedByValue": "{value} applies it.",
+  "@appliedByValue": {
+    "description": "Inspector caption under Drives for a rule, when exactly one value of the design applies it; followed by a Show link to that value.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "recordedAsDriving": "Recorded as driving {output}.",
+  "@recordedAsDriving": {
+    "description": "Inspector caption under Drives for a rule that a text-authored design connects to an output; the finding card below says why it is refused.",
+    "placeholders": {
+      "output": {
+        "type": "String"
+      }
+    }
+  },
+  "noValueOfConceptYet": "No value of {concept} in the design yet — a relationship that reads nothing and produces {concept} could drive this output.",
+  "@noValueOfConceptYet": {
+    "description": "Output inspector, in place of the Connect pop-up when no value of the accepted concept exists.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
   },
   "noExplicitInputsTheCanonicalDomainIs": "no explicit inputs: the canonical domain is (), the empty product; the kernel encodes () -> B as B",
   "@noExplicitInputsTheCanonicalDomainIs": {
@@ -677,13 +704,9 @@
   "@connect": {
     "description": "Output inspector: connect a driver."
   },
-  "aRelationship": "a relationship…",
-  "@aRelationship": {
-    "description": "Output inspector Connect menu hint: choose a relationship…"
-  },
-  "hasInputs": "has inputs",
-  "@hasInputs": {
-    "description": "Studio UI text (inspector.dart)."
+  "aValue": "a value…",
+  "@aValue": {
+    "description": "Output inspector Connect menu hint: choose a value (a relationship without inputs) of the accepted concept."
   },
   "anyTimingDomain": "Any timing domain",
   "@anyTimingDomain": {

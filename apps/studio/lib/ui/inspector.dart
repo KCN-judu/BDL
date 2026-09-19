@@ -74,6 +74,7 @@ class Inspector extends StatelessWidget {
           outcome: state.editor.lastOutcome,
           clocks: project.clocks,
           outputs: project.outputs,
+          appliedBy: valuesApplying(state, id),
           actions: state.editor.actions,
           dispatch: dispatch,
           // A base relationship the system realised by a binding, or a
@@ -240,6 +241,16 @@ String _invalidationWord(pb.Invalidation i) => switch (i) {
   pb.Invalidation.INVALIDATION_DEPLOYMENT => 'Deployment',
   _ => 'Unspecified',
 };
+
+/// The values (relationships that read nothing) whose definition applies
+/// relationship [id], read off the analysis's dependency edges — the
+/// compiler's, never a name match on formula text.  In id order.
+List<pb.MappingView> valuesApplying(AppState state, int id) => [
+  for (final m in state.project?.mappings ?? const <pb.MappingView>[])
+    if (m.signature.isUnitDomain &&
+        (state.mappingAnalysis(m.id.toInt())?.references.any((r) => r.toInt() == id) ?? false))
+      m,
+];
 
 /// Names as links, in a form row: "Used by  dimByTilt  warmPulse".
 class _NameLinks extends StatelessWidget {
@@ -604,6 +615,7 @@ class _MappingInspector extends StatelessWidget {
     required this.outcome,
     required this.clocks,
     required this.outputs,
+    this.appliedBy = const [],
     required this.actions,
     required this.dispatch,
     this.composer = const ComposerState(),
@@ -617,6 +629,10 @@ class _MappingInspector extends StatelessWidget {
   final List<pb.ConceptView> concepts;
   final List<pb.ClockView> clocks;
   final List<pb.OutputView> outputs;
+
+  /// The values whose definition applies this relationship (a rule): the
+  /// ones that could drive an output in its place.
+  final List<pb.MappingView> appliedBy;
   final SemanticActionsState? actions;
 
   /// The binding that realises this (open) base relationship, if any: the
@@ -903,24 +919,59 @@ class _MappingInspector extends StatelessWidget {
         InspectorSection(
           title: context.l10n.drives,
           children: [
-            FormRow(
-              label: context.l10n.output,
-              child: MacDropdown<int>(
-                value: drives ?? -1,
-                items: [-1, for (final o in outputs) o.id.toInt()],
-                labelOf: (o) => o < 0 ? 'nothing' : outputName(o),
-                onChanged: (o) =>
-                    dispatch(SetMappingDriveRequested(mappingId: id, outputId: o < 0 ? null : o)),
+            // Only a value — a relationship that reads nothing — can be
+            // *the* value an output commits at a tick.  A rule is not
+            // offered the pop-up: the caption says what would make the
+            // connection possible, and names the value when there is one.
+            if (inputs.isEmpty) ...[
+              FormRow(
+                label: context.l10n.output,
+                child: MacDropdown<int>(
+                  value: drives ?? -1,
+                  items: [-1, for (final o in outputs) o.id.toInt()],
+                  labelOf: (o) => o < 0 ? 'nothing' : outputName(o),
+                  onChanged: (o) =>
+                      dispatch(SetMappingDriveRequested(mappingId: id, outputId: o < 0 ? null : o)),
+                ),
               ),
-            ),
-            Text(
-              drives == null
-                  ? inputs.isEmpty
-                        ? context.l10n.thisValueCanCommitToAPhysical
-                        : context.l10n.onlyARelationshipWithoutInputsCanDrive
-                  : context.l10n.eachActivationCommitsThisValueTo(outputName(drives)),
-              style: small,
-            ),
+              Text(
+                drives == null
+                    ? context.l10n.thisValueCanCommitToAPhysical
+                    : context.l10n.eachActivationCommitsThisValueTo(outputName(drives)),
+                style: small,
+              ),
+            ] else ...[
+              Text(
+                context.l10n.onlyARelationshipWithoutInputsCanDrive,
+                key: const ValueKey('drives-caption'),
+                style: small,
+              ),
+              if (appliedBy case [final v])
+                Row(
+                  children: [
+                    Expanded(child: Text(context.l10n.appliedByValue(v.name), style: small)),
+                    MacLink(
+                      label: context.l10n.show,
+                      onTap: () => dispatch(SelectionChanged(MappingSelected(v.id.toInt()))),
+                    ),
+                  ],
+                ),
+              // A text-authored design may record the edge anyway; the
+              // model keeps it and the output pass reports it (card below).
+              if (drives case final o?)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(context.l10n.recordedAsDriving(outputName(o)), style: small),
+                    ),
+                    MacLink(
+                      label: context.l10n.disconnect,
+                      onTap: () =>
+                          dispatch(SetMappingDriveRequested(mappingId: id, outputId: null)),
+                    ),
+                  ],
+                ),
+            ],
             for (final d in driveIssues)
               Padding(
                 padding: const EdgeInsets.only(top: MacMetrics.gap),
@@ -1015,6 +1066,13 @@ class _OutputInspector extends StatelessWidget {
         if (m.hasDrivesOutputId() && m.drivesOutputId.toInt() == id) m,
     ];
     final driver = a != null && a.hasDriver() ? a.driver.toInt() : null;
+    final candidates = [
+      for (final m in p.mappings)
+        if (m.signature.isUnitDomain &&
+            m.signature.output == output.accepts &&
+            !claimants.contains(m))
+          m,
+    ];
     // Faults of the drive edges are reported on the drivers; they belong
     // here too, where the sink is looked at.
     final driveIssues = [
@@ -1140,23 +1198,27 @@ class _OutputInspector extends StatelessWidget {
                   ),
                 ],
               ),
-            FormRow(
-              label: context.l10n.connect,
-              child: MacDropdown<int>(
-                value: null,
-                hint: context.l10n.aRelationship,
-                items: [
-                  for (final m in p.mappings)
-                    if (!claimants.contains(m)) m.id.toInt(),
-                ],
-                labelOf: mappingName,
-                detailOf: (m) =>
-                    p.mappings.firstWhere((x) => x.id.toInt() == m).signature.isUnitDomain
-                    ? ''
-                    : context.l10n.hasInputs,
-                onChanged: (m) => dispatch(SetMappingDriveRequested(mappingId: m, outputId: id)),
+            // Candidates are what the canvas lets land on the sink: values
+            // (relationships that read nothing) producing the accepted
+            // concept.  A rule is never offered; the output pass stays the
+            // verdict for a text-authored edge.
+            if (candidates.isEmpty)
+              Text(
+                context.l10n.noValueOfConceptYet(conceptName(output.accepts.toInt())),
+                key: const ValueKey('no-candidate'),
+                style: small,
+              )
+            else
+              FormRow(
+                label: context.l10n.connect,
+                child: MacDropdown<int>(
+                  value: null,
+                  hint: context.l10n.aValue,
+                  items: [for (final m in candidates) m.id.toInt()],
+                  labelOf: mappingName,
+                  onChanged: (m) => dispatch(SetMappingDriveRequested(mappingId: m, outputId: id)),
+                ),
               ),
-            ),
             for (final d in driveIssues)
               Padding(
                 padding: const EdgeInsets.only(top: MacMetrics.gap),

@@ -9114,6 +9114,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     $core.String? inferredType,
     $core.String? coreExpr,
     $core.Iterable<Diagnostic>? diagnostics,
+    $core.Iterable<$fixnum.Int64>? references,
   }) {
     final result = MappingAnalysis._();
     if (id != null) result.id = id;
@@ -9122,6 +9123,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     if (inferredType != null) result.inferredType = inferredType;
     if (coreExpr != null) result.coreExpr = coreExpr;
     if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    if (references != null) result.references.addAll(references);
     return result;
   }
 
@@ -9145,6 +9147,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     ..aOS(5, _omitFieldNames ? '' : 'coreExpr')
     ..pPM<Diagnostic>(6, _omitFieldNames ? '' : 'diagnostics',
         subBuilder: Diagnostic.$_createMessage)
+    ..p<$fixnum.Int64>(7, _omitFieldNames ? '' : 'references', $pb.PbFieldType.KU6)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -9215,6 +9218,12 @@ class MappingAnalysis extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(6)
   $pb.PbList<Diagnostic> get diagnostics => $_getList(5);
+
+  /// The relationships this one's definition refers to, by identity (the
+  /// design's dependency edges, in id order): a value that applies a rule
+  /// lists that rule here.  Empty while the relationship is declared only.
+  @$pb.TagNumber(7)
+  $pb.PbList<$fixnum.Int64> get references => $_getList(6);
 }
 
 class SourceSpan extends $pb.GeneratedMessage {

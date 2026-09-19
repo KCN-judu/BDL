@@ -507,7 +507,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onlyARelationshipWithoutInputsCanDrive =>
-      'Only a relationship without inputs can drive an output: connect the one that combines the sources.';
+      'A rule cannot drive an output — connect the value that applies this rule.';
+
+  @override
+  String appliedByValue(String value) {
+    return '$value applies it.';
+  }
+
+  @override
+  String recordedAsDriving(String output) {
+    return 'Recorded as driving $output.';
+  }
+
+  @override
+  String noValueOfConceptYet(String concept) {
+    return 'No value of $concept in the design yet — a relationship that reads nothing and produces $concept could drive this output.';
+  }
 
   @override
   String get noExplicitInputsTheCanonicalDomainIs =>
@@ -547,10 +562,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connect => 'Connect';
 
   @override
-  String get aRelationship => 'a relationship…';
-
-  @override
-  String get hasInputs => 'has inputs';
+  String get aValue => 'a value…';
 
   @override
   String get anyTimingDomain => 'Any timing domain';

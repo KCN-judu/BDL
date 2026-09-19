@@ -814,6 +814,10 @@ message MappingAnalysis {
   string inferred_type = 4;
   string core_expr = 5;
   repeated Diagnostic diagnostics = 6;
+  // The relationships this one's definition refers to, by identity (the
+  // design's dependency edges, in id order): a value that applies a rule
+  // lists that rule here.  Empty while the relationship is declared only.
+  repeated uint64 references = 7;
 }
 
 enum DiagnosticSeverity {

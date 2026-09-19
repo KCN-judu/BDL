@@ -485,8 +485,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get thisValueCanCommitToAPhysical => 'この値は物理出力にコミットできます。';
 
   @override
-  String get onlyARelationshipWithoutInputsCanDrive =>
-      '出力を駆動できるのは入力を持たない関係だけです。各入力元をまとめる関係を接続してください。';
+  String get onlyARelationshipWithoutInputsCanDrive => 'ルールは出力を駆動できません。このルールを適用する値を接続してください。';
+
+  @override
+  String appliedByValue(String value) {
+    return '$value がこれを適用しています。';
+  }
+
+  @override
+  String recordedAsDriving(String output) {
+    return '$output を駆動するものとして記録されています。';
+  }
+
+  @override
+  String noValueOfConceptYet(String concept) {
+    return '設計にはまだ $concept の値がありません。何も読まず $concept を生成する関係なら、この出力を駆動できます。';
+  }
 
   @override
   String get noExplicitInputsTheCanonicalDomainIs =>
@@ -523,10 +537,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connect => '接続';
 
   @override
-  String get aRelationship => '関係を選択…';
-
-  @override
-  String get hasInputs => '入力あり';
+  String get aValue => '値を選択…';
 
   @override
   String get anyTimingDomain => '任意のタイミングドメイン';
