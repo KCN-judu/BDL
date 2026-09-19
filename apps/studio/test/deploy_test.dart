@@ -299,7 +299,11 @@ void main() {
         expect(a.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_INFEASIBLE);
         expect(a.deadEnd.whichReason(), pb.DeadEnd_Reason.fixedUnavailable);
         expect(a.diagnostics.first.message, contains('D4 cannot carry'));
-        // the semantic analysis is untouched by any board
+        // the semantic analysis is untouched by any board — it is its own
+        // answer for the new revision and may land after the placement
+        s = await store.until(
+          (s) => s.analysis != null && s.analysis!.revision == s.flat!.revision,
+        );
         expect(s.analysis, isNotNull);
 
         // another board: its own verdict
