@@ -57,6 +57,9 @@ message ClientMessage {
     ComposeFormulaRequest compose_formula = 36;
     ListConceptTemplatesRequest list_concept_templates = 40;
     InstantiateConceptTemplateRequest instantiate_concept_template = 41;
+    // The Standard Library as items (0.17): concepts and sources alike.
+    ListLibraryItemsRequest list_library_items = 42;
+    InstantiateLibraryItemRequest instantiate_library_item = 43;
     // Behaviour systems (protocol 0.6).
     InitSystemProjectRequest init_system_project = 50;
     GetSystemRequest get_system = 51;
@@ -107,6 +110,7 @@ message Response {
     FormulaProjectionResponse formula_projection = 46;
     FormulaSlotResponse formula_slot = 47;
     ComposeFormulaResponse compose_formula = 48;
+    LibraryItemsResponse library_items = 49;
   }
 }
 
@@ -1292,16 +1296,13 @@ message ConceptTemplateView {
   repeated string keywords = 10;
   // A generic presentation hint (`temperature`, `motor`); never semantic.
   string icon = 11;
-  // A Source template (0.16): instantiating it also creates the relationship
-  // `<source_default_name> : () -> <the concept>` with no definition — an
-  // ordinary unit-domain declaration the environment provides.  Empty for a
-  // template that creates only a concept.
-  string source_default_name = 12;
-  // The display name and description in other locales, by locale tag
-  // (`zh-Hans`, `ja`); a locale absent here shows the English fields.  The
-  // identifiers a template generates never change with the locale.
-  map<string, string> display_names = 13;
-  map<string, string> descriptions = 14;
+  // Deprecated since 0.17 (never set): a Source is a library item
+  // (`LibraryItemView.category = "source"`) whose `creates` lists the
+  // relationship; localized text is the client's, by item id.  Kept for
+  // 0.16 clients; removed at the next incompatible protocol.
+  string source_default_name = 12 [deprecated = true];
+  map<string, string> display_names = 13 [deprecated = true];
+  map<string, string> descriptions = 14 [deprecated = true];
 }
 
 // One named quantity of the shared vocabulary (`bdl_model::quantity`).
@@ -1324,10 +1325,78 @@ message InstantiateConceptTemplateRequest {
   // On a system project: insert into this component's body instead of the
   // system's own design (protocol 0.8).  Answered with SystemEditApplied.
   optional uint64 component = 4;
-  // For a Source template: the relationship's name, overriding its default
-  // (0.16).  The answer's outcome carries both `created_concept` and
-  // `created_mapping`; the two are one commit.
-  optional string source_name = 5;
+  // Deprecated since 0.17 (ignored): a Source is instantiated through
+  // InstantiateLibraryItem, whose `names` name every object by key.
+  optional string source_name = 5 [deprecated = true];
+}
+
+// The Standard Library as items (0.17).  An item is a reusable authoring
+// fragment built from ordinary BDL structures: a Concept item creates one
+// concept, a Source item a concept and an unresolved relationship without
+// inputs (`() -> Value`).  Instantiation is one transaction: one revision,
+// one undo step, every object with a fresh identity; nothing about the item
+// is recorded in the project, and no category carries semantics — the Source
+// role is derived from the objects' shape (ADR-0032).  `display_name` and
+// `description` are the canonical English; a client localizes by `id`.
+message ListLibraryItemsRequest {}
+
+message LibraryItemsResponse {
+  repeated LibraryView libraries = 1;
+  repeated QuantityView quantities = 2;
+}
+
+message LibraryView {
+  string id = 1;
+  string name = 2;
+  uint32 schema_version = 3;
+  string version = 4;
+  repeated LibraryItemView items = 5;
+}
+
+message LibraryItemView {
+  string id = 1;
+  // "concept" | "source".
+  string category = 2;
+  string display_name = 3;
+  string description = 4;
+  // Grouping inside the category (`environment`, `motion`, …).
+  string group = 5;
+  repeated string keywords = 6;
+  string icon = 7;
+  // What the item creates, in creation order, with the default names.
+  repeated LibraryObjectView creates = 8;
+  // The concept-template view of a Concept item (its representation, unit
+  // and role hint); absent for other categories.
+  optional ConceptTemplateView concept = 9;
+}
+
+message LibraryObjectView {
+  // "concept" | "mapping".
+  string kind = 1;
+  // Fragment-local key (`value`, `source`), what `InstantiateLibraryItem`
+  // names a chosen name by; never a project identity.
+  string key = 2;
+  string name = 3;
+  // A concept's textual type name (`Temperature`), empty when open.
+  string type_name = 4;
+  // A mapping's signature as written (`() -> RoomTemp`).
+  string signature = 5;
+  string description = 6;
+  optional Representation representation = 7;
+  string unit = 8;
+}
+
+// Instantiate one item: the daemon plans the fragment against the target
+// design (names free in it, or `names` by object key) and applies every
+// step in one transaction.  Answered with SystemEditApplied (every project
+// is a behaviour system); `edit.stale_revision` if the project moved on,
+// `library.unknown_item` if the id is not served.  Nothing is applied when
+// any step is refused.
+message InstantiateLibraryItemRequest {
+  uint64 base_revision = 1;
+  string item_id = 2;
+  map<string, string> names = 3;
+  optional uint64 component = 4;
 }
 
 // ---------------------------------------------------------------------------

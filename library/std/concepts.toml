@@ -1,10 +1,16 @@
-# BDL Standard Concept Library — shared authoring vocabulary.
+# BDL Standard Library — reusable authoring fragments built from ordinary
+# BDL structures (docs/spec/concept-library.md).
 #
-# Every entry is a TEMPLATE for creating an ordinary Concept: instantiating
-# it produces a CreateConcept edit with these defaults and a fresh
-# SemanticId.  Two instantiations are two distinct concepts.  Nothing here
-# is a kernel type, a device, or a global identity; a project never depends
-# on this file after the concept exists (docs/spec/concept-library.md).
+# [[template]] — a Concept item: instantiating it produces one
+# CreateConcept edit with these defaults and a fresh SemanticId.
+# [[source]] — a Source item: an environment-provided value entering the
+# behavior model — a semantic concept (`value`) and an unresolved
+# relationship without inputs (`relationship`, written `() -> Value`),
+# created together in one transaction.  Nothing here is a sensor
+# primitive, an I/O operation, a kernel type, a device or a global
+# identity; two instantiations are two sets of objects, and a project never
+# depends on this file after they exist.  Display names and descriptions
+# are the canonical English; Studio localizes them by id.
 #
 # representation: { quantity = "<quantity id>" } — from the shared quantity
 # vocabulary (bdl_model::quantity), "boolean", "count", or "open" (decide
@@ -14,9 +20,9 @@
 
 [library]
 id = "std"
-name = "BDL Standard Concept Library"
-schema_version = 1
-version = "0.1"
+name = "BDL Standard Library"
+schema_version = 2
+version = "0.2"
 
 # ---- environment ----------------------------------------------------------
 
@@ -447,109 +453,140 @@ unit = "Hz"
 keywords = ["tone", "note", "frequency", "buzzer", "beep", "Hz"]
 icon = "sound"
 
-# ---- sources --------------------------------------------------------------
+# ---- sources ----------------------------------------------------------------
 #
-# A Source template creates TWO ordinary items: a concept, and a relationship
-# `<source> : () -> <concept>` with no definition — a value entering the
-# behavior model from the environment, observed once per activation.  The
-# canvas shows it as a Source because of that shape and state (ADR-0032), not
-# because of anything in this file; a third-party library gets the same.
-# Not every Source is a physical sensor — the last two are not — which is why
-# the category is "sources".  What realizes a Source (an I2C sensor, an ADC
-# channel, a GPIO input) is deployment's, never the template's.
+# A Source item creates TWO ordinary objects in one transaction: a concept
+# (`value`) and a relationship `<relationship> : () -> <value>` with no
+# definition — a value entering the behavior model from the environment,
+# observed once per activation.  The canvas shows it as a Source because of
+# that shape and state (ADR-0032), not because of anything in this file; a
+# third-party library gets the same.  Not every Source is a physical sensor
+# — External Value is a host or network value — which is why the category is
+# "source".  What realizes a Source (an I2C sensor, an ADC channel, a GPIO
+# input) is deployment's, never the item's.  Display text here is the
+# canonical English; Studio localizes by id (locale/library/std.json).
 
-[[template]]
+[[source]]
 id = "std.source.temperature"
 display_name = "Temperature Sensor"
-default_name = "RoomTemp"
 description = "The temperature of a room, a surface or the air, as the environment provides it."
-category = "sources"
-role_hint = "input"
+category = "environment"
+keywords = ["temp", "thermal", "thermometer", "thermistor", "K", "°C", "celsius", "sensor", "source"]
+icon = "temperature"
+[source.value]
+default_name = "RoomTemp"
+description = "The measured temperature."
 representation = { quantity = "temperature" }
 unit = "K"
-keywords = ["temp", "thermal", "sensor", "thermometer", "°C", "celsius", "source"]
-icon = "temperature"
-source = { default_name = "TempSensor" }
-i18n = { "zh-Hans" = { display_name = "温度传感器", description = "房间、表面或空气的温度，由环境提供。" }, ja = { display_name = "温度センサー", description = "部屋・表面・空気の温度。環境から与えられる値。" } }
+[source.relationship]
+default_name = "TempSensor"
+description = "Supplies the measured temperature, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.tilt"
 display_name = "Tilt Sensor"
+description = "How far the product leans from level, as the environment provides it — a lamp head, a handheld, a vehicle body."
+category = "motion"
+keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "level", "sensor", "source"]
+icon = "tilt"
+[source.value]
 default_name = "Tilt"
-description = "How far the product leans from level, as the environment provides it."
-category = "sources"
-role_hint = "input"
+description = "How far something leans from level."
 representation = { quantity = "angle" }
 unit = "deg"
-keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "source"]
-icon = "tilt"
-source = { default_name = "TiltSensor" }
-i18n = { "zh-Hans" = { display_name = "倾斜传感器", description = "产品偏离水平的程度，由环境提供。" }, ja = { display_name = "傾きセンサー", description = "製品が水平からどれだけ傾いているか。環境から与えられる値。" } }
+[source.relationship]
+default_name = "TiltSensor"
+description = "Supplies the tilt, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.distance"
 display_name = "Distance Sensor"
+description = "How far away the nearest thing is, as the environment provides it — an obstacle, a hand, a fill level. Which sensor measures it is a deployment choice."
+category = "motion"
+keywords = ["range", "proximity", "far", "near", "obstacle", "ultrasonic", "lidar", "tof", "sensor", "source"]
+icon = "distance"
+[source.value]
 default_name = "Distance"
-description = "How far away the nearest thing is, as the environment provides it."
-category = "sources"
-role_hint = "input"
+description = "How far away something is."
 representation = { quantity = "length" }
 unit = "m"
-keywords = ["distance", "range", "proximity", "ultrasonic", "lidar", "tof", "source"]
-icon = "distance"
-source = { default_name = "DistanceSensor" }
-i18n = { "zh-Hans" = { display_name = "距离传感器", description = "最近的物体有多远，由环境提供。" }, ja = { display_name = "距離センサー", description = "最も近い物体までの距離。環境から与えられる値。" } }
+[source.relationship]
+default_name = "DistanceSensor"
+description = "Supplies the measured distance, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.ambient_light"
 display_name = "Ambient Light Sensor"
+description = "How much light falls on the product, as the environment provides it — for dimming, waking a display, daylight detection."
+category = "environment"
+keywords = ["light", "lux", "daylight", "dark", "photocell", "photodiode", "sensor", "source"]
+icon = "light"
+[source.value]
 default_name = "AmbientLight"
-description = "How much light falls on the product, as the environment provides it."
-category = "sources"
-role_hint = "input"
+description = "The illuminance of the surroundings."
 representation = { quantity = "illuminance" }
 unit = "lx"
-keywords = ["light", "lux", "brightness", "photocell", "ldr", "daylight", "source"]
-icon = "light"
-source = { default_name = "LightSensor" }
-i18n = { "zh-Hans" = { display_name = "环境光传感器", description = "落在产品上的光有多强，由环境提供。" }, ja = { display_name = "環境光センサー", description = "製品に当たる光の強さ。環境から与えられる値。" } }
+[source.relationship]
+default_name = "LightSensor"
+description = "Supplies the ambient light level, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.button"
-display_name = "Button / Switch State"
-default_name = "ButtonHeld"
-description = "Whether a button is held or a switch is on right now, as the environment provides it."
-category = "sources"
-role_hint = "input"
-representation = "boolean"
-keywords = ["button", "switch", "press", "toggle", "gpio", "input", "source"]
+display_name = "Button State"
+description = "Whether a button is held or a switch is on right now, as the environment provides it each activation — a stable state, never an event."
+category = "human"
+keywords = ["button", "switch", "press", "push", "key", "held", "input", "source"]
 icon = "button"
-source = { default_name = "ButtonInput" }
-i18n = { "zh-Hans" = { display_name = "按钮 / 开关状态", description = "此刻按钮是否被按住、开关是否打开，由环境提供。" }, ja = { display_name = "ボタン / スイッチの状態", description = "いまボタンが押されているか、スイッチが入っているか。環境から与えられる値。" } }
+[source.value]
+default_name = "ButtonHeld"
+description = "Whether the button is being held down."
+representation = "boolean"
+[source.relationship]
+default_name = "ButtonInput"
+description = "Supplies the button's state, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.encoder"
 display_name = "Encoder Position"
+description = "The angle a shaft or knob has turned to, as the environment provides it. Counting pulses is the deployment's job."
+category = "human"
+keywords = ["encoder", "rotary", "knob", "shaft", "position", "angle", "quadrature", "input", "source"]
+icon = "dial"
+[source.value]
 default_name = "ShaftAngle"
-description = "The angle a shaft or knob has turned to, as the environment provides it."
-category = "sources"
-role_hint = "input"
+description = "The angle the shaft or knob has turned to."
 representation = { quantity = "angle" }
 unit = "deg"
-keywords = ["encoder", "rotary", "knob", "shaft", "quadrature", "position", "source"]
-icon = "rotation"
-source = { default_name = "EncoderPosition" }
-i18n = { "zh-Hans" = { display_name = "编码器位置", description = "轴或旋钮转到的角度，由环境提供。" }, ja = { display_name = "エンコーダー位置", description = "軸やつまみが回された角度。環境から与えられる値。" } }
+[source.relationship]
+default_name = "EncoderPosition"
+description = "Supplies the encoder's position, one reading per activation."
 
-[[template]]
+[[source]]
 id = "std.source.analog"
 display_name = "Analog Input"
-default_name = "AnalogLevel"
-description = "A level the environment provides on an analog line, 0 (none) to 1 (full)."
-category = "sources"
-role_hint = "input"
-representation = { quantity = "scalar" }
-keywords = ["analog", "adc", "level", "potentiometer", "voltage", "input", "source"]
-icon = "dial"
-source = { default_name = "AnalogInput" }
-i18n = { "zh-Hans" = { display_name = "模拟输入", description = "模拟线路上由环境提供的电平，0（无）到 1（满）。" }, ja = { display_name = "アナログ入力", description = "アナログ線で環境から与えられるレベル。0（なし）〜1（最大）。" } }
+description = "A generic analog reading the behavior interprets. The value's kind is left to you: choose a quantity for the concept once you know what the input measures."
+category = "electrical"
+keywords = ["analog", "adc", "voltage", "reading", "generic", "input", "source"]
+icon = "electrical"
+[source.value]
+default_name = "AnalogValue"
+description = "What the analog input measures — decide the value form."
+representation = "open"
+[source.relationship]
+default_name = "AnalogInput"
+description = "Supplies the analog reading, one per activation."
+
+[[source]]
+id = "std.source.external"
+display_name = "External Value"
+description = "A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. A source is not always a sensor."
+category = "external"
+keywords = ["host", "network", "remote", "simulation", "external", "provided", "input", "source"]
+icon = "external"
+[source.value]
+default_name = "ExternalValue"
+description = "The value the environment provides — decide its value form."
+representation = "open"
+[source.relationship]
+default_name = "ExternalSource"
+description = "Supplies the external value, one per activation."

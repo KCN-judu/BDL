@@ -51,6 +51,8 @@ enum ClientMessage_Payload {
   composeFormula,
   listConceptTemplates,
   instantiateConceptTemplate,
+  listLibraryItems,
+  instantiateLibraryItem,
   initSystemProject,
   getSystem,
   applySystemEdit,
@@ -96,6 +98,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     ComposeFormulaRequest? composeFormula,
     ListConceptTemplatesRequest? listConceptTemplates,
     InstantiateConceptTemplateRequest? instantiateConceptTemplate,
+    ListLibraryItemsRequest? listLibraryItems,
+    InstantiateLibraryItemRequest? instantiateLibraryItem,
     InitSystemProjectRequest? initSystemProject,
     GetSystemRequest? getSystem,
     ApplySystemEditRequest? applySystemEdit,
@@ -139,6 +143,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (listConceptTemplates != null) result.listConceptTemplates = listConceptTemplates;
     if (instantiateConceptTemplate != null)
       result.instantiateConceptTemplate = instantiateConceptTemplate;
+    if (listLibraryItems != null) result.listLibraryItems = listLibraryItems;
+    if (instantiateLibraryItem != null) result.instantiateLibraryItem = instantiateLibraryItem;
     if (initSystemProject != null) result.initSystemProject = initSystemProject;
     if (getSystem != null) result.getSystem = getSystem;
     if (applySystemEdit != null) result.applySystemEdit = applySystemEdit;
@@ -192,6 +198,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     36: ClientMessage_Payload.composeFormula,
     40: ClientMessage_Payload.listConceptTemplates,
     41: ClientMessage_Payload.instantiateConceptTemplate,
+    42: ClientMessage_Payload.listLibraryItems,
+    43: ClientMessage_Payload.instantiateLibraryItem,
     50: ClientMessage_Payload.initSystemProject,
     51: ClientMessage_Payload.getSystem,
     52: ClientMessage_Payload.applySystemEdit,
@@ -237,6 +245,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       36,
       40,
       41,
+      42,
+      43,
       50,
       51,
       52,
@@ -307,6 +317,10 @@ class ClientMessage extends $pb.GeneratedMessage {
     ..aOM<InstantiateConceptTemplateRequest>(
         41, _omitFieldNames ? '' : 'instantiateConceptTemplate',
         subBuilder: InstantiateConceptTemplateRequest.$_createMessage)
+    ..aOM<ListLibraryItemsRequest>(42, _omitFieldNames ? '' : 'listLibraryItems',
+        subBuilder: ListLibraryItemsRequest.$_createMessage)
+    ..aOM<InstantiateLibraryItemRequest>(43, _omitFieldNames ? '' : 'instantiateLibraryItem',
+        subBuilder: InstantiateLibraryItemRequest.$_createMessage)
     ..aOM<InitSystemProjectRequest>(50, _omitFieldNames ? '' : 'initSystemProject',
         subBuilder: InitSystemProjectRequest.$_createMessage)
     ..aOM<GetSystemRequest>(51, _omitFieldNames ? '' : 'getSystem',
@@ -379,6 +393,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(36)
   @$pb.TagNumber(40)
   @$pb.TagNumber(41)
+  @$pb.TagNumber(42)
+  @$pb.TagNumber(43)
   @$pb.TagNumber(50)
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
@@ -419,6 +435,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(36)
   @$pb.TagNumber(40)
   @$pb.TagNumber(41)
+  @$pb.TagNumber(42)
+  @$pb.TagNumber(43)
   @$pb.TagNumber(50)
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
@@ -761,119 +779,142 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(41)
   InstantiateConceptTemplateRequest ensureInstantiateConceptTemplate() => $_ensure(29);
 
+  /// The Standard Library as items (0.17): concepts and sources alike.
+  @$pb.TagNumber(42)
+  ListLibraryItemsRequest get listLibraryItems => $_getN(30);
+  @$pb.TagNumber(42)
+  set listLibraryItems(ListLibraryItemsRequest value) => $_setField(42, value);
+  @$pb.TagNumber(42)
+  $core.bool hasListLibraryItems() => $_has(30);
+  @$pb.TagNumber(42)
+  void clearListLibraryItems() => $_clearField(42);
+  @$pb.TagNumber(42)
+  ListLibraryItemsRequest ensureListLibraryItems() => $_ensure(30);
+
+  @$pb.TagNumber(43)
+  InstantiateLibraryItemRequest get instantiateLibraryItem => $_getN(31);
+  @$pb.TagNumber(43)
+  set instantiateLibraryItem(InstantiateLibraryItemRequest value) => $_setField(43, value);
+  @$pb.TagNumber(43)
+  $core.bool hasInstantiateLibraryItem() => $_has(31);
+  @$pb.TagNumber(43)
+  void clearInstantiateLibraryItem() => $_clearField(43);
+  @$pb.TagNumber(43)
+  InstantiateLibraryItemRequest ensureInstantiateLibraryItem() => $_ensure(31);
+
   /// Behaviour systems (protocol 0.6).
   @$pb.TagNumber(50)
-  InitSystemProjectRequest get initSystemProject => $_getN(30);
+  InitSystemProjectRequest get initSystemProject => $_getN(32);
   @$pb.TagNumber(50)
   set initSystemProject(InitSystemProjectRequest value) => $_setField(50, value);
   @$pb.TagNumber(50)
-  $core.bool hasInitSystemProject() => $_has(30);
+  $core.bool hasInitSystemProject() => $_has(32);
   @$pb.TagNumber(50)
   void clearInitSystemProject() => $_clearField(50);
   @$pb.TagNumber(50)
-  InitSystemProjectRequest ensureInitSystemProject() => $_ensure(30);
+  InitSystemProjectRequest ensureInitSystemProject() => $_ensure(32);
 
   @$pb.TagNumber(51)
-  GetSystemRequest get getSystem => $_getN(31);
+  GetSystemRequest get getSystem => $_getN(33);
   @$pb.TagNumber(51)
   set getSystem(GetSystemRequest value) => $_setField(51, value);
   @$pb.TagNumber(51)
-  $core.bool hasGetSystem() => $_has(31);
+  $core.bool hasGetSystem() => $_has(33);
   @$pb.TagNumber(51)
   void clearGetSystem() => $_clearField(51);
   @$pb.TagNumber(51)
-  GetSystemRequest ensureGetSystem() => $_ensure(31);
+  GetSystemRequest ensureGetSystem() => $_ensure(33);
 
   @$pb.TagNumber(52)
-  ApplySystemEditRequest get applySystemEdit => $_getN(32);
+  ApplySystemEditRequest get applySystemEdit => $_getN(34);
   @$pb.TagNumber(52)
   set applySystemEdit(ApplySystemEditRequest value) => $_setField(52, value);
   @$pb.TagNumber(52)
-  $core.bool hasApplySystemEdit() => $_has(32);
+  $core.bool hasApplySystemEdit() => $_has(34);
   @$pb.TagNumber(52)
   void clearApplySystemEdit() => $_clearField(52);
   @$pb.TagNumber(52)
-  ApplySystemEditRequest ensureApplySystemEdit() => $_ensure(32);
+  ApplySystemEditRequest ensureApplySystemEdit() => $_ensure(34);
 
   @$pb.TagNumber(53)
-  RunSystemAnalysisRequest get runSystemAnalysis => $_getN(33);
+  RunSystemAnalysisRequest get runSystemAnalysis => $_getN(35);
   @$pb.TagNumber(53)
   set runSystemAnalysis(RunSystemAnalysisRequest value) => $_setField(53, value);
   @$pb.TagNumber(53)
-  $core.bool hasRunSystemAnalysis() => $_has(33);
+  $core.bool hasRunSystemAnalysis() => $_has(35);
   @$pb.TagNumber(53)
   void clearRunSystemAnalysis() => $_clearField(53);
   @$pb.TagNumber(53)
-  RunSystemAnalysisRequest ensureRunSystemAnalysis() => $_ensure(33);
+  RunSystemAnalysisRequest ensureRunSystemAnalysis() => $_ensure(35);
 
   /// Behaviour grouping and component authoring (protocol 0.8).
   @$pb.TagNumber(54)
-  ApplyGroupEditRequest get applyGroupEdit => $_getN(34);
+  ApplyGroupEditRequest get applyGroupEdit => $_getN(36);
   @$pb.TagNumber(54)
   set applyGroupEdit(ApplyGroupEditRequest value) => $_setField(54, value);
   @$pb.TagNumber(54)
-  $core.bool hasApplyGroupEdit() => $_has(34);
+  $core.bool hasApplyGroupEdit() => $_has(36);
   @$pb.TagNumber(54)
   void clearApplyGroupEdit() => $_clearField(54);
   @$pb.TagNumber(54)
-  ApplyGroupEditRequest ensureApplyGroupEdit() => $_ensure(34);
+  ApplyGroupEditRequest ensureApplyGroupEdit() => $_ensure(36);
 
   @$pb.TagNumber(55)
-  PreviewComponentExtractionRequest get previewComponentExtraction => $_getN(35);
+  PreviewComponentExtractionRequest get previewComponentExtraction => $_getN(37);
   @$pb.TagNumber(55)
   set previewComponentExtraction(PreviewComponentExtractionRequest value) => $_setField(55, value);
   @$pb.TagNumber(55)
-  $core.bool hasPreviewComponentExtraction() => $_has(35);
+  $core.bool hasPreviewComponentExtraction() => $_has(37);
   @$pb.TagNumber(55)
   void clearPreviewComponentExtraction() => $_clearField(55);
   @$pb.TagNumber(55)
-  PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(35);
+  PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(37);
 
   /// Text projects (ADR-0020; 0.9).
   @$pb.TagNumber(60)
-  InitTextProjectRequest get initTextProject => $_getN(36);
+  InitTextProjectRequest get initTextProject => $_getN(38);
   @$pb.TagNumber(60)
   set initTextProject(InitTextProjectRequest value) => $_setField(60, value);
   @$pb.TagNumber(60)
-  $core.bool hasInitTextProject() => $_has(36);
+  $core.bool hasInitTextProject() => $_has(38);
   @$pb.TagNumber(60)
   void clearInitTextProject() => $_clearField(60);
   @$pb.TagNumber(60)
-  InitTextProjectRequest ensureInitTextProject() => $_ensure(36);
+  InitTextProjectRequest ensureInitTextProject() => $_ensure(38);
 
   @$pb.TagNumber(61)
-  ReloadProjectRequest get reloadProject => $_getN(37);
+  ReloadProjectRequest get reloadProject => $_getN(39);
   @$pb.TagNumber(61)
   set reloadProject(ReloadProjectRequest value) => $_setField(61, value);
   @$pb.TagNumber(61)
-  $core.bool hasReloadProject() => $_has(37);
+  $core.bool hasReloadProject() => $_has(39);
   @$pb.TagNumber(61)
   void clearReloadProject() => $_clearField(61);
   @$pb.TagNumber(61)
-  ReloadProjectRequest ensureReloadProject() => $_ensure(37);
+  ReloadProjectRequest ensureReloadProject() => $_ensure(39);
 
   /// One project, Code view (ADR-0023; 0.10).
   @$pb.TagNumber(62)
-  GetSourcesRequest get getSources => $_getN(38);
+  GetSourcesRequest get getSources => $_getN(40);
   @$pb.TagNumber(62)
   set getSources(GetSourcesRequest value) => $_setField(62, value);
   @$pb.TagNumber(62)
-  $core.bool hasGetSources() => $_has(38);
+  $core.bool hasGetSources() => $_has(40);
   @$pb.TagNumber(62)
   void clearGetSources() => $_clearField(62);
   @$pb.TagNumber(62)
-  GetSourcesRequest ensureGetSources() => $_ensure(38);
+  GetSourcesRequest ensureGetSources() => $_ensure(40);
 
   @$pb.TagNumber(63)
-  ApplySourceEditRequest get applySourceEdit => $_getN(39);
+  ApplySourceEditRequest get applySourceEdit => $_getN(41);
   @$pb.TagNumber(63)
   set applySourceEdit(ApplySourceEditRequest value) => $_setField(63, value);
   @$pb.TagNumber(63)
-  $core.bool hasApplySourceEdit() => $_has(39);
+  $core.bool hasApplySourceEdit() => $_has(41);
   @$pb.TagNumber(63)
   void clearApplySourceEdit() => $_clearField(63);
   @$pb.TagNumber(63)
-  ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(39);
+  ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(41);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -985,6 +1026,7 @@ enum Response_Payload {
   formulaProjection,
   formulaSlot,
   composeFormula,
+  libraryItems,
   notSet
 }
 
@@ -1014,6 +1056,7 @@ class Response extends $pb.GeneratedMessage {
     FormulaProjectionResponse? formulaProjection,
     FormulaSlotResponse? formulaSlot,
     ComposeFormulaResponse? composeFormula,
+    LibraryItemsResponse? libraryItems,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1040,6 +1083,7 @@ class Response extends $pb.GeneratedMessage {
     if (formulaProjection != null) result.formulaProjection = formulaProjection;
     if (formulaSlot != null) result.formulaSlot = formulaSlot;
     if (composeFormula != null) result.composeFormula = composeFormula;
+    if (libraryItems != null) result.libraryItems = libraryItems;
     return result;
   }
 
@@ -1076,13 +1120,38 @@ class Response extends $pb.GeneratedMessage {
     46: Response_Payload.formulaProjection,
     47: Response_Payload.formulaSlot,
     48: Response_Payload.composeFormula,
+    49: Response_Payload.libraryItems,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Response.$_createMessage)
-    ..oo(0,
-        [2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 40, 41, 42, 43, 44, 45, 46, 47, 48])
+    ..oo(0, [
+      2,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      30,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49
+    ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOM<Error>(2, _omitFieldNames ? '' : 'error', subBuilder: Error.$_createMessage)
@@ -1129,6 +1198,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: FormulaSlotResponse.$_createMessage)
     ..aOM<ComposeFormulaResponse>(48, _omitFieldNames ? '' : 'composeFormula',
         subBuilder: ComposeFormulaResponse.$_createMessage)
+    ..aOM<LibraryItemsResponse>(49, _omitFieldNames ? '' : 'libraryItems',
+        subBuilder: LibraryItemsResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1174,6 +1245,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(46)
   @$pb.TagNumber(47)
   @$pb.TagNumber(48)
+  @$pb.TagNumber(49)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1198,6 +1270,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(46)
   @$pb.TagNumber(47)
   @$pb.TagNumber(48)
+  @$pb.TagNumber(49)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1461,6 +1534,17 @@ class Response extends $pb.GeneratedMessage {
   void clearComposeFormula() => $_clearField(48);
   @$pb.TagNumber(48)
   ComposeFormulaResponse ensureComposeFormula() => $_ensure(23);
+
+  @$pb.TagNumber(49)
+  LibraryItemsResponse get libraryItems => $_getN(24);
+  @$pb.TagNumber(49)
+  set libraryItems(LibraryItemsResponse value) => $_setField(49, value);
+  @$pb.TagNumber(49)
+  $core.bool hasLibraryItems() => $_has(24);
+  @$pb.TagNumber(49)
+  void clearLibraryItems() => $_clearField(49);
+  @$pb.TagNumber(49)
+  LibraryItemsResponse ensureLibraryItems() => $_ensure(24);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -13242,8 +13326,10 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
     $core.String? unit,
     $core.Iterable<$core.String>? keywords,
     $core.String? icon,
-    $core.String? sourceDefaultName,
+    @$core.Deprecated('This field is deprecated.') $core.String? sourceDefaultName,
+    @$core.Deprecated('This field is deprecated.')
     $core.Iterable<$core.MapEntry<$core.String, $core.String>>? displayNames,
+    @$core.Deprecated('This field is deprecated.')
     $core.Iterable<$core.MapEntry<$core.String, $core.String>>? descriptions,
   }) {
     final result = ConceptTemplateView._();
@@ -13421,25 +13507,28 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
   @$pb.TagNumber(11)
   void clearIcon() => $_clearField(11);
 
-  /// A Source template (0.16): instantiating it also creates the relationship
-  /// `<source_default_name> : () -> <the concept>` with no definition — an
-  /// ordinary unit-domain declaration the environment provides.  Empty for a
-  /// template that creates only a concept.
+  /// Deprecated since 0.17 (never set): a Source is a library item
+  /// (`LibraryItemView.category = "source"`) whose `creates` lists the
+  /// relationship; localized text is the client's, by item id.  Kept for
+  /// 0.16 clients; removed at the next incompatible protocol.
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(12)
   $core.String get sourceDefaultName => $_getSZ(11);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(12)
   set sourceDefaultName($core.String value) => $_setString(11, value);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(12)
   $core.bool hasSourceDefaultName() => $_has(11);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(12)
   void clearSourceDefaultName() => $_clearField(12);
 
-  /// The display name and description in other locales, by locale tag
-  /// (`zh-Hans`, `ja`); a locale absent here shows the English fields.  The
-  /// identifiers a template generates never change with the locale.
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(13)
   $pb.PbMap<$core.String, $core.String> get displayNames => $_getMap(12);
 
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(14)
   $pb.PbMap<$core.String, $core.String> get descriptions => $_getMap(13);
 }
@@ -13548,7 +13637,7 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
     $core.String? templateId,
     $core.String? name,
     $fixnum.Int64? component,
-    $core.String? sourceName,
+    @$core.Deprecated('This field is deprecated.') $core.String? sourceName,
   }) {
     final result = InstantiateConceptTemplateRequest._();
     if (baseRevision != null) result.baseRevision = baseRevision;
@@ -13643,17 +13732,615 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   void clearComponent() => $_clearField(4);
 
-  /// For a Source template: the relationship's name, overriding its default
-  /// (0.16).  The answer's outcome carries both `created_concept` and
-  /// `created_mapping`; the two are one commit.
+  /// Deprecated since 0.17 (ignored): a Source is instantiated through
+  /// InstantiateLibraryItem, whose `names` name every object by key.
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(5)
   $core.String get sourceName => $_getSZ(4);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(5)
   set sourceName($core.String value) => $_setString(4, value);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(5)
   $core.bool hasSourceName() => $_has(4);
+  @$core.Deprecated('This field is deprecated.')
   @$pb.TagNumber(5)
   void clearSourceName() => $_clearField(5);
+}
+
+/// The Standard Library as items (0.17).  An item is a reusable authoring
+/// fragment built from ordinary BDL structures: a Concept item creates one
+/// concept, a Source item a concept and an unresolved relationship without
+/// inputs (`() -> Value`).  Instantiation is one transaction: one revision,
+/// one undo step, every object with a fresh identity; nothing about the item
+/// is recorded in the project, and no category carries semantics — the Source
+/// role is derived from the objects' shape (ADR-0032).  `display_name` and
+/// `description` are the canonical English; a client localizes by `id`.
+class ListLibraryItemsRequest extends $pb.GeneratedMessage {
+  factory ListLibraryItemsRequest() => ListLibraryItemsRequest._();
+
+  ListLibraryItemsRequest._();
+
+  factory ListLibraryItemsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListLibraryItemsRequest()..mergeFromBuffer(data, registry);
+  factory ListLibraryItemsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListLibraryItemsRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListLibraryItemsRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListLibraryItemsRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListLibraryItemsRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListLibraryItemsRequest copyWith(void Function(ListLibraryItemsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListLibraryItemsRequest))
+          as ListLibraryItemsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListLibraryItemsRequest() / ListLibraryItemsRequest.new instead')
+  static ListLibraryItemsRequest create() => ListLibraryItemsRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListLibraryItemsRequest._();
+  @$core.override
+  ListLibraryItemsRequest createEmptyInstance() => ListLibraryItemsRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListLibraryItemsRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListLibraryItemsRequest>(
+          ListLibraryItemsRequest.$_createMessage);
+  static ListLibraryItemsRequest? _defaultInstance;
+}
+
+class LibraryItemsResponse extends $pb.GeneratedMessage {
+  factory LibraryItemsResponse({
+    $core.Iterable<LibraryView>? libraries,
+    $core.Iterable<QuantityView>? quantities,
+  }) {
+    final result = LibraryItemsResponse._();
+    if (libraries != null) result.libraries.addAll(libraries);
+    if (quantities != null) result.quantities.addAll(quantities);
+    return result;
+  }
+
+  LibraryItemsResponse._();
+
+  factory LibraryItemsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryItemsResponse()..mergeFromBuffer(data, registry);
+  factory LibraryItemsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryItemsResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'LibraryItemsResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: LibraryItemsResponse.$_createMessage)
+    ..pPM<LibraryView>(1, _omitFieldNames ? '' : 'libraries',
+        subBuilder: LibraryView.$_createMessage)
+    ..pPM<QuantityView>(2, _omitFieldNames ? '' : 'quantities',
+        subBuilder: QuantityView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryItemsResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryItemsResponse copyWith(void Function(LibraryItemsResponse) updates) =>
+      super.copyWith((message) => updates(message as LibraryItemsResponse)) as LibraryItemsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LibraryItemsResponse() / LibraryItemsResponse.new instead')
+  static LibraryItemsResponse create() => LibraryItemsResponse._();
+  static $pb.GeneratedMessage $_createMessage() => LibraryItemsResponse._();
+  @$core.override
+  LibraryItemsResponse createEmptyInstance() => LibraryItemsResponse._();
+  @$core.pragma('dart2js:noInline')
+  static LibraryItemsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<LibraryItemsResponse>(LibraryItemsResponse.$_createMessage);
+  static LibraryItemsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<LibraryView> get libraries => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<QuantityView> get quantities => $_getList(1);
+}
+
+class LibraryView extends $pb.GeneratedMessage {
+  factory LibraryView({
+    $core.String? id,
+    $core.String? name,
+    $core.int? schemaVersion,
+    $core.String? version,
+    $core.Iterable<LibraryItemView>? items,
+  }) {
+    final result = LibraryView._();
+    if (id != null) result.id = id;
+    if (name != null) result.name = name;
+    if (schemaVersion != null) result.schemaVersion = schemaVersion;
+    if (version != null) result.version = version;
+    if (items != null) result.items.addAll(items);
+    return result;
+  }
+
+  LibraryView._();
+
+  factory LibraryView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryView()..mergeFromBuffer(data, registry);
+  factory LibraryView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'LibraryView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: LibraryView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aI(3, _omitFieldNames ? '' : 'schemaVersion', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(4, _omitFieldNames ? '' : 'version')
+    ..pPM<LibraryItemView>(5, _omitFieldNames ? '' : 'items',
+        subBuilder: LibraryItemView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryView copyWith(void Function(LibraryView) updates) =>
+      super.copyWith((message) => updates(message as LibraryView)) as LibraryView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LibraryView() / LibraryView.new instead')
+  static LibraryView create() => LibraryView._();
+  static $pb.GeneratedMessage $_createMessage() => LibraryView._();
+  @$core.override
+  LibraryView createEmptyInstance() => LibraryView._();
+  @$core.pragma('dart2js:noInline')
+  static LibraryView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<LibraryView>(LibraryView.$_createMessage);
+  static LibraryView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get name => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set name($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get schemaVersion => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set schemaVersion($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSchemaVersion() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSchemaVersion() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get version => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set version($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasVersion() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearVersion() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<LibraryItemView> get items => $_getList(4);
+}
+
+class LibraryItemView extends $pb.GeneratedMessage {
+  factory LibraryItemView({
+    $core.String? id,
+    $core.String? category,
+    $core.String? displayName,
+    $core.String? description,
+    $core.String? group,
+    $core.Iterable<$core.String>? keywords,
+    $core.String? icon,
+    $core.Iterable<LibraryObjectView>? creates,
+    ConceptTemplateView? concept,
+  }) {
+    final result = LibraryItemView._();
+    if (id != null) result.id = id;
+    if (category != null) result.category = category;
+    if (displayName != null) result.displayName = displayName;
+    if (description != null) result.description = description;
+    if (group != null) result.group = group;
+    if (keywords != null) result.keywords.addAll(keywords);
+    if (icon != null) result.icon = icon;
+    if (creates != null) result.creates.addAll(creates);
+    if (concept != null) result.concept = concept;
+    return result;
+  }
+
+  LibraryItemView._();
+
+  factory LibraryItemView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryItemView()..mergeFromBuffer(data, registry);
+  factory LibraryItemView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryItemView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'LibraryItemView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: LibraryItemView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'category')
+    ..aOS(3, _omitFieldNames ? '' : 'displayName')
+    ..aOS(4, _omitFieldNames ? '' : 'description')
+    ..aOS(5, _omitFieldNames ? '' : 'group')
+    ..pPS(6, _omitFieldNames ? '' : 'keywords')
+    ..aOS(7, _omitFieldNames ? '' : 'icon')
+    ..pPM<LibraryObjectView>(8, _omitFieldNames ? '' : 'creates',
+        subBuilder: LibraryObjectView.$_createMessage)
+    ..aOM<ConceptTemplateView>(9, _omitFieldNames ? '' : 'concept',
+        subBuilder: ConceptTemplateView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryItemView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryItemView copyWith(void Function(LibraryItemView) updates) =>
+      super.copyWith((message) => updates(message as LibraryItemView)) as LibraryItemView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LibraryItemView() / LibraryItemView.new instead')
+  static LibraryItemView create() => LibraryItemView._();
+  static $pb.GeneratedMessage $_createMessage() => LibraryItemView._();
+  @$core.override
+  LibraryItemView createEmptyInstance() => LibraryItemView._();
+  @$core.pragma('dart2js:noInline')
+  static LibraryItemView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<LibraryItemView>(LibraryItemView.$_createMessage);
+  static LibraryItemView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  /// "concept" | "source".
+  @$pb.TagNumber(2)
+  $core.String get category => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set category($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCategory() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCategory() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get displayName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set displayName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDisplayName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDisplayName() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get description => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set description($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDescription() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDescription() => $_clearField(4);
+
+  /// Grouping inside the category (`environment`, `motion`, …).
+  @$pb.TagNumber(5)
+  $core.String get group => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set group($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasGroup() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearGroup() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<$core.String> get keywords => $_getList(5);
+
+  @$pb.TagNumber(7)
+  $core.String get icon => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set icon($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasIcon() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearIcon() => $_clearField(7);
+
+  /// What the item creates, in creation order, with the default names.
+  @$pb.TagNumber(8)
+  $pb.PbList<LibraryObjectView> get creates => $_getList(7);
+
+  /// The concept-template view of a Concept item (its representation, unit
+  /// and role hint); absent for other categories.
+  @$pb.TagNumber(9)
+  ConceptTemplateView get concept => $_getN(8);
+  @$pb.TagNumber(9)
+  set concept(ConceptTemplateView value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasConcept() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearConcept() => $_clearField(9);
+  @$pb.TagNumber(9)
+  ConceptTemplateView ensureConcept() => $_ensure(8);
+}
+
+class LibraryObjectView extends $pb.GeneratedMessage {
+  factory LibraryObjectView({
+    $core.String? kind,
+    $core.String? key,
+    $core.String? name,
+    $core.String? typeName,
+    $core.String? signature,
+    $core.String? description,
+    Representation? representation,
+    $core.String? unit,
+  }) {
+    final result = LibraryObjectView._();
+    if (kind != null) result.kind = kind;
+    if (key != null) result.key = key;
+    if (name != null) result.name = name;
+    if (typeName != null) result.typeName = typeName;
+    if (signature != null) result.signature = signature;
+    if (description != null) result.description = description;
+    if (representation != null) result.representation = representation;
+    if (unit != null) result.unit = unit;
+    return result;
+  }
+
+  LibraryObjectView._();
+
+  factory LibraryObjectView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryObjectView()..mergeFromBuffer(data, registry);
+  factory LibraryObjectView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LibraryObjectView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'LibraryObjectView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: LibraryObjectView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'kind')
+    ..aOS(2, _omitFieldNames ? '' : 'key')
+    ..aOS(3, _omitFieldNames ? '' : 'name')
+    ..aOS(4, _omitFieldNames ? '' : 'typeName')
+    ..aOS(5, _omitFieldNames ? '' : 'signature')
+    ..aOS(6, _omitFieldNames ? '' : 'description')
+    ..aOM<Representation>(7, _omitFieldNames ? '' : 'representation',
+        subBuilder: Representation.$_createMessage)
+    ..aOS(8, _omitFieldNames ? '' : 'unit')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryObjectView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LibraryObjectView copyWith(void Function(LibraryObjectView) updates) =>
+      super.copyWith((message) => updates(message as LibraryObjectView)) as LibraryObjectView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LibraryObjectView() / LibraryObjectView.new instead')
+  static LibraryObjectView create() => LibraryObjectView._();
+  static $pb.GeneratedMessage $_createMessage() => LibraryObjectView._();
+  @$core.override
+  LibraryObjectView createEmptyInstance() => LibraryObjectView._();
+  @$core.pragma('dart2js:noInline')
+  static LibraryObjectView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<LibraryObjectView>(LibraryObjectView.$_createMessage);
+  static LibraryObjectView? _defaultInstance;
+
+  /// "concept" | "mapping".
+  @$pb.TagNumber(1)
+  $core.String get kind => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set kind($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasKind() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearKind() => $_clearField(1);
+
+  /// Fragment-local key (`value`, `source`), what `InstantiateLibraryItem`
+  /// names a chosen name by; never a project identity.
+  @$pb.TagNumber(2)
+  $core.String get key => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set key($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKey() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKey() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get name => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set name($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearName() => $_clearField(3);
+
+  /// A concept's textual type name (`Temperature`), empty when open.
+  @$pb.TagNumber(4)
+  $core.String get typeName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set typeName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTypeName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTypeName() => $_clearField(4);
+
+  /// A mapping's signature as written (`() -> RoomTemp`).
+  @$pb.TagNumber(5)
+  $core.String get signature => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set signature($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSignature() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSignature() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get description => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set description($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasDescription() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearDescription() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  Representation get representation => $_getN(6);
+  @$pb.TagNumber(7)
+  set representation(Representation value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasRepresentation() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearRepresentation() => $_clearField(7);
+  @$pb.TagNumber(7)
+  Representation ensureRepresentation() => $_ensure(6);
+
+  @$pb.TagNumber(8)
+  $core.String get unit => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set unit($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasUnit() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearUnit() => $_clearField(8);
+}
+
+/// Instantiate one item: the daemon plans the fragment against the target
+/// design (names free in it, or `names` by object key) and applies every
+/// step in one transaction.  Answered with SystemEditApplied (every project
+/// is a behaviour system); `edit.stale_revision` if the project moved on,
+/// `library.unknown_item` if the id is not served.  Nothing is applied when
+/// any step is refused.
+class InstantiateLibraryItemRequest extends $pb.GeneratedMessage {
+  factory InstantiateLibraryItemRequest({
+    $fixnum.Int64? baseRevision,
+    $core.String? itemId,
+    $core.Iterable<$core.MapEntry<$core.String, $core.String>>? names,
+    $fixnum.Int64? component,
+  }) {
+    final result = InstantiateLibraryItemRequest._();
+    if (baseRevision != null) result.baseRevision = baseRevision;
+    if (itemId != null) result.itemId = itemId;
+    if (names != null) result.names.addEntries(names);
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  InstantiateLibraryItemRequest._();
+
+  factory InstantiateLibraryItemRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InstantiateLibraryItemRequest()..mergeFromBuffer(data, registry);
+  factory InstantiateLibraryItemRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InstantiateLibraryItemRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'InstantiateLibraryItemRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: InstantiateLibraryItemRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'baseRevision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'itemId')
+    ..m<$core.String, $core.String>(3, _omitFieldNames ? '' : 'names',
+        entryClassName: 'InstantiateLibraryItemRequest.NamesEntry',
+        keyFieldType: $pb.PbFieldType.OS,
+        valueFieldType: $pb.PbFieldType.OS,
+        packageName: const $pb.PackageName('bdl.v1'))
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InstantiateLibraryItemRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InstantiateLibraryItemRequest copyWith(void Function(InstantiateLibraryItemRequest) updates) =>
+      super.copyWith((message) => updates(message as InstantiateLibraryItemRequest))
+          as InstantiateLibraryItemRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core
+      .Deprecated('Use InstantiateLibraryItemRequest() / InstantiateLibraryItemRequest.new instead')
+  static InstantiateLibraryItemRequest create() => InstantiateLibraryItemRequest._();
+  static $pb.GeneratedMessage $_createMessage() => InstantiateLibraryItemRequest._();
+  @$core.override
+  InstantiateLibraryItemRequest createEmptyInstance() => InstantiateLibraryItemRequest._();
+  @$core.pragma('dart2js:noInline')
+  static InstantiateLibraryItemRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<InstantiateLibraryItemRequest>(
+          InstantiateLibraryItemRequest.$_createMessage);
+  static InstantiateLibraryItemRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get baseRevision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set baseRevision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBaseRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBaseRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get itemId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set itemId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasItemId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearItemId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbMap<$core.String, $core.String> get names => $_getMap(2);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get component => $_getI64(3);
+  @$pb.TagNumber(4)
+  set component($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasComponent() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearComponent() => $_clearField(4);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

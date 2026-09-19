@@ -912,6 +912,7 @@ pub fn role_hint_to_pb(r: bdl_library::RoleHint) -> pb::RoleHint {
     }
 }
 
+#[allow(deprecated)] // the 0.16 fields are set empty for 0.16 clients
 pub fn concept_template_view(t: &bdl_library::ConceptTemplate) -> pb::ConceptTemplateView {
     pb::ConceptTemplateView {
         id: t.id.clone(),
@@ -925,23 +926,10 @@ pub fn concept_template_view(t: &bdl_library::ConceptTemplate) -> pb::ConceptTem
         unit: t.unit_symbol().to_owned(),
         keywords: t.keywords.clone(),
         icon: t.icon.clone(),
-        source_default_name: t
-            .source
-            .as_ref()
-            .map(|s| s.default_name.clone())
-            .unwrap_or_default(),
-        display_names: t
-            .i18n
-            .iter()
-            .filter(|(_, x)| !x.display_name.is_empty())
-            .map(|(l, x)| (l.clone(), x.display_name.clone()))
-            .collect(),
-        descriptions: t
-            .i18n
-            .iter()
-            .filter(|(_, x)| !x.description.is_empty())
-            .map(|(l, x)| (l.clone(), x.description.clone()))
-            .collect(),
+        // deprecated since 0.17: never set
+        source_default_name: String::new(),
+        display_names: Default::default(),
+        descriptions: Default::default(),
     }
 }
 
@@ -968,6 +956,51 @@ pub fn concept_templates_response(set: &bdl_library::LibrarySet) -> pb::ConceptT
                 dim: Some(dim_to_pb(q.dim)),
             })
             .collect(),
+    }
+}
+
+pub fn library_object_view(o: &bdl_library::CreatedObject) -> pb::LibraryObjectView {
+    pb::LibraryObjectView {
+        kind: o.kind.clone(),
+        key: o.key.clone(),
+        name: o.name.clone(),
+        type_name: o.type_name.clone(),
+        signature: o.signature.clone(),
+        description: o.description.clone(),
+        representation: o.representation.as_ref().map(representation_to_pb),
+        unit: o.unit.clone(),
+    }
+}
+
+pub fn library_item_view(i: &bdl_library::LibraryItem) -> pb::LibraryItemView {
+    pb::LibraryItemView {
+        id: i.id.clone(),
+        category: i.category.as_str().to_owned(),
+        display_name: i.display_name.clone(),
+        description: i.description.clone(),
+        group: i.group.clone(),
+        keywords: i.keywords.clone(),
+        icon: i.icon.clone(),
+        creates: i.creates().iter().map(library_object_view).collect(),
+        concept: i.as_concept_template().as_ref().map(concept_template_view),
+    }
+}
+
+pub fn library_view(l: &bdl_library::Library) -> pb::LibraryView {
+    pb::LibraryView {
+        id: l.info.id.clone(),
+        name: l.info.name.clone(),
+        schema_version: l.info.schema_version,
+        version: l.info.version.clone(),
+        items: l.items().iter().map(library_item_view).collect(),
+    }
+}
+
+/// Every library served, as items, plus the shared quantity vocabulary.
+pub fn library_items_response(set: &bdl_library::LibrarySet) -> pb::LibraryItemsResponse {
+    pb::LibraryItemsResponse {
+        libraries: set.libraries().iter().map(library_view).collect(),
+        quantities: concept_templates_response(set).quantities,
     }
 }
 

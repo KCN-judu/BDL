@@ -1308,10 +1308,10 @@ fn concept_templates_over_stdio() {
         let applied = match c.call(
             Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
                 component: None,
-                source_name: None,
                 base_revision: base,
                 template_id: "std.environment.temperature".into(),
                 name: None,
+                ..Default::default()
             }),
             &mut events,
         ) {
@@ -1346,10 +1346,10 @@ fn concept_templates_over_stdio() {
     let named = match c.call(
         Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
             component: None,
-            source_name: None,
             base_revision: base,
             template_id: "std.environment.temperature".into(),
             name: Some("OvenTemperature".into()),
+            ..Default::default()
         }),
         &mut events,
     ) {
@@ -1360,15 +1360,339 @@ fn concept_templates_over_stdio() {
     match c.call(
         Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
             component: None,
-            source_name: None,
             base_revision: c.last_revision,
             template_id: "std.nope".into(),
             name: None,
+            ..Default::default()
         }),
         &mut events,
     ) {
         Resp::Error(e) => assert_eq!(e.code, "library.unknown_template"),
         other => panic!("expected an error, got {other:?}"),
     }
+    c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
+}
+
+/// The Standard Library as items (0.17): every concept template is a
+/// Concept item and the eight Source items sit beside them.  A Source
+/// item is one transaction: a concept and an unresolved `() -> Value`
+/// relationship with fresh identities, one undo removes both, a redo
+/// brings them back with the same identities, a collision moves to the
+/// next free names, an unknown id is refused, and the project saved and
+/// reopened holds the ordinary objects — the relationship a simulation
+/// input, the source text in the preferred spelling.
+#[test]
+fn library_items_over_stdio() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("rig");
+    let mut events = Vec::new();
+    let mut c = Client::spawn();
+    c.call(
+        Req::Handshake(pb::HandshakeRequest {
+            client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+            client_name: "e2e".into(),
+            client_version: "0".into(),
+        }),
+        &mut events,
+    );
+    let listed = match c.call(
+        Req::ListLibraryItems(pb::ListLibraryItemsRequest {}),
+        &mut events,
+    ) {
+        Resp::LibraryItems(l) => l,
+        other => panic!("expected items, got {other:?}"),
+    };
+    let std = bdl_library::Library::standard();
+    assert_eq!(listed.libraries.len(), 1);
+    let items = &listed.libraries[0].items;
+    assert_eq!(items.len(), std.items().len());
+    let concepts = items.iter().filter(|i| i.category == "concept").count();
+    let sources: Vec<&pb::LibraryItemView> =
+        items.iter().filter(|i| i.category == "source").collect();
+    assert_eq!(concepts, std.templates().len());
+    assert_eq!(sources.len(), 8);
+    // a Concept item carries its template view; a Source item what it creates
+    let temp = items
+        .iter()
+        .find(|i| i.id == "std.environment.temperature")
+        .unwrap();
+    assert_eq!(temp.concept.as_ref().unwrap().type_name, "Temperature");
+    assert_eq!(temp.creates.len(), 1);
+    let sensor = items
+        .iter()
+        .find(|i| i.id == "std.source.temperature")
+        .unwrap();
+    assert_eq!(sensor.display_name, "Temperature Sensor");
+    assert_eq!(sensor.creates.len(), 2);
+    assert_eq!(
+        (
+            sensor.creates[0].kind.as_str(),
+            sensor.creates[0].name.as_str(),
+            sensor.creates[0].type_name.as_str()
+        ),
+        ("concept", "RoomTemp", "Temperature")
+    );
+    assert_eq!(
+        (
+            sensor.creates[1].kind.as_str(),
+            sensor.creates[1].name.as_str(),
+            sensor.creates[1].signature.as_str()
+        ),
+        ("mapping", "TempSensor", "() -> RoomTemp")
+    );
+    for s in &sources {
+        assert!(s.creates[1].signature.starts_with("() -> "), "{}", s.id);
+    }
+
+    project(c.call(
+        Req::InitProject(pb::InitProjectRequest {
+            root_path: root.to_string_lossy().into(),
+            name: "rig".into(),
+        }),
+        &mut events,
+    ));
+    let insert =
+        |c: &mut Client, events: &mut Vec<pb::Event>, id: &str, names: Vec<(&str, &str)>| {
+            let base = c.last_revision;
+            match c.call(
+                Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
+                    base_revision: base,
+                    item_id: id.into(),
+                    names: names
+                        .into_iter()
+                        .map(|(k, v)| (k.to_string(), v.to_string()))
+                        .collect(),
+                    component: None,
+                }),
+                events,
+            ) {
+                Resp::SystemEditApplied(e) => e,
+                other => panic!("instantiate failed: {other:?}"),
+            }
+        };
+    // every Source item, each one revision with both objects created
+    let before = c.last_revision;
+    let mut created = Vec::new();
+    for s in &sources {
+        let e = insert(&mut c, &mut events, &s.id, vec![]);
+        let inner = e.outcome.unwrap().inner.unwrap();
+        created.push((
+            s.id.clone(),
+            inner.created_concept.unwrap(),
+            inner.created_mapping.unwrap(),
+        ));
+    }
+    assert!(c.last_revision > before);
+    let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
+    assert_eq!(p.concepts.len(), 8);
+    assert_eq!(p.mappings.len(), 8);
+    let mapping_names: Vec<&str> = p.mappings.iter().map(|m| m.name.as_str()).collect();
+    assert_eq!(
+        mapping_names,
+        vec![
+            "TempSensor",
+            "TiltSensor",
+            "DistanceSensor",
+            "LightSensor",
+            "ButtonInput",
+            "EncoderPosition",
+            "AnalogInput",
+            "ExternalSource"
+        ]
+    );
+    for m in &p.mappings {
+        assert!(
+            m.signature.as_ref().unwrap().inputs.is_empty(),
+            "{}",
+            m.name
+        );
+        assert!(
+            m.definition.is_none(),
+            "{}: a source stays unresolved",
+            m.name
+        );
+    }
+    // the relationship produces the concept created with it
+    for (_, concept, mapping) in &created {
+        let m = p.mappings.iter().find(|m| m.id == *mapping).unwrap();
+        assert_eq!(m.signature.as_ref().unwrap().output, *concept);
+        assert!(p.concepts.iter().any(|x| x.id == *concept));
+    }
+    // Analog Input and External Value leave the value form open
+    for name in ["AnalogValue", "ExternalValue"] {
+        let x = p.concepts.iter().find(|x| x.name == name).unwrap();
+        assert!(x.representation.is_none(), "{name}");
+    }
+    // a collision: the next free names, on both kinds; a chosen name wins
+    let e = insert(&mut c, &mut events, "std.source.temperature", vec![]);
+    let p = e.project.unwrap();
+    assert!(p.concepts.iter().any(|x| x.name == "RoomTemp2"));
+    assert!(p.mappings.iter().any(|m| m.name == "TempSensor2"));
+    let e = insert(
+        &mut c,
+        &mut events,
+        "std.source.temperature",
+        vec![("value", "OvenTemp"), ("source", "OvenSensor")],
+    );
+    let p = e.project.unwrap();
+    assert!(p.concepts.iter().any(|x| x.name == "OvenTemp"));
+    assert!(p.mappings.iter().any(|m| m.name == "OvenSensor"));
+    // one undo removes the whole item; a redo brings it back, same ids
+    let oven = p
+        .mappings
+        .iter()
+        .find(|m| m.name == "OvenSensor")
+        .unwrap()
+        .id;
+    let oven_temp = p.concepts.iter().find(|x| x.name == "OvenTemp").unwrap().id;
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
+        panic!("undo")
+    };
+    let p = u.project.unwrap();
+    assert!(!p.mappings.iter().any(|m| m.name == "OvenSensor"));
+    assert!(!p.concepts.iter().any(|x| x.name == "OvenTemp"));
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {}), &mut events) else {
+        panic!("redo")
+    };
+    let p = r.project.unwrap();
+    assert_eq!(
+        p.mappings
+            .iter()
+            .find(|m| m.name == "OvenSensor")
+            .map(|m| m.id),
+        Some(oven)
+    );
+    assert_eq!(
+        p.concepts
+            .iter()
+            .find(|x| x.name == "OvenTemp")
+            .map(|x| x.id),
+        Some(oven_temp)
+    );
+    // an unknown item is refused and nothing changes
+    let rev = c.last_revision;
+    match c.call(
+        Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
+            base_revision: rev,
+            item_id: "std.source.nope".into(),
+            names: Default::default(),
+            component: None,
+        }),
+        &mut events,
+    ) {
+        Resp::Error(e) => assert_eq!(e.code, "library.unknown_item"),
+        other => panic!("expected an error, got {other:?}"),
+    }
+    assert_eq!(c.last_revision, rev);
+    // atomic: a second step that is refused (a relationship name the
+    // language cannot spell) leaves no first step behind
+    let p_before = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
+    match c.call(
+        Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
+            base_revision: rev,
+            item_id: "std.source.tilt".into(),
+            names: [
+                ("value".to_string(), "LeanAngle".to_string()),
+                ("source".to_string(), "lean sensor".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+            component: None,
+        }),
+        &mut events,
+    ) {
+        Resp::Error(_) => {}
+        other => panic!("expected a refusal, got {other:?}"),
+    }
+    assert_eq!(c.last_revision, rev);
+    let p_after = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
+    assert_eq!(p_after.concepts.len(), p_before.concepts.len());
+    assert!(!p_after.concepts.iter().any(|x| x.name == "LeanAngle"));
+    // a Concept item through the same request
+    let e = insert(&mut c, &mut events, "std.environment.humidity", vec![]);
+    assert!(e
+        .project
+        .unwrap()
+        .concepts
+        .iter()
+        .any(|x| x.name == "Humidity"));
+    // the source text: the preferred spelling, never the shorthand
+    let Resp::Sources(s) = c.call(Req::GetSources(pb::GetSourcesRequest {}), &mut events) else {
+        panic!("sources")
+    };
+    let text: String = s
+        .sources
+        .unwrap()
+        .files
+        .iter()
+        .map(|f| f.text.clone())
+        .collect();
+    assert!(
+        text.contains("mapping TempSensor : () -> RoomTemp"),
+        "{text}"
+    );
+    assert!(text.contains("concept RoomTemp : Temperature"), "{text}");
+    assert!(!text.contains("mapping TempSensor : RoomTemp"), "{text}");
+    // the unresolved source is a simulation input: a value per tick reaches it
+    let temp_sensor = created[0].2;
+    let room_temp = created[0].1;
+    let Resp::Simulation(sim) = c.call(
+        Req::StartSimulation(pb::StartSimulationRequest {
+            inputs: vec![pb::SimulationInput {
+                mapping_id: temp_sensor,
+                tick: 0,
+                value: Some(pb::Value {
+                    kind: Some(pb::value::Kind::Semantic(Box::new(pb::SemanticValue {
+                        concept_id: room_temp,
+                        repr: Some(Box::new(pb::Value {
+                            kind: Some(pb::value::Kind::Quantity(pb::Quantity {
+                                dim: Some(pb::Dim {
+                                    temperature: 1,
+                                    ..Default::default()
+                                }),
+                                value: 293.0,
+                            })),
+                        })),
+                    }))),
+                }),
+            }],
+            schedule: vec![],
+        }),
+        &mut events,
+    ) else {
+        panic!("simulation")
+    };
+    assert!(sim.error.is_none(), "{:?}", sim.error);
+    // saved and reopened: the same objects, no library needed
+    let Resp::Project(_) = c.call(
+        Req::SaveProject(pb::SaveProjectRequest { force: false }),
+        &mut events,
+    ) else {
+        panic!("save")
+    };
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}), &mut events);
+    let reopened = project(c.call(
+        Req::OpenProject(pb::OpenProjectRequest {
+            root_path: root.to_string_lossy().into(),
+        }),
+        &mut events,
+    ));
+    assert_eq!(
+        reopened
+            .mappings
+            .iter()
+            .find(|m| m.name == "TempSensor")
+            .map(|m| m.id),
+        Some(temp_sensor)
+    );
+    assert_eq!(
+        reopened
+            .concepts
+            .iter()
+            .find(|x| x.name == "RoomTemp")
+            .map(|x| x.id),
+        Some(room_temp)
+    );
+    assert_eq!(reopened.mappings.len(), 10);
     c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
 }

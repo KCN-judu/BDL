@@ -61,6 +61,10 @@ pub enum SessionError {
     Ide(#[from] QueryError),
     #[error("this project is a flat design, not a behaviour system")]
     NotASystem,
+    /// A library item's plan does not hold together (a mapping names a
+    /// concept no step created).
+    #[error("library item: {0}")]
+    LibraryPlan(String),
     #[error(transparent)]
     SystemEdit(#[from] SystemEditError),
     #[error(transparent)]
@@ -204,6 +208,37 @@ fn check_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<(), Sessi
 pub enum HistoryEntry {
     Semantic(Box<BehaviorSystem>),
     Authoring(BTreeMap<BehaviorGroupId, BehaviorGroup>),
+}
+
+/// A system edit in flight: the working copy the steps of one authored
+/// transaction apply to, and their merged outcome.
+pub struct Transaction {
+    working: SystemSnapshot,
+    outcome: Option<SystemEditOutcome>,
+}
+
+impl Transaction {
+    /// Apply one system edit (with its rename expansion) to the working
+    /// copy; the outcome of this edit alone is returned, and merged into
+    /// the transaction's.
+    pub fn apply(&mut self, op: &SystemEditOp) -> Result<SystemEditOutcome, SessionError> {
+        check_names(bdl_text::names::names_in_system_edit(op))?;
+        let mut this: Option<SystemEditOutcome> = None;
+        for step in &crate::rename::expand_system(&self.working.system, op) {
+            let applied = apply_system_edit(&self.working, step)?;
+            self.working = applied.snapshot;
+            this = Some(match this {
+                None => applied.outcome,
+                Some(acc) => merge_system_outcomes(acc, applied.outcome),
+            });
+        }
+        let this = this.unwrap_or_default();
+        self.outcome = Some(match self.outcome.take() {
+            None => this.clone(),
+            Some(acc) => merge_system_outcomes(acc, this.clone()),
+        });
+        Ok(this)
+    }
 }
 
 /// What undoing or redoing did on a system project.
@@ -734,19 +769,77 @@ impl Session {
         base: Revision,
         op: &SystemEditOp,
     ) -> Result<CommittedSystem, SessionError> {
-        self.apply_system_then(base, op, |_| None)
+        self.transaction(base, |tx| tx.apply(op).map(|_| ()))
     }
 
-    /// [`apply_system`] with a second edit chosen from the first's outcome
-    /// (a template's `() -> concept` relationship after its concept): both
-    /// land in one revision, one history entry, one outcome.
-    pub fn apply_system_then(
+    /// Instantiate a library item: every planned step applied in one
+    /// transaction — one history entry (one undo removes the whole
+    /// fragment; a redo recreates it with the same identities), and nothing
+    /// at all when any step is refused.  A mapping step names the concepts
+    /// it reads and produces by fragment key, resolved here to the
+    /// identities the earlier steps allocated; the keys reach nothing.  The
+    /// result is ordinary objects: nothing about the item is recorded, and
+    /// a Source is a Source because of its shape (ADR-0032).
+    pub fn apply_library_item(
         &mut self,
         base: Revision,
-        op: &SystemEditOp,
-        then: impl FnOnce(&SystemEditOutcome) -> Option<SystemEditOp>,
+        component: Option<ComponentId>,
+        steps: &[bdl_library::PlannedStep],
     ) -> Result<CommittedSystem, SessionError> {
-        check_names(bdl_text::names::names_in_system_edit(op))?;
+        let wrap = |op: EditOp| match component {
+            None => SystemEditOp::Base { op },
+            Some(c) => SystemEditOp::EditComponentBody { component: c, op },
+        };
+        self.transaction(base, |tx| {
+            if let Some(c) = component {
+                if !tx.working.system.components.contains_key(&c) {
+                    return Err(SessionError::UnknownComponent(c));
+                }
+            }
+            let mut created: BTreeMap<String, bdl_model::SemanticId> = BTreeMap::new();
+            for step in steps {
+                let op = match step {
+                    bdl_library::PlannedStep::Concept { op, .. } => op.clone(),
+                    bdl_library::PlannedStep::Mapping {
+                        name,
+                        description,
+                        inputs,
+                        output,
+                        ..
+                    } => {
+                        let resolve = |key: &String| {
+                            created.get(key).copied().ok_or_else(|| {
+                                SessionError::LibraryPlan(format!(
+                                    "`{name}` names `{key}`, which no earlier step created"
+                                ))
+                            })
+                        };
+                        let inputs = inputs.iter().map(resolve).collect::<Result<Vec<_>, _>>()?;
+                        let output = resolve(output)?;
+                        EditOp::CreateMapping {
+                            name: name.clone(),
+                            description: description.clone(),
+                            signature: bdl_model::surface::Signature { inputs, output },
+                        }
+                    }
+                };
+                let outcome = tx.apply(&wrap(op))?;
+                if let Some(id) = outcome.inner.as_ref().and_then(|o| o.created_concept) {
+                    created.insert(step.key().to_string(), id);
+                }
+            }
+            Ok(())
+        })
+    }
+
+    /// One authored step of a system project: `body` applies any number of
+    /// system edits to a working copy; they land together — one history
+    /// entry, one re-derivation, one merged outcome — or not at all.
+    fn transaction(
+        &mut self,
+        base: Revision,
+        body: impl FnOnce(&mut Transaction) -> Result<(), SessionError>,
+    ) -> Result<CommittedSystem, SessionError> {
         let p = self.project_mut()?;
         let Some(sys) = p.system.as_mut() else {
             return Err(SessionError::NotASystem);
@@ -759,33 +852,17 @@ impl Session {
         }
         // The system's own revision counter follows the project's, so the
         // derived snapshot and the authored system share one number.
-        let at = SystemSnapshot {
-            revision: p.current.revision,
-            system: sys.current.system.clone(),
+        let mut tx = Transaction {
+            working: SystemSnapshot {
+                revision: p.current.revision,
+                system: sys.current.system.clone(),
+            },
+            outcome: None,
         };
-        let ops = crate::rename::expand_system(&at.system, op);
-        let mut working = at;
-        let mut outcome: Option<SystemEditOutcome> = None;
-        for step in &ops {
-            let applied = apply_system_edit(&working, step)?;
-            working = applied.snapshot;
-            outcome = Some(match outcome {
-                None => applied.outcome,
-                Some(acc) => merge_system_outcomes(acc, applied.outcome),
-            });
-        }
-        let mut outcome = outcome.unwrap_or_default();
-        if let Some(next) = then(&outcome) {
-            check_names(bdl_text::names::names_in_system_edit(&next))?;
-            for step in &crate::rename::expand_system(&working.system, &next) {
-                let applied = apply_system_edit(&working, step)?;
-                working = applied.snapshot;
-                outcome = merge_system_outcomes(outcome, applied.outcome);
-            }
-        }
+        body(&mut tx)?;
         let applied = AppliedSystem {
-            snapshot: working,
-            outcome,
+            snapshot: tx.working,
+            outcome: tx.outcome.unwrap_or_default(),
         };
         let previous = std::mem::replace(&mut sys.current, applied.snapshot);
         sys.undo

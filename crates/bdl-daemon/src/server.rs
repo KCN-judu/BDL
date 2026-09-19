@@ -415,6 +415,11 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             None,
         ),
         Req::InstantiateConceptTemplate(r) => instantiate_concept_template(session, &r),
+        Req::ListLibraryItems(_) => (
+            Resp::LibraryItems(convert::library_items_response(libraries())),
+            None,
+        ),
+        Req::InstantiateLibraryItem(r) => instantiate_library_item(session, &r),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -660,15 +665,17 @@ fn libraries() -> &'static bdl_library::LibrarySet {
     LIBRARIES.get_or_init(bdl_library::LibrarySet::standard)
 }
 
-/// The one instantiation operation: a template becomes an ordinary
-/// `CreateConcept` with the template's defaults and a free name, applied
-/// exactly like `ApplyEdit`.  The resulting concept records nothing about
-/// the template.
+/// The legacy instantiation request (0.6–0.16): a concept template by id,
+/// with an optional name — the Concept item of the same id, planned and
+/// applied like any item.  `source_name` (0.16) is deprecated and ignored:
+/// a Source is an item of its own category, instantiated with
+/// `InstantiateLibraryItem`.
+#[allow(deprecated)]
 fn instantiate_concept_template(
     session: &mut Session,
     r: &pb::InstantiateConceptTemplateRequest,
 ) -> (Resp, Option<Committed>) {
-    let Some(template) = libraries().get(&r.template_id) else {
+    if libraries().get(&r.template_id).is_none() {
         return (
             Resp::Error(error(
                 "library.unknown_template",
@@ -676,20 +683,68 @@ fn instantiate_concept_template(
             )),
             None,
         );
+    }
+    let mut names = std::collections::BTreeMap::new();
+    if let Some(n) = r.name.as_deref().filter(|n| !n.trim().is_empty()) {
+        names.insert("concept".to_string(), n.to_string());
+    }
+    instantiate_item(session, r.base_revision, &r.template_id, names, r.component)
+}
+
+/// One library item into the project, atomically: the fragment is planned
+/// against the target design (the system's own, or a component body) and
+/// every step applied in one transaction — `SystemEditApplied` with the
+/// outcome naming the created concept and relationship, or an error and
+/// nothing applied.  Nothing about the item is recorded; a Source is a
+/// Source because of the objects' shape (ADR-0032).
+fn instantiate_library_item(
+    session: &mut Session,
+    r: &pb::InstantiateLibraryItemRequest,
+) -> (Resp, Option<Committed>) {
+    if libraries().item(&r.item_id).is_none() {
+        return (
+            Resp::Error(error(
+                "library.unknown_item",
+                &format!("no library item `{}` is served", r.item_id),
+            )),
+            None,
+        );
+    }
+    let names = r
+        .names
+        .iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+    instantiate_item(session, r.base_revision, &r.item_id, names, r.component)
+}
+
+fn instantiate_item(
+    session: &mut Session,
+    base_revision: u64,
+    item_id: &str,
+    names: std::collections::BTreeMap<String, String>,
+    component: Option<u64>,
+) -> (Resp, Option<Committed>) {
+    let Some(item) = libraries().item(item_id) else {
+        return (
+            Resp::Error(error(
+                "library.unknown_item",
+                &format!("no library item `{item_id}` is served"),
+            )),
+            None,
+        );
     };
-    let revision = bdl_model::Revision::from_raw(r.base_revision);
+    let revision = bdl_model::Revision::from_raw(base_revision);
     let p = match session.project() {
         Ok(p) => p,
         Err(e) => return (Resp::Error(session_error(&e)), None),
     };
     // A system project inserts into its own design or a component body;
-    // the template's defaults are read against that design's names.  A
-    // Source template is two ordinary edits in one commit: the concept,
-    // then `<source> : () -> <concept>` with no definition.
+    // the item's default names are made free against that design.
     let Some(sys) = p.system.as_ref() else {
         return (Resp::Error(session_error(&SessionError::NotASystem)), None);
     };
-    let scope = component_scope(r.component);
+    let scope = component_scope(component);
     let design = match scope {
         None => &sys.current.system.base,
         Some(c) => match sys.current.system.components.get(&c) {
@@ -702,30 +757,8 @@ fn instantiate_concept_template(
             }
         },
     };
-    let inst = bdl_library::instantiate_with(
-        design,
-        template,
-        r.name.as_deref(),
-        r.source_name.as_deref(),
-    );
-    let wrap = |op: bdl_model::EditOp| match scope {
-        None => bdl_system::SystemEditOp::Base { op },
-        Some(component) => bdl_system::SystemEditOp::EditComponentBody { component, op },
-    };
-    let op = wrap(inst.concept);
-    let source_name = inst.source_name;
-    match session.apply_system_then(revision, &op, |outcome| {
-        let name = source_name.clone()?;
-        let output = outcome.inner.as_ref()?.created_concept?;
-        Some(wrap(bdl_model::EditOp::CreateMapping {
-            name,
-            description: String::new(),
-            signature: bdl_model::surface::Signature {
-                inputs: vec![],
-                output,
-            },
-        }))
-    }) {
+    let steps = bdl_library::plan(design, item, &names);
+    match session.apply_library_item(revision, scope, &steps) {
         Ok(c) => {
             let view = system_view(session).ok();
             let resp = Resp::SystemEditApplied(pb::SystemEditApplied {
@@ -1187,6 +1220,11 @@ fn session_error(e: &SessionError) -> pb::Error {
         SessionError::SystemEdit(bdl_system::SystemEditError::Base(inner)) => {
             convert::edit_error_to_pb(inner)
         }
+        SessionError::LibraryPlan(message) => pb::Error {
+            code: "library.invalid_plan".into(),
+            message: message.clone(),
+            details_json: String::new(),
+        },
         SessionError::SystemEdit(edit) => pb::Error {
             code: format!("system_edit.{}", system_edit_code(edit)),
             message: edit.to_string(),
@@ -1360,6 +1398,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::ComposeFormula(_) => "compose_formula",
         Req::ListConceptTemplates(_) => "list_concept_templates",
         Req::InstantiateConceptTemplate(_) => "instantiate_concept_template",
+        Req::ListLibraryItems(_) => "list_library_items",
+        Req::InstantiateLibraryItem(_) => "instantiate_library_item",
         Req::Shutdown(_) => "shutdown",
     }
 }

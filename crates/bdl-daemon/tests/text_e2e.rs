@@ -980,7 +980,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
 /// relationship, the source is written in the preferred spelling, never
 /// the shorthand, and reopening re-derives the same shape from the text.
 #[test]
-fn a_source_template_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain() {
+fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain() {
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().join("lamp");
     let mut c = Client::spawn();
@@ -992,42 +992,64 @@ fn a_source_template_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_dom
     };
     c.last_revision = p.project.unwrap().revision;
 
-    // the library serves the Sources with their relationship and locales
-    let Resp::ConceptTemplates(t) = c.call(Req::ListConceptTemplates(
-        pb::ListConceptTemplatesRequest {},
-    )) else {
+    // the library serves the Sources as items: what each creates, in the
+    // canonical English (Studio localizes by id); the concept templates of
+    // the legacy request carry nothing of it
+    let Resp::LibraryItems(t) = c.call(Req::ListLibraryItems(pb::ListLibraryItemsRequest {}))
+    else {
         panic!()
     };
     let std = &t.libraries[0];
     let temp = std
-        .templates
+        .items
         .iter()
         .find(|x| x.id == "std.source.temperature")
         .expect("served");
-    assert_eq!(temp.category, "sources");
-    assert_eq!(temp.source_default_name, "TempSensor");
-    assert_eq!(temp.display_names["zh-Hans"], "温度传感器");
-    assert_eq!(temp.display_names["ja"], "温度センサー");
+    assert_eq!(temp.category, "source");
+    assert_eq!(temp.display_name, "Temperature Sensor");
+    assert_eq!(temp.creates.len(), 2);
+    assert_eq!(temp.creates[1].name, "TempSensor");
+    assert_eq!(temp.creates[1].signature, "() -> RoomTemp");
     assert!(std
-        .templates
+        .items
         .iter()
-        .filter(|x| x.category == "sources")
-        .all(|x| !x.source_default_name.is_empty()));
+        .filter(|x| x.category == "source")
+        .all(|x| x.creates.len() == 2 && x.creates[1].signature.starts_with("() -> ")));
     assert!(std
-        .templates
+        .items
         .iter()
-        .filter(|x| x.category != "sources")
-        .all(|x| x.source_default_name.is_empty()));
+        .filter(|x| x.category == "concept")
+        .all(|x| x.creates.len() == 1 && x.concept.is_some()));
+    #[allow(deprecated)]
+    {
+        let Resp::ConceptTemplates(legacy) = c.call(Req::ListConceptTemplates(
+            pb::ListConceptTemplatesRequest {},
+        )) else {
+            panic!()
+        };
+        assert!(legacy.libraries[0]
+            .templates
+            .iter()
+            .all(|x| x.source_default_name.is_empty() && x.display_names.is_empty()));
+        assert!(!legacy.libraries[0]
+            .templates
+            .iter()
+            .any(|x| x.id.starts_with("std.source.")));
+    }
 
-    // instantiate, renaming both as a designer would
+    // instantiate, naming both as a designer would
     let before = c.last_revision;
-    let Resp::SystemEditApplied(e) = c.call(Req::InstantiateConceptTemplate(
-        pb::InstantiateConceptTemplateRequest {
+    let Resp::SystemEditApplied(e) = c.call(Req::InstantiateLibraryItem(
+        pb::InstantiateLibraryItemRequest {
             base_revision: before,
-            template_id: "std.source.temperature".into(),
-            name: Some("RoomTemp".into()),
+            item_id: "std.source.temperature".into(),
+            names: [
+                ("value".to_string(), "RoomTemp".to_string()),
+                ("source".to_string(), "TempSensor".to_string()),
+            ]
+            .into_iter()
+            .collect(),
             component: None,
-            source_name: Some("TempSensor".into()),
         },
     )) else {
         panic!()
