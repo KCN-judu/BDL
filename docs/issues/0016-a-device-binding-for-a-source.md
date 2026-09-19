@@ -4,7 +4,7 @@ state: open
 area: deployment
 opened: 2026-09-19
 resolved-by: []
-related: [ADR-0032, ADR-0015]
+related: [ADR-0032, ADR-0015, PRP-0001]
 ---
 
 # ISS-0016: A device binding for a Source
@@ -49,4 +49,6 @@ unchanged by any of it (ADR-0032 §1).
 
 ## Resolution
 
-Open.
+Open. PRP-0001 proposes the shape of the binding's missing half — the transducer
+from the device's raw reading to the concept — as a formal construction over
+designs; the device catalog question above stays.

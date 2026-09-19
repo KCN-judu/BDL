@@ -6,9 +6,9 @@ the stage between a [design issue](../issues/README.md) (a known problem) and an
 small additions need no proposal; a change to what the language means, to a file
 or wire format, or to a subsystem boundary does.
 
-| ID  | Proposal              | Status | Area | Outcome |
-| --- | --------------------- | ------ | ---- | ------- |
-| —   | _no proposal is open_ |        |      |         |
+| ID                                                     | Proposal                                                               | Status | Area   | Outcome |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- | ------ | ------ | ------- |
+| [PRP-0001](0001-source-provision-by-device-profile.md) | A Source is provisioned at deployment by a device profile's transducer | draft  | formal | —       |
 
 Statuses: `draft` → `discussion` → `accepted` (an ADR is written and linked;
 acceptance is not implementation) · `rejected` · `withdrawn` · `superseded`.
