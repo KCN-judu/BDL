@@ -24,9 +24,9 @@ rendered as _on_ / _off_ by Studio, a computed boolean rendered as
 form itself called _On / off_ in every sheet while BDL text writes `true` /
 `false`. The two renderings existed because the evaluator recorded computed
 declarations only: an unresolved declaration's value came from the input trace
-and was never written into the tick's sample, so Studio kept its own copy of
-the fed values and rendered them itself, with its own number format
-(`0.785398` beside `Brightness(0.5)` in one row of one table).
+and was never written into the tick's sample, so Studio kept its own copy of the
+fed values and rendered them itself, with its own number format (`0.785398`
+beside `Brightness(0.5)` in one row of one table).
 
 Semantic truth is Rust-only (ADR-0001); Studio renders projections. A value's
 text is part of that projection. Two renderers of one value form is a defect of
@@ -51,15 +51,15 @@ the same kind ADR-0031 forbids for terminology: one thing, two words.
    evaluator's fact, not a Studio calculation over `active_clock_ids`.
 4. **Rendering is notation, not locale.** The words `on`, `off`, `none`, `some`
    and the unit symbols are notation in the sense of ADR-0031 and do not change
-   with the locale; the control beside an _On / off_ switch says the same
-   `on` / `off`.
+   with the locale; the control beside an _On / off_ switch says the same `on` /
+   `off`.
 
 ## Alternatives
 
-- **Studio renders, with bdld's words copied.** Rejected: two implementations
-  of one format drift — they had.
-- **Drop Studio's fed-value rendering and show nothing for inputs.** Rejected:
-  a trace whose input columns are empty is not a trace.
+- **Studio renders, with bdld's words copied.** Rejected: two implementations of
+  one format drift — they had.
+- **Drop Studio's fed-value rendering and show nothing for inputs.** Rejected: a
+  trace whose input columns are empty is not a trace.
 - **`true` / `false` as the rendering.** Rejected: the designer chose a value
   form named _On / off_ and reads a switch, not a formula; `true` / `false`
   stays where it is syntax.
@@ -75,8 +75,8 @@ the same kind ADR-0031 forbids for terminology: one thing, two words.
 - Studio: `sampleOf(tick, mapping)` is the evaluator's sample; `_fedValue`,
   `_plainText` and the probe's duplicate Explain line are gone; the trace, the
   probe's _now_ and _over the run_ show `rendered`. `SimulationBlocker` carries
-  a kind and names; the page words it through the catalog (the one page that
-  was English-only is localised).
+  a kind and names; the page words it through the catalog (the one page that was
+  English-only is localised).
 - Records: `docs/spec/runtime-semantics.md` (Traces), `docs/spec/protocol.md`
   (StepSimulation), the user guide's Simulate page and screenshot; fragment
   `docs/changes/unreleased/2026-09-one-value-rendering.md`.

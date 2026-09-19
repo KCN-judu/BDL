@@ -36,7 +36,8 @@ import re
 import sys
 from pathlib import Path
 
-IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+# The alt text may hold one level of balanced brackets (`Tilt(0.785398 [rad])`).
+IMAGE = re.compile(r"!\[((?:[^\[\]]|\[[^\[\]]*\])*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)
 
 
