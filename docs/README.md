@@ -132,15 +132,20 @@ each of its questions was answered is in the
   information levels), 0024/0025 (collections need an allocator; equations are
   definitional families and order is a declaration), 0026/0027 (a concept beside
   a plain value is observed; collections are bounded by the design and validated
-  at deployment).
+  at deployment), 0032 (a Source is a derived presentation role, never a kernel
+  type).
 - **Unresolved:** twelve design issues — occurrence windows, candidate
   definitions, the evidence model, affine units, user enums, `f32` on device,
   nested packaging, a structural output entity, projection deltas, temporal
-  modifiers, `zip`'s cost in the core, the Unit-domain normalization's formal
-  proof.
+  modifiers, `zip`'s cost in the core, a device binding for a Source.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** complete-project persistence and the save guard
+- **Recently changed:** the Source role (ADR-0032, protocol 0.16, FV Phase 12
+  consumed: an unresolved `() -> A` at the environment boundary is drawn and
+  explained as a Source, never _declared_; seven standard Source templates
+  creating a concept and its Source in one commit; localized template text;
+  ISS-0014 resolved, ISS-0016 opened); the first internationalization layer
+  (ADR-0031: en, zh-Hans, ja); complete-project persistence and the save guard
   (ADR-0030, protocol 0.15); `() -> A` as the preferred spelling of a
   relationship without inputs (ADR-0029 amendment: the shorthand a hint with a
   quick fix, never generated, `bdld migrate-unit-domain` opt-in); the

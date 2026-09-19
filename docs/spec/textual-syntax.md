@@ -272,6 +272,16 @@ language yet. Port types (`requires n : T`, `param n : T`, `provides n : T`)
 keep the bare output — a port's grammar has no domain to spell, and the policy
 is about `mapping`.
 
+**No Source keyword.** A relationship without inputs and without a definition —
+`mapping tilt : () -> Tilt` alone — is what Studio and the IDE service present
+as a _Source_: a value the environment provides, observed once per activation
+(ADR-0032). The text has no keyword, attribute or comment for it, and none is
+read: the role is derived from the declaration's shape and state wherever it is
+shown, and adding a definition (`tilt() = …`) makes the same declaration an
+ordinary relationship. A Source template of the concept library writes exactly
+this pair — `concept RoomTemp : Temperature` and
+`mapping TempSensor : () -> RoomTemp` — in the preferred spelling.
+
 ### 4.2 Types
 
 ```ebnf

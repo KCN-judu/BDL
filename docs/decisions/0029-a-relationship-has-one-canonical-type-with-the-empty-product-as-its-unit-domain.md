@@ -5,13 +5,15 @@ date: 2026-09-18
 area: language
 supersedes: []
 superseded-by: []
-related: ["ADR-0010", "ADR-0013", "ADR-0025", "ISS-0014"]
+related: ["ADR-0010", "ADR-0013", "ADR-0025", "ISS-0014", "ADR-0032"]
 fv:
   [
-    "engineering choice: the kernel (`BDL/Core/Base.lean`) has no unit type and
-    types a declaration without inputs at its output; the production canonical
-    type `() -> B` is a normalization above the kernel, encoded into it by unit
-    elimination — ISS-0014 asks for the theorem",
+    "formally proved (model): FV Phase 12 `BDL/Surface/UnitDomain.lean` —
+    `elim_canonical`, `encode_decode`, `decode_encode`, `encode_injective`,
+    `canonical_injective`, `zero_input_obligation`, `refForms_agree` (the
+    interface layer `CTy` above the kernel; the kernel keeps no unit type;
+    ISS-0014 resolved)",
+    "engineering choice: `() -> A` as the preferred spelling (the amendment)",
   ]
 ---
 
@@ -132,3 +134,16 @@ Extends the decision; every sentence above stays true.
   migration applied automatically. No removal version is scheduled — the
   language has no versioning policy yet; scheduling one is a decision of its
   own.
+
+## Amendment (2026-09-19): the normalization is a theorem
+
+FV Phase 12 (`BDL/Surface/UnitDomain.lean`, `UNIT_DOMAIN_NOTE.md`, `dd44a84`)
+answers ISS-0014: the canonical type lives in an interface layer `CTy` above the
+kernel, unit elimination is a total function with
+`elim_canonical : elim (canonical s) = some (encode s)`, the two encodings are
+inverse over concept signatures, a declaration without inputs has no binder and
+holds memory as production says, and `f`, `f()`, `f(())` are one reference
+(`refForms_agree`). Every sentence above stays true; the `fv` field and the
+correspondence row move from _engineering choice_ to _formally proved (model)_.
+The kernel gains no unit type. The Source role this ADR names is decided in
+ADR-0032.

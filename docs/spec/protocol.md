@@ -145,15 +145,20 @@ into its draft and `AnalyzeDefinitionDraft` follows;
 verdict | | ListConceptTemplates | ConceptTemplatesResponse { libraries[] { id,
 name, schema_version, version, templates[] { id, display_name, default_name,
 description, category, role_hint, representation?, type_name, unit, keywords[],
-icon } }, quantities[] { id, type_name, unit, dim } } | the concept libraries
-the daemon serves (the Standard Concept Library, `library/std/concepts.toml`)
-and the shared quantity vocabulary; independent of any project
-(docs/spec/concept-library.md) | | InstantiateConceptTemplate { base_revision,
-template_id, name?, component? } | EditApplied, or SystemEditApplied on a system
-project | the one instantiation: the daemon builds `CreateConcept` from the
-template's defaults with a name free in the project (or `name`) and applies it
-like `ApplyEdit` — on a system project into the system's own design, or into
-`component`'s body; `library.unknown_template`, `edit.stale_revision` | |
+icon, source_default_name, display_names, descriptions } }, quantities[] { id,
+type_name, unit, dim } } | the concept libraries the daemon serves (the Standard
+Concept Library, `library/std/concepts.toml`) and the shared quantity
+vocabulary; independent of any project (docs/spec/concept-library.md);
+`source_default_name` (0.16) names the `() -> concept` relationship a Source
+template also creates, `display_names` / `descriptions` (0.16) carry the
+template's text by locale tag | | InstantiateConceptTemplate { base_revision,
+template_id, name?, component?, source_name? } | SystemEditApplied | the one
+instantiation: the daemon builds `CreateConcept` from the template's defaults
+with a name free in the project (or `name`) and applies it like `ApplyEdit` —
+into the system's own design, or into `component`'s body; a Source template adds
+`CreateMapping { source_name or the default, () -> the concept }` to the same
+commit (0.16), and the outcome carries both `created_concept` and
+`created_mapping`; `library.unknown_template`, `edit.stale_revision` | |
 Shutdown | Ack | |
 
 `EntityRef` is

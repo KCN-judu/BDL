@@ -67,7 +67,34 @@ representation = { quantity = "illuminance" }   # or "boolean" | "count" | "open
 unit = "lx"                     # a symbol from the shared unit table; the default to show
 keywords = ["light", "lux", "brightness", "daylight", "dark", "photocell"]
 icon = "light"                  # presentation hint; never semantic
+
+[[template]]
+id = "std.source.temperature"
+display_name = "Temperature Sensor"
+default_name = "RoomTemp"       # the concept
+description = "The temperature of a room, a surface or the air, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temp", "thermal", "sensor", "source"]
+icon = "temperature"
+source = { default_name = "TempSensor" }   # also creates `mapping TempSensor : () -> RoomTemp`
+i18n = { "zh-Hans" = { display_name = "温度传感器", description = "…" }, ja = { display_name = "温度センサー", description = "…" } }
 ```
+
+A **Source template** (`source` present) creates two ordinary items in one
+commit: the concept, and the relationship
+`<source.default_name> : () -> <the concept>` with no definition — a value the
+environment provides (ADR-0032). The library carries nothing else about it: the
+canvas shows the relationship as a Source because of its shape and state, and a
+third-party library's `source` field gets the same treatment.
+`source.default_name` must be an identifier different from `default_name`.
+
+**`i18n`** carries the display name and description per locale tag (`zh-Hans`,
+`ja`); a locale absent from it shows the English fields. Identifiers
+(`default_name`, `source.default_name`, `id`) never change with the locale
+(ADR-0031).
 
 Loading validates every template: the quantity must exist in the shared
 vocabulary, the unit must exist in the shared unit table and measure that
@@ -81,20 +108,24 @@ semantic value concept; input/output is not in the kernel. `icon` is a generic
 word (`temperature`, `motor`) a client may map to a glyph; it is not identity
 and not used today.
 
-## Categories (36 templates)
+## Categories (43 templates)
 
-| category    | templates                                                                                             |
-| ----------- | ----------------------------------------------------------------------------------------------------- |
-| environment | Temperature, Ambient Light, Humidity, Air Pressure, Sound Level                                       |
-| human       | Button Pressed, Touch, Switch State, Dial Position, Slider Position                                   |
-| motion      | Distance, Position, Angle, Tilt, Speed, Acceleration, Angular Velocity, Orientation                   |
-| mechanical  | Force, Pressure, Torque                                                                               |
-| electrical  | Voltage, Current, Battery Level                                                                       |
-| visual      | Brightness, Color, Display Value                                                                      |
-| actuation   | Motor Speed, Motor Angle, Servo Position, Vibration Intensity, Heater Power, Fan Speed, Valve Opening |
-| audio       | Volume, Pitch                                                                                         |
+| category    | templates                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| environment | Temperature, Ambient Light, Humidity, Air Pressure, Sound Level                                                               |
+| human       | Button Pressed, Touch, Switch State, Dial Position, Slider Position                                                           |
+| motion      | Distance, Position, Angle, Tilt, Speed, Acceleration, Angular Velocity, Orientation                                           |
+| mechanical  | Force, Pressure, Torque                                                                                                       |
+| electrical  | Voltage, Current, Battery Level                                                                                               |
+| visual      | Brightness, Color, Display Value                                                                                              |
+| actuation   | Motor Speed, Motor Angle, Servo Position, Vibration Intensity, Heater Power, Fan Speed, Valve Opening                         |
+| audio       | Volume, Pitch                                                                                                                 |
+| sources     | Temperature Sensor, Tilt Sensor, Distance Sensor, Ambient Light Sensor, Button / Switch State, Encoder Position, Analog Input |
 
-Deliberately small: nothing is added to inflate the count.
+Deliberately small: nothing is added to inflate the count. The Sources are the
+environment-provided values a first product needs, named for what a designer
+looks for; two of them (a button state, an analog level) are not sensors, which
+is why the category is _Sources_ and not _Sensors_.
 
 ## Concepts and quantities
 
@@ -126,7 +157,14 @@ Add Concept ▸
     Input ▸  ·  Output ▸        (by role hint)
     Environment ▸ · Geometry & motion ▸ · Human interaction ▸
     More…                       (opens the Library tab)
+Add Source ▸
+    Temperature Sensor · Tilt Sensor · … · Analog Input   (the Source templates)
+    New source…                 (a `() -> C` over a concept already in the design)
 ```
+
+A Source template's answer carries `created_concept` and `created_mapping`; the
+concept lands where the pointer was and opens for renaming, the Source lands a
+node width to its left, and one Undo removes both.
 
 **Create-then-rename**: choosing a template instantiates it through `bdld`
 (`InstantiateConceptTemplate`); when the projection with the new concept
@@ -137,14 +175,17 @@ leaving the field commits what was typed. Add Temperature → type
 `MotorTemperature` → keep designing.
 
 **Library tab** (left sidebar, beside _Project_) — browsing and discovery: a
-search field (display name, default name, keywords, category, unit — `lux` finds
-Ambient Light, `motor` finds Motor Speed and Motor Angle), category sections,
-rows with a grey socket glyph (filled = representation chosen, hollow = decide
-later; grey because the hue is the identity the compiler will allocate), the
-name, and what the value is measured as in the contract's words (`K`, `lx`,
-`no unit`, `on–off`, `count`, `decide later`); the description on hover.
-**Drag** a row onto the canvas to insert at the drop point; double-click or
-Return inserts auto-placed.
+search field (display name in English and in the current locale, default name,
+the Source's relationship name, keywords, category, unit — `lux` finds Ambient
+Light and Ambient Light Sensor, `motor` finds Motor Speed and Motor Angle,
+`温度` finds the Temperature Sensor in zh-Hans), category sections (_Sources_
+last, its rows wearing the Source silhouette instead of the socket glyph, the
+tooltip naming what the relationship provides), rows with a grey socket glyph
+(filled = representation chosen, hollow = decide later; grey because the hue is
+the identity the compiler will allocate), the name, and what the value is
+measured as in the contract's words (`K`, `lx`, `no unit`, `on–off`, `count`,
+`decide later`); the description on hover. **Drag** a row onto the canvas to
+insert at the drop point; double-click or Return inserts auto-placed.
 
 Every entry point dispatches the same `InsertConceptTemplateRequested` and the
 daemon performs the one instantiation; the results differ only in `SemanticId`,
@@ -172,12 +213,14 @@ second list.
 
 ## Protocol
 
-| request                                                            | response                                                                                                    | notes                                                                                                                                                                |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ListConceptTemplates`                                             | `ConceptTemplatesResponse { libraries[] { id, name, schema_version, version, templates[] }, quantities[] }` | independent of any project; Studio asks once per connection                                                                                                          |
-| `InstantiateConceptTemplate { base_revision, template_id, name? }` | `EditApplied`                                                                                               | the daemon builds the `CreateConcept` (defaults + a free name, or `name`) and applies it exactly like `ApplyEdit`; `edit.stale_revision`, `library.unknown_template` |
+| request                                                                                      | response                                                                                                    | notes                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ListConceptTemplates`                                                                       | `ConceptTemplatesResponse { libraries[] { id, name, schema_version, version, templates[] }, quantities[] }` | independent of any project; Studio asks once per connection                                                                                                                                                                                                                                             |
+| `InstantiateConceptTemplate { base_revision, template_id, name?, component?, source_name? }` | `SystemEditApplied`                                                                                         | the daemon builds the `CreateConcept` (defaults + a free name, or `name`) and applies it exactly like `ApplyEdit`; for a Source template also `CreateMapping { source_name or the template's default, () -> the concept }` in the same commit (0.16); `edit.stale_revision`, `library.unknown_template` |
 
-Protocol 0.5.
+`ConceptTemplateView` (0.16) adds `source_default_name` (empty for a plain
+concept template), `display_names` and `descriptions` (by locale tag). Protocol
+0.5; 0.16 for the Source fields.
 
 ## Future custom libraries
 
@@ -205,13 +248,15 @@ the concept library.
 
 ## Tests
 
-| scenario                                                                                                             | where                                            |
-| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| the embedded library loads, is 30–50 templates, every quantity/unit resolves; `Brightness` is a level, not luminance | `bdl-library` unit tests                         |
-| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                | `bdl-library`, `bdld` stdio e2e, Studio e2e      |
-| a project persists and reloads without the library; a changed template default does not reach an existing concept    | `bdl-library`                                    |
-| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema)                | `bdl-library`                                    |
-| every template is a textual completion, from the same data                                                           | `bdl-ide/tests/acceptance.rs`                    |
-| the daemon serves the embedded library template for template                                                         | `bdld/tests/stdio_e2e.rs`                        |
-| right-click and drag are one creation path; create-then-rename; recents; inline rename; search; refused insertion    | `apps/studio/test/concept_library_test.dart`     |
-| Studio against the real `bdld`: insert twice, rename, save, reopen                                                   | `apps/studio/test/concept_library_e2e_test.dart` |
+| scenario                                                                                                              | where                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the embedded library loads, is 30–50 templates, every quantity/unit resolves; `Brightness` is a level, not luminance  | `bdl-library` unit tests                                                                                                                                |
+| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                 | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                                             |
+| a project persists and reloads without the library; a changed template default does not reach an existing concept     | `bdl-library`                                                                                                                                           |
+| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema)                 | `bdl-library`                                                                                                                                           |
+| every template is a textual completion, from the same data                                                            | `bdl-ide/tests/acceptance.rs`                                                                                                                           |
+| the daemon serves the embedded library template for template                                                          | `bdld/tests/stdio_e2e.rs`                                                                                                                               |
+| right-click and drag are one creation path; create-then-rename; recents; inline rename; search; refused insertion     | `apps/studio/test/concept_library_test.dart`                                                                                                            |
+| Studio against the real `bdld`: insert twice, rename, save, reopen                                                    | `apps/studio/test/concept_library_e2e_test.dart`                                                                                                        |
+| a Source template is two edits in one commit, written `mapping S : () -> C`, one undo removes both, reopened the same | `bdl-library` (`source_templates_create_a_concept_and_an_explicit_unit_domain_relationship`), `bdld/tests/text_e2e.rs`, `concept_library_e2e_test.dart` |
+| the Sources category, localized names and search, the row glyph                                                       | `apps/studio/test/source_role_test.dart`                                                                                                                |

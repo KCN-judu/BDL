@@ -343,6 +343,23 @@ output-driver action and the simulation-input readiness ask
 `Signature::is_unit_domain` — the one predicate for "read as a value" — never a
 separate kind of mapping.
 
+### The relationship role (ADR-0032)
+
+`bdl_ide::relationship_role(snapshot, decl)` answers what a relationship _is_
+where the designer reads it: `Port(kind)` when the host says the declaration
+backs a port (`IdeHost::set_port_backed`, fed by the daemon from the component's
+interface; a text workspace reads it off the flattened origins), else `Source`
+when it has no definition and the unit domain, else `Mapping`. Nothing stores
+the role; a realised base relationship has a reference definition in the design
+and is therefore a `Mapping`. Hover puts `role: Source` first and words the
+missing definition as _none — provided by the environment, observed once per
+activation_; Explain adds `role`, `provision: environment` and a `reading` line
+naming `refForms_agree` (a Source is observed, not called) or
+`resolved_not_source` (a resolved `() -> A` computes internally).
+`RelationshipRole::word` is the English the daemon carries; Studio words its own
+surfaces from the same rule (`relationshipRole` in `app/state.dart`), so the two
+never disagree on a given projection.
+
 ### The Formula Composer (protocol 0.12, 0.13)
 
 `bdl-ide::formula` gives the Studio definition editor its structured projection,
