@@ -210,15 +210,33 @@ void main() {
 
       // The Library tab with a search, and a concept just inserted from it:
       // selected, its name open for editing on the canvas.
+      pb.LibraryItemView conceptItem(pb.ConceptTemplateView t) => pb.LibraryItemView(
+        id: t.id,
+        category: 'concept',
+        displayName: t.displayName,
+        description: t.description,
+        group: t.category,
+        creates: [
+          pb.LibraryObjectView(
+            kind: 'concept',
+            key: 'concept',
+            name: t.defaultName,
+            typeName: t.typeName,
+            representation: t.hasRepresentation() ? t.representation : null,
+            unit: t.unit,
+          ),
+        ],
+        concept: t,
+      );
       final library = state.copyWith(
-        library: pb.ConceptTemplatesResponse(
+        library: pb.LibraryItemsResponse(
           libraries: [
-            pb.ConceptLibraryView(
+            pb.LibraryView(
               id: 'std',
-              name: 'BDL Standard Concept Library',
-              schemaVersion: 1,
-              version: '0.1',
-              templates: [
+              name: 'BDL Standard Library',
+              schemaVersion: 2,
+              version: '0.2',
+              items: [
                 for (final (cat, name, rep, unit, role) in [
                   ('environment', 'Temperature', pb.Dim(temperature: 1), 'K', 1),
                   (
@@ -235,24 +253,51 @@ void main() {
                   ('actuation', 'Motor Angle', pb.Dim(angle: 1), 'deg', 2),
                   ('actuation', 'Heater Power', pb.Dim(), '', 2),
                 ])
-                  pb.ConceptTemplateView(
-                    id: 'std.$cat.${name.toLowerCase().replaceAll(' ', '_')}',
-                    displayName: name,
-                    defaultName: name.replaceAll(' ', ''),
-                    description: 'How $name is measured.',
-                    category: cat,
-                    roleHint: pb.RoleHint.valueOf(role)!,
-                    representation: pb.Representation(quantity: rep),
-                    unit: unit,
+                  conceptItem(
+                    pb.ConceptTemplateView(
+                      id: 'std.$cat.${name.toLowerCase().replaceAll(' ', '_')}',
+                      displayName: name,
+                      defaultName: name.replaceAll(' ', ''),
+                      description: 'How $name is measured.',
+                      category: cat,
+                      roleHint: pb.RoleHint.valueOf(role)!,
+                      representation: pb.Representation(quantity: rep),
+                      unit: unit,
+                    ),
                   ),
-                pb.ConceptTemplateView(
-                  id: 'std.human.button_pressed',
-                  displayName: 'Button Pressed',
-                  defaultName: 'ButtonPressed',
-                  description: 'Whether a button is held down.',
-                  category: 'human',
-                  roleHint: pb.RoleHint.ROLE_HINT_INPUT,
-                  representation: pb.Representation(boolean: pb.Unit()),
+                conceptItem(
+                  pb.ConceptTemplateView(
+                    id: 'std.human.button_pressed',
+                    displayName: 'Button Pressed',
+                    defaultName: 'ButtonPressed',
+                    description: 'Whether a button is held down.',
+                    category: 'human',
+                    roleHint: pb.RoleHint.ROLE_HINT_INPUT,
+                    representation: pb.Representation(boolean: pb.Unit()),
+                  ),
+                ),
+                pb.LibraryItemView(
+                  id: 'std.source.temperature',
+                  category: 'source',
+                  displayName: 'Temperature Sensor',
+                  description: 'A temperature the product measures.',
+                  group: 'environment',
+                  creates: [
+                    pb.LibraryObjectView(
+                      kind: 'concept',
+                      key: 'value',
+                      name: 'RoomTemp',
+                      typeName: 'Temperature',
+                      representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+                      unit: 'K',
+                    ),
+                    pb.LibraryObjectView(
+                      kind: 'mapping',
+                      key: 'source',
+                      name: 'TempSensor',
+                      signature: '() -> RoomTemp',
+                    ),
+                  ],
                 ),
               ],
             ),

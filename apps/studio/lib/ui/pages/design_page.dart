@@ -105,6 +105,7 @@ class DesignPage extends StatelessWidget {
                     o.id.toInt(): o.state,
                 },
                 templates: state.templates.toList(),
+                sources: state.libraryItems.where((i) => i.category == 'source').toList(),
                 recentTemplates: state.editor.recentTemplates,
                 renaming: state.editor.renaming,
                 canInsert: state.editor.pendingInsert == null,

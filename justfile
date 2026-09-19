@@ -45,6 +45,12 @@ docs-l10n:
 studio-l10n:
     cd {{studio}} && {{flutter}} gen-l10n
 
+# Regenerate the Standard Library's presentation strings (libItem_* keys in
+# the ARB catalogs, lib/l10n/library_strings.dart) from library/std/concepts.toml
+# and locale/library/std.json; then `just studio-l10n`.  Commit the result.
+library-l10n:
+    python3 scripts/gen_library_l10n.py
+
 # Catalog completeness: every English key in zh-Hans and ja, placeholders
 # matching, glossary well-formed, user-guide PO files in step with the POT,
 # and the rendered pages current (rendered into target/preflight and

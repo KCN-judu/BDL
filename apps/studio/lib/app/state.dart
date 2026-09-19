@@ -73,24 +73,6 @@ extension SourceHere on AppState {
   }
 }
 
-/// A library template's display name and description for [locale]
-/// (`zh-Hans`, `ja`), falling back to the English fields.  Identifiers the
-/// template generates never change with the locale.
-extension TemplateText on pb.ConceptTemplateView {
-  String displayNameIn(String locale) {
-    final l = displayNames[locale];
-    return l == null || l.isEmpty ? displayName : l;
-  }
-
-  String descriptionIn(String locale) {
-    final l = descriptions[locale];
-    return l == null || l.isEmpty ? description : l;
-  }
-
-  /// A Source template creates a concept and `<sourceDefaultName> : () -> concept`.
-  bool get isSource => sourceDefaultName.isNotEmpty;
-}
-
 /// The workflow pages, in workflow order (docs/architecture/studio-ui.md §1).
 enum StudioPage { design, simulate, deploy, monitor }
 
@@ -1314,7 +1296,7 @@ class EditorState {
   /// semantic resolution.
   final String librarySearch;
 
-  /// Recently inserted concept templates, most recent first (at most
+  /// Recently inserted library items, most recent first (at most
   /// [maxRecentTemplates]).  A Studio preference; never project state.
   final List<String> recentTemplates;
 
@@ -1516,7 +1498,7 @@ class AppState {
   /// and, later, others) plus the shared quantity vocabulary.  Authoring
   /// vocabulary, independent of any project; `null` until the daemon
   /// answered.
-  final pb.ConceptTemplatesResponse? library;
+  final pb.LibraryItemsResponse? library;
   final EditorState editor;
   final RenderState render;
 
@@ -1581,9 +1563,16 @@ class AppState {
     ComponentContext(:final id) => component(id),
   };
 
-  /// Every template of every served library, in library order.
+  /// Every item of every served library, in library order.
+  Iterable<pb.LibraryItemView> get libraryItems =>
+      library?.libraries.expand((l) => l.items) ?? const Iterable.empty();
+
+  pb.LibraryItemView? libraryItem(String id) => libraryItems.where((i) => i.id == id).firstOrNull;
+
+  /// The Concept items as templates (what the canvas menu's concept
+  /// sub-menus list), in library order.
   Iterable<pb.ConceptTemplateView> get templates =>
-      library?.libraries.expand((l) => l.templates) ?? const Iterable.empty();
+      libraryItems.where((i) => i.hasConcept()).map((i) => i.concept);
 
   pb.ConceptTemplateView? template(String id) => templates.where((t) => t.id == id).firstOrNull;
 
@@ -1641,7 +1630,7 @@ class AppState {
     bool clearSystemAnalysis = false,
     List<RecentProject>? recent,
     AppPreferences? preferences,
-    pb.ConceptTemplatesResponse? library,
+    pb.LibraryItemsResponse? library,
     EditorState? editor,
     RenderState? render,
   }) {

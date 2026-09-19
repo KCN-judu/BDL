@@ -239,6 +239,10 @@ def screenshots(r: Runner) -> None:
 
 def l10n(r: Runner) -> None:
     r.cmd([sys.executable, "scripts/check_l10n.py"])
+    # the Standard Library's presentation strings in the ARB catalogs and
+    # lib/l10n/library_strings.dart follow library/std/concepts.toml and
+    # locale/library/std.json
+    r.cmd([sys.executable, "scripts/gen_library_l10n.py", "--check"], hint="just library-l10n")
     r.cmd([sys.executable, "-m", "unittest", "scripts/test_docs_l10n.py"])
     # the rendered user-guide catalogs and pages must be current: regenerate
     # into a scratch copy and compare, never into the tree

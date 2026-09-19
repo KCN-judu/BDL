@@ -14,7 +14,8 @@ import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
-import '../concept_library_panel.dart' show ConceptTemplateDrag, categoryLabel;
+import '../../l10n/library_strings.dart';
+import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
 import '../dialogs.dart' show showNewSourceSheet;
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
@@ -29,6 +30,7 @@ class NodeCanvas extends StatefulWidget {
     this.statuses = const {},
     this.outputStates = const {},
     this.templates = const [],
+    this.sources = const [],
     this.recentTemplates = const [],
     this.renaming,
     this.canInsert = true,
@@ -74,6 +76,9 @@ class NodeCanvas extends StatefulWidget {
   /// The concept templates the right-click menu offers, and the recently
   /// used ones (most recent first).
   final List<pb.ConceptTemplateView> templates;
+
+  /// The Source items of the library, for the Add Source menu.
+  final List<pb.LibraryItemView> sources;
   final List<String> recentTemplates;
 
   /// The node whose name is open for inline editing, if any.
@@ -181,9 +186,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       scenePoint - const Offset(NodeMetrics.conceptWidth / 2, NodeMetrics.headerHeight / 2);
 
   void _insert(String templateId, Offset scenePoint) {
-    widget.dispatch(
-      InsertConceptTemplateRequested(templateId, position: nodeOriginFor(scenePoint)),
-    );
+    widget.dispatch(InsertLibraryItemRequested(templateId, position: nodeOriginFor(scenePoint)));
   }
 
   void _onSecondaryTapDown(TapDownDetails d) {
@@ -239,14 +242,22 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final node = _menuNode;
     final all = widget.templates;
     final byId = {for (final t in all) t.id: t};
-    final tag = context.l10n.libraryLocale;
+    final l10n = context.l10n;
     MenuItemButton item(pb.ConceptTemplateView t) => MenuItemButton(
       onPressed: widget.canInsert ? () => _insert(t.id, _menuScene) : null,
-      child: Text(t.displayNameIn(tag)),
+      child: Text(libraryItemStrings(l10n, t.id)?.name ?? t.displayName),
     );
     List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
-    final recent = [for (final id in widget.recentTemplates) ?byId[id]];
-    final sources = all.where((t) => t.isSource);
+    MenuItemButton sourceItem(pb.LibraryItemView s) => MenuItemButton(
+      onPressed: widget.canInsert ? () => _insert(s.id, _menuScene) : null,
+      child: Text(itemName(l10n, s)),
+    );
+    final sourceById = {for (final s in widget.sources) s.id: s};
+    final recent = [
+      for (final id in widget.recentTemplates)
+        if (byId[id] case final t?) item(t) else if (sourceById[id] case final s?) sourceItem(s),
+    ];
+    final sources = widget.sources.map(sourceItem);
     final environment = all.where((t) => t.category == 'environment');
     final motion = all.where((t) => t.category == 'motion');
     final human = all.where((t) => t.category == 'human');
@@ -389,7 +400,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       SubmenuButton(
         menuChildren: [
           if (recent.isNotEmpty) ...[
-            SubmenuButton(menuChildren: group(recent), child: Text(context.l10n.recent)),
+            SubmenuButton(menuChildren: recent, child: Text(context.l10n.recent)),
             const Divider(height: 8),
           ],
           SubmenuButton(menuChildren: group(inputs), child: Text(context.l10n.input)),
@@ -419,7 +430,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       // (ADR-0032): the standard ones, or one over a concept already here.
       SubmenuButton(
         menuChildren: [
-          ...group(sources),
+          ...sources,
           if (sources.isNotEmpty) const Divider(height: 8),
           MenuItemButton(
             onPressed: widget.canInsert && widget.project.concepts.isNotEmpty ? _newSource : null,
@@ -950,12 +961,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
             }
             return KeyEventResult.ignored;
           },
-          child: DragTarget<ConceptTemplateDrag>(
+          child: DragTarget<LibraryItemDrag>(
             onWillAcceptWithDetails: (_) => widget.canInsert,
             onAcceptWithDetails: (d) {
               final box = context.findRenderObject() as RenderBox?;
               if (box == null) return;
-              _insert(d.data.templateId, _toScene(box.globalToLocal(d.offset)));
+              _insert(d.data.itemId, _toScene(box.globalToLocal(d.offset)));
             },
             builder: (context, candidates, _) => MenuAnchor(
               controller: _chooserMenu,

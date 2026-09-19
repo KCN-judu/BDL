@@ -1815,6 +1815,443 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noSourcesARelationshipWithNoReads => '没有来源：一个既不读取任何内容也没有定义的关系就是来源。它的值由环境提供，每次激活一个。';
+
+  @override
+  String get searchLibrary => '搜索库';
+
+  @override
+  String get loadingTheLibrary => '正在载入库…';
+
+  @override
+  String get theLibraryArrivesWithTheCompiler => '库随编译器服务一同到达。';
+
+  @override
+  String noLibraryMatches(Object query) {
+    return '库中没有与“$query”匹配的项。';
+  }
+
+  @override
+  String get openAProjectToInsertFrom => '打开项目后即可从此处插入。';
+
+  @override
+  String get libraryCreates => '将创建';
+
+  @override
+  String libraryValueOf(Object name) {
+    return '值：$name';
+  }
+
+  @override
+  String librarySourceOf(Object name) {
+    return '来源：$name';
+  }
+
+  @override
+  String libraryTypeOf(Object type) {
+    return '类型：$type';
+  }
+
+  @override
+  String get libraryGroupExternal => '外部';
+
+  @override
+  String get libItem_std_environment_temperature_name => '温度';
+
+  @override
+  String get libItem_std_environment_temperature_description => '某物有多热：空气、房间、电机。';
+
+  @override
+  String get libItem_std_environment_temperature_tags => '温度 热 冷 热量';
+
+  @override
+  String get libItem_std_environment_ambient_light_name => '环境光';
+
+  @override
+  String get libItem_std_environment_ambient_light_description => '周围环境照射到产品上的光量。';
+
+  @override
+  String get libItem_std_environment_ambient_light_tags => '光 照度 亮度 日光 黑暗';
+
+  @override
+  String get libItem_std_environment_humidity_name => '湿度';
+
+  @override
+  String get libItem_std_environment_humidity_description => '空气的相对湿度，0（干燥）到 1（饱和）。';
+
+  @override
+  String get libItem_std_environment_humidity_tags => '湿度 潮湿 水分';
+
+  @override
+  String get libItem_std_environment_air_pressure_name => '气压';
+
+  @override
+  String get libItem_std_environment_air_pressure_description => '大气压力；随海拔降低，随天气变化。';
+
+  @override
+  String get libItem_std_environment_air_pressure_tags => '气压 压力 大气 海拔 天气';
+
+  @override
+  String get libItem_std_environment_sound_level_name => '声音强度';
+
+  @override
+  String get libItem_std_environment_sound_level_description => '周围环境有多吵，从 0（安静）到 1 的等级。';
+
+  @override
+  String get libItem_std_environment_sound_level_tags => '声音 噪声 音量 麦克风';
+
+  @override
+  String get libItem_std_human_button_pressed_name => '按钮按下';
+
+  @override
+  String get libItem_std_human_button_pressed_description => '此刻按钮是否被按住。';
+
+  @override
+  String get libItem_std_human_button_pressed_tags => '按钮 按下 按键 点击';
+
+  @override
+  String get libItem_std_human_touch_name => '触摸';
+
+  @override
+  String get libItem_std_human_touch_description => '表面是否正被触摸。';
+
+  @override
+  String get libItem_std_human_touch_tags => '触摸 触控 电容 手指';
+
+  @override
+  String get libItem_std_human_switch_state_name => '开关状态';
+
+  @override
+  String get libItem_std_human_switch_state_description => '拨动开关是否处于打开状态。';
+
+  @override
+  String get libItem_std_human_switch_state_tags => '开关 拨动 打开 关闭';
+
+  @override
+  String get libItem_std_human_dial_position_name => '旋钮位置';
+
+  @override
+  String get libItem_std_human_dial_position_description => '旋钮被转动了多少。';
+
+  @override
+  String get libItem_std_human_dial_position_tags => '旋钮 转动 电位器 角度';
+
+  @override
+  String get libItem_std_human_slider_position_name => '滑块位置';
+
+  @override
+  String get libItem_std_human_slider_position_description => '滑块在两端之间的位置，0 到 1。';
+
+  @override
+  String get libItem_std_human_slider_position_tags => '滑块 推子 位置 电位器';
+
+  @override
+  String get libItem_std_motion_distance_name => '距离';
+
+  @override
+  String get libItem_std_motion_distance_description => '某物离得有多远。';
+
+  @override
+  String get libItem_std_motion_distance_tags => '距离 远近 测距 接近 超声波';
+
+  @override
+  String get libItem_std_motion_position_name => '位置';
+
+  @override
+  String get libItem_std_motion_position_description => '某物沿一条轴所在的位置。';
+
+  @override
+  String get libItem_std_motion_position_tags => '位置 位移 轴 行程';
+
+  @override
+  String get libItem_std_motion_angle_name => '角度';
+
+  @override
+  String get libItem_std_motion_angle_description => '某物旋转了多少。';
+
+  @override
+  String get libItem_std_motion_angle_tags => '角度 旋转 度 弧度 朝向';
+
+  @override
+  String get libItem_std_motion_tilt_name => '倾斜';
+
+  @override
+  String get libItem_std_motion_tilt_description => '某物偏离水平的程度。';
+
+  @override
+  String get libItem_std_motion_tilt_tags => '倾斜 倾角 水平 加速度计';
+
+  @override
+  String get libItem_std_motion_speed_name => '速度';
+
+  @override
+  String get libItem_std_motion_speed_description => '某物移动得有多快。';
+
+  @override
+  String get libItem_std_motion_speed_tags => '速度 速率 快慢';
+
+  @override
+  String get libItem_std_motion_acceleration_name => '加速度';
+
+  @override
+  String get libItem_std_motion_acceleration_description => '速度变化得有多快；冲击或碰撞在这里表现为尖峰。';
+
+  @override
+  String get libItem_std_motion_acceleration_tags => '加速度 冲击 碰撞 振动';
+
+  @override
+  String get libItem_std_motion_angular_velocity_name => '角速度';
+
+  @override
+  String get libItem_std_motion_angular_velocity_description => '某物转动得有多快。';
+
+  @override
+  String get libItem_std_motion_angular_velocity_tags => '角速度 转速 陀螺仪 旋转';
+
+  @override
+  String get libItem_std_motion_orientation_name => '朝向';
+
+  @override
+  String get libItem_std_motion_orientation_description => '某物面向哪个方向，作为航向。';
+
+  @override
+  String get libItem_std_motion_orientation_tags => '朝向 航向 方位 罗盘';
+
+  @override
+  String get libItem_std_mechanical_force_name => '力';
+
+  @override
+  String get libItem_std_mechanical_force_description => '某物推或拉的力度。';
+
+  @override
+  String get libItem_std_mechanical_force_tags => '力 推力 拉力 重量 载荷';
+
+  @override
+  String get libItem_std_mechanical_pressure_name => '压强';
+
+  @override
+  String get libItem_std_mechanical_pressure_description => '单位面积上的力：轮胎、管道、握力。';
+
+  @override
+  String get libItem_std_mechanical_pressure_tags => '压强 压力 轮胎 管道';
+
+  @override
+  String get libItem_std_mechanical_torque_name => '扭矩';
+
+  @override
+  String get libItem_std_mechanical_torque_description => '作用在轴上的转动力。';
+
+  @override
+  String get libItem_std_mechanical_torque_tags => '扭矩 转矩 轴 电机';
+
+  @override
+  String get libItem_std_electrical_voltage_name => '电压';
+
+  @override
+  String get libItem_std_electrical_voltage_description => '某点的电势：电源轨、电池单元、检测线。';
+
+  @override
+  String get libItem_std_electrical_voltage_tags => '电压 电势 伏特 电源';
+
+  @override
+  String get libItem_std_electrical_current_name => '电流';
+
+  @override
+  String get libItem_std_electrical_current_description => '通过某条路径的电流。';
+
+  @override
+  String get libItem_std_electrical_current_tags => '电流 安培 负载';
+
+  @override
+  String get libItem_std_electrical_battery_level_name => '电池电量';
+
+  @override
+  String get libItem_std_electrical_battery_level_description => '电池有多满，0（空）到 1（满）。';
+
+  @override
+  String get libItem_std_electrical_battery_level_tags => '电池 电量 充电 剩余';
+
+  @override
+  String get libItem_std_output_brightness_name => '亮度';
+
+  @override
+  String get libItem_std_output_brightness_description => '灯应有多亮，0（关）到 1（全亮）。';
+
+  @override
+  String get libItem_std_output_brightness_tags => '亮度 灯 调光 LED';
+
+  @override
+  String get libItem_std_output_color_name => '颜色';
+
+  @override
+  String get libItem_std_output_color_description => '灯显示的颜色，作为色环上的色相。';
+
+  @override
+  String get libItem_std_output_color_tags => '颜色 色相 RGB 灯';
+
+  @override
+  String get libItem_std_output_display_value_name => '显示数值';
+
+  @override
+  String get libItem_std_output_display_value_description => '显示屏上显示的一个数字。';
+
+  @override
+  String get libItem_std_output_display_value_tags => '显示 数值 屏幕 读数';
+
+  @override
+  String get libItem_std_actuator_motor_speed_name => '电机转速';
+
+  @override
+  String get libItem_std_actuator_motor_speed_description => '电机应转多快，以满速的比例表示，−1 到 1。';
+
+  @override
+  String get libItem_std_actuator_motor_speed_tags => '电机 转速 马达 PWM';
+
+  @override
+  String get libItem_std_actuator_motor_angle_name => '电机角度';
+
+  @override
+  String get libItem_std_actuator_motor_angle_description => '电机或步进电机应保持的角度。';
+
+  @override
+  String get libItem_std_actuator_motor_angle_tags => '电机 角度 步进 马达';
+
+  @override
+  String get libItem_std_actuator_servo_position_name => '舵机位置';
+
+  @override
+  String get libItem_std_actuator_servo_position_description => '舵机臂应转到的角度。';
+
+  @override
+  String get libItem_std_actuator_servo_position_tags => '舵机 伺服 角度 位置';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_name => '振动强度';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_description => '触觉马达应振动得多强，0 到 1。';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_tags => '振动 触觉 马达 震动';
+
+  @override
+  String get libItem_std_actuator_heater_power_name => '加热功率';
+
+  @override
+  String get libItem_std_actuator_heater_power_description => '加热器应开到多大，0 到 1。';
+
+  @override
+  String get libItem_std_actuator_heater_power_tags => '加热 加热器 功率 温控';
+
+  @override
+  String get libItem_std_actuator_fan_speed_name => '风扇转速';
+
+  @override
+  String get libItem_std_actuator_fan_speed_description => '风扇应转多快，0（关）到 1（全速）。';
+
+  @override
+  String get libItem_std_actuator_fan_speed_tags => '风扇 转速 散热 冷却';
+
+  @override
+  String get libItem_std_actuator_valve_opening_name => '阀门开度';
+
+  @override
+  String get libItem_std_actuator_valve_opening_description => '阀门打开的程度，0（关闭）到 1（全开）。';
+
+  @override
+  String get libItem_std_actuator_valve_opening_tags => '阀门 开度 流量 水';
+
+  @override
+  String get libItem_std_audio_volume_name => '音量';
+
+  @override
+  String get libItem_std_audio_volume_description => '产品播放的响度，0（静音）到 1（最大）。';
+
+  @override
+  String get libItem_std_audio_volume_tags => '音量 响度 扬声器 声音';
+
+  @override
+  String get libItem_std_audio_pitch_name => '音高';
+
+  @override
+  String get libItem_std_audio_pitch_description => '要播放的音调的频率。';
+
+  @override
+  String get libItem_std_audio_pitch_tags => '音高 频率 音调 蜂鸣器';
+
+  @override
+  String get libItem_std_source_temperature_name => '温度传感器';
+
+  @override
+  String get libItem_std_source_temperature_description => '产品测得的温度——房间、外壳、电机——作为行为读取的值。';
+
+  @override
+  String get libItem_std_source_temperature_tags => '温度 传感器 热 测温 热敏电阻';
+
+  @override
+  String get libItem_std_source_tilt_name => '倾斜传感器';
+
+  @override
+  String get libItem_std_source_tilt_description => '产品偏离水平的程度，作为行为读取的值——灯头、手持设备、车身。';
+
+  @override
+  String get libItem_std_source_tilt_tags => '倾斜 传感器 倾角 加速度计 水平';
+
+  @override
+  String get libItem_std_source_distance_name => '距离传感器';
+
+  @override
+  String get libItem_std_source_distance_description =>
+      '某物离得有多远，作为行为读取的值——障碍物、手、液位。用哪种传感器测量是部署时的选择。';
+
+  @override
+  String get libItem_std_source_distance_tags => '距离 传感器 测距 接近 超声波 激光';
+
+  @override
+  String get libItem_std_source_ambient_light_name => '环境光传感器';
+
+  @override
+  String get libItem_std_source_ambient_light_description =>
+      '周围环境照射到产品上的光量，作为行为读取的值——用于调光、唤醒显示、检测日光。';
+
+  @override
+  String get libItem_std_source_ambient_light_tags => '环境光 传感器 照度 光 日光 亮度';
+
+  @override
+  String get libItem_std_source_button_name => '按钮状态';
+
+  @override
+  String get libItem_std_source_button_description => '此刻按钮是否被按住，作为行为每次激活时读取的值——一个稳定状态，而不是事件。';
+
+  @override
+  String get libItem_std_source_button_tags => '按钮 状态 按下 按键 输入';
+
+  @override
+  String get libItem_std_source_encoder_name => '编码器位置';
+
+  @override
+  String get libItem_std_source_encoder_description => '旋转编码器报告的角位置，作为行为读取的值——旋钮、轴、轮子。计脉冲是部署的事。';
+
+  @override
+  String get libItem_std_source_encoder_tags => '编码器 位置 旋钮 轴 角度 输入';
+
+  @override
+  String get libItem_std_source_analog_name => '模拟输入';
+
+  @override
+  String get libItem_std_source_analog_description => '由行为解释的通用模拟读数。值的种类留给你：知道输入测量什么之后，再为概念选择一个量。';
+
+  @override
+  String get libItem_std_source_analog_tags => '模拟 输入 ADC 电压 读数 通用';
+
+  @override
+  String get libItem_std_source_external_name => '外部值';
+
+  @override
+  String get libItem_std_source_external_description =>
+      '由产品外部提供的值——来自主机、网络或仿真——作为行为读取的值。来源并不总是传感器。';
+
+  @override
+  String get libItem_std_source_external_tags => '外部 来源 主机 网络 仿真 输入 提供';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).

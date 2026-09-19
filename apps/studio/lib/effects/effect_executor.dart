@@ -252,18 +252,18 @@ class EffectExecutor {
             ),
           );
         }
-      case ListConceptTemplates():
+      case ListLibraryItems():
         await _call(
-          pb.ClientMessage(listConceptTemplates: pb.ListConceptTemplatesRequest()),
-          (r) => _dispatch(ConceptTemplatesReceived(r.conceptTemplates)),
+          pb.ClientMessage(listLibraryItems: pb.ListLibraryItemsRequest()),
+          (r) => _dispatch(LibraryItemsReceived(r.libraryItems)),
           counted: false,
         );
-      case InstantiateConceptTemplate(:final baseRevision, :final templateId, :final component):
+      case InstantiateLibraryItem(:final baseRevision, :final itemId, :final component):
         await _call(
           pb.ClientMessage(
-            instantiateConceptTemplate: pb.InstantiateConceptTemplateRequest(
+            instantiateLibraryItem: pb.InstantiateLibraryItemRequest(
               baseRevision: Int64(baseRevision),
-              templateId: templateId,
+              itemId: itemId,
               component: component == null ? null : Int64(component),
             ),
           ),

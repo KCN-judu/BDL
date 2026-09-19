@@ -1950,4 +1950,478 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noSourcesARelationshipWithNoReads =>
       'No Sources: a relationship with no reads and no definition is one. The environment then provides its value, one per activation.';
+
+  @override
+  String get searchLibrary => 'Search the library';
+
+  @override
+  String get loadingTheLibrary => 'Loading the library…';
+
+  @override
+  String get theLibraryArrivesWithTheCompiler => 'The library arrives with the compiler service.';
+
+  @override
+  String noLibraryMatches(Object query) {
+    return 'Nothing in the library matches “$query”.';
+  }
+
+  @override
+  String get openAProjectToInsertFrom => 'Open a project to insert from here.';
+
+  @override
+  String get libraryCreates => 'Creates';
+
+  @override
+  String libraryValueOf(Object name) {
+    return 'value: $name';
+  }
+
+  @override
+  String librarySourceOf(Object name) {
+    return 'source: $name';
+  }
+
+  @override
+  String libraryTypeOf(Object type) {
+    return 'type: $type';
+  }
+
+  @override
+  String get libraryGroupExternal => 'External';
+
+  @override
+  String get libItem_std_environment_temperature_name => 'Temperature';
+
+  @override
+  String get libItem_std_environment_temperature_description =>
+      'How warm something is: the air, a room, a motor.';
+
+  @override
+  String get libItem_std_environment_temperature_tags => 'temp thermal heat warm cold K °C celsius';
+
+  @override
+  String get libItem_std_environment_ambient_light_name => 'Ambient Light';
+
+  @override
+  String get libItem_std_environment_ambient_light_description =>
+      'How much light falls on the product from its surroundings.';
+
+  @override
+  String get libItem_std_environment_ambient_light_tags =>
+      'light lux brightness daylight dark photocell';
+
+  @override
+  String get libItem_std_environment_humidity_name => 'Humidity';
+
+  @override
+  String get libItem_std_environment_humidity_description =>
+      'Relative humidity of the air, 0 (dry) to 1 (saturated).';
+
+  @override
+  String get libItem_std_environment_humidity_tags => 'moisture damp rh relative humidity %';
+
+  @override
+  String get libItem_std_environment_air_pressure_name => 'Air Pressure';
+
+  @override
+  String get libItem_std_environment_air_pressure_description =>
+      'Atmospheric pressure; falls with altitude, moves with weather.';
+
+  @override
+  String get libItem_std_environment_air_pressure_tags =>
+      'barometer atmospheric altitude weather hPa kPa';
+
+  @override
+  String get libItem_std_environment_sound_level_name => 'Sound Level';
+
+  @override
+  String get libItem_std_environment_sound_level_description =>
+      'How loud the surroundings are, as a level from 0 (silence) to 1.';
+
+  @override
+  String get libItem_std_environment_sound_level_tags => 'noise loud microphone audio dB volume';
+
+  @override
+  String get libItem_std_human_button_pressed_name => 'Button Pressed';
+
+  @override
+  String get libItem_std_human_button_pressed_description =>
+      'Whether a button is being held down right now.';
+
+  @override
+  String get libItem_std_human_button_pressed_tags => 'button press push click key held';
+
+  @override
+  String get libItem_std_human_touch_name => 'Touch';
+
+  @override
+  String get libItem_std_human_touch_description => 'Whether a surface is being touched.';
+
+  @override
+  String get libItem_std_human_touch_tags => 'touch contact capacitive tap finger';
+
+  @override
+  String get libItem_std_human_switch_state_name => 'Switch State';
+
+  @override
+  String get libItem_std_human_switch_state_description => 'Whether a toggle switch is on.';
+
+  @override
+  String get libItem_std_human_switch_state_tags => 'switch toggle on off enabled';
+
+  @override
+  String get libItem_std_human_dial_position_name => 'Dial Position';
+
+  @override
+  String get libItem_std_human_dial_position_description => 'How far a knob has been turned.';
+
+  @override
+  String get libItem_std_human_dial_position_tags => 'dial knob rotary potentiometer turn';
+
+  @override
+  String get libItem_std_human_slider_position_name => 'Slider Position';
+
+  @override
+  String get libItem_std_human_slider_position_description =>
+      'Where a slider sits between its two ends, 0 to 1.';
+
+  @override
+  String get libItem_std_human_slider_position_tags => 'slider fader level position potentiometer';
+
+  @override
+  String get libItem_std_motion_distance_name => 'Distance';
+
+  @override
+  String get libItem_std_motion_distance_description => 'How far away something is.';
+
+  @override
+  String get libItem_std_motion_distance_tags => 'range proximity far near ultrasonic lidar cm mm';
+
+  @override
+  String get libItem_std_motion_position_name => 'Position';
+
+  @override
+  String get libItem_std_motion_position_description => 'Where something is along one axis.';
+
+  @override
+  String get libItem_std_motion_position_tags => 'location axis offset displacement mm';
+
+  @override
+  String get libItem_std_motion_angle_name => 'Angle';
+
+  @override
+  String get libItem_std_motion_angle_description => 'How far something is rotated.';
+
+  @override
+  String get libItem_std_motion_angle_tags => 'rotation degrees radians heading bearing';
+
+  @override
+  String get libItem_std_motion_tilt_name => 'Tilt';
+
+  @override
+  String get libItem_std_motion_tilt_description => 'How far something leans from level.';
+
+  @override
+  String get libItem_std_motion_tilt_tags => 'lean incline pitch roll level accelerometer';
+
+  @override
+  String get libItem_std_motion_speed_name => 'Speed';
+
+  @override
+  String get libItem_std_motion_speed_description => 'How fast something moves.';
+
+  @override
+  String get libItem_std_motion_speed_tags => 'velocity fast slow m/s km/h rate';
+
+  @override
+  String get libItem_std_motion_acceleration_name => 'Acceleration';
+
+  @override
+  String get libItem_std_motion_acceleration_description =>
+      'How quickly speed is changing; a shock or a bump is a spike here.';
+
+  @override
+  String get libItem_std_motion_acceleration_tags => 'accelerometer shock bump g m/s² impact';
+
+  @override
+  String get libItem_std_motion_angular_velocity_name => 'Angular Velocity';
+
+  @override
+  String get libItem_std_motion_angular_velocity_description => 'How fast something is turning.';
+
+  @override
+  String get libItem_std_motion_angular_velocity_tags =>
+      'gyro gyroscope spin rotation rate rad/s rpm yaw rate';
+
+  @override
+  String get libItem_std_motion_orientation_name => 'Orientation';
+
+  @override
+  String get libItem_std_motion_orientation_description =>
+      'Which way something faces, as a heading.';
+
+  @override
+  String get libItem_std_motion_orientation_tags => 'heading compass yaw facing magnetometer';
+
+  @override
+  String get libItem_std_mechanical_force_name => 'Force';
+
+  @override
+  String get libItem_std_mechanical_force_description => 'How hard something pushes or pulls.';
+
+  @override
+  String get libItem_std_mechanical_force_tags => 'load push pull weight newton load cell';
+
+  @override
+  String get libItem_std_mechanical_pressure_name => 'Pressure';
+
+  @override
+  String get libItem_std_mechanical_pressure_description =>
+      'Force over an area: a tyre, a pipe, a grip.';
+
+  @override
+  String get libItem_std_mechanical_pressure_tags => 'psi bar kPa pneumatic hydraulic tyre grip';
+
+  @override
+  String get libItem_std_mechanical_torque_name => 'Torque';
+
+  @override
+  String get libItem_std_mechanical_torque_description => 'Turning force on a shaft.';
+
+  @override
+  String get libItem_std_mechanical_torque_tags => 'twist moment shaft N·m Nm';
+
+  @override
+  String get libItem_std_electrical_voltage_name => 'Voltage';
+
+  @override
+  String get libItem_std_electrical_voltage_description =>
+      'Electrical potential at a point: a rail, a cell, a sense line.';
+
+  @override
+  String get libItem_std_electrical_voltage_tags => 'volt potential rail supply mV adc';
+
+  @override
+  String get libItem_std_electrical_current_name => 'Current';
+
+  @override
+  String get libItem_std_electrical_current_description => 'Electrical current through a path.';
+
+  @override
+  String get libItem_std_electrical_current_tags => 'amp ampere mA draw load shunt';
+
+  @override
+  String get libItem_std_electrical_battery_level_name => 'Battery Level';
+
+  @override
+  String get libItem_std_electrical_battery_level_description =>
+      'How full the battery is, 0 (empty) to 1 (full).';
+
+  @override
+  String get libItem_std_electrical_battery_level_tags =>
+      'battery charge soc fuel gauge % low battery';
+
+  @override
+  String get libItem_std_output_brightness_name => 'Brightness';
+
+  @override
+  String get libItem_std_output_brightness_description =>
+      'How bright a light should be, 0 (off) to 1 (full).';
+
+  @override
+  String get libItem_std_output_brightness_tags => 'light led lamp dim level pwm intensity';
+
+  @override
+  String get libItem_std_output_color_name => 'Color';
+
+  @override
+  String get libItem_std_output_color_description =>
+      'Which colour a light shows, as a hue around the wheel.';
+
+  @override
+  String get libItem_std_output_color_tags => 'colour hue rgb led tint';
+
+  @override
+  String get libItem_std_output_display_value_name => 'Display Value';
+
+  @override
+  String get libItem_std_output_display_value_description => 'A number shown on a display.';
+
+  @override
+  String get libItem_std_output_display_value_tags => 'display screen readout digits show';
+
+  @override
+  String get libItem_std_actuator_motor_speed_name => 'Motor Speed';
+
+  @override
+  String get libItem_std_actuator_motor_speed_description =>
+      'How fast a motor should turn, as a share of its full speed, −1 to 1.';
+
+  @override
+  String get libItem_std_actuator_motor_speed_tags => 'motor drive pwm rpm throttle h-bridge';
+
+  @override
+  String get libItem_std_actuator_motor_angle_name => 'Motor Angle';
+
+  @override
+  String get libItem_std_actuator_motor_angle_description =>
+      'The angle a motor or stepper should hold.';
+
+  @override
+  String get libItem_std_actuator_motor_angle_tags => 'motor stepper position rotation target';
+
+  @override
+  String get libItem_std_actuator_servo_position_name => 'Servo Position';
+
+  @override
+  String get libItem_std_actuator_servo_position_description =>
+      'The angle a servo arm should move to.';
+
+  @override
+  String get libItem_std_actuator_servo_position_tags => 'servo arm sg90 pwm angle';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_name => 'Vibration Intensity';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_description =>
+      'How strongly a haptic motor should buzz, 0 to 1.';
+
+  @override
+  String get libItem_std_actuator_vibration_intensity_tags => 'haptic buzz rumble vibrate motor';
+
+  @override
+  String get libItem_std_actuator_heater_power_name => 'Heater Power';
+
+  @override
+  String get libItem_std_actuator_heater_power_description =>
+      'How much a heater should be on, 0 to 1.';
+
+  @override
+  String get libItem_std_actuator_heater_power_tags => 'heat heater element warm pwm duty';
+
+  @override
+  String get libItem_std_actuator_fan_speed_name => 'Fan Speed';
+
+  @override
+  String get libItem_std_actuator_fan_speed_description =>
+      'How fast a fan should run, 0 (off) to 1 (full).';
+
+  @override
+  String get libItem_std_actuator_fan_speed_tags => 'fan cooling blower pwm airflow';
+
+  @override
+  String get libItem_std_actuator_valve_opening_name => 'Valve Opening';
+
+  @override
+  String get libItem_std_actuator_valve_opening_description =>
+      'How far a valve is open, 0 (closed) to 1 (fully open).';
+
+  @override
+  String get libItem_std_actuator_valve_opening_tags => 'valve flow open closed solenoid';
+
+  @override
+  String get libItem_std_audio_volume_name => 'Volume';
+
+  @override
+  String get libItem_std_audio_volume_description =>
+      'How loud the product should play, 0 (silent) to 1 (full).';
+
+  @override
+  String get libItem_std_audio_volume_tags => 'loudness speaker gain mute audio';
+
+  @override
+  String get libItem_std_audio_pitch_name => 'Pitch';
+
+  @override
+  String get libItem_std_audio_pitch_description => 'The frequency of a tone to play.';
+
+  @override
+  String get libItem_std_audio_pitch_tags => 'tone note frequency buzzer beep Hz';
+
+  @override
+  String get libItem_std_source_temperature_name => 'Temperature Sensor';
+
+  @override
+  String get libItem_std_source_temperature_description =>
+      'The temperature of a room, a surface or the air, as the environment provides it.';
+
+  @override
+  String get libItem_std_source_temperature_tags =>
+      'temp thermal thermometer thermistor K °C celsius sensor source';
+
+  @override
+  String get libItem_std_source_tilt_name => 'Tilt Sensor';
+
+  @override
+  String get libItem_std_source_tilt_description =>
+      'How far the product leans from level, as the environment provides it — a lamp head, a handheld, a vehicle body.';
+
+  @override
+  String get libItem_std_source_tilt_tags =>
+      'tilt lean incline pitch roll accelerometer imu level sensor source';
+
+  @override
+  String get libItem_std_source_distance_name => 'Distance Sensor';
+
+  @override
+  String get libItem_std_source_distance_description =>
+      'How far away the nearest thing is, as the environment provides it — an obstacle, a hand, a fill level. Which sensor measures it is a deployment choice.';
+
+  @override
+  String get libItem_std_source_distance_tags =>
+      'range proximity far near obstacle ultrasonic lidar tof sensor source';
+
+  @override
+  String get libItem_std_source_ambient_light_name => 'Ambient Light Sensor';
+
+  @override
+  String get libItem_std_source_ambient_light_description =>
+      'How much light falls on the product, as the environment provides it — for dimming, waking a display, daylight detection.';
+
+  @override
+  String get libItem_std_source_ambient_light_tags =>
+      'light lux daylight dark photocell photodiode sensor source';
+
+  @override
+  String get libItem_std_source_button_name => 'Button State';
+
+  @override
+  String get libItem_std_source_button_description =>
+      'Whether a button is held or a switch is on right now, as the environment provides it each activation — a stable state, never an event.';
+
+  @override
+  String get libItem_std_source_button_tags => 'button switch press push key held input source';
+
+  @override
+  String get libItem_std_source_encoder_name => 'Encoder Position';
+
+  @override
+  String get libItem_std_source_encoder_description =>
+      'The angle a shaft or knob has turned to, as the environment provides it. Counting pulses is the deployment\'s job.';
+
+  @override
+  String get libItem_std_source_encoder_tags =>
+      'encoder rotary knob shaft position angle quadrature input source';
+
+  @override
+  String get libItem_std_source_analog_name => 'Analog Input';
+
+  @override
+  String get libItem_std_source_analog_description =>
+      'A generic analog reading the behavior interprets. The value\'s kind is left to you: choose a quantity for the concept once you know what the input measures.';
+
+  @override
+  String get libItem_std_source_analog_tags => 'analog adc voltage reading generic input source';
+
+  @override
+  String get libItem_std_source_external_name => 'External Value';
+
+  @override
+  String get libItem_std_source_external_description =>
+      'A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. A source is not always a sensor.';
+
+  @override
+  String get libItem_std_source_external_tags =>
+      'host network remote simulation external provided input source';
 }

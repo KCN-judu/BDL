@@ -10,7 +10,7 @@ import '../app/state.dart';
 import '../app/system.dart' show freshGroupName;
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/concept_glyphs.dart';
-import 'concept_library_panel.dart';
+import 'library_panel.dart';
 import 'dialogs.dart';
 import 'mac/widgets.dart';
 import 'mac/interactive.dart';
@@ -47,7 +47,7 @@ class Library extends StatelessWidget {
           Expanded(
             child: switch (state.editor.sidebar) {
               SidebarTab.project => _ProjectObjects(state: state, dispatch: dispatch),
-              SidebarTab.library => ConceptLibraryPanel(state: state, dispatch: dispatch),
+              SidebarTab.library => LibraryPanel(state: state, dispatch: dispatch),
             },
           ),
         ],

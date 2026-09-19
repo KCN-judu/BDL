@@ -16,7 +16,7 @@ import 'package:bdl_studio/l10n/l10n.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/canvas/concept_glyphs.dart';
-import 'package:bdl_studio/ui/concept_library_panel.dart';
+import 'package:bdl_studio/ui/library_panel.dart';
 import 'package:bdl_studio/ui/dialogs.dart';
 import 'package:bdl_studio/ui/inspector.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
@@ -109,29 +109,57 @@ class HarnessState extends State<Harness> {
   );
 }
 
-pb.ConceptTemplateView sourceTemplate() => pb.ConceptTemplateView(
+/// The Temperature Sensor Source item as the daemon serves it: what it
+/// creates, in the canonical English; Studio localizes by id.
+pb.LibraryItemView sourceItem() => pb.LibraryItemView(
   id: 'std.source.temperature',
+  category: 'source',
   displayName: 'Temperature Sensor',
-  defaultName: 'RoomTemp',
   description: 'The temperature of a room, as the environment provides it.',
-  category: 'sources',
-  roleHint: pb.RoleHint.ROLE_HINT_INPUT,
-  representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
-  unit: 'K',
+  group: 'environment',
   keywords: ['temp', 'source'],
-  sourceDefaultName: 'TempSensor',
-  displayNames: {'zh-Hans': '温度传感器', 'ja': '温度センサー'}.entries,
-  descriptions: {'zh-Hans': '房间的温度，由环境提供。'}.entries,
+  creates: [
+    pb.LibraryObjectView(
+      kind: 'concept',
+      key: 'value',
+      name: 'RoomTemp',
+      typeName: 'Temperature',
+      representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+      unit: 'K',
+    ),
+    pb.LibraryObjectView(
+      kind: 'mapping',
+      key: 'source',
+      name: 'TempSensor',
+      signature: '() -> RoomTemp',
+    ),
+  ],
 );
 
-pb.ConceptTemplateView conceptTemplate() => pb.ConceptTemplateView(
+pb.LibraryItemView conceptItem() => pb.LibraryItemView(
   id: 'std.environment.humidity',
+  category: 'concept',
   displayName: 'Humidity',
-  defaultName: 'Humidity',
   description: 'How damp the air is.',
-  category: 'environment',
-  roleHint: pb.RoleHint.ROLE_HINT_INPUT,
-  representation: pb.Representation(quantity: pb.Dim()),
+  group: 'environment',
+  creates: [
+    pb.LibraryObjectView(
+      kind: 'concept',
+      key: 'concept',
+      name: 'Humidity',
+      typeName: 'Scalar',
+      representation: pb.Representation(quantity: pb.Dim()),
+    ),
+  ],
+  concept: pb.ConceptTemplateView(
+    id: 'std.environment.humidity',
+    displayName: 'Humidity',
+    defaultName: 'Humidity',
+    description: 'How damp the air is.',
+    category: 'environment',
+    roleHint: pb.RoleHint.ROLE_HINT_INPUT,
+    representation: pb.Representation(quantity: pb.Dim()),
+  ),
 );
 
 final zh = lookupAppLocalizations(const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans'));
@@ -303,32 +331,40 @@ void main() {
   });
 
   group('library', () {
-    test('the category is Sources, in each locale', () {
-      expect(categoryLabel(kEnglish, 'sources'), 'Sources');
-      expect(categoryLabel(zh, 'sources'), '来源');
-      expect(categoryLabel(ja, 'sources'), '入力元');
+    test('the section is Sources, in each locale', () {
+      expect(categoryTitle(kEnglish, 'source'), 'Sources');
+      expect(categoryTitle(zh, 'source'), '来源');
+      expect(categoryTitle(ja, 'source'), '入力元');
+      expect(categoryTitle(kEnglish, 'concept'), 'Concepts');
     });
 
-    test('a template\'s text follows the locale; its identifiers do not', () {
-      final t = sourceTemplate();
-      expect(t.isSource, isTrue);
-      expect(conceptTemplate().isSource, isFalse);
-      expect(t.displayNameIn('en'), 'Temperature Sensor');
-      expect(t.displayNameIn('zh-Hans'), '温度传感器');
-      expect(t.displayNameIn('ja'), '温度センサー');
-      expect(t.descriptionIn('ja'), t.description, reason: 'absent locale falls back');
-      expect(t.defaultName, 'RoomTemp');
-      expect(t.sourceDefaultName, 'TempSensor');
-      expect(kEnglish.libraryLocale, 'en');
-      expect(zh.libraryLocale, 'zh-Hans');
-      expect(ja.libraryLocale, 'ja');
+    test('an item\'s text follows the locale; what it creates does not', () {
+      final t = sourceItem();
+      expect(t.category, 'source');
+      expect(conceptItem().category, 'concept');
+      expect(itemName(kEnglish, t), 'Temperature Sensor');
+      expect(itemName(zh, t), '温度传感器');
+      expect(itemName(ja, t), '温度センサー');
+      expect(itemDescription(ja, t), isNot(t.description));
+      for (final l in [kEnglish, zh, ja]) {
+        expect(t.creates.first.name, 'RoomTemp');
+        expect(t.creates.last.name, 'TempSensor');
+        expect(itemWord(l, t), '() -> RoomTemp');
+        expect(itemPreview(l, t).join(' '), contains('RoomTemp (Temperature)'));
+      }
+      // an item the catalog does not know keeps the daemon's English
+      final foreign = pb.LibraryItemView(id: 'team.x', category: 'source', displayName: 'X Sensor');
+      expect(itemName(ja, foreign), 'X Sensor');
     });
 
-    test('search finds a Source by its localized name and its relationship name', () {
-      final all = [sourceTemplate(), conceptTemplate()];
+    test('search finds a Source by its localized name, its tags and its relationship name', () {
+      final all = [sourceItem(), conceptItem()];
       List<String> ids(String q, AppLocalizations l) =>
-          searchTemplates(all, q, l10n: l).map((t) => t.id).toList();
+          searchItems(all, q, l10n: l).map((t) => t.id).toList();
       expect(ids('温度', zh), ['std.source.temperature']);
+      expect(ids('传感器', zh), ['std.source.temperature']);
+      expect(ids('温度', ja), ['std.source.temperature']);
+      expect(ids('センサー', ja), ['std.source.temperature']);
       expect(ids('TempSensor', kEnglish), ['std.source.temperature']);
       expect(ids('Sources', kEnglish), ['std.source.temperature']);
       expect(ids('来源', zh), ['std.source.temperature']);

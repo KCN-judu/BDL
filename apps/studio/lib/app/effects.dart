@@ -146,21 +146,18 @@ class PreviewExtraction extends Effect {
   final int generation;
 }
 
-/// Ask the daemon for its concept libraries.  Not counted as pending.
-class ListConceptTemplates extends Effect {
-  const ListConceptTemplates();
+/// Ask the daemon for its libraries, as items.  Not counted as pending.
+class ListLibraryItems extends Effect {
+  const ListLibraryItems();
 }
 
-/// The one instantiation request: the daemon builds and applies the
-/// `CreateConcept` from the template's defaults.  Answered like an edit.
-class InstantiateConceptTemplate extends Effect {
-  const InstantiateConceptTemplate({
-    required this.baseRevision,
-    required this.templateId,
-    this.component,
-  });
+/// The one instantiation request: the daemon plans the item's fragment
+/// against the target design and applies every step in one transaction.
+/// Answered like an edit.
+class InstantiateLibraryItem extends Effect {
+  const InstantiateLibraryItem({required this.baseRevision, required this.itemId, this.component});
   final int baseRevision;
-  final String templateId;
+  final String itemId;
 
   /// On a system project: the component body to insert into (`null`: the
   /// system's own design).

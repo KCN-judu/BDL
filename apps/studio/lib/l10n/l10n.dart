@@ -51,17 +51,6 @@ extension StudioL10n on BuildContext {
 /// The English catalog, the canonical fallback.
 final AppLocalizations kEnglish = lookupAppLocalizations(const Locale('en'));
 
-/// The locale tag a concept library keys its translated text by
-/// (`docs/spec/concept-library.md`): `zh-Hans`, `ja`, or `en` for the
-/// canonical fields.
-extension LibraryLocale on AppLocalizations {
-  String get libraryLocale => localeName.startsWith('zh')
-      ? 'zh-Hans'
-      : localeName.startsWith('ja')
-      ? 'ja'
-      : 'en';
-}
-
 /// How each supported locale names itself — shown in the language menu in
 /// its own language, whatever the current locale.
 String endonym(Locale locale) => switch (locale.languageCode) {

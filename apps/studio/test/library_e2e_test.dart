@@ -12,6 +12,9 @@ import 'dart:io';
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/simulation.dart';
 import 'package:bdl_studio/app/state.dart';
+import 'package:bdl_studio/l10n/l10n.dart';
+import 'package:bdl_studio/ui/library_panel.dart' show itemName;
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
@@ -53,10 +56,7 @@ void main() {
 
       // Right-click insertion, then a drag insertion of the same template.
       store.dispatch(
-        const InsertConceptTemplateRequested(
-          'std.environment.temperature',
-          position: Offset(40, 40),
-        ),
+        const InsertLibraryItemRequested('std.environment.temperature', position: Offset(40, 40)),
       );
       await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 1);
       final first = store.state.project!.concepts.single;
@@ -66,10 +66,7 @@ void main() {
       );
       await store.until((s) => s.editor.pendingRequests == 0);
       store.dispatch(
-        const InsertConceptTemplateRequested(
-          'std.environment.temperature',
-          position: Offset(40, 200),
-        ),
+        const InsertLibraryItemRequested('std.environment.temperature', position: Offset(40, 200)),
       );
       await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 2);
       final second = store.state.project!.concepts.firstWhere((c) => c.id != first.id);
@@ -115,27 +112,40 @@ void main() {
       store.dispatch(const AppStarted());
       await store.until((s) => s.library != null || s.connection is ConnectionFailed);
       expect(store.state.connection, isA<Connected>(), reason: '${store.state.connection}');
-      // the library serves seven Sources, each with its relationship and
-      // its zh-Hans / ja names; no other template has a relationship
-      final sources = store.state.templates.where((t) => t.isSource).toList();
-      expect(sources.length, greaterThanOrEqualTo(7));
-      expect(sources.every((t) => t.category == 'sources'), isTrue);
-      expect(
-        store.state.templates.where((t) => t.category != 'sources').any((t) => t.isSource),
-        isFalse,
-      );
-      final temp = store.state.template('std.source.temperature')!;
-      expect(temp.sourceDefaultName, 'TempSensor');
-      expect(temp.displayNameIn('zh-Hans'), '温度传感器');
-      expect(temp.displayNameIn('ja'), '温度センサー');
-      expect(temp.displayNameIn('en'), 'Temperature Sensor');
+      // the library serves eight Sources, each creating a concept and its
+      // `() -> Value` relationship; the concept templates hold none of it
+      final sources = store.state.libraryItems.where((i) => i.category == 'source').toList();
+      expect(sources.map((i) => i.id), [
+        'std.source.temperature',
+        'std.source.tilt',
+        'std.source.distance',
+        'std.source.ambient_light',
+        'std.source.button',
+        'std.source.encoder',
+        'std.source.analog',
+        'std.source.external',
+      ]);
+      for (final i in sources) {
+        expect(i.creates.length, 2, reason: i.id);
+        expect(i.creates.last.signature, startsWith('() -> '), reason: i.id);
+      }
+      expect(store.state.templates.any((t) => t.id.startsWith('std.source.')), isFalse);
+      final temp = store.state.libraryItem('std.source.temperature')!;
+      expect(temp.creates.last.name, 'TempSensor');
+      expect(itemName(kEnglish, temp), 'Temperature Sensor');
+      expect(itemName(lookupAppLocalizations(const Locale('zh')), temp), '温度传感器');
+      expect(itemName(lookupAppLocalizations(const Locale('ja')), temp), '温度センサー');
+      // Analog Input and External Value leave the value form to the designer
+      for (final id in ['std.source.analog', 'std.source.external']) {
+        expect(store.state.libraryItem(id)!.creates.first.hasRepresentation(), isFalse, reason: id);
+      }
 
       final root = p.join(dir.path, 'lamp');
       store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
       await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
       final before = store.state.revision;
       store.dispatch(
-        const InsertConceptTemplateRequested('std.source.temperature', position: Offset(400, 40)),
+        const InsertLibraryItemRequested('std.source.temperature', position: Offset(400, 40)),
       );
       var s = await store.until(
         (x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty,

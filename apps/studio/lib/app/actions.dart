@@ -102,14 +102,15 @@ class CreateConceptRequested extends UserAction {
   final pb.Representation? representation;
 }
 
-/// Insert a concept from a library template (right-click menu, a drag from
-/// the Library panel, or its row): one request to the daemon, which
-/// creates an ordinary concept with the template's defaults.  [position]
-/// is where the node lands (scene coordinates); `null` auto-places.  Both
-/// entry points dispatch exactly this.
-class InsertConceptTemplateRequested extends UserAction {
-  const InsertConceptTemplateRequested(this.templateId, {this.position});
-  final String templateId;
+/// Insert a library item (right-click menu, a drag from the Library panel,
+/// or its row): one request to the daemon, which creates the item's
+/// ordinary objects — a concept, or a concept and its `() -> Value`
+/// relationship — in one transaction with fresh identities.  [position] is
+/// where the first node lands (scene coordinates); `null` auto-places.
+/// Every entry point dispatches exactly this.
+class InsertLibraryItemRequested extends UserAction {
+  const InsertLibraryItemRequested(this.itemId, {this.position});
+  final String itemId;
   final Offset? position;
 }
 
@@ -1101,10 +1102,10 @@ class DeploymentFailed extends ResponseAction {
   final String message;
 }
 
-/// The daemon's concept libraries arrived (asked once per connection).
-class ConceptTemplatesReceived extends ResponseAction {
-  const ConceptTemplatesReceived(this.library);
-  final pb.ConceptTemplatesResponse library;
+/// The daemon's libraries arrived, as items (asked once per connection).
+class LibraryItemsReceived extends ResponseAction {
+  const LibraryItemsReceived(this.library);
+  final pb.LibraryItemsResponse library;
 }
 
 /// The user chose a display language in Preferences.  An application

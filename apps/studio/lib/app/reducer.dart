@@ -484,21 +484,21 @@ Transition reduce(AppState s, AppAction action) {
     SourceEditApplied(:final applied) => sourceEditApplied(s, applied),
 
     // ---- concept library ---------------------------------------------------
-    InsertConceptTemplateRequested(:final templateId, :final position) => _whenProject(s, () {
+    InsertLibraryItemRequested(:final itemId, :final position) => _whenProject(s, () {
       if (s.editor.pendingInsert != null) return Transition(s);
       final busy = pending(s);
       return Transition(
         busy.copyWith(
           editor: busy.editor.copyWith(
-            pendingInsert: PendingInsert(templateId: templateId, position: position),
-            recentTemplates: rememberTemplate(s.editor.recentTemplates, templateId),
+            pendingInsert: PendingInsert(templateId: itemId, position: position),
+            recentTemplates: rememberTemplate(s.editor.recentTemplates, itemId),
             clearRenaming: true,
           ),
         ),
         [
-          InstantiateConceptTemplate(
+          InstantiateLibraryItem(
             baseRevision: s.revision,
-            templateId: templateId,
+            itemId: itemId,
             component: s.editor.componentScope,
           ),
         ],
@@ -528,7 +528,7 @@ Transition reduce(AppState s, AppAction action) {
       ),
     ),
     InlineRenameFinished(:final node, :final name) => _inlineRenameFinished(s, node, name),
-    ConceptTemplatesReceived(:final library) => Transition(s.copyWith(library: library)),
+    LibraryItemsReceived(:final library) => Transition(s.copyWith(library: library)),
     // A collapsed group's box is layout of its own kind.
     NodeMoved(:final node, :final position) when node.kind == NodeKind.group => systemAction(
       s,
@@ -562,7 +562,7 @@ Transition reduce(AppState s, AppAction action) {
               ),
       ),
       // The concept libraries are the daemon's; ask once per connection.
-      [if (handshake.compatible) const ListConceptTemplates()],
+      [if (handshake.compatible) const ListLibraryItems()],
     ),
     DaemonConnectionFailed(:final reason) => Transition(
       s.copyWith(connection: ConnectionFailed(reason)),
@@ -908,9 +908,10 @@ Transition projectReceived(
   var layoutsOut = layouts;
   if (created != null && dropped != null) {
     layout = {...layout, created: dropped};
-    // A Source template also created the relationship that provides the
+    // A Source item also created the relationship that provides the
     // concept: it lands to the concept's left, where its one socket faces
-    // the concept — a node width and a gap away.
+    // the concept — environment → Source → behavior — a node width and a
+    // gap away.
     if (outcome != null && outcome.hasCreatedMapping()) {
       layout = {
         ...layout,
