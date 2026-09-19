@@ -72,12 +72,12 @@ Fixed by the manifest and the harness, the same for every image:
 2. Add the manifest entry. Steps name entities
    (`{"select": {"mapping": "brightness"}}`, `{"draft": …}`, `{"input": …}`,
    `{"step": 3}`, `{"target": …}`, `{"pin": …}`, `{"context": …}`,
-   `{"collapse": …}`, `{"package": …}`, `{"link": …}`, `{"sidebar": …}`);
-   expectations name nodes, groups, texts; the crop is a `region` (`window`,
-   `page`, `canvas`, `inspector`, `sidebar`, `welcome`), a widget `key`, a
-   `widget` type, a `text`, a set of `nodes` / `groups`, or a `union` of those,
-   with `pad`, `maxWidth`, `maxHeight`. Everything a step or a crop names must
-   exist, or the harness fails and says what is missing.
+   `{"view": "code"}`, `{"collapse": …}`, `{"package": …}`, `{"link": …}`,
+   `{"sidebar": …}`); expectations name nodes, groups, texts; the crop is a
+   `region` (`window`, `page`, `canvas`, `inspector`, `sidebar`, `welcome`), a
+   widget `key`, a `widget` type, a `text`, a set of `nodes` / `groups`, or a
+   `union` of those, with `pad`, `maxWidth`, `maxHeight`. Everything a step or a
+   crop names must exist, or the harness fails and says what is missing.
 3. Write the caption (what the reader is looking at, one sentence) and the alt
    text (what a reader who cannot see it needs, in the designer's words — what
    is on screen, not every pixel).
@@ -109,6 +109,7 @@ never a behavioural change to make a picture easier.
 | deploy-dead-end       | `getting-started/first-deployment.md`                           | tilt-lamp          | _Not feasible_ with pin D4 fixed by hand (F11)                                                                                                             | captured, automated                                         |
 | instance-nodes        | `studio/system-projects.md`, `concepts/behavior-systems.md`     | component-system   | two instance nodes, their bindings, `adaptiveLamp` selected (F12)                                                                                          | captured, automated                                         |
 | component-source      | `studio/system-projects.md`                                     | component-system   | the component's own canvas with the bar back to the system                                                                                                 | captured, automated                                         |
+| code-view             | `studio/code-view.md`                                           | component-system   | the Code view of the component system, coloured by the IDE service's tokens                                                                                | captured, automated                                         |
 | behavior-region       | `workflows/grouping-behavior.md`, `concepts/behavior-groups.md` | behavior-group     | the expanded _Adaptive lamp_ region, selected                                                                                                              | captured, automated                                         |
 | behavior-collapsed    | `workflows/grouping-behavior.md`                                | behavior-group     | the collapsed box with its aggregate sockets (F13)                                                                                                         | captured, automated                                         |
 | packaging-sheet       | `workflows/package-as-component.md`                             | behavior-group     | the packaging sheet with Requires, Provides and the decisions (F14)                                                                                        | captured, automated                                         |

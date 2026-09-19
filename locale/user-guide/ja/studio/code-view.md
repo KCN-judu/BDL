@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/code-view.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/code-view.md) · [简体中文](../../zh_Hans/studio/code-view.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 設計・コード・分割
 
@@ -19,6 +21,16 @@
 一度に 1 ファイルのテキスト。プロジェクトに複数の `.bdl` ファイルがあるとき、エディタ上部のポップアップがそれらを列挙します。まだビルドできないファイルは _— 未ビルド_ 付きで示されます。
 
 テキストはプロジェクトのファイルそのもので、キャンバスで行ったことがすべて書き込まれています。キャンバスでコンセプトの名前を変えると、テキストは使われているすべての場所で新しい名前を示し、コメントと空行はそのままです。キャンバスで関係を追加すると、`src/main.bdl` の末尾（`main.bdl` がないときは最初のファイルの末尾）、または属するコンポーネント本体の末尾に現れます。
+
+## What the colours mean
+
+![The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.](../../../../docs/user-guide/assets/studio/code-view.png)
+
+_The Code view of the component system: the file as the project holds it, coloured by what each word is._
+
+The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere.
+
+Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting.
 
 ## 入力
 

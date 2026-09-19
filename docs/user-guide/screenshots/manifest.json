@@ -508,7 +508,7 @@
       },
       "output": "studio/component-source.png",
       "caption": "A component's source: its own canvas, with the ports marked, and the bar that leads back to the system.",
-      "alt": "Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue drawn dashed with the word declared (a required port has no formula of its own), the rule dimByTilt, and brightness with the word provides in its header.",
+      "alt": "Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), the rule dimByTilt, and brightness with the word provides in its header.",
       "purpose": "What opening an instance's source shows."
     },
     {

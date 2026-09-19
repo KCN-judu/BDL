@@ -164,6 +164,13 @@ fn bench(name: &str, concepts: usize, mappings: usize, outputs: usize) {
             .count()
     });
     time("semantic tokens", 5, || semantic_tokens(&snap, doc).len());
+    let toks = semantic_tokens(&snap, doc);
+    time("semantic tokens → LSP data (UTF-16)", 5, || {
+        bdl_ide::tokens::encode::encode_data(&toks, &text, Default::default()).len()
+    });
+    host.set_definition_draft(m, "clamp(Concept0 / (90 deg), 0, 1)");
+    let snap = host.snapshot();
+    time("formula tokens (draft)", 20, || formula_tokens(&snap, m).len());
     println!();
 }
 

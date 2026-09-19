@@ -429,6 +429,10 @@ changed under a dirty draft, a notice with _Reload_ / _Keep mine_ — never a
 silent overwrite. Open is orange and worded as what is still to decide; only
 _Invalid_ is red.
 
+The text itself is coloured by what each word is — the IDE service's semantic
+tokens through the syntax theme, exactly as the Code view (§12, _Colour_);
+Studio classifies nothing.
+
 Keys in the field: ⌘↩ saves the definition while it is dirty; ⌘S keeps its
 meaning, _Save project_, and never commits a draft; Esc reverts; Return inserts
 a line. The canvas draws committed state only; the status line counts _N unsaved
@@ -913,8 +917,8 @@ under the editor, one row per reason in product language, the line number in
 tabular figures, a mark that survives without colour (× for an error, the
 canvas's hollow ring for something still open — incompleteness is never red);
 activating a row puts the caret on the range. (3) The text itself — the primary
-object, a plain monospace editor over the daemon's sources, one file at a time
-(a pop-up names the others; a draft file is labelled _— not built_). (4) The
+object, a monospace editor over the daemon's sources, one file at a time (a
+pop-up names the others; a draft file is labelled _— not built_). (4) The
 selection — shared in Split: selecting a node scrolls the editor to its item;
 the caret in an item selects its node. Both directions use the daemon's source
 anchors (`GetSources`); Studio does not parse.
@@ -931,10 +935,29 @@ a send is the next send; nothing typed is discarded and no error banner is
 raised for a race the designer did not cause. `pendingRequests` counts the send,
 as it counts every edit.
 
+**Colour.** The text is coloured by what each word _is_ — the IDE service's
+semantic tokens (`docs/architecture/syntax-highlighting.md`, ADR-0035) through
+`ui/code/syntax_theme.dart`, the one place a colour is chosen. A name's ink is
+the _category_ of what it names, in the hue family of that category's node
+header tint (concept, relationship, Source, output/device, instance), so the
+text and the graph agree without a legend; keywords, operators and units are the
+secondary ink, comments the tertiary; a declaration is heavier (the title of its
+item — the weight channel), a name bound in the formula itself (a parameter, a
+binder's local) is italic, the `?` slot is the _open_ colour (the text form of
+the Composer's dashed hollow chip). Non-colour partners: the declaring keyword
+(`concept`, `mapping`, `output`, …), the shape of the use, the hover card's
+word, the weight or slant. _Unresolved_ is not a colour here: the canvas draws
+it dashed and the fault list names it. The channel row is _ink colour in code
+text_ (`semantic-ui.md`). Text that does not build keeps its lexical colours;
+while the designer types the spans on show are shifted, never recomputed in
+Dart, and the service is asked again 150 ms after typing pauses — no flicker, no
+stale colour over new text. The definition editor's field is the same controller
+and the same theme.
+
 **States.** No project: the page's empty state. Sources not yet here: _Reading
 the sources…_. Incomplete-but-valid (open faults): listed with the hollow ring,
 the graph in step. Not building: the banners and the list. Disconnected: the
-editor is read-only.
+editor is read-only; the last colours stay.
 
 **Saved as typed.** A save keeps the text of the editor whether or not it
 builds, and every formula draft (ADR-0030); reopening returns to it, the banners

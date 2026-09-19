@@ -350,7 +350,7 @@ msgstr ""
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:127
-#: docs/user-guide/studio/code-view.md:78
+#: docs/user-guide/studio/code-view.md:104
 #: docs/user-guide/studio/deploy.md:86
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
@@ -3116,7 +3116,7 @@ msgid "Everything you can see and edit is in the project. A formula you typed an
 msgstr "見たり編集したりできるすべてはプロジェクトにあります。入力したが追加していない数式——まだ検査を通らないものも、空のフィールドも——はそのまま保存され、エディタに戻ってきます。コードビューのまだビルドできないテキストは入力したとおりに保存されます。ディスク上のファイルは入力したものであり、設計は再びビルドできるまで最後にビルドできたバージョンを表示し続けます（[設計・コード・分割](../studio/code-view.md)）。"
 
 #: docs/user-guide/reference/project-files.md:86
-#: docs/user-guide/studio/code-view.md:62
+#: docs/user-guide/studio/code-view.md:88
 msgid "Saving"
 msgstr "保存"
 
@@ -4695,50 +4695,66 @@ msgid "The text is the project's files with everything you did on the canvas wri
 msgstr "テキストはプロジェクトのファイルそのもので、キャンバスで行ったことがすべて書き込まれています。キャンバスでコンセプトの名前を変えると、テキストは使われているすべての場所で新しい名前を示し、コメントと空行はそのままです。キャンバスで関係を追加すると、`src/main.bdl` の末尾（`main.bdl` がないときは最初のファイルの末尾）、または属するコンポーネント本体の末尾に現れます。"
 
 #: docs/user-guide/studio/code-view.md:29
+msgid "What the colours mean"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:33
+msgid "_The Code view of the component system: the file as the project holds it, coloured by what each word is._"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:36
+msgid "The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:46
+msgid "Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:55
 msgid "Typing"
 msgstr "入力"
 
-#: docs/user-guide/studio/code-view.md:31
+#: docs/user-guide/studio/code-view.md:57
 msgid "Type as in any editor. A short moment after you stop, the file is read as a design:"
 msgstr "どのエディタでも同じように入力します。手を止めて少し経つと、ファイルは設計として読まれます："
 
-#: docs/user-guide/studio/code-view.md:34
+#: docs/user-guide/studio/code-view.md:60
 msgid "**It builds.** The canvas changes to match — a new relationship appears as a node, placed for you beside what it reads; a renamed concept keeps its node, its colour, its place and its connections, because the identity of an item lives with its kind and name, not with its spelling in the text ([Identity](../textual/overview.md#identity))."
 msgstr "**ビルドできる。** キャンバスが合わせて変わります——新しい関係はノードとして現れ、読み取るものの横に自動で配置されます。名前を変えたコンセプトはノード、色、場所、接続を保ちます。項目の同一性はその種類と名前にあり、テキスト中の綴りにはないからです（[同一性](../textual/overview.md#identity)）。"
 
-#: docs/user-guide/studio/code-view.md:39
+#: docs/user-guide/studio/code-view.md:65
 msgid "**It does not build yet.** A banner above the editor says _This file does not build yet: the design shows the last version that did._ The canvas keeps showing the last version of the file that built, with its own banner: _Showing the last version that built; the text has changes that do not build yet._ Your text stays exactly as typed. The reasons are listed under the editor, one per line, with the line number; click one to put the cursor on it. An **×** is something the design cannot mean; a **hollow ring** is something the design has no meaning for yet and does not stop the file from building. Fix the text and both banners go."
 msgstr "**まだビルドできない。** エディタ上部のバナーが _このファイルはまだビルドできません。設計には最後にビルドできたバージョンが表示されています。_ と述べます。キャンバスはファイルの最後にビルドできたバージョンを、独自のバナー _最後にビルドできたバージョンを表示しています。テキストにはまだビルドできない変更があります。_ とともに表示し続けます。テキストは入力したままです。理由はエディタの下に 1 行ずつ行番号付きで列挙され、クリックするとカーソルがそこへ移ります。**×** は設計が意味しえないもの、**中空の輪**は設計にまだ意味がなく、ファイルのビルドを止めないものです。テキストを直せば両方のバナーが消えます。"
 
-#: docs/user-guide/studio/code-view.md:49
+#: docs/user-guide/studio/code-view.md:75
 msgid "Nothing you type is lost, and nothing you drew is lost: a file that does not build never erases the graph."
 msgstr "入力したものも描いたものも失われません。ビルドできないファイルがグラフを消すことは決してありません。"
 
-#: docs/user-guide/studio/code-view.md:52
+#: docs/user-guide/studio/code-view.md:78
 msgid "**Undo** (⌘Z) undoes changes to the design — a relationship added in the text is undone like one added on the canvas, and the text follows. Changes that only touch comments or spacing are not steps of that history."
 msgstr "**取り消し**（⌘Z）は設計への変更を取り消します——テキストで追加した関係はキャンバスで追加したものと同じように取り消され、テキストが追従します。コメントや空白だけに触れる変更はその履歴のステップではありません。"
 
-#: docs/user-guide/studio/code-view.md:56
+#: docs/user-guide/studio/code-view.md:82
 msgid "Split: one selection"
 msgstr "分割：1 つの選択"
 
-#: docs/user-guide/studio/code-view.md:58
+#: docs/user-guide/studio/code-view.md:84
 msgid "Select a node on the canvas and the editor scrolls to its declaration. Click inside an item's text and its node is selected on the canvas, so the inspector shows it. The selection is the same object in both views."
 msgstr "キャンバスでノードを選択するとエディタはその宣言までスクロールします。項目のテキスト内をクリックするとキャンバスでそのノードが選択され、インスペクターに表示されます。選択は両方のビューで同じオブジェクトです。"
 
-#: docs/user-guide/studio/code-view.md:64
+#: docs/user-guide/studio/code-view.md:90
 msgid "**⌘S** writes the files exactly as the editor shows them — a file that does not build yet included — then the layout and the sidecars ([Project files](../reference/project-files.md)). Reopening the project shows the same text, with the same banners, and the design as the last version that built."
 msgstr "**⌘S** はファイルをエディタに表示されているとおりに書き込み——まだビルドできないファイルも含めて——次にレイアウトとサイドカーを書き込みます（[プロジェクトファイル](../reference/project-files.md)）。プロジェクトを再び開くと、同じテキストが同じバナーとともに、設計は最後にビルドできたバージョンとして表示されます。"
 
-#: docs/user-guide/studio/code-view.md:70
+#: docs/user-guide/studio/code-view.md:96
 msgid "Not built yet"
 msgstr "未実装"
 
-#: docs/user-guide/studio/code-view.md:72
+#: docs/user-guide/studio/code-view.md:98
 msgid "Findings underlined in the text (the list and the cursor jump stand in); completion and hover in the editor (a code editor with the language server has them — [Editor and language server](../textual/editor-and-lsp.md)); a _Format_ command; creating a second source file from Studio (make it in a code editor; it appears on reload)."
 msgstr "テキスト中の検出項目の下線（リストとカーソルジャンプが代わりです）。エディタ内の補完とホバー（言語サーバー付きのコードエディタにはあります——[エディタと言語サーバー](../textual/editor-and-lsp.md)）。_フォーマット_ コマンド。Studio から 2 つ目のソースファイルを作ること（コードエディタで作ると、再読み込みで現れます）。"
 
-#: docs/user-guide/studio/code-view.md:80
+#: docs/user-guide/studio/code-view.md:106
 msgid "[Canvas](canvas.md) · [Textual BDL](../textual/overview.md) · [Authoring a project as text](../workflows/authoring-as-text.md) · [Source files](../troubleshooting/text-project-errors.md)"
 msgstr "[キャンバス](canvas.md) · [テキスト形式の BDL](../textual/overview.md) · [プロジェクトをテキストで書く](../workflows/authoring-as-text.md) · [ソースファイル](../troubleshooting/text-project-errors.md)"
 
@@ -5570,7 +5586,7 @@ msgid "**Component source**"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:17
-msgid "one component's own design, in its own names; its port-backed relationships carry _provides_ / _parameter_ in their header (a _requires_ port has no formula, so it reads _declared_); its own behavior regions"
+msgid "one component's own design, in its own names; its port-backed relationships carry _requires_ / _provides_ / _parameter_ in their header (a _requires_ port has no formula of its own: it is a Source the instance's binding provides); its own behavior regions"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:17
@@ -6106,7 +6122,7 @@ msgid "`textDocument/semanticTokens/full`"
 msgstr ""
 
 #: docs/user-guide/textual/editor-and-lsp.md:56
-msgid "concept, mapping, output, clock, device, unit, keyword, parameter, constructor, number, comment, operator"
+msgid "the standard token types your editor already themes — `type` for a concept, `function` for a rule, `variable` for a value (with the modifier `source` for a Source, `output`, `device`, `instance`), `namespace` for a clock, `class` for a component, `property` for a port, `parameter`, `keyword`, `number`, `operator`, `comment`, `enumMember` — plus BDL's own `unit` (the word after a number) and `slot` (the `?`); `declaration` on a declared name, `defaultLibrary` on an equation of the library; the same classes Studio colours"
 msgstr ""
 
 #: docs/user-guide/textual/editor-and-lsp.md:57

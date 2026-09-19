@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/code-view.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/code-view.md) · 简体中文 · [日本語](../../ja/studio/code-view.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 设计、代码与分栏
 
@@ -19,6 +21,16 @@
 一次显示一个文件的文本。当项目有多个 `.bdl` 文件时，编辑器顶部的弹出菜单列出它们；尚不能构建的文件带有 _— 未构建_ 标记。
 
 文本就是项目的文件，你在画布上做的一切都写在里面：在画布上重命名概念，文本会在它被使用的每个地方显示新名字，你的注释和空行保持不变。在画布上添加关系，它会出现在 `src/main.bdl` 的末尾（没有 `main.bdl` 时是第一个文件的末尾），或者它所属组件主体的末尾。
+
+## What the colours mean
+
+![The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.](../../../../docs/user-guide/assets/studio/code-view.png)
+
+_The Code view of the component system: the file as the project holds it, coloured by what each word is._
+
+The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere.
+
+Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting.
 
 ## 输入
 

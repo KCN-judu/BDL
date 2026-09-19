@@ -86,25 +86,14 @@
       {
         "language": "bdl",
         "scopes": {
-          "concept": [
-            "entity.name.type.concept.bdl"
-          ],
-          "mapping": [
-            "entity.name.function.mapping.bdl"
-          ],
-          "output": [
-            "variable.other.output.bdl"
-          ],
-          "clock": [
-            "entity.name.tag.clock.bdl"
-          ],
-          "device": [
-            "variable.other.device.bdl"
-          ],
           "unit": [
             "constant.other.unit.bdl"
+          ],
+          "slot": [
+            "keyword.other.slot.bdl"
           ]
-        }
+        },
+        "$comment": "The legend is the LSP standard vocabulary (type, function, variable, parameter, keyword, …) themed by the editor; only BDL's own types need a scope. docs/architecture/syntax-highlighting.md"
       }
     ]
   },

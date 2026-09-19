@@ -350,7 +350,7 @@ msgstr ""
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:127
-#: docs/user-guide/studio/code-view.md:78
+#: docs/user-guide/studio/code-view.md:104
 #: docs/user-guide/studio/deploy.md:86
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
@@ -3116,7 +3116,7 @@ msgid "Everything you can see and edit is in the project. A formula you typed an
 msgstr "你能看到和编辑的一切都在项目中。你输入但未添加的公式——即使尚未通过检查，即使字段为空——都原样保存并回到编辑器中。代码视图中尚不能构建的文本按输入原样保存：磁盘上的文件就是你输入的内容，设计继续显示它最后一个能构建的版本，直到它再次能构建（[设计、代码与分栏](../studio/code-view.md)）。"
 
 #: docs/user-guide/reference/project-files.md:86
-#: docs/user-guide/studio/code-view.md:62
+#: docs/user-guide/studio/code-view.md:88
 msgid "Saving"
 msgstr "保存"
 
@@ -4695,50 +4695,66 @@ msgid "The text is the project's files with everything you did on the canvas wri
 msgstr "文本就是项目的文件，你在画布上做的一切都写在里面：在画布上重命名概念，文本会在它被使用的每个地方显示新名字，你的注释和空行保持不变。在画布上添加关系，它会出现在 `src/main.bdl` 的末尾（没有 `main.bdl` 时是第一个文件的末尾），或者它所属组件主体的末尾。"
 
 #: docs/user-guide/studio/code-view.md:29
+msgid "What the colours mean"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:33
+msgid "_The Code view of the component system: the file as the project holds it, coloured by what each word is._"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:36
+msgid "The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:46
+msgid "Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:55
 msgid "Typing"
 msgstr "输入"
 
-#: docs/user-guide/studio/code-view.md:31
+#: docs/user-guide/studio/code-view.md:57
 msgid "Type as in any editor. A short moment after you stop, the file is read as a design:"
 msgstr "像在任何编辑器里一样输入。你停下片刻之后，文件会被读作设计："
 
-#: docs/user-guide/studio/code-view.md:34
+#: docs/user-guide/studio/code-view.md:60
 msgid "**It builds.** The canvas changes to match — a new relationship appears as a node, placed for you beside what it reads; a renamed concept keeps its node, its colour, its place and its connections, because the identity of an item lives with its kind and name, not with its spelling in the text ([Identity](../textual/overview.md#identity))."
 msgstr "**能构建。** 画布随之变化——新关系作为节点出现，替你放在它读取的东西旁边；重命名的概念保留它的节点、颜色、位置和连接，因为条目的身份在于它的种类和名字，而不是它在文本中的拼写（[身份](../textual/overview.md#identity)）。"
 
-#: docs/user-guide/studio/code-view.md:39
+#: docs/user-guide/studio/code-view.md:65
 msgid "**It does not build yet.** A banner above the editor says _This file does not build yet: the design shows the last version that did._ The canvas keeps showing the last version of the file that built, with its own banner: _Showing the last version that built; the text has changes that do not build yet._ Your text stays exactly as typed. The reasons are listed under the editor, one per line, with the line number; click one to put the cursor on it. An **×** is something the design cannot mean; a **hollow ring** is something the design has no meaning for yet and does not stop the file from building. Fix the text and both banners go."
 msgstr "**尚不能构建。** 编辑器上方的横幅显示 _此文件尚不能构建：设计显示的是最后一个能构建的版本。_ 画布继续显示文件最后一个能构建的版本，并带有自己的横幅：_正在显示最后一个能构建的版本；文本中有尚不能构建的更改。_ 你的文本保持原样。原因列在编辑器下方，每行一条，附有行号；点击一条把光标移到那里。**×** 表示设计无法表达的东西；**空心环**表示设计尚无含义、但不阻止文件构建的东西。修好文本，两条横幅都会消失。"
 
-#: docs/user-guide/studio/code-view.md:49
+#: docs/user-guide/studio/code-view.md:75
 msgid "Nothing you type is lost, and nothing you drew is lost: a file that does not build never erases the graph."
 msgstr "你输入的不会丢失，你画的也不会丢失：不能构建的文件永远不会抹掉图。"
 
-#: docs/user-guide/studio/code-view.md:52
+#: docs/user-guide/studio/code-view.md:78
 msgid "**Undo** (⌘Z) undoes changes to the design — a relationship added in the text is undone like one added on the canvas, and the text follows. Changes that only touch comments or spacing are not steps of that history."
 msgstr "**撤销**（⌘Z）撤销对设计的更改——在文本中添加的关系像在画布上添加的一样被撤销，文本随之变化。只涉及注释或空白的更改不是该历史中的步骤。"
 
-#: docs/user-guide/studio/code-view.md:56
+#: docs/user-guide/studio/code-view.md:82
 msgid "Split: one selection"
 msgstr "分栏：同一个选择"
 
-#: docs/user-guide/studio/code-view.md:58
+#: docs/user-guide/studio/code-view.md:84
 msgid "Select a node on the canvas and the editor scrolls to its declaration. Click inside an item's text and its node is selected on the canvas, so the inspector shows it. The selection is the same object in both views."
 msgstr "在画布上选中节点，编辑器滚动到它的声明。点击某个条目的文本内部，它的节点在画布上被选中，检查器随之显示。两个视图中的选择是同一个对象。"
 
-#: docs/user-guide/studio/code-view.md:64
+#: docs/user-guide/studio/code-view.md:90
 msgid "**⌘S** writes the files exactly as the editor shows them — a file that does not build yet included — then the layout and the sidecars ([Project files](../reference/project-files.md)). Reopening the project shows the same text, with the same banners, and the design as the last version that built."
 msgstr "**⌘S** 按编辑器显示的原样写入文件——包括尚不能构建的文件——然后是布局和辅助文件（[项目文件](../reference/project-files.md)）。重新打开项目显示同样的文本、同样的横幅，设计则是最后一个能构建的版本。"
 
-#: docs/user-guide/studio/code-view.md:70
+#: docs/user-guide/studio/code-view.md:96
 msgid "Not built yet"
 msgstr "尚未实现"
 
-#: docs/user-guide/studio/code-view.md:72
+#: docs/user-guide/studio/code-view.md:98
 msgid "Findings underlined in the text (the list and the cursor jump stand in); completion and hover in the editor (a code editor with the language server has them — [Editor and language server](../textual/editor-and-lsp.md)); a _Format_ command; creating a second source file from Studio (make it in a code editor; it appears on reload)."
 msgstr "在文本中用下划线标出发现项（目前由列表和光标跳转代替）；编辑器中的补全和悬停（带语言服务器的代码编辑器有——[编辑器与语言服务器](../textual/editor-and-lsp.md)）；_格式化_ 命令；从 Studio 创建第二个源文件（在代码编辑器中创建；重新加载后出现）。"
 
-#: docs/user-guide/studio/code-view.md:80
+#: docs/user-guide/studio/code-view.md:106
 msgid "[Canvas](canvas.md) · [Textual BDL](../textual/overview.md) · [Authoring a project as text](../workflows/authoring-as-text.md) · [Source files](../troubleshooting/text-project-errors.md)"
 msgstr "[画布](canvas.md) · [文本形式的 BDL](../textual/overview.md) · [以文本编写项目](../workflows/authoring-as-text.md) · [源文件](../troubleshooting/text-project-errors.md)"
 
@@ -5570,7 +5586,7 @@ msgid "**Component source**"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:17
-msgid "one component's own design, in its own names; its port-backed relationships carry _provides_ / _parameter_ in their header (a _requires_ port has no formula, so it reads _declared_); its own behavior regions"
+msgid "one component's own design, in its own names; its port-backed relationships carry _requires_ / _provides_ / _parameter_ in their header (a _requires_ port has no formula of its own: it is a Source the instance's binding provides); its own behavior regions"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:17
@@ -6106,7 +6122,7 @@ msgid "`textDocument/semanticTokens/full`"
 msgstr ""
 
 #: docs/user-guide/textual/editor-and-lsp.md:56
-msgid "concept, mapping, output, clock, device, unit, keyword, parameter, constructor, number, comment, operator"
+msgid "the standard token types your editor already themes — `type` for a concept, `function` for a rule, `variable` for a value (with the modifier `source` for a Source, `output`, `device`, `instance`), `namespace` for a clock, `class` for a component, `property` for a port, `parameter`, `keyword`, `number`, `operator`, `comment`, `enumMember` — plus BDL's own `unit` (the word after a number) and `slot` (the `?`); `declaration` on a declared name, `defaultLibrary` on an equation of the library; the same classes Studio colours"
 msgstr ""
 
 #: docs/user-guide/textual/editor-and-lsp.md:57

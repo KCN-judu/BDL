@@ -26,6 +26,32 @@ relationship on the canvas and it appears at the end of `src/main.bdl` (or of
 the first file, when there is no `main.bdl`), or at the end of the component
 body it belongs to.
 
+## What the colours mean
+
+![The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.](../assets/studio/code-view.png)
+
+_The Code view of the component system: the file as the project holds it,
+coloured by what each word is._
+
+The text is coloured by what each word _is_ to the project — not by how it is
+spelled. The colours are the canvas's: a **concept** name has the concept nodes'
+blue-grey, a **relationship** the relationship nodes' blue, a **Source** the
+green of a Source node, an **output** or a **device** the warm tone of an output
+node, an **instance** the teal of an instance node. Keywords, operators and
+units are grey; comments lighter grey. A name where it is _declared_ is heavier
+than where it is used; a name that exists only inside a formula — a rule's
+parameter, a binder's variable — is italic; a `?` left in a formula is orange,
+the same _still to decide_ colour as elsewhere.
+
+Because the colours come from the project, they tell you things spelling cannot:
+`deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the
+head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp`
+is the library's; a relationship turns from Source green to relationship blue
+the moment it is given a definition. A file that does not build yet keeps its
+keywords, numbers, comments and units coloured, and the names the last version
+that built still knows. The colours follow the appearance (light or dark); there
+is no setting.
+
 ## Typing
 
 Type as in any editor. A short moment after you stop, the file is read as a

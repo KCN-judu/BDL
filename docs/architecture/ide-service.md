@@ -338,6 +338,17 @@ entity, role) and the same ladder status.
 Studio does not consume LSP. Its projection is visual; its transport is
 protobuf; both read the same `bdl-ide` results as text editors do.
 
+Highlighting is the same pattern with a text instead of a verdict
+(`docs/architecture/syntax-highlighting.md`, ADR-0035): the Code view and the
+definition editor send the text as typed —
+`SemanticTokens { revision, generation, text, path | formula }` (protocol 0.21)
+— the daemon sets it as the file's overlay on a text workspace over the sources
+as written back (`SystemState::text_ide`), or as the relationship's draft
+overlay in its scope, and answers `bdl_ide::semantic_tokens` / `formula_tokens`
+with the legend; Studio keeps only the latest generation's answer, shifts the
+spans while typing, and maps the legend's names to a theme. No class is decided
+in Dart.
+
 ### The canonical type of a relationship
 
 Hover carries `type: () -> RoomTemp` / `Angle -> Brightness` /
@@ -464,23 +475,23 @@ boundaries it answers with.
 
 `bdl-lsp` (`lsp-server` + `lsp-types` 0.97, LSP 3.17 baseline):
 
-| LSP                                    | `bdl-ide`                                                                                                                                                                                                                   |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `initialize`                           | negotiate position encoding (UTF-8 if offered, else UTF-16, else UTF-32); load the project at `initializationOptions.projectRoot` / the first workspace folder if it holds `bdl.toml`, else start empty                     |
-| `didOpen` / `didChange` / `didClose`   | `host.set_text_document` / `close_text_document` (overlay)                                                                                                                                                                  |
-| `textDocument/hover`                   | `entity_at` → `hover`                                                                                                                                                                                                       |
-| `textDocument/definition`              | `entity_at` → `definition_of`                                                                                                                                                                                               |
-| `textDocument/references`              | `entity_at` → `references`                                                                                                                                                                                                  |
-| `textDocument/prepareRename`, `rename` | `plan_rename` → `WorkspaceEdit` (text operations; model operations are reported through `bdl/previewEdit`)                                                                                                                  |
-| `textDocument/completion`              | `completion(Document { offset })` — inputs, relationships, units, keywords, and the equation library (`CompletionKind::Equation`, documented in the designer's words; a relationship of the design with the same name wins) |
-| `textDocument/diagnostic` (pull)       | `diagnostics(Document)` → `project_to_document`                                                                                                                                                                             |
-| `textDocument/documentSymbol`          | `document_symbols`                                                                                                                                                                                                          |
-| `textDocument/semanticTokens/full`     | `semantic_tokens` (delta-encoded per line; a rule's parameters are `parameter`, an applied equation of the library is `macro`, `in`/`ordered` are keywords)                                                                 |
-| `textDocument/codeAction`              | `actions_for` on the diagnostics in range, `actions_at` on the entity                                                                                                                                                       |
-| `$/cancelRequest`                      | `host.cancel_request`                                                                                                                                                                                                       |
-| `bdl/explainEntity`                    | `explain` (+ a Markdown rendering)                                                                                                                                                                                          |
-| `bdl/invalidationPreview`              | `preview_change`                                                                                                                                                                                                            |
-| `bdl/previewEdit`                      | `plan_rename` as a full `SemanticEditPlan`                                                                                                                                                                                  |
+| LSP                                    | `bdl-ide`                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialize`                           | negotiate position encoding (UTF-8 if offered, else UTF-16, else UTF-32); load the project at `initializationOptions.projectRoot` / the first workspace folder if it holds `bdl.toml`, else start empty                                                                             |
+| `didOpen` / `didChange` / `didClose`   | `host.set_text_document` / `close_text_document` (overlay)                                                                                                                                                                                                                          |
+| `textDocument/hover`                   | `entity_at` → `hover`                                                                                                                                                                                                                                                               |
+| `textDocument/definition`              | `entity_at` → `definition_of`                                                                                                                                                                                                                                                       |
+| `textDocument/references`              | `entity_at` → `references`                                                                                                                                                                                                                                                          |
+| `textDocument/prepareRename`, `rename` | `plan_rename` → `WorkspaceEdit` (text operations; model operations are reported through `bdl/previewEdit`)                                                                                                                                                                          |
+| `textDocument/completion`              | `completion(Document { offset })` — inputs, relationships, units, keywords, and the equation library (`CompletionKind::Equation`, documented in the designer's words; a relationship of the design with the same name wins)                                                         |
+| `textDocument/diagnostic` (pull)       | `diagnostics(Document)` → `project_to_document`                                                                                                                                                                                                                                     |
+| `textDocument/documentSymbol`          | `document_symbols`                                                                                                                                                                                                                                                                  |
+| `textDocument/semanticTokens/full`     | `semantic_tokens` → `tokens::encode` in the negotiated position encoding; the legend is `bdl_ide::legend()` — LSP standard types plus `unit` / `slot`, modifiers `declaration`, `defaultLibrary`, `source`, `output`, `device`, `instance`, `unresolved` (`syntax-highlighting.md`) |
+| `textDocument/codeAction`              | `actions_for` on the diagnostics in range, `actions_at` on the entity                                                                                                                                                                                                               |
+| `$/cancelRequest`                      | `host.cancel_request`                                                                                                                                                                                                                                                               |
+| `bdl/explainEntity`                    | `explain` (+ a Markdown rendering)                                                                                                                                                                                                                                                  |
+| `bdl/invalidationPreview`              | `preview_change`                                                                                                                                                                                                                                                                    |
+| `bdl/previewEdit`                      | `plan_rename` as a full `SemanticEditPlan`                                                                                                                                                                                                                                          |
 
 Pull diagnostics are the model. Push (`publishDiagnostics`) exists only for
 clients that do not advertise `textDocument.diagnostic`, is confined to the
@@ -544,7 +555,7 @@ Flutter + `bdld`).
 ## Performance baseline
 
 `cargo run --release -p bdl-ide --example perf_baseline` (best of N, one core,
-2026-09-15, Apple silicon):
+2026-09-15, Apple silicon; the token rows re-measured 2026-09-20):
 
 | query                                      | small (3/3/1) | medium (60/80/10) | large (300/400/40) |
 | ------------------------------------------ | ------------- | ----------------- | ------------------ |
@@ -554,7 +565,9 @@ Flutter + `bdld`).
 | completion (formula)                       | <0.01 ms      | <0.01 ms          | <0.01 ms           |
 | hover / references / rename plan           | <0.01 ms      | <0.01 ms          | <0.01 ms           |
 | text overlay → snapshot (bind + compile)   | 0.09 ms       | 0.80 ms           | 4.7 ms             |
-| semantic tokens (whole document)           | 0.03 ms       | 0.41 ms           | 4.3 ms             |
+| semantic tokens (whole document)           | 0.03 ms       | 0.50 ms           | 1.5 ms             |
+| semantic tokens → LSP data (UTF-16)        | <0.01 ms      | 0.07 ms           | 0.21 ms            |
+| formula tokens (one draft)                 | 0.01 ms       | 0.01 ms           | 0.01 ms            |
 
 (concepts/mappings/outputs). Every keystroke recomputes the whole project; at
 these sizes that is well under a frame. Debug builds are roughly an order of

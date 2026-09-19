@@ -11,10 +11,10 @@ The ideas are in [Behavior groups](../concepts/behavior-groups.md),
 
 The canvas shows **one design at a time**:
 
-| Canvas               | Shows                                                                                                                                                                                                           | Bar above the canvas                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **System**           | the top level: the system's own concepts, relationships, domains, outputs; component **instance nodes**; **binding links**; behavior **regions** and **boxes**                                                  | _System · N instances · M components_                                                                                                |
-| **Component source** | one component's own design, in its own names; its port-backed relationships carry _provides_ / _parameter_ in their header (a _requires_ port has no formula, so it reads _declared_); its own behavior regions | _Editing AdaptiveLamp · used by 3 instances — its promise is what instances see; edits here reach every instance._ with **‹ System** |
+| Canvas               | Shows                                                                                                                                                                                                                                                           | Bar above the canvas                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **System**           | the top level: the system's own concepts, relationships, domains, outputs; component **instance nodes**; **binding links**; behavior **regions** and **boxes**                                                                                                  | _System · N instances · M components_                                                                                                |
+| **Component source** | one component's own design, in its own names; its port-backed relationships carry _requires_ / _provides_ / _parameter_ in their header (a _requires_ port has no formula of its own: it is a Source the instance's binding provides); its own behavior regions | _Editing AdaptiveLamp · used by 3 instances — its promise is what instances see; edits here reach every instance._ with **‹ System** |
 
 Open a component's source by double-clicking an instance, or with **Edit
 Source** on an instance or component. Return with _‹ System_ or the inspector's
@@ -40,7 +40,7 @@ concept's own hue, or the instance's private hue for a private concept — so tw
 instances of one component have two colours for their private _Brightness_. A
 red mark on the component's name means the source no longer keeps its promise.
 
-![Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue drawn dashed with the word declared (a required port has no formula of its own), the rule dimByTilt, and brightness with the word provides in its header.](../assets/studio/component-source.png)
+![Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), the rule dimByTilt, and brightness with the word provides in its header.](../assets/studio/component-source.png)
 
 _A component's source: its own canvas, with the ports marked, and the bar that
 leads back to the system._
