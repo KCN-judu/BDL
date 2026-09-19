@@ -45,6 +45,18 @@ _Reads Tilt: a rule, a function to Brightness. It has no value of its own — a
 value's formula applies it…_. A computed value is a Source you then give a
 formula.
 
+Only a value shows in the simulator: a rule has no value per tick, so it has no
+column in the trace. A rule that nothing applies is a legal state, and the tool
+says so: the finding _dimByTilt is a rule nothing applies yet._ on the rule, in
+the inspector's _Relationship_ section and on the Simulate page, with the fix
+**Add a value that applies dimByTilt** — which creates
+`dimByTiltValue : () -> Brightness = dimByTilt(tilt)` when exactly one value
+produces each concept the rule reads, asks you to choose when several do, and
+says why when none does. On the canvas the rule's output socket is hollow — no
+value comes out of it yet — and, once the rule has a formula, its header reads
+_not applied_ instead of _rule_. It is not an error: nothing is wrong, something
+is still to be written.
+
 ## The formula
 
 Formulas are short expressions over the names in scope: the concepts the
@@ -94,7 +106,8 @@ and of dependency, not a flowchart.
   _Revert_ / _Detach definition_, the verdict line, and any findings about the
   formula; then _Depends on_ (the relationships the formula names) and _Named
   in_ (the formulas that name this one) — the reference links, as names you can
-  click.
+  click; then the findings about the relationship's place in the design — a rule
+  nothing applies, with its fix beside it.
 - **Timing** — _Updates in_: the timing domain, or _Any timing domain_ for a
   pure rule. See [Timing](timing.md).
 - **Drives** — the physical output this value is the final target of, if any.
@@ -119,4 +132,5 @@ in the analysis (`MappingAnalysis.references`, ADR-0034).
 
 [Concepts](concepts.md) · [Incomplete designs](incomplete-designs.md) ·
 [Formula editor](../studio/formula-editor.md) ·
-[Formula language](../reference/formula-language.md)
+[Formula language](../reference/formula-language.md) ·
+[Simulate](../studio/simulate.md)

@@ -17,9 +17,17 @@ One control for every [Source](canvas.md) — every relationship that reads
 nothing and has no formula: the values the environment provides, which the
 simulation asks you for. The control follows the concept's value form, never its
 name: a number with the unit beside it for a quantity (in the base unit:
-radians, metres, seconds, kelvin…), a switch for on / off, a whole number for a
-count. The row carries the concept's glyph and colour, and clicking it selects
-the object — on this page and on Design.
+radians, metres, seconds, kelvin…), an **off | on** control for on / off, a
+whole number for a count. The row carries the concept's glyph and colour, and
+clicking it selects the object — on this page and on Design.
+
+A Source you have not given a value yet says so: a number field shows the hint
+_no value yet_, and the on / off control is drawn empty with a dashed outline
+and the words _no value yet_ beside it — the same dashes that mark a declared
+relationship, for the same reason: nothing has been decided. It is not _off_.
+One click on **off** or **on** gives exactly that value; the simulator never
+fills one in for you, because a missing Source is an error at run time, not a
+default.
 
 Under the Sources, **Timing domains**: a period per domain — _every N_ ticks —
 the schedule the evaluator activates by. A period, never a rate. Changing a
@@ -43,6 +51,27 @@ While any is listed **Step** is disabled and does nothing. While the analysis
 for the current design has not arrived the list says _Checking the design…_ and
 nothing is wrong. Opening the page never starts a run.
 
+Below the blockers, with a hollow dot instead of a filled one, the page lists
+what does **not** stop a step but explains what the trace will not show: a
+**rule nothing applies**. A rule — a relationship with inputs — is a function,
+so it has no value per tick and no column; only a value that calls it does. The
+note names the rule and the value that would put it to work:
+
+- _AirConditionerCtrl is a rule nothing applies yet._ — _A rule has no value of
+  its own; a value that applies it —
+  `AirConditionerCtrl(TempSensor, ButtonInput)` — is what the simulator and an
+  output can read._
+
+Under it, the fix **Add a value that applies AirConditionerCtrl** and a _Show_
+link. The fix creates
+`airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)`
+in one click when each concept the rule reads has exactly one value producing
+it; when one has several, the button becomes a pop-up of the calls to choose
+from; when one has none, the button says why (_Not possible yet: no value
+produces `RoomTemp` yet; add a Source or a computed value that produces it
+first_). The tool never guesses. A rule that has no definition yet is a blocker
+first (_has no definition_) and is not repeated here.
+
 ![Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.](../assets/studio/simulate-readiness.png)
 
 _A blocker with its Show link: the Source tilt has no value yet, so Step is
@@ -64,11 +93,14 @@ divided by zero._), never as a banner.
 
 Rows are ticks. Columns are the design's **values** — relationships without
 inputs — and its **driven outputs**; a rule (a relationship with inputs) has no
-column, because it is a function, not a value. The _active_ column names the
-domains that ticked. A cell is the evaluator's own rendering, always with the
-concept and in the value form's words: `Brightness(0.5)`,
-`Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number
-shows six significant digits. Studio never renders a value itself.
+column, because it is a function, not a value — `dimByTilt` never appears, the
+value `brightness = dimByTilt(tilt)` does. If a rule seems ignored by the
+simulation, the readiness area says so and offers the value that applies it. The
+_active_ column names the domains that ticked. A cell is the evaluator's own
+rendering, always with the concept and in the value form's words:
+`Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_
+/ _off_, a number shows six significant digits. Studio never renders a value
+itself.
 
 An empty cell means the value's domain did not activate at that tick. A Source's
 cell is the value you fed, echoed by the evaluator at the ticks its domain
@@ -89,9 +121,10 @@ its latest sample; when none does, _Nothing carries Brightness yet: no value or
 Source produces it._ and, for each rule that produces it, _dimByTilt is a rule;
 a value whose formula applies it would carry Brightness._ A rule has no value to
 show: _A rule: it has no value of its own. A value whose formula applies it is
-what the simulator samples._, then _Applied in brightness._ or _No value applies
-it yet._ **Explain** under it holds the identity number, the run's revision and,
-for a failure, the code and technical text.
+what the simulator samples._, then, under _Applied in_, links to the values
+whose formula applies it — or _No value applies it yet._ with the same fix the
+readiness area offers. **Explain** under it holds the identity number, the run's
+revision and, for a failure, the code and technical text.
 
 ## What a new revision does
 
@@ -108,5 +141,5 @@ exist yet).
 ## Related
 
 [Your first simulation](../getting-started/first-simulation.md) ·
-[Timing](../concepts/timing.md) ·
-[Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)
+[Relationships](../concepts/relationships.md) · [Timing](../concepts/timing.md)
+· [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)

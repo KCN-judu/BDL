@@ -14,7 +14,9 @@ _傾き 45° で 3 ステップ後のシミュレートページ：左に入力�
 
 ## 入力元（左）
 
-すべての[入力元](canvas.md)——何も読み取らず数式を持たないすべての関係——に 1 つずつのコントロール。環境から与えられる値で、シミュレーションはそれをあなたに求めます。コントロールはコンセプトの値の形式に従い、名前には従いません。量なら横に単位の付いた数（基本単位で：ラジアン、メートル、秒、ケルビン…）、オン/オフならスイッチ、個数なら整数です。行はコンセプトのグリフと色を持ち、クリックするとそのオブジェクトが——このページでも設計でも——選択されます。
+One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), an **off | on** control for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design.
+
+A Source you have not given a value yet says so: a number field shows the hint _no value yet_, and the on / off control is drawn empty with a dashed outline and the words _no value yet_ beside it — the same dashes that mark a declared relationship, for the same reason: nothing has been decided. It is not _off_. One click on **off** or **on** gives exactly that value; the simulator never fills one in for you, because a missing Source is an error at run time, not a default.
 
 入力元の下に**タイミングドメイン**。ドメインごとの周期——_N ティックごと_——評価器が起動するスケジュールです。周期であって、レートではありません。周期を変えると実行は最初からやり直されます。
 
@@ -31,6 +33,12 @@ _傾き 45° で 3 ステップ後のシミュレートページ：左に入力�
 
 いずれかが列挙されている間、**ステップ**は無効で何もしません。現在の設計の解析が届いていない間、リストは _設計を検査中…_ と述べ、何も問題はありません。ページを開いても実行は始まりません。
 
+Below the blockers, with a hollow dot instead of a filled one, the page lists what does **not** stop a step but explains what the trace will not show: a **rule nothing applies**. A rule — a relationship with inputs — is a function, so it has no value per tick and no column; only a value that calls it does. The note names the rule and the value that would put it to work:
+
+- _AirConditionerCtrl is a rule nothing applies yet._ — _A rule has no value of its own; a value that applies it — `AirConditionerCtrl(TempSensor, ButtonInput)` — is what the simulator and an output can read._
+
+Under it, the fix **Add a value that applies AirConditionerCtrl** and a _Show_ link. The fix creates `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)` in one click when each concept the rule reads has exactly one value producing it; when one has several, the button becomes a pop-up of the calls to choose from; when one has none, the button says why (_Not possible yet: no value produces `RoomTemp` yet; add a Source or a computed value that produces it first_). The tool never guesses. A rule that has no definition yet is a blocker first (_has no definition_) and is not repeated here.
+
 ![Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.](../../../../docs/user-guide/assets/studio/simulate-readiness.png)
 
 _表示リンク付きの妨げ：入力元 tilt にまだ値がないので、ステップは無効。_
@@ -43,7 +51,7 @@ _表示リンク付きの妨げ：入力元 tilt にまだ値がないので、�
 
 ## トレース（中央）
 
-行はティック。列は設計の**値**——入力のない関係——と**駆動される出力**です。規則（入力のある関係）には列がありません。関数であって値ではないからです。_起動_ 列はティックしたドメインを示します。セルは評価器自身の描画で、常にコンセプト付き、値の形式の言葉で書かれます：`Brightness(0.5)`、`Tilt(0.785398 [rad])`、`Held(on)`——真理値は _on_ / _off_、数値は有効数字 6 桁です。Studio が自分で値を描画することはありません。
+Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value — `dimByTilt` never appears, the value `brightness = dimByTilt(tilt)` does. If a rule seems ignored by the simulation, the readiness area says so and offers the value that applies it. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself.
 
 空のセルは、その値のドメインがそのティックで起動しなかったことを意味します。入力元のセルは与えた値で、そのドメインが起動したティックに評価器がエコーしたものです。列の順序は同一性によるもので、時間によるものではありません。列見出しをクリックするとその関係が選択されます。
 
@@ -51,7 +59,7 @@ _表示リンク付きの妨げ：入力元 tilt にまだ値がないので、�
 
 ## プローブ（右）
 
-選択したオブジェクトの**現在**の値と**実行全体**の値を、トレースと同じ書き方でグリフ付きで。出力ならその駆動元。概念はそれを**運ぶ**ものとして示されます——_運び手_、続いてそれを生成する各値と入力元が最新のサンプルとともに。ひとつもなければ _まだ何も Brightness を運んでいません。これを生成する値も入力元もありません。_ と、生成する各ルールについて _dimByTilt はルールです。これを適用する値が Brightness を運びます。_ ルールには示す値がありません：_ルールです。固有の値は持ちません。シミュレーターがサンプルするのは、これを適用する値です。_、続いて _brightness で適用されています。_ または _まだどの値にも適用されていません。_ その下の**説明**には識別番号、実行のリビジョン、失敗時にはコードと技術的な文言があります。
+The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. A concept is shown as what **carries** it — _Carried by_, then each value and Source that produces it with its latest sample; when none does, _Nothing carries Brightness yet: no value or Source produces it._ and, for each rule that produces it, _dimByTilt is a rule; a value whose formula applies it would carry Brightness._ A rule has no value to show: _A rule: it has no value of its own. A value whose formula applies it is what the simulator samples._, then, under _Applied in_, links to the values whose formula applies it — or _No value applies it yet._ with the same fix the readiness area offers. **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text.
 
 ## 新しいリビジョンが行うこと
 
@@ -63,4 +71,4 @@ _表示リンク付きの妨げ：入力元 tilt にまだ値がないので、�
 
 ## 関連
 
-[最初のシミュレーション](../getting-started/first-simulation.md) · [タイミング](../../../../docs/user-guide/concepts/timing.md) · [トラブルシューティング：未完成の設計](../../../../docs/user-guide/troubleshooting/incomplete-design.md)
+[Your first simulation](../getting-started/first-simulation.md) · [Relationships](../../../../docs/user-guide/concepts/relationships.md) · [Timing](../../../../docs/user-guide/concepts/timing.md) · [Troubleshooting: incomplete design](../../../../docs/user-guide/troubleshooting/incomplete-design.md)

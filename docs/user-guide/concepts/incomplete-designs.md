@@ -11,16 +11,17 @@ like, and which ones actually stop you.
 
 ## The states of a relationship
 
-| State        | You see                                                                                    | It means                                                                                         | Stops you?                                                               |
-| ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| **declared** | dashed node, the word _declared_ in the header                                             | the relationship reads something and has no formula yet                                          | only where its value is needed: an output it should drive stays undriven |
-| **Source**   | a bar at the node's left edge, an entry arrow, the word _Source_ in the header             | the relationship reads nothing and has no formula: the environment provides its value            | no — nothing is missing; the simulator asks you for the value            |
-| **open**     | solid node, but a hollow socket; inspector: _Checked once Temperature's value is decided._ | it has a formula, but a concept it reads has no value form yet, so the formula cannot be checked | no — it is waiting, not wrong                                            |
-| **invalid**  | a red mark at the formula line; the finding under the field                                | it has a formula and the formula does not check                                                  | simulation, and anything that depends on it                              |
-| **valid**    | solid node, no marks                                                                       | it checks, has a value at every tick it is asked for, and its timing is consistent               | no                                                                       |
+| State           | You see                                                                                    | It means                                                                                                                                      | Stops you?                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **declared**    | dashed node, the word _declared_ in the header                                             | the relationship reads something and has no formula yet                                                                                       | only where its value is needed: an output it should drive stays undriven                 |
+| **Source**      | a bar at the node's left edge, an entry arrow, the word _Source_ in the header             | the relationship reads nothing and has no formula: the environment provides its value                                                         | no — nothing is missing; the simulator asks you for the value                            |
+| **open**        | solid node, but a hollow socket; inspector: _Checked once Temperature's value is decided._ | it has a formula, but a concept it reads has no value form yet, so the formula cannot be checked                                              | no — it is waiting, not wrong                                                            |
+| **invalid**     | a red mark at the formula line; the finding under the field                                | it has a formula and the formula does not check                                                                                               | simulation, and anything that depends on it                                              |
+| **valid**       | solid node, no marks                                                                       | it checks, has a value at every tick it is asked for, and its timing is consistent                                                            | no                                                                                       |
+| **not applied** | a rule with a hollow output socket and, once defined, the word _not applied_ in the header | no value calls the rule, so nothing in the design has its result: the simulator shows no column for it and no output can be driven through it | no — the note on the Simulate page and in the inspector offers the value that applies it |
 
-_Declared_ and _open_ are the two intentional states. They are drawn in orange
-or with dashes — never red. Red is reserved for _wrong now_.
+_Declared_, _open_ and _not applied_ are the intentional states. They are drawn
+in orange, with dashes or hollow — never red. Red is reserved for _wrong now_.
 
 ## The states of a design
 
@@ -33,7 +34,9 @@ across domains_.
 The Simulate page turns the same facts into sentences with links: _tilt needs a
 value before simulation can step._ — _dimByTilt has no definition._ — _level has
 no valid definition._ Each _Show_ link selects the object. Nothing here is a
-failure; it is the list of what remains.
+failure; it is the list of what remains. Below those, with a hollow dot, the
+notes that stop nothing but explain the trace: _dimByTilt is a rule nothing
+applies yet._, with the fix that writes the value applying it.
 
 ## Why BDL is built this way
 
@@ -63,7 +66,10 @@ The practical consequences:
 The Simulate page's list, the status line, and the **Fixes** section of an
 inspector all point at the same work. Fixes are actions the tool can offer for a
 finding — _Choose what Temperature is represented by_, _Connect a driver to
-light_ — each applied as an ordinary edit you can undo.
+light_, _Add a value that applies dimByTilt_ — each applied as an ordinary edit
+you can undo. A fix is ready when the tool can do it alone, a pop-up when you
+must choose, and a sentence saying why when it cannot be done yet; it never
+guesses.
 
 ## Going deeper
 

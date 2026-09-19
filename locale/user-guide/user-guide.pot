@@ -326,9 +326,9 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-systems.md:100
 #: docs/user-guide/concepts/components.md:88
 #: docs/user-guide/concepts/concepts.md:72
-#: docs/user-guide/concepts/incomplete-designs.md:68
+#: docs/user-guide/concepts/incomplete-designs.md:74
 #: docs/user-guide/concepts/physical-outputs.md:73
-#: docs/user-guide/concepts/relationships.md:105
+#: docs/user-guide/concepts/relationships.md:118
 #: docs/user-guide/concepts/timing.md:104
 msgid "Going deeper"
 msgstr ""
@@ -341,9 +341,9 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-systems.md:115
 #: docs/user-guide/concepts/components.md:99
 #: docs/user-guide/concepts/concepts.md:82
-#: docs/user-guide/concepts/incomplete-designs.md:77
+#: docs/user-guide/concepts/incomplete-designs.md:83
 #: docs/user-guide/concepts/physical-outputs.md:84
-#: docs/user-guide/concepts/relationships.md:118
+#: docs/user-guide/concepts/relationships.md:131
 #: docs/user-guide/concepts/timing.md:114
 #: docs/user-guide/reference/cli.md:40
 #: docs/user-guide/reference/formula-language.md:87
@@ -354,7 +354,7 @@ msgstr ""
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
 #: docs/user-guide/studio/library.md:71
-#: docs/user-guide/studio/simulate.md:108
+#: docs/user-guide/studio/simulate.md:141
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:94
 #: docs/user-guide/textual/editor-and-lsp.md:83
@@ -760,7 +760,7 @@ msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Butt
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:63
-#: docs/user-guide/concepts/relationships.md:86
+#: docs/user-guide/concepts/relationships.md:98
 msgid "What the inspector shows"
 msgstr ""
 
@@ -912,59 +912,75 @@ msgstr ""
 msgid "no"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:22
-msgid "_Declared_ and _open_ are the two intentional states. They are drawn in orange or with dashes — never red. Red is reserved for _wrong now_."
+#: docs/user-guide/concepts/incomplete-designs.md:21
+msgid "**not applied**"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:25
+#: docs/user-guide/concepts/incomplete-designs.md:21
+msgid "a rule with a hollow output socket and, once defined, the word _not applied_ in the header"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:21
+msgid "no value calls the rule, so nothing in the design has its result: the simulator shows no column for it and no output can be driven through it"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:21
+msgid "no — the note on the Simulate page and in the inspector offers the value that applies it"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:23
+msgid "_Declared_, _open_ and _not applied_ are the intentional states. They are drawn in orange, with dashes or hollow — never red. Red is reserved for _wrong now_."
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:26
 msgid "The states of a design"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:27
+#: docs/user-guide/concepts/incomplete-designs.md:28
 msgid "A whole design is **executable** when every relationship an output depends on is valid and every required output has exactly one driver. Below that, the status line at the bottom of the window tells you what is still open, as counts and short phrases: _2 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:33
-msgid "The Simulate page turns the same facts into sentences with links: _tilt needs a value before simulation can step._ — _dimByTilt has no definition._ — _level has no valid definition._ Each _Show_ link selects the object. Nothing here is a failure; it is the list of what remains."
+#: docs/user-guide/concepts/incomplete-designs.md:34
+msgid "The Simulate page turns the same facts into sentences with links: _tilt needs a value before simulation can step._ — _dimByTilt has no definition._ — _level has no valid definition._ Each _Show_ link selects the object. Nothing here is a failure; it is the list of what remains. Below those, with a hollow dot, the notes that stop nothing but explain the trace: _dimByTilt is a rule nothing applies yet._, with the fix that writes the value applying it."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:38
+#: docs/user-guide/concepts/incomplete-designs.md:41
 msgid "Why BDL is built this way"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:40
+#: docs/user-guide/concepts/incomplete-designs.md:43
 msgid "Design is discovered in an order that does not match the order of dependency. You know the lamp will have a light before you know the formula; you know a relationship reads _Temperature_ before you know whether temperature is a quantity in kelvin or a coarse _cold / warm / hot_. A tool that refused to hold the design until every piece was decided would push you back to sketches. BDL holds the design, checks the parts that can be checked, and reports the rest as _open_ — with the same precision it uses for errors, so that \"what is left\" is always a concrete list."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:49
+#: docs/user-guide/concepts/incomplete-designs.md:52
 msgid "The practical consequences:"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:51
+#: docs/user-guide/concepts/incomplete-designs.md:54
 msgid "A relationship without inputs and without a formula is a **Source**, not a declared one: it is exactly what the simulator asks you for. A sensor reading is a Source with a domain. \"Comes from the environment\" is a complete state, on purpose; give the Source a formula and it becomes a computed value instead."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:55
+#: docs/user-guide/concepts/incomplete-designs.md:58
 msgid "An **open** relationship does not turn red when you change the concept it waits on; it is re-checked and becomes valid or invalid."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:57
+#: docs/user-guide/concepts/incomplete-designs.md:60
 msgid "An **undriven** required output is _incomplete_, an **undriven optional** output is fine, and a **contested** output (two drivers) is an error — because the first two are missing information and the third is a contradiction."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:61
+#: docs/user-guide/concepts/incomplete-designs.md:64
 msgid "Finishing a design"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:63
-msgid "The Simulate page's list, the status line, and the **Fixes** section of an inspector all point at the same work. Fixes are actions the tool can offer for a finding — _Choose what Temperature is represented by_, _Connect a driver to light_ — each applied as an ordinary edit you can undo."
+#: docs/user-guide/concepts/incomplete-designs.md:66
+msgid "The Simulate page's list, the status line, and the **Fixes** section of an inspector all point at the same work. Fixes are actions the tool can offer for a finding — _Choose what Temperature is represented by_, _Connect a driver to light_, _Add a value that applies dimByTilt_ — each applied as an ordinary edit you can undo. A fix is ready when the tool can do it alone, a pop-up when you must choose, and a sentence saying why when it cannot be done yet; it never guesses."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:70
+#: docs/user-guide/concepts/incomplete-designs.md:76
 msgid "_For language implementers._ The kernel treats a declaration without a realization as a legal, unresolved declaration; the ladder a mapping climbs is _Declared → Open → Invalid → TypeValid → TemporallyValid → ClockConsistent_, and output completeness and hardware feasibility are properties of the design and of a (design, target) pair, not rungs. `docs/architecture/compiler-pipeline.md` (\"Driver and result\") and ADR-0015."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:79
+#: docs/user-guide/concepts/incomplete-designs.md:85
 msgid "[Relationships](relationships.md) · [Status meanings](../reference/status-meanings.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
 msgstr ""
 
@@ -1261,59 +1277,63 @@ msgid "The creation sheet says which shape you are about to make as you change t
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:48
+msgid "Only a value shows in the simulator: a rule has no value per tick, so it has no column in the trace. A rule that nothing applies is a legal state, and the tool says so: the finding _dimByTilt is a rule nothing applies yet._ on the rule, in the inspector's _Relationship_ section and on the Simulate page, with the fix **Add a value that applies dimByTilt** — which creates `dimByTiltValue : () -> Brightness = dimByTilt(tilt)` when exactly one value produces each concept the rule reads, asks you to choose when several do, and says why when none does. On the canvas the rule's output socket is hollow — no value comes out of it yet — and, once the rule has a formula, its header reads _not applied_ instead of _rule_. It is not an error: nothing is wrong, something is still to be written."
+msgstr ""
+
+#: docs/user-guide/concepts/relationships.md:60
 msgid "The formula"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:50
+#: docs/user-guide/concepts/relationships.md:62
 msgid "Formulas are short expressions over the names in scope: the concepts the relationship reads, the values and rules of the design, numbers with units, and a few keywords."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:61
+#: docs/user-guide/concepts/relationships.md:73
 msgid "A formula is checked for **dimension** (units must work out), for **meaning** (the result must be the concept the signature promises), and for **shape** (a rule cannot be used where a value is expected, and the other way round). The full language — operators, `if`, `let`, `match`, memory with `delay`, values from other domains with `sync` — is in [Formula language](../reference/formula-language.md); the editor is described in [Formula editor](../studio/formula-editor.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:69
+#: docs/user-guide/concepts/relationships.md:81
 msgid "Links on the canvas"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:71
+#: docs/user-guide/concepts/relationships.md:83
 msgid "Two kinds of link, told apart by colour and by where they end. A link in a concept's colour from a concept's output socket to a relationship's input socket means _this relationship reads that concept_; from a relationship's output socket to a concept's input socket, _this relationship produces that concept_. These are the **signature**: drawing one edits it; dragging one away from an input and dropping it on empty canvas removes the concept from the signature. A thin grey link from a relationship's output socket to the left end of another relationship's formula line means _that formula names this relationship_ — `brightness`'s line receives one from `dimByTilt` (applied) and one from `tilt` (named). These are the **dependency**, read off the analysis of the formula; they follow the formula and cannot be dragged. On the canvas a rule wears the word _rule_ in its header; a value wears no word. Neither kind of link shows the arithmetic or an order of execution: the canvas is a picture of the interface and of dependency, not a flowchart."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:88
+#: docs/user-guide/concepts/relationships.md:100
 msgid "**Meaning** — name, description and _Role_: _Source_, _Rule_ or _Value_ (or the port the relationship backs), with one sentence."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:90
+#: docs/user-guide/concepts/relationships.md:102
 msgid "**Reads** / **Produces** — the signature, as chips and a pop-up with the concepts' glyphs. Changing either is an edit; the inspector says which relationships will be rechecked."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:93
-msgid "**Relationship** — the formula editor: _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_, the verdict line, and any findings about the formula; then _Depends on_ (the relationships the formula names) and _Named in_ (the formulas that name this one) — the reference links, as names you can click."
+#: docs/user-guide/concepts/relationships.md:105
+msgid "**Relationship** — the formula editor: _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_, the verdict line, and any findings about the formula; then _Depends on_ (the relationships the formula names) and _Named in_ (the formulas that name this one) — the reference links, as names you can click; then the findings about the relationship's place in the design — a rule nothing applies, with its fix beside it."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:98
+#: docs/user-guide/concepts/relationships.md:111
 msgid "**Timing** — _Updates in_: the timing domain, or _Any timing domain_ for a pure rule. See [Timing](timing.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:100
+#: docs/user-guide/concepts/relationships.md:113
 msgid "**Drives** — the physical output this value is the final target of, if any. See [Physical outputs](physical-outputs.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:102
+#: docs/user-guide/concepts/relationships.md:115
 msgid "**Fixes** — actions the tool offers for findings on this relationship."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:103
+#: docs/user-guide/concepts/relationships.md:116
 msgid "**Explain** — collapsed by default: the formal detail."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:107
+#: docs/user-guide/concepts/relationships.md:120
 msgid "_For language implementers._ A relationship is a declaration with an interface (the signature elaborated over the concepts' representations) and an optional realization (the formula elaborated to a Core term, a lambda over `rep` of each input ending in `mk` of the output). A declaration without a realization is the language's unresolved declaration, a first-class state. `docs/architecture/compiler-pipeline.md` passes 3–6; `docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the formula language's naming rule. The reference links are the kernel's `dependsOn` (`docs/spec/kernel.md` §5) — `refs` of the realization, carried per relationship in the analysis (`MappingAnalysis.references`, ADR-0034)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:120
-msgid "[Concepts](concepts.md) · [Incomplete designs](incomplete-designs.md) · [Formula editor](../studio/formula-editor.md) · [Formula language](../reference/formula-language.md)"
+#: docs/user-guide/concepts/relationships.md:133
+msgid "[Concepts](concepts.md) · [Incomplete designs](incomplete-designs.md) · [Formula editor](../studio/formula-editor.md) · [Formula language](../reference/formula-language.md) · [Simulate](../studio/simulate.md)"
 msgstr ""
 
 #: docs/user-guide/concepts/timing.md:1
@@ -5393,103 +5413,119 @@ msgid "Sources (left)"
 msgstr ""
 
 #: docs/user-guide/studio/simulate.md:16
-msgid "One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), a switch for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design."
+msgid "One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), an **off | on** control for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design."
 msgstr ""
 
 #: docs/user-guide/studio/simulate.md:24
+msgid "A Source you have not given a value yet says so: a number field shows the hint _no value yet_, and the on / off control is drawn empty with a dashed outline and the words _no value yet_ beside it — the same dashes that mark a declared relationship, for the same reason: nothing has been decided. It is not _off_. One click on **off** or **on** gives exactly that value; the simulator never fills one in for you, because a missing Source is an error at run time, not a default."
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:32
 msgid "Under the Sources, **Timing domains**: a period per domain — _every N_ ticks — the schedule the evaluator activates by. A period, never a rate. Changing a period starts the run over."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:28
+#: docs/user-guide/studio/simulate.md:36
 msgid "An instance's **open required ports** are Sources too, and an instance's values are listed as `lampA.brightness`."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:31
+#: docs/user-guide/studio/simulate.md:39
 msgid "Readiness (above the trace)"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:33
+#: docs/user-guide/studio/simulate.md:41
 msgid "Before anything runs, the page lists what would stop a step, as sentences about named objects, each with a _Show_ link that selects it:"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:36
+#: docs/user-guide/studio/simulate.md:44
 msgid "_tilt needs a value before simulation can step._ — a Source without a value"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:37
+#: docs/user-guide/studio/simulate.md:45
 msgid "_Tilt needs a value form (Quantity, On / off or Count) before tilt can be given a value._ — a concept still on _decide later_"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:39
+#: docs/user-guide/studio/simulate.md:47
 msgid "_dimByTilt has no definition._ / _level has no valid definition._"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:40
+#: docs/user-guide/studio/simulate.md:48
 msgid "_These relationships depend on each other in the same instant: a, b._"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:42
+#: docs/user-guide/studio/simulate.md:50
 msgid "While any is listed **Step** is disabled and does nothing. While the analysis for the current design has not arrived the list says _Checking the design…_ and nothing is wrong. Opening the page never starts a run."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:48
-msgid "_A blocker with its Show link: the Source tilt has no value yet, so Step is disabled._"
+#: docs/user-guide/studio/simulate.md:54
+msgid "Below the blockers, with a hollow dot instead of a filled one, the page lists what does **not** stop a step but explains what the trace will not show: a **rule nothing applies**. A rule — a relationship with inputs — is a function, so it has no value per tick and no column; only a value that calls it does. The note names the rule and the value that would put it to work:"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:51
-msgid "Step, Step ×10, Reset"
-msgstr ""
-
-#: docs/user-guide/studio/simulate.md:53
-msgid "**Step** evaluates the next tick with the Sources on screen; **Step ×10** ten of them. Every step is a **replay**: the evaluator restarts at tick 0 with every tick's Sources so far and the schedule, then runs to the new tick — so the same design, Sources and periods always give the same trace. **Reset** returns to tick 0; Sources and periods stay."
-msgstr ""
-
-#: docs/user-guide/studio/simulate.md:59
-msgid "A tick that **fails** — a division by zero, a value that is not a number — stops there, and the failure is written on the controls' line about the object (_bad divided by zero._), never as a banner."
-msgstr ""
-
-#: docs/user-guide/studio/simulate.md:63
-msgid "The trace (centre)"
+#: docs/user-guide/studio/simulate.md:60
+msgid "_AirConditionerCtrl is a rule nothing applies yet._ — _A rule has no value of its own; a value that applies it — `AirConditionerCtrl(TempSensor, ButtonInput)` — is what the simulator and an output can read._"
 msgstr ""
 
 #: docs/user-guide/studio/simulate.md:65
-msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself."
+msgid "Under it, the fix **Add a value that applies AirConditionerCtrl** and a _Show_ link. The fix creates `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)` in one click when each concept the rule reads has exactly one value producing it; when one has several, the button becomes a pop-up of the calls to choose from; when one has none, the button says why (_Not possible yet: no value produces `RoomTemp` yet; add a Source or a computed value that produces it first_). The tool never guesses. A rule that has no definition yet is a blocker first (_has no definition_) and is not repeated here."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:73
+#: docs/user-guide/studio/simulate.md:77
+msgid "_A blocker with its Show link: the Source tilt has no value yet, so Step is disabled._"
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:80
+msgid "Step, Step ×10, Reset"
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:82
+msgid "**Step** evaluates the next tick with the Sources on screen; **Step ×10** ten of them. Every step is a **replay**: the evaluator restarts at tick 0 with every tick's Sources so far and the schedule, then runs to the new tick — so the same design, Sources and periods always give the same trace. **Reset** returns to tick 0; Sources and periods stay."
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:88
+msgid "A tick that **fails** — a division by zero, a value that is not a number — stops there, and the failure is written on the controls' line about the object (_bad divided by zero._), never as a banner."
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:92
+msgid "The trace (centre)"
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:94
+msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value — `dimByTilt` never appears, the value `brightness = dimByTilt(tilt)` does. If a rule seems ignored by the simulation, the readiness area says so and offers the value that applies it. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself."
+msgstr ""
+
+#: docs/user-guide/studio/simulate.md:105
 msgid "An empty cell means the value's domain did not activate at that tick. A Source's cell is the value you fed, echoed by the evaluator at the ticks its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:78
+#: docs/user-guide/studio/simulate.md:110
 msgid "Memory and transports show up as values: `acc = delay(0, acc + x)` reads `0` at tick 0 and last tick's sum after; `y = sync(fast, -1, x)` in a slower domain reads the source's last activation strictly before its own, so a source value produced at the same instant is not yet visible."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:83
+#: docs/user-guide/studio/simulate.md:115
 msgid "The probe (right)"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:85
-msgid "The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. A concept is shown as what **carries** it — _Carried by_, then each value and Source that produces it with its latest sample; when none does, _Nothing carries Brightness yet: no value or Source produces it._ and, for each rule that produces it, _dimByTilt is a rule; a value whose formula applies it would carry Brightness._ A rule has no value to show: _A rule: it has no value of its own. A value whose formula applies it is what the simulator samples._, then _Applied in brightness._ or _No value applies it yet._ **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text."
+#: docs/user-guide/studio/simulate.md:117
+msgid "The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. A concept is shown as what **carries** it — _Carried by_, then each value and Source that produces it with its latest sample; when none does, _Nothing carries Brightness yet: no value or Source produces it._ and, for each rule that produces it, _dimByTilt is a rule; a value whose formula applies it would carry Brightness._ A rule has no value to show: _A rule: it has no value of its own. A value whose formula applies it is what the simulator samples._, then, under _Applied in_, links to the values whose formula applies it — or _No value applies it yet._ with the same fix the readiness area offers. **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:96
+#: docs/user-guide/studio/simulate.md:129
 msgid "What a new revision does"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:98
+#: docs/user-guide/studio/simulate.md:131
 msgid "Editing the design drops the samples and any answer still in flight, keeps the fed values for inputs that still exist, and re-checks readiness. A trace always belongs to one revision of the design."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:102
+#: docs/user-guide/studio/simulate.md:135
 msgid "Not on this page"
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:104
+#: docs/user-guide/studio/simulate.md:137
 msgid "Values on the canvas (the trace and probe are the only views), plots (the trace is a table), and telemetry from a real device (that is Monitor, which does not exist yet)."
 msgstr ""
 
-#: docs/user-guide/studio/simulate.md:110
-msgid "[Your first simulation](../getting-started/first-simulation.md) · [Timing](../concepts/timing.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
+#: docs/user-guide/studio/simulate.md:143
+msgid "[Your first simulation](../getting-started/first-simulation.md) · [Relationships](../concepts/relationships.md) · [Timing](../concepts/timing.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:1
