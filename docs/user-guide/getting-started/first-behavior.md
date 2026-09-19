@@ -109,18 +109,21 @@ what Brightness is and what the formula produces instead._
 > (_Tilt_), units after a number, keywords. Hovering a name for a moment shows
 > what it is. The Formula view asks for nothing: each slot lists what fits.
 
-## 5. Bring the tilt in from outside
+## 5. Bring the tilt in from the environment
 
 `dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the
-tilt come from? From a sensor — from outside the design. In BDL a value that
-arrives from outside is a relationship that **reads nothing**, produces the
-concept, and has **no formula**.
+tilt come from? From the environment — a sensor, outside the design. In BDL a
+value the environment provides is a **Source**: a relationship that **reads
+nothing**, produces the concept, and has **no formula**.
 
 1. **+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**.
-   Create.
+   Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the
+   same thing; the Library's _Sources_ category makes a concept and its Source
+   together.)
 
-Leave it declared. Its dashed outline now means "supplied from outside": in the
-simulator you will type its value; on a device it will be the sensor.
+The node says _Source_ in its header, with a bar down its left edge and no input
+socket. It is not dashed: nothing is missing. In the simulator you will type its
+value; on a device the sensor will provide it.
 
 ## 6. Compute the lamp's brightness
 
@@ -137,7 +140,7 @@ Completion offers `dimByTilt(` because it is a relationship with an input, and
 relationships are combined; links on the canvas show _which concepts_ a
 relationship reads, not the arithmetic.
 
-**What you made.** Three relationships: an input (`tilt`), a rule (`dimByTilt`)
+**What you made.** Three relationships: a Source (`tilt`), a rule (`dimByTilt`)
 and a computed value (`brightness`). The status line at the bottom counts them.
 
 ## 7. Give the values a rhythm
@@ -180,27 +183,27 @@ qualifies; connecting `dimByTilt` instead would be accepted as an edit and then
 reported under the output as a connection that does not fit.
 
 **What you made.** A complete design. The status line no longer says _outputs
-incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the input,
+incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the Source,
 which is meant to stay without a formula. Press **⌘S** to save.
 
 ## What you have
 
-![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/getting-started/complete-lamp.png)
+![The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/getting-started/complete-lamp.png)
 
-_The finished lamp: the input tilt, the rule dimByTilt, the value brightness,
+_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness,
 and the driven light._
 
-| Object         | Kind                                  | Formula           | Updates in    |
-| -------------- | ------------------------------------- | ----------------- | ------------- |
-| **Tilt**       | concept, an angle                     |                   |               |
-| **Brightness** | concept, a plain number               |                   |               |
-| **tilt**       | relationship reading nothing: input   | _none_            | _interaction_ |
-| **dimByTilt**  | relationship reading Tilt: a rule     | `Tilt / 90 deg`   | any           |
-| **brightness** | relationship reading nothing: a value | `dimByTilt(tilt)` | _interaction_ |
-| **light**      | physical output driven by brightness  |                   | _interaction_ |
+| Object         | Kind                                   | Formula           | Updates in    |
+| -------------- | -------------------------------------- | ----------------- | ------------- |
+| **Tilt**       | concept, an angle                      |                   |               |
+| **Brightness** | concept, a plain number                |                   |               |
+| **tilt**       | relationship reading nothing: a Source | _none_            | _interaction_ |
+| **dimByTilt**  | relationship reading Tilt: a rule      | `Tilt / 90 deg`   | any           |
+| **brightness** | relationship reading nothing: a value  | `dimByTilt(tilt)` | _interaction_ |
+| **light**      | physical output driven by brightness   |                   | _interaction_ |
 
 The design is _executable_: every relationship the output depends on is defined
-or is an input, checks, has a rhythm, and the output has exactly one driver.
+or is a Source, checks, has a rhythm, and the output has exactly one driver.
 
 ## If something does not work
 

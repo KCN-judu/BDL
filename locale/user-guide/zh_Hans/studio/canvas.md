@@ -9,13 +9,14 @@
 ## 标记的含义
 
 | 你看到 | 含义 |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **插口颜色** | _哪个概念_——每个概念有自己的色相，在它出现的所有地方都相同 |
 | **插口形状** | 概念的 _值形式_：○ 量、◇ 开/关、□ 计数；值形式为 _稍后决定_ 时是**空心环** |
 | **一条连线** | _这个关系读取那个概念_（概念 → 关系输入），或 _这个值驱动那个输出_（关系 → 汇） |
-| **虚线轮廓** | _已声明_：没有公式的关系；没有驱动方或没有域的输出 |
+| **虚线轮廓** | _已声明_：读取了某些东西但没有公式的关系；没有驱动方或没有域的输出 |
+| **节点左边缘的竖条、一个进入箭头、_来源_ 一词** | 一个**来源**：由环境提供的值——一个不读取任何东西且没有公式的关系。这里没有任何缺失 |
 | **公式行上的红色标记** | 公式未通过检查——_现在就错了_，而不是 _还没做_ |
-| **_已声明_、_有争议_、_不合式_、_无域_ 这些词** | 节点可以携带的唯一状态词，只在该状态成立时显示（必须被驱动的输出在此期间显示 _必需_） |
+| **_已声明_、_有争议_、_不合式_、_无域_ 这些词** | 节点可以携带的唯一状态词，只在该状态成立时显示（必须被驱动的输出在此期间显示 _必需_；来源显示 _来源_） |
 | **节点右边缘的小名字** | 它的时序域 |
 | **强调色** | 选中——仅此而已 |
 
@@ -23,13 +24,15 @@
 
 ## 节点
 
-![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/studio/node-anatomy.png)
+![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/studio/node-anatomy.png)
 
 _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）和 light 汇。_
 
 **概念**是一行：它的名字，左侧一个输入插口（有东西生成这个概念），右侧一个输出插口（关系从这里读取它）。两个插口都带有概念的颜色和形状。
 
-**关系**是一个方框：标题带有名字，以及（当适用时）唯一的状态词（上图中没有公式的 `tilt` 显示 _已声明_）；左侧每个读取的概念一个输入插口，各自标有概念名；右侧一个输出插口，标有它生成的概念；下面一行是公式，当关系有时序域时，域名在右边缘。不读取任何东西的关系——`tilt`、`brightness`——没有输入插口；它是值，它的公式（如果有）指出它依赖的值和规则。
+**关系**是一个方框：标题带有名字，以及（当适用时）唯一的状态词（读取了某些东西但还没有公式的关系显示 _已声明_）；左侧每个读取的概念一个输入插口，各自标有概念名；右侧一个输出插口，标有它生成的概念；下面一行是公式，当关系有时序域时，域名在右边缘。不读取任何东西的关系——上图中的 `brightness`——没有输入插口；它是值，它的公式指出它依赖的值和规则。
+
+**来源**是一个不读取任何东西且没有公式的关系——上图中的 `tilt`：它的值由环境提供，每次激活一次。它的标题写着 _来源_，名字前有一个进入箭头，**左**边缘有一条竖条（那是环境的一侧；设计中没有任何东西喂给它），有一个输出插口，没有输入插口。它不是虚线的，也不是 _已声明_：这里没有任何缺失。在真实产品上由什么提供这个值——传感器、按钮、模拟线路——是部署的事，不是画布上的标记；给来源一个公式，它就变成在设计内部计算的普通关系。
 
 **物理输出**是一个汇：着色的标题带有名字，右侧一个词——设计完成前必须驱动的输出显示 _必需_，或者覆盖它的状态（_无域_、_有争议_、_不合式_）；一个输入插口，标有它接受的概念；右边缘是时序域；右侧一条竖条——没有东西从它流出。
 
@@ -62,7 +65,7 @@ _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）
 
 ## 上下文菜单
 
-在空白画布上：**添加概念 ▸**——_最近_、_输入_、_输出_、三个最常用的类别、_更多…_（打开库标签页）；**添加实例 ▸** _组件_ 和**新建行为组**。
+在空白画布上：**添加概念 ▸**——_最近_、_输入_、_输出_、三个最常用的类别、_更多…_（打开库标签页）；**添加来源 ▸**——标准来源（_温度传感器_、_倾斜传感器_……）以及 _新建来源…_，为设计中已有的概念建立来源；**添加实例 ▸** _组件_ 和**新建行为组**。
 
 在节点上：**重命名**、**删除**；在关系上还有**分组为行为**、**添加到组 ▸**、**从 … 移出**；在实例上，**编辑来源**；在行为上，**折叠** / **展开**、**打包为可复用组件…**、**取消分组**。
 

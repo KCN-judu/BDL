@@ -6,23 +6,23 @@
 
 仿真页（⌘2）回答 _设计随时间做什么_，一拍一拍地回答。每个值都来自编译器服务的参考求值器——BDL 设计含义的可执行定义。Studio 保存你输入的值、你选择的周期和返回的采样；它自己不做任何计算。
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
 
-_倾角为 45° 时步进三次后的仿真页：左侧是输入，中间是轨迹，右侧是探针。_
+_倾角为 45° 时步进三次后的仿真页：左侧是来源，中间是轨迹，右侧是探针。_
 
-## 输入（左侧）
+## 来源（左侧）
 
-每个来自外部的值一个控件——每个不读取任何东西且没有公式的关系。控件跟随概念的值形式，而不是它的名字：量是旁边带单位的数（用基本单位：弧度、米、秒、开尔文…），开/关是开关，计数是整数。这一行带有概念的图形符号和颜色，点击它会选中该对象——在本页和设计页上都是。
+每个[来源](canvas.md)一个控件——每个不读取任何东西且没有公式的关系：由环境提供、仿真向你索取的值。控件跟随概念的值形式，而不是它的名字：量是旁边带单位的数（用基本单位：弧度、米、秒、开尔文…），开/关是开关，计数是整数。这一行带有概念的图形符号和颜色，点击它会选中该对象——在本页和设计页上都是。
 
-输入下方是**时序域**：每个域一个周期——_每 N_ 拍——求值器按此调度激活。是周期，从不是速率。更改周期会重新开始运行。
+来源下方是**时序域**：每个域一个周期——_每 N_ 拍——求值器按此调度激活。是周期，从不是速率。更改周期会重新开始运行。
 
-实例的**开放的必需端口**也是输入，实例的值以 `lampA.brightness` 的形式列出。
+实例的**开放的必需端口**也是来源，实例的值以 `lampA.brightness` 的形式列出。
 
 ## 就绪状态（轨迹上方）
 
 在任何东西运行之前，页面用关于具名对象的句子列出会阻止步进的事项，每条附有选中它的 _显示_ 链接：
 
-- _tilt 需要一个值仿真才能步进。_——没有值的输入
+- _tilt 需要一个值仿真才能步进。_——没有值的来源
 - _Tilt 需要一个值形式（量、开/关或计数），tilt 才能被赋值。_——仍处于 _稍后决定_ 的概念
 - _dimByTilt 没有定义。_ / _level 没有有效的定义。_
 - _这些关系在同一瞬间相互依赖：a、b。_
@@ -31,11 +31,11 @@ _倾角为 45° 时步进三次后的仿真页：左侧是输入，中间是轨�
 
 ![Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.](../../../../docs/user-guide/assets/studio/simulate-readiness.png)
 
-_一个阻碍项及其显示链接：输入 tilt 还没有值，所以步进被禁用。_
+_一个阻碍项及其显示链接：来源 tilt 还没有值，所以步进被禁用。_
 
 ## 步进、步进 ×10、重置
 
-**步进**用屏幕上的输入求值下一拍；**步进 ×10** 求值十拍。每次步进都是**重放**：求值器带着迄今每一拍的输入和调度从第 0 拍重新开始，然后运行到新的一拍——因此同样的设计、输入和周期总是给出同样的轨迹。**重置**回到第 0 拍；输入和周期保留。
+**步进**用屏幕上的来源求值下一拍；**步进 ×10** 求值十拍。每次步进都是**重放**：求值器带着迄今每一拍的来源和调度从第 0 拍重新开始，然后运行到新的一拍——因此同样的设计、来源和周期总是给出同样的轨迹。**重置**回到第 0 拍；来源和周期保留。
 
 **失败**的一拍——除以零、不是数的值——就停在那里，失败以关于该对象的句子写在控件行上（_bad 除以了零。_），从不作为横幅。
 
@@ -43,7 +43,7 @@ _一个阻碍项及其显示链接：输入 tilt 还没有值，所以步进被�
 
 行是拍。列是设计的**值**——没有输入的关系——和它的**被驱动的输出**；规则（有输入的关系）没有列，因为它是函数而不是值。_活动_ 列指出走了一拍的域。单元格是求值器自己的渲染，总是带着概念：`Brightness(0.5)`、`Held(true)`。
 
-空单元格表示该值的域在那一拍没有激活。输入的单元格显示你喂入的值，只在其域激活的拍显示。列的顺序按身份，不按时间；点击列标题选中该关系。
+空单元格表示该值的域在那一拍没有激活。来源的单元格显示你喂入的值，只在其域激活的拍显示。列的顺序按身份，不按时间；点击列标题选中该关系。
 
 记忆和传输以值的形式出现：`acc = delay(0, acc + x)` 在第 0 拍读到 `0`，之后读到上一拍的和；较慢域中的 `y = sync(fast, -1, x)` 读取来源在严格早于自身激活之前的最后一次激活，所以同一瞬间产生的来源值还看不到。
 

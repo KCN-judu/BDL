@@ -11,10 +11,10 @@ Click **Simulate** in the page bar at the bottom (or press **⌘2**).
 
 The page has three parts:
 
-- **Inputs**, on the left — one control for every value that comes from outside.
-  Here that is `tilt`, with a number field and the unit `rad` beside it. Under
-  the inputs, **Timing domains** lists `interaction` with a period: _every 1_
-  tick.
+- **Sources**, on the left — one control for every value the environment
+  provides. Here that is `tilt`, with a number field and the unit `rad` beside
+  it. Under the Sources, **Timing domains** lists `interaction` with a period:
+  _every 1_ tick.
 - the **trace**, in the middle — a table that fills as you step: one row per
   tick, a column for every computed value and every driven output. Above it,
   **Step**, **Step ×10** and **Reset**, and the tick counter.
@@ -40,7 +40,7 @@ values the design computed — `brightness` as `Brightness(0.5)` (or within a fe
 digits of it, depending on what you typed), and the _light_ column showing the
 same value, because `brightness` drives it. A value is always written with the
 concept it belongs to. Click **Step** twice more: three rows, the same values,
-because the input has not changed.
+because the Source has not changed.
 
 Change the field to `1.5708` (90°) and **Step**: about `Brightness(1)`. Set `0`
 and step: `Brightness(0)`. Upright is off; flat is full.
@@ -50,10 +50,10 @@ recomputed from the inputs you supplied. The evaluator that produced these
 numbers is the one that defines what a BDL design means; the generated code for
 a device is held to it.
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../assets/studio/simulate-page.png)
 
-_The Simulate page after three steps with the tilt at 45°: inputs on the left,
-the trace in the middle, the probe on the right._
+_The Simulate page after three steps with the tilt at 45°: the Sources on the
+left, the trace in the middle, the probe on the right._
 
 ## 4. Look at one value
 
@@ -81,7 +81,7 @@ Design page drops the trace; your input values stay.
 
 ## If something does not work
 
-- **Step is disabled and a sentence names a relationship.** Read it: an input
+- **Step is disabled and a sentence names a relationship.** Read it: a Source
   without a value, a concept without a value form, a relationship without a
   valid definition, or relationships that depend on each other in the same
   instant. Each has a _Show_ link. See

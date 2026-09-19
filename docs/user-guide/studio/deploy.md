@@ -31,7 +31,7 @@ row; in it you set
 - a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital
   output_ (a relay, a switched load), _H-bridge channel_ (a motor: one PWM line
   plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;
-- the **output** it realises (or none, for a sensor that feeds the design);
+- the **output** it realises (or none);
 - one **pin field per requirement** of the kind — leave empty to let the
   placement choose, or type a board pin name (`D3`, `A4`) to fix it by hand;
 - **Remove**.
@@ -43,6 +43,13 @@ fields are the only manual choice.
 
 Devices are saved with the project. They are deployment data, not design data:
 adding, changing or removing one leaves every Design-page verdict unchanged.
+
+A [Source](canvas.md) — a value the environment provides — has no device binding
+yet: no kind on this page provides a value to the design, and the inspector's
+_Realization_ row says so (_Provided by the environment; no device is bound
+yet._). Binding a sensor, a button or an analog line to a Source is deployment
+work that will arrive with the first embedded platform; the design does not
+change when it does.
 
 ## The verdict
 

@@ -20,22 +20,30 @@ _This change affects dimByTilt, warmPulse; they will be checked again._ — and
 
 ## Relationship
 
-| Section          | Fields                                                                                                                                   | Notes                                        |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **Meaning**      | Name, Meaning                                                                                                                            |                                              |
-| **Reads**        | chips with the concepts' glyphs, removable; a pop-up to add                                                                              | an edit; dependents are rechecked            |
-| **Produces**     | a pop-up with the glyph                                                                                                                  | an edit                                      |
-| **Relationship** | the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field  | see [Formula editor](formula-editor.md)      |
-| **Timing**       | _Updates in_ — a domain, or _Any timing domain_; timing findings                                                                         | see [Timing](../concepts/timing.md)          |
-| **Drives**       | the output this value drives, or none; connection findings                                                                               | only a relationship without inputs can drive |
-| **Fixes**        | actions the tool offers for findings on this relationship: a button when ready, a pop-up when it needs a choice, the reason when blocked | applied as ordinary, undoable edits          |
-| **Delete …**     |                                                                                                                                          |                                              |
+| Section          | Fields                                                                                                                                                                                                                                     | Notes                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| **Meaning**      | Name, Meaning, _Role_ — _Source_, _Relationship_, or the port it backs; a Source adds one sentence                                                                                                                                         | the role is read off the design, never set   |
+| **Reads**        | chips with the concepts' glyphs, removable; a pop-up to add                                                                                                                                                                                | an edit; dependents are rechecked            |
+| **Produces**     | a pop-up with the glyph — titled **Provides** for a Source                                                                                                                                                                                 | an edit                                      |
+| **Relationship** | the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field; for a Source, _Realization: Provided by the environment; no device is bound yet._ above the field | see [Formula editor](formula-editor.md)      |
+| **Timing**       | _Updates in_ — a domain, or _Any timing domain_; timing findings                                                                                                                                                                           | see [Timing](../concepts/timing.md)          |
+| **Drives**       | the output this value drives, or none; connection findings                                                                                                                                                                                 | only a relationship without inputs can drive |
+| **Fixes**        | actions the tool offers for findings on this relationship: a button when ready, a pop-up when it needs a choice, the reason when blocked                                                                                                   | applied as ordinary, undoable edits          |
+| **Delete …**     |                                                                                                                                                                                                                                            |                                              |
 
 A relationship can also show _In group …_ with a _Show Group_ link, _Takes its
 value from …_ with _Show Binding_ when it is bound to a port (with _Disconnect
 it to define the relationship yourself._), and — in a component's source — the
 port it backs (_requires_ / _provides_ / _parameter_). Ports are declared from
 the component's own inspector.
+
+A **Source** — a relationship that reads nothing and has no formula — is
+inspected the same way. Its Role row says _Source_; its output section is
+_Provides_; its Relationship section says the environment provides the value and
+no device is bound yet, and keeps the formula field: add a formula and the same
+relationship is computed inside the design instead. Nothing here says _sensor_
+or names a part — which device provides the value is decided on the
+[Deploy page](deploy.md), and today no device kind provides one.
 
 ## Physical output
 

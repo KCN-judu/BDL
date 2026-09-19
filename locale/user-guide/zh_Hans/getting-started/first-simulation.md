@@ -14,7 +14,7 @@
 
 这个页面有三个部分：
 
-- 左侧的**输入**——每个来自外部的值一个控件。这里是 `tilt`，一个数字栏，旁边是单位 `rad`。输入下方，**时序域**列出了 `interaction` 及其周期：_每 1_ 拍。
+- 左侧的**来源**——每个由环境提供的值一个控件。这里是 `tilt`，一个数字栏，旁边是单位 `rad`。来源下方，**时序域**列出了 `interaction` 及其周期：_每 1_ 拍。
 - 中间的**轨迹**——随你步进而填充的表格：每拍一行，每个计算值和每个被驱动的输出一列。上方是**步进**、**步进 ×10** 和**重置**，以及拍计数器。
 - 右侧的**探针**——当前选中对象的值，包括现在的值和整个运行中的值。
 
@@ -28,15 +28,15 @@
 
 点击**步进**。
 
-轨迹得到第一行：第 0 拍，活动域 _interaction_，以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为输入没变。
+轨迹得到第一行：第 0 拍，活动域 _interaction_，以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为来源没变。
 
 把栏改为 `1.5708`（90°）并**步进**：约为 `Brightness(1)`。设为 `0` 再步进：`Brightness(0)`。竖直时熄灭，放平时全亮。
 
 **发生了什么。** 每一拍，_interaction_ 域中的每个值都根据你提供的输入重新计算。产生这些数字的求值器就是定义 BDL 设计含义的那个；为设备生成的代码必须与之一致。
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
 
-_倾角为 45° 时步进三次后的仿真页：左侧是输入，中间是轨迹，右侧是探针。_
+_倾角为 45° 时步进三次后的仿真页：左侧是来源，中间是轨迹，右侧是探针。_
 
 ## 4. 查看一个值
 
@@ -54,7 +54,7 @@ _倾角为 45° 时步进三次后的仿真页：左侧是输入，中间是轨�
 
 ## 如果有什么不对
 
-- **步进被禁用，并有一句话指出某个关系。** 读一读：没有值的输入、没有值形式的概念、没有有效定义的关系，或者在同一瞬间相互依赖的关系。每一条都有 _显示_ 链接。见 [未完成的设计](../../../../docs/user-guide/troubleshooting/incomplete-design.md)。
+- **步进被禁用，并有一句话指出某个关系。** 读一读：没有值的来源、没有值形式的概念、没有有效定义的关系，或者在同一瞬间相互依赖的关系。每一条都有 _显示_ 链接。见 [未完成的设计](../../../../docs/user-guide/troubleshooting/incomplete-design.md)。
 - **某一拍停止，控件行上出现消息**（例如除以零）。消息会指出关系。修改公式或输入，再次步进。
 - **编辑设计后轨迹为空。** 这是预期的——运行属于设计的某一个版本。再次步进。
 

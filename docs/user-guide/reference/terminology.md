@@ -14,9 +14,11 @@ last column is the formal or internal name, which appears only in
 | **reads** / **produces** | a relationship's signature | Reads, Produces | interface, `Signature { inputs, output }` |
 | **rule** | a relationship with inputs | — | arrow-typed declaration |
 | **value** | a relationship without inputs | — | nullary declaration |
-| **input** | a value with no formula: supplied from outside | — (dashed, *declared*) | unresolved nullary declaration; `I d t` |
+| **Source** | a value with no formula: the environment provides it, once per activation (zh-Hans 来源, ja 入力元; never *sensor*, *signal* or *source code*) | *Source* (canvas header, Role, the Library's *Sources*, the Simulate page's *Sources*) | unresolved nullary declaration at the environment boundary; `Source Δ d`, `I d t`; a derived role, stored nowhere |
 | **formula** | the text that defines a relationship | Relationship (section) | definition, realization, Core term |
-| **declared** | a relationship without a formula | *declared* | `realization = none` |
+| **declared** | a relationship that reads something and has no formula | *declared* | `realization = none` with inputs |
+| **role** | what a relationship is where you are: *Source*, *Relationship*, or the port it backs | Role (inspector) | `relationship_role` |
+| **environment** | what is outside the behavior model and provides a Source's value | *Provided by the environment* | the simulation's input `I` |
 | **open** | a relationship whose formula waits on a concept's value form | *Checked once … is decided.* | `MappingStatus::Open`, `semantic.unbound_representation` |
 | **invalid** | a formula that does not check | red mark | `MappingStatus::Invalid` |
 | **valid** | checks, has a value at every activation, timing consistent | — | `TypeValid` → `TemporallyValid` → `ClockConsistent` |
@@ -35,7 +37,7 @@ last column is the formal or internal name, which appears only in
 | **behavior** (group) | a named set of relationships; organisation only | Behavior, Group as Behavior | `BehaviorGroup`, authoring metadata |
 | **boundary** | what a behavior's members read from and give to the outside | Boundary: Inputs, Outputs, Open, Physical outputs, Internal | crossing-in, crossing-out |
 | **component** | a reusable behavior with a source and a promise | Component | `BehaviorComponent`, `ComponentId` |
-| **source** | a component's own design | Edit Source | body |
+| **source** (of a component) | a component's own design — a different word from *Source* above | Edit Source | body |
 | **promise** / **port** | what a component requires, provides, or takes as a parameter | Ports: Requires, Provides, Parameter | `BehaviorInterface`, `Port`, `PortContract`, `PortId` |
 | **timing parameter** | a component's domain that each instance maps to a system domain | Timing parameters | clock parameter |
 | **shared concept** | a concept of a source that stands for a system concept | Shared concepts | `shared_concepts` |

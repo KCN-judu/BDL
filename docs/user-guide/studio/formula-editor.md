@@ -30,7 +30,9 @@ there and offers what fits:
 - **A reference.** The concepts this relationship reads and the design's
   relationships whose value is the right kind — each with what it produces. A
   reference is inserted as it is: its kind comes from its declaration, and it
-  gets no unit pop-up.
+  gets no unit pop-up. A value — a Source such as `tilt`, or a computed value —
+  is written by its name alone (`tilt`, never `tilt()`); a rule is applied with
+  its arguments (`dimByTilt(?)`).
 - **An equation.** Folded under _Equations_: the library's equations whose
   result can be the value expected here (for an angle, `min`, `max`, `clamp`,
   `sum` …; not `any`, which produces true or false). Choosing one inserts it

@@ -203,7 +203,7 @@ msgstr ""
 
 #: docs/user-guide/concepts/behavior-groups.md:29
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:65
+#: docs/user-guide/studio/canvas.md:75
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Do"
 msgstr "操作"
@@ -327,9 +327,9 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-systems.md:100
 #: docs/user-guide/concepts/components.md:88
 #: docs/user-guide/concepts/concepts.md:72
-#: docs/user-guide/concepts/incomplete-designs.md:67
+#: docs/user-guide/concepts/incomplete-designs.md:68
 #: docs/user-guide/concepts/physical-outputs.md:64
-#: docs/user-guide/concepts/relationships.md:83
+#: docs/user-guide/concepts/relationships.md:84
 #: docs/user-guide/concepts/timing.md:104
 msgid "Going deeper"
 msgstr ""
@@ -342,20 +342,20 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-systems.md:115
 #: docs/user-guide/concepts/components.md:99
 #: docs/user-guide/concepts/concepts.md:82
-#: docs/user-guide/concepts/incomplete-designs.md:76
+#: docs/user-guide/concepts/incomplete-designs.md:77
 #: docs/user-guide/concepts/physical-outputs.md:75
-#: docs/user-guide/concepts/relationships.md:94
+#: docs/user-guide/concepts/relationships.md:95
 #: docs/user-guide/concepts/timing.md:114
 #: docs/user-guide/reference/cli.md:38
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:101
+#: docs/user-guide/studio/canvas.md:113
 #: docs/user-guide/studio/code-view.md:78
-#: docs/user-guide/studio/deploy.md:79
-#: docs/user-guide/studio/formula-editor.md:166
-#: docs/user-guide/studio/inspector.md:70
-#: docs/user-guide/studio/library.md:49
-#: docs/user-guide/studio/simulate.md:98
+#: docs/user-guide/studio/deploy.md:86
+#: docs/user-guide/studio/formula-editor.md:168
+#: docs/user-guide/studio/inspector.md:78
+#: docs/user-guide/studio/library.md:66
+#: docs/user-guide/studio/simulate.md:99
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:92
 #: docs/user-guide/textual/editor-and-lsp.md:83
@@ -369,7 +369,7 @@ msgstr ""
 #: docs/user-guide/workflows/component-versioning.md:59
 #: docs/user-guide/workflows/cross-domain-transport.md:78
 #: docs/user-guide/workflows/multi-output-behavior.md:53
-#: docs/user-guide/workflows/sensor-to-output.md:80
+#: docs/user-guide/workflows/sensor-to-output.md:83
 msgid "Related"
 msgstr "相关"
 
@@ -761,7 +761,7 @@ msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Butt
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:63
-#: docs/user-guide/concepts/relationships.md:67
+#: docs/user-guide/concepts/relationships.md:68
 msgid "What the inspector shows"
 msgstr ""
 
@@ -836,118 +836,136 @@ msgid "dashed node, the word _declared_ in the header"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:16
-msgid "the relationship has a signature and no formula yet"
+msgid "the relationship reads something and has no formula yet"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:16
-msgid "only where its value is needed: the simulator will ask for it as an input, and an output it should drive stays undriven"
+msgid "only where its value is needed: an output it should drive stays undriven"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:17
+#: docs/user-guide/concepts/relationships.md:30
+#: docs/user-guide/reference/terminology.md:17
+msgid "**Source**"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:17
+msgid "a bar at the node's left edge, an entry arrow, the word _Source_ in the header"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:17
+msgid "the relationship reads nothing and has no formula: the environment provides its value"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:17
+msgid "no — nothing is missing; the simulator asks you for the value"
+msgstr ""
+
+#: docs/user-guide/concepts/incomplete-designs.md:18
 #: docs/user-guide/concepts/physical-outputs.md:27
-#: docs/user-guide/reference/terminology.md:20
+#: docs/user-guide/reference/terminology.md:22
 msgid "**open**"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:17
+#: docs/user-guide/concepts/incomplete-designs.md:18
 msgid "solid node, but a hollow socket; inspector: _Checked once Temperature's value is decided._"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:17
+#: docs/user-guide/concepts/incomplete-designs.md:18
 msgid "it has a formula, but a concept it reads has no value form yet, so the formula cannot be checked"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:17
+#: docs/user-guide/concepts/incomplete-designs.md:18
 msgid "no — it is waiting, not wrong"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:18
-#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/concepts/incomplete-designs.md:19
+#: docs/user-guide/reference/terminology.md:23
 msgid "**invalid**"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:18
+#: docs/user-guide/concepts/incomplete-designs.md:19
 msgid "a red mark at the formula line; the finding under the field"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:18
+#: docs/user-guide/concepts/incomplete-designs.md:19
 msgid "it has a formula and the formula does not check"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:18
+#: docs/user-guide/concepts/incomplete-designs.md:19
 msgid "simulation, and anything that depends on it"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:19
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/concepts/incomplete-designs.md:20
+#: docs/user-guide/reference/terminology.md:24
 msgid "**valid**"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:19
+#: docs/user-guide/concepts/incomplete-designs.md:20
 msgid "solid node, no marks"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:19
+#: docs/user-guide/concepts/incomplete-designs.md:20
 msgid "it checks, has a value at every tick it is asked for, and its timing is consistent"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:19
+#: docs/user-guide/concepts/incomplete-designs.md:20
 msgid "no"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:21
+#: docs/user-guide/concepts/incomplete-designs.md:22
 msgid "_Declared_ and _open_ are the two intentional states. They are drawn in orange or with dashes — never red. Red is reserved for _wrong now_."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:24
+#: docs/user-guide/concepts/incomplete-designs.md:25
 msgid "The states of a design"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:26
+#: docs/user-guide/concepts/incomplete-designs.md:27
 msgid "A whole design is **executable** when every relationship an output depends on is valid and every required output has exactly one driver. Below that, the status line at the bottom of the window tells you what is still open, as counts and short phrases: _2 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:32
+#: docs/user-guide/concepts/incomplete-designs.md:33
 msgid "The Simulate page turns the same facts into sentences with links: _tilt needs a value before simulation can step._ — _dimByTilt has no definition._ — _level has no valid definition._ Each _Show_ link selects the object. Nothing here is a failure; it is the list of what remains."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:37
+#: docs/user-guide/concepts/incomplete-designs.md:38
 msgid "Why BDL is built this way"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:39
+#: docs/user-guide/concepts/incomplete-designs.md:40
 msgid "Design is discovered in an order that does not match the order of dependency. You know the lamp will have a light before you know the formula; you know a relationship reads _Temperature_ before you know whether temperature is a quantity in kelvin or a coarse _cold / warm / hot_. A tool that refused to hold the design until every piece was decided would push you back to sketches. BDL holds the design, checks the parts that can be checked, and reports the rest as _open_ — with the same precision it uses for errors, so that \"what is left\" is always a concrete list."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:48
+#: docs/user-guide/concepts/incomplete-designs.md:49
 msgid "The practical consequences:"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:50
-msgid "A **declared** relationship without inputs is exactly what the simulator treats as an **input** — you supply its value. A sensor is a declared value with a domain. So \"unfinished\" and \"comes from outside\" are the same state, on purpose."
+#: docs/user-guide/concepts/incomplete-designs.md:51
+msgid "A relationship without inputs and without a formula is a **Source**, not a declared one: it is exactly what the simulator asks you for. A sensor reading is a Source with a domain. \"Comes from the environment\" is a complete state, on purpose; give the Source a formula and it becomes a computed value instead."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:54
+#: docs/user-guide/concepts/incomplete-designs.md:55
 msgid "An **open** relationship does not turn red when you change the concept it waits on; it is re-checked and becomes valid or invalid."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:56
+#: docs/user-guide/concepts/incomplete-designs.md:57
 msgid "An **undriven** required output is _incomplete_, an **undriven optional** output is fine, and a **contested** output (two drivers) is an error — because the first two are missing information and the third is a contradiction."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:60
+#: docs/user-guide/concepts/incomplete-designs.md:61
 msgid "Finishing a design"
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:62
+#: docs/user-guide/concepts/incomplete-designs.md:63
 msgid "The Simulate page's list, the status line, and the **Fixes** section of an inspector all point at the same work. Fixes are actions the tool can offer for a finding — _Choose what Temperature is represented by_, _Connect a driver to light_ — each applied as an ordinary edit you can undo."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:69
+#: docs/user-guide/concepts/incomplete-designs.md:70
 msgid "_For language implementers._ The kernel treats a declaration without a realization as a legal, unresolved declaration; the ladder a mapping climbs is _Declared → Open → Invalid → TypeValid → TemporallyValid → ClockConsistent_, and output completeness and hardware feasibility are properties of the design and of a (design, target) pair, not rungs. `docs/architecture/compiler-pipeline.md` (\"Driver and result\") and ADR-0015."
 msgstr ""
 
-#: docs/user-guide/concepts/incomplete-designs.md:78
+#: docs/user-guide/concepts/incomplete-designs.md:79
 msgid "[Relationships](relationships.md) · [Status meanings](../reference/status-meanings.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
 msgstr ""
 
@@ -1022,14 +1040,14 @@ msgstr ""
 #: docs/user-guide/concepts/physical-outputs.md:25
 #: docs/user-guide/reference/formula-language.md:53
 #: docs/user-guide/reference/status-meanings.md:9
-#: docs/user-guide/reference/status-meanings.md:27
-#: docs/user-guide/reference/status-meanings.md:42
-#: docs/user-guide/reference/status-meanings.md:53
-#: docs/user-guide/reference/status-meanings.md:64
-#: docs/user-guide/reference/status-meanings.md:72
-#: docs/user-guide/reference/status-meanings.md:81
+#: docs/user-guide/reference/status-meanings.md:28
+#: docs/user-guide/reference/status-meanings.md:43
+#: docs/user-guide/reference/status-meanings.md:54
+#: docs/user-guide/reference/status-meanings.md:65
+#: docs/user-guide/reference/status-meanings.md:73
+#: docs/user-guide/reference/status-meanings.md:82
 #: docs/user-guide/reference/terminology.md:8
-#: docs/user-guide/studio/deploy.md:49
+#: docs/user-guide/studio/deploy.md:56
 #: docs/user-guide/troubleshooting/connection-errors.md:109
 msgid "Meaning"
 msgstr "含义"
@@ -1079,7 +1097,7 @@ msgid "the connection was recorded, and it is wrong"
 msgstr ""
 
 #: docs/user-guide/concepts/physical-outputs.md:31
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "**contested**"
 msgstr ""
 
@@ -1109,7 +1127,7 @@ msgid "In the inspector"
 msgstr ""
 
 #: docs/user-guide/concepts/physical-outputs.md:48
-#: docs/user-guide/concepts/relationships.md:69
+#: docs/user-guide/concepts/relationships.md:70
 msgid "**Meaning** — name and description."
 msgstr ""
 
@@ -1159,44 +1177,44 @@ msgid "Signature first, formula second"
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:14
-msgid "Creating a relationship only fixes its signature. That is enough for the rest of the design to be built around it: other relationships can apply it, an output can wait for it, the simulator can list what it still needs. The formula comes when you are ready, in the inspector's _Relationship_ section. Until then the node is dashed and _declared_."
+msgid "Creating a relationship only fixes its signature. That is enough for the rest of the design to be built around it: other relationships can apply it, an output can wait for it, the simulator can list what it still needs. The formula comes when you are ready, in the inspector's _Relationship_ section. Until then a relationship that reads something is dashed and _declared_; one that reads nothing is a **Source** — complete as it is, provided by the environment."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:20
+#: docs/user-guide/concepts/relationships.md:21
 msgid "The formula is checked against the signature as you type, and the check is in your own terms: _Brightness is a dimensionless quantity, but this formula produces an angle._"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:24
+#: docs/user-guide/concepts/relationships.md:25
 msgid "Three shapes of relationship"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:26
+#: docs/user-guide/concepts/relationships.md:27
 msgid "Shape"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:26
+#: docs/user-guide/concepts/relationships.md:27
 msgid "Reads"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:26
-#: docs/user-guide/getting-started/first-behavior.md:193
+#: docs/user-guide/concepts/relationships.md:27
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "Formula"
 msgstr "公式"
 
-#: docs/user-guide/concepts/relationships.md:26
+#: docs/user-guide/concepts/relationships.md:27
 msgid "What it is"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:28
+#: docs/user-guide/concepts/relationships.md:29
 msgid "**Rule**"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:28
+#: docs/user-guide/concepts/relationships.md:29
 msgid "one or more concepts"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:28
-#: docs/user-guide/concepts/relationships.md:30
+#: docs/user-guide/concepts/relationships.md:29
+#: docs/user-guide/concepts/relationships.md:31
 #: docs/user-guide/textual/syntax-basics.md:162
 #: docs/user-guide/textual/syntax-basics.md:163
 #: docs/user-guide/textual/syntax-basics.md:164
@@ -1207,88 +1225,84 @@ msgstr ""
 msgid "yes"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:28
+#: docs/user-guide/concepts/relationships.md:29
 msgid "a function from concepts to a concept: `dimByTilt : Tilt → Brightness = Tilt / 90 deg`"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:29
-msgid "**Input**"
-msgstr ""
-
-#: docs/user-guide/concepts/relationships.md:29
 #: docs/user-guide/concepts/relationships.md:30
+#: docs/user-guide/concepts/relationships.md:31
 msgid "nothing"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:29
+#: docs/user-guide/concepts/relationships.md:30
 msgid "none"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:29
-msgid "a value that arrives from outside — a sensor, a switch. In simulation you type it; on a device the hardware supplies it"
+#: docs/user-guide/concepts/relationships.md:30
+msgid "a value the environment provides — from a sensor, a switch, an analog line. In simulation you type it; on a device the hardware supplies it"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:30
+#: docs/user-guide/concepts/relationships.md:31
 msgid "**Computed value**"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:30
+#: docs/user-guide/concepts/relationships.md:31
 msgid "a value of the design: `brightness = dimByTilt(tilt)`"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:32
+#: docs/user-guide/concepts/relationships.md:33
 msgid "Only a relationship that _reads nothing_ is a value; a rule is something you apply. This matters in two places: a physical output can only be driven by a value, and a formula applies a rule by calling it — `dimByTilt(tilt)` — and names a value by writing it — `tilt`."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:37
+#: docs/user-guide/concepts/relationships.md:38
 msgid "The formula"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:39
+#: docs/user-guide/concepts/relationships.md:40
 msgid "Formulas are short expressions over the names in scope: the concepts the relationship reads, the values and rules of the design, numbers with units, and a few keywords."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:50
+#: docs/user-guide/concepts/relationships.md:51
 msgid "A formula is checked for **dimension** (units must work out), for **meaning** (the result must be the concept the signature promises), and for **shape** (a rule cannot be used where a value is expected, and the other way round). The full language — operators, `if`, `let`, `match`, memory with `delay`, values from other domains with `sync` — is in [Formula language](../reference/formula-language.md); the editor is described in [Formula editor](../studio/formula-editor.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:58
+#: docs/user-guide/concepts/relationships.md:59
 msgid "Links on the canvas"
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:60
+#: docs/user-guide/concepts/relationships.md:61
 msgid "A link from a concept's output socket to a relationship's input socket means _this relationship reads that concept_. Drawing one edits the signature; dragging one away from an input and dropping it on empty canvas removes the concept from the signature. Links show _what is read_, never the arithmetic, and never an order of execution: the canvas is a picture of dependency, not a flowchart."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:70
+#: docs/user-guide/concepts/relationships.md:71
 msgid "**Reads** / **Produces** — the signature, as chips and a pop-up with the concepts' glyphs. Changing either is an edit; the inspector says which relationships will be rechecked."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:73
+#: docs/user-guide/concepts/relationships.md:74
 msgid "**Relationship** — the formula editor: _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_, the verdict line, and any findings about the formula."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:76
+#: docs/user-guide/concepts/relationships.md:77
 msgid "**Timing** — _Updates in_: the timing domain, or _Any timing domain_ for a pure rule. See [Timing](timing.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:78
+#: docs/user-guide/concepts/relationships.md:79
 msgid "**Drives** — the physical output this value is the final target of, if any. See [Physical outputs](physical-outputs.md)."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:80
+#: docs/user-guide/concepts/relationships.md:81
 msgid "**Fixes** — actions the tool offers for findings on this relationship."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:81
+#: docs/user-guide/concepts/relationships.md:82
 msgid "**Explain** — collapsed by default: the formal detail."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:85
+#: docs/user-guide/concepts/relationships.md:86
 msgid "_For language implementers._ A relationship is a declaration with an interface (the signature elaborated over the concepts' representations) and an optional realization (the formula elaborated to a Core term, a lambda over `rep` of each input ending in `mk` of the output). A declaration without a realization is the language's unresolved declaration, a first-class state. `docs/architecture/compiler-pipeline.md` passes 3–6; `docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the formula language's naming rule."
 msgstr ""
 
-#: docs/user-guide/concepts/relationships.md:96
+#: docs/user-guide/concepts/relationships.md:97
 msgid "[Concepts](concepts.md) · [Incomplete designs](incomplete-designs.md) · [Formula editor](../studio/formula-editor.md) · [Formula language](../reference/formula-language.md)"
 msgstr ""
 
@@ -1523,7 +1537,7 @@ msgid "**What you made.** A rule: brightness is the tilt divided by ninety degre
 msgstr "**你做了什么。** 一条规则：亮度等于倾角除以九十度。在**文本**视图里试试：把 `90 deg` 改成 `90 s`，看字段下方那行变红：它说明 Brightness 是什么，以及公式实际生成的是什么——角度除以时间不是纯数。把 `deg` 改回来。每个公式都会这样检查单位和含义，无论你是打字还是拼装——而且在按下 _添加定义_ 之前，什么都不会保存到设计中。"
 
 #: docs/user-guide/getting-started/first-behavior.md:105
-#: docs/user-guide/studio/formula-editor.md:89
+#: docs/user-guide/studio/formula-editor.md:91
 msgid "_The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead._"
 msgstr "_公式字段中有一个未通过检查的草稿：红色结论行说明 Brightness 是什么，以及公式实际生成的是什么。_"
 
@@ -1532,220 +1546,220 @@ msgid "In the Text view, **⌃Space** opens completion: the names you can use he
 msgstr "在文本视图中，**⌃Space** 打开补全：此处可用的名字（_Tilt_）、数字后的单位、关键字。把鼠标在名字上停留片刻会显示它是什么。公式视图什么都不需要你记：每个槽位都列出适合的内容。"
 
 #: docs/user-guide/getting-started/first-behavior.md:112
-msgid "5. Bring the tilt in from outside"
-msgstr "5. 把倾角从外部引进来"
+msgid "5. Bring the tilt in from the environment"
+msgstr "5. 把倾角从环境引进来"
 
 #: docs/user-guide/getting-started/first-behavior.md:114
-msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the tilt come from? From a sensor — from outside the design. In BDL a value that arrives from outside is a relationship that **reads nothing**, produces the concept, and has **no formula**."
-msgstr "`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自传感器——来自设计之外。在 BDL 中，从外部到来的值是一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。"
+msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the tilt come from? From the environment — a sensor, outside the design. In BDL a value the environment provides is a **Source**: a relationship that **reads nothing**, produces the concept, and has **no formula**."
+msgstr "`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自环境——设计之外的一个传感器。在 BDL 中，由环境提供的值是一个**来源**：一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。"
 
 #: docs/user-guide/getting-started/first-behavior.md:119
-msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create."
-msgstr "点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。"
+msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ category makes a concept and its Source together.)"
+msgstr "点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会做出同样的东西；库的 _来源_ 类别会同时做出一个概念和它的来源。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:122
-msgid "Leave it declared. Its dashed outline now means \"supplied from outside\": in the simulator you will type its value; on a device it will be the sensor."
-msgstr "让它保持已声明状态。它的虚线轮廓现在表示“由外部提供”：在仿真器中你将输入它的值；在设备上它就是传感器。"
+#: docs/user-guide/getting-started/first-behavior.md:124
+msgid "The node says _Source_ in its header, with a bar down its left edge and no input socket. It is not dashed: nothing is missing. In the simulator you will type its value; on a device the sensor will provide it."
+msgstr "节点的标题写着 _来源_，左边缘有一条竖条，没有输入插口。它不是虚线的：这里没有任何缺失。在仿真器中你将输入它的值；在设备上由传感器提供。"
 
-#: docs/user-guide/getting-started/first-behavior.md:125
+#: docs/user-guide/getting-started/first-behavior.md:128
 msgid "6. Compute the lamp's brightness"
 msgstr "6. 计算灯的亮度"
 
-#: docs/user-guide/getting-started/first-behavior.md:127
+#: docs/user-guide/getting-started/first-behavior.md:130
 msgid "The value the lamp actually shows is `dimByTilt` applied to `tilt`. That is again a relationship that reads nothing and produces Brightness — this time with a formula."
 msgstr "灯实际显示的值是把 `dimByTilt` 应用于 `tilt`。这又是一个不读取任何东西、生成 Brightness 的关系——这次带有公式。"
 
-#: docs/user-guide/getting-started/first-behavior.md:131
+#: docs/user-guide/getting-started/first-behavior.md:134
 msgid "**+** next to _Mappings_: Name `brightness`, read nothing, produce **Brightness**. Create."
 msgstr "点击 _映射_ 旁的 **+**：名称 `brightness`，不读取任何东西，生成 **Brightness**。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:133
+#: docs/user-guide/getting-started/first-behavior.md:136
 msgid "Select it and enter the formula `dimByTilt(tilt)`. _Add definition._"
 msgstr "选中它并输入公式 `dimByTilt(tilt)`。_添加定义。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:135
+#: docs/user-guide/getting-started/first-behavior.md:138
 msgid "Completion offers `dimByTilt(` because it is a relationship with an input, and `tilt` because it is a value. The formula field is the only place where relationships are combined; links on the canvas show _which concepts_ a relationship reads, not the arithmetic."
 msgstr "补全会提供 `dimByTilt(`，因为它是带输入的关系；也会提供 `tilt`，因为它是值。公式字段是唯一组合关系的地方；画布上的连线显示关系读取 _哪些概念_，而不是算术。"
 
-#: docs/user-guide/getting-started/first-behavior.md:140
-msgid "**What you made.** Three relationships: an input (`tilt`), a rule (`dimByTilt`) and a computed value (`brightness`). The status line at the bottom counts them."
-msgstr "**你做了什么。** 三个关系：一个输入（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。"
-
 #: docs/user-guide/getting-started/first-behavior.md:143
+msgid "**What you made.** Three relationships: a Source (`tilt`), a rule (`dimByTilt`) and a computed value (`brightness`). The status line at the bottom counts them."
+msgstr "**你做了什么。** 三个关系：一个来源（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。"
+
+#: docs/user-guide/getting-started/first-behavior.md:146
 msgid "7. Give the values a rhythm"
 msgstr "7. 给值一个节奏"
 
-#: docs/user-guide/getting-started/first-behavior.md:145
+#: docs/user-guide/getting-started/first-behavior.md:148
 msgid "A value that comes from outside has a rhythm: the sensor reports every so often. In BDL that rhythm is a named **timing domain**, and every value that updates on its own belongs to one."
 msgstr "来自外部的值有节奏：传感器每隔一段时间报告一次。在 BDL 中，这个节奏是一个有名字的**时序域**，每个自行更新的值都属于某一个。"
 
-#: docs/user-guide/getting-started/first-behavior.md:149
+#: docs/user-guide/getting-started/first-behavior.md:152
 msgid "**+** next to _Timing domains_: name it `interaction`. Create."
 msgstr "点击 _时序域_ 旁的 **+**：命名为 `interaction`。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:150
+#: docs/user-guide/getting-started/first-behavior.md:153
 msgid "Select `tilt`. In the inspector's **Timing** section, set **Updates in** to _interaction_."
 msgstr "选中 `tilt`。在检查器的**时序**区，把**更新于**设为 _interaction_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:152
+#: docs/user-guide/getting-started/first-behavior.md:155
 msgid "Select `brightness` and do the same."
 msgstr "选中 `brightness`，做同样的事。"
 
-#: docs/user-guide/getting-started/first-behavior.md:154
+#: docs/user-guide/getting-started/first-behavior.md:157
 msgid "`dimByTilt` stays on _Any timing domain_: it is a pure rule and takes the rhythm of whatever applies it. The domain's name appears quietly at the right edge of the two nodes."
 msgstr "`dimByTilt` 保持在 _任意时序域_：它是纯规则，跟随应用它的那一方的节奏。域的名字安静地出现在两个节点的右边缘。"
 
-#: docs/user-guide/getting-started/first-behavior.md:158
+#: docs/user-guide/getting-started/first-behavior.md:161
 msgid "**What you made.** A design in which \"when does this update\" is an explicit decision. A domain is a name, not a rate — how often _interaction_ ticks is chosen when you simulate or deploy, not here."
 msgstr "**你做了什么。** 一个把“这个什么时候更新”作为显式决定的设计。域是名字，不是速率——_interaction_ 多久走一拍是在仿真或部署时选择的，不在这里。"
 
-#: docs/user-guide/getting-started/first-behavior.md:162
+#: docs/user-guide/getting-started/first-behavior.md:165
 msgid "8. Add the light"
 msgstr "8. 添加灯"
 
-#: docs/user-guide/getting-started/first-behavior.md:164
+#: docs/user-guide/getting-started/first-behavior.md:167
 msgid "Brightness is a value inside the design. The lamp itself is a **physical output**: the place where a value leaves the design for the world."
 msgstr "Brightness 是设计内部的值。灯本身是一个**物理输出**：值离开设计、进入世界的地方。"
 
-#: docs/user-guide/getting-started/first-behavior.md:167
+#: docs/user-guide/getting-started/first-behavior.md:170
 msgid "**+** next to _Outputs_. In the _New output_ sheet: Name `light`, **Accepts** Brightness, **Updates in** interaction, **Required** on. Create."
 msgstr "点击 _输出_ 旁的 **+**。在 _新建输出_ 面板中：名称 `light`，**接受** Brightness，**更新于** interaction，打开**必需**。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:170
+#: docs/user-guide/getting-started/first-behavior.md:173
 msgid "A sink node appears at the right edge of the canvas, drawn dashed: it has a domain but nothing drives it yet. The status line says _outputs incomplete_."
 msgstr "画布右边缘出现一个汇节点，以虚线绘制：它有域，但还没有东西驱动它。状态行显示 _输出未完成_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:173
+#: docs/user-guide/getting-started/first-behavior.md:176
 msgid "Drag from `brightness`'s output socket onto the sink's socket. (Or select the output and pick `brightness` in the **Connect** pop-up of its inspector; the pop-up marks relationships that _have inputs_, which cannot drive an output.)"
 msgstr "从 `brightness` 的输出插口拖到汇节点的插口上。（或者选中输出，在其检查器的**连接**弹出菜单中选择 `brightness`；弹出菜单会标记 _有输入_ 的关系，它们不能驱动输出。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:177
+#: docs/user-guide/getting-started/first-behavior.md:180
 msgid "The sink becomes solid. Only a relationship that _reads nothing_ and produces the accepted concept in the same domain can drive an output. `brightness` qualifies; connecting `dimByTilt` instead would be accepted as an edit and then reported under the output as a connection that does not fit."
 msgstr "汇节点变为实线。只有 _不读取任何东西_、并在同一域中生成所接受概念的关系才能驱动输出。`brightness` 符合条件；如果改连 `dimByTilt`，编辑会被接受，然后在输出下方被报告为不合适的连接。"
 
-#: docs/user-guide/getting-started/first-behavior.md:182
-msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the input, which is meant to stay without a formula. Press **⌘S** to save."
-msgstr "**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_；它仍然计数 _1 个未定义_——那是输入 `tilt`，它本来就应该没有公式。按 **⌘S** 保存。"
+#: docs/user-guide/getting-started/first-behavior.md:185
+msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the Source, which is meant to stay without a formula. Press **⌘S** to save."
+msgstr "**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_；它仍然计数 _1 个未定义_——那是来源 `tilt`，它本来就应该没有公式。按 **⌘S** 保存。"
 
-#: docs/user-guide/getting-started/first-behavior.md:186
+#: docs/user-guide/getting-started/first-behavior.md:189
 msgid "What you have"
 msgstr "你现在拥有的"
 
-#: docs/user-guide/getting-started/first-behavior.md:190
-msgid "_The finished lamp: the input tilt, the rule dimByTilt, the value brightness, and the driven light._"
-msgstr "_完成的灯：输入 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_"
-
 #: docs/user-guide/getting-started/first-behavior.md:193
+msgid "_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light._"
+msgstr "_完成的灯：来源 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_"
+
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "Object"
 msgstr "对象"
 
-#: docs/user-guide/getting-started/first-behavior.md:193
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "Kind"
 msgstr "种类"
 
-#: docs/user-guide/getting-started/first-behavior.md:193
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "Updates in"
 msgstr "更新于"
 
-#: docs/user-guide/getting-started/first-behavior.md:195
+#: docs/user-guide/getting-started/first-behavior.md:198
 msgid "**Tilt**"
 msgstr "**Tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:195
+#: docs/user-guide/getting-started/first-behavior.md:198
 msgid "concept, an angle"
 msgstr "概念，角度"
 
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "**Brightness**"
 msgstr "**Brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "concept, a plain number"
 msgstr "概念，纯数"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:200
 msgid "**tilt**"
 msgstr "**tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
-msgid "relationship reading nothing: input"
-msgstr "不读取任何东西的关系：输入"
+#: docs/user-guide/getting-started/first-behavior.md:200
+msgid "relationship reading nothing: a Source"
+msgstr "不读取任何东西的关系：来源"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:200
 msgid "_none_"
 msgstr "_无_"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
-#: docs/user-guide/getting-started/first-behavior.md:199
 #: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "_interaction_"
 msgstr "_interaction_"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "**dimByTilt**"
 msgstr "**dimByTilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "relationship reading Tilt: a rule"
 msgstr "读取 Tilt 的关系：规则"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "`Tilt / 90 deg`"
 msgstr "`Tilt / 90 deg`"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:201
 #: docs/user-guide/getting-started/install-and-launch.md:13
 msgid "any"
 msgstr "任意"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "**brightness**"
 msgstr "**brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "relationship reading nothing: a value"
 msgstr "不读取任何东西的关系：值"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:202
 #: docs/user-guide/textual/syntax-basics.md:166
 msgid "`dimByTilt(tilt)`"
 msgstr "`dimByTilt(tilt)`"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "**light**"
 msgstr "**light**"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "physical output driven by brightness"
 msgstr "由 brightness 驱动的物理输出"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
-msgid "The design is _executable_: every relationship the output depends on is defined or is an input, checks, has a rhythm, and the output has exactly one driver."
-msgstr "这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是输入，通过检查，有节奏，并且输出恰好有一个驱动方。"
-
 #: docs/user-guide/getting-started/first-behavior.md:205
+msgid "The design is _executable_: every relationship the output depends on is defined or is a Source, checks, has a rhythm, and the output has exactly one driver."
+msgstr "这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是来源，通过检查，有节奏，并且输出恰好有一个驱动方。"
+
+#: docs/user-guide/getting-started/first-behavior.md:208
 #: docs/user-guide/getting-started/first-deployment.md:83
 #: docs/user-guide/getting-started/first-simulation.md:82
 msgid "If something does not work"
 msgstr "如果有什么不对"
 
-#: docs/user-guide/getting-started/first-behavior.md:207
+#: docs/user-guide/getting-started/first-behavior.md:210
 msgid "**The formula line is red.** Read it: it names the problem in terms of your concepts (\"this divides an angle by a time\"). See [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr "**公式行是红色的。** 读一读：它用你的概念来说明问题（“这把角度除以了时间”）。见 [类型、单位与概念](../troubleshooting/type-and-concept-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:210
+#: docs/user-guide/getting-started/first-behavior.md:213
 msgid "**`brightness` will not connect to the output.** Check its _Updates in_ matches the output's, and that it reads nothing. See [Connections](../troubleshooting/connection-errors.md)."
 msgstr "**`brightness` 连不上输出。** 检查它的 _更新于_ 是否与输出一致，以及它是否不读取任何东西。见 [连接](../troubleshooting/connection-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:213
+#: docs/user-guide/getting-started/first-behavior.md:216
 msgid "**The status line says _N definitions not added_.** A formula is typed but not added; select the node and press _Add definition_ or _Revert_."
 msgstr "**状态行显示 _N 个定义未添加_。** 公式已输入但未添加；选中节点，按 _添加定义_ 或 _还原_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:215
+#: docs/user-guide/getting-started/first-behavior.md:218
 msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See [Install and launch](install-and-launch.md)."
 msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 [安装与启动](install-and-launch.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:218
+#: docs/user-guide/getting-started/first-behavior.md:221
 #: docs/user-guide/getting-started/first-deployment.md:93
 #: docs/user-guide/getting-started/first-simulation.md:95
 #: docs/user-guide/getting-started/install-and-launch.md:71
@@ -1758,7 +1772,7 @@ msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 
 msgid "Next"
 msgstr "下一步"
 
-#: docs/user-guide/getting-started/first-behavior.md:220
+#: docs/user-guide/getting-started/first-behavior.md:223
 msgid "[Your first simulation](first-simulation.md) — tilt the lamp and watch the brightness."
 msgstr "[你的第一次仿真](first-simulation.md)——倾斜灯，观察亮度。"
 
@@ -1909,8 +1923,8 @@ msgid "The page has three parts:"
 msgstr "这个页面有三个部分："
 
 #: docs/user-guide/getting-started/first-simulation.md:14
-msgid "**Inputs**, on the left — one control for every value that comes from outside. Here that is `tilt`, with a number field and the unit `rad` beside it. Under the inputs, **Timing domains** lists `interaction` with a period: _every 1_ tick."
-msgstr "左侧的**输入**——每个来自外部的值一个控件。这里是 `tilt`，一个数字栏，旁边是单位 `rad`。输入下方，**时序域**列出了 `interaction` 及其周期：_每 1_ 拍。"
+msgid "**Sources**, on the left — one control for every value the environment provides. Here that is `tilt`, with a number field and the unit `rad` beside it. Under the Sources, **Timing domains** lists `interaction` with a period: _every 1_ tick."
+msgstr "左侧的**来源**——每个由环境提供的值一个控件。这里是 `tilt`，一个数字栏，旁边是单位 `rad`。来源下方，**时序域**列出了 `interaction` 及其周期：_每 1_ 拍。"
 
 #: docs/user-guide/getting-started/first-simulation.md:18
 msgid "the **trace**, in the middle — a table that fills as you step: one row per tick, a column for every computed value and every driven output. Above it, **Step**, **Step ×10** and **Reset**, and the tick counter."
@@ -1941,8 +1955,8 @@ msgid "Click **Step**."
 msgstr "点击**步进**。"
 
 #: docs/user-guide/getting-started/first-simulation.md:38
-msgid "The trace gains its first row: tick 0, the active domain _interaction_, and the values the design computed — `brightness` as `Brightness(0.5)` (or within a few digits of it, depending on what you typed), and the _light_ column showing the same value, because `brightness` drives it. A value is always written with the concept it belongs to. Click **Step** twice more: three rows, the same values, because the input has not changed."
-msgstr "轨迹得到第一行：第 0 拍，活动域 _interaction_，以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为输入没变。"
+msgid "The trace gains its first row: tick 0, the active domain _interaction_, and the values the design computed — `brightness` as `Brightness(0.5)` (or within a few digits of it, depending on what you typed), and the _light_ column showing the same value, because `brightness` drives it. A value is always written with the concept it belongs to. Click **Step** twice more: three rows, the same values, because the Source has not changed."
+msgstr "轨迹得到第一行：第 0 拍，活动域 _interaction_，以及设计计算出的值——`brightness` 为 `Brightness(0.5)`（或者相差几位小数，取决于你输入的值），_light_ 列显示同样的值，因为 `brightness` 驱动它。值总是和它所属的概念一起书写。再点两次**步进**：三行，同样的值，因为来源没变。"
 
 #: docs/user-guide/getting-started/first-simulation.md:45
 msgid "Change the field to `1.5708` (90°) and **Step**: about `Brightness(1)`. Set `0` and step: `Brightness(0)`. Upright is off; flat is full."
@@ -1954,8 +1968,8 @@ msgstr "**发生了什么。** 每一拍，_interaction_ 域中的每个值都�
 
 #: docs/user-guide/getting-started/first-simulation.md:55
 #: docs/user-guide/studio/simulate.md:11
-msgid "_The Simulate page after three steps with the tilt at 45°: inputs on the left, the trace in the middle, the probe on the right._"
-msgstr "_倾角为 45° 时步进三次后的仿真页：左侧是输入，中间是轨迹，右侧是探针。_"
+msgid "_The Simulate page after three steps with the tilt at 45°: the Sources on the left, the trace in the middle, the probe on the right._"
+msgstr "_倾角为 45° 时步进三次后的仿真页：左侧是来源，中间是轨迹，右侧是探针。_"
 
 #: docs/user-guide/getting-started/first-simulation.md:58
 msgid "4. Look at one value"
@@ -1986,8 +2000,8 @@ msgid "Every step is a replay: the simulator restarts at tick 0 with all the inp
 msgstr "每次步进都是重放：仿真器带着你迄今输入的所有值从第 0 拍重新开始，运行到新的一拍。同样的设计、同样的输入和同样的周期每次都给出同样的轨迹。在设计页上修改设计会丢弃轨迹；你的输入值保留。"
 
 #: docs/user-guide/getting-started/first-simulation.md:84
-msgid "**Step is disabled and a sentence names a relationship.** Read it: an input without a value, a concept without a value form, a relationship without a valid definition, or relationships that depend on each other in the same instant. Each has a _Show_ link. See [Incomplete design](../troubleshooting/incomplete-design.md)."
-msgstr "**步进被禁用，并有一句话指出某个关系。** 读一读：没有值的输入、没有值形式的概念、没有有效定义的关系，或者在同一瞬间相互依赖的关系。每一条都有 _显示_ 链接。见 [未完成的设计](../troubleshooting/incomplete-design.md)。"
+msgid "**Step is disabled and a sentence names a relationship.** Read it: a Source without a value, a concept without a value form, a relationship without a valid definition, or relationships that depend on each other in the same instant. Each has a _Show_ link. See [Incomplete design](../troubleshooting/incomplete-design.md)."
+msgstr "**步进被禁用，并有一句话指出某个关系。** 读一读：没有值的来源、没有值形式的概念、没有有效定义的关系，或者在同一瞬间相互依赖的关系。每一条都有 _显示_ 链接。见 [未完成的设计](../troubleshooting/incomplete-design.md)。"
 
 #: docs/user-guide/getting-started/first-simulation.md:89
 msgid "**A tick stops with a message on the controls' line** (for example a division by zero). The message names the relationship. Change the formula or the inputs and step again."
@@ -2025,7 +2039,7 @@ msgstr "版本"
 #: docs/user-guide/reference/formula-language.md:34
 #: docs/user-guide/studio/inspector.md:14
 #: docs/user-guide/studio/inspector.md:23
-#: docs/user-guide/studio/inspector.md:42
+#: docs/user-guide/studio/inspector.md:50
 #: docs/user-guide/textual/editor-and-lsp.md:45
 msgid "Notes"
 msgstr "说明"
@@ -2612,7 +2626,7 @@ msgid "`delay` and `sync` belong in a **value's** formula (no inputs), at the to
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:69
-#: docs/user-guide/studio/formula-editor.md:153
+#: docs/user-guide/studio/formula-editor.md:155
 msgid "What is checked"
 msgstr "检查什么"
 
@@ -2719,14 +2733,14 @@ msgstr "应用程序"
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
 #: docs/user-guide/reference/keyboard-and-mouse.md:42
 #: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/studio/formula-editor.md:128
+#: docs/user-guide/studio/formula-editor.md:130
 msgid "Keys"
 msgstr "按键"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
 #: docs/user-guide/reference/keyboard-and-mouse.md:42
 #: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/studio/formula-editor.md:130
+#: docs/user-guide/studio/formula-editor.md:132
 msgid "Does"
 msgstr "作用"
 
@@ -2781,28 +2795,28 @@ msgid "Canvas"
 msgstr "画布"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:65
+#: docs/user-guide/studio/canvas.md:75
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Result"
 msgstr "结果"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:67
+#: docs/user-guide/studio/canvas.md:77
 msgid "drag empty canvas"
 msgstr "拖动空白画布"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:67
+#: docs/user-guide/studio/canvas.md:77
 msgid "pan"
 msgstr "平移"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:68
+#: docs/user-guide/studio/canvas.md:78
 msgid "scroll wheel / pinch"
 msgstr "滚轮 / 捏合"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:68
+#: docs/user-guide/studio/canvas.md:78
 msgid "zoom about the pointer"
 msgstr "以指针为中心缩放"
 
@@ -2823,7 +2837,7 @@ msgid "select"
 msgstr "选中"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:28
-#: docs/user-guide/studio/canvas.md:71
+#: docs/user-guide/studio/canvas.md:81
 msgid "⇧-click"
 msgstr "⇧-点击"
 
@@ -2832,12 +2846,12 @@ msgid "add to / remove from the multi-selection"
 msgstr "加入 / 移出多选"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:72
+#: docs/user-guide/studio/canvas.md:82
 msgid "⇧-drag on empty canvas"
 msgstr "在空白画布上 ⇧-拖动"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:72
+#: docs/user-guide/studio/canvas.md:82
 msgid "box-select"
 msgstr "框选"
 
@@ -2862,14 +2876,14 @@ msgid "drag a connected input socket away → empty canvas"
 msgstr "把已连接的输入插口拖开 → 空白画布"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:32
-#: docs/user-guide/studio/canvas.md:75
+#: docs/user-guide/studio/canvas.md:85
 #: docs/user-guide/studio/system-projects.md:57
 #: docs/user-guide/studio/system-projects.md:58
 msgid "disconnect"
 msgstr "断开"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:33
-#: docs/user-guide/studio/canvas.md:77
+#: docs/user-guide/studio/canvas.md:87
 msgid "⌫ / Delete"
 msgstr "⌫ / Delete"
 
@@ -2898,7 +2912,7 @@ msgid "double-click a behavior's title"
 msgstr "双击行为标题"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:37
-#: docs/user-guide/studio/canvas.md:79
+#: docs/user-guide/studio/canvas.md:89
 msgid "right-click"
 msgstr "右键点击"
 
@@ -2923,7 +2937,7 @@ msgid "⌘↩"
 msgstr "⌘↩"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:44
-#: docs/user-guide/studio/formula-editor.md:132
+#: docs/user-guide/studio/formula-editor.md:134
 msgid "Add / Save the definition"
 msgstr "添加 / 保存定义"
 
@@ -3131,417 +3145,425 @@ msgid "dashed relationship node, word *declared*"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:11
-msgid "no formula yet"
+msgid "no formula yet (a relationship that reads something)"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:12
+msgid "bar at a node's left edge, entry arrow, word *Source*"
+msgstr ""
+
+#: docs/user-guide/reference/status-meanings.md:12
+msgid "a Source: the environment provides the value; nothing is missing"
+msgstr ""
+
+#: docs/user-guide/reference/status-meanings.md:13
 msgid "solid node with a hollow input socket"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:12
+#: docs/user-guide/reference/status-meanings.md:13
 msgid "*open*: waits for that concept's value form"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:13
+#: docs/user-guide/reference/status-meanings.md:14
 msgid "red mark at the formula line"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:13
+#: docs/user-guide/reference/status-meanings.md:14
 msgid "the formula does not check"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:14
+#: docs/user-guide/reference/status-meanings.md:15
 msgid "hollow ring socket on a concept"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:14
+#: docs/user-guide/reference/status-meanings.md:15
 msgid "value form *decide later*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:15
+#: docs/user-guide/reference/status-meanings.md:16
 msgid "dashed sink, *no domain*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:15
+#: docs/user-guide/reference/status-meanings.md:16
 msgid "the output has no timing domain"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:16
+#: docs/user-guide/reference/status-meanings.md:17
 msgid "dashed sink"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:16
+#: docs/user-guide/reference/status-meanings.md:17
 msgid "the output has no driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:17
+#: docs/user-guide/reference/status-meanings.md:18
 msgid "solid sink"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:17
-#: docs/user-guide/reference/status-meanings.md:58
+#: docs/user-guide/reference/status-meanings.md:18
+#: docs/user-guide/reference/status-meanings.md:59
 msgid "driven"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:18
+#: docs/user-guide/reference/status-meanings.md:19
 msgid "sink with the red word *contested*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:18
+#: docs/user-guide/reference/status-meanings.md:19
 msgid "more than one driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:19
+#: docs/user-guide/reference/status-meanings.md:20
 msgid "sink with the red word *ill-formed*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:19
+#: docs/user-guide/reference/status-meanings.md:20
 msgid "the driver's concept or domain does not fit the output"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:20
+#: docs/user-guide/reference/status-meanings.md:21
 msgid "a domain name at a node's right edge"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:20
+#: docs/user-guide/reference/status-meanings.md:21
 msgid "*Updates in* that domain"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:21
+#: docs/user-guide/reference/status-meanings.md:22
 msgid "instance socket hollow"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:21
+#: docs/user-guide/reference/status-meanings.md:22
 msgid "the required port is open (unbound)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:22
+#: docs/user-guide/reference/status-meanings.md:23
 msgid "red mark on an instance's component name"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:22
+#: docs/user-guide/reference/status-meanings.md:23
 msgid "the source no longer keeps the component's promise"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:23
+#: docs/user-guide/reference/status-meanings.md:24
 msgid "a gate mark on a binding link"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:23
+#: docs/user-guide/reference/status-meanings.md:24
 msgid "the value is carried across timing domains"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:25
+#: docs/user-guide/reference/status-meanings.md:26
 msgid "In the status line"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:27
-#: docs/user-guide/reference/status-meanings.md:64
-#: docs/user-guide/reference/status-meanings.md:72
-#: docs/user-guide/reference/status-meanings.md:81
+#: docs/user-guide/reference/status-meanings.md:28
+#: docs/user-guide/reference/status-meanings.md:65
+#: docs/user-guide/reference/status-meanings.md:73
+#: docs/user-guide/reference/status-meanings.md:82
 #: docs/user-guide/textual/overview.md:98
 msgid "Text"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:29
+#: docs/user-guide/reference/status-meanings.md:30
 msgid "*Saved* / *Edited*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:29
+#: docs/user-guide/reference/status-meanings.md:30
 msgid "whether the project on disk matches what you see"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:30
+#: docs/user-guide/reference/status-meanings.md:31
 msgid "*N concepts · M mappings*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:30
+#: docs/user-guide/reference/status-meanings.md:31
 msgid "counts"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:31
+#: docs/user-guide/reference/status-meanings.md:32
 msgid "*N not yet defined* (orange)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:31
+#: docs/user-guide/reference/status-meanings.md:32
 msgid "relationships without a formula"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:32
+#: docs/user-guide/reference/status-meanings.md:33
 msgid "*N definitions do not check* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:32
+#: docs/user-guide/reference/status-meanings.md:33
 msgid "invalid formulas"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:33
+#: docs/user-guide/reference/status-meanings.md:34
 msgid "*N definitions not added*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:33
+#: docs/user-guide/reference/status-meanings.md:34
 msgid "formula drafts not yet added — saved with the project, not the project's"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:34
+#: docs/user-guide/reference/status-meanings.md:35
 msgid "*not causal* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:34
+#: docs/user-guide/reference/status-meanings.md:35
 msgid "an instantaneous cycle"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:35
+#: docs/user-guide/reference/status-meanings.md:36
 msgid "*reads across domains* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:35
+#: docs/user-guide/reference/status-meanings.md:36
 msgid "a value reads another domain's value without `sync`"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:36
+#: docs/user-guide/reference/status-meanings.md:37
 msgid "*outputs incomplete* (orange)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:36
+#: docs/user-guide/reference/status-meanings.md:37
 msgid "a required output undriven, an output open, or a connection that does not fit"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:37
+#: docs/user-guide/reference/status-meanings.md:38
 msgid "*feasible on Arduino Nano* / *incomplete on …* / *not feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:37
+#: docs/user-guide/reference/status-meanings.md:38
 msgid "the last Deploy verdict for the chosen board"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:38
+#: docs/user-guide/reference/status-meanings.md:39
 msgid "*Compiler 0.1.0* / *Connecting to the compiler* / *Compiler not connected*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:38
+#: docs/user-guide/reference/status-meanings.md:39
 msgid "the connection to the compiler service"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:40
+#: docs/user-guide/reference/status-meanings.md:41
 msgid "In a relationship's inspector"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:42
+#: docs/user-guide/reference/status-meanings.md:43
 msgid "Line under the formula"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:44
+#: docs/user-guide/reference/status-meanings.md:45
 msgid "*Checking…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:44
+#: docs/user-guide/reference/status-meanings.md:45
 msgid "the compiler has not answered for this text yet"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:45
+#: docs/user-guide/reference/status-meanings.md:46
 msgid "*Valid definition*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:45
+#: docs/user-guide/reference/status-meanings.md:46
 msgid "checks"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:46
+#: docs/user-guide/reference/status-meanings.md:47
 msgid "*Tilt has no representation yet.* (orange)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:46
-#: docs/user-guide/reference/status-meanings.md:55
+#: docs/user-guide/reference/status-meanings.md:47
+#: docs/user-guide/reference/status-meanings.md:56
 msgid "open"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:47
+#: docs/user-guide/reference/status-meanings.md:48
 msgid "a red message"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:47
+#: docs/user-guide/reference/status-meanings.md:48
 msgid "the first finding; the rest are listed under it"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:48
+#: docs/user-guide/reference/status-meanings.md:49
 msgid "*Not saved: …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:48
+#: docs/user-guide/reference/status-meanings.md:49
 msgid "the last commit was refused; the text is kept"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:49
+#: docs/user-guide/reference/status-meanings.md:50
 msgid "*unsaved* in the section header"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:49
+#: docs/user-guide/reference/status-meanings.md:50
 msgid "a draft differs from the saved formula"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:51
+#: docs/user-guide/reference/status-meanings.md:52
 msgid "In an output's inspector"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:53
+#: docs/user-guide/reference/status-meanings.md:54
 msgid "Line"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:55
+#: docs/user-guide/reference/status-meanings.md:56
 msgid "*No timing domain yet: not part of the design's commitment until one is chosen.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:56
+#: docs/user-guide/reference/status-meanings.md:57
 msgid "*Undriven — the design is incomplete without a driver.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:56
+#: docs/user-guide/reference/status-meanings.md:57
 msgid "required, no driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:57
+#: docs/user-guide/reference/status-meanings.md:58
 msgid "*Undriven.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:57
+#: docs/user-guide/reference/status-meanings.md:58
 msgid "optional, no driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:58
+#: docs/user-guide/reference/status-meanings.md:59
 msgid "*Driven by brightness.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:59
+#: docs/user-guide/reference/status-meanings.md:60
 msgid "*Still driven by a, b*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:59
+#: docs/user-guide/reference/status-meanings.md:60
 msgid "contested"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:60
+#: docs/user-guide/reference/status-meanings.md:61
 msgid "*The connection does not fit: see the driver's findings below.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:60
+#: docs/user-guide/reference/status-meanings.md:61
 msgid "the driver's concept or domain differs"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:62
+#: docs/user-guide/reference/status-meanings.md:63
 msgid "On an instance's port"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:66
+#: docs/user-guide/reference/status-meanings.md:67
 msgid "*Open: nothing supplies it yet.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:66
+#: docs/user-guide/reference/status-meanings.md:67
 msgid "required port without a binding"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:67
+#: docs/user-guide/reference/status-meanings.md:68
 msgid "*Bound to lampA.brightness*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:67
+#: docs/user-guide/reference/status-meanings.md:68
 msgid "bound; *Show Binding* selects the link"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:68
+#: docs/user-guide/reference/status-meanings.md:69
 msgid "*Direct* / *Carried across timing domains* (binding inspector)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:68
+#: docs/user-guide/reference/status-meanings.md:69
 msgid "whether the binding transports"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:70
+#: docs/user-guide/reference/status-meanings.md:71
 msgid "On the Simulate page"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:74
+#: docs/user-guide/reference/status-meanings.md:75
 msgid "*Checking the design…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:74
+#: docs/user-guide/reference/status-meanings.md:75
 msgid "the analysis for this revision has not arrived"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:75
+#: docs/user-guide/reference/status-meanings.md:76
 msgid "a sentence with *Show*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:75
+#: docs/user-guide/reference/status-meanings.md:76
 msgid "something blocks stepping (see [Incomplete design](../troubleshooting/incomplete-design.md))"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:76
+#: docs/user-guide/reference/status-meanings.md:77
 msgid "*tilt divided by zero.* / *… produced a value that is not a number.* / *… needs a value for this step.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:76
+#: docs/user-guide/reference/status-meanings.md:77
 msgid "the tick failed at that relationship"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:77
+#: docs/user-guide/reference/status-meanings.md:78
 msgid "an empty trace cell"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:77
+#: docs/user-guide/reference/status-meanings.md:78
 msgid "the value's domain did not activate at that tick"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:79
+#: docs/user-guide/reference/status-meanings.md:80
 msgid "On the Deploy page"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:83
+#: docs/user-guide/reference/status-meanings.md:84
 msgid "*Choose a board to see whether this design fits it.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:83
+#: docs/user-guide/reference/status-meanings.md:84
 msgid "no target chosen"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:84
+#: docs/user-guide/reference/status-meanings.md:85
 msgid "*Checking Arduino Nano…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:84
+#: docs/user-guide/reference/status-meanings.md:85
 msgid "the analysis is running"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:85
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/status-meanings.md:86
+#: docs/user-guide/reference/terminology.md:36
 msgid "*Feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:85
+#: docs/user-guide/reference/status-meanings.md:86
 msgid "placed"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:86
+#: docs/user-guide/reference/status-meanings.md:87
 msgid "*Fits … so far — the binding is not finished.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:86
+#: docs/user-guide/reference/status-meanings.md:87
 msgid "an output without a device or a device without an output"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:87
+#: docs/user-guide/reference/status-meanings.md:88
 msgid "*Not feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:87
+#: docs/user-guide/reference/status-meanings.md:88
 msgid "one requirement could not be placed; the dead end follows"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:89
+#: docs/user-guide/reference/status-meanings.md:90
 msgid "In Explain: the formal ladder"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:91
+#: docs/user-guide/reference/status-meanings.md:92
 msgid "`declared → open → invalid → type-valid → temporally valid → clock-consistent`. *Output-complete* is a property of the whole design, *feasible* of the design on one board; neither is a step a relationship climbs."
 msgstr ""
 
@@ -3656,9 +3678,9 @@ msgstr ""
 
 #: docs/user-guide/reference/terminology.md:15
 #: docs/user-guide/reference/terminology.md:16
-#: docs/user-guide/reference/terminology.md:22
-#: docs/user-guide/reference/terminology.md:25
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:46
 msgid "—"
 msgstr ""
 
@@ -3679,19 +3701,15 @@ msgid "nullary declaration"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:17
-msgid "**input**"
+msgid "a value with no formula: the environment provides it, once per activation (zh-Hans 来源, ja 入力元; never *sensor*, *signal* or *source code*)"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:17
-msgid "a value with no formula: supplied from outside"
+msgid "*Source* (canvas header, Role, the Library's *Sources*, the Simulate page's *Sources*)"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:17
-msgid "— (dashed, *declared*)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:17
-msgid "unresolved nullary declaration; `I d t`"
+msgid "unresolved nullary declaration at the environment boundary; `Source Δ d`, `I d t`; a derived role, stored nowhere"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:18
@@ -3711,7 +3729,7 @@ msgid "definition, realization, Core term"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:19
-msgid "a relationship without a formula"
+msgid "a relationship that reads something and has no formula"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:19
@@ -3719,525 +3737,557 @@ msgid "*declared*"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:19
-msgid "`realization = none`"
+msgid "`realization = none` with inputs"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:20
+msgid "**role**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "what a relationship is where you are: *Source*, *Relationship*, or the port it backs"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "Role (inspector)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "`relationship_role`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "**environment**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "what is outside the behavior model and provides a Source's value"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "*Provided by the environment*"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "the simulation's input `I`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:22
 msgid "a relationship whose formula waits on a concept's value form"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:20
+#: docs/user-guide/reference/terminology.md:22
 msgid "*Checked once … is decided.*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:20
+#: docs/user-guide/reference/terminology.md:22
 msgid "`MappingStatus::Open`, `semantic.unbound_representation`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/reference/terminology.md:23
 msgid "a formula that does not check"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/reference/terminology.md:23
 msgid "red mark"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/reference/terminology.md:23
 msgid "`MappingStatus::Invalid`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "checks, has a value at every activation, timing consistent"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "`TypeValid` → `TemporallyValid` → `ClockConsistent`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "**executable**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "every needed relationship valid and every required output driven once"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "status line shows nothing open"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "`output_complete ∧ executable`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "**timing domain**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "a named rhythm; the values that tick together"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "Timing domain; *Updates in*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "clock, `ClockId`, `Κ`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "**memory**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "last tick's value, written `delay(init, e)`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "`delay` state cell"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "**carrying across domains**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "reading another domain's last value, written `sync(domain, init, e)` or chosen in the *Starts at* sheet"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "Carry across timing domains; Starts at"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "`sync`, transport"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "**instantaneous cycle**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "values needing each other in one tick"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "*depend on each other in the same instant*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "not `Causal`, `reactive.instantaneous_cycle`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "**physical output**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "where a value leaves the design: a light, a motor"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "Output"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "`OutputId`, `Ω`, `OutputSpec`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "**driver** / **drives**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "the one value connected to an output"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "Driver, Drives"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "drive edge `β`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "an output with more than one driver"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "*contested*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "`SingleDriver` violated"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "**device**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "the hardware that realises one output on a board"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "Device (Deploy)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "`DeviceBinding`, `DeviceKind`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "**board** / **target**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "the hardware the placement is checked against"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 #: docs/user-guide/studio/deploy.md:15
 msgid "Target"
 msgstr "目标板"
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "`Hardware`, `TargetDescriptor`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "**placement**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "which board pin each device requirement uses"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "Placement"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "`Assignment`; `Requirement`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "**feasible**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "every requirement placed"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "`DeploymentStatus::Feasible`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "**behavior** (group)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "a named set of relationships; organisation only"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "Behavior, Group as Behavior"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "`BehaviorGroup`, authoring metadata"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "**boundary**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "what a behavior's members read from and give to the outside"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "Boundary: Inputs, Outputs, Open, Physical outputs, Internal"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "crossing-in, crossing-out"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "**component**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "a reusable behavior with a source and a promise"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "Component"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "`BehaviorComponent`, `ComponentId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
-msgid "**source**"
+#: docs/user-guide/reference/terminology.md:40
+msgid "**source** (of a component)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
-msgid "a component's own design"
+#: docs/user-guide/reference/terminology.md:40
+msgid "a component's own design — a different word from *Source* above"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "Edit Source"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "body"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "**promise** / **port**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "what a component requires, provides, or takes as a parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "Ports: Requires, Provides, Parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "`BehaviorInterface`, `Port`, `PortContract`, `PortId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "**timing parameter**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "a component's domain that each instance maps to a system domain"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "Timing parameters"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "clock parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "**shared concept**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "a concept of a source that stands for a system concept"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "Shared concepts"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "`shared_concepts`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "**instance**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "one use of a component"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "Instance"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "`ComponentInstance`, `ComponentInstanceId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "**binding**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "a connection from a provided port or value to a required port or open relationship"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "Connection, Binding"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "`Binding`, `BindingId`, `Definition::Reference`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "**fan-out**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "one value read by several required ports"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "several bindings from one source"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "**version**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "a copy of a component with the same promise"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "Duplicate as Version"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "`DuplicateComponent`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "**system**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "a design with instances; what every project holds"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "System (context bar)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "`BehaviorSystem`; flattened design"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "**Design view / Code view / Split**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "the project as a graph, as its `.bdl` files, or both side by side"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "Design · Code · Split (Design page)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "`DesignView`; `GetSources`, `ApplySourceEdit`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "**does not build yet**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "the text in the Code view is not a design yet; the graph shows the last version that was"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "*This file does not build yet …*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "a draft the loader refused; last-known-good revision"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "**revision**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "one version of the design; every edit makes a new one"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
-#: docs/user-guide/studio/inspector.md:61
+#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/studio/inspector.md:69
 msgid "Explain"
 msgstr "解释"
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "`Revision`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "**draft**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "a typed but not yet added formula"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "*unsaved*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "`MappingDefinitionDraft` overlay"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "**finding**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "what the compiler reports about an object"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "(under the field it concerns)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "diagnostic, code"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "**fix**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "an action the tool offers for a finding"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "Fixes"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "semantic action, edit plan"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "**template**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "a ready-made concept in the Library"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 #: docs/user-guide/studio/library.md:1
 msgid "Library"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "`TemplateId` — never an identity"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:55
+#: docs/user-guide/reference/terminology.md:57
 msgid "Words this guide does not use for designer-facing text: *mapping* (except to name the Studio label), *signal*, *event*, *handler*, *flatten*, *elaborate*, *judgment*, and any identifier such as `DeclId`."
 msgstr ""
 
@@ -4278,174 +4328,186 @@ msgid "**dashed outline**"
 msgstr "**虚线轮廓**"
 
 #: docs/user-guide/studio/canvas.md:13
-msgid "_declared_: a relationship without a formula; an output without a driver or without a domain"
-msgstr "_已声明_：没有公式的关系；没有驱动方或没有域的输出"
+msgid "_declared_: a relationship that reads something and has no formula; an output without a driver or without a domain"
+msgstr "_已声明_：读取了某些东西但没有公式的关系；没有驱动方或没有域的输出"
 
 #: docs/user-guide/studio/canvas.md:14
+msgid "**a bar down a node's left edge, an entry arrow, the word _Source_**"
+msgstr "**节点左边缘的竖条、一个进入箭头、_来源_ 一词**"
+
+#: docs/user-guide/studio/canvas.md:14
+msgid "a **Source**: a value the environment provides — a relationship that reads nothing and has no formula. Nothing is missing"
+msgstr "一个**来源**：由环境提供的值——一个不读取任何东西且没有公式的关系。这里没有任何缺失"
+
+#: docs/user-guide/studio/canvas.md:15
 msgid "**a red mark at the formula line**"
 msgstr "**公式行上的红色标记**"
 
-#: docs/user-guide/studio/canvas.md:14
+#: docs/user-guide/studio/canvas.md:15
 msgid "the formula does not check — _wrong now_, never _not yet_"
 msgstr "公式未通过检查——_现在就错了_，而不是 _还没做_"
 
-#: docs/user-guide/studio/canvas.md:15
+#: docs/user-guide/studio/canvas.md:16
 msgid "**the word _declared_, _contested_, _ill-formed_, _no domain_**"
 msgstr "**_已声明_、_有争议_、_不合式_、_无域_ 这些词**"
 
-#: docs/user-guide/studio/canvas.md:15
-msgid "the one state word a node may carry, only while that state holds (an output that must be driven says _required_ meanwhile)"
-msgstr "节点可以携带的唯一状态词，只在该状态成立时显示（必须被驱动的输出在此期间显示 _必需_）"
-
 #: docs/user-guide/studio/canvas.md:16
+msgid "the one state word a node may carry, only while that state holds (an output that must be driven says _required_ meanwhile; a Source says _Source_)"
+msgstr "节点可以携带的唯一状态词，只在该状态成立时显示（必须被驱动的输出在此期间显示 _必需_；来源显示 _来源_）"
+
+#: docs/user-guide/studio/canvas.md:17
 msgid "**a small name at a node's right edge**"
 msgstr "**节点右边缘的小名字**"
 
-#: docs/user-guide/studio/canvas.md:16
+#: docs/user-guide/studio/canvas.md:17
 msgid "its timing domain"
 msgstr "它的时序域"
 
-#: docs/user-guide/studio/canvas.md:17
+#: docs/user-guide/studio/canvas.md:18
 msgid "**the accent colour**"
 msgstr "**强调色**"
 
-#: docs/user-guide/studio/canvas.md:17
+#: docs/user-guide/studio/canvas.md:18
 msgid "selection — and nothing else"
 msgstr "选中——仅此而已"
 
-#: docs/user-guide/studio/canvas.md:19
+#: docs/user-guide/studio/canvas.md:20
 msgid "Position, size and the direction of links carry **no meaning**. Data is drawn left to right for readability; edges show dependency, not the order in which anything runs; there is no node per operator — arithmetic lives in the formula field."
 msgstr "位置、大小和连线方向**没有含义**。为了可读性，数据从左到右绘制；边表示依赖，而不是任何东西运行的顺序；没有按运算符分的节点——算术在公式字段中。"
 
-#: docs/user-guide/studio/canvas.md:24
+#: docs/user-guide/studio/canvas.md:25
 msgid "The nodes"
 msgstr "节点"
 
-#: docs/user-guide/studio/canvas.md:28
+#: docs/user-guide/studio/canvas.md:29
 msgid "_Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the light sink._"
 msgstr "_倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）和 light 汇。_"
 
-#: docs/user-guide/studio/canvas.md:31
+#: docs/user-guide/studio/canvas.md:32
 msgid "A **concept** is one row: its name, an input socket on the left (something produces this concept) and an output socket on the right (relationships read it from here). Both sockets carry the concept's colour and shape."
 msgstr "**概念**是一行：它的名字，左侧一个输入插口（有东西生成这个概念），右侧一个输出插口（关系从这里读取它）。两个插口都带有概念的颜色和形状。"
 
-#: docs/user-guide/studio/canvas.md:35
-msgid "A **relationship** is a box: a header with the name and, while it applies, the one state word (_declared_ on `tilt` above, which has no formula); one input socket per concept it reads, on the left, each labelled with the concept; one output socket on the right, labelled with the concept it produces; and the formula on the line below, with the timing domain's name at the right edge when the relationship has one. A relationship that reads nothing — `tilt`, `brightness` — has no input sockets; it is a value, and its formula, if any, names the values and rules it depends on."
-msgstr "**关系**是一个方框：标题带有名字，以及（当适用时）唯一的状态词（上图中没有公式的 `tilt` 显示 _已声明_）；左侧每个读取的概念一个输入插口，各自标有概念名；右侧一个输出插口，标有它生成的概念；下面一行是公式，当关系有时序域时，域名在右边缘。不读取任何东西的关系——`tilt`、`brightness`——没有输入插口；它是值，它的公式（如果有）指出它依赖的值和规则。"
+#: docs/user-guide/studio/canvas.md:36
+msgid "A **relationship** is a box: a header with the name and, while it applies, the one state word (_declared_ on a relationship that reads something and has no formula yet); one input socket per concept it reads, on the left, each labelled with the concept; one output socket on the right, labelled with the concept it produces; and the formula on the line below, with the timing domain's name at the right edge when the relationship has one. A relationship that reads nothing — `brightness` above — has no input sockets; it is a value, and its formula names the values and rules it depends on."
+msgstr "**关系**是一个方框：标题带有名字，以及（当适用时）唯一的状态词（读取了某些东西但还没有公式的关系显示 _已声明_）；左侧每个读取的概念一个输入插口，各自标有概念名；右侧一个输出插口，标有它生成的概念；下面一行是公式，当关系有时序域时，域名在右边缘。不读取任何东西的关系——上图中的 `brightness`——没有输入插口；它是值，它的公式指出它依赖的值和规则。"
 
-#: docs/user-guide/studio/canvas.md:44
+#: docs/user-guide/studio/canvas.md:45
+msgid "A **Source** is a relationship that reads nothing and has no formula — `tilt` above: the environment provides its value, once per activation. It is drawn with the word _Source_ in the header, an entry arrow before its name, a bar down its **left** edge (the environment side; nothing in the design feeds it), one output socket and no input socket. It is not dashed and not _declared_: nothing is missing. What provides the value on a real product — a sensor, a button, an analog line — is a deployment matter, not a mark on the canvas; give the Source a formula and it becomes an ordinary relationship computed inside the design."
+msgstr "**来源**是一个不读取任何东西且没有公式的关系——上图中的 `tilt`：它的值由环境提供，每次激活一次。它的标题写着 _来源_，名字前有一个进入箭头，**左**边缘有一条竖条（那是环境的一侧；设计中没有任何东西喂给它），有一个输出插口，没有输入插口。它不是虚线的，也不是 _已声明_：这里没有任何缺失。在真实产品上由什么提供这个值——传感器、按钮、模拟线路——是部署的事，不是画布上的标记；给来源一个公式，它就变成在设计内部计算的普通关系。"
+
+#: docs/user-guide/studio/canvas.md:54
 msgid "A **physical output** is a sink: a tinted header with its name and a word at the right — _required_ for an output the design must drive before it is complete, or the state that overrides it (_no domain_, _contested_, _ill-formed_); one input socket labelled with the concept it accepts; the timing domain at the right edge; and a bar down its right side — nothing flows out of it."
 msgstr "**物理输出**是一个汇：着色的标题带有名字，右侧一个词——设计完成前必须驱动的输出显示 _必需_，或者覆盖它的状态（_无域_、_有争议_、_不合式_）；一个输入插口，标有它接受的概念；右边缘是时序域；右侧一条竖条——没有东西从它流出。"
 
-#: docs/user-guide/studio/canvas.md:50
+#: docs/user-guide/studio/canvas.md:60
 msgid "The selected node (`dimByTilt` above) is outlined in the accent colour; nothing else on the canvas uses that colour."
 msgstr "选中的节点（上图的 `dimByTilt`）以强调色描边；画布上没有其他东西使用这个颜色。"
 
-#: docs/user-guide/studio/canvas.md:53
+#: docs/user-guide/studio/canvas.md:63
 msgid "A project that composes components also shows **instance nodes** (one row per port, the component's name in the body) and **behavior regions** or collapsed **behavior boxes**; see [System projects](system-projects.md)."
 msgstr "组合组件的项目还会显示**实例节点**（每个端口一行，主体中是组件名）和**行为区域**或折叠的**行为框**；见 [系统项目](system-projects.md)。"
 
-#: docs/user-guide/studio/canvas.md:57
+#: docs/user-guide/studio/canvas.md:67
 msgid "Every node has a place. A node you did not place — one made in the Code view, in a code editor, or by an older project's first open — is placed for you: in the column of its kind (concepts left, relationships in the middle, outputs right), beside what it reads or produces, below anything already there. Nothing you placed moves; drag it where you like ([Design, Code and Split](code-view.md))."
 msgstr "每个节点都有位置。不是你放置的节点——在代码视图、代码编辑器中创建的，或旧项目首次打开时产生的——会替你放置：放在它所属种类的列中（概念在左，关系在中间，输出在右），紧挨着它读取或生成的东西，在已有内容的下方。你放置的东西不会移动；把它拖到你喜欢的地方（[设计、代码与分栏](code-view.md)）。"
 
-#: docs/user-guide/studio/canvas.md:63
+#: docs/user-guide/studio/canvas.md:73
 msgid "Gestures"
 msgstr "手势"
 
-#: docs/user-guide/studio/canvas.md:69
+#: docs/user-guide/studio/canvas.md:79
 msgid "Home, or ⌘0"
 msgstr "Home 或 ⌘0"
 
-#: docs/user-guide/studio/canvas.md:69
+#: docs/user-guide/studio/canvas.md:79
 msgid "frame the whole design"
 msgstr "显示整个设计"
 
-#: docs/user-guide/studio/canvas.md:70
+#: docs/user-guide/studio/canvas.md:80
 msgid "click a node"
 msgstr "点击节点"
 
-#: docs/user-guide/studio/canvas.md:70
+#: docs/user-guide/studio/canvas.md:80
 msgid "select it (the inspector follows)"
 msgstr "选中它（检查器随之切换）"
 
-#: docs/user-guide/studio/canvas.md:71
+#: docs/user-guide/studio/canvas.md:81
 msgid "add to / remove from a multi-selection"
 msgstr "加入 / 移出多选"
 
-#: docs/user-guide/studio/canvas.md:73
+#: docs/user-guide/studio/canvas.md:83
 msgid "drag a node body"
 msgstr "拖动节点主体"
 
-#: docs/user-guide/studio/canvas.md:73
+#: docs/user-guide/studio/canvas.md:83
 msgid "move it; released, the position is saved (not a design change)"
 msgstr "移动它；松开后位置被保存（不是设计改动）"
 
-#: docs/user-guide/studio/canvas.md:74
+#: docs/user-guide/studio/canvas.md:84
 msgid "drag from an output socket to an input socket"
 msgstr "从输出插口拖到输入插口"
 
-#: docs/user-guide/studio/canvas.md:74
+#: docs/user-guide/studio/canvas.md:84
 msgid "make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor"
 msgstr "建立连线；拖动时，每个可接受它的插口显示光晕，不兼容的插口显示禁止光标"
 
-#: docs/user-guide/studio/canvas.md:75
+#: docs/user-guide/studio/canvas.md:85
 msgid "drag from a connected input socket away, release on empty canvas"
 msgstr "从已连接的输入插口拖开，在空白画布上松开"
 
-#: docs/user-guide/studio/canvas.md:76
+#: docs/user-guide/studio/canvas.md:86
 msgid "drop a dragged link on empty canvas"
 msgstr "把拖动中的连线放在空白画布上"
 
-#: docs/user-guide/studio/canvas.md:76
+#: docs/user-guide/studio/canvas.md:86
 msgid "nothing (no node is created)"
 msgstr "无（不会创建节点）"
 
-#: docs/user-guide/studio/canvas.md:77
+#: docs/user-guide/studio/canvas.md:87
 msgid "delete the selection; a concept in use is refused with a banner naming its users"
 msgstr "删除选中项；使用中的概念会被拒绝，并以横幅列出使用者"
 
-#: docs/user-guide/studio/canvas.md:78
+#: docs/user-guide/studio/canvas.md:88
 msgid "double-click a concept or relationship node"
 msgstr "双击概念或关系节点"
 
-#: docs/user-guide/studio/canvas.md:78
+#: docs/user-guide/studio/canvas.md:88
 msgid "rename in place (an output is renamed in the inspector; an instance opens its source)"
 msgstr "原地重命名（输出在检查器中重命名；实例则打开它的来源）"
 
-#: docs/user-guide/studio/canvas.md:79
+#: docs/user-guide/studio/canvas.md:89
 msgid "the context menu (below)"
 msgstr "上下文菜单（见下）"
 
-#: docs/user-guide/studio/canvas.md:80
+#: docs/user-guide/studio/canvas.md:90
 msgid "drag a row from the Library tab onto the canvas"
 msgstr "把库标签页中的一行拖到画布上"
 
-#: docs/user-guide/studio/canvas.md:80
+#: docs/user-guide/studio/canvas.md:90
 msgid "insert that concept at the drop point; its name opens for editing"
 msgstr "在放下的位置插入该概念；它的名字进入编辑状态"
 
-#: docs/user-guide/studio/canvas.md:84
+#: docs/user-guide/studio/canvas.md:94
 msgid "The context menu"
 msgstr "上下文菜单"
 
-#: docs/user-guide/studio/canvas.md:86
-msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Instance ▸** _component_ and **New Behavior Group**."
-msgstr "在空白画布上：**添加概念 ▸**——_最近_、_输入_、_输出_、三个最常用的类别、_更多…_（打开库标签页）；**添加实例 ▸** _组件_ 和**新建行为组**。"
+#: docs/user-guide/studio/canvas.md:96
+msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — the standard Sources (_Temperature Sensor_, _Tilt Sensor_, …) and _New source…_ for a Source over a concept already in the design; **Add Instance ▸** _component_ and **New Behavior Group**."
+msgstr "在空白画布上：**添加概念 ▸**——_最近_、_输入_、_输出_、三个最常用的类别、_更多…_（打开库标签页）；**添加来源 ▸**——标准来源（_温度传感器_、_倾斜传感器_……）以及 _新建来源…_，为设计中已有的概念建立来源；**添加实例 ▸** _组件_ 和**新建行为组**。"
 
-#: docs/user-guide/studio/canvas.md:90
+#: docs/user-guide/studio/canvas.md:102
 msgid "On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**, **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a behavior, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
 msgstr "在节点上：**重命名**、**删除**；在关系上还有**分组为行为**、**添加到组 ▸**、**从 … 移出**；在实例上，**编辑来源**；在行为上，**折叠** / **展开**、**打包为可复用组件…**、**取消分组**。"
 
-#: docs/user-guide/studio/canvas.md:95
+#: docs/user-guide/studio/canvas.md:107
 msgid "What the canvas never shows"
 msgstr "画布永远不显示的"
 
-#: docs/user-guide/studio/canvas.md:97
+#: docs/user-guide/studio/canvas.md:109
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas; the status line counts it), values (those are on the Simulate page), and identifiers or type names (those are in Explain)."
 msgstr "草稿公式（已输入但未添加的公式不会改变画布上的任何东西；状态行会计数）、值（在仿真页）、以及标识符或类型名（在解释中）。"
 
-#: docs/user-guide/studio/canvas.md:103
+#: docs/user-guide/studio/canvas.md:115
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[工作区](workspace.md) · [检查器](inspector.md) · [系统项目](system-projects.md) · [键盘与鼠标](../reference/keyboard-and-mouse.md)"
 
@@ -4598,8 +4660,8 @@ msgid "a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital
 msgstr "一个**种类**——_PWM 通道_（可调光灯、舵机信号）、_数字输出_（继电器、开关负载）、_H 桥通道_（电机：一条 PWM 线加一条方向线）、_I²C 传感器_、_正交编码器_、_UART_；"
 
 #: docs/user-guide/studio/deploy.md:34
-msgid "the **output** it realises (or none, for a sensor that feeds the design);"
-msgstr "它实现的**输出**（对于向设计供值的传感器，为无）；"
+msgid "the **output** it realises (or none);"
+msgstr "它实现的**输出**（或者无）；"
 
 #: docs/user-guide/studio/deploy.md:35
 msgid "one **pin field per requirement** of the kind — leave empty to let the placement choose, or type a board pin name (`D3`, `A4`) to fix it by hand;"
@@ -4618,62 +4680,66 @@ msgid "Devices are saved with the project. They are deployment data, not design 
 msgstr "设备随项目保存。它们是部署数据，不是设计数据：添加、更改或移除设备不会改变设计页的任何结论。"
 
 #: docs/user-guide/studio/deploy.md:47
+msgid "A [Source](canvas.md) — a value the environment provides — has no device binding yet: no kind on this page provides a value to the design, and the inspector's _Realization_ row says so (_Provided by the environment; no device is bound yet._). Binding a sensor, a button or an analog line to a Source is deployment work that will arrive with the first embedded platform; the design does not change when it does."
+msgstr "[来源](canvas.md)——由环境提供的值——还没有设备绑定：本页上没有任何种类会向设计供值，检查器的 _实现_ 一行也这样说明（_由环境提供；尚未绑定设备。_）。把传感器、按钮或模拟线路绑定到来源是部署工作，会随第一个嵌入式平台到来；到那时设计也不会改变。"
+
+#: docs/user-guide/studio/deploy.md:54
 msgid "The verdict"
 msgstr "结论"
 
-#: docs/user-guide/studio/deploy.md:49
+#: docs/user-guide/studio/deploy.md:56
 msgid "Verdict"
 msgstr "结论"
 
-#: docs/user-guide/studio/deploy.md:51
+#: docs/user-guide/studio/deploy.md:58
 msgid "**Feasible on Arduino Nano.**"
 msgstr "**可部署到 Arduino Nano。**"
 
-#: docs/user-guide/studio/deploy.md:51
+#: docs/user-guide/studio/deploy.md:58
 msgid "every device's requirements were placed on distinct pins with the right capabilities; the _Placement on …_ table lists device · requirement · → pin"
 msgstr "每个设备的需求都被放到了具备相应能力的、互不相同的引脚上；_… 上的布置_ 表格列出设备 · 需求 · → 引脚"
 
-#: docs/user-guide/studio/deploy.md:52
+#: docs/user-guide/studio/deploy.md:59
 msgid "**Fits Arduino Nano so far — the binding is not finished.**"
 msgstr "**目前能放进 Arduino Nano——绑定尚未完成。**"
 
-#: docs/user-guide/studio/deploy.md:52
+#: docs/user-guide/studio/deploy.md:59
 msgid "what is bound fits, but an output has no device (_No device on … for: …_) or a device no output (_Not connected to an output: …_)"
 msgstr "已绑定的部分能放下，但某个输出没有设备（_… 上没有对应的设备：…_）或某个设备没有输出（_未连接到输出：…_）"
 
-#: docs/user-guide/studio/deploy.md:53
+#: docs/user-guide/studio/deploy.md:60
 msgid "**Not feasible on Arduino Nano.**"
 msgstr "**无法部署到 Arduino Nano。**"
 
-#: docs/user-guide/studio/deploy.md:53
+#: docs/user-guide/studio/deploy.md:60
 msgid "one requirement could not be placed; a red box names it and why — _arduino_nano has nothing that can carry pwmLight PWM._ (no pin has the capability), _D4 cannot carry pwmLight PWM on arduino_nano._ with _The pin chosen by hand, D4, cannot carry … here._ (a pin fixed by hand), or the pins that block it, each with what holds it; _Placed before the dead end:_ lists what was placed"
 msgstr "某个需求无法布置；红框指出它和原因——_arduino_nano 上没有东西能承载 pwmLight 的 PWM。_（没有引脚具备该能力）、_在 arduino_nano 上 D4 无法承载 pwmLight 的 PWM。_ 加上 _手动选择的引脚 D4 在这里无法承载 …_（手动固定的引脚），或者阻塞它的引脚及各自被占用的原因；_死路之前已布置：_ 列出已布置的内容"
 
-#: docs/user-guide/studio/deploy.md:55
+#: docs/user-guide/studio/deploy.md:62
 msgid "The verdict is only about the board. Whether the **design** itself is ready — every relationship checks, no instantaneous cycle, every required output driven — is the Design page's business and is not restated here: a design whose formulas are wrong can still be _feasible_, and the status line at the bottom keeps showing _not causal_ or _outputs incomplete_ while you are on this page. Both have to hold before anything could run."
 msgstr "结论只关乎板子。**设计**本身是否就绪——每个关系通过检查、没有瞬时环路、每个必需输出都被驱动——是设计页的事，这里不再重述：公式错误的设计仍然可以 _可部署_，而你在本页时底部状态行仍会显示 _存在瞬时环路_ 或 _输出未完成_。两者都成立，才谈得上运行。"
 
-#: docs/user-guide/studio/deploy.md:62
+#: docs/user-guide/studio/deploy.md:69
 msgid "_Not feasible_ reports the **first dead end** the placement hit under its own order — one conflict, honestly named, not necessarily the only one."
 msgstr "_无法部署_ 报告的是布置按自身顺序遇到的**第一个死路**——一个如实指出的冲突，不一定是唯一的。"
 
-#: docs/user-guide/studio/deploy.md:65
+#: docs/user-guide/studio/deploy.md:72
 msgid "What \"feasible\" leaves out"
 msgstr "“可部署”没有涵盖的"
 
-#: docs/user-guide/studio/deploy.md:67
+#: docs/user-guide/studio/deploy.md:74
 msgid "Electrical and numeric constraints: current, voltage, PWM frequency, timer resolution, bus speed. _Feasible_ means the pins can be allocated, not that the circuit works. A later layer may narrow _feasible_; it will never widen it."
 msgstr "电气和数值约束：电流、电压、PWM 频率、定时器分辨率、总线速度。_可部署_ 意味着引脚可以分配，而不是电路能工作。以后的层可能收窄 _可部署_，但永远不会放宽它。"
 
-#: docs/user-guide/studio/deploy.md:71
+#: docs/user-guide/studio/deploy.md:78
 msgid "What is not there"
 msgstr "尚未实现的"
 
-#: docs/user-guide/studio/deploy.md:73
+#: docs/user-guide/studio/deploy.md:80
 msgid "Generating and building firmware from the Deploy page, flashing a board, and reading values back from it. The compiler can already generate a Rust core for a design and checks it trace for trace against the simulator in the repository's tests, but that path has no Studio surface yet; the roadmap in `docs/project/roadmap.md` lists it."
 msgstr "从部署页生成并构建固件、烧录板子、从板子读回值。编译器已经能为设计生成 Rust 核心，并在仓库测试中逐条轨迹地与仿真器对照检查，但这条路径在 Studio 中还没有界面；`docs/project/roadmap.md` 中的路线图列出了它。"
 
-#: docs/user-guide/studio/deploy.md:81
+#: docs/user-guide/studio/deploy.md:88
 msgid "[Your first deployment check](../getting-started/first-deployment.md) · [Physical outputs](../concepts/physical-outputs.md) · [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)"
 msgstr "[你的第一次部署检查](../getting-started/first-deployment.md) · [物理输出](../concepts/physical-outputs.md) · [故障排除：部署](../troubleshooting/deployment-errors.md)"
 
@@ -4702,150 +4768,150 @@ msgid "**A number.** Type it, choose its unit from the pop-up, press Return or *
 msgstr "**一个数。** 输入它，从弹出菜单选择单位，按回车或**插入**。弹出菜单只列出槽位期望的那种值的单位——角度是 _rad_、_deg_、_turn_；绝不会是长度或时间。期望纯数的槽位没有单位可选。"
 
 #: docs/user-guide/studio/formula-editor.md:30
-msgid "**A reference.** The concepts this relationship reads and the design's relationships whose value is the right kind — each with what it produces. A reference is inserted as it is: its kind comes from its declaration, and it gets no unit pop-up."
-msgstr "**一个引用。** 这个关系读取的概念，以及设计中值的种类合适的关系——各自附有它生成的内容。引用按原样插入：它的种类来自其声明，没有单位弹出菜单。"
+msgid "**A reference.** The concepts this relationship reads and the design's relationships whose value is the right kind — each with what it produces. A reference is inserted as it is: its kind comes from its declaration, and it gets no unit pop-up. A value — a Source such as `tilt`, or a computed value — is written by its name alone (`tilt`, never `tilt()`); a rule is applied with its arguments (`dimByTilt(?)`)."
+msgstr "**一个引用。** 这个关系读取的概念，以及设计中值的种类合适的关系——各自附有它生成的内容。引用按原样插入：它的种类来自其声明，没有单位弹出菜单。值——像 `tilt` 这样的来源，或计算值——只用名字书写（`tilt`，绝不是 `tilt()`）；规则带着参数应用（`dimByTilt(?)`）。"
 
-#: docs/user-guide/studio/formula-editor.md:34
+#: docs/user-guide/studio/formula-editor.md:36
 msgid "**An equation.** Folded under _Equations_: the library's equations whose result can be the value expected here (for an angle, `min`, `max`, `clamp`, `sum` …; not `any`, which produces true or false). Choosing one inserts it with a slot per argument."
 msgstr "**一个方程。** 折叠在 _方程_ 之下：库中结果可以是此处期望值的方程（角度可用 `min`、`max`、`clamp`、`sum` …；不包括生成真或假的 `any`）。选择一个会插入它，每个参数一个槽位。"
 
-#: docs/user-guide/studio/formula-editor.md:39
+#: docs/user-guide/studio/formula-editor.md:41
 msgid "Click a part that is already there and the compiler says what it is. Above it, the actions on that part: **+ − × ÷** put that operator after it with a new slot for the other side, **Compare** likewise for `<`, `==` and the rest, **Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads a collection element by element (`all reading in readings: ?` — the editor picks a readable name for the element, `reading` for `readings`, `item` otherwise), **Range** asks whether the value lies between two ends (`… in ? .. ?`), and **Remove** turns it back into a slot — removing the slot next to an operator removes the operator with it. Parentheses are added where the operators need them: a sum divided by something becomes `(a + b) / ?`."
 msgstr "点击已有的部件，编译器会说明它是什么。它上方是针对该部件的操作：**+ − × ÷** 把该运算符放在它后面，并为另一侧添加新槽位；**比较**对 `<`、`==` 等同理；**函数**把它包进一个方程（`clamp(…, ?, ?)`）；**每个元素**逐个元素读取集合（`all reading in readings: ?`——编辑器为元素选一个可读的名字，`readings` 对应 `reading`，否则用 `item`）；**范围**询问值是否在两端之间（`… in ? .. ?`）；**移除**把它变回槽位——移除运算符旁的槽位会连同运算符一起移除。括号会在运算符需要的地方自动添加：和除以某物变成 `(a + b) / ?`。"
 
-#: docs/user-guide/studio/formula-editor.md:50
+#: docs/user-guide/studio/formula-editor.md:52
 msgid "The line under the field — _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._ — is the compiler's reasoning in plain words. It works out what a slot must be from what is around it: the result the relationship must produce, and the other side of the operator. `? / 1 s` for a speed expects a length; `Force * ?` for a torque expects a length. When nothing around a slot is known yet — a product of two slots — it says so and offers no unit; fill the other side first. **Explain** shows the same in the compiler's notation."
 msgstr "字段下方那行——_期望：角度，因为角度 ÷ 角度 = 无量纲量。_——是编译器用平实语言给出的推理。它根据槽位周围的内容推算槽位必须是什么：关系必须生成的结果，以及运算符的另一侧。速度的 `? / 1 s` 期望长度；力矩的 `Force * ?` 期望长度。当槽位周围什么都还不知道时——两个槽位的乘积——它会这样说明并且不提供单位；先填另一侧。**解释**用编译器的记号显示同样的内容。"
 
-#: docs/user-guide/studio/formula-editor.md:58
+#: docs/user-guide/studio/formula-editor.md:60
 msgid "A **number with a unit** is two fields: the number and its unit. Editing the number is a new quantity in the same unit. Choosing another unit from the pop-up keeps the quantity and rewrites the number: `180 deg` becomes `3.141592653589793 rad`. The two are different things, and the pop-up never does the first."
 msgstr "**带单位的数**是两个字段：数和它的单位。编辑数是同一单位下的一个新量。从弹出菜单选择另一个单位会保持量不变并重写数：`180 deg` 变成 `3.141592653589793 rad`。这两者是不同的事，弹出菜单永远不做前者。"
 
-#: docs/user-guide/studio/formula-editor.md:64
+#: docs/user-guide/studio/formula-editor.md:66
 msgid "A formula over a collection is drawn the way it reads: `all reading in readings:` on one line and the condition indented under it. The element's name is in italics wherever it appears — it belongs to this formula, not to the design, so renaming a concept never touches it — and selecting it says what one element is. A range is its two ends around `..`; each end expects the same kind as the value before `in`, so its unit pop-up lists that kind's units."
 msgstr "作用于集合的公式按其读法绘制：`all reading in readings:` 一行，条件缩进在它下面。元素名在出现的所有地方都是斜体——它属于这个公式，而不是设计，所以重命名概念永远不会影响它——选中它会说明一个元素是什么。范围是 `..` 两侧的两端；每一端期望的种类与 `in` 之前的值相同，因此其单位弹出菜单列出该种类的单位。"
 
-#: docs/user-guide/studio/formula-editor.md:72
+#: docs/user-guide/studio/formula-editor.md:74
 msgid "The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads exactly so in the **Text** view, and a formula typed as text appears in the **Formula** view — with `?` wherever text left a slot; `all reading in readings: reading < limit` typed as text comes back as the same words. Some forms — `if`, `match`, a block with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` — are shown as text in the Formula view and edited in the Text view. Text that cannot be read as a formula keeps exactly what you typed; the Formula view shows no parts for it, says _The text cannot be read as a formula._ and offers **Edit as text**. After any change the Formula view waits for the compiler's reading of the new text — _Waiting for the compiler to read the formula…_, the parts dimmed — before it offers the next action, so nothing you click ever acts on text that has already changed."
 msgstr "公式底层是普通文本：`clamp(Tilt / 90 deg, 0, 1)` 在**文本**视图中就是这样，以文本输入的公式也会出现在**公式**视图中——文本留下槽位的地方显示 `?`；以文本输入的 `all reading in readings: reading < limit` 会以同样的文字回来。有些形式——`if`、`match`、带 `let` 的块、规则 `x => …`、集合或分组字面量、`delay` / `sync`——在公式视图中以文本显示，在文本视图中编辑。无法读作公式的文本会原样保留你输入的内容；公式视图不为它显示部件，而是说 _文本无法读作公式。_ 并提供**以文本编辑**。任何更改之后，公式视图会等待编译器读取新文本——_正在等待编译器读取公式…_，部件变暗——然后才提供下一步操作，因此你点击的任何东西都不会作用于已经变化的文本。"
 
-#: docs/user-guide/studio/formula-editor.md:85
+#: docs/user-guide/studio/formula-editor.md:87
 msgid "The text field and its verdict"
 msgstr "文本字段及其结论"
 
-#: docs/user-guide/studio/formula-editor.md:92
+#: docs/user-guide/studio/formula-editor.md:94
 msgid "**The hint** shown in the empty field names what you can write over: _expression over Tilt, Held_ — the concepts this relationship reads — or _expression with no inputs_ for a value."
 msgstr "空字段中显示的**提示**指出你可以基于什么来写：_基于 Tilt、Held 的表达式_——这个关系读取的概念——或者对于值，_没有输入的表达式_。"
 
-#: docs/user-guide/studio/formula-editor.md:95
+#: docs/user-guide/studio/formula-editor.md:97
 msgid "**The verdict line**: _Checking…_ while the compiler looks, then _Valid definition_, or an orange line for something still to decide (_Tilt has no representation yet._), or a red line with the first finding's message. Orange is _not yet_; red is _wrong now_."
 msgstr "**结论行**：编译器检查时显示 _检查中…_，然后是 _有效的定义_，或者一行橙色表示还有待决定的事（_Tilt 还没有表示形式。_），或者一行红色带有第一个发现项的消息。橙色是 _还没做_；红色是 _现在就错了_。"
 
-#: docs/user-guide/studio/formula-editor.md:99
+#: docs/user-guide/studio/formula-editor.md:101
 msgid "**Underlines** mark the spans each finding is about, in the field itself, and each finding is repeated below with its excerpt, an explanation and any fixes. Above, the whole formula is the span: `Tilt / 90 s` is an angle over a time, an angular rate, where Brightness must be a plain number."
 msgstr "**下划线**在字段内标出每个发现项涉及的范围，每个发现项在下方重复出现，附有摘录、解释和可用的修复。上图中整个公式就是那个范围：`Tilt / 90 s` 是角度除以时间，即角速率，而 Brightness 必须是纯数。"
 
-#: docs/user-guide/studio/formula-editor.md:103
+#: docs/user-guide/studio/formula-editor.md:105
 msgid "**The buttons**: **Add definition** when the relationship has no formula yet, **Save definition** when it has one; **Revert** while the text differs from what is saved; **Detach definition** to remove the formula and return the relationship to _declared_. They are the same in both views: a formula with a slot still in it can be saved, and is _invalid_ until the slot is filled."
 msgstr "**按钮**：关系还没有公式时是**添加定义**，已有公式时是**保存定义**；文本与已保存内容不同时显示**还原**；**分离定义**移除公式并把关系恢复为 _已声明_。两种视图中它们相同：仍含槽位的公式可以保存，在槽位填满之前它是 _无效的_。"
 
-#: docs/user-guide/studio/formula-editor.md:109
+#: docs/user-guide/studio/formula-editor.md:111
 msgid "Drafts"
 msgstr "草稿"
 
-#: docs/user-guide/studio/formula-editor.md:111
+#: docs/user-guide/studio/formula-editor.md:113
 msgid "Typing creates a **draft**. The draft is part of the project: it survives switching selection and switching pages, is saved with the project (whether or not it checks, and even when the field is empty), and comes back in the editor when you reopen. The status line counts _N definitions not added_; adding it is a design change. The canvas does not change — a draft must not make an unresolved relationship look defined."
 msgstr "输入会创建一份**草稿**。草稿是项目的一部分：切换选择和切换页面后仍然保留，随项目一起保存（无论是否通过检查，甚至字段为空时也保存），重新打开时回到编辑器中。状态行计数 _N 个定义未添加_；添加它是一次设计改动。画布不会变化——草稿不能让未解决的关系看起来像已定义。"
 
-#: docs/user-guide/studio/formula-editor.md:118
+#: docs/user-guide/studio/formula-editor.md:120
 msgid "When the design changes under a draft — you changed a concept's unit, or undo replaced the saved formula — the draft is re-checked against the new design, and if the saved formula itself changed while you were typing, the field shows a notice with **Reload** (take the saved one) or **Keep mine** (keep typing over it). Nothing is overwritten silently."
 msgstr "当草稿之下的设计发生变化——你更改了某个概念的单位，或撤销替换了已保存的公式——草稿会针对新设计重新检查；如果你输入期间已保存的公式本身变了，字段会显示一条提示，带有**重新加载**（采用已保存的）或**保留我的**（继续在它之上输入）。什么都不会被悄悄覆盖。"
 
-#: docs/user-guide/studio/formula-editor.md:124
+#: docs/user-guide/studio/formula-editor.md:126
 msgid "Saving an **invalid** formula is allowed: the relationship becomes _invalid_ with the same finding you saw while typing. A design may record a formula before it is right, just as a concept may exist before its value form is chosen."
 msgstr "允许保存**无效的**公式：关系变为 _无效_，带有你输入时看到的同一个发现项。设计可以在公式正确之前记录它，正如概念可以在选择值形式之前存在。"
 
-#: docs/user-guide/studio/formula-editor.md:130
+#: docs/user-guide/studio/formula-editor.md:132
 msgid "Key"
 msgstr "键"
 
-#: docs/user-guide/studio/formula-editor.md:132
+#: docs/user-guide/studio/formula-editor.md:134
 msgid "**⌘↩**"
 msgstr "**⌘↩**"
 
-#: docs/user-guide/studio/formula-editor.md:133
+#: docs/user-guide/studio/formula-editor.md:135
 msgid "**Esc**"
 msgstr "**Esc**"
 
-#: docs/user-guide/studio/formula-editor.md:133
+#: docs/user-guide/studio/formula-editor.md:135
 msgid "Revert a draft (a second Esc when completion is open closes it first)"
 msgstr "还原草稿（补全打开时，第一次 Esc 先关闭它）"
 
-#: docs/user-guide/studio/formula-editor.md:134
+#: docs/user-guide/studio/formula-editor.md:136
 msgid "**Return**"
 msgstr "**Return**"
 
-#: docs/user-guide/studio/formula-editor.md:134
+#: docs/user-guide/studio/formula-editor.md:136
 msgid "in the Text view a new line — formulas may span lines; in a number entry, insert the number"
 msgstr "在文本视图中换行——公式可以跨行；在数字输入中，插入该数"
 
-#: docs/user-guide/studio/formula-editor.md:135
+#: docs/user-guide/studio/formula-editor.md:137
 msgid "**⌃Space**"
 msgstr "**⌃Space**"
 
-#: docs/user-guide/studio/formula-editor.md:135
+#: docs/user-guide/studio/formula-editor.md:137
 msgid "open completion (Text view)"
 msgstr "打开补全（文本视图）"
 
-#: docs/user-guide/studio/formula-editor.md:136
+#: docs/user-guide/studio/formula-editor.md:138
 msgid "**↑ / ↓**, **Return / Tab**"
 msgstr "**↑ / ↓**、**Return / Tab**"
 
-#: docs/user-guide/studio/formula-editor.md:136
+#: docs/user-guide/studio/formula-editor.md:138
 msgid "move in and accept from the completion list"
 msgstr "在补全列表中移动并接受"
 
-#: docs/user-guide/studio/formula-editor.md:137
+#: docs/user-guide/studio/formula-editor.md:139
 msgid "**Tab**"
 msgstr "**Tab**"
 
-#: docs/user-guide/studio/formula-editor.md:137
+#: docs/user-guide/studio/formula-editor.md:139
 msgid "in the Formula view, move to the next part"
 msgstr "在公式视图中，移到下一个部件"
 
-#: docs/user-guide/studio/formula-editor.md:138
+#: docs/user-guide/studio/formula-editor.md:140
 msgid "**+ − \\* /**, **⌫**"
 msgstr "**+ − \\* /**、**⌫**"
 
-#: docs/user-guide/studio/formula-editor.md:138
+#: docs/user-guide/studio/formula-editor.md:140
 msgid "on a selected part in the Formula view: put that operator after it; remove it"
 msgstr "在公式视图中选中的部件上：把该运算符放在它后面；移除它"
 
-#: docs/user-guide/studio/formula-editor.md:139
+#: docs/user-guide/studio/formula-editor.md:141
 msgid "**⌘S**"
 msgstr "**⌘S**"
 
-#: docs/user-guide/studio/formula-editor.md:139
+#: docs/user-guide/studio/formula-editor.md:141
 msgid "_Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states"
 msgstr "_保存项目_——从不保存草稿；未添加的公式和未保存的项目是两种不同的状态"
 
-#: docs/user-guide/studio/formula-editor.md:141
+#: docs/user-guide/studio/formula-editor.md:143
 msgid "Completion and hover"
 msgstr "补全与悬停"
 
-#: docs/user-guide/studio/formula-editor.md:143
+#: docs/user-guide/studio/formula-editor.md:145
 msgid "In the Text view, **⌃Space** opens a list at the caret: the concepts in scope, the design's relationships (rules come with a `(`), units after a number, keywords, and `delay(…)` / `sync(…)` where they are allowed. The list is the compiler's, filtered and ordered by it; each row shows the kind and the resulting type. It re-asks on every keystroke while open."
 msgstr "在文本视图中，**⌃Space** 在光标处打开一个列表：作用域内的概念、设计中的关系（规则带有 `(`）、数字后的单位、关键字，以及在允许的位置的 `delay(…)` / `sync(…)`。列表由编译器提供，并由它过滤和排序；每一行显示种类和结果类型。打开期间每次按键都会重新询问。"
 
-#: docs/user-guide/studio/formula-editor.md:149
+#: docs/user-guide/studio/formula-editor.md:151
 msgid "Resting the pointer on a name for a moment shows a **card**: what the name is, its value form, its status, a description. Never a formal term — those are in _Explain_."
 msgstr "把指针在名字上停留片刻会显示一张**卡片**：这个名字是什么、它的值形式、状态、描述。从不显示形式化术语——那些在 _解释_ 中。"
 
-#: docs/user-guide/studio/formula-editor.md:155
+#: docs/user-guide/studio/formula-editor.md:157
 msgid "Dimensions (units must work out), meaning (the result must be the concept the signature promises), shape (a rule where a value is expected, a value applied like a rule, a call with the wrong number of arguments), names (unknown, ambiguous, or a concept named that this relationship does not read), and the placement of `delay` / `sync`. Timing across domains and instantaneous cycles are checked once the formula is saved, because they depend on the rest of the design; timing findings appear under **Timing**, connection findings under **Drives**, and the rest (an instantaneous cycle, say) under the **Relationship** section beneath the editor — all on the relationship they concern."
 msgstr "量纲（单位必须算得通）、含义（结果必须是签名承诺的概念）、形状（期望值的地方出现规则、把值当规则应用、参数个数错误的调用）、名字（未知、有歧义，或者提到了这个关系不读取的概念），以及 `delay` / `sync` 的位置。跨域时序和瞬时环路在公式保存后检查，因为它们依赖设计的其余部分；时序发现项出现在**时序**之下，连接发现项在**驱动**之下，其余的（比如瞬时环路）在编辑器下方的**关系**分区——都在它们涉及的关系上。"
 
-#: docs/user-guide/studio/formula-editor.md:168
+#: docs/user-guide/studio/formula-editor.md:170
 msgid "[Relationships](../concepts/relationships.md) · [Formula language](../reference/formula-language.md) · [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)"
 msgstr "[关系](../concepts/relationships.md) · [公式语言](../reference/formula-language.md) · [类型、单位与概念](../troubleshooting/type-and-concept-errors.md)"
 
@@ -4863,26 +4929,25 @@ msgstr "各分区下方，**最后一次更改**用一句关于 _其他_ 对象�
 
 #: docs/user-guide/studio/inspector.md:14
 #: docs/user-guide/studio/inspector.md:23
-#: docs/user-guide/studio/inspector.md:42
+#: docs/user-guide/studio/inspector.md:50
 #: docs/user-guide/studio/library.md:10
 msgid "Section"
 msgstr "分区"
 
 #: docs/user-guide/studio/inspector.md:14
 #: docs/user-guide/studio/inspector.md:23
-#: docs/user-guide/studio/inspector.md:42
+#: docs/user-guide/studio/inspector.md:50
 msgid "Fields"
 msgstr "字段"
 
 #: docs/user-guide/studio/inspector.md:16
 #: docs/user-guide/studio/inspector.md:25
-#: docs/user-guide/studio/inspector.md:44
+#: docs/user-guide/studio/inspector.md:52
 msgid "**Meaning**"
 msgstr "**含义**"
 
 #: docs/user-guide/studio/inspector.md:16
-#: docs/user-guide/studio/inspector.md:25
-#: docs/user-guide/studio/inspector.md:44
+#: docs/user-guide/studio/inspector.md:52
 msgid "Name, Meaning"
 msgstr "名称、含义"
 
@@ -4912,7 +4977,7 @@ msgstr "名字是选中该关系的链接"
 
 #: docs/user-guide/studio/inspector.md:19
 #: docs/user-guide/studio/inspector.md:32
-#: docs/user-guide/studio/inspector.md:48
+#: docs/user-guide/studio/inspector.md:56
 msgid "**Delete …**"
 msgstr "**删除 …**"
 
@@ -4923,6 +4988,14 @@ msgstr "使用中时禁用；使用者列在按钮下方"
 #: docs/user-guide/studio/inspector.md:21
 msgid "Relationship"
 msgstr "关系"
+
+#: docs/user-guide/studio/inspector.md:25
+msgid "Name, Meaning, _Role_ — _Source_, _Relationship_, or the port it backs; a Source adds one sentence"
+msgstr "名称、含义、_角色_——_来源_、_关系_，或它所支撑的端口；来源会多一句说明"
+
+#: docs/user-guide/studio/inspector.md:25
+msgid "the role is read off the design, never set"
+msgstr "角色从设计中读出，从不设置"
 
 #: docs/user-guide/studio/inspector.md:26
 msgid "**Reads**"
@@ -4941,8 +5014,8 @@ msgid "**Produces**"
 msgstr "**生成**"
 
 #: docs/user-guide/studio/inspector.md:27
-msgid "a pop-up with the glyph"
-msgstr "带图形符号的弹出菜单"
+msgid "a pop-up with the glyph — titled **Provides** for a Source"
+msgstr "带图形符号的弹出菜单——对于来源，标题为**提供**"
 
 #: docs/user-guide/studio/inspector.md:27
 msgid "an edit"
@@ -4953,8 +5026,8 @@ msgid "**Relationship**"
 msgstr "**关系**"
 
 #: docs/user-guide/studio/inspector.md:28
-msgid "the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field"
-msgstr "公式字段及其结论行；_添加定义_ / _保存定义_ / _还原_ / _分离定义_；字段下方的发现项"
+msgid "the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field; for a Source, _Realization: Provided by the environment; no device is bound yet._ above the field"
+msgstr "公式字段及其结论行；_添加定义_ / _保存定义_ / _还原_ / _分离定义_；字段下方的发现项；对于来源，字段上方是 _实现：由环境提供；尚未绑定设备。_"
 
 #: docs/user-guide/studio/inspector.md:28
 msgid "see [Formula editor](formula-editor.md)"
@@ -4985,7 +5058,7 @@ msgid "only a relationship without inputs can drive"
 msgstr "只有没有输入的关系才能驱动"
 
 #: docs/user-guide/studio/inspector.md:31
-#: docs/user-guide/studio/inspector.md:47
+#: docs/user-guide/studio/inspector.md:55
 msgid "**Fixes**"
 msgstr "**修复**"
 
@@ -5002,54 +5075,58 @@ msgid "A relationship can also show _In group …_ with a _Show Group_ link, _Ta
 msgstr "关系还可能显示 _属于组 …_ 及 _显示组_ 链接；绑定到端口时显示 _从 … 取值_ 及 _显示绑定_（附有 _断开它以自行定义该关系。_）；在组件的来源中，显示它支撑的端口（_requires_ / _provides_ / _parameter_）。端口在组件自己的检查器中声明。"
 
 #: docs/user-guide/studio/inspector.md:40
+msgid "A **Source** — a relationship that reads nothing and has no formula — is inspected the same way. Its Role row says _Source_; its output section is _Provides_; its Relationship section says the environment provides the value and no device is bound yet, and keeps the formula field: add a formula and the same relationship is computed inside the design instead. Nothing here says _sensor_ or names a part — which device provides the value is decided on the [Deploy page](deploy.md), and today no device kind provides one."
+msgstr "**来源**——不读取任何东西且没有公式的关系——以同样的方式检查。它的角色一行写着 _来源_；它的输出部分是 _提供_；它的关系部分说明该值由环境提供、尚未绑定设备，并保留公式字段：添加一个公式，同一个关系就改为在设计内部计算。这里没有任何地方说 _传感器_ 或指名某个零件——由哪个设备提供这个值是在[部署页](deploy.md)上决定的，而今天还没有任何设备种类能提供。"
+
+#: docs/user-guide/studio/inspector.md:48
 msgid "Physical output"
 msgstr "物理输出"
 
-#: docs/user-guide/studio/inspector.md:45
+#: docs/user-guide/studio/inspector.md:53
 msgid "**Output**"
 msgstr "**输出**"
 
-#: docs/user-guide/studio/inspector.md:45
+#: docs/user-guide/studio/inspector.md:53
 msgid "_Accepts_, _Updates in_, _Required_"
 msgstr "_接受_、_更新于_、_必需_"
 
-#: docs/user-guide/studio/inspector.md:46
+#: docs/user-guide/studio/inspector.md:54
 msgid "**Driver**"
 msgstr "**驱动方**"
 
-#: docs/user-guide/studio/inspector.md:46
+#: docs/user-guide/studio/inspector.md:54
 msgid "the state (_Driven by brightness._, _Undriven — the design is incomplete without a driver._, …); claimants with _disconnect_; a _Connect_ pop-up of the design's relationships (those _with inputs_ marked)"
 msgstr "状态（_由 brightness 驱动。_、_未驱动——没有驱动方设计不完整。_，…）；带 _断开_ 的争夺者；一个列出设计中各关系的 _连接_ 弹出菜单（_有输入_ 的会被标记）"
 
-#: docs/user-guide/studio/inspector.md:46
+#: docs/user-guide/studio/inspector.md:54
 msgid "see [Physical outputs](../concepts/physical-outputs.md)"
 msgstr "见 [物理输出](../concepts/physical-outputs.md)"
 
-#: docs/user-guide/studio/inspector.md:47
+#: docs/user-guide/studio/inspector.md:55
 msgid "_Detach … from …_, _Create upstream combination mapping_, _Connect a driver to …_"
 msgstr "_把 … 从 … 分离_、_创建上游组合映射_、_为 … 连接驱动方_"
 
-#: docs/user-guide/studio/inspector.md:50
+#: docs/user-guide/studio/inspector.md:58
 msgid "Timing domain"
 msgstr "时序域"
 
-#: docs/user-guide/studio/inspector.md:52
+#: docs/user-guide/studio/inspector.md:60
 msgid "Timing domains have no inspector page: rename them in place in the sidebar and delete them there while unused. Their meaning is in the relationships and outputs that _update in_ them."
 msgstr "时序域没有检查器页面：在侧栏中原地重命名，未使用时也在那里删除。它们的含义体现在 _更新于_ 它们的关系和输出中。"
 
-#: docs/user-guide/studio/inspector.md:56
+#: docs/user-guide/studio/inspector.md:64
 msgid "Behaviors, components, instances, bindings"
 msgstr "行为、组件、实例、绑定"
 
-#: docs/user-guide/studio/inspector.md:58
+#: docs/user-guide/studio/inspector.md:66
 msgid "They have inspectors of their own; [System projects](system-projects.md) describes them."
 msgstr "它们有各自的检查器；[系统项目](system-projects.md) 会描述它们。"
 
-#: docs/user-guide/studio/inspector.md:63
+#: docs/user-guide/studio/inspector.md:71
 msgid "The disclosure at the end of every inspector. It shows the object's identity number, the formal interface and, for a relationship with a formula, the inferred type and the Core term; the status word; the diagnostic codes and technical text behind each finding; the revision; and the kind of the last change (_refinement_ / _edit_) with what it invalidated. This is the one place in Studio where compiler vocabulary appears. Nothing above it depends on it."
 msgstr "每个检查器末尾的展开区。它显示对象的标识号、形式化接口，对于有公式的关系还有推断出的类型和 Core 项；状态词；每个发现项背后的诊断代码和技术文本；修订号；以及最后一次更改的种类（_精化_ / _编辑_）和它使什么失效。这是 Studio 中唯一出现编译器词汇的地方。它上面的内容没有任何东西依赖它。"
 
-#: docs/user-guide/studio/inspector.md:72
+#: docs/user-guide/studio/inspector.md:80
 msgid "[Workspace](workspace.md) · [Formula editor](formula-editor.md) · [Status meanings](../reference/status-meanings.md)"
 msgstr "[工作区](workspace.md) · [公式编辑器](formula-editor.md) · [状态含义](../reference/status-meanings.md)"
 
@@ -5094,7 +5171,7 @@ msgid "_New mapping_ — name, _Reads_ (toggle concepts), _Produces_ (choose one
 msgstr ""
 
 #: docs/user-guide/studio/library.md:13
-msgid "the relationship; click to select"
+msgid "the relationship (a Source with its own glyph); click to select"
 msgstr ""
 
 #: docs/user-guide/studio/library.md:14
@@ -5142,22 +5219,34 @@ msgid "Library tab"
 msgstr ""
 
 #: docs/user-guide/studio/library.md:28
-msgid "Ready-made **concept templates**: a search field, categories (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_) and rows with a grey socket glyph — filled when the template comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover."
+msgid "Ready-made **concept templates**: a search field, categories (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_, _Sources_) and rows with a grey socket glyph — filled when the template comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover. Template names and descriptions follow the language you chose; the names of what they create do not."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:35
+#: docs/user-guide/studio/library.md:36
 msgid "To use one: **drag the row onto the canvas**, or double-click it. The concept is created with the template's default name and value form, lands where you dropped it, and its name opens for editing — type _MotorTemperature_ over _Temperature_ and keep going. The same templates are on the canvas's right-click **Add Concept ▸** menu, with your recent choices first."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:41
+#: docs/user-guide/studio/library.md:42
 msgid "A template is a way of _making_ a concept, not an identity: inserting _Temperature_ twice gives two independent concepts, and editing the project later never reaches back into the library. Once inserted, a concept is yours — rename it, change its unit, delete it."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:46
+#: docs/user-guide/studio/library.md:47
+msgid "Sources"
+msgstr ""
+
+#: docs/user-guide/studio/library.md:49
+msgid "The **Sources** category — _Temperature Sensor_, _Tilt Sensor_, _Distance Sensor_, _Ambient Light Sensor_, _Button / Switch State_, _Encoder Position_, _Analog Input_ — is for values the environment provides. Its rows wear the Source glyph instead of the socket, and each one inserts **two** things at once: the concept (_RoomTemp_, a temperature) and a [Source](canvas.md) that provides it (_TempSensor_), placed to the concept's left with a link between them. The concept opens for renaming as usual; rename the Source in its inspector. One Undo removes both."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:58
+msgid "Not every Source is a sensor — a button's state and an analog level are Sources too — and no Source says which part will provide it: that belongs to [deployment](deploy.md). The same two items can be made by hand: a concept, then _New source…_ from the canvas's **Add Source ▸** menu."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:63
 msgid "The templates and the list of quantity kinds come from the compiler service, so the Library, the unit picker and the textual syntax agree on names."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:51
+#: docs/user-guide/studio/library.md:68
 msgid "[Concepts](../concepts/concepts.md) · [Canvas](canvas.md) · [Inspector](inspector.md)"
 msgstr ""
 
@@ -5170,106 +5259,106 @@ msgid "The Simulate page (⌘2) answers _what does the design do over time_, one
 msgstr "仿真页（⌘2）回答 _设计随时间做什么_，一拍一拍地回答。每个值都来自编译器服务的参考求值器——BDL 设计含义的可执行定义。Studio 保存你输入的值、你选择的周期和返回的采样；它自己不做任何计算。"
 
 #: docs/user-guide/studio/simulate.md:14
-msgid "Inputs (left)"
-msgstr "输入（左侧）"
+msgid "Sources (left)"
+msgstr "来源（左侧）"
 
 #: docs/user-guide/studio/simulate.md:16
-msgid "One control for every value that comes from outside — every relationship that reads nothing and has no formula. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), a switch for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design."
-msgstr "每个来自外部的值一个控件——每个不读取任何东西且没有公式的关系。控件跟随概念的值形式，而不是它的名字：量是旁边带单位的数（用基本单位：弧度、米、秒、开尔文…），开/关是开关，计数是整数。这一行带有概念的图形符号和颜色，点击它会选中该对象——在本页和设计页上都是。"
+msgid "One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), a switch for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design."
+msgstr "每个[来源](canvas.md)一个控件——每个不读取任何东西且没有公式的关系：由环境提供、仿真向你索取的值。控件跟随概念的值形式，而不是它的名字：量是旁边带单位的数（用基本单位：弧度、米、秒、开尔文…），开/关是开关，计数是整数。这一行带有概念的图形符号和颜色，点击它会选中该对象——在本页和设计页上都是。"
 
-#: docs/user-guide/studio/simulate.md:23
-msgid "Under the inputs, **Timing domains**: a period per domain — _every N_ ticks — the schedule the evaluator activates by. A period, never a rate. Changing a period starts the run over."
-msgstr "输入下方是**时序域**：每个域一个周期——_每 N_ 拍——求值器按此调度激活。是周期，从不是速率。更改周期会重新开始运行。"
+#: docs/user-guide/studio/simulate.md:24
+msgid "Under the Sources, **Timing domains**: a period per domain — _every N_ ticks — the schedule the evaluator activates by. A period, never a rate. Changing a period starts the run over."
+msgstr "来源下方是**时序域**：每个域一个周期——_每 N_ 拍——求值器按此调度激活。是周期，从不是速率。更改周期会重新开始运行。"
 
-#: docs/user-guide/studio/simulate.md:27
-msgid "An instance's **open required ports** are inputs too, and an instance's values are listed as `lampA.brightness`."
-msgstr "实例的**开放的必需端口**也是输入，实例的值以 `lampA.brightness` 的形式列出。"
+#: docs/user-guide/studio/simulate.md:28
+msgid "An instance's **open required ports** are Sources too, and an instance's values are listed as `lampA.brightness`."
+msgstr "实例的**开放的必需端口**也是来源，实例的值以 `lampA.brightness` 的形式列出。"
 
-#: docs/user-guide/studio/simulate.md:30
+#: docs/user-guide/studio/simulate.md:31
 msgid "Readiness (above the trace)"
 msgstr "就绪状态（轨迹上方）"
 
-#: docs/user-guide/studio/simulate.md:32
+#: docs/user-guide/studio/simulate.md:33
 msgid "Before anything runs, the page lists what would stop a step, as sentences about named objects, each with a _Show_ link that selects it:"
 msgstr "在任何东西运行之前，页面用关于具名对象的句子列出会阻止步进的事项，每条附有选中它的 _显示_ 链接："
 
-#: docs/user-guide/studio/simulate.md:35
-msgid "_tilt needs a value before simulation can step._ — an input without a value"
-msgstr "_tilt 需要一个值仿真才能步进。_——没有值的输入"
-
 #: docs/user-guide/studio/simulate.md:36
+msgid "_tilt needs a value before simulation can step._ — a Source without a value"
+msgstr "_tilt 需要一个值仿真才能步进。_——没有值的来源"
+
+#: docs/user-guide/studio/simulate.md:37
 msgid "_Tilt needs a value form (Quantity, On / off or Count) before tilt can be given a value._ — a concept still on _decide later_"
 msgstr "_Tilt 需要一个值形式（量、开/关或计数），tilt 才能被赋值。_——仍处于 _稍后决定_ 的概念"
 
-#: docs/user-guide/studio/simulate.md:38
+#: docs/user-guide/studio/simulate.md:39
 msgid "_dimByTilt has no definition._ / _level has no valid definition._"
 msgstr "_dimByTilt 没有定义。_ / _level 没有有效的定义。_"
 
-#: docs/user-guide/studio/simulate.md:39
+#: docs/user-guide/studio/simulate.md:40
 msgid "_These relationships depend on each other in the same instant: a, b._"
 msgstr "_这些关系在同一瞬间相互依赖：a、b。_"
 
-#: docs/user-guide/studio/simulate.md:41
+#: docs/user-guide/studio/simulate.md:42
 msgid "While any is listed **Step** is disabled and does nothing. While the analysis for the current design has not arrived the list says _Checking the design…_ and nothing is wrong. Opening the page never starts a run."
 msgstr "只要列出了任何一条，**步进**就被禁用且不做任何事。当前设计的分析尚未到达时，列表显示 _正在检查设计…_，这并不表示有错。打开页面永远不会开始运行。"
 
-#: docs/user-guide/studio/simulate.md:47
-msgid "_A blocker with its Show link: the input tilt has no value yet, so Step is disabled._"
-msgstr "_一个阻碍项及其显示链接：输入 tilt 还没有值，所以步进被禁用。_"
+#: docs/user-guide/studio/simulate.md:48
+msgid "_A blocker with its Show link: the Source tilt has no value yet, so Step is disabled._"
+msgstr "_一个阻碍项及其显示链接：来源 tilt 还没有值，所以步进被禁用。_"
 
-#: docs/user-guide/studio/simulate.md:50
+#: docs/user-guide/studio/simulate.md:51
 msgid "Step, Step ×10, Reset"
 msgstr "步进、步进 ×10、重置"
 
-#: docs/user-guide/studio/simulate.md:52
-msgid "**Step** evaluates the next tick with the inputs on screen; **Step ×10** ten of them. Every step is a **replay**: the evaluator restarts at tick 0 with every tick's inputs so far and the schedule, then runs to the new tick — so the same design, inputs and periods always give the same trace. **Reset** returns to tick 0; inputs and periods stay."
-msgstr "**步进**用屏幕上的输入求值下一拍；**步进 ×10** 求值十拍。每次步进都是**重放**：求值器带着迄今每一拍的输入和调度从第 0 拍重新开始，然后运行到新的一拍——因此同样的设计、输入和周期总是给出同样的轨迹。**重置**回到第 0 拍；输入和周期保留。"
+#: docs/user-guide/studio/simulate.md:53
+msgid "**Step** evaluates the next tick with the Sources on screen; **Step ×10** ten of them. Every step is a **replay**: the evaluator restarts at tick 0 with every tick's Sources so far and the schedule, then runs to the new tick — so the same design, Sources and periods always give the same trace. **Reset** returns to tick 0; Sources and periods stay."
+msgstr "**步进**用屏幕上的来源求值下一拍；**步进 ×10** 求值十拍。每次步进都是**重放**：求值器带着迄今每一拍的来源和调度从第 0 拍重新开始，然后运行到新的一拍——因此同样的设计、来源和周期总是给出同样的轨迹。**重置**回到第 0 拍；来源和周期保留。"
 
-#: docs/user-guide/studio/simulate.md:58
+#: docs/user-guide/studio/simulate.md:59
 msgid "A tick that **fails** — a division by zero, a value that is not a number — stops there, and the failure is written on the controls' line about the object (_bad divided by zero._), never as a banner."
 msgstr "**失败**的一拍——除以零、不是数的值——就停在那里，失败以关于该对象的句子写在控件行上（_bad 除以了零。_），从不作为横幅。"
 
-#: docs/user-guide/studio/simulate.md:62
+#: docs/user-guide/studio/simulate.md:63
 msgid "The trace (centre)"
 msgstr "轨迹（中间）"
 
-#: docs/user-guide/studio/simulate.md:64
+#: docs/user-guide/studio/simulate.md:65
 msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept: `Brightness(0.5)`, `Held(true)`."
 msgstr "行是拍。列是设计的**值**——没有输入的关系——和它的**被驱动的输出**；规则（有输入的关系）没有列，因为它是函数而不是值。_活动_ 列指出走了一拍的域。单元格是求值器自己的渲染，总是带着概念：`Brightness(0.5)`、`Held(true)`。"
 
-#: docs/user-guide/studio/simulate.md:70
-msgid "An empty cell means the value's domain did not activate at that tick. An input's cell shows the value you fed, only at ticks where its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
-msgstr "空单元格表示该值的域在那一拍没有激活。输入的单元格显示你喂入的值，只在其域激活的拍显示。列的顺序按身份，不按时间；点击列标题选中该关系。"
+#: docs/user-guide/studio/simulate.md:71
+msgid "An empty cell means the value's domain did not activate at that tick. A Source's cell shows the value you fed, only at ticks where its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
+msgstr "空单元格表示该值的域在那一拍没有激活。来源的单元格显示你喂入的值，只在其域激活的拍显示。列的顺序按身份，不按时间；点击列标题选中该关系。"
 
-#: docs/user-guide/studio/simulate.md:75
+#: docs/user-guide/studio/simulate.md:76
 msgid "Memory and transports show up as values: `acc = delay(0, acc + x)` reads `0` at tick 0 and last tick's sum after; `y = sync(fast, -1, x)` in a slower domain reads the source's last activation strictly before its own, so a source value produced at the same instant is not yet visible."
 msgstr "记忆和传输以值的形式出现：`acc = delay(0, acc + x)` 在第 0 拍读到 `0`，之后读到上一拍的和；较慢域中的 `y = sync(fast, -1, x)` 读取来源在严格早于自身激活之前的最后一次激活，所以同一瞬间产生的来源值还看不到。"
 
-#: docs/user-guide/studio/simulate.md:80
+#: docs/user-guide/studio/simulate.md:81
 msgid "The probe (right)"
 msgstr "探针（右侧）"
 
-#: docs/user-guide/studio/simulate.md:82
+#: docs/user-guide/studio/simulate.md:83
 msgid "The selected object's value **now** and **over the run**, with its glyph; for an output, its driver. **Explain** under it holds the identity number, the run's revision, the rendered value and, for a failure, the code and technical text."
 msgstr "选中对象**现在**和**整个运行中**的值，带有它的图形符号；对于输出，还有它的驱动方。其下的**解释**保存标识号、运行的修订号、渲染值，以及失败时的代码和技术文本。"
 
-#: docs/user-guide/studio/simulate.md:86
+#: docs/user-guide/studio/simulate.md:87
 msgid "What a new revision does"
 msgstr "新修订会做什么"
 
-#: docs/user-guide/studio/simulate.md:88
+#: docs/user-guide/studio/simulate.md:89
 msgid "Editing the design drops the samples and any answer still in flight, keeps the fed values for inputs that still exist, and re-checks readiness. A trace always belongs to one revision of the design."
 msgstr "编辑设计会丢弃采样和任何仍在途中的回答，保留仍然存在的输入的喂入值，并重新检查就绪状态。轨迹总是属于设计的某一个修订。"
 
-#: docs/user-guide/studio/simulate.md:92
+#: docs/user-guide/studio/simulate.md:93
 msgid "Not on this page"
 msgstr "本页没有的"
 
-#: docs/user-guide/studio/simulate.md:94
+#: docs/user-guide/studio/simulate.md:95
 msgid "Values on the canvas (the trace and probe are the only views), plots (the trace is a table), and telemetry from a real device (that is Monitor, which does not exist yet)."
 msgstr "画布上的值（轨迹和探针是仅有的视图）、图表（轨迹是表格），以及来自真实设备的遥测（那是监视，尚不存在）。"
 
-#: docs/user-guide/studio/simulate.md:100
+#: docs/user-guide/studio/simulate.md:101
 msgid "[Your first simulation](../getting-started/first-simulation.md) · [Timing](../concepts/timing.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
 msgstr "[你的第一次仿真](../getting-started/first-simulation.md) · [时序](../concepts/timing.md) · [故障排除：未完成的设计](../troubleshooting/incomplete-design.md)"
 
@@ -7395,7 +7484,7 @@ msgstr ""
 #: docs/user-guide/workflows/grouping-behavior.md:51
 #: docs/user-guide/workflows/multi-output-behavior.md:30
 #: docs/user-guide/workflows/package-as-component.md:45
-#: docs/user-guide/workflows/sensor-to-output.md:45
+#: docs/user-guide/workflows/sensor-to-output.md:47
 msgid "What BDL means by this"
 msgstr ""
 
@@ -7414,7 +7503,7 @@ msgstr ""
 #: docs/user-guide/workflows/grouping-behavior.md:62
 #: docs/user-guide/workflows/multi-output-behavior.md:45
 #: docs/user-guide/workflows/package-as-component.md:61
-#: docs/user-guide/workflows/sensor-to-output.md:69
+#: docs/user-guide/workflows/sensor-to-output.md:72
 msgid "If it does not work"
 msgstr ""
 
@@ -7907,73 +7996,73 @@ msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientL
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:20
-msgid "**The input.** _Mappings_ **+**: `ambient`, reads nothing, produces AmbientLight. Leave it declared. **Timing › Updates in**: _interaction_."
+msgid "**The Source.** _Mappings_ **+**: `ambient`, reads nothing, produces AmbientLight — a Source; leave it without a formula. **Timing › Updates in**: _interaction_. (The Library's _Ambient Light Sensor_ makes steps 1 and 2 at once.)"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:22
+#: docs/user-guide/workflows/sensor-to-output.md:24
 msgid "**The rule.** _Mappings_ **+**: `adaptBrightness`, reads **Brightness** and **AmbientLight**, produces **Brightness**. Formula:"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:29
+#: docs/user-guide/workflows/sensor-to-output.md:31
 msgid "_Add definition._ A rule may read and produce the same concept: this one takes a brightness and returns an adjusted brightness."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:32
+#: docs/user-guide/workflows/sensor-to-output.md:34
 msgid "**Rewire the value.** Select `brightness` and change its formula to"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:38
+#: docs/user-guide/workflows/sensor-to-output.md:40
 msgid "_Save definition._ The output is still driven by `brightness`; nothing else changes."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:41
+#: docs/user-guide/workflows/sensor-to-output.md:43
 msgid "**Simulate.** ⌘2. Two inputs now: `tilt` and `ambient`. Set tilt `1.5708`, ambient `100`, **Step**: `Brightness(1)`. Set ambient `500`, **Step**: `Brightness(0.5)`."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:47
-msgid "`ambient` and `tilt` are the design's **inputs**: declared values in the _interaction_ domain. What supplies them is outside the design."
+#: docs/user-guide/workflows/sensor-to-output.md:49
+msgid "`ambient` and `tilt` are the design's **Sources**: values the environment provides, in the _interaction_ domain. What supplies them is outside the design."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:49
+#: docs/user-guide/workflows/sensor-to-output.md:52
 msgid "`dimByTilt` and `adaptBrightness` are **rules** with no domain of their own; they run when `brightness` runs."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:51
+#: docs/user-guide/workflows/sensor-to-output.md:54
 msgid "`brightness` is the **one value** the light shows, and the **only driver** of _light_. Everything the lamp does is legible from this one formula."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:53
+#: docs/user-guide/workflows/sensor-to-output.md:56
 msgid "The comparison `AmbientLight > 300 lx` is checked for dimension like any arithmetic: comparing an illuminance with `300` (no unit) would be refused."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:56
+#: docs/user-guide/workflows/sensor-to-output.md:59
 msgid "Variations"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:58
+#: docs/user-guide/workflows/sensor-to-output.md:61
 msgid "**A switch instead of a sensor.** A concept _Held_ with value form **On / off** (◇), an input `held`, a rule `chooseBrightness` reading Held and Tilt with the formula `if Held then dimByTilt(Tilt) else 0`, and the value `brightness = chooseBrightness(held, tilt)`. Inside a rule you name the concepts it reads; inside a value you name the design's values and apply its rules."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:64
+#: docs/user-guide/workflows/sensor-to-output.md:67
 msgid "**A count.** A concept _Presses_ with value form **Count** (□); counts compare and add like numbers but carry no unit, and cannot be matched against number patterns."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:67
+#: docs/user-guide/workflows/sensor-to-output.md:70
 msgid "**Memory.** `acc = delay(0, acc + x)` — see [Timing](../concepts/timing.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:71
+#: docs/user-guide/workflows/sensor-to-output.md:74
 msgid "A red line under the formula naming two dimensions that do not fit — a unit is missing on a number (`300` instead of `300 lx`), or the two sides of a comparison measure different things. [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:75
+#: docs/user-guide/workflows/sensor-to-output.md:78
 msgid "Simulation refuses with _ambient needs a value_ — a new input has no value yet; type one."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:77
+#: docs/user-guide/workflows/sensor-to-output.md:80
 msgid "The light's cell in the trace is empty — `brightness` lost its domain, or the output's domain differs. [Timing](../troubleshooting/timing-errors.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:82
+#: docs/user-guide/workflows/sensor-to-output.md:85
 msgid "[A second output](multi-output-behavior.md) · [Formula language](../reference/formula-language.md)"
 msgstr ""

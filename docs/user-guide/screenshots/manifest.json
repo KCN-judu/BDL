@@ -239,8 +239,8 @@
         "pad": 40
       },
       "output": "getting-started/complete-lamp.png",
-      "caption": "The finished lamp: the input tilt, the rule dimByTilt, the value brightness, and the driven light.",
-      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "caption": "The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light.",
+      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
       "purpose": "What the tutorial's design looks like when it is executable."
     },
     {
@@ -280,7 +280,7 @@
       },
       "output": "studio/node-anatomy.png",
       "caption": "Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the light sink.",
-      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
       "purpose": "The parts of every node kind, on real nodes."
     },
     {
@@ -309,7 +309,7 @@
       ],
       "expect": {
         "texts": [
-          "Inputs",
+          "Sources",
           "Timing domains"
         ],
         "ticks": 3
@@ -319,8 +319,8 @@
         "maxHeight": 420
       },
       "output": "studio/simulate-page.png",
-      "caption": "The Simulate page after three steps with the tilt at 45°: inputs on the left, the trace in the middle, the probe on the right.",
-      "alt": "The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.",
+      "caption": "The Simulate page after three steps with the tilt at 45°: the Sources on the left, the trace in the middle, the probe on the right.",
+      "alt": "The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.",
       "purpose": "The whole Simulate page in a settled run."
     },
     {
@@ -349,7 +349,7 @@
         "maxWidth": 720
       },
       "output": "studio/simulate-readiness.png",
-      "caption": "A blocker with its Show link: the input tilt has no value yet, so Step is disabled.",
+      "caption": "A blocker with its Show link: the Source tilt has no value yet, so Step is disabled.",
       "alt": "Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.",
       "purpose": "What stops a step, and how it is worded."
     },

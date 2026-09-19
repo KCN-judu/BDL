@@ -8,7 +8,8 @@ colour means *selected* and nothing else.
 
 | Mark | Meaning |
 | --- | --- |
-| dashed relationship node, word *declared* | no formula yet |
+| dashed relationship node, word *declared* | no formula yet (a relationship that reads something) |
+| bar at a node's left edge, entry arrow, word *Source* | a Source: the environment provides the value; nothing is missing |
 | solid node with a hollow input socket | *open*: waits for that concept's value form |
 | red mark at the formula line | the formula does not check |
 | hollow ring socket on a concept | value form *decide later* |

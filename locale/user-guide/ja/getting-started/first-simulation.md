@@ -14,7 +14,7 @@
 
 このページには 3 つの部分があります：
 
-- 左の**入力**——外から来るすべての値に 1 つずつのコントロール。ここでは `tilt` で、数値フィールドとその横に単位 `rad` があります。入力の下の**タイミングドメイン**には `interaction` と周期 _1 ティックごと_ が並びます。
+- 左の**入力元**——環境から与えられるすべての値に 1 つずつのコントロール。ここでは `tilt` で、数値フィールドとその横に単位 `rad` があります。入力元の下の**タイミングドメイン**には `interaction` と周期 _1 ティックごと_ が並びます。
 - 中央の**トレース**——ステップするたびに埋まる表。ティックごとに 1 行、計算された値と駆動される出力ごとに 1 列。その上に**ステップ**、**ステップ ×10**、**リセット**、そしてティックカウンター。
 - 右の**プローブ**——選択中のものの値。現在の値と実行全体の値。
 
@@ -28,15 +28,15 @@
 
 **ステップ**をクリックします。
 
-トレースに最初の行が現れます。ティック 0、起動したドメイン _interaction_、そして設計が計算した値——`brightness` は `Brightness(0.5)`（入力した値によっては数桁の差があります）、_light_ 列は同じ値です。`brightness` がそれを駆動するからです。値は常に、それが属するコンセプトとともに書かれます。**ステップ**をあと 2 回クリックします。3 行、同じ値。入力が変わっていないからです。
+トレースに最初の行が現れます。ティック 0、起動したドメイン _interaction_、そして設計が計算した値——`brightness` は `Brightness(0.5)`（入力した値によっては数桁の差があります）、_light_ 列は同じ値です。`brightness` がそれを駆動するからです。値は常に、それが属するコンセプトとともに書かれます。**ステップ**をあと 2 回クリックします。3 行、同じ値。入力元が変わっていないからです。
 
 フィールドを `1.5708`（90°）に変えて**ステップ**：およそ `Brightness(1)`。`0` にしてステップ：`Brightness(0)`。直立で消灯、水平で全灯です。
 
 **何が起きたか。** 各ティックで、_interaction_ ドメインのすべての値があなたの与えた入力から再計算されました。これらの数値を生み出した評価器は、BDL の設計の意味を定義するものです。デバイス用に生成されるコードはそれに従わなければなりません。
 
-![The Simulate page: on the left an input control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
+![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read 0.785398, Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with 0.5 now and at each tick over the run.](../../../../docs/user-guide/assets/studio/simulate-page.png)
 
-_傾き 45° で 3 ステップ後のシミュレートページ：左に入力、中央にトレース、右にプローブ。_
+_傾き 45° で 3 ステップ後のシミュレートページ：左に入力元、中央にトレース、右にプローブ。_
 
 ## 4. 1 つの値を見る
 
@@ -54,7 +54,7 @@ _タイミングドメイン_ の下で _interaction_ を _2 ごと_ に設定�
 
 ## うまくいかないとき
 
-- **ステップが無効で、一文が関係を名指ししている。** 読んでください。値のない入力、値の形式のないコンセプト、有効な定義のない関係、または同じ瞬間に互いに依存する関係です。それぞれに _表示_ リンクがあります。[未完成の設計](../../../../docs/user-guide/troubleshooting/incomplete-design.md) を参照。
+- **ステップが無効で、一文が関係を名指ししている。** 読んでください。値のない入力元、値の形式のないコンセプト、有効な定義のない関係、または同じ瞬間に互いに依存する関係です。それぞれに _表示_ リンクがあります。[未完成の設計](../../../../docs/user-guide/troubleshooting/incomplete-design.md) を参照。
 - **ティックがコントロール行のメッセージとともに止まる**（例えばゼロ除算）。メッセージは関係を名指しします。数式か入力を変えて、もう一度ステップします。
 - **設計を編集した後トレースが空になった。** 想定どおりです——実行は設計の 1 つのバージョンに属します。もう一度ステップします。
 

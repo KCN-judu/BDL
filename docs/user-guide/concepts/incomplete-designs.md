@@ -11,12 +11,13 @@ like, and which ones actually stop you.
 
 ## The states of a relationship
 
-| State        | You see                                                                                    | It means                                                                                         | Stops you?                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| **declared** | dashed node, the word _declared_ in the header                                             | the relationship has a signature and no formula yet                                              | only where its value is needed: the simulator will ask for it as an input, and an output it should drive stays undriven |
-| **open**     | solid node, but a hollow socket; inspector: _Checked once Temperature's value is decided._ | it has a formula, but a concept it reads has no value form yet, so the formula cannot be checked | no — it is waiting, not wrong                                                                                           |
-| **invalid**  | a red mark at the formula line; the finding under the field                                | it has a formula and the formula does not check                                                  | simulation, and anything that depends on it                                                                             |
-| **valid**    | solid node, no marks                                                                       | it checks, has a value at every tick it is asked for, and its timing is consistent               | no                                                                                                                      |
+| State        | You see                                                                                    | It means                                                                                         | Stops you?                                                               |
+| ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **declared** | dashed node, the word _declared_ in the header                                             | the relationship reads something and has no formula yet                                          | only where its value is needed: an output it should drive stays undriven |
+| **Source**   | a bar at the node's left edge, an entry arrow, the word _Source_ in the header             | the relationship reads nothing and has no formula: the environment provides its value            | no — nothing is missing; the simulator asks you for the value            |
+| **open**     | solid node, but a hollow socket; inspector: _Checked once Temperature's value is decided._ | it has a formula, but a concept it reads has no value form yet, so the formula cannot be checked | no — it is waiting, not wrong                                            |
+| **invalid**  | a red mark at the formula line; the finding under the field                                | it has a formula and the formula does not check                                                  | simulation, and anything that depends on it                              |
+| **valid**    | solid node, no marks                                                                       | it checks, has a value at every tick it is asked for, and its timing is consistent               | no                                                                       |
 
 _Declared_ and _open_ are the two intentional states. They are drawn in orange
 or with dashes — never red. Red is reserved for _wrong now_.
@@ -47,10 +48,10 @@ always a concrete list.
 
 The practical consequences:
 
-- A **declared** relationship without inputs is exactly what the simulator
-  treats as an **input** — you supply its value. A sensor is a declared value
-  with a domain. So "unfinished" and "comes from outside" are the same state, on
-  purpose.
+- A relationship without inputs and without a formula is a **Source**, not a
+  declared one: it is exactly what the simulator asks you for. A sensor reading
+  is a Source with a domain. "Comes from the environment" is a complete state,
+  on purpose; give the Source a formula and it becomes a computed value instead.
 - An **open** relationship does not turn red when you change the concept it
   waits on; it is re-checked and becomes valid or invalid.
 - An **undriven** required output is _incomplete_, an **undriven optional**

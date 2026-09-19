@@ -73,13 +73,13 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 
 > 在文本视图中，**⌃Space** 打开补全：此处可用的名字（_Tilt_）、数字后的单位、关键字。把鼠标在名字上停留片刻会显示它是什么。公式视图什么都不需要你记：每个槽位都列出适合的内容。
 
-## 5. 把倾角从外部引进来
+## 5. 把倾角从环境引进来
 
-`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自传感器——来自设计之外。在 BDL 中，从外部到来的值是一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。
+`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自环境——设计之外的一个传感器。在 BDL 中，由环境提供的值是一个**来源**：一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。
 
-1. 点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。
+1. 点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会做出同样的东西；库的 _来源_ 类别会同时做出一个概念和它的来源。）
 
-让它保持已声明状态。它的虚线轮廓现在表示“由外部提供”：在仿真器中你将输入它的值；在设备上它就是传感器。
+节点的标题写着 _来源_，左边缘有一条竖条，没有输入插口。它不是虚线的：这里没有任何缺失。在仿真器中你将输入它的值；在设备上由传感器提供。
 
 ## 6. 计算灯的亮度
 
@@ -90,7 +90,7 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 
 补全会提供 `dimByTilt(`，因为它是带输入的关系；也会提供 `tilt`，因为它是值。公式字段是唯一组合关系的地方；画布上的连线显示关系读取 _哪些概念_，而不是算术。
 
-**你做了什么。** 三个关系：一个输入（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。
+**你做了什么。** 三个关系：一个来源（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。
 
 ## 7. 给值一个节奏
 
@@ -116,24 +116,24 @@ Brightness 是设计内部的值。灯本身是一个**物理输出**：值离�
 
 汇节点变为实线。只有 _不读取任何东西_、并在同一域中生成所接受概念的关系才能驱动输出。`brightness` 符合条件；如果改连 `dimByTilt`，编辑会被接受，然后在输出下方被报告为不合适的连接。
 
-**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_；它仍然计数 _1 个未定义_——那是输入 `tilt`，它本来就应该没有公式。按 **⌘S** 保存。
+**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_；它仍然计数 _1 个未定义_——那是来源 `tilt`，它本来就应该没有公式。按 **⌘S** 保存。
 
 ## 你现在拥有的
 
-![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
+![The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
 
-_完成的灯：输入 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_
+_完成的灯：来源 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_
 
 | 对象 | 种类 | 公式 | 更新于 |
-| -------------- | ------------------------------------- | ----------------- | ------------- |
+| -------------- | -------------------------------------- | ----------------- | ------------- |
 | **Tilt** | 概念，角度 |  |  |
 | **Brightness** | 概念，纯数 |  |  |
-| **tilt** | 不读取任何东西的关系：输入 | _无_ | _interaction_ |
+| **tilt** | 不读取任何东西的关系：来源 | _无_ | _interaction_ |
 | **dimByTilt** | 读取 Tilt 的关系：规则 | `Tilt / 90 deg` | 任意 |
 | **brightness** | 不读取任何东西的关系：值 | `dimByTilt(tilt)` | _interaction_ |
 | **light** | 由 brightness 驱动的物理输出 |  | _interaction_ |
 
-这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是输入，通过检查，有节奏，并且输出恰好有一个驱动方。
+这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是来源，通过检查，有节奏，并且输出恰好有一个驱动方。
 
 ## 如果有什么不对
 

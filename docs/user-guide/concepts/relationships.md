@@ -14,8 +14,9 @@ Same thing.
 Creating a relationship only fixes its signature. That is enough for the rest of
 the design to be built around it: other relationships can apply it, an output
 can wait for it, the simulator can list what it still needs. The formula comes
-when you are ready, in the inspector's _Relationship_ section. Until then the
-node is dashed and _declared_.
+when you are ready, in the inspector's _Relationship_ section. Until then a
+relationship that reads something is dashed and _declared_; one that reads
+nothing is a **Source** — complete as it is, provided by the environment.
 
 The formula is checked against the signature as you type, and the check is in
 your own terms: _Brightness is a dimensionless quantity, but this formula
@@ -23,11 +24,11 @@ produces an angle._
 
 ## Three shapes of relationship
 
-| Shape              | Reads                | Formula | What it is                                                                                                              |
-| ------------------ | -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Rule**           | one or more concepts | yes     | a function from concepts to a concept: `dimByTilt : Tilt → Brightness = Tilt / 90 deg`                                  |
-| **Input**          | nothing              | none    | a value that arrives from outside — a sensor, a switch. In simulation you type it; on a device the hardware supplies it |
-| **Computed value** | nothing              | yes     | a value of the design: `brightness = dimByTilt(tilt)`                                                                   |
+| Shape              | Reads                | Formula | What it is                                                                                                                                  |
+| ------------------ | -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rule**           | one or more concepts | yes     | a function from concepts to a concept: `dimByTilt : Tilt → Brightness = Tilt / 90 deg`                                                      |
+| **Source**         | nothing              | none    | a value the environment provides — from a sensor, a switch, an analog line. In simulation you type it; on a device the hardware supplies it |
+| **Computed value** | nothing              | yes     | a value of the design: `brightness = dimByTilt(tilt)`                                                                                       |
 
 Only a relationship that _reads nothing_ is a value; a rule is something you
 apply. This matters in two places: a physical output can only be driven by a

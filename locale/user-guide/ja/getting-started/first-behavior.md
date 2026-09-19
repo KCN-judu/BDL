@@ -73,13 +73,13 @@ _検査を通らない下書きのある数式フィールド：赤い判定行�
 
 > テキストビューでは **⌃Space** で補完が開きます。ここで使える名前（_Tilt_）、数値の後の単位、キーワードです。名前に少しホバーすると、それが何かが表示されます。数式ビューは何も求めません。各スロットが適合するものを列挙します。
 
-## 5. 傾きを外から取り込む
+## 5. 傾きを環境から取り込む
 
-`dimByTilt` は規則であって値ではありません。処理する傾きが必要です。傾きはどこから来るのでしょう？ センサーから——設計の外からです。BDL では、外から届く値は、**何も読み取らず**、そのコンセプトを生成し、**数式を持たない**関係です。
+`dimByTilt` は規則であって値ではありません。処理する傾きが必要です。傾きはどこから来るのでしょう？ 環境から——設計の外にあるセンサーからです。BDL では、環境から与えられる値は**入力元**です。**何も読み取らず**、そのコンセプトを生成し、**数式を持たない**関係です。
 
-1. _マッピング_ の横の **+**：名前 `tilt`、何も読み取らず、**Tilt** を生成。作成。
+1. _マッピング_ の横の **+**：名前 `tilt`、何も読み取らず、**Tilt** を生成。作成。（キャンバスを右クリック → **入力元を追加 ▸** → _新しい入力元…_ でも同じものが作れます。ライブラリの _入力元_ カテゴリは、コンセプトとその入力元を一度に作ります。）
 
-宣言済みのままにします。その破線の輪郭は今や「外から供給される」を意味します。シミュレータでは値を入力し、デバイスではセンサーになります。
+ノードのヘッダーには _入力元_ とあり、左端に縦のバーがあって、入力ソケットはありません。破線ではありません。欠けているものは何もないのです。シミュレータでは値を入力し、デバイスではセンサーがそれを与えます。
 
 ## 6. ランプの明るさを計算する
 
@@ -90,7 +90,7 @@ _検査を通らない下書きのある数式フィールド：赤い判定行�
 
 補完は、入力を持つ関係だから `dimByTilt(` を、値だから `tilt` を提示します。数式フィールドは関係を組み合わせる唯一の場所です。キャンバス上のリンクは関係が _どのコンセプト_ を読むかを示し、算術は示しません。
 
-**作ったもの。** 3 つの関係：入力（`tilt`）、規則（`dimByTilt`）、計算された値（`brightness`）。下部のステータス行がそれらを数えます。
+**作ったもの。** 3 つの関係：入力元（`tilt`）、規則（`dimByTilt`）、計算された値（`brightness`）。下部のステータス行がそれらを数えます。
 
 ## 7. 値にリズムを与える
 
@@ -116,24 +116,24 @@ Brightness は設計の内部の値です。ランプ自体は**物理出力**�
 
 シンクが実線になります。出力を駆動できるのは、_何も読み取らず_、同じドメインで受け入れられるコンセプトを生成する関係だけです。`brightness` は条件を満たします。代わりに `dimByTilt` を接続すると、編集としては受け入れられ、その後出力の下に適合しない接続として報告されます。
 
-**作ったもの。** 完全な設計。ステータス行はもう _出力が未完了_ とは言いません。まだ _未定義 1 件_ を数えています——それは入力 `tilt` で、数式なしのままでよいものです。**⌘S** を押して保存します。
+**作ったもの。** 完全な設計。ステータス行はもう _出力が未完了_ とは言いません。まだ _未定義 1 件_ を数えています——それは入力元 `tilt` で、数式なしのままでよいものです。**⌘S** を押して保存します。
 
 ## 手元にあるもの
 
-![The canvas with the concept rows Tilt and Brightness at the top, the relationship nodes tilt (dashed, declared), dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
+![The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
 
-_完成したランプ：入力 tilt、規則 dimByTilt、値 brightness、駆動される light。_
+_完成したランプ：入力元 tilt、規則 dimByTilt、値 brightness、駆動される light。_
 
 | オブジェクト | 種類 | 数式 | 更新ドメイン |
-| -------------- | ------------------------------------- | ----------------- | ------------- |
+| -------------- | -------------------------------------- | ----------------- | ------------- |
 | **Tilt** | コンセプト、角度 |  |  |
 | **Brightness** | コンセプト、無次元の数 |  |  |
-| **tilt** | 何も読み取らない関係：入力 | _なし_ | _interaction_ |
+| **tilt** | 何も読み取らない関係：入力元 | _なし_ | _interaction_ |
 | **dimByTilt** | Tilt を読み取る関係：規則 | `Tilt / 90 deg` | 任意 |
 | **brightness** | 何も読み取らない関係：値 | `dimByTilt(tilt)` | _interaction_ |
 | **light** | brightness に駆動される物理出力 |  | _interaction_ |
 
-この設計は _実行可能_ です。出力が依存するすべての関係は定義済みか入力であり、検査を通り、リズムを持ち、出力にはちょうど 1 つの駆動元があります。
+この設計は _実行可能_ です。出力が依存するすべての関係は定義済みか入力元であり、検査を通り、リズムを持ち、出力にはちょうど 1 つの駆動元があります。
 
 ## うまくいかないとき
 

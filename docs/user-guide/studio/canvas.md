@@ -5,16 +5,17 @@ Everything on it means something, and each visual channel means one thing only.
 
 ## What the marks mean
 
-| You see                                                         | It means                                                                                                                        |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **socket colour**                                               | _which concept_ — every concept has its own hue, the same everywhere it appears                                                 |
-| **socket shape**                                                | the concept's _value form_: ○ quantity, ◇ on / off, □ count; a **hollow ring** while the value form is _decide later_           |
-| **a link**                                                      | _this relationship reads that concept_ (concept → relationship input), or _this value drives that output_ (relationship → sink) |
-| **dashed outline**                                              | _declared_: a relationship without a formula; an output without a driver or without a domain                                    |
-| **a red mark at the formula line**                              | the formula does not check — _wrong now_, never _not yet_                                                                       |
-| **the word _declared_, _contested_, _ill-formed_, _no domain_** | the one state word a node may carry, only while that state holds (an output that must be driven says _required_ meanwhile)      |
-| **a small name at a node's right edge**                         | its timing domain                                                                                                               |
-| **the accent colour**                                           | selection — and nothing else                                                                                                    |
+| You see                                                              | It means                                                                                                                                           |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **socket colour**                                                    | _which concept_ — every concept has its own hue, the same everywhere it appears                                                                    |
+| **socket shape**                                                     | the concept's _value form_: ○ quantity, ◇ on / off, □ count; a **hollow ring** while the value form is _decide later_                              |
+| **a link**                                                           | _this relationship reads that concept_ (concept → relationship input), or _this value drives that output_ (relationship → sink)                    |
+| **dashed outline**                                                   | _declared_: a relationship that reads something and has no formula; an output without a driver or without a domain                                 |
+| **a bar down a node's left edge, an entry arrow, the word _Source_** | a **Source**: a value the environment provides — a relationship that reads nothing and has no formula. Nothing is missing                          |
+| **a red mark at the formula line**                                   | the formula does not check — _wrong now_, never _not yet_                                                                                          |
+| **the word _declared_, _contested_, _ill-formed_, _no domain_**      | the one state word a node may carry, only while that state holds (an output that must be driven says _required_ meanwhile; a Source says _Source_) |
+| **a small name at a node's right edge**                              | its timing domain                                                                                                                                  |
+| **the accent colour**                                                | selection — and nothing else                                                                                                                       |
 
 Position, size and the direction of links carry **no meaning**. Data is drawn
 left to right for readability; edges show dependency, not the order in which
@@ -23,7 +24,7 @@ field.
 
 ## The nodes
 
-![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; tilt drawn dashed with the word declared; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/studio/node-anatomy.png)
+![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../assets/studio/node-anatomy.png)
 
 _Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt
 selected), and the light sink._
@@ -33,13 +34,22 @@ produces this concept) and an output socket on the right (relationships read it
 from here). Both sockets carry the concept's colour and shape.
 
 A **relationship** is a box: a header with the name and, while it applies, the
-one state word (_declared_ on `tilt` above, which has no formula); one input
-socket per concept it reads, on the left, each labelled with the concept; one
-output socket on the right, labelled with the concept it produces; and the
-formula on the line below, with the timing domain's name at the right edge when
-the relationship has one. A relationship that reads nothing — `tilt`,
-`brightness` — has no input sockets; it is a value, and its formula, if any,
+one state word (_declared_ on a relationship that reads something and has no
+formula yet); one input socket per concept it reads, on the left, each labelled
+with the concept; one output socket on the right, labelled with the concept it
+produces; and the formula on the line below, with the timing domain's name at
+the right edge when the relationship has one. A relationship that reads nothing
+— `brightness` above — has no input sockets; it is a value, and its formula
 names the values and rules it depends on.
+
+A **Source** is a relationship that reads nothing and has no formula — `tilt`
+above: the environment provides its value, once per activation. It is drawn with
+the word _Source_ in the header, an entry arrow before its name, a bar down its
+**left** edge (the environment side; nothing in the design feeds it), one output
+socket and no input socket. It is not dashed and not _declared_: nothing is
+missing. What provides the value on a real product — a sensor, a button, an
+analog line — is a deployment matter, not a mark on the canvas; give the Source
+a formula and it becomes an ordinary relationship computed inside the design.
 
 A **physical output** is a sink: a tinted header with its name and a word at the
 right — _required_ for an output the design must drive before it is complete, or
@@ -84,8 +94,10 @@ placed moves; drag it where you like ([Design, Code and Split](code-view.md)).
 ## The context menu
 
 On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most
-common categories, _More…_ (which opens the Library tab); **Add Instance ▸**
-_component_ and **New Behavior Group**.
+common categories, _More…_ (which opens the Library tab); **Add Source ▸** — the
+standard Sources (_Temperature Sensor_, _Tilt Sensor_, …) and _New source…_ for
+a Source over a concept already in the design; **Add Instance ▸** _component_
+and **New Behavior Group**.
 
 On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**,
 **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a
