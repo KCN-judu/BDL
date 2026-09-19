@@ -11,8 +11,8 @@ related: [ADR-0031, ISS-0008]
 
 ## Problem
 
-A diagnostic reaches Studio as `code`, `message` (English prose composed by
-the daemon, usually naming entities: _Output light has no driver_), optional
+A diagnostic reaches Studio as `code`, `message` (English prose composed by the
+daemon, usually naming entities: _Output light has no driver_), optional
 `technical` text and a span. Studio can localize the sentence only for codes
 whose meaning the code alone determines (`studio.*`, `project.changed_on_disk`,
 `edit.stale_revision`, `simulation.not_started`, …); for the rest the English
@@ -31,10 +31,10 @@ presentation is not.
 `apps/studio/lib/l10n/diagnostics.dart` — `localizedMessage` and its switch;
 `crates/bdl-daemon/src/server.rs` — `error(code, text)` composes the text;
 `crates/bdl-model` — `Diagnostic { code, message, technical, span, fixes }`.
-`apps/studio/test/l10n_test.dart` (`a diagnostic code is identity; only its
-sentence changes`) pins the fallback. The simulator already renders four
-`simulation.*` codes from structured fields (`mapping_id`), which is the shape
-the rest needs.
+`apps/studio/test/l10n_test.dart`
+(`a diagnostic code is identity; only its sentence changes`) pins the fallback.
+The simulator already renders four `simulation.*` codes from structured fields
+(`mapping_id`), which is the shape the rest needs.
 
 ## Dependencies
 

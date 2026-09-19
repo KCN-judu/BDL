@@ -20,8 +20,8 @@
   stay English with their code beside them (ISS-0015). The Explain panel's
   formal vocabulary stays English by design.
 - **What never changes with the language:** BDL syntax and keywords, type
-  notation and `()`, formal and protocol identities, diagnostic codes, the
-  names you gave things, and every byte of a project file.
+  notation and `()`, formal and protocol identities, diagnostic codes, the names
+  you gave things, and every byte of a project file.
 - **The user guide** has Simplified Chinese and Japanese editions of its core
   workflow — the front page, _Getting started_ (five pages), the Studio pages
   for the workspace, canvas, inspector, formula editor, code view, simulate and
@@ -47,6 +47,6 @@ Protocol unchanged.
 `apps/studio/test/l10n_test.dart` (locales, resolution, persistence, live
 re-rendering, presentation-only invariants, layout in zh-Hans and ja),
 `scripts/test_docs_l10n.py` (guide segmentation, PO round-trip, render
-threshold, link rewriting), `scripts/check_l10n.py` over the real catalogs
-(in `just docs-check` and CI, with `just docs-l10n` required to leave
-`locale/` unchanged).
+threshold, link rewriting), `scripts/check_l10n.py` over the real catalogs (in
+`just docs-check` and CI, with `just docs-l10n` required to leave `locale/`
+unchanged).

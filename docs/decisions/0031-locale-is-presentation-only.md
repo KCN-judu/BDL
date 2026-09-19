@@ -17,32 +17,32 @@ Accepted (first internationalization milestone).
 
 ## Context
 
-Studio and the user guide were English-only, with every label a Dart literal
-and every explanation an English page. Designers in Simplified Chinese and
-Japanese are the next audience, and the product's own principle — semantic
-truth is Rust-only (ADR-0001), Studio renders projections — leaves an obvious
-line to draw: a locale may change how a projection is worded and never what
-it projects. The pressure was to get translations in without letting a
-language leak into a project file, a diagnostic identity or the compiler.
+Studio and the user guide were English-only, with every label a Dart literal and
+every explanation an English page. Designers in Simplified Chinese and Japanese
+are the next audience, and the product's own principle — semantic truth is
+Rust-only (ADR-0001), Studio renders projections — leaves an obvious line to
+draw: a locale may change how a projection is worded and never what it projects.
+The pressure was to get translations in without letting a language leak into a
+project file, a diagnostic identity or the compiler.
 
 ## Decision
 
-1. **Locale is an application preference, never project state.** It is stored
-   in `preferences.json` in the app-support directory beside the recent-projects
+1. **Locale is an application preference, never project state.** It is stored in
+   `preferences.json` in the app-support directory beside the recent-projects
    list, loaded at startup, saved on change, and applied live. No project file,
    `.bdl` source, sidecar, protocol message or daemon request carries or reads
    it.
-2. **Changing the locale changes presentation only.** BDL syntax, type
-   notation, `()`, formal identities, protocol identities, diagnostic codes and
-   user-given names are rendered identically in every locale. A diagnostic's
-   code is its identity; Studio words a sentence for a code only when the code
-   alone determines it, and otherwise shows the compiler's English sentence with
-   the code beside it.
+2. **Changing the locale changes presentation only.** BDL syntax, type notation,
+   `()`, formal identities, protocol identities, diagnostic codes and user-given
+   names are rendered identically in every locale. A diagnostic's code is its
+   identity; Studio words a sentence for a code only when the code alone
+   determines it, and otherwise shows the compiler's English sentence with the
+   code beside it.
 3. **Exactly three locales — English, Simplified Chinese, Japanese — with
    English canonical.** Every string and page is authored in English; the other
    two are translations of it, complete for the P0/P1 surfaces, checked in CI.
-   An unsupported system locale resolves to English. A fourth locale requires
-   an ADR superseding this list.
+   An unsupported system locale resolves to English. A fourth locale requires an
+   ADR superseding this list.
 4. **Two pipelines, both reproducible from the repository.** Studio: Flutter
    gen-l10n over ARB files with typed accessors, ICU plurals and declared
    placeholders, no string concatenation in widgets. Guide: English Markdown →
@@ -77,9 +77,9 @@ language leak into a project file, a diagnostic identity or the compiler.
   `apps/studio/lib/ui/` is a defect. Helpers outside the widget tree take an
   `AppLocalizations`; the effect executor labels OS dialogs from the tracked
   preference.
-- `scripts/check_l10n.py`, `just l10n-check` and CI fail on a key missing from
-  a translation, a placeholder mismatch, a glossary term rendered where it
-  must not be, or a rendered guide page that is out of date.
+- `scripts/check_l10n.py`, `just l10n-check` and CI fail on a key missing from a
+  translation, a placeholder mismatch, a glossary term rendered where it must
+  not be, or a rendered guide page that is out of date.
 - Records: `docs/project/localization-style.md` (the rules), ISS-0015 (the
   daemon-owned English remainder), a change fragment
   (`docs/changes/unreleased/2026-09-internationalization.md`), a status row.
