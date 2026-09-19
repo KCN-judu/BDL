@@ -240,9 +240,9 @@ an explicit sync (blocked, with the reason: no surface phrase yet, DI-3/DI-17).
 **Meaning-changing fixes are never applied implicitly**; `NeedsChoice` exists
 precisely so the tool does not guess.
 
-Completion in a `concept …` position also offers the Standard Concept Library's
-templates (`CompletionKind::Template`, from `bdl-library` — the same data
-Studio's Library tab shows), writing ordinary declarations such as
+Completion in a `concept …` position also offers the Standard Library's Concept
+items (`CompletionKind::Template`, from `bdl-library` — the same data Studio's
+Library tab shows), writing ordinary declarations such as
 `AmbientLight : Illuminance`; see `docs/spec/concept-library.md`.
 
 ## Rename and references by identity

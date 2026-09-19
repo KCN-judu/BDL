@@ -103,7 +103,7 @@ assets/brand/           the compass-λ mark (generator, SVGs, icons)
 docs/                   architecture, formats, pipeline, IR, protocol, ADRs, design issues
 reference/paper/        the paper (PDF + markdown source)
 hardware/boards/        board descriptions as data
-library/std/            the Standard Concept Library, concepts.toml
+library/std/            the Standard Library, concepts.toml
 examples/smart_lamp/    the canonical example project (Design → Simulate → Deploy)
 runtime/bdl-runtime-core  no_std vocabulary every generated core links against
 runtime/bdl-runtime-host  std harness: run generated programs, JSON traces, cargo driver

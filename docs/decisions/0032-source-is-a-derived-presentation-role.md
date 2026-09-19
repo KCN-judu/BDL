@@ -128,3 +128,32 @@ the kernel gains nothing.
   fragment is `docs/changes/unreleased/2026-09-source-role.md`.
 - The glossary term is _Source_ (zh-Hans 来源, ja 入力元), never _source code_,
   _file_, _sensor_ or _signal_.
+
+## Amendment (2026-09-19, the generalized Standard Library)
+
+Decision §6 and the Alternatives paragraph above describe the first shipping
+form: a Source template as a `ConceptTemplate` with a `source` field, localized
+text in `concepts.toml`, protocol 0.16. The library was generalized the same day
+and this amendment states the current form; everything the decision says about
+the role itself stands.
+
+- A **Source is a library item**, not a template field: `LibraryItem` with
+  `category = source` whose fragment is one concept (`value`) and one
+  `() -> value` relationship (`source`). The library carries no role and the
+  item no flag — the canvas derives the role from the shape and state of what
+  was created, exactly as for a Source made by hand. Instantiation is one
+  transaction (`InstantiateLibraryItem`, protocol 0.17): every step or none, one
+  revision, one Undo.
+- **Localized text is presentation** (ADR-0031): the library, the crate and the
+  protocol carry canonical English only; Studio localizes items by id through
+  its ordinary l10n pipeline (`locale/library/std.json` →
+  `scripts/gen_library_l10n.py` → ARB). The 0.16 fields
+  `ConceptTemplateView.source_default_name`, `display_names`, `descriptions` and
+  `InstantiateConceptTemplateRequest.source_name` are deprecated and never set;
+  `ListConceptTemplates` / `InstantiateConceptTemplate` remain as the
+  Concept-item projection.
+- The section is _Sources_ with eight items (an _External Value_ joins the
+  seven), and _Analog Input_ and _External Value_ leave the representation open.
+
+Specification: `docs/spec/concept-library.md`; change fragment:
+`docs/changes/unreleased/2026-09-standard-library.md`.

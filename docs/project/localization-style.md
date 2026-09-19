@@ -157,6 +157,17 @@ just l10n-check                        # the two above, and the rendered pages m
 `pubspec.yaml`); the generated files are committed so a checkout builds without
 the step. Translations are edited in the ARB files and the PO files only.
 
+**Standard Library items** are the one exception to "edited in the ARB files":
+their names, descriptions and search tags live in `locale/library/std.json` (by
+item id and locale; English comes from `library/std/concepts.toml`), and
+`just library-l10n` (`scripts/gen_library_l10n.py`) writes the `libItem_*` keys
+into the three ARB catalogs and the id lookup
+`apps/studio/lib/l10n/library_strings.dart`. Edit the JSON, regenerate, then
+`just studio-l10n`; preflight's `l10n` check fails when the generated files are
+behind. The library, the compiler service and the protocol carry English only
+(ADR-0031, ADR-0032 amendment): an item is localized by id in Studio, and what
+it creates — `RoomTemp`, `TempSensor` — is an identifier in every locale.
+
 ## Review
 
 A change to a string or a page:

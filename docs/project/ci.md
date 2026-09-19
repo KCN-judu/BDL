@@ -14,14 +14,14 @@ developer runs the same checks locally.
 
 ## The contract
 
-| Job                                | Profile              | Proves                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Rust + docs (Linux)**            | `rust-ci`            | The semantic and compiler authority: `cargo fmt`, Prettier and markdownlint over every tracked Markdown file, the engineering-record validator and its tests, the screenshot ledger, the localization catalogs and the rendered user-guide pages (regenerated into `target/preflight` and compared), `cargo clippy -D warnings`, `cargo test --workspace`. Uploads the Linux `bdld`. |
-| **Flutter (Linux)**                | `flutter-ci`         | The full Studio authority: `flutter pub get`, `dart format --set-exit-if-changed`, `flutter analyze`, the checked-in `gen-l10n` classes current, every Studio test — the e2e suites against the Linux `bdld`.                                                                                                                                                                        |
-| **Protocol**                       | `proto-ci`           | The checked-in Dart protobuf code is what `protoc` + `dart format` produce for the current `.proto` (Rust regenerates at build time). Compared byte for byte in Python — the same check runs on Windows.                                                                                                                                                                             |
-| **Windows compatibility (Rust)**   | `windows-rust-ci`    | The crates whose tests meet what differs on Windows — paths, drive letters, `file://` URIs, process spawning, files, line endings, the host toolchain (table below). Builds `bdld.exe` and uploads it.                                                                                                                                                                               |
-| **Windows compatibility (Studio)** | `windows-flutter-ci` | The Studio tests tagged `daemon` or `filesystem` (`apps/studio/dart_test.yaml`) against `bdld.exe`: the real daemon process, project files on disk, preferences, fonts, fixtures.                                                                                                                                                                                                    |
-| **Windows native build**           | `windows-build-ci`   | `flutter build windows --debug`: the native target compiles and links (`flutter analyze` does not prove that). Runs in parallel with the two compatibility jobs.                                                                                                                                                                                                                     |
+| Job                                | Profile              | Proves                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rust + docs (Linux)**            | `rust-ci`            | The semantic and compiler authority: `cargo fmt`, Prettier and markdownlint over every tracked Markdown file, the engineering-record validator and its tests, the screenshot ledger, the localization catalogs, the Standard Library's generated presentation strings and the rendered user-guide pages (regenerated into `target/preflight` and compared), `cargo clippy -D warnings`, `cargo test --workspace`. Uploads the Linux `bdld`. |
+| **Flutter (Linux)**                | `flutter-ci`         | The full Studio authority: `flutter pub get`, `dart format --set-exit-if-changed`, `flutter analyze`, the checked-in `gen-l10n` classes current, every Studio test — the e2e suites against the Linux `bdld`.                                                                                                                                                                                                                               |
+| **Protocol**                       | `proto-ci`           | The checked-in Dart protobuf code is what `protoc` + `dart format` produce for the current `.proto` (Rust regenerates at build time). Compared byte for byte in Python — the same check runs on Windows.                                                                                                                                                                                                                                    |
+| **Windows compatibility (Rust)**   | `windows-rust-ci`    | The crates whose tests meet what differs on Windows — paths, drive letters, `file://` URIs, process spawning, files, line endings, the host toolchain (table below). Builds `bdld.exe` and uploads it.                                                                                                                                                                                                                                      |
+| **Windows compatibility (Studio)** | `windows-flutter-ci` | The Studio tests tagged `daemon` or `filesystem` (`apps/studio/dart_test.yaml`) against `bdld.exe`: the real daemon process, project files on disk, preferences, fonts, fixtures.                                                                                                                                                                                                                                                           |
+| **Windows native build**           | `windows-build-ci`   | `flutter build windows --debug`: the native target compiles and links (`flutter analyze` does not prove that). Runs in parallel with the two compatibility jobs.                                                                                                                                                                                                                                                                            |
 
 Linux is the authority for everything platform-independent; Windows never
 repeats it. A check that Linux proves once — the parser, the elaborator, the
@@ -144,8 +144,26 @@ Rust test binaries and 130-odd Studio tests no longer run on Windows; the 44 s
 of Windows Rust tests are the compatibility set (20 s of it the compiler
 differential building generated crates with the host cargo).
 
-Second run (`cache-workspace-crates: true` on the Windows Rust job, SDK caches
-warm): _recorded here from run …_.
+Second run on `main` (`f97609b`, run 35423383574; the dependency and SDK caches
+warm, the workspace-crate cache first written by this run, so read only from the
+third run on):
+
+| Job                            | Duration | Of which                                                                                                 |
+| ------------------------------ | -------- | -------------------------------------------------------------------------------------------------------- |
+| Rust + docs (Linux)            | 150 s    | preflight `rust-ci` 120 s                                                                                |
+| Flutter (Linux), after Rust    | 99 s     | SDK setup 14 s (warm), `flutter-ci` 77 s                                                                 |
+| Protocol                       | 27 s     | —                                                                                                        |
+| Windows compatibility (Rust)   | 158 s    | cache restore 20 s, `windows-rust-ci` 111 s = 1 m 08 s compiling the 25 workspace crates + 35 s of tests |
+| Windows compatibility (Studio) | 192 s    | SDK setup 100 s (a cache hit: 1.8 GB restored and untarred in 67 s), `windows-flutter-ci` 79 s           |
+| Windows native build           | 165 s    | SDK setup 85 s (same), build 69 s                                                                        |
+
+Windows critical path this run: 05:13:39 → 05:19:32, **5 m 53 s** (the Rust job
+then the Studio job), against 8 m 26 s – 9 m 02 s before the split — a third
+off, with restoring the Flutter SDK on Windows now the single largest step of
+the path (100 s of the Studio job's 192 s, 67 s of it untarring the 1.8 GB
+cache). Windows runner-minutes: 158 + 192 + 165 = 515 s, level with the 506–542
+s of the serial job while running three times the parallelism. The next win is a
+slimmer Flutter SDK cache on Windows, not more splitting.
 
 ## Local preflight
 

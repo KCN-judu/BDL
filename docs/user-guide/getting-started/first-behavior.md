@@ -118,7 +118,7 @@ nothing**, produces the concept, and has **no formula**.
 
 1. **+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**.
    Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the
-   same thing; the Library's _Sources_ category makes a concept and its Source
+   same thing; the Library's _Sources_ section makes a concept and its Source
    together.)
 
 The node says _Source_ in its header, with a bar down its left edge and no input

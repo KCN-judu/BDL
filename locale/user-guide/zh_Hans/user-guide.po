@@ -354,7 +354,7 @@ msgstr ""
 #: docs/user-guide/studio/deploy.md:86
 #: docs/user-guide/studio/formula-editor.md:168
 #: docs/user-guide/studio/inspector.md:78
-#: docs/user-guide/studio/library.md:66
+#: docs/user-guide/studio/library.md:71
 #: docs/user-guide/studio/simulate.md:99
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:92
@@ -1554,8 +1554,8 @@ msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where doe
 msgstr "`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自环境——设计之外的一个传感器。在 BDL 中，由环境提供的值是一个**来源**：一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。"
 
 #: docs/user-guide/getting-started/first-behavior.md:119
-msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ category makes a concept and its Source together.)"
-msgstr "点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会做出同样的东西；库的 _来源_ 类别会同时做出一个概念和它的来源。）"
+msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ section makes a concept and its Source together.)"
+msgstr "点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会做出同样的东西；库的 _来源_ 分区会同时做出一个概念和它的来源。）"
 
 #: docs/user-guide/getting-started/first-behavior.md:124
 msgid "The node says _Source_ in its header, with a bar down its left edge and no input socket. It is not dashed: nothing is missing. In the simulator you will type its value; on a device the sensor will provide it."
@@ -5219,34 +5219,34 @@ msgid "Library tab"
 msgstr ""
 
 #: docs/user-guide/studio/library.md:28
-msgid "Ready-made **concept templates**: a search field, categories (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_, _Sources_) and rows with a grey socket glyph — filled when the template comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover. Template names and descriptions follow the language you chose; the names of what they create do not."
+msgid "The **Standard Library**: ready-made items in two sections, **Concepts** and **Sources**, with a search field above. Each section is grouped (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_; the Sources add _External_). A Concept row carries a grey socket glyph — filled when the item comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover. Item names and descriptions follow the language you chose, and so does search — `温度` finds the Temperature Sensor in 简体中文, `センサー` in 日本語; the names of what they create do not change."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:36
-msgid "To use one: **drag the row onto the canvas**, or double-click it. The concept is created with the template's default name and value form, lands where you dropped it, and its name opens for editing — type _MotorTemperature_ over _Temperature_ and keep going. The same templates are on the canvas's right-click **Add Concept ▸** menu, with your recent choices first."
+#: docs/user-guide/studio/library.md:38
+msgid "To use one: **drag the row onto the canvas**, or double-click it. The concept is created with the item's default name and value form, lands where you dropped it, and its name opens for editing — type _MotorTemperature_ over _Temperature_ and keep going. The same items are on the canvas's right-click **Add Concept ▸** menu, with your recent choices first."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:42
-msgid "A template is a way of _making_ a concept, not an identity: inserting _Temperature_ twice gives two independent concepts, and editing the project later never reaches back into the library. Once inserted, a concept is yours — rename it, change its unit, delete it."
-msgstr ""
-
-#: docs/user-guide/studio/library.md:47
-msgid "Sources"
+#: docs/user-guide/studio/library.md:44
+msgid "An item is a way of _making_ objects, not an identity: inserting _Temperature_ twice gives two independent concepts, and editing the project later never reaches back into the library. Once inserted, a concept is yours — rename it, change its unit, delete it."
 msgstr ""
 
 #: docs/user-guide/studio/library.md:49
-msgid "The **Sources** category — _Temperature Sensor_, _Tilt Sensor_, _Distance Sensor_, _Ambient Light Sensor_, _Button / Switch State_, _Encoder Position_, _Analog Input_ — is for values the environment provides. Its rows wear the Source glyph instead of the socket, and each one inserts **two** things at once: the concept (_RoomTemp_, a temperature) and a [Source](canvas.md) that provides it (_TempSensor_), placed to the concept's left with a link between them. The concept opens for renaming as usual; rename the Source in its inspector. One Undo removes both."
+msgid "Sources"
 msgstr ""
 
-#: docs/user-guide/studio/library.md:58
-msgid "Not every Source is a sensor — a button's state and an analog level are Sources too — and no Source says which part will provide it: that belongs to [deployment](deploy.md). The same two items can be made by hand: a concept, then _New source…_ from the canvas's **Add Source ▸** menu."
+#: docs/user-guide/studio/library.md:51
+msgid "The **Sources** section — _Temperature Sensor_, _Tilt Sensor_, _Distance Sensor_, _Ambient Light Sensor_, _Button State_, _Encoder Position_, _Analog Input_, _External Value_ — is for values the environment provides. Its rows wear the Source glyph instead of the socket, the hover says what the item creates, and each one inserts **two** things at once: the concept (_RoomTemp_, a temperature) and a [Source](canvas.md) that provides it (_TempSensor_), placed to the concept's left with a link between them. The concept opens for renaming as usual; rename the Source in its inspector. The two arrive together and one Undo removes both."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:63
-msgid "The templates and the list of quantity kinds come from the compiler service, so the Library, the unit picker and the textual syntax agree on names."
+#: docs/user-guide/studio/library.md:61
+msgid "Not every Source is a sensor — a button's state, an analog level and a value a host or a network provides are Sources too — and no Source says which part will provide it: that belongs to [deployment](deploy.md). _Analog Input_ and _External Value_ leave the value form to you: choose the quantity once you know what the input measures. The same two items can be made by hand: a concept, then _New source…_ from the canvas's **Add Source ▸** menu."
 msgstr ""
 
 #: docs/user-guide/studio/library.md:68
+msgid "The items and the list of quantity kinds come from the compiler service, so the Library, the unit picker and the textual syntax agree on names."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:73
 msgid "[Concepts](../concepts/concepts.md) · [Canvas](canvas.md) · [Inspector](inspector.md)"
 msgstr ""
 

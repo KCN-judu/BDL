@@ -25,14 +25,16 @@
   `provision: environment` and the reading that a Source is observed once per
   activation and is not an effectful zero-argument call (`refForms_agree`); a
   resolved `() -> A` cites `resolved_not_source`.
-- **Library**: a _Sources_ category with seven templates — Temperature Sensor,
-  Tilt Sensor, Distance Sensor, Ambient Light Sensor, Button / Switch State,
-  Encoder Position, Analog Input — each creating a concept **and** its
-  `() -> concept` Source in one commit (one Undo removes both). Template names
-  and descriptions are localized (`i18n` in `concepts.toml`), identifiers never.
-  The canvas menu gains _Add Source ▸_ (the templates, then _New source…_ over
-  an existing concept); the Library rows and the sidebar wear the Source
-  silhouette.
+- **Library**: a _Sources_ section — Temperature Sensor, Tilt Sensor, Distance
+  Sensor, Ambient Light Sensor, Button State, Encoder Position, Analog Input —
+  each creating a concept **and** its `() -> concept` Source in one commit (one
+  Undo removes both). Names and descriptions follow the locale, identifiers
+  never. The canvas menu gains _Add Source ▸_ (the Sources, then _New source…_
+  over an existing concept); the Library rows and the sidebar wear the Source
+  silhouette. (The library's form — items, one transaction, presentation-owned
+  localization, protocol 0.17 — is
+  [2026-09 Standard Library](2026-09-standard-library.md), which supersedes the
+  0.16 protocol surface below on the same day.)
 - **Simulate**: the section is _Sources_ — the simulation's inputs are exactly
   the Sources (`SimulationInput = Source ∧ UnitDomain`). The **Formula
   Composer** inserts a Source by reference (`TempSensor`, never `TempSensor()`),
@@ -48,24 +50,26 @@
   was _declared_ with no reads is now shown as a Source. The word _declared_
   still means a relationship with reads and no definition.
 - Project files: nothing — no file, sidecar or text carries the role.
-- Protocol clients: protocol **0.16**, additive — `ConceptTemplateView` gains
-  `source_default_name`, `display_names`, `descriptions`;
-  `InstantiateConceptTemplateRequest` gains `source_name`; a Source template's
-  `SystemEditApplied` outcome carries `created_concept` and `created_mapping`. A
-  client that ignores the new fields still instantiates the concept and gets the
-  Source with it.
+- Protocol clients: protocol **0.16**, additive — `ConceptTemplateView` gained
+  `source_default_name`, `display_names`, `descriptions` and
+  `InstantiateConceptTemplateRequest` `source_name`; 0.17 (same day) deprecates
+  all four and never sets them — a Source is a library item
+  (`ListLibraryItems`); a Source's `SystemEditApplied` outcome carries
+  `created_concept` and `created_mapping`.
 - Developers: `bdl_ide::{relationship_role, RelationshipRole, provision}`;
-  `IdeHost::set_port_backed`, `AnalysisSnapshot::port_of`;
-  `bdl_library::{instantiate_with, Instantiation, SourceSpec, TemplateText}`;
-  `Session::apply_system_then`; Studio `relationshipRole`, `AppState.isSource`,
-  `TemplateText.displayNameIn`, `AppLocalizations.libraryLocale`,
-  `showNewSourceSheet`, `NodeShape.source`, `MappingGlyph(source:)`.
+  `IdeHost::set_port_backed`, `AnalysisSnapshot::port_of`; Studio
+  `relationshipRole`, `AppState.isSource`, `showNewSourceSheet`,
+  `NodeShape.source`, `MappingGlyph(source:)`.
+  (`bdl_library::{instantiate_with, Instantiation, SourceSpec, TemplateText}`,
+  `Session::apply_system_then`, `TemplateText.displayNameIn` and
+  `AppLocalizations.libraryLocale` existed only between the two fragments; see
+  the Standard Library fragment.)
 
 ## Evidence
 
 `crates/bdl-ide/tests/source_role.rs`, `crates/bdl-library/src/lib.rs`
-(`source_templates_create_a_concept_and_an_explicit_unit_domain_relationship`),
+(`a_source_item_plans_a_concept_and_an_unresolved_unit_domain_relationship`),
 `crates/bdl-daemon/tests/text_e2e.rs`
-(`a_source_template_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain`),
+(`a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain`),
 `apps/studio/test/source_role_test.dart`,
-`apps/studio/test/concept_library_e2e_test.dart`.
+`apps/studio/test/library_e2e_test.dart`.

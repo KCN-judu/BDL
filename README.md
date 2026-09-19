@@ -36,7 +36,7 @@ crates/             the Rust workspace — model, IR, syntax, elaboration, check
                     (docs/architecture/overview.md lists each crate and its boundary)
 runtime/            bdl-runtime-core (no_std vocabulary of generated cores), bdl-runtime-host
 hardware/boards/    board descriptions as data (arduino_nano, big_board)
-library/std/        the Standard Concept Library (concepts.toml)
+library/std/        the Standard Library (concepts.toml)
 examples/           smart_lamp — the canonical Design → Simulate → Deploy example
 docs/               architecture, formats, pipeline, ADRs, paper digest, the user guide
 locale/             the terminology glossary and the user guide's zh-Hans / ja catalogs and pages
