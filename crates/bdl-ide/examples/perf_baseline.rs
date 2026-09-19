@@ -54,6 +54,8 @@ fn design(concepts: usize, mappings: usize, outputs: usize) -> (ProjectSnapshot,
                     inputs: vec![input],
                     output,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .expect("mapping");

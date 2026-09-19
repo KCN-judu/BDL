@@ -820,6 +820,8 @@ impl Session {
                             name: name.clone(),
                             description: description.clone(),
                             signature: bdl_model::surface::Signature { inputs, output },
+                            definition: None,
+                            clock: None,
                         }
                     }
                 };
@@ -1514,6 +1516,8 @@ mod tests {
                         inputs: vec![tilt],
                         output: bright,
                     },
+                    definition: None,
+                    clock: None,
                 },
             )
             .unwrap();
@@ -1570,6 +1574,8 @@ mod tests {
                         inputs: vec![tilt],
                         output: bright,
                     },
+                    definition: None,
+                    clock: None,
                 },
             )
             .unwrap()

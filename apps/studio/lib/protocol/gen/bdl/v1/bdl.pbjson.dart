@@ -1715,6 +1715,21 @@ const CreateMapping$json = {
     {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
     {'1': 'description', '3': 2, '4': 1, '5': 9, '10': 'description'},
     {'1': 'signature', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Signature', '10': 'signature'},
+    {
+      '1': 'definition',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Definition',
+      '9': 0,
+      '10': 'definition',
+      '17': true
+    },
+    {'1': 'clock_id', '3': 5, '4': 1, '5': 4, '9': 1, '10': 'clockId', '17': true},
+  ],
+  '8': [
+    {'1': '_definition'},
+    {'1': '_clock_id'},
   ],
 };
 
@@ -1722,7 +1737,9 @@ const CreateMapping$json = {
 final $typed_data.Uint8List createMappingDescriptor = $convert
     .base64Decode('Cg1DcmVhdGVNYXBwaW5nEhIKBG5hbWUYASABKAlSBG5hbWUSIAoLZGVzY3JpcHRpb24YAiABKA'
         'lSC2Rlc2NyaXB0aW9uEi8KCXNpZ25hdHVyZRgDIAEoCzIRLmJkbC52MS5TaWduYXR1cmVSCXNp'
-        'Z25hdHVyZQ==');
+        'Z25hdHVyZRI3CgpkZWZpbml0aW9uGAQgASgLMhIuYmRsLnYxLkRlZmluaXRpb25IAFIKZGVmaW'
+        '5pdGlvbogBARIeCghjbG9ja19pZBgFIAEoBEgBUgdjbG9ja0lkiAEBQg0KC19kZWZpbml0aW9u'
+        'QgsKCV9jbG9ja19pZA==');
 
 @$core.Deprecated('Use renameMappingDescriptor instead')
 const RenameMapping$json = {

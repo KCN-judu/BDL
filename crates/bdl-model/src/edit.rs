@@ -61,11 +61,19 @@ pub enum EditOp {
     DeleteConcept {
         id: SemanticId,
     },
+    /// Create a mapping: declared, and — when `definition` is given —
+    /// defined in the same step, in `clock` if one is named.  A creation
+    /// is a refinement whatever it carries: nothing existing depends on
+    /// the new declaration yet.
     CreateMapping {
         name: String,
         #[serde(default)]
         description: String,
         signature: Signature,
+        #[serde(default)]
+        definition: Option<Definition>,
+        #[serde(default)]
+        clock: Option<ClockId>,
     },
     RenameMapping {
         id: DeclId,
@@ -404,12 +412,19 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
             name,
             description,
             signature,
+            definition,
+            clock,
         } => {
             let name = valid_name(name)?;
             if design.mappings.values().any(|m| m.name == name) {
                 return Err(EditError::DuplicateMappingName { name });
             }
             check_signature(&design, signature)?;
+            if let Some(c) = clock {
+                if !design.clocks.contains_key(c) {
+                    return Err(EditError::UnknownClock { id: *c });
+                }
+            }
             let (id, ids) = design.ids.fresh_decl();
             design.ids = ids;
             design.mappings.insert(
@@ -419,16 +434,25 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     name,
                     description: description.clone(),
                     signature: signature.clone(),
-                    definition: None,
-                    clock: None,
+                    definition: definition.clone(),
+                    clock: *clock,
                     drives: None,
                     parameters: Vec::new(),
                 },
             );
-            EditOutcome {
+            let mut o = EditOutcome {
                 created_mapping: Some(id),
                 ..EditOutcome::refinement()
+            };
+            if definition.is_some() {
+                o = o
+                    .touching(Invalidation::Realization)
+                    .touching(Invalidation::Reactive);
             }
+            if clock.is_some() {
+                o = o.touching(Invalidation::Clock);
+            }
+            o
         }
         EditOp::RenameMapping { id, name } => {
             let name = valid_name(name)?;
@@ -948,6 +972,8 @@ mod tests {
                     inputs: vec![tilt],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();
@@ -971,6 +997,8 @@ mod tests {
                     inputs: vec![tilt],
                     output: ghost,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap_err();
@@ -990,6 +1018,8 @@ mod tests {
                     inputs: vec![tilt],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();
@@ -1056,6 +1086,8 @@ mod tests {
                     inputs: vec![tilt],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();
@@ -1094,6 +1126,8 @@ mod tests {
                 inputs: vec![SemanticId::from_raw(0)],
                 output: SemanticId::from_raw(1),
             },
+            definition: None,
+            clock: None,
         };
         let json = serde_json::to_string(&op).unwrap();
         let back: EditOp = serde_json::from_str(&json).unwrap();

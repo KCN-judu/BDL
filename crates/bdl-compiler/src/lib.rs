@@ -91,6 +91,11 @@ pub struct MappingAnalysis {
     pub inferred_type: Option<Ty>,
     /// The elaborated Core term (for the explanation view / tests).
     pub realization: Option<Expr>,
+    /// The declarations whose realization references this one — for a
+    /// rule, the values that apply it (the dependency graph's reverse
+    /// edges, so a client never reads formulas to find them).
+    #[serde(default)]
+    pub applied_by: BTreeSet<DeclId>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
@@ -247,6 +252,7 @@ fn analyze_ir(
                 status,
                 inferred_type,
                 realization,
+                applied_by: BTreeSet::new(),
                 diagnostics,
             },
         );
@@ -277,6 +283,24 @@ fn analyze_ir(
     }
     all.extend(causality.diagnostics.iter().cloned());
     all.extend(clocks.diagnostics.iter().cloned());
+    // A rule nothing applies.  A declaration with inputs is a function: its
+    // value at a tick is a closure, never a number the simulator shows or
+    // an output commits.  When no realization references it and no sink is
+    // driven through it, the design is still legal — and the designer who
+    // drew it into the graph is owed the fact, with the value that would
+    // put it to work.
+    for (id, m) in mappings.iter_mut() {
+        m.applied_by = dependencies
+            .reverse_all
+            .get(id)
+            .cloned()
+            .unwrap_or_default();
+        if let Some(d) = rule_unapplied(&ir, &dependencies, *id, &m.interface) {
+            m.diagnostics.push(d.clone());
+            sort_diagnostics(&mut m.diagnostics);
+            all.push(d);
+        }
+    }
 
     // Output pass.  Which sinks are required is a surface decision.
     let outputs = check_outputs(&ir, required);
@@ -324,6 +348,77 @@ fn analyze_ir(
         open_outputs,
         output_complete,
     }
+}
+
+/// `reactive.rule_unapplied`: `id` is a rule (its interface is an arrow),
+/// no realization references it and no sink is driven through it.
+fn rule_unapplied(
+    ir: &DesignIr,
+    dependencies: &DependencyGraph,
+    id: DeclId,
+    interface: &Interface,
+) -> Option<Diagnostic> {
+    if !matches!(interface.expected_type, Ty::Arr { .. }) {
+        return None;
+    }
+    let applied = dependencies
+        .reverse_all
+        .get(&id)
+        .is_some_and(|users| !users.is_empty());
+    if applied || ir.drives.contains_key(&id) {
+        return None;
+    }
+    let name = ir
+        .decls
+        .get(&id)
+        .map(|d| d.name.as_str())
+        .unwrap_or("this rule");
+    let (inputs, _) = interface.expected_type.uncurry();
+    let concept_name = |t: &Ty| match t {
+        Ty::Sem { id } => ir
+            .concepts
+            .get(id)
+            .map(|c| c.name.clone())
+            .unwrap_or_else(|| id.to_string()),
+        other => pretty::describe(ir, other),
+    };
+    // The values that produce what the rule reads, when each concept has
+    // exactly one — the call the designer would write.  Otherwise the
+    // concepts are named and the choice is left where it belongs.
+    let argument = |t: &Ty| -> Option<String> {
+        let mut producers = ir
+            .decls
+            .values()
+            .filter(|d| !matches!(d.interface.expected_type, Ty::Arr { .. }))
+            .filter(|d| d.interface.expected_type == *t)
+            .map(|d| d.name.clone());
+        let first = producers.next()?;
+        producers.next().is_none().then_some(first)
+    };
+    let args: Option<Vec<String>> = inputs.iter().map(|t| argument(t)).collect();
+    let concepts: Vec<String> = inputs.iter().map(|t| concept_name(t)).collect();
+    let explanation = match args {
+        Some(args) => format!(
+            "A rule has no value of its own; a value that applies it — `{name}({})` — is what the simulator and an output can read.",
+            args.join(", ")
+        ),
+        None => format!(
+            "A rule has no value of its own; a value that applies it — one that calls `{name}` with a value for each concept it reads ({}) — is what the simulator and an output can read.",
+            concepts.join(", ")
+        ),
+    };
+    Some(
+        Diagnostic::info(
+            "reactive.rule_unapplied",
+            Entity::Mapping { id },
+            format!("{name} is a rule nothing applies yet."),
+        )
+        .explain(explanation)
+        .technical(format!(
+            "{name} : {}; no realization references {id} (reverse_all = ∅); β {id} = none",
+            pretty::kernel(&interface.expected_type)
+        )),
+    )
 }
 
 // ---- deployment -----------------------------------------------------------
@@ -604,6 +699,8 @@ mod tests {
                     inputs: vec![ids[0]],
                     output: ids[1],
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();
@@ -628,7 +725,10 @@ mod tests {
         let a = analyze(&s);
         assert_eq!(a.revision, s.revision);
         assert_eq!(a.mappings[&id].status, MappingStatus::Declared);
-        assert!(a.diagnostics.is_empty());
+        // a rule nothing applies: the one note, never an error
+        assert_eq!(a.diagnostics.len(), 1);
+        assert_eq!(a.diagnostics[0].code.as_str(), "reactive.rule_unapplied");
+        assert!(!a.diagnostics[0].is_error());
 
         let s2 = attach(&s, id, "Tilt / 90 deg");
         let a2 = analyze(&s2);
@@ -656,7 +756,86 @@ mod tests {
         .snapshot;
         let a3 = analyze(&s3);
         assert_eq!(a3.mappings[&id].status, MappingStatus::Invalid);
-        assert_eq!(a3.diagnostics[0].code.as_str(), "dimension.mismatch");
+        assert!(a3
+            .diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "dimension.mismatch"));
+    }
+
+    /// `reactive.rule_unapplied`: on a rule no realization references and
+    /// no sink is driven through, in product words; gone once a value
+    /// applies it.  A value never carries it.
+    #[test]
+    fn a_rule_nothing_applies_is_stated_until_a_value_applies_it() {
+        let (s, rule) = lamp();
+        let s = attach(&s, rule, "Tilt / 90 deg");
+        let tilt = s.design.mappings[&rule].signature.inputs[0];
+        let brightness = s.design.mappings[&rule].signature.output;
+        let a = analyze(&s);
+        let note = &a.mappings[&rule].diagnostics[0];
+        assert_eq!(note.code.as_str(), "reactive.rule_unapplied");
+        assert_eq!(note.severity, Severity::Info);
+        assert_eq!(note.message, "dimByTilt is a rule nothing applies yet.");
+        // no value produces Tilt yet: the concept is named, no call is invented
+        assert!(note.explanation.contains("(Tilt)"), "{}", note.explanation);
+        assert!(!note.message.contains("declRef"));
+        assert!(a.diagnostics.contains(note), "in the project list too");
+
+        // a Source for Tilt: the explanation now spells the call
+        let b = edit(
+            &s,
+            EditOp::CreateMapping {
+                name: "tilt".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: tilt,
+                },
+                definition: None,
+                clock: None,
+            },
+        );
+        let source = b.outcome.created_mapping.unwrap();
+        let a = analyze(&b.snapshot);
+        assert!(a.mappings[&rule].diagnostics[0]
+            .explanation
+            .contains("`dimByTilt(tilt)`"));
+        assert!(
+            a.mappings[&source].diagnostics.is_empty(),
+            "a value is never unapplied"
+        );
+
+        // a value that applies it: the note is gone
+        let c = edit(
+            &b.snapshot,
+            EditOp::CreateMapping {
+                name: "brightness".into(),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![],
+                    output: brightness,
+                },
+                definition: Some(Definition::Formula {
+                    source: "dimByTilt(tilt)".into(),
+                }),
+                clock: None,
+            },
+        );
+        assert_eq!(c.outcome.kind, Some(bdl_model::edit::EditKind::Refinement));
+        let value = c.outcome.created_mapping.unwrap();
+        let a = analyze(&c.snapshot);
+        assert!(
+            a.mappings[&rule].diagnostics.is_empty(),
+            "{:?}",
+            a.diagnostics
+        );
+        assert!(a.diagnostics.is_empty());
+        assert_eq!(
+            a.mappings[&rule].applied_by,
+            BTreeSet::from([value]),
+            "who applies the rule is stated, not left to a client"
+        );
+        assert!(a.mappings[&value].applied_by.is_empty());
     }
 
     #[test]
@@ -766,6 +945,8 @@ mod tests {
                     inputs: vec![],
                     output: brightness,
                 },
+                definition: None,
+                clock: None,
             },
         );
         let id = a.outcome.created_mapping.unwrap();
@@ -821,7 +1002,11 @@ mod tests {
         assert_eq!(a.outputs.states[&out], bdl_output::OutputState::Driven);
         assert!(a.output_complete, "{:?}", a.diagnostics);
         assert_eq!(a.ir.drives[&id], out);
-        assert!(a.diagnostics.is_empty());
+        // only the note on the unapplied rule `dimByTilt` remains
+        assert!(a
+            .diagnostics
+            .iter()
+            .all(|d| d.code.as_str() == "reactive.rule_unapplied"));
 
         // a second driver: conflict, no policy, both mappings carry it
         let brightness = s.design.mappings[&id].signature.output;
@@ -834,6 +1019,8 @@ mod tests {
                     inputs: vec![],
                     output: brightness,
                 },
+                definition: None,
+                clock: None,
             },
         );
         let other = b.outcome.created_mapping.unwrap();

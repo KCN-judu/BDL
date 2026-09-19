@@ -124,6 +124,8 @@ impl Sys {
                     inputs: inputs.to_vec(),
                     output,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .inner
@@ -277,6 +279,8 @@ impl Sys {
                 inputs: inputs.to_vec(),
                 output,
             },
+            definition: None,
+            clock: None,
         })
         .inner
         .unwrap()
@@ -538,6 +542,8 @@ pub fn hand_written_flat() -> Flat {
                     name: name.into(),
                     description: String::new(),
                     signature: Signature { inputs, output },
+                    definition: None,
+                    clock: None,
                 },
             )
             .created_mapping

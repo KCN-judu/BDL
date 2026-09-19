@@ -41,6 +41,8 @@ fn main() {
                 inputs: vec![ids[0]],
                 output: ids[1],
             },
+            definition: None,
+            clock: None,
         },
     )
     .unwrap();
@@ -66,6 +68,8 @@ fn main() {
                 inputs: vec![],
                 output: ids[3],
             },
+            definition: None,
+            clock: None,
         },
     )
     .unwrap();
@@ -83,6 +87,8 @@ fn main() {
                 },
                 output: ids[1],
             },
+            definition: None,
+            clock: None,
         },
     )
     .unwrap();

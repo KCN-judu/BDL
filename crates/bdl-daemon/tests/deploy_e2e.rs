@@ -152,6 +152,7 @@ fn rover(dir: &tempfile::TempDir) -> (Client, u64, u64, u64, u64) {
                 inputs: vec![],
                 output: speed,
             }),
+            ..Default::default()
         }))
         .outcome
         .unwrap()

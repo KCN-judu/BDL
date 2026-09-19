@@ -210,6 +210,7 @@ fn vertical_slice_steps_1_to_12() {
                     inputs: vec![tilt],
                     output: bright,
                 }),
+                ..Default::default()
             }),
         ),
         &mut events,
@@ -252,8 +253,23 @@ fn vertical_slice_steps_1_to_12() {
     let a = a.analysis.unwrap();
     assert_eq!(a.revision, 4);
     assert_eq!(a.mappings[0].status(), pb::MappingStatus::Open);
-    assert_eq!(a.diagnostics[0].code, "semantic.unbound_representation");
-    assert_eq!(a.diagnostics[0].severity(), pb::DiagnosticSeverity::Info);
+    let open = a
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "semantic.unbound_representation")
+        .expect("the open note");
+    assert_eq!(open.severity(), pb::DiagnosticSeverity::Info);
+    // the rule is applied by nothing yet: a note beside it, never an error
+    let unapplied = a
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "reactive.rule_unapplied")
+        .expect("the unapplied note");
+    assert_eq!(unapplied.severity(), pb::DiagnosticSeverity::Info);
+    assert_eq!(
+        unapplied.message,
+        "dimByTilt is a rule nothing applies yet."
+    );
     // bind representations → type-valid
     for (id, rep) in [
         (
@@ -294,7 +310,11 @@ fn vertical_slice_steps_1_to_12() {
     assert_eq!(a.mappings[0].status(), pb::MappingStatus::ClockConsistent);
     assert!(a.causal && a.clock_consistent);
     assert_eq!(a.evaluation_order, vec![m.id]);
-    assert!(a.diagnostics.is_empty());
+    // nothing wrong; the one note is that nothing applies the rule yet
+    assert!(a
+        .diagnostics
+        .iter()
+        .all(|d| d.code == "reactive.rule_unapplied"));
     assert!(
         a.mappings[0].core_expr.contains("(rep #0)"),
         "{}",
@@ -355,8 +375,11 @@ fn vertical_slice_steps_1_to_12() {
     };
     let a = a.analysis.unwrap();
     assert_eq!(a.mappings[0].status(), pb::MappingStatus::Invalid);
-    let d = &a.diagnostics[0];
-    assert_eq!(d.code, "dimension.mismatch");
+    let d = a
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "dimension.mismatch")
+        .expect("the dimension error");
     // an edit discards the run: stepping needs a fresh start
     let Resp::Error(e) = c.call(
         Req::StepSimulation(pb::StepSimulationRequest { ticks: 1 }),
@@ -529,6 +552,7 @@ fn outputs_and_deployment_over_stdio() {
                 inputs: vec![],
                 output: speed,
             }),
+            ..Default::default()
         }),
     )
     .outcome
@@ -869,6 +893,7 @@ fn definition_drafts_over_stdio() {
                 inputs: vec![tilt],
                 output: brightness,
             }),
+            ..Default::default()
         }),
     )
     .outcome
@@ -903,7 +928,12 @@ fn definition_drafts_over_stdio() {
     assert!(d.parse_ok);
     let a = d.analysis.unwrap();
     assert_eq!(a.status(), pb::MappingStatus::ClockConsistent);
-    assert!(a.diagnostics.is_empty());
+    // the draft's own verdict is clean; the mapping's list keeps the note
+    // that nothing applies the rule, the same on every surface
+    assert!(a
+        .diagnostics
+        .iter()
+        .all(|d| d.code == "reactive.rule_unapplied"));
     assert!(!a.core_expr.is_empty());
 
     // invalid draft: the dimension diagnostic with a span into the draft source
@@ -1092,6 +1122,7 @@ fn definition_drafts_over_stdio() {
                 inputs: vec![warmth],
                 output: brightness,
             }),
+            ..Default::default()
         }),
     )
     .outcome

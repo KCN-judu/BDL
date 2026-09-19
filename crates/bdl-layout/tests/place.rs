@@ -38,6 +38,8 @@ fn lamp() -> Design {
                 inputs: vec![],
                 output: SemanticId::from_raw(0),
             },
+            definition: None,
+            clock: None,
         },
         EditOp::CreateMapping {
             name: "dimByTilt".into(),
@@ -46,6 +48,8 @@ fn lamp() -> Design {
                 inputs: vec![SemanticId::from_raw(0)],
                 output: SemanticId::from_raw(1),
             },
+            definition: None,
+            clock: None,
         },
         EditOp::AttachDefinition {
             id: DeclId::from_raw(1),
@@ -242,6 +246,8 @@ fn instances_and_component_bodies_are_placed_too() {
                 inputs: vec![],
                 output: SemanticId::from_raw(0),
             },
+            definition: None,
+            clock: None,
         },
     ];
     for op in body_ops {

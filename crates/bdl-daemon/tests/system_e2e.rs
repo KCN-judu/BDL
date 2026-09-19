@@ -158,6 +158,7 @@ fn mapping(name: &str, inputs: Vec<u64>, output: u64) -> pb::edit_op::Op {
         name: name.into(),
         description: String::new(),
         signature: Some(pb::Signature { inputs, output }),
+        ..Default::default()
     })
 }
 

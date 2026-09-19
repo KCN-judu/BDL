@@ -275,6 +275,10 @@ message CreateMapping {
   string name = 1;
   string description = 2;
   Signature signature = 3;
+  // Defined in the same step (0.19); absent, the mapping is declared only.
+  optional Definition definition = 4;
+  // The timing domain it updates in; absent, agnostic.
+  optional uint64 clock_id = 5;
 }
 message RenameMapping {
   uint64 id = 1;

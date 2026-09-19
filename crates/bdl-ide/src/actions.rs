@@ -212,6 +212,11 @@ pub fn actions_for(snapshot: &AnalysisSnapshot, d: &SemanticDiagnostic) -> Vec<S
                 out.extend(use_current_name(snapshot, m, span, &d.fixes, code));
             }
         }
+        "reactive.rule_unapplied" => {
+            if let Some(m) = entity.as_mapping() {
+                out.push(apply_rule(snapshot, m, code));
+            }
+        }
         "clock.cross_domain_reference" => {
             out.push(SemanticAction {
                 id: SemanticActionId(format!("clock.insert_sync:{entity}")),
@@ -376,6 +381,8 @@ fn create_combination(
             inputs,
             output: out.accepts,
         },
+        definition: None,
+        clock: None,
     };
     let mut a = ready(
         snapshot,
@@ -387,6 +394,196 @@ fn create_combination(
     );
     a.kind = ActionKind::Refactor;
     a
+}
+
+/// `reactive.rule_unapplied`: create the value that applies the rule —
+/// `<lowerCamel rule> : () -> <output> = Rule(arg, …)` — with one argument
+/// per concept the rule reads, each a value that produces that concept.
+/// Ready when every concept has exactly one such value; a choice when one
+/// has several (one option per combination, never a guess); blocked when
+/// one has none, or when the arguments live in different timing domains
+/// (a value reads from one domain: the transport is the designer's).
+fn apply_rule(snapshot: &AnalysisSnapshot, rule: DeclId, code: &str) -> SemanticAction {
+    let design = &snapshot.effective().design;
+    let id = SemanticActionId(format!("rule.apply:{rule}"));
+    let blocked = |title: String, reason: String, explanation: String| SemanticAction {
+        id: id.clone(),
+        title,
+        kind: ActionKind::QuickFix,
+        applicability: Applicability::Blocked { reason },
+        plan: None,
+        explanation,
+        addresses: addresses(code),
+    };
+    let Some(block) = design.mappings.get(&rule) else {
+        return blocked(
+            "Add a value that applies the rule".into(),
+            "the rule no longer exists".into(),
+            String::new(),
+        );
+    };
+    let rname = block.name.clone();
+    let title = format!("Add a value that applies `{rname}`");
+    let explanation = format!(
+        "`{rname}` is a rule: it has no value of its own.  The new value applies it to the values that produce what it reads, so it has a value at every tick — one the simulator shows and an output can read.  Nothing about `{rname}` changes."
+    );
+    let concept_name = |c: bdl_model::SemanticId| name(snapshot, EntityRef::Concept(c));
+    // Per read concept, the values that produce it, in id order.
+    let mut candidates: Vec<Vec<&bdl_model::surface::MappingBlock>> = Vec::new();
+    for c in &block.signature.inputs {
+        let producing: Vec<_> = design
+            .mappings
+            .values()
+            .filter(|m| m.signature.is_unit_domain() && m.signature.output == *c)
+            .collect();
+        if producing.is_empty() {
+            return blocked(
+                title,
+                format!(
+                    "no value produces `{}` yet; add a Source or a computed value that produces it first",
+                    concept_name(*c)
+                ),
+                explanation,
+            );
+        }
+        candidates.push(producing);
+    }
+    let combinations = candidates.iter().map(Vec::len).product::<usize>();
+    if combinations > MAX_APPLY_COMBINATIONS {
+        let several: Vec<String> = block
+            .signature
+            .inputs
+            .iter()
+            .zip(&candidates)
+            .filter(|(_, v)| v.len() > 1)
+            .map(|(c, _)| format!("`{}`", concept_name(*c)))
+            .collect();
+        return blocked(
+            title,
+            format!(
+                "several values produce each of {}; write the value that applies `{rname}` yourself, naming the ones you mean",
+                several.join(", ")
+            ),
+            explanation,
+        );
+    }
+    let fresh = fresh_value_name(design, &rname);
+    let mut options = Vec::new();
+    let mut conflict: Option<String> = None;
+    for combo in cartesian(&candidates) {
+        // The value's domain: the rule's, else the one domain its
+        // arguments share; two domains cannot be read by one value.
+        let mut domain = block.clock;
+        let mut clash = None;
+        for m in &combo {
+            match (domain, m.clock) {
+                (_, None) => {}
+                (None, Some(k)) => domain = Some(k),
+                (Some(d), Some(k)) if d == k => {}
+                (Some(d), Some(k)) => {
+                    let dname = |c| name(snapshot, EntityRef::Clock(c));
+                    clash = Some(format!(
+                        "`{}` updates in `{}` while another argument updates in `{}`; a value reads from one timing domain, so bring them together with a transport first",
+                        m.name,
+                        dname(k),
+                        dname(d)
+                    ));
+                }
+            }
+        }
+        if let Some(c) = clash {
+            conflict.get_or_insert(c);
+            continue;
+        }
+        let args: Vec<&str> = combo.iter().map(|m| m.name.as_str()).collect();
+        let source = format!("{rname}({})", args.join(", "));
+        options.push(ActionChoice {
+            label: source.clone(),
+            edit: EditOp::CreateMapping {
+                name: fresh.clone(),
+                description: format!("Applies {rname}."),
+                signature: bdl_model::surface::Signature {
+                    inputs: Vec::new(),
+                    output: block.signature.output,
+                },
+                definition: Some(bdl_model::surface::Definition::Formula { source }),
+                clock: domain,
+            },
+        });
+    }
+    match options.len() {
+        0 => blocked(
+            title,
+            conflict.unwrap_or_else(|| "the rule reads nothing a value could supply".into()),
+            explanation,
+        ),
+        1 => {
+            let ActionChoice { edit, .. } = options.remove(0);
+            ready(snapshot, id, title, edit, explanation, code)
+        }
+        _ => SemanticAction {
+            id,
+            title,
+            kind: ActionKind::QuickFix,
+            applicability: Applicability::NeedsChoice { options },
+            plan: None,
+            explanation: format!(
+                "{explanation}  Several values produce what `{rname}` reads; choose which ones the new value applies it to."
+            ),
+            addresses: addresses(code),
+        },
+    }
+}
+
+/// Above this many argument combinations the choice is no longer a
+/// pop-up: the designer writes the value.
+const MAX_APPLY_COMBINATIONS: usize = 24;
+
+/// Every combination of one element per list, first list slowest — the
+/// order the lists have (ids), so the options are stable.
+fn cartesian<'a, T>(lists: &'a [Vec<&'a T>]) -> Vec<Vec<&'a T>> {
+    lists.iter().fold(vec![Vec::new()], |acc, list| {
+        acc.iter()
+            .flat_map(|prefix| {
+                list.iter().map(move |x| {
+                    let mut next = prefix.clone();
+                    next.push(*x);
+                    next
+                })
+            })
+            .collect()
+    })
+}
+
+/// `AirConditionerCtrl` → `airConditionerCtrl`; a rule already spelled
+/// that way gets `Value` appended; a taken name gets a counter.  Taken:
+/// every mapping and concept name (both are names a formula resolves).
+fn fresh_value_name(design: &bdl_model::surface::Design, rule: &str) -> String {
+    let mut chars = rule.chars();
+    let base: String = match chars.next() {
+        Some(first) => first.to_lowercase().chain(chars).collect(),
+        None => "value".into(),
+    };
+    let base = if base == rule {
+        format!("{base}Value")
+    } else {
+        base
+    };
+    let taken = |n: &str| {
+        design.mappings.values().any(|m| m.name == n)
+            || design.concepts.values().any(|c| c.name == n)
+    };
+    if !taken(&base) {
+        return base;
+    }
+    let mut n = 2;
+    loop {
+        let candidate = format!("{base}{n}");
+        if !taken(&candidate) {
+            return candidate;
+        }
+        n += 1;
+    }
 }
 
 fn choose_clock(snapshot: &AnalysisSnapshot, o: OutputId, code: &str) -> SemanticAction {

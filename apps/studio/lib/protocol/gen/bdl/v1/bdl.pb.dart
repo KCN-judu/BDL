@@ -3706,11 +3706,15 @@ class CreateMapping extends $pb.GeneratedMessage {
     $core.String? name,
     $core.String? description,
     Signature? signature,
+    Definition? definition,
+    $fixnum.Int64? clockId,
   }) {
     final result = CreateMapping._();
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (signature != null) result.signature = signature;
+    if (definition != null) result.definition = definition;
+    if (clockId != null) result.clockId = clockId;
     return result;
   }
 
@@ -3729,6 +3733,10 @@ class CreateMapping extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'name')
     ..aOS(2, _omitFieldNames ? '' : 'description')
     ..aOM<Signature>(3, _omitFieldNames ? '' : 'signature', subBuilder: Signature.$_createMessage)
+    ..aOM<Definition>(4, _omitFieldNames ? '' : 'definition',
+        subBuilder: Definition.$_createMessage)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'clockId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3779,6 +3787,28 @@ class CreateMapping extends $pb.GeneratedMessage {
   void clearSignature() => $_clearField(3);
   @$pb.TagNumber(3)
   Signature ensureSignature() => $_ensure(2);
+
+  /// Defined in the same step (0.19); absent, the mapping is declared only.
+  @$pb.TagNumber(4)
+  Definition get definition => $_getN(3);
+  @$pb.TagNumber(4)
+  set definition(Definition value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDefinition() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDefinition() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Definition ensureDefinition() => $_ensure(3);
+
+  /// The timing domain it updates in; absent, agnostic.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get clockId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set clockId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasClockId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearClockId() => $_clearField(5);
 }
 
 class RenameMapping extends $pb.GeneratedMessage {

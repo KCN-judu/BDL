@@ -203,6 +203,8 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
                         .as_ref()
                         .ok_or(ConvertError::Missing("create_mapping.signature"))?,
                 ),
+                definition: m.definition.as_ref().map(definition_from_pb).transpose()?,
+                clock: m.clock_id.map(ClockId::from_raw),
             },
             Op::RenameMapping(m) => EditOp::RenameMapping {
                 id: decl(m.id),
@@ -338,10 +340,14 @@ pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
             name,
             description,
             signature,
+            definition,
+            clock,
         } => Op::CreateMapping(pb::CreateMapping {
             name: name.clone(),
             description: description.clone(),
             signature: Some(signature_to_pb(signature)),
+            definition: definition.as_ref().map(definition_to_pb),
+            clock_id: clock.map(|c| c.raw()),
         }),
         EditOp::RenameMapping { id, name } => Op::RenameMapping(pb::RenameMapping {
             id: id.raw(),
@@ -2117,6 +2123,8 @@ mod tests {
                     inputs: vec![sem(1), sem(2)],
                     output: sem(3),
                 },
+                definition: None,
+                clock: None,
             },
             EditOp::RenameMapping {
                 id: decl(4),
@@ -2221,6 +2229,7 @@ mod tests {
                     inputs: vec![0],
                     output: 1,
                 }),
+                ..Default::default()
             })),
         };
         let m = edit_op_from_pb(&op).unwrap();
@@ -2233,6 +2242,8 @@ mod tests {
                     inputs: vec![SemanticId::from_raw(0)],
                     output: SemanticId::from_raw(1)
                 },
+                definition: None,
+                clock: None,
             }
         );
     }
@@ -2274,6 +2285,8 @@ mod tests {
                     inputs: vec![],
                     output: tilt,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();
@@ -2308,6 +2321,8 @@ mod tests {
                     inputs: vec![bright],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         );
         let twice = a.outcome.created_mapping.unwrap();
@@ -2331,6 +2346,8 @@ mod tests {
                     inputs: vec![],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         );
         let half = a.outcome.created_mapping.unwrap();
@@ -2354,6 +2371,8 @@ mod tests {
                     inputs: vec![],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         );
         let value = a.outcome.created_mapping.unwrap();
@@ -2409,6 +2428,8 @@ mod tests {
                 name: name.into(),
                 description: String::new(),
                 signature: Signature { inputs, output },
+                definition: None,
+                clock: None,
             };
         let sensor = apply(&mut s, mapping("TempSensor", vec![], temp))
             .created_mapping

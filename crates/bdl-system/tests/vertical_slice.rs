@@ -276,6 +276,8 @@ fn composition_is_by_identity_never_by_name() {
                 inputs: vec![],
                 output: s.tilt,
             },
+            definition: None,
+            clock: None,
         })
         .inner
         .unwrap()

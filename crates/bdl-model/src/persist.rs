@@ -421,6 +421,8 @@ mod tests {
                     inputs: vec![tilt],
                     output: bright,
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();

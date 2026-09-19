@@ -217,6 +217,7 @@ fn a_text_project_is_edited_over_the_wire_saved_as_source_and_reopened() {
                 inputs: vec![],
                 output: tilt,
             }),
+            ..Default::default()
         }))
         .created_mapping
         .unwrap();
@@ -228,6 +229,7 @@ fn a_text_project_is_edited_over_the_wire_saved_as_source_and_reopened() {
                 inputs: vec![tilt],
                 output: bright,
             }),
+            ..Default::default()
         }))
         .created_mapping
         .unwrap();
@@ -245,6 +247,7 @@ fn a_text_project_is_edited_over_the_wire_saved_as_source_and_reopened() {
                 inputs: vec![],
                 output: bright,
             }),
+            ..Default::default()
         }))
         .created_mapping
         .unwrap();
@@ -838,6 +841,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
                 inputs: vec![tilt],
                 output: bright,
             }),
+            ..Default::default()
         }))
         .created_mapping
         .unwrap();
@@ -849,6 +853,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
                 inputs: vec![],
                 output: bright,
             }),
+            ..Default::default()
         }))
         .created_mapping
         .unwrap();

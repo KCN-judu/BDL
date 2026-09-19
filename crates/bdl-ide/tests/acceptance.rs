@@ -602,6 +602,8 @@ fn equations_of_the_library_complete_by_prefix_in_the_designers_words() {
                 inputs: vec![],
                 output: lamp.brightness,
             },
+            definition: None,
+            clock: None,
         },
     );
     let mut host = IdeHost::new(s);

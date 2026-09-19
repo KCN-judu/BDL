@@ -429,6 +429,8 @@ mod tests {
                     inputs: vec![ids[0]],
                     output: ids[1],
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();

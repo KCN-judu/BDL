@@ -89,6 +89,8 @@ impl Lamp {
                 name: name.into(),
                 description: String::new(),
                 signature: Signature { inputs, output },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();

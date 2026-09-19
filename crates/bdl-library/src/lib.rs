@@ -1089,6 +1089,8 @@ mod tests {
                     inputs: vec![],
                     output: a.outcome.created_concept.expect("id"),
                 },
+                definition: None,
+                clock: None,
             },
         )
         .expect("m");

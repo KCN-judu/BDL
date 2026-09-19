@@ -34,6 +34,8 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
                 inputs: vec![],
                 output: SemanticId::from_raw(0),
             },
+            definition: None,
+            clock: None,
         },
         EditOp::CreateMapping {
             name: "dimByTilt".into(),
@@ -42,6 +44,8 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
                 inputs: vec![SemanticId::from_raw(0)],
                 output: SemanticId::from_raw(1),
             },
+            definition: None,
+            clock: None,
         },
         EditOp::AttachDefinition {
             id: DeclId::from_raw(1),

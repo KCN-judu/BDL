@@ -92,6 +92,8 @@ fn author(root: &std::path::Path) -> Authored {
             name: name.into(),
             description: description.into(),
             signature: Signature { inputs, output },
+            definition: None,
+            clock: None,
         }
     };
     let tilt_in = apply(

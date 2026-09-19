@@ -108,6 +108,8 @@ impl Fixture {
                     inputs: inputs.iter().map(|i| self.c(i)).collect(),
                     output: self.c(output),
                 },
+                definition: None,
+                clock: None,
             },
         )
         .unwrap();

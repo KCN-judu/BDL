@@ -105,6 +105,8 @@ impl Surface {
                 name: name.into(),
                 description: String::new(),
                 signature: Signature { inputs, output },
+                definition: None,
+                clock: None,
             })
             .created_mapping
             .unwrap();
