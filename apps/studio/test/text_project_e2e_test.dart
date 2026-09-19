@@ -65,7 +65,10 @@ void main() {
         s.analysis != null &&
         s.analysis!.revision == s.flat!.revision &&
         s.system != null &&
-        s.system!.revision == s.flat!.revision,
+        s.system!.revision == s.flat!.revision &&
+        // the system analysis is its own answer and may land last
+        s.systemAnalysis != null &&
+        s.systemAnalysis!.revision == s.flat!.revision,
   );
   int conceptId(String name) =>
       store.state.project!.concepts.firstWhere((c) => c.name == name).id.toInt();
