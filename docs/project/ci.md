@@ -119,8 +119,33 @@ first runs on `main` are recorded below when they exist.
 
 ## Measured (after)
 
-_To be filled from the first `main` runs after this change: job durations, the
-compatibility set's compile and test time, cache hits, the native build alone._
+First run on `main` after the split (`25f9bca`, run 35422425790), with every new
+job's caches cold — the Rust cache key carries the job name, so `windows-rust`
+compiled its 152 dependency crates once more, and the Flutter SDK cache was
+written, not read:
+
+| Job                            | Duration | Of which                                                                            |
+| ------------------------------ | -------- | ----------------------------------------------------------------------------------- |
+| Rust + docs (Linux)            | 152 s    | preflight `rust-ci` 122 s (cache hit)                                               |
+| Flutter (Linux), after Rust    | 159 s    | SDK setup 56 s (cold), `flutter-ci` 83 s                                            |
+| Protocol                       | 32 s     | —                                                                                   |
+| Windows compatibility (Rust)   | 227 s    | `windows-rust-ci` 178 s = 2 m 11 s compiling on a cold cache + 44 s of tests        |
+| Windows compatibility (Studio) | 251 s    | SDK setup 124 s (cold; the pub cache already hit, 42 MB), `windows-flutter-ci` 93 s |
+| Windows native build           | 262 s    | SDK setup 100 s (cold), build 118 s                                                 |
+
+Windows critical path this run: 04:51:56 → 04:59:57, **8 m 01 s** (the Rust job
+then the Studio job), against 8 m 26 s – 9 m 02 s before — the gain is masked by
+the cold caches; the three jobs are parallel where the old one was serial.
+Windows runner-minutes: 227 + 251 + 262 = 740 s (three jobs, two of them setting
+up Flutter from nothing) against 506–542 s. The honest reading: with cold caches
+the split costs more minutes and saves little wall time; the numbers that matter
+are the warm ones below. What the split did remove: the platform-independent
+Rust test binaries and 130-odd Studio tests no longer run on Windows; the 44 s
+of Windows Rust tests are the compatibility set (20 s of it the compiler
+differential building generated crates with the host cargo).
+
+Second run (`cache-workspace-crates: true` on the Windows Rust job, SDK caches
+warm): _recorded here from run …_.
 
 ## Local preflight
 
