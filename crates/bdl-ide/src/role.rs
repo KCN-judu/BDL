@@ -2,6 +2,7 @@
 //!
 //! A relationship is one ordinary declaration whatever its role; the role is
 //! derived, never stored, from three existing facts: its canonical domain,
+//! read off the projection wherever it is shown,
 //! its realization state, and whether it backs a port.  It corresponds to
 //! FV Phase 12 (`BDL/Surface/UnitDomain.lean`): `Source Δ d` is
 //! "no realization", `SimulationInput` is `Source ∧ UnitDomain`, and
