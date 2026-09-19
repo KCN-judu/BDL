@@ -52,8 +52,9 @@ Goals:
 - The raw type `R` and the transducer `f` come from the device, are checked by
   the kernel's own rules (typing, dimension, grant), and are compiled by the
   generated core — never hand-written in an adapter.
-- The design file is untouched. The designer keeps `mapping TempSensor : () ->
-  RoomTemp`; provision is a deployment artefact (ADR-0032 §1, ADR-0015).
+- The design file is untouched. The designer keeps
+  `mapping TempSensor : () -> RoomTemp`; provision is a deployment artefact
+  (ADR-0032 §1, ADR-0015).
 
 Non-goals:
 
@@ -82,8 +83,8 @@ For a design `Δ` with concept environment `Θ` and clocks `Κ`:
   composed); a GPIO `⟨bool, λb. b, bool⟩`; an I2C sensor whose driver already
   converts, `⟨q Temperature, λx. x, q Temperature⟩`.
 - A profile **fits** a Source `s` with `tyView s = sem c` iff `Θ c = some rep`
-  (the profile's representation is the concept's, D-29); with
-  `tyView s = q d` or `bool` iff `rep` is that type. Fitting is decidable.
+  (the profile's representation is the concept's, D-29); with `tyView s = q d`
+  or `bool` iff `rep` is that type. Fitting is decidable.
 - **Provision** of `s` by `P` with a fresh `r ∉ dom Δ`:
 
   ```text
@@ -98,8 +99,8 @@ For a design `Δ` with concept environment `Θ` and clocks `Κ`:
 
 `r` is the **monomorphised** Source: the design was polymorphic in how `C`
 arises; choosing `P` fixes `raw`. The deployed design `Δ'` has one more
-unresolved declaration and one fewer; `SimulationInput Δ' = SimulationInput Δ
-∖ {s} ∪ {r}`.
+unresolved declaration and one fewer;
+`SimulationInput Δ' = SimulationInput Δ ∖ {s} ∪ {r}`.
 
 ### Claims to prove
 
@@ -107,11 +108,11 @@ Let `Δ' = provision Δ Κ s P r`, `Κ'` as above, and for an input `I'` of `Δ'
 define the **induced input** `I := I' [ s ↦ λt. ⟦tr⟧(I' r t) ]` (the value `tr`
 gives at tick `t`, wrapped by `mk c`).
 
-1. `provision_typed` — if `Δ` is globally well typed (`GlobalWF`), `P` fits
-   `s`, and `r` is fresh, then `Δ'` is globally well typed and
+1. `provision_typed` — if `Δ` is globally well typed (`GlobalWF`), `P` fits `s`,
+   and `r` is fresh, then `Δ'` is globally well typed and
    `tyView Δ' s = tyView Δ s`. Every other declaration's interface is unchanged
-   (`DeclLeq` holds pointwise: provision is a **refinement** of `s` in the
-   sense of `Decl.lean`, never an edit).
+   (`DeclLeq` holds pointwise: provision is a **refinement** of `s` in the sense
+   of `Decl.lean`, never an edit).
 2. `provision_causal` — `Causal Δ → Causal Δ'` (`r` has no references; `s`
    references only `r`; every other realization is unchanged).
 3. `provision_clocked` — clock consistency (Phase 5) is preserved with
@@ -127,6 +128,7 @@ gives at tick `t`, wrapped by `mk c`).
    In words: the deployed design, fed raw readings, behaves exactly as the
    abstract design fed the transduced values. `PhysicalOutput` is unchanged for
    every sink (corollary via `eval_independent_of_drives`).
+
 5. `provision_abstracts` — every trace of `Δ'` is a trace of `Δ` (take the
    induced `I`); hence every property proved of `Δ` for all inputs holds of
    every deployment. When `tr` is surjective onto `rep`'s inhabitants the two
@@ -173,8 +175,8 @@ provisioned deployment_: the slot for `s` is replaced by a slot for `r` at
 
 ## Alternatives
 
-- **Keep the transducer in the platform adapter** (status quo). Rejected as
-  the long-term shape: the conversion is unchecked (a thermistor profile that
+- **Keep the transducer in the platform adapter** (status quo). Rejected as the
+  long-term shape: the conversion is unchecked (a thermistor profile that
   returns millivolts where a temperature is due compiles), invisible in Studio
   and Explain, and outside every theorem; ISS-0016 cannot be resolved without
   deciding where the conversion lives.
@@ -199,47 +201,46 @@ Formal first (this proposal's ask):
 - `BDL/Surface/Provision.lean`: `DeviceProfile`, `Fits`, `provision`,
   `inducedInput`, theorems 1–7; executed examples for the thermistor (`exH`
   charts composed), a GPIO, an identity profile, and a saturating ADC showing
-  strict refinement; a negative example that a profile with `rep ≠ Θ c` does
-  not fit and that a profile using `mk` of another concept is rejected by the
-  grant.
+  strict refinement; a negative example that a profile with `rep ≠ Θ c` does not
+  fit and that a profile using `mk` of another concept is rejected by the grant.
 - `docs/project/formal-correspondence.md` gains the row; the ADR that accepts
   this proposal cites the theorems in `fv`.
 
 Then engineering, in order (not designed here — each is its own ADR when the
 proofs stand):
 
-1. `bdl-hardware`: a device catalog entry gains `provides { raw, transducer,
-   representation }` as BDL formula text; `Device` gains a `for <source>` end
-   (ISS-0016).
+1. `bdl-hardware`: a device catalog entry gains
+   `provides { raw, transducer, representation }` as BDL formula text; `Device`
+   gains a `for <source>` end (ISS-0016).
 2. `bdl-compiler::analyze_deployment` computes the provisioned design and checks
    `Fits` in product words ("this sensor reports a voltage; RoomTemp is a
    temperature").
 3. `bdl-lower` / `bdl-codegen-rust`: input slots at `raw`; `tr` inlined; the
    differential tests compare the provisioned core against the reference
    evaluator on the provisioned design (theorem 4 is the oracle).
-4. Studio: the Deploy page's Sources list (device, raw type, transducer summary);
-   the inspector's _Realization_ row names the device; the Simulate page can
-   run "as deployed", feeding raw values and showing both columns.
+4. Studio: the Deploy page's Sources list (device, raw type, transducer
+   summary); the inspector's _Realization_ row names the device; the Simulate
+   page can run "as deployed", feeding raw values and showing both columns.
 
 ## Open questions
 
-- **Memory in a transducer.** Debouncing and filtering want `delay` inside
-  `tr`. Phase 12 permits memory in a zero-input realization (D-116), so `s :=
-  tr(r)` may hold it — but then `tr` is not a function and theorem 5's
-  "surjective ⇒ equal traces" needs restating over streams. Start with pure
-  `tr`; note the extension.
+- **Memory in a transducer.** Debouncing and filtering want `delay` inside `tr`.
+  Phase 12 permits memory in a zero-input realization (D-116), so `s := tr(r)`
+  may hold it — but then `tr` is not a function and theorem 5's "surjective ⇒
+  equal traces" needs restating over streams. Start with pure `tr`; note the
+  extension.
 - **One raw reading, several concepts.** An IMU yields one register image for
   three Sources. Provision of `{s₁, s₂, s₃}` by one profile with one shared `r`
-  and three projections is the same construction; theorem 6 should be stated
-  for a set of Sources from the start.
+  and three projections is the same construction; theorem 6 should be stated for
+  a set of Sources from the start.
 - **Whose clock is the raw input's.** `Κ r = Κ s` is the least commitment; a
   device with its own rate is a `sync` at deployment, which Phase 5/8 already
   covers but which the Deploy page would have to offer.
 - **The grant argument.** Theorem 1 relies on `mk c` being admissible in `s`'s
   own realization. Confirm that `Grant.of (sem c)` is what `HasType` uses for an
   unresolved declaration once realized (it is for realized ones today).
-- **Range facts.** Whether the compiler should surface "on this device,
-  RoomTemp never exceeds 358 K" from a profile's declared range (theorem 5's
+- **Range facts.** Whether the compiler should surface "on this device, RoomTemp
+  never exceeds 358 K" from a profile's declared range (theorem 5's
   strict-refinement case) — useful, but a separate proposal.
 
 ## Outcome
