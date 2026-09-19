@@ -925,7 +925,9 @@ message FormulaNode {
   string id = 1;
   SourceSpan range = 2;
   // "reference", "number", "quantity", "bool", "unary", "binary",
-  // "compare", "call", "slot", "opaque", "binder", "range" (0.13).
+  // "compare", "call", "slot", "opaque", "binder", "range" (0.13),
+  // "if" (0.17: a choice; children: the condition, the outcome when it
+  // holds, the outcome otherwise).
   string kind = 3;
   // The source text of the node.
   string text = 4;
@@ -998,6 +1000,9 @@ message FormulaSlotResponse {
   repeated UnitCandidate units = 8;
   repeated ReferenceCandidate references = 9;
   repeated EquationCandidate equations = 10;
+  // The truth values that fit a position expecting true or false, as
+  // text to fill the slot with: `true`, `false` (0.17).
+  repeated string booleans = 11;
 }
 
 message UnitCandidate {
@@ -1038,7 +1043,8 @@ message ComposeAction {
   oneof action {
     // Put `fill` where the node is (`?` → `90 deg`, `tilt`, `min(?, ?)`).
     string fill = 2;
-    // `node op ?` (or `? op node` with `before`).
+    // `node op ?` (or `? op node` with `before`); `!` (0.17) is the
+    // prefix form, `!node`, and takes no slot.
     ComposeOperator operator = 3;
     // `name(node, ?, …)` with `arity` arguments.
     ComposeCall call = 4;
@@ -1053,6 +1059,9 @@ message ComposeAction {
     ComposeBinder binder = 8;
     // `node in ? .. ?` (0.13).
     Unit range = 9;
+    // A choice (0.17): a slot becomes `if ? then ? else ?`; any other
+    // node becomes one outcome of it, `if ? then node else ?`.
+    Unit choose = 10;
   }
 }
 

@@ -6,3 +6,5 @@
 # everyone who runs the test benefits from these saved cases.
 cc 533b0f2562d889db7c116ce7f4514b8376e5617e26e281b1f1e3715d6ba89a92 # shrinks to src = "Tilt - ?", op = "+"
 cc 22fbf80522735dc2a30b1a3fe90d4fa831970f09eb1e56bd61aedaf843e0c6c2 # shrinks to src = "(Tilt) * Tilt", op = "+"
+cc b277bcfdbbaf0b4ec9dedeb2ac868e7cbd1d6283b86b366d8da398655dc2d6de # shrinks to src = "Tilt || Tilt", op = "&&"
+cc 586f75f5579a7928344507c3b18071da45efc5bc195d10225d6e10456d7fde57 # shrinks to src = "-if Tilt then Tilt else Tilt", op = "+"

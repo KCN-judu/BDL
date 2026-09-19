@@ -10147,7 +10147,9 @@ class FormulaNode extends $pb.GeneratedMessage {
   SourceSpan ensureRange() => $_ensure(1);
 
   /// "reference", "number", "quantity", "bool", "unary", "binary",
-  /// "compare", "call", "slot", "opaque", "binder", "range" (0.13).
+  /// "compare", "call", "slot", "opaque", "binder", "range" (0.13),
+  /// "if" (0.17: a choice; children: the condition, the outcome when it
+  /// holds, the outcome otherwise).
   @$pb.TagNumber(3)
   $core.String get kind => $_getSZ(2);
   @$pb.TagNumber(3)
@@ -10540,6 +10542,7 @@ class FormulaSlotResponse extends $pb.GeneratedMessage {
     $core.Iterable<UnitCandidate>? units,
     $core.Iterable<ReferenceCandidate>? references,
     $core.Iterable<EquationCandidate>? equations,
+    $core.Iterable<$core.String>? booleans,
   }) {
     final result = FormulaSlotResponse._();
     if (revision != null) result.revision = revision;
@@ -10552,6 +10555,7 @@ class FormulaSlotResponse extends $pb.GeneratedMessage {
     if (units != null) result.units.addAll(units);
     if (references != null) result.references.addAll(references);
     if (equations != null) result.equations.addAll(equations);
+    if (booleans != null) result.booleans.addAll(booleans);
     return result;
   }
 
@@ -10582,6 +10586,7 @@ class FormulaSlotResponse extends $pb.GeneratedMessage {
         subBuilder: ReferenceCandidate.$_createMessage)
     ..pPM<EquationCandidate>(10, _omitFieldNames ? '' : 'equations',
         subBuilder: EquationCandidate.$_createMessage)
+    ..pPS(11, _omitFieldNames ? '' : 'booleans')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -10680,6 +10685,11 @@ class FormulaSlotResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(10)
   $pb.PbList<EquationCandidate> get equations => $_getList(9);
+
+  /// The truth values that fit a position expecting true or false, as
+  /// text to fill the slot with: `true`, `false` (0.17).
+  @$pb.TagNumber(11)
+  $pb.PbList<$core.String> get booleans => $_getList(10);
 }
 
 class UnitCandidate extends $pb.GeneratedMessage {
@@ -11077,6 +11087,7 @@ enum ComposeAction_Action {
   remove,
   binder,
   range,
+  choose,
   notSet
 }
 
@@ -11091,6 +11102,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     Unit? remove,
     ComposeBinder? binder,
     Unit? range,
+    Unit? choose,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -11102,6 +11114,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (remove != null) result.remove = remove;
     if (binder != null) result.binder = binder;
     if (range != null) result.range = range;
+    if (choose != null) result.choose = choose;
     return result;
   }
 
@@ -11123,12 +11136,13 @@ class ComposeAction extends $pb.GeneratedMessage {
     7: ComposeAction_Action.remove,
     8: ComposeAction_Action.binder,
     9: ComposeAction_Action.range,
+    10: ComposeAction_Action.choose,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -11141,6 +11155,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     ..aOM<ComposeBinder>(8, _omitFieldNames ? '' : 'binder',
         subBuilder: ComposeBinder.$_createMessage)
     ..aOM<Unit>(9, _omitFieldNames ? '' : 'range', subBuilder: Unit.$_createMessage)
+    ..aOM<Unit>(10, _omitFieldNames ? '' : 'choose', subBuilder: Unit.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -11171,6 +11186,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(7)
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -11180,6 +11196,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(7)
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -11202,7 +11219,8 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearFill() => $_clearField(2);
 
-  /// `node op ?` (or `? op node` with `before`).
+  /// `node op ?` (or `? op node` with `before`); `!` (0.17) is the
+  /// prefix form, `!node`, and takes no slot.
   @$pb.TagNumber(3)
   ComposeOperator get operator => $_getN(2);
   @$pb.TagNumber(3)
@@ -11284,6 +11302,19 @@ class ComposeAction extends $pb.GeneratedMessage {
   void clearRange() => $_clearField(9);
   @$pb.TagNumber(9)
   Unit ensureRange() => $_ensure(8);
+
+  /// A choice (0.17): a slot becomes `if ? then ? else ?`; any other
+  /// node becomes one outcome of it, `if ? then node else ?`.
+  @$pb.TagNumber(10)
+  Unit get choose => $_getN(9);
+  @$pb.TagNumber(10)
+  set choose(Unit value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasChoose() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearChoose() => $_clearField(10);
+  @$pb.TagNumber(10)
+  Unit ensureChoose() => $_ensure(9);
 }
 
 class ComposeBinder extends $pb.GeneratedMessage {

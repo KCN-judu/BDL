@@ -313,8 +313,11 @@ pub enum NodeKind {
     },
     /// `?` — an expression not yet written.
     Slot,
-    /// A form the Composer shows as text: `if`, `match`, a block, a rule,
-    /// a collection or grouped literal, `delay`/`sync`.
+    /// `if c then a else b` — a choice; children: the condition, the
+    /// outcome when it holds, the outcome otherwise.
+    If,
+    /// A form the Composer shows as text: `match`, a block, a rule, a
+    /// collection or grouped literal, `delay`/`sync`.
     Opaque {
         what: String,
     },
@@ -725,11 +728,13 @@ impl Builder<'_> {
                     )
                 }
             }
-            ExprKind::If { .. } => (
-                NodeKind::Opaque {
-                    what: "a choice (if … then … else …)".into(),
-                },
-                Vec::new(),
+            ExprKind::If { cond, then, els } => (
+                NodeKind::If,
+                vec![
+                    child(self, cond, 0),
+                    child(self, then, 1),
+                    child(self, els, 2),
+                ],
             ),
             ExprKind::Match { .. } => (
                 NodeKind::Opaque {
@@ -955,6 +960,40 @@ impl Builder<'_> {
                 self.solve(&mut c[0], None, coll_why);
                 self.solve(&mut b[0], body_expected.as_ref(), body_why);
             }
+            NodeKind::If => {
+                // the condition is a question; both outcomes give what the
+                // choice gives — the position's expectation, else what the
+                // other outcome already is
+                let known =
+                    |n: &FormulaNode| n.actual.clone().filter(|t| t.kind != TypeKindView::Unknown);
+                let (then_known, else_known) = (known(&node.children[1]), known(&node.children[2]));
+                let (outcome, why) = match (expected, then_known, else_known) {
+                    (Some(t), _, _) => (
+                        Some(t.clone()),
+                        format!(
+                            "both outcomes of a choice give what the choice gives: {}",
+                            t.description
+                        ),
+                    ),
+                    (None, Some(t), _) | (None, None, Some(t)) => (
+                        Some(t.clone()),
+                        format!(
+                            "both outcomes of a choice are the same kind of value: {}",
+                            t.description
+                        ),
+                    ),
+                    (None, None, None) => (None, String::new()),
+                };
+                let (c, rest) = node.children.split_at_mut(1);
+                self.solve(
+                    &mut c[0],
+                    Some(&TypeView::boolean()),
+                    "a choice asks a question: the condition is true or false".into(),
+                );
+                for o in rest.iter_mut() {
+                    self.solve(o, outcome.as_ref(), why.clone());
+                }
+            }
             NodeKind::Unary { op } => {
                 let (e, why) = if op == "!" {
                     (
@@ -1169,6 +1208,9 @@ pub struct SlotInfo {
     pub units: Vec<UnitCandidate>,
     pub references: Vec<ReferenceCandidate>,
     pub equations: Vec<EquationCandidate>,
+    /// The truth values, as text to fill the slot with (`true`, `false`),
+    /// when the position expects true or false.
+    pub booleans: Vec<String>,
 }
 
 /// What fits at `node` of `mapping`'s projection.
@@ -1242,6 +1284,11 @@ pub fn formula_slot(
     };
     let references = reference_candidates(design, ir, block, expected.as_ref());
     let equations = equation_candidates(ir, expected.as_ref());
+    let booleans = if expects_truth_value(design, expected.as_ref()) {
+        vec!["true".to_owned(), "false".to_owned()]
+    } else {
+        Vec::new()
+    };
     Ok(SlotInfo {
         node: node.to_owned(),
         expected,
@@ -1251,7 +1298,32 @@ pub fn formula_slot(
         units,
         references,
         equations,
+        booleans,
     })
+}
+
+/// Whether the position takes a truth value: true or false itself, or a
+/// concept represented by one (a literal is observed with it, as a
+/// quantity literal is with a quantity concept).
+fn expects_truth_value(design: &Design, expected: Option<&TypeView>) -> bool {
+    match expected {
+        Some(TypeView {
+            kind: TypeKindView::Boolean,
+            ..
+        }) => true,
+        Some(TypeView {
+            kind: TypeKindView::Concept,
+            concept: Some(id),
+            ..
+        }) => matches!(
+            design
+                .concepts
+                .get(id)
+                .and_then(|c| c.representation.as_ref()),
+            Some(Representation::Boolean)
+        ),
+        _ => false,
+    }
 }
 
 /// Whether a value of representation `rep` (or concept `concept`) fits
@@ -1449,7 +1521,8 @@ fn equation_candidates(ir: &DesignIr, expected: Option<&TypeView>) -> Vec<Equati
 pub enum ComposeOp {
     /// Put `text` where the node is (`?` → `90 deg`, `tilt`, `min(?, ?)`).
     Fill { node: String, text: String },
-    /// `node` becomes `node op ?` (or `? op node` with `before`).
+    /// `node` becomes `node op ?` (or `? op node` with `before`); `!` is
+    /// the prefix form, `!node`, and takes no slot.
     Operator {
         node: String,
         op: String,
@@ -1481,6 +1554,9 @@ pub enum ComposeOp {
     Binder { node: String, form: String },
     /// `node` becomes `node in ? .. ?`.
     Range { node: String },
+    /// A choice: a slot becomes `if ? then ? else ?`; any other node
+    /// becomes one outcome of it, `if ? then node else ?`.
+    Choose { node: String },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -1493,32 +1569,57 @@ pub struct ComposeResult {
     pub select: Option<String>,
 }
 
-/// Precedence of a node as an operand: what needs parentheses under what.
-fn precedence(kind: &NodeKind) -> u8 {
-    match kind {
-        // a binder extends as far right as its body: an operand only in
-        // parentheses
-        NodeKind::Binder { .. } => 0,
-        NodeKind::Compare { op } if matches!(op.as_str(), "&&" | "||") => 1,
-        NodeKind::Compare { op } if op == "??" => 4,
-        NodeKind::Compare { .. } => 2,
-        NodeKind::Range => 3,
-        NodeKind::Binary { op } if matches!(op.as_str(), "+" | "-") => 5,
-        NodeKind::Binary { .. } => 6,
-        NodeKind::Unary { .. } => 7,
-        _ => 8,
+/// Whether removing an empty operand of `parent` removes the operator
+/// with it: arithmetic, a comparison, `&&`, `||` — every two-sided
+/// operator whose other side then stands alone (not `in`, whose range
+/// is not a value on its own).
+fn removes_operator(parent: &FormulaNode) -> bool {
+    match &parent.kind {
+        NodeKind::Binary { .. } => true,
+        NodeKind::Compare { op } => op != "in",
+        _ => false,
     }
 }
 
+/// Precedence of a node as an operand: what needs parentheses under what.
+/// The ladder is the parser's (`bdl-syntax::parser::expr::infix`), one
+/// step per level.
+fn precedence(kind: &NodeKind) -> u8 {
+    match kind {
+        // a binder extends as far right as its body, a choice as far as
+        // its `else` does: an operand only in parentheses
+        NodeKind::Binder { .. } | NodeKind::If => 0,
+        NodeKind::Compare { op } | NodeKind::Binary { op } => op_precedence(op),
+        NodeKind::Range => op_precedence(".."),
+        NodeKind::Unary { .. } => UNARY,
+        _ => ATOM,
+    }
+}
+
+const UNARY: u8 = 9;
+const ATOM: u8 = 10;
+/// What a comparison's operand must bind at: comparisons do not chain
+/// (`a < b == c` is refused), so one under another is parenthesised on
+/// either side, and a range (`..`) stands unparenthesised after `in`.
+const COMPARISON_OPERAND: u8 = 5;
+
 fn op_precedence(op: &str) -> u8 {
     match op {
-        "&&" | "||" => 1,
-        ".." => 3,
-        "??" => 4,
-        "+" | "-" => 5,
-        "*" | "/" => 6,
-        _ => 2,
+        "||" => 1,
+        "&&" => 2,
+        "==" | "!=" => 3,
+        "<" | "<=" | ">" | ">=" | "in" => 4,
+        ".." => 5,
+        "??" => 6,
+        "+" | "-" => 7,
+        "*" | "/" => 8,
+        _ => 4,
     }
+}
+
+/// `<`, `<=`, `>`, `>=`, `==`, `!=`, `in`: the operators that do not chain.
+fn is_comparison(op: &str) -> bool {
+    matches!(op, "<" | "<=" | ">" | ">=" | "==" | "!=" | "in")
 }
 
 /// Whether one pair of parentheses encloses the whole text (`(a + b)`,
@@ -1544,38 +1645,66 @@ fn wholly_parenthesised(text: &str) -> bool {
     false
 }
 
+/// The precedence of a node as an operand: its own, unless it ends in a
+/// form that extends as far right as it can (a choice, a binder) — then
+/// anything written after it would be swallowed, and it binds like that
+/// form: `-if c then a else b` before `+ ?` needs parentheses as much as
+/// the choice alone does.
+fn node_precedence(node: &FormulaNode) -> u8 {
+    let own = precedence(&node.kind);
+    let open_right = match &node.kind {
+        NodeKind::Unary { .. }
+        | NodeKind::Binary { .. }
+        | NodeKind::Compare { .. }
+        | NodeKind::Range => node
+            .children
+            .last()
+            .is_some_and(|c| node_precedence(c) == 0),
+        _ => false,
+    };
+    if open_right {
+        0
+    } else {
+        own
+    }
+}
+
 /// The node's text, parenthesised when it would bind weaker than `under`.
 fn operand(node: &FormulaNode, under: u8) -> String {
     let text = node.text.trim();
-    if precedence(&node.kind) < under && !wholly_parenthesised(text) {
+    if node_precedence(node) < under && !wholly_parenthesised(text) {
         format!("({text})")
     } else {
         text.to_owned()
     }
 }
 
-/// The kind a piece of text would have as a node, for parenthesising it.
-fn kind_of_text(text: &str) -> NodeKind {
+/// The precedence a piece of text would have as an operand, for
+/// parenthesising it (`node_precedence` over its syntax).
+fn precedence_of_text(text: &str) -> u8 {
+    fn of(e: &SurfaceExpr) -> u8 {
+        let own = match &e.kind {
+            ExprKind::Binary { op, .. } => op_precedence(binary_symbol(*op).0),
+            ExprKind::Unary { .. } => UNARY,
+            ExprKind::If { .. } | ExprKind::Binder { .. } | ExprKind::Lambda { .. } => 0,
+            ExprKind::Range { .. } => op_precedence(".."),
+            _ => ATOM,
+        };
+        let open_right = match &e.kind {
+            ExprKind::Binary { rhs: last, .. }
+            | ExprKind::Unary { expr: last, .. }
+            | ExprKind::Range { hi: last, .. } => of(last) == 0,
+            _ => false,
+        };
+        if open_right {
+            0
+        } else {
+            own
+        }
+    }
     match bdl_syntax::formula(text) {
-        Ok(e) => match e.kind {
-            ExprKind::Binary { op, .. } => {
-                let (sym, arithmetic) = binary_symbol(op);
-                if arithmetic {
-                    NodeKind::Binary { op: sym.into() }
-                } else {
-                    NodeKind::Compare { op: sym.into() }
-                }
-            }
-            ExprKind::Unary { .. } => NodeKind::Unary { op: "-".into() },
-            ExprKind::Binder { .. } => NodeKind::Binder {
-                form: String::new(),
-                param: String::new(),
-                param_type: None,
-            },
-            ExprKind::Range { .. } => NodeKind::Range,
-            _ => NodeKind::Slot,
-        },
-        Err(_) => NodeKind::Slot,
+        Ok(e) => of(&e),
+        Err(_) => ATOM,
     }
 }
 
@@ -1629,7 +1758,8 @@ pub fn compose(
         | ComposeOp::SetCoordinate { node, .. }
         | ComposeOp::Remove { node }
         | ComposeOp::Binder { node, .. }
-        | ComposeOp::Range { node } => node.as_str(),
+        | ComposeOp::Range { node }
+        | ComposeOp::Choose { node } => node.as_str(),
     };
     let Some(node) = root.find(node_id) else {
         return Err(QueryError::NotApplicable {
@@ -1644,15 +1774,20 @@ pub fn compose(
     let context = |parent: Option<(&FormulaNode, usize)>| -> u8 {
         parent
             .map(|(p, i)| match &p.kind {
+                NodeKind::Compare { op } if is_comparison(op) => COMPARISON_OPERAND,
                 NodeKind::Binary { op } | NodeKind::Compare { op } => {
                     op_precedence(op) + if i == 1 { 1 } else { 0 }
                 }
-                NodeKind::Range => 4,
-                NodeKind::Unary { .. } => 8,
-                // a binder's collection stops at the colon: a comparison,
-                // a range or another binder there needs parentheses; its
-                // body extends to the end and needs none
-                NodeKind::Binder { .. } if i == 0 => 3,
+                // a range's ends: arithmetic and `??` bind tighter than
+                // `..`, a comparison or a logical operator does not
+                NodeKind::Range => op_precedence("??"),
+                NodeKind::Unary { .. } => UNARY,
+                // `if`, `then` and `else` delimit a choice's parts
+                NodeKind::If => 0,
+                // a binder's collection stops at the colon: a comparison
+                // or another binder there needs parentheses (a range does
+                // not); its body extends to the end and needs none
+                NodeKind::Binder { .. } if i == 0 => COMPARISON_OPERAND,
                 _ => 0,
             })
             .unwrap_or(0)
@@ -1670,14 +1805,28 @@ pub fn compose(
             let text = text.trim();
             (
                 node.range,
-                grouped(text.to_owned(), precedence(&kind_of_text(text))),
+                grouped(text.to_owned(), precedence_of_text(text)),
             )
+        }
+        ComposeOp::Operator { op, .. } if op == "!" => {
+            // negation binds tighter than any operator: its operand is
+            // parenthesised unless it is atomic or a negation itself
+            let operand = operand(node, UNARY);
+            (node.range, grouped(format!("!{operand}"), UNARY))
         }
         ComposeOp::Operator { op, before, .. } => {
             let p = op_precedence(op);
             // as the left operand the node may bind equally (`a - b - ?` is
-            // `(a - b) - ?`); as the right one it may not (`? / (a / b)`)
-            let operand = operand(node, if *before { p + 1 } else { p });
+            // `(a - b) - ?`); as the right one it may not (`? / (a / b)`);
+            // under a comparison it may be no comparison at all
+            let under = if is_comparison(op) {
+                COMPARISON_OPERAND
+            } else if *before {
+                p + 1
+            } else {
+                p
+            };
+            let operand = operand(node, under);
             let text = if *before {
                 format!("? {op} {operand}")
             } else {
@@ -1692,17 +1841,33 @@ pub fn compose(
                 });
             }
             let local = fresh_local(design, block, &root, &node.text);
-            // the collection is parsed up to the colon: a comparison or a
-            // range there needs parentheses
-            let coll = operand(node, 3);
+            // the collection is parsed up to the colon: a comparison there
+            // needs parentheses
+            let coll = operand(node, COMPARISON_OPERAND);
             (
                 node.range,
                 grouped(format!("{form} {local} in {coll}: ?"), 0),
             )
         }
         ComposeOp::Range { .. } => {
-            let subject = operand(node, 3);
-            (node.range, grouped(format!("{subject} in ? .. ?"), 2))
+            let subject = operand(node, COMPARISON_OPERAND);
+            (
+                node.range,
+                grouped(format!("{subject} in ? .. ?"), op_precedence("in")),
+            )
+        }
+        ComposeOp::Choose { .. } => {
+            // a choice's parts are delimited by its words: nothing inside
+            // needs parentheses; the choice itself extends to the end
+            let outcome = if matches!(node.kind, NodeKind::Slot) {
+                "?".to_owned()
+            } else {
+                node.text.trim().to_owned()
+            };
+            (
+                node.range,
+                grouped(format!("if ? then {outcome} else ?"), 0),
+            )
         }
         ComposeOp::Call { name, arity, .. } => {
             let mut args = vec![node.text.trim().to_owned()];
@@ -1775,15 +1940,19 @@ pub fn compose(
             }
         }
         ComposeOp::Remove { .. } => match parent {
-            Some((p, i))
-                if matches!(node.kind, NodeKind::Slot)
-                    && matches!(p.kind, NodeKind::Binary { .. }) =>
-            {
+            Some((p, i)) if matches!(node.kind, NodeKind::Slot) && removes_operator(p) => {
                 // removing an empty operand removes the operator: the
                 // other operand stands alone, grouped as *its* new
                 // position demands
                 let other = &p.children[1 - i];
                 (p.range, operand(other, context(root.parent_of(&p.id))))
+            }
+            Some((p, _))
+                if matches!(node.kind, NodeKind::Slot)
+                    && matches!(p.kind, NodeKind::Unary { .. }) =>
+            {
+                // an empty negation is nothing: the slot stands alone
+                (p.range, "?".to_owned())
             }
             _ => (node.range, "?".to_owned()),
         },
@@ -1811,12 +1980,14 @@ pub fn compose(
             slots.into_iter().next()
         };
         match op {
+            ComposeOp::Operator { op, .. } if op == "!" => Some(node_id.to_owned()),
             ComposeOp::Operator { before, .. } => {
                 Some(format!("{node_id}.{}", if *before { 0 } else { 1 }))
             }
             ComposeOp::Call { arity, .. } if *arity > 1 => Some(format!("{node_id}.1")),
             ComposeOp::Binder { .. } => Some(format!("{node_id}.1")),
             ComposeOp::Range { .. } => Some(format!("{node_id}.1.0")),
+            ComposeOp::Choose { .. } => Some(format!("{node_id}.0")),
             ComposeOp::Fill { .. } => first_slot_in(node_id).or_else(|| {
                 // no slot in what was written: the next slot after it, the
                 // Tab order, else the node itself
@@ -1830,7 +2001,7 @@ pub fn compose(
             ComposeOp::Remove { .. } => match parent {
                 Some((p, _))
                     if matches!(node.kind, NodeKind::Slot)
-                        && matches!(p.kind, NodeKind::Binary { .. }) =>
+                        && (removes_operator(p) || matches!(p.kind, NodeKind::Unary { .. })) =>
                 {
                     Some(p.id.clone())
                 }

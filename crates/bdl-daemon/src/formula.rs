@@ -152,6 +152,15 @@ fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
             false,
             None,
         ),
+        NodeKind::If => (
+            "if",
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            false,
+            None,
+        ),
         NodeKind::Opaque { what } => (
             "opaque",
             what.clone(),
@@ -260,6 +269,7 @@ pub fn slot_to_pb(s: &SlotInfo, revision: u64, mapping_id: u64) -> pb::FormulaSl
                 summary: e.summary.clone(),
             })
             .collect(),
+        booleans: s.booleans.clone(),
     }
 }
 
@@ -296,5 +306,6 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
             form: b.form.clone(),
         },
         Action::Range(_) => ComposeOp::Range { node },
+        Action::Choose(_) => ComposeOp::Choose { node },
     })
 }

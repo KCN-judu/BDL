@@ -150,9 +150,9 @@ fn the_projection_is_the_surface_tree_with_types_expected_types_and_ranges() {
 fn unsupported_forms_are_opaque_regions_and_parse_failures_have_no_tree() {
     let lamp = lamp();
     let mut host = IdeHost::new(lamp.snapshot.clone());
-    host.set_definition_draft(lamp.dim_by_tilt, "if Tilt < 10 deg then 0 else 1");
+    host.set_definition_draft(lamp.dim_by_tilt, "match Tilt { _ => 0 }");
     let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
-    assert!(matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("choice")));
+    assert!(matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("match")));
     assert!(node(&p, "r").children.is_empty());
     assert!(p.complete, "an opaque form is still a valid formula");
     host.set_definition_draft(lamp.dim_by_tilt, "Tilt / (");
@@ -343,10 +343,17 @@ fn equation_candidates_are_the_schemes_whose_result_fits_and_whose_capabilities_
         .expect("clamp");
     assert_eq!(clamp.insert, "clamp(?, ?, ?)");
     assert_eq!(clamp.shape, "clamp(x, low, high)");
-    // a truth-valued position offers the truth-valued equations
+    // a truth-valued position — a choice's condition — offers the
+    // truth-valued equations and no angle-valued one
     host.set_definition_draft(lamp.dim_by_tilt, "if ? then 1 else 0");
-    let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
-    assert!(matches!(node(&p, "r").kind, NodeKind::Opaque { .. }));
+    let slot = formula_slot(&host.snapshot(), lamp.dim_by_tilt, "r.0").expect("slot");
+    let names: Vec<&str> = slot.equations.iter().map(|e| e.name.as_str()).collect();
+    for want in ["any", "all", "contains", "inRange"] {
+        assert!(names.contains(&want), "{want} missing from {names:?}");
+    }
+    for not in ["min", "max", "clamp", "sum"] {
+        assert!(!names.contains(&not), "{not} offered for a truth value");
+    }
 }
 
 // ---- generations and stability --------------------------------------------------------
@@ -1048,14 +1055,14 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
     let lamp = lamp();
     let mut host = IdeHost::new(lamp.snapshot.clone());
     let m = lamp.dim_by_tilt;
-    let src = "(if Tilt < 10 deg then 1 else 0) * ?";
+    let src = "(match Tilt { _ => 1 }) * ?";
     host.set_definition_draft(m, src);
     let p = formula_projection(&host.snapshot(), m).expect("projection");
     let opaque = node(&p, "r.0");
-    assert!(matches!(&opaque.kind, NodeKind::Opaque { what } if what.contains("choice")));
+    assert!(matches!(&opaque.kind, NodeKind::Opaque { what } if what.contains("match")));
     assert_eq!(
         &src[opaque.range.start as usize..opaque.range.end as usize],
-        "(if Tilt < 10 deg then 1 else 0)"
+        "(match Tilt { _ => 1 })"
     );
     assert!(opaque.children.is_empty());
     assert_eq!(
@@ -1073,7 +1080,7 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
             text: "2".into(),
         },
     );
-    assert_eq!(r.source, "(if Tilt < 10 deg then 1 else 0) * 2");
+    assert_eq!(r.source, "(match Tilt { _ => 1 }) * 2");
     // the opaque node itself can be replaced or removed as a whole
     let r = composed(&mut host, m, src, ComposeOp::Remove { node: "r.0".into() });
     assert_eq!(r.source, "? * ?");
@@ -1087,13 +1094,380 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
             before: false,
         },
     );
-    assert_eq!(r.source, "((if Tilt < 10 deg then 1 else 0) + ?) * ?");
+    assert_eq!(r.source, "((match Tilt { _ => 1 }) + ?) * ?");
     // a temporal form and a rule are opaque too, with their own sentence
     host.set_definition_draft(lamp.dim_by_tilt, "delay(0, Tilt)");
     let p = formula_projection(&host.snapshot(), m).expect("projection");
     assert!(
         matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("remembered"))
     );
+}
+
+// ---- boolean logic and choices -------------------------------------------------------
+
+struct AirConditioner {
+    snapshot: ProjectSnapshot,
+    ctrl: DeclId,
+    button_held: SemanticId,
+    switch_state: SemanticId,
+}
+
+/// `RoomTemp` (a temperature), `ButtonHeld` and `SwitchState` (true or
+/// false), `AirConditionerCtrl : RoomTemp -> ButtonHeld -> SwitchState`,
+/// and `Armed`, a boolean-valued value with no inputs.
+fn air_conditioner() -> AirConditioner {
+    let s = ProjectSnapshot::new(bdl_model::surface::Design::empty("ac"));
+    let mk = |s: &ProjectSnapshot, name: &str, rep: Representation| {
+        let a = bdl_model::edit::apply_edit(s, &concept(name, Some(rep))).expect("concept");
+        (a.snapshot, a.outcome.created_concept.expect("id"))
+    };
+    let (s, room_temp) = mk(
+        &s,
+        "RoomTemp",
+        Representation::Quantity {
+            dim: Dim::TEMPERATURE,
+        },
+    );
+    let (s, button_held) = mk(&s, "ButtonHeld", Representation::Boolean);
+    let (s, switch_state) = mk(&s, "SwitchState", Representation::Boolean);
+    let a = bdl_model::edit::apply_edit(
+        &s,
+        &mapping(
+            "AirConditionerCtrl",
+            vec![room_temp, button_held],
+            switch_state,
+        ),
+    )
+    .expect("mapping");
+    let ctrl = a.outcome.created_mapping.expect("id");
+    let s = edit(&a.snapshot, mapping("Armed", vec![], switch_state));
+    AirConditioner {
+        snapshot: s,
+        ctrl,
+        button_held,
+        switch_state,
+    }
+}
+
+/// `if c then a else b` is a structured node with three children: the
+/// condition expects true or false; both outcomes expect what the choice
+/// gives — the position's expectation, else what the other outcome is.
+#[test]
+fn a_choice_is_a_structured_node_whose_parts_expect_what_a_choice_demands() {
+    let ac = air_conditioner();
+    let mut host = IdeHost::new(ac.snapshot.clone());
+    host.set_definition_draft(
+        ac.ctrl,
+        "if RoomTemp > 299.15 K && ButtonHeld then true else false",
+    );
+    let p = formula_projection(&host.snapshot(), ac.ctrl).expect("projection");
+    assert!(p.parse_ok && p.complete, "{:?}", p.unplaced);
+    let root = node(&p, "r");
+    assert!(matches!(root.kind, NodeKind::If));
+    assert_eq!(root.children.len(), 3);
+    let cond = node(&p, "r.0");
+    assert!(matches!(&cond.kind, NodeKind::Compare { op } if op == "&&"));
+    assert_eq!(
+        cond.expected.as_ref().map(|t| t.kind),
+        Some(TypeKindView::Boolean)
+    );
+    assert_eq!(
+        cond.because,
+        "a choice asks a question: the condition is true or false"
+    );
+    // inside the condition: `&&` asks true or false of both sides, `>`
+    // puts two temperatures side by side
+    assert_eq!(
+        node(&p, "r.0.1").expected.as_ref().map(|t| t.kind),
+        Some(TypeKindView::Boolean)
+    );
+    assert_eq!(
+        dim_of(&node(&p, "r.0.0.1").expected),
+        Some(Dim::TEMPERATURE)
+    );
+    // both outcomes: the switch state the formula must produce
+    for id in ["r.1", "r.2"] {
+        let o = node(&p, id);
+        assert!(matches!(o.kind, NodeKind::Bool { .. }));
+        assert_eq!(
+            o.expected.as_ref().and_then(|t| t.concept),
+            Some(ac.switch_state),
+            "{id}"
+        );
+        assert!(
+            o.because.contains("both outcomes of a choice"),
+            "{}",
+            o.because
+        );
+    }
+    // nothing expected of the choice (the subject of `in` is not locally
+    // determined): the outcome already written tells the other what it
+    // must be
+    let lamp = lamp();
+    let mut host = IdeHost::new(lamp.snapshot.clone());
+    host.set_definition_draft(
+        lamp.dim_by_tilt,
+        "(if ? then 90 deg else ?) in Tilt .. Tilt",
+    );
+    let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
+    assert!(node(&p, "r.0").expected.is_none());
+    assert_eq!(dim_of(&node(&p, "r.0.2").expected), Some(Dim::ANGLE));
+    assert!(node(&p, "r.0.2").because.contains("the same kind of value"));
+    assert_eq!(
+        node(&p, "r.0.0").expected.as_ref().map(|t| t.kind),
+        Some(TypeKindView::Boolean)
+    );
+    // the slots in Tab order include the choice's
+    assert_eq!(p.slots, vec!["r.0.0", "r.0.2"]);
+}
+
+/// A position that expects true or false — a logical operand, a
+/// condition, a boolean concept — offers the two truth values, and the
+/// references that produce a truth value rank first; a quantity position
+/// offers neither.
+#[test]
+fn a_boolean_slot_offers_true_and_false_and_ranks_boolean_references_first() {
+    let ac = air_conditioner();
+    let mut host = IdeHost::new(ac.snapshot.clone());
+    host.set_definition_draft(ac.ctrl, "RoomTemp > 299.15 K && ?");
+    let slot = formula_slot(&host.snapshot(), ac.ctrl, "r.1").expect("slot");
+    assert_eq!(slot.booleans, vec!["true", "false"]);
+    let labels: Vec<(&str, u8)> = slot
+        .references
+        .iter()
+        .map(|r| (r.label.as_str(), r.relevance))
+        .collect();
+    assert_eq!(
+        labels,
+        vec![("ButtonHeld", 90), ("Armed", 75)],
+        "never RoomTemp"
+    );
+    assert_eq!(
+        slot.references[0].entity,
+        Some(EntityRef::Concept(ac.button_held))
+    );
+    assert!(slot.units.is_empty());
+    // the result position: a SwitchState is true or false
+    host.set_definition_draft(ac.ctrl, "?");
+    let slot = formula_slot(&host.snapshot(), ac.ctrl, "r").expect("slot");
+    assert_eq!(slot.booleans, vec!["true", "false"]);
+    // the concept itself (Armed produces a SwitchState) before a value of
+    // the same kind
+    assert_eq!(
+        slot.references
+            .iter()
+            .map(|r| r.label.as_str())
+            .collect::<Vec<_>>(),
+        vec!["Armed", "ButtonHeld"]
+    );
+    // a condition
+    host.set_definition_draft(ac.ctrl, "if ? then true else false");
+    let slot = formula_slot(&host.snapshot(), ac.ctrl, "r.0").expect("slot");
+    assert_eq!(slot.booleans, vec!["true", "false"]);
+    assert_eq!(
+        slot.explanation,
+        "Expected: true or false, because a choice asks a question: the condition is true or false."
+    );
+    // a negation
+    host.set_definition_draft(ac.ctrl, "!?");
+    let slot = formula_slot(&host.snapshot(), ac.ctrl, "r.0").expect("slot");
+    assert_eq!(slot.booleans, vec!["true", "false"]);
+    // a temperature: no truth value fits
+    host.set_definition_draft(ac.ctrl, "RoomTemp > ?");
+    let slot = formula_slot(&host.snapshot(), ac.ctrl, "r.1").expect("slot");
+    assert!(slot.booleans.is_empty());
+    assert_eq!(
+        slot.references
+            .iter()
+            .map(|r| r.label.as_str())
+            .collect::<Vec<_>>(),
+        vec!["RoomTemp"],
+        "a truth value is no temperature"
+    );
+}
+
+/// The acceptance walkthrough: from an empty formula, structured actions
+/// alone make `RoomTemp > 299.15 K && ButtonHeld` and
+/// `if RoomTemp > 299.15 K && ButtonHeld then true else false`, and the
+/// text is exactly that.
+#[test]
+fn the_air_conditioner_walkthrough_is_a_sequence_of_structured_actions() {
+    let ac = air_conditioner();
+    let mut host = IdeHost::new(ac.snapshot.clone());
+    let m = ac.ctrl;
+    let fill = |node: &str, text: &str| ComposeOp::Fill {
+        node: node.into(),
+        text: text.into(),
+    };
+    let after = |node: &str, op: &str| ComposeOp::Operator {
+        node: node.into(),
+        op: op.into(),
+        before: false,
+    };
+    // the condition first
+    let r = composed(&mut host, m, "", fill("r", "RoomTemp"));
+    assert_eq!(r.source, "RoomTemp");
+    let r = composed(&mut host, m, &r.source, after("r", ">"));
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("RoomTemp > ?", Some("r.1"))
+    );
+    let r = composed(&mut host, m, &r.source, fill("r.1", "299.15 K"));
+    assert_eq!(r.source, "RoomTemp > 299.15 K");
+    // `&&` after the comparison: no parentheses, the comparison binds tighter
+    let r = composed(&mut host, m, &r.source, after("r", "&&"));
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("RoomTemp > 299.15 K && ?", Some("r.1"))
+    );
+    let r = composed(&mut host, m, &r.source, fill("r.1", "ButtonHeld"));
+    assert_eq!(r.source, "RoomTemp > 299.15 K && ButtonHeld");
+    let p = formula_projection(&host.snapshot(), m).expect("projection");
+    let _ = &p;
+    // the same, as the condition of a choice, built from the choice down
+    let r = composed(&mut host, m, "", ComposeOp::Choose { node: "r".into() });
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("if ? then ? else ?", Some("r.0"))
+    );
+    let r = composed(&mut host, m, &r.source, fill("r.0", "RoomTemp"));
+    let r = composed(&mut host, m, &r.source, after("r.0", ">"));
+    let r = composed(&mut host, m, &r.source, fill("r.0.1", "299.15 K"));
+    let r = composed(&mut host, m, &r.source, after("r.0", "&&"));
+    let r = composed(&mut host, m, &r.source, fill("r.0.1", "ButtonHeld"));
+    assert_eq!(
+        r.source,
+        "if RoomTemp > 299.15 K && ButtonHeld then ? else ?"
+    );
+    assert_eq!(
+        r.select.as_deref(),
+        Some("r.1"),
+        "the next slot in Tab order"
+    );
+    let r = composed(&mut host, m, &r.source, fill("r.1", "true"));
+    assert_eq!(r.select.as_deref(), Some("r.2"));
+    let r = composed(&mut host, m, &r.source, fill("r.2", "false"));
+    assert_eq!(
+        r.source,
+        "if RoomTemp > 299.15 K && ButtonHeld then true else false"
+    );
+    host.set_definition_draft(m, &r.source);
+    let p = formula_projection(&host.snapshot(), m).expect("projection");
+    assert!(p.complete, "{:?}", p.unplaced);
+}
+
+/// `!` is the prefix form: no slot, the operand parenthesised only when
+/// it binds weaker; a choice wraps a node as one outcome; the logical
+/// operators and a choice parenthesise as their precedence demands; an
+/// empty logical operand or negation is removed with its operator.
+#[test]
+fn negation_choice_and_the_logical_operators_compose_with_the_right_parentheses() {
+    let ac = air_conditioner();
+    let mut host = IdeHost::new(ac.snapshot.clone());
+    let m = ac.ctrl;
+    let not = |node: &str| ComposeOp::Operator {
+        node: node.into(),
+        op: "!".into(),
+        before: false,
+    };
+    let r = composed(&mut host, m, "ButtonHeld", not("r"));
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("!ButtonHeld", Some("r"))
+    );
+    let r = composed(&mut host, m, "!ButtonHeld", not("r"));
+    assert_eq!(r.source, "!!ButtonHeld");
+    let r = composed(&mut host, m, "ButtonHeld && Armed", not("r"));
+    assert_eq!(r.source, "!(ButtonHeld && Armed)");
+    let r = composed(&mut host, m, "ButtonHeld && Armed", not("r.1"));
+    assert_eq!(r.source, "ButtonHeld && !Armed");
+    let r = composed(&mut host, m, "RoomTemp > 299.15 K", not("r"));
+    assert_eq!(r.source, "!(RoomTemp > 299.15 K)");
+    let r = composed(&mut host, m, "?", not("r"));
+    assert_eq!(r.source, "!?");
+    // `||` under `&&` and the other way round
+    let and = |node: &str| ComposeOp::Operator {
+        node: node.into(),
+        op: "&&".into(),
+        before: false,
+    };
+    let or = |node: &str| ComposeOp::Operator {
+        node: node.into(),
+        op: "||".into(),
+        before: false,
+    };
+    let r = composed(&mut host, m, "ButtonHeld || Armed", and("r"));
+    assert_eq!(r.source, "(ButtonHeld || Armed) && ?");
+    let r = composed(&mut host, m, "ButtonHeld && Armed", or("r"));
+    assert_eq!(r.source, "ButtonHeld && Armed || ?");
+    let r = composed(&mut host, m, "ButtonHeld && Armed", or("r.1"));
+    assert_eq!(r.source, "ButtonHeld && (Armed || ?)");
+    // a choice wraps a node as its `then` outcome; as an operand it is
+    // parenthesised, its parts never are
+    let choose = |node: &str| ComposeOp::Choose { node: node.into() };
+    let r = composed(&mut host, m, "ButtonHeld", choose("r"));
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("if ? then ButtonHeld else ?", Some("r.0"))
+    );
+    let r = composed(&mut host, m, "ButtonHeld && Armed", choose("r.1"));
+    assert_eq!(r.source, "ButtonHeld && (if ? then Armed else ?)");
+    let r = composed(&mut host, m, "ButtonHeld && Armed", choose("r"));
+    assert_eq!(r.source, "if ? then ButtonHeld && Armed else ?");
+    let r = composed(&mut host, m, "if ? then ButtonHeld else ?", and("r"));
+    assert_eq!(r.source, "(if ? then ButtonHeld else ?) && ?");
+    let r = composed(&mut host, m, "if ? then ButtonHeld else ?", and("r.1"));
+    assert_eq!(r.source, "if ? then ButtonHeld && ? else ?");
+    let r = composed(&mut host, m, "if ? then ButtonHeld else ?", or("r.0"));
+    assert_eq!(r.source, "if ? || ? then ButtonHeld else ?");
+    // filling a slot with a choice needs parentheses under an operator
+    let r = composed(
+        &mut host,
+        m,
+        "ButtonHeld && ?",
+        ComposeOp::Fill {
+            node: "r.1".into(),
+            text: "if Armed then true else false".into(),
+        },
+    );
+    assert_eq!(r.source, "ButtonHeld && (if Armed then true else false)");
+    // removing an empty logical operand removes the operator; an empty
+    // negation is nothing
+    let remove = |node: &str| ComposeOp::Remove { node: node.into() };
+    let r = composed(&mut host, m, "ButtonHeld && ?", remove("r.1"));
+    assert_eq!(
+        (r.source.as_str(), r.select.as_deref()),
+        ("ButtonHeld", Some("r"))
+    );
+    let r = composed(&mut host, m, "? || Armed", remove("r.0"));
+    assert_eq!(r.source, "Armed");
+    let r = composed(&mut host, m, "!?", remove("r.0"));
+    assert_eq!((r.source.as_str(), r.select.as_deref()), ("?", Some("r")));
+    let r = composed(&mut host, m, "ButtonHeld && !?", remove("r.1.0"));
+    assert_eq!(r.source, "ButtonHeld && ?");
+    // a choice's outcome or condition becomes a slot again, never less
+    let r = composed(
+        &mut host,
+        m,
+        "if Armed then ButtonHeld else false",
+        remove("r.0"),
+    );
+    assert_eq!(r.source, "if ? then ButtonHeld else false");
+    let r = composed(
+        &mut host,
+        m,
+        "if ? then ButtonHeld else false",
+        remove("r.0"),
+    );
+    assert_eq!(r.source, "if ? then ButtonHeld else false");
+    // the whole choice
+    let r = composed(
+        &mut host,
+        m,
+        "if Armed then ButtonHeld else false",
+        remove("r"),
+    );
+    assert_eq!(r.source, "?");
 }
 
 mod round_trip {
@@ -1117,9 +1491,18 @@ mod round_trip {
                     inner.clone()
                 )
                     .prop_map(|(a, op, b)| format!("{a} {op} {b}")),
+                (
+                    inner.clone(),
+                    prop_oneof![Just("&&"), Just("||")],
+                    inner.clone()
+                )
+                    .prop_map(|(a, op, b)| format!("{a} {op} {b}")),
                 inner.clone().prop_map(|a| format!("({a})")),
                 inner.clone().prop_map(|a| format!("-{a}")),
-                (inner.clone(), inner).prop_map(|(a, b)| format!("min({a}, {b})")),
+                inner.clone().prop_map(|a| format!("!{a}")),
+                (inner.clone(), inner.clone()).prop_map(|(a, b)| format!("min({a}, {b})")),
+                (inner.clone(), inner.clone(), inner)
+                    .prop_map(|(c, a, b)| format!("if {c} then {a} else {b}")),
             ]
         })
     }
@@ -1136,6 +1519,14 @@ mod round_trip {
             K::Hole => "?".into(),
             K::Unary { op, expr } => format!("({op:?} {})", shape(expr)),
             K::Binary { op, lhs, rhs } => format!("({} {op:?} {})", shape(lhs), shape(rhs)),
+            K::If { cond, then, els } => {
+                format!(
+                    "(if {} then {} else {})",
+                    shape(cond),
+                    shape(then),
+                    shape(els)
+                )
+            }
             K::Call { callee, args } => format!(
                 "{}[{}]",
                 shape(callee),
@@ -1178,7 +1569,7 @@ mod round_trip {
         /// the original meaning back; a unit switch there and back keeps
         /// the tree's shape (the coordinate may be rewritten).
         #[test]
-        fn wrap_then_remove_restores_the_meaning(src in arb_expr(), op in prop_oneof![Just("+"), Just("*"), Just("/")]) {
+        fn wrap_then_remove_restores_the_meaning(src in arb_expr(), op in prop_oneof![Just("+"), Just("*"), Just("/"), Just("<"), Just("&&"), Just("||")]) {
             let lamp = lamp();
             let mut host = IdeHost::new(lamp.snapshot.clone());
             let m = lamp.dim_by_tilt;

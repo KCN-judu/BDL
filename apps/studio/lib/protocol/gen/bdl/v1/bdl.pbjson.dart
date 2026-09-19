@@ -3323,6 +3323,7 @@ const FormulaSlotResponse$json = {
       '6': '.bdl.v1.EquationCandidate',
       '10': 'equations'
     },
+    {'1': 'booleans', '3': 11, '4': 3, '5': 9, '10': 'booleans'},
   ],
   '8': [
     {'1': '_expected'},
@@ -3338,7 +3339,8 @@ final $typed_data.Uint8List formulaSlotResponseDescriptor = $convert
         'CgxpbnN1ZmZpY2llbnQYByABKAhSDGluc3VmZmljaWVudBIrCgV1bml0cxgIIAMoCzIVLmJkbC'
         '52MS5Vbml0Q2FuZGlkYXRlUgV1bml0cxI6CgpyZWZlcmVuY2VzGAkgAygLMhouYmRsLnYxLlJl'
         'ZmVyZW5jZUNhbmRpZGF0ZVIKcmVmZXJlbmNlcxI3CgllcXVhdGlvbnMYCiADKAsyGS5iZGwudj'
-        'EuRXF1YXRpb25DYW5kaWRhdGVSCWVxdWF0aW9uc0ILCglfZXhwZWN0ZWQ=');
+        'EuRXF1YXRpb25DYW5kaWRhdGVSCWVxdWF0aW9ucxIaCghib29sZWFucxgLIAMoCVIIYm9vbGVh'
+        'bnNCCwoJX2V4cGVjdGVk');
 
 @$core.Deprecated('Use unitCandidateDescriptor instead')
 const UnitCandidate$json = {
@@ -3453,6 +3455,7 @@ const ComposeAction$json = {
     {'1': 'remove', '3': 7, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'remove'},
     {'1': 'binder', '3': 8, '4': 1, '5': 11, '6': '.bdl.v1.ComposeBinder', '9': 0, '10': 'binder'},
     {'1': 'range', '3': 9, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'range'},
+    {'1': 'choose', '3': 10, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'choose'},
   ],
   '8': [
     {'1': 'action'},
@@ -3467,8 +3470,8 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'RfdW5pdBgFIAEoCzIWLmJkbC52MS5Db21wb3NlU2V0VW5pdEgAUgdzZXRVbml0EicKDnNldF9j'
         'b29yZGluYXRlGAYgASgJSABSDXNldENvb3JkaW5hdGUSJgoGcmVtb3ZlGAcgASgLMgwuYmRsLn'
         'YxLlVuaXRIAFIGcmVtb3ZlEi8KBmJpbmRlchgIIAEoCzIVLmJkbC52MS5Db21wb3NlQmluZGVy'
-        'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlQggKBmFjdG'
-        'lvbg==');
+        'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlEiYKBmNob2'
+        '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZUIICgZhY3Rpb24=');
 
 @$core.Deprecated('Use composeBinderDescriptor instead')
 const ComposeBinder$json = {

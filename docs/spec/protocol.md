@@ -115,38 +115,42 @@ Composer's view of the mapping's effective definition (its draft overlay, else
 the committed formula), `bdl_ide::formula_projection` (0.12): a `FormulaNode`
 per surface expression — tree-path `id`, byte `range` into `source`, `kind`
 (reference · number · quantity · bool · unary · binary · compare · call · slot ·
-opaque · binder · range — the last two 0.13), `text`, `name` (a binder's word),
-a quantity's `coordinate` / `unit` / `unit_id`, `entity`, `actual` and
-`expected` `TypeView { description, kind, dim?, concept_id?, element? }`
-(`element`, 0.13: what one element of a collection is; `kind` may be `unit`,
-0.14: the empty product `()`, a relationship's domain when it has no inputs —
-never a measurement unit), `because`, the diagnostics placed on it, `children`,
-and (0.13) `local` on a reference bound by an enclosing binder or rule, a
-binder's `param` and `param_type`; sets no overlay; `formula.not_applicable` for
-a definition by reference | | GetFormulaSlot { revision, mapping_id, source,
+opaque · binder · range — the last two 0.13 — · if, 0.17: a choice, children the
+condition and the two outcomes), `text`, `name` (a binder's word), a quantity's
+`coordinate` / `unit` / `unit_id`, `entity`, `actual` and `expected`
+`TypeView { description, kind, dim?, concept_id?, element? }` (`element`, 0.13:
+what one element of a collection is; `kind` may be `unit`, 0.14: the empty
+product `()`, a relationship's domain when it has no inputs — never a
+measurement unit), `because`, the diagnostics placed on it, `children`, and
+(0.13) `local` on a reference bound by an enclosing binder or rule, a binder's
+`param` and `param_type`; sets no overlay; `formula.not_applicable` for a
+definition by reference | | GetFormulaSlot { revision, mapping_id, source,
 node_id, component? } | FormulaSlotResponse { revision, mapping_id, node_id,
 expected?, explanation, technical, insufficient, units[] { id, symbol, measures
 }, references[] { label, insert, entity?, produces, relevance }, equations[] {
-name, shape, insert, summary } } | sets the overlay to `source`, then
-`bdl_ide::formula_slot`: what the position expects by local dimension inference
-and what fits — the units of the solved dimension (a literal's own dimension for
-a literal), the design's references by type, the library's equations whose
-result fits and whose capabilities hold; `insufficient` for a product or
-quotient of two unknowns | | ComposeFormula { revision, mapping_id, source,
-action ComposeAction { node_id, fill \| operator { op, before } \| call { name,
-arity } \| set_unit { unit_id, preserve_value } \| set_coordinate \| remove \|
-binder { form } \| range (0.13) }, component? } | ComposeFormulaResponse {
-revision, mapping_id, source, edits[] DraftTextEdit { start, end, new_text },
-select } | `bdl_ide::compose`: the text the structured action makes, as the
-whole draft and as byte-range edits, with the node to select next; the overlay
-is set to the request's `source`, never to the answer — Studio puts the answer
-into its draft and `AnalyzeDefinitionDraft` follows;
-`DefinitionDraftAnalysis.projection` (0.12) carries the projection of every
-verdict | | ListLibraryItems | LibraryItemsResponse { libraries[] { id, name,
-schema_version, version, items[] { id, category, display_name, description,
-group, keywords[], icon, creates[] { kind, key, name, type_name, signature,
-description, representation?, unit }, concept? } }, quantities[] { id,
-type_name, unit, dim } } | the libraries the daemon serves (the Standard
+name, shape, insert, summary }, booleans[] (0.17) } | sets the overlay to
+`source`, then `bdl_ide::formula_slot`: what the position expects by local
+dimension inference and what fits — the units of the solved dimension (a
+literal's own dimension for a literal), the design's references by type, the
+library's equations whose result fits and whose capabilities hold, the truth
+values `true` / `false` as text where the position is true or false or a concept
+represented by one; `insufficient` for a product or quotient of two unknowns | |
+ComposeFormula { revision, mapping_id, source, action ComposeAction { node_id,
+fill \| operator { op, before } (0.17: op `!` is the prefix form, `!node`, no
+slot) \| call { name, arity } \| set_unit { unit_id, preserve_value } \|
+set_coordinate \| remove \| binder { form } \| range (0.13) \| choose (0.17: a
+slot becomes `if ? then ? else ?`, any other node `if ? then node else ?`) },
+component? } | ComposeFormulaResponse { revision, mapping_id, source, edits[]
+DraftTextEdit { start, end, new_text }, select } | `bdl_ide::compose`: the text
+the structured action makes, as the whole draft and as byte-range edits, with
+the node to select next; the overlay is set to the request's `source`, never to
+the answer — Studio puts the answer into its draft and `AnalyzeDefinitionDraft`
+follows; `DefinitionDraftAnalysis.projection` (0.12) carries the projection of
+every verdict | | ListLibraryItems | LibraryItemsResponse { libraries[] { id,
+name, schema_version, version, items[] { id, category, display_name,
+description, group, keywords[], icon, creates[] { kind, key, name, type_name,
+signature, description, representation?, unit }, concept? } }, quantities[] {
+id, type_name, unit, dim } } | the libraries the daemon serves (the Standard
 Library, `library/std/concepts.toml`) as items — `category` is `concept` or
 `source`, `creates` what instantiating one makes, in order, with the default
 names and the fragment keys `names` may address, `concept` the template view of
