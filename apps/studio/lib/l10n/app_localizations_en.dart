@@ -982,6 +982,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get thisPartIsEditedAsText => 'This part is edited as text.';
 
   @override
+  String get composeChoose => 'Choose';
+
+  @override
+  String get aChoiceIfThenElse => 'A choice: if … then … else …';
+
+  @override
+  String get negateThis => 'Negate this: not …';
+
+  @override
   String get readingTheSources => 'Reading the sources…';
 
   @override

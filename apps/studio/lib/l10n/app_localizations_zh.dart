@@ -935,6 +935,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get thisPartIsEditedAsText => '这一部分以文本方式编辑。';
 
   @override
+  String get composeChoose => '选择';
+
+  @override
+  String get aChoiceIfThenElse => '选择：if … then … else …';
+
+  @override
+  String get negateThis => '取反：not …';
+
+  @override
   String get readingTheSources => '正在读取源码…';
 
   @override

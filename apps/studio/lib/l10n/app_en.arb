@@ -1230,6 +1230,18 @@
   "@thisPartIsEditedAsText": {
     "description": "Studio UI text (formula_composer.dart)."
   },
+  "composeChoose": "Choose",
+  "@composeChoose": {
+    "description": "Composer: wrap the component in a choice (if … then … else …), or open one in a slot."
+  },
+  "aChoiceIfThenElse": "A choice: if … then … else …",
+  "@aChoiceIfThenElse": {
+    "description": "Composer: the Choose button's tooltip."
+  },
+  "negateThis": "Negate this: not …",
+  "@negateThis": {
+    "description": "Composer: the not button's tooltip."
+  },
   "readingTheSources": "Reading the sources…",
   "@readingTheSources": {
     "description": "Studio UI text (code_pane.dart)."

@@ -942,6 +942,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get thisPartIsEditedAsText => 'この部分はテキストとして編集されています。';
 
   @override
+  String get composeChoose => '選択';
+
+  @override
+  String get aChoiceIfThenElse => '選択：if … then … else …';
+
+  @override
+  String get negateThis => '否定：not …';
+
+  @override
   String get readingTheSources => 'ソースを読み込み中…';
 
   @override

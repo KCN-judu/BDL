@@ -1941,6 +1941,24 @@ abstract class AppLocalizations {
   /// **'This part is edited as text.'**
   String get thisPartIsEditedAsText;
 
+  /// Composer: wrap the component in a choice (if … then … else …), or open one in a slot.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get composeChoose;
+
+  /// Composer: the Choose button's tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'A choice: if … then … else …'**
+  String get aChoiceIfThenElse;
+
+  /// Composer: the not button's tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Negate this: not …'**
+  String get negateThis;
+
   /// Studio UI text (code_pane.dart).
   ///
   /// In en, this message translates to:

@@ -293,6 +293,124 @@ void main() {
     },
   );
 
+  test(
+    'boolean logic and a choice are assembled without typing, and typed text comes back structured',
+    () async {
+      if (bdld == null) {
+        markTestSkipped('bdld not built');
+        return;
+      }
+      store = TestStore(
+        spawn: DaemonClient.spawn,
+        executable: bdld,
+        draftDebounce: const Duration(milliseconds: 10),
+      );
+      store.dispatch(const AppStarted());
+      await store.until((s) => s.connection is Connected || s.connection is ConnectionFailed);
+      dir = await Directory.systemTemp.createTemp('bdl-studio-composer');
+      try {
+        store.dispatch(NewProjectRequested(rootPath: p.join(dir.path, 'ac'), name: 'ac'));
+        await store.until((s) => s.project != null);
+        store.dispatch(
+          CreateConceptRequested(
+            name: 'RoomTemp',
+            representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+          ),
+        );
+        await settled();
+        for (final name in ['ButtonHeld', 'SwitchState']) {
+          store.dispatch(
+            CreateConceptRequested(
+              name: name,
+              representation: pb.Representation(boolean: pb.Unit()),
+            ),
+          );
+          await settled();
+        }
+        store.dispatch(
+          CreateMappingRequested(
+            name: 'AirConditionerCtrl',
+            inputs: [conceptId('RoomTemp'), conceptId('ButtonHeld')],
+            output: conceptId('SwitchState'),
+          ),
+        );
+        await settled();
+        final id = mappingId();
+        store.dispatch(SelectionChanged(MappingSelected(id)));
+        await store.until((s) => s.analysis != null);
+        pb.ComposeAction after(String node, String op) => pb.ComposeAction(
+          nodeId: node,
+          operator: pb.ComposeOperator(op: op, before: false),
+        );
+        // `RoomTemp > 299.15 K && ButtonHeld`, from the empty slot
+        var src = await composed(pb.ComposeAction(nodeId: 'r', fill: 'RoomTemp'));
+        src = await composed(after('r', '>'));
+        expect(src, 'RoomTemp > ?');
+        var slot = await slotOf('r.1');
+        expect(slot.expected.description, 'a temperature');
+        expect(slot.units.map((u) => u.symbol), contains('K'));
+        expect(slot.booleans, isEmpty);
+        src = await composed(pb.ComposeAction(nodeId: 'r.1', fill: '299.15 K'));
+        src = await composed(after('r', '&&'));
+        expect(src, 'RoomTemp > 299.15 K && ?');
+        // the slot is a truth value: the two literals, ButtonHeld first
+        slot = await slotOf('r.1');
+        expect(slot.booleans, ['true', 'false']);
+        expect(slot.references.first.label, 'ButtonHeld');
+        expect(slot.references.map((r) => r.label), isNot(contains('RoomTemp')));
+        src = await composed(pb.ComposeAction(nodeId: 'r.1', fill: 'ButtonHeld'));
+        expect(src, 'RoomTemp > 299.15 K && ButtonHeld');
+        var proj = await projected();
+        expect(proj.complete, isTrue);
+        expect(
+          store.state.draft(id)!.analysis!.status,
+          pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
+        );
+        // the same as the condition of a choice, from the choice down
+        store.dispatch(DefinitionDraftChanged(mappingId: id, source: ''));
+        await store.until((s) => (s.draft(id)?.source ?? 'x') == '');
+        src = await composed(pb.ComposeAction(nodeId: 'r', choose: pb.Unit()));
+        expect(src, 'if ? then ? else ?');
+        src = await composed(pb.ComposeAction(nodeId: 'r.0', fill: 'RoomTemp'));
+        src = await composed(after('r.0', '>'));
+        src = await composed(pb.ComposeAction(nodeId: 'r.0.1', fill: '299.15 K'));
+        src = await composed(after('r.0', '&&'));
+        src = await composed(pb.ComposeAction(nodeId: 'r.0.1', fill: 'ButtonHeld'));
+        expect(src, 'if RoomTemp > 299.15 K && ButtonHeld then ? else ?');
+        slot = await slotOf('r.1');
+        expect(slot.expected.description, 'a SwitchState (true or false)');
+        expect(slot.booleans, ['true', 'false']);
+        src = await composed(pb.ComposeAction(nodeId: 'r.1', fill: 'true'));
+        src = await composed(pb.ComposeAction(nodeId: 'r.2', fill: 'false'));
+        const choice = 'if RoomTemp > 299.15 K && ButtonHeld then true else false';
+        expect(src, choice);
+        proj = await projected();
+        expect(proj.complete, isTrue);
+        expect(proj.root.kind, 'if');
+        // `not` in place, on the condition's right side
+        src = await composed(after('r.0.1', '!'));
+        expect(src, 'if RoomTemp > 299.15 K && !ButtonHeld then true else false');
+        // the same text typed in the Text view comes back fully structured
+        store.dispatch(DefinitionDraftChanged(mappingId: id, source: choice));
+        final s = await store.until((s) => s.draft(id)?.projection?.source == choice);
+        final root = s.draft(id)!.projection!.root;
+        bool opaque(pb.FormulaNode n) => n.kind == 'opaque' || n.children.any(opaque);
+        expect(opaque(root), isFalse, reason: '$root');
+        expect(root.kind, 'if');
+        expect(root.children.map((c) => c.kind), ['compare', 'bool', 'bool']);
+        expect(root.children[0].name, '&&');
+        expect(root.children[0].children[0].name, '>');
+        expect(root.children[0].expected.description, 'true or false');
+        expect(root.children[1].expected.description, 'a SwitchState (true or false)');
+        expect(s.draft(id)!.projection!.complete, isTrue);
+        expect(s.draft(id)!.source, choice);
+      } finally {
+        await store.dispose();
+        await dir.delete(recursive: true);
+      }
+    },
+  );
+
   test('a torque slot infers a length and a product of two unknowns is not guessed', () async {
     if (bdld == null) {
       markTestSkipped('bdld not built');

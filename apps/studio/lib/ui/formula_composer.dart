@@ -16,15 +16,32 @@
 /// its concept's socket glyph (shape = kind of value); a literal is two
 /// fields, the coordinate and its unit pop-up (18A: only a literal owns a
 /// unit picker; a reference's kind comes from its declaration); an
-/// operator is its glyph; a call is its name and parentheses; an
+/// operator is its glyph (`×`, `÷`, `≤`; the logical ones their words,
+/// `and`, `or`, `not`, in the keyword weight — the operator's reading, as
+/// `×` is `*`'s); a call is its name and parentheses; a choice is `if` and
+/// its condition on one line with `then` and `else` and their outcomes
+/// indented under it (as a binder's body is under its head); an
 /// unsupported form is its text.  Selection is the selection tint;
 /// keyboard focus the accent ring; an error the diagnostic row's words and
 /// the red underline — never colour alone.
 ///
-/// Keys: Tab moves between components in reading order; on a selected
-/// component `+ − * /` insert that operator after it, ⌫ removes it; in a
-/// slot's number entry digits type and Return inserts; Esc clears the
-/// selection.
+/// Typing is primary and the structure is a live rendering of what was
+/// typed (the Text view is the same draft): every key here is a
+/// structured action the compiler answers with text.  Keys: Tab moves
+/// between components in reading order; on a selected component
+///
+///   `+` `-` `*` `/`   insert that operator after it, with a slot;
+///   `<` `>`           a comparison after it (`<=`, `>=`, `!=` from the
+///                     Compare pop-up);
+///   `=`               `==` after it;
+///   `&` `|`           `&&`, `||` after it;
+///   `!`               negates it in place (`!…`, no slot);
+///   ⌫                 removes it (a slot's operator goes with it);
+///   Esc               clears the selection;
+///
+/// in a slot's number entry digits type and Return inserts.  What a slot
+/// offers is the compiler's: for a position that is true or false, the
+/// two truth values and the references that produce one.
 library;
 
 import 'package:flutter/material.dart';
@@ -88,11 +105,38 @@ class _FormulaComposerState extends State<FormulaComposer> {
 
   String? get _selected => widget.composer.selectedNode;
 
-  void _select(String? id) =>
-      widget.dispatch(FormulaNodeSelected(mappingId: widget.mappingId, nodeId: id));
+  /// Selects `id`; a click also takes the keyboard focus, so the keys act
+  /// on the selection (a slot's number entry, built next, takes it back
+  /// for its digits).  A literal's own field selects without taking it —
+  /// the field has it.
+  void _select(String? id, {bool focus = true}) {
+    widget.dispatch(FormulaNodeSelected(mappingId: widget.mappingId, nodeId: id));
+    if (id != null && focus) _focus.requestFocus();
+  }
 
   void _compose(pb.ComposeAction a) =>
       widget.dispatch(ComposeRequested(mappingId: widget.mappingId, action: a));
+
+  /// Whether a component is a truth value, by what the compiler found it
+  /// to be: true or false, or a concept represented by one; `null` while
+  /// nothing is known.  Presentation only — it decides which actions are
+  /// offered, never whether they are right.
+  bool? _truthValued(pb.FormulaNode? n) {
+    if (n == null || !n.hasActual()) return null;
+    final a = n.actual;
+    switch (a.kind) {
+      case 'boolean':
+        return true;
+      case 'unknown':
+        return null;
+      case 'concept':
+        final c = a.hasConceptId() ? widget.concepts[a.conceptId.toInt()] : null;
+        if (c == null || !c.hasRepresentation()) return null;
+        return c.representation.hasBoolean();
+      default:
+        return false;
+    }
+  }
 
   pb.FormulaNode? _find(pb.FormulaNode? n, String id) {
     if (n == null) return null;
@@ -116,13 +160,31 @@ class _FormulaComposerState extends State<FormulaComposer> {
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
       return KeyEventResult.ignored;
     }
-    final ch = e.character;
-    final op = switch (ch) {
+    final k = e.logicalKey;
+    final op = switch (e.character) {
       '+' => '+',
       '-' => '-',
       '*' => '*',
       '/' => '/',
-      _ => null,
+      '<' => '<',
+      '>' => '>',
+      '=' => '==',
+      '&' => '&&',
+      '|' => '||',
+      '!' => '!',
+      _ => switch (k) {
+        LogicalKeyboardKey.add => '+',
+        LogicalKeyboardKey.minus => '-',
+        LogicalKeyboardKey.asterisk => '*',
+        LogicalKeyboardKey.slash => '/',
+        LogicalKeyboardKey.less => '<',
+        LogicalKeyboardKey.greater => '>',
+        LogicalKeyboardKey.equal => '==',
+        LogicalKeyboardKey.ampersand => '&&',
+        LogicalKeyboardKey.bar => '||',
+        LogicalKeyboardKey.exclamation => '!',
+        _ => null,
+      },
     };
     if (op != null) {
       _compose(
@@ -223,6 +285,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
               node: selectedNode,
               slot: widget.composer.slot,
               pending: pending,
+              truthValued: _truthValued(selectedNode),
               onCompose: _compose,
               onDeselect: () => _select(null),
             ),
@@ -347,7 +410,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
             error: hasError,
             enabled: enabled,
             units: isSelected ? widget.composer.slot?.units ?? const [] : const [],
-            onSelect: () => _select(n.id),
+            onSelect: () => _select(n.id, focus: false),
             onCoordinate: (v) => _compose(pb.ComposeAction(nodeId: n.id, setCoordinate: v)),
             onUnit: (id) => _compose(
               pb.ComposeAction(
@@ -370,7 +433,14 @@ class _FormulaComposerState extends State<FormulaComposer> {
         ];
       case 'unary':
         inner = [
-          _Glyph(n.name, selected: isSelected, onTap: enabled ? () => _select(n.id) : null),
+          _Glyph(
+            _operatorGlyph(n.name),
+            key: ValueKey('node-${n.id}'),
+            selected: isSelected,
+            error: hasError,
+            keyword: _isWord(n.name),
+            onTap: enabled ? () => _select(n.id) : null,
+          ),
           ..._pieces(n.children[0], selected, enabled),
         ];
       case 'binary' || 'compare':
@@ -381,9 +451,47 @@ class _FormulaComposerState extends State<FormulaComposer> {
             key: ValueKey('node-${n.id}'),
             selected: isSelected,
             error: hasError,
+            keyword: _isWord(n.name),
             onTap: enabled ? () => _select(n.id) : null,
           ),
           ..._pieces(n.children[1], selected, enabled),
+        ];
+      case 'if':
+        // `if` and the condition on one line, each outcome indented under
+        // its word — the three words name the choice, as a binder's do
+        Widget part(String word, pb.FormulaNode child, {Key? key}) => Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            _Glyph(
+              word,
+              key: key,
+              selected: isSelected,
+              error: hasError,
+              keyword: true,
+              onTap: enabled ? () => _select(n.id) : null,
+            ),
+            ..._pieces(child, selected, enabled),
+          ],
+        );
+        inner = [
+          Column(
+            key: ValueKey('if-${n.id}'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              part('if', n.children[0], key: ValueKey('node-${n.id}')),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 4),
+                child: part('then', n.children[1]),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 4),
+                child: part('else', n.children[2]),
+              ),
+            ],
+          ),
         ];
       case 'call':
         inner = [
@@ -438,8 +546,14 @@ String _operatorGlyph(String op) => switch (op) {
   '<=' => '≤',
   '>=' => '≥',
   '!=' => '≠',
+  '&&' => 'and',
+  '||' => 'or',
+  '!' => 'not',
   _ => op,
 };
+
+/// The operators drawn as words of the language rather than symbols.
+bool _isWord(String op) => op == '&&' || op == '||' || op == '!';
 
 /// One selectable component.
 class _Chip extends StatelessWidget {
@@ -718,6 +832,7 @@ class _SlotPanel extends StatefulWidget {
     required this.node,
     required this.slot,
     required this.pending,
+    required this.truthValued,
     required this.onCompose,
     required this.onDeselect,
   });
@@ -726,6 +841,11 @@ class _SlotPanel extends StatefulWidget {
   final pb.FormulaNode? node;
   final pb.FormulaSlotResponse? slot;
   final bool pending;
+
+  /// Whether the selected component is a truth value (`null`: not known):
+  /// the logical operators are offered unless it is not one, a range
+  /// unless it is one.
+  final bool? truthValued;
   final void Function(pb.ComposeAction) onCompose;
   final VoidCallback onDeselect;
 
@@ -806,37 +926,52 @@ class _SlotPanelState extends State<_SlotPanel> {
         // 2. what to put here: a number (with its unit, 18C), a reference,
         //    an equation — or, on a component, an operator around it
         if (_isSlot) ...[
-          // a number: the coordinate, its unit (the compiler's list for the
-          // slot's dimension), Insert — the literal's construction (18B.1)
-          Row(
-            spacing: MacMetrics.gapTight,
-            children: [
-              Expanded(
-                child: MacTextField(
-                  key: const ValueKey('slot-number'),
-                  controller: _number,
-                  focusNode: _numberFocus,
-                  autofocus: true,
-                  monospace: true,
-                  hint: 'number',
-                  onSubmitted: (_) => _insertNumber(),
+          if (s != null && s.booleans.isNotEmpty)
+            // a truth value: the two literals, as written
+            Row(
+              spacing: MacMetrics.gapTight,
+              children: [
+                for (final b in s.booleans)
+                  MacButton(
+                    key: ValueKey('bool-$b'),
+                    label: b,
+                    onPressed: widget.pending ? null : () => _fill(b),
+                  ),
+              ],
+            )
+          else
+            // a number: the coordinate, its unit (the compiler's list for
+            // the slot's dimension), Insert — the literal's construction
+            // (18B.1)
+            Row(
+              spacing: MacMetrics.gapTight,
+              children: [
+                Expanded(
+                  child: MacTextField(
+                    key: const ValueKey('slot-number'),
+                    controller: _number,
+                    focusNode: _numberFocus,
+                    autofocus: true,
+                    monospace: true,
+                    hint: 'number',
+                    onSubmitted: (_) => _insertNumber(),
+                  ),
                 ),
-              ),
-              if (units.isNotEmpty)
-                MacDropdown<String>(
-                  key: const ValueKey('slot-unit'),
-                  compact: true,
-                  value: unitSymbol,
-                  hint: unitSymbol,
-                  items: [for (final u in units) u.symbol],
-                  onChanged: (v) => setState(() => _unit = v),
+                if (units.isNotEmpty)
+                  MacDropdown<String>(
+                    key: const ValueKey('slot-unit'),
+                    compact: true,
+                    value: unitSymbol,
+                    hint: unitSymbol,
+                    items: [for (final u in units) u.symbol],
+                    onChanged: (v) => setState(() => _unit = v),
+                  ),
+                MacButton(
+                  label: context.l10n.insert,
+                  onPressed: widget.pending ? null : _insertNumber,
                 ),
-              MacButton(
-                label: context.l10n.insert,
-                onPressed: widget.pending ? null : _insertNumber,
-              ),
-            ],
-          ),
+              ],
+            ),
           if (s != null && s.insufficient)
             Padding(
               padding: const EdgeInsets.only(top: MacMetrics.gapTight),
@@ -870,6 +1005,41 @@ class _SlotPanelState extends State<_SlotPanel> {
               ],
             ),
           ],
+          if (s != null) ...[
+            const SizedBox(height: MacMetrics.gap),
+            // the forms a slot can open: a choice (any kind of value), a
+            // negation (a truth value, or not yet known)
+            Wrap(
+              spacing: MacMetrics.gapTight,
+              runSpacing: MacMetrics.gapTight,
+              children: [
+                MacButton(
+                  key: const ValueKey('op-choose'),
+                  label: context.l10n.composeChoose,
+                  tooltip: context.l10n.aChoiceIfThenElse,
+                  onPressed: widget.pending
+                      ? null
+                      : () => widget.onCompose(
+                          pb.ComposeAction(nodeId: widget.nodeId, choose: pb.Unit()),
+                        ),
+                ),
+                if (s.booleans.isNotEmpty || !s.hasExpected())
+                  MacButton(
+                    key: const ValueKey('op-not'),
+                    label: 'not',
+                    tooltip: context.l10n.negateThis,
+                    onPressed: widget.pending
+                        ? null
+                        : () => widget.onCompose(
+                            pb.ComposeAction(
+                              nodeId: widget.nodeId,
+                              operator: pb.ComposeOperator(op: '!', before: false),
+                            ),
+                          ),
+                  ),
+              ],
+            ),
+          ],
         ] else ...[
           Wrap(
             spacing: MacMetrics.gapTight,
@@ -890,6 +1060,37 @@ class _SlotPanelState extends State<_SlotPanel> {
                           ),
                         ),
                 ),
+              // the logical operators, on what may be a truth value: `and`
+              // and `or` take a slot after it, `not` wraps it in place
+              if (widget.truthValued != false) ...[
+                for (final op in const ['&&', '||'])
+                  MacButton(
+                    key: ValueKey('op-$op'),
+                    label: _operatorGlyph(op),
+                    tooltip: context.l10n.insertAfterThis(op),
+                    onPressed: widget.pending
+                        ? null
+                        : () => widget.onCompose(
+                            pb.ComposeAction(
+                              nodeId: widget.nodeId,
+                              operator: pb.ComposeOperator(op: op, before: false),
+                            ),
+                          ),
+                  ),
+                MacButton(
+                  key: const ValueKey('op-not'),
+                  label: _operatorGlyph('!'),
+                  tooltip: context.l10n.negateThis,
+                  onPressed: widget.pending
+                      ? null
+                      : () => widget.onCompose(
+                          pb.ComposeAction(
+                            nodeId: widget.nodeId,
+                            operator: pb.ComposeOperator(op: '!', before: false),
+                          ),
+                        ),
+                ),
+              ],
               MacDropdown<String>(
                 key: const ValueKey('op-compare'),
                 compact: true,
@@ -941,7 +1142,7 @@ class _SlotPanelState extends State<_SlotPanel> {
                     ),
                   ),
                 ),
-              if (n == null || !n.hasActual() || n.actual.kind != 'boolean')
+              if (widget.truthValued != true)
                 MacButton(
                   key: const ValueKey('op-range'),
                   label: context.l10n.range,
@@ -952,6 +1153,17 @@ class _SlotPanelState extends State<_SlotPanel> {
                           pb.ComposeAction(nodeId: widget.nodeId, range: pb.Unit()),
                         ),
                 ),
+              // a choice around it: the component becomes one outcome
+              MacButton(
+                key: const ValueKey('op-choose'),
+                label: context.l10n.composeChoose,
+                tooltip: context.l10n.aChoiceIfThenElse,
+                onPressed: widget.pending
+                    ? null
+                    : () => widget.onCompose(
+                        pb.ComposeAction(nodeId: widget.nodeId, choose: pb.Unit()),
+                      ),
+              ),
               MacButton(
                 key: const ValueKey('op-remove'),
                 label: context.l10n.remove,

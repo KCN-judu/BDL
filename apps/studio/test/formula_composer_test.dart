@@ -15,6 +15,7 @@ import 'package:bdl_studio/ui/definition_editor.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const tilt = 0;
@@ -247,6 +248,194 @@ pb.FormulaProjection binderOverRange() => pb.FormulaProjection(
       ),
     ],
   ),
+);
+
+// ---- the air conditioner: boolean logic and a choice ---------------------------
+
+const roomTemp = 10;
+const buttonHeld = 11;
+const switchState = 12;
+
+/// `AirConditionerCtrl : RoomTemp -> ButtonHeld -> SwitchState`.
+pb.ProjectProjection airConditioner({String? definition}) {
+  final p = pb.ProjectProjection(revision: Int64(1), name: 'ac', rootPath: '/p')
+    ..concepts.addAll([
+      pb.ConceptView(
+        id: Int64(roomTemp),
+        name: 'RoomTemp',
+        representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+      ),
+      pb.ConceptView(
+        id: Int64(buttonHeld),
+        name: 'ButtonHeld',
+        representation: pb.Representation(boolean: pb.Unit()),
+      ),
+      pb.ConceptView(
+        id: Int64(switchState),
+        name: 'SwitchState',
+        representation: pb.Representation(boolean: pb.Unit()),
+      ),
+    ])
+    ..mappings.add(
+      pb.MappingView(
+        id: Int64(dim),
+        name: 'AirConditionerCtrl',
+        signature: pb.Signature(
+          inputs: [Int64(roomTemp), Int64(buttonHeld)],
+          output: Int64(switchState),
+        ),
+        definition: definition == null ? null : pb.Definition(formula: definition),
+      ),
+    );
+  return p;
+}
+
+pb.TypeView truth() => pb.TypeView(description: 'true or false', kind: 'boolean');
+pb.TypeView temperature() =>
+    pb.TypeView(description: 'a temperature', kind: 'quantity', dim: pb.Dim(temperature: 1));
+
+/// `RoomTemp > 299.15 K && ButtonHeld` — or, with `held` false, the same
+/// with a slot in ButtonHeld's place — as the compiler projects it, rooted
+/// at `id` from byte `at`.
+pb.FormulaNode warmAndHeld({String id = 'r', int at = 0, bool held = true}) {
+  final right = held ? 'ButtonHeld' : '?';
+  final text = 'RoomTemp > 299.15 K && $right';
+  return pb.FormulaNode(
+    id: id,
+    kind: 'compare',
+    name: '&&',
+    text: text,
+    range: pb.SourceSpan(start: at, end: at + text.length),
+    actual: truth(),
+    children: [
+      pb.FormulaNode(
+        id: '$id.0',
+        kind: 'compare',
+        name: '>',
+        text: 'RoomTemp > 299.15 K',
+        range: pb.SourceSpan(start: at, end: at + 19),
+        actual: truth(),
+        expected: truth(),
+        children: [
+          pb.FormulaNode(
+            id: '$id.0.0',
+            kind: 'reference',
+            name: 'RoomTemp',
+            text: 'RoomTemp',
+            range: pb.SourceSpan(start: at, end: at + 8),
+            entity: pb.EntityRef(conceptId: Int64(roomTemp)),
+            actual: pb.TypeView(
+              description: 'a RoomTemp',
+              kind: 'concept',
+              dim: pb.Dim(temperature: 1),
+              conceptId: Int64(roomTemp),
+            ),
+            expected: temperature(),
+          ),
+          pb.FormulaNode(
+            id: '$id.0.1',
+            kind: 'quantity',
+            coordinate: '299.15',
+            unit: 'K',
+            unitId: 'temperature.K',
+            text: '299.15 K',
+            range: pb.SourceSpan(start: at + 11, end: at + 19),
+            actual: temperature(),
+            expected: temperature(),
+          ),
+        ],
+      ),
+      held
+          ? pb.FormulaNode(
+              id: '$id.1',
+              kind: 'reference',
+              name: 'ButtonHeld',
+              text: 'ButtonHeld',
+              range: pb.SourceSpan(start: at + 23, end: at + 33),
+              entity: pb.EntityRef(conceptId: Int64(buttonHeld)),
+              actual: pb.TypeView(
+                description: 'a ButtonHeld',
+                kind: 'concept',
+                conceptId: Int64(buttonHeld),
+              ),
+              expected: truth(),
+            )
+          : pb.FormulaNode(
+              id: '$id.1',
+              kind: 'slot',
+              text: '?',
+              range: pb.SourceSpan(start: at + 23, end: at + 24),
+              expected: truth(),
+              because: 'both sides of a logical operator are true or false',
+            ),
+    ],
+  );
+}
+
+/// `if RoomTemp > 299.15 K && ButtonHeld then true else false`.
+pb.FormulaProjection warmAndHeldChoice() {
+  const text = 'if RoomTemp > 299.15 K && ButtonHeld then true else false';
+  final result = pb.TypeView(
+    description: 'a SwitchState (true or false)',
+    kind: 'concept',
+    conceptId: Int64(switchState),
+  );
+  return pb.FormulaProjection(
+    source: text,
+    parseOk: true,
+    complete: true,
+    result: result,
+    root: pb.FormulaNode(
+      id: 'r',
+      kind: 'if',
+      text: text,
+      range: pb.SourceSpan(start: 0, end: text.length),
+      actual: truth(),
+      expected: result,
+      children: [
+        warmAndHeld(id: 'r.0', at: 3)..expected = truth(),
+        pb.FormulaNode(
+          id: 'r.1',
+          kind: 'bool',
+          name: 'true',
+          text: 'true',
+          range: pb.SourceSpan(start: 42, end: 46),
+          actual: truth(),
+          expected: result,
+        ),
+        pb.FormulaNode(
+          id: 'r.2',
+          kind: 'bool',
+          name: 'false',
+          text: 'false',
+          range: pb.SourceSpan(start: 52, end: 57),
+          actual: truth(),
+          expected: result,
+        ),
+      ],
+    ),
+  );
+}
+
+/// What a truth-valued slot offers: the two literals and ButtonHeld first.
+pb.FormulaSlotResponse truthSlot(String node) => pb.FormulaSlotResponse(
+  revision: Int64(1),
+  mappingId: Int64(dim),
+  nodeId: node,
+  expected: truth(),
+  explanation:
+      'Expected: true or false, because both sides of a logical operator are true or false.',
+  technical: 'expected true or false',
+  booleans: ['true', 'false'],
+  references: [
+    pb.ReferenceCandidate(
+      label: 'ButtonHeld',
+      insert: 'ButtonHeld',
+      entity: pb.EntityRef(conceptId: Int64(buttonHeld)),
+      produces: 'ButtonHeld (true or false)',
+      relevance: 90,
+    ),
+  ],
 );
 
 pb.FormulaSlotResponse angleSlot(String node) => pb.FormulaSlotResponse(
@@ -1179,6 +1368,232 @@ void main() {
         ),
       );
       expect(h.effects.whereType<ComposeFormula>(), isEmpty);
+    });
+
+    testWidgets('a truth value offers and, or, not and Choose; a quantity offers none of them', (
+      t,
+    ) async {
+      const src = 'RoomTemp > 299.15 K && ButtonHeld';
+      var s = connected(airConditioner());
+      s = drafted(
+        s,
+        src,
+        projection: pb.FormulaProjection(
+          source: src,
+          parseOk: true,
+          complete: true,
+          root: warmAndHeld(),
+        ),
+      );
+      final h = await pump(t, s);
+      // the operator is its word, in the language's weight; the
+      // comparison its symbol
+      expect(find.text('and'), findsOneWidget);
+      expect(find.text('&&'), findsNothing);
+      expect(find.text('>'), findsOneWidget);
+      // ButtonHeld: a truth value
+      await t.tap(find.byKey(const ValueKey('node-r.1')));
+      await t.pump();
+      var e = h.effects.whereType<GetFormulaSlot>().single;
+      h.answer(FormulaSlotReceived(generation: e.generation, result: truthSlot('r.1')));
+      await t.pump();
+      for (final k in ['op-&&', 'op-||', 'op-not', 'op-choose', 'op-+', 'op-remove']) {
+        expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
+      }
+      expect(find.byKey(const ValueKey('op-range')), findsNothing);
+      await t.tap(find.byKey(const ValueKey('op-||')));
+      await t.pump();
+      var c = h.effects.whereType<ComposeFormula>().single;
+      expect(
+        (c.action.nodeId, c.action.operator.op, c.action.operator.before),
+        ('r.1', '||', false),
+      );
+      h.answer(
+        ComposeReceived(
+          generation: c.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: '$src || ?',
+            select: 'r.1',
+          ),
+        ),
+      );
+      // `not` wraps in place; `Choose` makes the component an outcome
+      final again = await pump(
+        t,
+        drafted(
+          connected(airConditioner()),
+          src,
+          projection: pb.FormulaProjection(
+            source: src,
+            parseOk: true,
+            complete: true,
+            root: warmAndHeld(),
+          ),
+        ),
+      );
+      await t.tap(find.byKey(const ValueKey('node-r')));
+      await t.pump();
+      e = again.effects.whereType<GetFormulaSlot>().single;
+      again.answer(FormulaSlotReceived(generation: e.generation, result: truthSlot('r')));
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('op-not')));
+      await t.pump();
+      c = again.effects.whereType<ComposeFormula>().single;
+      expect((c.action.nodeId, c.action.operator.op), ('r', '!'));
+      // RoomTemp: a temperature — no logical operator, a range
+      final third = await pump(
+        t,
+        drafted(
+          connected(airConditioner()),
+          src,
+          projection: pb.FormulaProjection(
+            source: src,
+            parseOk: true,
+            complete: true,
+            root: warmAndHeld(),
+          ),
+        ),
+      );
+      await t.tap(find.byKey(const ValueKey('node-r.0.0')));
+      await t.pump();
+      e = third.effects.whereType<GetFormulaSlot>().single;
+      third.answer(
+        FormulaSlotReceived(
+          generation: e.generation,
+          result: pb.FormulaSlotResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            nodeId: 'r.0.0',
+            expected: temperature(),
+          ),
+        ),
+      );
+      await t.pump();
+      for (final k in ['op-&&', 'op-||', 'op-not']) {
+        expect(find.byKey(ValueKey(k)), findsNothing, reason: k);
+      }
+      expect(find.byKey(const ValueKey('op-range')), findsOneWidget);
+      expect(find.byKey(const ValueKey('op-choose')), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('op-choose')));
+      await t.pump();
+      c = third.effects.whereType<ComposeFormula>().single;
+      expect(c.action.nodeId, 'r.0.0');
+      expect(c.action.hasChoose(), isTrue);
+    });
+
+    testWidgets('the keys on a selected component: comparisons, ==, and, or, not', (t) async {
+      const src = 'RoomTemp > 299.15 K && ButtonHeld';
+      // the character typed, the (shifted) key it comes from, the
+      // operator it inserts
+      const keys = [
+        ('<', LogicalKeyboardKey.comma, PhysicalKeyboardKey.comma, '<'),
+        ('>', LogicalKeyboardKey.period, PhysicalKeyboardKey.period, '>'),
+        ('=', LogicalKeyboardKey.equal, PhysicalKeyboardKey.equal, '=='),
+        ('&', LogicalKeyboardKey.digit7, PhysicalKeyboardKey.digit7, '&&'),
+        ('|', LogicalKeyboardKey.backslash, PhysicalKeyboardKey.backslash, '||'),
+        ('!', LogicalKeyboardKey.digit1, PhysicalKeyboardKey.digit1, '!'),
+        ('+', LogicalKeyboardKey.equal, PhysicalKeyboardKey.equal, '+'),
+      ];
+      for (final (ch, logical, key, op) in keys) {
+        final h = await pump(
+          t,
+          drafted(
+            connected(airConditioner()),
+            src,
+            projection: pb.FormulaProjection(
+              source: src,
+              parseOk: true,
+              complete: true,
+              root: warmAndHeld(),
+            ),
+          ),
+        );
+        // a click selects and takes the keys
+        await t.tap(find.byKey(const ValueKey('node-r.1')));
+        await t.pump();
+        await simulateKeyDownEvent(
+          LogicalKeyboardKey.shift,
+          physicalKey: PhysicalKeyboardKey.shiftLeft,
+        );
+        await simulateKeyDownEvent(logical, physicalKey: key, character: ch);
+        await simulateKeyUpEvent(logical, physicalKey: key);
+        await simulateKeyUpEvent(
+          LogicalKeyboardKey.shift,
+          physicalKey: PhysicalKeyboardKey.shiftLeft,
+        );
+        await t.pump();
+        final c = h.effects.whereType<ComposeFormula>().single;
+        expect((c.action.nodeId, c.action.operator.op), ('r.1', op), reason: ch);
+      }
+    });
+
+    testWidgets('a truth-valued slot offers true and false, the references, Choose and not', (
+      t,
+    ) async {
+      const src = 'RoomTemp > 299.15 K && ?';
+      final h = await pump(
+        t,
+        drafted(
+          connected(airConditioner()),
+          src,
+          projection: pb.FormulaProjection(
+            source: src,
+            parseOk: true,
+            complete: false,
+            slots: ['r.1'],
+            root: warmAndHeld(held: false),
+          ),
+        ),
+      );
+      await t.tap(find.byKey(const ValueKey('node-r.1')));
+      await t.pump();
+      final e = h.effects.whereType<GetFormulaSlot>().single;
+      h.answer(FormulaSlotReceived(generation: e.generation, result: truthSlot('r.1')));
+      await t.pump();
+      expect(
+        find.text(
+          'Expected: true or false, because both sides of a logical operator are true or false.',
+        ),
+        findsOneWidget,
+      );
+      // no number to type for a truth value; the two literals instead
+      expect(find.byKey(const ValueKey('slot-number')), findsNothing);
+      expect(find.byKey(const ValueKey('bool-true')), findsOneWidget);
+      expect(find.byKey(const ValueKey('bool-false')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ref-ButtonHeld')), findsOneWidget);
+      expect(find.byKey(const ValueKey('op-choose')), findsOneWidget);
+      expect(find.byKey(const ValueKey('op-not')), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('bool-true')));
+      await t.pump();
+      final c = h.effects.whereType<ComposeFormula>().single;
+      expect((c.action.nodeId, c.action.fill), ('r.1', 'true'));
+    });
+
+    testWidgets('a choice is if and its condition over then and else, each part selectable', (
+      t,
+    ) async {
+      final p = warmAndHeldChoice();
+      final h = await pump(t, drafted(connected(airConditioner()), p.source, projection: p));
+      // no opaque text: the three words and every part of the condition
+      expect(find.byKey(const ValueKey('if-r')), findsOneWidget);
+      expect(find.text('if'), findsOneWidget);
+      expect(find.text('then'), findsOneWidget);
+      expect(find.text('else'), findsOneWidget);
+      expect(find.text(p.source), findsNothing);
+      expect(find.byKey(const ValueKey('node-r.0.0.0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('node-r.1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('node-r.2')), findsOneWidget);
+      expect(find.text('true'), findsOneWidget);
+      expect(find.text('false'), findsOneWidget);
+      // the word selects the choice; an outcome selects itself
+      await t.tap(find.byKey(const ValueKey('node-r')));
+      await t.pump();
+      expect(h.state.editor.composer.selectedNode, 'r');
+      await t.tap(find.byKey(const ValueKey('node-r.2')));
+      await t.pump();
+      expect(h.state.editor.composer.selectedNode, 'r.2');
     });
 
     testWidgets('save, revert and a conflict work the same in Formula mode', (t) async {
