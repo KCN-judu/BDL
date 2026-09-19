@@ -34,6 +34,8 @@ import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'code/highlighting_controller.dart';
+import 'code/syntax_theme.dart';
 import 'formula_composer.dart';
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
@@ -209,12 +211,19 @@ class DefinitionEditor extends StatefulWidget {
     required this.dispatch,
     this.completion,
     this.hover,
+    this.highlight,
+    this.component,
     this.composer = const ComposerState(),
     this.projection,
     this.concepts = const {},
   });
 
   final int mappingId;
+
+  /// The IDE service's tokens over the text on screen, and the component
+  /// whose body this relationship belongs to (the request's scope).
+  final HighlightState? highlight;
+  final int? component;
 
   /// The Formula Composer's editor state, and the projection on screen
   /// (the draft's own, else the committed definition's).
@@ -240,8 +249,9 @@ class DefinitionEditor extends StatefulWidget {
 }
 
 class _DefinitionEditorState extends State<DefinitionEditor> {
-  late final _MarkedController _controller = _MarkedController(text: _desiredText);
+  late final HighlightingController _controller = HighlightingController(text: _desiredText);
   final FocusNode _focus = FocusNode(debugLabel: 'definition');
+  Timer? _highlightPause;
 
   String get _desiredText => widget.draft?.source ?? widget.committed ?? '';
 
@@ -249,6 +259,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
   void initState() {
     super.initState();
     _needProjection();
+    _needHighlight();
   }
 
   @override
@@ -256,6 +267,27 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
     super.didUpdateWidget(old);
     _syncText();
     _needProjection();
+    if (old.mappingId != widget.mappingId || old.component != widget.component) _needHighlight();
+  }
+
+  /// The text on screen wants its spans: when the field first shows a
+  /// relationship, and after a pause in typing.  The reducer drops a
+  /// repeat of a text already asked about.
+  void _needHighlight() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _highlight();
+    });
+  }
+
+  void _highlight() {
+    _highlightPause?.cancel();
+    widget.dispatch(
+      SemanticTokensRequested.formula(
+        mappingId: widget.mappingId,
+        text: _controller.text,
+        component: widget.component,
+      ),
+    );
   }
 
   /// Formula mode over a committed definition with no draft: the
@@ -279,11 +311,13 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
       text: desired,
       selection: TextSelection.collapsed(offset: offset),
     );
+    _needHighlight();
   }
 
   @override
   void dispose() {
     _hoverTimer?.cancel();
+    _highlightPause?.cancel();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
@@ -304,6 +338,8 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
 
   void _onChanged(String v) {
     widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: v));
+    _highlightPause?.cancel();
+    _highlightPause = Timer(kHighlightPause, _highlight);
     // With the pop-up open, every keystroke re-asks at the new caret: the
     // service filters by prefix, Studio never does.
     if (_completionOpen) _requestCompletion();
@@ -396,6 +432,8 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
         if (d.hasSpan())
           (codeUnitRange(m.text, d.span.start, d.span.end), _severityColor(t, d.severity)),
     ];
+    _controller.theme = SyntaxTheme.of(t);
+    _controller.setHighlight(widget.highlight);
     final toneColor = switch (m.tone) {
       VerdictTone.none || VerdictTone.checking => t.textTertiary,
       VerdictTone.settled => t.settled,
@@ -783,51 +821,5 @@ class _HoverCard extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-/// A controller that underlines byte-span diagnostics in place.  The marks
-/// are recomputed from state on every build; the text itself is never
-/// touched here.
-class _MarkedController extends TextEditingController {
-  _MarkedController({super.text});
-
-  List<(TextRange, Color)> marks = const [];
-
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final text = this.text;
-    final valid = marks.where((m) => !m.$1.isCollapsed && m.$1.end <= text.length).toList()
-      ..sort((a, b) => a.$1.start.compareTo(b.$1.start));
-    if (valid.isEmpty) {
-      return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
-    }
-    final children = <TextSpan>[];
-    var at = 0;
-    for (final (range, color) in valid) {
-      final start = range.start.clamp(at, text.length);
-      if (start > at) children.add(TextSpan(text: text.substring(at, start)));
-      final end = range.end.clamp(start, text.length);
-      if (end > start) {
-        children.add(
-          TextSpan(
-            text: text.substring(start, end),
-            style: TextStyle(
-              decoration: TextDecoration.underline,
-              decorationStyle: TextDecorationStyle.wavy,
-              decorationColor: color,
-              decorationThickness: 1.5,
-            ),
-          ),
-        );
-      }
-      at = end;
-    }
-    if (at < text.length) children.add(TextSpan(text: text.substring(at)));
-    return TextSpan(style: style, children: children);
   }
 }

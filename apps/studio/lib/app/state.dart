@@ -285,6 +285,100 @@ class SourcesState {
   );
 }
 
+/// One classified span of a text, in UTF-16 code units of the text it was
+/// classified over, by the legend's names: Studio colours by name and
+/// never by index, and leaves a name it does not know plain.
+@immutable
+class HighlightSpan {
+  const HighlightSpan(this.start, this.end, this.type, this.modifiers);
+  final int start;
+  final int end;
+
+  /// An LSP token type name (`type`, `function`, `variable`, `keyword`,
+  /// `number`, `operator`, `comment`, …) or a BDL one (`unit`, `slot`).
+  final String type;
+
+  /// LSP modifier names (`declaration`, `defaultLibrary`) and BDL's
+  /// (`source`, `output`, `device`, `instance`, `unresolved`).
+  final Set<String> modifiers;
+
+  HighlightSpan shifted(int by) => HighlightSpan(start + by, end + by, type, modifiers);
+
+  @override
+  bool operator ==(Object other) =>
+      other is HighlightSpan &&
+      other.start == start &&
+      other.end == end &&
+      other.type == type &&
+      setEquals(other.modifiers, modifiers);
+
+  @override
+  int get hashCode => Object.hash(start, end, type, modifiers.length);
+
+  @override
+  String toString() => 'HighlightSpan($start, $end, $type, $modifiers)';
+}
+
+/// The tokens the IDE service gave for one document (a source file or a
+/// formula draft), with the text they are over.  Only the latest
+/// request's answer is applied; an older answer is dropped.  While the
+/// editor's text differs from [text], the editor shifts the spans of the
+/// unchanged prefix and suffix and shows the changed middle plain until
+/// the next answer — so nothing flickers and nothing stale is drawn over
+/// new text.
+@immutable
+class HighlightState {
+  const HighlightState({
+    required this.key,
+    required this.generation,
+    required this.requested,
+    this.text = '',
+    this.spans = const [],
+    this.legendVersion,
+    this.pending = false,
+  });
+
+  /// `file:<path>` or `formula:<component or ->:<mapping id>`.
+  final String key;
+
+  /// The generation of the latest request for this document.
+  final int generation;
+
+  /// The text the latest request carried.
+  final String requested;
+
+  /// The text [spans] are over.
+  final String text;
+  final List<HighlightSpan> spans;
+
+  /// The legend version the spans were named by, once one answered.
+  final int? legendVersion;
+
+  /// A request is in flight; the spans on show are the previous answer's.
+  final bool pending;
+
+  static String fileKey(String path) => 'file:$path';
+  static String formulaKey(int mappingId, int? component) =>
+      'formula:${component ?? '-'}:$mappingId';
+
+  HighlightState copyWith({
+    int? generation,
+    String? requested,
+    String? text,
+    List<HighlightSpan>? spans,
+    int? legendVersion,
+    bool? pending,
+  }) => HighlightState(
+    key: key,
+    generation: generation ?? this.generation,
+    requested: requested ?? this.requested,
+    text: text ?? this.text,
+    spans: spans ?? this.spans,
+    legendVersion: legendVersion ?? this.legendVersion,
+    pending: pending ?? this.pending,
+  );
+}
+
 /// Canvas node kinds.  [instance] is a component instance of a system
 /// (rendered from its ports' contracts, never its body); [group] is a
 /// collapsed behaviour group (a picture of its members, never a node the
@@ -1220,9 +1314,17 @@ class EditorState {
     this.closeAfterSave,
     this.pendingSave,
     this.draftsSeeded = false,
+    this.highlights = const {},
   });
 
   final StudioPage page;
+
+  /// The semantic tokens of the texts on screen, by document key (a source
+  /// file, a formula draft): what the IDE service last said the spans of
+  /// a text are.  Kept across revisions and pushed projections — they are
+  /// about a text, not a revision — and shifted, never recomputed, while
+  /// the designer types (`app/highlighting.dart`).
+  final Map<String, HighlightState> highlights;
 
   /// The *Save changes?* sheet is up for this intent.
   final UnloadIntent? closeGuard;
@@ -1403,6 +1505,7 @@ class EditorState {
     bool? pendingSave,
     bool clearPendingSave = false,
     bool? draftsSeeded,
+    Map<String, HighlightState>? highlights,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -1443,6 +1546,7 @@ class EditorState {
       closeAfterSave: clearCloseAfterSave ? null : (closeAfterSave ?? this.closeAfterSave),
       pendingSave: clearPendingSave ? null : (pendingSave ?? this.pendingSave),
       draftsSeeded: draftsSeeded ?? this.draftsSeeded,
+      highlights: highlights ?? this.highlights,
     );
   }
 

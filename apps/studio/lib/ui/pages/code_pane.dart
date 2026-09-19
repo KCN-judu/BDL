@@ -11,7 +11,12 @@
 /// canvas uses for the undecided, never red.
 ///
 /// Studio never parses the text: the file list, the draft state, the
-/// anchors and every diagnostic come from the daemon.
+/// anchors, every diagnostic and every highlighted span come from the
+/// daemon.  The text is coloured by what each word *is* — the IDE
+/// service's semantic tokens through the syntax theme (`ui/code/`) —
+/// so a concept, a relationship, a Source, an output read as the
+/// categories the canvas draws; typing shifts the spans on show and asks
+/// again after a short pause, so nothing flickers.
 library;
 
 import 'dart:async';
@@ -26,6 +31,8 @@ import '../../app/actions.dart';
 import '../../app/sources.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import '../code/highlighting_controller.dart';
+import '../code/syntax_theme.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
@@ -43,10 +50,11 @@ class CodePane extends StatefulWidget {
 }
 
 class _CodePaneState extends State<CodePane> {
-  final TextEditingController _c = TextEditingController();
+  final HighlightingController _c = HighlightingController();
   final FocusNode _focus = FocusNode();
   final ScrollController _scroll = ScrollController();
   Timer? _pause;
+  Timer? _highlightPause;
 
   /// The path the controller's text belongs to.
   String? _path;
@@ -90,6 +98,19 @@ class _CodePaneState extends State<CodePane> {
         selection: TextSelection.collapsed(offset: caret.clamp(0, text.length)),
       );
     }
+    // the text on screen wants its spans (after this build, not during it)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _highlight();
+    });
+  }
+
+  /// Ask for the tokens of the text on screen.  The reducer drops a
+  /// repeat of the text already asked about.
+  void _highlight() {
+    _highlightPause?.cancel();
+    final path = _path;
+    if (path == null) return;
+    widget.dispatch(SemanticTokensRequested.file(path: path, text: _c.text));
   }
 
   void _typed(String text) {
@@ -99,6 +120,8 @@ class _CodePaneState extends State<CodePane> {
     widget.dispatch(SourceTextChanged(path, text));
     _pause?.cancel();
     _pause = Timer(kSourceEditPause, _send);
+    _highlightPause?.cancel();
+    _highlightPause = Timer(kHighlightPause, _highlight);
   }
 
   void _send() {
@@ -144,6 +167,7 @@ class _CodePaneState extends State<CodePane> {
   @override
   void dispose() {
     _pause?.cancel();
+    _highlightPause?.cancel();
     _c.dispose();
     _focus.dispose();
     _scroll.dispose();
@@ -167,6 +191,8 @@ class _CodePaneState extends State<CodePane> {
     }
     final diagnostics = sources.diagnosticsOf(file.path);
     final errors = diagnostics.where((d) => !d.open).length;
+    _c.theme = SyntaxTheme.of(t);
+    _c.setHighlight(widget.state.editor.highlights[HighlightState.fileKey(file.path)]);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

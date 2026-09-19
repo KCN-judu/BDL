@@ -340,6 +340,31 @@ class Scene {
       await act(SelectionChanged(sel), (s) => s.editor.selection == sel);
       return;
     }
+    if (step['view'] case final String view) {
+      // Design | Code | Split: the text is read and its spans classified
+      final v = switch (view) {
+        'design' => DesignView.design,
+        'code' => DesignView.code,
+        'split' => DesignView.split,
+        _ => wrong('unknown view "$view"'),
+      };
+      await act(
+        DesignViewChanged(v),
+        (s) =>
+            s.editor.view == v &&
+            (v == DesignView.design ||
+                (s.editor.sources.revision == s.revision &&
+                    s.editor.sources.openPath != null &&
+                    (s
+                            .editor
+                            .highlights[HighlightState.fileKey(s.editor.sources.openPath!)]
+                            ?.spans
+                            .isNotEmpty ??
+                        false))),
+        why: 'the sources and their tokens',
+      );
+      return;
+    }
     if (step['context'] case final Map<String, dynamic> by) {
       final ctx = ComponentContext(component(by['component'] as String));
       await act(ContextChanged(ctx), (s) => s.editor.context == ctx && analysed(s));

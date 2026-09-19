@@ -15,6 +15,7 @@ import 'composer.dart';
 import 'deploy.dart';
 import 'drafts.dart';
 import 'lifecycle.dart';
+import 'highlighting.dart';
 import 'sources.dart';
 import 'effects.dart';
 import 'simulation.dart';
@@ -369,6 +370,18 @@ Transition reduce(AppState s, AppAction action) {
     ),
     HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
     ToolingFailed(:final generation) => toolingFailed(s, generation),
+
+    // ---- semantic highlighting (app/highlighting.dart) -------------------------
+    SemanticTokensRequested(:final path, :final mappingId, :final component, :final text) =>
+      semanticTokensRequested(
+        s,
+        path: path,
+        mappingId: mappingId,
+        component: component,
+        text: text,
+      ),
+    SemanticTokensReceived(:final key, :final result) => semanticTokensReceived(s, key, result),
+    SemanticTokensFailed(:final key, :final generation) => semanticTokensFailed(s, key, generation),
 
     // ---- the Formula Composer (app/composer.dart) ---------------------------------
     FormulaModeChanged(:final formulaMode) => formulaModeChanged(s, formulaMode),

@@ -270,6 +270,27 @@ class ComposeFormula extends Effect {
   final int? component;
 }
 
+/// Semantic tokens over a text as typed; uncounted, answered by
+/// `SemanticTokensReceived` or `SemanticTokensFailed` under [key].
+class FetchSemanticTokens extends Effect {
+  const FetchSemanticTokens({
+    required this.key,
+    required this.revision,
+    required this.generation,
+    required this.text,
+    this.path,
+    this.mappingId,
+    this.component,
+  });
+  final String key;
+  final int revision;
+  final int generation;
+  final String text;
+  final String? path;
+  final int? mappingId;
+  final int? component;
+}
+
 class HoverDraft extends Effect {
   const HoverDraft({
     required this.revision,

@@ -1,3 +1,4 @@
+import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/app/store.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -15,6 +16,11 @@ class _FixedStore extends AppStore {
   final AppState fixed;
   @override
   AppState build() => fixed;
+
+  // The state never moves: a request the shell makes on its own (the
+  // tokens of a text on screen) has no executor to go to.
+  @override
+  void dispatch(AppAction action) {}
 }
 
 Widget _app(AppState state) => ProviderScope(

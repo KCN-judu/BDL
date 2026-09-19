@@ -69,6 +69,9 @@ class Inspector extends StatelessWidget {
           draft: state.draft(id),
           completion: state.editor.completion?.mappingId == id ? state.editor.completion : null,
           hover: state.editor.hover?.mappingId == id ? state.editor.hover : null,
+          highlight:
+              state.editor.highlights[HighlightState.formulaKey(id, state.editor.componentScope)],
+          component: state.editor.componentScope,
           composer: state.editor.composer,
           projection: composerProjection(state, id),
           revision: project.revision.toInt(),
@@ -622,6 +625,8 @@ class _MappingInspector extends StatelessWidget {
     required this.draft,
     required this.completion,
     required this.hover,
+    this.highlight,
+    this.component,
     required this.revision,
     required this.outcome,
     required this.clocks,
@@ -640,6 +645,11 @@ class _MappingInspector extends StatelessWidget {
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
+
+  /// The definition's semantic tokens, and the component whose body the
+  /// relationship belongs to (the scope of a formula request).
+  final HighlightState? highlight;
+  final int? component;
 
   /// The relationships this one's definition references, and those whose
   /// definitions reference it — the analysis's `refs`, the canvas's
@@ -901,6 +911,8 @@ class _MappingInspector extends StatelessWidget {
                 inputNames: inputs.map(_name).toList(),
                 completion: completion,
                 hover: hover,
+                highlight: highlight,
+                component: component,
                 composer: composer,
                 projection: projection,
                 concepts: {for (final c in concepts) c.id.toInt(): c},

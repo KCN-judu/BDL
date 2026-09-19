@@ -896,6 +896,24 @@ class DesignViewChanged extends UserAction {
 }
 
 /// The editor shows another source file.
+/// The text on screen wants its tokens (the Code view's file or a
+/// formula draft): after a pause in typing, or when a text is first shown.
+/// [component] scopes a formula document; [path] names a file document.
+class SemanticTokensRequested extends UserAction {
+  const SemanticTokensRequested.file({required this.path, required this.text})
+    : mappingId = null,
+      component = null;
+  const SemanticTokensRequested.formula({
+    required this.mappingId,
+    required this.text,
+    this.component,
+  }) : path = null;
+  final String? path;
+  final int? mappingId;
+  final int? component;
+  final String text;
+}
+
 class SourceFileOpened extends UserAction {
   const SourceFileOpened(this.path);
   final String path;
@@ -1041,6 +1059,19 @@ class CompletionReceived extends ResponseAction {
   const CompletionReceived({required this.generation, required this.result});
   final int generation;
   final pb.DraftCompletionResponse result;
+}
+
+class SemanticTokensReceived extends ResponseAction {
+  const SemanticTokensReceived({required this.key, required this.result});
+  final String key;
+  final pb.SemanticTokensResponse result;
+}
+
+/// The request failed or could not be sent: the tokens on show stay.
+class SemanticTokensFailed extends ResponseAction {
+  const SemanticTokensFailed({required this.key, required this.generation});
+  final String key;
+  final int generation;
 }
 
 class HoverReceived extends ResponseAction {

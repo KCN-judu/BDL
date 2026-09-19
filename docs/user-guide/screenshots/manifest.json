@@ -512,6 +512,31 @@
       "purpose": "What opening an instance's source shows."
     },
     {
+      "id": "code-view",
+      "pages": [
+        "studio/code-view.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "view": "code"
+        }
+      ],
+      "expect": {
+        "textsContaining": [
+          "src/main.bdl"
+        ]
+      },
+      "crop": {
+        "region": "page"
+      },
+      "output": "studio/code-view.png",
+      "caption": "The Code view of the component system: the file as the project holds it, coloured by what each word is.",
+      "alt": "The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.",
+      "purpose": "What the editor's colours mean, on a real file."
+    },
+    {
       "id": "behavior-region",
       "pages": [
         "workflows/grouping-behavior.md",

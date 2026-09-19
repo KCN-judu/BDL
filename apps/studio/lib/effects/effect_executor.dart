@@ -311,6 +311,41 @@ class EffectExecutor {
           ),
           (r) => _dispatch(CompletionReceived(generation: generation, result: r.draftCompletion)),
         );
+      case FetchSemanticTokens(
+        :final key,
+        :final revision,
+        :final generation,
+        :final text,
+        :final path,
+        :final mappingId,
+        :final component,
+      ):
+        final client = _client;
+        if (client == null) {
+          _dispatch(SemanticTokensFailed(key: key, generation: generation));
+          return;
+        }
+        try {
+          final r = await client.request(
+            pb.ClientMessage(
+              semanticTokens: pb.SemanticTokensRequest(
+                revision: Int64(revision),
+                generation: Int64(generation),
+                text: text,
+                path: path,
+                formula: mappingId == null
+                    ? null
+                    : pb.FormulaDocument(
+                        mappingId: Int64(mappingId),
+                        component: component == null ? null : Int64(component),
+                      ),
+              ),
+            ),
+          );
+          _dispatch(SemanticTokensReceived(key: key, result: r.semanticTokens));
+        } catch (e) {
+          _dispatch(SemanticTokensFailed(key: key, generation: generation));
+        }
       case HoverDraft(
         :final revision,
         :final mappingId,
