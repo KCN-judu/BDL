@@ -12,7 +12,7 @@
 
 ## 数式を組み立てる
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
 _分母のスロットを選択した数式ビュー：コンパイラはスロットが角度を期待することとその理由を述べ、角度の単位付きの数値、適合する参照、結果が適合する方程式を提示する。_
 

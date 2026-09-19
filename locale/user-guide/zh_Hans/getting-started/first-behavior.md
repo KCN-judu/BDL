@@ -59,7 +59,7 @@ _一个已声明的关系：虚线轮廓，标题中写着“已声明”。_
 
 两个视图编辑的是同一个公式。按 **⌘↩** 或点击**添加定义**。
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
 _选中分母槽位的公式视图：编译器说明该槽位期望角度及原因，并提供带角度单位的数字、合适的引用，以及结果类型合适的方程。_
 

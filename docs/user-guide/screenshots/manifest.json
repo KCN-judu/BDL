@@ -205,7 +205,7 @@
       },
       "output": "studio/formula-composer.png",
       "caption": "The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits.",
-      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.",
+      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.",
       "purpose": "How a formula is assembled without typing, and how the compiler guides each slot."
     },
     {

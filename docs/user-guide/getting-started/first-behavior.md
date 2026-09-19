@@ -84,7 +84,7 @@ _A declared relationship: dashed outline and the word declared in its header._
 
    Both views edit the same formula. Press **⌘↩** or click **Add definition**.
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, and a folded Equations row.](../assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../assets/studio/formula-composer.png)
 
 _The Formula view with the denominator slot selected: the compiler says the slot
 expects an angle and why, and offers a number with the angle units, the
