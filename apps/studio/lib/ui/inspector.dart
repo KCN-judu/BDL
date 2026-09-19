@@ -251,15 +251,17 @@ String _invalidationWord(pb.Invalidation i) => switch (i) {
   _ => 'Unspecified',
 };
 
-/// The values (relationships that read nothing) whose definition applies
-/// relationship [id], read off the analysis's dependency edges — the
-/// compiler's, never a name match on formula text.  In id order.
-List<pb.MappingView> valuesApplying(AppState state, int id) => [
-  for (final m in state.project?.mappings ?? const <pb.MappingView>[])
-    if (m.signature.isUnitDomain &&
-        (state.mappingAnalysis(m.id.toInt())?.references.any((r) => r.toInt() == id) ?? false))
-      m,
-];
+/// The values whose definition applies relationship [id] — the compiler's
+/// `applied_by` (its direct reverse dependency edges), restricted to the
+/// values among them; never a name match on formula text.  In projection
+/// order.
+List<pb.MappingView> valuesApplying(AppState state, int id) {
+  final appliers = state.referrersOf(id).toSet();
+  return [
+    for (final m in state.project?.mappings ?? const <pb.MappingView>[])
+      if (appliers.contains(m.id.toInt()) && relationshipRole(m) == RelationshipRole.value) m,
+  ];
+}
 
 /// Names as links, in a form row: "Used by  dimByTilt  warmPulse".
 class _NameLinks extends StatelessWidget {
@@ -694,13 +696,13 @@ class _MappingInspector extends StatelessWidget {
     final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
     final a = analysis;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
-    // The role is derived (ADR-0032): an unresolved `() -> A` that backs no
-    // port and no binding is a Source — the environment provides it.
-    // Nothing is missing, so it is never *declared*; a bound relationship
-    // has its definition from the system.
-    final source =
-        boundTo == null && relationshipRole(mapping, portWord: portWord) == RelationshipRole.source;
-    final declared = !mapping.hasDefinition() && !source && boundTo == null;
+    // The role is the daemon's (ADR-0032, `MappingView.role`); a bound
+    // base relationship arrives as a Value, a port-backed Source of an
+    // open component wears its port's word.  *Declared* — the one hole a
+    // designer fills — is a rule with no formula.
+    final role = relationshipRole(mapping);
+    final source = role == RelationshipRole.source && portWord == null;
+    final declared = role == RelationshipRole.rule && !mapping.hasDefinition();
     // Findings without a span, by where they belong: timing ones under
     // *Updates in*, drive ones under *Drives*, the rest (causality) with the
     // relationship itself.
@@ -756,20 +758,21 @@ class _MappingInspector extends StatelessWidget {
             FormRow(
               label: context.l10n.role,
               child: Text(
-                source
-                    ? context.l10n.roleSource
-                    : portWord ??
-                          (inputs.isNotEmpty ? context.l10n.roleRule : context.l10n.roleValue),
+                portWord ??
+                    switch (role) {
+                      RelationshipRole.source => context.l10n.roleSource,
+                      RelationshipRole.rule => context.l10n.roleRule,
+                      RelationshipRole.value => context.l10n.roleValue,
+                    },
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
-            if (source)
-              Text(context.l10n.sourceExplanation, style: small)
-            else if (portWord == null)
-              Text(
-                inputs.isNotEmpty ? context.l10n.ruleExplanation : context.l10n.valueExplanation,
-                style: small,
-              ),
+            if (portWord == null)
+              Text(switch (role) {
+                RelationshipRole.source => context.l10n.sourceExplanation,
+                RelationshipRole.rule => context.l10n.ruleExplanation,
+                RelationshipRole.value => context.l10n.valueExplanation,
+              }, style: small),
           ],
         ),
         InspectorSection(
@@ -978,11 +981,12 @@ class _MappingInspector extends StatelessWidget {
         InspectorSection(
           title: context.l10n.drives,
           children: [
-            // Only a value — a relationship that reads nothing — can be
-            // *the* value an output commits at a tick.  A rule is not
-            // offered the pop-up: the caption says what would make the
-            // connection possible, and names the value when there is one.
-            if (inputs.isEmpty) ...[
+            // Only a Source or a value — a relationship that reads nothing
+            // — can be *the* value an output commits at a tick (the output
+            // pass's DriveWF).  A rule is not offered the pop-up: the
+            // caption says what would make the connection possible, and
+            // names the value when there is one.
+            if (role != RelationshipRole.rule) ...[
               FormRow(
                 label: context.l10n.output,
                 child: MacDropdown<int>(
@@ -1125,9 +1129,13 @@ class _OutputInspector extends StatelessWidget {
         if (m.hasDrivesOutputId() && m.drivesOutputId.toInt() == id) m,
     ];
     final driver = a != null && a.hasDriver() ? a.driver.toInt() : null;
+    // What can drive the sink is the output pass's rule (DriveWF): a
+    // relationship whose type is the output's — a Source or a value, never
+    // a rule (its type is an arrow) — in the output's domain; the pass
+    // reports the domain, the type is decided here by the concept.
     final candidates = [
       for (final m in p.mappings)
-        if (m.signature.isUnitDomain &&
+        if (relationshipRole(m) != RelationshipRole.rule &&
             m.signature.output == output.accepts &&
             !claimants.contains(m))
           m,

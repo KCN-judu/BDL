@@ -13,6 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/test_store.dart';
 
+import 'support/roles.dart';
+
 const dim = 0;
 
 pb.ProjectProjection lamp({int revision = 1}) =>
@@ -22,7 +24,7 @@ pb.ProjectProjection lamp({int revision = 1}) =>
         pb.ConceptView(id: Int64(1), name: 'Brightness'),
       ])
       ..mappings.add(
-        pb.MappingView(
+        mappingView(
           id: Int64(dim),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),

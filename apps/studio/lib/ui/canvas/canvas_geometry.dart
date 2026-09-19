@@ -572,11 +572,13 @@ CanvasScene buildScene(
     socketByRef[outRef] = out;
     labels[outRef] = _conceptName(p, outId);
     final realised = realisedBy[m.id.toInt()];
-    // The role is derived (ADR-0032): unresolved, unit domain, not a port,
-    // not realised by a binding → a Source; the environment provides it.
-    final source =
-        realised == null &&
-        relationshipRole(m, portWord: system.portWords[m.id.toInt()]) == RelationshipRole.source;
+    // The role is the daemon's (ADR-0032, `MappingView.role`): a Source is
+    // drawn as one where the designer is — inside an open component a
+    // port-backed Source wears its port's word instead; the system view
+    // already states a bound base relationship as a Value.
+    final role = relationshipRole(m);
+    final portWord = system.portWords[m.id.toInt()];
+    final source = role == RelationshipRole.source && portWord == null;
     nodes.add(
       NodeShape(
         ref: ref,
@@ -587,11 +589,14 @@ CanvasScene buildScene(
             : realised == null
             ? null
             : '= $realised',
-        declared: !source && !m.hasDefinition() && realised == null,
+        // Declared — dashed — is the one hole a designer fills: a rule
+        // with no formula.  A Source is complete; a value has its
+        // realization.
+        declared: role == RelationshipRole.rule && !m.hasDefinition(),
         source: source,
         // A rule reads something: the input sockets are the shape, the
         // word says the consequence (it is applied; it has no value).
-        rule: inputs.isNotEmpty,
+        rule: role == RelationshipRole.rule,
         dependsOn: [
           for (final d in refs[m.id.toInt()] ?? const <int>[])
             if (d != m.id.toInt())

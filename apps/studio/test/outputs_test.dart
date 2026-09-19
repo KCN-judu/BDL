@@ -18,6 +18,8 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const speed = 0;
 const cruise = 0;
 const boost = 1;
@@ -46,7 +48,7 @@ pb.ProjectProjection rover({
     )
     ..clocks.add(pb.ClockView(id: Int64(main_), name: 'main'))
     ..mappings.addAll([
-      pb.MappingView(
+      mappingView(
         id: Int64(cruise),
         name: 'cruise',
         signature: pb.Signature(inputs: [], output: Int64(speed)),
@@ -54,7 +56,7 @@ pb.ProjectProjection rover({
         clockId: Int64(main_),
         drivesOutputId: drivers.contains(cruise) ? Int64(motor) : null,
       ),
-      pb.MappingView(
+      mappingView(
         id: Int64(boost),
         name: 'boost',
         signature: pb.Signature(inputs: [], output: Int64(speed)),
@@ -506,15 +508,17 @@ void main() {
         // says so through the dependency edge), `boost` does not.
         final project = rover(drivers: const [])
           ..mappings.add(
-            pb.MappingView(
+            mappingView(
               id: Int64(scale),
               name: 'scale',
               signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
               definition: pb.Definition(formula: 'speed * 2'),
             ),
           );
-        final applied = pb.ProjectAnalysis(revision: Int64(1))
-          ..mappings.add(pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)]));
+        final applied = withAppliedBy(
+          pb.ProjectAnalysis(revision: Int64(1))
+            ..mappings.add(pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)])),
+        );
         final key = GlobalKey<HarnessState>();
         await t.pumpWidget(
           Harness(
@@ -542,11 +546,13 @@ void main() {
           Harness(
             key: UniqueKey(),
             initial: connected(project, selection: const MappingSelected(scale)).copyWith(
-              analysis: pb.ProjectAnalysis(revision: Int64(1))
-                ..mappings.addAll([
-                  pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)]),
-                  pb.MappingAnalysis(id: Int64(boost), references: [Int64(scale)]),
-                ]),
+              analysis: withAppliedBy(
+                pb.ProjectAnalysis(revision: Int64(1))
+                  ..mappings.addAll([
+                    pb.MappingAnalysis(id: Int64(cruise), references: [Int64(scale)]),
+                    pb.MappingAnalysis(id: Int64(boost), references: [Int64(scale)]),
+                  ]),
+              ),
             ),
             child: (s, d) => Inspector(state: s, dispatch: d),
           ),
@@ -563,7 +569,7 @@ void main() {
       (t) async {
         final project = rover(drivers: const [])
           ..mappings.add(
-            pb.MappingView(
+            mappingView(
               id: Int64(scale),
               name: 'scale',
               signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
@@ -618,13 +624,13 @@ void main() {
           ),
         )
         ..mappings.addAll([
-          pb.MappingView(
+          mappingView(
             id: Int64(scale),
             name: 'scale',
             signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),
             definition: pb.Definition(formula: 'speed * 2'),
           ),
-          pb.MappingView(
+          mappingView(
             id: Int64(bearing),
             name: 'bearing',
             signature: pb.Signature(inputs: [], output: Int64(heading)),
@@ -660,7 +666,7 @@ void main() {
       final onlyRules = rover(drivers: const [])
         ..mappings.clear()
         ..mappings.add(
-          pb.MappingView(
+          mappingView(
             id: Int64(scale),
             name: 'scale',
             signature: pb.Signature(inputs: [Int64(speed)], output: Int64(speed)),

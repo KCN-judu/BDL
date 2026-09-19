@@ -226,7 +226,7 @@ class _InputsSection extends StatelessWidget {
     final inputs = simulationInputs(project);
     final functions = [
       for (final m in project.mappings)
-        if (!m.hasDefinition() && !m.signature.isUnitDomain) m,
+        if (relationshipRole(m) == RelationshipRole.rule && !m.hasDefinition()) m,
     ];
     return InspectorSection(
       // The simulation's inputs are exactly the Sources (FV Phase 12
@@ -588,9 +588,11 @@ class _Trace extends StatelessWidget {
     final p = state.flat!;
     final sim = state.editor.simulation;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    // One column per Source and per value (the role the daemon states):
+    // a rule's value at a tick is a function, never a sample.
     final columns = [
       for (final m in p.mappings)
-        if (m.signature.isUnitDomain) m,
+        if (relationshipRole(m) != RelationshipRole.rule) m,
     ];
     final outputs = [
       for (final o in p.outputs)
@@ -705,11 +707,11 @@ class _Probe extends StatelessWidget {
         // gives it no value until a value's formula applies the rule.
         final carriers = [
           for (final m in p.mappings)
-            if (m.signature.isUnitDomain && m.signature.output.toInt() == id) m,
+            if (relationshipRole(m) != RelationshipRole.rule && m.signature.output.toInt() == id) m,
         ];
         final rules = [
           for (final m in p.mappings)
-            if (!m.signature.isUnitDomain && m.signature.output.toInt() == id) m,
+            if (relationshipRole(m) == RelationshipRole.rule && m.signature.output.toInt() == id) m,
         ];
         body = InspectorSection(
           title: c.name,
@@ -735,7 +737,8 @@ class _Probe extends StatelessWidget {
       case MappingSelected(:final id):
         final m = p.mappings.firstWhere((m) => m.id.toInt() == id);
         final c = p.concepts.where((c) => c.id == m.signature.output).firstOrNull;
-        final isValue = m.signature.isUnitDomain;
+        // A Source or a value is sampled at every tick; a rule is not.
+        final isValue = relationshipRole(m) != RelationshipRole.rule;
         // A rule is applied by the values whose formulas reference it
         // (the analysis's refs, the canvas's reference edges) — those are
         // what the simulator samples.

@@ -23,6 +23,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const roomTemp = 0, buttonHeld = 1, switchState = 2;
 const tempSensor = 10, buttonInput = 11, ctrl = 12, acOn = 13;
 
@@ -33,7 +35,7 @@ pb.ConceptView concept(int id, String name) => pb.ConceptView(
 );
 
 pb.MappingView mapping(int id, String name, List<int> inputs, int output, {String? formula}) =>
-    pb.MappingView(
+    mappingView(
       id: Int64(id),
       name: name,
       signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),
@@ -75,18 +77,20 @@ pb.ProjectProjection design({bool withValue = true}) => pb.ProjectProjection(
 
 /// What the compiler reports for [design]: the value references the rule
 /// and both Sources; nothing else references anything.
-pb.ProjectAnalysis analysis() => pb.ProjectAnalysis(
-  revision: Int64(1),
-  mappings: [
-    pb.MappingAnalysis(id: Int64(tempSensor), status: pb.MappingStatus.MAPPING_STATUS_DECLARED),
-    pb.MappingAnalysis(id: Int64(buttonInput), status: pb.MappingStatus.MAPPING_STATUS_DECLARED),
-    pb.MappingAnalysis(id: Int64(ctrl), status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT),
-    pb.MappingAnalysis(
-      id: Int64(acOn),
-      status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
-      references: [Int64(tempSensor), Int64(buttonInput), Int64(ctrl)],
-    ),
-  ],
+pb.ProjectAnalysis analysis() => withAppliedBy(
+  pb.ProjectAnalysis(
+    revision: Int64(1),
+    mappings: [
+      pb.MappingAnalysis(id: Int64(tempSensor), status: pb.MappingStatus.MAPPING_STATUS_DECLARED),
+      pb.MappingAnalysis(id: Int64(buttonInput), status: pb.MappingStatus.MAPPING_STATUS_DECLARED),
+      pb.MappingAnalysis(id: Int64(ctrl), status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT),
+      pb.MappingAnalysis(
+        id: Int64(acOn),
+        status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
+        references: [Int64(tempSensor), Int64(buttonInput), Int64(ctrl)],
+      ),
+    ],
+  ),
 );
 
 Map<int, List<int>> refsOf(pb.ProjectAnalysis a) => {

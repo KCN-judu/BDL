@@ -18,6 +18,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/canvas_harness.dart' show SceneLookup;
 
+import 'support/roles.dart';
+
 const tilt = 0, level = 1;
 const tiltValue = 0, a = 1, b = 2, follower = 3, openTilt = 4;
 const groupId = 7;
@@ -34,7 +36,7 @@ pb.MappingView mapping(
   int output, {
   List<int> inputs = const [],
   String? formula,
-}) => pb.MappingView(
+}) => mappingView(
   id: Int64(id),
   name: name,
   signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),

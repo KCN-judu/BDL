@@ -16,12 +16,13 @@ import 'effects.dart';
 import 'reducer.dart' show Transition;
 import 'state.dart';
 
-/// Unresolved relationships with the unit domain `()` — values the design
-/// reads and does not define: the declarations the evaluator needs a value
-/// for at every tick.  (Read off the projection.)
+/// The Sources of the flat design — the declarations the evaluator needs a
+/// value for at every tick (FV Phase 12 `SimulationInput = Source ∧
+/// UnitDomain`).  Read off the role the daemon states; an unbound required
+/// port of an instance is one of them (the flattening leaves it unresolved).
 List<pb.MappingView> simulationInputs(pb.ProjectProjection p) => [
   for (final m in p.mappings)
-    if (!m.hasDefinition() && m.signature.isUnitDomain) m,
+    if (relationshipRole(m) == RelationshipRole.source) m,
 ];
 
 Transition simulationInputChanged(AppState s, int mappingId, pb.Value value) {
@@ -129,7 +130,8 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
           mappingId: m.id.toInt(),
         ),
       );
-    } else if (!m.hasDefinition() && !m.signature.isUnitDomain) {
+    } else if (relationshipRole(m) == RelationshipRole.rule && !m.hasDefinition()) {
+      // a declared rule: the one hole a definition fills
       out.add(
         SimulationBlocker(
           SimulationBlockerKind.noDefinition,
@@ -238,22 +240,23 @@ bool isUnappliedRule(AppState s, int mappingId) {
   return m?.diagnostics.any((d) => d.code == kRuleUnappliedCode) ?? false;
 }
 
-/// The relationships whose definition applies [ruleId]: those whose
-/// `references` (the compiler's dependency edges, ADR-0034) name it — the
-/// inverse of a stated relation, never a reading of formulas.  In
-/// projection order; empty when nothing does, or while the analysis is
-/// not yet about this revision.
+/// The relationships whose definition applies [ruleId]: the compiler's
+/// `applied_by` — its direct reverse dependency edges (ADR-0034), stated,
+/// never a reading of formulas and never inverted here.  In projection
+/// order; empty when nothing does, or while the analysis is not yet about
+/// this revision.
 List<pb.MappingView> appliersOf(AppState s, int ruleId) {
   final p = s.flat;
   final a = s.analysis;
   if (p == null || a == null || a.revision != p.revision) return const [];
-  final referrers = {
+  final appliers = {
     for (final m in a.mappings)
-      if (m.references.any((r) => r.toInt() == ruleId)) m.id.toInt(),
+      if (m.id.toInt() == ruleId)
+        for (final d in m.appliedBy) d.toInt(),
   };
   return [
     for (final m in p.mappings)
-      if (referrers.contains(m.id.toInt())) m,
+      if (appliers.contains(m.id.toInt())) m,
   ];
 }
 

@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 class _FixedStore extends AppStore {
   _FixedStore(this.fixed);
   final AppState fixed;
@@ -57,7 +59,7 @@ void main() {
         pb.ConceptView(id: Int64(1), name: 'Brightness'),
       ])
       ..mappings.add(
-        pb.MappingView(
+        mappingView(
           id: Int64(0),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),
@@ -94,17 +96,17 @@ void main() {
         pb.ConceptView(id: Int64(1), name: 'Brightness'),
       ])
       ..mappings.addAll([
-        pb.MappingView(
+        mappingView(
           id: Int64(0),
           name: 'tilt',
           signature: pb.Signature(output: Int64(0)),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(1),
           name: 'level',
           signature: pb.Signature(output: Int64(1)),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(2),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),
@@ -125,7 +127,7 @@ void main() {
     // one declared rule (reads Tilt, no formula yet) is the one open item
     final declared = project.deepCopy()
       ..mappings.add(
-        pb.MappingView(
+        mappingView(
           id: Int64(3),
           name: 'brighten',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),
@@ -143,7 +145,7 @@ void main() {
     final project = pb.ProjectProjection(revision: Int64(3), name: 'lamp', rootPath: '/p')
       ..concepts.add(pb.ConceptView(id: Int64(0), name: 'Tilt'))
       ..mappings.add(
-        pb.MappingView(
+        mappingView(
           id: Int64(0),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(0)),

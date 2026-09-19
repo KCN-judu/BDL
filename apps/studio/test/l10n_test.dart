@@ -29,6 +29,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 /// A store that reduces for real but runs no effects (no daemon, no disk).
 class _PureStore extends AppStore {
   _PureStore([this.initial = const AppState()]);
@@ -87,7 +89,7 @@ pb.ProjectProjection _lamp() =>
         pb.ConceptView(id: Int64(1), name: 'Brightness'),
       ])
       ..mappings.add(
-        pb.MappingView(
+        mappingView(
           id: Int64(0),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),

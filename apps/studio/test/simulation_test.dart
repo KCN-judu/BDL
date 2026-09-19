@@ -26,6 +26,8 @@ import 'package:path/path.dart' as p;
 
 import 'support/test_store.dart';
 
+import 'support/roles.dart';
+
 const tilt = 0;
 const brightness = 1;
 const held = 2;
@@ -56,26 +58,26 @@ pb.ProjectProjection lamp({int revision = 1}) =>
       ])
       ..clocks.add(pb.ClockView(id: Int64(interaction), name: 'interaction'))
       ..mappings.addAll([
-        pb.MappingView(
+        mappingView(
           id: Int64(tiltIn),
           name: 'tilt',
           signature: pb.Signature(inputs: [], output: Int64(tilt)),
           clockId: Int64(interaction),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(dim),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(brightness)),
           definition: pb.Definition(formula: 'Tilt / 90 deg'),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(bright),
           name: 'brightness',
           signature: pb.Signature(inputs: [], output: Int64(brightness)),
           definition: pb.Definition(formula: 'dimByTilt(tilt)'),
           clockId: Int64(interaction),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(heldIn),
           name: 'held',
           signature: pb.Signature(inputs: [], output: Int64(held)),

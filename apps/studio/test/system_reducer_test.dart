@@ -15,6 +15,8 @@ import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const tilt = 0, level = 1;
 const main_ = 0, aux = 1;
 const tiltValue = 0, brightness = 1, mirror = 2;
@@ -29,7 +31,7 @@ pb.ConceptView concept(int id, String name, {int? angle}) => pb.ConceptView(
 );
 
 pb.MappingView mapping(int id, String name, int output, {String? formula, int? clock}) =>
-    pb.MappingView(
+    mappingView(
       id: Int64(id),
       name: name,
       signature: pb.Signature(output: Int64(output)),

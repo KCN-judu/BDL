@@ -4,6 +4,8 @@ import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 pb.ProjectProjection lamp() => pb.ProjectProjection(revision: Int64(1), name: 'lamp')
   ..concepts.addAll([
     pb.ConceptView(
@@ -14,7 +16,7 @@ pb.ProjectProjection lamp() => pb.ProjectProjection(revision: Int64(1), name: 'l
     pb.ConceptView(id: Int64(1), name: 'Brightness'),
   ])
   ..mappings.add(
-    pb.MappingView(
+    mappingView(
       id: Int64(0),
       name: 'dimByTilt',
       signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),

@@ -1387,8 +1387,14 @@ class _CanvasPainter extends CustomPainter {
             ? l10n.definitionDoesNotCheck
             : l10n.stateDefined;
         // A rule is named as what it is; what a definition depends on is
-        // the reference edges, said here since they end at no socket.
-        final shape = n.rule ? l10n.ruleNodeSemantics(reads) : l10n.valueNodeSemantics;
+        // the reference edges, said here since they end at no socket.  A
+        // port-backed relationship of an open component is named by its
+        // port, the word the header wears.
+        final shape = n.rule
+            ? l10n.ruleNodeSemantics(reads)
+            : n.headerWord.isNotEmpty
+            ? n.headerWord
+            : l10n.valueNodeSemantics;
         final depends = n.dependsOn.isEmpty
             ? ''
             : ', ${l10n.dependsOnList(n.dependsOn.join(', '))}';

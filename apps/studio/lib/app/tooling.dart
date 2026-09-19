@@ -162,7 +162,9 @@ EditorState withoutTooling(EditorState e) {
 // ---- semantic actions --------------------------------------------------------
 
 Transition semanticActionsRequested(AppState s, pb.EntityRef entity) {
-  if (s.project == null) return Transition(s);
+  // The IDE service acts on flat entities (DI-40): a component body's
+  // entities have their own ids, which the flat host would misread.
+  if (s.project == null || s.editor.context is! SystemContext) return Transition(s);
   final a = s.editor.actions;
   if (a != null && a.entity == entity && a.revision == s.revision) return Transition(s);
   final generation = s.editor.toolingGeneration + 1;
@@ -201,7 +203,7 @@ Transition semanticActionsReceived(AppState s, int generation, pb.SemanticAction
 /// (or leave the choice on show); otherwise ask, remembering the choice.
 Transition semanticActionChosen(AppState s, String actionKind) {
   final entity = s.selectedEntity;
-  if (entity == null) return Transition(s);
+  if (entity == null || s.editor.context is! SystemContext) return Transition(s);
   final a = s.editor.actions;
   if (a != null && a.isFor(entity, s.revision) && !a.pending) {
     final chosen = a.ofKind(actionKind);

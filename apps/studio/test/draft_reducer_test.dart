@@ -11,6 +11,8 @@ import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const tilt = 0;
 const brightness = 1;
 const dim = 0;
@@ -29,7 +31,7 @@ pb.ProjectProjection lamp({
     ]);
   if (withMapping) {
     p.mappings.add(
-      pb.MappingView(
+      mappingView(
         id: Int64(dim),
         name: 'dimByTilt',
         signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(brightness)),
@@ -537,7 +539,7 @@ void main() {
     test('drafts are per mapping: another mapping keeps its own text', () {
       final p = lamp()
         ..mappings.add(
-          pb.MappingView(
+          mappingView(
             id: Int64(5),
             name: 'other',
             signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(brightness)),

@@ -25,6 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const tilt = 0, level = 1;
 const tiltSensor = 0, pulse = 1, dimByTilt = 2;
 
@@ -35,7 +37,7 @@ pb.ConceptView concept(int id, String name, {int angle = 0}) => pb.ConceptView(
 );
 
 pb.MappingView mapping(int id, String name, List<int> inputs, int output, {String? formula}) =>
-    pb.MappingView(
+    mappingView(
       id: Int64(id),
       name: name,
       signature: pb.Signature(inputs: inputs.map(Int64.new), output: Int64(output)),
@@ -166,37 +168,91 @@ final zh = lookupAppLocalizations(const Locale.fromSubtags(languageCode: 'zh', s
 final ja = lookupAppLocalizations(const Locale('ja'));
 
 void main() {
-  group('the role is derived', () {
-    test('from shape and state: unresolved () -> A is a Source; resolved or A -> B is not', () {
+  group('the role is the daemon\'s', () {
+    test('stated on every relationship: Source, Rule, Value — never re-derived here', () {
       final p = design();
       expect(relationshipRole(of(p, tiltSensor)), RelationshipRole.source);
-      expect(relationshipRole(of(p, pulse)), RelationshipRole.mapping);
-      expect(relationshipRole(of(p, dimByTilt)), RelationshipRole.mapping);
+      expect(relationshipRole(of(p, pulse)), RelationshipRole.value);
+      expect(relationshipRole(of(p, dimByTilt)), RelationshipRole.rule);
+      // a view without a role is not this daemon's projection
+      final bare = of(p, tiltSensor).deepCopy()..clearRole();
+      expect(() => relationshipRole(bare), throwsStateError);
     });
 
-    test('a port-backed () -> A in a component presents its port, never a Source', () {
-      expect(
-        relationshipRole(of(design(), tiltSensor), portWord: 'requires tiltSensor'),
-        RelationshipRole.port,
-      );
-    });
-
-    test('never by name and never stored: renaming keeps it, a definition ends it', () {
+    test('a port-backed Source in an open component is not a Source where the designer is', () {
       final p = design();
-      final renamed = of(p, tiltSensor).deepCopy()..name = 'Whatever';
-      expect(relationshipRole(renamed), RelationshipRole.source);
-      final defined = of(p, tiltSensor).deepCopy()..definition = pb.Definition(formula: '1 deg');
-      expect(relationshipRole(defined), RelationshipRole.mapping);
-      final sensorByName = of(p, dimByTilt).deepCopy()..name = 'TempSensor';
-      expect(relationshipRole(sensorByName), RelationshipRole.mapping);
-    });
-
-    test('where the designer is: a binding that realises a base relationship ends it', () {
-      final s = connected(design()).copyWith(
+      final s = connected(p).copyWith(
+        editor: connected(p).editor.copyWith(context: const ComponentContext(3)),
         system: pb.SystemView(
           revision: Int64(1),
           name: 'lamp',
-          base: design(),
+          base: pb.ProjectProjection(revision: Int64(1), name: 'lamp'),
+          components: [
+            pb.ComponentView(
+              id: Int64(3),
+              name: 'Probe',
+              body: p,
+              ports: [
+                pb.PortView(
+                  id: Int64(1),
+                  name: 'tiltSensor',
+                  kind: pb.PortKind.PORT_KIND_REQUIRED,
+                  decl: Int64(tiltSensor),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      // the role stays Source (the port's binding provides it); the
+      // surface wears the port instead
+      expect(relationshipRole(of(p, tiltSensor)), RelationshipRole.source);
+      expect(s.backsPort(of(p, tiltSensor)), isTrue);
+      expect(s.isSource(of(p, tiltSensor)), isFalse);
+      expect(s.isDeclared(of(p, tiltSensor)), isFalse, reason: 'nothing is missing');
+    });
+
+    test('a state never changes it: renaming, a definition, an invalid one', () {
+      final p = design();
+      final renamed = of(p, tiltSensor).deepCopy()..name = 'Whatever';
+      expect(relationshipRole(renamed), RelationshipRole.source);
+      final defined = mappingView(
+        id: Int64(tiltSensor),
+        name: 'tiltSensor',
+        signature: pb.Signature(output: Int64(tilt)),
+        definition: pb.Definition(formula: 'true + 1'),
+      );
+      expect(relationshipRole(defined), RelationshipRole.value, reason: 'invalid is a state');
+      final sensorByName = of(p, dimByTilt).deepCopy()..name = 'TempSensor';
+      expect(relationshipRole(sensorByName), RelationshipRole.rule);
+    });
+
+    test('declared is a rule with no formula; a Source and a value are complete', () {
+      final s = connected(design());
+      expect(s.isDeclared(of(design(), dimByTilt)), isTrue);
+      expect(s.isDeclared(of(design(), tiltSensor)), isFalse);
+      expect(s.isDeclared(of(design(), pulse)), isFalse);
+    });
+
+    test('where the designer is: the system states a bound base relationship as a Value', () {
+      // the daemon's system view already carries the Value role for a base
+      // relationship a binding realises (`base_projection`); Studio reads
+      // it and says *bound to*, it does not decide it
+      final bound = design()
+        ..mappings.removeWhere((m) => m.id.toInt() == tiltSensor)
+        ..mappings.add(
+          mappingView(
+            id: Int64(tiltSensor),
+            name: 'tiltSensor',
+            signature: pb.Signature(output: Int64(tilt)),
+            role: pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE,
+          ),
+        );
+      final s = connected(bound).copyWith(
+        system: pb.SystemView(
+          revision: Int64(1),
+          name: 'lamp',
+          base: bound,
           bindings: [
             pb.BindingView(
               id: Int64(7),
@@ -206,7 +262,8 @@ void main() {
           ],
         ),
       );
-      expect(s.isSource(of(design(), tiltSensor)), isFalse);
+      expect(s.isSource(of(bound, tiltSensor)), isFalse);
+      expect(s.realisedByBinding(of(bound, tiltSensor)), isTrue);
       expect(connected(design()).isSource(of(design(), tiltSensor)), isTrue);
       expect(connected(design()).isSource(of(design(), pulse)), isFalse);
     });
@@ -263,10 +320,22 @@ void main() {
     });
 
     test('a base relationship a binding realises is shown as realised, not as a Source', () {
+      // the system view states the bound base relationship as a Value
+      // (`base_projection`); the canvas draws the binding as its definition
+      final base = design()
+        ..mappings.removeWhere((m) => m.id.toInt() == tiltSensor)
+        ..mappings.add(
+          mappingView(
+            id: Int64(tiltSensor),
+            name: 'tiltSensor',
+            signature: pb.Signature(output: Int64(tilt)),
+            role: pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE,
+          ),
+        );
       final sys = pb.SystemView(
         revision: Int64(1),
         name: 'lamp',
-        base: design(),
+        base: base,
         bindings: [
           pb.BindingView(
             id: Int64(7),
@@ -275,7 +344,7 @@ void main() {
           ),
         ],
       );
-      final scene = buildScene(design(), const {}, system: SystemSceneInput(system: sys));
+      final scene = buildScene(base, const {}, system: SystemSceneInput(system: sys));
       final n = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(tiltSensor));
       expect(n.source, isFalse);
       expect(n.definition, '= pulse');

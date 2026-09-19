@@ -363,6 +363,13 @@ class _NewMappingFormState extends State<_NewMappingForm> {
             output: Int64(_output ?? _unchosen),
           ),
           state: pb.AcceptanceState.ACCEPTANCE_STATE_DECLARED,
+          // The relationship does not exist yet, so no daemon has stated
+          // its role: the preview says what the daemon will say for this
+          // shape once created — reads make a rule, none an unresolved
+          // Source (the e2e test checks the created one against it).
+          role: _inputs.isEmpty
+              ? pb.RelationshipRole.RELATIONSHIP_ROLE_SOURCE
+              : pb.RelationshipRole.RELATIONSHIP_ROLE_RULE,
         ),
       );
 

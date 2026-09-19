@@ -29,6 +29,8 @@ import 'package:path/path.dart' as p;
 
 import 'support/test_store.dart';
 
+import 'support/roles.dart';
+
 const roomTemp = 0;
 const buttonHeld = 1;
 const switchState = 2;
@@ -65,17 +67,17 @@ pb.ProjectProjection ac({bool applied = false}) =>
         ),
       ])
       ..mappings.addAll([
-        pb.MappingView(
+        mappingView(
           id: Int64(tempSensor),
           name: 'TempSensor',
           signature: pb.Signature(inputs: [], output: Int64(roomTemp)),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(buttonInput),
           name: 'ButtonInput',
           signature: pb.Signature(inputs: [], output: Int64(buttonHeld)),
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(ctrl),
           name: 'AirConditionerCtrl',
           signature: pb.Signature(
@@ -85,7 +87,7 @@ pb.ProjectProjection ac({bool applied = false}) =>
           definition: pb.Definition(formula: 'RoomTemp > 299.15 K && ButtonHeld'),
         ),
         if (applied)
-          pb.MappingView(
+          mappingView(
             id: Int64(acOn),
             name: 'acOn',
             signature: pb.Signature(inputs: [], output: Int64(switchState)),
@@ -95,31 +97,32 @@ pb.ProjectProjection ac({bool applied = false}) =>
 
 /// The compiler's verdict: causal, and the note on the rule unless applied
 /// (the applier's `references` then name the rule).
-pb.ProjectAnalysis analysisOf({bool applied = false}) =>
-    pb.ProjectAnalysis(revision: Int64(1), causal: true, clockConsistent: true)
-      ..mappings.addAll([
-        if (applied)
-          pb.MappingAnalysis(
-            id: Int64(acOn),
-            status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
-            references: [Int64(ctrl), Int64(tempSensor), Int64(buttonInput)],
-          ),
+pb.ProjectAnalysis analysisOf({bool applied = false}) => withAppliedBy(
+  pb.ProjectAnalysis(revision: Int64(1), causal: true, clockConsistent: true)
+    ..mappings.addAll([
+      if (applied)
         pb.MappingAnalysis(
-          id: Int64(ctrl),
+          id: Int64(acOn),
           status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
-          diagnostics: applied
-              ? []
-              : [
-                  pb.Diagnostic(
-                    code: kRuleUnappliedCode,
-                    severity: pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_INFO,
-                    mappingId: Int64(ctrl),
-                    message: note,
-                    explanation: explanation,
-                  ),
-                ],
+          references: [Int64(ctrl), Int64(tempSensor), Int64(buttonInput)],
         ),
-      ]);
+      pb.MappingAnalysis(
+        id: Int64(ctrl),
+        status: pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT,
+        diagnostics: applied
+            ? []
+            : [
+                pb.Diagnostic(
+                  code: kRuleUnappliedCode,
+                  severity: pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_INFO,
+                  mappingId: Int64(ctrl),
+                  message: note,
+                  explanation: explanation,
+                ),
+              ],
+      ),
+    ]),
+);
 
 AppState connected(pb.ProjectProjection project, pb.ProjectAnalysis analysis) => AppState(
   connection: Connected(
@@ -510,10 +513,6 @@ void main() {
           SemanticActionChosen(selection: MappingSelected(rule), actionKind: kApplyRuleActionKind),
         );
         await store.until((s) => s.project!.mappings.any((m) => m.name == 'airConditionerCtrl'));
-        // ignore: avoid_print
-        print(
-          'DEBUG actions=${store.actions.map((a) => a.runtimeType).toList()} sel=${store.state.editor.selection} entity=${store.state.selectedEntity} acts=${store.state.editor.actions?.actions.map((a) => '${a.id} ${a.applicability} ${a.reason}')} rev=${store.state.revision} arev=${store.state.editor.actions?.revision} err=${store.state.editor.lastError}',
-        );
         final value = store.state.project!.mappings.firstWhere(
           (m) => m.name == 'airConditionerCtrl',
         );
@@ -551,6 +550,71 @@ void main() {
         final sample = s.editor.simulation.samples.single;
         final rendered = sample.values.firstWhere((v) => v.mappingId == value.id).rendered;
         expect(rendered, 'SwitchState(on)');
+
+        // the roles, the daemon's: Source, Source, Rule, Value — and who
+        // applies the rule, stated by the compiler
+        RelationshipRole roleOf(int id) =>
+            relationshipRole(store.state.project!.mappings.firstWhere((m) => m.id.toInt() == id));
+        expect(roleOf(sensor), RelationshipRole.source);
+        expect(roleOf(button), RelationshipRole.source);
+        expect(roleOf(rule), RelationshipRole.rule);
+        expect(roleOf(value.id.toInt()), RelationshipRole.value);
+        expect(store.state.referrersOf(rule), [value.id.toInt()]);
+        expect(simulationInputs(store.state.flat!).map((m) => m.id.toInt()), [sensor, button]);
+        expect(isUnappliedRule(store.state, rule), isFalse);
+
+        // undo: one history unit removes the value; the note is back, the
+        // rule is still a Rule; redo brings the same identity back
+        store.dispatch(const UndoRequested());
+        await store.until((s) => !s.project!.mappings.any((m) => m.name == 'airConditionerCtrl'));
+        await analysed();
+        expect(roleOf(rule), RelationshipRole.rule);
+        expect(isUnappliedRule(store.state, rule), isTrue);
+        expect(store.state.referrersOf(rule), isEmpty);
+        store.dispatch(const RedoRequested());
+        await store.until((s) => s.project!.mappings.any((m) => m.name == 'airConditionerCtrl'));
+        await analysed();
+        final redone = store.state.project!.mappings.firstWhere(
+          (m) => m.name == 'airConditionerCtrl',
+        );
+        expect(redone.id, value.id);
+        expect(relationshipRole(redone), RelationshipRole.value);
+        expect(isUnappliedRule(store.state, rule), isFalse);
+
+        // a stateful () -> A is a Value, never a Source by shape: no input
+        // control, a column
+        final memory = await mapping('heldAWhile', [], held, formula: 'delay(false, ButtonInput)');
+        await analysed();
+        expect(roleOf(memory), RelationshipRole.value);
+        expect(simulationInputs(store.state.flat!).map((m) => m.id.toInt()), [sensor, button]);
+        expect(
+          store.state.analysis!.mappings.firstWhere((m) => m.id.toInt() == memory).role,
+          pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE,
+        );
+
+        // saved and reopened: the definition, the roles, the appliers —
+        // nothing about a role in the files
+        final root = p.join(dir.path, 'ac');
+        store.dispatch(const SaveRequested());
+        await store.until((s) => s.editor.pendingRequests == 0 && !s.project!.dirty);
+        final onDisk = File(p.join(root, 'src', 'main.bdl')).readAsStringSync();
+        expect(onDisk, contains('airConditionerCtrl'));
+        expect(onDisk.toLowerCase(), isNot(contains('role')));
+        store.dispatch(const CloseProjectRequested());
+        await store.until((s) => s.project == null);
+        store.dispatch(OpenProjectRequested(root));
+        await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
+        await analysed();
+        final again = store.state.project!.mappings.firstWhere(
+          (m) => m.name == 'airConditionerCtrl',
+        );
+        expect(again.id, value.id);
+        expect(relationshipRole(again), RelationshipRole.value);
+        expect(again.definition.formula, 'AirConditionerCtrl(TempSensor, ButtonInput)');
+        expect(roleOf(mappingId('AirConditionerCtrl')), RelationshipRole.rule);
+        expect(roleOf(mappingId('heldAWhile')), RelationshipRole.value);
+        expect(store.state.referrersOf(mappingId('AirConditionerCtrl')), [value.id.toInt()]);
+        expect(isUnappliedRule(store.state, mappingId('AirConditionerCtrl')), isFalse);
       } finally {
         await store.dispose();
         await dir.delete(recursive: true);

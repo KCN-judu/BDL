@@ -27,51 +27,56 @@ extension SignatureDomain on pb.Signature {
   bool get isUnitDomain => inputs.isEmpty;
 }
 
-/// What a relationship is, as a designer reads it — derived from the
-/// projection, never stored (ADR-0032; FV Phase 12 `Source`,
-/// `resolved_not_source`).  The same rule the IDE service uses for hover
-/// and Explain (`bdl-ide::relationship_role`).
+/// What a relationship is, as a designer reads it — one of three, stated
+/// by the daemon (`MappingView.role`, protocol 0.20) from the authored
+/// shape and realization state at the revision, never stored and never
+/// re-derived here (ADR-0032; FV Phase 12 `Source`, `resolved_not_source`).
+/// Everything else Studio shows about a relationship — declared, invalid,
+/// applied by nothing, driven, bound, backing a port — is a *state* that
+/// varies within a role.
 enum RelationshipRole {
-  /// A value entering the behavior model from the environment: no inputs,
-  /// no definition, not backing a port.  Observed once per activation.
+  /// Unit domain, no realization: a value provided from outside this
+  /// design — the environment, or, in a component body, the port it backs.
+  /// Observed once per activation; a simulation input.
   source,
 
-  /// A value transformed inside the behavior model — including a resolved
-  /// `() -> B` that computes internally: the domain shape alone makes
-  /// nothing a Source.
-  mapping,
+  /// A domain with inputs: a function from what it reads to what it
+  /// produces, with or without a definition.  It has no value of its own;
+  /// a value's formula applies it.
+  rule,
 
-  /// In a component's source: a declaration that backs a port.  The port's
-  /// own word (requires / provides / parameter) is its role.
-  port,
+  /// Unit domain with a realization — a formula, a binding's reference,
+  /// memory, a constant: a value at every activation of its domain.
+  value,
 }
 
-/// The role of [m].  [portWord] is the port it backs in a component's
-/// source, if any; a relationship realised by a binding has a definition
-/// in the projection (a reference) and is therefore never a Source.
-RelationshipRole relationshipRole(pb.MappingView m, {String? portWord}) {
-  if (portWord != null && portWord.isNotEmpty) return RelationshipRole.port;
-  if (!m.hasDefinition() && m.signature.isUnitDomain) return RelationshipRole.source;
-  return RelationshipRole.mapping;
-}
+/// The role of [m], as the daemon stated it.  Every projection carries it;
+/// a view without one is not a projection of this daemon.
+RelationshipRole relationshipRole(pb.MappingView m) => switch (m.role) {
+  pb.RelationshipRole.RELATIONSHIP_ROLE_SOURCE => RelationshipRole.source,
+  pb.RelationshipRole.RELATIONSHIP_ROLE_RULE => RelationshipRole.rule,
+  pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE => RelationshipRole.value,
+  _ => throw StateError(
+    'relationship ${m.id} carries no role: the daemon states it (protocol 0.20)',
+  ),
+};
 
-/// Whether [m] presents as a Source where the designer is: the derived
-/// role, less what the system knows — a port it backs in the open
-/// component, a binding that realises it on the system canvas.
-extension SourceHere on AppState {
-  bool isSource(pb.MappingView m) {
-    if (backsPort(m)) return false;
-    if (realisedByBinding(m)) return false;
-    return relationshipRole(m) == RelationshipRole.source;
-  }
+/// The role facts Studio's surfaces read, all of them off the projection
+/// and the system view — never off a formula, a name or the shape alone.
+extension RoleFacts on AppState {
+  /// [m] is a Source where the designer is — provided by the environment
+  /// of the design on screen.  Inside an open component, a Source that
+  /// backs a port is provided through that port ([backsPort]) and wears
+  /// the port's word instead.
+  bool isSource(pb.MappingView m) =>
+      relationshipRole(m) == RelationshipRole.source && !backsPort(m);
 
-  /// Whether [m] is *declared* where the designer is: it has no formula and
-  /// something is missing — it reads inputs, or backs a port of the open
-  /// component.  A Source is complete (the environment provides it) and a
-  /// relationship a binding realises has its definition from the system, so
-  /// neither is declared.  This is what the canvas draws dashed and what
-  /// the status line counts as *not yet defined*.
-  bool isDeclared(pb.MappingView m) => !m.hasDefinition() && !realisedByBinding(m) && !isSource(m);
+  /// [m] is *declared*: a rule with no formula yet — the one hole a
+  /// designer must fill.  A Source is complete (its provider is outside),
+  /// and a value has its realization.  This is what the canvas draws
+  /// dashed and what the status line counts as *not yet defined*.
+  bool isDeclared(pb.MappingView m) =>
+      relationshipRole(m) == RelationshipRole.rule && !m.hasDefinition();
 
   /// Whether [m] backs a port of the component whose source is open.
   bool backsPort(pb.MappingView m) {
@@ -80,7 +85,7 @@ extension SourceHere on AppState {
   }
 
   /// Whether a binding of the system realises [m] (its definition is a
-  /// reference the system made).
+  /// reference the system made): a state of a value, said as *bound to*.
   bool realisedByBinding(pb.MappingView m) {
     final id = m.id.toInt();
     return system?.bindings.any(
@@ -1560,11 +1565,16 @@ class AppState {
         for (final d in m.references) d.toInt(),
   ];
 
-  /// The relationships whose definitions reference [id]: the same edges,
-  /// read the other way — the inspector's *Named in* row.
+  /// The relationships whose definitions reference [id] — the compiler's
+  /// `applied_by`, the direct reverse edges it states (protocol 0.20),
+  /// never an inversion done here; the inspector's *Named in* row and,
+  /// for a rule, who applies it.  [id] itself is left out when its own
+  /// definition names it.
   List<int> referrersOf(int id) => [
     for (final m in contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
-      if (m.id.toInt() != id && m.references.any((d) => d.toInt() == id)) m.id.toInt(),
+      if (m.id.toInt() == id)
+        for (final d in m.appliedBy)
+          if (d.toInt() != id) d.toInt(),
   ];
 
   pb.ComponentView? component(int id) =>

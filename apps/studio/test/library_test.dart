@@ -18,6 +18,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/test_store.dart';
 
+import 'support/roles.dart';
+
 pb.ConceptTemplateView tpl(
   String id,
   String name, {
@@ -188,7 +190,7 @@ Future<(TestStore, FakeDaemon)> connected() async {
             ..concepts.add(pb.ConceptView(id: Int64(id), name: value.name))
             ..mappings.addAll([
               if (mappingId != null)
-                pb.MappingView(
+                mappingView(
                   id: Int64(mappingId),
                   name: mapping!.name,
                   signature: pb.Signature(inputs: const [], output: Int64(id)),

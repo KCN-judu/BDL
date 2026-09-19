@@ -16,6 +16,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 class _FixedStore extends AppStore {
   _FixedStore(this.fixed);
   final AppState fixed;
@@ -64,14 +66,14 @@ void main() {
         ),
       ])
       ..mappings.addAll([
-        pb.MappingView(
+        mappingView(
           id: Int64(0),
           name: 'dimByTilt',
           signature: pb.Signature(inputs: [Int64(0), Int64(3)], output: Int64(1)),
           definition: pb.Definition(formula: 'Tilt + 1 s'),
           state: pb.AcceptanceState.ACCEPTANCE_STATE_DEFINED,
         ),
-        pb.MappingView(
+        mappingView(
           id: Int64(1),
           name: 'warmPulse',
           signature: pb.Signature(inputs: [Int64(2)], output: Int64(1)),

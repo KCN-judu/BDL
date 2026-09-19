@@ -17,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/roles.dart';
+
 const tilt = 0;
 const brightness = 1;
 const dim = 0;
@@ -29,7 +31,7 @@ pb.ProjectProjection lamp({int revision = 1, String? definition, String? otherDe
       pb.ConceptView(id: Int64(brightness), name: 'Brightness'),
     ]);
   p.mappings.add(
-    pb.MappingView(
+    mappingView(
       id: Int64(dim),
       name: 'dimByTilt',
       signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(brightness)),
@@ -37,7 +39,7 @@ pb.ProjectProjection lamp({int revision = 1, String? definition, String? otherDe
     ),
   );
   p.mappings.add(
-    pb.MappingView(
+    mappingView(
       id: Int64(other),
       name: 'other',
       signature: pb.Signature(inputs: [], output: Int64(brightness)),
