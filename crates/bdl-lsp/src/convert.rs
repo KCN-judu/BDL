@@ -7,7 +7,7 @@ use crate::position::LineIndex;
 use bdl_ide::{
     ActionKind, Applicability, CompletionKind, EntityKind, EntityStatus, SemanticAction,
     SemanticCompletion, SemanticEditPlan, SemanticHover, SemanticOperation, SemanticSeverity,
-    SemanticSymbol, SemanticToken, TextDiagnostic, TokenKind,
+    SemanticSymbol, SemanticToken, TextDiagnostic,
 };
 use bdl_ide_db::{DocumentId, TextRange};
 use lsp_types::{
@@ -307,105 +307,56 @@ pub fn code_action(
 
 // ---- semantic tokens ---------------------------------------------------------
 
-pub const TOKEN_TYPES: &[SemanticTokenType] = &[
-    SemanticTokenType::TYPE,      // concept
-    SemanticTokenType::FUNCTION,  // mapping
-    SemanticTokenType::EVENT,     // output
-    SemanticTokenType::NAMESPACE, // clock
-    SemanticTokenType::CLASS,     // device
-    SemanticTokenType::new("unit"),
-    SemanticTokenType::KEYWORD,
-    SemanticTokenType::PARAMETER,
-    SemanticTokenType::ENUM_MEMBER, // constructor
-    SemanticTokenType::NUMBER,
-    SemanticTokenType::COMMENT,
-    SemanticTokenType::OPERATOR,
-    SemanticTokenType::MACRO, // equation of the library
-];
-
-pub const TOKEN_MODIFIERS: &[SemanticTokenModifier] = &[
-    SemanticTokenModifier::DECLARATION,
-    SemanticTokenModifier::new("unresolved"),
-];
-
+/// The LSP legend is the canonical one (`bdl_ide::legend()`), string for
+/// string: the adapter adds nothing and reorders nothing, so a client
+/// that reads `bdl-ide`'s legend and one that reads this server's agree.
 pub fn legend() -> SemanticTokensLegend {
+    let l = bdl_ide::legend();
     SemanticTokensLegend {
-        token_types: TOKEN_TYPES.to_vec(),
-        token_modifiers: TOKEN_MODIFIERS.to_vec(),
+        token_types: l
+            .types
+            .iter()
+            .map(|t| SemanticTokenType::new(leak(t)))
+            .collect(),
+        token_modifiers: l
+            .modifiers
+            .iter()
+            .map(|m| SemanticTokenModifier::new(leak(m)))
+            .collect(),
     }
 }
 
-fn token_type(k: TokenKind) -> u32 {
-    match k {
-        TokenKind::Concept => 0,
-        TokenKind::Mapping => 1,
-        TokenKind::Output => 2,
-        TokenKind::Clock => 3,
-        TokenKind::Device => 4,
-        TokenKind::Unit => 5,
-        TokenKind::Keyword => 6,
-        TokenKind::Parameter => 7,
-        TokenKind::Constructor => 8,
-        TokenKind::Number => 9,
-        TokenKind::Comment => 10,
-        TokenKind::Operator => 11,
-        TokenKind::Equation => 12,
-    }
+/// `SemanticTokenType::new` wants a `&'static str`; the legend's strings
+/// are a fixed, tiny set, leaked once per process.
+fn leak(s: &str) -> &'static str {
+    Box::leak(s.to_owned().into_boxed_str())
 }
 
-/// Delta-encode tokens (LSP `SemanticTokens.data`).  Multi-line tokens
-/// (block comments) are split per line because the encoding is per line.
+/// The LSP `data` array for a document, in the negotiated encoding.
 pub fn semantic_tokens(
     tokens: &[SemanticToken],
-    index: &LineIndex,
+    encoding: crate::position::PositionEncoding,
     text: &str,
 ) -> Vec<lsp_types::SemanticToken> {
-    let mut out = Vec::new();
-    let mut prev_line = 0u32;
-    let mut prev_start = 0u32;
-    for t in tokens {
-        let start = t.range.start.min(text.len() as u32);
-        let end = t.range.end.min(text.len() as u32).max(start);
-        let mut piece_start = start;
-        loop {
-            let s_pos = index.position(piece_start);
-            let line_end = text[piece_start as usize..end as usize]
-                .find('\n')
-                .map(|i| piece_start + i as u32)
-                .unwrap_or(end);
-            let e_pos = index.position(line_end);
-            let length = e_pos.character.saturating_sub(s_pos.character);
-            if length > 0 {
-                let delta_line = s_pos.line - prev_line;
-                let delta_start = if delta_line == 0 {
-                    s_pos.character - prev_start
-                } else {
-                    s_pos.character
-                };
-                let mut modifiers = 0u32;
-                if t.modifiers.declaration {
-                    modifiers |= 1;
-                }
-                if t.modifiers.unresolved {
-                    modifiers |= 2;
-                }
-                out.push(lsp_types::SemanticToken {
-                    delta_line,
-                    delta_start,
-                    length,
-                    token_type: token_type(t.kind),
-                    token_modifiers_bitset: modifiers,
-                });
-                prev_line = s_pos.line;
-                prev_start = s_pos.character;
-            }
-            if line_end >= end {
-                break;
-            }
-            piece_start = line_end + 1;
+    let enc = match encoding {
+        crate::position::PositionEncoding::Utf8 => bdl_ide::tokens::encode::PositionEncoding::Utf8,
+        crate::position::PositionEncoding::Utf16 => {
+            bdl_ide::tokens::encode::PositionEncoding::Utf16
         }
-    }
-    out
+        crate::position::PositionEncoding::Utf32 => {
+            bdl_ide::tokens::encode::PositionEncoding::Utf32
+        }
+    };
+    bdl_ide::tokens::encode::encode(tokens, text, enc)
+        .into_iter()
+        .map(|t| lsp_types::SemanticToken {
+            delta_line: t.delta_line,
+            delta_start: t.delta_start,
+            length: t.length,
+            token_type: t.token_type,
+            token_modifiers_bitset: t.token_modifiers,
+        })
+        .collect()
 }
 
 pub fn text_range_of(index: &LineIndex, r: lsp_types::Range) -> TextRange {

@@ -786,36 +786,36 @@ fn a_binder_local_is_never_a_reference_to_the_design() {
     assert!(body_sites.iter().all(|s| *s == "Tilt"), "{body_sites:?}");
 
     let tokens = semantic_tokens(&snap, doc);
-    let classes: Vec<(&str, TokenKind, bool)> = tokens
+    let classes: Vec<(&str, TokenType, bool)> = tokens
         .iter()
         .map(|t| {
             (
                 &text[t.range.start as usize..t.range.end as usize],
-                t.kind,
+                t.ty,
                 t.modifiers.declaration,
             )
         })
         .collect();
     assert!(
-        classes.contains(&("all", TokenKind::Keyword, false)),
+        classes.contains(&("all", TokenType::Keyword, false)),
         "{classes:?}"
     );
     assert!(
-        classes.contains(&("tilt", TokenKind::Parameter, true)),
+        classes.contains(&("tilt", TokenType::Parameter, true)),
         "{classes:?}"
     );
     assert!(
-        classes.contains(&("tilt", TokenKind::Parameter, false)),
+        classes.contains(&("tilt", TokenType::Parameter, false)),
         "{classes:?}"
     );
     assert!(
-        classes.contains(&("..", TokenKind::Operator, false)),
+        classes.contains(&("..", TokenType::Operator, false)),
         "{classes:?}"
     );
     assert!(
         classes
             .iter()
-            .filter(|c| c.0 == "tilt" && c.1 == TokenKind::Parameter)
+            .filter(|c| c.0 == "tilt" && c.1 == TokenType::Parameter)
             .count()
             == 2,
         "{classes:?}"
@@ -824,14 +824,14 @@ fn a_binder_local_is_never_a_reference_to_the_design() {
     assert!(
         classes
             .iter()
-            .filter(|c| c.0 == "in" && c.1 == TokenKind::Keyword)
+            .filter(|c| c.0 == "in" && c.1 == TokenType::Keyword)
             .count()
             == 2
     );
     assert!(
         classes
             .iter()
-            .filter(|c| c.0 == "Tilt" && c.1 == TokenKind::Concept)
+            .filter(|c| c.0 == "Tilt" && c.1 == TokenType::Type)
             .count()
             >= 3
     );
@@ -853,13 +853,13 @@ fn a_binder_local_is_never_a_reference_to_the_design() {
     let snap2 = host2.snapshot();
     let doc2 = snap2.document_by_uri(&uri).expect("document");
     let tokens2 = semantic_tokens(&snap2, doc2);
-    let all_tokens: Vec<TokenKind> = tokens2
+    let all_tokens: Vec<TokenType> = tokens2
         .iter()
         .filter(|t| &text2[t.range.start as usize..t.range.end as usize] == "all")
-        .map(|t| t.kind)
+        .map(|t| t.ty)
         .collect();
     assert!(
-        all_tokens.iter().all(|k| *k == TokenKind::Mapping),
+        all_tokens.iter().all(|k| *k == TokenType::Variable),
         "{all_tokens:?}"
     );
 }

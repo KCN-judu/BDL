@@ -844,7 +844,11 @@ fn handle_request(ctx: &Ctx<'_>, req: Request) -> Result<serde_json::Value, Requ
                 .document(doc)
                 .map(|d| d.source.clone())
                 .unwrap_or_default();
-            let data = convert::semantic_tokens(&semantic_tokens(ctx.snapshot, doc), &index, &text);
+            let data = convert::semantic_tokens(
+                &semantic_tokens(ctx.snapshot, doc),
+                index.encoding(),
+                &text,
+            );
             ok(Some(lsp::SemanticTokensResult::Tokens(
                 lsp::SemanticTokens {
                     result_id: Some(ctx.snapshot.stamp().to_string()),

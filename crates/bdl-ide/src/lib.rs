@@ -76,7 +76,10 @@ pub use references::{definition_of, entity_at, entity_at_formula, references, Re
 pub use rename::{plan_rename, RenameError};
 pub use role::{port_backed, provider, relationship_role, Provider, RelationshipRole};
 pub use symbols::{document_symbols, symbols, SemanticSymbol};
-pub use tokens::{semantic_tokens, SemanticToken, TokenKind, TokenModifiers};
+pub use tokens::{
+    formula_tokens, legend, lexical_tokens, semantic_tokens, Legend, SemanticToken, TokenModifiers,
+    TokenType, LEGEND_VERSION,
+};
 pub use virtual_docs::{virtual_document, VirtualDocument, VirtualKind};
 
 use serde::{Deserialize, Serialize};
