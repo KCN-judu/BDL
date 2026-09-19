@@ -99,9 +99,47 @@ jobs:
       # rebuilt all 25 crates on every run anyway — the cache grew from 165
       # to 297 MB and the restore and save got slower, for nothing.
       - uses: Swatinem/rust-cache@v2
+      # sccache experiment (docs/project/ci.md, "sccache"): a content-hashed
+      # compiler cache over the Actions cache service, on this job only,
+      # under measurement.  Every step of it is allowed to fail — if the
+      # tool cannot be installed or its server cannot start, the build runs
+      # with plain rustc and the step outcomes say so.  Only rlib
+      # compilations are cacheable (test binaries, bdld.exe and build
+      # scripts link, and sccache never caches a link).
+      - name: sccache (experiment)
+        id: sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.18.0"
+        continue-on-error: true
+      - name: sccache server
+        id: sccache-server
+        if: steps.sccache.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_GHA_VERSION: "windows-rust-1"
+        run: |
+          & $env:SCCACHE_PATH --start-server
+          & $env:SCCACHE_PATH --show-stats
       # windows-rust: the crates whose tests meet paths, URIs, processes,
       # files or the host cargo (scripts/preflight.py WINDOWS_RUST_CRATES)
       - run: python scripts/preflight.py windows-rust-ci
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_GHA_VERSION: "windows-rust-1"
+          # empty when sccache is not running: cargo then uses rustc directly
+          RUSTC_WRAPPER: ${{ steps.sccache-server.outcome == 'success' && env.SCCACHE_PATH || '' }}
+      - name: sccache stats
+        if: always() && steps.sccache-server.outcome == 'success'
+        shell: pwsh
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_GHA_VERSION: "windows-rust-1"
+        run: |
+          & $env:SCCACHE_PATH --show-stats
+          & $env:SCCACHE_PATH --show-stats --stats-format=json
       - name: Upload bdld.exe for the Studio job
         uses: actions/upload-artifact@v4
         with:
