@@ -132,3 +132,37 @@ fn a_port_backed_body_declaration_presents_its_port_not_source() {
         Some(RelationshipRole::Port(PortKind::Provided))
     );
 }
+
+/// The Formula Composer offers a Source by reference — `ambient`, never
+/// `ambient()`: a `() -> A` is read as a value (`refForms_agree`), and the
+/// consumer cannot tell a Source from a resolved relationship.
+#[test]
+fn the_composer_inserts_a_source_by_reference_never_as_a_call() {
+    let lamp = lamp();
+    let (s, ambient) = {
+        let a = apply_edit(&lamp.snapshot, &mapping("ambient", vec![], lamp.brightness)).unwrap();
+        (a.snapshot, a.outcome.created_mapping.unwrap())
+    };
+    let (s, pulse) = {
+        let a = apply_edit(&s, &mapping("pulse", vec![], lamp.brightness)).unwrap();
+        let id = a.outcome.created_mapping.unwrap();
+        (edit(&a.snapshot, formula(id, "delay(0, 1)")), id)
+    };
+    let mut host = IdeHost::new(s);
+    host.set_definition_draft(lamp.dim_by_tilt, "?");
+    let slot = formula_slot(&host.snapshot(), lamp.dim_by_tilt, "r").expect("slot");
+    let by_entity = |id: DeclId| {
+        slot.references
+            .iter()
+            .find(|r| r.entity == Some(EntityRef::Mapping(id)))
+            .expect("offered")
+    };
+    let src = by_entity(ambient);
+    assert_eq!(src.label, "ambient");
+    assert_eq!(src.insert, "ambient", "by reference, not a call");
+    assert!(src.produces.starts_with("Brightness"));
+    // the resolved () -> Brightness is offered the same way: consumers are
+    // indistinguishable (`consumers_indistinguishable`)
+    let res = by_entity(pulse);
+    assert_eq!(res.insert, "pulse");
+}
