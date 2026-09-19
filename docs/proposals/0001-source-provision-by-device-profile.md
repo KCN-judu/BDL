@@ -195,7 +195,12 @@ Let `Δ' = provision Δ P`, `Κ' = provisionΚ Κ P`, `I = induced Δ P I'`.
    principle — `id` and `succ` from one reading are each onto, and the abstract
    pair `(5, 9)` has no witness (`no_joint_witness`). The strict case is
    executed: a saturating ADC never yields 451 K; the abstract design observes
-   `TempSensor = 451 K`, no provisioned deployment does (`exE`).
+   `TempSensor = 451 K`, no provisioned deployment does (`exE`). **The strict
+   case is the normal one and the wanted one**: a limited range, finite
+   resolution, saturation and physical coupling between the channels of one
+   reading all make `Trace(device) ⊂ Trace(abstract)`, and that is what a
+   deployment is for. A joint section characterises when the two coincide; its
+   absence is never a deployment error, and no tooling should treat it as one.
 6. `provision_not_reapplicable` — after provision no target is a Source and `WF`
    fails (`r` is no longer fresh): provision is a one-way step. The first draft
    said "idempotent per Source"; the totalized function does satisfy
@@ -294,9 +299,12 @@ designed here):
 2. `bdl-compiler::analyze_deployment` computes the provisioned design and checks
    `Fits`, purity (`Channel.WF ∧ DelayFree`) and the commitments of the
    provisioned Sources, in product words ("this sensor reports a voltage;
-   RoomTemp is a temperature"). Whether `computes` is checked (it is a `∀` over
-   raw values) or trusted from the catalog with differential tests is an open
-   question below.
+   RoomTemp is a temperature"). Today every declaration's commitments are empty
+   (`bdl-elab` authors none; `require` is reserved, not implemented), so the
+   commitment check is vacuous until commitments exist; `provision_wf`'s `hcomm`
+   is the hook, not a present obligation. Whether `computes` is checked (it is a
+   `∀` over raw values) or trusted from the catalog with differential tests is
+   an open question below.
 3. `bdl-lower` / `bdl-codegen-rust`: input slots at `raw`; `tr` inlined; the
    differential tests compare the provisioned core against the reference
    evaluator on the provisioned design (`provision_transparent` is the oracle).
