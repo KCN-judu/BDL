@@ -51,7 +51,8 @@ Requirements: Rust 1.89 (pinned in `rust-toolchain.toml`, which also pulls
 regenerate the Dart protocol code.
 
 ```bash
-just check          # fmt, clippy, tests, Flutter analyze/test, proto drift
+just check          # everything the Linux CI jobs prove (python scripts/preflight.py full)
+python scripts/preflight.py fast   # before a commit; `platform` for the Windows-sensitive checks
 just studio         # build bdld and run Studio against it (run from Terminal/Finder-launched
                     # shells: macOS refuses file dialogs to children of sandboxed hosts)
 just bdld           # run the daemon on stdio for manual experiments
