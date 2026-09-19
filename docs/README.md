@@ -73,6 +73,7 @@ header that `just docs-check` verifies against its folder.
 | [behavior-systems.md](architecture/behavior-systems.md)                       | behavior-systems | components, contracts, instances, bindings, flattening, groups — implementation design |
 | [deployment-read-model.md](architecture/deployment-read-model.md)             | deployment       | what a Deploy surface is handed                                                        |
 | [ide-service.md](architecture/ide-service.md)                                 | ide              | overlays, projections, text workspaces, the LSP adapter                                |
+| [relationship-roles.md](architecture/relationship-roles.md)                   | compiler         | Source / Rule / Value: the derived role, its states, the boundary, the matrix          |
 | [studio-ui.md](architecture/studio-ui.md)                                     | studio           | the design system and interaction standard of Studio                                   |
 | [studio-compiler-integration.md](architecture/studio-compiler-integration.md) | studio           | the Studio/compiler boundary and its evidence map                                      |
 | [component-boundary.md](architecture/component-boundary.md)                   | runtime          | supplied Rust computation blocks — designed, not built                                 |
@@ -143,10 +144,13 @@ each of its questions was answered is in the
   modifiers, `zip`'s cost in the core, a device binding for a Source.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** reference edges (ADR-0034, protocol 0.18: what a formula
-  names is drawn into its formula line from `MappingAnalysis.references`; a rule
-  wears _rule_; one meaning of _produces_ across canvas, probe and inspector);
-  one rendering of a value (ADR-0033: `on` / `off`, six significant digits, the
+- **Recently changed:** one derived relationship role — Source, Rule, Value —
+  stated by the daemon on every projection and analysis (protocol 0.20, ADR-0032
+  amended, `docs/architecture/relationship-roles.md`; Studio re-derives
+  nothing); reference edges (ADR-0034, protocol 0.18: what a formula names is
+  drawn into its formula line from `MappingAnalysis.references`; a rule wears
+  _rule_; one meaning of _produces_ across canvas, probe and inspector); one
+  rendering of a value (ADR-0033: `on` / `off`, six significant digits, the
   evaluator's text everywhere, inputs echoed in the trace; the Simulate page
   localised); the generalized Standard Library (protocol 0.17: items as
   fragments of ordinary objects, _Concepts_ and _Sources_, eight Sources

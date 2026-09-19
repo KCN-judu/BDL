@@ -131,23 +131,28 @@ header word precedence is `Source` › `declared` › port word › sink state �
   `() -> B` (ADR-0029); the unit domain `()` is a type-theoretic normalization,
   not a design input, so the node shows one output socket and nothing on the
   left — the Explain disclosure says `type: () -> Brightness` and that the
-  domain is the empty product. Studio asks `Signature.isUnitDomain`
-  (`app/state.dart`) wherever "read as a value" matters (simulation inputs,
-  output drivers, the value/rule word), never a separate kind of node.
-- **A Source is a role, not a node kind** (ADR-0032). A relationship with the
-  unit domain and no definition, backing no port and realised by no binding, is
-  drawn as a Source: the word _Source_ in the header, an entry glyph (an arrow
-  crossing a boundary tick) before the title, a solid 3 px bar on the node's
-  **left** edge — the environment side, the mirror of the sink's bar on the
-  right — and a green header strip as the redundant colour cue. It is never
-  dashed: nothing is missing. The rule is `relationshipRole` (`app/state.dart`)
-  read through `SystemSceneInput.portWords` and the system's bindings in
-  `buildScene`; the painter reads `NodeShape.source`. The _realise_ socket of an
-  open base relationship (§11) is added only while something could bind to it —
-  the system has an instance, or another relationship produces the same concept
-  — so a Source in a design with neither keeps its left edge clear. Assistive
-  technology hears _name, Source: a value entering the behavior model from the
-  environment, provides C_.
+  domain is the empty product. Wherever "read as a value" matters (simulation
+  inputs and columns, output drivers, the value/rule word) Studio reads the
+  **role the daemon states** on every `MappingView` (`role`, protocol 0.20;
+  `relationshipRole` in `app/state.dart` only maps the enum), never the
+  signature's shape and never a formula: the canonical matrix is
+  `docs/architecture/relationship-roles.md`.
+- **A Source is a role, not a node kind** (ADR-0032). A relationship the daemon
+  states as a Source — the unit domain and no realization — that backs no port
+  of the open component is drawn as a Source: the word _Source_ in the header,
+  an entry glyph (an arrow crossing a boundary tick) before the title, a solid 3
+  px bar on the node's **left** edge — the environment side, the mirror of the
+  sink's bar on the right — and a green header strip as the redundant colour
+  cue. It is never dashed: nothing is missing. A base relationship a binding
+  realises arrives from the system view already as a Value (its flattened copy
+  carries the binding); a port-backed Source of an open component wears the
+  port's word (`SystemSceneInput.portWords`) — its provider is the port, a fact
+  beside the role. The painter reads `NodeShape.source`. The _realise_ socket of
+  an open base relationship (§11) is added only while something could bind to it
+  — the system has an instance, or another relationship produces the same
+  concept — so a Source in a design with neither keeps its left edge clear.
+  Assistive technology hears _name, Source: a value entering the behavior model
+  from the environment, provides C_.
 
 ```text
         ┌─────────────────────────┐
@@ -202,12 +207,17 @@ header word precedence is `Source` › `declared` › port word › sink state �
   is dropped. A self-reference draws nothing (the register mark, §7, is not
   built). A hidden member of a collapsed group adds none of its own; an edge
   from a hidden member leaves from the group's aggregate output socket.
-- **Rule, value, Source** are told apart without the formula: a relationship
-  that reads something is a **rule** — its input sockets are the shape and the
-  header says _rule_ when no state word takes the slot (`NodeShape.rule`); one
-  that reads nothing and has a formula is a **value** with no word; one that
-  reads nothing and has none is a Source (above). Assistive technology hears
-  _name, rule, reads …, produces …, depends on …_ / _name, value, produces …_.
+- **Rule, value, Source** are the daemon's three roles, told apart without the
+  formula: a relationship that reads something is a **rule** — its input sockets
+  are the shape and the header says _rule_ when no state word takes the slot
+  (`NodeShape.rule`); one that reads nothing and has a realization is a
+  **value** with no word; one that reads nothing and has none is a Source
+  (above). _Declared_ (dashed) is a state of a rule only — the one hole a
+  designer fills; _not applied_ (a hollow output socket) is the compiler's
+  `reactive.rule_unapplied`, a state of a rule; _does not check_ is a state of a
+  rule or a value. Assistive technology hears _name, rule, reads …, produces …,
+  depends on …, applied by nothing_ / _name, value, produces …_ / for a
+  port-backed relationship of an open component the port's word.
 - **Empty canvas**: one tertiary line naming the first step (add a concept from
   the Library). Painted nodes expose semantics in product language for assistive
   technology.
@@ -368,7 +378,7 @@ organised by what the designer means, not by the model's fields:
 | Mapping                     | **Meaning**                    | Name, Meaning                                                                                                                                                                                                                                                                                                                               | Rename, SetDescription                                                                                    | refinement                                                                                                                   |
 | Mapping                     | **Reads**                      | chips with the socket glyph, removable; a pop-up to add                                                                                                                                                                                                                                                                                     | SetSignature                                                                                              | edit                                                                                                                         |
 | Mapping                     | **Produces**                   | pop-up with the socket glyph; titled **Provides** for a Source                                                                                                                                                                                                                                                                              | SetSignature                                                                                              | edit                                                                                                                         |
-| Mapping                     | **Meaning › Role**             | _Source_ / _Relationship_ / the port word — derived, never edited; a Source adds one sentence (_A value that enters the behavior model from the environment, observed once per activation. Nothing is missing…_)                                                                                                                            | —                                                                                                         | —                                                                                                                            |
+| Mapping                     | **Meaning › Role**             | _Source_ / _Rule_ / _Value_ (the daemon's `MappingView.role`) / the port word for a port-backed relationship of an open component — derived, never edited; a Source adds one sentence (_A value that enters the behavior model from the environment, observed once per activation. Nothing is missing…_)                                    | —                                                                                                         | —                                                                                                                            |
 | Source                      | **Relationship › Realization** | _Provided by the environment; no device is bound yet._ above the definition editor; the header word is _Source_, never _declared_                                                                                                                                                                                                           | —                                                                                                         | — (a device binding for a Source is ISS-0016)                                                                                |
 | Mapping                     | **Relationship**               | the definition editor (§4a) — _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; header word _declared_ while empty, _unsaved_ while a draft differs; findings about the mapping’s place in the design attached under the editor in product language                                                                    | AttachDefinition, ReplaceDefinition (chosen by the reducer from the committed state, never by the widget) | add is a refinement; save (replace) and detach are edits                                                                     |
 | Mapping                     | Delete `<name>`                | —                                                                                                                                                                                                                                                                                                                                           | DeleteMapping                                                                                             | edit                                                                                                                         |

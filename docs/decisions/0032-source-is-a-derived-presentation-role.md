@@ -157,3 +157,31 @@ the role itself stands.
 
 Specification: `docs/spec/concept-library.md`; change fragment:
 `docs/changes/unreleased/2026-09-standard-library.md`.
+
+## Amendment (2026-09-20, three roles, one authority)
+
+The decision names the role _Source_ and leaves the rest a _relationship_. The
+product now reads three roles — **Source**, **Rule**, **Value** — and the role
+has one home. Everything above stands; this amendment states the current form:
+
+- `bdl_model::RelationshipRole` / `MappingBlock::role` is the predicate: a
+  domain with inputs is a Rule; the unit domain with a realization is a Value;
+  the unit domain without one is a Source. Realization means an attached
+  definition — a formula whether or not it checks, a binding's reference,
+  memory, a constant — never a draft. The compiler states the role in
+  `MappingAnalysis.role`, the daemon on every `MappingView.role` (protocol 0.20,
+  additive), and the system view states a base relationship a binding realises
+  as a Value. Studio maps the enum and re-derives nothing (`AppState.isSource`
+  and `relationshipRole` read the stated role); the Formula Composer's sheet
+  preview, for a relationship that does not exist yet, says what the daemon will
+  say for its shape.
+- The former `RelationshipRole::Port(kind)` of `bdl-ide` is not a role: a
+  port-backed declaration keeps its role — a required or parameter port's is a
+  Source of the body, provided through the port; a provided port's realized
+  inside is a Value — and the port is a fact beside it (`bdl-ide::port_backed`,
+  `Provider::Port`). Studio wears the port's word for it, as before.
+- States — declared, invalid, applied by nothing, driven, bound, clocked — vary
+  within a role and never move it (`docs/architecture/relationship-roles.md`,
+  the normative matrix).
+- FV Phase 13's provisioned Source is a Value by this same rule; no role is
+  added for it (PRP-0001, not implemented).
