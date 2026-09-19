@@ -1,16 +1,27 @@
 name: CI
 
+# One validation contract: every job runs a profile of scripts/preflight.py,
+# the same checks a developer runs locally (`python scripts/preflight.py
+# full` before a push).  What each job proves, and why Windows runs the
+# subset it runs, is docs/project/ci.md.
+
 on:
   push:
     branches: [main]
   pull_request:
+
+# A newer commit on a branch or PR supersedes the run in flight; main keeps
+# every run, so its history stays complete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   rust:
-    name: Rust (fmt, clippy, test)
+    name: Rust + docs (Linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,26 +29,15 @@ jobs:
         with:
           toolchain: "1.89.0"
           components: rustfmt, clippy
+      # Caches the registry, git deps and the dependency artifacts under
+      # target/ (workspace crates are rebuilt); sets CARGO_INCREMENTAL=0.
       - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all -- --check
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Markdown format and lint (what `just docs-fmt` would change fails here)
-        run: |
-          git ls-files -z '*.md' | xargs -0 npx --yes prettier@3.9.7 --log-level warn --check
-          git ls-files -z '*.md' | xargs -0 npx --yes markdownlint-cli2@0.23.2
-      - run: python3 scripts/validate_docs.py
-      - run: python3 -m unittest scripts/test_validate_docs.py
-      - run: python3 scripts/check_screenshots.py
-      - name: Localization catalogs complete and rendered pages current
-        run: |
-          python3 scripts/check_l10n.py
-          python3 -m unittest scripts/test_docs_l10n.py
-          python3 scripts/docs_l10n.py all
-          git diff --exit-code -- locale/
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+      # rust-format, docs-format, docs-lint, docs-validate, screenshots,
+      # l10n, rust-clippy, rust-test — cheap checks first
+      - run: python3 scripts/preflight.py rust-ci
       - name: Upload bdld for the Flutter job
         uses: actions/upload-artifact@v4
         with:
@@ -45,52 +45,26 @@ jobs:
           path: target/debug/bdld
 
   flutter:
-    name: Flutter (format, analyze, test)
+    name: Flutter (Linux)
     runs-on: ubuntu-latest
     needs: rust
-    defaults:
-      run:
-        working-directory: apps/studio
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: "3.47.4"
+          cache: true
       - uses: actions/download-artifact@v4
         with:
           name: bdld-linux
           path: ${{ github.workspace }}/target/debug
       - run: chmod +x ${{ github.workspace }}/target/debug/bdld
-      - run: flutter pub get
-      - run: dart format --page-width 100 --output=none --set-exit-if-changed lib test
-      - run: flutter analyze
-      - run: flutter test
+      # flutter-deps, dart-format, flutter-analyze, studio-l10n-generated,
+      # flutter-test (every Studio test, against the Linux bdld)
+      - run: python3 scripts/preflight.py flutter-ci
         env:
           BDLD_PATH: ${{ github.workspace }}/target/debug/bdld
-
-  windows:
-    name: Windows (Rust tests, Studio build)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: "1.89.0"
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo test --workspace
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: "3.47.4"
-      - run: flutter pub get
-        working-directory: apps/studio
-      - run: flutter test
-        working-directory: apps/studio
-        env:
-          BDLD_PATH: ${{ github.workspace }}\target\debug\bdld.exe
-      - run: flutter build windows --debug
-        working-directory: apps/studio
 
   proto:
     name: Protocol (generated Dart up to date)
@@ -105,7 +79,61 @@ jobs:
       - run: dart pub global activate protoc_plugin
       - run: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          tmp=$(mktemp -d)
-          protoc -I crates/bdl-protocol/proto --dart_out=$tmp crates/bdl-protocol/proto/bdl/v1/bdl.proto
-          dart format --page-width 100 $tmp >/dev/null
-          diff -r $tmp/bdl apps/studio/lib/protocol/gen/bdl
+          python3 scripts/preflight.py proto-ci
+
+  # Windows proves what Linux cannot: paths, drive letters, file URIs,
+  # process spawning, the filesystem, the host toolchain and the native
+  # build.  Three jobs in parallel instead of one serial job; the Rust
+  # compatibility set builds bdld.exe once for the Studio tests.
+  windows-rust:
+    name: Windows compatibility (Rust)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+      - uses: Swatinem/rust-cache@v2
+      # windows-rust: the crates whose tests meet paths, URIs, processes,
+      # files or the host cargo (scripts/preflight.py WINDOWS_RUST_CRATES)
+      - run: python scripts/preflight.py windows-rust-ci
+      - name: Upload bdld.exe for the Studio job
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdld-windows
+          path: target/debug/bdld.exe
+
+  windows-studio:
+    name: Windows compatibility (Studio)
+    runs-on: windows-latest
+    needs: windows-rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.4"
+          cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: bdld-windows
+          path: ${{ github.workspace }}\target\debug
+      # windows-flutter: the Studio tests tagged `daemon || filesystem`
+      # (apps/studio/dart_test.yaml) against bdld.exe
+      - run: python scripts/preflight.py windows-flutter-ci
+        env:
+          BDLD_PATH: ${{ github.workspace }}\target\debug\bdld.exe
+
+  windows-build:
+    name: Windows native build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.4"
+          cache: true
+      # windows-build: `flutter build windows --debug` — the cheapest
+      # command that proves the native target compiles and links
+      - run: python scripts/preflight.py windows-build-ci
