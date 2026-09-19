@@ -974,3 +974,133 @@ fn unfinished_edits_survive_save_close_and_reopen() {
         "the definition draft stays: {sidecar}"
     );
 }
+
+/// A standard Source template is an ordinary library mechanism (ADR-0032):
+/// one commit creates a concept and an unresolved `() -> concept`
+/// relationship, the source is written in the preferred spelling, never
+/// the shorthand, and reopening re-derives the same shape from the text.
+#[test]
+fn a_source_template_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("lamp");
+    let mut c = Client::spawn();
+    let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "lamp".into(),
+    })) else {
+        panic!()
+    };
+    c.last_revision = p.project.unwrap().revision;
+
+    // the library serves the Sources with their relationship and locales
+    let Resp::ConceptTemplates(t) = c.call(Req::ListConceptTemplates(
+        pb::ListConceptTemplatesRequest {},
+    )) else {
+        panic!()
+    };
+    let std = &t.libraries[0];
+    let temp = std
+        .templates
+        .iter()
+        .find(|x| x.id == "std.source.temperature")
+        .expect("served");
+    assert_eq!(temp.category, "sources");
+    assert_eq!(temp.source_default_name, "TempSensor");
+    assert_eq!(temp.display_names["zh-Hans"], "温度传感器");
+    assert_eq!(temp.display_names["ja"], "温度センサー");
+    assert!(std
+        .templates
+        .iter()
+        .filter(|x| x.category == "sources")
+        .all(|x| !x.source_default_name.is_empty()));
+    assert!(std
+        .templates
+        .iter()
+        .filter(|x| x.category != "sources")
+        .all(|x| x.source_default_name.is_empty()));
+
+    // instantiate, renaming both as a designer would
+    let before = c.last_revision;
+    let Resp::SystemEditApplied(e) = c.call(Req::InstantiateConceptTemplate(
+        pb::InstantiateConceptTemplateRequest {
+            base_revision: before,
+            template_id: "std.source.temperature".into(),
+            name: Some("RoomTemp".into()),
+            component: None,
+            source_name: Some("TempSensor".into()),
+        },
+    )) else {
+        panic!()
+    };
+    let p = e.project.unwrap();
+    c.last_revision = p.revision;
+    assert!(p.revision > before);
+    let outcome = e.outcome.unwrap().inner.unwrap();
+    let concept = outcome.created_concept.expect("the concept");
+    let source = outcome.created_mapping.expect("the relationship");
+    let m = p.mappings.iter().find(|m| m.id == source).unwrap();
+    assert_eq!(m.name, "TempSensor");
+    assert!(
+        m.signature.as_ref().unwrap().inputs.is_empty(),
+        "unit domain"
+    );
+    assert_eq!(m.signature.as_ref().unwrap().output, concept);
+    assert!(
+        m.definition.is_none(),
+        "unresolved: the environment provides it"
+    );
+    assert_eq!(
+        p.concepts.iter().find(|x| x.id == concept).unwrap().name,
+        "RoomTemp"
+    );
+    // one undo removes both: they are one history entry
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    let p = u.project.unwrap();
+    c.last_revision = p.revision;
+    assert!(p.mappings.is_empty() && p.concepts.is_empty());
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {})) else {
+        panic!()
+    };
+    c.last_revision = r.project.unwrap().revision;
+
+    // the text: the preferred spelling, never the shorthand; a save keeps it
+    let main = c
+        .sources()
+        .files
+        .into_iter()
+        .find(|f| f.path == "src/main.bdl")
+        .unwrap();
+    assert!(
+        main.text.contains("mapping TempSensor : () -> RoomTemp"),
+        "{}",
+        main.text
+    );
+    assert!(
+        !main.text.contains("mapping TempSensor : RoomTemp\n"),
+        "{}",
+        main.text
+    );
+    let Resp::Project(saved) = c.save(false) else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+    let on_disk = std::fs::read_to_string(root.join("src/main.bdl")).unwrap();
+    assert!(
+        on_disk.contains("mapping TempSensor : () -> RoomTemp"),
+        "{on_disk}"
+    );
+
+    // reopen: the same shape, the same ids — the role is re-derived, nothing
+    // about the template or the role is in the project
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let p = c.open(&root);
+    let m = p.mappings.iter().find(|m| m.name == "TempSensor").unwrap();
+    assert_eq!(m.id, source);
+    assert!(m.signature.as_ref().unwrap().inputs.is_empty());
+    assert!(m.definition.is_none());
+    let sidecar = std::fs::read_to_string(root.join(".bdl/authoring.json")).unwrap();
+    assert!(!sidecar.to_lowercase().contains("source"), "{sidecar}");
+    assert!(!sidecar.contains("template"), "{sidecar}");
+}

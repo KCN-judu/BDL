@@ -95,6 +95,22 @@ pub fn explain(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Explana
                 }
             }
             sem = sem.line("interface", pretty::kernel(&a.interface.expected_type));
+            if let Some(role) = crate::role::relationship_role(snapshot, id) {
+                sem = sem.line("role", role.word());
+                if let Some(p) = crate::role::provision(role) {
+                    sem = sem.line("provision", p).line(
+                        "reading",
+                        "The declaration is observed once per activation: its value is the environment's for that tick (FV Phase 12 `source_value`). The unit argument is erased above the kernel; a reference is a reading of the declaration, not an effectful zero-argument call (`refForms_agree`).",
+                    );
+                } else if matches!(role, crate::role::RelationshipRole::Mapping)
+                    && m.is_some_and(|m| m.signature.is_unit_domain())
+                {
+                    sem = sem.line(
+                        "reading",
+                        "A realized `() -> B` never consults the environment (FV Phase 12 `resolved_not_source`): the domain shape alone makes nothing a Source.",
+                    );
+                }
+            }
             let grant: Vec<String> = a
                 .interface
                 .expected_type

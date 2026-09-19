@@ -25,7 +25,7 @@
 use bdl_model::surface::{Design, Representation};
 use bdl_model::{quantity, EditOp};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 /// The schema of the TOML files this crate reads.
@@ -90,6 +90,44 @@ pub struct ConceptTemplate {
     /// A generic presentation hint (`temperature`, `motor`); never semantic.
     #[serde(default)]
     pub icon: String,
+    /// A *Source* template: instantiating it also creates one relationship
+    /// `<source.default_name> : () -> <the concept>` with no definition —
+    /// an ordinary unit-domain declaration the environment provides
+    /// (ADR-0032).  Nothing else marks it: the Source role is derived from
+    /// that shape, so a third-party library gets exactly the same result.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceSpec>,
+    /// Display name and description in other locales (`zh-Hans`, `ja`),
+    /// for the Library panel; the generated identifiers never change with
+    /// the locale.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub i18n: BTreeMap<String, TemplateText>,
+}
+
+/// The relationship a Source template creates beside its concept.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SourceSpec {
+    /// The relationship's name on creation (`TempSensor`), made unique in
+    /// the design if taken.
+    pub default_name: String,
+}
+
+/// One locale's rendering of a template's presentation text.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TemplateText {
+    #[serde(default)]
+    pub display_name: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+/// What instantiating a template does: the `CreateConcept` edit, and for a
+/// Source template the name of the `() -> concept` relationship to create
+/// once the concept's identity is known.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Instantiation {
+    pub concept: EditOp,
+    pub source_name: Option<String>,
 }
 
 fn either() -> RoleHint {
@@ -222,6 +260,16 @@ impl Library {
             if !is_identifier(&t.default_name) {
                 return Err(problem("default_name must be an identifier"));
             }
+            if let Some(src) = &t.source {
+                if !is_identifier(&src.default_name) {
+                    return Err(problem("source.default_name must be an identifier"));
+                }
+                if src.default_name == t.default_name {
+                    return Err(problem(
+                        "source.default_name must differ from the concept's default_name",
+                    ));
+                }
+            }
             if t.display_name.trim().is_empty() || t.category.trim().is_empty() {
                 return Err(problem("display_name and category are required"));
             }
@@ -330,15 +378,51 @@ impl LibrarySet {
 /// default when given.  Applying the edit allocates a fresh `SemanticId`;
 /// nothing about the template is recorded.
 pub fn instantiate(design: &Design, template: &ConceptTemplate, name: Option<&str>) -> EditOp {
+    instantiate_with(design, template, name, None).concept
+}
+
+/// [`instantiate`] plus, for a Source template, the relationship to create
+/// after the concept: `source_name` overrides its default.  The caller
+/// creates the concept, reads the `SemanticId` off the outcome, and creates
+/// `CreateMapping { name, inputs: [], output }` — one commit, two ordinary
+/// edits, no definition: the environment provides the value.
+pub fn instantiate_with(
+    design: &Design,
+    template: &ConceptTemplate,
+    name: Option<&str>,
+    source_name: Option<&str>,
+) -> Instantiation {
     let wanted = name
         .map(str::trim)
         .filter(|n| !n.is_empty())
         .unwrap_or(&template.default_name);
-    EditOp::CreateConcept {
-        name: free_name(design, wanted),
-        description: template.description.clone(),
-        representation: template.representation(),
+    let source_name = template.source.as_ref().map(|s| {
+        let wanted = source_name
+            .map(str::trim)
+            .filter(|n| !n.is_empty())
+            .unwrap_or(&s.default_name);
+        free_mapping_name(design, wanted)
+    });
+    Instantiation {
+        concept: EditOp::CreateConcept {
+            name: free_name(design, wanted),
+            description: template.description.clone(),
+            representation: template.representation(),
+        },
+        source_name,
     }
+}
+
+/// `wanted` if no relationship has it, else the first free `wanted2`, ….
+pub fn free_mapping_name(design: &Design, wanted: &str) -> String {
+    let taken = |n: &str| design.mappings.values().any(|m| m.name == n);
+    if !taken(wanted) {
+        return wanted.to_owned();
+    }
+    (2u32..)
+        .map(|i| format!("{wanted}{i}"))
+        .find(|n| !taken(n))
+        .unwrap_or_else(|| wanted.to_owned())
 }
 
 /// `wanted` if no concept has it, else the first `wanted2`, `wanted3`, …
@@ -363,9 +447,18 @@ fn is_identifier(s: &str) -> bool {
 impl fmt::Display for ConceptTemplate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.type_name() {
-            Some(t) => write!(f, "concept {} : {}", self.default_name, t),
-            None => write!(f, "concept {}", self.default_name),
+            Some(t) => write!(f, "concept {} : {}", self.default_name, t)?,
+            None => write!(f, "concept {}", self.default_name)?,
         }
+        if let Some(s) = &self.source {
+            // the preferred spelling: the empty product written out
+            write!(
+                f,
+                "\nmapping {} : () -> {}",
+                s.default_name, self.default_name
+            )?;
+        }
+        Ok(())
     }
 }
 
@@ -396,7 +489,8 @@ mod tests {
                 "electrical",
                 "visual",
                 "actuation",
-                "audio"
+                "audio",
+                "sources"
             ]
         );
         for t in lib.templates() {
@@ -425,10 +519,62 @@ mod tests {
     }
 
     #[test]
+    fn source_templates_create_a_concept_and_an_explicit_unit_domain_relationship() {
+        let lib = Library::standard();
+        let sources: Vec<&ConceptTemplate> = lib
+            .templates()
+            .iter()
+            .filter(|t| t.category == "sources")
+            .collect();
+        assert_eq!(sources.len(), 7, "the seven standard Sources");
+        let design = Design::empty("lamp");
+        for t in &sources {
+            let src = t
+                .source
+                .as_ref()
+                .expect("a Source template names its relationship");
+            assert!(is_identifier(&src.default_name), "{}", t.id);
+            for locale in ["zh-Hans", "ja"] {
+                let text = t
+                    .i18n
+                    .get(locale)
+                    .unwrap_or_else(|| panic!("{} lacks {locale}", t.id));
+                assert!(!text.display_name.is_empty() && !text.description.is_empty());
+            }
+            // the printed form is the preferred spelling, never the shorthand
+            let shown = t.to_string();
+            assert!(
+                shown.contains(&format!(
+                    "mapping {} : () -> {}",
+                    src.default_name, t.default_name
+                )),
+                "{shown}"
+            );
+            assert!(!shown.contains(&format!(": {}\n", t.default_name)));
+            // instantiation: an ordinary CreateConcept, then the relationship's name
+            let i = instantiate_with(&design, t, None, None);
+            assert!(matches!(i.concept, EditOp::CreateConcept { .. }));
+            assert_eq!(i.source_name.as_deref(), Some(src.default_name.as_str()));
+            // both names are the designer's to choose
+            let i = instantiate_with(&design, t, Some("Room"), Some("Thermo"));
+            assert!(matches!(&i.concept, EditOp::CreateConcept { name, .. } if name == "Room"));
+            assert_eq!(i.source_name.as_deref(), Some("Thermo"));
+        }
+        // a template without `source` creates only the concept
+        let plain = lib.get("std.environment.temperature").unwrap();
+        assert!(instantiate_with(&design, plain, None, None)
+            .source_name
+            .is_none());
+    }
+
+    #[test]
     fn search_matches_names_keywords_units_and_categories() {
         let lib = Library::standard();
         let ids = |q: &str| -> Vec<String> { lib.search(q).map(|t| t.id.clone()).collect() };
-        assert_eq!(ids("lux"), vec!["std.environment.ambient_light"]);
+        assert_eq!(
+            ids("lux"),
+            vec!["std.environment.ambient_light", "std.source.ambient_light"]
+        );
         assert!(ids("tilt").contains(&"std.motion.tilt".to_owned()));
         let motor = ids("motor");
         assert!(motor.contains(&"std.actuator.motor_speed".to_owned()));

@@ -683,29 +683,17 @@ fn instantiate_concept_template(
         Err(e) => return (Resp::Error(session_error(&e)), None),
     };
     // A system project inserts into its own design or a component body;
-    // the template's defaults are read against that design's names.
+    // the template's defaults are read against that design's names.  A
+    // Source template is two ordinary edits in one commit: the concept,
+    // then `<source> : () -> <concept>` with no definition.
     let Some(sys) = p.system.as_ref() else {
-        let op = bdl_library::instantiate(&p.current.design, template, r.name.as_deref());
-        return match session.apply(revision, &op) {
-            Ok(c) => {
-                let resp = Resp::EditApplied(pb::EditApplied {
-                    project: Some(project_of(session)),
-                    outcome: c.outcome.as_ref().map(convert::outcome_to_pb),
-                });
-                (resp, Some(c))
-            }
-            Err(e) => (Resp::Error(session_error(&e)), None),
-        };
+        return (Resp::Error(session_error(&SessionError::NotASystem)), None);
     };
-    let op = match component_scope(r.component) {
-        None => bdl_system::SystemEditOp::Base {
-            op: bdl_library::instantiate(&sys.current.system.base, template, r.name.as_deref()),
-        },
+    let scope = component_scope(r.component);
+    let design = match scope {
+        None => &sys.current.system.base,
         Some(c) => match sys.current.system.components.get(&c) {
-            Some(comp) => bdl_system::SystemEditOp::EditComponentBody {
-                component: c,
-                op: bdl_library::instantiate(&comp.body, template, r.name.as_deref()),
-            },
+            Some(comp) => &comp.body,
             None => {
                 return (
                     Resp::Error(session_error(&SessionError::UnknownComponent(c))),
@@ -714,7 +702,30 @@ fn instantiate_concept_template(
             }
         },
     };
-    match session.apply_system(revision, &op) {
+    let inst = bdl_library::instantiate_with(
+        design,
+        template,
+        r.name.as_deref(),
+        r.source_name.as_deref(),
+    );
+    let wrap = |op: bdl_model::EditOp| match scope {
+        None => bdl_system::SystemEditOp::Base { op },
+        Some(component) => bdl_system::SystemEditOp::EditComponentBody { component, op },
+    };
+    let op = wrap(inst.concept);
+    let source_name = inst.source_name;
+    match session.apply_system_then(revision, &op, |outcome| {
+        let name = source_name.clone()?;
+        let output = outcome.inner.as_ref()?.created_concept?;
+        Some(wrap(bdl_model::EditOp::CreateMapping {
+            name,
+            description: String::new(),
+            signature: bdl_model::surface::Signature {
+                inputs: vec![],
+                output,
+            },
+        }))
+    }) {
         Ok(c) => {
             let view = system_view(session).ok();
             let resp = Resp::SystemEditApplied(pb::SystemEditApplied {

@@ -204,6 +204,12 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             }
             sig.push(cname(m.signature.output));
             let mut details = Vec::new();
+            // the designer-facing role, derived (ADR-0032): a Source is one
+            // word beside the name — the type below says what it produces
+            let role = crate::role::relationship_role(snapshot, id);
+            if let Some(role) = role {
+                details.push(detail("role", role.word()));
+            }
             if let Some(spelling) = declared_spelling(snapshot, id) {
                 details.push(detail("declared spelling", spelling));
             }
@@ -242,7 +248,15 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                         },
                     ));
                 }
-                None => details.push(detail("definition", "none — an open declaration")),
+                None => details.push(detail(
+                    "definition",
+                    match role {
+                        Some(crate::role::RelationshipRole::Source) => {
+                            "none — provided by the environment, observed once per activation"
+                        }
+                        _ => "none — an open declaration",
+                    },
+                )),
             }
             if let Some(a) = a {
                 if let Some(t) = &a.inferred_type {

@@ -1292,6 +1292,16 @@ message ConceptTemplateView {
   repeated string keywords = 10;
   // A generic presentation hint (`temperature`, `motor`); never semantic.
   string icon = 11;
+  // A Source template (0.16): instantiating it also creates the relationship
+  // `<source_default_name> : () -> <the concept>` with no definition — an
+  // ordinary unit-domain declaration the environment provides.  Empty for a
+  // template that creates only a concept.
+  string source_default_name = 12;
+  // The display name and description in other locales, by locale tag
+  // (`zh-Hans`, `ja`); a locale absent here shows the English fields.  The
+  // identifiers a template generates never change with the locale.
+  map<string, string> display_names = 13;
+  map<string, string> descriptions = 14;
 }
 
 // One named quantity of the shared vocabulary (`bdl_model::quantity`).
@@ -1314,6 +1324,10 @@ message InstantiateConceptTemplateRequest {
   // On a system project: insert into this component's body instead of the
   // system's own design (protocol 0.8).  Answered with SystemEditApplied.
   optional uint64 component = 4;
+  // For a Source template: the relationship's name, overriding its default
+  // (0.16).  The answer's outcome carries both `created_concept` and
+  // `created_mapping`; the two are one commit.
+  optional string source_name = 5;
 }
 
 // ---------------------------------------------------------------------------

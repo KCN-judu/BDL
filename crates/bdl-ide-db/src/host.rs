@@ -73,6 +73,10 @@ pub struct IdeHost {
     config: IdeConfig,
     requests: RequestTracker,
     cache: Option<Arc<AnalysisSnapshot>>,
+    /// For a host over a component body: the body declarations that back a
+    /// port, with the port's kind.  A port-backed declaration presents its
+    /// port role, never the Source role (ADR-0032).
+    port_backed: BTreeMap<bdl_model::DeclId, bdl_system::PortKind>,
 }
 
 impl IdeHost {
@@ -92,6 +96,16 @@ impl IdeHost {
             config,
             requests: RequestTracker::default(),
             cache: None,
+            port_backed: BTreeMap::new(),
+        }
+    }
+
+    /// The port-backed declarations of the body this host is over (a
+    /// system's own host has none).  Changes the snapshot's roles only.
+    pub fn set_port_backed(&mut self, ports: BTreeMap<bdl_model::DeclId, bdl_system::PortKind>) {
+        if self.port_backed != ports {
+            self.port_backed = ports;
+            self.cache = None;
         }
     }
 
@@ -358,19 +372,17 @@ impl IdeHost {
             }
         }
         let s = match &self.text {
-            Some(ground) => Arc::new(AnalysisSnapshot::compose_text(
-                ground,
-                &self.overlays,
-                &self.uris,
-                token,
-            )?),
-            None => Arc::new(AnalysisSnapshot::compose(
+            Some(ground) => {
+                AnalysisSnapshot::compose_text(ground, &self.overlays, &self.uris, token)?
+            }
+            None => AnalysisSnapshot::compose(
                 self.committed.clone(),
                 &self.overlays,
                 &self.uris,
                 token,
-            )?),
+            )?,
         };
+        let s = Arc::new(s.with_port_backed(self.port_backed.clone()));
         self.cache = Some(s.clone());
         Ok(s)
     }

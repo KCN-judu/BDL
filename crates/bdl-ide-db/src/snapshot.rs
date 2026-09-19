@@ -59,6 +59,9 @@ pub struct AnalysisSnapshot {
     /// Present for a text workspace: the authored system behind the flat
     /// design, and the identities as the build decided them.
     text: Option<Arc<TextWorld>>,
+    /// The body declarations backing a port, when this is a component
+    /// body's host: their role is the port's.
+    port_backed: BTreeMap<DeclId, bdl_system::PortKind>,
 }
 
 impl AnalysisSnapshot {
@@ -139,7 +142,29 @@ impl AnalysisSnapshot {
             projections,
             index,
             text: Some(Arc::new(world)),
+            port_backed: BTreeMap::new(),
         })
+    }
+
+    /// The same snapshot over a component body whose `ports` are backed by
+    /// these declarations.
+    pub fn with_port_backed(mut self, ports: BTreeMap<DeclId, bdl_system::PortKind>) -> Self {
+        self.port_backed = ports;
+        self
+    }
+
+    /// The port a declaration backs, if any: a component body's port
+    /// (this host's) or, in a text workspace, an instance's port in the
+    /// flattened design.
+    pub fn port_of(&self, decl: DeclId) -> Option<bdl_system::PortKind> {
+        if let Some(k) = self.port_backed.get(&decl) {
+            return Some(*k);
+        }
+        let world = self.text.as_deref()?;
+        let port = world.flattened.origins.ports.get(&decl)?;
+        let instance = world.system.instances.get(&port.instance)?;
+        let component = world.system.components.get(&instance.component)?;
+        component.interface.ports.get(&port.port).map(|p| p.kind)
     }
 
     /// The authored system and its flattening, for a text workspace.
@@ -225,6 +250,7 @@ impl AnalysisSnapshot {
             projections,
             index,
             text: None,
+            port_backed: BTreeMap::new(),
         })
     }
 

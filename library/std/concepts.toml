@@ -446,3 +446,110 @@ representation = { quantity = "frequency" }
 unit = "Hz"
 keywords = ["tone", "note", "frequency", "buzzer", "beep", "Hz"]
 icon = "sound"
+
+# ---- sources --------------------------------------------------------------
+#
+# A Source template creates TWO ordinary items: a concept, and a relationship
+# `<source> : () -> <concept>` with no definition — a value entering the
+# behavior model from the environment, observed once per activation.  The
+# canvas shows it as a Source because of that shape and state (ADR-0032), not
+# because of anything in this file; a third-party library gets the same.
+# Not every Source is a physical sensor — the last two are not — which is why
+# the category is "sources".  What realizes a Source (an I2C sensor, an ADC
+# channel, a GPIO input) is deployment's, never the template's.
+
+[[template]]
+id = "std.source.temperature"
+display_name = "Temperature Sensor"
+default_name = "RoomTemp"
+description = "The temperature of a room, a surface or the air, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temp", "thermal", "sensor", "thermometer", "°C", "celsius", "source"]
+icon = "temperature"
+source = { default_name = "TempSensor" }
+i18n = { "zh-Hans" = { display_name = "温度传感器", description = "房间、表面或空气的温度，由环境提供。" }, ja = { display_name = "温度センサー", description = "部屋・表面・空気の温度。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.tilt"
+display_name = "Tilt Sensor"
+default_name = "Tilt"
+description = "How far the product leans from level, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "source"]
+icon = "tilt"
+source = { default_name = "TiltSensor" }
+i18n = { "zh-Hans" = { display_name = "倾斜传感器", description = "产品偏离水平的程度，由环境提供。" }, ja = { display_name = "傾きセンサー", description = "製品が水平からどれだけ傾いているか。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.distance"
+display_name = "Distance Sensor"
+default_name = "Distance"
+description = "How far away the nearest thing is, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "length" }
+unit = "m"
+keywords = ["distance", "range", "proximity", "ultrasonic", "lidar", "tof", "source"]
+icon = "distance"
+source = { default_name = "DistanceSensor" }
+i18n = { "zh-Hans" = { display_name = "距离传感器", description = "最近的物体有多远，由环境提供。" }, ja = { display_name = "距離センサー", description = "最も近い物体までの距離。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.ambient_light"
+display_name = "Ambient Light Sensor"
+default_name = "AmbientLight"
+description = "How much light falls on the product, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "illuminance" }
+unit = "lx"
+keywords = ["light", "lux", "brightness", "photocell", "ldr", "daylight", "source"]
+icon = "light"
+source = { default_name = "LightSensor" }
+i18n = { "zh-Hans" = { display_name = "环境光传感器", description = "落在产品上的光有多强，由环境提供。" }, ja = { display_name = "環境光センサー", description = "製品に当たる光の強さ。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.button"
+display_name = "Button / Switch State"
+default_name = "ButtonHeld"
+description = "Whether a button is held or a switch is on right now, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = "boolean"
+keywords = ["button", "switch", "press", "toggle", "gpio", "input", "source"]
+icon = "button"
+source = { default_name = "ButtonInput" }
+i18n = { "zh-Hans" = { display_name = "按钮 / 开关状态", description = "此刻按钮是否被按住、开关是否打开，由环境提供。" }, ja = { display_name = "ボタン / スイッチの状態", description = "いまボタンが押されているか、スイッチが入っているか。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.encoder"
+display_name = "Encoder Position"
+default_name = "ShaftAngle"
+description = "The angle a shaft or knob has turned to, as the environment provides it."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "angle" }
+unit = "deg"
+keywords = ["encoder", "rotary", "knob", "shaft", "quadrature", "position", "source"]
+icon = "rotation"
+source = { default_name = "EncoderPosition" }
+i18n = { "zh-Hans" = { display_name = "编码器位置", description = "轴或旋钮转到的角度，由环境提供。" }, ja = { display_name = "エンコーダー位置", description = "軸やつまみが回された角度。環境から与えられる値。" } }
+
+[[template]]
+id = "std.source.analog"
+display_name = "Analog Input"
+default_name = "AnalogLevel"
+description = "A level the environment provides on an analog line, 0 (none) to 1 (full)."
+category = "sources"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["analog", "adc", "level", "potentiometer", "voltage", "input", "source"]
+icon = "dial"
+source = { default_name = "AnalogInput" }
+i18n = { "zh-Hans" = { display_name = "模拟输入", description = "模拟线路上由环境提供的电平，0（无）到 1（满）。" }, ja = { display_name = "アナログ入力", description = "アナログ線で環境から与えられるレベル。0（なし）〜1（最大）。" } }

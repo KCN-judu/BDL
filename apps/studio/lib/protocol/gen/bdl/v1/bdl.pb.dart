@@ -13242,6 +13242,9 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
     $core.String? unit,
     $core.Iterable<$core.String>? keywords,
     $core.String? icon,
+    $core.String? sourceDefaultName,
+    $core.Iterable<$core.MapEntry<$core.String, $core.String>>? displayNames,
+    $core.Iterable<$core.MapEntry<$core.String, $core.String>>? descriptions,
   }) {
     final result = ConceptTemplateView._();
     if (id != null) result.id = id;
@@ -13255,6 +13258,9 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
     if (unit != null) result.unit = unit;
     if (keywords != null) result.keywords.addAll(keywords);
     if (icon != null) result.icon = icon;
+    if (sourceDefaultName != null) result.sourceDefaultName = sourceDefaultName;
+    if (displayNames != null) result.displayNames.addEntries(displayNames);
+    if (descriptions != null) result.descriptions.addEntries(descriptions);
     return result;
   }
 
@@ -13282,6 +13288,17 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
     ..aOS(9, _omitFieldNames ? '' : 'unit')
     ..pPS(10, _omitFieldNames ? '' : 'keywords')
     ..aOS(11, _omitFieldNames ? '' : 'icon')
+    ..aOS(12, _omitFieldNames ? '' : 'sourceDefaultName')
+    ..m<$core.String, $core.String>(13, _omitFieldNames ? '' : 'displayNames',
+        entryClassName: 'ConceptTemplateView.DisplayNamesEntry',
+        keyFieldType: $pb.PbFieldType.OS,
+        valueFieldType: $pb.PbFieldType.OS,
+        packageName: const $pb.PackageName('bdl.v1'))
+    ..m<$core.String, $core.String>(14, _omitFieldNames ? '' : 'descriptions',
+        entryClassName: 'ConceptTemplateView.DescriptionsEntry',
+        keyFieldType: $pb.PbFieldType.OS,
+        valueFieldType: $pb.PbFieldType.OS,
+        packageName: const $pb.PackageName('bdl.v1'))
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13403,6 +13420,28 @@ class ConceptTemplateView extends $pb.GeneratedMessage {
   $core.bool hasIcon() => $_has(10);
   @$pb.TagNumber(11)
   void clearIcon() => $_clearField(11);
+
+  /// A Source template (0.16): instantiating it also creates the relationship
+  /// `<source_default_name> : () -> <the concept>` with no definition — an
+  /// ordinary unit-domain declaration the environment provides.  Empty for a
+  /// template that creates only a concept.
+  @$pb.TagNumber(12)
+  $core.String get sourceDefaultName => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set sourceDefaultName($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasSourceDefaultName() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearSourceDefaultName() => $_clearField(12);
+
+  /// The display name and description in other locales, by locale tag
+  /// (`zh-Hans`, `ja`); a locale absent here shows the English fields.  The
+  /// identifiers a template generates never change with the locale.
+  @$pb.TagNumber(13)
+  $pb.PbMap<$core.String, $core.String> get displayNames => $_getMap(12);
+
+  @$pb.TagNumber(14)
+  $pb.PbMap<$core.String, $core.String> get descriptions => $_getMap(13);
 }
 
 /// One named quantity of the shared vocabulary (`bdl_model::quantity`).
@@ -13509,12 +13548,14 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
     $core.String? templateId,
     $core.String? name,
     $fixnum.Int64? component,
+    $core.String? sourceName,
   }) {
     final result = InstantiateConceptTemplateRequest._();
     if (baseRevision != null) result.baseRevision = baseRevision;
     if (templateId != null) result.templateId = templateId;
     if (name != null) result.name = name;
     if (component != null) result.component = component;
+    if (sourceName != null) result.sourceName = sourceName;
     return result;
   }
 
@@ -13537,6 +13578,7 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
     ..aOS(3, _omitFieldNames ? '' : 'name')
     ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(5, _omitFieldNames ? '' : 'sourceName')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13600,6 +13642,18 @@ class InstantiateConceptTemplateRequest extends $pb.GeneratedMessage {
   $core.bool hasComponent() => $_has(3);
   @$pb.TagNumber(4)
   void clearComponent() => $_clearField(4);
+
+  /// For a Source template: the relationship's name, overriding its default
+  /// (0.16).  The answer's outcome carries both `created_concept` and
+  /// `created_mapping`; the two are one commit.
+  @$pb.TagNumber(5)
+  $core.String get sourceName => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set sourceName($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSourceName() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSourceName() => $_clearField(5);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

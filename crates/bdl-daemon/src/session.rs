@@ -328,6 +328,13 @@ impl SystemState {
                     revision,
                     design: c.body.clone(),
                 });
+                host.set_port_backed(
+                    c.interface
+                        .ports
+                        .values()
+                        .map(|p| (p.decl, p.kind))
+                        .collect(),
+                );
             }
         }
     }
@@ -727,6 +734,18 @@ impl Session {
         base: Revision,
         op: &SystemEditOp,
     ) -> Result<CommittedSystem, SessionError> {
+        self.apply_system_then(base, op, |_| None)
+    }
+
+    /// [`apply_system`] with a second edit chosen from the first's outcome
+    /// (a template's `() -> concept` relationship after its concept): both
+    /// land in one revision, one history entry, one outcome.
+    pub fn apply_system_then(
+        &mut self,
+        base: Revision,
+        op: &SystemEditOp,
+        then: impl FnOnce(&SystemEditOutcome) -> Option<SystemEditOp>,
+    ) -> Result<CommittedSystem, SessionError> {
         check_names(bdl_text::names::names_in_system_edit(op))?;
         let p = self.project_mut()?;
         let Some(sys) = p.system.as_mut() else {
@@ -755,9 +774,18 @@ impl Session {
                 Some(acc) => merge_system_outcomes(acc, applied.outcome),
             });
         }
+        let mut outcome = outcome.unwrap_or_default();
+        if let Some(next) = then(&outcome) {
+            check_names(bdl_text::names::names_in_system_edit(&next))?;
+            for step in &crate::rename::expand_system(&working.system, &next) {
+                let applied = apply_system_edit(&working, step)?;
+                working = applied.snapshot;
+                outcome = merge_system_outcomes(outcome, applied.outcome);
+            }
+        }
         let applied = AppliedSystem {
             snapshot: working,
-            outcome: outcome.unwrap_or_default(),
+            outcome,
         };
         let previous = std::mem::replace(&mut sys.current, applied.snapshot);
         sys.undo
@@ -1142,12 +1170,21 @@ impl Session {
             .ok_or(SessionError::UnknownComponent(component))?;
         let revision = sys.current.revision;
         let body = c.body.clone();
-        Ok(sys.component_ide.entry(component).or_insert_with(|| {
+        // the body's port-backed declarations present their port's role
+        let ports: BTreeMap<DeclId, bdl_system::PortKind> = c
+            .interface
+            .ports
+            .values()
+            .map(|p| (p.decl, p.kind))
+            .collect();
+        let host = sys.component_ide.entry(component).or_insert_with(|| {
             IdeHost::new(ProjectSnapshot {
                 revision,
                 design: body,
             })
-        }))
+        });
+        host.set_port_backed(ports);
+        Ok(host)
     }
 
     /// Studio typed in the definition editor: `source` becomes the draft

@@ -925,6 +925,23 @@ pub fn concept_template_view(t: &bdl_library::ConceptTemplate) -> pb::ConceptTem
         unit: t.unit_symbol().to_owned(),
         keywords: t.keywords.clone(),
         icon: t.icon.clone(),
+        source_default_name: t
+            .source
+            .as_ref()
+            .map(|s| s.default_name.clone())
+            .unwrap_or_default(),
+        display_names: t
+            .i18n
+            .iter()
+            .filter(|(_, x)| !x.display_name.is_empty())
+            .map(|(l, x)| (l.clone(), x.display_name.clone()))
+            .collect(),
+        descriptions: t
+            .i18n
+            .iter()
+            .filter(|(_, x)| !x.description.is_empty())
+            .map(|(l, x)| (l.clone(), x.description.clone()))
+            .collect(),
     }
 }
 

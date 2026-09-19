@@ -3890,10 +3890,48 @@ const ConceptTemplateView$json = {
     {'1': 'unit', '3': 9, '4': 1, '5': 9, '10': 'unit'},
     {'1': 'keywords', '3': 10, '4': 3, '5': 9, '10': 'keywords'},
     {'1': 'icon', '3': 11, '4': 1, '5': 9, '10': 'icon'},
+    {'1': 'source_default_name', '3': 12, '4': 1, '5': 9, '10': 'sourceDefaultName'},
+    {
+      '1': 'display_names',
+      '3': 13,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ConceptTemplateView.DisplayNamesEntry',
+      '10': 'displayNames'
+    },
+    {
+      '1': 'descriptions',
+      '3': 14,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ConceptTemplateView.DescriptionsEntry',
+      '10': 'descriptions'
+    },
   ],
+  '3': [ConceptTemplateView_DisplayNamesEntry$json, ConceptTemplateView_DescriptionsEntry$json],
   '8': [
     {'1': '_representation'},
   ],
+};
+
+@$core.Deprecated('Use conceptTemplateViewDescriptor instead')
+const ConceptTemplateView_DisplayNamesEntry$json = {
+  '1': 'DisplayNamesEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 9, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 9, '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+@$core.Deprecated('Use conceptTemplateViewDescriptor instead')
+const ConceptTemplateView_DescriptionsEntry$json = {
+  '1': 'DescriptionsEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 9, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 9, '10': 'value'},
+  ],
+  '7': {'7': true},
 };
 
 /// Descriptor for `ConceptTemplateView`. Decode as a `google.protobuf.DescriptorProto`.
@@ -3904,8 +3942,14 @@ final $typed_data.Uint8List conceptTemplateViewDescriptor = $convert
         '9yeRItCglyb2xlX2hpbnQYBiABKA4yEC5iZGwudjEuUm9sZUhpbnRSCHJvbGVIaW50EkMKDnJl'
         'cHJlc2VudGF0aW9uGAcgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0aW9uSABSDnJlcHJlc2VudG'
         'F0aW9uiAEBEhsKCXR5cGVfbmFtZRgIIAEoCVIIdHlwZU5hbWUSEgoEdW5pdBgJIAEoCVIEdW5p'
-        'dBIaCghrZXl3b3JkcxgKIAMoCVIIa2V5d29yZHMSEgoEaWNvbhgLIAEoCVIEaWNvbkIRCg9fcm'
-        'VwcmVzZW50YXRpb24=');
+        'dBIaCghrZXl3b3JkcxgKIAMoCVIIa2V5d29yZHMSEgoEaWNvbhgLIAEoCVIEaWNvbhIuChNzb3'
+        'VyY2VfZGVmYXVsdF9uYW1lGAwgASgJUhFzb3VyY2VEZWZhdWx0TmFtZRJSCg1kaXNwbGF5X25h'
+        'bWVzGA0gAygLMi0uYmRsLnYxLkNvbmNlcHRUZW1wbGF0ZVZpZXcuRGlzcGxheU5hbWVzRW50cn'
+        'lSDGRpc3BsYXlOYW1lcxJRCgxkZXNjcmlwdGlvbnMYDiADKAsyLS5iZGwudjEuQ29uY2VwdFRl'
+        'bXBsYXRlVmlldy5EZXNjcmlwdGlvbnNFbnRyeVIMZGVzY3JpcHRpb25zGj8KEURpc3BsYXlOYW'
+        '1lc0VudHJ5EhAKA2tleRgBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAEaPwoR'
+        'RGVzY3JpcHRpb25zRW50cnkSEAoDa2V5GAEgASgJUgNrZXkSFAoFdmFsdWUYAiABKAlSBXZhbH'
+        'VlOgI4AUIRCg9fcmVwcmVzZW50YXRpb24=');
 
 @$core.Deprecated('Use quantityViewDescriptor instead')
 const QuantityView$json = {
@@ -3931,10 +3975,12 @@ const InstantiateConceptTemplateRequest$json = {
     {'1': 'template_id', '3': 2, '4': 1, '5': 9, '10': 'templateId'},
     {'1': 'name', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'name', '17': true},
     {'1': 'component', '3': 4, '4': 1, '5': 4, '9': 1, '10': 'component', '17': true},
+    {'1': 'source_name', '3': 5, '4': 1, '5': 9, '9': 2, '10': 'sourceName', '17': true},
   ],
   '8': [
     {'1': '_name'},
     {'1': '_component'},
+    {'1': '_source_name'},
   ],
 };
 
@@ -3942,8 +3988,9 @@ const InstantiateConceptTemplateRequest$json = {
 final $typed_data.Uint8List instantiateConceptTemplateRequestDescriptor = $convert
     .base64Decode('CiFJbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZVJlcXVlc3QSIwoNYmFzZV9yZXZpc2lvbhgBIA'
         'EoBFIMYmFzZVJldmlzaW9uEh8KC3RlbXBsYXRlX2lkGAIgASgJUgp0ZW1wbGF0ZUlkEhcKBG5h'
-        'bWUYAyABKAlIAFIEbmFtZYgBARIhCgljb21wb25lbnQYBCABKARIAVIJY29tcG9uZW50iAEBQg'
-        'cKBV9uYW1lQgwKCl9jb21wb25lbnQ=');
+        'bWUYAyABKAlIAFIEbmFtZYgBARIhCgljb21wb25lbnQYBCABKARIAVIJY29tcG9uZW50iAEBEi'
+        'QKC3NvdXJjZV9uYW1lGAUgASgJSAJSCnNvdXJjZU5hbWWIAQFCBwoFX25hbWVCDAoKX2NvbXBv'
+        'bmVudEIOCgxfc291cmNlX25hbWU=');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {
