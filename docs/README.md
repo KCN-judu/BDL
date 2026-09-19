@@ -115,7 +115,7 @@ became issues. The pre-implementation checklist was removed on 2026-09-17; where
 each of its questions was answered is in the
 [migration report](project/migration-report.md#the-pre-implementation-checklist).
 
-## Current snapshot — 2026-09-18
+## Current snapshot — 2026-09-20
 
 - **Architecture:** a Rust semantic core (`bdl-model` → `bdl-ir` → elaboration,
   checking, reactive evaluation, outputs, hardware) with a compiler façade, an
@@ -135,46 +135,50 @@ each of its questions was answered is in the
   a plain value is observed; collections are bounded by the design and validated
   at deployment), 0032 (a Source is a derived presentation role, never a kernel
   type), 0033 (a value is rendered once, by the evaluator, in product words; fed
-  inputs echoed in the trace).
+  inputs echoed in the trace), 0034 (canvas edges are signature edges and
+  reference edges; _produces_ is the signature, _carried by_ a value per tick).
 - **Unresolved:** twelve design issues — occurrence windows, candidate
   definitions, the evidence model, affine units, user enums, `f32` on device,
   nested packaging, a structural output entity, projection deltas, temporal
   modifiers, `zip`'s cost in the core, a device binding for a Source.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** one rendering of a value (ADR-0033: `on` / `off`, six
-  significant digits, the evaluator's text everywhere, inputs echoed in the
-  trace; the Simulate page localised); the generalized Standard Library
-  (protocol 0.17: items as fragments of ordinary objects, _Concepts_ and
-  _Sources_, eight Sources instantiated in one transaction, item text localized
-  by Studio; ADR-0032 amended); the Source role (ADR-0032, protocol 0.16, FV
-  Phase 12 consumed: an unresolved `() -> A` at the environment boundary is
-  drawn and explained as a Source, never _declared_; ISS-0014 resolved, ISS-0016
-  opened); the first internationalization layer (ADR-0031: en, zh-Hans, ja);
-  complete-project persistence and the save guard (ADR-0030, protocol 0.15);
-  `() -> A` as the preferred spelling of a relationship without inputs (ADR-0029
-  amendment: the shorthand a hint with a quick fix, never generated,
-  `bdld migrate-unit-domain` opt-in); the Unit-domain normalization (ADR-0029:
-  one canonical type per relationship, `() -> B` for no inputs, `()` and
-  `(A, B) -> C` spellings, protocol 0.14, ISS-0014 for the formal follow-up);
-  the natural expression surface (P11, FV Phase 11 consumed: binders
-  `all x in xs: body`, closed ranges `x in lo .. hi` and `x ?? d` as one-way
-  desugaring to the equation library, locals as the formula's own symbols, the
-  Composer drawing and composing them, protocol 0.13, ADR-0028's second
-  amendment); the Composer hardening pass (P10b: the chart model, the
-  stale-projection policy, nominal positions, grouping by position); the Formula
-  Composer foundation (P10a, FV Phase 10 consumed: the `?` slot, the unit
-  registry with charts and one conversion, the projection / slot / compose
-  queries of the IDE service, protocol 0.12, the Formula | Text views of the
-  definition editor, ADR-0028); the P9 hardening pass (linear folds and
-  commit-only writes in the generated core, static list bounds and window
-  capacity as deployment validation, `bdld compile --bounded-memory --period`,
-  the order invariant in the model, ADR-0026/0027); the data core and the
-  equation library (FV Phases 9a–9c consumed: collections, grouped and optional
-  values, `fold`, equality on data, order by declaration, the equations,
-  protocol 0.11, ADR-0024/0025); one BDL project — sources canonical, legacy
-  JSON migrated on open, the layout service, the Code and Split views, protocol
-  0.10. [changes/unreleased/](changes/unreleased/).
+- **Recently changed:** reference edges (ADR-0034, protocol 0.18: what a formula
+  names is drawn into its formula line from `MappingAnalysis.references`; a rule
+  wears _rule_; one meaning of _produces_ across canvas, probe and inspector);
+  one rendering of a value (ADR-0033: `on` / `off`, six significant digits, the
+  evaluator's text everywhere, inputs echoed in the trace; the Simulate page
+  localised); the generalized Standard Library (protocol 0.17: items as
+  fragments of ordinary objects, _Concepts_ and _Sources_, eight Sources
+  instantiated in one transaction, item text localized by Studio; ADR-0032
+  amended); the Source role (ADR-0032, protocol 0.16, FV Phase 12 consumed: an
+  unresolved `() -> A` at the environment boundary is drawn and explained as a
+  Source, never _declared_; ISS-0014 resolved, ISS-0016 opened); the first
+  internationalization layer (ADR-0031: en, zh-Hans, ja); complete-project
+  persistence and the save guard (ADR-0030, protocol 0.15); `() -> A` as the
+  preferred spelling of a relationship without inputs (ADR-0029 amendment: the
+  shorthand a hint with a quick fix, never generated, `bdld migrate-unit-domain`
+  opt-in); the Unit-domain normalization (ADR-0029: one canonical type per
+  relationship, `() -> B` for no inputs, `()` and `(A, B) -> C` spellings,
+  protocol 0.14, ISS-0014 for the formal follow-up); the natural expression
+  surface (P11, FV Phase 11 consumed: binders `all x in xs: body`, closed ranges
+  `x in lo .. hi` and `x ?? d` as one-way desugaring to the equation library,
+  locals as the formula's own symbols, the Composer drawing and composing them,
+  protocol 0.13, ADR-0028's second amendment); the Composer hardening pass
+  (P10b: the chart model, the stale-projection policy, nominal positions,
+  grouping by position); the Formula Composer foundation (P10a, FV Phase 10
+  consumed: the `?` slot, the unit registry with charts and one conversion, the
+  projection / slot / compose queries of the IDE service, protocol 0.12, the
+  Formula | Text views of the definition editor, ADR-0028); the P9 hardening
+  pass (linear folds and commit-only writes in the generated core, static list
+  bounds and window capacity as deployment validation,
+  `bdld compile --bounded-memory --period`, the order invariant in the model,
+  ADR-0026/0027); the data core and the equation library (FV Phases 9a–9c
+  consumed: collections, grouped and optional values, `fold`, equality on data,
+  order by declaration, the equations, protocol 0.11, ADR-0024/0025); one BDL
+  project — sources canonical, legacy JSON migrated on open, the layout service,
+  the Code and Split views, protocol 0.10.
+  [changes/unreleased/](changes/unreleased/).
 
 ## Rules in one paragraph
 

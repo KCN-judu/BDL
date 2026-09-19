@@ -552,7 +552,8 @@ void main() {
           ),
         );
         expect(find.byKey(const ValueKey('drives-caption')), findsOneWidget);
-        expect(find.textContaining('applies it.'), findsNothing);
+        // No value is named (the Role sentence's "…applies it." is not a name).
+        expect(find.textContaining(RegExp(r'^\S+ applies it\.$')), findsNothing);
         expect(find.text('Show'), findsNothing);
       },
     );

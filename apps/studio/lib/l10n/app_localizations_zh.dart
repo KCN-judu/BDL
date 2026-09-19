@@ -214,9 +214,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseWhatItProducesTheOutputSocket => '选择它产出什么：输出插口会采用该概念的颜色和形状。';
 
   @override
-  String get dashedDeclaredNotYetDefinedAttachA => '虚线：已声明、尚未定义。准备好后，随时在检查器中附加公式。';
-
-  @override
   String get newTimingDomain => '新建时序域';
 
   @override
@@ -992,9 +989,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectAnInputAColumnOrA => '选择一个输入、一列或一个概念。';
 
   @override
-  String get aRelationshipItIsAppliedInsideOther => '一个关系：它在其他关系内部被应用，本身没有可采样的值。';
-
-  @override
   String get now => '当前';
 
   @override
@@ -1672,11 +1666,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String noValueDeclarationProduces(Object concept) {
-    return '没有产出 $concept 的值声明。';
-  }
-
-  @override
   String resourcesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 个资源');
     return '$_temp0';
@@ -1878,9 +1867,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseWhatItProvidesTheOutputSocket => '选择它提供什么：其右侧唯一的插槽。';
 
   @override
-  String get theEnvironmentProvidesItNoInputSockets => '由环境提供：没有输入插槽，每次激活一个值。';
-
-  @override
   String get sources => '来源';
 
   @override
@@ -1923,6 +1909,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryGroupExternal => '外部';
+
+  @override
+  String get ruleWord => '规则';
+
+  @override
+  String get roleRule => '规则';
+
+  @override
+  String get roleValue => '值';
+
+  @override
+  String get ruleExplanation => '从它读取的概念到它产出的概念的函数。它本身没有值：由某个值的公式来应用它。';
+
+  @override
+  String get valueExplanation => '设计中的一个值：它的公式在每次激活时给出一个值。';
+
+  @override
+  String get dependsOn => '依赖于';
+
+  @override
+  String get namedIn => '被提及于';
+
+  @override
+  String ruleNodeSemantics(String reads) {
+    return '规则，读取 $reads';
+  }
+
+  @override
+  String get valueNodeSemantics => '值';
+
+  @override
+  String dependsOnList(String names) {
+    return '依赖于 $names';
+  }
+
+  @override
+  String sheetSourceShape(String concept) {
+    return '不读取任何概念：一个来源。由环境在每次激活时提供 $concept；之后添加公式则会使它变为计算得到的值。';
+  }
+
+  @override
+  String sheetRuleShape(String reads, String concept) {
+    return '读取 $reads：一条规则，到 $concept 的函数。它本身没有值——由某个值的公式来应用它；在添加公式之前显示为虚线。';
+  }
+
+  @override
+  String get aRuleNoValueOfItsOwn => '一条规则：它本身没有值。模拟器采样的是应用它的值。';
+
+  @override
+  String appliedIn(String names) {
+    return '应用于 $names。';
+  }
+
+  @override
+  String get noValueAppliesItYet => '尚无值应用它。';
+
+  @override
+  String noValueCarries(String concept) {
+    return '尚无任何东西承载 $concept：没有值或来源产出它。';
+  }
+
+  @override
+  String ruleProducesNoValue(String rule, String concept) {
+    return '$rule 是一条规则；应用它的值才会承载 $concept。';
+  }
+
+  @override
+  String get carriedBy => '承载于';
 
   @override
   String get libItem_std_environment_temperature_name => '温度';

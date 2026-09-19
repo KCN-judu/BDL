@@ -345,7 +345,9 @@ class _InputControl extends StatelessWidget {
               children: [
                 SocketGlyph.of(concept, t, size: 11),
                 Text(mapping.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
-                Text(concept.name, style: small),
+                Flexible(
+                  child: Text(concept.name, style: small, overflow: TextOverflow.ellipsis),
+                ),
               ],
             ),
           ),
@@ -632,28 +634,55 @@ class _Probe extends StatelessWidget {
         );
       case ConceptSelected(:final id):
         final c = p.concepts.firstWhere((c) => c.id.toInt() == id);
-        final producers = [
+        // *Produces* is the signature (any relationship whose output is
+        // this concept — the canvas's input socket); a value of the concept
+        // per tick exists only where a value or a Source produces it: the
+        // concept is *carried by* those (ADR-0034).  A rule producing it
+        // gives it no value until a value's formula applies the rule.
+        final carriers = [
           for (final m in p.mappings)
             if (m.signature.isUnitDomain && m.signature.output.toInt() == id) m,
+        ];
+        final rules = [
+          for (final m in p.mappings)
+            if (!m.signature.isUnitDomain && m.signature.output.toInt() == id) m,
         ];
         body = InspectorSection(
           title: c.name,
           trailing: SocketGlyph.of(c, t),
           children: [
-            if (producers.isEmpty)
-              Text(context.l10n.noValueDeclarationProduces(c.name), style: small)
-            else
-              for (final m in producers)
+            if (carriers.isEmpty) ...[
+              Text(context.l10n.noValueCarries(c.name), style: small),
+              for (final r in rules)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(context.l10n.ruleProducesNoValue(r.name, c.name), style: small),
+                ),
+            ] else ...[
+              Text(context.l10n.carriedBy, style: small),
+              for (final m in carriers)
                 FormRow(
                   label: m.name,
                   child: Text(_latest(sim, m.id.toInt()) ?? '—', style: value),
                 ),
+            ],
           ],
         );
       case MappingSelected(:final id):
         final m = p.mappings.firstWhere((m) => m.id.toInt() == id);
         final c = p.concepts.where((c) => c.id == m.signature.output).firstOrNull;
         final isValue = m.signature.isUnitDomain;
+        // A rule is applied by the values whose formulas reference it
+        // (the analysis's refs, the canvas's reference edges) — those are
+        // what the simulator samples.
+        final refsOf = {
+          for (final a in state.analysis?.mappings ?? const <pb.MappingAnalysis>[])
+            a.id.toInt(): a.references.map((d) => d.toInt()).toSet(),
+        };
+        final appliedIn = [
+          for (final v in p.mappings)
+            if (refsOf[v.id.toInt()]?.contains(id) ?? false) v.name,
+        ];
         body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -661,9 +690,18 @@ class _Probe extends StatelessWidget {
               title: m.name,
               trailing: c == null ? null : SocketGlyph.of(c, t),
               children: [
-                if (!isValue)
-                  Text(context.l10n.aRelationshipItIsAppliedInsideOther, style: small)
-                else
+                if (!isValue) ...[
+                  Text(context.l10n.aRuleNoValueOfItsOwn, style: small),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      appliedIn.isEmpty
+                          ? context.l10n.noValueAppliesItYet
+                          : context.l10n.appliedIn(appliedIn.join(', ')),
+                      style: small,
+                    ),
+                  ),
+                ] else
                   FormRow(
                     label: context.l10n.now,
                     child: Text(

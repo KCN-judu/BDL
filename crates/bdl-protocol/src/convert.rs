@@ -2381,6 +2381,93 @@ mod tests {
         assert!(refs(twice).is_empty() && refs(half).is_empty());
     }
 
+    /// The canvas's reference edges come from the wire, never from the
+    /// formula text (ADR-0034): a value's analysis names every relationship
+    /// its definition references, a rule's and a Source's name none.
+    #[test]
+    fn analysis_carries_the_realization_refs() {
+        let mut s = ProjectSnapshot::new(Design::empty("ac"));
+        let apply = |s: &mut ProjectSnapshot, op: EditOp| {
+            let a = bdl_model::apply_edit(s, &op).unwrap();
+            *s = a.snapshot;
+            a.outcome
+        };
+        let concept = |name: &str| EditOp::CreateConcept {
+            name: name.into(),
+            description: String::new(),
+            representation: Some(Representation::Boolean),
+        };
+        let temp = apply(&mut s, concept("RoomTemp")).created_concept.unwrap();
+        let held = apply(&mut s, concept("ButtonHeld"))
+            .created_concept
+            .unwrap();
+        let switch = apply(&mut s, concept("SwitchState"))
+            .created_concept
+            .unwrap();
+        let mapping =
+            |name: &str, inputs: Vec<bdl_model::SemanticId>, output| EditOp::CreateMapping {
+                name: name.into(),
+                description: String::new(),
+                signature: Signature { inputs, output },
+            };
+        let sensor = apply(&mut s, mapping("TempSensor", vec![], temp))
+            .created_mapping
+            .unwrap();
+        let button = apply(&mut s, mapping("ButtonInput", vec![], held))
+            .created_mapping
+            .unwrap();
+        let rule = apply(
+            &mut s,
+            mapping("AirConditionerCtrl", vec![temp, held], switch),
+        )
+        .created_mapping
+        .unwrap();
+        apply(
+            &mut s,
+            EditOp::AttachDefinition {
+                id: rule,
+                definition: Definition::Formula {
+                    source: "RoomTemp and ButtonHeld".into(),
+                },
+            },
+        );
+        let value = apply(&mut s, mapping("acOn", vec![], switch))
+            .created_mapping
+            .unwrap();
+        apply(
+            &mut s,
+            EditOp::AttachDefinition {
+                id: value,
+                definition: Definition::Formula {
+                    source: "AirConditionerCtrl(TempSensor, ButtonInput)".into(),
+                },
+            },
+        );
+        let a = analysis_to_pb(&bdl_compiler::analyze(&s));
+        let refs = |id: DeclId| {
+            a.mappings
+                .iter()
+                .find(|m| m.id == id.raw())
+                .map(|m| m.references.clone())
+                .unwrap()
+        };
+        assert_eq!(
+            refs(value),
+            vec![sensor.raw(), button.raw(), rule.raw()],
+            "ascending, each once"
+        );
+        assert!(
+            refs(rule).is_empty(),
+            "a rule reads its inputs; it references nothing"
+        );
+        assert!(refs(sensor).is_empty() && refs(button).is_empty());
+        let draft = mapping_analysis_to_pb(&bdl_compiler::analyze(&s).mappings[&value]);
+        assert!(
+            draft.references.is_empty(),
+            "a draft verdict carries no edges"
+        );
+    }
+
     #[test]
     fn dim_round_trip() {
         let d = Dim::LENGTH - Dim::TIME;

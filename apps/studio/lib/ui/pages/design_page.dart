@@ -104,6 +104,10 @@ class DesignPage extends StatelessWidget {
                   for (final o in state.contextAnalysis?.outputs ?? const <pb.OutputAnalysis>[])
                     o.id.toInt(): o.state,
                 },
+                refs: {
+                  for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+                    m.id.toInt(): [for (final d in m.references) d.toInt()],
+                },
                 templates: state.templates.toList(),
                 sources: state.libraryItems.where((i) => i.category == 'source').toList(),
                 recentTemplates: state.editor.recentTemplates,

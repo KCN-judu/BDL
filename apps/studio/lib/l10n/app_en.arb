@@ -269,10 +269,6 @@
   "@chooseWhatItProducesTheOutputSocket": {
     "description": "Studio UI text (dialogs.dart)."
   },
-  "dashedDeclaredNotYetDefinedAttachA": "Dashed: declared, not yet defined. Attach a formula from the inspector whenever you are ready.",
-  "@dashedDeclaredNotYetDefinedAttachA": {
-    "description": "Studio UI text (dialogs.dart)."
-  },
   "newTimingDomain": "New timing domain",
   "@newTimingDomain": {
     "description": "Studio UI text (dialogs.dart)."
@@ -1311,10 +1307,6 @@
   },
   "selectAnInputAColumnOrA": "Select an input, a column or a concept.",
   "@selectAnInputAColumnOrA": {
-    "description": "Studio UI text (simulate_page.dart)."
-  },
-  "aRelationshipItIsAppliedInsideOther": "A relationship: it is applied inside other relationships and has no value of its own to sample.",
-  "@aRelationshipItIsAppliedInsideOther": {
     "description": "Studio UI text (simulate_page.dart)."
   },
   "now": "Now",
@@ -2404,15 +2396,6 @@
       }
     }
   },
-  "noValueDeclarationProduces": "No value declaration produces {concept}.",
-  "@noValueDeclarationProduces": {
-    "description": "Simulate probe: nothing to sample for this concept.",
-    "placeholders": {
-      "concept": {
-        "type": "Object"
-      }
-    }
-  },
   "resourcesCount": "{count, plural, =1{1 resource} other{{count} resources}}",
   "@resourcesCount": {
     "description": "Deploy target menu detail.",
@@ -2734,10 +2717,6 @@
   "@chooseWhatItProvidesTheOutputSocket": {
     "description": "New-source sheet hint while no concept is chosen."
   },
-  "theEnvironmentProvidesItNoInputSockets": "The environment provides it: no input sockets, one value per activation.",
-  "@theEnvironmentProvidesItNoInputSockets": {
-    "description": "New-source sheet hint once a concept is chosen."
-  },
   "sources": "Sources",
   "@sources": {
     "description": "Simulate page: the section of values the environment provides during a run (the Sources)."
@@ -2785,6 +2764,119 @@
   "libraryGroupExternal": "External",
   "@libraryGroupExternal": {
     "description": "Studio UI text (library_panel.dart)."
+  },
+  "ruleWord": "rule",
+  "@ruleWord": {
+    "description": "Canvas header word for a relationship that reads something (glossary: rule): a function applied by a value's formula, with no value of its own. Shown only when no state word takes the slot."
+  },
+  "roleRule": "Rule",
+  "@roleRule": {
+    "description": "Inspector Role row and Simulate probe: a relationship that reads something (glossary: rule)."
+  },
+  "roleValue": "Value",
+  "@roleValue": {
+    "description": "Inspector Role row: a relationship that reads nothing and has a formula (glossary: computed value)."
+  },
+  "ruleExplanation": "A function from what it reads to what it produces. It has no value of its own: a value's formula applies it.",
+  "@ruleExplanation": {
+    "description": "Inspector explanation under a rule's Role row."
+  },
+  "valueExplanation": "A value of the design: its formula gives it a value once per activation.",
+  "@valueExplanation": {
+    "description": "Inspector explanation under a computed value's Role row."
+  },
+  "dependsOn": "Depends on",
+  "@dependsOn": {
+    "description": "Inspector row label: the relationships this one's formula references (the reference edges on the canvas)."
+  },
+  "namedIn": "Named in",
+  "@namedIn": {
+    "description": "Inspector row label: the relationships whose formulas reference this one."
+  },
+  "ruleNodeSemantics": "rule, reads {reads}",
+  "@ruleNodeSemantics": {
+    "description": "Accessibility fragment of a rule node on the canvas; reads is the list of concept names.",
+    "placeholders": {
+      "reads": {
+        "type": "String"
+      }
+    }
+  },
+  "valueNodeSemantics": "value",
+  "@valueNodeSemantics": {
+    "description": "Accessibility fragment of a computed-value node on the canvas."
+  },
+  "dependsOnList": "depends on {names}",
+  "@dependsOnList": {
+    "description": "Accessibility fragment of a relationship node: the relationships its formula references.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "sheetSourceShape": "Reads nothing: a Source. The environment provides {concept} once per activation; a formula added later makes it a computed value instead.",
+  "@sheetSourceShape": {
+    "description": "New-relationship / new-source sheet hint once the produced concept is chosen and nothing is read: which shape is being created and its consequence.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "sheetRuleShape": "Reads {reads}: a rule, a function to {concept}. It has no value of its own — a value's formula applies it; dashed until its formula is added.",
+  "@sheetRuleShape": {
+    "description": "New-relationship sheet hint once the produced concept is chosen and something is read: which shape is being created and its consequence.",
+    "placeholders": {
+      "reads": {
+        "type": "String"
+      },
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "aRuleNoValueOfItsOwn": "A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.",
+  "@aRuleNoValueOfItsOwn": {
+    "description": "Simulate probe: a rule is selected."
+  },
+  "appliedIn": "Applied in {names}.",
+  "@appliedIn": {
+    "description": "Simulate probe: the values whose formulas apply the selected rule.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "noValueAppliesItYet": "No value applies it yet.",
+  "@noValueAppliesItYet": {
+    "description": "Simulate probe: nothing references the selected rule."
+  },
+  "noValueCarries": "Nothing carries {concept} yet: no value or Source produces it.",
+  "@noValueCarries": {
+    "description": "Simulate probe: no unit-domain relationship produces this concept, so it has no value per tick.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleProducesNoValue": "{rule} is a rule; a value whose formula applies it would carry {concept}.",
+  "@ruleProducesNoValue": {
+    "description": "Simulate probe: a rule produces the concept by signature, but only a value gives it a value per tick.",
+    "placeholders": {
+      "rule": {
+        "type": "String"
+      },
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "carriedBy": "Carried by",
+  "@carriedBy": {
+    "description": "Simulate probe caption: the values and Sources that give this concept a value per tick."
   },
   "libItem_std_environment_temperature_name": "Temperature",
   "@libItem_std_environment_temperature_name": {

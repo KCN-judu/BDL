@@ -214,9 +214,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chooseWhatItProducesTheOutputSocket => '何を生成するかを選びます。出力ソケットはそのコンセプトの色と形になります。';
 
   @override
-  String get dashedDeclaredNotYetDefinedAttachA => '破線：宣言済み、未定義。準備ができたらインスペクターから数式を付けてください。';
-
-  @override
   String get newTimingDomain => '新規タイミングドメイン';
 
   @override
@@ -998,9 +995,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get selectAnInputAColumnOrA => '入力、列、コンセプトのいずれかを選択してください。';
 
   @override
-  String get aRelationshipItIsAppliedInsideOther => '関係：他の関係の内部で適用されるため、サンプルできる固有の値を持ちません。';
-
-  @override
   String get now => '現在';
 
   @override
@@ -1680,11 +1674,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String noValueDeclarationProduces(Object concept) {
-    return '$concept を生成する値の宣言がありません。';
-  }
-
-  @override
   String resourcesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'リソース $count 件');
     return '$_temp0';
@@ -1891,9 +1880,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chooseWhatItProvidesTheOutputSocket => '何を提供するかを選んでください。右側にある唯一のソケットです。';
 
   @override
-  String get theEnvironmentProvidesItNoInputSockets => '環境から与えられます。入力ソケットはなく、アクティベーションごとに一つの値です。';
-
-  @override
   String get sources => '入力元';
 
   @override
@@ -1937,6 +1923,74 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get libraryGroupExternal => '外部';
+
+  @override
+  String get ruleWord => 'ルール';
+
+  @override
+  String get roleRule => 'ルール';
+
+  @override
+  String get roleValue => '値';
+
+  @override
+  String get ruleExplanation => '読み取るものから生成するものへの関数です。固有の値は持ちません。値の数式がこれを適用します。';
+
+  @override
+  String get valueExplanation => '設計の値です。数式がアクティベーションごとに一つの値を与えます。';
+
+  @override
+  String get dependsOn => '依存先';
+
+  @override
+  String get namedIn => '参照元';
+
+  @override
+  String ruleNodeSemantics(String reads) {
+    return 'ルール、$reads を読み取る';
+  }
+
+  @override
+  String get valueNodeSemantics => '値';
+
+  @override
+  String dependsOnList(String names) {
+    return '$names に依存';
+  }
+
+  @override
+  String sheetSourceShape(String concept) {
+    return '何も読み取りません：入力元です。環境がアクティベーションごとに $concept を与えます。後で数式を追加すると計算される値になります。';
+  }
+
+  @override
+  String sheetRuleShape(String reads, String concept) {
+    return '$reads を読み取ります：ルール、$concept への関数です。固有の値は持たず、値の数式がこれを適用します。数式が追加されるまで破線で表示されます。';
+  }
+
+  @override
+  String get aRuleNoValueOfItsOwn => 'ルールです。固有の値は持ちません。シミュレーターがサンプルするのは、これを適用する値です。';
+
+  @override
+  String appliedIn(String names) {
+    return '$names で適用されています。';
+  }
+
+  @override
+  String get noValueAppliesItYet => 'まだどの値にも適用されていません。';
+
+  @override
+  String noValueCarries(String concept) {
+    return 'まだ何も $concept を運んでいません。これを生成する値も入力元もありません。';
+  }
+
+  @override
+  String ruleProducesNoValue(String rule, String concept) {
+    return '$rule はルールです。これを適用する値が $concept を運びます。';
+  }
+
+  @override
+  String get carriedBy => '運び手';
 
   @override
   String get libItem_std_environment_temperature_name => '温度';

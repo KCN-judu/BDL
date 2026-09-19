@@ -815,8 +815,12 @@ message MappingAnalysis {
   string core_expr = 5;
   repeated Diagnostic diagnostics = 6;
   // The relationships this one's definition refers to, by identity (the
-  // design's dependency edges, in id order): a value that applies a rule
-  // lists that rule here.  Empty while the relationship is declared only.
+  // design's dependency edges — the kernel's `dependsOn` — in id order,
+  // each once, the relationship itself included when its definition names
+  // it): a value that applies a rule lists that rule here.  Empty while the
+  // relationship is declared only, for a Source, for a definition that does
+  // not elaborate, and in a draft verdict.  The canvas draws each as a
+  // reference edge (ADR-0034); protocol 0.18.
   repeated uint64 references = 7;
 }
 

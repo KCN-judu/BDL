@@ -88,6 +88,14 @@ class Inspector extends StatelessWidget {
               .map((p) => '${portKindWord(p.kind)} ${p.name}')
               .firstOrNull,
           group: state.editor.context is SystemContext ? state.groupOf(id) : null,
+          dependsOn: [
+            for (final d in state.refsOf(id))
+              if (d != id) ?project.mappings.where((m) => m.id.toInt() == d).firstOrNull,
+          ],
+          namedIn: [
+            for (final r in state.referrersOf(id))
+              ?project.mappings.where((m) => m.id.toInt() == r).firstOrNull,
+          ],
         ),
         OutputSelected(:final id) => _OutputInspector(
           key: ValueKey('o$id'),
@@ -624,9 +632,17 @@ class _MappingInspector extends StatelessWidget {
     this.boundLabel,
     this.portWord,
     this.group,
+    this.dependsOn = const [],
+    this.namedIn = const [],
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
+
+  /// The relationships this one's definition references, and those whose
+  /// definitions reference it — the analysis's `refs`, the canvas's
+  /// reference edges (ADR-0034).  Empty while the analysis is pending.
+  final List<pb.MappingView> dependsOn;
+  final List<pb.MappingView> namedIn;
   final List<pb.ClockView> clocks;
   final List<pb.OutputView> outputs;
 
@@ -733,14 +749,26 @@ class _MappingInspector extends StatelessWidget {
                 onCommit: (v) => dispatch(SetMappingDescriptionRequested(id: id, description: v)),
               ),
             ),
+            // The three shapes (ADR-0034): a Source reads nothing and has no
+            // formula; a rule reads something; a value reads nothing and is
+            // defined.  A port-backed relationship's role is its port's.
             FormRow(
               label: context.l10n.role,
               child: Text(
-                source ? context.l10n.roleSource : portWord ?? context.l10n.relationship,
+                source
+                    ? context.l10n.roleSource
+                    : portWord ??
+                          (inputs.isNotEmpty ? context.l10n.roleRule : context.l10n.roleValue),
                 style: TextStyle(fontSize: 12, color: t.textPrimary),
               ),
             ),
-            if (source) Text(context.l10n.sourceExplanation, style: small),
+            if (source)
+              Text(context.l10n.sourceExplanation, style: small)
+            else if (portWord == null)
+              Text(
+                inputs.isNotEmpty ? context.l10n.ruleExplanation : context.l10n.valueExplanation,
+                style: small,
+              ),
           ],
         ),
         InspectorSection(
@@ -873,6 +901,27 @@ class _MappingInspector extends StatelessWidget {
                 projection: projection,
                 concepts: {for (final c in concepts) c.id.toInt(): c},
                 dispatch: dispatch,
+              ),
+            // What the formula references and who references this: the
+            // reference edges of the canvas, as rows — the detail behind
+            // the neutral link into the formula line.
+            if (mapping.hasDefinition() && boundTo == null)
+              FormRow(
+                label: context.l10n.dependsOn,
+                child: _NameLinks(
+                  mappings: dependsOn,
+                  dispatch: dispatch,
+                  empty: context.l10n.nothingYet,
+                ),
+              ),
+            if (!source && boundTo == null)
+              FormRow(
+                label: context.l10n.namedIn,
+                child: _NameLinks(
+                  mappings: namedIn,
+                  dispatch: dispatch,
+                  empty: context.l10n.nothingYet,
+                ),
               ),
             for (final d in broader)
               Padding(

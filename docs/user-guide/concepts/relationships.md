@@ -31,9 +31,19 @@ produces an angle._
 | **Computed value** | nothing              | yes     | a value of the design: `brightness = dimByTilt(tilt)`                                                                                       |
 
 Only a relationship that _reads nothing_ is a value; a rule is something you
-apply. This matters in two places: a physical output can only be driven by a
-value, and a formula applies a rule by calling it — `dimByTilt(tilt)` — and
-names a value by writing it — `tilt`.
+apply. This matters in three places: a physical output can only be driven by a
+value; a formula applies a rule by calling it — `dimByTilt(tilt)` — and names a
+value by writing it — `tilt`; and only a value or a Source gives its concept a
+value at each tick. A rule _produces_ its concept in the sense of its signature
+— its output socket is that concept — but the concept is **carried** only by a
+value whose formula applies the rule. Until `brightness` exists, `dimByTilt` is
+a function nobody calls, and nothing carries _Brightness_.
+
+The creation sheet says which shape you are about to make as you change the
+reads: with nothing read, _Reads nothing: a Source…_; with something read,
+_Reads Tilt: a rule, a function to Brightness. It has no value of its own — a
+value's formula applies it…_. A computed value is a Source you then give a
+formula.
 
 ## The formula
 
@@ -58,22 +68,33 @@ from other domains with `sync` — is in
 
 ## Links on the canvas
 
-A link from a concept's output socket to a relationship's input socket means
-_this relationship reads that concept_. Drawing one edits the signature;
-dragging one away from an input and dropping it on empty canvas removes the
-concept from the signature. Links show _what is read_, never the arithmetic, and
-never an order of execution: the canvas is a picture of dependency, not a
-flowchart.
+Two kinds of link, told apart by colour and by where they end. A link in a
+concept's colour from a concept's output socket to a relationship's input socket
+means _this relationship reads that concept_; from a relationship's output
+socket to a concept's input socket, _this relationship produces that concept_.
+These are the **signature**: drawing one edits it; dragging one away from an
+input and dropping it on empty canvas removes the concept from the signature. A
+thin grey link from a relationship's output socket to the left end of another
+relationship's formula line means _that formula names this relationship_ —
+`brightness`'s line receives one from `dimByTilt` (applied) and one from `tilt`
+(named). These are the **dependency**, read off the analysis of the formula;
+they follow the formula and cannot be dragged. On the canvas a rule wears the
+word _rule_ in its header; a value wears no word. Neither kind of link shows the
+arithmetic or an order of execution: the canvas is a picture of the interface
+and of dependency, not a flowchart.
 
 ## What the inspector shows
 
-- **Meaning** — name and description.
+- **Meaning** — name, description and _Role_: _Source_, _Rule_ or _Value_ (or
+  the port the relationship backs), with one sentence.
 - **Reads** / **Produces** — the signature, as chips and a pop-up with the
   concepts' glyphs. Changing either is an edit; the inspector says which
   relationships will be rechecked.
 - **Relationship** — the formula editor: _Add definition_ / _Save definition_ /
   _Revert_ / _Detach definition_, the verdict line, and any findings about the
-  formula.
+  formula; then _Depends on_ (the relationships the formula names) and _Named
+  in_ (the formulas that name this one) — the reference links, as names you can
+  click.
 - **Timing** — _Updates in_: the timing domain, or _Any timing domain_ for a
   pure rule. See [Timing](timing.md).
 - **Drives** — the physical output this value is the final target of, if any.
@@ -90,7 +111,9 @@ input ending in `mk` of the output). A declaration without a realization is the
 language's unresolved declaration, a first-class state.
 `docs/architecture/compiler-pipeline.md` passes 3–6;
 `docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the formula
-language's naming rule.
+language's naming rule. The reference links are the kernel's `dependsOn`
+(`docs/spec/kernel.md` §5) — `refs` of the realization, carried per relationship
+in the analysis (`MappingAnalysis.references`, ADR-0034).
 
 ## Related
 

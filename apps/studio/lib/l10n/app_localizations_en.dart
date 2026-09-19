@@ -224,10 +224,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose what it produces: the output socket takes that concept’s colour and shape.';
 
   @override
-  String get dashedDeclaredNotYetDefinedAttachA =>
-      'Dashed: declared, not yet defined. Attach a formula from the inspector whenever you are ready.';
-
-  @override
   String get newTimingDomain => 'New timing domain';
 
   @override
@@ -1041,10 +1037,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAnInputAColumnOrA => 'Select an input, a column or a concept.';
 
   @override
-  String get aRelationshipItIsAppliedInsideOther =>
-      'A relationship: it is applied inside other relationships and has no value of its own to sample.';
-
-  @override
   String get now => 'Now';
 
   @override
@@ -1796,11 +1788,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String noValueDeclarationProduces(Object concept) {
-    return 'No value declaration produces $concept.';
-  }
-
-  @override
   String resourcesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2016,10 +2003,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose what it provides: the one socket on its right.';
 
   @override
-  String get theEnvironmentProvidesItNoInputSockets =>
-      'The environment provides it: no input sockets, one value per activation.';
-
-  @override
   String get sources => 'Sources';
 
   @override
@@ -2063,6 +2046,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryGroupExternal => 'External';
+
+  @override
+  String get ruleWord => 'rule';
+
+  @override
+  String get roleRule => 'Rule';
+
+  @override
+  String get roleValue => 'Value';
+
+  @override
+  String get ruleExplanation =>
+      'A function from what it reads to what it produces. It has no value of its own: a value\'s formula applies it.';
+
+  @override
+  String get valueExplanation =>
+      'A value of the design: its formula gives it a value once per activation.';
+
+  @override
+  String get dependsOn => 'Depends on';
+
+  @override
+  String get namedIn => 'Named in';
+
+  @override
+  String ruleNodeSemantics(String reads) {
+    return 'rule, reads $reads';
+  }
+
+  @override
+  String get valueNodeSemantics => 'value';
+
+  @override
+  String dependsOnList(String names) {
+    return 'depends on $names';
+  }
+
+  @override
+  String sheetSourceShape(String concept) {
+    return 'Reads nothing: a Source. The environment provides $concept once per activation; a formula added later makes it a computed value instead.';
+  }
+
+  @override
+  String sheetRuleShape(String reads, String concept) {
+    return 'Reads $reads: a rule, a function to $concept. It has no value of its own — a value\'s formula applies it; dashed until its formula is added.';
+  }
+
+  @override
+  String get aRuleNoValueOfItsOwn =>
+      'A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.';
+
+  @override
+  String appliedIn(String names) {
+    return 'Applied in $names.';
+  }
+
+  @override
+  String get noValueAppliesItYet => 'No value applies it yet.';
+
+  @override
+  String noValueCarries(String concept) {
+    return 'Nothing carries $concept yet: no value or Source produces it.';
+  }
+
+  @override
+  String ruleProducesNoValue(String rule, String concept) {
+    return '$rule is a rule; a value whose formula applies it would carry $concept.';
+  }
+
+  @override
+  String get carriedBy => 'Carried by';
 
   @override
   String get libItem_std_environment_temperature_name => 'Temperature';

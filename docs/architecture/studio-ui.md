@@ -114,7 +114,7 @@ as a banner above the page content, never as a modal.
 
 _As built: [node anatomy](../user-guide/assets/studio/node-anatomy.png); the
 header word precedence is `Source` › `declared` › port word › sink state ›
-`required`._
+`required` › `rule`._
 
 ```text
    ●────[ Tilt ]────●                       concept: one row — name, in-socket, out-socket
@@ -188,7 +188,26 @@ header word precedence is `Source` › `declared` › port word › sink state �
   not declared.
 - **Links** are cubic Béziers from an output socket (right edge) to an input
   socket (left edge), tangents horizontal, colour of the concept, 2 px, selected
-  links thicker. Data flows left → right.
+  links thicker. Data flows left → right. These are the **signature edges**:
+  concept → a relationship that reads it, relationship → the concept it
+  produces, value → the sink it drives — the interface, and what dragging edits.
+- **Reference edges** (ADR-0034) are the kernel's `dependsOn`: from the output
+  socket of every relationship a definition names into the **formula line** of
+  the relationship naming it — the left end of its definition region, not a
+  socket — in the secondary text colour, 1.5 px, under the signature edges, with
+  no hit area, halo or selection. They come from `MappingAnalysis.references`
+  (`buildScene(refs:)`, `LinkShape.reference`), never from the formula text;
+  without an analysis of the revision there are none, and an edge whose end the
+  projection does not show (a deleted relationship, an instance's private one)
+  is dropped. A self-reference draws nothing (the register mark, §7, is not
+  built). A hidden member of a collapsed group adds none of its own; an edge
+  from a hidden member leaves from the group's aggregate output socket.
+- **Rule, value, Source** are told apart without the formula: a relationship
+  that reads something is a **rule** — its input sockets are the shape and the
+  header says _rule_ when no state word takes the slot (`NodeShape.rule`); one
+  that reads nothing and has a formula is a **value** with no word; one that
+  reads nothing and has none is a Source (above). Assistive technology hears
+  _name, rule, reads …, produces …, depends on …_ / _name, value, produces …_.
 - **Empty canvas**: one tertiary line naming the first step (add a concept from
   the Library). Painted nodes expose semantics in product language for assistive
   technology.
@@ -221,13 +240,13 @@ Muting nodes (M) has no BDL meaning and is not offered.
 
 ### What the canvas never means
 
-Edges are dependency, not execution order. Drawing order does not set output
-priority. Node position is layout only (ADR-0003): the canvas draws every node
-where the layout puts it and arranges nothing itself — an entity without a
-position is placed by the daemon's layout service on open and on commit
-(ADR-0023 §7, `docs/architecture/overview.md`), and the projection carries the
-result. No node type exists per arithmetic operator — formulas live in the
-inspector.
+Signature edges are the interface and reference edges are dependency; neither is
+execution order. Drawing order does not set output priority. Node position is
+layout only (ADR-0003): the canvas draws every node where the layout puts it and
+arranges nothing itself — an entity without a position is placed by the daemon's
+layout service on open and on commit (ADR-0023 §7,
+`docs/architecture/overview.md`), and the projection carries the result. No node
+type exists per arithmetic operator — formulas live in the inspector.
 
 ### Create-then-rename (library items)
 
@@ -583,6 +602,8 @@ _now_ = implemented; _spec_ = agreed here, drawn when its compiler pass lands.
 | order by declaration                        | `Concept::ordered` (`OrdDecl`, Phase 9c)                                                  | — (nothing on the canvas: order is not structure)                                                                                                                                                                                                                                                                                                                                      | _Order_ checkbox under a quantity value form: _values are magnitudes: <, smallest, largest, clamp, in range_ / _values are compared for equality only_                                                                               | `ordered concept …`; `semantic.no_order` names the fix                                  |                                                                                                                                                                                      |
 | unresolved declaration                      | `realization = none`                                                                      | **dashed** outline, empty definition region, header word _declared_                                                                                                                                                                                                                                                                                                                    | Relationship: empty field + Attach                                                                                                                                                                                                   | `Δ(d).realization = none`                                                               | now                                                                                                                                                                                  |
 | mapping relationship                        | `Signature { inputs, output }` → `Interface`                                              | one input socket per read concept on the left, one output socket on the right, links in the concepts' hues                                                                                                                                                                                                                                                                             | Reads · Produces (chips and pop-up carry the socket glyph)                                                                                                                                                                           | `Interface: sem#0 → sem#3 → sem#1`                                                      | now                                                                                                                                                                                  |
+| dependency (`dependsOn`)                    | `MappingAnalysis.references` (`DependencyGraph::all`)                                     | a **reference edge**: secondary-colour 1.5 px link from the referenced relationship's output socket into the referencing relationship's formula line; no socket, no hit area (ADR-0034)                                                                                                                                                                                                | _Depends on_ / _Named in_ rows of name links; the _Role_ row _Rule_ / _Value_ / _Source_ with one sentence                                                                                                                           | `references` in kernel notation                                                         | now                                                                                                                                                                                  |
+| rule vs value                               | `Signature.inputs` non-empty vs empty with a definition                                   | input sockets (the shape) and the header word _rule_ when no state word takes the slot; a value has neither                                                                                                                                                                                                                                                                            | _Role: Rule_ / _Role: Value_; the creation sheet's sentence as the reads change                                                                                                                                                      | `type: A -> B` vs `() -> B`                                                             | now                                                                                                                                                                                  |
 | semantic construction                       | `mk s` under `Grant.of τ`                                                                 | a link forms only between sockets of one hue; the output socket is the produced concept                                                                                                                                                                                                                                                                                                | Produces                                                                                                                                                                                                                             | `Grant permits mk sem#1 in this realization`                                            | now (grant is invisible by design)                                                                                                                                                   |
 | dimension mismatch                          | `Prim.ty` fails                                                                           | a **red mark at the formula line** on the node, nothing in the header                                                                                                                                                                                                                                                                                                                  | under the formula: "This adds an angle and a time." + fixes                                                                                                                                                                          | `+ : q[rad] → q[rad] → …, found q[s]`, code                                             | now                                                                                                                                                                                  |
 | waiting on an open value                    | `MappingStatus.OPEN`                                                                      | solid node whose read socket is hollow                                                                                                                                                                                                                                                                                                                                                 | under the formula: "Checked once _Temperature_'s value is decided."                                                                                                                                                                  | status enum                                                                             | now                                                                                                                                                                                  |

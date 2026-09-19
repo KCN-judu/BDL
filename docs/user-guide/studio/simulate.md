@@ -83,9 +83,15 @@ produced at the same instant is not yet visible.
 ## The probe (right)
 
 The selected object's value **now** and **over the run**, written as in the
-trace, with its glyph; for an output, its driver. **Explain** under it holds the
-identity number, the run's revision and, for a failure, the code and technical
-text.
+trace, with its glyph; for an output, its driver. A concept is shown as what
+**carries** it — _Carried by_, then each value and Source that produces it with
+its latest sample; when none does, _Nothing carries Brightness yet: no value or
+Source produces it._ and, for each rule that produces it, _dimByTilt is a rule;
+a value whose formula applies it would carry Brightness._ A rule has no value to
+show: _A rule: it has no value of its own. A value whose formula applies it is
+what the simulator samples._, then _Applied in brightness._ or _No value applies
+it yet._ **Explain** under it holds the identity number, the run's revision and,
+for a failure, the code and technical text.
 
 ## What a new revision does
 

@@ -29,6 +29,7 @@ class NodeCanvas extends StatefulWidget {
     required this.dispatch,
     this.statuses = const {},
     this.outputStates = const {},
+    this.refs = const {},
     this.templates = const [],
     this.sources = const [],
     this.recentTemplates = const [],
@@ -72,6 +73,10 @@ class NodeCanvas extends StatefulWidget {
 
   /// The output pass per sink id, when an analysis of this revision exists.
   final Map<int, pb.OutputState> outputStates;
+
+  /// Per mapping id, the mappings its definition references
+  /// (`MappingAnalysis.references`, the same analysis): the reference edges.
+  final Map<int, List<int>> refs;
 
   /// The concept templates the right-click menu offers, and the recently
   /// used ones (most recent first).
@@ -165,6 +170,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     layout,
     statuses: widget.statuses,
     outputStates: widget.outputStates,
+    refs: widget.refs,
     system: _sceneInput,
   );
 
@@ -1237,7 +1243,21 @@ class _CanvasPainter extends CustomPainter {
       );
     }
 
-    for (final l in scene.links) {
+    // Reference edges first, under the signature edges: neutral (no
+    // concept flows through a port here — the formula names a
+    // relationship, rule or value alike), thinner, ending at the formula
+    // line rather than a socket (ADR-0034).
+    for (final l in scene.links.where((l) => l.reference)) {
+      canvas.drawPath(
+        l.path,
+        Paint()
+          ..color = tokens.textSecondary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+    for (final l in scene.links.where((l) => !l.reference)) {
       final isSelected = l.binding != null && l.binding == selectedBinding;
       canvas.drawPath(
         l.path,
@@ -1360,7 +1380,13 @@ class _CanvasPainter extends CustomPainter {
             : n.wrong
             ? l10n.definitionDoesNotCheck
             : l10n.stateDefined;
-        return '${n.title}, relationship, reads $reads, produces $produces, $state';
+        // A rule is named as what it is; what a definition depends on is
+        // the reference edges, said here since they end at no socket.
+        final shape = n.rule ? l10n.ruleNodeSemantics(reads) : l10n.valueNodeSemantics;
+        final depends = n.dependsOn.isEmpty
+            ? ''
+            : ', ${l10n.dependsOnList(n.dependsOn.join(', '))}';
+        return '${n.title}, $shape, produces $produces$depends, $state';
       case NodeKind.output:
         final accepts = n.socketLabels.values.join(', ');
         final state = switch (n.sink) {
@@ -1544,12 +1570,15 @@ class NodePainter {
       FontWeight.w600,
       12.5,
       tokens.textPrimary,
-      maxWidth: n.rect.width - (n.declared || n.source ? 78 : 24) - (n.source ? 14 : 0),
+      maxWidth: n.rect.width - (n.declared || n.source || n.rule ? 78 : 24) - (n.source ? 14 : 0),
     );
     // The header's right word is object state in words only where the
     // geometry cannot carry it: a declared mapping, an open or contested
     // sink, a required sink, a port-backed relationship in a component's
     // source.
+    // A defined rule that carries no other word says *rule*: it is applied
+    // by a value's formula and has no value of its own (ADR-0034); the
+    // input sockets are the shape, the word the consequence.
     final headerWord = n.source
         ? l10n.roleSource
         : n.declared
@@ -1560,7 +1589,12 @@ class NodePainter {
             SinkState.open => l10n.noDomain,
             SinkState.contested => l10n.stateContested,
             SinkState.illFormed => l10n.stateIllFormed,
-            _ => n.required ? l10n.stateRequired : '',
+            _ =>
+              n.required
+                  ? l10n.stateRequired
+                  : n.rule
+                  ? l10n.ruleWord
+                  : '',
           };
     if (headerWord.isNotEmpty) {
       _text(

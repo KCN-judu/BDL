@@ -12,8 +12,11 @@ last column is the formal or internal name, which appears only in
 | **dimension** | the physical kind of a quantity (angle, length, time…), what formulas are checked against | Unit (chosen by quantity kind) | `Dim` |
 | **relationship** | a named rule from concepts to a concept, with a signature and an optional formula | Mapping (sidebar, sheet), Relationship (inspector) | declaration, `DeclId`, `MappingBlock` |
 | **reads** / **produces** | a relationship's signature | Reads, Produces | interface, `Signature { inputs, output }` |
-| **rule** | a relationship with inputs | — | arrow-typed declaration |
-| **value** | a relationship without inputs | — | nullary declaration |
+| **rule** | a relationship with inputs: a function a value's formula applies; it has no value of its own | *rule* (canvas header), *Rule* (Role) | arrow-typed declaration |
+| **value** | a relationship without inputs; with a formula, a computed value | *Value* (Role) | nullary declaration |
+| **produces** | the concept a relationship's signature ends in, rule or value alike | Produces, Produced by, the concept's input socket | `Signature.output`, `Ty.grant` |
+| **carried by** | the values and Sources that give a concept a value at each tick | *Carried by* (Simulate probe) | unit-domain declarations producing the concept |
+| **reference link** | the thin grey link into a formula line: that formula names this relationship | — | `dependsOn`, `MappingAnalysis.references` |
 | **Source** | a value with no formula: the environment provides it, once per activation (zh-Hans 来源, ja 入力元; never *sensor*, *signal* or *source code*) | *Source* (canvas header, Role, the Library's *Sources*, the Simulate page's *Sources*) | unresolved nullary declaration at the environment boundary; `Source Δ d`, `I d t`; a derived role, stored nowhere |
 | **formula** | the text that defines a relationship | Relationship (section) | definition, realization, Core term |
 | **declared** | a relationship that reads something and has no formula | *declared* | `realization = none` with inputs |

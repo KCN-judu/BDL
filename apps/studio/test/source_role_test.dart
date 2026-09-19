@@ -442,7 +442,7 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.text('Brightness').last);
       await t.pumpAndSettle();
-      expect(find.text(kEnglish.theEnvironmentProvidesItNoInputSockets), findsOneWidget);
+      expect(find.text(kEnglish.sheetSourceShape('Brightness')), findsOneWidget);
       await t.tap(find.text('Create'));
       await t.pumpAndSettle();
       final r = await result;

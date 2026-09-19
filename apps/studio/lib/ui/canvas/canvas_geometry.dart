@@ -15,6 +15,15 @@
 /// declared-not-defined, and a red mark at the definition line means the
 /// definition does not check.
 ///
+/// Two kinds of edge (ADR-0034).  A *signature edge* runs socket to socket
+/// in the concept's hue: concept → a relationship that reads it, a
+/// relationship → the concept it produces, a value → the sink it drives;
+/// it is what the designer edits by dragging.  A *reference edge* runs from
+/// a relationship's output socket into the formula line of a relationship
+/// whose definition names it — the kernel's `dependsOn`, read off the
+/// analysis (`MappingAnalysis.references`), never off the formula text — and is
+/// drawn neutral and thin: it is not a typed port and cannot be dragged.
+///
 /// A system canvas (docs/architecture/studio-ui.md §11) adds component-instance nodes
 /// drawn from their ports' *contracts* (never their bodies), binding links
 /// between ports (a transport gate where a value is carried across timing
@@ -183,11 +192,24 @@ class NodeShape {
     this.headerWord = '',
     this.unrealized = false,
     this.source = false,
+    this.rule = false,
+    this.dependsOn = const [],
   });
   final NodeRef ref;
   final Rect rect;
   final String title;
   final List<SocketShape> sockets;
+
+  /// A rule (ADR-0034): a relationship that reads something — a function
+  /// from its inputs to its output, applied by other formulas; it has no
+  /// value of its own.  The word *rule* in the header when no state word
+  /// takes the slot; the input sockets are the shape.
+  final bool rule;
+
+  /// The names of the relationships this one's definition references, in
+  /// the analysis's order — what the reference edges into its formula line
+  /// stand for, said to assistive technology.
+  final List<String> dependsOn;
 
   /// An instance node: the component's name, in the body row.  A collapsed
   /// group: how many relationships it holds.
@@ -240,6 +262,10 @@ class NodeShape {
     rect.width,
     NodeMetrics.bodyHeight,
   );
+
+  /// Where a reference edge enters a mapping: the left end of its formula
+  /// line.  Not a socket — nothing can be dropped there.
+  Offset get formulaEntry => Offset(rect.left, definitionRegion.center.dy);
 }
 
 class LinkShape {
@@ -250,11 +276,21 @@ class LinkShape {
     required this.path,
     this.binding,
     this.transport,
+    this.reference = false,
   });
   final SocketRef from;
+
+  /// The socket the link ends at.  A reference edge has none: [to] is the
+  /// referencing relationship's output socket ref standing for the node,
+  /// and the path ends at its [NodeShape.formulaEntry].
   final SocketRef to;
   final int concept;
   final Path path;
+
+  /// A reference edge (ADR-0034): [to]'s node names [from]'s node in its
+  /// definition.  Drawn neutral and thin into the formula line; never a
+  /// drop target, never selectable.
+  final bool reference;
 
   /// The binding this link is, on a system canvas.
   final int? binding;
@@ -400,11 +436,16 @@ class SystemSceneInput {
   bool isCollapsed(int group) => summarize || (groupBoxes[group]?.collapsed ?? false);
 }
 
+/// [refs]: per mapping id, the mappings its definition references
+/// (`MappingAnalysis.references`, when an analysis of this revision exists) —
+/// the reference edges.  [statuses] and [outputStates] are the same
+/// analysis's verdicts.
 CanvasScene buildScene(
   pb.ProjectProjection p,
   Map<NodeRef, Offset> layout, {
   Map<int, pb.MappingStatus> statuses = const {},
   Map<int, pb.OutputState> outputStates = const {},
+  Map<int, List<int>> refs = const {},
   SystemSceneInput system = const SystemSceneInput(),
 }) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
@@ -537,6 +578,14 @@ CanvasScene buildScene(
             : '= $realised',
         declared: !source && !m.hasDefinition() && realised == null,
         source: source,
+        // A rule reads something: the input sockets are the shape, the
+        // word says the consequence (it is applied; it has no value).
+        rule: inputs.isNotEmpty,
+        dependsOn: [
+          for (final d in refs[m.id.toInt()] ?? const <int>[])
+            if (d != m.id.toInt())
+              if (mappings.where((x) => x.id.toInt() == d).firstOrNull case final x?) x.name,
+        ],
         wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
         socketLabels: labels,
@@ -986,6 +1035,49 @@ CanvasScene buildScene(
             to: to.ref,
             concept: outId,
             path: linkPath(from.center, to.center),
+          ),
+        );
+      }
+    }
+  }
+
+  // Reference edges (ADR-0034): from each relationship a definition names
+  // to the formula line of the relationship naming it — the kernel's
+  // `dependsOn`, as the analysis reports it.  A hidden referencing member
+  // adds nothing (its group's crossing-in edges stand for it above); a
+  // hidden referenced member's edge leaves from its group's aggregate
+  // socket; a reference to itself (memory through `delay`) and one to a
+  // declaration the projection does not show (an instance's private
+  // relationship, or one already deleted) draw nothing.
+  {
+    final byId = {for (final n in nodes) n.ref: n};
+    for (final m in mappings) {
+      final id = m.id.toInt();
+      if (hiddenMembers.containsKey(id)) continue;
+      final node = byId[NodeRef.mapping(id)];
+      if (node == null) continue;
+      final outId = m.signature.output.toInt();
+      final self = SocketRef(node: node.ref, side: SocketSide.output, concept: outId);
+      for (final d in refs[id] ?? const <int>[]) {
+        if (d == id) continue;
+        final target = mappings.where((x) => x.id.toInt() == d).firstOrNull;
+        if (target == null) continue;
+        final targetOut = target.signature.output.toInt();
+        final from = hiddenMembers.containsKey(d)
+            ? groupOut(d)
+            : socketByRef[SocketRef(
+                node: NodeRef.mapping(d),
+                side: SocketSide.output,
+                concept: targetOut,
+              )];
+        if (from == null) continue;
+        links.add(
+          LinkShape(
+            from: from.ref,
+            to: self,
+            concept: targetOut,
+            path: linkPath(from.center, node.formulaEntry),
+            reference: true,
           ),
         );
       }

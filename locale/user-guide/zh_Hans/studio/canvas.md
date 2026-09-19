@@ -9,28 +9,32 @@
 ## 标记的含义
 
 | 你看到 | 含义 |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **插口颜色** | _哪个概念_——每个概念有自己的色相，在它出现的所有地方都相同 |
 | **插口形状** | 概念的 _值形式_：○ 量、◇ 开/关、□ 计数；值形式为 _稍后决定_ 时是**空心环** |
-| **一条连线** | _这个关系读取那个概念_（概念 → 关系输入），或 _这个值驱动那个输出_（关系 → 汇） |
+| **概念颜色的连线，从插槽到插槽** | 签名：_这个关系读取那个概念_（概念 → 关系输入）、_这个关系产出那个概念_（关系 → 概念），或 _这个值驱动那个输出_（关系 → 汇） |
+| **止于公式行的细灰线** | 引用：_这个公式提到了那个关系_——一个值应用某条规则，或提到某个值或来源。它两端都不能拖拽；公式在检查器中编辑 |
 | **虚线轮廓** | _已声明_：读取了某些东西但没有公式的关系；没有驱动方或没有域的输出 |
 | **节点左边缘的竖条、一个进入箭头、_来源_ 一词** | 一个**来源**：由环境提供的值——一个不读取任何东西且没有公式的关系。这里没有任何缺失 |
 | **公式行上的红色标记** | 公式未通过检查——_现在就错了_，而不是 _还没做_ |
 | **_已声明_、_有争议_、_不合式_、_无域_ 这些词** | 节点可以携带的唯一状态词，只在该状态成立时显示（必须被驱动的输出在此期间显示 _必需_；来源显示 _来源_） |
+| **词 _规则_** | 读取了某些概念的关系——一个函数；在某个值的公式应用它之前，它本身没有值。仅在没有状态词占用该位置时显示 |
 | **节点右边缘的小名字** | 它的时序域 |
 | **强调色** | 选中——仅此而已 |
 
-位置、大小和连线方向**没有含义**。为了可读性，数据从左到右绘制；边表示依赖，而不是任何东西运行的顺序；没有按运算符分的节点——算术在公式字段中。
+位置、大小和连线方向**没有含义**。数据从左到右绘制只是为了可读。彩色连线表示签名，灰色连线表示什么依赖什么；两者都不表示运行顺序，也没有按运算符划分的节点——算术在公式字段里。
 
 ## 节点
 
-![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/studio/node-anatomy.png)
+![Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt, with the word rule in its header, outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; brightness with no input socket and two thin grey links arriving at its formula line from the output sockets of tilt and dimByTilt; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/studio/node-anatomy.png)
 
 _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）和 light 汇。_
 
 **概念**是一行：它的名字，左侧一个输入插口（有东西生成这个概念），右侧一个输出插口（关系从这里读取它）。两个插口都带有概念的颜色和形状。
 
-**关系**是一个方框：标题带有名字，以及（当适用时）唯一的状态词（读取了某些东西但还没有公式的关系显示 _已声明_）；左侧每个读取的概念一个输入插口，各自标有概念名；右侧一个输出插口，标有它生成的概念；下面一行是公式，当关系有时序域时，域名在右边缘。不读取任何东西的关系——上图中的 `brightness`——没有输入插口；它是值，它的公式指出它依赖的值和规则。
+**关系**是一个方框：标题栏有名字，以及在状态成立时的唯一状态词（读取了某些概念但尚无公式的关系显示 _已声明_）；左侧每个读取的概念一个输入插槽，各自标注概念名；右侧一个输出插槽，标注它产出的概念；下方一行是公式，关系有时序域时其名字在右缘。
+
+不读公式也能从方框分辨三种形态。读取了某些概念的关系——上图的 `dimByTilt`——是一条**规则**：它有输入插槽，并且在标题词位置没有被其他词占用时显示 _规则_。它是一个函数；在某个值的公式应用它之前，设计不会用它计算任何东西。不读取任何概念且有公式的关系——`brightness`——是一个**值**：没有输入插槽、没有词，它的公式提到它所依赖的值和规则。每一个被提到的关系都通过一条**引用连线**与它相连：从那个关系的输出插槽到 `brightness` 公式行左端的一条细灰线。引用连线是设计的依赖关系，读自编译器对公式的分析；分析到达时它们才出现，且不能拖拽——改变公式才能改变它们。没有任何公式应用的规则，不会有引用连线通向任何公式行。
 
 **来源**是一个不读取任何东西且没有公式的关系——上图中的 `tilt`：它的值由环境提供，每次激活一次。它的标题写着 _来源_，名字前有一个进入箭头，**左**边缘有一条竖条（那是环境的一侧；设计中没有任何东西喂给它），有一个输出插口，没有输入插口。它不是虚线的，也不是 _已声明_：这里没有任何缺失。在真实产品上由什么提供这个值——传感器、按钮、模拟线路——是部署的事，不是画布上的标记；给来源一个公式，它就变成在设计内部计算的普通关系。
 
@@ -71,7 +75,7 @@ _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）
 
 ## 画布永远不显示的
 
-草稿公式（已输入但未添加的公式不会改变画布上的任何东西；状态行会计数）、值（在仿真页）、以及标识符或类型名（在解释中）。
+草稿公式（已输入但未添加的公式不会改变画布上的任何东西——包括它的引用连线；状态行会计数），值（在模拟页上），关系对自身上一个值的记忆（`delay` 不画连线），以及标识符或类型名（在解释中）。
 
 ## 相关
 

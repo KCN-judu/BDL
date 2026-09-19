@@ -510,12 +510,6 @@ abstract class AppLocalizations {
   /// Studio UI text (dialogs.dart).
   ///
   /// In en, this message translates to:
-  /// **'Dashed: declared, not yet defined. Attach a formula from the inspector whenever you are ready.'**
-  String get dashedDeclaredNotYetDefinedAttachA;
-
-  /// Studio UI text (dialogs.dart).
-  ///
-  /// In en, this message translates to:
   /// **'New timing domain'**
   String get newTimingDomain;
 
@@ -2043,12 +2037,6 @@ abstract class AppLocalizations {
   /// **'Select an input, a column or a concept.'**
   String get selectAnInputAColumnOrA;
 
-  /// Studio UI text (simulate_page.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'A relationship: it is applied inside other relationships and has no value of its own to sample.'**
-  String get aRelationshipItIsAppliedInsideOther;
-
   /// Simulate probe: the current value.
   ///
   /// In en, this message translates to:
@@ -3003,12 +2991,6 @@ abstract class AppLocalizations {
   /// **'tick {n}'**
   String tickN(int n);
 
-  /// Simulate probe: nothing to sample for this concept.
-  ///
-  /// In en, this message translates to:
-  /// **'No value declaration produces {concept}.'**
-  String noValueDeclarationProduces(Object concept);
-
   /// Deploy target menu detail.
   ///
   /// In en, this message translates to:
@@ -3333,12 +3315,6 @@ abstract class AppLocalizations {
   /// **'Choose what it provides: the one socket on its right.'**
   String get chooseWhatItProvidesTheOutputSocket;
 
-  /// New-source sheet hint once a concept is chosen.
-  ///
-  /// In en, this message translates to:
-  /// **'The environment provides it: no input sockets, one value per activation.'**
-  String get theEnvironmentProvidesItNoInputSockets;
-
   /// Simulate page: the section of values the environment provides during a run (the Sources).
   ///
   /// In en, this message translates to:
@@ -3410,6 +3386,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'External'**
   String get libraryGroupExternal;
+
+  /// Canvas header word for a relationship that reads something (glossary: rule): a function applied by a value's formula, with no value of its own. Shown only when no state word takes the slot.
+  ///
+  /// In en, this message translates to:
+  /// **'rule'**
+  String get ruleWord;
+
+  /// Inspector Role row and Simulate probe: a relationship that reads something (glossary: rule).
+  ///
+  /// In en, this message translates to:
+  /// **'Rule'**
+  String get roleRule;
+
+  /// Inspector Role row: a relationship that reads nothing and has a formula (glossary: computed value).
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get roleValue;
+
+  /// Inspector explanation under a rule's Role row.
+  ///
+  /// In en, this message translates to:
+  /// **'A function from what it reads to what it produces. It has no value of its own: a value\'s formula applies it.'**
+  String get ruleExplanation;
+
+  /// Inspector explanation under a computed value's Role row.
+  ///
+  /// In en, this message translates to:
+  /// **'A value of the design: its formula gives it a value once per activation.'**
+  String get valueExplanation;
+
+  /// Inspector row label: the relationships this one's formula references (the reference edges on the canvas).
+  ///
+  /// In en, this message translates to:
+  /// **'Depends on'**
+  String get dependsOn;
+
+  /// Inspector row label: the relationships whose formulas reference this one.
+  ///
+  /// In en, this message translates to:
+  /// **'Named in'**
+  String get namedIn;
+
+  /// Accessibility fragment of a rule node on the canvas; reads is the list of concept names.
+  ///
+  /// In en, this message translates to:
+  /// **'rule, reads {reads}'**
+  String ruleNodeSemantics(String reads);
+
+  /// Accessibility fragment of a computed-value node on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'value'**
+  String get valueNodeSemantics;
+
+  /// Accessibility fragment of a relationship node: the relationships its formula references.
+  ///
+  /// In en, this message translates to:
+  /// **'depends on {names}'**
+  String dependsOnList(String names);
+
+  /// New-relationship / new-source sheet hint once the produced concept is chosen and nothing is read: which shape is being created and its consequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads nothing: a Source. The environment provides {concept} once per activation; a formula added later makes it a computed value instead.'**
+  String sheetSourceShape(String concept);
+
+  /// New-relationship sheet hint once the produced concept is chosen and something is read: which shape is being created and its consequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads {reads}: a rule, a function to {concept}. It has no value of its own — a value\'s formula applies it; dashed until its formula is added.'**
+  String sheetRuleShape(String reads, String concept);
+
+  /// Simulate probe: a rule is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.'**
+  String get aRuleNoValueOfItsOwn;
+
+  /// Simulate probe: the values whose formulas apply the selected rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied in {names}.'**
+  String appliedIn(String names);
+
+  /// Simulate probe: nothing references the selected rule.
+  ///
+  /// In en, this message translates to:
+  /// **'No value applies it yet.'**
+  String get noValueAppliesItYet;
+
+  /// Simulate probe: no unit-domain relationship produces this concept, so it has no value per tick.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing carries {concept} yet: no value or Source produces it.'**
+  String noValueCarries(String concept);
+
+  /// Simulate probe: a rule produces the concept by signature, but only a value gives it a value per tick.
+  ///
+  /// In en, this message translates to:
+  /// **'{rule} is a rule; a value whose formula applies it would carry {concept}.'**
+  String ruleProducesNoValue(String rule, String concept);
+
+  /// Simulate probe caption: the values and Sources that give this concept a value per tick.
+  ///
+  /// In en, this message translates to:
+  /// **'Carried by'**
+  String get carriedBy;
 
   /// Standard Library item (library/std/concepts.toml); generated by scripts/gen_library_l10n.py.
   ///

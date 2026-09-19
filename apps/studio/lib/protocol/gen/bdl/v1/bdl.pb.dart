@@ -9220,8 +9220,12 @@ class MappingAnalysis extends $pb.GeneratedMessage {
   $pb.PbList<Diagnostic> get diagnostics => $_getList(5);
 
   /// The relationships this one's definition refers to, by identity (the
-  /// design's dependency edges, in id order): a value that applies a rule
-  /// lists that rule here.  Empty while the relationship is declared only.
+  /// design's dependency edges — the kernel's `dependsOn` — in id order,
+  /// each once, the relationship itself included when its definition names
+  /// it): a value that applies a rule lists that rule here.  Empty while the
+  /// relationship is declared only, for a Source, for a definition that does
+  /// not elaborate, and in a draft verdict.  The canvas draws each as a
+  /// reference edge (ADR-0034); protocol 0.18.
   @$pb.TagNumber(7)
   $pb.PbList<$fixnum.Int64> get references => $_getList(6);
 }

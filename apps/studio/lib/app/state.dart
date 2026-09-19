@@ -1532,6 +1532,23 @@ class AppState {
       systemAnalysis?.componentAnalyses.where((c) => c.id.toInt() == id).firstOrNull?.analysis,
   };
 
+  /// The relationships [id]'s definition references — the kernel's
+  /// `dependsOn`, as the analysis on screen reports it (`references`); empty
+  /// while no analysis of this revision exists.  The canvas's reference
+  /// edges and the inspector's *Depends on* row (ADR-0034).
+  List<int> refsOf(int id) => [
+    for (final m in contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+      if (m.id.toInt() == id)
+        for (final d in m.references) d.toInt(),
+  ];
+
+  /// The relationships whose definitions reference [id]: the same edges,
+  /// read the other way — the inspector's *Named in* row.
+  List<int> referrersOf(int id) => [
+    for (final m in contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+      if (m.id.toInt() != id && m.references.any((d) => d.toInt() == id)) m.id.toInt(),
+  ];
+
   pb.ComponentView? component(int id) =>
       system?.components.where((c) => c.id.toInt() == id).firstOrNull;
 

@@ -344,6 +344,9 @@ class _NewMappingFormState extends State<_NewMappingForm> {
     Navigator.pop(context, (name: name, inputs: List<int>.of(_inputs), output: output));
   }
 
+  String _conceptName(int id) =>
+      widget.concepts.where((c) => c.id.toInt() == id).map((c) => c.name).firstOrNull ?? '?';
+
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
@@ -415,16 +418,21 @@ class _NewMappingFormState extends State<_NewMappingForm> {
           ),
         ),
         const SizedBox(height: 4),
-        // The preview derives the role like the canvas: with no reads the
-        // node is a Source, and the hint says so instead of "dashed".
+        // Which of the three shapes this creates, as the reads change
+        // (ADR-0034): nothing read is a Source; something read is a rule —
+        // a function a value's formula applies, with no value of its own.
+        // The preview derives the role the way the canvas does.
         Text(
           _output == null
               ? widget.source
                     ? context.l10n.chooseWhatItProvidesTheOutputSocket
                     : context.l10n.chooseWhatItProducesTheOutputSocket
               : _inputs.isEmpty
-              ? context.l10n.theEnvironmentProvidesItNoInputSockets
-              : context.l10n.dashedDeclaredNotYetDefinedAttachA,
+              ? context.l10n.sheetSourceShape(_conceptName(_output!))
+              : context.l10n.sheetRuleShape(
+                  _inputs.map(_conceptName).join(', '),
+                  _conceptName(_output!),
+                ),
           style: TextStyle(fontSize: 11, color: t.textSecondary),
         ),
         const SizedBox(height: 18),
