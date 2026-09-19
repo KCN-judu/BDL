@@ -6,7 +6,7 @@
 
 Studio には 2 つの画面があります。**プロジェクトマネージャー**（プロジェクトを開いていない）と**ワークスペース**（プロジェクトを開いている）です。ワークスペースは 1 つのウィンドウで、下部にワークフロー順にページが並びます。
 
-![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 not yet defined, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
+![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
 
 _傾きランプを開き brightness を選択したワークスペース：ツールバー、サイドバー、キャンバス、インスペクター、ステータス行、ページバー。_
 
@@ -20,7 +20,7 @@ _傾きランプを開き brightness を選択したワークスペース：ツ�
 
 **インスペクター**（右）——選択中のオブジェクト：その意味、変更できること、変更が影響するもの。[インスペクター](inspector.md) を参照。
 
-**ステータス行**——文書の状態（_保存済み_ / _編集済み_）、次に件数とまだ決まっていないもの（_未定義 1 件_、_出力が未完了_、_瞬時サイクルあり_、_ドメインをまたぐ読み取り_、_未追加の定義 N 件_）、次にコンパイラ接続。拒否された操作のエラーはページ内容の上に _閉じる_ リンク付きの**バナー**として現れます——ダイアログにはなりません。
+**ステータス行**——文書の状態（_保存済み_ / _編集済み_）、次に件数（_コンセプト 2 件_、_マッピング 3 件_、そして環境が提供する関係が設計にあるときは _入力元 1 件_）、次にまだ決まっていないもの（_未定義 1 件_、_出力が未完了_、_瞬時サイクルあり_、_ドメインをまたぐ読み取り_、_未追加の定義 N 件_）、次にコンパイラ接続。入力元はそのままで完全なので、数えられはしますが、未決のものとして並ぶことはありません。拒否された操作のエラーはページ内容の上に _閉じる_ リンク付きの**バナー**として現れます——ダイアログにはなりません。
 
 **ページバー**——使う順に並んだページ：
 

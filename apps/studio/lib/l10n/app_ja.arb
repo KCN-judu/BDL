@@ -421,6 +421,7 @@
   "protocolVersion": "プロトコル {version}",
   "conceptsCount": "{count, plural, other{コンセプト {count} 件}}",
   "mappingsCount": "{count, plural, other{マッピング {count} 件}}",
+  "sourcesCount": "{count, plural, other{入力元 {count} 件}}",
   "saveChangesTo": "「{name}」への変更を保存しますか？",
   "readConcept": "{concept} を読み取る",
   "domainAlreadyExists": "{name} という名前のドメインはすでに存在します。",

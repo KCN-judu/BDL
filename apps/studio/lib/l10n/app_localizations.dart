@@ -2565,7 +2565,7 @@ abstract class AppLocalizations {
   /// **'Redo ({shortcut})'**
   String redoTooltip(Object shortcut);
 
-  /// Status line: number of relationships declared without a definition (not an error).
+  /// Status line: number of relationships declared without a definition — reading inputs or backing a port, no formula yet (not an error). Sources are not counted.
   ///
   /// In en, this message translates to:
   /// **'{count} not yet defined'**
@@ -2624,6 +2624,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 mapping} other{{count} mappings}}'**
   String mappingsCount(int count);
+
+  /// Status line fact: relationships the environment provides (glossary: source), a plain count, never an open item.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 source} other{{count} sources}}'**
+  String sourcesCount(int count);
 
   /// Title of the save-changes sheet; name is the project name.
   ///

@@ -1369,6 +1369,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String sourcesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '入力元 $count 件');
+    return '$_temp0';
+  }
+
+  @override
   String saveChangesTo(Object name) {
     return '「$name」への変更を保存しますか？';
   }

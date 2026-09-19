@@ -1778,7 +1778,7 @@
   },
   "notYetDefinedCount": "{count} not yet defined",
   "@notYetDefinedCount": {
-    "description": "Status line: number of relationships declared without a definition (not an error).",
+    "description": "Status line: number of relationships declared without a definition — reading inputs or backing a port, no formula yet (not an error). Sources are not counted.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -1860,6 +1860,15 @@
   "mappingsCount": "{count, plural, =1{1 mapping} other{{count} mappings}}",
   "@mappingsCount": {
     "description": "Status line fact; Studio calls a relationship a mapping in this row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sourcesCount": "{count, plural, =1{1 source} other{{count} sources}}",
+  "@sourcesCount": {
+    "description": "Status line fact: relationships the environment provides (glossary: source), a plain count, never an open item.",
     "placeholders": {
       "count": {
         "type": "int"

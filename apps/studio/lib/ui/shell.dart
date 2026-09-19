@@ -253,7 +253,12 @@ class _StatusLine extends StatelessWidget {
     if (p == null) {
       facts.add(Text(context.l10n.noProject, style: small));
     } else {
-      final declared = p.mappings.where((m) => !m.hasDefinition()).length;
+      // *Not yet defined* is exactly what the canvas draws dashed: a Source
+      // reads nothing and has no formula, and nothing is missing from it
+      // (docs/user-guide/concepts/incomplete-designs.md); it is a count of
+      // the design, not an open item.
+      final declared = p.mappings.where(state.isDeclared).length;
+      final sources = p.mappings.where(state.isSource).length;
       final wrong =
           state.analysis?.mappings
               .where((m) => m.status == pb.MappingStatus.MAPPING_STATUS_INVALID)
@@ -262,6 +267,9 @@ class _StatusLine extends StatelessWidget {
       facts.add(Text(p.dirty ? context.l10n.edited : context.l10n.saved, style: small));
       facts.add(Text(context.l10n.conceptsCount(p.concepts.length), style: small));
       facts.add(Text(context.l10n.mappingsCount(p.mappings.length), style: small));
+      if (sources > 0) {
+        facts.add(Text(context.l10n.sourcesCount(sources), style: small));
+      }
       if (declared > 0) {
         facts.add(
           Text(context.l10n.notYetDefinedCount(declared), style: small.copyWith(color: t.open)),

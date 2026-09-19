@@ -421,6 +421,7 @@
   "protocolVersion": "协议 {version}",
   "conceptsCount": "{count, plural, other{{count} 个概念}}",
   "mappingsCount": "{count, plural, other{{count} 个映射}}",
+  "sourcesCount": "{count, plural, other{{count} 个来源}}",
   "saveChangesTo": "保存对“{name}”的改动？",
   "readConcept": "读取 {concept}",
   "domainAlreadyExists": "已存在名为 {name} 的时序域。",

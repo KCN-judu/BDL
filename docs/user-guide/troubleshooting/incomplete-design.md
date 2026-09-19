@@ -7,11 +7,15 @@ else. The idea behind this is in
 
 ## A dashed node with the word _declared_; the status line says _N not yet defined_
 
-**What it is.** A relationship with a signature and no formula.
+**What it is.** A relationship that reads something (or backs a port of the
+component you are editing) and has no formula yet. A relationship that reads
+nothing and has no formula is a Source — drawn with a bar at its left edge, not
+dashed, and counted as _N sources_, not as not yet defined: nothing is missing
+from it.
 
-**What to do.** If it is an input (reads nothing, supplied from outside):
-nothing — give it a timing domain and it is finished. Otherwise select it and
-write the formula in _Relationship_.
+**What to do.** Select it and write the formula in _Relationship_. If it was
+meant to be an input from outside, remove its reads instead: it becomes a
+Source.
 
 ## _tilt needs a value before simulation can step._ (Simulate)
 

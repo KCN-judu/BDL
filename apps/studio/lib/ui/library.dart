@@ -118,7 +118,7 @@ class _ProjectObjects extends StatelessWidget {
                 for (final m in p.mappings)
                   _Row(
                     glyph: MappingGlyph(
-                      declared: !m.hasDefinition(),
+                      declared: state.isDeclared(m),
                       wrong:
                           state.mappingAnalysis(m.id.toInt())?.status ==
                           pb.MappingStatus.MAPPING_STATUS_INVALID,

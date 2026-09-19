@@ -35,7 +35,7 @@ msgstr "你可以在这里做什么"
 
 #: docs/user-guide/README.md:29
 #: docs/user-guide/studio/code-view.md:8
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:42
 msgid "**Design**"
 msgstr "**设计**"
 
@@ -44,7 +44,7 @@ msgid "name the concepts of your product, relate them with formulas, decide thei
 msgstr "为产品的概念命名，用公式把它们关联起来，决定它们的时序，并把结果接到物理输出"
 
 #: docs/user-guide/README.md:30
-#: docs/user-guide/studio/workspace.md:41
+#: docs/user-guide/studio/workspace.md:43
 msgid "**Simulate**"
 msgstr "**仿真**"
 
@@ -53,7 +53,7 @@ msgid "feed values in, step the design tick by tick, and watch every value — w
 msgstr "喂入值，逐拍推进设计，观察每一个值——用的是定义这门语言的同一个求值器"
 
 #: docs/user-guide/README.md:31
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:44
 msgid "**Deploy**"
 msgstr "**部署**"
 
@@ -357,12 +357,12 @@ msgstr ""
 #: docs/user-guide/studio/library.md:71
 #: docs/user-guide/studio/simulate.md:99
 #: docs/user-guide/studio/system-projects.md:130
-#: docs/user-guide/studio/workspace.md:92
+#: docs/user-guide/studio/workspace.md:94
 #: docs/user-guide/textual/editor-and-lsp.md:83
 #: docs/user-guide/textual/syntax-basics.md:196
 #: docs/user-guide/troubleshooting/connection-errors.md:129
 #: docs/user-guide/troubleshooting/deployment-errors.md:71
-#: docs/user-guide/troubleshooting/incomplete-design.md:88
+#: docs/user-guide/troubleshooting/incomplete-design.md:92
 #: docs/user-guide/troubleshooting/text-project-errors.md:121
 #: docs/user-guide/troubleshooting/timing-errors.md:82
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:109
@@ -1041,11 +1041,11 @@ msgstr ""
 #: docs/user-guide/reference/formula-language.md:53
 #: docs/user-guide/reference/status-meanings.md:9
 #: docs/user-guide/reference/status-meanings.md:28
-#: docs/user-guide/reference/status-meanings.md:43
-#: docs/user-guide/reference/status-meanings.md:54
-#: docs/user-guide/reference/status-meanings.md:65
-#: docs/user-guide/reference/status-meanings.md:73
-#: docs/user-guide/reference/status-meanings.md:82
+#: docs/user-guide/reference/status-meanings.md:44
+#: docs/user-guide/reference/status-meanings.md:55
+#: docs/user-guide/reference/status-meanings.md:66
+#: docs/user-guide/reference/status-meanings.md:74
+#: docs/user-guide/reference/status-meanings.md:83
 #: docs/user-guide/reference/terminology.md:8
 #: docs/user-guide/studio/deploy.md:56
 #: docs/user-guide/troubleshooting/connection-errors.md:109
@@ -1197,7 +1197,7 @@ msgid "Reads"
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:27
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:197
 msgid "Formula"
 msgstr "公式"
 
@@ -1638,128 +1638,128 @@ msgid "The sink becomes solid. Only a relationship that _reads nothing_ and prod
 msgstr "汇节点变为实线。只有 _不读取任何东西_、并在同一域中生成所接受概念的关系才能驱动输出。`brightness` 符合条件；如果改连 `dimByTilt`，编辑会被接受，然后在输出下方被报告为不合适的连接。"
 
 #: docs/user-guide/getting-started/first-behavior.md:185
-msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the Source, which is meant to stay without a formula. Press **⌘S** to save."
-msgstr "**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_；它仍然计数 _1 个未定义_——那是来源 `tilt`，它本来就应该没有公式。按 **⌘S** 保存。"
+msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_, and nothing is _not yet defined_: `tilt`, the Source, is meant to stay without a formula, and the line counts it as _1 source_. Press **⌘S** to save."
+msgstr "**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_，也没有任何 _尚未定义_ 的项：来源 `tilt` 本来就应该没有公式，状态行把它计为 _1 个来源_。按 **⌘S** 保存。"
 
-#: docs/user-guide/getting-started/first-behavior.md:189
+#: docs/user-guide/getting-started/first-behavior.md:190
 msgid "What you have"
 msgstr "你现在拥有的"
 
-#: docs/user-guide/getting-started/first-behavior.md:193
+#: docs/user-guide/getting-started/first-behavior.md:194
 msgid "_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light._"
 msgstr "_完成的灯：来源 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:197
 msgid "Object"
 msgstr "对象"
 
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:197
 msgid "Kind"
 msgstr "种类"
 
-#: docs/user-guide/getting-started/first-behavior.md:196
+#: docs/user-guide/getting-started/first-behavior.md:197
 msgid "Updates in"
 msgstr "更新于"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "**Tilt**"
 msgstr "**Tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:198
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "concept, an angle"
 msgstr "概念，角度"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:200
 msgid "**Brightness**"
 msgstr "**Brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:200
 msgid "concept, a plain number"
 msgstr "概念，纯数"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "**tilt**"
 msgstr "**tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "relationship reading nothing: a Source"
 msgstr "不读取任何东西的关系：来源"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "_none_"
 msgstr "_无_"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:201
 #: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "_interaction_"
 msgstr "_interaction_"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "**dimByTilt**"
 msgstr "**dimByTilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "relationship reading Tilt: a rule"
 msgstr "读取 Tilt 的关系：规则"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "`Tilt / 90 deg`"
 msgstr "`Tilt / 90 deg`"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:202
 #: docs/user-guide/getting-started/install-and-launch.md:13
 msgid "any"
 msgstr "任意"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "**brightness**"
 msgstr "**brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "relationship reading nothing: a value"
 msgstr "不读取任何东西的关系：值"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:203
 #: docs/user-guide/textual/syntax-basics.md:166
 msgid "`dimByTilt(tilt)`"
 msgstr "`dimByTilt(tilt)`"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "**light**"
 msgstr "**light**"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "physical output driven by brightness"
 msgstr "由 brightness 驱动的物理输出"
 
-#: docs/user-guide/getting-started/first-behavior.md:205
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "The design is _executable_: every relationship the output depends on is defined or is a Source, checks, has a rhythm, and the output has exactly one driver."
 msgstr "这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是来源，通过检查，有节奏，并且输出恰好有一个驱动方。"
 
-#: docs/user-guide/getting-started/first-behavior.md:208
+#: docs/user-guide/getting-started/first-behavior.md:209
 #: docs/user-guide/getting-started/first-deployment.md:83
 #: docs/user-guide/getting-started/first-simulation.md:82
 msgid "If something does not work"
 msgstr "如果有什么不对"
 
-#: docs/user-guide/getting-started/first-behavior.md:210
+#: docs/user-guide/getting-started/first-behavior.md:211
 msgid "**The formula line is red.** Read it: it names the problem in terms of your concepts (\"this divides an angle by a time\"). See [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr "**公式行是红色的。** 读一读：它用你的概念来说明问题（“这把角度除以了时间”）。见 [类型、单位与概念](../troubleshooting/type-and-concept-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:213
+#: docs/user-guide/getting-started/first-behavior.md:214
 msgid "**`brightness` will not connect to the output.** Check its _Updates in_ matches the output's, and that it reads nothing. See [Connections](../troubleshooting/connection-errors.md)."
 msgstr "**`brightness` 连不上输出。** 检查它的 _更新于_ 是否与输出一致，以及它是否不读取任何东西。见 [连接](../troubleshooting/connection-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:216
+#: docs/user-guide/getting-started/first-behavior.md:217
 msgid "**The status line says _N definitions not added_.** A formula is typed but not added; select the node and press _Add definition_ or _Revert_."
 msgstr "**状态行显示 _N 个定义未添加_。** 公式已输入但未添加；选中节点，按 _添加定义_ 或 _还原_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:218
+#: docs/user-guide/getting-started/first-behavior.md:219
 msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See [Install and launch](install-and-launch.md)."
 msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 [安装与启动](install-and-launch.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:221
+#: docs/user-guide/getting-started/first-behavior.md:222
 #: docs/user-guide/getting-started/first-deployment.md:93
 #: docs/user-guide/getting-started/first-simulation.md:95
 #: docs/user-guide/getting-started/install-and-launch.md:71
@@ -1772,7 +1772,7 @@ msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 
 msgid "Next"
 msgstr "下一步"
 
-#: docs/user-guide/getting-started/first-behavior.md:223
+#: docs/user-guide/getting-started/first-behavior.md:224
 msgid "[Your first simulation](first-simulation.md) — tilt the lamp and watch the brightness."
 msgstr "[你的第一次仿真](first-simulation.md)——倾斜灯，观察亮度。"
 
@@ -3201,7 +3201,7 @@ msgid "solid sink"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:18
-#: docs/user-guide/reference/status-meanings.md:59
+#: docs/user-guide/reference/status-meanings.md:60
 msgid "driven"
 msgstr ""
 
@@ -3258,9 +3258,9 @@ msgid "In the status line"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:28
-#: docs/user-guide/reference/status-meanings.md:65
-#: docs/user-guide/reference/status-meanings.md:73
-#: docs/user-guide/reference/status-meanings.md:82
+#: docs/user-guide/reference/status-meanings.md:66
+#: docs/user-guide/reference/status-meanings.md:74
+#: docs/user-guide/reference/status-meanings.md:83
 #: docs/user-guide/textual/overview.md:98
 msgid "Text"
 msgstr ""
@@ -3282,288 +3282,296 @@ msgid "counts"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:32
-msgid "*N not yet defined* (orange)"
+msgid "*N sources*"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:32
-msgid "relationships without a formula"
+msgid "relationships the environment provides (read nothing, no formula) — a count, not an open item"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:33
+msgid "*N not yet defined* (orange)"
+msgstr ""
+
+#: docs/user-guide/reference/status-meanings.md:33
+msgid "relationships that read something, or back a port, and have no formula yet; Sources are not counted"
+msgstr ""
+
+#: docs/user-guide/reference/status-meanings.md:34
 msgid "*N definitions do not check* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:33
+#: docs/user-guide/reference/status-meanings.md:34
 msgid "invalid formulas"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:34
+#: docs/user-guide/reference/status-meanings.md:35
 msgid "*N definitions not added*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:34
+#: docs/user-guide/reference/status-meanings.md:35
 msgid "formula drafts not yet added — saved with the project, not the project's"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:35
+#: docs/user-guide/reference/status-meanings.md:36
 msgid "*not causal* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:35
+#: docs/user-guide/reference/status-meanings.md:36
 msgid "an instantaneous cycle"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:36
+#: docs/user-guide/reference/status-meanings.md:37
 msgid "*reads across domains* (red)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:36
+#: docs/user-guide/reference/status-meanings.md:37
 msgid "a value reads another domain's value without `sync`"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:37
+#: docs/user-guide/reference/status-meanings.md:38
 msgid "*outputs incomplete* (orange)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:37
+#: docs/user-guide/reference/status-meanings.md:38
 msgid "a required output undriven, an output open, or a connection that does not fit"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:38
+#: docs/user-guide/reference/status-meanings.md:39
 msgid "*feasible on Arduino Nano* / *incomplete on …* / *not feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:38
+#: docs/user-guide/reference/status-meanings.md:39
 msgid "the last Deploy verdict for the chosen board"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:39
+#: docs/user-guide/reference/status-meanings.md:40
 msgid "*Compiler 0.1.0* / *Connecting to the compiler* / *Compiler not connected*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:39
+#: docs/user-guide/reference/status-meanings.md:40
 msgid "the connection to the compiler service"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:41
+#: docs/user-guide/reference/status-meanings.md:42
 msgid "In a relationship's inspector"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:43
+#: docs/user-guide/reference/status-meanings.md:44
 msgid "Line under the formula"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:45
+#: docs/user-guide/reference/status-meanings.md:46
 msgid "*Checking…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:45
+#: docs/user-guide/reference/status-meanings.md:46
 msgid "the compiler has not answered for this text yet"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:46
+#: docs/user-guide/reference/status-meanings.md:47
 msgid "*Valid definition*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:46
+#: docs/user-guide/reference/status-meanings.md:47
 msgid "checks"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:47
+#: docs/user-guide/reference/status-meanings.md:48
 msgid "*Tilt has no representation yet.* (orange)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:47
-#: docs/user-guide/reference/status-meanings.md:56
+#: docs/user-guide/reference/status-meanings.md:48
+#: docs/user-guide/reference/status-meanings.md:57
 msgid "open"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:48
+#: docs/user-guide/reference/status-meanings.md:49
 msgid "a red message"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:48
+#: docs/user-guide/reference/status-meanings.md:49
 msgid "the first finding; the rest are listed under it"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:49
+#: docs/user-guide/reference/status-meanings.md:50
 msgid "*Not saved: …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:49
+#: docs/user-guide/reference/status-meanings.md:50
 msgid "the last commit was refused; the text is kept"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:50
+#: docs/user-guide/reference/status-meanings.md:51
 msgid "*unsaved* in the section header"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:50
+#: docs/user-guide/reference/status-meanings.md:51
 msgid "a draft differs from the saved formula"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:52
+#: docs/user-guide/reference/status-meanings.md:53
 msgid "In an output's inspector"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:54
+#: docs/user-guide/reference/status-meanings.md:55
 msgid "Line"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:56
+#: docs/user-guide/reference/status-meanings.md:57
 msgid "*No timing domain yet: not part of the design's commitment until one is chosen.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:57
+#: docs/user-guide/reference/status-meanings.md:58
 msgid "*Undriven — the design is incomplete without a driver.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:57
+#: docs/user-guide/reference/status-meanings.md:58
 msgid "required, no driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:58
+#: docs/user-guide/reference/status-meanings.md:59
 msgid "*Undriven.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:58
+#: docs/user-guide/reference/status-meanings.md:59
 msgid "optional, no driver"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:59
+#: docs/user-guide/reference/status-meanings.md:60
 msgid "*Driven by brightness.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:60
+#: docs/user-guide/reference/status-meanings.md:61
 msgid "*Still driven by a, b*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:60
+#: docs/user-guide/reference/status-meanings.md:61
 msgid "contested"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:61
+#: docs/user-guide/reference/status-meanings.md:62
 msgid "*The connection does not fit: see the driver's findings below.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:61
+#: docs/user-guide/reference/status-meanings.md:62
 msgid "the driver's concept or domain differs"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:63
+#: docs/user-guide/reference/status-meanings.md:64
 msgid "On an instance's port"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:67
+#: docs/user-guide/reference/status-meanings.md:68
 msgid "*Open: nothing supplies it yet.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:67
+#: docs/user-guide/reference/status-meanings.md:68
 msgid "required port without a binding"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:68
+#: docs/user-guide/reference/status-meanings.md:69
 msgid "*Bound to lampA.brightness*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:68
+#: docs/user-guide/reference/status-meanings.md:69
 msgid "bound; *Show Binding* selects the link"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:69
+#: docs/user-guide/reference/status-meanings.md:70
 msgid "*Direct* / *Carried across timing domains* (binding inspector)"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:69
+#: docs/user-guide/reference/status-meanings.md:70
 msgid "whether the binding transports"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:71
+#: docs/user-guide/reference/status-meanings.md:72
 msgid "On the Simulate page"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:75
+#: docs/user-guide/reference/status-meanings.md:76
 msgid "*Checking the design…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:75
+#: docs/user-guide/reference/status-meanings.md:76
 msgid "the analysis for this revision has not arrived"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:76
+#: docs/user-guide/reference/status-meanings.md:77
 msgid "a sentence with *Show*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:76
+#: docs/user-guide/reference/status-meanings.md:77
 msgid "something blocks stepping (see [Incomplete design](../troubleshooting/incomplete-design.md))"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:77
+#: docs/user-guide/reference/status-meanings.md:78
 msgid "*tilt divided by zero.* / *… produced a value that is not a number.* / *… needs a value for this step.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:77
+#: docs/user-guide/reference/status-meanings.md:78
 msgid "the tick failed at that relationship"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:78
+#: docs/user-guide/reference/status-meanings.md:79
 msgid "an empty trace cell"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:78
+#: docs/user-guide/reference/status-meanings.md:79
 msgid "the value's domain did not activate at that tick"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:80
+#: docs/user-guide/reference/status-meanings.md:81
 msgid "On the Deploy page"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:84
+#: docs/user-guide/reference/status-meanings.md:85
 msgid "*Choose a board to see whether this design fits it.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:84
+#: docs/user-guide/reference/status-meanings.md:85
 msgid "no target chosen"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:85
+#: docs/user-guide/reference/status-meanings.md:86
 msgid "*Checking Arduino Nano…*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:85
+#: docs/user-guide/reference/status-meanings.md:86
 msgid "the analysis is running"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:86
+#: docs/user-guide/reference/status-meanings.md:87
 #: docs/user-guide/reference/terminology.md:36
 msgid "*Feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:86
+#: docs/user-guide/reference/status-meanings.md:87
 msgid "placed"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:87
+#: docs/user-guide/reference/status-meanings.md:88
 msgid "*Fits … so far — the binding is not finished.*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:87
+#: docs/user-guide/reference/status-meanings.md:88
 msgid "an output without a device or a device without an output"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:88
+#: docs/user-guide/reference/status-meanings.md:89
 msgid "*Not feasible on …*"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:88
+#: docs/user-guide/reference/status-meanings.md:89
 msgid "one requirement could not be placed; the dead end follows"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:90
+#: docs/user-guide/reference/status-meanings.md:91
 msgid "In Explain: the formal ladder"
 msgstr ""
 
-#: docs/user-guide/reference/status-meanings.md:92
+#: docs/user-guide/reference/status-meanings.md:93
 msgid "`declared → open → invalid → type-valid → temporally valid → clock-consistent`. *Output-complete* is a property of the whole design, *feasible* of the design on one board; neither is a step a relationship climbs."
 msgstr ""
 
@@ -5647,114 +5655,114 @@ msgid "**Inspector** (right) — the selected object: what it means, what you ca
 msgstr "**检查器**（右侧）——选中的对象：它的含义、你能改什么、改动影响什么。见 [检查器](inspector.md)。"
 
 #: docs/user-guide/studio/workspace.md:30
-msgid "**Status line** — the document state (_Saved_ / _Edited_), then counts and what is still open (_1 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_, _N definitions not added_), then the compiler connection. Errors from a refused action appear as a **banner** above the page content with a _Dismiss_ link — never as a dialog."
-msgstr "**状态行**——文档状态（_已保存_ / _已编辑_），然后是计数和仍未完成的事项（_1 个未定义_、_输出未完成_、_存在瞬时环路_、_跨域读取_、_N 个定义未添加_），然后是编译器连接。被拒绝操作的错误以**横幅**的形式出现在页面内容上方，带有 _关闭_ 链接——从不使用对话框。"
+msgid "**Status line** — the document state (_Saved_ / _Edited_), then counts (_2 concepts_, _3 mappings_, and _1 source_ when the design has a relationship the environment provides), then what is still open (_1 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_, _N definitions not added_), then the compiler connection. A Source is complete as it is, so it is counted, never listed as open. Errors from a refused action appear as a **banner** above the page content with a _Dismiss_ link — never as a dialog."
+msgstr "**状态行**——文档状态（_已保存_ / _已编辑_），然后是计数（_2 个概念_、_3 个映射_，以及当设计中有由环境提供的关系时的 _1 个来源_），然后是仍未完成的事项（_1 个尚未定义_、_输出未完成_、_存在瞬时环路_、_跨域读取_、_N 个定义尚未添加_），然后是编译器连接。来源本身就是完整的，所以它被计数，从不列为未完成。被拒绝操作的错误以**横幅**的形式出现在页面内容上方，带有 _关闭_ 链接——从不使用对话框。"
 
-#: docs/user-guide/studio/workspace.md:36
+#: docs/user-guide/studio/workspace.md:38
 msgid "**Page bar** — the pages, in the order you use them:"
 msgstr "**页面栏**——各个页面，按你使用它们的顺序："
 
-#: docs/user-guide/studio/workspace.md:38
+#: docs/user-guide/studio/workspace.md:40
 msgid "Page"
 msgstr "页面"
 
-#: docs/user-guide/studio/workspace.md:38
+#: docs/user-guide/studio/workspace.md:40
 msgid "Answers"
 msgstr "回答"
 
-#: docs/user-guide/studio/workspace.md:38
+#: docs/user-guide/studio/workspace.md:40
 msgid "Shortcut"
 msgstr "快捷键"
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:42
 msgid "what does the product do"
 msgstr "产品做什么"
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:42
 msgid "⌘1"
 msgstr "⌘1"
 
-#: docs/user-guide/studio/workspace.md:41
+#: docs/user-guide/studio/workspace.md:43
 msgid "what does it do over time"
 msgstr "它随时间做什么"
 
-#: docs/user-guide/studio/workspace.md:41
+#: docs/user-guide/studio/workspace.md:43
 msgid "⌘2"
 msgstr "⌘2"
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:44
 msgid "does it fit this board"
 msgstr "它能放进这块板子吗"
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:44
 msgid "⌘3"
 msgstr "⌘3"
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:45
 msgid "**Monitor**"
 msgstr "**监视**"
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:45
 msgid "what is it doing right now — _not built yet_; the page says live values arrive with telemetry"
 msgstr "它现在正在做什么——_尚未构建_；页面说明实时值将随遥测功能一起到来"
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:45
 msgid "⌘4"
 msgstr "⌘4"
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:47
 msgid "The button at the left of the page bar (⊞) closes the project and returns to the project manager. The gear at the right opens **Preferences…**: the language Studio speaks (System Default, English, 简体中文, 日本語), which changes only what Studio shows — never the BDL source, the project files or the compiler. The same link is on the project manager."
 msgstr "页面栏左侧的按钮（⊞）关闭项目并返回项目管理器。右侧的齿轮打开**偏好设置…**：Studio 使用的语言（跟随系统、English、简体中文、日本語），它只改变 Studio 显示的内容——从不改变 BDL 源码、项目文件或编译器。项目管理器上也有同样的链接。"
 
-#: docs/user-guide/studio/workspace.md:51
+#: docs/user-guide/studio/workspace.md:53
 msgid "Saving, undo, revisions"
 msgstr "保存、撤销、修订"
 
-#: docs/user-guide/studio/workspace.md:53
+#: docs/user-guide/studio/workspace.md:55
 msgid "**⌘S** or **Save** writes the whole project to its folder — the design, the layout, and every unfinished edit: a formula typed and not added, text in the Code view that does not build yet. A design change is recorded as a new _revision_ of the project; **⌘Z** / **⇧⌘Z** step through them. Moving nodes, resizing panels and collapsing groups are not design changes: they are saved but make no revision. A typed formula that has not been added is a _draft_ — it is kept when you switch selection or pages, saved with the project, and the status line counts it as _definition not added_ until you add or revert it."
 msgstr "**⌘S** 或**保存**把整个项目写入它的文件夹——设计、布局，以及每一个未完成的编辑：已输入但未添加的公式、代码视图中尚不能构建的文本。设计改动会记录为项目的一个新 _修订_；**⌘Z** / **⇧⌘Z** 在它们之间前后移动。移动节点、调整面板大小和折叠分组不是设计改动：它们会被保存，但不产生修订。已输入但未添加的公式是一份 _草稿_——切换选择或页面时会保留，随项目一起保存，在你添加或还原之前，状态行把它计为 _定义未添加_。"
 
-#: docs/user-guide/studio/workspace.md:62
+#: docs/user-guide/studio/workspace.md:64
 msgid "Closing a project"
 msgstr "关闭项目"
 
-#: docs/user-guide/studio/workspace.md:64
+#: docs/user-guide/studio/workspace.md:66
 msgid "**Close**, the project manager button (⊞), **⌘W**, **⌘Q**, the menu's Quit, the window's close button, and opening or creating another project all ask the same question when the project differs from what is saved:"
 msgstr "**关闭**、项目管理器按钮（⊞）、**⌘W**、**⌘Q**、菜单中的退出、窗口的关闭按钮，以及打开或创建另一个项目，在项目与已保存内容不同时都会问同一个问题："
 
-#: docs/user-guide/studio/workspace.md:68
+#: docs/user-guide/studio/workspace.md:70
 msgid "Save changes to “lamp”? **Don't Save** · **Cancel** · **Save**"
 msgstr "是否保存对“lamp”的更改？**不保存** · **取消** · **保存**"
 
-#: docs/user-guide/studio/workspace.md:70
+#: docs/user-guide/studio/workspace.md:72
 msgid "**Save** saves everything as it is now and then closes; if the save is refused (a file changed on disk — see the banner), the project stays open. **Don't Save** closes; the next open returns to what was last saved. **Cancel** (Esc) changes nothing. A project that is _Saved_ closes at once. Nothing asks twice, and nothing closes while the question is open."
 msgstr "**保存**原样保存一切然后关闭；如果保存被拒绝（有文件在磁盘上被修改——见横幅），项目保持打开。**不保存**直接关闭；下次打开回到上次保存的状态。**取消**（Esc）什么都不改。_已保存_ 的项目立即关闭。不会问两次，问题未回答时也不会关闭任何东西。"
 
-#: docs/user-guide/studio/workspace.md:76
+#: docs/user-guide/studio/workspace.md:78
 msgid "The three levels of information"
 msgstr "三个信息层次"
 
-#: docs/user-guide/studio/workspace.md:78
+#: docs/user-guide/studio/workspace.md:80
 msgid "Studio shows a design at three levels, and keeps them apart:"
 msgstr "Studio 在三个层次上展示设计，并把它们分开："
 
-#: docs/user-guide/studio/workspace.md:80
+#: docs/user-guide/studio/workspace.md:82
 msgid "**Canvas** — structure you can see: shape, colour, links, dashed outlines, a red mark. No type names, no identifiers."
 msgstr "**画布**——看得见的结构：形状、颜色、连线、虚线轮廓、红色标记。没有类型名，没有标识符。"
 
-#: docs/user-guide/studio/workspace.md:82
+#: docs/user-guide/studio/workspace.md:84
 msgid "**Inspector** — designer vocabulary: _Meaning_, _Value_, _Reads_, _Produces_, _Updates in_, _Drives_; findings in product language beside the field they concern."
 msgstr "**检查器**——设计师的词汇：_含义_、_值_、_读取_、_生成_、_更新于_、_驱动_；用产品语言写的发现项，紧挨着它们涉及的字段。"
 
-#: docs/user-guide/studio/workspace.md:85
+#: docs/user-guide/studio/workspace.md:87
 msgid "**Explain** — a collapsed disclosure at the end of every inspector: the identity numbers, the formal interface and terms, diagnostic codes, the revision. Nothing in the first two levels depends on it."
 msgstr "**解释**——每个检查器末尾一个折叠的展开区：标识号、形式化接口和项、诊断代码、修订号。前两个层次没有任何东西依赖它。"
 
-#: docs/user-guide/studio/workspace.md:89
+#: docs/user-guide/studio/workspace.md:91
 msgid "This guide follows the same order: it explains the canvas and the inspector, and points to _Explain_ and the technical documentation for the rest."
 msgstr "本指南遵循同样的顺序：解释画布和检查器，其余的指向 _解释_ 和技术文档。"
 
-#: docs/user-guide/studio/workspace.md:94
+#: docs/user-guide/studio/workspace.md:96
 msgid "[Canvas](canvas.md) · [Library](library.md) · [Inspector](inspector.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[画布](canvas.md) · [库](library.md) · [检查器](inspector.md) · [键盘与鼠标](../reference/keyboard-and-mouse.md)"
 
@@ -6896,118 +6904,118 @@ msgid "A dashed node with the word _declared_; the status line says _N not yet d
 msgstr ""
 
 #: docs/user-guide/troubleshooting/incomplete-design.md:10
-msgid "**What it is.** A relationship with a signature and no formula."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/incomplete-design.md:12
-msgid "**What to do.** If it is an input (reads nothing, supplied from outside): nothing — give it a timing domain and it is finished. Otherwise select it and write the formula in _Relationship_."
+msgid "**What it is.** A relationship that reads something (or backs a port of the component you are editing) and has no formula yet. A relationship that reads nothing and has no formula is a Source — drawn with a bar at its left edge, not dashed, and counted as _N sources_, not as not yet defined: nothing is missing from it."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/incomplete-design.md:16
-msgid "_tilt needs a value before simulation can step._ (Simulate)"
-msgstr ""
-
-#: docs/user-guide/troubleshooting/incomplete-design.md:18
-msgid "**What it is.** An input has no value for the run."
+msgid "**What to do.** Select it and write the formula in _Relationship_. If it was meant to be an input from outside, remove its reads instead: it becomes a Source."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/incomplete-design.md:20
+msgid "_tilt needs a value before simulation can step._ (Simulate)"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/incomplete-design.md:22
+msgid "**What it is.** An input has no value for the run."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/incomplete-design.md:24
 msgid "**What to do.** Type one in its control on the left. Step is enabled once every input has a value."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:23
+#: docs/user-guide/troubleshooting/incomplete-design.md:27
 msgid "_Tilt needs a value form (Quantity, On / off or Count) before tilt can be given a value._ (Simulate)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:25
+#: docs/user-guide/troubleshooting/incomplete-design.md:29
 msgid "**What it is.** The concept an input produces is still _decide later_, so there is no control that could take a value."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:28
+#: docs/user-guide/troubleshooting/incomplete-design.md:32
 msgid "**What to do.** Select the concept (the _Show_ link) and choose its _Value_. Or use the fix _Choose what Tilt is represented by_."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:31
+#: docs/user-guide/troubleshooting/incomplete-design.md:35
 msgid "_Checked once Temperature's value is decided._ / _Temperature has no representation yet, so this formula cannot be checked._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:33
+#: docs/user-guide/troubleshooting/incomplete-design.md:37
 msgid "**What it is.** The formula reads a concept whose value form is not chosen. The relationship is _open_: not wrong, waiting. Its node is solid with a hollow socket."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:37
+#: docs/user-guide/troubleshooting/incomplete-design.md:41
 msgid "**What to do.** Decide the concept's value form. The formula is checked at once; nothing needs retyping. Code: `semantic.unbound_representation` (information)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:40
+#: docs/user-guide/troubleshooting/incomplete-design.md:44
 msgid "_dimByTilt has no definition. A relationship that reads something needs one before the design can run._ (Simulate)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:42
+#: docs/user-guide/troubleshooting/incomplete-design.md:46
 msgid "**What it is.** A rule without a formula is applied by something the simulator needs."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:45
+#: docs/user-guide/troubleshooting/incomplete-design.md:49
 msgid "**What to do.** Write the formula. (A _value_ without a formula is an input and is fine; a _rule_ without one has nothing to compute.)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:48
+#: docs/user-guide/troubleshooting/incomplete-design.md:52
 msgid "_level has no valid definition._ (Simulate)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:50
+#: docs/user-guide/troubleshooting/incomplete-design.md:54
 msgid "**What it is.** A relationship the run needs has a formula that does not check. This one _is_ an error — see [Types, units and concepts](type-and-concept-errors.md)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:54
+#: docs/user-guide/troubleshooting/incomplete-design.md:58
 msgid "_light has no final target yet._ / _Undriven — the design is incomplete without a driver._ / status line _outputs incomplete_"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:56
+#: docs/user-guide/troubleshooting/incomplete-design.md:60
 msgid "**What it is.** A required output with no driver. The design is incomplete, not wrong."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:59
+#: docs/user-guide/troubleshooting/incomplete-design.md:63
 msgid "**What to do.** Connect the value that should drive it: drag from its output socket to the sink, pick it in the output's _Connect_ pop-up, or take the fix _Connect a driver to light_. If the output is not essential, switch _Required_ off. Code: `output.missing_driver` (information)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:64
+#: docs/user-guide/troubleshooting/incomplete-design.md:68
 msgid "_light has no timing domain yet, so this connection cannot be checked._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:66
+#: docs/user-guide/troubleshooting/incomplete-design.md:70
 msgid "**What it is.** The output is _open_ — it has no domain, so nothing can be checked against it."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:69
+#: docs/user-guide/troubleshooting/incomplete-design.md:73
 msgid "**What to do.** Set _Updates in_ on the output. Code: `output.clock_unset` (information)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:72
+#: docs/user-guide/troubleshooting/incomplete-design.md:76
 msgid "_Open: nothing supplies it yet._ (an instance's port)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:74
+#: docs/user-guide/troubleshooting/incomplete-design.md:78
 msgid "**What it is.** A required port with no binding. The instance works with what it has; the simulator asks for the port's value as an input."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:77
+#: docs/user-guide/troubleshooting/incomplete-design.md:81
 msgid "**What to do.** Draw a link from a provided port or a top-level value to it — or leave it, if the value really comes from outside."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:80
+#: docs/user-guide/troubleshooting/incomplete-design.md:84
 msgid "_Fits Arduino Nano so far — the binding is not finished._ (Deploy)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:82
+#: docs/user-guide/troubleshooting/incomplete-design.md:86
 msgid "**What it is.** Every device that is bound fits, but an output has no device or a device no output."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:85
+#: docs/user-guide/troubleshooting/incomplete-design.md:89
 msgid "**What to do.** _Add device_ and choose the output; or choose an output in the device row. See [Deployment](deployment-errors.md)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/incomplete-design.md:90
+#: docs/user-guide/troubleshooting/incomplete-design.md:94
 msgid "[Incomplete designs](../concepts/incomplete-designs.md) · [Status meanings](../reference/status-meanings.md)"
 msgstr ""
 

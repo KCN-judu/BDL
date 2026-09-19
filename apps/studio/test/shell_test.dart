@@ -81,6 +81,61 @@ void main() {
     expect(find.text('Deploy'), findsOneWidget);
   });
 
+  testWidgets('status line counts only declared relationships as not yet defined', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    // Two Sources (read nothing, no formula: the environment provides them)
+    // and one defined rule — nothing is missing, so nothing is *not yet
+    // defined*; the Sources are a plain count.
+    final project = pb.ProjectProjection(revision: Int64(3), name: 'lamp', rootPath: '/p')
+      ..concepts.addAll([
+        pb.ConceptView(id: Int64(0), name: 'Tilt'),
+        pb.ConceptView(id: Int64(1), name: 'Brightness'),
+      ])
+      ..mappings.addAll([
+        pb.MappingView(
+          id: Int64(0),
+          name: 'tilt',
+          signature: pb.Signature(output: Int64(0)),
+        ),
+        pb.MappingView(
+          id: Int64(1),
+          name: 'level',
+          signature: pb.Signature(output: Int64(1)),
+        ),
+        pb.MappingView(
+          id: Int64(2),
+          name: 'dimByTilt',
+          signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),
+          definition: pb.Definition(formula: 'Tilt / 90 deg'),
+        ),
+      ]);
+    final state = AppState(
+      connection: Connected(
+        executable: 'bdld',
+        handshake: pb.HandshakeResponse(compatible: true, protocolVersion: pb.Version()),
+      ),
+      project: project,
+    );
+    await tester.pumpWidget(_app(state));
+    expect(find.text('2 sources'), findsOneWidget);
+    expect(find.textContaining('not yet defined'), findsNothing);
+
+    // one declared rule (reads Tilt, no formula yet) is the one open item
+    final declared = project.deepCopy()
+      ..mappings.add(
+        pb.MappingView(
+          id: Int64(3),
+          name: 'brighten',
+          signature: pb.Signature(inputs: [Int64(0)], output: Int64(1)),
+        ),
+      );
+    await tester.pumpWidget(_app(state.copyWith(project: declared)));
+    expect(find.text('2 sources'), findsOneWidget);
+    expect(find.text('1 not yet defined'), findsOneWidget);
+  });
+
   testWidgets('status line names unsaved drafts and whole-design verdicts', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;

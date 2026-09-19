@@ -60,16 +60,33 @@ RelationshipRole relationshipRole(pb.MappingView m, {String? portWord}) {
 /// component, a binding that realises it on the system canvas.
 extension SourceHere on AppState {
   bool isSource(pb.MappingView m) {
+    if (backsPort(m)) return false;
+    if (realisedByBinding(m)) return false;
+    return relationshipRole(m) == RelationshipRole.source;
+  }
+
+  /// Whether [m] is *declared* where the designer is: it has no formula and
+  /// something is missing — it reads inputs, or backs a port of the open
+  /// component.  A Source is complete (the environment provides it) and a
+  /// relationship a binding realises has its definition from the system, so
+  /// neither is declared.  This is what the canvas draws dashed and what
+  /// the status line counts as *not yet defined*.
+  bool isDeclared(pb.MappingView m) => !m.hasDefinition() && !realisedByBinding(m) && !isSource(m);
+
+  /// Whether [m] backs a port of the component whose source is open.
+  bool backsPort(pb.MappingView m) {
     final id = m.id.toInt();
-    final port = openComponent?.ports.where((p) => p.decl.toInt() == id).firstOrNull;
-    if (port != null) return false;
-    final bound =
-        system?.bindings.any(
+    return openComponent?.ports.any((p) => p.decl.toInt() == id) ?? false;
+  }
+
+  /// Whether a binding of the system realises [m] (its definition is a
+  /// reference the system made).
+  bool realisedByBinding(pb.MappingView m) {
+    final id = m.id.toInt();
+    return system?.bindings.any(
           (b) => b.destination.hasBaseDecl() && b.destination.baseDecl.toInt() == id,
         ) ??
         false;
-    if (bound) return false;
-    return relationshipRole(m) == RelationshipRole.source;
   }
 }
 

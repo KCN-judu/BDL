@@ -658,15 +658,16 @@ class _MappingInspector extends StatelessWidget {
     final id = mapping.id.toInt();
     final inputs = mapping.signature.inputs.map((i) => i.toInt()).toList();
     final output = mapping.signature.output.toInt();
-    final declared = !mapping.hasDefinition();
     final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
     final a = analysis;
     final small = TextStyle(fontSize: 11, color: t.textSecondary);
     // The role is derived (ADR-0032): an unresolved `() -> A` that backs no
     // port and no binding is a Source — the environment provides it.
-    // Nothing is missing, so it is never *declared*.
+    // Nothing is missing, so it is never *declared*; a bound relationship
+    // has its definition from the system.
     final source =
         boundTo == null && relationshipRole(mapping, portWord: portWord) == RelationshipRole.source;
+    final declared = !mapping.hasDefinition() && !source && boundTo == null;
     // Findings without a span, by where they belong: timing ones under
     // *Updates in*, drive ones under *Drives*, the rest (causality) with the
     // relationship itself.
@@ -964,7 +965,11 @@ class _MappingInspector extends StatelessWidget {
               for (final d in a.diagnostics)
                 ExplainLine('${d.code}${d.technical.isEmpty ? '' : ': ${d.technical}'}'),
             ] else
-              ExplainLine('status: ${declared ? 'declared' : context.l10n.pendingAnalysis}'),
+              // The kernel's rung: a declaration without a realization,
+              // Source or not, is *declared* there.
+              ExplainLine(
+                'status: ${mapping.hasDefinition() ? context.l10n.pendingAnalysis : 'declared'}',
+              ),
             ExplainLine('revision $revision'),
             if (outcome case final o?) ExplainLine(_outcomeNotation(o)),
           ],

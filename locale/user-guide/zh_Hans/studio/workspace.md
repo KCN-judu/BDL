@@ -6,7 +6,7 @@
 
 Studio 有两个界面：**项目管理器**（没有打开项目）和**工作区**（打开了项目）。工作区是一个窗口，底部按工作流顺序排列着各个页面。
 
-![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 not yet defined, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
+![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
 
 _打开倾角灯并选中 brightness 的工作区：工具栏、侧栏、画布、检查器、状态行和页面栏。_
 
@@ -20,7 +20,7 @@ _打开倾角灯并选中 brightness 的工作区：工具栏、侧栏、画布�
 
 **检查器**（右侧）——选中的对象：它的含义、你能改什么、改动影响什么。见 [检查器](inspector.md)。
 
-**状态行**——文档状态（_已保存_ / _已编辑_），然后是计数和仍未完成的事项（_1 个未定义_、_输出未完成_、_存在瞬时环路_、_跨域读取_、_N 个定义未添加_），然后是编译器连接。被拒绝操作的错误以**横幅**的形式出现在页面内容上方，带有 _关闭_ 链接——从不使用对话框。
+**状态行**——文档状态（_已保存_ / _已编辑_），然后是计数（_2 个概念_、_3 个映射_，以及当设计中有由环境提供的关系时的 _1 个来源_），然后是仍未完成的事项（_1 个尚未定义_、_输出未完成_、_存在瞬时环路_、_跨域读取_、_N 个定义尚未添加_），然后是编译器连接。来源本身就是完整的，所以它被计数，从不列为未完成。被拒绝操作的错误以**横幅**的形式出现在页面内容上方，带有 _关闭_ 链接——从不使用对话框。
 
 **页面栏**——各个页面，按你使用它们的顺序：
 

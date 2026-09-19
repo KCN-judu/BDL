@@ -1028,12 +1028,10 @@ class GroupInspector extends StatelessWidget {
                 child: Row(
                   children: [
                     MappingGlyph(
-                      declared:
-                          !(p.mappings
-                                  .where((x) => x.id.toInt() == m)
-                                  .firstOrNull
-                                  ?.hasDefinition() ??
-                              false),
+                      declared: switch (p.mappings.where((x) => x.id.toInt() == m).firstOrNull) {
+                        null => false,
+                        final x => state.isDeclared(x),
+                      },
                       wrong:
                           state.mappingAnalysis(m)?.status ==
                           pb.MappingStatus.MAPPING_STATUS_INVALID,

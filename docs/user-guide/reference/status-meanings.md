@@ -29,7 +29,8 @@ colour means *selected* and nothing else.
 | --- | --- |
 | *Saved* / *Edited* | whether the project on disk matches what you see |
 | *N concepts · M mappings* | counts |
-| *N not yet defined* (orange) | relationships without a formula |
+| *N sources* | relationships the environment provides (read nothing, no formula) — a count, not an open item |
+| *N not yet defined* (orange) | relationships that read something, or back a port, and have no formula yet; Sources are not counted |
 | *N definitions do not check* (red) | invalid formulas |
 | *N definitions not added* | formula drafts not yet added — saved with the project, not the project's |
 | *not causal* (red) | an instantaneous cycle |

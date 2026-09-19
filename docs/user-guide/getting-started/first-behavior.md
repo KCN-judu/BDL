@@ -183,8 +183,9 @@ qualifies; connecting `dimByTilt` instead would be accepted as an edit and then
 reported under the output as a connection that does not fit.
 
 **What you made.** A complete design. The status line no longer says _outputs
-incomplete_; it still counts _1 not yet defined_ — that is `tilt`, the Source,
-which is meant to stay without a formula. Press **⌘S** to save.
+incomplete_, and nothing is _not yet defined_: `tilt`, the Source, is meant to
+stay without a formula, and the line counts it as _1 source_. Press **⌘S** to
+save.
 
 ## What you have
 

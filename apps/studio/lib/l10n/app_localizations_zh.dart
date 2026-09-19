@@ -1360,6 +1360,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String sourcesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 个来源');
+    return '$_temp0';
+  }
+
+  @override
   String saveChangesTo(Object name) {
     return '保存对“$name”的改动？';
   }
