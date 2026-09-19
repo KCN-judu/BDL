@@ -31,7 +31,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "docs/user-guide"
-OUT = ROOT / "locale/user-guide"
+# Where the catalogs and pages live in the tree.  `--out` writes them
+# elsewhere (a freshness check's scratch copy); links and the generated
+# notice are still computed as if the pages sat at CANONICAL, so the two
+# renderings compare byte for byte.
+CANONICAL = ROOT / "locale/user-guide"
+OUT = CANONICAL
 POT = OUT / "user-guide.pot"
 LANGS = ("zh_Hans", "ja")
 # Working documents of the guide's authors, not pages of the guide.
@@ -354,6 +359,8 @@ def render() -> None:
         for page, blocks in rendered.items():
             rel = page.relative_to(SOURCE)
             out_path = OUT / lang / rel
+            # relative links are computed from the canonical location
+            canon_path = CANONICAL / lang / rel
             out_path.parent.mkdir(parents=True, exist_ok=True)
             partial = False
             lines: list[str] = []
@@ -374,19 +381,19 @@ def render() -> None:
                 else:
                     lines.extend(b.literal)
             body = "\n".join(lines)
-            body = rewrite_links(body, page.parent, out_path.parent, rendered_src)
+            body = rewrite_links(body, page.parent, canon_path.parent, rendered_src)
             src_rel = page.relative_to(ROOT).as_posix()
-            po_rel = po.relative_to(ROOT).as_posix()
-            english = os.path.relpath(page, out_path.parent)
+            po_rel = (CANONICAL / lang / "user-guide.po").relative_to(ROOT).as_posix()
+            english = os.path.relpath(page, canon_path.parent)
             links = [f"[English]({english})"]
             for other in LANGS:
                 if other == lang:
                     links.append(STRINGS[lang]["name"])
                 else:
-                    sibling = OUT / other / rel
+                    sibling = CANONICAL / other / rel
                     if translated_enough(blocks, other_tr[other]):
                         links.append(
-                            f"[{STRINGS[other]['name']}]({os.path.relpath(sibling, out_path.parent)})"
+                            f"[{STRINGS[other]['name']}]({os.path.relpath(sibling, canon_path.parent)})"
                         )
                     else:
                         links.append(STRINGS[other]["name"])
@@ -403,7 +410,20 @@ def render() -> None:
 
 
 def main(argv: list[str]) -> int:
-    steps = argv[1:] or ["all"]
+    global OUT, POT
+    args = list(argv[1:])
+    # `--out DIR`: write the catalogs and pages under DIR instead of
+    # locale/user-guide (a freshness check renders into a scratch copy and
+    # compares, never touching the working tree)
+    if "--out" in args:
+        i = args.index("--out")
+        if i + 1 >= len(args):
+            print(__doc__)
+            return 2
+        OUT = Path(args[i + 1]).resolve()
+        POT = OUT / "user-guide.pot"
+        del args[i : i + 2]
+    steps = args or ["all"]
     for step in steps:
         if step in ("extract", "all"):
             extract()

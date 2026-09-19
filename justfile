@@ -26,16 +26,12 @@ docs-fmt:
     git ls-files -z '*.md' | xargs -0 {{markdownlint}} --fix
 
 # Report Markdown that `just docs-fmt` would change or that breaks a rule.
+# (The checks are scripts/preflight.py's: one list, shared with CI.)
 docs-lint:
-    git ls-files -z '*.md' | xargs -0 {{prettier}} --log-level warn --check
-    git ls-files -z '*.md' | xargs -0 {{markdownlint}}
+    python3 scripts/preflight.py docs-format docs-lint
 
-docs-check: docs-lint
-    python3 scripts/validate_docs.py
-    python3 -m unittest scripts/test_validate_docs.py
-    python3 scripts/check_screenshots.py
-    python3 scripts/check_l10n.py
-    python3 -m unittest scripts/test_docs_l10n.py
+docs-check:
+    python3 scripts/preflight.py docs-format docs-lint docs-validate screenshots l10n
 
 # ---- Localization ---------------------------------------------------------
 
@@ -51,11 +47,10 @@ studio-l10n:
 
 # Catalog completeness: every English key in zh-Hans and ja, placeholders
 # matching, glossary well-formed, user-guide PO files in step with the POT,
-# and the rendered pages current.
+# and the rendered pages current (rendered into target/preflight and
+# compared; the tree is never touched).
 l10n-check:
-    python3 scripts/check_l10n.py
-    python3 scripts/docs_l10n.py all
-    git diff --exit-code -- locale/
+    python3 scripts/preflight.py l10n
 
 # Capture the user guide's screenshots from the real Studio against the real
 # bdld on docs/fixtures/*, as docs/user-guide/screenshots/manifest.json says
@@ -90,15 +85,10 @@ proto:
         crates/bdl-protocol/proto/bdl/v1/bdl.proto
     cd {{studio}} && dart format --page-width 100 lib/protocol/gen
 
-# Fail if the checked-in Dart protobuf code is out of date.
+# Fail if the checked-in Dart protobuf code is out of date (cross-platform:
+# generated into target/preflight and compared byte for byte).
 proto-check:
-    #!/usr/bin/env zsh
-    set -eu
-    tmp=$(mktemp -d)
-    {{protoc}} -I crates/bdl-protocol/proto --dart_out=$tmp crates/bdl-protocol/proto/bdl/v1/bdl.proto
-    dart format --page-width 100 $tmp >/dev/null
-    diff -r $tmp/bdl {{studio}}/lib/protocol/gen/bdl
-    rm -rf $tmp
+    python3 scripts/preflight.py proto-generated
 
 # ---- Studio ---------------------------------------------------------------
 
@@ -127,7 +117,17 @@ studio: build
 
 # ---- Everything -----------------------------------------------------------
 
-check: docs-check lint test studio-analyze studio-test proto-check
+# Everything the Linux CI jobs prove, from the one list CI runs
+# (scripts/preflight.py; `preflight` for the quick pre-commit profile,
+# `preflight-platform` for what this host can prove of the Windows job).
+check:
+    python3 scripts/preflight.py full
+
+preflight:
+    python3 scripts/preflight.py fast
+
+preflight-platform:
+    python3 scripts/preflight.py platform
 
 # Run bdld on stdio (for manual protocol experiments).
 bdld:
