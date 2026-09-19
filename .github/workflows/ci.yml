@@ -35,8 +35,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      # rust-format, docs-format, docs-lint, docs-validate, screenshots,
-      # l10n, rust-clippy, rust-test — cheap checks first
+      # rust-format, docs-format, docs-lint, docs-validate, ci-scripts,
+      # screenshots, l10n, rust-clippy, rust-test — cheap checks first
       - run: python3 scripts/preflight.py rust-ci
       - name: Upload bdld for the Flutter job
         uses: actions/upload-artifact@v4
@@ -108,6 +108,14 @@ jobs:
           name: bdld-windows
           path: target/debug/bdld.exe
 
+  # The Flutter SDK on Windows: restoring the stock 1.8 GB cache costs about
+  # a minute per job, almost all of it extracting 23 000 files.  The SDK is
+  # cached slim instead — scripts/slim_flutter_sdk.py removes the Android
+  # and web artifacts and the framework's dev/example/engine trees on the
+  # run that installs it (a cache miss), and every later run restores the
+  # smaller archive.  The pub cache stays: its 42 MB restore (19–24 s) beats
+  # a cold `flutter pub get` on Windows (38–55 s).  Measured in
+  # docs/project/ci.md.
   windows-studio:
     name: Windows compatibility (Studio)
     runs-on: windows-latest
@@ -115,10 +123,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
+        id: flutter
         with:
           channel: stable
           flutter-version: "3.47.4"
           cache: true
+          cache-key: "flutter-slim-:os:-:channel:-:version:-:arch:-:hash:"
+      - name: Slim the Flutter SDK before it is cached
+        if: steps.flutter.outputs.CACHE-HIT != 'true'
+        run: python scripts/slim_flutter_sdk.py
       - uses: actions/download-artifact@v4
         with:
           name: bdld-windows
@@ -135,10 +148,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
+        id: flutter
         with:
           channel: stable
           flutter-version: "3.47.4"
           cache: true
+          cache-key: "flutter-slim-:os:-:channel:-:version:-:arch:-:hash:"
+      - name: Slim the Flutter SDK before it is cached
+        if: steps.flutter.outputs.CACHE-HIT != 'true'
+        run: python scripts/slim_flutter_sdk.py
       # windows-build: `flutter build windows --debug` — the cheapest
       # command that proves the native target compiles and links
       - run: python scripts/preflight.py windows-build-ci

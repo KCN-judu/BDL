@@ -233,6 +233,12 @@ def docs_validate(r: Runner) -> None:
     r.cmd([sys.executable, "-m", "unittest", "scripts/test_validate_docs.py"])
 
 
+def ci_scripts(r: Runner) -> None:
+    """The helper scripts the workflow calls besides this one
+    (scripts/slim_flutter_sdk.py) keep their contract."""
+    r.cmd([sys.executable, "-m", "unittest", "scripts/test_slim_flutter_sdk.py"])
+
+
 def screenshots(r: Runner) -> None:
     r.cmd([sys.executable, "scripts/check_screenshots.py"])
 
@@ -366,6 +372,7 @@ CHECKS: dict[str, Check] = {
         Check("docs-format", "Markdown formatting (Prettier)", docs_format, ("npx", "git"), "just docs-fmt"),
         Check("docs-lint", "Markdown lint", docs_lint, ("npx", "git"), "just docs-fmt"),
         Check("docs-validate", "Engineering records", docs_validate),
+        Check("ci-scripts", "CI helper scripts", ci_scripts),
         Check("screenshots", "Screenshot ledger", screenshots),
         Check("l10n", "Localization catalogs and rendered pages", l10n, hint="just docs-l10n"),
         Check("rust-check", "cargo check (all targets)", rust_check, ("cargo",)),
@@ -391,6 +398,7 @@ PROFILES: dict[str, list[str]] = {
     "fast": [
         "rust-format",
         "docs-validate",
+        "ci-scripts",
         "l10n",
         "proto-generated",
         "rust-check",
@@ -403,6 +411,7 @@ PROFILES: dict[str, list[str]] = {
         "docs-format",
         "docs-lint",
         "docs-validate",
+        "ci-scripts",
         "screenshots",
         "l10n",
         "rust-clippy",
@@ -421,6 +430,7 @@ PROFILES: dict[str, list[str]] = {
         "docs-format",
         "docs-lint",
         "docs-validate",
+        "ci-scripts",
         "screenshots",
         "l10n",
         "rust-clippy",
