@@ -606,6 +606,7 @@ _now_ = implemented; _spec_ = agreed here, drawn when its compiler pass lands.
 | rule vs value                               | `Signature.inputs` non-empty vs empty with a definition                                   | input sockets (the shape) and the header word _rule_ when no state word takes the slot; a value has neither                                                                                                                                                                                                                                                                            | _Role: Rule_ / _Role: Value_; the creation sheet's sentence as the reads change                                                                                                                                                      | `type: A -> B` vs `() -> B`                                                             | now                                                                                                                                                                                  |
 | semantic construction                       | `mk s` under `Grant.of τ`                                                                 | a link forms only between sockets of one hue; the output socket is the produced concept                                                                                                                                                                                                                                                                                                | Produces                                                                                                                                                                                                                             | `Grant permits mk sem#1 in this realization`                                            | now (grant is invisible by design)                                                                                                                                                   |
 | dimension mismatch                          | `Prim.ty` fails                                                                           | a **red mark at the formula line** on the node, nothing in the header                                                                                                                                                                                                                                                                                                                  | under the formula: "This adds an angle and a time." + fixes                                                                                                                                                                          | `+ : q[rad] → q[rad] → …, found q[s]`, code                                             | now                                                                                                                                                                                  |
+| rule nothing applies                        | `reactive.rule_unapplied` (no reverse edge in the dependency graph, no drive edge)        | **hollow** output socket (no value comes out of it), header word _not applied_ once defined; the accessibility label says "applied by nothing"                                                                                                                                                                                                                                         | the finding in _Relationship_ with its fix beside it (_Add a value that applies dimByTilt_); on Simulate a readiness note and the probe's _Applied by_                                                                               | `reverse_all = ∅`, `β = none`; the note's technical text                                | now                                                                                                                                                                                  |
 | waiting on an open value                    | `MappingStatus.OPEN`                                                                      | solid node whose read socket is hollow                                                                                                                                                                                                                                                                                                                                                 | under the formula: "Checked once _Temperature_'s value is decided."                                                                                                                                                                  | status enum                                                                             | now                                                                                                                                                                                  |
 | temporal state                              | `delay init e`                                                                            | **register mark** on the link that crosses a tick, initial value beside it                                                                                                                                                                                                                                                                                                             | "Remembers _Held_, starting at _no_"                                                                                                                                                                                                 | `delay false (declRef d)`                                                               | spec for the canvas; today `delay(init, e)` is written in the formula and its value shows in the Simulate trace                                                                      |
 | clock / domain                              | `Κ d = some c`                                                                            | **lane**: labelled background region; domain-free mappings outside                                                                                                                                                                                                                                                                                                                     | _Updates in_ pop-up (pure = any domain); the domain is a name, never a rate                                                                                                                                                          | `Κ(d) = c₀`, `Clocked`                                                                  | now as a quiet word at the node's right edge, the library's _Timing domains_ section and the inspector pop-up; the lane is spec                                                      |
@@ -718,9 +719,15 @@ _As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
   and have no definition (`I d t`, DI-16; FV Phase 12
   `SimulationInput = Source ∧ UnitDomain`): the same relationships the canvas
   draws as Sources. Each gets a control from the concept's _value form_, never
-  from its name: a number with the unit beside it (quantity), a switch (on–off),
-  a whole number (count). The row carries the concept's glyph and hue from the
-  canvas and selects the same object as Design.
+  from its name: a number with the unit beside it (quantity), an off | on
+  segmented control (on–off), a whole number (count). A Source without a value
+  is a third state, not _off_: the number fields carry the hint _no value yet_,
+  the on–off control is drawn empty with a dashed outline
+  (`MacSegmented undecided`, the same "not decided" mark as a declared node and
+  a formula slot) and the words _no value yet_ beside it; one click on a segment
+  gives exactly that value and nothing is defaulted — a missing input is a
+  runtime error by design (docs/spec/runtime-semantics.md). The row carries the
+  concept's glyph and hue from the canvas and selects the same object as Design.
 - **Timing domains**: an activation period per domain, the `Schedule` the
   evaluator activates by; a period, never a rate. Changing one starts over.
 - **Readiness** is read off the compiler's analysis and the projection and never
@@ -731,7 +738,17 @@ _As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
   _These relationships depend on each other in the same instant: a, b._ While
   any is listed Step is disabled and a Step sends nothing; while the analysis
   for this revision is pending the list says _Checking the design…_ and nothing
-  is wrong. Entering the page never starts a run.
+  is wrong. Entering the page never starts a run. Below the blockers, with a
+  hollow dot (does not stop Step), the **notes**: the compiler's
+  `reactive.rule_unapplied` on every defined rule no value applies — _X is a
+  rule nothing applies yet._ with its explanation naming the call — carrying the
+  service's fix `rule.apply` (_Add a value that applies X_) and a _Show_ link.
+  The fix is chosen where the finding is (`SemanticActionChosen`): Studio
+  selects the rule, asks `ListSemanticActions`, and applies the action when it
+  arrives READY; NEEDS_CHOICE renders the pop-up of calls, BLOCKED the reason
+  (`OfferedFix`, `FixItem` — one drawing of a fix everywhere). Studio matches
+  the action by its kind, never by spelling the entity itself
+  (`SemanticActionsState.ofKind`).
 - **Step** evaluates the next tick(s) with the inputs on screen. The daemon
   fixes an input trace at `StartSimulation`, so each step is a deterministic
   **replay**: `Start` with every tick's inputs so far and the schedule, then
@@ -747,8 +764,14 @@ _As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
   (`sampleOf`); a read-model echo of inputs would remove that lookup. Column
   order is identity, not time.
 - **The probe** (right) is the selection's value now and over the run, with the
-  object's glyph; an output shows its final target. Explain holds `DeclId`, the
-  run's revision, the rendered value and an error's code and technical text.
+  object's glyph; an output shows its final target. A rule has no value per
+  tick: the probe says so (_A rule: it has no value of its own. A value whose
+  formula applies it is what the simulator samples._) and links, under _Applied
+  in_, the values whose definition references it — the inverse of
+  `MappingAnalysis.references`, the compiler's dependency edges, never a text
+  search — or says _No value applies it yet._ and offers the same fix. Explain
+  holds `DeclId`, the run's revision, the rendered value and an error's code and
+  technical text.
 - **Errors** that stop a tick are the controls' line, about the object (_bad
   divided by zero._), never the global banner.
 - **Stale results**: a new revision drops the samples, keeps the fed values for

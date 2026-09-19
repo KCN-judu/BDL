@@ -236,9 +236,15 @@ combination mapping (declared, unresolved, not yet connected — a legal state);
 move a mapping to the sink's domain or the sink to the mapping's; choose a
 domain for an open sink; connect a driver to a required sink; choose a
 representation; replace a misspelt formula name by a current input name; insert
-an explicit sync (blocked, with the reason: no surface phrase yet, DI-3/DI-17).
-**Meaning-changing fixes are never applied implicitly**; `NeedsChoice` exists
-precisely so the tool does not guess.
+an explicit sync (blocked, with the reason: no surface phrase yet, DI-3/DI-17);
+add the value that applies a rule nothing applies (`rule.apply:<rule>`, for
+`reactive.rule_unapplied`: `EditOp::CreateMapping` with a definition —
+`<lowerCamel rule> : () -> <output> = Rule(arg, …)`, a fresh non-colliding name,
+the domain the rule or its arguments fix — ready when every read concept has
+exactly one producing value, one option per argument combination when a concept
+has several, blocked when one has none or the arguments update in two domains;
+`crates/bdl-ide/tests/rule_apply.rs`). **Meaning-changing fixes are never
+applied implicitly**; `NeedsChoice` exists precisely so the tool does not guess.
 
 Completion in a `concept …` position also offers the Standard Library's Concept
 items (`CompletionKind::Template`, from `bdl-library` — the same data Studio's
