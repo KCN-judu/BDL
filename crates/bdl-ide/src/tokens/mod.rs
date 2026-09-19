@@ -36,10 +36,11 @@
 
 pub mod encode;
 
+use crate::role;
 use bdl_elab::names::{InputEnv, Lookup};
 use bdl_ide_db::{AnalysisSnapshot, DocumentId, EntityKind, EntityRef, EntityRole, TextRange};
 use bdl_model::surface::{Definition, MappingBlock};
-use bdl_model::DeclId;
+use bdl_model::{DeclId, RelationshipRole};
 use bdl_syntax::ast::{self, AstNode};
 use bdl_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use serde::{Deserialize, Serialize};
@@ -405,13 +406,13 @@ fn entity_token(
             let block = design.mappings.get(&d)?;
             match relationship_role(snapshot, d, block) {
                 // a rule with no definition yet is declared only: hollow
-                Role::Rule => {
+                RelationshipRole::Rule => {
                     m.unresolved = block.definition.is_none();
                     TokenType::Function
                 }
-                Role::Value => TokenType::Variable,
+                RelationshipRole::Value => TokenType::Variable,
                 // having no definition is what a Source is, not a gap
-                Role::Source => {
+                RelationshipRole::Source => {
                     m.source = true;
                     TokenType::Variable
                 }
@@ -437,39 +438,15 @@ fn entity_token(
     Some((ty, m))
 }
 
-/// The derived role of a relationship (ADR-0032): Source, Rule or Value,
-/// as the committed design says when it has the relationship, else as the
-/// effective (drafted) one does.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Role {
-    Source,
-    Rule,
-    Value,
-}
-
-fn relationship_role(snapshot: &AnalysisSnapshot, d: DeclId, effective: &MappingBlock) -> Role {
-    let block = snapshot
-        .committed()
-        .design
-        .mappings
-        .get(&d)
-        .unwrap_or(effective);
-    if snapshot.port_of(d).is_some() {
-        // a body's port-backed declaration: the port provides it — a
-        // Source of the body when it has no inputs, a Rule otherwise
-        return if block.signature.is_unit_domain() {
-            Role::Source
-        } else {
-            Role::Rule
-        };
-    }
-    if !block.signature.is_unit_domain() {
-        Role::Rule
-    } else if block.definition.is_some() {
-        Role::Value
-    } else {
-        Role::Source
-    }
+/// The derived role of a relationship (ADR-0032): what the committed
+/// design says when it has the relationship (a draft is not a
+/// realization), else what the effective (drafted) block says.
+fn relationship_role(
+    snapshot: &AnalysisSnapshot,
+    d: DeclId,
+    effective: &MappingBlock,
+) -> RelationshipRole {
+    role::relationship_role(snapshot, d).unwrap_or_else(|| effective.role())
 }
 
 /// The tokens of a document: the semantic layer from the projection map
