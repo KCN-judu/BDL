@@ -1215,7 +1215,7 @@ msgid "Reads"
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:27
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Formula"
 msgstr ""
 
@@ -1522,274 +1522,274 @@ msgid "A node appears with one input socket (Tilt, on the left) and one output s
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:64
-msgid "_A declared relationship: dashed outline and the word declared in its header._"
-msgstr ""
-
-#: docs/user-guide/getting-started/first-behavior.md:66
-msgid "4. Write the formula"
+msgid "_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._"
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:68
+msgid "4. Write the formula"
+msgstr ""
+
+#: docs/user-guide/getting-started/first-behavior.md:70
 msgid "Click the `dimByTilt` node. The inspector shows it."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:69
+#: docs/user-guide/getting-started/first-behavior.md:71
 msgid "In the **Relationship** section, the editor opens in its **Formula** view: an empty slot, `?`, and the words _produces a Brightness_. Click the slot. Under it, _References_ lists **Tilt** — click it. The slot becomes `Tilt`."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:72
+#: docs/user-guide/getting-started/first-behavior.md:74
 msgid "Click `Tilt` and press **÷**. The formula reads `Tilt ÷ ?`, and the new slot is selected: _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:75
+#: docs/user-guide/getting-started/first-behavior.md:77
 msgid "In the number entry type `90`, choose **deg** from the unit pop-up (only angle units are offered), and press Return. The formula reads `Tilt ÷ 90 deg` and the line under the field says _Valid definition_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:79
+#: docs/user-guide/getting-started/first-behavior.md:81
 msgid "If you would rather type, switch to **Text** and write it as text:"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:85
+#: docs/user-guide/getting-started/first-behavior.md:87
 msgid "Both views edit the same formula. Press **⌘↩** or click **Add definition**."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:89
+#: docs/user-guide/getting-started/first-behavior.md:91
 #: docs/user-guide/studio/formula-editor.md:18
 msgid "_The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:93
+#: docs/user-guide/getting-started/first-behavior.md:95
 msgid "The node now shows its formula in the body and is drawn solid."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:95
+#: docs/user-guide/getting-started/first-behavior.md:97
 msgid "**What you made.** A rule: brightness is the tilt divided by ninety degrees. Try it in the **Text** view: change `90 deg` to `90 s` and watch the line under the field turn red: it says what Brightness is and what the formula produces instead — an angle divided by a time is not a plain number. Put `deg` back. Every formula is checked this way, for units and for meaning, as you type or as you assemble it — and nothing is saved to the design until you press _Add definition_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:105
+#: docs/user-guide/getting-started/first-behavior.md:107
 #: docs/user-guide/studio/formula-editor.md:113
 msgid "_The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:110
+#: docs/user-guide/getting-started/first-behavior.md:112
 msgid "In the Text view, **⌃Space** opens completion: the names you can use here (_Tilt_), units after a number, keywords. Hovering a name for a moment shows what it is. The Formula view asks for nothing: each slot lists what fits."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:112
+#: docs/user-guide/getting-started/first-behavior.md:114
 msgid "5. Bring the tilt in from the environment"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:114
+#: docs/user-guide/getting-started/first-behavior.md:116
 msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the tilt come from? From the environment — a sensor, outside the design. In BDL a value the environment provides is a **Source**: a relationship that **reads nothing**, produces the concept, and has **no formula**."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:119
+#: docs/user-guide/getting-started/first-behavior.md:121
 msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ section makes a concept and its Source together.)"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:124
+#: docs/user-guide/getting-started/first-behavior.md:126
 msgid "The node says _Source_ in its header, with a bar down its left edge and no input socket. It is not dashed: nothing is missing. In the simulator you will type its value; on a device the sensor will provide it."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:128
+#: docs/user-guide/getting-started/first-behavior.md:130
 msgid "6. Compute the lamp's brightness"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:130
+#: docs/user-guide/getting-started/first-behavior.md:132
 msgid "The value the lamp actually shows is `dimByTilt` applied to `tilt`. That is again a relationship that reads nothing and produces Brightness — this time with a formula."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:134
+#: docs/user-guide/getting-started/first-behavior.md:136
 msgid "**+** next to _Mappings_: Name `brightness`, read nothing, produce **Brightness**. Create."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:136
+#: docs/user-guide/getting-started/first-behavior.md:138
 msgid "Select it and enter the formula `dimByTilt(tilt)`. _Add definition._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:138
+#: docs/user-guide/getting-started/first-behavior.md:140
 msgid "Completion offers `dimByTilt(` because it is a relationship with an input, and `tilt` because it is a value. The formula field is the only place where relationships are combined; links on the canvas show _which concepts_ a relationship reads, not the arithmetic."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:143
+#: docs/user-guide/getting-started/first-behavior.md:145
 msgid "**What you made.** Three relationships: a Source (`tilt`), a rule (`dimByTilt`) and a computed value (`brightness`). The status line at the bottom counts them."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:146
+#: docs/user-guide/getting-started/first-behavior.md:148
 msgid "7. Give the values a rhythm"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:148
+#: docs/user-guide/getting-started/first-behavior.md:150
 msgid "A value that comes from outside has a rhythm: the sensor reports every so often. In BDL that rhythm is a named **timing domain**, and every value that updates on its own belongs to one."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:152
+#: docs/user-guide/getting-started/first-behavior.md:154
 msgid "**+** next to _Timing domains_: name it `interaction`. Create."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:153
+#: docs/user-guide/getting-started/first-behavior.md:155
 msgid "Select `tilt`. In the inspector's **Timing** section, set **Updates in** to _interaction_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:155
+#: docs/user-guide/getting-started/first-behavior.md:157
 msgid "Select `brightness` and do the same."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:157
+#: docs/user-guide/getting-started/first-behavior.md:159
 msgid "`dimByTilt` stays on _Any timing domain_: it is a pure rule and takes the rhythm of whatever applies it. The domain's name appears quietly at the right edge of the two nodes."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:161
+#: docs/user-guide/getting-started/first-behavior.md:163
 msgid "**What you made.** A design in which \"when does this update\" is an explicit decision. A domain is a name, not a rate — how often _interaction_ ticks is chosen when you simulate or deploy, not here."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:165
+#: docs/user-guide/getting-started/first-behavior.md:167
 msgid "8. Add the light"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:167
+#: docs/user-guide/getting-started/first-behavior.md:169
 msgid "Brightness is a value inside the design. The lamp itself is a **physical output**: the place where a value leaves the design for the world."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:170
+#: docs/user-guide/getting-started/first-behavior.md:172
 msgid "**+** next to _Outputs_. In the _New output_ sheet: Name `light`, **Accepts** Brightness, **Updates in** interaction, **Required** on. Create."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:173
+#: docs/user-guide/getting-started/first-behavior.md:175
 msgid "A sink node appears at the right edge of the canvas, drawn dashed: it has a domain but nothing drives it yet. The status line says _outputs incomplete_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:176
+#: docs/user-guide/getting-started/first-behavior.md:178
 msgid "Drag from `brightness`'s output socket onto the sink's socket. (Or select the output and pick `brightness` in the **Connect** pop-up of its inspector; the pop-up marks relationships that _have inputs_, which cannot drive an output.)"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:180
+#: docs/user-guide/getting-started/first-behavior.md:182
 msgid "The sink becomes solid. Only a relationship that _reads nothing_ and produces the accepted concept in the same domain can drive an output. `brightness` qualifies; connecting `dimByTilt` instead would be accepted as an edit and then reported under the output as a connection that does not fit."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:185
+#: docs/user-guide/getting-started/first-behavior.md:187
 msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_, and nothing is _not yet defined_: `tilt`, the Source, is meant to stay without a formula, and the line counts it as _1 source_. Press **⌘S** to save."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:190
+#: docs/user-guide/getting-started/first-behavior.md:192
 msgid "What you have"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:194
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Object"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Kind"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Updates in"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "**Tilt**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "concept, an angle"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "**Brightness**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "concept, a plain number"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "**tilt**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "relationship reading nothing: a Source"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "_none_"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:201
 #: docs/user-guide/getting-started/first-behavior.md:203
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:205
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "_interaction_"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "**dimByTilt**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "relationship reading Tilt: a rule"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "`Tilt / 90 deg`"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 #: docs/user-guide/getting-started/install-and-launch.md:13
 msgid "any"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "**brightness**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "relationship reading nothing: a value"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 #: docs/user-guide/textual/syntax-basics.md:166
 msgid "`dimByTilt(tilt)`"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "**light**"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "physical output driven by brightness"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:206
+#: docs/user-guide/getting-started/first-behavior.md:208
 msgid "The design is _executable_: every relationship the output depends on is defined or is a Source, checks, has a rhythm, and the output has exactly one driver."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:209
+#: docs/user-guide/getting-started/first-behavior.md:211
 #: docs/user-guide/getting-started/first-deployment.md:83
 #: docs/user-guide/getting-started/first-simulation.md:83
 msgid "If something does not work"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:211
+#: docs/user-guide/getting-started/first-behavior.md:213
 msgid "**The formula line is red.** Read it: it names the problem in terms of your concepts (\"this divides an angle by a time\"). See [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:214
+#: docs/user-guide/getting-started/first-behavior.md:216
 msgid "**`brightness` will not connect to the output.** Check its _Updates in_ matches the output's, and that it reads nothing. See [Connections](../troubleshooting/connection-errors.md)."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:217
+#: docs/user-guide/getting-started/first-behavior.md:219
 msgid "**The status line says _N definitions not added_.** A formula is typed but not added; select the node and press _Add definition_ or _Revert_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:219
+#: docs/user-guide/getting-started/first-behavior.md:221
 msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See [Install and launch](install-and-launch.md)."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:222
+#: docs/user-guide/getting-started/first-behavior.md:224
 #: docs/user-guide/getting-started/first-deployment.md:93
 #: docs/user-guide/getting-started/first-simulation.md:96
 #: docs/user-guide/getting-started/install-and-launch.md:71
@@ -1802,7 +1802,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:224
+#: docs/user-guide/getting-started/first-behavior.md:226
 msgid "[Your first simulation](first-simulation.md) — tilt the lamp and watch the brightness."
 msgstr ""
 

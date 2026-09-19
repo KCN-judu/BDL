@@ -59,9 +59,11 @@ A node appears with one input socket (Tilt, on the left) and one output socket
 its header: the relationship exists and has a signature, but no formula yet.
 That is not an error. You could stop here, save, and come back tomorrow.
 
-![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.](../assets/getting-started/declared-relationship.png)
+![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.](../assets/getting-started/declared-relationship.png)
 
-_A declared relationship: dashed outline and the word declared in its header._
+_A declared relationship: dashed outline and the word declared in its header.
+Its output socket is hollow: no value comes out of a rule until a value applies
+it._
 
 ## 4. Write the formula
 

@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/first-behavior.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · [简体中文](../../zh_Hans/getting-started/first-behavior.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 最初の振る舞い
 
@@ -40,9 +42,9 @@
 
 入力ソケット 1 つ（左の Tilt）と出力ソケット 1 つ（右の Brightness）を持つノードが現れます。**破線**で描かれ、ヘッダーに _宣言済み_ とあります。関係は存在しシグネチャを持ちますが、数式はまだありません。これはエラーではありません。ここで止めて保存し、明日戻ってきても構いません。
 
-![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
+![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
 
-_宣言済みの関係：破線の輪郭と、ヘッダーの「宣言済み」。_
+_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._
 
 ## 4. 数式を書く
 

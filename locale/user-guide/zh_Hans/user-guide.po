@@ -1216,7 +1216,7 @@ msgid "Reads"
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:27
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Formula"
 msgstr "公式"
 
@@ -1523,274 +1523,274 @@ msgid "A node appears with one input socket (Tilt, on the left) and one output s
 msgstr "出现一个节点，有一个输入插口（左侧的 Tilt）和一个输出插口（右侧的 Brightness）。它以**虚线**绘制，标题里写着 _已声明_：关系存在并有签名，但还没有公式。这不是错误。你可以就此停下、保存，明天再回来。"
 
 #: docs/user-guide/getting-started/first-behavior.md:64
-msgid "_A declared relationship: dashed outline and the word declared in its header._"
-msgstr "_一个已声明的关系：虚线轮廓，标题中写着“已声明”。_"
+msgid "_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._"
+msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:66
+#: docs/user-guide/getting-started/first-behavior.md:68
 msgid "4. Write the formula"
 msgstr "4. 写公式"
 
-#: docs/user-guide/getting-started/first-behavior.md:68
+#: docs/user-guide/getting-started/first-behavior.md:70
 msgid "Click the `dimByTilt` node. The inspector shows it."
 msgstr "点击 `dimByTilt` 节点。检查器会显示它。"
 
-#: docs/user-guide/getting-started/first-behavior.md:69
+#: docs/user-guide/getting-started/first-behavior.md:71
 msgid "In the **Relationship** section, the editor opens in its **Formula** view: an empty slot, `?`, and the words _produces a Brightness_. Click the slot. Under it, _References_ lists **Tilt** — click it. The slot becomes `Tilt`."
 msgstr "在**关系**区，编辑器以**公式**视图打开：一个空槽位 `?`，以及文字 _生成 Brightness_。点击槽位。它下方的 _引用_ 列出了 **Tilt**——点击它。槽位变为 `Tilt`。"
 
-#: docs/user-guide/getting-started/first-behavior.md:72
+#: docs/user-guide/getting-started/first-behavior.md:74
 msgid "Click `Tilt` and press **÷**. The formula reads `Tilt ÷ ?`, and the new slot is selected: _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._"
 msgstr "点击 `Tilt` 并按 **÷**。公式显示为 `Tilt ÷ ?`，新槽位被选中：_期望：角度，因为角度 ÷ 角度 = 无量纲量。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:75
+#: docs/user-guide/getting-started/first-behavior.md:77
 msgid "In the number entry type `90`, choose **deg** from the unit pop-up (only angle units are offered), and press Return. The formula reads `Tilt ÷ 90 deg` and the line under the field says _Valid definition_."
 msgstr "在数字输入框中输入 `90`，从单位弹出菜单中选择 **deg**（只提供角度单位），按回车。公式显示为 `Tilt ÷ 90 deg`，字段下方一行显示 _有效的定义_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:79
+#: docs/user-guide/getting-started/first-behavior.md:81
 msgid "If you would rather type, switch to **Text** and write it as text:"
 msgstr "如果你更愿意打字，切换到**文本**并以文本形式写："
 
-#: docs/user-guide/getting-started/first-behavior.md:85
+#: docs/user-guide/getting-started/first-behavior.md:87
 msgid "Both views edit the same formula. Press **⌘↩** or click **Add definition**."
 msgstr "两个视图编辑的是同一个公式。按 **⌘↩** 或点击**添加定义**。"
 
-#: docs/user-guide/getting-started/first-behavior.md:89
+#: docs/user-guide/getting-started/first-behavior.md:91
 #: docs/user-guide/studio/formula-editor.md:18
 msgid "_The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._"
 msgstr "_选中分母槽位的公式视图：编译器说明该槽位期望角度及原因，并提供带角度单位的数字、合适的引用，以及结果类型合适的方程。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:93
+#: docs/user-guide/getting-started/first-behavior.md:95
 msgid "The node now shows its formula in the body and is drawn solid."
 msgstr "节点现在在主体中显示公式，并以实线绘制。"
 
-#: docs/user-guide/getting-started/first-behavior.md:95
+#: docs/user-guide/getting-started/first-behavior.md:97
 msgid "**What you made.** A rule: brightness is the tilt divided by ninety degrees. Try it in the **Text** view: change `90 deg` to `90 s` and watch the line under the field turn red: it says what Brightness is and what the formula produces instead — an angle divided by a time is not a plain number. Put `deg` back. Every formula is checked this way, for units and for meaning, as you type or as you assemble it — and nothing is saved to the design until you press _Add definition_."
 msgstr "**你做了什么。** 一条规则：亮度等于倾角除以九十度。在**文本**视图里试试：把 `90 deg` 改成 `90 s`，看字段下方那行变红：它说明 Brightness 是什么，以及公式实际生成的是什么——角度除以时间不是纯数。把 `deg` 改回来。每个公式都会这样检查单位和含义，无论你是打字还是拼装——而且在按下 _添加定义_ 之前，什么都不会保存到设计中。"
 
-#: docs/user-guide/getting-started/first-behavior.md:105
+#: docs/user-guide/getting-started/first-behavior.md:107
 #: docs/user-guide/studio/formula-editor.md:113
 msgid "_The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead._"
 msgstr "_公式字段中有一个未通过检查的草稿：红色结论行说明 Brightness 是什么，以及公式实际生成的是什么。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:110
+#: docs/user-guide/getting-started/first-behavior.md:112
 msgid "In the Text view, **⌃Space** opens completion: the names you can use here (_Tilt_), units after a number, keywords. Hovering a name for a moment shows what it is. The Formula view asks for nothing: each slot lists what fits."
 msgstr "在文本视图中，**⌃Space** 打开补全：此处可用的名字（_Tilt_）、数字后的单位、关键字。把鼠标在名字上停留片刻会显示它是什么。公式视图什么都不需要你记：每个槽位都列出适合的内容。"
 
-#: docs/user-guide/getting-started/first-behavior.md:112
+#: docs/user-guide/getting-started/first-behavior.md:114
 msgid "5. Bring the tilt in from the environment"
 msgstr "5. 把倾角从环境引进来"
 
-#: docs/user-guide/getting-started/first-behavior.md:114
+#: docs/user-guide/getting-started/first-behavior.md:116
 msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the tilt come from? From the environment — a sensor, outside the design. In BDL a value the environment provides is a **Source**: a relationship that **reads nothing**, produces the concept, and has **no formula**."
 msgstr "`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自环境——设计之外的一个传感器。在 BDL 中，由环境提供的值是一个**来源**：一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。"
 
-#: docs/user-guide/getting-started/first-behavior.md:119
+#: docs/user-guide/getting-started/first-behavior.md:121
 msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ section makes a concept and its Source together.)"
 msgstr "点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会做出同样的东西；库的 _来源_ 分区会同时做出一个概念和它的来源。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:124
+#: docs/user-guide/getting-started/first-behavior.md:126
 msgid "The node says _Source_ in its header, with a bar down its left edge and no input socket. It is not dashed: nothing is missing. In the simulator you will type its value; on a device the sensor will provide it."
 msgstr "节点的标题写着 _来源_，左边缘有一条竖条，没有输入插口。它不是虚线的：这里没有任何缺失。在仿真器中你将输入它的值；在设备上由传感器提供。"
 
-#: docs/user-guide/getting-started/first-behavior.md:128
+#: docs/user-guide/getting-started/first-behavior.md:130
 msgid "6. Compute the lamp's brightness"
 msgstr "6. 计算灯的亮度"
 
-#: docs/user-guide/getting-started/first-behavior.md:130
+#: docs/user-guide/getting-started/first-behavior.md:132
 msgid "The value the lamp actually shows is `dimByTilt` applied to `tilt`. That is again a relationship that reads nothing and produces Brightness — this time with a formula."
 msgstr "灯实际显示的值是把 `dimByTilt` 应用于 `tilt`。这又是一个不读取任何东西、生成 Brightness 的关系——这次带有公式。"
 
-#: docs/user-guide/getting-started/first-behavior.md:134
+#: docs/user-guide/getting-started/first-behavior.md:136
 msgid "**+** next to _Mappings_: Name `brightness`, read nothing, produce **Brightness**. Create."
 msgstr "点击 _映射_ 旁的 **+**：名称 `brightness`，不读取任何东西，生成 **Brightness**。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:136
+#: docs/user-guide/getting-started/first-behavior.md:138
 msgid "Select it and enter the formula `dimByTilt(tilt)`. _Add definition._"
 msgstr "选中它并输入公式 `dimByTilt(tilt)`。_添加定义。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:138
+#: docs/user-guide/getting-started/first-behavior.md:140
 msgid "Completion offers `dimByTilt(` because it is a relationship with an input, and `tilt` because it is a value. The formula field is the only place where relationships are combined; links on the canvas show _which concepts_ a relationship reads, not the arithmetic."
 msgstr "补全会提供 `dimByTilt(`，因为它是带输入的关系；也会提供 `tilt`，因为它是值。公式字段是唯一组合关系的地方；画布上的连线显示关系读取 _哪些概念_，而不是算术。"
 
-#: docs/user-guide/getting-started/first-behavior.md:143
+#: docs/user-guide/getting-started/first-behavior.md:145
 msgid "**What you made.** Three relationships: a Source (`tilt`), a rule (`dimByTilt`) and a computed value (`brightness`). The status line at the bottom counts them."
 msgstr "**你做了什么。** 三个关系：一个来源（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。"
 
-#: docs/user-guide/getting-started/first-behavior.md:146
+#: docs/user-guide/getting-started/first-behavior.md:148
 msgid "7. Give the values a rhythm"
 msgstr "7. 给值一个节奏"
 
-#: docs/user-guide/getting-started/first-behavior.md:148
+#: docs/user-guide/getting-started/first-behavior.md:150
 msgid "A value that comes from outside has a rhythm: the sensor reports every so often. In BDL that rhythm is a named **timing domain**, and every value that updates on its own belongs to one."
 msgstr "来自外部的值有节奏：传感器每隔一段时间报告一次。在 BDL 中，这个节奏是一个有名字的**时序域**，每个自行更新的值都属于某一个。"
 
-#: docs/user-guide/getting-started/first-behavior.md:152
+#: docs/user-guide/getting-started/first-behavior.md:154
 msgid "**+** next to _Timing domains_: name it `interaction`. Create."
 msgstr "点击 _时序域_ 旁的 **+**：命名为 `interaction`。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:153
+#: docs/user-guide/getting-started/first-behavior.md:155
 msgid "Select `tilt`. In the inspector's **Timing** section, set **Updates in** to _interaction_."
 msgstr "选中 `tilt`。在检查器的**时序**区，把**更新于**设为 _interaction_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:155
+#: docs/user-guide/getting-started/first-behavior.md:157
 msgid "Select `brightness` and do the same."
 msgstr "选中 `brightness`，做同样的事。"
 
-#: docs/user-guide/getting-started/first-behavior.md:157
+#: docs/user-guide/getting-started/first-behavior.md:159
 msgid "`dimByTilt` stays on _Any timing domain_: it is a pure rule and takes the rhythm of whatever applies it. The domain's name appears quietly at the right edge of the two nodes."
 msgstr "`dimByTilt` 保持在 _任意时序域_：它是纯规则，跟随应用它的那一方的节奏。域的名字安静地出现在两个节点的右边缘。"
 
-#: docs/user-guide/getting-started/first-behavior.md:161
+#: docs/user-guide/getting-started/first-behavior.md:163
 msgid "**What you made.** A design in which \"when does this update\" is an explicit decision. A domain is a name, not a rate — how often _interaction_ ticks is chosen when you simulate or deploy, not here."
 msgstr "**你做了什么。** 一个把“这个什么时候更新”作为显式决定的设计。域是名字，不是速率——_interaction_ 多久走一拍是在仿真或部署时选择的，不在这里。"
 
-#: docs/user-guide/getting-started/first-behavior.md:165
+#: docs/user-guide/getting-started/first-behavior.md:167
 msgid "8. Add the light"
 msgstr "8. 添加灯"
 
-#: docs/user-guide/getting-started/first-behavior.md:167
+#: docs/user-guide/getting-started/first-behavior.md:169
 msgid "Brightness is a value inside the design. The lamp itself is a **physical output**: the place where a value leaves the design for the world."
 msgstr "Brightness 是设计内部的值。灯本身是一个**物理输出**：值离开设计、进入世界的地方。"
 
-#: docs/user-guide/getting-started/first-behavior.md:170
+#: docs/user-guide/getting-started/first-behavior.md:172
 msgid "**+** next to _Outputs_. In the _New output_ sheet: Name `light`, **Accepts** Brightness, **Updates in** interaction, **Required** on. Create."
 msgstr "点击 _输出_ 旁的 **+**。在 _新建输出_ 面板中：名称 `light`，**接受** Brightness，**更新于** interaction，打开**必需**。创建。"
 
-#: docs/user-guide/getting-started/first-behavior.md:173
+#: docs/user-guide/getting-started/first-behavior.md:175
 msgid "A sink node appears at the right edge of the canvas, drawn dashed: it has a domain but nothing drives it yet. The status line says _outputs incomplete_."
 msgstr "画布右边缘出现一个汇节点，以虚线绘制：它有域，但还没有东西驱动它。状态行显示 _输出未完成_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:176
+#: docs/user-guide/getting-started/first-behavior.md:178
 msgid "Drag from `brightness`'s output socket onto the sink's socket. (Or select the output and pick `brightness` in the **Connect** pop-up of its inspector; the pop-up marks relationships that _have inputs_, which cannot drive an output.)"
 msgstr "从 `brightness` 的输出插口拖到汇节点的插口上。（或者选中输出，在其检查器的**连接**弹出菜单中选择 `brightness`；弹出菜单会标记 _有输入_ 的关系，它们不能驱动输出。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:180
+#: docs/user-guide/getting-started/first-behavior.md:182
 msgid "The sink becomes solid. Only a relationship that _reads nothing_ and produces the accepted concept in the same domain can drive an output. `brightness` qualifies; connecting `dimByTilt` instead would be accepted as an edit and then reported under the output as a connection that does not fit."
 msgstr "汇节点变为实线。只有 _不读取任何东西_、并在同一域中生成所接受概念的关系才能驱动输出。`brightness` 符合条件；如果改连 `dimByTilt`，编辑会被接受，然后在输出下方被报告为不合适的连接。"
 
-#: docs/user-guide/getting-started/first-behavior.md:185
+#: docs/user-guide/getting-started/first-behavior.md:187
 msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_, and nothing is _not yet defined_: `tilt`, the Source, is meant to stay without a formula, and the line counts it as _1 source_. Press **⌘S** to save."
 msgstr "**你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_，也没有任何 _尚未定义_ 的项：来源 `tilt` 本来就应该没有公式，状态行把它计为 _1 个来源_。按 **⌘S** 保存。"
 
-#: docs/user-guide/getting-started/first-behavior.md:190
+#: docs/user-guide/getting-started/first-behavior.md:192
 msgid "What you have"
 msgstr "你现在拥有的"
 
-#: docs/user-guide/getting-started/first-behavior.md:194
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light._"
 msgstr "_完成的灯：来源 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Object"
 msgstr "对象"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Kind"
 msgstr "种类"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Updates in"
 msgstr "更新于"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "**Tilt**"
 msgstr "**Tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "concept, an angle"
 msgstr "概念，角度"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "**Brightness**"
 msgstr "**Brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "concept, a plain number"
 msgstr "概念，纯数"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "**tilt**"
 msgstr "**tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "relationship reading nothing: a Source"
 msgstr "不读取任何东西的关系：来源"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "_none_"
 msgstr "_无_"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
 #: docs/user-guide/getting-started/first-behavior.md:203
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:205
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "_interaction_"
 msgstr "_interaction_"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "**dimByTilt**"
 msgstr "**dimByTilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "relationship reading Tilt: a rule"
 msgstr "读取 Tilt 的关系：规则"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "`Tilt / 90 deg`"
 msgstr "`Tilt / 90 deg`"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 #: docs/user-guide/getting-started/install-and-launch.md:13
 msgid "any"
 msgstr "任意"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "**brightness**"
 msgstr "**brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "relationship reading nothing: a value"
 msgstr "不读取任何东西的关系：值"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 #: docs/user-guide/textual/syntax-basics.md:166
 msgid "`dimByTilt(tilt)`"
 msgstr "`dimByTilt(tilt)`"
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "**light**"
 msgstr "**light**"
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "physical output driven by brightness"
 msgstr "由 brightness 驱动的物理输出"
 
-#: docs/user-guide/getting-started/first-behavior.md:206
+#: docs/user-guide/getting-started/first-behavior.md:208
 msgid "The design is _executable_: every relationship the output depends on is defined or is a Source, checks, has a rhythm, and the output has exactly one driver."
 msgstr "这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是来源，通过检查，有节奏，并且输出恰好有一个驱动方。"
 
-#: docs/user-guide/getting-started/first-behavior.md:209
+#: docs/user-guide/getting-started/first-behavior.md:211
 #: docs/user-guide/getting-started/first-deployment.md:83
 #: docs/user-guide/getting-started/first-simulation.md:83
 msgid "If something does not work"
 msgstr "如果有什么不对"
 
-#: docs/user-guide/getting-started/first-behavior.md:211
+#: docs/user-guide/getting-started/first-behavior.md:213
 msgid "**The formula line is red.** Read it: it names the problem in terms of your concepts (\"this divides an angle by a time\"). See [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr "**公式行是红色的。** 读一读：它用你的概念来说明问题（“这把角度除以了时间”）。见 [类型、单位与概念](../troubleshooting/type-and-concept-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:214
+#: docs/user-guide/getting-started/first-behavior.md:216
 msgid "**`brightness` will not connect to the output.** Check its _Updates in_ matches the output's, and that it reads nothing. See [Connections](../troubleshooting/connection-errors.md)."
 msgstr "**`brightness` 连不上输出。** 检查它的 _更新于_ 是否与输出一致，以及它是否不读取任何东西。见 [连接](../troubleshooting/connection-errors.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:217
+#: docs/user-guide/getting-started/first-behavior.md:219
 msgid "**The status line says _N definitions not added_.** A formula is typed but not added; select the node and press _Add definition_ or _Revert_."
 msgstr "**状态行显示 _N 个定义未添加_。** 公式已输入但未添加；选中节点，按 _添加定义_ 或 _还原_。"
 
-#: docs/user-guide/getting-started/first-behavior.md:219
+#: docs/user-guide/getting-started/first-behavior.md:221
 msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See [Install and launch](install-and-launch.md)."
 msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 [安装与启动](install-and-launch.md)。"
 
-#: docs/user-guide/getting-started/first-behavior.md:222
+#: docs/user-guide/getting-started/first-behavior.md:224
 #: docs/user-guide/getting-started/first-deployment.md:93
 #: docs/user-guide/getting-started/first-simulation.md:96
 #: docs/user-guide/getting-started/install-and-launch.md:71
@@ -1803,7 +1803,7 @@ msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 
 msgid "Next"
 msgstr "下一步"
 
-#: docs/user-guide/getting-started/first-behavior.md:224
+#: docs/user-guide/getting-started/first-behavior.md:226
 msgid "[Your first simulation](first-simulation.md) — tilt the lamp and watch the brightness."
 msgstr "[你的第一次仿真](first-simulation.md)——倾斜灯，观察亮度。"
 

@@ -1216,7 +1216,7 @@ msgid "Reads"
 msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:27
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Formula"
 msgstr "数式"
 
@@ -1523,274 +1523,274 @@ msgid "A node appears with one input socket (Tilt, on the left) and one output s
 msgstr "入力ソケット 1 つ（左の Tilt）と出力ソケット 1 つ（右の Brightness）を持つノードが現れます。**破線**で描かれ、ヘッダーに _宣言済み_ とあります。関係は存在しシグネチャを持ちますが、数式はまだありません。これはエラーではありません。ここで止めて保存し、明日戻ってきても構いません。"
 
 #: docs/user-guide/getting-started/first-behavior.md:64
-msgid "_A declared relationship: dashed outline and the word declared in its header._"
-msgstr "_宣言済みの関係：破線の輪郭と、ヘッダーの「宣言済み」。_"
+msgid "_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._"
+msgstr ""
 
-#: docs/user-guide/getting-started/first-behavior.md:66
+#: docs/user-guide/getting-started/first-behavior.md:68
 msgid "4. Write the formula"
 msgstr "4. 数式を書く"
 
-#: docs/user-guide/getting-started/first-behavior.md:68
+#: docs/user-guide/getting-started/first-behavior.md:70
 msgid "Click the `dimByTilt` node. The inspector shows it."
 msgstr "`dimByTilt` ノードをクリックします。インスペクターに表示されます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:69
+#: docs/user-guide/getting-started/first-behavior.md:71
 msgid "In the **Relationship** section, the editor opens in its **Formula** view: an empty slot, `?`, and the words _produces a Brightness_. Click the slot. Under it, _References_ lists **Tilt** — click it. The slot becomes `Tilt`."
 msgstr "**関係**セクションで、エディタは**数式**ビューで開きます。空のスロット `?` と、_Brightness を生成_ という語です。スロットをクリックします。その下の _参照_ に **Tilt** が並びます——クリックします。スロットが `Tilt` になります。"
 
-#: docs/user-guide/getting-started/first-behavior.md:72
+#: docs/user-guide/getting-started/first-behavior.md:74
 msgid "Click `Tilt` and press **÷**. The formula reads `Tilt ÷ ?`, and the new slot is selected: _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._"
 msgstr "`Tilt` をクリックして **÷** を押します。数式は `Tilt ÷ ?` になり、新しいスロットが選択されます。_期待：角度。角度 ÷ 角度 = 無次元量だから。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:75
+#: docs/user-guide/getting-started/first-behavior.md:77
 msgid "In the number entry type `90`, choose **deg** from the unit pop-up (only angle units are offered), and press Return. The formula reads `Tilt ÷ 90 deg` and the line under the field says _Valid definition_."
 msgstr "数値入力に `90` と入力し、単位ポップアップから **deg** を選び（角度の単位だけが提示されます）、Return を押します。数式は `Tilt ÷ 90 deg` になり、フィールドの下の行に _有効な定義_ と表示されます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:79
+#: docs/user-guide/getting-started/first-behavior.md:81
 msgid "If you would rather type, switch to **Text** and write it as text:"
 msgstr "タイプする方がよければ、**テキスト**に切り替えてテキストで書きます："
 
-#: docs/user-guide/getting-started/first-behavior.md:85
+#: docs/user-guide/getting-started/first-behavior.md:87
 msgid "Both views edit the same formula. Press **⌘↩** or click **Add definition**."
 msgstr "どちらのビューも同じ数式を編集します。**⌘↩** を押すか、**定義を追加**をクリックします。"
 
-#: docs/user-guide/getting-started/first-behavior.md:89
+#: docs/user-guide/getting-started/first-behavior.md:91
 #: docs/user-guide/studio/formula-editor.md:18
 msgid "_The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._"
 msgstr "_分母のスロットを選択した数式ビュー：コンパイラはスロットが角度を期待することとその理由を述べ、角度の単位付きの数値、適合する参照、結果が適合する方程式を提示する。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:93
+#: docs/user-guide/getting-started/first-behavior.md:95
 msgid "The node now shows its formula in the body and is drawn solid."
 msgstr "ノードは本体に数式を示し、実線で描かれます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:95
+#: docs/user-guide/getting-started/first-behavior.md:97
 msgid "**What you made.** A rule: brightness is the tilt divided by ninety degrees. Try it in the **Text** view: change `90 deg` to `90 s` and watch the line under the field turn red: it says what Brightness is and what the formula produces instead — an angle divided by a time is not a plain number. Put `deg` back. Every formula is checked this way, for units and for meaning, as you type or as you assemble it — and nothing is saved to the design until you press _Add definition_."
 msgstr "**作ったもの。** 規則です。明るさは傾きを 90 度で割ったもの。**テキスト**ビューで試してみてください。`90 deg` を `90 s` に変えると、フィールドの下の行が赤くなります。Brightness が何であり、数式が代わりに何を生成するかを述べます——角度を時間で割ったものは無次元の数ではありません。`deg` に戻します。すべての数式はこのように、入力中も組み立て中も、単位と意味が検査されます——そして _定義を追加_ を押すまで設計には何も保存されません。"
 
-#: docs/user-guide/getting-started/first-behavior.md:105
+#: docs/user-guide/getting-started/first-behavior.md:107
 #: docs/user-guide/studio/formula-editor.md:113
 msgid "_The formula field with a draft that does not check: the red verdict line says what Brightness is and what the formula produces instead._"
 msgstr "_検査を通らない下書きのある数式フィールド：赤い判定行は Brightness が何であり、数式が代わりに何を生成するかを述べる。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:110
+#: docs/user-guide/getting-started/first-behavior.md:112
 msgid "In the Text view, **⌃Space** opens completion: the names you can use here (_Tilt_), units after a number, keywords. Hovering a name for a moment shows what it is. The Formula view asks for nothing: each slot lists what fits."
 msgstr "テキストビューでは **⌃Space** で補完が開きます。ここで使える名前（_Tilt_）、数値の後の単位、キーワードです。名前に少しホバーすると、それが何かが表示されます。数式ビューは何も求めません。各スロットが適合するものを列挙します。"
 
-#: docs/user-guide/getting-started/first-behavior.md:112
+#: docs/user-guide/getting-started/first-behavior.md:114
 msgid "5. Bring the tilt in from the environment"
 msgstr "5. 傾きを環境から取り込む"
 
-#: docs/user-guide/getting-started/first-behavior.md:114
+#: docs/user-guide/getting-started/first-behavior.md:116
 msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where does the tilt come from? From the environment — a sensor, outside the design. In BDL a value the environment provides is a **Source**: a relationship that **reads nothing**, produces the concept, and has **no formula**."
 msgstr "`dimByTilt` は規則であって値ではありません。処理する傾きが必要です。傾きはどこから来るのでしょう？ 環境から——設計の外にあるセンサーからです。BDL では、環境から与えられる値は**入力元**です。**何も読み取らず**、そのコンセプトを生成し、**数式を持たない**関係です。"
 
-#: docs/user-guide/getting-started/first-behavior.md:119
+#: docs/user-guide/getting-started/first-behavior.md:121
 msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ section makes a concept and its Source together.)"
 msgstr "_マッピング_ の横の **+**：名前 `tilt`、何も読み取らず、**Tilt** を生成。作成。（キャンバスを右クリック → **入力元を追加 ▸** → _新しい入力元…_ でも同じものが作れます。ライブラリの _入力元_ セクションは、コンセプトとその入力元を一度に作ります。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:124
+#: docs/user-guide/getting-started/first-behavior.md:126
 msgid "The node says _Source_ in its header, with a bar down its left edge and no input socket. It is not dashed: nothing is missing. In the simulator you will type its value; on a device the sensor will provide it."
 msgstr "ノードのヘッダーには _入力元_ とあり、左端に縦のバーがあって、入力ソケットはありません。破線ではありません。欠けているものは何もないのです。シミュレータでは値を入力し、デバイスではセンサーがそれを与えます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:128
+#: docs/user-guide/getting-started/first-behavior.md:130
 msgid "6. Compute the lamp's brightness"
 msgstr "6. ランプの明るさを計算する"
 
-#: docs/user-guide/getting-started/first-behavior.md:130
+#: docs/user-guide/getting-started/first-behavior.md:132
 msgid "The value the lamp actually shows is `dimByTilt` applied to `tilt`. That is again a relationship that reads nothing and produces Brightness — this time with a formula."
 msgstr "ランプが実際に示す値は、`tilt` に `dimByTilt` を適用したものです。これもまた、何も読み取らず Brightness を生成する関係です——今回は数式付きで。"
 
-#: docs/user-guide/getting-started/first-behavior.md:134
+#: docs/user-guide/getting-started/first-behavior.md:136
 msgid "**+** next to _Mappings_: Name `brightness`, read nothing, produce **Brightness**. Create."
 msgstr "_マッピング_ の横の **+**：名前 `brightness`、何も読み取らず、**Brightness** を生成。作成。"
 
-#: docs/user-guide/getting-started/first-behavior.md:136
+#: docs/user-guide/getting-started/first-behavior.md:138
 msgid "Select it and enter the formula `dimByTilt(tilt)`. _Add definition._"
 msgstr "選択して数式 `dimByTilt(tilt)` を入力します。_定義を追加。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:138
+#: docs/user-guide/getting-started/first-behavior.md:140
 msgid "Completion offers `dimByTilt(` because it is a relationship with an input, and `tilt` because it is a value. The formula field is the only place where relationships are combined; links on the canvas show _which concepts_ a relationship reads, not the arithmetic."
 msgstr "補完は、入力を持つ関係だから `dimByTilt(` を、値だから `tilt` を提示します。数式フィールドは関係を組み合わせる唯一の場所です。キャンバス上のリンクは関係が _どのコンセプト_ を読むかを示し、算術は示しません。"
 
-#: docs/user-guide/getting-started/first-behavior.md:143
+#: docs/user-guide/getting-started/first-behavior.md:145
 msgid "**What you made.** Three relationships: a Source (`tilt`), a rule (`dimByTilt`) and a computed value (`brightness`). The status line at the bottom counts them."
 msgstr "**作ったもの。** 3 つの関係：入力元（`tilt`）、規則（`dimByTilt`）、計算された値（`brightness`）。下部のステータス行がそれらを数えます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:146
+#: docs/user-guide/getting-started/first-behavior.md:148
 msgid "7. Give the values a rhythm"
 msgstr "7. 値にリズムを与える"
 
-#: docs/user-guide/getting-started/first-behavior.md:148
+#: docs/user-guide/getting-started/first-behavior.md:150
 msgid "A value that comes from outside has a rhythm: the sensor reports every so often. In BDL that rhythm is a named **timing domain**, and every value that updates on its own belongs to one."
 msgstr "外から来る値にはリズムがあります。センサーは一定間隔で報告します。BDL ではそのリズムは名前付きの**タイミングドメイン**であり、自分で更新されるすべての値はいずれかに属します。"
 
-#: docs/user-guide/getting-started/first-behavior.md:152
+#: docs/user-guide/getting-started/first-behavior.md:154
 msgid "**+** next to _Timing domains_: name it `interaction`. Create."
 msgstr "_タイミングドメイン_ の横の **+**：`interaction` と名付けます。作成。"
 
-#: docs/user-guide/getting-started/first-behavior.md:153
+#: docs/user-guide/getting-started/first-behavior.md:155
 msgid "Select `tilt`. In the inspector's **Timing** section, set **Updates in** to _interaction_."
 msgstr "`tilt` を選択します。インスペクターの**タイミング**セクションで、**更新ドメイン**を _interaction_ に設定します。"
 
-#: docs/user-guide/getting-started/first-behavior.md:155
+#: docs/user-guide/getting-started/first-behavior.md:157
 msgid "Select `brightness` and do the same."
 msgstr "`brightness` を選択して同じことをします。"
 
-#: docs/user-guide/getting-started/first-behavior.md:157
+#: docs/user-guide/getting-started/first-behavior.md:159
 msgid "`dimByTilt` stays on _Any timing domain_: it is a pure rule and takes the rhythm of whatever applies it. The domain's name appears quietly at the right edge of the two nodes."
 msgstr "`dimByTilt` は _任意のタイミングドメイン_ のままです。純粋な規則であり、それを適用するもののリズムに従います。ドメインの名前が 2 つのノードの右端に控えめに表示されます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:161
+#: docs/user-guide/getting-started/first-behavior.md:163
 msgid "**What you made.** A design in which \"when does this update\" is an explicit decision. A domain is a name, not a rate — how often _interaction_ ticks is chosen when you simulate or deploy, not here."
 msgstr "**作ったもの。**「これはいつ更新されるか」が明示的な決定である設計。ドメインは名前であってレートではありません——_interaction_ がどのくらいの頻度でティックするかは、ここではなくシミュレートやデプロイのときに選びます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:165
+#: docs/user-guide/getting-started/first-behavior.md:167
 msgid "8. Add the light"
 msgstr "8. ライトを追加する"
 
-#: docs/user-guide/getting-started/first-behavior.md:167
+#: docs/user-guide/getting-started/first-behavior.md:169
 msgid "Brightness is a value inside the design. The lamp itself is a **physical output**: the place where a value leaves the design for the world."
 msgstr "Brightness は設計の内部の値です。ランプ自体は**物理出力**、つまり値が設計を離れて世界へ出ていく場所です。"
 
-#: docs/user-guide/getting-started/first-behavior.md:170
+#: docs/user-guide/getting-started/first-behavior.md:172
 msgid "**+** next to _Outputs_. In the _New output_ sheet: Name `light`, **Accepts** Brightness, **Updates in** interaction, **Required** on. Create."
 msgstr "_出力_ の横の **+**。_新規出力_ シートで：名前 `light`、**受け取る** Brightness、**更新ドメイン** interaction、**必須**をオン。作成。"
 
-#: docs/user-guide/getting-started/first-behavior.md:173
+#: docs/user-guide/getting-started/first-behavior.md:175
 msgid "A sink node appears at the right edge of the canvas, drawn dashed: it has a domain but nothing drives it yet. The status line says _outputs incomplete_."
 msgstr "キャンバスの右端にシンクノードが破線で現れます。ドメインはありますが、まだ何も駆動していません。ステータス行に _出力が未完了_ と表示されます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:176
+#: docs/user-guide/getting-started/first-behavior.md:178
 msgid "Drag from `brightness`'s output socket onto the sink's socket. (Or select the output and pick `brightness` in the **Connect** pop-up of its inspector; the pop-up marks relationships that _have inputs_, which cannot drive an output.)"
 msgstr "`brightness` の出力ソケットからシンクのソケットへドラッグします。（または出力を選択し、そのインスペクターの**接続**ポップアップで `brightness` を選びます。ポップアップは _入力を持つ_ 関係に印を付けます。それらは出力を駆動できません。）"
 
-#: docs/user-guide/getting-started/first-behavior.md:180
+#: docs/user-guide/getting-started/first-behavior.md:182
 msgid "The sink becomes solid. Only a relationship that _reads nothing_ and produces the accepted concept in the same domain can drive an output. `brightness` qualifies; connecting `dimByTilt` instead would be accepted as an edit and then reported under the output as a connection that does not fit."
 msgstr "シンクが実線になります。出力を駆動できるのは、_何も読み取らず_、同じドメインで受け入れられるコンセプトを生成する関係だけです。`brightness` は条件を満たします。代わりに `dimByTilt` を接続すると、編集としては受け入れられ、その後出力の下に適合しない接続として報告されます。"
 
-#: docs/user-guide/getting-started/first-behavior.md:185
+#: docs/user-guide/getting-started/first-behavior.md:187
 msgid "**What you made.** A complete design. The status line no longer says _outputs incomplete_, and nothing is _not yet defined_: `tilt`, the Source, is meant to stay without a formula, and the line counts it as _1 source_. Press **⌘S** to save."
 msgstr "**作ったもの。** 完全な設計。ステータス行はもう _出力が未完了_ とは言わず、_未定義_ のものもありません。入力元 `tilt` は数式なしのままでよいもので、ステータス行はそれを _入力元 1 件_ と数えます。**⌘S** を押して保存します。"
 
-#: docs/user-guide/getting-started/first-behavior.md:190
+#: docs/user-guide/getting-started/first-behavior.md:192
 msgid "What you have"
 msgstr "手元にあるもの"
 
-#: docs/user-guide/getting-started/first-behavior.md:194
+#: docs/user-guide/getting-started/first-behavior.md:196
 msgid "_The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light._"
 msgstr "_完成したランプ：入力元 tilt、規則 dimByTilt、値 brightness、駆動される light。_"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Object"
 msgstr "オブジェクト"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Kind"
 msgstr "種類"
 
-#: docs/user-guide/getting-started/first-behavior.md:197
+#: docs/user-guide/getting-started/first-behavior.md:199
 msgid "Updates in"
 msgstr "更新ドメイン"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "**Tilt**"
 msgstr "**Tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:199
+#: docs/user-guide/getting-started/first-behavior.md:201
 msgid "concept, an angle"
 msgstr "コンセプト、角度"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "**Brightness**"
 msgstr "**Brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:200
+#: docs/user-guide/getting-started/first-behavior.md:202
 msgid "concept, a plain number"
 msgstr "コンセプト、無次元の数"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "**tilt**"
 msgstr "**tilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "relationship reading nothing: a Source"
 msgstr "何も読み取らない関係：入力元"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
+#: docs/user-guide/getting-started/first-behavior.md:203
 msgid "_none_"
 msgstr "_なし_"
 
-#: docs/user-guide/getting-started/first-behavior.md:201
 #: docs/user-guide/getting-started/first-behavior.md:203
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:205
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "_interaction_"
 msgstr "_interaction_"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "**dimByTilt**"
 msgstr "**dimByTilt**"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "relationship reading Tilt: a rule"
 msgstr "Tilt を読み取る関係：規則"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 msgid "`Tilt / 90 deg`"
 msgstr "`Tilt / 90 deg`"
 
-#: docs/user-guide/getting-started/first-behavior.md:202
+#: docs/user-guide/getting-started/first-behavior.md:204
 #: docs/user-guide/getting-started/install-and-launch.md:13
 msgid "any"
 msgstr "任意"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "**brightness**"
 msgstr "**brightness**"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 msgid "relationship reading nothing: a value"
 msgstr "何も読み取らない関係：値"
 
-#: docs/user-guide/getting-started/first-behavior.md:203
+#: docs/user-guide/getting-started/first-behavior.md:205
 #: docs/user-guide/textual/syntax-basics.md:166
 msgid "`dimByTilt(tilt)`"
 msgstr "`dimByTilt(tilt)`"
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "**light**"
 msgstr "**light**"
 
-#: docs/user-guide/getting-started/first-behavior.md:204
+#: docs/user-guide/getting-started/first-behavior.md:206
 msgid "physical output driven by brightness"
 msgstr "brightness に駆動される物理出力"
 
-#: docs/user-guide/getting-started/first-behavior.md:206
+#: docs/user-guide/getting-started/first-behavior.md:208
 msgid "The design is _executable_: every relationship the output depends on is defined or is a Source, checks, has a rhythm, and the output has exactly one driver."
 msgstr "この設計は _実行可能_ です。出力が依存するすべての関係は定義済みか入力元であり、検査を通り、リズムを持ち、出力にはちょうど 1 つの駆動元があります。"
 
-#: docs/user-guide/getting-started/first-behavior.md:209
+#: docs/user-guide/getting-started/first-behavior.md:211
 #: docs/user-guide/getting-started/first-deployment.md:83
 #: docs/user-guide/getting-started/first-simulation.md:83
 msgid "If something does not work"
 msgstr "うまくいかないとき"
 
-#: docs/user-guide/getting-started/first-behavior.md:211
+#: docs/user-guide/getting-started/first-behavior.md:213
 msgid "**The formula line is red.** Read it: it names the problem in terms of your concepts (\"this divides an angle by a time\"). See [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr "**数式の行が赤い。** 読んでください。あなたのコンセプトの言葉で問題を述べています（「これは角度を時間で割っている」）。[型・単位・コンセプト](../troubleshooting/type-and-concept-errors.md) を参照。"
 
-#: docs/user-guide/getting-started/first-behavior.md:214
+#: docs/user-guide/getting-started/first-behavior.md:216
 msgid "**`brightness` will not connect to the output.** Check its _Updates in_ matches the output's, and that it reads nothing. See [Connections](../troubleshooting/connection-errors.md)."
 msgstr "**`brightness` が出力に接続できない。** その _更新ドメイン_ が出力のものと一致し、何も読み取っていないことを確認してください。[接続](../troubleshooting/connection-errors.md) を参照。"
 
-#: docs/user-guide/getting-started/first-behavior.md:217
+#: docs/user-guide/getting-started/first-behavior.md:219
 msgid "**The status line says _N definitions not added_.** A formula is typed but not added; select the node and press _Add definition_ or _Revert_."
 msgstr "**ステータス行に _未追加の定義 N 件_ とある。** 数式は入力されたが追加されていません。ノードを選択して _定義を追加_ か _元に戻す_ を押します。"
 
-#: docs/user-guide/getting-started/first-behavior.md:219
+#: docs/user-guide/getting-started/first-behavior.md:221
 msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See [Install and launch](install-and-launch.md)."
 msgstr "**何も検査されず、最下行に _コンパイラ未接続_ とある。** [インストールと起動](install-and-launch.md) を参照。"
 
-#: docs/user-guide/getting-started/first-behavior.md:222
+#: docs/user-guide/getting-started/first-behavior.md:224
 #: docs/user-guide/getting-started/first-deployment.md:93
 #: docs/user-guide/getting-started/first-simulation.md:96
 #: docs/user-guide/getting-started/install-and-launch.md:71
@@ -1803,7 +1803,7 @@ msgstr "**何も検査されず、最下行に _コンパイラ未接続_ とあ
 msgid "Next"
 msgstr "次へ"
 
-#: docs/user-guide/getting-started/first-behavior.md:224
+#: docs/user-guide/getting-started/first-behavior.md:226
 msgid "[Your first simulation](first-simulation.md) — tilt the lamp and watch the brightness."
 msgstr "[最初のシミュレーション](first-simulation.md)——ランプを傾けて明るさを観察します。"
 

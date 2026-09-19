@@ -96,7 +96,7 @@
       },
       "output": "getting-started/declared-relationship.png",
       "caption": "A declared relationship: dashed outline and the word declared in its header.",
-      "alt": "Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.",
+      "alt": "Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.",
       "purpose": "The tutorial's step 3: what a relationship without a formula looks like."
     },
     {

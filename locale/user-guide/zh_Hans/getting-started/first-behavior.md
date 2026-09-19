@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-behavior.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · 简体中文 · [日本語](../../ja/getting-started/first-behavior.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一个行为
 
@@ -40,9 +42,9 @@
 
 出现一个节点，有一个输入插口（左侧的 Tilt）和一个输出插口（右侧的 Brightness）。它以**虚线**绘制，标题里写着 _已声明_：关系存在并有签名，但还没有公式。这不是错误。你可以就此停下、保存，明天再回来。
 
-![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
+![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
 
-_一个已声明的关系：虚线轮廓，标题中写着“已声明”。_
+_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._
 
 ## 4. 写公式
 
