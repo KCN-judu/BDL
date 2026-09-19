@@ -274,7 +274,116 @@ normal runner, the Studio job 135–165 s instead of 176–192 s, the critical p
 the runners, not the workflow. What remains on the path is the Rust job's
 compile of the 25 workspace crates on Windows (about 68 s of its 158–207 s),
 which no mtime-based cache can save; a content-hashed compiler cache (sccache
-with the Actions backend) is the next candidate, and a separate decision.
+with the Actions backend) was the next candidate — measured and rejected below.
+
+## sccache on the Windows Rust job — measured, rejected
+
+The candidate after the slim SDK cache was a content-hashed compiler cache on
+`windows-rust`, the job whose 25-crate workspace compile no mtime-based cache
+can save. Tried on 2026-09-19 on a pull-request branch
+([#1](https://github.com/KCN-judu/BDL/pull/1), nine runs, none merged), with the
+same `WINDOWS_RUST_CRATES` and the same tests before and after.
+
+**Configuration under test.** `mozilla-actions/sccache-action@v0.0.11`
+(`fc920bf`) installing `sccache v0.18.0` (the release of 2026-09-14, pinned; a
+10 MB download, 1 s), the GitHub Actions cache backend (`SCCACHE_GHA_ENABLED`,
+the cache service v2, namespace `SCCACHE_GHA_VERSION=windows-rust-1`, no
+credentials beyond the job's own `ACTIONS_RUNTIME_TOKEN`), `RUSTC_WRAPPER`
+pointing at the binary for the one `cargo test` of
+`preflight.py windows-rust-ci` — and, since the harness inherits the
+environment, for the `cargo` the compiler-differential and runtime-host tests
+run on generated crates. Each sccache step was `continue-on-error`, the wrapper
+was set only when the server had started, and `--show-stats` ran before the
+post-job step: a missing tool or backend would have meant a plain-rustc run with
+the step outcomes saying so. Nothing else changed: `Swatinem/rust-cache` kept
+restoring the dependency artifacts (so the ~150 dependency crates never reached
+sccache), the crate subset and the tests were the ones above, and local
+`preflight.py platform` needed nothing.
+
+**What sccache can and cannot cache here.** Its cache key is the rustc version,
+the arguments, the `CARGO_*` environment, the working directory, the contents of
+every source in rustc's dep-info and of every `--extern` file — a key that
+distinguishes toolchain, target, flags, features and dependency versions without
+any hand-written part, and one that no stale or wrong-feature artifact can
+satisfy. But it caches only `rlib`/`staticlib` compilations: every crate that
+links — each test binary (a unit-test target recompiles its crate's sources with
+`cfg(test)`), `bdld.exe`, every build script — runs rustc and the MSVC linker
+every time. On this job that is 71 of the 458 requests by count and, by time,
+about 35 s of the 44–52 s a fully-warm `cargo test` still takes: in run C every
+workspace rlib was served from the cache within 17 s of cargo starting and
+`cargo test` finished at 51.8 s.
+
+**Runs.** Windows compatibility (Rust) job, all on the same afternoon; the
+control is the workflow of `main` on the same branch. `cargo` is the time cargo
+reports at _Finished test profile_ (it includes 7–13 s of _Updating crates.io
+index_ on every Windows run, sccache or not); tests are the summed _finished in_
+of the test binaries; hits are sccache's Rust hits of its 95 cacheable requests.
+
+| Run | Change                            | sccache             | job       | preflight | cargo    | tests | hits  | cache size        |
+| --- | --------------------------------- | ------------------- | --------- | --------- | -------- | ----- | ----- | ----------------- |
+| A   | the workflow change               | cold                | 191 s     | 131 s     | 66 s     | 59 s  | 0/95  | 96 entries, 75 MB |
+| B   | none (empty commit)               | warm                | **143 s** | 89 s      | **44 s** | 42 s  | 95/95 | 96, 75 MB         |
+| C   | none                              | warm                | 149 s     | 100 s     | 52 s     | 45 s  | 95/95 | 96, 75 MB         |
+| D   | a doc comment in `bdl-ide`        | warm, 2 misses      | 157 s     | 106 s     | 59 s     | 43 s  | 93/95 | 98, 89 MB         |
+| E   | control: no sccache               | —                   | 168 s     | 119 s     | 80 s     | 35 s  | —     | —                 |
+| F   | none (the env moved to job level) | warm                | 185 s     | 122 s     | 65 s     | 52 s  | 95/95 | 98, 89 MB         |
+| G   | a doc comment in `bdl-model`      | warm, 22 misses     | 197 s     | 145 s     | 94 s     | 48 s  | 73/95 | 120, 157 MB       |
+| H   | none                              | warm, **13 misses** | 198 s     | 141 s     | 90 s     | 48 s  | 82/95 | 133, 209 MB       |
+| I   | none                              | warm, **3 misses**  | 177 s     | 119 s     | 64 s     | 50 s  | 92/95 | 136, 231 MB       |
+
+Baseline for the same job, the six runs without sccache (the five on `main`
+above, `446db61`…`e3ef5ac`, and the control E): job 161 / 168 / 176 / 177 / 179
+/ 207 s — best 161, **median 177**, worst 207; `cargo` 72–85 s, median 80; tests
+34–57 s, median 35.
+
+With sccache, the five warm runs with no source change (B, C, F, H, I): job 143
+/ 149 / 177 / 185 / 198 — best 143, **median 177**, worst 198; `cargo` 44–90 s,
+median 64. The three of them that hit fully (B, C, F): job median 149, `cargo`
+median 52. The two runs with one crate changed: D (`bdl-ide`, near the top of
+the graph) 157 s, G (`bdl-model`, near the bottom) 197 s against the
+control's 168.
+
+Windows critical path (the Rust job then the Studio job): B and C 4 m 59 s, D 5
+m 12 s, E (control) 5 m 07 s, F 5 m 19 s, A 5 m 31 s, I 5 m 33 s, G 5 m 45 s, H
+5 m 56 s — against 5 m 17 s – 6 m 16 s for the warm runs on `main`. Windows
+runner-seconds per run: 417–501 (E 437), against 515–581 on `main` — the
+afternoon's runners were faster than the morning's for every job, sccache or
+not, which is the size of the noise these numbers sit in.
+
+**Costs found.** Installation and server start 2–3 s; the post-job stats 1 s; no
+separate restore or save — the backend fetches and stores per object during the
+compile (average read on a hit 0.11–0.24 s, average write on a miss 0.39–0.49 s,
+no read or write errors in nine runs). The cache footprint: 75 MB after the cold
+run, 231 MB after two source changes (7 MB for the `bdl-ide` change, 68 MB for
+the `bdl-model` one), 136 small entries under the repository's 10 GB quota
+beside the 1.0 GB slim SDK and the 165–297 MB dependency caches; entries expire
+unused after seven days. Two costs the hit rate does not show: the tests ran
+42–59 s under sccache against 34–39 s on five of the six baseline runs (57 s on
+the slow one; median +13 s), because the harness's own `cargo` compiles of
+generated crates went through the wrapper too; and the cache did not re-warm in
+one run after a change — H recompiled 13 objects and I another 3 with no source
+change between G, H and I, so a push that touches a low crate costs its own run
+and part of the next two (the cause was not pinned down; cargo's pipelined
+`.rmeta` externs are the suspect, and it was not worth a debug run once the
+ceiling below was clear).
+
+**Decision: rejected.** The threshold was a repeatable 20–25 s median reduction
+of the Windows Rust job or the Windows critical path. Measured: the median warm
+job is 177 s with sccache and 177 s without; the median `cargo` step falls 16 s
+(80 → 64), of which the tests' own wrapped `cargo` gives 13 s back; a run that
+changes a low crate is slower than the control; and the best case — every rlib
+served, a fast runner — is 143–149 s, 28 s under the median, reached in two of
+nine runs. The ceiling is structural, not tuning: only ~35 s of the 80 s compile
+is rlib compilation that a content cache can serve, the other 45 s is test
+binaries, `bdld.exe` and linking that sccache never caches, and the runner's
+disk moves the whole job by ±20 s on its own. For that, the job would carry a
+third-party action, a downloaded binary, a server process, a cache namespace to
+bump and 100–200 MB of cache entries. Operational complexity exceeds the
+benefit; the configuration was removed and this record kept. Two things the
+measurement did show: the 7–13 s `Updating crates.io index` at the start of
+every Windows `cargo test` (0.2 s on Linux) is a separate, cheaper candidate;
+and the compile that is left on the path is mostly test-binary and link time,
+which only fewer or smaller test binaries would reduce.
 
 ## Local preflight
 
