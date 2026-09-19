@@ -30,6 +30,7 @@ class NodeCanvas extends StatefulWidget {
     this.statuses = const {},
     this.outputStates = const {},
     this.refs = const {},
+    this.unapplied = const {},
     this.templates = const [],
     this.sources = const [],
     this.recentTemplates = const [],
@@ -47,6 +48,10 @@ class NodeCanvas extends StatefulWidget {
   final Map<NodeRef, Offset> layout;
   final Selection selection;
   final void Function(AppAction) dispatch;
+
+  /// The rules the compiler notes as applied by nothing
+  /// (`reactive.rule_unapplied`): drawn with a hollow output socket.
+  final Set<int> unapplied;
 
   /// A system project's instances, bindings, groups and their verdicts;
   /// empty for a flat project and inside a component's source.
@@ -171,6 +176,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     statuses: widget.statuses,
     outputStates: widget.outputStates,
     refs: widget.refs,
+    unapplied: widget.unapplied,
     system: _sceneInput,
   );
 
@@ -1386,7 +1392,8 @@ class _CanvasPainter extends CustomPainter {
         final depends = n.dependsOn.isEmpty
             ? ''
             : ', ${l10n.dependsOnList(n.dependsOn.join(', '))}';
-        return '${n.title}, $shape, produces $produces$depends, $state';
+        final applied = n.unapplied ? ', ${l10n.appliedByNothing}' : '';
+        return '${n.title}, $shape, produces $produces$depends, $state$applied';
       case NodeKind.output:
         final accepts = n.socketLabels.values.join(', ');
         final state = switch (n.sink) {
@@ -1578,13 +1585,18 @@ class NodePainter {
     // source.
     // A defined rule that carries no other word says *rule*: it is applied
     // by a value's formula and has no value of its own (ADR-0034); the
-    // input sockets are the shape, the word the consequence.
+    // input sockets are the shape, the word the consequence.  A rule
+    // nothing applies says *not applied* instead — the state before the
+    // shape, as *declared* comes before both — and its hollow output socket
+    // says no value comes out of it.
     final headerWord = n.source
         ? l10n.roleSource
         : n.declared
         ? l10n.stateDeclared
         : n.headerWord.isNotEmpty
         ? n.headerWord
+        : n.unapplied
+        ? l10n.stateNotApplied
         : switch (n.sink) {
             SinkState.open => l10n.noDomain,
             SinkState.contested => l10n.stateContested,

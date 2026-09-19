@@ -711,6 +711,7 @@ class SemanticActionsState {
     required this.generation,
     this.actions = const [],
     this.pending = true,
+    this.applyOnArrival,
   });
   final pb.EntityRef entity;
   final int revision;
@@ -718,14 +719,31 @@ class SemanticActionsState {
   final List<pb.SemanticActionView> actions;
   final bool pending;
 
-  SemanticActionsState copyWith({List<pb.SemanticActionView>? actions, bool? pending}) =>
-      SemanticActionsState(
-        entity: entity,
-        revision: revision,
-        generation: generation,
-        actions: actions ?? this.actions,
-        pending: pending ?? this.pending,
-      );
+  /// The kind of action the designer already chose by its title, before
+  /// the list arrived (a Fix offered where the finding is shown, away from
+  /// the inspector): applied the moment it arrives ready.  One that needs
+  /// a choice or is blocked is shown instead — never guessed.
+  final String? applyOnArrival;
+
+  /// The action of [kind] among these (an id is `<kind>:<entity>…`).
+  pb.SemanticActionView? ofKind(String kind) =>
+      actions.where((x) => x.id == kind || x.id.startsWith('$kind:')).firstOrNull;
+
+  /// The actions on show are about this object at this revision.
+  bool isFor(pb.EntityRef e, int rev) => entity == e && revision == rev;
+
+  SemanticActionsState copyWith({
+    List<pb.SemanticActionView>? actions,
+    bool? pending,
+    bool clearApplyOnArrival = false,
+  }) => SemanticActionsState(
+    entity: entity,
+    revision: revision,
+    generation: generation,
+    actions: actions ?? this.actions,
+    pending: pending ?? this.pending,
+    applyOnArrival: clearApplyOnArrival ? null : applyOnArrival,
+  );
 }
 
 /// How far the compiler has got with a draft's current source.

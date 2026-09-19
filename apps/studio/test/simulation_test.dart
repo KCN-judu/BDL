@@ -17,6 +17,7 @@ import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/l10n/l10n.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/mac/theme.dart';
+import 'package:bdl_studio/ui/mac/widgets.dart';
 import 'package:bdl_studio/ui/pages/simulate_page.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
@@ -145,6 +146,13 @@ String? _findBdld() {
   }
   return null;
 }
+
+/// The words beside the on/off control (a number field's hint is in the
+/// tree whether shown or not, so the words are looked for in the row).
+Finder besideOnOff(Finder onOff) => find.descendant(
+  of: find.ancestor(of: onOff, matching: find.byType(Row)).first,
+  matching: find.text('no value yet'),
+);
 
 /// The page needs the width of a real window: inputs, trace, probe.
 void wide(WidgetTester t) {
@@ -367,14 +375,18 @@ void main() {
         ),
       ).state;
       await t.pumpWidget(page(s, dispatched.add));
-      // a quantity input is a number field with its unit; an on/off input a switch
+      // a quantity input is a number field with its unit; an on/off input
+      // an off | on control, with its given value chosen
       expect(find.byKey(const ValueKey('input-$tiltIn')), findsOneWidget);
       expect(find.text('rad'), findsOneWidget);
-      expect(find.byType(Switch), findsOneWidget);
+      final onOff = find.byKey(const ValueKey('input-$heldIn'));
+      expect(onOff, findsOneWidget);
+      expect(t.widget<MacSegmented<bool?>>(onOff).value, isFalse);
+      expect(besideOnOff(onOff), findsNothing, reason: 'held was given off');
       expect(find.text('1 tick evaluated.'), findsOneWidget);
       expect(find.text('Brightness(0.3333)'), findsOneWidget);
       expect(find.text('<function>'), findsNothing, reason: 'a function is not a column');
-      await t.tap(find.byType(Switch));
+      await t.tap(find.descendant(of: onOff, matching: find.text('on')));
       await t.pump();
       final changed = dispatched.whereType<SimulationInputChanged>().single;
       expect(changed.mappingId, heldIn);
@@ -413,6 +425,41 @@ void main() {
       );
       await t.pumpWidget(page(cyclic, (_) {}));
       expect(find.text('The design contains an instantaneous cycle.'), findsOneWidget);
+    });
+
+    testWidgets('an on/off Source with no value is neither off nor on: dashed, "no value yet", '
+        'one click decides', (t) async {
+      wide(t);
+      final dispatched = <AppAction>[];
+      // tilt given, held not: the control is undecided and says so; the
+      // blocker agrees with what the control shows
+      var s = connected(lamp());
+      s = reduce(s, SimulationInputChanged(mappingId: tiltIn, value: angle(0))).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      final onOff = find.byKey(const ValueKey('input-$heldIn'));
+      final control = t.widget<MacSegmented<bool?>>(onOff);
+      expect(control.value, isNull);
+      expect(control.undecided, isTrue, reason: 'dashed, empty: not decided');
+      expect(besideOnOff(onOff), findsOneWidget);
+      expect(find.text('held needs a value before simulation can step.'), findsOneWidget);
+      // one click on a segment gives exactly that value — off is a choice,
+      // never a default
+      await t.tap(find.descendant(of: onOff, matching: find.text('off')));
+      await t.pump();
+      final changed = dispatched.whereType<SimulationInputChanged>().single;
+      expect(changed.mappingId, heldIn);
+      expect(changed.value.semantic.repr.boolean, isFalse);
+      s = reduce(s, changed).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      expect(t.widget<MacSegmented<bool?>>(onOff).undecided, isFalse);
+      expect(besideOnOff(onOff), findsNothing);
+      expect(find.text('held needs a value before simulation can step.'), findsNothing);
+      expect(simulationBlockers(s), isEmpty);
+      // the number fields say the same words while empty
+      expect(
+        t.widget<CommitTextField>(find.byKey(const ValueKey('input-$tiltIn'))).hint,
+        'no value yet',
+      );
     });
 
     testWidgets('readiness names the object, links to it, and disables Step', (t) async {

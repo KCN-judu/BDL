@@ -1037,6 +1037,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAnInputAColumnOrA => 'Select an input, a column or a concept.';
 
   @override
+  String get aRelationshipItIsAppliedInsideOther =>
+      'A relationship: it is applied inside other relationships and has no value of its own to sample.';
+
+  @override
+  String get appliedBy => 'Applied in';
+
+  @override
+  String addAValueThatApplies(String name) {
+    return 'Add a value that applies $name';
+  }
+
+  @override
+  String get noValueYet => 'no value yet';
+
+  @override
+  String get stateNotApplied => 'not applied';
+
+  @override
+  String get appliedByNothing => 'applied by nothing';
+
+  @override
+  String notPossibleYet(String reason) {
+    return 'Not possible yet: $reason';
+  }
+
+  @override
   String get now => 'Now';
 
   @override
@@ -2096,11 +2122,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aRuleNoValueOfItsOwn =>
       'A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.';
-
-  @override
-  String appliedIn(String names) {
-    return 'Applied in $names.';
-  }
 
   @override
   String get noValueAppliesItYet => 'No value applies it yet.';

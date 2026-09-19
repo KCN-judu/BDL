@@ -18,6 +18,7 @@ library;
 import 'dart:io';
 
 import 'package:bdl_studio/app/actions.dart';
+import 'package:bdl_studio/app/simulation.dart' show kRuleUnappliedCode;
 import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
@@ -109,7 +110,9 @@ void main() {
         'draft edit → verdict rendered in state: ${dt.inMilliseconds} ms (incl. 30 ms debounce)',
       );
       expect(d.analysis!.status, pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT);
-      expect(d.analysis!.diagnostics, isEmpty);
+      // nothing about the text; the rule's own note (nothing applies it
+      // yet) travels with the mapping and is not the editor's
+      expect(d.analysis!.diagnostics.map((x) => x.code), everyElement(kRuleUnappliedCode));
       expect(d.parseOk, isTrue);
       // nothing committed by checking
       expect(store.state.committedDefinition(id), isNull);
@@ -169,7 +172,7 @@ void main() {
       store.dispatch(DefinitionDraftChanged(mappingId: id, source: 'Tilt / 90 deg'));
       d = await checked();
       expect(d.analysis!.status, pb.MappingStatus.MAPPING_STATUS_CLOCK_CONSISTENT);
-      expect(d.analysis!.diagnostics, isEmpty);
+      expect(d.analysis!.diagnostics.map((x) => x.code), everyElement(kRuleUnappliedCode));
       store.dispatch(CommitDefinitionRequested(id));
       s = await store.until((s) => s.committedDefinition(id) == 'Tilt / 90 deg');
       expect(s.editor.lastOutcome!.kind, pb.EditKind.EDIT_KIND_EDIT, reason: 'a replace');
@@ -179,8 +182,10 @@ void main() {
       store.dispatch(DefinitionDraftChanged(mappingId: id, source: 'Tilt /'));
       d = await checked();
       expect(d.parseOk, isFalse);
-      expect(d.analysis!.diagnostics.first.code, 'formula.parse.unexpected_token');
-      expect(d.analysis!.diagnostics.first.hasSpan(), isTrue);
+      final parse = d.analysis!.diagnostics.firstWhere(
+        (x) => x.code == 'formula.parse.unexpected_token',
+      );
+      expect(parse.hasSpan(), isTrue);
     } finally {
       await teardown();
     }

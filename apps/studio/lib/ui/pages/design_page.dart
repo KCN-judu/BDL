@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
+import '../../app/simulation.dart' show kRuleUnappliedCode;
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../canvas/canvas_geometry.dart' show SystemSceneInput;
@@ -107,6 +108,10 @@ class DesignPage extends StatelessWidget {
                 refs: {
                   for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
                     m.id.toInt(): [for (final d in m.references) d.toInt()],
+                },
+                unapplied: {
+                  for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+                    if (m.diagnostics.any((d) => d.code == kRuleUnappliedCode)) m.id.toInt(),
                 },
                 templates: state.templates.toList(),
                 sources: state.libraryItems.where((i) => i.category == 'source').toList(),

@@ -995,6 +995,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get selectAnInputAColumnOrA => '入力、列、コンセプトのいずれかを選択してください。';
 
   @override
+  String get aRelationshipItIsAppliedInsideOther => '関係：他の関係の内部で適用されるため、サンプルできる固有の値を持ちません。';
+
+  @override
+  String get appliedBy => '適用先';
+
+  @override
+  String addAValueThatApplies(String name) {
+    return '$name を適用する値を追加';
+  }
+
+  @override
+  String get noValueYet => '値はまだありません';
+
+  @override
+  String get stateNotApplied => '未適用';
+
+  @override
+  String get appliedByNothing => '何も適用していない';
+
+  @override
+  String notPossibleYet(String reason) {
+    return 'まだできません：$reason';
+  }
+
+  @override
   String get now => '現在';
 
   @override
@@ -1970,11 +1995,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get aRuleNoValueOfItsOwn => 'ルールです。固有の値は持ちません。シミュレーターがサンプルするのは、これを適用する値です。';
-
-  @override
-  String appliedIn(String names) {
-    return '$names で適用されています。';
-  }
 
   @override
   String get noValueAppliesItYet => 'まだどの値にも適用されていません。';

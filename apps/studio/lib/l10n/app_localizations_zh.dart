@@ -989,6 +989,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectAnInputAColumnOrA => '选择一个输入、一列或一个概念。';
 
   @override
+  String get aRelationshipItIsAppliedInsideOther => '一个关系：它在其他关系内部被应用，本身没有可采样的值。';
+
+  @override
+  String get appliedBy => '应用于';
+
+  @override
+  String addAValueThatApplies(String name) {
+    return '添加一个应用 $name 的值';
+  }
+
+  @override
+  String get noValueYet => '尚无值';
+
+  @override
+  String get stateNotApplied => '未应用';
+
+  @override
+  String get appliedByNothing => '无任何值应用';
+
+  @override
+  String notPossibleYet(String reason) {
+    return '暂不可行：$reason';
+  }
+
+  @override
   String get now => '当前';
 
   @override
@@ -1956,11 +1981,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aRuleNoValueOfItsOwn => '一条规则：它本身没有值。模拟器采样的是应用它的值。';
-
-  @override
-  String appliedIn(String names) {
-    return '应用于 $names。';
-  }
 
   @override
   String get noValueAppliesItYet => '尚无值应用它。';

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/composer.dart' show composerProjection;
+import '../app/simulation.dart' show kApplyRuleActionKind, kRuleUnappliedCode;
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel, socketKind, statusWord, SocketKind;
@@ -923,11 +924,20 @@ class _MappingInspector extends StatelessWidget {
                   empty: context.l10n.nothingYet,
                 ),
               ),
-            for (final d in broader)
+            for (final d in broader) ...[
               Padding(
                 padding: const EdgeInsets.only(top: MacMetrics.gap),
                 child: DiagnosticCard(diagnostic: d, source: committed ?? ''),
               ),
+              // A rule nothing applies: its fix sits with the finding —
+              // the value that would apply it — not in a list below.
+              if (d.code == kRuleUnappliedCode)
+                if (actions?.ofKind(kApplyRuleActionKind) case final fix?)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 15, bottom: MacMetrics.gap),
+                    child: FixItem(action: fix, dispatch: dispatch),
+                  ),
+            ],
             if (a?.status == pb.MappingStatus.MAPPING_STATUS_OPEN && waitingOn.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -1028,7 +1038,7 @@ class _MappingInspector extends StatelessWidget {
               ),
           ],
         ),
-        FixList(actions: actions, dispatch: dispatch),
+        FixList(actions: actions, dispatch: dispatch, excludeKinds: const {kApplyRuleActionKind}),
         Padding(
           padding: const EdgeInsets.all(12),
           child: Align(

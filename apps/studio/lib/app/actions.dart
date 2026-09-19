@@ -787,6 +787,17 @@ class SemanticActionApplied extends UserAction {
   final int? option;
 }
 
+/// A Fix chosen where its finding is shown (the Simulate page's readiness
+/// area) rather than in the inspector: select the object, ask the service
+/// for its actions, and apply the one of [actionKind] as soon as it
+/// arrives ready.  An action that needs a choice or is blocked is then on
+/// show for the designer to complete.
+class SemanticActionChosen extends UserAction {
+  const SemanticActionChosen({required this.selection, required this.actionKind});
+  final Selection selection;
+  final String actionKind;
+}
+
 // ---- simulation ------------------------------------------------------------
 
 /// The value an input takes from the next evaluated tick on.

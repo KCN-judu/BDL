@@ -319,6 +319,12 @@ Transition reduce(AppState s, AppAction action) {
       actionId,
       option,
     ),
+    SemanticActionChosen(:final selection, :final actionKind) => semanticActionChosen(
+      s.copyWith(
+        editor: withoutTooling(s.editor).copyWith(selection: selection, clearRenaming: true),
+      ),
+      actionKind,
+    ),
 
     // ---- canvas links (typed by concept identity) --------------------------
     LinkConceptToMappingInput(:final conceptId, :final mappingId) => _withMapping(s, mappingId, (

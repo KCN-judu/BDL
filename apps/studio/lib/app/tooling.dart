@@ -182,10 +182,48 @@ Transition semanticActionsReceived(AppState s, int generation, pb.SemanticAction
   if (a == null || generation != a.generation || r.revision.toInt() != s.revision) {
     return Transition(s);
   }
+  final next = s.copyWith(
+    editor: s.editor.copyWith(
+      actions: a.copyWith(actions: r.actions, pending: false, clearApplyOnArrival: true),
+    ),
+  );
+  // Chosen before it arrived: apply now if ready; otherwise it is on show.
+  final kind = a.applyOnArrival;
+  final chosen = kind == null ? null : next.editor.actions?.ofKind(kind);
+  if (chosen != null && chosen.applicability == pb.ActionApplicability.ACTION_APPLICABILITY_READY) {
+    return semanticActionApplied(next, chosen.id, null);
+  }
+  return Transition(next);
+}
+
+/// The designer chose an action by title where its finding is shown; the
+/// selection is already the object.  Actions already on show for it: apply
+/// (or leave the choice on show); otherwise ask, remembering the choice.
+Transition semanticActionChosen(AppState s, String actionKind) {
+  final entity = s.selectedEntity;
+  if (entity == null) return Transition(s);
+  final a = s.editor.actions;
+  if (a != null && a.isFor(entity, s.revision) && !a.pending) {
+    final chosen = a.ofKind(actionKind);
+    return chosen != null &&
+            chosen.applicability == pb.ActionApplicability.ACTION_APPLICABILITY_READY
+        ? semanticActionApplied(s, chosen.id, null)
+        : Transition(s);
+  }
+  final generation = s.editor.toolingGeneration + 1;
   return Transition(
     s.copyWith(
-      editor: s.editor.copyWith(actions: a.copyWith(actions: r.actions, pending: false)),
+      editor: s.editor.copyWith(
+        actions: SemanticActionsState(
+          entity: entity,
+          revision: s.revision,
+          generation: generation,
+          applyOnArrival: actionKind,
+        ),
+        toolingGeneration: generation,
+      ),
     ),
+    [ListSemanticActions(revision: s.revision, entity: entity, generation: generation)],
   );
 }
 

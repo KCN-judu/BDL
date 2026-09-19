@@ -194,6 +194,7 @@ class NodeShape {
     this.source = false,
     this.rule = false,
     this.dependsOn = const [],
+    this.unapplied = false,
   });
   final NodeRef ref;
   final Rect rect;
@@ -228,6 +229,12 @@ class NodeShape {
   /// environment — no input sockets, one output socket, the environment
   /// boundary drawn on its left edge.  Not *declared*: nothing is missing.
   final bool source;
+
+  /// A rule nothing applies (the compiler's `reactive.rule_unapplied`):
+  /// its output socket is hollow — the value form is known, no value comes
+  /// out of it until a value applies the rule — and, once defined, the
+  /// header word *not applied*.  A legal state, never an error.
+  final bool unapplied;
 
   /// The timing domain the node updates in ('' when agnostic or open): a
   /// quiet word at the right of the body, never a badge.
@@ -446,6 +453,7 @@ CanvasScene buildScene(
   Map<int, pb.MappingStatus> statuses = const {},
   Map<int, pb.OutputState> outputStates = const {},
   Map<int, List<int>> refs = const {},
+  Set<int> unapplied = const {},
   SystemSceneInput system = const SystemSceneInput(),
 }) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
@@ -552,10 +560,13 @@ CanvasScene buildScene(
     }
     final outId = m.signature.output.toInt();
     final outRef = SocketRef(node: ref, side: SocketSide.output, concept: outId);
+    // A rule nothing applies produces nothing yet: the socket is hollow.
+    final isUnapplied = unapplied.contains(m.id.toInt());
     final out = SocketShape._(
       Offset(rect.right, rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2),
       outRef,
       kindOf(outId),
+      open: isUnapplied,
     );
     sockets.add(out);
     socketByRef[outRef] = out;
@@ -586,6 +597,7 @@ CanvasScene buildScene(
             if (d != m.id.toInt())
               if (mappings.where((x) => x.id.toInt() == d).firstOrNull case final x?) x.name,
         ],
+        unapplied: isUnapplied,
         wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
         socketLabels: labels,

@@ -2037,6 +2037,48 @@ abstract class AppLocalizations {
   /// **'Select an input, a column or a concept.'**
   String get selectAnInputAColumnOrA;
 
+  /// Studio UI text (simulate_page.dart).
+  ///
+  /// In en, this message translates to:
+  /// **'A relationship: it is applied inside other relationships and has no value of its own to sample.'**
+  String get aRelationshipItIsAppliedInsideOther;
+
+  /// Simulate probe, a rule selected: label of the row linking to the values whose formula applies it.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied in'**
+  String get appliedBy;
+
+  /// The Fix for a rule nothing applies (bdl-ide action rule.apply), on the Simulate page's readiness area and in the probe; name is the rule's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a value that applies {name}'**
+  String addAValueThatApplies(String name);
+
+  /// Simulate inputs: a Source not yet given a value — beside the dashed on/off control and as the hint of an empty number field. Not off, not zero: a value is still to be given.
+  ///
+  /// In en, this message translates to:
+  /// **'no value yet'**
+  String get noValueYet;
+
+  /// Canvas node header word: a defined rule that no value applies (its output socket is hollow).
+  ///
+  /// In en, this message translates to:
+  /// **'not applied'**
+  String get stateNotApplied;
+
+  /// Canvas node accessibility label fragment: a rule no value applies.
+  ///
+  /// In en, this message translates to:
+  /// **'applied by nothing'**
+  String get appliedByNothing;
+
+  /// A blocked fix: the service's reason follows.
+  ///
+  /// In en, this message translates to:
+  /// **'Not possible yet: {reason}'**
+  String notPossibleYet(String reason);
+
   /// Simulate probe: the current value.
   ///
   /// In en, this message translates to:
@@ -3464,12 +3506,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.'**
   String get aRuleNoValueOfItsOwn;
-
-  /// Simulate probe: the values whose formulas apply the selected rule.
-  ///
-  /// In en, this message translates to:
-  /// **'Applied in {names}.'**
-  String appliedIn(String names);
 
   /// Simulate probe: nothing references the selected rule.
   ///

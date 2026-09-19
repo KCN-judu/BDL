@@ -15,6 +15,7 @@ import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/dialogs.dart';
 import 'package:bdl_studio/ui/inspector.dart';
+import 'package:bdl_studio/ui/mac/interactive.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:bdl_studio/ui/pages/simulate_page.dart';
 import 'package:fixnum/fixnum.dart';
@@ -349,7 +350,8 @@ void main() {
         ),
       );
       expect(find.text(kEnglish.aRuleNoValueOfItsOwn), findsOneWidget);
-      expect(find.text(kEnglish.appliedIn('acOn')), findsOneWidget);
+      expect(find.text(kEnglish.appliedBy), findsOneWidget);
+      expect(find.widgetWithText(MacLink, 'acOn'), findsOneWidget, reason: 'a link to the value');
 
       await t.pumpWidget(
         Harness(

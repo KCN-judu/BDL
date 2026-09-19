@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/diagnostics.dart' show isPlacementNote;
 import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
@@ -101,11 +102,11 @@ class DefinitionEditorModel {
       statusText = committed == null ? l10n.nothingToAddYet : l10n.emptyDetachToRemoveTheDefinition;
       tone = VerdictTone.none;
     } else if (saving) {
-      diagnostics = draft.analysis?.diagnostics ?? const [];
+      diagnostics = _ofTheText(draft.analysis);
       statusText = l10n.saving;
       tone = VerdictTone.checking;
     } else if (draft.commitError case final e?) {
-      diagnostics = draft.analysis?.diagnostics ?? const [];
+      diagnostics = _ofTheText(draft.analysis);
       statusText = l10n.notSaved(e);
       tone = VerdictTone.error;
     } else {
@@ -120,7 +121,7 @@ class DefinitionEditorModel {
           tone = VerdictTone.open;
         case DraftCheck.checked:
           final a = draft.analysis;
-          diagnostics = a?.diagnostics ?? const [];
+          diagnostics = _ofTheText(a);
           (statusText, tone) = a == null
               ? (l10n.checking, VerdictTone.checking)
               : _summarise(l10n, a, parseOk: draft.parseOk);
@@ -158,6 +159,11 @@ class DefinitionEditorModel {
   bool get canRevert => dirty && !saving;
   bool get canDetach => committed != null && !saving;
 
+  /// A draft verdict's findings about the text: the mapping's own list
+  /// less the notes on its place in the design (the inspector's).
+  static List<pb.Diagnostic> _ofTheText(pb.MappingAnalysis? a) =>
+      a?.diagnostics.where((d) => !isPlacementNote(d.code)).toList() ?? const [];
+
   /// One line for the ladder verdict.  Open is not an error: it says what is
   /// still to be decided.  Invalid says the first thing that is wrong.
   static (String, VerdictTone) _summarise(
@@ -169,7 +175,8 @@ class DefinitionEditorModel {
       (d) => d.severity == pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR,
     );
     final others = a.diagnostics.where(
-      (d) => d.severity != pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR,
+      (d) =>
+          d.severity != pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_ERROR && !isPlacementNote(d.code),
     );
     return switch (a.status) {
       pb.MappingStatus.MAPPING_STATUS_INVALID => (

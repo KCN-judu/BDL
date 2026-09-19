@@ -1309,6 +1309,44 @@
   "@selectAnInputAColumnOrA": {
     "description": "Studio UI text (simulate_page.dart)."
   },
+  "aRelationshipItIsAppliedInsideOther": "A relationship: it is applied inside other relationships and has no value of its own to sample.",
+  "@aRelationshipItIsAppliedInsideOther": {
+    "description": "Studio UI text (simulate_page.dart)."
+  },
+  "appliedBy": "Applied in",
+  "@appliedBy": {
+    "description": "Simulate probe, a rule selected: label of the row linking to the values whose formula applies it."
+  },
+  "addAValueThatApplies": "Add a value that applies {name}",
+  "@addAValueThatApplies": {
+    "description": "The Fix for a rule nothing applies (bdl-ide action rule.apply), on the Simulate page's readiness area and in the probe; name is the rule's name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noValueYet": "no value yet",
+  "@noValueYet": {
+    "description": "Simulate inputs: a Source not yet given a value — beside the dashed on/off control and as the hint of an empty number field. Not off, not zero: a value is still to be given."
+  },
+  "stateNotApplied": "not applied",
+  "@stateNotApplied": {
+    "description": "Canvas node header word: a defined rule that no value applies (its output socket is hollow)."
+  },
+  "appliedByNothing": "applied by nothing",
+  "@appliedByNothing": {
+    "description": "Canvas node accessibility label fragment: a rule no value applies."
+  },
+  "notPossibleYet": "Not possible yet: {reason}",
+  "@notPossibleYet": {
+    "description": "A blocked fix: the service's reason follows.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "now": "Now",
   "@now": {
     "description": "Simulate probe: the current value."
@@ -2839,15 +2877,6 @@
   "aRuleNoValueOfItsOwn": "A rule: it has no value of its own. A value whose formula applies it is what the simulator samples.",
   "@aRuleNoValueOfItsOwn": {
     "description": "Simulate probe: a rule is selected."
-  },
-  "appliedIn": "Applied in {names}.",
-  "@appliedIn": {
-    "description": "Simulate probe: the values whose formulas apply the selected rule.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
   },
   "noValueAppliesItYet": "No value applies it yet.",
   "@noValueAppliesItYet": {

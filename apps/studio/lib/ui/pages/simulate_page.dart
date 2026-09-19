@@ -24,6 +24,7 @@ import '../mac/controls.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
+import '../semantic_actions.dart';
 
 class SimulatePage extends StatelessWidget {
   const SimulatePage({super.key, required this.state, required this.dispatch});
@@ -101,6 +102,11 @@ class SimulatePage extends StatelessWidget {
 /// What keeps the design from stepping, as sentences about named objects
 /// with a link to each — the readiness state.  Step is disabled while any
 /// is listed; nothing is sent.  A tick that *failed* is the controls' line.
+///
+/// Below the blockers, the notes: facts the compiler states about the
+/// design that do not stop a step but explain what the trace will not
+/// show — a rule nothing applies.  A filled dot stops Step; a hollow one
+/// does not.  Each note carries its Fix and a link to the object.
 class _Blockers extends StatelessWidget {
   const _Blockers({super.key, required this.state, required this.dispatch});
   final AppState state;
@@ -110,7 +116,10 @@ class _Blockers extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final blockers = simulationBlockers(state);
-    if (blockers.isEmpty) return const SizedBox.shrink();
+    final notes = simulationNotes(state);
+    if (blockers.isEmpty && notes.isEmpty) return const SizedBox.shrink();
+    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    String nameOf(int mappingId) => state.mapping(mappingId)?.name ?? '?';
     return Container(
       padding: const EdgeInsets.fromLTRB(MacMetrics.gapGroup, 10, MacMetrics.gapGroup, 10),
       decoration: BoxDecoration(
@@ -146,6 +155,45 @@ class _Blockers extends StatelessWidget {
                             ),
                           ),
                         ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          for (final n in notes)
+            Row(
+              key: ValueKey('readiness-note-${n.mappingId}'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MacMetrics.gap,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Icon(Icons.circle_outlined, size: 7, color: t.open),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: MacMetrics.gapTight,
+                    children: [
+                      Text(n.message, style: const TextStyle(fontSize: 12)),
+                      if (n.explanation.isNotEmpty) Text(n.explanation, style: small),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: MacMetrics.gap,
+                        children: [
+                          OfferedFix(
+                            state: state,
+                            selection: MappingSelected(n.mappingId),
+                            actionKind: n.actionKind,
+                            title: context.l10n.addAValueThatApplies(nameOf(n.mappingId)),
+                            dispatch: dispatch,
+                          ),
+                          MacLink(
+                            label: context.l10n.show,
+                            onTap: () => dispatch(SelectionChanged(MappingSelected(n.mappingId))),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -249,7 +297,7 @@ class _InputControl extends StatelessWidget {
                 child: CommitTextField(
                   key: ValueKey('input-$id'),
                   value: repr != null && repr.hasQuantity() ? _fmt(repr.quantity.value) : '',
-                  hint: context.l10n.valueHint,
+                  hint: context.l10n.noValueYet,
                   onCommit: (v) {
                     final n = double.tryParse(v.trim());
                     if (n == null) return;
@@ -270,28 +318,38 @@ class _InputControl extends StatelessWidget {
             ],
           );
         case pb.Representation_Kind.boolean:
-          final on = repr != null && repr.hasBoolean() && repr.boolean;
+          // Three states, not two: off, on, and no value yet — the third
+          // is a dashed, empty control with the words beside it, so a
+          // Source nobody has decided never looks switched off.  One click
+          // on a segment gives exactly that value; nothing is defaulted
+          // (the runtime treats a missing input as an error by design).
+          final bool? on = repr != null && repr.hasBoolean() ? repr.boolean : null;
           control = Row(
             spacing: MacMetrics.gap,
             children: [
-              Switch(
-                key: ValueKey('input-$id'),
-                value: on,
-                onChanged: (v) => dispatch(
-                  SimulationInputChanged(
-                    mappingId: id,
-                    value: _semantic(pb.Value(boolean: v)),
+              SizedBox(
+                width: 96,
+                child: MacSegmented<bool?>(
+                  key: ValueKey('input-$id'),
+                  value: on,
+                  undecided: on == null,
+                  options: {false: context.l10n.offWord, true: context.l10n.onWord},
+                  onChanged: (v) => dispatch(
+                    SimulationInputChanged(
+                      mappingId: id,
+                      value: _semantic(pb.Value(boolean: v ?? false)),
+                    ),
                   ),
                 ),
               ),
-              Text(on ? context.l10n.onWord : context.l10n.offWord, style: small),
+              if (on == null) Text(context.l10n.noValueYet, style: small),
             ],
           );
         case pb.Representation_Kind.count:
           control = CommitTextField(
             key: ValueKey('input-$id'),
             value: repr != null && repr.hasCount() ? repr.count.toString() : '',
-            hint: context.l10n.wholeNumber,
+            hint: context.l10n.noValueYet,
             onCommit: (v) {
               final n = int.tryParse(v.trim());
               if (n == null || n < 0) return;
@@ -344,7 +402,13 @@ class _InputControl extends StatelessWidget {
               spacing: MacMetrics.gap,
               children: [
                 SocketGlyph.of(concept, t, size: 11),
-                Text(mapping.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                Flexible(
+                  child: Text(
+                    mapping.name,
+                    style: TextStyle(fontSize: 12, color: t.textPrimary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Flexible(
                   child: Text(concept.name, style: small, overflow: TextOverflow.ellipsis),
                 ),
@@ -675,14 +739,7 @@ class _Probe extends StatelessWidget {
         // A rule is applied by the values whose formulas reference it
         // (the analysis's refs, the canvas's reference edges) — those are
         // what the simulator samples.
-        final refsOf = {
-          for (final a in state.analysis?.mappings ?? const <pb.MappingAnalysis>[])
-            a.id.toInt(): a.references.map((d) => d.toInt()).toSet(),
-        };
-        final appliedIn = [
-          for (final v in p.mappings)
-            if (refsOf[v.id.toInt()]?.contains(id) ?? false) v.name,
-        ];
+        final appliers = appliersOf(state, id);
         body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -692,15 +749,43 @@ class _Probe extends StatelessWidget {
               children: [
                 if (!isValue) ...[
                   Text(context.l10n.aRuleNoValueOfItsOwn, style: small),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      appliedIn.isEmpty
-                          ? context.l10n.noValueAppliesItYet
-                          : context.l10n.appliedIn(appliedIn.join(', ')),
-                      style: small,
+                  // Who applies it, as links; when nobody does, the fix
+                  // that would (the compiler's note on the rule).
+                  if (appliers.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: FormRow(
+                        label: context.l10n.appliedBy,
+                        child: Wrap(
+                          spacing: MacMetrics.gapTight,
+                          children: [
+                            for (final a in appliers)
+                              MacLink(
+                                label: a.name,
+                                onTap: () =>
+                                    dispatch(SelectionChanged(MappingSelected(a.id.toInt()))),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(context.l10n.noValueAppliesItYet, style: small),
                     ),
-                  ),
+                    if (isUnappliedRule(state, id))
+                      Padding(
+                        padding: const EdgeInsets.only(top: MacMetrics.gapTight),
+                        child: OfferedFix(
+                          state: state,
+                          selection: MappingSelected(id),
+                          actionKind: kApplyRuleActionKind,
+                          title: context.l10n.addAValueThatApplies(m.name),
+                          dispatch: dispatch,
+                        ),
+                      ),
+                  ],
                 ] else
                   FormRow(
                     label: context.l10n.now,

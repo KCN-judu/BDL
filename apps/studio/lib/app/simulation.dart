@@ -172,6 +172,91 @@ List<SimulationBlocker> simulationBlockers(AppState s) {
 pb.DeclarationSample? sampleOf(pb.TickSample t, int mappingId) =>
     t.values.where((v) => v.mappingId.toInt() == mappingId).firstOrNull;
 
+/// The stable code of the compiler's note on a rule nothing applies.
+const String kRuleUnappliedCode = 'reactive.rule_unapplied';
+
+/// The kind of the action that adds the value applying a rule
+/// (`bdl-ide::actions`, id `rule.apply:<rule>`).  An action id is
+/// `<kind>:<entity>[:<detail>]`, stable within a snapshot; among one
+/// object's actions the kind picks the action, so Studio never spells an
+/// entity the service's way.
+const String kApplyRuleActionKind = 'rule.apply';
+
+/// Whether [actionId] is the apply-rule action (of the object it was
+/// listed for).
+bool isApplyRuleAction(String actionId) =>
+    actionId == kApplyRuleActionKind || actionId.startsWith('$kApplyRuleActionKind:');
+
+/// A fact about the design worth stating on the Simulate page that does
+/// not keep it from stepping: a rule nothing applies.  Its value at a tick
+/// is a function, so no column shows it; the note says so and carries the
+/// fix.  Read off the analysis — the compiler states it, Studio repeats it.
+@immutable
+class SimulationNote {
+  const SimulationNote({
+    required this.mappingId,
+    required this.message,
+    required this.explanation,
+    required this.actionKind,
+  });
+  final int mappingId;
+  final String message;
+  final String explanation;
+
+  /// The kind of the action that addresses it ([kApplyRuleActionKind]).
+  final String actionKind;
+}
+
+/// The unapplied rules of the current analysis, in the analysis's order.
+/// A rule without a definition is already a blocker (it needs one first)
+/// and is not repeated here.
+List<SimulationNote> simulationNotes(AppState s) {
+  final p = s.flat;
+  final a = s.analysis;
+  if (p == null || a == null || a.revision != p.revision) return const [];
+  return [
+    for (final m in a.mappings)
+      for (final d in m.diagnostics)
+        if (d.code == kRuleUnappliedCode &&
+            (p.mappings.where((x) => x.id == m.id).firstOrNull?.hasDefinition() ?? false))
+          SimulationNote(
+            mappingId: m.id.toInt(),
+            message: d.message,
+            explanation: d.explanation,
+            actionKind: kApplyRuleActionKind,
+          ),
+  ];
+}
+
+/// Whether the current analysis notes [mappingId] as a rule nothing
+/// applies (`reactive.rule_unapplied`).  False while the analysis is not
+/// yet about this revision.
+bool isUnappliedRule(AppState s, int mappingId) {
+  final a = s.analysis;
+  if (a == null || a.revision.toInt() != s.revision) return false;
+  final m = a.mappings.where((m) => m.id.toInt() == mappingId).firstOrNull;
+  return m?.diagnostics.any((d) => d.code == kRuleUnappliedCode) ?? false;
+}
+
+/// The relationships whose definition applies [ruleId]: those whose
+/// `references` (the compiler's dependency edges, ADR-0034) name it — the
+/// inverse of a stated relation, never a reading of formulas.  In
+/// projection order; empty when nothing does, or while the analysis is
+/// not yet about this revision.
+List<pb.MappingView> appliersOf(AppState s, int ruleId) {
+  final p = s.flat;
+  final a = s.analysis;
+  if (p == null || a == null || a.revision != p.revision) return const [];
+  final referrers = {
+    for (final m in a.mappings)
+      if (m.references.any((r) => r.toInt() == ruleId)) m.id.toInt(),
+  };
+  return [
+    for (final m in p.mappings)
+      if (referrers.contains(m.id.toInt())) m,
+  ];
+}
+
 /// Refused — with no request — while anything blocks; the blockers are on
 /// screen, each naming its object.
 Transition simulationStepRequested(AppState s, int ticks) {

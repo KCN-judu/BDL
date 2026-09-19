@@ -36,6 +36,12 @@ String localizedMessage(AppLocalizations l10n, String code, String fallback) => 
 /// detail, not the headline).
 bool isStudioWorded(String code) => localizedMessage(kEnglish, code, '') != '';
 
+/// A finding about the mapping's place in the design rather than about
+/// its definition text — a rule nothing applies — which no text typed into
+/// the definition can change: the definition editor leaves it to the
+/// inspector's Relationship section, whatever draft is being tried.
+bool isPlacementNote(String code) => code == 'reactive.rule_unapplied';
+
 /// The catalog for a language preference outside the widget tree (the
 /// effect executor's OS dialogs): the chosen locale, or the platform's
 /// resolved to a supported one.

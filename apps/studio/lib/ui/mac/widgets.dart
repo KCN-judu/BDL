@@ -183,26 +183,37 @@ class _CommitTextFieldState extends State<CommitTextField> {
 }
 
 /// NSSegmentedControl look-alike.
+///
+/// [undecided]: no segment is chosen yet and the choice is still to be
+/// made — the track is empty with a dashed outline (the same "not
+/// decided" mark as a declared relationship's outline and a formula
+/// slot), never a segment shown as if chosen.  One click on a segment
+/// decides.
 class MacSegmented<T> extends StatelessWidget {
   const MacSegmented({
     super.key,
     required this.value,
     required this.options,
     required this.onChanged,
+    this.undecided = false,
   });
   final T value;
   final Map<T, String> options;
   final void Function(T) onChanged;
+  final bool undecided;
 
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     return Container(
       height: MacMetrics.controlHeight,
-      decoration: BoxDecoration(
-        color: t.isDark ? const Color(0x22FFFFFF) : const Color(0x11000000),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: undecided
+          ? null
+          : BoxDecoration(
+              color: t.isDark ? const Color(0x22FFFFFF) : const Color(0x11000000),
+              borderRadius: BorderRadius.circular(6),
+            ),
+      foregroundDecoration: undecided ? DashedOutline(color: t.textTertiary, radius: 6) : null,
       padding: const EdgeInsets.all(2),
       child: Row(
         children: [
@@ -249,6 +260,44 @@ class MacSegmented<T> extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// A 1 px dashed rounded outline, as a decoration: "not decided yet" on a
+/// control, the way the canvas dashes a declared relationship.
+class DashedOutline extends Decoration {
+  const DashedOutline({required this.color, this.radius = 6});
+  final Color color;
+  final double radius;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _DashedOutlinePainter(this);
+}
+
+class _DashedOutlinePainter extends BoxPainter {
+  _DashedOutlinePainter(this.decoration);
+  final DashedOutline decoration;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size ?? Size.zero;
+    final rect = (offset & size).deflate(0.5);
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(decoration.radius)));
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = decoration.color;
+    const dash = 4.0;
+    const gap = 3.0;
+    for (final metric in path.computeMetrics()) {
+      var at = 0.0;
+      while (at < metric.length) {
+        final end = (at + dash).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(at, end), paint);
+        at += dash + gap;
+      }
+    }
   }
 }
 
