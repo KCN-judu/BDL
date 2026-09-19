@@ -16,7 +16,7 @@ the lamp.
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | An output accepts **one concept**.                                                                       | The lamp shows a brightness, not "a number". Connecting an _Opacity_ would be a mistake the tool can catch.                                                                                               |
 | An output has **one timing domain**, and its driver must update in that domain.                          | The physical device refreshes at the domain's rhythm; a driver on another rhythm would leave the output reading a value from an unrelated instant.                                                        |
-| An output is driven by a **value** — a relationship that reads nothing.                                  | A rule is something you apply; only a value can be _the_ brightness at this tick. `brightness = dimByTilt(tilt)` drives; `dimByTilt` cannot.                                                              |
+| An output is driven by a **value** — a relationship that reads nothing.                                  | A rule is something you apply; only a value can be _the_ brightness at this tick. `brightness = dimByTilt(tilt)` drives; `dimByTilt` cannot. Studio offers the connection only to values.                 |
 | An output has **at most one driver**.                                                                    | Two relationships driving one light is a contradiction in the design. BDL names it and does not pick a winner — no priorities, no last-writer. Combine the two values in a relationship and connect that. |
 | A **required** output must be driven for the design to be executable; an optional one may stay undriven. | A lamp without its light is unfinished; an optional status LED is not.                                                                                                                                    |
 
@@ -48,11 +48,20 @@ sink.
 - **Meaning** — name and description.
 - **Output** — _Accepts_ (the concept), _Updates in_, _Required_.
 - **Driver** — the state line, the claimants with _disconnect_ links, and a
-  **Connect** pop-up listing the design's relationships (those with inputs are
-  marked _has inputs_; connecting one is recorded and then reported).
+  **Connect** pop-up listing the design's values of the accepted concept. When
+  there is none, one sentence says so instead — _No value of Brightness in the
+  design yet — a relationship that reads nothing and produces Brightness could
+  drive this output._
 - **Fixes** — for a contested output, _Detach … from …_ and _Create upstream
   combination mapping_; for an undriven one, _Connect a driver to …_ with a
   choice.
+
+On a relationship's own page, the **Drives** section offers an _Output_ pop-up
+to a value only. A rule shows the caption _A rule cannot drive an output —
+connect the value that applies this rule._ and, when exactly one value of the
+design applies it, names that value with a _Show_ link. A text-authored design
+may still write a rule as a driver; then the connection is recorded, the finding
+appears under _Drives_ and _Driver_, and _Disconnect_ removes it.
 
 ## From output to device
 

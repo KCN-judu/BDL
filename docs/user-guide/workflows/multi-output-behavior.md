@@ -44,8 +44,9 @@ light — and see what BDL does when two values compete for one output.
 
 ## If it does not work
 
-- _Only a relationship without inputs can drive an output_ — you connected a
-  rule; connect the value that applies it.
+- _A rule cannot drive an output — connect the value that applies this rule._ —
+  the rule's _Drives_ section offers no output; connect the value it names
+  (_Show_ selects it), or write one.
 - The connection is recorded but reported under _Driver_ — the value's domain
   differs from the output's, or it produces another concept.
   [Connections](../troubleshooting/connection-errors.md).

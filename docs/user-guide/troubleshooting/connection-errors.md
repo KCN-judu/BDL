@@ -58,10 +58,17 @@ and BDL does not resolve it with a priority or a last writer.
 upstream combination mapping_. Combine the competing values in one relationship
 — `if held then a else b` — and connect that. Code: `output.multiple_drivers`.
 
-## _Only a relationship without inputs can drive an output: connect the relationship that combines the sources._
+## _A rule cannot drive an output — connect the value that applies this rule._ (under _Drives_)
 
-**What to do.** The rule cannot drive; the value that applies it can. Same rule
-as above, stated at the source.
+**What it means.** Not a finding: the selected relationship reads something, so
+its _Drives_ section offers no output. The same rule as above, stated at the
+source before anything is connected.
+
+**What to do.** When exactly one value of the design applies the rule, the
+section names it — _Show_ selects it; connect the output from there. Otherwise
+write the value (`brightness = dimByTilt(tilt)`) and connect that. An output's
+_Connect_ pop-up likewise lists only values of the concept it accepts; when
+there is none, it says so in one sentence.
 
 ## _Replace the connection?_ (a sheet)
 
