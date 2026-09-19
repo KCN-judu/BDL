@@ -63,6 +63,7 @@ enum ClientMessage_Payload {
   reloadProject,
   getSources,
   applySourceEdit,
+  semanticTokens,
   notSet
 }
 
@@ -110,6 +111,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     ReloadProjectRequest? reloadProject,
     GetSourcesRequest? getSources,
     ApplySourceEditRequest? applySourceEdit,
+    SemanticTokensRequest? semanticTokens,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -156,6 +158,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (reloadProject != null) result.reloadProject = reloadProject;
     if (getSources != null) result.getSources = getSources;
     if (applySourceEdit != null) result.applySourceEdit = applySourceEdit;
+    if (semanticTokens != null) result.semanticTokens = semanticTokens;
     return result;
   }
 
@@ -210,6 +213,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     61: ClientMessage_Payload.reloadProject,
     62: ClientMessage_Payload.getSources,
     63: ClientMessage_Payload.applySourceEdit,
+    64: ClientMessage_Payload.semanticTokens,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -256,7 +260,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       60,
       61,
       62,
-      63
+      63,
+      64
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -342,6 +347,8 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: GetSourcesRequest.$_createMessage)
     ..aOM<ApplySourceEditRequest>(63, _omitFieldNames ? '' : 'applySourceEdit',
         subBuilder: ApplySourceEditRequest.$_createMessage)
+    ..aOM<SemanticTokensRequest>(64, _omitFieldNames ? '' : 'semanticTokens',
+        subBuilder: SemanticTokensRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -405,6 +412,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(61)
   @$pb.TagNumber(62)
   @$pb.TagNumber(63)
+  @$pb.TagNumber(64)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -447,6 +455,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(61)
   @$pb.TagNumber(62)
   @$pb.TagNumber(63)
+  @$pb.TagNumber(64)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -915,6 +924,19 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearApplySourceEdit() => $_clearField(63);
   @$pb.TagNumber(63)
   ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(41);
+
+  /// Semantic tokens over a text as typed (0.21): the one classifier's
+  /// answer for the Code view and the formula editor alike.
+  @$pb.TagNumber(64)
+  SemanticTokensRequest get semanticTokens => $_getN(42);
+  @$pb.TagNumber(64)
+  set semanticTokens(SemanticTokensRequest value) => $_setField(64, value);
+  @$pb.TagNumber(64)
+  $core.bool hasSemanticTokens() => $_has(42);
+  @$pb.TagNumber(64)
+  void clearSemanticTokens() => $_clearField(64);
+  @$pb.TagNumber(64)
+  SemanticTokensRequest ensureSemanticTokens() => $_ensure(42);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1027,6 +1049,7 @@ enum Response_Payload {
   formulaSlot,
   composeFormula,
   libraryItems,
+  semanticTokens,
   notSet
 }
 
@@ -1057,6 +1080,7 @@ class Response extends $pb.GeneratedMessage {
     FormulaSlotResponse? formulaSlot,
     ComposeFormulaResponse? composeFormula,
     LibraryItemsResponse? libraryItems,
+    SemanticTokensResponse? semanticTokens,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1084,6 +1108,7 @@ class Response extends $pb.GeneratedMessage {
     if (formulaSlot != null) result.formulaSlot = formulaSlot;
     if (composeFormula != null) result.composeFormula = composeFormula;
     if (libraryItems != null) result.libraryItems = libraryItems;
+    if (semanticTokens != null) result.semanticTokens = semanticTokens;
     return result;
   }
 
@@ -1121,6 +1146,7 @@ class Response extends $pb.GeneratedMessage {
     47: Response_Payload.formulaSlot,
     48: Response_Payload.composeFormula,
     49: Response_Payload.libraryItems,
+    50: Response_Payload.semanticTokens,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1150,7 +1176,8 @@ class Response extends $pb.GeneratedMessage {
       46,
       47,
       48,
-      49
+      49,
+      50
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1200,6 +1227,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: ComposeFormulaResponse.$_createMessage)
     ..aOM<LibraryItemsResponse>(49, _omitFieldNames ? '' : 'libraryItems',
         subBuilder: LibraryItemsResponse.$_createMessage)
+    ..aOM<SemanticTokensResponse>(50, _omitFieldNames ? '' : 'semanticTokens',
+        subBuilder: SemanticTokensResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1246,6 +1275,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(47)
   @$pb.TagNumber(48)
   @$pb.TagNumber(49)
+  @$pb.TagNumber(50)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1271,6 +1301,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(47)
   @$pb.TagNumber(48)
   @$pb.TagNumber(49)
+  @$pb.TagNumber(50)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1545,6 +1576,17 @@ class Response extends $pb.GeneratedMessage {
   void clearLibraryItems() => $_clearField(49);
   @$pb.TagNumber(49)
   LibraryItemsResponse ensureLibraryItems() => $_ensure(24);
+
+  @$pb.TagNumber(50)
+  SemanticTokensResponse get semanticTokens => $_getN(25);
+  @$pb.TagNumber(50)
+  set semanticTokens(SemanticTokensResponse value) => $_setField(50, value);
+  @$pb.TagNumber(50)
+  $core.bool hasSemanticTokens() => $_has(25);
+  @$pb.TagNumber(50)
+  void clearSemanticTokens() => $_clearField(50);
+  @$pb.TagNumber(50)
+  SemanticTokensResponse ensureSemanticTokens() => $_ensure(25);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -17227,6 +17269,505 @@ class SourceEditApplied extends $pb.GeneratedMessage {
   void clearSources() => $_clearField(3);
   @$pb.TagNumber(3)
   SourcesView ensureSources() => $_ensure(2);
+}
+
+enum SemanticTokensRequest_Document { path, formula, notSet }
+
+/// Semantic tokens (protocol 0.21): the classes of a text's spans as the
+/// IDE service states them, on the LSP semantic-token vocabulary
+/// (`docs/architecture/syntax-highlighting.md`).  The daemon classifies;
+/// a client colours.  No colour, font or theme word ever crosses the
+/// wire, and a client never tokenizes BDL itself.  The text is sent
+/// whole, as typed — the same text that `ApplySourceEdit` or
+/// `AnalyzeDefinitionDraft` carries — so the tokens are over exactly the
+/// bytes the client has, whether or not that text builds: what the tree
+/// recognises keeps its lexical class, what the project resolves gains
+/// its semantic class.
+class SemanticTokensRequest extends $pb.GeneratedMessage {
+  factory SemanticTokensRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? text,
+    $core.String? path,
+    FormulaDocument? formula,
+  }) {
+    final result = SemanticTokensRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (text != null) result.text = text;
+    if (path != null) result.path = path;
+    if (formula != null) result.formula = formula;
+    return result;
+  }
+
+  SemanticTokensRequest._();
+
+  factory SemanticTokensRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokensRequest()..mergeFromBuffer(data, registry);
+  factory SemanticTokensRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokensRequest()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, SemanticTokensRequest_Document>
+      _SemanticTokensRequest_DocumentByTag = {
+    4: SemanticTokensRequest_Document.path,
+    5: SemanticTokensRequest_Document.formula,
+    0: SemanticTokensRequest_Document.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SemanticTokensRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticTokensRequest.$_createMessage)
+    ..oo(0, [4, 5])
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'text')
+    ..aOS(4, _omitFieldNames ? '' : 'path')
+    ..aOM<FormulaDocument>(5, _omitFieldNames ? '' : 'formula',
+        subBuilder: FormulaDocument.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokensRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokensRequest copyWith(void Function(SemanticTokensRequest) updates) =>
+      super.copyWith((message) => updates(message as SemanticTokensRequest))
+          as SemanticTokensRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticTokensRequest() / SemanticTokensRequest.new instead')
+  static SemanticTokensRequest create() => SemanticTokensRequest._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticTokensRequest._();
+  @$core.override
+  SemanticTokensRequest createEmptyInstance() => SemanticTokensRequest._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticTokensRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SemanticTokensRequest>(
+          SemanticTokensRequest.$_createMessage);
+  static SemanticTokensRequest? _defaultInstance;
+
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  SemanticTokensRequest_Document whichDocument() =>
+      _SemanticTokensRequest_DocumentByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
+  void clearDocument() => $_clearField($_whichOneof(0));
+
+  /// The revision the client's text is against.  Informational: the
+  /// daemon answers over its current project and states its own
+  /// revision; a client compares.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  /// The client's own counter for this document, echoed back so a late
+  /// answer to an older text is recognised and dropped.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  /// The text to classify, exactly as the client has it.
+  @$pb.TagNumber(3)
+  $core.String get text => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set text($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasText() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearText() => $_clearField(3);
+
+  /// A source file of the project, by path (`src/main.bdl`): the Code
+  /// view.  Classified as an overlay over the project's sources, so the
+  /// other files' declarations resolve.
+  @$pb.TagNumber(4)
+  $core.String get path => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set path($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasPath() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPath() => $_clearField(4);
+
+  /// One relationship's definition, as the formula editor has it: the
+  /// draft overlay of that relationship, in its own scope.
+  @$pb.TagNumber(5)
+  FormulaDocument get formula => $_getN(4);
+  @$pb.TagNumber(5)
+  set formula(FormulaDocument value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasFormula() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearFormula() => $_clearField(5);
+  @$pb.TagNumber(5)
+  FormulaDocument ensureFormula() => $_ensure(4);
+}
+
+class FormulaDocument extends $pb.GeneratedMessage {
+  factory FormulaDocument({
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? component,
+  }) {
+    final result = FormulaDocument._();
+    if (mappingId != null) result.mappingId = mappingId;
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  FormulaDocument._();
+
+  factory FormulaDocument.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaDocument()..mergeFromBuffer(data, registry);
+  factory FormulaDocument.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaDocument()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FormulaDocument',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormulaDocument.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaDocument clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaDocument copyWith(void Function(FormulaDocument) updates) =>
+      super.copyWith((message) => updates(message as FormulaDocument)) as FormulaDocument;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormulaDocument() / FormulaDocument.new instead')
+  static FormulaDocument create() => FormulaDocument._();
+  static $pb.GeneratedMessage $_createMessage() => FormulaDocument._();
+  @$core.override
+  FormulaDocument createEmptyInstance() => FormulaDocument._();
+  @$core.pragma('dart2js:noInline')
+  static FormulaDocument getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FormulaDocument>(FormulaDocument.$_createMessage);
+  static FormulaDocument? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get mappingId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set mappingId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMappingId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMappingId() => $_clearField(1);
+
+  /// The component whose body the relationship belongs to; absent for the
+  /// system's own.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get component => $_getI64(1);
+  @$pb.TagNumber(2)
+  set component($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasComponent() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearComponent() => $_clearField(2);
+}
+
+class SemanticTokensResponse extends $pb.GeneratedMessage {
+  factory SemanticTokensResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    SemanticTokenLegend? legend,
+    $core.int? textLen,
+    $core.Iterable<SemanticToken>? tokens,
+  }) {
+    final result = SemanticTokensResponse._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (legend != null) result.legend = legend;
+    if (textLen != null) result.textLen = textLen;
+    if (tokens != null) result.tokens.addAll(tokens);
+    return result;
+  }
+
+  SemanticTokensResponse._();
+
+  factory SemanticTokensResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokensResponse()..mergeFromBuffer(data, registry);
+  factory SemanticTokensResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokensResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SemanticTokensResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticTokensResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<SemanticTokenLegend>(3, _omitFieldNames ? '' : 'legend',
+        subBuilder: SemanticTokenLegend.$_createMessage)
+    ..aI(4, _omitFieldNames ? '' : 'textLen', fieldType: $pb.PbFieldType.OU3)
+    ..pPM<SemanticToken>(5, _omitFieldNames ? '' : 'tokens',
+        subBuilder: SemanticToken.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokensResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokensResponse copyWith(void Function(SemanticTokensResponse) updates) =>
+      super.copyWith((message) => updates(message as SemanticTokensResponse))
+          as SemanticTokensResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticTokensResponse() / SemanticTokensResponse.new instead')
+  static SemanticTokensResponse create() => SemanticTokensResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticTokensResponse._();
+  @$core.override
+  SemanticTokensResponse createEmptyInstance() => SemanticTokensResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticTokensResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SemanticTokensResponse>(
+          SemanticTokensResponse.$_createMessage);
+  static SemanticTokensResponse? _defaultInstance;
+
+  /// The revision the daemon classified at.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  /// `SemanticTokensRequest.generation`, echoed.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  /// The vocabulary the indices below are into.  Sent with every answer
+  /// (it is small) so a client never assumes a legend it has not seen.
+  @$pb.TagNumber(3)
+  SemanticTokenLegend get legend => $_getN(2);
+  @$pb.TagNumber(3)
+  set legend(SemanticTokenLegend value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasLegend() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearLegend() => $_clearField(3);
+  @$pb.TagNumber(3)
+  SemanticTokenLegend ensureLegend() => $_ensure(2);
+
+  /// The byte length of the text classified: a client that has since
+  /// typed compares before applying.
+  @$pb.TagNumber(4)
+  $core.int get textLen => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set textLen($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTextLen() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTextLen() => $_clearField(4);
+
+  /// Sorted by `start`, non-overlapping, never empty, on character
+  /// boundaries.
+  @$pb.TagNumber(5)
+  $pb.PbList<SemanticToken> get tokens => $_getList(4);
+}
+
+/// The token types and modifiers by index — LSP `SemanticTokensLegend`
+/// with a version.  `types` are the standard LSP names where one fits
+/// (`type`, `function`, `variable`, `parameter`, `keyword`, `number`,
+/// `operator`, `comment`, `enumMember`, `property`, `class`,
+/// `namespace`) plus `unit` and `slot`; `modifiers` are the standard
+/// `declaration` and `defaultLibrary` plus `source`, `output`, `device`,
+/// `instance`, `unresolved`.  The version moves when a name is added,
+/// removed or renumbered; a client colours by name, never by index, and
+/// leaves an unknown name plain.
+class SemanticTokenLegend extends $pb.GeneratedMessage {
+  factory SemanticTokenLegend({
+    $core.int? version,
+    $core.Iterable<$core.String>? types,
+    $core.Iterable<$core.String>? modifiers,
+  }) {
+    final result = SemanticTokenLegend._();
+    if (version != null) result.version = version;
+    if (types != null) result.types.addAll(types);
+    if (modifiers != null) result.modifiers.addAll(modifiers);
+    return result;
+  }
+
+  SemanticTokenLegend._();
+
+  factory SemanticTokenLegend.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokenLegend()..mergeFromBuffer(data, registry);
+  factory SemanticTokenLegend.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticTokenLegend()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SemanticTokenLegend',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticTokenLegend.$_createMessage)
+    ..aI(1, _omitFieldNames ? '' : 'version', fieldType: $pb.PbFieldType.OU3)
+    ..pPS(2, _omitFieldNames ? '' : 'types')
+    ..pPS(3, _omitFieldNames ? '' : 'modifiers')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokenLegend clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticTokenLegend copyWith(void Function(SemanticTokenLegend) updates) =>
+      super.copyWith((message) => updates(message as SemanticTokenLegend)) as SemanticTokenLegend;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticTokenLegend() / SemanticTokenLegend.new instead')
+  static SemanticTokenLegend create() => SemanticTokenLegend._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticTokenLegend._();
+  @$core.override
+  SemanticTokenLegend createEmptyInstance() => SemanticTokenLegend._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticTokenLegend getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SemanticTokenLegend>(SemanticTokenLegend.$_createMessage);
+  static SemanticTokenLegend? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get version => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set version($core.int value) => $_setUnsignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasVersion() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearVersion() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get types => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$core.String> get modifiers => $_getList(2);
+}
+
+/// One classified span, in byte offsets into the request's text.
+class SemanticToken extends $pb.GeneratedMessage {
+  factory SemanticToken({
+    $core.int? start,
+    $core.int? end,
+    $core.int? tokenType,
+    $core.int? tokenModifiers,
+  }) {
+    final result = SemanticToken._();
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    if (tokenType != null) result.tokenType = tokenType;
+    if (tokenModifiers != null) result.tokenModifiers = tokenModifiers;
+    return result;
+  }
+
+  SemanticToken._();
+
+  factory SemanticToken.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticToken()..mergeFromBuffer(data, registry);
+  factory SemanticToken.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SemanticToken()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SemanticToken',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SemanticToken.$_createMessage)
+    ..aI(1, _omitFieldNames ? '' : 'start', fieldType: $pb.PbFieldType.OU3)
+    ..aI(2, _omitFieldNames ? '' : 'end', fieldType: $pb.PbFieldType.OU3)
+    ..aI(3, _omitFieldNames ? '' : 'tokenType', fieldType: $pb.PbFieldType.OU3)
+    ..aI(4, _omitFieldNames ? '' : 'tokenModifiers', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticToken clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SemanticToken copyWith(void Function(SemanticToken) updates) =>
+      super.copyWith((message) => updates(message as SemanticToken)) as SemanticToken;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SemanticToken() / SemanticToken.new instead')
+  static SemanticToken create() => SemanticToken._();
+  static $pb.GeneratedMessage $_createMessage() => SemanticToken._();
+  @$core.override
+  SemanticToken createEmptyInstance() => SemanticToken._();
+  @$core.pragma('dart2js:noInline')
+  static SemanticToken getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SemanticToken>(SemanticToken.$_createMessage);
+  static SemanticToken? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get start => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set start($core.int value) => $_setUnsignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStart() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStart() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get end => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set end($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEnd() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEnd() => $_clearField(2);
+
+  /// Index into `legend.types`.
+  @$pb.TagNumber(3)
+  $core.int get tokenType => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set tokenType($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTokenType() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTokenType() => $_clearField(3);
+
+  /// Bit set over `legend.modifiers` (bit i = modifiers[i]).
+  @$pb.TagNumber(4)
+  $core.int get tokenModifiers => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set tokenModifiers($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTokenModifiers() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTokenModifiers() => $_clearField(4);
 }
 
 class GetSystemRequest extends $pb.GeneratedMessage {

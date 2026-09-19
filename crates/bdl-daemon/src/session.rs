@@ -18,9 +18,9 @@
 //! `bdl-ide`, never by a side path through the compiler.
 
 use bdl_ide::{
-    completion, draft_verdict, entity_at_formula, hover, AnalysisSnapshot, CompletionContext,
-    DraftVerdict, EntityRef, IdeHost, OverlayKey, QueryError, SemanticCompletion, SemanticHover,
-    TextRange,
+    completion, draft_verdict, entity_at_formula, formula_tokens, hover, semantic_tokens,
+    AnalysisSnapshot, CompletionContext, DraftVerdict, EntityRef, IdeHost, OverlayKey, QueryError,
+    SemanticCompletion, SemanticHover, SemanticToken, TextRange,
 };
 use bdl_ide_db::CancelScope;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome};
@@ -260,6 +260,11 @@ pub struct SystemState {
     /// IDE ground state per component body, for component-scoped drafts:
     /// created on first use, re-seated on every commit.
     component_ide: BTreeMap<ComponentId, IdeHost>,
+    /// IDE ground state over the sources as written back, for the Code
+    /// view's tokens: the text typed is an overlay on it, so the other
+    /// files' declarations resolve.  Seeded on first use, dropped on every
+    /// commit (the written-back text moves with the system).
+    text_ide: Option<IdeHost>,
     saved: BehaviorSystem,
     undo: Vec<HistoryEntry>,
     redo: Vec<HistoryEntry>,
@@ -353,6 +358,7 @@ impl SystemState {
     /// revision; hosts of components that no longer exist go.  Overlays
     /// (drafts) survive, as on the project host.
     fn reseat_component_hosts(&mut self) {
+        self.text_ide = None;
         let revision = self.current.revision;
         let components = &self.current.system.components;
         self.component_ide
@@ -639,6 +645,7 @@ impl Session {
                 flattened,
                 authoring_generation: 0,
                 component_ide: BTreeMap::new(),
+                text_ide: None,
                 undo: Vec::new(),
                 redo: Vec::new(),
                 text,
@@ -1401,6 +1408,48 @@ impl Session {
             return Ok(None);
         };
         Ok(hover(&snapshot, entity).map(|h| (range, h)))
+    }
+
+    /// The tokens of one source file's text as typed (protocol 0.21): the
+    /// text becomes the file's overlay on the sources as written back, and
+    /// the one classifier answers over the resulting workspace.  A text
+    /// that does not build still gets its lexical tokens.  The path must
+    /// be one the Code view may write.
+    pub fn source_tokens(
+        &mut self,
+        path: &str,
+        text: &str,
+    ) -> Result<Vec<SemanticToken>, SessionError> {
+        if !is_source_path(path) {
+            return Err(SessionError::InvalidSourcePath {
+                path: path.to_owned(),
+            });
+        }
+        let p = self.project_mut()?;
+        let sys = p.system.as_mut().ok_or(SessionError::NotASystem)?;
+        if sys.text_ide.is_none() {
+            let wb = written_back(sys)?;
+            let name = sys.current.system.base.name.clone();
+            sys.text_ide = Some(IdeHost::text_workspace(&name, wb.files, wb.table));
+        }
+        let host = sys.text_ide.as_mut().ok_or(SessionError::NotASystem)?;
+        let uri = bdl_ide_db::workspace::file_uri(path);
+        let (doc, _) = host.set_text_document(&uri, text);
+        let snapshot = host.snapshot();
+        Ok(semantic_tokens(&snapshot, doc))
+    }
+
+    /// The tokens of a relationship's definition as typed: the draft
+    /// overlay of `mapping` in its scope, classified relative to its own
+    /// text.
+    pub fn draft_tokens(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+    ) -> Result<Vec<SemanticToken>, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        Ok(formula_tokens(&snapshot, mapping))
     }
 
     /// The current world's snapshot (committed + whatever overlays exist),

@@ -164,14 +164,10 @@ fn the_lamp_tokenizes_to_exact_classes_on_both_layers() {
         "{r:?}"
     );
 
-    // a Source: a variable the design only reads, declared and unresolved
+    // a Source: a variable the design only reads; having no definition is
+    // what it is, not a gap
     assert!(
-        has(
-            &r,
-            "temp",
-            TokenType::Variable,
-            &["declaration", "source", "unresolved"]
-        ),
+        has(&r, "temp", TokenType::Variable, &["declaration", "source"]),
         "{r:?}"
     );
 
@@ -425,12 +421,7 @@ fn a_relationship_changes_class_with_its_derived_role_only() {
     let doc = snap.document_by_uri(&uri).expect("doc");
     let r = rows(&text, &semantic_tokens(&snap, doc));
     assert!(
-        has(
-            &r,
-            "temp",
-            TokenType::Variable,
-            &["declaration", "source", "unresolved"]
-        ),
+        has(&r, "temp", TokenType::Variable, &["declaration", "source"]),
         "{r:?}"
     );
     // attach a definition: a Value
@@ -460,12 +451,7 @@ fn a_relationship_changes_class_with_its_derived_role_only() {
     let doc3 = snap3.document_by_uri(&uri).expect("doc");
     let r3 = rows(&text3, &semantic_tokens(&snap3, doc3));
     assert!(
-        has(
-            &r3,
-            "temp",
-            TokenType::Variable,
-            &["declaration", "source", "unresolved"]
-        ),
+        has(&r3, "temp", TokenType::Variable, &["declaration", "source"]),
         "{r3:?}"
     );
 
@@ -693,7 +679,7 @@ device pwmLight : pwm_channel for light
             &r,
             "tiltValue",
             TokenType::Variable,
-            &["declaration", "source", "unresolved"]
+            &["declaration", "source"]
         ),
         "{r:?}"
     );

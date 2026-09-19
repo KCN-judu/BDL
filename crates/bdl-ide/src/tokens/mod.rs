@@ -403,10 +403,14 @@ fn entity_token(
                 return None;
             };
             let block = design.mappings.get(&d)?;
-            m.unresolved = block.definition.is_none();
             match relationship_role(snapshot, d, block) {
-                Role::Rule => TokenType::Function,
+                // a rule with no definition yet is declared only: hollow
+                Role::Rule => {
+                    m.unresolved = block.definition.is_none();
+                    TokenType::Function
+                }
                 Role::Value => TokenType::Variable,
+                // having no definition is what a Source is, not a gap
                 Role::Source => {
                     m.source = true;
                     TokenType::Variable

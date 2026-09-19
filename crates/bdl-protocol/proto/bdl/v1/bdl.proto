@@ -74,6 +74,9 @@ message ClientMessage {
     // One project, Code view (ADR-0023; 0.10).
     GetSourcesRequest get_sources = 62;
     ApplySourceEditRequest apply_source_edit = 63;
+    // Semantic tokens over a text as typed (0.21): the one classifier's
+    // answer for the Code view and the formula editor alike.
+    SemanticTokensRequest semantic_tokens = 64;
   }
 }
 
@@ -111,6 +114,7 @@ message Response {
     FormulaSlotResponse formula_slot = 47;
     ComposeFormulaResponse compose_formula = 48;
     LibraryItemsResponse library_items = 49;
+    SemanticTokensResponse semantic_tokens = 50;
   }
 }
 
@@ -1774,6 +1778,85 @@ message SourceEditApplied {
   // The current projection either way (new revision when accepted).
   ProjectProjection project = 2;
   SourcesView sources = 3;
+}
+
+// Semantic tokens (protocol 0.21): the classes of a text's spans as the
+// IDE service states them, on the LSP semantic-token vocabulary
+// (`docs/architecture/syntax-highlighting.md`).  The daemon classifies;
+// a client colours.  No colour, font or theme word ever crosses the
+// wire, and a client never tokenizes BDL itself.  The text is sent
+// whole, as typed — the same text that `ApplySourceEdit` or
+// `AnalyzeDefinitionDraft` carries — so the tokens are over exactly the
+// bytes the client has, whether or not that text builds: what the tree
+// recognises keeps its lexical class, what the project resolves gains
+// its semantic class.
+message SemanticTokensRequest {
+  // The revision the client's text is against.  Informational: the
+  // daemon answers over its current project and states its own
+  // revision; a client compares.
+  uint64 revision = 1;
+  // The client's own counter for this document, echoed back so a late
+  // answer to an older text is recognised and dropped.
+  uint64 generation = 2;
+  // The text to classify, exactly as the client has it.
+  string text = 3;
+  oneof document {
+    // A source file of the project, by path (`src/main.bdl`): the Code
+    // view.  Classified as an overlay over the project's sources, so the
+    // other files' declarations resolve.
+    string path = 4;
+    // One relationship's definition, as the formula editor has it: the
+    // draft overlay of that relationship, in its own scope.
+    FormulaDocument formula = 5;
+  }
+}
+
+message FormulaDocument {
+  uint64 mapping_id = 1;
+  // The component whose body the relationship belongs to; absent for the
+  // system's own.
+  optional uint64 component = 2;
+}
+
+message SemanticTokensResponse {
+  // The revision the daemon classified at.
+  uint64 revision = 1;
+  // `SemanticTokensRequest.generation`, echoed.
+  uint64 generation = 2;
+  // The vocabulary the indices below are into.  Sent with every answer
+  // (it is small) so a client never assumes a legend it has not seen.
+  SemanticTokenLegend legend = 3;
+  // The byte length of the text classified: a client that has since
+  // typed compares before applying.
+  uint32 text_len = 4;
+  // Sorted by `start`, non-overlapping, never empty, on character
+  // boundaries.
+  repeated SemanticToken tokens = 5;
+}
+
+// The token types and modifiers by index — LSP `SemanticTokensLegend`
+// with a version.  `types` are the standard LSP names where one fits
+// (`type`, `function`, `variable`, `parameter`, `keyword`, `number`,
+// `operator`, `comment`, `enumMember`, `property`, `class`,
+// `namespace`) plus `unit` and `slot`; `modifiers` are the standard
+// `declaration` and `defaultLibrary` plus `source`, `output`, `device`,
+// `instance`, `unresolved`.  The version moves when a name is added,
+// removed or renumbered; a client colours by name, never by index, and
+// leaves an unknown name plain.
+message SemanticTokenLegend {
+  uint32 version = 1;
+  repeated string types = 2;
+  repeated string modifiers = 3;
+}
+
+// One classified span, in byte offsets into the request's text.
+message SemanticToken {
+  uint32 start = 1;
+  uint32 end = 2;
+  // Index into `legend.types`.
+  uint32 token_type = 3;
+  // Bit set over `legend.modifiers` (bit i = modifiers[i]).
+  uint32 token_modifiers = 4;
 }
 
 message GetSystemRequest {}

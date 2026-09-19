@@ -712,6 +712,15 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'applySourceEdit'
     },
+    {
+      '1': 'semantic_tokens',
+      '3': 64,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SemanticTokensRequest',
+      '9': 0,
+      '10': 'semanticTokens'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -776,8 +785,9 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'RleHRQcm9qZWN0EkUKDnJlbG9hZF9wcm9qZWN0GD0gASgLMhwuYmRsLnYxLlJlbG9hZFByb2pl'
         'Y3RSZXF1ZXN0SABSDXJlbG9hZFByb2plY3QSPAoLZ2V0X3NvdXJjZXMYPiABKAsyGS5iZGwudj'
         'EuR2V0U291cmNlc1JlcXVlc3RIAFIKZ2V0U291cmNlcxJMChFhcHBseV9zb3VyY2VfZWRpdBg/'
-        'IAEoCzIeLmJkbC52MS5BcHBseVNvdXJjZUVkaXRSZXF1ZXN0SABSD2FwcGx5U291cmNlRWRpdE'
-        'IJCgdwYXlsb2Fk');
+        'IAEoCzIeLmJkbC52MS5BcHBseVNvdXJjZUVkaXRSZXF1ZXN0SABSD2FwcGx5U291cmNlRWRpdB'
+        'JICg9zZW1hbnRpY190b2tlbnMYQCABKAsyHS5iZGwudjEuU2VtYW50aWNUb2tlbnNSZXF1ZXN0'
+        'SABSDnNlbWFudGljVG9rZW5zQgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1002,6 +1012,15 @@ const Response$json = {
       '9': 0,
       '10': 'libraryItems'
     },
+    {
+      '1': 'semantic_tokens',
+      '3': 50,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SemanticTokensResponse',
+      '9': 0,
+      '10': 'semanticTokens'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1038,8 +1057,9 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'plY3Rpb24SQAoMZm9ybXVsYV9zbG90GC8gASgLMhsuYmRsLnYxLkZvcm11bGFTbG90UmVzcG9u'
         'c2VIAFILZm9ybXVsYVNsb3QSSQoPY29tcG9zZV9mb3JtdWxhGDAgASgLMh4uYmRsLnYxLkNvbX'
         'Bvc2VGb3JtdWxhUmVzcG9uc2VIAFIOY29tcG9zZUZvcm11bGESQwoNbGlicmFyeV9pdGVtcxgx'
-        'IAEoCzIcLmJkbC52MS5MaWJyYXJ5SXRlbXNSZXNwb25zZUgAUgxsaWJyYXJ5SXRlbXNCCQoHcG'
-        'F5bG9hZA==');
+        'IAEoCzIcLmJkbC52MS5MaWJyYXJ5SXRlbXNSZXNwb25zZUgAUgxsaWJyYXJ5SXRlbXMSSQoPc2'
+        'VtYW50aWNfdG9rZW5zGDIgASgLMh4uYmRsLnYxLlNlbWFudGljVG9rZW5zUmVzcG9uc2VIAFIO'
+        'c2VtYW50aWNUb2tlbnNCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -4869,6 +4889,104 @@ final $typed_data.Uint8List sourceEditAppliedDescriptor = $convert
     .base64Decode('ChFTb3VyY2VFZGl0QXBwbGllZBIaCghhY2NlcHRlZBgBIAEoCFIIYWNjZXB0ZWQSMwoHcHJvam'
         'VjdBgCIAEoCzIZLmJkbC52MS5Qcm9qZWN0UHJvamVjdGlvblIHcHJvamVjdBItCgdzb3VyY2Vz'
         'GAMgASgLMhMuYmRsLnYxLlNvdXJjZXNWaWV3Ugdzb3VyY2Vz');
+
+@$core.Deprecated('Use semanticTokensRequestDescriptor instead')
+const SemanticTokensRequest$json = {
+  '1': 'SemanticTokensRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'text', '3': 3, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'path', '3': 4, '4': 1, '5': 9, '9': 0, '10': 'path'},
+    {
+      '1': 'formula',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaDocument',
+      '9': 0,
+      '10': 'formula'
+    },
+  ],
+  '8': [
+    {'1': 'document'},
+  ],
+};
+
+/// Descriptor for `SemanticTokensRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticTokensRequestDescriptor = $convert
+    .base64Decode('ChVTZW1hbnRpY1Rva2Vuc1JlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh4KCm'
+        'dlbmVyYXRpb24YAiABKARSCmdlbmVyYXRpb24SEgoEdGV4dBgDIAEoCVIEdGV4dBIUCgRwYXRo'
+        'GAQgASgJSABSBHBhdGgSMwoHZm9ybXVsYRgFIAEoCzIXLmJkbC52MS5Gb3JtdWxhRG9jdW1lbn'
+        'RIAFIHZm9ybXVsYUIKCghkb2N1bWVudA==');
+
+@$core.Deprecated('Use formulaDocumentDescriptor instead')
+const FormulaDocument$json = {
+  '1': 'FormulaDocument',
+  '2': [
+    {'1': 'mapping_id', '3': 1, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'component', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `FormulaDocument`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaDocumentDescriptor = $convert
+    .base64Decode('Cg9Gb3JtdWxhRG9jdW1lbnQSHQoKbWFwcGluZ19pZBgBIAEoBFIJbWFwcGluZ0lkEiEKCWNvbX'
+        'BvbmVudBgCIAEoBEgAUgljb21wb25lbnSIAQFCDAoKX2NvbXBvbmVudA==');
+
+@$core.Deprecated('Use semanticTokensResponseDescriptor instead')
+const SemanticTokensResponse$json = {
+  '1': 'SemanticTokensResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'legend', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.SemanticTokenLegend', '10': 'legend'},
+    {'1': 'text_len', '3': 4, '4': 1, '5': 13, '10': 'textLen'},
+    {'1': 'tokens', '3': 5, '4': 3, '5': 11, '6': '.bdl.v1.SemanticToken', '10': 'tokens'},
+  ],
+};
+
+/// Descriptor for `SemanticTokensResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticTokensResponseDescriptor = $convert
+    .base64Decode('ChZTZW1hbnRpY1Rva2Vuc1Jlc3BvbnNlEhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbhIeCg'
+        'pnZW5lcmF0aW9uGAIgASgEUgpnZW5lcmF0aW9uEjMKBmxlZ2VuZBgDIAEoCzIbLmJkbC52MS5T'
+        'ZW1hbnRpY1Rva2VuTGVnZW5kUgZsZWdlbmQSGQoIdGV4dF9sZW4YBCABKA1SB3RleHRMZW4SLQ'
+        'oGdG9rZW5zGAUgAygLMhUuYmRsLnYxLlNlbWFudGljVG9rZW5SBnRva2Vucw==');
+
+@$core.Deprecated('Use semanticTokenLegendDescriptor instead')
+const SemanticTokenLegend$json = {
+  '1': 'SemanticTokenLegend',
+  '2': [
+    {'1': 'version', '3': 1, '4': 1, '5': 13, '10': 'version'},
+    {'1': 'types', '3': 2, '4': 3, '5': 9, '10': 'types'},
+    {'1': 'modifiers', '3': 3, '4': 3, '5': 9, '10': 'modifiers'},
+  ],
+};
+
+/// Descriptor for `SemanticTokenLegend`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticTokenLegendDescriptor = $convert
+    .base64Decode('ChNTZW1hbnRpY1Rva2VuTGVnZW5kEhgKB3ZlcnNpb24YASABKA1SB3ZlcnNpb24SFAoFdHlwZX'
+        'MYAiADKAlSBXR5cGVzEhwKCW1vZGlmaWVycxgDIAMoCVIJbW9kaWZpZXJz');
+
+@$core.Deprecated('Use semanticTokenDescriptor instead')
+const SemanticToken$json = {
+  '1': 'SemanticToken',
+  '2': [
+    {'1': 'start', '3': 1, '4': 1, '5': 13, '10': 'start'},
+    {'1': 'end', '3': 2, '4': 1, '5': 13, '10': 'end'},
+    {'1': 'token_type', '3': 3, '4': 1, '5': 13, '10': 'tokenType'},
+    {'1': 'token_modifiers', '3': 4, '4': 1, '5': 13, '10': 'tokenModifiers'},
+  ],
+};
+
+/// Descriptor for `SemanticToken`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List semanticTokenDescriptor = $convert
+    .base64Decode('Cg1TZW1hbnRpY1Rva2VuEhQKBXN0YXJ0GAEgASgNUgVzdGFydBIQCgNlbmQYAiABKA1SA2VuZB'
+        'IdCgp0b2tlbl90eXBlGAMgASgNUgl0b2tlblR5cGUSJwoPdG9rZW5fbW9kaWZpZXJzGAQgASgN'
+        'Ug50b2tlbk1vZGlmaWVycw==');
 
 @$core.Deprecated('Use getSystemRequestDescriptor instead')
 const GetSystemRequest$json = {

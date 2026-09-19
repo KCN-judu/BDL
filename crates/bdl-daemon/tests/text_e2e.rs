@@ -1167,3 +1167,204 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     assert!(!sidecar.to_lowercase().contains("source"), "{sidecar}");
     assert!(!sidecar.contains("template"), "{sidecar}");
 }
+
+/// Semantic tokens over the wire (protocol 0.21): the Code view's text and
+/// a formula draft are classified by the one classifier, on the LSP
+/// vocabulary, with the legend in every answer; a text that does not
+/// build keeps its lexical classes; a component's body relationship is
+/// classified in its own scope; the client's generation comes back.
+#[test]
+fn semantic_tokens_are_served_for_sources_and_formula_drafts() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("system");
+    std::fs::create_dir_all(root.join("src")).unwrap();
+    std::fs::write(
+        root.join("bdl.toml"),
+        "schema_version = 1\nname = \"system\"\nkind = \"text\"\n",
+    )
+    .unwrap();
+    let text = include_str!("../../bdl-syntax/test_data/valid/system.bdl");
+    std::fs::write(root.join("src/system.bdl"), text).unwrap();
+    let mut c = Client::spawn();
+    let p = c.open(&root);
+    let sources = c.sources();
+    let shown = &sources.files[0];
+    assert_eq!(shown.path, "src/system.bdl");
+
+    let tokens =
+        |c: &mut Client, document: pb::semantic_tokens_request::Document, text: &str| match c.call(
+            Req::SemanticTokens(pb::SemanticTokensRequest {
+                revision: c.last_revision,
+                generation: 7,
+                text: text.into(),
+                document: Some(document),
+            }),
+        ) {
+            Resp::SemanticTokens(t) => t,
+            other => panic!("{other:?}"),
+        };
+    let classes =
+        |t: &pb::SemanticTokensResponse, text: &str| -> Vec<(String, String, Vec<String>)> {
+            let legend = t.legend.as_ref().unwrap();
+            t.tokens
+                .iter()
+                .map(|tok| {
+                    let mods = legend
+                        .modifiers
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| tok.token_modifiers & (1 << i) != 0)
+                        .map(|(_, m)| m.clone())
+                        .collect();
+                    (
+                        text[tok.start as usize..tok.end as usize].to_owned(),
+                        legend.types[tok.token_type as usize].clone(),
+                        mods,
+                    )
+                })
+                .collect()
+        };
+    let has = |rows: &[(String, String, Vec<String>)], text: &str, ty: &str, mods: &[&str]| {
+        rows.iter().any(|(t, k, m)| {
+            t == text && k == ty && m.iter().map(String::as_str).eq(mods.iter().copied())
+        })
+    };
+
+    // the file as shown
+    let path = pb::semantic_tokens_request::Document::Path(shown.path.clone());
+    let t = tokens(&mut c, path.clone(), &shown.text);
+    assert_eq!(t.generation, 7);
+    assert_eq!(t.revision, c.last_revision);
+    assert_eq!(t.text_len, shown.text.len() as u32);
+    let legend = t.legend.as_ref().unwrap();
+    assert_eq!(legend.version, bdl_ide::LEGEND_VERSION);
+    assert_eq!(legend.types, bdl_ide::legend().types);
+    assert_eq!(legend.modifiers, bdl_ide::legend().modifiers);
+    for w in t.tokens.windows(2) {
+        assert!(w[0].end <= w[1].start, "{:?} {:?}", w[0], w[1]);
+    }
+    let rows = classes(&t, &shown.text);
+    assert!(has(&rows, "concept", "keyword", &[]), "{rows:?}");
+    assert!(has(&rows, "Tilt", "type", &["declaration"]));
+    assert!(
+        has(&rows, "tilt", "variable", &["declaration", "source"]),
+        "{rows:?}"
+    );
+    assert!(has(&rows, "tiltValue", "variable", &["declaration"]));
+    assert!(has(&rows, "interaction", "namespace", &["declaration"]));
+    assert!(has(&rows, "interaction", "namespace", &[]));
+    assert!(has(&rows, "light", "variable", &["declaration", "output"]));
+    assert!(has(
+        &rows,
+        "pwmLight",
+        "variable",
+        &["declaration", "device"]
+    ));
+    assert!(has(&rows, "AdaptiveLamp", "class", &["declaration"]));
+    assert!(has(&rows, "AdaptiveLamp", "class", &[]));
+    assert!(has(
+        &rows,
+        "lampA",
+        "variable",
+        &["declaration", "instance"]
+    ));
+    assert!(has(&rows, "dimByTilt", "function", &["declaration"]));
+    assert!(has(&rows, "t", "parameter", &["declaration"]));
+    assert!(has(&rows, "90", "number", &[]));
+    assert!(has(&rows, "deg", "unit", &[]));
+    assert!(has(&rows, "/", "operator", &[]));
+    assert!(has(&rows, "// supplied from outside", "comment", &[]));
+    assert!(has(&rows, "gain", "property", &["declaration"]));
+    assert!(!rows
+        .iter()
+        .any(|(t, _, _)| t == ":" || t == "{" || t == "}"));
+
+    // text that does not build: the lexical layer stays, and the project
+    // is untouched (no revision moved, the committed sources unchanged)
+    let broken = shown
+        .text
+        .replace("dimByTilt(t) = t / (90 deg)", "dimByTilt(t) = t / (90 deg");
+    let rev = c.last_revision;
+    let t = tokens(&mut c, path.clone(), &broken);
+    assert_eq!(t.revision, rev);
+    assert_eq!(t.text_len, broken.len() as u32);
+    let rows = classes(&t, &broken);
+    assert!(has(&rows, "concept", "keyword", &[]));
+    assert!(has(&rows, "90", "number", &[]));
+    assert!(has(&rows, "Tilt", "type", &["declaration"]));
+    assert!(c.sources().files[0].text == shown.text);
+    assert_eq!(c.last_revision, rev);
+    // and the file's tokens after it are over the committed text again
+    let t = tokens(&mut c, path.clone(), &shown.text);
+    assert!(has(&classes(&t, &shown.text), "deg", "unit", &[]));
+
+    // a formula draft in a component's body, relative to its own text
+    let Resp::System(s) = c.call(Req::GetSystem(pb::GetSystemRequest {})) else {
+        panic!()
+    };
+    let s = s.system.unwrap();
+    let lamp = &s.components[0];
+    let dim = lamp
+        .body
+        .as_ref()
+        .unwrap()
+        .mappings
+        .iter()
+        .find(|m| m.name == "dimByTilt")
+        .unwrap()
+        .id;
+    let draft = "clamp(t / (90 deg), 0, 1)";
+    let t = tokens(
+        &mut c,
+        pb::semantic_tokens_request::Document::Formula(pb::FormulaDocument {
+            mapping_id: dim,
+            component: Some(lamp.id),
+        }),
+        draft,
+    );
+    assert_eq!(t.text_len, draft.len() as u32);
+    let rows = classes(&t, draft);
+    assert!(
+        has(&rows, "clamp", "function", &["defaultLibrary"]),
+        "{rows:?}"
+    );
+    assert!(has(&rows, "t", "parameter", &[]));
+    assert!(has(&rows, "90", "number", &[]));
+    assert!(has(&rows, "deg", "unit", &[]));
+    assert!(has(&rows, "0", "number", &[]));
+
+    // a system relationship's draft names a Source and a Rule
+    let brightness = p
+        .mappings
+        .iter()
+        .find(|m| m.name == "brightness")
+        .unwrap()
+        .id;
+    let draft = "if tilt > 0 deg then mirror else slow";
+    let t = tokens(
+        &mut c,
+        pb::semantic_tokens_request::Document::Formula(pb::FormulaDocument {
+            mapping_id: brightness,
+            component: None,
+        }),
+        draft,
+    );
+    let rows = classes(&t, draft);
+    assert!(has(&rows, "if", "keyword", &[]));
+    assert!(has(&rows, "tilt", "variable", &["source"]), "{rows:?}");
+    assert!(has(&rows, "mirror", "variable", &[]));
+    assert!(has(&rows, "slow", "variable", &[]));
+
+    // a path the Code view may not write is refused
+    let Resp::Error(e) = c.call(Req::SemanticTokens(pb::SemanticTokensRequest {
+        revision: c.last_revision,
+        generation: 8,
+        text: String::new(),
+        document: Some(pb::semantic_tokens_request::Document::Path(
+            "../x.bdl".into(),
+        )),
+    })) else {
+        panic!()
+    };
+    assert_eq!(e.code, "source.invalid_path");
+}

@@ -405,6 +405,7 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         }
         Req::CompleteDefinitionDraft(r) => (complete_definition_draft(session, &r), None),
         Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
+        Req::SemanticTokens(r) => (semantic_tokens(session, &r), None),
         Req::HoverEntity(r) => (hover_entity(session, &r), None),
         Req::ListSemanticActions(r) => (list_semantic_actions(session, &r), None),
         Req::GetFormulaProjection(r) => (get_formula_projection(session, &r), None),
@@ -585,6 +586,58 @@ fn hover_definition_draft(session: &mut Session, r: &pb::HoverDefinitionDraftReq
             ..hover_to_pb(h, r.revision)
         }),
         Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+/// Tokens over a text as typed (protocol 0.21).  A stale `revision` is
+/// not an error: tokens are presentation, and the daemon answers over
+/// its current project and states the revision it classified at — the
+/// client compares.  The legend travels with every answer.
+fn semantic_tokens(session: &mut Session, r: &pb::SemanticTokensRequest) -> Resp {
+    use pb::semantic_tokens_request::Document;
+    let tokens = match r.document.as_ref() {
+        Some(Document::Path(path)) => session.source_tokens(path, &r.text),
+        Some(Document::Formula(f)) => session.draft_tokens(
+            component_scope(f.component),
+            bdl_model::DeclId::from_raw(f.mapping_id),
+            &r.text,
+        ),
+        None => {
+            return Resp::Error(error(
+                "protocol.missing_field",
+                "semantic tokens need a document: a source path or a formula",
+            ))
+        }
+    };
+    let revision = session
+        .project()
+        .map(|p| p.current.revision.raw())
+        .unwrap_or_default();
+    match tokens {
+        Ok(tokens) => Resp::SemanticTokens(pb::SemanticTokensResponse {
+            revision,
+            generation: r.generation,
+            legend: Some(legend_to_pb(&bdl_ide::legend())),
+            text_len: r.text.len() as u32,
+            tokens: tokens
+                .iter()
+                .map(|t| pb::SemanticToken {
+                    start: t.range.start,
+                    end: t.range.end,
+                    token_type: t.ty.index(),
+                    token_modifiers: t.modifiers.bits(),
+                })
+                .collect(),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn legend_to_pb(l: &bdl_ide::Legend) -> pb::SemanticTokenLegend {
+    pb::SemanticTokenLegend {
+        version: l.version,
+        types: l.types.clone(),
+        modifiers: l.modifiers.clone(),
     }
 }
 
@@ -1398,6 +1451,7 @@ fn payload_name(p: &Req) -> &'static str {
         Req::DiscardDefinitionDraft(_) => "discard_definition_draft",
         Req::CompleteDefinitionDraft(_) => "complete_definition_draft",
         Req::HoverDefinitionDraft(_) => "hover_definition_draft",
+        Req::SemanticTokens(_) => "semantic_tokens",
         Req::HoverEntity(_) => "hover_entity",
         Req::ListSemanticActions(_) => "list_semantic_actions",
         Req::GetFormulaProjection(_) => "get_formula_projection",
