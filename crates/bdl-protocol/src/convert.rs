@@ -1017,6 +1017,19 @@ pub fn library_item_view(i: &bdl_library::LibraryItem) -> pb::LibraryItemView {
         icon: i.icon.clone(),
         creates: i.creates().iter().map(library_object_view).collect(),
         concept: i.as_concept_template().as_ref().map(concept_template_view),
+        preset: i.preset().as_ref().map(source_preset_view),
+    }
+}
+
+pub fn source_preset_view(p: &bdl_library::SourcePreset) -> pb::SourcePresetView {
+    pb::SourcePresetView {
+        concept_name: p.concept_name.clone(),
+        concept_description: p.concept_description.clone(),
+        representation: p.representation.as_ref().map(representation_to_pb),
+        type_name: p.type_name.clone(),
+        unit: p.unit.clone(),
+        source_name: p.source_name.clone(),
+        source_description: p.source_description.clone(),
     }
 }
 

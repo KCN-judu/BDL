@@ -60,6 +60,9 @@ message ClientMessage {
     // The Standard Library as items (0.17): concepts and sources alike.
     ListLibraryItemsRequest list_library_items = 42;
     InstantiateLibraryItemRequest instantiate_library_item = 43;
+    // Source creation over a chosen concept (0.23).
+    CreateSourceRequest create_source = 44;
+    ListSourceCandidatesRequest list_source_candidates = 45;
     // Behaviour systems (protocol 0.6).
     InitSystemProjectRequest init_system_project = 50;
     GetSystemRequest get_system = 51;
@@ -126,6 +129,7 @@ message Response {
     SourceCompletionResponse source_completion = 51;
     SourceLocationsResponse source_locations = 52;
     FormatSourceResponse format_source = 53;
+    SourceCandidatesResponse source_candidates = 54;
   }
 }
 
@@ -1443,6 +1447,24 @@ message LibraryItemView {
   // The concept-template view of a Concept item (its representation, unit
   // and role hint); absent for other categories.
   optional ConceptTemplateView concept = 9;
+  // The preset view of a Source item (0.23): what the Source creation
+  // flow prefills — names, a value form, a unit — and ranks existing
+  // concepts by.  The item decides nothing about identity: the Source is
+  // created over the concept the designer chooses (`CreateSource`).
+  // `creates` still describes what `InstantiateLibraryItem` would make of
+  // the item (the legacy path: concept and Source together).
+  optional SourcePresetView preset = 10;
+}
+
+message SourcePresetView {
+  string concept_name = 1;
+  string concept_description = 2;
+  optional Representation representation = 3;
+  // The textual type name of the value form (`Temperature`), empty when open.
+  string type_name = 4;
+  string unit = 5;
+  string source_name = 6;
+  string source_description = 7;
 }
 
 message LibraryObjectView {
@@ -1472,6 +1494,65 @@ message InstantiateLibraryItemRequest {
   string item_id = 2;
   map<string, string> names = 3;
   optional uint64 component = 4;
+}
+
+// Create a Source — `<source_name> : () -> C`, no definition (ADR-0032) —
+// over a concept the designer chose: an existing concept of the design in
+// scope (the system's own, or `component`'s body), or a new concept
+// created in the same transaction.  One revision, one history entry, all
+// or nothing: when either edit is refused nothing is applied and no
+// identity is consumed.  Answered with SystemEditApplied whose outcome
+// carries `created_mapping` and, for a new concept, `created_concept`.
+// `edit.stale_revision`, `edit.unknown_concept`, `edit.duplicate_*`,
+// `edit.invalid_name`.  The result is ordinary objects: the Source is a
+// Source because of its shape, and nothing records how it was made.
+message CreateSourceRequest {
+  uint64 base_revision = 1;
+  optional uint64 component = 2;
+  string source_name = 3;
+  string source_description = 4;
+  oneof concept {
+    // A concept of the design in scope, by identity — never by name or
+    // value form.
+    uint64 existing_concept = 5;
+    NewConcept new_concept = 6;
+  }
+}
+
+message NewConcept {
+  string name = 1;
+  string description = 2;
+  // Absent: the value form is decided later, as for CreateConcept.
+  optional Representation representation = 3;
+}
+
+// The concepts a Source may be created over, in the order the creation
+// flow lists them (0.23): every concept of the design in scope — identity
+// is nominal, two concepts of one value form are two choices — with the
+// ones whose value form is the preset's first (`preferred`) when
+// `item_id` names a Source item.  With an empty `item_id` (a generic New
+// Source) every concept in id order.  Ranking is authoring convenience,
+// never a rule: a Source `() -> C` is legal over any `C`.
+message ListSourceCandidatesRequest {
+  uint64 revision = 1;
+  optional uint64 component = 2;
+  string item_id = 3;
+}
+
+message SourceCandidatesResponse {
+  uint64 revision = 1;
+  repeated SourceCandidateView candidates = 2;
+  // The preset, when `item_id` named a Source item.
+  optional SourcePresetView preset = 3;
+  // The preset's names made free in the design (`Temperature`,
+  // `temperatureInput`; `Temperature2` when taken); empty without a preset.
+  string suggested_concept_name = 4;
+  string suggested_source_name = 5;
+}
+
+message SourceCandidateView {
+  uint64 concept_id = 1;
+  bool preferred = 2;
 }
 
 // ---------------------------------------------------------------------------

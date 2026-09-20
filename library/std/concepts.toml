@@ -3,14 +3,19 @@
 #
 # [[template]] — a Concept item: instantiating it produces one
 # CreateConcept edit with these defaults and a fresh SemanticId.
-# [[source]] — a Source item: an environment-provided value entering the
-# behavior model — a semantic concept (`value`) and an unresolved
-# relationship without inputs (`relationship`, written `() -> Value`),
-# created together in one transaction.  Nothing here is a sensor
-# primitive, an I/O operation, a kernel type, a device or a global
-# identity; two instantiations are two sets of objects, and a project never
-# depends on this file after they exist.  Display names and descriptions
-# are the canonical English; Studio localizes them by id.
+# [[source]] — a Source item: a PRESET for creating a Source — a value
+# entering the behavior model from the environment, `<source> : () -> C`
+# with no definition — over a concept the designer chooses: an existing
+# concept of the design, or a new one created in the same transaction.
+# `value` describes the new concept the preset suggests (name, value form,
+# unit) and `relationship` the Source it suggests (name); Studio's Source
+# sheet prefills them and ranks existing concepts by the value form.  The
+# item owns no identity.  (The legacy `InstantiateLibraryItem` request
+# still creates both objects at once from the same data.)  Nothing here
+# is a sensor primitive, an I/O operation, a kernel type, a device or a
+# global identity; a project never depends on this file after the objects
+# exist.  Display names and descriptions are the canonical English;
+# Studio localizes them by id.
 #
 # representation: { quantity = "<quantity id>" } — from the shared quantity
 # vocabulary (bdl_model::quantity), "boolean", "count", or "open" (decide
@@ -455,39 +460,43 @@ icon = "sound"
 
 # ---- sources ----------------------------------------------------------------
 #
-# A Source item creates TWO ordinary objects in one transaction: a concept
-# (`value`) and a relationship `<relationship> : () -> <value>` with no
-# definition — a value entering the behavior model from the environment,
-# observed once per activation.  The canvas shows it as a Source because of
-# that shape and state (ADR-0032), not because of anything in this file; a
-# third-party library gets the same.  Not every Source is a physical sensor
-# — External Value is a host or network value — which is why the category is
-# "source".  What realizes a Source (an I2C sensor, an ADC channel, a GPIO
-# input) is deployment's, never the item's.  Display text here is the
-# canonical English; Studio localizes by id (locale/library/std.json).
+# A Source is a value entering the behavior model from the environment,
+# observed once per activation: `<name> : () -> C`, no definition.  Which
+# concept `C` it provides is the designer's choice, never this file's — an
+# existing concept of the design (RoomTemperature, MotorTemperature: two
+# identities of one value form stay two choices) or a new one created in
+# the same transaction.  Each item below is a preset for that choice: the
+# words on the row, a suggested Source name, and the new concept it would
+# suggest (name, value form, unit); existing concepts of that value form
+# are listed first.  The canvas shows the result as a Source because of its
+# shape and state (ADR-0032), not because of anything here.  An input is
+# not a sensor — External Input is a host or network value — and what
+# realizes it (an I2C sensor, an ADC channel, a GPIO pin; FV Phase 13) is
+# deployment's, never the item's.  Display text is the canonical English;
+# Studio localizes by id (locale/library/std.json).
 
 [[source]]
 id = "std.source.temperature"
-display_name = "Temperature Sensor"
-description = "The temperature of a room, a surface or the air, as the environment provides it."
+display_name = "Temperature Input"
+description = "A temperature the environment provides — a room, a surface, the air — read once per activation."
 category = "environment"
-keywords = ["temp", "thermal", "thermometer", "thermistor", "K", "°C", "celsius", "sensor", "source"]
+keywords = ["temp", "thermal", "thermometer", "thermistor", "K", "°C", "celsius", "sensor", "input", "source"]
 icon = "temperature"
 [source.value]
-default_name = "RoomTemp"
-description = "The measured temperature."
+default_name = "Temperature"
+description = "How warm something is."
 representation = { quantity = "temperature" }
 unit = "K"
 [source.relationship]
-default_name = "TempSensor"
-description = "Supplies the measured temperature, one reading per activation."
+default_name = "temperatureInput"
+description = "Provides the temperature, one reading per activation."
 
 [[source]]
 id = "std.source.tilt"
-display_name = "Tilt Sensor"
+display_name = "Tilt Input"
 description = "How far the product leans from level, as the environment provides it — a lamp head, a handheld, a vehicle body."
 category = "motion"
-keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "level", "sensor", "source"]
+keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "level", "sensor", "input", "source"]
 icon = "tilt"
 [source.value]
 default_name = "Tilt"
@@ -495,15 +504,15 @@ description = "How far something leans from level."
 representation = { quantity = "angle" }
 unit = "deg"
 [source.relationship]
-default_name = "TiltSensor"
-description = "Supplies the tilt, one reading per activation."
+default_name = "tiltInput"
+description = "Provides the tilt, one reading per activation."
 
 [[source]]
 id = "std.source.distance"
-display_name = "Distance Sensor"
+display_name = "Distance Input"
 description = "How far away the nearest thing is, as the environment provides it — an obstacle, a hand, a fill level. Which sensor measures it is a deployment choice."
 category = "motion"
-keywords = ["range", "proximity", "far", "near", "obstacle", "ultrasonic", "lidar", "tof", "sensor", "source"]
+keywords = ["range", "proximity", "far", "near", "obstacle", "ultrasonic", "lidar", "tof", "sensor", "input", "source"]
 icon = "distance"
 [source.value]
 default_name = "Distance"
@@ -511,15 +520,15 @@ description = "How far away something is."
 representation = { quantity = "length" }
 unit = "m"
 [source.relationship]
-default_name = "DistanceSensor"
-description = "Supplies the measured distance, one reading per activation."
+default_name = "distanceInput"
+description = "Provides the distance, one reading per activation."
 
 [[source]]
 id = "std.source.ambient_light"
-display_name = "Ambient Light Sensor"
+display_name = "Ambient Light Input"
 description = "How much light falls on the product, as the environment provides it — for dimming, waking a display, daylight detection."
 category = "environment"
-keywords = ["light", "lux", "daylight", "dark", "photocell", "photodiode", "sensor", "source"]
+keywords = ["light", "lux", "daylight", "dark", "photocell", "photodiode", "sensor", "input", "source"]
 icon = "light"
 [source.value]
 default_name = "AmbientLight"
@@ -527,12 +536,12 @@ description = "The illuminance of the surroundings."
 representation = { quantity = "illuminance" }
 unit = "lx"
 [source.relationship]
-default_name = "LightSensor"
-description = "Supplies the ambient light level, one reading per activation."
+default_name = "ambientLightInput"
+description = "Provides the ambient light level, one reading per activation."
 
 [[source]]
 id = "std.source.button"
-display_name = "Button State"
+display_name = "Button Input"
 description = "Whether a button is held or a switch is on right now, as the environment provides it each activation — a stable state, never an event."
 category = "human"
 keywords = ["button", "switch", "press", "push", "key", "held", "input", "source"]
@@ -542,12 +551,12 @@ default_name = "ButtonHeld"
 description = "Whether the button is being held down."
 representation = "boolean"
 [source.relationship]
-default_name = "ButtonInput"
-description = "Supplies the button's state, one reading per activation."
+default_name = "buttonInput"
+description = "Provides the button's state, one reading per activation."
 
 [[source]]
 id = "std.source.encoder"
-display_name = "Encoder Position"
+display_name = "Encoder Input"
 description = "The angle a shaft or knob has turned to, as the environment provides it. Counting pulses is the deployment's job."
 category = "human"
 keywords = ["encoder", "rotary", "knob", "shaft", "position", "angle", "quadrature", "input", "source"]
@@ -558,13 +567,13 @@ description = "The angle the shaft or knob has turned to."
 representation = { quantity = "angle" }
 unit = "deg"
 [source.relationship]
-default_name = "EncoderPosition"
-description = "Supplies the encoder's position, one reading per activation."
+default_name = "encoderInput"
+description = "Provides the encoder's position, one reading per activation."
 
 [[source]]
 id = "std.source.analog"
 display_name = "Analog Input"
-description = "A generic analog reading the behavior interprets. The value's kind is left to you: choose a quantity for the concept once you know what the input measures."
+description = "A generic analog reading the behavior interprets. The value's kind is left to you: choose a value form for the concept once you know what the input measures."
 category = "electrical"
 keywords = ["analog", "adc", "voltage", "reading", "generic", "input", "source"]
 icon = "electrical"
@@ -573,13 +582,13 @@ default_name = "AnalogValue"
 description = "What the analog input measures — decide the value form."
 representation = "open"
 [source.relationship]
-default_name = "AnalogInput"
-description = "Supplies the analog reading, one per activation."
+default_name = "analogInput"
+description = "Provides the analog reading, one per activation."
 
 [[source]]
 id = "std.source.external"
-display_name = "External Value"
-description = "A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. A source is not always a sensor."
+display_name = "External Input"
+description = "A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. An input is not always a sensor."
 category = "external"
 keywords = ["host", "network", "remote", "simulation", "external", "provided", "input", "source"]
 icon = "external"
@@ -588,5 +597,5 @@ default_name = "ExternalValue"
 description = "The value the environment provides — decide its value form."
 representation = "open"
 [source.relationship]
-default_name = "ExternalSource"
-description = "Supplies the external value, one per activation."
+default_name = "externalInput"
+description = "Provides the external value, one per activation."

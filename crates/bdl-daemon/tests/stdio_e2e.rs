@@ -1453,7 +1453,7 @@ fn library_items_over_stdio() {
         .iter()
         .find(|i| i.id == "std.source.temperature")
         .unwrap();
-    assert_eq!(sensor.display_name, "Temperature Sensor");
+    assert_eq!(sensor.display_name, "Temperature Input");
     assert_eq!(sensor.creates.len(), 2);
     assert_eq!(
         (
@@ -1461,7 +1461,7 @@ fn library_items_over_stdio() {
             sensor.creates[0].name.as_str(),
             sensor.creates[0].type_name.as_str()
         ),
-        ("concept", "RoomTemp", "Temperature")
+        ("concept", "Temperature", "Temperature")
     );
     assert_eq!(
         (
@@ -1469,7 +1469,7 @@ fn library_items_over_stdio() {
             sensor.creates[1].name.as_str(),
             sensor.creates[1].signature.as_str()
         ),
-        ("mapping", "TempSensor", "() -> RoomTemp")
+        ("mapping", "temperatureInput", "() -> Temperature")
     );
     for s in &sources {
         assert!(s.creates[1].signature.starts_with("() -> "), "{}", s.id);
@@ -1521,14 +1521,14 @@ fn library_items_over_stdio() {
     assert_eq!(
         mapping_names,
         vec![
-            "TempSensor",
-            "TiltSensor",
-            "DistanceSensor",
-            "LightSensor",
-            "ButtonInput",
-            "EncoderPosition",
-            "AnalogInput",
-            "ExternalSource"
+            "temperatureInput",
+            "tiltInput",
+            "distanceInput",
+            "ambientLightInput",
+            "buttonInput",
+            "encoderInput",
+            "analogInput",
+            "externalInput"
         ]
     );
     for m in &p.mappings {
@@ -1557,22 +1557,22 @@ fn library_items_over_stdio() {
     // a collision: the next free names, on both kinds; a chosen name wins
     let e = insert(&mut c, &mut events, "std.source.temperature", vec![]);
     let p = e.project.unwrap();
-    assert!(p.concepts.iter().any(|x| x.name == "RoomTemp2"));
-    assert!(p.mappings.iter().any(|m| m.name == "TempSensor2"));
+    assert!(p.concepts.iter().any(|x| x.name == "Temperature2"));
+    assert!(p.mappings.iter().any(|m| m.name == "temperatureInput2"));
     let e = insert(
         &mut c,
         &mut events,
         "std.source.temperature",
-        vec![("value", "OvenTemp"), ("source", "OvenSensor")],
+        vec![("value", "OvenTemp"), ("source", "ovenInput")],
     );
     let p = e.project.unwrap();
     assert!(p.concepts.iter().any(|x| x.name == "OvenTemp"));
-    assert!(p.mappings.iter().any(|m| m.name == "OvenSensor"));
+    assert!(p.mappings.iter().any(|m| m.name == "ovenInput"));
     // one undo removes the whole item; a redo brings it back, same ids
     let oven = p
         .mappings
         .iter()
-        .find(|m| m.name == "OvenSensor")
+        .find(|m| m.name == "ovenInput")
         .unwrap()
         .id;
     let oven_temp = p.concepts.iter().find(|x| x.name == "OvenTemp").unwrap().id;
@@ -1580,7 +1580,7 @@ fn library_items_over_stdio() {
         panic!("undo")
     };
     let p = u.project.unwrap();
-    assert!(!p.mappings.iter().any(|m| m.name == "OvenSensor"));
+    assert!(!p.mappings.iter().any(|m| m.name == "ovenInput"));
     assert!(!p.concepts.iter().any(|x| x.name == "OvenTemp"));
     let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {}), &mut events) else {
         panic!("redo")
@@ -1589,7 +1589,7 @@ fn library_items_over_stdio() {
     assert_eq!(
         p.mappings
             .iter()
-            .find(|m| m.name == "OvenSensor")
+            .find(|m| m.name == "ovenInput")
             .map(|m| m.id),
         Some(oven)
     );
@@ -1659,11 +1659,14 @@ fn library_items_over_stdio() {
         .map(|f| f.text.clone())
         .collect();
     assert!(
-        text.contains("mapping TempSensor : () -> RoomTemp"),
+        text.contains("mapping temperatureInput : () -> Temperature"),
         "{text}"
     );
-    assert!(text.contains("concept RoomTemp : Temperature"), "{text}");
-    assert!(!text.contains("mapping TempSensor : RoomTemp"), "{text}");
+    assert!(text.contains("concept Temperature : Temperature"), "{text}");
+    assert!(
+        !text.contains("mapping temperatureInput : Temperature"),
+        "{text}"
+    );
     // the unresolved source is a simulation input: a value per tick reaches it
     let temp_sensor = created[0].2;
     let room_temp = created[0].1;
@@ -1712,7 +1715,7 @@ fn library_items_over_stdio() {
         reopened
             .mappings
             .iter()
-            .find(|m| m.name == "TempSensor")
+            .find(|m| m.name == "temperatureInput")
             .map(|m| m.id),
         Some(temp_sensor)
     );
@@ -1720,7 +1723,7 @@ fn library_items_over_stdio() {
         reopened
             .concepts
             .iter()
-            .find(|x| x.name == "RoomTemp")
+            .find(|x| x.name == "Temperature")
             .map(|x| x.id),
         Some(room_temp)
     );
@@ -1871,10 +1874,14 @@ fn a_library_transaction_is_all_or_nothing() {
             vec![("source", "lean sensor")],
             "edit.invalid_name",
         ),
-        // the chosen concept name is taken (never a silent `RoomTemp2`)
-        ("std.source.tilt", vec![("value", "RoomTemp")], "edit."),
+        // the chosen concept name is taken (never a silent `Temperature2`)
+        ("std.source.tilt", vec![("value", "Temperature")], "edit."),
         // the chosen relationship name is taken, after a good first step
-        ("std.source.tilt", vec![("source", "TempSensor")], "edit."),
+        (
+            "std.source.tilt",
+            vec![("source", "temperatureInput")],
+            "edit.",
+        ),
         // a key the item does not create
         (
             "std.source.tilt",
@@ -1979,14 +1986,14 @@ fn a_library_transaction_is_all_or_nothing() {
         .iter()
         .find(|m| m.id == local_mapping)
         .unwrap();
-    assert_eq!(sensor.name, "DistanceSensor");
+    assert_eq!(sensor.name, "distanceInput");
     assert_eq!(
         sensor.signature.as_ref().unwrap().output,
         local_concept,
         "the body's own concept, not the system concept with the same local number"
     );
     // the system's base design is untouched: the same concepts, and its
-    // concept 0 (RoomTemp) is still RoomTemp, not bound by the body
+    // concept 0 (Temperature) is still Temperature, not bound by the body
     let base_after = get(&mut c, &mut events);
     assert!(base_after.concepts.iter().all(|x| base_before
         .concepts
@@ -1995,7 +2002,7 @@ fn a_library_transaction_is_all_or_nothing() {
     assert!(base_after
         .concepts
         .iter()
-        .any(|x| x.id == room_temp && x.name == "RoomTemp"));
+        .any(|x| x.id == room_temp && x.name == "Temperature"));
     assert_eq!(
         base_after.mappings.len(),
         base_before.mappings.len(),

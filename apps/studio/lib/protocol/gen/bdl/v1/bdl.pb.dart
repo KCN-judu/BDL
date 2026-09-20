@@ -53,6 +53,8 @@ enum ClientMessage_Payload {
   instantiateConceptTemplate,
   listLibraryItems,
   instantiateLibraryItem,
+  createSource,
+  listSourceCandidates,
   initSystemProject,
   getSystem,
   applySystemEdit,
@@ -106,6 +108,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     InstantiateConceptTemplateRequest? instantiateConceptTemplate,
     ListLibraryItemsRequest? listLibraryItems,
     InstantiateLibraryItemRequest? instantiateLibraryItem,
+    CreateSourceRequest? createSource,
+    ListSourceCandidatesRequest? listSourceCandidates,
     InitSystemProjectRequest? initSystemProject,
     GetSystemRequest? getSystem,
     ApplySystemEditRequest? applySystemEdit,
@@ -157,6 +161,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       result.instantiateConceptTemplate = instantiateConceptTemplate;
     if (listLibraryItems != null) result.listLibraryItems = listLibraryItems;
     if (instantiateLibraryItem != null) result.instantiateLibraryItem = instantiateLibraryItem;
+    if (createSource != null) result.createSource = createSource;
+    if (listSourceCandidates != null) result.listSourceCandidates = listSourceCandidates;
     if (initSystemProject != null) result.initSystemProject = initSystemProject;
     if (getSystem != null) result.getSystem = getSystem;
     if (applySystemEdit != null) result.applySystemEdit = applySystemEdit;
@@ -218,6 +224,8 @@ class ClientMessage extends $pb.GeneratedMessage {
     41: ClientMessage_Payload.instantiateConceptTemplate,
     42: ClientMessage_Payload.listLibraryItems,
     43: ClientMessage_Payload.instantiateLibraryItem,
+    44: ClientMessage_Payload.createSource,
+    45: ClientMessage_Payload.listSourceCandidates,
     50: ClientMessage_Payload.initSystemProject,
     51: ClientMessage_Payload.getSystem,
     52: ClientMessage_Payload.applySystemEdit,
@@ -271,6 +279,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       41,
       42,
       43,
+      44,
+      45,
       50,
       51,
       52,
@@ -351,6 +361,10 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: ListLibraryItemsRequest.$_createMessage)
     ..aOM<InstantiateLibraryItemRequest>(43, _omitFieldNames ? '' : 'instantiateLibraryItem',
         subBuilder: InstantiateLibraryItemRequest.$_createMessage)
+    ..aOM<CreateSourceRequest>(44, _omitFieldNames ? '' : 'createSource',
+        subBuilder: CreateSourceRequest.$_createMessage)
+    ..aOM<ListSourceCandidatesRequest>(45, _omitFieldNames ? '' : 'listSourceCandidates',
+        subBuilder: ListSourceCandidatesRequest.$_createMessage)
     ..aOM<InitSystemProjectRequest>(50, _omitFieldNames ? '' : 'initSystemProject',
         subBuilder: InitSystemProjectRequest.$_createMessage)
     ..aOM<GetSystemRequest>(51, _omitFieldNames ? '' : 'getSystem',
@@ -437,6 +451,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
   @$pb.TagNumber(43)
+  @$pb.TagNumber(44)
+  @$pb.TagNumber(45)
   @$pb.TagNumber(50)
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
@@ -485,6 +501,8 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(41)
   @$pb.TagNumber(42)
   @$pb.TagNumber(43)
+  @$pb.TagNumber(44)
+  @$pb.TagNumber(45)
   @$pb.TagNumber(50)
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
@@ -856,190 +874,213 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(43)
   InstantiateLibraryItemRequest ensureInstantiateLibraryItem() => $_ensure(31);
 
+  /// Source creation over a chosen concept (0.23).
+  @$pb.TagNumber(44)
+  CreateSourceRequest get createSource => $_getN(32);
+  @$pb.TagNumber(44)
+  set createSource(CreateSourceRequest value) => $_setField(44, value);
+  @$pb.TagNumber(44)
+  $core.bool hasCreateSource() => $_has(32);
+  @$pb.TagNumber(44)
+  void clearCreateSource() => $_clearField(44);
+  @$pb.TagNumber(44)
+  CreateSourceRequest ensureCreateSource() => $_ensure(32);
+
+  @$pb.TagNumber(45)
+  ListSourceCandidatesRequest get listSourceCandidates => $_getN(33);
+  @$pb.TagNumber(45)
+  set listSourceCandidates(ListSourceCandidatesRequest value) => $_setField(45, value);
+  @$pb.TagNumber(45)
+  $core.bool hasListSourceCandidates() => $_has(33);
+  @$pb.TagNumber(45)
+  void clearListSourceCandidates() => $_clearField(45);
+  @$pb.TagNumber(45)
+  ListSourceCandidatesRequest ensureListSourceCandidates() => $_ensure(33);
+
   /// Behaviour systems (protocol 0.6).
   @$pb.TagNumber(50)
-  InitSystemProjectRequest get initSystemProject => $_getN(32);
+  InitSystemProjectRequest get initSystemProject => $_getN(34);
   @$pb.TagNumber(50)
   set initSystemProject(InitSystemProjectRequest value) => $_setField(50, value);
   @$pb.TagNumber(50)
-  $core.bool hasInitSystemProject() => $_has(32);
+  $core.bool hasInitSystemProject() => $_has(34);
   @$pb.TagNumber(50)
   void clearInitSystemProject() => $_clearField(50);
   @$pb.TagNumber(50)
-  InitSystemProjectRequest ensureInitSystemProject() => $_ensure(32);
+  InitSystemProjectRequest ensureInitSystemProject() => $_ensure(34);
 
   @$pb.TagNumber(51)
-  GetSystemRequest get getSystem => $_getN(33);
+  GetSystemRequest get getSystem => $_getN(35);
   @$pb.TagNumber(51)
   set getSystem(GetSystemRequest value) => $_setField(51, value);
   @$pb.TagNumber(51)
-  $core.bool hasGetSystem() => $_has(33);
+  $core.bool hasGetSystem() => $_has(35);
   @$pb.TagNumber(51)
   void clearGetSystem() => $_clearField(51);
   @$pb.TagNumber(51)
-  GetSystemRequest ensureGetSystem() => $_ensure(33);
+  GetSystemRequest ensureGetSystem() => $_ensure(35);
 
   @$pb.TagNumber(52)
-  ApplySystemEditRequest get applySystemEdit => $_getN(34);
+  ApplySystemEditRequest get applySystemEdit => $_getN(36);
   @$pb.TagNumber(52)
   set applySystemEdit(ApplySystemEditRequest value) => $_setField(52, value);
   @$pb.TagNumber(52)
-  $core.bool hasApplySystemEdit() => $_has(34);
+  $core.bool hasApplySystemEdit() => $_has(36);
   @$pb.TagNumber(52)
   void clearApplySystemEdit() => $_clearField(52);
   @$pb.TagNumber(52)
-  ApplySystemEditRequest ensureApplySystemEdit() => $_ensure(34);
+  ApplySystemEditRequest ensureApplySystemEdit() => $_ensure(36);
 
   @$pb.TagNumber(53)
-  RunSystemAnalysisRequest get runSystemAnalysis => $_getN(35);
+  RunSystemAnalysisRequest get runSystemAnalysis => $_getN(37);
   @$pb.TagNumber(53)
   set runSystemAnalysis(RunSystemAnalysisRequest value) => $_setField(53, value);
   @$pb.TagNumber(53)
-  $core.bool hasRunSystemAnalysis() => $_has(35);
+  $core.bool hasRunSystemAnalysis() => $_has(37);
   @$pb.TagNumber(53)
   void clearRunSystemAnalysis() => $_clearField(53);
   @$pb.TagNumber(53)
-  RunSystemAnalysisRequest ensureRunSystemAnalysis() => $_ensure(35);
+  RunSystemAnalysisRequest ensureRunSystemAnalysis() => $_ensure(37);
 
   /// Behaviour grouping and component authoring (protocol 0.8).
   @$pb.TagNumber(54)
-  ApplyGroupEditRequest get applyGroupEdit => $_getN(36);
+  ApplyGroupEditRequest get applyGroupEdit => $_getN(38);
   @$pb.TagNumber(54)
   set applyGroupEdit(ApplyGroupEditRequest value) => $_setField(54, value);
   @$pb.TagNumber(54)
-  $core.bool hasApplyGroupEdit() => $_has(36);
+  $core.bool hasApplyGroupEdit() => $_has(38);
   @$pb.TagNumber(54)
   void clearApplyGroupEdit() => $_clearField(54);
   @$pb.TagNumber(54)
-  ApplyGroupEditRequest ensureApplyGroupEdit() => $_ensure(36);
+  ApplyGroupEditRequest ensureApplyGroupEdit() => $_ensure(38);
 
   @$pb.TagNumber(55)
-  PreviewComponentExtractionRequest get previewComponentExtraction => $_getN(37);
+  PreviewComponentExtractionRequest get previewComponentExtraction => $_getN(39);
   @$pb.TagNumber(55)
   set previewComponentExtraction(PreviewComponentExtractionRequest value) => $_setField(55, value);
   @$pb.TagNumber(55)
-  $core.bool hasPreviewComponentExtraction() => $_has(37);
+  $core.bool hasPreviewComponentExtraction() => $_has(39);
   @$pb.TagNumber(55)
   void clearPreviewComponentExtraction() => $_clearField(55);
   @$pb.TagNumber(55)
-  PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(37);
+  PreviewComponentExtractionRequest ensurePreviewComponentExtraction() => $_ensure(39);
 
   /// Text projects (ADR-0020; 0.9).
   @$pb.TagNumber(60)
-  InitTextProjectRequest get initTextProject => $_getN(38);
+  InitTextProjectRequest get initTextProject => $_getN(40);
   @$pb.TagNumber(60)
   set initTextProject(InitTextProjectRequest value) => $_setField(60, value);
   @$pb.TagNumber(60)
-  $core.bool hasInitTextProject() => $_has(38);
+  $core.bool hasInitTextProject() => $_has(40);
   @$pb.TagNumber(60)
   void clearInitTextProject() => $_clearField(60);
   @$pb.TagNumber(60)
-  InitTextProjectRequest ensureInitTextProject() => $_ensure(38);
+  InitTextProjectRequest ensureInitTextProject() => $_ensure(40);
 
   @$pb.TagNumber(61)
-  ReloadProjectRequest get reloadProject => $_getN(39);
+  ReloadProjectRequest get reloadProject => $_getN(41);
   @$pb.TagNumber(61)
   set reloadProject(ReloadProjectRequest value) => $_setField(61, value);
   @$pb.TagNumber(61)
-  $core.bool hasReloadProject() => $_has(39);
+  $core.bool hasReloadProject() => $_has(41);
   @$pb.TagNumber(61)
   void clearReloadProject() => $_clearField(61);
   @$pb.TagNumber(61)
-  ReloadProjectRequest ensureReloadProject() => $_ensure(39);
+  ReloadProjectRequest ensureReloadProject() => $_ensure(41);
 
   /// One project, Code view (ADR-0023; 0.10).
   @$pb.TagNumber(62)
-  GetSourcesRequest get getSources => $_getN(40);
+  GetSourcesRequest get getSources => $_getN(42);
   @$pb.TagNumber(62)
   set getSources(GetSourcesRequest value) => $_setField(62, value);
   @$pb.TagNumber(62)
-  $core.bool hasGetSources() => $_has(40);
+  $core.bool hasGetSources() => $_has(42);
   @$pb.TagNumber(62)
   void clearGetSources() => $_clearField(62);
   @$pb.TagNumber(62)
-  GetSourcesRequest ensureGetSources() => $_ensure(40);
+  GetSourcesRequest ensureGetSources() => $_ensure(42);
 
   @$pb.TagNumber(63)
-  ApplySourceEditRequest get applySourceEdit => $_getN(41);
+  ApplySourceEditRequest get applySourceEdit => $_getN(43);
   @$pb.TagNumber(63)
   set applySourceEdit(ApplySourceEditRequest value) => $_setField(63, value);
   @$pb.TagNumber(63)
-  $core.bool hasApplySourceEdit() => $_has(41);
+  $core.bool hasApplySourceEdit() => $_has(43);
   @$pb.TagNumber(63)
   void clearApplySourceEdit() => $_clearField(63);
   @$pb.TagNumber(63)
-  ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(41);
+  ApplySourceEditRequest ensureApplySourceEdit() => $_ensure(43);
 
   /// Semantic tokens over a text as typed (0.21): the one classifier's
   /// answer for the Code view and the formula editor alike.
   @$pb.TagNumber(64)
-  SemanticTokensRequest get semanticTokens => $_getN(42);
+  SemanticTokensRequest get semanticTokens => $_getN(44);
   @$pb.TagNumber(64)
   set semanticTokens(SemanticTokensRequest value) => $_setField(64, value);
   @$pb.TagNumber(64)
-  $core.bool hasSemanticTokens() => $_has(42);
+  $core.bool hasSemanticTokens() => $_has(44);
   @$pb.TagNumber(64)
   void clearSemanticTokens() => $_clearField(64);
   @$pb.TagNumber(64)
-  SemanticTokensRequest ensureSemanticTokens() => $_ensure(42);
+  SemanticTokensRequest ensureSemanticTokens() => $_ensure(44);
 
   /// The Code view's IDE queries over a text as typed (0.22): the same
   /// overlay as SemanticTokens, the same bdl-ide answers as the language
   /// server.
   @$pb.TagNumber(65)
-  SourceCompletionRequest get sourceCompletion => $_getN(43);
+  SourceCompletionRequest get sourceCompletion => $_getN(45);
   @$pb.TagNumber(65)
   set sourceCompletion(SourceCompletionRequest value) => $_setField(65, value);
   @$pb.TagNumber(65)
-  $core.bool hasSourceCompletion() => $_has(43);
+  $core.bool hasSourceCompletion() => $_has(45);
   @$pb.TagNumber(65)
   void clearSourceCompletion() => $_clearField(65);
   @$pb.TagNumber(65)
-  SourceCompletionRequest ensureSourceCompletion() => $_ensure(43);
+  SourceCompletionRequest ensureSourceCompletion() => $_ensure(45);
 
   @$pb.TagNumber(66)
-  SourceHoverRequest get sourceHover => $_getN(44);
+  SourceHoverRequest get sourceHover => $_getN(46);
   @$pb.TagNumber(66)
   set sourceHover(SourceHoverRequest value) => $_setField(66, value);
   @$pb.TagNumber(66)
-  $core.bool hasSourceHover() => $_has(44);
+  $core.bool hasSourceHover() => $_has(46);
   @$pb.TagNumber(66)
   void clearSourceHover() => $_clearField(66);
   @$pb.TagNumber(66)
-  SourceHoverRequest ensureSourceHover() => $_ensure(44);
+  SourceHoverRequest ensureSourceHover() => $_ensure(46);
 
   @$pb.TagNumber(67)
-  SourceDefinitionRequest get sourceDefinition => $_getN(45);
+  SourceDefinitionRequest get sourceDefinition => $_getN(47);
   @$pb.TagNumber(67)
   set sourceDefinition(SourceDefinitionRequest value) => $_setField(67, value);
   @$pb.TagNumber(67)
-  $core.bool hasSourceDefinition() => $_has(45);
+  $core.bool hasSourceDefinition() => $_has(47);
   @$pb.TagNumber(67)
   void clearSourceDefinition() => $_clearField(67);
   @$pb.TagNumber(67)
-  SourceDefinitionRequest ensureSourceDefinition() => $_ensure(45);
+  SourceDefinitionRequest ensureSourceDefinition() => $_ensure(47);
 
   @$pb.TagNumber(68)
-  SourceReferencesRequest get sourceReferences => $_getN(46);
+  SourceReferencesRequest get sourceReferences => $_getN(48);
   @$pb.TagNumber(68)
   set sourceReferences(SourceReferencesRequest value) => $_setField(68, value);
   @$pb.TagNumber(68)
-  $core.bool hasSourceReferences() => $_has(46);
+  $core.bool hasSourceReferences() => $_has(48);
   @$pb.TagNumber(68)
   void clearSourceReferences() => $_clearField(68);
   @$pb.TagNumber(68)
-  SourceReferencesRequest ensureSourceReferences() => $_ensure(46);
+  SourceReferencesRequest ensureSourceReferences() => $_ensure(48);
 
   @$pb.TagNumber(69)
-  FormatSourceRequest get formatSource => $_getN(47);
+  FormatSourceRequest get formatSource => $_getN(49);
   @$pb.TagNumber(69)
   set formatSource(FormatSourceRequest value) => $_setField(69, value);
   @$pb.TagNumber(69)
-  $core.bool hasFormatSource() => $_has(47);
+  $core.bool hasFormatSource() => $_has(49);
   @$pb.TagNumber(69)
   void clearFormatSource() => $_clearField(69);
   @$pb.TagNumber(69)
-  FormatSourceRequest ensureFormatSource() => $_ensure(47);
+  FormatSourceRequest ensureFormatSource() => $_ensure(49);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1156,6 +1197,7 @@ enum Response_Payload {
   sourceCompletion,
   sourceLocations,
   formatSource,
+  sourceCandidates,
   notSet
 }
 
@@ -1190,6 +1232,7 @@ class Response extends $pb.GeneratedMessage {
     SourceCompletionResponse? sourceCompletion,
     SourceLocationsResponse? sourceLocations,
     FormatSourceResponse? formatSource,
+    SourceCandidatesResponse? sourceCandidates,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1221,6 +1264,7 @@ class Response extends $pb.GeneratedMessage {
     if (sourceCompletion != null) result.sourceCompletion = sourceCompletion;
     if (sourceLocations != null) result.sourceLocations = sourceLocations;
     if (formatSource != null) result.formatSource = formatSource;
+    if (sourceCandidates != null) result.sourceCandidates = sourceCandidates;
     return result;
   }
 
@@ -1262,6 +1306,7 @@ class Response extends $pb.GeneratedMessage {
     51: Response_Payload.sourceCompletion,
     52: Response_Payload.sourceLocations,
     53: Response_Payload.formatSource,
+    54: Response_Payload.sourceCandidates,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1295,7 +1340,8 @@ class Response extends $pb.GeneratedMessage {
       50,
       51,
       52,
-      53
+      53,
+      54
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1353,6 +1399,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: SourceLocationsResponse.$_createMessage)
     ..aOM<FormatSourceResponse>(53, _omitFieldNames ? '' : 'formatSource',
         subBuilder: FormatSourceResponse.$_createMessage)
+    ..aOM<SourceCandidatesResponse>(54, _omitFieldNames ? '' : 'sourceCandidates',
+        subBuilder: SourceCandidatesResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1403,6 +1451,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
+  @$pb.TagNumber(54)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1432,6 +1481,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(51)
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
+  @$pb.TagNumber(54)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1750,6 +1800,17 @@ class Response extends $pb.GeneratedMessage {
   void clearFormatSource() => $_clearField(53);
   @$pb.TagNumber(53)
   FormatSourceResponse ensureFormatSource() => $_ensure(28);
+
+  @$pb.TagNumber(54)
+  SourceCandidatesResponse get sourceCandidates => $_getN(29);
+  @$pb.TagNumber(54)
+  set sourceCandidates(SourceCandidatesResponse value) => $_setField(54, value);
+  @$pb.TagNumber(54)
+  $core.bool hasSourceCandidates() => $_has(29);
+  @$pb.TagNumber(54)
+  void clearSourceCandidates() => $_clearField(54);
+  @$pb.TagNumber(54)
+  SourceCandidatesResponse ensureSourceCandidates() => $_ensure(29);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -14299,6 +14360,7 @@ class LibraryItemView extends $pb.GeneratedMessage {
     $core.String? icon,
     $core.Iterable<LibraryObjectView>? creates,
     ConceptTemplateView? concept,
+    SourcePresetView? preset,
   }) {
     final result = LibraryItemView._();
     if (id != null) result.id = id;
@@ -14310,6 +14372,7 @@ class LibraryItemView extends $pb.GeneratedMessage {
     if (icon != null) result.icon = icon;
     if (creates != null) result.creates.addAll(creates);
     if (concept != null) result.concept = concept;
+    if (preset != null) result.preset = preset;
     return result;
   }
 
@@ -14336,6 +14399,8 @@ class LibraryItemView extends $pb.GeneratedMessage {
         subBuilder: LibraryObjectView.$_createMessage)
     ..aOM<ConceptTemplateView>(9, _omitFieldNames ? '' : 'concept',
         subBuilder: ConceptTemplateView.$_createMessage)
+    ..aOM<SourcePresetView>(10, _omitFieldNames ? '' : 'preset',
+        subBuilder: SourcePresetView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14433,6 +14498,153 @@ class LibraryItemView extends $pb.GeneratedMessage {
   void clearConcept() => $_clearField(9);
   @$pb.TagNumber(9)
   ConceptTemplateView ensureConcept() => $_ensure(8);
+
+  /// The preset view of a Source item (0.23): what the Source creation
+  /// flow prefills — names, a value form, a unit — and ranks existing
+  /// concepts by.  The item decides nothing about identity: the Source is
+  /// created over the concept the designer chooses (`CreateSource`).
+  /// `creates` still describes what `InstantiateLibraryItem` would make of
+  /// the item (the legacy path: concept and Source together).
+  @$pb.TagNumber(10)
+  SourcePresetView get preset => $_getN(9);
+  @$pb.TagNumber(10)
+  set preset(SourcePresetView value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasPreset() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearPreset() => $_clearField(10);
+  @$pb.TagNumber(10)
+  SourcePresetView ensurePreset() => $_ensure(9);
+}
+
+class SourcePresetView extends $pb.GeneratedMessage {
+  factory SourcePresetView({
+    $core.String? conceptName,
+    $core.String? conceptDescription,
+    Representation? representation,
+    $core.String? typeName,
+    $core.String? unit,
+    $core.String? sourceName,
+    $core.String? sourceDescription,
+  }) {
+    final result = SourcePresetView._();
+    if (conceptName != null) result.conceptName = conceptName;
+    if (conceptDescription != null) result.conceptDescription = conceptDescription;
+    if (representation != null) result.representation = representation;
+    if (typeName != null) result.typeName = typeName;
+    if (unit != null) result.unit = unit;
+    if (sourceName != null) result.sourceName = sourceName;
+    if (sourceDescription != null) result.sourceDescription = sourceDescription;
+    return result;
+  }
+
+  SourcePresetView._();
+
+  factory SourcePresetView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcePresetView()..mergeFromBuffer(data, registry);
+  factory SourcePresetView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourcePresetView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourcePresetView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourcePresetView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conceptName')
+    ..aOS(2, _omitFieldNames ? '' : 'conceptDescription')
+    ..aOM<Representation>(3, _omitFieldNames ? '' : 'representation',
+        subBuilder: Representation.$_createMessage)
+    ..aOS(4, _omitFieldNames ? '' : 'typeName')
+    ..aOS(5, _omitFieldNames ? '' : 'unit')
+    ..aOS(6, _omitFieldNames ? '' : 'sourceName')
+    ..aOS(7, _omitFieldNames ? '' : 'sourceDescription')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcePresetView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourcePresetView copyWith(void Function(SourcePresetView) updates) =>
+      super.copyWith((message) => updates(message as SourcePresetView)) as SourcePresetView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourcePresetView() / SourcePresetView.new instead')
+  static SourcePresetView create() => SourcePresetView._();
+  static $pb.GeneratedMessage $_createMessage() => SourcePresetView._();
+  @$core.override
+  SourcePresetView createEmptyInstance() => SourcePresetView._();
+  @$core.pragma('dart2js:noInline')
+  static SourcePresetView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourcePresetView>(SourcePresetView.$_createMessage);
+  static SourcePresetView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conceptName => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conceptName($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConceptName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConceptName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get conceptDescription => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set conceptDescription($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasConceptDescription() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearConceptDescription() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Representation get representation => $_getN(2);
+  @$pb.TagNumber(3)
+  set representation(Representation value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRepresentation() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRepresentation() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Representation ensureRepresentation() => $_ensure(2);
+
+  /// The textual type name of the value form (`Temperature`), empty when open.
+  @$pb.TagNumber(4)
+  $core.String get typeName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set typeName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTypeName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTypeName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get unit => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set unit($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasUnit() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearUnit() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get sourceName => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set sourceName($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasSourceName() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearSourceName() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get sourceDescription => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set sourceDescription($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasSourceDescription() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearSourceDescription() => $_clearField(7);
 }
 
 class LibraryObjectView extends $pb.GeneratedMessage {
@@ -14679,6 +14891,500 @@ class InstantiateLibraryItemRequest extends $pb.GeneratedMessage {
   $core.bool hasComponent() => $_has(3);
   @$pb.TagNumber(4)
   void clearComponent() => $_clearField(4);
+}
+
+enum CreateSourceRequest_Concept { existingConcept, newConcept, notSet }
+
+/// Create a Source — `<source_name> : () -> C`, no definition (ADR-0032) —
+/// over a concept the designer chose: an existing concept of the design in
+/// scope (the system's own, or `component`'s body), or a new concept
+/// created in the same transaction.  One revision, one history entry, all
+/// or nothing: when either edit is refused nothing is applied and no
+/// identity is consumed.  Answered with SystemEditApplied whose outcome
+/// carries `created_mapping` and, for a new concept, `created_concept`.
+/// `edit.stale_revision`, `edit.unknown_concept`, `edit.duplicate_*`,
+/// `edit.invalid_name`.  The result is ordinary objects: the Source is a
+/// Source because of its shape, and nothing records how it was made.
+class CreateSourceRequest extends $pb.GeneratedMessage {
+  factory CreateSourceRequest({
+    $fixnum.Int64? baseRevision,
+    $fixnum.Int64? component,
+    $core.String? sourceName,
+    $core.String? sourceDescription,
+    $fixnum.Int64? existingConcept,
+    NewConcept? newConcept,
+  }) {
+    final result = CreateSourceRequest._();
+    if (baseRevision != null) result.baseRevision = baseRevision;
+    if (component != null) result.component = component;
+    if (sourceName != null) result.sourceName = sourceName;
+    if (sourceDescription != null) result.sourceDescription = sourceDescription;
+    if (existingConcept != null) result.existingConcept = existingConcept;
+    if (newConcept != null) result.newConcept = newConcept;
+    return result;
+  }
+
+  CreateSourceRequest._();
+
+  factory CreateSourceRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateSourceRequest()..mergeFromBuffer(data, registry);
+  factory CreateSourceRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateSourceRequest()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, CreateSourceRequest_Concept> _CreateSourceRequest_ConceptByTag =
+      {
+    5: CreateSourceRequest_Concept.existingConcept,
+    6: CreateSourceRequest_Concept.newConcept,
+    0: CreateSourceRequest_Concept.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CreateSourceRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CreateSourceRequest.$_createMessage)
+    ..oo(0, [5, 6])
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'baseRevision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'sourceName')
+    ..aOS(4, _omitFieldNames ? '' : 'sourceDescription')
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'existingConcept', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOM<NewConcept>(6, _omitFieldNames ? '' : 'newConcept',
+        subBuilder: NewConcept.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateSourceRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateSourceRequest copyWith(void Function(CreateSourceRequest) updates) =>
+      super.copyWith((message) => updates(message as CreateSourceRequest)) as CreateSourceRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CreateSourceRequest() / CreateSourceRequest.new instead')
+  static CreateSourceRequest create() => CreateSourceRequest._();
+  static $pb.GeneratedMessage $_createMessage() => CreateSourceRequest._();
+  @$core.override
+  CreateSourceRequest createEmptyInstance() => CreateSourceRequest._();
+  @$core.pragma('dart2js:noInline')
+  static CreateSourceRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateSourceRequest>(CreateSourceRequest.$_createMessage);
+  static CreateSourceRequest? _defaultInstance;
+
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  CreateSourceRequest_Concept whichConcept() => _CreateSourceRequest_ConceptByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(5)
+  @$pb.TagNumber(6)
+  void clearConcept() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get baseRevision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set baseRevision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBaseRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBaseRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get component => $_getI64(1);
+  @$pb.TagNumber(2)
+  set component($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasComponent() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearComponent() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get sourceName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set sourceName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSourceName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSourceName() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get sourceDescription => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set sourceDescription($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSourceDescription() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSourceDescription() => $_clearField(4);
+
+  /// A concept of the design in scope, by identity — never by name or
+  /// value form.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get existingConcept => $_getI64(4);
+  @$pb.TagNumber(5)
+  set existingConcept($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasExistingConcept() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearExistingConcept() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  NewConcept get newConcept => $_getN(5);
+  @$pb.TagNumber(6)
+  set newConcept(NewConcept value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasNewConcept() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearNewConcept() => $_clearField(6);
+  @$pb.TagNumber(6)
+  NewConcept ensureNewConcept() => $_ensure(5);
+}
+
+class NewConcept extends $pb.GeneratedMessage {
+  factory NewConcept({
+    $core.String? name,
+    $core.String? description,
+    Representation? representation,
+  }) {
+    final result = NewConcept._();
+    if (name != null) result.name = name;
+    if (description != null) result.description = description;
+    if (representation != null) result.representation = representation;
+    return result;
+  }
+
+  NewConcept._();
+
+  factory NewConcept.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NewConcept()..mergeFromBuffer(data, registry);
+  factory NewConcept.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NewConcept()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NewConcept',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: NewConcept.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'description')
+    ..aOM<Representation>(3, _omitFieldNames ? '' : 'representation',
+        subBuilder: Representation.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NewConcept clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NewConcept copyWith(void Function(NewConcept) updates) =>
+      super.copyWith((message) => updates(message as NewConcept)) as NewConcept;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use NewConcept() / NewConcept.new instead')
+  static NewConcept create() => NewConcept._();
+  static $pb.GeneratedMessage $_createMessage() => NewConcept._();
+  @$core.override
+  NewConcept createEmptyInstance() => NewConcept._();
+  @$core.pragma('dart2js:noInline')
+  static NewConcept getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NewConcept>(NewConcept.$_createMessage);
+  static NewConcept? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get description => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set description($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDescription() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDescription() => $_clearField(2);
+
+  /// Absent: the value form is decided later, as for CreateConcept.
+  @$pb.TagNumber(3)
+  Representation get representation => $_getN(2);
+  @$pb.TagNumber(3)
+  set representation(Representation value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRepresentation() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRepresentation() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Representation ensureRepresentation() => $_ensure(2);
+}
+
+/// The concepts a Source may be created over, in the order the creation
+/// flow lists them (0.23): every concept of the design in scope — identity
+/// is nominal, two concepts of one value form are two choices — with the
+/// ones whose value form is the preset's first (`preferred`) when
+/// `item_id` names a Source item.  With an empty `item_id` (a generic New
+/// Source) every concept in id order.  Ranking is authoring convenience,
+/// never a rule: a Source `() -> C` is legal over any `C`.
+class ListSourceCandidatesRequest extends $pb.GeneratedMessage {
+  factory ListSourceCandidatesRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? component,
+    $core.String? itemId,
+  }) {
+    final result = ListSourceCandidatesRequest._();
+    if (revision != null) result.revision = revision;
+    if (component != null) result.component = component;
+    if (itemId != null) result.itemId = itemId;
+    return result;
+  }
+
+  ListSourceCandidatesRequest._();
+
+  factory ListSourceCandidatesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListSourceCandidatesRequest()..mergeFromBuffer(data, registry);
+  factory ListSourceCandidatesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListSourceCandidatesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListSourceCandidatesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListSourceCandidatesRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'itemId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListSourceCandidatesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListSourceCandidatesRequest copyWith(void Function(ListSourceCandidatesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListSourceCandidatesRequest))
+          as ListSourceCandidatesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListSourceCandidatesRequest() / ListSourceCandidatesRequest.new instead')
+  static ListSourceCandidatesRequest create() => ListSourceCandidatesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListSourceCandidatesRequest._();
+  @$core.override
+  ListSourceCandidatesRequest createEmptyInstance() => ListSourceCandidatesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListSourceCandidatesRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListSourceCandidatesRequest>(
+          ListSourceCandidatesRequest.$_createMessage);
+  static ListSourceCandidatesRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get component => $_getI64(1);
+  @$pb.TagNumber(2)
+  set component($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasComponent() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearComponent() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get itemId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set itemId($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasItemId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearItemId() => $_clearField(3);
+}
+
+class SourceCandidatesResponse extends $pb.GeneratedMessage {
+  factory SourceCandidatesResponse({
+    $fixnum.Int64? revision,
+    $core.Iterable<SourceCandidateView>? candidates,
+    SourcePresetView? preset,
+    $core.String? suggestedConceptName,
+    $core.String? suggestedSourceName,
+  }) {
+    final result = SourceCandidatesResponse._();
+    if (revision != null) result.revision = revision;
+    if (candidates != null) result.candidates.addAll(candidates);
+    if (preset != null) result.preset = preset;
+    if (suggestedConceptName != null) result.suggestedConceptName = suggestedConceptName;
+    if (suggestedSourceName != null) result.suggestedSourceName = suggestedSourceName;
+    return result;
+  }
+
+  SourceCandidatesResponse._();
+
+  factory SourceCandidatesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCandidatesResponse()..mergeFromBuffer(data, registry);
+  factory SourceCandidatesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCandidatesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceCandidatesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceCandidatesResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<SourceCandidateView>(2, _omitFieldNames ? '' : 'candidates',
+        subBuilder: SourceCandidateView.$_createMessage)
+    ..aOM<SourcePresetView>(3, _omitFieldNames ? '' : 'preset',
+        subBuilder: SourcePresetView.$_createMessage)
+    ..aOS(4, _omitFieldNames ? '' : 'suggestedConceptName')
+    ..aOS(5, _omitFieldNames ? '' : 'suggestedSourceName')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCandidatesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCandidatesResponse copyWith(void Function(SourceCandidatesResponse) updates) =>
+      super.copyWith((message) => updates(message as SourceCandidatesResponse))
+          as SourceCandidatesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceCandidatesResponse() / SourceCandidatesResponse.new instead')
+  static SourceCandidatesResponse create() => SourceCandidatesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SourceCandidatesResponse._();
+  @$core.override
+  SourceCandidatesResponse createEmptyInstance() => SourceCandidatesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SourceCandidatesResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceCandidatesResponse>(
+          SourceCandidatesResponse.$_createMessage);
+  static SourceCandidatesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<SourceCandidateView> get candidates => $_getList(1);
+
+  /// The preset, when `item_id` named a Source item.
+  @$pb.TagNumber(3)
+  SourcePresetView get preset => $_getN(2);
+  @$pb.TagNumber(3)
+  set preset(SourcePresetView value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPreset() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPreset() => $_clearField(3);
+  @$pb.TagNumber(3)
+  SourcePresetView ensurePreset() => $_ensure(2);
+
+  /// The preset's names made free in the design (`Temperature`,
+  /// `temperatureInput`; `Temperature2` when taken); empty without a preset.
+  @$pb.TagNumber(4)
+  $core.String get suggestedConceptName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set suggestedConceptName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSuggestedConceptName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSuggestedConceptName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get suggestedSourceName => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set suggestedSourceName($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSuggestedSourceName() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSuggestedSourceName() => $_clearField(5);
+}
+
+class SourceCandidateView extends $pb.GeneratedMessage {
+  factory SourceCandidateView({
+    $fixnum.Int64? conceptId,
+    $core.bool? preferred,
+  }) {
+    final result = SourceCandidateView._();
+    if (conceptId != null) result.conceptId = conceptId;
+    if (preferred != null) result.preferred = preferred;
+    return result;
+  }
+
+  SourceCandidateView._();
+
+  factory SourceCandidateView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCandidateView()..mergeFromBuffer(data, registry);
+  factory SourceCandidateView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCandidateView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceCandidateView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceCandidateView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'conceptId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(2, _omitFieldNames ? '' : 'preferred')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCandidateView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCandidateView copyWith(void Function(SourceCandidateView) updates) =>
+      super.copyWith((message) => updates(message as SourceCandidateView)) as SourceCandidateView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceCandidateView() / SourceCandidateView.new instead')
+  static SourceCandidateView create() => SourceCandidateView._();
+  static $pb.GeneratedMessage $_createMessage() => SourceCandidateView._();
+  @$core.override
+  SourceCandidateView createEmptyInstance() => SourceCandidateView._();
+  @$core.pragma('dart2js:noInline')
+  static SourceCandidateView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceCandidateView>(SourceCandidateView.$_createMessage);
+  static SourceCandidateView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get conceptId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set conceptId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConceptId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConceptId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get preferred => $_getBF(1);
+  @$pb.TagNumber(2)
+  set preferred($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPreferred() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPreferred() => $_clearField(2);
 }
 
 class ListTargetsRequest extends $pb.GeneratedMessage {

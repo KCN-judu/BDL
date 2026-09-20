@@ -1011,10 +1011,10 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
         .find(|x| x.id == "std.source.temperature")
         .expect("served");
     assert_eq!(temp.category, "source");
-    assert_eq!(temp.display_name, "Temperature Sensor");
+    assert_eq!(temp.display_name, "Temperature Input");
     assert_eq!(temp.creates.len(), 2);
-    assert_eq!(temp.creates[1].name, "TempSensor");
-    assert_eq!(temp.creates[1].signature, "() -> RoomTemp");
+    assert_eq!(temp.creates[1].name, "temperatureInput");
+    assert_eq!(temp.creates[1].signature, "() -> Temperature");
     assert!(std
         .items
         .iter()
@@ -1048,7 +1048,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
                 template_id: "std.source.temperature".into(),
                 name: None,
                 component: None,
-                source_name: Some("TempSensor".into()),
+                source_name: Some("temperatureInput".into()),
             },
         )) else {
             panic!("a Source is not a template")
@@ -1085,8 +1085,8 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
             base_revision: before,
             item_id: "std.source.temperature".into(),
             names: [
-                ("value".to_string(), "RoomTemp".to_string()),
-                ("source".to_string(), "TempSensor".to_string()),
+                ("value".to_string(), "Temperature".to_string()),
+                ("source".to_string(), "temperatureInput".to_string()),
             ]
             .into_iter()
             .collect(),
@@ -1102,7 +1102,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     let concept = outcome.created_concept.expect("the concept");
     let source = outcome.created_mapping.expect("the relationship");
     let m = p.mappings.iter().find(|m| m.id == source).unwrap();
-    assert_eq!(m.name, "TempSensor");
+    assert_eq!(m.name, "temperatureInput");
     assert!(
         m.signature.as_ref().unwrap().inputs.is_empty(),
         "unit domain"
@@ -1114,7 +1114,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     );
     assert_eq!(
         p.concepts.iter().find(|x| x.id == concept).unwrap().name,
-        "RoomTemp"
+        "Temperature"
     );
     // one undo removes both: they are one history entry
     let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
@@ -1136,12 +1136,15 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
         .find(|f| f.path == "src/main.bdl")
         .unwrap();
     assert!(
-        main.text.contains("mapping TempSensor : () -> RoomTemp"),
+        main.text
+            .contains("mapping temperatureInput : () -> Temperature"),
         "{}",
         main.text
     );
     assert!(
-        !main.text.contains("mapping TempSensor : RoomTemp\n"),
+        !main
+            .text
+            .contains("mapping temperatureInput : Temperature\n"),
         "{}",
         main.text
     );
@@ -1151,7 +1154,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     assert!(!saved.project.unwrap().dirty);
     let on_disk = std::fs::read_to_string(root.join("src/main.bdl")).unwrap();
     assert!(
-        on_disk.contains("mapping TempSensor : () -> RoomTemp"),
+        on_disk.contains("mapping temperatureInput : () -> Temperature"),
         "{on_disk}"
     );
 
@@ -1159,7 +1162,11 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     // about the template or the role is in the project
     c.call(Req::CloseProject(pb::CloseProjectRequest {}));
     let p = c.open(&root);
-    let m = p.mappings.iter().find(|m| m.name == "TempSensor").unwrap();
+    let m = p
+        .mappings
+        .iter()
+        .find(|m| m.name == "temperatureInput")
+        .unwrap();
     assert_eq!(m.id, source);
     assert!(m.signature.as_ref().unwrap().inputs.is_empty());
     assert!(m.definition.is_none());

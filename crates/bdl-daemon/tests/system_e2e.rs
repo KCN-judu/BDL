@@ -1509,3 +1509,393 @@ fn the_role_is_one_answer_across_the_component_boundary() {
     let _ = (open, port_level);
     c.call(Req::Shutdown(pb::ShutdownRequest {}));
 }
+
+/// A Source is created over a concept the designer chose (0.23,
+/// `CreateSource`): an existing one by identity — one edit, no new concept
+/// — or a new one in the same transaction — one revision, one history
+/// entry, nothing when either edit is refused.  Identity is nominal: two
+/// concepts of one value form are two candidates; an open value form is
+/// bindable; the result is an ordinary Source (the role, a simulation
+/// input, an output driver); inside a component body the concept is the
+/// body's, never a system concept with the same number.  The preset ranks
+/// and suggests, and owns nothing.
+#[test]
+fn a_source_is_created_over_a_chosen_concept() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("rig");
+    let mut c = Client::spawn();
+    c.call(Req::Handshake(pb::HandshakeRequest {
+        client_protocol_version: Some(bdl_protocol::PROTOCOL_VERSION),
+        client_name: "e2e".into(),
+        client_version: "0".into(),
+    }));
+    let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
+        root_path: root.to_string_lossy().into(),
+        name: "rig".into(),
+    })) else {
+        panic!()
+    };
+    c.last_revision = p.project.unwrap().revision;
+    let temperature = pb::Dim {
+        temperature: 1,
+        ..Default::default()
+    };
+    let room = c
+        .base(concept("RoomTemperature", temperature))
+        .created_concept
+        .unwrap();
+    let motor = c
+        .base(concept("MotorTemperature", temperature))
+        .created_concept
+        .unwrap();
+    let open = c
+        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
+            name: "Mood".into(),
+            description: String::new(),
+            representation: None,
+        }))
+        .created_concept
+        .unwrap();
+    let create = |c: &mut Client,
+                  name: &str,
+                  choice: pb::create_source_request::Concept,
+                  component: Option<u64>| {
+        let base = c.last_revision;
+        c.call(Req::CreateSource(pb::CreateSourceRequest {
+            base_revision: base,
+            component,
+            source_name: name.into(),
+            source_description: String::new(),
+            concept: Some(choice),
+        }))
+    };
+    let existing = pb::create_source_request::Concept::ExistingConcept;
+    let fresh = |name: &str, rep: Option<pb::Representation>| {
+        pb::create_source_request::Concept::NewConcept(pb::NewConcept {
+            name: name.into(),
+            description: String::new(),
+            representation: rep,
+        })
+    };
+    let get = |c: &mut Client| match c.call(Req::GetProject(pb::GetProjectRequest {})) {
+        Resp::Project(p) => p.project.unwrap(),
+        other => panic!("{other:?}"),
+    };
+
+    // candidates for the Temperature preset: both temperatures preferred,
+    // both listed, the open concept after; suggestions free in the design
+    let Resp::SourceCandidates(cand) =
+        c.call(Req::ListSourceCandidates(pb::ListSourceCandidatesRequest {
+            revision: c.last_revision,
+            component: None,
+            item_id: "std.source.temperature".into(),
+        }))
+    else {
+        panic!()
+    };
+    assert_eq!(
+        cand.candidates
+            .iter()
+            .map(|x| (x.concept_id, x.preferred))
+            .collect::<Vec<_>>(),
+        vec![(room, true), (motor, true), (open, false)]
+    );
+    let preset = cand.preset.as_ref().unwrap();
+    assert_eq!(preset.type_name, "Temperature");
+    assert_eq!(preset.unit, "K");
+    assert_eq!(cand.suggested_concept_name, "Temperature");
+    assert_eq!(cand.suggested_source_name, "temperatureInput");
+    // generic: every concept, id order, no preset
+    let Resp::SourceCandidates(all) =
+        c.call(Req::ListSourceCandidates(pb::ListSourceCandidatesRequest {
+            revision: c.last_revision,
+            component: None,
+            item_id: String::new(),
+        }))
+    else {
+        panic!()
+    };
+    assert_eq!(
+        all.candidates
+            .iter()
+            .map(|x| x.concept_id)
+            .collect::<Vec<_>>(),
+        vec![room, motor, open]
+    );
+    assert!(all.candidates.iter().all(|x| !x.preferred));
+    assert!(all.preset.is_none());
+
+    // an existing concept: one Source, no new concept, one revision
+    let before = get(&mut c);
+    let rev = c.last_revision;
+    let Resp::SystemEditApplied(e) = create(&mut c, "roomTemperatureInput", existing(room), None)
+    else {
+        panic!("create over an existing concept")
+    };
+    let p = e.project.unwrap();
+    assert_eq!(p.revision, rev + 1);
+    assert_eq!(p.concepts.len(), before.concepts.len(), "no new concept");
+    let o = e.outcome.unwrap().inner.unwrap();
+    assert!(o.created_concept.is_none());
+    let source = o.created_mapping.unwrap();
+    let m = p.mappings.iter().find(|m| m.id == source).unwrap();
+    assert_eq!(m.name, "roomTemperatureInput");
+    assert!(m.signature.as_ref().unwrap().inputs.is_empty());
+    assert_eq!(
+        m.signature.as_ref().unwrap().output,
+        room,
+        "the chosen identity, never MotorTemperature"
+    );
+    assert!(m.definition.is_none());
+    assert_eq!(m.role(), pb::RelationshipRole::Source);
+    // one undo removes only the Source
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    let p = u.project.unwrap();
+    c.last_revision = p.revision;
+    assert_eq!(p.concepts.len(), before.concepts.len());
+    assert!(p.mappings.is_empty());
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {})) else {
+        panic!()
+    };
+    c.last_revision = r.project.as_ref().unwrap().revision;
+    assert_eq!(r.project.unwrap().mappings[0].id, source);
+
+    // an open value form is bindable: the Source is about identity
+    let Resp::SystemEditApplied(e) = create(&mut c, "moodInput", existing(open), None) else {
+        panic!("an open concept accepts a Source")
+    };
+    let mood = e.outcome.unwrap().inner.unwrap().created_mapping.unwrap();
+    // a concept that is not in the design: refused, nothing changes
+    let rev = c.last_revision;
+    let Resp::Error(err) = create(&mut c, "ghost", existing(999), None) else {
+        panic!("expected a refusal")
+    };
+    assert_eq!(err.code, "edit.unknown_concept");
+    assert_eq!(c.last_revision, rev);
+
+    // a new concept and its Source: one revision, both created, one undo
+    let before = get(&mut c);
+    let rev = c.last_revision;
+    let Resp::SystemEditApplied(e) = create(
+        &mut c,
+        "temperatureInput",
+        fresh(
+            "Temperature",
+            Some(pb::Representation {
+                kind: Some(pb::representation::Kind::Quantity(temperature)),
+            }),
+        ),
+        None,
+    ) else {
+        panic!("create with a new concept")
+    };
+    let p = e.project.unwrap();
+    assert_eq!(p.revision, rev + 1, "one transaction, one revision");
+    let o = e.outcome.unwrap().inner.unwrap();
+    let new_concept = o.created_concept.unwrap();
+    let new_source = o.created_mapping.unwrap();
+    assert_eq!(p.concepts.len(), before.concepts.len() + 1);
+    let m = p.mappings.iter().find(|m| m.id == new_source).unwrap();
+    assert_eq!(m.signature.as_ref().unwrap().output, new_concept);
+    assert_eq!(m.role(), pb::RelationshipRole::Source);
+    let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {})) else {
+        panic!()
+    };
+    let p = u.project.unwrap();
+    c.last_revision = p.revision;
+    assert_eq!(
+        p.concepts.len(),
+        before.concepts.len(),
+        "one undo removes both"
+    );
+    assert!(!p.mappings.iter().any(|m| m.id == new_source));
+    let Resp::SystemEditApplied(r) = c.call(Req::Redo(pb::RedoRequest {})) else {
+        panic!()
+    };
+    let p = r.project.unwrap();
+    c.last_revision = p.revision;
+    assert!(p.concepts.iter().any(|x| x.id == new_concept));
+    assert!(p.mappings.iter().any(|m| m.id == new_source));
+
+    // all or nothing: a Source name already taken refuses the pair — the
+    // new concept is not created either, no identity is consumed, and
+    // the history is untouched; a taken concept name likewise
+    let clean = get(&mut c);
+    let rev = c.last_revision;
+    for (source, concept) in [
+        ("roomTemperatureInput", "Humidity"),
+        ("humidityInput", "Mood"),
+    ] {
+        let Resp::Error(err) = create(&mut c, source, fresh(concept, None), None) else {
+            panic!("expected a refusal for {source} / {concept}")
+        };
+        assert!(err.code.starts_with("edit.duplicate_"), "{}", err.code);
+        assert_eq!(c.last_revision, rev);
+        let after = get(&mut c);
+        assert_eq!(after.concepts, clean.concepts);
+        assert_eq!(after.mappings, clean.mappings);
+        assert_eq!(after.can_undo, clean.can_undo);
+    }
+    let Resp::SystemEditApplied(e) = create(&mut c, "humidityInput", fresh("Humidity", None), None)
+    else {
+        panic!()
+    };
+    let o = e.outcome.unwrap().inner.unwrap();
+    assert_eq!(
+        o.created_concept.unwrap(),
+        new_concept + 1,
+        "the refused attempts consumed no identity"
+    );
+
+    // the Source drives a sink that accepts its concept (DriveWF), and is
+    // a simulation input
+    let main = c
+        .base(pb::edit_op::Op::CreateClockDomain(pb::CreateClockDomain {
+            name: "main".into(),
+        }))
+        .created_clock
+        .unwrap();
+    let heater = c
+        .base(pb::edit_op::Op::CreateOutput(pb::CreateOutput {
+            name: "heater".into(),
+            description: String::new(),
+            accepts: room,
+            clock_id: Some(main),
+        }))
+        .created_output
+        .unwrap();
+    c.base(pb::edit_op::Op::SetMappingClock(pb::SetMappingClock {
+        id: source,
+        clock_id: Some(main),
+    }));
+    c.base(pb::edit_op::Op::SetMappingDrive(pb::SetMappingDrive {
+        id: source,
+        output_id: Some(heater),
+    }));
+    let a = c.system_analysis();
+    let flat = a.analysis.as_ref().unwrap();
+    let out = flat.outputs.iter().find(|o| o.id == heater).unwrap();
+    assert_eq!(out.state(), pb::OutputState::Driven);
+    assert_eq!(out.driver, Some(source));
+    let sources: Vec<u64> = get(&mut c)
+        .mappings
+        .iter()
+        .filter(|m| m.role() == pb::RelationshipRole::Source)
+        .map(|m| m.id)
+        .collect();
+    assert!(sources.contains(&source) && sources.contains(&mood) && sources.contains(&new_source));
+
+    // inside a component body: the concept is the body's — the body's
+    // concept 0 is not the system's concept 0
+    let probe = c
+        .sys(pb::system_edit_op::Op::CreateComponent(
+            pb::CreateComponent {
+                name: "Probe".into(),
+                description: String::new(),
+            },
+        ))
+        .outcome
+        .unwrap()
+        .created_component
+        .unwrap();
+    let p_tilt = c
+        .body(
+            probe,
+            concept(
+                "Tilt",
+                pb::Dim {
+                    angle: 1,
+                    ..Default::default()
+                },
+            ),
+        )
+        .created_concept
+        .unwrap();
+    assert_eq!(
+        p_tilt, room,
+        "the same local number as the system's RoomTemperature"
+    );
+    let Resp::SystemEditApplied(e) = create(&mut c, "tiltInput", existing(p_tilt), Some(probe))
+    else {
+        panic!("create in the body")
+    };
+    let body_source = e.outcome.unwrap().inner.unwrap().created_mapping.unwrap();
+    let sv = e.system.unwrap();
+    let body = sv.components[0].body.as_ref().unwrap();
+    let m = body.mappings.iter().find(|m| m.id == body_source).unwrap();
+    assert_eq!(m.signature.as_ref().unwrap().output, p_tilt);
+    assert_eq!(
+        body.concepts.iter().find(|x| x.id == p_tilt).unwrap().name,
+        "Tilt"
+    );
+    assert!(
+        !sv.base
+            .as_ref()
+            .unwrap()
+            .mappings
+            .iter()
+            .any(|m| m.name == "tiltInput"),
+        "nothing in the base"
+    );
+    // a system concept id that the body does not have: refused
+    let Resp::Error(err) = create(&mut c, "motorInput", existing(motor), Some(probe)) else {
+        panic!("expected a refusal")
+    };
+    assert_eq!(err.code, "edit.unknown_concept");
+    // candidates in the body are the body's
+    let Resp::SourceCandidates(cand) =
+        c.call(Req::ListSourceCandidates(pb::ListSourceCandidatesRequest {
+            revision: c.last_revision,
+            component: Some(probe),
+            item_id: "std.source.tilt".into(),
+        }))
+    else {
+        panic!()
+    };
+    assert_eq!(
+        cand.candidates
+            .iter()
+            .map(|x| (x.concept_id, x.preferred))
+            .collect::<Vec<_>>(),
+        vec![(p_tilt, true)]
+    );
+
+    // saved and reopened: ordinary text, nothing about how it was made
+    let Resp::Project(saved) = c.call(Req::SaveProject(pb::SaveProjectRequest { force: false }))
+    else {
+        panic!()
+    };
+    assert!(!saved.project.unwrap().dirty);
+    let text = std::fs::read_to_string(root.join("src/main.bdl")).unwrap();
+    assert!(
+        text.contains("mapping roomTemperatureInput : () -> RoomTemperature"),
+        "{text}"
+    );
+    assert!(
+        text.contains("mapping temperatureInput : () -> Temperature"),
+        "{text}"
+    );
+    assert!(!text.contains("?"), "{text}");
+    let sidecar = std::fs::read_to_string(root.join(".bdl/authoring.json")).unwrap();
+    assert!(
+        !sidecar.contains("preset") && !sidecar.contains("std.source"),
+        "{sidecar}"
+    );
+    c.call(Req::CloseProject(pb::CloseProjectRequest {}));
+    let Resp::Project(reopened) = c.call(Req::OpenProject(pb::OpenProjectRequest {
+        root_path: root.to_string_lossy().into(),
+    })) else {
+        panic!()
+    };
+    let p = reopened.project.unwrap();
+    let m = p
+        .mappings
+        .iter()
+        .find(|m| m.name == "roomTemperatureInput")
+        .unwrap();
+    assert_eq!(m.id, source);
+    assert_eq!(m.role(), pb::RelationshipRole::Source);
+    c.call(Req::Shutdown(pb::ShutdownRequest {}));
+}

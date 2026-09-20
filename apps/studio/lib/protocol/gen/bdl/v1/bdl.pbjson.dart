@@ -623,6 +623,24 @@ const ClientMessage$json = {
       '10': 'instantiateLibraryItem'
     },
     {
+      '1': 'create_source',
+      '3': 44,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.CreateSourceRequest',
+      '9': 0,
+      '10': 'createSource'
+    },
+    {
+      '1': 'list_source_candidates',
+      '3': 45,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListSourceCandidatesRequest',
+      '9': 0,
+      '10': 'listSourceCandidates'
+    },
+    {
       '1': 'init_system_project',
       '3': 50,
       '4': 1,
@@ -816,30 +834,33 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'RlUmVxdWVzdEgAUhppbnN0YW50aWF0ZUNvbmNlcHRUZW1wbGF0ZRJPChJsaXN0X2xpYnJhcnlf'
         'aXRlbXMYKiABKAsyHy5iZGwudjEuTGlzdExpYnJhcnlJdGVtc1JlcXVlc3RIAFIQbGlzdExpYn'
         'JhcnlJdGVtcxJhChhpbnN0YW50aWF0ZV9saWJyYXJ5X2l0ZW0YKyABKAsyJS5iZGwudjEuSW5z'
-        'dGFudGlhdGVMaWJyYXJ5SXRlbVJlcXVlc3RIAFIWaW5zdGFudGlhdGVMaWJyYXJ5SXRlbRJSCh'
-        'Npbml0X3N5c3RlbV9wcm9qZWN0GDIgASgLMiAuYmRsLnYxLkluaXRTeXN0ZW1Qcm9qZWN0UmVx'
-        'dWVzdEgAUhFpbml0U3lzdGVtUHJvamVjdBI5CgpnZXRfc3lzdGVtGDMgASgLMhguYmRsLnYxLk'
-        'dldFN5c3RlbVJlcXVlc3RIAFIJZ2V0U3lzdGVtEkwKEWFwcGx5X3N5c3RlbV9lZGl0GDQgASgL'
-        'Mh4uYmRsLnYxLkFwcGx5U3lzdGVtRWRpdFJlcXVlc3RIAFIPYXBwbHlTeXN0ZW1FZGl0ElIKE3'
-        'J1bl9zeXN0ZW1fYW5hbHlzaXMYNSABKAsyIC5iZGwudjEuUnVuU3lzdGVtQW5hbHlzaXNSZXF1'
-        'ZXN0SABSEXJ1blN5c3RlbUFuYWx5c2lzEkkKEGFwcGx5X2dyb3VwX2VkaXQYNiABKAsyHS5iZG'
-        'wudjEuQXBwbHlHcm91cEVkaXRSZXF1ZXN0SABSDmFwcGx5R3JvdXBFZGl0Em0KHHByZXZpZXdf'
-        'Y29tcG9uZW50X2V4dHJhY3Rpb24YNyABKAsyKS5iZGwudjEuUHJldmlld0NvbXBvbmVudEV4dH'
-        'JhY3Rpb25SZXF1ZXN0SABSGnByZXZpZXdDb21wb25lbnRFeHRyYWN0aW9uEkwKEWluaXRfdGV4'
-        'dF9wcm9qZWN0GDwgASgLMh4uYmRsLnYxLkluaXRUZXh0UHJvamVjdFJlcXVlc3RIAFIPaW5pdF'
-        'RleHRQcm9qZWN0EkUKDnJlbG9hZF9wcm9qZWN0GD0gASgLMhwuYmRsLnYxLlJlbG9hZFByb2pl'
-        'Y3RSZXF1ZXN0SABSDXJlbG9hZFByb2plY3QSPAoLZ2V0X3NvdXJjZXMYPiABKAsyGS5iZGwudj'
-        'EuR2V0U291cmNlc1JlcXVlc3RIAFIKZ2V0U291cmNlcxJMChFhcHBseV9zb3VyY2VfZWRpdBg/'
-        'IAEoCzIeLmJkbC52MS5BcHBseVNvdXJjZUVkaXRSZXF1ZXN0SABSD2FwcGx5U291cmNlRWRpdB'
-        'JICg9zZW1hbnRpY190b2tlbnMYQCABKAsyHS5iZGwudjEuU2VtYW50aWNUb2tlbnNSZXF1ZXN0'
-        'SABSDnNlbWFudGljVG9rZW5zEk4KEXNvdXJjZV9jb21wbGV0aW9uGEEgASgLMh8uYmRsLnYxLl'
-        'NvdXJjZUNvbXBsZXRpb25SZXF1ZXN0SABSEHNvdXJjZUNvbXBsZXRpb24SPwoMc291cmNlX2hv'
-        'dmVyGEIgASgLMhouYmRsLnYxLlNvdXJjZUhvdmVyUmVxdWVzdEgAUgtzb3VyY2VIb3ZlchJOCh'
-        'Fzb3VyY2VfZGVmaW5pdGlvbhhDIAEoCzIfLmJkbC52MS5Tb3VyY2VEZWZpbml0aW9uUmVxdWVz'
-        'dEgAUhBzb3VyY2VEZWZpbml0aW9uEk4KEXNvdXJjZV9yZWZlcmVuY2VzGEQgASgLMh8uYmRsLn'
-        'YxLlNvdXJjZVJlZmVyZW5jZXNSZXF1ZXN0SABSEHNvdXJjZVJlZmVyZW5jZXMSQgoNZm9ybWF0'
-        'X3NvdXJjZRhFIAEoCzIbLmJkbC52MS5Gb3JtYXRTb3VyY2VSZXF1ZXN0SABSDGZvcm1hdFNvdX'
-        'JjZUIJCgdwYXlsb2Fk');
+        'dGFudGlhdGVMaWJyYXJ5SXRlbVJlcXVlc3RIAFIWaW5zdGFudGlhdGVMaWJyYXJ5SXRlbRJCCg'
+        '1jcmVhdGVfc291cmNlGCwgASgLMhsuYmRsLnYxLkNyZWF0ZVNvdXJjZVJlcXVlc3RIAFIMY3Jl'
+        'YXRlU291cmNlElsKFmxpc3Rfc291cmNlX2NhbmRpZGF0ZXMYLSABKAsyIy5iZGwudjEuTGlzdF'
+        'NvdXJjZUNhbmRpZGF0ZXNSZXF1ZXN0SABSFGxpc3RTb3VyY2VDYW5kaWRhdGVzElIKE2luaXRf'
+        'c3lzdGVtX3Byb2plY3QYMiABKAsyIC5iZGwudjEuSW5pdFN5c3RlbVByb2plY3RSZXF1ZXN0SA'
+        'BSEWluaXRTeXN0ZW1Qcm9qZWN0EjkKCmdldF9zeXN0ZW0YMyABKAsyGC5iZGwudjEuR2V0U3lz'
+        'dGVtUmVxdWVzdEgAUglnZXRTeXN0ZW0STAoRYXBwbHlfc3lzdGVtX2VkaXQYNCABKAsyHi5iZG'
+        'wudjEuQXBwbHlTeXN0ZW1FZGl0UmVxdWVzdEgAUg9hcHBseVN5c3RlbUVkaXQSUgoTcnVuX3N5'
+        'c3RlbV9hbmFseXNpcxg1IAEoCzIgLmJkbC52MS5SdW5TeXN0ZW1BbmFseXNpc1JlcXVlc3RIAF'
+        'IRcnVuU3lzdGVtQW5hbHlzaXMSSQoQYXBwbHlfZ3JvdXBfZWRpdBg2IAEoCzIdLmJkbC52MS5B'
+        'cHBseUdyb3VwRWRpdFJlcXVlc3RIAFIOYXBwbHlHcm91cEVkaXQSbQoccHJldmlld19jb21wb2'
+        '5lbnRfZXh0cmFjdGlvbhg3IAEoCzIpLmJkbC52MS5QcmV2aWV3Q29tcG9uZW50RXh0cmFjdGlv'
+        'blJlcXVlc3RIAFIacHJldmlld0NvbXBvbmVudEV4dHJhY3Rpb24STAoRaW5pdF90ZXh0X3Byb2'
+        'plY3QYPCABKAsyHi5iZGwudjEuSW5pdFRleHRQcm9qZWN0UmVxdWVzdEgAUg9pbml0VGV4dFBy'
+        'b2plY3QSRQoOcmVsb2FkX3Byb2plY3QYPSABKAsyHC5iZGwudjEuUmVsb2FkUHJvamVjdFJlcX'
+        'Vlc3RIAFINcmVsb2FkUHJvamVjdBI8CgtnZXRfc291cmNlcxg+IAEoCzIZLmJkbC52MS5HZXRT'
+        'b3VyY2VzUmVxdWVzdEgAUgpnZXRTb3VyY2VzEkwKEWFwcGx5X3NvdXJjZV9lZGl0GD8gASgLMh'
+        '4uYmRsLnYxLkFwcGx5U291cmNlRWRpdFJlcXVlc3RIAFIPYXBwbHlTb3VyY2VFZGl0EkgKD3Nl'
+        'bWFudGljX3Rva2VucxhAIAEoCzIdLmJkbC52MS5TZW1hbnRpY1Rva2Vuc1JlcXVlc3RIAFIOc2'
+        'VtYW50aWNUb2tlbnMSTgoRc291cmNlX2NvbXBsZXRpb24YQSABKAsyHy5iZGwudjEuU291cmNl'
+        'Q29tcGxldGlvblJlcXVlc3RIAFIQc291cmNlQ29tcGxldGlvbhI/Cgxzb3VyY2VfaG92ZXIYQi'
+        'ABKAsyGi5iZGwudjEuU291cmNlSG92ZXJSZXF1ZXN0SABSC3NvdXJjZUhvdmVyEk4KEXNvdXJj'
+        'ZV9kZWZpbml0aW9uGEMgASgLMh8uYmRsLnYxLlNvdXJjZURlZmluaXRpb25SZXF1ZXN0SABSEH'
+        'NvdXJjZURlZmluaXRpb24STgoRc291cmNlX3JlZmVyZW5jZXMYRCABKAsyHy5iZGwudjEuU291'
+        'cmNlUmVmZXJlbmNlc1JlcXVlc3RIAFIQc291cmNlUmVmZXJlbmNlcxJCCg1mb3JtYXRfc291cm'
+        'NlGEUgASgLMhsuYmRsLnYxLkZvcm1hdFNvdXJjZVJlcXVlc3RIAFIMZm9ybWF0U291cmNlQgkK'
+        'B3BheWxvYWQ=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1100,6 +1121,15 @@ const Response$json = {
       '9': 0,
       '10': 'formatSource'
     },
+    {
+      '1': 'source_candidates',
+      '3': 54,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceCandidatesResponse',
+      '9': 0,
+      '10': 'sourceCandidates'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1142,7 +1172,9 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'NlQ29tcGxldGlvblJlc3BvbnNlSABSEHNvdXJjZUNvbXBsZXRpb24STAoQc291cmNlX2xvY2F0'
         'aW9ucxg0IAEoCzIfLmJkbC52MS5Tb3VyY2VMb2NhdGlvbnNSZXNwb25zZUgAUg9zb3VyY2VMb2'
         'NhdGlvbnMSQwoNZm9ybWF0X3NvdXJjZRg1IAEoCzIcLmJkbC52MS5Gb3JtYXRTb3VyY2VSZXNw'
-        'b25zZUgAUgxmb3JtYXRTb3VyY2VCCQoHcGF5bG9hZA==');
+        'b25zZUgAUgxmb3JtYXRTb3VyY2USTwoRc291cmNlX2NhbmRpZGF0ZXMYNiABKAsyIC5iZGwudj'
+        'EuU291cmNlQ2FuZGlkYXRlc1Jlc3BvbnNlSABSEHNvdXJjZUNhbmRpZGF0ZXNCCQoHcGF5bG9h'
+        'ZA==');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -4256,9 +4288,20 @@ const LibraryItemView$json = {
       '10': 'concept',
       '17': true
     },
+    {
+      '1': 'preset',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourcePresetView',
+      '9': 1,
+      '10': 'preset',
+      '17': true
+    },
   ],
   '8': [
     {'1': '_concept'},
+    {'1': '_preset'},
   ],
 };
 
@@ -4269,7 +4312,44 @@ final $typed_data.Uint8List libraryItemViewDescriptor = $convert
         'GAQgASgJUgtkZXNjcmlwdGlvbhIUCgVncm91cBgFIAEoCVIFZ3JvdXASGgoIa2V5d29yZHMYBi'
         'ADKAlSCGtleXdvcmRzEhIKBGljb24YByABKAlSBGljb24SMwoHY3JlYXRlcxgIIAMoCzIZLmJk'
         'bC52MS5MaWJyYXJ5T2JqZWN0Vmlld1IHY3JlYXRlcxI6Cgdjb25jZXB0GAkgASgLMhsuYmRsLn'
-        'YxLkNvbmNlcHRUZW1wbGF0ZVZpZXdIAFIHY29uY2VwdIgBAUIKCghfY29uY2VwdA==');
+        'YxLkNvbmNlcHRUZW1wbGF0ZVZpZXdIAFIHY29uY2VwdIgBARI1CgZwcmVzZXQYCiABKAsyGC5i'
+        'ZGwudjEuU291cmNlUHJlc2V0Vmlld0gBUgZwcmVzZXSIAQFCCgoIX2NvbmNlcHRCCQoHX3ByZX'
+        'NldA==');
+
+@$core.Deprecated('Use sourcePresetViewDescriptor instead')
+const SourcePresetView$json = {
+  '1': 'SourcePresetView',
+  '2': [
+    {'1': 'concept_name', '3': 1, '4': 1, '5': 9, '10': 'conceptName'},
+    {'1': 'concept_description', '3': 2, '4': 1, '5': 9, '10': 'conceptDescription'},
+    {
+      '1': 'representation',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Representation',
+      '9': 0,
+      '10': 'representation',
+      '17': true
+    },
+    {'1': 'type_name', '3': 4, '4': 1, '5': 9, '10': 'typeName'},
+    {'1': 'unit', '3': 5, '4': 1, '5': 9, '10': 'unit'},
+    {'1': 'source_name', '3': 6, '4': 1, '5': 9, '10': 'sourceName'},
+    {'1': 'source_description', '3': 7, '4': 1, '5': 9, '10': 'sourceDescription'},
+  ],
+  '8': [
+    {'1': '_representation'},
+  ],
+};
+
+/// Descriptor for `SourcePresetView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourcePresetViewDescriptor = $convert
+    .base64Decode('ChBTb3VyY2VQcmVzZXRWaWV3EiEKDGNvbmNlcHRfbmFtZRgBIAEoCVILY29uY2VwdE5hbWUSLw'
+        'oTY29uY2VwdF9kZXNjcmlwdGlvbhgCIAEoCVISY29uY2VwdERlc2NyaXB0aW9uEkMKDnJlcHJl'
+        'c2VudGF0aW9uGAMgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0aW9uSABSDnJlcHJlc2VudGF0aW'
+        '9uiAEBEhsKCXR5cGVfbmFtZRgEIAEoCVIIdHlwZU5hbWUSEgoEdW5pdBgFIAEoCVIEdW5pdBIf'
+        'Cgtzb3VyY2VfbmFtZRgGIAEoCVIKc291cmNlTmFtZRItChJzb3VyY2VfZGVzY3JpcHRpb24YBy'
+        'ABKAlSEXNvdXJjZURlc2NyaXB0aW9uQhEKD19yZXByZXNlbnRhdGlvbg==');
 
 @$core.Deprecated('Use libraryObjectViewDescriptor instead')
 const LibraryObjectView$json = {
@@ -4346,6 +4426,141 @@ final $typed_data.Uint8List instantiateLibraryItemRequestDescriptor = $convert
         'YmRsLnYxLkluc3RhbnRpYXRlTGlicmFyeUl0ZW1SZXF1ZXN0Lk5hbWVzRW50cnlSBW5hbWVzEi'
         'EKCWNvbXBvbmVudBgEIAEoBEgAUgljb21wb25lbnSIAQEaOAoKTmFtZXNFbnRyeRIQCgNrZXkY'
         'ASABKAlSA2tleRIUCgV2YWx1ZRgCIAEoCVIFdmFsdWU6AjgBQgwKCl9jb21wb25lbnQ=');
+
+@$core.Deprecated('Use createSourceRequestDescriptor instead')
+const CreateSourceRequest$json = {
+  '1': 'CreateSourceRequest',
+  '2': [
+    {'1': 'base_revision', '3': 1, '4': 1, '5': 4, '10': 'baseRevision'},
+    {'1': 'component', '3': 2, '4': 1, '5': 4, '9': 1, '10': 'component', '17': true},
+    {'1': 'source_name', '3': 3, '4': 1, '5': 9, '10': 'sourceName'},
+    {'1': 'source_description', '3': 4, '4': 1, '5': 9, '10': 'sourceDescription'},
+    {'1': 'existing_concept', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'existingConcept'},
+    {
+      '1': 'new_concept',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.NewConcept',
+      '9': 0,
+      '10': 'newConcept'
+    },
+  ],
+  '8': [
+    {'1': 'concept'},
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `CreateSourceRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createSourceRequestDescriptor = $convert
+    .base64Decode('ChNDcmVhdGVTb3VyY2VSZXF1ZXN0EiMKDWJhc2VfcmV2aXNpb24YASABKARSDGJhc2VSZXZpc2'
+        'lvbhIhCgljb21wb25lbnQYAiABKARIAVIJY29tcG9uZW50iAEBEh8KC3NvdXJjZV9uYW1lGAMg'
+        'ASgJUgpzb3VyY2VOYW1lEi0KEnNvdXJjZV9kZXNjcmlwdGlvbhgEIAEoCVIRc291cmNlRGVzY3'
+        'JpcHRpb24SKwoQZXhpc3RpbmdfY29uY2VwdBgFIAEoBEgAUg9leGlzdGluZ0NvbmNlcHQSNQoL'
+        'bmV3X2NvbmNlcHQYBiABKAsyEi5iZGwudjEuTmV3Q29uY2VwdEgAUgpuZXdDb25jZXB0QgkKB2'
+        'NvbmNlcHRCDAoKX2NvbXBvbmVudA==');
+
+@$core.Deprecated('Use newConceptDescriptor instead')
+const NewConcept$json = {
+  '1': 'NewConcept',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'description', '3': 2, '4': 1, '5': 9, '10': 'description'},
+    {
+      '1': 'representation',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Representation',
+      '9': 0,
+      '10': 'representation',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_representation'},
+  ],
+};
+
+/// Descriptor for `NewConcept`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List newConceptDescriptor = $convert
+    .base64Decode('CgpOZXdDb25jZXB0EhIKBG5hbWUYASABKAlSBG5hbWUSIAoLZGVzY3JpcHRpb24YAiABKAlSC2'
+        'Rlc2NyaXB0aW9uEkMKDnJlcHJlc2VudGF0aW9uGAMgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0'
+        'aW9uSABSDnJlcHJlc2VudGF0aW9uiAEBQhEKD19yZXByZXNlbnRhdGlvbg==');
+
+@$core.Deprecated('Use listSourceCandidatesRequestDescriptor instead')
+const ListSourceCandidatesRequest$json = {
+  '1': 'ListSourceCandidatesRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'component', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+    {'1': 'item_id', '3': 3, '4': 1, '5': 9, '10': 'itemId'},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `ListSourceCandidatesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listSourceCandidatesRequestDescriptor = $convert
+    .base64Decode('ChtMaXN0U291cmNlQ2FuZGlkYXRlc1JlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW'
+        '9uEiEKCWNvbXBvbmVudBgCIAEoBEgAUgljb21wb25lbnSIAQESFwoHaXRlbV9pZBgDIAEoCVIG'
+        'aXRlbUlkQgwKCl9jb21wb25lbnQ=');
+
+@$core.Deprecated('Use sourceCandidatesResponseDescriptor instead')
+const SourceCandidatesResponse$json = {
+  '1': 'SourceCandidatesResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {
+      '1': 'candidates',
+      '3': 2,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.SourceCandidateView',
+      '10': 'candidates'
+    },
+    {
+      '1': 'preset',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourcePresetView',
+      '9': 0,
+      '10': 'preset',
+      '17': true
+    },
+    {'1': 'suggested_concept_name', '3': 4, '4': 1, '5': 9, '10': 'suggestedConceptName'},
+    {'1': 'suggested_source_name', '3': 5, '4': 1, '5': 9, '10': 'suggestedSourceName'},
+  ],
+  '8': [
+    {'1': '_preset'},
+  ],
+};
+
+/// Descriptor for `SourceCandidatesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceCandidatesResponseDescriptor = $convert
+    .base64Decode('ChhTb3VyY2VDYW5kaWRhdGVzUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEj'
+        'sKCmNhbmRpZGF0ZXMYAiADKAsyGy5iZGwudjEuU291cmNlQ2FuZGlkYXRlVmlld1IKY2FuZGlk'
+        'YXRlcxI1CgZwcmVzZXQYAyABKAsyGC5iZGwudjEuU291cmNlUHJlc2V0Vmlld0gAUgZwcmVzZX'
+        'SIAQESNAoWc3VnZ2VzdGVkX2NvbmNlcHRfbmFtZRgEIAEoCVIUc3VnZ2VzdGVkQ29uY2VwdE5h'
+        'bWUSMgoVc3VnZ2VzdGVkX3NvdXJjZV9uYW1lGAUgASgJUhNzdWdnZXN0ZWRTb3VyY2VOYW1lQg'
+        'kKB19wcmVzZXQ=');
+
+@$core.Deprecated('Use sourceCandidateViewDescriptor instead')
+const SourceCandidateView$json = {
+  '1': 'SourceCandidateView',
+  '2': [
+    {'1': 'concept_id', '3': 1, '4': 1, '5': 4, '10': 'conceptId'},
+    {'1': 'preferred', '3': 2, '4': 1, '5': 8, '10': 'preferred'},
+  ],
+};
+
+/// Descriptor for `SourceCandidateView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceCandidateViewDescriptor = $convert
+    .base64Decode('ChNTb3VyY2VDYW5kaWRhdGVWaWV3Eh0KCmNvbmNlcHRfaWQYASABKARSCWNvbmNlcHRJZBIcCg'
+        'lwcmVmZXJyZWQYAiABKAhSCXByZWZlcnJlZA==');
 
 @$core.Deprecated('Use listTargetsRequestDescriptor instead')
 const ListTargetsRequest$json = {

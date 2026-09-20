@@ -18,7 +18,7 @@
 //!   [`ConceptTemplate`] of the original concept library, kept as a view.
 //! * **Source** — an environment-provided value entering the behavior
 //!   model: a semantic concept and an unresolved relationship without
-//!   inputs, `mapping TempSensor : () -> RoomTemp`.  Nothing about it is a
+//!   inputs, `mapping temperatureInput : () -> Temperature`.  Nothing about it is a
 //!   sensor primitive or an I/O operation: the relationship is ordinary,
 //!   normally left unresolved, and so a simulation input and, later, a
 //!   deployment realization point.  Source ≠ sensor: `External Value` is a
@@ -304,8 +304,8 @@ impl LibraryItem {
         })
     }
 
-    /// What the item creates, as the designer reads it (`concept RoomTemp :
-    /// Temperature`, `mapping TempSensor : () -> RoomTemp`), with the
+    /// What the item creates, as the designer reads it (`concept Temperature :
+    /// Temperature`, `mapping temperatureInput : () -> Temperature`), with the
     /// default names.
     pub fn creates(&self) -> Vec<CreatedObject> {
         self.fragment
@@ -372,6 +372,91 @@ impl LibraryItem {
                     || matches!(o, FragmentObject::Concept(c) if hay(&unit_symbol_of(&c.representation, &c.unit)))
             })
     }
+}
+
+/// A Source item read as a **preset** for the Source creation flow: what
+/// the flow prefills, never what it decides.  The concept a Source
+/// provides is the designer's choice — an existing concept of the design,
+/// or a new one created in the same transaction — and the preset only
+/// suggests names, a value form and a unit, and ranks the existing
+/// concepts (`rank_concepts`).  It owns no identity.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SourcePreset {
+    /// The name a new concept would get (`Temperature`); made free in the
+    /// design by the flow.
+    pub concept_name: String,
+    pub concept_description: String,
+    /// The value form a new concept would get; `None` leaves it to the
+    /// designer (_decide later_).
+    pub representation: Option<Representation>,
+    /// The textual type name of that value form (`Temperature`), empty
+    /// when open.
+    pub type_name: String,
+    /// The unit symbol a new quantity concept would show (`K`); empty
+    /// when none.
+    pub unit: String,
+    /// The name the Source would get (`temperatureInput`); made free in
+    /// the design by the flow.
+    pub source_name: String,
+    pub source_description: String,
+}
+
+impl LibraryItem {
+    /// The preset view of a Source item: its `value` concept and `source`
+    /// relationship read as suggestions.  `None` for a Concept item.
+    pub fn preset(&self) -> Option<SourcePreset> {
+        if self.category != ItemCategory::Source {
+            return None;
+        }
+        let value = self.fragment.objects.iter().find_map(|o| match o {
+            FragmentObject::Concept(c) => Some(c),
+            _ => None,
+        })?;
+        let source = self.fragment.objects.iter().find_map(|o| match o {
+            FragmentObject::Mapping(m) if m.output == value.key => Some(m),
+            _ => None,
+        })?;
+        Some(SourcePreset {
+            concept_name: value.default_name.clone(),
+            concept_description: value.description.clone(),
+            representation: representation_of(&value.representation),
+            type_name: concept_type_name(&value.representation)
+                .unwrap_or("")
+                .to_owned(),
+            unit: unit_symbol_of(&value.representation, &value.unit),
+            source_name: source.default_name.clone(),
+            source_description: source.description.clone(),
+        })
+    }
+}
+
+/// An existing concept the Source creation flow may bind to, ranked for a
+/// preset.  Every concept of the design is a candidate — a Source `() -> C`
+/// is legal for any `C`, an open value form included, and identity is
+/// nominal: two concepts of one value form stay two choices.  `preferred`
+/// says the concept's value form is the preset's; the flow lists those
+/// first.  Authoring convenience only, never a rule.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SourceCandidate {
+    pub concept: bdl_model::SemanticId,
+    pub preferred: bool,
+}
+
+/// The concepts of `design` in the order the flow lists them: the ones
+/// whose value form is `preferred` (when a preset states one) first, each
+/// group in id order.  With no preferred form every concept is listed in
+/// id order.
+pub fn rank_concepts(design: &Design, preferred: Option<&Representation>) -> Vec<SourceCandidate> {
+    let mut out: Vec<SourceCandidate> = design
+        .concepts
+        .values()
+        .map(|c| SourceCandidate {
+            concept: c.id,
+            preferred: preferred.is_some() && c.representation.as_ref() == preferred,
+        })
+        .collect();
+    out.sort_by_key(|c| (!c.preferred, c.concept));
+    out
 }
 
 /// One object an item creates, for previews: what it is, its default
@@ -800,7 +885,7 @@ pub enum PlanError {
 
 /// The steps that instantiate `item` in `design`, in fragment order.  A
 /// default name is made free in the design and among the steps before it
-/// (`RoomTemp`, else `RoomTemp2`, …); a name chosen in `names` (by
+/// (`Temperature`, else `Temperature2`, …); a name chosen in `names` (by
 /// fragment key) is used as given, so a taken or unspellable name is
 /// refused by the edit it becomes, never silently changed.  A key `names`
 /// addresses that the item does not create is refused here.  Nothing is
@@ -1064,17 +1149,17 @@ mod tests {
         assert_eq!(steps.len(), 2);
         assert!(
             matches!(&steps[0], PlannedStep::Concept { key, op: EditOp::CreateConcept { name, representation: Some(Representation::Quantity { dim }), .. } }
-            if key == "value" && name == "RoomTemp" && *dim == Dim::TEMPERATURE)
+            if key == "value" && name == "Temperature" && *dim == Dim::TEMPERATURE)
         );
         assert!(
             matches!(&steps[1], PlannedStep::Mapping { key, name, inputs, output, .. }
-            if key == "source" && name == "TempSensor" && inputs.is_empty() && output == "value")
+            if key == "source" && name == "temperatureInput" && inputs.is_empty() && output == "value")
         );
         // a taken name, on either kind, moves to the next free one
         let a = apply_edit(
             &s,
             &EditOp::CreateConcept {
-                name: "RoomTemp".into(),
+                name: "Temperature".into(),
                 description: String::new(),
                 representation: None,
             },
@@ -1083,7 +1168,7 @@ mod tests {
         let b = apply_edit(
             &a.snapshot,
             &EditOp::CreateMapping {
-                name: "TempSensor".into(),
+                name: "temperatureInput".into(),
                 description: String::new(),
                 signature: bdl_model::surface::Signature {
                     inputs: vec![],
@@ -1095,26 +1180,26 @@ mod tests {
         )
         .expect("m");
         let steps = plan(&b.snapshot.design, item, &Default::default()).expect("plan");
-        assert_eq!(steps[0].name(), "RoomTemp2");
-        assert_eq!(steps[1].name(), "TempSensor2");
+        assert_eq!(steps[0].name(), "Temperature2");
+        assert_eq!(steps[1].name(), "temperatureInput2");
         // a chosen name is used as given — a taken one is the edit path's
-        // refusal, never a silent `RoomTemp2`; a default beside it stays
+        // refusal, never a silent `Temperature2`; a default beside it stays
         // free of it
         let mut names = BTreeMap::new();
         names.insert("value".to_string(), "OvenTemp".to_string());
-        names.insert("source".to_string(), "RoomTemp".to_string());
+        names.insert("source".to_string(), "Temperature".to_string());
         let steps = plan(&b.snapshot.design, item, &names).expect("plan");
         assert_eq!(steps[0].name(), "OvenTemp");
-        assert_eq!(steps[1].name(), "RoomTemp");
+        assert_eq!(steps[1].name(), "Temperature");
         let mut names = BTreeMap::new();
-        names.insert("source".to_string(), "RoomTemp".to_string());
+        names.insert("source".to_string(), "Temperature".to_string());
         let steps = plan(&s.design, item, &names).expect("plan");
         assert_eq!(
             steps[0].name(),
-            "RoomTemp2",
+            "Temperature2",
             "the default moves off the chosen name"
         );
-        assert_eq!(steps[1].name(), "RoomTemp");
+        assert_eq!(steps[1].name(), "Temperature");
         // a key the item does not create is refused, with the keys it has
         let mut names = BTreeMap::new();
         names.insert("sensor".to_string(), "X".to_string());
@@ -1156,6 +1241,94 @@ mod tests {
         );
     }
 
+    /// A Source item is a preset: it suggests names, a value form and a
+    /// unit and ranks the design's concepts; it decides no identity.
+    /// Every concept is a candidate — two of one value form stay two, an
+    /// open one is listed — with the preset's value form first.
+    #[test]
+    fn a_source_item_is_a_preset_that_ranks_and_suggests_and_owns_no_identity() {
+        let lib = Library::standard();
+        let preset = lib
+            .item("std.source.temperature")
+            .unwrap()
+            .preset()
+            .unwrap();
+        assert_eq!(preset.concept_name, "Temperature");
+        assert_eq!(preset.source_name, "temperatureInput");
+        assert_eq!(preset.type_name, "Temperature");
+        assert_eq!(preset.unit, "K");
+        assert_eq!(
+            preset.representation,
+            Some(Representation::Quantity {
+                dim: Dim::TEMPERATURE
+            })
+        );
+        assert!(lib
+            .item("std.environment.temperature")
+            .unwrap()
+            .preset()
+            .is_none());
+        let open = lib.item("std.source.external").unwrap().preset().unwrap();
+        assert_eq!(open.representation, None);
+        assert_eq!(open.type_name, "");
+        for i in lib
+            .items()
+            .iter()
+            .filter(|i| i.category == ItemCategory::Source)
+        {
+            let p = i.preset().expect(&i.id);
+            assert!(
+                i.display_name.ends_with("Input"),
+                "{}: {}",
+                i.id,
+                i.display_name
+            );
+            assert!(
+                p.source_name.ends_with("Input"),
+                "{}: {}",
+                i.id,
+                p.source_name
+            );
+            assert!(is_identifier(&p.concept_name) && is_identifier(&p.source_name));
+        }
+        // ranking: RoomTemperature and MotorTemperature (both temperatures)
+        // first, in id order; Mood (open) after; nothing hidden
+        let s = ProjectSnapshot::new(Design::empty("rig"));
+        let kelvin = Some(Representation::Quantity {
+            dim: Dim::TEMPERATURE,
+        });
+        let mk = |s: &ProjectSnapshot, name: &str, rep: Option<Representation>| {
+            let a = apply_edit(
+                s,
+                &EditOp::CreateConcept {
+                    name: name.into(),
+                    description: String::new(),
+                    representation: rep,
+                },
+            )
+            .unwrap();
+            (a.snapshot, a.outcome.created_concept.unwrap())
+        };
+        let (s, mood) = mk(&s, "Mood", None);
+        let (s, room) = mk(&s, "RoomTemperature", kelvin.clone());
+        let (s, motor) = mk(&s, "MotorTemperature", kelvin.clone());
+        let ranked = rank_concepts(&s.design, preset.representation.as_ref());
+        assert_eq!(
+            ranked
+                .iter()
+                .map(|c| (c.concept, c.preferred))
+                .collect::<Vec<_>>(),
+            vec![(room, true), (motor, true), (mood, false)]
+        );
+        // no preset: id order, nothing preferred
+        let plain = rank_concepts(&s.design, None);
+        assert_eq!(
+            plain.iter().map(|c| c.concept).collect::<Vec<_>>(),
+            vec![mood, room, motor]
+        );
+        assert!(plain.iter().all(|c| !c.preferred));
+    }
+
     #[test]
     fn search_matches_names_keywords_units_and_categories() {
         let lib = Library::standard();
@@ -1173,7 +1346,7 @@ mod tests {
         assert_eq!(ids("source").len(), 8, "every Source, by its section");
         assert_eq!(ids("sensor").len(), 4, "a Source is not always a sensor");
         assert_eq!(ids("external"), vec!["std.source.external"]);
-        assert!(ids("TempSensor").contains(&"std.source.temperature".to_owned()));
+        assert!(ids("temperatureInput").contains(&"std.source.temperature".to_owned()));
         assert_eq!(ids("").len(), lib.items().len());
         assert!(ids("zzzz").is_empty());
     }
@@ -1293,7 +1466,7 @@ mod tests {
         );
         // a source whose relationship names no concept of its own fragment
         let bad_source = STANDARD_LIBRARY_TOML.replacen(
-            "default_name = \"TempSensor\"",
+            "default_name = \"temperatureInput\"",
             "default_name = \"Temp Sensor\"",
             1,
         );

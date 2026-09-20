@@ -426,6 +426,8 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             None,
         ),
         Req::InstantiateLibraryItem(r) => instantiate_library_item(session, &r),
+        Req::CreateSource(r) => create_source(session, &r),
+        Req::ListSourceCandidates(r) => (list_source_candidates(session, &r), None),
         Req::Shutdown(_) => (Resp::Ack(pb::Ack {}), None),
     }
 }
@@ -950,6 +952,187 @@ fn instantiate_item(
         }
         Err(e) => (Resp::Error(session_error(&e)), None),
     }
+}
+
+/// The design a request scoped by `component` addresses: the system's own
+/// base, or the component's body.
+fn scoped_design(
+    p: &crate::session::OpenProject,
+    component: Option<u64>,
+) -> Result<(&bdl_model::surface::Design, Option<bdl_system::ComponentId>), pb::Error> {
+    let Some(sys) = p.system.as_ref() else {
+        return Err(session_error(&SessionError::NotASystem));
+    };
+    let scope = component_scope(component);
+    let design = match scope {
+        None => &sys.current.system.base,
+        Some(c) => match sys.current.system.components.get(&c) {
+            Some(comp) => &comp.body,
+            None => return Err(session_error(&SessionError::UnknownComponent(c))),
+        },
+    };
+    Ok((design, scope))
+}
+
+/// A Source over a chosen concept: one `CreateMapping` for an existing
+/// concept, `CreateConcept` then `CreateMapping` in one transaction for a
+/// new one — the same planned steps a library item runs through, so the
+/// keys resolve inside the transaction and nothing is applied when either
+/// edit is refused.  Names are used as given: a taken or unspellable one
+/// is the ordinary edit refusal.
+fn create_source(session: &mut Session, r: &pb::CreateSourceRequest) -> (Resp, Option<Committed>) {
+    use bdl_library::PlannedStep;
+    let revision = bdl_model::Revision::from_raw(r.base_revision);
+    let p = match session.project() {
+        Ok(p) => p,
+        Err(e) => return (Resp::Error(session_error(&e)), None),
+    };
+    let (design, scope) = match scoped_design(p, r.component) {
+        Ok(x) => x,
+        Err(e) => return (Resp::Error(e), None),
+    };
+    let source_name = r.source_name.trim().to_owned();
+    let committed = match &r.concept {
+        // an existing concept, by identity: one ordinary edit
+        Some(pb::create_source_request::Concept::ExistingConcept(id)) => {
+            let id = bdl_model::SemanticId::from_raw(*id);
+            if !design.concepts.contains_key(&id) {
+                return (
+                    Resp::Error(error(
+                        "edit.unknown_concept",
+                        &format!("no concept {id} in this design"),
+                    )),
+                    None,
+                );
+            }
+            let op = bdl_model::EditOp::CreateMapping {
+                name: source_name,
+                description: r.source_description.clone(),
+                signature: bdl_model::surface::Signature {
+                    inputs: Vec::new(),
+                    output: id,
+                },
+                definition: None,
+                clock: None,
+            };
+            let sop = match scope {
+                None => bdl_system::SystemEditOp::Base { op },
+                Some(c) => bdl_system::SystemEditOp::EditComponentBody { component: c, op },
+            };
+            session.apply_system(revision, &sop)
+        }
+        // a new concept and the Source over it: two planned steps in one
+        // transaction, the key resolved inside it
+        Some(pb::create_source_request::Concept::NewConcept(c)) => {
+            let representation = match c.representation.as_ref() {
+                None => None,
+                Some(rep) => match convert::representation_from_pb(rep) {
+                    Ok(r) => Some(r),
+                    Err(e) => {
+                        return (
+                            Resp::Error(error("edit.invalid_representation", &e.to_string())),
+                            None,
+                        )
+                    }
+                },
+            };
+            let steps = [
+                PlannedStep::Concept {
+                    key: "value".into(),
+                    op: bdl_model::EditOp::CreateConcept {
+                        name: c.name.trim().to_owned(),
+                        description: c.description.clone(),
+                        representation,
+                    },
+                },
+                PlannedStep::Mapping {
+                    key: "source".into(),
+                    name: source_name,
+                    description: r.source_description.clone(),
+                    inputs: Vec::new(),
+                    output: "value".into(),
+                },
+            ];
+            session.apply_library_item(revision, scope, &steps)
+        }
+        None => return (
+            Resp::Error(error(
+                "edit.invalid_request",
+                "a Source is created over a concept: choose an existing one or describe a new one",
+            )),
+            None,
+        ),
+    };
+    match committed {
+        Ok(c) => {
+            let view = system_view(session).ok();
+            let resp = Resp::SystemEditApplied(pb::SystemEditApplied {
+                system: view,
+                project: Some(project_of(session)),
+                outcome: Some(convert::system::system_outcome_to_pb(&c.outcome)),
+            });
+            (
+                resp,
+                Some(Committed {
+                    snapshot: c.snapshot,
+                    outcome: None,
+                }),
+            )
+        }
+        Err(e) => (Resp::Error(session_error(&e)), None),
+    }
+}
+
+/// The concepts a Source may be created over, ranked for a preset, with
+/// the preset's names made free in the design in scope.
+fn list_source_candidates(session: &mut Session, r: &pb::ListSourceCandidatesRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let p = match session.project() {
+        Ok(p) => p,
+        Err(e) => return Resp::Error(session_error(&e)),
+    };
+    let (design, _) = match scoped_design(p, r.component) {
+        Ok(x) => x,
+        Err(e) => return Resp::Error(e),
+    };
+    let preset = if r.item_id.is_empty() {
+        None
+    } else {
+        match libraries().item(&r.item_id).and_then(|i| i.preset()) {
+            Some(preset) => Some(preset),
+            None => {
+                return Resp::Error(error(
+                    "library.unknown_item",
+                    &format!("no Source item `{}` is served", r.item_id),
+                ))
+            }
+        }
+    };
+    let candidates = bdl_library::rank_concepts(
+        design,
+        preset.as_ref().and_then(|p| p.representation.as_ref()),
+    );
+    Resp::SourceCandidates(pb::SourceCandidatesResponse {
+        revision: r.revision,
+        candidates: candidates
+            .iter()
+            .map(|c| pb::SourceCandidateView {
+                concept_id: c.concept.raw(),
+                preferred: c.preferred,
+            })
+            .collect(),
+        suggested_concept_name: preset
+            .as_ref()
+            .map(|p| bdl_library::free_name(design, &p.concept_name))
+            .unwrap_or_default(),
+        suggested_source_name: preset
+            .as_ref()
+            .map(|p| bdl_library::free_name(design, &p.source_name))
+            .unwrap_or_default(),
+        preset: preset.as_ref().map(convert::source_preset_view),
+    })
 }
 
 fn hover_entity(session: &mut Session, r: &pb::HoverEntityRequest) -> Resp {
@@ -1580,6 +1763,8 @@ fn payload_name(p: &Req) -> &'static str {
         Req::InstantiateConceptTemplate(_) => "instantiate_concept_template",
         Req::ListLibraryItems(_) => "list_library_items",
         Req::InstantiateLibraryItem(_) => "instantiate_library_item",
+        Req::CreateSource(_) => "create_source",
+        Req::ListSourceCandidates(_) => "list_source_candidates",
         Req::Shutdown(_) => "shutdown",
     }
 }
