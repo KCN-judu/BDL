@@ -339,12 +339,14 @@ pub struct DriveItem {
     pub span: Span,
 }
 
-/// `device Name : kind for output { pin i = name }`
+/// `device Name : kind for output { realization profile, pin i = name }`
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeviceItem {
     pub name: Ident,
     pub kind: Ident,
     pub output: Option<Ident>,
+    /// The realization profile chosen for the output, as written.
+    pub realization: Option<Ident>,
     /// `(requirement index, pin name)` as written.
     pub pins: Vec<(u16, Ident)>,
     pub span: Span,
@@ -801,6 +803,10 @@ fn device(d: &ast::DeviceDecl, errors: &mut Vec<SyntaxError>) -> Option<DeviceIt
         Some(o) => Some(ident_ref(&o)?),
         None => None,
     };
+    let realization = match d.realization() {
+        Some(r) => Some(ident_ref(&r.profile()?)?),
+        None => None,
+    };
     let mut pins = Vec::new();
     for pin in d.pins() {
         let index_tok = pin.index()?;
@@ -822,6 +828,7 @@ fn device(d: &ast::DeviceDecl, errors: &mut Vec<SyntaxError>) -> Option<DeviceIt
         name,
         kind,
         output,
+        realization,
         pins,
         span: d.span(),
     })

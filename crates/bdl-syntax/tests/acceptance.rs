@@ -262,3 +262,54 @@ fn lowering_reports_definition_name_and_arity_mismatches() {
         ]
     );
 }
+
+/// A device body carries the realization profile beside the pin choices,
+/// in either order; a body without one leaves the profile open (the
+/// spelling of every project written before realization existed).
+#[test]
+fn a_device_body_carries_its_realization_profile() {
+    let src = "device lamp : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }\n\
+               device relay : digital_output for coil { pin 0 = D4, realization gpio_level }\n\
+               device old : pwm_channel for light { pin 0 = D5 }\n\
+               device bare : pwm_channel for light\n";
+    let parse = parse_module(src);
+    assert!(parse.is_ok(), "{:?}", parse.errors());
+    let (module, errors) = lower_module(&parse);
+    assert!(errors.is_empty(), "{errors:?}");
+    type Device = (String, Option<String>, Vec<(u16, String)>);
+    let devices: Vec<Device> = module
+        .items
+        .iter()
+        .map(|i| match i {
+            SurfaceItem::Device(d) => (
+                d.name.name.clone(),
+                d.realization.as_ref().map(|r| r.name.clone()),
+                d.pins.iter().map(|(i, p)| (*i, p.name.clone())).collect(),
+            ),
+            other => panic!("{other:?}"),
+        })
+        .collect();
+    assert_eq!(
+        devices,
+        vec![
+            (
+                "lamp".into(),
+                Some("pwm_duty8".into()),
+                vec![(0, "D3".into())]
+            ),
+            (
+                "relay".into(),
+                Some("gpio_level".into()),
+                vec![(0, "D4".into())]
+            ),
+            ("old".into(), None, vec![(0, "D5".into())]),
+            ("bare".into(), None, vec![]),
+        ]
+    );
+    // `realization` without a profile is an error that names what is expected.
+    let parse = parse_module("device x : pwm_channel for light { realization }\n");
+    assert!(!parse.is_ok());
+    assert!(parse.errors()[0]
+        .message
+        .contains("realization profile's id"));
+}

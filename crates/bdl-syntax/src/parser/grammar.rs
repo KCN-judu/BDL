@@ -408,13 +408,29 @@ fn device_decl(p: &mut Parser<'_>, scope: Scope) {
     m.complete(p, DeviceDecl);
 }
 
-/// `DeviceBody ::= "{" ( PinFix ","? )* "}"`, `PinFix ::= "pin" Number "=" Ident`
+/// `DeviceBody ::= "{" ( (PinFix | RealizationFix) ","? )* "}"`,
+/// `PinFix ::= "pin" Number "=" Ident`, `RealizationFix ::= "realization" Ident`
 fn device_body(p: &mut Parser<'_>) {
     let m = p.start();
     p.bump(); // {
     loop {
         if p.at(RBrace) || p.at_eof() {
             break;
+        }
+        if p.at(Ident) && p.current_text() == "realization" {
+            let fix = p.start();
+            p.bump(); // realization
+            if p.at(Ident) {
+                name_ref(p);
+            } else {
+                p.error_expecting(
+                    "expected the realization profile's id after `realization`",
+                    &[Ident],
+                );
+            }
+            fix.complete(p, RealizationFix);
+            p.eat(Comma);
+            continue;
         }
         if p.at(Ident) && p.current_text() == "pin" {
             let pin = p.start();
@@ -441,7 +457,7 @@ fn device_body(p: &mut Parser<'_>) {
         }
         p.error_and_bump(
             SyntaxErrorCode::Expected,
-            "expected `pin <index> = <name>` or `}` here",
+            "expected `pin <index> = <name>`, `realization <profile>` or `}` here",
         );
     }
     p.expect(RBrace, "expected `}` to close the device");

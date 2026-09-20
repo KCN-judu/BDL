@@ -172,6 +172,15 @@ pub enum EditOp {
         id: DeviceId,
         output: Option<OutputId>,
     },
+    /// Choose the realization profile of a device (or release it), and with
+    /// it the hardware requirement template the profile prescribes: one
+    /// deployment decision, applied whole.  The design's behaviour is
+    /// untouched (FV Phase 14: the logical output keeps its meaning).
+    SetDeviceRealization {
+        id: DeviceId,
+        profile: Option<crate::surface::OutputProfileId>,
+        kind: DeviceKind,
+    },
     /// Pin one of the device's requirements to a named board resource, or
     /// release it.  A deployment constraint, never a design change.
     SetDevicePin {
@@ -709,6 +718,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     name,
                     kind: *kind,
                     output: *output,
+                    realization: None,
                     fixed_pins: BTreeMap::new(),
                 },
             );
@@ -733,6 +743,18 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
             let d = device_mut(&mut design, *id)?;
             d.kind = *kind;
             d.fixed_pins.clear();
+            // a kind chosen by hand is no longer the profile's: the
+            // realization is released with it
+            d.realization = None;
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::SetDeviceRealization { id, profile, kind } => {
+            let d = device_mut(&mut design, *id)?;
+            if d.kind != *kind {
+                d.fixed_pins.clear();
+            }
+            d.kind = *kind;
+            d.realization = profile.clone();
             EditOutcome::edit([Invalidation::Deployment])
         }
         EditOp::SetDeviceOutput { id, output } => {

@@ -14,6 +14,7 @@ fn dev(n: u64, name: &str, kind: DeviceKind) -> DeviceBinding {
         name: name.into(),
         kind,
         output: None,
+        realization: None,
         fixed_pins: BTreeMap::new(),
     }
 }

@@ -167,6 +167,11 @@ ast_node!(
     PinFix
 );
 ast_node!(
+    /// `realization Ident`
+    RealizationFix,
+    RealizationFix
+);
+ast_node!(
     /// `component Name { ComponentItem* }`
     ComponentDecl,
     ComponentDecl
@@ -301,6 +306,16 @@ impl DeviceDecl {
         child::<DeviceBody>(&self.0)
             .into_iter()
             .flat_map(|b| children::<PinFix>(b.syntax()))
+    }
+    /// The last `realization <profile>` written in the body, if any.
+    pub fn realization(&self) -> Option<RealizationFix> {
+        child::<DeviceBody>(&self.0).and_then(|b| children::<RealizationFix>(b.syntax()).last())
+    }
+}
+
+impl RealizationFix {
+    pub fn profile(&self) -> Option<NameRef> {
+        child(&self.0)
     }
 }
 

@@ -421,6 +421,7 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
             name: "pwm".into(),
             kind: bdl_model::surface::DeviceKind::PwmChannel,
             output: Some(light),
+            realization: Some(bdl_model::OutputProfileId("pwm_duty8".into())),
             fixed_pins: [(0u16, "D3".to_owned())].into_iter().collect(),
         },
     );
@@ -443,7 +444,7 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
     assert!(!text.contains("drive light"), "{text}");
     assert!(
         text.ends_with(
-            "concept Held : Bool\n\ndevice pwm : pwm_channel for light { pin 0 = D3 }\n"
+            "concept Held : Bool\n\ndevice pwm : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }\n"
         ),
         "{text}"
     );

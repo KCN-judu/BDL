@@ -152,19 +152,52 @@ pub enum DeviceKind {
     Uart,
 }
 
+/// The stable identity of an output realization profile — how a logical
+/// output's value becomes a machine command (`pwm_duty8`,
+/// `gpio_level`).  An identifier the deployment names; what it denotes —
+/// a typed pure encoder `rep(C) -> raw` and a hardware requirement
+/// template — is the profile registry's (`bdl-output::realization`),
+/// never the design's.  Deployment data, like the device kind: nothing in
+/// the behaviour design depends on it (FV Phase 14, FVD-0131).
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct OutputProfileId(pub String);
+
+impl OutputProfileId {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for OutputProfileId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// Deployment-layer binding of hardware to the design: which device kind
-/// realises a sink (or feeds the product, for sensors), and any pins the
-/// designer fixed by hand.  Fixed pins are named board-relatively and
-/// resolved against the target at deployment.
+/// realises a logical output (or feeds the product, for sensors), which
+/// realization profile encodes the output's value into the device's
+/// command, and any pins the designer fixed by hand.  Fixed pins are named
+/// board-relatively and resolved against the target at deployment.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeviceBinding {
     pub id: DeviceId,
     pub name: String,
+    /// The hardware requirement template (what the board must carry).  With
+    /// a `realization`, the profile's own kind.
     pub kind: DeviceKind,
-    /// The sink this device realises; `None` for sensors and other devices
-    /// that feed the design.
+    /// The logical output this device realises; `None` for sensors and
+    /// other devices that feed the design.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output: Option<OutputId>,
+    /// The realization profile: the typed pure encoder from the output's
+    /// accepted representation to the device's raw command, and the
+    /// requirements (FV Phase 14).  `None` on a binding made before
+    /// profiles existed, or not yet chosen: the device still places on the
+    /// board by its kind, and no command is lowered for it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub realization: Option<OutputProfileId>,
     /// Manual pin choices, by the device's local requirement index.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub fixed_pins: BTreeMap<u16, String>,

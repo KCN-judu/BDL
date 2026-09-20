@@ -16,7 +16,7 @@ use bdl_model::surface::{
     ClockDomain, Concept, Definition, Design, DeviceBinding, DeviceKind, MappingBlock,
     PhysicalOutput, Representation, Signature,
 };
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, SemanticId};
+use bdl_model::{ClockId, DeclId, DeviceId, OutputId, OutputProfileId, SemanticId};
 use bdl_syntax::lower::{
     BindEndItem, ComponentBodyItem, ComponentItem, MappingDefinition, PatternKind, PortWord,
     SurfaceItem, SurfaceModule, SurfaceType, TypeKind,
@@ -574,6 +574,10 @@ impl<'a> Builder<'a> {
                             name: d.name.name.clone(),
                             kind,
                             output,
+                            realization: d
+                                .realization
+                                .as_ref()
+                                .map(|r| OutputProfileId(r.name.clone())),
                             fixed_pins,
                         },
                     );
@@ -1518,6 +1522,10 @@ impl<'a> Builder<'a> {
                             name: d.name.name.clone(),
                             kind,
                             output,
+                            realization: d
+                                .realization
+                                .as_ref()
+                                .map(|r| OutputProfileId(r.name.clone())),
                             fixed_pins: d.pins.iter().map(|(i, p)| (*i, p.name.clone())).collect(),
                         },
                     );

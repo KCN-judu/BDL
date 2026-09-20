@@ -179,13 +179,13 @@ pub fn device(design: &Design, d: &DeviceBinding) -> String {
         s.push_str(" for ");
         s.push_str(&output_name(design, o));
     }
-    if !d.fixed_pins.is_empty() {
-        let pins: Vec<String> = d
-            .fixed_pins
-            .iter()
-            .map(|(i, p)| format!("pin {i} = {p}"))
-            .collect();
-        s.push_str(&format!(" {{ {} }}", pins.join(", ")));
+    let mut body: Vec<String> = Vec::new();
+    if let Some(profile) = &d.realization {
+        body.push(format!("realization {profile}"));
+    }
+    body.extend(d.fixed_pins.iter().map(|(i, p)| format!("pin {i} = {p}")));
+    if !body.is_empty() {
+        s.push_str(&format!(" {{ {} }}", body.join(", ")));
     }
     s
 }

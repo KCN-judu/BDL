@@ -290,6 +290,7 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                             name: ren.name(&d.name),
                             kind: d.kind,
                             output: d.output.and_then(|o| ren.output(o)),
+                            realization: d.realization.clone(),
                             fixed_pins: d.fixed_pins.clone(),
                         },
                     );
