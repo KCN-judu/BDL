@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used)]
 
-use bdl_hardware::boards::{arduino_nano, big_board};
+use bdl_hardware::boards::{arduino_nano, big_board, rp2040_pico};
 use bdl_hardware::devices::requirements_for_all;
 use bdl_hardware::solve::{brute_force_satisfiable, candidates};
 use bdl_hardware::*;
@@ -258,7 +258,7 @@ fn validate_reports_every_violation_kind() {
 
 #[test]
 fn boards_round_trip_through_toml_and_match_the_checked_in_files() {
-    for hw in [arduino_nano(), big_board()] {
+    for hw in [arduino_nano(), big_board(), rp2040_pico()] {
         assert!(bdl_hardware::boards::well_formed(&hw));
         let text = toml::to_string_pretty(&hw).unwrap();
         let back: Hardware = toml::from_str(&text).unwrap();
@@ -276,6 +276,29 @@ fn boards_round_trip_through_toml_and_match_the_checked_in_files() {
             Err(e) => panic!("{path}: {e} (set BDL_WRITE_BOARDS=1 to generate)"),
         }
     }
+}
+
+/// The Pico's PWM slices follow the datasheet (`GPn` on slice `(n/2) % 8`,
+/// channel by parity), the LED pin has no PWM, and a PWM device and a
+/// digital output place on distinct lines.
+#[test]
+fn the_pico_places_a_pwm_line_and_a_digital_output() {
+    let pico = rp2040_pico();
+    assert_eq!(pico.family, "rp2040");
+    assert_eq!(pico.resources.len(), 27);
+    assert_eq!(pico.unit_of(&rid("GP15"), Capability::Pwm), Some(UnitId(7)));
+    assert_eq!(pico.unit_of(&rid("GP16"), Capability::Pwm), Some(UnitId(0)));
+    assert!(pico.supports(&rid("GP25"), Capability::DigitalOut));
+    assert!(!pico.supports(&rid("GP25"), Capability::Pwm));
+    let devices = [
+        dev(1, "lamp", DeviceKind::PwmChannel),
+        dev(2, "relay", DeviceKind::DigitalOutput),
+    ];
+    let reqs = requirements_for_all(devices.iter());
+    let a = solve(&pico, &reqs).expect("feasible");
+    assert!(validate(&pico, &reqs, &a).is_empty());
+    assert!(pico.supports(&rid(assigned(&a, 1, 0)), Capability::Pwm));
+    assert_ne!(assigned(&a, 1, 0), assigned(&a, 2, 0));
 }
 
 // ---- properties -----------------------------------------------------------

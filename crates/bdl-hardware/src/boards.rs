@@ -93,9 +93,82 @@ pub fn big_board() -> Hardware {
     hw
 }
 
+/// The Raspberry Pi Pico (RP2040) as the first Embassy target: GP0–GP22 and
+/// GP26–GP28 are digital lines with PWM on every one (eight slices, `GPn`
+/// on slice `(n / 2) % 8`, channel A on even and B on odd pins), an
+/// interrupt on every line, ADC on GP26–GP28; GP25 is the on-board LED and
+/// has no PWM pad on the Pico; I²C0/I²C1, UART0/UART1 and SPI0/SPI1 on
+/// their documented pins (the unit is the controller).  Buses are
+/// shareable, everything else exclusive.  GP23/GP24 are internal and not
+/// listed.  A PWM slice is a *unit* only for the solver's unit relations;
+/// two outputs on one slice share its carrier, which the Pico allows.
+pub fn rp2040_pico() -> Hardware {
+    use Capability::*;
+    let mut resources = Vec::new();
+    for n in (0u32..=22).chain(25..=28) {
+        let id = format!("GP{n}");
+        let mut caps = vec![DigitalIn, DigitalOut, Interrupt];
+        let mut units = Vec::new();
+        if n != 25 {
+            caps.push(Pwm);
+            units.push((Pwm, (n / 2) % 8));
+        }
+        if (26..=28).contains(&n) {
+            caps.push(AnalogIn);
+        }
+        // I²C: SDA on 0, 4, 8, … (I2C0 on n % 4 == 0, I2C1 on n % 4 == 2);
+        // SCL one pin above.
+        if n <= 21 || (26..=27).contains(&n) {
+            match n % 4 {
+                0 | 2 => {
+                    caps.push(I2cSda);
+                    units.push((I2cSda, (n % 4) / 2));
+                }
+                _ => {
+                    caps.push(I2cScl);
+                    units.push((I2cScl, (n % 4) / 2));
+                }
+            }
+        }
+        // UART0 TX 0/12/16, RX 1/13/17; UART1 TX 4/8, RX 5/9.
+        for (tx, rx, unit) in [(0, 1, 0), (12, 13, 0), (16, 17, 0), (4, 5, 1), (8, 9, 1)] {
+            if n == tx {
+                caps.push(UartTx);
+                units.push((UartTx, unit));
+            }
+            if n == rx {
+                caps.push(UartRx);
+                units.push((UartRx, unit));
+            }
+        }
+        // SPI0 on 0–7 and 16–19, SPI1 on 8–15: MISO, SS, SCK, MOSI in order
+        // of `n % 4` (RX, CSn, SCK, TX).
+        if n <= 19 {
+            let unit = u32::from((8..=15).contains(&n));
+            let cap = match n % 4 {
+                0 => SpiMiso,
+                1 => SpiSs,
+                2 => SpiSck,
+                _ => SpiMosi,
+            };
+            caps.push(cap);
+            units.push((cap, unit));
+        }
+        resources.push(res(&id, &caps, &units));
+    }
+    Hardware {
+        name: "rp2040_pico".into(),
+        display_name: "Raspberry Pi Pico (RP2040)".into(),
+        description: "RP2040: 27 GPIO lines, PWM on every line but the LED over eight slices, ADC on GP26–GP28, two I²C, two UART, two SPI; GP25 is the on-board LED".into(),
+        family: "rp2040".into(),
+        resources,
+        shareable: [I2cSda, I2cScl].into_iter().collect(),
+    }
+}
+
 /// Every built-in target, by id.
 pub fn registry() -> BTreeMap<String, Hardware> {
-    [arduino_nano(), big_board()]
+    [arduino_nano(), big_board(), rp2040_pico()]
         .into_iter()
         .map(|h| (h.name.clone(), h))
         .collect()

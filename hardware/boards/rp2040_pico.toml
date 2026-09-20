@@ -1,0 +1,439 @@
+name = "rp2040_pico"
+display_name = "Raspberry Pi Pico (RP2040)"
+description = "RP2040: 27 GPIO lines, PWM on every line but the LED over eight slices, ADC on GP26–GP28, two I²C, two UART, two SPI; GP25 is the on-board LED"
+family = "rp2040"
+shareable = [
+    "i2c_sda",
+    "i2c_scl",
+]
+
+[[resources]]
+id = "GP0"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_miso",
+    "uart_tx",
+]
+
+[resources.units]
+pwm = 0
+i2c_sda = 0
+spi_miso = 0
+uart_tx = 0
+
+[[resources]]
+id = "GP1"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_ss",
+    "uart_rx",
+]
+
+[resources.units]
+pwm = 0
+i2c_scl = 0
+spi_ss = 0
+uart_rx = 0
+
+[[resources]]
+id = "GP2"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_sck",
+]
+
+[resources.units]
+pwm = 1
+i2c_sda = 1
+spi_sck = 0
+
+[[resources]]
+id = "GP3"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 1
+i2c_scl = 1
+spi_mosi = 0
+
+[[resources]]
+id = "GP4"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_miso",
+    "uart_tx",
+]
+
+[resources.units]
+pwm = 2
+i2c_sda = 0
+spi_miso = 0
+uart_tx = 1
+
+[[resources]]
+id = "GP5"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_ss",
+    "uart_rx",
+]
+
+[resources.units]
+pwm = 2
+i2c_scl = 0
+spi_ss = 0
+uart_rx = 1
+
+[[resources]]
+id = "GP6"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_sck",
+]
+
+[resources.units]
+pwm = 3
+i2c_sda = 1
+spi_sck = 0
+
+[[resources]]
+id = "GP7"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 3
+i2c_scl = 1
+spi_mosi = 0
+
+[[resources]]
+id = "GP8"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_miso",
+    "uart_tx",
+]
+
+[resources.units]
+pwm = 4
+i2c_sda = 0
+spi_miso = 1
+uart_tx = 1
+
+[[resources]]
+id = "GP9"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_ss",
+    "uart_rx",
+]
+
+[resources.units]
+pwm = 4
+i2c_scl = 0
+spi_ss = 1
+uart_rx = 1
+
+[[resources]]
+id = "GP10"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_sck",
+]
+
+[resources.units]
+pwm = 5
+i2c_sda = 1
+spi_sck = 1
+
+[[resources]]
+id = "GP11"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 5
+i2c_scl = 1
+spi_mosi = 1
+
+[[resources]]
+id = "GP12"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_miso",
+    "uart_tx",
+]
+
+[resources.units]
+pwm = 6
+i2c_sda = 0
+spi_miso = 1
+uart_tx = 0
+
+[[resources]]
+id = "GP13"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_ss",
+    "uart_rx",
+]
+
+[resources.units]
+pwm = 6
+i2c_scl = 0
+spi_ss = 1
+uart_rx = 0
+
+[[resources]]
+id = "GP14"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_sck",
+]
+
+[resources.units]
+pwm = 7
+i2c_sda = 1
+spi_sck = 1
+
+[[resources]]
+id = "GP15"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 7
+i2c_scl = 1
+spi_mosi = 1
+
+[[resources]]
+id = "GP16"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_miso",
+    "uart_tx",
+]
+
+[resources.units]
+pwm = 0
+i2c_sda = 0
+spi_miso = 0
+uart_tx = 0
+
+[[resources]]
+id = "GP17"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_ss",
+    "uart_rx",
+]
+
+[resources.units]
+pwm = 0
+i2c_scl = 0
+spi_ss = 0
+uart_rx = 0
+
+[[resources]]
+id = "GP18"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+    "spi_sck",
+]
+
+[resources.units]
+pwm = 1
+i2c_sda = 1
+spi_sck = 0
+
+[[resources]]
+id = "GP19"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+    "spi_mosi",
+]
+
+[resources.units]
+pwm = 1
+i2c_scl = 1
+spi_mosi = 0
+
+[[resources]]
+id = "GP20"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_sda",
+]
+
+[resources.units]
+pwm = 2
+i2c_sda = 0
+
+[[resources]]
+id = "GP21"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+    "i2c_scl",
+]
+
+[resources.units]
+pwm = 2
+i2c_scl = 0
+
+[[resources]]
+id = "GP22"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "interrupt",
+]
+
+[resources.units]
+pwm = 3
+
+[[resources]]
+id = "GP25"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "interrupt",
+]
+
+[[resources]]
+id = "GP26"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "analog_in",
+    "interrupt",
+    "i2c_sda",
+]
+
+[resources.units]
+pwm = 5
+i2c_sda = 1
+
+[[resources]]
+id = "GP27"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "analog_in",
+    "interrupt",
+    "i2c_scl",
+]
+
+[resources.units]
+pwm = 5
+i2c_scl = 1
+
+[[resources]]
+id = "GP28"
+capabilities = [
+    "digital_in",
+    "digital_out",
+    "pwm",
+    "analog_in",
+    "interrupt",
+]
+
+[resources.units]
+pwm = 6
