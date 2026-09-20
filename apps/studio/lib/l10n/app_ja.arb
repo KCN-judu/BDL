@@ -703,5 +703,9 @@
   "libItem_std_source_analog_tags": "アナログ 入力 ADC 電圧 読み値 汎用",
   "libItem_std_source_external_name": "外部値",
   "libItem_std_source_external_description": "製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力元はセンサーとは限らない。",
-  "libItem_std_source_external_tags": "外部 入力元 ホスト ネットワーク シミュレーション 入力"
+  "libItem_std_source_external_tags": "外部 入力元 ホスト ネットワーク シミュレーション 入力",
+  "format": "整形",
+  "formatTooltip": "ファイルを正規のレイアウトに整える（⌥⇧F）",
+  "nothingNames": "{name} を参照している箇所はありません。",
+  "placesNaming": "{count, plural, other{{count} 箇所が {name} を参照しています}}"
 }

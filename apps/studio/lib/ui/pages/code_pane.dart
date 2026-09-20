@@ -17,12 +17,22 @@
 /// so a concept, a relationship, a Source, an output read as the
 /// categories the canvas draws; typing shifts the spans on show and asks
 /// again after a short pause, so nothing flickers.
+///
+/// The editor is an IDE surface over the same text (protocol 0.22,
+/// `app/code_tooling.dart`): ⌃Space asks the service for what can go
+/// here and a pop-up at the caret shows its candidates; a dwell over a
+/// name asks what it is and a card at the name says so; ⌘-click or F12
+/// goes to where it is declared, in this file or another; ⇧F12 lists
+/// every place it is named; ⌥⇧F asks for the canonical layout and applies
+/// it as one edit.  Every answer is about the exact text it was asked
+/// for; Studio classifies, resolves and composes nothing.
 library;
 
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/diagnostics.dart';
@@ -31,8 +41,11 @@ import '../../app/actions.dart';
 import '../../app/sources.dart';
 import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import '../code/completion_popup.dart';
 import '../code/highlighting_controller.dart';
+import '../code/hover_card.dart';
 import '../code/syntax_theme.dart';
+import '../mac/controls.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
@@ -51,10 +64,13 @@ class CodePane extends StatefulWidget {
 
 class _CodePaneState extends State<CodePane> {
   final HighlightingController _c = HighlightingController();
-  final FocusNode _focus = FocusNode();
+  final FocusNode _focus = FocusNode(debugLabel: 'code');
   final ScrollController _scroll = ScrollController();
+  final GlobalKey _fieldKey = GlobalKey();
+  final GlobalKey _stackKey = GlobalKey();
   Timer? _pause;
   Timer? _highlightPause;
+  Timer? _hoverTimer;
 
   /// The path the controller's text belongs to.
   String? _path;
@@ -63,13 +79,39 @@ class _CodePaneState extends State<CodePane> {
   /// change that repeats it does not move the caret.
   String _shown = '';
 
+  /// The last daemon replacement (a format) the editor showed.
+  int _replaced = 0;
+
+  /// The last navigation the editor acted on.
+  int _revealed = 0;
+
+  /// A reference row chosen in another file: applied once that file is
+  /// on screen.
+  SourceLocation? _pendingGo;
+
+  /// The byte offset last hovered, and the text it was hovered in.
+  int? _hoverBytes;
+
   SourcesState get _sources => widget.state.editor.sources;
+
+  CompletionState? get _completion {
+    final c = widget.state.editor.completion;
+    return c != null && c.path == _path ? c : null;
+  }
+
+  HoverState? get _hover {
+    final h = widget.state.editor.hover;
+    return h != null && h.path == _path ? h : null;
+  }
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(() {
-      if (!_focus.hasFocus) _send();
+      if (!_focus.hasFocus) {
+        _send();
+        if (_completion != null) widget.dispatch(const CompletionDismissed());
+      }
     });
     _show();
   }
@@ -80,19 +122,36 @@ class _CodePaneState extends State<CodePane> {
     _show();
     final sel = widget.state.editor.selection;
     if (sel != old.state.editor.selection && !_focus.hasFocus) _reveal(sel);
+    final reveal = widget.state.editor.reveal;
+    if (reveal != null && reveal.generation != _revealed) {
+      _revealed = reveal.generation;
+      _goTo(reveal.location);
+    }
+    final pending = _pendingGo;
+    if (pending != null && pending.path == _path) {
+      _pendingGo = null;
+      _goTo(pending);
+    }
   }
 
   /// Put the state's text in the editor when it is not the designer's
-  /// own typing: another file, a new revision from the graph, a reload.
+  /// own typing: another file, a new revision from the graph, a reload,
+  /// the daemon's formatted text.
   void _show() {
     final text = _sources.text;
     final path = _sources.openPath;
-    if (path == _path && text == _shown) return;
+    final formatted = _sources.replaced != _replaced;
+    _replaced = _sources.replaced;
+    if (path == _path && text == _shown && !formatted) return;
     final switching = path != _path;
     _path = path;
     _shown = text;
-    if (switching || _sources.buffer == null) {
-      final caret = switching ? 0 : _c.selection.baseOffset.clamp(0, text.length);
+    if (switching || _sources.buffer == null || formatted) {
+      final caret = switching
+          ? 0
+          : formatted
+          ? _sameLineAndColumn(_c.text, _c.selection.baseOffset, text)
+          : _c.selection.baseOffset.clamp(0, text.length);
       _c.value = TextEditingValue(
         text: text,
         selection: TextSelection.collapsed(offset: caret.clamp(0, text.length)),
@@ -104,6 +163,169 @@ class _CodePaneState extends State<CodePane> {
     });
   }
 
+  /// The caret at the same line and column in a replaced text, as far as
+  /// that line has columns: what a format keeps of the caret.
+  static int _sameLineAndColumn(String from, int caret, String to) {
+    final at = caret.clamp(0, from.length);
+    final before = from.substring(0, at);
+    final line = '\n'.allMatches(before).length;
+    final column = at - (before.lastIndexOf('\n') + 1);
+    final lines = to.split('\n');
+    if (line >= lines.length) return to.length;
+    var offset = 0;
+    for (var i = 0; i < line; i++) {
+      offset += lines[i].length + 1;
+    }
+    return offset + column.clamp(0, lines[line].length);
+  }
+
+  // ---- the IDE surface ---------------------------------------------------------
+
+  /// The field's render object, for caret rectangles and pointer offsets.
+  RenderEditable? _editable() {
+    RenderEditable? editable;
+    void visit(RenderObject r) {
+      if (editable != null) return;
+      if (r is RenderEditable) {
+        editable = r;
+      } else {
+        r.visitChildren(visit);
+      }
+    }
+
+    final root = _fieldKey.currentContext?.findRenderObject();
+    if (root == null) return null;
+    visit(root);
+    return editable;
+  }
+
+  /// The rectangle of a code-unit offset's caret, in the overlay stack's
+  /// coordinates.
+  Rect? _caretRect(int offset) {
+    final e = _editable();
+    final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (e == null || stack == null || !e.hasSize) return null;
+    final local = e.getLocalRectForCaret(TextPosition(offset: offset.clamp(0, _c.text.length)));
+    final origin = e.localToGlobal(local.topLeft, ancestor: stack);
+    return origin & local.size;
+  }
+
+  int get _caretBytes => _byteOffset(_c.text, _c.selection.baseOffset);
+
+  void _requestCompletion() {
+    final path = _path;
+    if (path == null) return;
+    widget.dispatch(SourceCompletionRequested(path: path, text: _c.text, offset: _caretBytes));
+  }
+
+  /// Replace the service's byte range with its insert text; the caret
+  /// lands after it.  The candidate's meaning is not consulted.
+  void _accept() {
+    final c = _completion;
+    if (c == null || c.items.isEmpty) return;
+    final item = c.items[c.selected.clamp(0, c.items.length - 1)];
+    final text = _c.text;
+    final start = _charOffset(text, item.replaceStart);
+    final end = _charOffset(text, item.replaceEnd).clamp(start, text.length);
+    final next = text.replaceRange(start, end, item.insert);
+    _c.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + item.insert.length),
+    );
+    widget.dispatch(const CompletionDismissed());
+    _typed(next, reask: false);
+  }
+
+  /// The byte offset under the pointer, or null outside the text.
+  int? _offsetAt(Offset global) {
+    final e = _editable();
+    if (e == null || !e.hasSize) return null;
+    final local = e.globalToLocal(global);
+    if (!(Offset.zero & e.size).contains(local)) return null;
+    final position = e.getPositionForPoint(global);
+    if (position.offset >= _c.text.length) return null;
+    return _byteOffset(_c.text, position.offset);
+  }
+
+  void _onHover(PointerHoverEvent e) {
+    final bytes = _offsetAt(e.position);
+    if (bytes == _hoverBytes) return;
+    _hoverBytes = bytes;
+    _hoverTimer?.cancel();
+    if (bytes == null) {
+      _endHover();
+      return;
+    }
+    // A short dwell, so sweeping the pointer across the text asks once;
+    // the reducer asks nothing for a spot inside the card on show.
+    _hoverTimer = Timer(const Duration(milliseconds: 250), () {
+      final path = _path;
+      if (path == null || !mounted) return;
+      widget.dispatch(SourceHoverRequested(path: path, text: _c.text, offset: bytes));
+    });
+  }
+
+  void _endHover() {
+    _hoverTimer?.cancel();
+    _hoverBytes = null;
+    final path = _path;
+    if (path != null && _hover != null) {
+      widget.dispatch(SourceHoverRequested(path: path, text: _c.text, offset: null));
+    }
+  }
+
+  void _definitionAt(int bytes) {
+    final path = _path;
+    if (path == null) return;
+    widget.dispatch(SourceDefinitionRequested(path: path, text: _c.text, offset: bytes));
+  }
+
+  void _referencesAt(int bytes) {
+    final path = _path;
+    if (path == null) return;
+    widget.dispatch(SourceReferencesRequested(path: path, text: _c.text, offset: bytes));
+  }
+
+  /// ⌘-click on a name: its definition.
+  void _onPointerDown(PointerDownEvent e) {
+    if (!HardwareKeyboard.instance.isMetaPressed) return;
+    final bytes = _offsetAt(e.position);
+    if (bytes != null) _definitionAt(bytes);
+  }
+
+  void _format() {
+    final path = _path;
+    if (path == null) return;
+    _pause?.cancel();
+    widget.dispatch(FormatSourceRequested(path: path, text: _c.text));
+  }
+
+  /// Open the file of a location when it is another, then select its
+  /// range and scroll to it.
+  void _goTo(SourceLocation location) {
+    if (location.path != _path) {
+      if (_sources.file(location.path) == null) return;
+      _pendingGo = location;
+      _send();
+      widget.dispatch(SourceFileOpened(location.path));
+      return;
+    }
+    final text = _c.text;
+    final start = _charOffset(text, location.start);
+    final end = _charOffset(text, location.end).clamp(start, text.length);
+    _focus.requestFocus();
+    _c.selection = TextSelection(baseOffset: start, extentOffset: end);
+    _scrollTo(start);
+  }
+
+  void _scrollTo(int offset) {
+    final line = '\n'.allMatches(_c.text.substring(0, offset.clamp(0, _c.text.length))).length;
+    if (_scroll.hasClients) {
+      final y = (line * _lineHeight - 48).clamp(0.0, _scroll.position.maxScrollExtent);
+      _scroll.animateTo(y, duration: const Duration(milliseconds: 160), curve: Curves.easeOut);
+    }
+  }
+
   /// Ask for the tokens of the text on screen.  The reducer drops a
   /// repeat of the text already asked about.
   void _highlight() {
@@ -113,7 +335,9 @@ class _CodePaneState extends State<CodePane> {
     widget.dispatch(SemanticTokensRequested.file(path: path, text: _c.text));
   }
 
-  void _typed(String text) {
+  /// The designer typed (or accepted a candidate: then the pop-up is
+  /// closing and is not re-asked).
+  void _typed(String text, {bool reask = true}) {
     final path = _path;
     if (path == null) return;
     _shown = text;
@@ -122,6 +346,10 @@ class _CodePaneState extends State<CodePane> {
     _pause = Timer(kSourceEditPause, _send);
     _highlightPause?.cancel();
     _highlightPause = Timer(kHighlightPause, _highlight);
+    // typing ends a hover; with the pop-up open every keystroke re-asks
+    // at the new caret (the service filters by prefix, Studio never does)
+    if (_hover != null) _endHover();
+    if (reask && _completion != null) _requestCompletion();
   }
 
   void _send() {
@@ -140,11 +368,7 @@ class _CodePaneState extends State<CodePane> {
     if (anchor == null) return;
     final offset = _charOffset(file.text, anchor.start);
     _c.selection = TextSelection.collapsed(offset: offset);
-    final line = '\n'.allMatches(file.text.substring(0, offset)).length;
-    if (_scroll.hasClients) {
-      final y = (line * _lineHeight - 48).clamp(0.0, _scroll.position.maxScrollExtent);
-      _scroll.animateTo(y, duration: const Duration(milliseconds: 160), curve: Curves.easeOut);
-    }
+    _scrollTo(offset);
   }
 
   /// The caret moved into an item: select its node (Split sync, the other
@@ -168,6 +392,7 @@ class _CodePaneState extends State<CodePane> {
   void dispose() {
     _pause?.cancel();
     _highlightPause?.cancel();
+    _hoverTimer?.cancel();
     _c.dispose();
     _focus.dispose();
     _scroll.dispose();
@@ -193,69 +418,183 @@ class _CodePaneState extends State<CodePane> {
     final errors = diagnostics.where((d) => !d.open).length;
     _c.theme = SyntaxTheme.of(t);
     _c.setHighlight(widget.state.editor.highlights[HighlightState.fileKey(file.path)]);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _FileBar(
-          sources: sources,
-          onOpen: (p) {
-            _send();
-            widget.dispatch(SourceFileOpened(p));
-          },
-        ),
-        if (file.draft)
-          _Banner(
-            icon: Icons.sync_problem_outlined,
-            text: context.l10n.thisFileDoesNotBuildYet(errors),
+    final completion = _completion;
+    final completionOpen = completion != null;
+    final card = _hover?.card;
+    final references = widget.state.editor.references;
+    return CallbackShortcuts(
+      bindings: {
+        // The pop-up takes the navigation keys only while it is open.
+        if (completionOpen) ...{
+          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+              widget.dispatch(const CompletionMoved(1)),
+          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+              widget.dispatch(const CompletionMoved(-1)),
+          const SingleActivator(LogicalKeyboardKey.enter): _accept,
+          const SingleActivator(LogicalKeyboardKey.tab): _accept,
+          const SingleActivator(LogicalKeyboardKey.escape): () =>
+              widget.dispatch(const CompletionDismissed()),
+        } else if (card != null) ...{
+          const SingleActivator(LogicalKeyboardKey.escape): _endHover,
+        } else if (references != null) ...{
+          const SingleActivator(LogicalKeyboardKey.escape): () =>
+              widget.dispatch(const ReferencesDismissed()),
+        },
+        const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
+        const SingleActivator(LogicalKeyboardKey.f12): () => _definitionAt(_caretBytes),
+        const SingleActivator(LogicalKeyboardKey.f12, shift: true): () =>
+            _referencesAt(_caretBytes),
+        const SingleActivator(LogicalKeyboardKey.keyF, alt: true, shift: true): _format,
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _FileBar(
+            sources: sources,
+            onOpen: (p) {
+              _send();
+              widget.dispatch(SourceFileOpened(p));
+            },
+            onFormat: connected && sources.formatting == null ? _format : null,
           ),
-        Expanded(
-          child: Container(
-            color: t.content,
-            child: Semantics(
-              label: context.l10n.sourceOf(file.path),
-              child: TextField(
-                controller: _c,
-                focusNode: _focus,
-                scrollController: _scroll,
-                readOnly: !connected,
-                maxLines: null,
-                expands: true,
-                keyboardType: TextInputType.multiline,
-                textAlignVertical: TextAlignVertical.top,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontFamily: 'Menlo',
-                  height: _lineHeight / 12,
-                  color: t.textPrimary,
+          if (file.draft)
+            _Banner(
+              icon: Icons.sync_problem_outlined,
+              text: context.l10n.thisFileDoesNotBuildYet(errors),
+            ),
+          Expanded(
+            child: Container(
+              color: t.content,
+              child: LayoutBuilder(
+                builder: (context, box) => Stack(
+                  key: _stackKey,
+                  children: [
+                    Positioned.fill(
+                      child: Listener(
+                        onPointerHover: _onHover,
+                        onPointerDown: _onPointerDown,
+                        child: MouseRegion(
+                          onExit: (_) => _endHover(),
+                          child: Semantics(
+                            label: context.l10n.sourceOf(file.path),
+                            child: TextField(
+                              key: _fieldKey,
+                              controller: _c,
+                              focusNode: _focus,
+                              scrollController: _scroll,
+                              readOnly: !connected,
+                              maxLines: null,
+                              expands: true,
+                              keyboardType: TextInputType.multiline,
+                              textAlignVertical: TextAlignVertical.top,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Menlo',
+                                height: _lineHeight / 12,
+                                color: t.textPrimary,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+                              ),
+                              inputFormatters: const [_Lf()],
+                              onChanged: _typed,
+                              onTap: _caretMoved,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (completionOpen && (completion.items.isNotEmpty || completion.pending))
+                      _Anchored(
+                        at: _caretRect(_charOffset(_c.text, completion.offset)),
+                        width: 360,
+                        height: CompletionPopup.rowHeight * CompletionPopup.visibleRows + 12,
+                        bounds: box.biggest,
+                        child: CompletionPopup(
+                          completion: completion,
+                          onPick: (i) {
+                            widget.dispatch(CompletionMoved(i - completion.selected));
+                            _accept();
+                          },
+                        ),
+                      ),
+                    if (!completionOpen && card != null && card.found && card.hasSpan())
+                      _Anchored(
+                        at: _caretRect(_charOffset(_c.text, card.span.start)),
+                        width: 320,
+                        height: 180,
+                        bounds: box.biggest,
+                        child: HoverCard(card: card),
+                      ),
+                  ],
                 ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.fromLTRB(16, 12, 16, 12),
-                ),
-                inputFormatters: const [_Lf()],
-                onChanged: _typed,
-                onTap: _caretMoved,
               ),
             ),
           ),
-        ),
-        if (diagnostics.isNotEmpty) ...[
-          Divider(height: 1, color: t.hairline),
-          _Diagnostics(
-            text: file.text,
-            diagnostics: diagnostics,
-            onGo: (d) {
-              final offset = _charOffset(file.text, d.start);
-              _focus.requestFocus();
-              _c.selection = TextSelection(
-                baseOffset: offset,
-                extentOffset: _charOffset(file.text, d.end).clamp(offset, file.text.length),
-              );
-            },
-          ),
+          if (references != null) ...[
+            Divider(height: 1, color: t.hairline),
+            _References(
+              references: references,
+              sources: sources,
+              onGo: _goTo,
+              onClose: () => widget.dispatch(const ReferencesDismissed()),
+            ),
+          ],
+          if (diagnostics.isNotEmpty) ...[
+            Divider(height: 1, color: t.hairline),
+            _Diagnostics(
+              text: file.text,
+              diagnostics: diagnostics,
+              onGo: (d) {
+                final offset = _charOffset(file.text, d.start);
+                _focus.requestFocus();
+                _c.selection = TextSelection(
+                  baseOffset: offset,
+                  extentOffset: _charOffset(file.text, d.end).clamp(offset, file.text.length),
+                );
+              },
+            ),
+          ],
         ],
-      ],
+      ),
+    );
+  }
+}
+
+/// A pop-up or card placed under a caret rectangle of the field — above
+/// it when the editor has no room below — inside the editor's own bounds,
+/// never stealing focus from it.
+class _Anchored extends StatelessWidget {
+  const _Anchored({
+    required this.at,
+    required this.width,
+    required this.height,
+    required this.bounds,
+    required this.child,
+  });
+  final Rect? at;
+  final double width;
+
+  /// The most the child takes, to decide whether it fits below.
+  final double height;
+  final Widget child;
+
+  /// The editor's size, which the child must stay inside.
+  final Size bounds;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = at ?? const Rect.fromLTWH(16, 12, 0, 18);
+    final below = r.bottom + height <= bounds.height || r.top - height < 0;
+    final left = r.left.clamp(0.0, (bounds.width - width).clamp(0.0, double.infinity));
+    return Positioned(
+      left: left,
+      top: below ? r.bottom : null,
+      bottom: below ? null : bounds.height - r.top,
+      width: width,
+      child: Focus(canRequestFocus: false, descendantsAreFocusable: false, child: child),
     );
   }
 }
@@ -270,9 +609,13 @@ class _Lf extends TextInputFormatter {
 
 /// The file on screen and the others, when there are others.
 class _FileBar extends StatelessWidget {
-  const _FileBar({required this.sources, required this.onOpen});
+  const _FileBar({required this.sources, required this.onOpen, required this.onFormat});
   final SourcesState sources;
   final void Function(String) onOpen;
+
+  /// Ask the daemon for the canonical layout; null while one is being
+  /// asked or the daemon is away.
+  final VoidCallback? onFormat;
 
   @override
   Widget build(BuildContext context) {
@@ -299,10 +642,137 @@ class _FileBar extends StatelessWidget {
                 labelOf: (p) => sources.file(p)?.draft == true ? context.l10n.notBuiltSuffix(p) : p,
               ),
             ),
+          const Spacer(),
+          MacButton(
+            key: const ValueKey('format-source'),
+            label: context.l10n.format,
+            onPressed: onFormat,
+            tooltip: context.l10n.formatTooltip,
+          ),
         ],
       ),
     );
   }
+}
+
+/// Every place the daemon says names one entity, one row each — the
+/// file and line in tabular figures, the line's text — with the name in
+/// the header.  Activating a row goes there; Esc or the close button
+/// dismisses the list.
+class _References extends StatelessWidget {
+  const _References({
+    required this.references,
+    required this.sources,
+    required this.onGo,
+    required this.onClose,
+  });
+  final SourceReferencesState references;
+  final SourcesState sources;
+  final void Function(SourceLocation) onGo;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final rows = references.locations;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 6 * 24 + 32),
+      child: Container(
+        key: const ValueKey('references'),
+        color: t.window,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 24,
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      references.pending
+                          ? context.l10n.looking
+                          : rows.isEmpty
+                          ? context.l10n.nothingNames(references.title)
+                          : context.l10n.placesNaming(rows.length, references.title),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: t.textPrimary,
+                      ),
+                    ),
+                  ),
+                  MacInteractive(
+                    onTap: onClose,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Semantics(
+                      button: true,
+                      label: context.l10n.close,
+                      child: Icon(Icons.close, size: 12, color: t.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final l in rows)
+                    MacInteractive(
+                      onTap: () => onGo(l),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        height: 24,
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 160,
+                              child: Text(
+                                '${l.path}:${_lineOf(sources.file(l.path)?.text ?? '', l.start)}',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: t.textSecondary,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _lineText(sources.file(l.path)?.text ?? '', l.start),
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'Menlo',
+                                  color: t.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The trimmed text of the line holding a byte offset.
+String _lineText(String text, int byte) {
+  final at = _charOffset(text, byte);
+  final start = text.lastIndexOf('\n', at - 1 < 0 ? 0 : at - 1) + 1;
+  final end = text.indexOf('\n', at);
+  return text.substring(start, end < 0 ? text.length : end).trim();
 }
 
 /// A document-level condition, as the window's banners are drawn.

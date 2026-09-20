@@ -15,6 +15,7 @@ import 'composer.dart';
 import 'deploy.dart';
 import 'drafts.dart';
 import 'lifecycle.dart';
+import 'code_tooling.dart';
 import 'highlighting.dart';
 import 'sources.dart';
 import 'effects.dart';
@@ -370,6 +371,55 @@ Transition reduce(AppState s, AppAction action) {
     ),
     HoverReceived(:final generation, :final result) => hoverReceived(s, generation, result),
     ToolingFailed(:final generation) => toolingFailed(s, generation),
+
+    // ---- the Code view's IDE queries (app/code_tooling.dart) --------------------
+    SourceCompletionRequested(:final path, :final text, :final offset) => sourceCompletionRequested(
+      s,
+      path,
+      text,
+      offset,
+    ),
+    SourceCompletionReceived(:final generation, :final result) => sourceCompletionReceived(
+      s,
+      generation,
+      result,
+    ),
+    SourceHoverRequested(:final path, :final text, :final offset) => sourceHoverRequested(
+      s,
+      path,
+      text,
+      offset,
+    ),
+    SourceDefinitionRequested(:final path, :final text, :final offset) => sourceDefinitionRequested(
+      s,
+      path,
+      text,
+      offset,
+    ),
+    SourceDefinitionReceived(:final generation, :final result) => sourceDefinitionReceived(
+      s,
+      generation,
+      result,
+    ),
+    SourceReferencesRequested(:final path, :final text, :final offset) => sourceReferencesRequested(
+      s,
+      path,
+      text,
+      offset,
+    ),
+    SourceReferencesReceived(:final generation, :final result) => sourceReferencesReceived(
+      s,
+      generation,
+      result,
+    ),
+    ReferencesDismissed() => referencesDismissed(s),
+    FormatSourceRequested(:final path, :final text) => formatSourceRequested(s, path, text),
+    FormatSourceReceived(:final generation, :final path, :final result) => formatSourceReceived(
+      s,
+      generation,
+      path,
+      result,
+    ),
 
     // ---- semantic highlighting (app/highlighting.dart) -------------------------
     SemanticTokensRequested(:final path, :final mappingId, :final component, :final text) =>

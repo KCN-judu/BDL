@@ -537,6 +537,72 @@
       "purpose": "What the editor's colours mean, on a real file."
     },
     {
+      "id": "code-completion",
+      "pages": [
+        "studio/code-view.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "view": "code"
+        },
+        {
+          "complete": {
+            "after": "brightness() = dimByTilt("
+          }
+        }
+      ],
+      "expect": {
+        "textsContaining": [
+          "tiltValue"
+        ]
+      },
+      "crop": {
+        "key": "completion-popup",
+        "pad": 200,
+        "maxWidth": 860,
+        "maxHeight": 520
+      },
+      "output": "studio/code-completion.png",
+      "caption": "The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first.",
+      "alt": "A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.",
+      "purpose": "Completion in the Code view is the service's list, not a word list."
+    },
+    {
+      "id": "code-hover",
+      "pages": [
+        "studio/code-view.md"
+      ],
+      "fixture": "component-system",
+      "view": "design",
+      "steps": [
+        {
+          "view": "code"
+        },
+        {
+          "hover": {
+            "over": "dimByTilt(tiltValue)"
+          }
+        }
+      ],
+      "expect": {
+        "textsContaining": [
+          "dimByTilt"
+        ]
+      },
+      "crop": {
+        "key": "hover-card",
+        "pad": 200,
+        "maxWidth": 860,
+        "maxHeight": 520
+      },
+      "output": "studio/code-hover.png",
+      "caption": "The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state.",
+      "alt": "A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.",
+      "purpose": "Hover in the Code view answers what a name is, by identity."
+    },
+    {
       "id": "behavior-region",
       "pages": [
         "workflows/grouping-behavior.md",

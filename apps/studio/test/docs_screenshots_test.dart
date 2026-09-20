@@ -35,6 +35,7 @@ import 'package:bdl_studio/ui/inspector.dart';
 import 'package:bdl_studio/ui/library.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:bdl_studio/ui/pages/deploy_page.dart';
+import 'package:bdl_studio/ui/pages/code_pane.dart';
 import 'package:bdl_studio/ui/pages/design_page.dart';
 import 'package:bdl_studio/ui/pages/simulate_page.dart';
 import 'package:bdl_studio/ui/shell.dart';
@@ -362,6 +363,41 @@ class Scene {
                             .isNotEmpty ??
                         false))),
         why: 'the sources and their tokens',
+      );
+      return;
+    }
+    if (step['complete'] case final Map<String, dynamic> c) {
+      // the Code view's completion pop-up at the end of a text fragment
+      final text = s.editor.sources.text;
+      final needle = c['after'] as String;
+      final at = text.indexOf(needle);
+      if (at < 0) wrong('complete: "$needle" is not in the open file');
+      final offset = utf8.encode(text.substring(0, at + needle.length)).length;
+      final path = s.editor.sources.openPath!;
+      await act(
+        SourceCompletionRequested(path: path, text: text, offset: offset),
+        (s) => s.editor.completion != null && !s.editor.completion!.pending,
+        why: 'the candidates',
+      );
+      // the pane places the pop-up at the caret: put the caret there
+      final field = tester.widget<TextField>(
+        find.descendant(of: find.byType(CodePane), matching: find.byType(TextField)),
+      );
+      field.controller!.selection = TextSelection.collapsed(offset: at + needle.length);
+      return;
+    }
+    if (step['hover'] case final Map<String, dynamic> h) {
+      // the Code view's hover card over a text fragment
+      final text = s.editor.sources.text;
+      final needle = h['over'] as String;
+      final at = text.indexOf(needle);
+      if (at < 0) wrong('hover: "$needle" is not in the open file');
+      final offset = utf8.encode(text.substring(0, at)).length + 1;
+      final path = s.editor.sources.openPath!;
+      await act(
+        SourceHoverRequested(path: path, text: text, offset: offset),
+        (s) => s.editor.hover?.card != null,
+        why: 'the card',
       );
       return;
     }

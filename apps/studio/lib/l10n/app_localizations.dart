@@ -4322,6 +4322,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'host network remote simulation external provided input source'**
   String get libItem_std_source_external_tags;
+
+  /// Studio UI text (code_pane.dart): the file-bar button asking the daemon for the canonical layout.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get format;
+
+  /// Studio UI text (code_pane.dart).
+  ///
+  /// In en, this message translates to:
+  /// **'Lay the file out the canonical way (⌥⇧F)'**
+  String get formatTooltip;
+
+  /// Studio UI text (code_pane.dart): the references list when empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing names {name}.'**
+  String nothingNames(String name);
+
+  /// Studio UI text (code_pane.dart): the references list header.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 place names {name}} other{{count} places name {name}}}'**
+  String placesNaming(int count, String name);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

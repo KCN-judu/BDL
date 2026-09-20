@@ -914,6 +914,49 @@ class SemanticTokensRequested extends UserAction {
   final String text;
 }
 
+/// The Code view's IDE requests, each over the file's text exactly as
+/// typed and a byte offset into it (`app/code_tooling.dart`).
+class SourceCompletionRequested extends UserAction {
+  const SourceCompletionRequested({required this.path, required this.text, required this.offset});
+  final String path;
+  final String text;
+  final int offset;
+}
+
+/// A null [offset] ends the hover.
+class SourceHoverRequested extends UserAction {
+  const SourceHoverRequested({required this.path, required this.text, required this.offset});
+  final String path;
+  final String text;
+  final int? offset;
+}
+
+class SourceDefinitionRequested extends UserAction {
+  const SourceDefinitionRequested({required this.path, required this.text, required this.offset});
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class SourceReferencesRequested extends UserAction {
+  const SourceReferencesRequested({required this.path, required this.text, required this.offset});
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class ReferencesDismissed extends UserAction {
+  const ReferencesDismissed();
+}
+
+/// Format the file: the daemon's canonical layout of [text], applied as
+/// one authored edit when it comes back for the text still on screen.
+class FormatSourceRequested extends UserAction {
+  const FormatSourceRequested({required this.path, required this.text});
+  final String path;
+  final String text;
+}
+
 class SourceFileOpened extends UserAction {
   const SourceFileOpened(this.path);
   final String path;
@@ -1072,6 +1115,32 @@ class SemanticTokensFailed extends ResponseAction {
   const SemanticTokensFailed({required this.key, required this.generation});
   final String key;
   final int generation;
+}
+
+class SourceCompletionReceived extends ResponseAction {
+  const SourceCompletionReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.SourceCompletionResponse result;
+}
+
+/// The definition site(s) of the name asked about.
+class SourceDefinitionReceived extends ResponseAction {
+  const SourceDefinitionReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.SourceLocationsResponse result;
+}
+
+class SourceReferencesReceived extends ResponseAction {
+  const SourceReferencesReceived({required this.generation, required this.result});
+  final int generation;
+  final pb.SourceLocationsResponse result;
+}
+
+class FormatSourceReceived extends ResponseAction {
+  const FormatSourceReceived({required this.generation, required this.path, required this.result});
+  final int generation;
+  final String path;
+  final pb.FormatSourceResponse result;
 }
 
 class HoverReceived extends ResponseAction {

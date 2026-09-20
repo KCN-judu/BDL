@@ -34,7 +34,9 @@ import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'code/completion_popup.dart';
 import 'code/highlighting_controller.dart';
+import 'code/hover_card.dart';
 import 'code/syntax_theme.dart';
 import 'formula_composer.dart';
 import 'mac/controls.dart';
@@ -522,14 +524,14 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
           if (!formulaMode &&
               completion != null &&
               (completion.items.isNotEmpty || completion.pending))
-            _CompletionPopup(
+            CompletionPopup(
               completion: completion,
               onPick: (i) {
                 widget.dispatch(CompletionMoved(i - completion.selected));
                 _accept();
               },
             ),
-          if (!formulaMode && card != null && card.found) _HoverCard(card: card),
+          if (!formulaMode && card != null && card.found) HoverCard(card: card),
           const SizedBox(height: MacMetrics.gapTight),
           if (m.conflict)
             _ConflictNotice(
@@ -676,150 +678,3 @@ class _ConflictNotice extends StatelessWidget {
 /// (monospace, what will be inserted), its kind, the resulting type in a
 /// secondary column.  Selection is the accent tint; the selected row also
 /// carries a ▸ so it survives without colour.
-class _CompletionPopup extends StatelessWidget {
-  const _CompletionPopup({required this.completion, required this.onPick});
-  final CompletionState completion;
-  final void Function(int index) onPick;
-
-  static const double rowHeight = 22;
-  static const int visibleRows = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final items = completion.items;
-    return Container(
-      key: const ValueKey('completion-popup'),
-      margin: const EdgeInsets.only(top: MacMetrics.gapTight),
-      constraints: const BoxConstraints(maxHeight: rowHeight * visibleRows + 2),
-      decoration: BoxDecoration(
-        color: t.content,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: t.hairline),
-      ),
-      child: items.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(6),
-              child: Text(
-                context.l10n.looking,
-                style: TextStyle(fontSize: 11, color: t.textTertiary),
-              ),
-            )
-          : ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemExtent: rowHeight,
-              itemCount: items.length,
-              itemBuilder: (context, i) {
-                final item = items[i];
-                final selected = i == completion.selected;
-                return MouseRegion(
-                  cursor: SystemMouseCursors.basic,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onPick(i),
-                    child: Container(
-                      color: selected ? t.selection : null,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Row(
-                        spacing: MacMetrics.gap,
-                        children: [
-                          SizedBox(
-                            width: 8,
-                            child: Text(
-                              selected ? '▸' : '',
-                              style: TextStyle(fontSize: 10, color: t.textSecondary),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              item.label,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Menlo',
-                                color: t.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Text(item.kind, style: TextStyle(fontSize: 10, color: t.textTertiary)),
-                          if (item.resultingType.isNotEmpty)
-                            SizedBox(
-                              width: 72,
-                              child: Text(
-                                item.resultingType,
-                                textAlign: TextAlign.right,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10, color: t.textSecondary),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-}
-
-/// The everyday meaning of the name under the pointer, as the service
-/// states it: title, what kind of value, its status, a few details.  No
-/// Core term here — that is Explain's job.
-class _HoverCard extends StatelessWidget {
-  const _HoverCard({required this.card});
-  final pb.DraftHoverResponse card;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    return Container(
-      key: const ValueKey('hover-card'),
-      margin: const EdgeInsets.only(top: MacMetrics.gapTight),
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-      decoration: BoxDecoration(
-        color: t.content,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: t.hairline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: MacMetrics.gapTight,
-        children: [
-          Text(
-            card.title,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
-          ),
-          if (card.signature.isNotEmpty)
-            Text(
-              card.signature,
-              style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary),
-            ),
-          if (card.representation.isNotEmpty)
-            Text(card.representation, style: TextStyle(fontSize: 11, color: t.textPrimary)),
-          Text(
-            card.status,
-            style: TextStyle(fontSize: 11, color: card.open ? t.open : t.textSecondary),
-          ),
-          for (final d in card.details)
-            Row(
-              spacing: MacMetrics.gap,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 80,
-                  child: Text(d.label, style: TextStyle(fontSize: 11, color: t.textTertiary)),
-                ),
-                Expanded(
-                  child: Text(d.value, style: TextStyle(fontSize: 11, color: t.textPrimary)),
-                ),
-              ],
-            ),
-          if (card.explanation.isNotEmpty)
-            Text(card.explanation, style: TextStyle(fontSize: 11, color: t.textSecondary)),
-        ],
-      ),
-    );
-  }
-}

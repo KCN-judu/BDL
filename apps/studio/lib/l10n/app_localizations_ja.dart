@@ -2415,4 +2415,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get libItem_std_source_external_tags => '外部 入力元 ホスト ネットワーク シミュレーション 入力';
+
+  @override
+  String get format => '整形';
+
+  @override
+  String get formatTooltip => 'ファイルを正規のレイアウトに整える（⌥⇧F）';
+
+  @override
+  String nothingNames(String name) {
+    return '$name を参照している箇所はありません。';
+  }
+
+  @override
+  String placesNaming(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 箇所が $name を参照しています',
+    );
+    return '$_temp0';
+  }
 }

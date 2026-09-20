@@ -291,6 +291,81 @@ class FetchSemanticTokens extends Effect {
   final int? component;
 }
 
+/// The Code view's IDE queries over a file's text as typed (protocol
+/// 0.22); uncounted, answered under [generation] or by `ToolingFailed`.
+class CompleteSource extends Effect {
+  const CompleteSource({
+    required this.revision,
+    required this.generation,
+    required this.path,
+    required this.text,
+    required this.offset,
+  });
+  final int revision;
+  final int generation;
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class HoverSource extends Effect {
+  const HoverSource({
+    required this.revision,
+    required this.generation,
+    required this.path,
+    required this.text,
+    required this.offset,
+  });
+  final int revision;
+  final int generation;
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class DefineSource extends Effect {
+  const DefineSource({
+    required this.revision,
+    required this.generation,
+    required this.path,
+    required this.text,
+    required this.offset,
+  });
+  final int revision;
+  final int generation;
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class ReferencesSource extends Effect {
+  const ReferencesSource({
+    required this.revision,
+    required this.generation,
+    required this.path,
+    required this.text,
+    required this.offset,
+  });
+  final int revision;
+  final int generation;
+  final String path;
+  final String text;
+  final int offset;
+}
+
+class FormatSource extends Effect {
+  const FormatSource({
+    required this.revision,
+    required this.generation,
+    required this.path,
+    required this.text,
+  });
+  final int revision;
+  final int generation;
+  final String path;
+  final String text;
+}
+
 class HoverDraft extends Effect {
   const HoverDraft({
     required this.revision,

@@ -2574,4 +2574,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get libItem_std_source_external_tags =>
       'host network remote simulation external provided input source';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get formatTooltip => 'Lay the file out the canonical way (⌥⇧F)';
+
+  @override
+  String nothingNames(String name) {
+    return 'Nothing names $name.';
+  }
+
+  @override
+  String placesNaming(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places name $name',
+      one: '1 place names $name',
+    );
+    return '$_temp0';
+  }
 }

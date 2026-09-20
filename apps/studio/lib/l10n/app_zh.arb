@@ -703,5 +703,9 @@
   "libItem_std_source_analog_tags": "模拟 输入 ADC 电压 读数 通用",
   "libItem_std_source_external_name": "外部值",
   "libItem_std_source_external_description": "由产品外部提供的值——来自主机、网络或仿真——作为行为读取的值。来源并不总是传感器。",
-  "libItem_std_source_external_tags": "外部 来源 主机 网络 仿真 输入 提供"
+  "libItem_std_source_external_tags": "外部 来源 主机 网络 仿真 输入 提供",
+  "format": "格式化",
+  "formatTooltip": "按规范布局整理文件（⌥⇧F）",
+  "nothingNames": "没有任何地方引用 {name}。",
+  "placesNaming": "{count, plural, other{{count} 处引用了 {name}}}"
 }

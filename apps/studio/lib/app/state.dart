@@ -223,6 +223,9 @@ class SourcesState {
     this.buffer,
     this.sent,
     this.retry,
+    this.replaced = 0,
+    this.formatGeneration = 0,
+    this.formatting,
   });
 
   /// The project revision [files] describe; -1 before the first answer.
@@ -244,6 +247,17 @@ class SourcesState {
 
   /// An edit refused as stale, resent once the sources catch up.
   final String? retry;
+
+  /// Bumped when the editor's text was replaced by the daemon's — a
+  /// formatted file — so the editor shows it (keeping the caret where it
+  /// can) rather than treating it as the designer's own typing.
+  final int replaced;
+
+  /// The format request in flight: its generation and the text it was
+  /// asked over.  An answer to another generation, or to a text the
+  /// designer has since changed, changes nothing.
+  final int formatGeneration;
+  final String? formatting;
 
   pb.SourceFileView? file(String? path) => files.where((f) => f.path == path).firstOrNull;
 
@@ -274,6 +288,10 @@ class SourcesState {
     bool clearSent = false,
     String? retry,
     bool clearRetry = false,
+    int? replaced,
+    int? formatGeneration,
+    String? formatting,
+    bool clearFormatting = false,
   }) => SourcesState(
     revision: revision ?? this.revision,
     files: files ?? this.files,
@@ -282,7 +300,77 @@ class SourcesState {
     buffer: clearBuffer ? null : (buffer ?? this.buffer),
     sent: clearSent ? null : (sent ?? this.sent),
     retry: clearRetry ? null : (retry ?? this.retry),
+    replaced: replaced ?? this.replaced,
+    formatGeneration: formatGeneration ?? this.formatGeneration,
+    formatting: clearFormatting ? null : (formatting ?? this.formatting),
   );
+}
+
+/// A place in a source file, as the daemon states it: the path and a
+/// byte range into that file's text as the daemon holds it.
+@immutable
+class SourceLocation {
+  const SourceLocation({required this.path, required this.start, required this.end});
+  final String path;
+  final int start;
+  final int end;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SourceLocation && other.path == path && other.start == start && other.end == end;
+
+  @override
+  int get hashCode => Object.hash(path, start, end);
+
+  @override
+  String toString() => 'SourceLocation($path, $start, $end)';
+}
+
+/// Where the Code view should go: the daemon's definition site for the
+/// name the designer asked about (Cmd-click, F12).  The pane opens the
+/// file and selects the range once per [generation].
+@immutable
+class SourceReveal {
+  const SourceReveal({required this.generation, required this.location});
+  final int generation;
+  final SourceLocation location;
+}
+
+/// The references list under the Code view: every site naming one entity,
+/// as the daemon states them, for the name the designer asked about
+/// (Shift-F12).
+@immutable
+class SourceReferencesState {
+  const SourceReferencesState({
+    required this.generation,
+    required this.path,
+    required this.offset,
+    this.title = '',
+    this.locations = const [],
+    this.pending = true,
+  });
+
+  /// The request tag; an older answer is dropped.
+  final int generation;
+
+  /// Where it was asked.
+  final String path;
+  final int offset;
+
+  /// The entity's name, once answered.
+  final String title;
+  final List<SourceLocation> locations;
+  final bool pending;
+
+  SourceReferencesState copyWith({String? title, List<SourceLocation>? locations, bool? pending}) =>
+      SourceReferencesState(
+        generation: generation,
+        path: path,
+        offset: offset,
+        title: title ?? this.title,
+        locations: locations ?? this.locations,
+        pending: pending ?? this.pending,
+      );
 }
 
 /// One classified span of a text, in UTF-16 code units of the text it was
@@ -1057,7 +1145,8 @@ class ComposerState {
 @immutable
 class CompletionState {
   const CompletionState({
-    required this.mappingId,
+    this.mappingId,
+    this.path,
     required this.generation,
     required this.source,
     required this.offset,
@@ -1065,7 +1154,12 @@ class CompletionState {
     this.selected = 0,
     this.pending = true,
   });
-  final int mappingId;
+
+  /// The formula field's relationship, or …
+  final int? mappingId;
+
+  /// … the Code view's source file the pop-up belongs to.
+  final String? path;
 
   /// Request tag; a response with another generation is ignored.
   final int generation;
@@ -1088,6 +1182,7 @@ class CompletionState {
     bool? pending,
   }) => CompletionState(
     mappingId: mappingId,
+    path: path,
     generation: generation ?? this.generation,
     source: source ?? this.source,
     offset: offset ?? this.offset,
@@ -1100,11 +1195,21 @@ class CompletionState {
 /// A hover card over a formula name (or, from the canvas, over an entity).
 @immutable
 class HoverState {
-  const HoverState({required this.generation, this.mappingId, this.offset, this.entity, this.card});
+  const HoverState({
+    required this.generation,
+    this.mappingId,
+    this.path,
+    this.offset,
+    this.entity,
+    this.card,
+  });
   final int generation;
 
   /// Formula hover: the mapping whose draft text is hovered, at a byte offset.
   final int? mappingId;
+
+  /// Source hover: the Code view's file whose text is hovered, at a byte offset.
+  final String? path;
   final int? offset;
 
   /// Entity hover (canvas / library rows).
@@ -1116,6 +1221,7 @@ class HoverState {
   HoverState copyWith({pb.DraftHoverResponse? card}) => HoverState(
     generation: generation,
     mappingId: mappingId,
+    path: path,
     offset: offset,
     entity: entity,
     card: card ?? this.card,
@@ -1315,9 +1421,16 @@ class EditorState {
     this.pendingSave,
     this.draftsSeeded = false,
     this.highlights = const {},
+    this.reveal,
+    this.references,
   });
 
   final StudioPage page;
+
+  /// The Code view's pending navigation and its references list
+  /// (`app/code_tooling.dart`).
+  final SourceReveal? reveal;
+  final SourceReferencesState? references;
 
   /// The semantic tokens of the texts on screen, by document key (a source
   /// file, a formula draft): what the IDE service last said the spans of
@@ -1506,6 +1619,9 @@ class EditorState {
     bool clearPendingSave = false,
     bool? draftsSeeded,
     Map<String, HighlightState>? highlights,
+    SourceReveal? reveal,
+    SourceReferencesState? references,
+    bool clearReferences = false,
   }) {
     return EditorState(
       page: page ?? this.page,
@@ -1547,6 +1663,8 @@ class EditorState {
       pendingSave: clearPendingSave ? null : (pendingSave ?? this.pendingSave),
       draftsSeeded: draftsSeeded ?? this.draftsSeeded,
       highlights: highlights ?? this.highlights,
+      reveal: reveal ?? this.reveal,
+      references: clearReferences ? null : (references ?? this.references),
     );
   }
 

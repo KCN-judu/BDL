@@ -346,6 +346,122 @@ class EffectExecutor {
         } catch (e) {
           _dispatch(SemanticTokensFailed(key: key, generation: generation));
         }
+      case CompleteSource(
+        :final revision,
+        :final generation,
+        :final path,
+        :final text,
+        :final offset,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            sourceCompletion: pb.SourceCompletionRequest(
+              revision: Int64(revision),
+              generation: Int64(generation),
+              path: path,
+              text: text,
+              offset: offset,
+            ),
+          ),
+          (r) => _dispatch(
+            SourceCompletionReceived(generation: generation, result: r.sourceCompletion),
+          ),
+        );
+      case HoverSource(:final revision, :final generation, :final path, :final text, :final offset):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            sourceHover: pb.SourceHoverRequest(
+              revision: Int64(revision),
+              generation: Int64(generation),
+              path: path,
+              text: text,
+              offset: offset,
+            ),
+          ),
+          (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
+        );
+      case DefineSource(
+        :final revision,
+        :final generation,
+        :final path,
+        :final text,
+        :final offset,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            sourceDefinition: pb.SourceDefinitionRequest(
+              revision: Int64(revision),
+              generation: Int64(generation),
+              path: path,
+              text: text,
+              offset: offset,
+            ),
+          ),
+          (r) => _dispatch(
+            SourceDefinitionReceived(generation: generation, result: r.sourceLocations),
+          ),
+        );
+      case ReferencesSource(
+        :final revision,
+        :final generation,
+        :final path,
+        :final text,
+        :final offset,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            sourceReferences: pb.SourceReferencesRequest(
+              revision: Int64(revision),
+              generation: Int64(generation),
+              path: path,
+              text: text,
+              offset: offset,
+              includeDeclaration: true,
+            ),
+          ),
+          (r) => _dispatch(
+            SourceReferencesReceived(generation: generation, result: r.sourceLocations),
+          ),
+        );
+      case FormatSource(:final revision, :final generation, :final path, :final text):
+        final client = _client;
+        if (client == null) {
+          _dispatch(
+            FormatSourceReceived(
+              generation: generation,
+              path: path,
+              result: pb.FormatSourceResponse(formatted: false, text: text),
+            ),
+          );
+          return;
+        }
+        try {
+          final r = await client.request(
+            pb.ClientMessage(
+              formatSource: pb.FormatSourceRequest(
+                revision: Int64(revision),
+                generation: Int64(generation),
+                path: path,
+                text: text,
+              ),
+            ),
+          );
+          _dispatch(
+            FormatSourceReceived(generation: generation, path: path, result: r.formatSource),
+          );
+        } catch (e) {
+          _dispatch(
+            FormatSourceReceived(
+              generation: generation,
+              path: path,
+              result: pb.FormatSourceResponse(formatted: false, text: text),
+            ),
+          );
+        }
       case HoverDraft(
         :final revision,
         :final mappingId,

@@ -8,6 +8,7 @@
 library;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'code_tooling.dart' show codeToolingFailed;
 import 'composer.dart' show composerAfterFailure, withoutComposerSelection;
 import 'effects.dart';
 import 'reducer.dart' show Transition, sendEdit;
@@ -147,6 +148,7 @@ Transition toolingFailed(AppState s, int generation) {
   if (e.completion?.generation == generation) next = next.copyWith(clearCompletion: true);
   if (e.hover?.generation == generation) next = next.copyWith(clearHover: true);
   next = composerAfterFailure(next, generation);
+  next = codeToolingFailed(next, generation);
   return Transition(identical(next, e) ? s : s.copyWith(editor: next));
 }
 
