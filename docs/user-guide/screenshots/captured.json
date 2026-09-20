@@ -91,11 +91,11 @@
   },
   "deploy-page": {
     "output": "studio/deploy-page.png",
-    "commit": "ce38c71c0705",
+    "commit": "f4454d787594",
     "dirty": false,
-    "captured_at": "2026-09-20T10:21:49Z",
+    "captured_at": "2026-09-20T13:10:08Z",
     "fixture_sha256": "4240a0afd71429760013821c10b3c1e63b3939741c48d576f74621c5c20f9cbd",
-    "entry_sha256": "e3bec9b240ffa95a8ecfe24435b9fa7352c04046a7c8c0ac45dbb46dca33db00",
+    "entry_sha256": "db73bfdf5af2da10b7a300be975df3f89d254c8d4478491dc9776c39345c49d8",
     "width": 1616,
     "height": 960
   },
