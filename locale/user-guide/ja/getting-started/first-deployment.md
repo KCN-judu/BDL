@@ -35,7 +35,7 @@
 
 **作ったもの。** 1 つのボードに対するデプロイ構成。設計とともにプロジェクトに保存されますが、別の層です。デバイスを追加しても設計ページの判定は変わらず、別のボードを選んでも変わりません。
 
-![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../../../../docs/user-guide/assets/studio/deploy-page.png)
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
 _デプロイページ：Arduino Nano を選択、light に PWM デバイス 1 つ、判定と配置。_
 
