@@ -1031,14 +1031,99 @@ pub fn concept_templates_response(set: &bdl_library::LibrarySet) -> pb::ConceptT
         libraries: set.libraries().iter().map(concept_library_view).collect(),
         quantities: bdl_model::quantity::QUANTITIES
             .iter()
-            .map(|q| pb::QuantityView {
-                id: q.id.to_owned(),
-                type_name: q.type_name.to_owned(),
-                unit: q.unit.to_owned(),
-                dim: Some(dim_to_pb(q.dim)),
+            .map(quantity_view)
+            .collect(),
+    }
+}
+
+fn quantity_view(q: &bdl_model::quantity::QuantityDef) -> pb::QuantityView {
+    let preferred = bdl_model::units::preferred_for(q.dim).filter(|_| !q.unit.is_empty());
+    pb::QuantityView {
+        id: q.id.to_owned(),
+        type_name: q.type_name.to_owned(),
+        // the display rendering, as the field always carried
+        unit: preferred
+            .as_ref()
+            .map(|u| u.display())
+            .unwrap_or_else(|| q.unit.to_owned()),
+        dim: Some(dim_to_pb(q.dim)),
+        preferred_unit: preferred.as_ref().map(unit_expr_view),
+    }
+}
+
+pub fn unit_expr_view(u: &bdl_model::units::UnitExpr) -> pb::UnitExprView {
+    pb::UnitExprView {
+        source: u.source(),
+        display: u.display(),
+        dim: Some(dim_to_pb(u.dim())),
+        atom_id: u.as_atom().map(|d| d.id.to_owned()).unwrap_or_default(),
+        factors: u
+            .factors()
+            .iter()
+            .map(|f| pb::UnitFactorView {
+                atom_id: f.atom.id.to_owned(),
+                symbol: f.atom.symbol.to_owned(),
+                exponent: i32::from(f.exponent),
             })
             .collect(),
     }
+}
+
+/// The representation a value category id denotes (`ListValueCategories`):
+/// a named quantity's dimension, `boolean`, `count`; `None` for an
+/// unknown id.
+pub fn representation_of_category(id: &str) -> Option<bdl_model::surface::Representation> {
+    use bdl_model::surface::Representation;
+    match id {
+        "boolean" => Some(Representation::Boolean),
+        "count" => Some(Representation::Count),
+        _ => bdl_model::quantity::lookup(id).map(|q| Representation::Quantity { dim: q.dim }),
+    }
+}
+
+/// The compiler-owned authoring categories: every named quantity, then
+/// the truth value and the count (0.27).
+pub fn value_categories_response() -> pb::ValueCategoriesResponse {
+    use bdl_model::surface::Representation;
+    let mut categories: Vec<pb::ValueCategoryView> = bdl_model::quantity::QUANTITIES
+        .iter()
+        .map(|q| {
+            let preferred = bdl_model::units::preferred_for(q.dim).filter(|_| !q.unit.is_empty());
+            pb::ValueCategoryView {
+                id: q.id.to_owned(),
+                display_name: q.display_name(),
+                type_name: q.type_name.to_owned(),
+                representation: Some(representation_to_pb(&Representation::Quantity {
+                    dim: q.dim,
+                })),
+                dim: Some(dim_to_pb(q.dim)),
+                preferred_unit: preferred.as_ref().map(unit_expr_view),
+                units: bdl_model::units::candidates_for(q.dim)
+                    .iter()
+                    .map(unit_expr_view)
+                    .collect(),
+            }
+        })
+        .collect();
+    categories.push(pb::ValueCategoryView {
+        id: "boolean".into(),
+        display_name: "true or false".into(),
+        type_name: "Bool".into(),
+        representation: Some(representation_to_pb(&Representation::Boolean)),
+        dim: None,
+        preferred_unit: None,
+        units: Vec::new(),
+    });
+    categories.push(pb::ValueCategoryView {
+        id: "count".into(),
+        display_name: "count".into(),
+        type_name: "Count".into(),
+        representation: Some(representation_to_pb(&Representation::Count)),
+        dim: None,
+        preferred_unit: None,
+        units: Vec::new(),
+    });
+    pb::ValueCategoriesResponse { categories }
 }
 
 pub fn library_object_view(o: &bdl_library::CreatedObject) -> pb::LibraryObjectView {

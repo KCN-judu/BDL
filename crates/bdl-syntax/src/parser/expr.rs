@@ -354,9 +354,7 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
                     // name followed by `=>` or `(` cannot be a unit (nothing
                     // may follow a unit but an operator), so a missing comma
                     // between match arms does not swallow the next pattern.
-                    let u = p.start();
-                    p.bump();
-                    u.complete(p, UnitSuffix);
+                    unit_suffix(p);
                 }
                 m.complete(p, LiteralExpr)
             }
@@ -382,6 +380,100 @@ fn primary(p: &mut Parser<'_>) -> Option<CompletedMarker> {
             _ => return None,
         });
     }
+}
+
+/// `UnitSuffix ::= UnitProduct ("per" UnitProduct)?`,
+/// `UnitProduct ::= UnitFactor ("*" UnitFactor)*`,
+/// `UnitFactor ::= Ident ("^" "-"? Number)?` — the unit expression after a
+/// number (docs/spec/textual-syntax.md §5.2).  `per` is contextual: an
+/// identifier everywhere else, the unit quotient only here, where a name
+/// can never be a reference.  `*` continues the unit only when the word
+/// after it is a registered unit symbol (`1 N * m`); otherwise it is the
+/// value-level multiplication it always was (`2 m * width`,
+/// `90 deg * gain`) — the one place the parser consults the registry, so
+/// that no existing formula changes meaning.  Everything after `per` is
+/// unit syntax: an unknown word there is a unit the elaborator will not
+/// know, never a reference.  A second `per` is refused (write `m per
+/// s^2`); a `^` needs a whole-number exponent.
+fn unit_suffix(p: &mut Parser<'_>) {
+    let u = p.start();
+    if p.current_text() == "per" {
+        p.error_and_bump(
+            SyntaxErrorCode::MalformedUnit,
+            "a unit expression cannot start with `per`: write the unit first, as in `10 m per s`",
+        );
+        u.complete(p, UnitSuffix);
+        return;
+    }
+    unit_product(p);
+    if p.at(Ident) && p.current_text() == "per" {
+        p.bump(); // per
+        if p.at(Ident) && p.current_text() != "per" {
+            unit_product(p);
+        } else {
+            p.error(
+                SyntaxErrorCode::MalformedUnit,
+                "expected a unit after `per`, as in `m per s`",
+            );
+        }
+        if p.at(Ident) && p.current_text() == "per" {
+            p.error_and_bump(
+                SyntaxErrorCode::MalformedUnit,
+                "a unit expression has one `per`: write a power instead, as in `m per s^2`",
+            );
+            // swallow what follows the second `per` so the literal ends here
+            if p.at(Ident) {
+                unit_product(p);
+            }
+        }
+    }
+    u.complete(p, UnitSuffix);
+}
+
+fn unit_product(p: &mut Parser<'_>) {
+    unit_factor(p);
+    while p.at(Star) && p.nth(1) == Ident && bdl_model::units::lookup(p.nth_text(1)).is_some() {
+        p.bump(); // *
+        unit_factor(p);
+    }
+    // `m * per s`: a `*` followed by `per` is a malformed unit, not a
+    // multiplication by a value named `per`
+    if p.at(Star) && p.nth(1) == Ident && p.nth_text(1) == "per" {
+        p.error_and_bump(
+            SyntaxErrorCode::MalformedUnit,
+            "expected a unit after `*`, as in `N * m`",
+        );
+    }
+}
+
+fn unit_factor(p: &mut Parser<'_>) {
+    let f = p.start();
+    p.bump(); // the symbol
+    if p.at(Caret) {
+        p.bump(); // ^
+        p.eat(Minus);
+        if p.at(Number) {
+            let text = p.current_text();
+            let whole = !text.contains(['.', 'e', 'E']) && text.parse::<i64>().is_ok();
+            if whole {
+                p.bump();
+            } else {
+                p.error_and_bump(
+                    SyntaxErrorCode::MalformedUnit,
+                    "unit powers use a whole-number exponent, such as `s^2` or `s^-1`",
+                );
+            }
+        } else {
+            p.error(
+                SyntaxErrorCode::MalformedUnit,
+                "unit powers use a whole-number exponent, such as `s^2` or `s^-1`",
+            );
+            if p.at(Caret) {
+                p.bump_as_error();
+            }
+        }
+    }
+    f.complete(p, UnitFactor);
 }
 
 /// `ParenExpr ::= "(" Expr ")"`, `TupleExpr ::= "(" Expr ("," Expr)+ ","? ")"`

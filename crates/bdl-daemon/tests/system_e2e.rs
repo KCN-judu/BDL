@@ -1589,6 +1589,7 @@ fn a_source_is_created_over_a_chosen_concept() {
             name: name.into(),
             description: String::new(),
             representation: rep,
+            category_id: None,
         })
     };
     let get = |c: &mut Client| match c.call(Req::GetProject(pb::GetProjectRequest {})) {
@@ -1762,6 +1763,38 @@ fn a_source_is_created_over_a_chosen_concept() {
         new_concept + 1,
         "the refused attempts consumed no identity"
     );
+    // a new concept by value category (0.27): the daemon resolves the
+    // representation; an unknown category is refused whole
+    let by_category = |name: &str, category: &str| {
+        pb::create_source_request::Concept::NewConcept(pb::NewConcept {
+            name: name.into(),
+            description: String::new(),
+            representation: None,
+            category_id: Some(category.into()),
+        })
+    };
+    let Resp::SystemEditApplied(e) = create(
+        &mut c,
+        "spinInput",
+        by_category("Spin", "angular_velocity"),
+        None,
+    ) else {
+        panic!()
+    };
+    let spin = e.outcome.unwrap().inner.unwrap().created_concept.unwrap();
+    let p = get(&mut c);
+    let spin_view = p.concepts.iter().find(|x| x.id == spin).unwrap();
+    let rep = spin_view.representation.as_ref().unwrap();
+    assert!(matches!(
+        &rep.kind,
+        Some(pb::representation::Kind::Quantity(d)) if d.angle == 1 && d.time == -1
+    ));
+    let rev = c.last_revision;
+    let Resp::Error(err) = create(&mut c, "moodInput", by_category("Mood", "vibes"), None) else {
+        panic!("expected a refusal")
+    };
+    assert_eq!(err.code, "library.unknown_category");
+    assert_eq!(c.last_revision, rev);
 
     // the Source drives a sink that accepts its concept (DriveWF), and is
     // a simulation input

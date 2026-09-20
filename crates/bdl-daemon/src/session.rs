@@ -1439,6 +1439,87 @@ impl Session {
         Ok(bdl_ide::compose(&snapshot, mapping, source, op)?)
     }
 
+    /// A structural caret moved over the draft's projection (0.27).
+    pub fn navigate_formula(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+        node: &str,
+        side: bdl_ide::Side,
+        motion: bdl_ide::Motion,
+    ) -> Result<bdl_ide::Caret, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        let projection = bdl_ide::formula_projection(&snapshot, mapping)?;
+        let Some(root) = projection.root.as_ref() else {
+            return Err(QueryError::NotApplicable {
+                reason: "the formula does not parse; edit it as text".into(),
+            }
+            .into());
+        };
+        bdl_ide::navigate(root, node, side, motion).ok_or_else(|| {
+            QueryError::NotApplicable {
+                reason: format!("no node {node} in the formula"),
+            }
+            .into()
+        })
+    }
+
+    /// Completion at a structural caret of the draft (0.27).
+    pub fn caret_completion(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+        node: &str,
+        side: bdl_ide::Side,
+        prefix: &str,
+    ) -> Result<Vec<SemanticCompletion>, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        if !snapshot.effective().design.mappings.contains_key(&mapping) {
+            return Err(QueryError::UnknownEntity {
+                entity: EntityRef::Mapping(mapping),
+            }
+            .into());
+        }
+        Ok(completion(
+            &snapshot,
+            &CompletionContext::FormulaCaret {
+                mapping,
+                node: node.to_owned(),
+                side,
+                prefix: prefix.to_owned(),
+            },
+        ))
+    }
+
+    /// Signature help around a node of the draft (0.27).
+    pub fn formula_signature(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+        source: &str,
+        node: &str,
+    ) -> Result<Option<bdl_ide::SignatureHelp>, SessionError> {
+        let snapshot = self.draft_snapshot(scope, mapping, source)?;
+        let projection = bdl_ide::formula_projection(&snapshot, mapping)?;
+        let design = &snapshot.effective().design;
+        Ok(bdl_ide::signature(&projection, design, node))
+    }
+
+    /// The read-only render of the mapping's effective definition (0.27);
+    /// sets no overlay.
+    pub fn formula_render(
+        &mut self,
+        scope: Option<ComponentId>,
+        mapping: DeclId,
+    ) -> Result<bdl_ide::FormulaRender, SessionError> {
+        // the saved formula: the committed world, whatever is being drafted
+        let snapshot = self.ide_in(scope)?.committed_snapshot();
+        let projection = bdl_ide::formula_projection(&snapshot, mapping)?;
+        Ok(bdl_ide::render(&projection))
+    }
+
     /// The concept named at a byte offset into the draft, explained by the
     /// IDE service; `None` when nothing semantic is under the cursor.
     pub fn draft_hover(

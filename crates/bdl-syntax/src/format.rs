@@ -323,6 +323,16 @@ impl Formatter {
         if prefix_minus {
             return false;
         }
+        // a unit power is glued: `s^2`, `s^-1`; `per` and `*` in a unit
+        // keep one space each side (`m per s^2`, `N * m`)
+        let in_unit_factor =
+            |x: &SyntaxToken| x.parent().is_some_and(|n| n.kind() == K::UnitFactor);
+        if (t.kind() == K::Caret && in_unit_factor(t))
+            || (p.kind() == K::Caret && in_unit_factor(p))
+            || (p.kind() == K::Minus && in_unit_factor(p) && t.kind() == K::Number)
+        {
+            return false;
+        }
         if matches!(
             t.kind(),
             K::RParen | K::RBracket | K::Comma | K::Dot | K::Semi

@@ -323,6 +323,12 @@ fn identifier_token(t: &SyntaxToken) -> Option<SemanticToken> {
     let grand = parent.parent();
     let grand_kind = grand.as_ref().map(|g| g.kind());
     match parent.kind() {
+        // a unit factor's symbol; `per` between factors is the unit
+        // quotient — a construct here, an ordinary name anywhere else
+        SyntaxKind::UnitFactor => Some(SemanticToken::new(range, TokenType::Unit)),
+        SyntaxKind::UnitSuffix if t.text() == "per" => {
+            Some(SemanticToken::new(range, TokenType::Keyword))
+        }
         SyntaxKind::UnitSuffix => Some(SemanticToken::new(range, TokenType::Unit)),
         // `all x in xs: …`: the word is a construct here (and an ordinary
         // name anywhere else)

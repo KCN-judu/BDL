@@ -3,8 +3,8 @@
 //! nothing here decides what a formula means.
 
 use bdl_ide::{
-    ComposeOp, FormulaNode, FormulaProjection, NodeKind, SemanticDiagnostic, SemanticSeverity,
-    SlotInfo, TypeView,
+    ComposeOp, FormulaNode, FormulaProjection, FormulaRender, Motion, NodeKind, SemanticDiagnostic,
+    SemanticSeverity, Side, SignatureHelp, SlotInfo, TypeView,
 };
 use bdl_protocol::convert;
 use bdl_protocol::pb;
@@ -44,147 +44,13 @@ fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
         ),
         _ => (false, String::new(), None),
     };
-    let (kind, name, coordinate, unit, unit_id, equation, entity) = match &n.kind {
-        NodeKind::Reference { name, entity, .. } => (
-            "reference",
-            name.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            *entity,
-        ),
-        NodeKind::Binder { form, .. } => (
-            "binder",
-            form.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Range => (
-            "range",
-            String::new(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Number { text } => (
-            "number",
-            String::new(),
-            text.clone(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Quantity {
-            coordinate,
-            unit,
-            unit_id,
-        } => (
-            "quantity",
-            String::new(),
-            coordinate.clone(),
-            unit.clone(),
-            unit_id.clone().unwrap_or_default(),
-            false,
-            None,
-        ),
-        NodeKind::Bool { value } => (
-            "bool",
-            value.to_string(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Unary { op } => (
-            "unary",
-            op.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Binary { op } => (
-            "binary",
-            op.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Compare { op } => (
-            "compare",
-            op.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Call {
-            name,
-            equation,
-            entity,
-        } => (
-            "call",
-            name.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            *equation,
-            *entity,
-        ),
-        NodeKind::Slot => (
-            "slot",
-            String::new(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::If => (
-            "if",
-            String::new(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-        NodeKind::Opaque { what } => (
-            "opaque",
-            what.clone(),
-            String::new(),
-            String::new(),
-            String::new(),
-            false,
-            None,
-        ),
-    };
-    pb::FormulaNode {
+    let mut out = pb::FormulaNode {
         id: n.id.clone(),
         range: Some(pb::SourceSpan {
             start: n.range.start,
             end: n.range.end,
         }),
-        kind: kind.into(),
         text: n.text.clone(),
-        name,
-        coordinate,
-        unit,
-        unit_id,
-        equation,
-        entity: entity.map(entity_to_pb),
         actual: n.actual.as_ref().map(type_view_to_pb),
         expected: n.expected.as_ref().map(type_view_to_pb),
         because: n.because.clone(),
@@ -197,7 +63,94 @@ fn node_to_pb(n: &FormulaNode) -> pb::FormulaNode {
         local,
         param,
         param_type,
+        role: n.role.clone(),
+        locals: n.locals.clone(),
+        append_at: n.append_at,
+        ..Default::default()
+    };
+    match &n.kind {
+        NodeKind::Reference { name, entity, .. } => {
+            out.kind = "reference".into();
+            out.name = name.clone();
+            out.entity = entity.map(entity_to_pb);
+        }
+        NodeKind::Binder { form, .. } => {
+            out.kind = "binder".into();
+            out.name = form.clone();
+        }
+        NodeKind::Range => out.kind = "range".into(),
+        NodeKind::Number { text } => {
+            out.kind = "number".into();
+            out.coordinate = text.clone();
+        }
+        NodeKind::Quantity {
+            coordinate,
+            unit,
+            unit_id,
+            unit_source,
+            unit_display,
+        } => {
+            out.kind = "quantity".into();
+            out.coordinate = coordinate.clone();
+            out.unit = unit.clone();
+            out.unit_id = unit_id.clone().unwrap_or_default();
+            out.unit_source = unit_source.clone().unwrap_or_default();
+            out.unit_display = unit_display.clone().unwrap_or_default();
+        }
+        NodeKind::Bool { value } => {
+            out.kind = "bool".into();
+            out.name = value.to_string();
+        }
+        NodeKind::Unary { op } => {
+            out.kind = "unary".into();
+            out.name = op.clone();
+        }
+        NodeKind::Binary { op } => {
+            out.kind = "binary".into();
+            out.name = op.clone();
+        }
+        NodeKind::Compare { op } => {
+            out.kind = "compare".into();
+            out.name = op.clone();
+        }
+        NodeKind::Call {
+            name,
+            equation,
+            entity,
+        } => {
+            out.kind = "call".into();
+            out.name = name.clone();
+            out.equation = *equation;
+            out.entity = entity.map(entity_to_pb);
+        }
+        NodeKind::Slot => out.kind = "slot".into(),
+        NodeKind::If => out.kind = "if".into(),
+        NodeKind::Match => out.kind = "match".into(),
+        NodeKind::Arm { pattern, binds } => {
+            out.kind = "arm".into();
+            out.name = pattern.clone();
+            out.binds = binds.clone();
+        }
+        NodeKind::Block => out.kind = "block".into(),
+        NodeKind::Let { pattern, binds } => {
+            out.kind = "let".into();
+            out.name = pattern.clone();
+            out.binds = binds.clone();
+        }
+        NodeKind::Rule { params } => {
+            out.kind = "rule".into();
+            out.binds = params.clone();
+        }
+        NodeKind::List => out.kind = "list".into(),
+        NodeKind::Tuple => out.kind = "tuple".into(),
+        NodeKind::Delay => out.kind = "delay".into(),
+        NodeKind::Sync => out.kind = "sync".into(),
+        NodeKind::Opaque { what } => {
+            out.kind = "opaque".into();
+            out.name = what.clone();
+        }
     }
+    out
 }
 
 use crate::server::entity_to_pb;
@@ -246,6 +199,7 @@ pub fn slot_to_pb(s: &SlotInfo, revision: u64, mapping_id: u64) -> pb::FormulaSl
                 id: u.id.clone(),
                 symbol: u.symbol.clone(),
                 measures: u.measures.clone(),
+                display: u.display.clone(),
             })
             .collect(),
         references: s
@@ -307,5 +261,101 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
         },
         Action::Range(_) => ComposeOp::Range { node },
         Action::Choose(_) => ComposeOp::Choose { node },
+        Action::Insert(i) => ComposeOp::Insert {
+            node,
+            side: side_from_pb(i.side())?,
+            text: i.text.clone(),
+        },
     })
+}
+
+pub fn side_from_pb(s: pb::CaretSide) -> Option<Side> {
+    match s {
+        pb::CaretSide::Before => Some(Side::Before),
+        pb::CaretSide::After => Some(Side::After),
+        pb::CaretSide::Unspecified => None,
+    }
+}
+
+pub fn side_to_pb(s: Side) -> pb::CaretSide {
+    match s {
+        Side::Before => pb::CaretSide::Before,
+        Side::After => pb::CaretSide::After,
+    }
+}
+
+pub fn motion_from_pb(m: pb::CaretMotion) -> Option<Motion> {
+    Some(match m {
+        pb::CaretMotion::Left => Motion::Left,
+        pb::CaretMotion::Right => Motion::Right,
+        pb::CaretMotion::Up => Motion::Up,
+        pb::CaretMotion::Down => Motion::Down,
+        pb::CaretMotion::Exit => Motion::Exit,
+        pb::CaretMotion::NextSlot => Motion::NextSlot,
+        pb::CaretMotion::PreviousSlot => Motion::PreviousSlot,
+        pb::CaretMotion::Unspecified => return None,
+    })
+}
+
+pub fn signature_to_pb(
+    s: Option<&SignatureHelp>,
+    revision: u64,
+    mapping_id: u64,
+) -> pb::FormulaSignatureResponse {
+    match s {
+        None => pb::FormulaSignatureResponse {
+            revision,
+            mapping_id,
+            found: false,
+            ..Default::default()
+        },
+        Some(s) => pb::FormulaSignatureResponse {
+            revision,
+            mapping_id,
+            found: true,
+            node_id: s.node.clone(),
+            name: s.name.clone(),
+            shape: s.shape.clone(),
+            parameters: s
+                .parameters
+                .iter()
+                .map(|p| pb::ParameterHelp {
+                    name: p.name.clone(),
+                    expected: p.expected.clone(),
+                })
+                .collect(),
+            result: s.result.clone(),
+            active: s.active,
+            summary: s.summary.clone(),
+        },
+    }
+}
+
+pub fn render_to_pb(
+    r: &FormulaRender,
+    revision: u64,
+    mapping_id: u64,
+) -> pb::FormulaRenderResponse {
+    pb::FormulaRenderResponse {
+        revision,
+        mapping_id,
+        fragments: r
+            .fragments
+            .iter()
+            .map(|f| pb::FormulaFragment {
+                text: f.text.clone(),
+                kind: f.kind.clone(),
+                node_id: f.node.clone(),
+                range: Some(pb::SourceSpan {
+                    start: f.range.start,
+                    end: f.range.end,
+                }),
+            })
+            .collect(),
+        compact: r.compact.clone(),
+        result: r.result.clone(),
+        error_count: r.error_count,
+        warning_count: r.warning_count,
+        references: r.references.clone(),
+    }
 }

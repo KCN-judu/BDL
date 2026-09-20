@@ -191,6 +191,43 @@ final $typed_data.Uint8List diagnosticSeverityDescriptor = $convert
         'AAEh0KGURJQUdOT1NUSUNfU0VWRVJJVFlfRVJST1IQARIfChtESUFHTk9TVElDX1NFVkVSSVRZ'
         'X1dBUk5JTkcQAhIcChhESUFHTk9TVElDX1NFVkVSSVRZX0lORk8QAw==');
 
+@$core.Deprecated('Use caretSideDescriptor instead')
+const CaretSide$json = {
+  '1': 'CaretSide',
+  '2': [
+    {'1': 'CARET_SIDE_UNSPECIFIED', '2': 0},
+    {'1': 'CARET_SIDE_BEFORE', '2': 1},
+    {'1': 'CARET_SIDE_AFTER', '2': 2},
+  ],
+};
+
+/// Descriptor for `CaretSide`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List caretSideDescriptor = $convert
+    .base64Decode('CglDYXJldFNpZGUSGgoWQ0FSRVRfU0lERV9VTlNQRUNJRklFRBAAEhUKEUNBUkVUX1NJREVfQk'
+        'VGT1JFEAESFAoQQ0FSRVRfU0lERV9BRlRFUhAC');
+
+@$core.Deprecated('Use caretMotionDescriptor instead')
+const CaretMotion$json = {
+  '1': 'CaretMotion',
+  '2': [
+    {'1': 'CARET_MOTION_UNSPECIFIED', '2': 0},
+    {'1': 'CARET_MOTION_LEFT', '2': 1},
+    {'1': 'CARET_MOTION_RIGHT', '2': 2},
+    {'1': 'CARET_MOTION_UP', '2': 3},
+    {'1': 'CARET_MOTION_DOWN', '2': 4},
+    {'1': 'CARET_MOTION_EXIT', '2': 5},
+    {'1': 'CARET_MOTION_NEXT_SLOT', '2': 6},
+    {'1': 'CARET_MOTION_PREVIOUS_SLOT', '2': 7},
+  ],
+};
+
+/// Descriptor for `CaretMotion`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List caretMotionDescriptor = $convert
+    .base64Decode('CgtDYXJldE1vdGlvbhIcChhDQVJFVF9NT1RJT05fVU5TUEVDSUZJRUQQABIVChFDQVJFVF9NT1'
+        'RJT05fTEVGVBABEhYKEkNBUkVUX01PVElPTl9SSUdIVBACEhMKD0NBUkVUX01PVElPTl9VUBAD'
+        'EhUKEUNBUkVUX01PVElPTl9ET1dOEAQSFQoRQ0FSRVRfTU9USU9OX0VYSVQQBRIaChZDQVJFVF'
+        '9NT1RJT05fTkVYVF9TTE9UEAYSHgoaQ0FSRVRfTU9USU9OX1BSRVZJT1VTX1NMT1QQBw==');
+
 @$core.Deprecated('Use actionApplicabilityDescriptor instead')
 const ActionApplicability$json = {
   '1': 'ActionApplicability',
@@ -951,6 +988,51 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'listTemplates'
     },
+    {
+      '1': 'list_value_categories',
+      '3': 76,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListValueCategoriesRequest',
+      '9': 0,
+      '10': 'listValueCategories'
+    },
+    {
+      '1': 'navigate_formula',
+      '3': 77,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.NavigateFormulaRequest',
+      '9': 0,
+      '10': 'navigateFormula'
+    },
+    {
+      '1': 'complete_formula_caret',
+      '3': 78,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.CompleteFormulaCaretRequest',
+      '9': 0,
+      '10': 'completeFormulaCaret'
+    },
+    {
+      '1': 'get_formula_signature',
+      '3': 79,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.GetFormulaSignatureRequest',
+      '9': 0,
+      '10': 'getFormulaSignature'
+    },
+    {
+      '1': 'get_formula_render',
+      '3': 80,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.GetFormulaRenderRequest',
+      '9': 0,
+      '10': 'getFormulaRender'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1034,7 +1116,15 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'X2RldmljZXMYSSABKAsyHy5iZGwudjEuTGlzdEZsYXNoRGV2aWNlc1JlcXVlc3RIAFIQbGlzdE'
         'ZsYXNoRGV2aWNlcxJFCg5mbGFzaF9maXJtd2FyZRhKIAEoCzIcLmJkbC52MS5GbGFzaEZpcm13'
         'YXJlUmVxdWVzdEgAUg1mbGFzaEZpcm13YXJlEkUKDmxpc3RfdGVtcGxhdGVzGEsgASgLMhwuYm'
-        'RsLnYxLkxpc3RUZW1wbGF0ZXNSZXF1ZXN0SABSDWxpc3RUZW1wbGF0ZXNCCQoHcGF5bG9hZA==');
+        'RsLnYxLkxpc3RUZW1wbGF0ZXNSZXF1ZXN0SABSDWxpc3RUZW1wbGF0ZXMSWAoVbGlzdF92YWx1'
+        'ZV9jYXRlZ29yaWVzGEwgASgLMiIuYmRsLnYxLkxpc3RWYWx1ZUNhdGVnb3JpZXNSZXF1ZXN0SA'
+        'BSE2xpc3RWYWx1ZUNhdGVnb3JpZXMSSwoQbmF2aWdhdGVfZm9ybXVsYRhNIAEoCzIeLmJkbC52'
+        'MS5OYXZpZ2F0ZUZvcm11bGFSZXF1ZXN0SABSD25hdmlnYXRlRm9ybXVsYRJbChZjb21wbGV0ZV'
+        '9mb3JtdWxhX2NhcmV0GE4gASgLMiMuYmRsLnYxLkNvbXBsZXRlRm9ybXVsYUNhcmV0UmVxdWVz'
+        'dEgAUhRjb21wbGV0ZUZvcm11bGFDYXJldBJYChVnZXRfZm9ybXVsYV9zaWduYXR1cmUYTyABKA'
+        'syIi5iZGwudjEuR2V0Rm9ybXVsYVNpZ25hdHVyZVJlcXVlc3RIAFITZ2V0Rm9ybXVsYVNpZ25h'
+        'dHVyZRJPChJnZXRfZm9ybXVsYV9yZW5kZXIYUCABKAsyHy5iZGwudjEuR2V0Rm9ybXVsYVJlbm'
+        'RlclJlcXVlc3RIAFIQZ2V0Rm9ybXVsYVJlbmRlckIJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1331,6 +1421,42 @@ const Response$json = {
       '9': 0,
       '10': 'templates'
     },
+    {
+      '1': 'value_categories',
+      '3': 58,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ValueCategoriesResponse',
+      '9': 0,
+      '10': 'valueCategories'
+    },
+    {
+      '1': 'navigate_formula',
+      '3': 59,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.NavigateFormulaResponse',
+      '9': 0,
+      '10': 'navigateFormula'
+    },
+    {
+      '1': 'formula_signature',
+      '3': 60,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaSignatureResponse',
+      '9': 0,
+      '10': 'formulaSignature'
+    },
+    {
+      '1': 'formula_render',
+      '3': 61,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormulaRenderResponse',
+      '9': 0,
+      '10': 'formulaRender'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1378,7 +1504,13 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'c3RhdHVzGDcgASgLMhsuYmRsLnYxLkJ1aWxkU3RhdHVzUmVzcG9uc2VIAFILYnVpbGRTdGF0dX'
         'MSQwoNZmxhc2hfZGV2aWNlcxg4IAEoCzIcLmJkbC52MS5GbGFzaERldmljZXNSZXNwb25zZUgA'
         'UgxmbGFzaERldmljZXMSOQoJdGVtcGxhdGVzGDkgASgLMhkuYmRsLnYxLlRlbXBsYXRlc1Jlc3'
-        'BvbnNlSABSCXRlbXBsYXRlc0IJCgdwYXlsb2Fk');
+        'BvbnNlSABSCXRlbXBsYXRlcxJMChB2YWx1ZV9jYXRlZ29yaWVzGDogASgLMh8uYmRsLnYxLlZh'
+        'bHVlQ2F0ZWdvcmllc1Jlc3BvbnNlSABSD3ZhbHVlQ2F0ZWdvcmllcxJMChBuYXZpZ2F0ZV9mb3'
+        'JtdWxhGDsgASgLMh8uYmRsLnYxLk5hdmlnYXRlRm9ybXVsYVJlc3BvbnNlSABSD25hdmlnYXRl'
+        'Rm9ybXVsYRJPChFmb3JtdWxhX3NpZ25hdHVyZRg8IAEoCzIgLmJkbC52MS5Gb3JtdWxhU2lnbm'
+        'F0dXJlUmVzcG9uc2VIAFIQZm9ybXVsYVNpZ25hdHVyZRJGCg5mb3JtdWxhX3JlbmRlchg9IAEo'
+        'CzIdLmJkbC52MS5Gb3JtdWxhUmVuZGVyUmVzcG9uc2VIAFINZm9ybXVsYVJlbmRlckIJCgdwYX'
+        'lsb2Fk');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -3661,6 +3793,8 @@ const FormulaNode$json = {
     {'1': 'coordinate', '3': 6, '4': 1, '5': 9, '10': 'coordinate'},
     {'1': 'unit', '3': 7, '4': 1, '5': 9, '10': 'unit'},
     {'1': 'unit_id', '3': 8, '4': 1, '5': 9, '10': 'unitId'},
+    {'1': 'unit_source', '3': 19, '4': 1, '5': 9, '10': 'unitSource'},
+    {'1': 'unit_display', '3': 20, '4': 1, '5': 9, '10': 'unitDisplay'},
     {'1': 'equation', '3': 9, '4': 1, '5': 8, '10': 'equation'},
     {
       '1': 'entity',
@@ -3707,12 +3841,17 @@ const FormulaNode$json = {
       '10': 'paramType',
       '17': true
     },
+    {'1': 'role', '3': 21, '4': 1, '5': 9, '10': 'role'},
+    {'1': 'locals', '3': 22, '4': 3, '5': 9, '10': 'locals'},
+    {'1': 'binds', '3': 23, '4': 3, '5': 9, '10': 'binds'},
+    {'1': 'append_at', '3': 24, '4': 1, '5': 13, '9': 4, '10': 'appendAt', '17': true},
   ],
   '8': [
     {'1': '_entity'},
     {'1': '_actual'},
     {'1': '_expected'},
     {'1': '_param_type'},
+    {'1': '_append_at'},
   ],
 };
 
@@ -3721,15 +3860,213 @@ final $typed_data.Uint8List formulaNodeDescriptor = $convert
     .base64Decode('CgtGb3JtdWxhTm9kZRIOCgJpZBgBIAEoCVICaWQSKAoFcmFuZ2UYAiABKAsyEi5iZGwudjEuU2'
         '91cmNlU3BhblIFcmFuZ2USEgoEa2luZBgDIAEoCVIEa2luZBISCgR0ZXh0GAQgASgJUgR0ZXh0'
         'EhIKBG5hbWUYBSABKAlSBG5hbWUSHgoKY29vcmRpbmF0ZRgGIAEoCVIKY29vcmRpbmF0ZRISCg'
-        'R1bml0GAcgASgJUgR1bml0EhcKB3VuaXRfaWQYCCABKAlSBnVuaXRJZBIaCghlcXVhdGlvbhgJ'
-        'IAEoCFIIZXF1YXRpb24SLgoGZW50aXR5GAogASgLMhEuYmRsLnYxLkVudGl0eVJlZkgAUgZlbn'
-        'RpdHmIAQESLQoGYWN0dWFsGAsgASgLMhAuYmRsLnYxLlR5cGVWaWV3SAFSBmFjdHVhbIgBARIx'
-        'CghleHBlY3RlZBgMIAEoCzIQLmJkbC52MS5UeXBlVmlld0gCUghleHBlY3RlZIgBARIYCgdiZW'
-        'NhdXNlGA0gASgJUgdiZWNhdXNlEjQKC2RpYWdub3N0aWNzGA4gAygLMhIuYmRsLnYxLkRpYWdu'
-        'b3N0aWNSC2RpYWdub3N0aWNzEi8KCGNoaWxkcmVuGA8gAygLMhMuYmRsLnYxLkZvcm11bGFOb2'
-        'RlUghjaGlsZHJlbhIUCgVsb2NhbBgQIAEoCFIFbG9jYWwSFAoFcGFyYW0YESABKAlSBXBhcmFt'
-        'EjQKCnBhcmFtX3R5cGUYEiABKAsyEC5iZGwudjEuVHlwZVZpZXdIA1IJcGFyYW1UeXBliAEBQg'
-        'kKB19lbnRpdHlCCQoHX2FjdHVhbEILCglfZXhwZWN0ZWRCDQoLX3BhcmFtX3R5cGU=');
+        'R1bml0GAcgASgJUgR1bml0EhcKB3VuaXRfaWQYCCABKAlSBnVuaXRJZBIfCgt1bml0X3NvdXJj'
+        'ZRgTIAEoCVIKdW5pdFNvdXJjZRIhCgx1bml0X2Rpc3BsYXkYFCABKAlSC3VuaXREaXNwbGF5Eh'
+        'oKCGVxdWF0aW9uGAkgASgIUghlcXVhdGlvbhIuCgZlbnRpdHkYCiABKAsyES5iZGwudjEuRW50'
+        'aXR5UmVmSABSBmVudGl0eYgBARItCgZhY3R1YWwYCyABKAsyEC5iZGwudjEuVHlwZVZpZXdIAV'
+        'IGYWN0dWFsiAEBEjEKCGV4cGVjdGVkGAwgASgLMhAuYmRsLnYxLlR5cGVWaWV3SAJSCGV4cGVj'
+        'dGVkiAEBEhgKB2JlY2F1c2UYDSABKAlSB2JlY2F1c2USNAoLZGlhZ25vc3RpY3MYDiADKAsyEi'
+        '5iZGwudjEuRGlhZ25vc3RpY1ILZGlhZ25vc3RpY3MSLwoIY2hpbGRyZW4YDyADKAsyEy5iZGwu'
+        'djEuRm9ybXVsYU5vZGVSCGNoaWxkcmVuEhQKBWxvY2FsGBAgASgIUgVsb2NhbBIUCgVwYXJhbR'
+        'gRIAEoCVIFcGFyYW0SNAoKcGFyYW1fdHlwZRgSIAEoCzIQLmJkbC52MS5UeXBlVmlld0gDUglw'
+        'YXJhbVR5cGWIAQESEgoEcm9sZRgVIAEoCVIEcm9sZRIWCgZsb2NhbHMYFiADKAlSBmxvY2Fscx'
+        'IUCgViaW5kcxgXIAMoCVIFYmluZHMSIAoJYXBwZW5kX2F0GBggASgNSARSCGFwcGVuZEF0iAEB'
+        'QgkKB19lbnRpdHlCCQoHX2FjdHVhbEILCglfZXhwZWN0ZWRCDQoLX3BhcmFtX3R5cGVCDAoKX2'
+        'FwcGVuZF9hdA==');
+
+@$core.Deprecated('Use navigateFormulaRequestDescriptor instead')
+const NavigateFormulaRequest$json = {
+  '1': 'NavigateFormulaRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'node_id', '3': 4, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'side', '3': 5, '4': 1, '5': 14, '6': '.bdl.v1.CaretSide', '10': 'side'},
+    {'1': 'motion', '3': 6, '4': 1, '5': 14, '6': '.bdl.v1.CaretMotion', '10': 'motion'},
+    {'1': 'component', '3': 7, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `NavigateFormulaRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List navigateFormulaRequestDescriptor = $convert
+    .base64Decode('ChZOYXZpZ2F0ZUZvcm11bGFSZXF1ZXN0EhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbhIdCg'
+        'ptYXBwaW5nX2lkGAIgASgEUgltYXBwaW5nSWQSFgoGc291cmNlGAMgASgJUgZzb3VyY2USFwoH'
+        'bm9kZV9pZBgEIAEoCVIGbm9kZUlkEiUKBHNpZGUYBSABKA4yES5iZGwudjEuQ2FyZXRTaWRlUg'
+        'RzaWRlEisKBm1vdGlvbhgGIAEoDjITLmJkbC52MS5DYXJldE1vdGlvblIGbW90aW9uEiEKCWNv'
+        'bXBvbmVudBgHIAEoBEgAUgljb21wb25lbnSIAQFCDAoKX2NvbXBvbmVudA==');
+
+@$core.Deprecated('Use navigateFormulaResponseDescriptor instead')
+const NavigateFormulaResponse$json = {
+  '1': 'NavigateFormulaResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'node_id', '3': 3, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'side', '3': 4, '4': 1, '5': 14, '6': '.bdl.v1.CaretSide', '10': 'side'},
+    {'1': 'offset', '3': 5, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `NavigateFormulaResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List navigateFormulaResponseDescriptor = $convert
+    .base64Decode('ChdOYXZpZ2F0ZUZvcm11bGFSZXNwb25zZRIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHQ'
+        'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEhcKB25vZGVfaWQYAyABKAlSBm5vZGVJZBIl'
+        'CgRzaWRlGAQgASgOMhEuYmRsLnYxLkNhcmV0U2lkZVIEc2lkZRIWCgZvZmZzZXQYBSABKA1SBm'
+        '9mZnNldA==');
+
+@$core.Deprecated('Use completeFormulaCaretRequestDescriptor instead')
+const CompleteFormulaCaretRequest$json = {
+  '1': 'CompleteFormulaCaretRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'node_id', '3': 4, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'side', '3': 5, '4': 1, '5': 14, '6': '.bdl.v1.CaretSide', '10': 'side'},
+    {'1': 'prefix', '3': 6, '4': 1, '5': 9, '10': 'prefix'},
+    {'1': 'component', '3': 7, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `CompleteFormulaCaretRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List completeFormulaCaretRequestDescriptor = $convert
+    .base64Decode('ChtDb21wbGV0ZUZvcm11bGFDYXJldFJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW'
+        '9uEh0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIWCgZzb3VyY2UYAyABKAlSBnNvdXJj'
+        'ZRIXCgdub2RlX2lkGAQgASgJUgZub2RlSWQSJQoEc2lkZRgFIAEoDjIRLmJkbC52MS5DYXJldF'
+        'NpZGVSBHNpZGUSFgoGcHJlZml4GAYgASgJUgZwcmVmaXgSIQoJY29tcG9uZW50GAcgASgESABS'
+        'CWNvbXBvbmVudIgBAUIMCgpfY29tcG9uZW50');
+
+@$core.Deprecated('Use getFormulaSignatureRequestDescriptor instead')
+const GetFormulaSignatureRequest$json = {
+  '1': 'GetFormulaSignatureRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'source', '3': 3, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'node_id', '3': 4, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'component', '3': 5, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `GetFormulaSignatureRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getFormulaSignatureRequestDescriptor = $convert
+    .base64Decode('ChpHZXRGb3JtdWxhU2lnbmF0dXJlUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb2'
+        '4SHQoKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEhYKBnNvdXJjZRgDIAEoCVIGc291cmNl'
+        'EhcKB25vZGVfaWQYBCABKAlSBm5vZGVJZBIhCgljb21wb25lbnQYBSABKARIAFIJY29tcG9uZW'
+        '50iAEBQgwKCl9jb21wb25lbnQ=');
+
+@$core.Deprecated('Use formulaSignatureResponseDescriptor instead')
+const FormulaSignatureResponse$json = {
+  '1': 'FormulaSignatureResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'found', '3': 3, '4': 1, '5': 8, '10': 'found'},
+    {'1': 'node_id', '3': 4, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'name', '3': 5, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'shape', '3': 6, '4': 1, '5': 9, '10': 'shape'},
+    {'1': 'parameters', '3': 7, '4': 3, '5': 11, '6': '.bdl.v1.ParameterHelp', '10': 'parameters'},
+    {'1': 'result', '3': 8, '4': 1, '5': 9, '10': 'result'},
+    {'1': 'active', '3': 9, '4': 1, '5': 13, '9': 0, '10': 'active', '17': true},
+    {'1': 'summary', '3': 10, '4': 1, '5': 9, '10': 'summary'},
+  ],
+  '8': [
+    {'1': '_active'},
+  ],
+};
+
+/// Descriptor for `FormulaSignatureResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaSignatureResponseDescriptor = $convert
+    .base64Decode('ChhGb3JtdWxhU2lnbmF0dXJlUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh'
+        '0KCm1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBIUCgVmb3VuZBgDIAEoCFIFZm91bmQSFwoH'
+        'bm9kZV9pZBgEIAEoCVIGbm9kZUlkEhIKBG5hbWUYBSABKAlSBG5hbWUSFAoFc2hhcGUYBiABKA'
+        'lSBXNoYXBlEjUKCnBhcmFtZXRlcnMYByADKAsyFS5iZGwudjEuUGFyYW1ldGVySGVscFIKcGFy'
+        'YW1ldGVycxIWCgZyZXN1bHQYCCABKAlSBnJlc3VsdBIbCgZhY3RpdmUYCSABKA1IAFIGYWN0aX'
+        'ZliAEBEhgKB3N1bW1hcnkYCiABKAlSB3N1bW1hcnlCCQoHX2FjdGl2ZQ==');
+
+@$core.Deprecated('Use parameterHelpDescriptor instead')
+const ParameterHelp$json = {
+  '1': 'ParameterHelp',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'expected', '3': 2, '4': 1, '5': 9, '10': 'expected'},
+  ],
+};
+
+/// Descriptor for `ParameterHelp`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List parameterHelpDescriptor = $convert
+    .base64Decode('Cg1QYXJhbWV0ZXJIZWxwEhIKBG5hbWUYASABKAlSBG5hbWUSGgoIZXhwZWN0ZWQYAiABKAlSCG'
+        'V4cGVjdGVk');
+
+@$core.Deprecated('Use getFormulaRenderRequestDescriptor instead')
+const GetFormulaRenderRequest$json = {
+  '1': 'GetFormulaRenderRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'component', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'component', '17': true},
+  ],
+  '8': [
+    {'1': '_component'},
+  ],
+};
+
+/// Descriptor for `GetFormulaRenderRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getFormulaRenderRequestDescriptor = $convert
+    .base64Decode('ChdHZXRGb3JtdWxhUmVuZGVyUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHQ'
+        'oKbWFwcGluZ19pZBgCIAEoBFIJbWFwcGluZ0lkEiEKCWNvbXBvbmVudBgDIAEoBEgAUgljb21w'
+        'b25lbnSIAQFCDAoKX2NvbXBvbmVudA==');
+
+@$core.Deprecated('Use formulaRenderResponseDescriptor instead')
+const FormulaRenderResponse$json = {
+  '1': 'FormulaRenderResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'mapping_id', '3': 2, '4': 1, '5': 4, '10': 'mappingId'},
+    {'1': 'fragments', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.FormulaFragment', '10': 'fragments'},
+    {'1': 'compact', '3': 4, '4': 1, '5': 9, '10': 'compact'},
+    {'1': 'result', '3': 5, '4': 1, '5': 9, '10': 'result'},
+    {'1': 'error_count', '3': 6, '4': 1, '5': 13, '10': 'errorCount'},
+    {'1': 'warning_count', '3': 7, '4': 1, '5': 13, '10': 'warningCount'},
+    {'1': 'references', '3': 8, '4': 3, '5': 9, '10': 'references'},
+  ],
+};
+
+/// Descriptor for `FormulaRenderResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaRenderResponseDescriptor = $convert
+    .base64Decode('ChVGb3JtdWxhUmVuZGVyUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh0KCm'
+        '1hcHBpbmdfaWQYAiABKARSCW1hcHBpbmdJZBI1CglmcmFnbWVudHMYAyADKAsyFy5iZGwudjEu'
+        'Rm9ybXVsYUZyYWdtZW50UglmcmFnbWVudHMSGAoHY29tcGFjdBgEIAEoCVIHY29tcGFjdBIWCg'
+        'ZyZXN1bHQYBSABKAlSBnJlc3VsdBIfCgtlcnJvcl9jb3VudBgGIAEoDVIKZXJyb3JDb3VudBIj'
+        'Cg13YXJuaW5nX2NvdW50GAcgASgNUgx3YXJuaW5nQ291bnQSHgoKcmVmZXJlbmNlcxgIIAMoCV'
+        'IKcmVmZXJlbmNlcw==');
+
+@$core.Deprecated('Use formulaFragmentDescriptor instead')
+const FormulaFragment$json = {
+  '1': 'FormulaFragment',
+  '2': [
+    {'1': 'text', '3': 1, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'kind', '3': 2, '4': 1, '5': 9, '10': 'kind'},
+    {'1': 'node_id', '3': 3, '4': 1, '5': 9, '10': 'nodeId'},
+    {'1': 'range', '3': 4, '4': 1, '5': 11, '6': '.bdl.v1.SourceSpan', '10': 'range'},
+  ],
+};
+
+/// Descriptor for `FormulaFragment`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formulaFragmentDescriptor = $convert
+    .base64Decode('Cg9Gb3JtdWxhRnJhZ21lbnQSEgoEdGV4dBgBIAEoCVIEdGV4dBISCgRraW5kGAIgASgJUgRraW'
+        '5kEhcKB25vZGVfaWQYAyABKAlSBm5vZGVJZBIoCgVyYW5nZRgEIAEoCzISLmJkbC52MS5Tb3Vy'
+        'Y2VTcGFuUgVyYW5nZQ==');
 
 @$core.Deprecated('Use typeViewDescriptor instead')
 const TypeView$json = {
@@ -3849,13 +4186,14 @@ const UnitCandidate$json = {
     {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
     {'1': 'symbol', '3': 2, '4': 1, '5': 9, '10': 'symbol'},
     {'1': 'measures', '3': 3, '4': 1, '5': 9, '10': 'measures'},
+    {'1': 'display', '3': 4, '4': 1, '5': 9, '10': 'display'},
   ],
 };
 
 /// Descriptor for `UnitCandidate`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List unitCandidateDescriptor = $convert
     .base64Decode('Cg1Vbml0Q2FuZGlkYXRlEg4KAmlkGAEgASgJUgJpZBIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbB'
-        'IaCghtZWFzdXJlcxgDIAEoCVIIbWVhc3VyZXM=');
+        'IaCghtZWFzdXJlcxgDIAEoCVIIbWVhc3VyZXMSGAoHZGlzcGxheRgEIAEoCVIHZGlzcGxheQ==');
 
 @$core.Deprecated('Use referenceCandidateDescriptor instead')
 const ReferenceCandidate$json = {
@@ -3956,6 +4294,7 @@ const ComposeAction$json = {
     {'1': 'binder', '3': 8, '4': 1, '5': 11, '6': '.bdl.v1.ComposeBinder', '9': 0, '10': 'binder'},
     {'1': 'range', '3': 9, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'range'},
     {'1': 'choose', '3': 10, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'choose'},
+    {'1': 'insert', '3': 11, '4': 1, '5': 11, '6': '.bdl.v1.ComposeInsert', '9': 0, '10': 'insert'},
   ],
   '8': [
     {'1': 'action'},
@@ -3971,7 +4310,8 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'b29yZGluYXRlGAYgASgJSABSDXNldENvb3JkaW5hdGUSJgoGcmVtb3ZlGAcgASgLMgwuYmRsLn'
         'YxLlVuaXRIAFIGcmVtb3ZlEi8KBmJpbmRlchgIIAEoCzIVLmJkbC52MS5Db21wb3NlQmluZGVy'
         'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlEiYKBmNob2'
-        '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZUIICgZhY3Rpb24=');
+        '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZRIvCgZpbnNlcnQYCyABKAsyFS5iZGwu'
+        'djEuQ29tcG9zZUluc2VydEgAUgZpbnNlcnRCCAoGYWN0aW9u');
 
 @$core.Deprecated('Use composeBinderDescriptor instead')
 const ComposeBinder$json = {
@@ -4026,6 +4366,20 @@ const ComposeSetUnit$json = {
 final $typed_data.Uint8List composeSetUnitDescriptor = $convert
     .base64Decode('Cg5Db21wb3NlU2V0VW5pdBIXCgd1bml0X2lkGAEgASgJUgZ1bml0SWQSJQoOcHJlc2VydmVfdm'
         'FsdWUYAiABKAhSDXByZXNlcnZlVmFsdWU=');
+
+@$core.Deprecated('Use composeInsertDescriptor instead')
+const ComposeInsert$json = {
+  '1': 'ComposeInsert',
+  '2': [
+    {'1': 'side', '3': 1, '4': 1, '5': 14, '6': '.bdl.v1.CaretSide', '10': 'side'},
+    {'1': 'text', '3': 2, '4': 1, '5': 9, '10': 'text'},
+  ],
+};
+
+/// Descriptor for `ComposeInsert`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List composeInsertDescriptor = $convert
+    .base64Decode('Cg1Db21wb3NlSW5zZXJ0EiUKBHNpZGUYASABKA4yES5iZGwudjEuQ2FyZXRTaWRlUgRzaWRlEh'
+        'IKBHRleHQYAiABKAlSBHRleHQ=');
 
 @$core.Deprecated('Use composeFormulaResponseDescriptor instead')
 const ComposeFormulaResponse$json = {
@@ -4128,6 +4482,7 @@ const DraftCompletionItem$json = {
     {'1': 'resulting_type', '3': 6, '4': 1, '5': 9, '10': 'resultingType'},
     {'1': 'documentation', '3': 7, '4': 1, '5': 9, '10': 'documentation'},
     {'1': 'relevance', '3': 8, '4': 1, '5': 13, '10': 'relevance'},
+    {'1': 'structured_insert', '3': 9, '4': 1, '5': 9, '10': 'structuredInsert'},
   ],
 };
 
@@ -4137,7 +4492,8 @@ final $typed_data.Uint8List draftCompletionItemDescriptor = $convert
         'gJUgRraW5kEiMKDXJlcGxhY2Vfc3RhcnQYAyABKA1SDHJlcGxhY2VTdGFydBIfCgtyZXBsYWNl'
         'X2VuZBgEIAEoDVIKcmVwbGFjZUVuZBIWCgZpbnNlcnQYBSABKAlSBmluc2VydBIlCg5yZXN1bH'
         'RpbmdfdHlwZRgGIAEoCVINcmVzdWx0aW5nVHlwZRIkCg1kb2N1bWVudGF0aW9uGAcgASgJUg1k'
-        'b2N1bWVudGF0aW9uEhwKCXJlbGV2YW5jZRgIIAEoDVIJcmVsZXZhbmNl');
+        'b2N1bWVudGF0aW9uEhwKCXJlbGV2YW5jZRgIIAEoDVIJcmVsZXZhbmNlEisKEXN0cnVjdHVyZW'
+        'RfaW5zZXJ0GAkgASgJUhBzdHJ1Y3R1cmVkSW5zZXJ0');
 
 @$core.Deprecated('Use hoverDefinitionDraftRequestDescriptor instead')
 const HoverDefinitionDraftRequest$json = {
@@ -4506,13 +4862,135 @@ const QuantityView$json = {
     {'1': 'type_name', '3': 2, '4': 1, '5': 9, '10': 'typeName'},
     {'1': 'unit', '3': 3, '4': 1, '5': 9, '10': 'unit'},
     {'1': 'dim', '3': 4, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '10': 'dim'},
+    {
+      '1': 'preferred_unit',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.UnitExprView',
+      '9': 0,
+      '10': 'preferredUnit',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_preferred_unit'},
   ],
 };
 
 /// Descriptor for `QuantityView`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List quantityViewDescriptor = $convert
     .base64Decode('CgxRdWFudGl0eVZpZXcSDgoCaWQYASABKAlSAmlkEhsKCXR5cGVfbmFtZRgCIAEoCVIIdHlwZU'
-        '5hbWUSEgoEdW5pdBgDIAEoCVIEdW5pdBIdCgNkaW0YBCABKAsyCy5iZGwudjEuRGltUgNkaW0=');
+        '5hbWUSEgoEdW5pdBgDIAEoCVIEdW5pdBIdCgNkaW0YBCABKAsyCy5iZGwudjEuRGltUgNkaW0S'
+        'QAoOcHJlZmVycmVkX3VuaXQYBSABKAsyFC5iZGwudjEuVW5pdEV4cHJWaWV3SABSDXByZWZlcn'
+        'JlZFVuaXSIAQFCEQoPX3ByZWZlcnJlZF91bml0');
+
+@$core.Deprecated('Use unitExprViewDescriptor instead')
+const UnitExprView$json = {
+  '1': 'UnitExprView',
+  '2': [
+    {'1': 'source', '3': 1, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'display', '3': 2, '4': 1, '5': 9, '10': 'display'},
+    {'1': 'dim', '3': 3, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '10': 'dim'},
+    {'1': 'atom_id', '3': 4, '4': 1, '5': 9, '10': 'atomId'},
+    {'1': 'factors', '3': 5, '4': 3, '5': 11, '6': '.bdl.v1.UnitFactorView', '10': 'factors'},
+  ],
+};
+
+/// Descriptor for `UnitExprView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List unitExprViewDescriptor = $convert
+    .base64Decode('CgxVbml0RXhwclZpZXcSFgoGc291cmNlGAEgASgJUgZzb3VyY2USGAoHZGlzcGxheRgCIAEoCV'
+        'IHZGlzcGxheRIdCgNkaW0YAyABKAsyCy5iZGwudjEuRGltUgNkaW0SFwoHYXRvbV9pZBgEIAEo'
+        'CVIGYXRvbUlkEjAKB2ZhY3RvcnMYBSADKAsyFi5iZGwudjEuVW5pdEZhY3RvclZpZXdSB2ZhY3'
+        'RvcnM=');
+
+@$core.Deprecated('Use unitFactorViewDescriptor instead')
+const UnitFactorView$json = {
+  '1': 'UnitFactorView',
+  '2': [
+    {'1': 'atom_id', '3': 1, '4': 1, '5': 9, '10': 'atomId'},
+    {'1': 'symbol', '3': 2, '4': 1, '5': 9, '10': 'symbol'},
+    {'1': 'exponent', '3': 3, '4': 1, '5': 17, '10': 'exponent'},
+  ],
+};
+
+/// Descriptor for `UnitFactorView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List unitFactorViewDescriptor = $convert
+    .base64Decode('Cg5Vbml0RmFjdG9yVmlldxIXCgdhdG9tX2lkGAEgASgJUgZhdG9tSWQSFgoGc3ltYm9sGAIgAS'
+        'gJUgZzeW1ib2wSGgoIZXhwb25lbnQYAyABKBFSCGV4cG9uZW50');
+
+@$core.Deprecated('Use listValueCategoriesRequestDescriptor instead')
+const ListValueCategoriesRequest$json = {
+  '1': 'ListValueCategoriesRequest',
+};
+
+/// Descriptor for `ListValueCategoriesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listValueCategoriesRequestDescriptor =
+    $convert.base64Decode('ChpMaXN0VmFsdWVDYXRlZ29yaWVzUmVxdWVzdA==');
+
+@$core.Deprecated('Use valueCategoriesResponseDescriptor instead')
+const ValueCategoriesResponse$json = {
+  '1': 'ValueCategoriesResponse',
+  '2': [
+    {
+      '1': 'categories',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.ValueCategoryView',
+      '10': 'categories'
+    },
+  ],
+};
+
+/// Descriptor for `ValueCategoriesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List valueCategoriesResponseDescriptor = $convert
+    .base64Decode('ChdWYWx1ZUNhdGVnb3JpZXNSZXNwb25zZRI5CgpjYXRlZ29yaWVzGAEgAygLMhkuYmRsLnYxLl'
+        'ZhbHVlQ2F0ZWdvcnlWaWV3UgpjYXRlZ29yaWVz');
+
+@$core.Deprecated('Use valueCategoryViewDescriptor instead')
+const ValueCategoryView$json = {
+  '1': 'ValueCategoryView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'display_name', '3': 2, '4': 1, '5': 9, '10': 'displayName'},
+    {'1': 'type_name', '3': 3, '4': 1, '5': 9, '10': 'typeName'},
+    {
+      '1': 'representation',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.Representation',
+      '10': 'representation'
+    },
+    {'1': 'dim', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.Dim', '9': 0, '10': 'dim', '17': true},
+    {
+      '1': 'preferred_unit',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.UnitExprView',
+      '9': 1,
+      '10': 'preferredUnit',
+      '17': true
+    },
+    {'1': 'units', '3': 7, '4': 3, '5': 11, '6': '.bdl.v1.UnitExprView', '10': 'units'},
+  ],
+  '8': [
+    {'1': '_dim'},
+    {'1': '_preferred_unit'},
+  ],
+};
+
+/// Descriptor for `ValueCategoryView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List valueCategoryViewDescriptor = $convert
+    .base64Decode('ChFWYWx1ZUNhdGVnb3J5VmlldxIOCgJpZBgBIAEoCVICaWQSIQoMZGlzcGxheV9uYW1lGAIgAS'
+        'gJUgtkaXNwbGF5TmFtZRIbCgl0eXBlX25hbWUYAyABKAlSCHR5cGVOYW1lEj4KDnJlcHJlc2Vu'
+        'dGF0aW9uGAQgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0aW9uUg5yZXByZXNlbnRhdGlvbhIiCg'
+        'NkaW0YBSABKAsyCy5iZGwudjEuRGltSABSA2RpbYgBARJACg5wcmVmZXJyZWRfdW5pdBgGIAEo'
+        'CzIULmJkbC52MS5Vbml0RXhwclZpZXdIAVINcHJlZmVycmVkVW5pdIgBARIqCgV1bml0cxgHIA'
+        'MoCzIULmJkbC52MS5Vbml0RXhwclZpZXdSBXVuaXRzQgYKBF9kaW1CEQoPX3ByZWZlcnJlZF91'
+        'bml0');
 
 @$core.Deprecated('Use instantiateConceptTemplateRequestDescriptor instead')
 const InstantiateConceptTemplateRequest$json = {
@@ -4801,9 +5279,11 @@ const NewConcept$json = {
       '10': 'representation',
       '17': true
     },
+    {'1': 'category_id', '3': 4, '4': 1, '5': 9, '9': 1, '10': 'categoryId', '17': true},
   ],
   '8': [
     {'1': '_representation'},
+    {'1': '_category_id'},
   ],
 };
 
@@ -4811,7 +5291,8 @@ const NewConcept$json = {
 final $typed_data.Uint8List newConceptDescriptor = $convert
     .base64Decode('CgpOZXdDb25jZXB0EhIKBG5hbWUYASABKAlSBG5hbWUSIAoLZGVzY3JpcHRpb24YAiABKAlSC2'
         'Rlc2NyaXB0aW9uEkMKDnJlcHJlc2VudGF0aW9uGAMgASgLMhYuYmRsLnYxLlJlcHJlc2VudGF0'
-        'aW9uSABSDnJlcHJlc2VudGF0aW9uiAEBQhEKD19yZXByZXNlbnRhdGlvbg==');
+        'aW9uSABSDnJlcHJlc2VudGF0aW9uiAEBEiQKC2NhdGVnb3J5X2lkGAQgASgJSAFSCmNhdGVnb3'
+        'J5SWSIAQFCEQoPX3JlcHJlc2VudGF0aW9uQg4KDF9jYXRlZ29yeV9pZA==');
 
 @$core.Deprecated('Use listSourceCandidatesRequestDescriptor instead')
 const ListSourceCandidatesRequest$json = {

@@ -31,7 +31,7 @@ use crate::completion::describe_representation;
 use crate::diagnostics::{lift_for_mapping, SemanticDiagnostic};
 use crate::QueryError;
 use bdl_check::pretty;
-use bdl_elab::units::{self, UnitDef};
+use bdl_elab::units;
 use bdl_elab::{names::InputEnv, FormulaTrace, TypeTrace};
 use bdl_equations::{self as equations, Cap, PTy};
 use bdl_ide_db::{
@@ -282,13 +282,21 @@ pub enum NodeKind {
     Number {
         text: String,
     },
-    /// `90 deg`: a coordinate and its unit.
+    /// `90 deg`, `9.81 m per s^2`: a coordinate and its unit.
     Quantity {
         coordinate: String,
+        /// The unit as written (`m per s^2`).
         unit: String,
-        /// The registry id of the unit, when it is one.
+        /// The registry id when the unit is one atom (`angle.deg`).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         unit_id: Option<String>,
+        /// The canonical spelling (`m per s^2`) and the mathematical
+        /// rendering (`m/s²`) when the unit resolves; absent when it does
+        /// not (the node's diagnostics say why).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        unit_source: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        unit_display: Option<String>,
     },
     Bool {
         value: bool,
@@ -316,8 +324,38 @@ pub enum NodeKind {
     /// `if c then a else b` — a choice; children: the condition, the
     /// outcome when it holds, the outcome otherwise.
     If,
-    /// A form the Composer shows as text: `match`, a block, a rule, a
-    /// collection or grouped literal, `delay`/`sync`.
+    /// `match x { p => e, … }`; children: the subject, then one arm each.
+    Match,
+    /// One arm of a match: the pattern as written and the names it
+    /// binds; child: the body.
+    Arm {
+        pattern: String,
+        binds: Vec<String>,
+    },
+    /// `{ let p = v; …; tail }`; children: one `Let` each, then the result.
+    Block,
+    /// `let p = v`: the pattern as written and the names it binds; child:
+    /// the value.
+    Let {
+        pattern: String,
+        binds: Vec<String>,
+    },
+    /// `x => e`, `(x, y) => e` — a rule given to an equation; child: the
+    /// body.
+    Rule {
+        params: Vec<String>,
+    },
+    /// `[a, b, c]`; children: the items.
+    List,
+    /// `(a, b)`; children: the parts.
+    Tuple,
+    /// `delay(init, value)`; children: the initial value, the value
+    /// remembered.
+    Delay,
+    /// `sync(domain, init, value)`; children: the domain, the initial
+    /// value, the value read.
+    Sync,
+    /// A form the Composer shows as text: the empty product `()`.
     Opaque {
         what: String,
     },
@@ -332,6 +370,24 @@ pub struct FormulaNode {
     pub kind: NodeKind,
     /// The source text of the node.
     pub text: String,
+    /// What the node is to its parent, in the designer's words:
+    /// `condition`, `then`, `else`, `numerator`, `denominator`, `left`,
+    /// `right`, `operand`, `argument 1`, `collection`, `body`, `subject`,
+    /// `arm 1`, `value`, `result`, `item 1`, `part 1`, `initial`,
+    /// `domain`, `from`, `to`; empty at the root.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub role: String,
+    /// The formula's own names in scope at this node — a binder's or
+    /// rule's parameters, a pattern's names, earlier `let`s — innermost
+    /// last.  What a completion at this position may name besides the
+    /// design's.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub locals: Vec<String>,
+    /// Where a further child would be inserted (`f(a, b|)`, `[a, b|]`,
+    /// `(a, b|)`, a match's last arm): the byte offset before the closing
+    /// delimiter.  Absent on nodes with a fixed shape.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub append_at: Option<u32>,
     /// What the elaborator found the node to be.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub actual: Option<TypeView>,
@@ -372,6 +428,13 @@ impl FormulaNode {
         }
         for c in &self.children {
             c.slots(out);
+        }
+    }
+    /// Every node in source (pre-)order.
+    pub fn walk<'a>(&'a self, out: &mut Vec<&'a FormulaNode>) {
+        out.push(self);
+        for c in &self.children {
+            c.walk(out);
         }
     }
 }
@@ -448,6 +511,15 @@ pub fn formula_projection(
     mapping: DeclId,
 ) -> Result<FormulaProjection, QueryError> {
     let (source, draft_generation) = effective_source(snapshot, mapping)?;
+    projection_of(snapshot, mapping, source, draft_generation)
+}
+
+fn projection_of(
+    snapshot: &AnalysisSnapshot,
+    mapping: DeclId,
+    source: String,
+    draft_generation: Option<OverlayGeneration>,
+) -> Result<FormulaProjection, QueryError> {
     let design = &snapshot.effective().design;
     let ir = &snapshot.analysis().ir;
     let block = &design.mappings[&mapping];
@@ -512,6 +584,58 @@ pub fn formula_projection(
         unplaced,
         source,
     })
+}
+
+/// The unit expression a literal's suffix denotes, resolved against the
+/// registry (the elaborator's own resolution, repeated for the view).
+pub(crate) fn resolve_surface_unit(
+    u: &bdl_syntax::Unit,
+) -> Result<units::UnitExpr, units::UnitError> {
+    let num: Vec<(String, i64)> = u
+        .numerator
+        .iter()
+        .map(|f| (f.symbol.clone(), f.exponent))
+        .collect();
+    let den: Vec<(String, i64)> = u
+        .denominator
+        .iter()
+        .map(|f| (f.symbol.clone(), f.exponent))
+        .collect();
+    units::UnitExpr::build(&num, &den).map_err(|(_, e)| e)
+}
+
+/// The names a pattern binds: a bare name, and the names inside a
+/// constructor's fields (a nullary constructor such as `None` binds
+/// nothing; the elaborator tells the two apart — here a capitalised bare
+/// name is taken as a constructor, the surface's convention).
+fn pattern_names(p: &bdl_syntax::SurfacePattern) -> Vec<String> {
+    use bdl_syntax::PatternKind;
+    let mut out = Vec::new();
+    fn go(p: &bdl_syntax::SurfacePattern, out: &mut Vec<String>) {
+        match &p.kind {
+            PatternKind::Ident(n) => {
+                if !n.starts_with(|c: char| c.is_ascii_uppercase()) {
+                    out.push(n.clone());
+                }
+            }
+            PatternKind::Constructor { fields, .. } => fields.iter().for_each(|f| go(f, out)),
+            _ => {}
+        }
+    }
+    go(p, &mut out);
+    out
+}
+
+/// The byte offset of the closing delimiter of `e` (its last character,
+/// when it is `close`): where a further argument, item or arm goes.
+fn closing_offset(e: &SurfaceExpr, source: &str, close: char) -> Option<u32> {
+    let text = source.get(e.span.start as usize..e.span.end as usize)?;
+    let trimmed = text.trim_end();
+    if trimmed.ends_with(close) {
+        Some(e.span.start + trimmed.len() as u32 - 1)
+    } else {
+        None
+    }
 }
 
 /// Attach a diagnostic to the innermost node whose range contains its
@@ -616,7 +740,13 @@ impl Builder<'_> {
     }
 
     fn node(&mut self, e: &SurfaceExpr, id: String) -> FormulaNode {
-        let child = |b: &mut Self, c: &SurfaceExpr, i: usize| b.node(c, format!("{id}.{i}"));
+        let locals_here = self.locals.clone();
+        let child = |b: &mut Self, c: &SurfaceExpr, i: usize, role: &str| {
+            let mut n = b.node(c, format!("{id}.{i}"));
+            n.role = role.to_owned();
+            n
+        };
+        let mut append_at = None;
         let (kind, children) = match &e.kind {
             ExprKind::Hole => (NodeKind::Slot, Vec::new()),
             ExprKind::Name(name) => {
@@ -640,13 +770,13 @@ impl Builder<'_> {
                 collection,
                 body,
             } => {
-                let coll = child(self, collection, 0);
+                let coll = child(self, collection, 0, "collection");
                 let param_type = coll
                     .actual
                     .as_ref()
                     .and_then(|t| t.element.as_deref().cloned());
                 self.locals.push(param.name.clone());
-                let body_node = child(self, body, 1);
+                let body_node = child(self, body, 1, "body");
                 self.locals.pop();
                 (
                     NodeKind::Binder {
@@ -659,18 +789,26 @@ impl Builder<'_> {
             }
             ExprKind::Range { lo, hi } => (
                 NodeKind::Range,
-                vec![child(self, lo, 0), child(self, hi, 1)],
+                vec![child(self, lo, 0, "from"), child(self, hi, 1, "to")],
             ),
             ExprKind::Number { literal, unit } => (
                 match unit {
                     None => NodeKind::Number {
                         text: literal.as_str().to_owned(),
                     },
-                    Some(u) => NodeKind::Quantity {
-                        coordinate: literal.as_str().to_owned(),
-                        unit: u.name.clone(),
-                        unit_id: units::lookup(&u.name).map(|d| d.id.to_owned()),
-                    },
+                    Some(u) => {
+                        let resolved = resolve_surface_unit(u).ok();
+                        NodeKind::Quantity {
+                            coordinate: literal.as_str().to_owned(),
+                            unit: u.name.clone(),
+                            unit_id: resolved
+                                .as_ref()
+                                .and_then(|x| x.as_atom())
+                                .map(|d| d.id.to_owned()),
+                            unit_source: resolved.as_ref().map(|x| x.source()),
+                            unit_display: resolved.as_ref().map(|x| x.display()),
+                        }
+                    }
                 },
                 Vec::new(),
             ),
@@ -682,17 +820,21 @@ impl Builder<'_> {
                         UnaryOp::Not => "!".into(),
                     },
                 },
-                vec![child(self, expr, 0)],
+                vec![child(self, expr, 0, "operand")],
             ),
             ExprKind::Binary { op, lhs, rhs } => {
                 let (sym, arithmetic) = binary_symbol(*op);
+                let (lr, rr) = match op {
+                    BinaryOp::Div => ("numerator", "denominator"),
+                    _ => ("left", "right"),
+                };
                 (
                     if arithmetic {
                         NodeKind::Binary { op: sym.into() }
                     } else {
                         NodeKind::Compare { op: sym.into() }
                     },
-                    vec![child(self, lhs, 0), child(self, rhs, 1)],
+                    vec![child(self, lhs, 0, lr), child(self, rhs, 1, rr)],
                 )
             }
             ExprKind::Call { callee, args } => {
@@ -700,66 +842,147 @@ impl Builder<'_> {
                     ExprKind::Name(n) => n.clone(),
                     _ => self.text(callee.span),
                 };
-                let temporal = matches!(name.as_str(), "delay" | "sync");
-                if temporal {
-                    (
-                        NodeKind::Opaque {
-                            what: if name == "delay" {
-                                "a remembered value".into()
-                            } else {
-                                "a value from another timing domain".into()
+                append_at = closing_offset(e, self.source, ')');
+                match name.as_str() {
+                    "delay" => {
+                        let roles = ["initial", "value"];
+                        (
+                            NodeKind::Delay,
+                            args.iter()
+                                .enumerate()
+                                .map(|(i, a)| {
+                                    child(self, a, i, roles.get(i).unwrap_or(&"argument"))
+                                })
+                                .collect(),
+                        )
+                    }
+                    "sync" => {
+                        let roles = ["domain", "initial", "value"];
+                        (
+                            NodeKind::Sync,
+                            args.iter()
+                                .enumerate()
+                                .map(|(i, a)| {
+                                    child(self, a, i, roles.get(i).unwrap_or(&"argument"))
+                                })
+                                .collect(),
+                        )
+                    }
+                    _ => {
+                        let entity = self.reference_entity(&name);
+                        let equation = entity.is_none() && equations::lookup(&name).is_some();
+                        (
+                            NodeKind::Call {
+                                name,
+                                equation,
+                                entity,
                             },
-                        },
-                        Vec::new(),
-                    )
-                } else {
-                    let entity = self.reference_entity(&name);
-                    let equation = entity.is_none() && equations::lookup(&name).is_some();
-                    (
-                        NodeKind::Call {
-                            name,
-                            equation,
-                            entity,
-                        },
-                        args.iter()
-                            .enumerate()
-                            .map(|(i, a)| child(self, a, i))
-                            .collect(),
-                    )
+                            args.iter()
+                                .enumerate()
+                                .map(|(i, a)| child(self, a, i, &format!("argument {}", i + 1)))
+                                .collect(),
+                        )
+                    }
                 }
             }
             ExprKind::If { cond, then, els } => (
                 NodeKind::If,
                 vec![
-                    child(self, cond, 0),
-                    child(self, then, 1),
-                    child(self, els, 2),
+                    child(self, cond, 0, "condition"),
+                    child(self, then, 1, "then"),
+                    child(self, els, 2, "else"),
                 ],
             ),
-            ExprKind::Match { .. } => (
-                NodeKind::Opaque {
-                    what: "a match".into(),
-                },
-                Vec::new(),
-            ),
-            ExprKind::Block { .. } => (
-                NodeKind::Opaque {
-                    what: "a block with let".into(),
-                },
-                Vec::new(),
-            ),
-            ExprKind::List(_) => (
-                NodeKind::Opaque {
-                    what: "a collection".into(),
-                },
-                Vec::new(),
-            ),
-            ExprKind::Tuple(_) => (
-                NodeKind::Opaque {
-                    what: "a grouped value".into(),
-                },
-                Vec::new(),
-            ),
+            ExprKind::Match { scrutinee, arms } => {
+                let mut children = vec![child(self, scrutinee, 0, "subject")];
+                append_at = closing_offset(e, self.source, '}');
+                for (i, arm) in arms.iter().enumerate() {
+                    let binds = pattern_names(&arm.pattern);
+                    let before = self.locals.len();
+                    self.locals.extend(binds.iter().cloned());
+                    let body = {
+                        let mut n = self.node(&arm.body, format!("{id}.{}.0", i + 1));
+                        n.role = "body".into();
+                        n
+                    };
+                    self.locals.truncate(before);
+                    children.push(FormulaNode {
+                        id: format!("{id}.{}", i + 1),
+                        range: TextRange::new(arm.span.start, arm.span.end),
+                        text: self.text(arm.span),
+                        role: format!("arm {}", i + 1),
+                        locals: locals_here.clone(),
+                        append_at: None,
+                        actual: body.actual.clone(),
+                        expected: None,
+                        because: String::new(),
+                        diagnostics: Vec::new(),
+                        children: vec![body],
+                        kind: NodeKind::Arm {
+                            pattern: self.text(arm.pattern.span),
+                            binds,
+                        },
+                    });
+                }
+                (NodeKind::Match, children)
+            }
+            ExprKind::Block { lets, tail } => {
+                let mut children = Vec::new();
+                let before = self.locals.len();
+                for (i, l) in lets.iter().enumerate() {
+                    let scope = self.locals.clone();
+                    let value = {
+                        let mut n = self.node(&l.value, format!("{id}.{i}.0"));
+                        n.role = "value".into();
+                        n
+                    };
+                    let binds = pattern_names(&l.pattern);
+                    self.locals.extend(binds.iter().cloned());
+                    children.push(FormulaNode {
+                        id: format!("{id}.{i}"),
+                        range: TextRange::new(l.span.start, l.span.end),
+                        text: self.text(l.span),
+                        role: format!("let {}", i + 1),
+                        locals: scope,
+                        append_at: None,
+                        actual: value.actual.clone(),
+                        expected: None,
+                        because: String::new(),
+                        diagnostics: Vec::new(),
+                        children: vec![value],
+                        kind: NodeKind::Let {
+                            pattern: self.text(l.pattern.span),
+                            binds,
+                        },
+                    });
+                }
+                let n = lets.len();
+                children.push(child(self, tail, n, "result"));
+                self.locals.truncate(before);
+                (NodeKind::Block, children)
+            }
+            ExprKind::List(items) => {
+                append_at = closing_offset(e, self.source, ']');
+                (
+                    NodeKind::List,
+                    items
+                        .iter()
+                        .enumerate()
+                        .map(|(i, a)| child(self, a, i, &format!("item {}", i + 1)))
+                        .collect(),
+                )
+            }
+            ExprKind::Tuple(items) => {
+                append_at = closing_offset(e, self.source, ')');
+                (
+                    NodeKind::Tuple,
+                    items
+                        .iter()
+                        .enumerate()
+                        .map(|(i, a)| child(self, a, i, &format!("part {}", i + 1)))
+                        .collect(),
+                )
+            }
             // `f(())`: the explicit application to the unique argument; the
             // Composer offers `f` and never writes this form itself
             ExprKind::Unit => (
@@ -768,17 +991,22 @@ impl Builder<'_> {
                 },
                 Vec::new(),
             ),
-            ExprKind::Lambda { .. } => (
-                NodeKind::Opaque {
-                    what: "a rule".into(),
-                },
-                Vec::new(),
-            ),
+            ExprKind::Lambda { params, body } => {
+                let names: Vec<String> = params.iter().map(|p| p.name.clone()).collect();
+                let before = self.locals.len();
+                self.locals.extend(names.iter().cloned());
+                let body_node = child(self, body, 0, "body");
+                self.locals.truncate(before);
+                (NodeKind::Rule { params: names }, vec![body_node])
+            }
         };
         FormulaNode {
             id,
             range: TextRange::new(e.span.start, e.span.end),
             text: self.text(e.span),
+            role: String::new(),
+            locals: locals_here,
+            append_at,
             actual: self.actual(e),
             expected: None,
             because: String::new(),
@@ -1051,6 +1279,72 @@ impl Builder<'_> {
                     }
                 }
             }
+            NodeKind::Match => {
+                // the subject is free; every arm's body gives what the
+                // match gives
+                let why = match expected {
+                    Some(t) => format!(
+                        "every arm of a match gives what the match gives: {}",
+                        t.description
+                    ),
+                    None => "every arm of a match gives the same kind of value".into(),
+                };
+                let (s, arms) = node.children.split_at_mut(1);
+                self.solve(&mut s[0], None, "a match looks at its subject".into());
+                for arm in arms.iter_mut() {
+                    arm.expected = expected.cloned();
+                    arm.because = why.clone();
+                    for body in arm.children.iter_mut() {
+                        self.solve(body, expected, why.clone());
+                    }
+                }
+            }
+            NodeKind::Block => {
+                // the `let`s are free; the result gives what the block gives
+                let n = node.children.len();
+                for (i, c) in node.children.iter_mut().enumerate() {
+                    if i + 1 == n {
+                        self.solve(
+                            c,
+                            expected,
+                            "the result of a block is what the block gives".into(),
+                        );
+                    } else {
+                        for v in c.children.iter_mut() {
+                            self.solve(v, None, String::new());
+                        }
+                    }
+                }
+            }
+            NodeKind::Delay => {
+                // both the initial and the remembered value are what the
+                // delay gives
+                let why = "a remembered value and its initial value are the same kind of value"
+                    .to_string();
+                for c in node.children.iter_mut() {
+                    self.solve(c, expected, why.clone());
+                }
+            }
+            NodeKind::Sync => {
+                let why = "a value read from another domain and its initial value are the same kind of value".to_string();
+                for (i, c) in node.children.iter_mut().enumerate() {
+                    if i == 0 {
+                        self.solve(c, None, "the timing domain read from".into());
+                    } else {
+                        self.solve(c, expected, why.clone());
+                    }
+                }
+            }
+            NodeKind::List => {
+                let element = expected.and_then(|t| t.element.as_deref().cloned());
+                for c in node.children.iter_mut() {
+                    self.solve(
+                        c,
+                        element.as_ref(),
+                        "every item of a collection is one element".into(),
+                    );
+                }
+            }
             _ => {
                 for c in node.children.iter_mut() {
                     self.solve(c, None, String::new());
@@ -1161,10 +1455,25 @@ fn closed_ty(v: &TypeView) -> Option<Ty> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnitCandidate {
+    /// The registry id of an atom (`angle.deg`); empty for a composite.
     pub id: String,
+    /// The canonical source spelling: `deg`, `rad per s`, `m per s^2`.
     pub symbol: String,
+    /// The mathematical rendering, for display: `rad/s`, `m/s²`.
+    pub display: String,
     /// "an angle"
     pub measures: String,
+}
+
+impl UnitCandidate {
+    pub fn of(u: &units::UnitExpr) -> UnitCandidate {
+        UnitCandidate {
+            id: u.as_atom().map(|d| d.id.to_owned()).unwrap_or_default(),
+            symbol: u.source(),
+            display: u.display(),
+            measures: pretty::describe_dim(u.dim()),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -1266,19 +1575,16 @@ pub fn formula_slot(
         .and_then(|r| r.find(node))
         .and_then(|n| match &n.kind {
             NodeKind::Quantity {
-                unit_id: Some(_), ..
+                unit_source: Some(_),
+                ..
             } => n.actual.as_ref().and_then(|t| t.dim),
             _ => None,
         });
     let dim = literal_dim.or(expected.as_ref().and_then(|t| t.dim));
     let units: Vec<UnitCandidate> = match dim {
-        Some(d) => units::units_for(d)
-            .into_iter()
-            .map(|u| UnitCandidate {
-                id: u.id.to_owned(),
-                symbol: u.symbol.to_owned(),
-                measures: pretty::describe_dim(u.dim),
-            })
+        Some(d) => units::candidates_for(d)
+            .iter()
+            .map(UnitCandidate::of)
             .collect(),
         None => Vec::new(),
     };
@@ -1535,7 +1841,8 @@ pub enum ComposeOp {
         name: String,
         arity: u32,
     },
-    /// A literal's unit: with `preserve_value` the coordinate is
+    /// A literal's unit — a registry id (`angle.deg`) or a canonical
+    /// spelling (`rad per s`): with `preserve_value` the coordinate is
     /// converted so the physical quantity is unchanged (`180 deg` →
     /// `3.14… rad`); without it the coordinate stays (`180 deg` →
     /// `180 rad`, a different quantity).
@@ -1543,6 +1850,19 @@ pub enum ComposeOp {
         node: String,
         unit_id: String,
         preserve_value: bool,
+    },
+    /// Keyboard input at a structural caret: `text` typed before or after
+    /// `node` (or into it, when it is a slot), interpreted by the grammar
+    /// — an operator becomes `node op ?`, `(` parenthesises, a word fills
+    /// a slot with its canonical form (`clamp` → `clamp(?, ?, ?)`, `if` →
+    /// `if ? then ? else ?`), a unit word after a number becomes the
+    /// literal's unit, `per` / `*` / `^` after a quantity extend its
+    /// unit.  Refused, with the reason, when the text cannot stand at the
+    /// caret.
+    Insert {
+        node: String,
+        side: Side,
+        text: String,
     },
     /// A literal's coordinate: the same unit, another quantity.
     SetCoordinate { node: String, text: String },
@@ -1587,8 +1907,9 @@ fn removes_operator(parent: &FormulaNode) -> bool {
 fn precedence(kind: &NodeKind) -> u8 {
     match kind {
         // a binder extends as far right as its body, a choice as far as
-        // its `else` does: an operand only in parentheses
-        NodeKind::Binder { .. } | NodeKind::If => 0,
+        // its `else` does, a rule as far as its body: an operand only in
+        // parentheses
+        NodeKind::Binder { .. } | NodeKind::If | NodeKind::Rule { .. } => 0,
         NodeKind::Compare { op } | NodeKind::Binary { op } => op_precedence(op),
         NodeKind::Range => op_precedence(".."),
         NodeKind::Unary { .. } => UNARY,
@@ -1759,6 +2080,7 @@ pub fn compose(
         | ComposeOp::Remove { node }
         | ComposeOp::Binder { node, .. }
         | ComposeOp::Range { node }
+        | ComposeOp::Insert { node, .. }
         | ComposeOp::Choose { node } => node.as_str(),
     };
     let Some(node) = root.find(node_id) else {
@@ -1882,15 +2204,20 @@ pub fn compose(
             preserve_value,
             ..
         } => {
-            let Some(to) = units::by_id(unit_id) else {
-                return Err(QueryError::NotApplicable {
-                    reason: format!("no unit {unit_id}"),
-                });
-            };
-            let (coordinate, from): (String, Option<&UnitDef>) = match &node.kind {
+            let to = resolve_unit_ref(unit_id).ok_or_else(|| QueryError::NotApplicable {
+                reason: format!("no unit {unit_id}"),
+            })?;
+            let (coordinate, from): (String, Option<units::UnitExpr>) = match &node.kind {
                 NodeKind::Quantity {
-                    coordinate, unit, ..
-                } => (coordinate.clone(), units::lookup(unit)),
+                    coordinate,
+                    unit_source,
+                    ..
+                } => (
+                    coordinate.clone(),
+                    unit_source
+                        .as_deref()
+                        .and_then(|s| units::UnitExpr::parse_canonical(s).ok()),
+                ),
                 NodeKind::Number { text } => (text.clone(), None),
                 _ => {
                     return Err(QueryError::NotApplicable {
@@ -1899,28 +2226,29 @@ pub fn compose(
                 }
             };
             let coordinate = match (from, *preserve_value) {
-                (Some(from), true) if from.id != to.id => {
+                (Some(from), true) if from != to => {
                     let x: f64 = coordinate.parse().map_err(|_| QueryError::NotApplicable {
                         reason: format!("`{coordinate}` is not a number"),
                     })?;
-                    match units::convert(x, from, to) {
-                        Some(y) => format_coordinate(y),
-                        None => {
-                            return Err(QueryError::NotApplicable {
-                                reason: format!(
-                                    "{} measures {}, {} measures {}: the value cannot be kept",
-                                    from.symbol,
-                                    pretty::describe_dim(from.dim),
-                                    to.symbol,
-                                    pretty::describe_dim(to.dim)
-                                ),
-                            })
-                        }
+                    if from.dim() != to.dim() {
+                        return Err(QueryError::NotApplicable {
+                            reason: format!(
+                                "{} measures {}, {} measures {}: the value cannot be kept",
+                                from.source(),
+                                pretty::describe_dim(from.dim()),
+                                to.source(),
+                                pretty::describe_dim(to.dim())
+                            ),
+                        });
                     }
+                    format_coordinate(to.from_canonical(from.to_canonical(x)))
                 }
                 _ => coordinate,
             };
-            (node.range, format!("{coordinate} {}", to.symbol))
+            (node.range, format!("{coordinate} {}", to.source()))
+        }
+        ComposeOp::Insert { side, text, .. } => {
+            insertion(node, parent, *side, text, &root, design, block)?
         }
         ComposeOp::SetCoordinate { text, .. } => {
             let text = text.trim();
@@ -1988,16 +2316,18 @@ pub fn compose(
             ComposeOp::Binder { .. } => Some(format!("{node_id}.1")),
             ComposeOp::Range { .. } => Some(format!("{node_id}.1.0")),
             ComposeOp::Choose { .. } => Some(format!("{node_id}.0")),
-            ComposeOp::Fill { .. } => first_slot_in(node_id).or_else(|| {
-                // no slot in what was written: the next slot after it, the
-                // Tab order, else the node itself
-                let mut slots = Vec::new();
-                root.slots(&mut slots);
-                slots
-                    .into_iter()
-                    .find(|s| root.find(s).is_some_and(|n| n.range.start >= range.end))
-                    .or_else(|| Some(node_id.to_owned()))
-            }),
+            ComposeOp::Fill { .. } | ComposeOp::Insert { .. } => {
+                first_slot_in(node_id).or_else(|| {
+                    // no slot in what was written: the next slot after it, the
+                    // Tab order, else the node itself
+                    let mut slots = Vec::new();
+                    root.slots(&mut slots);
+                    slots
+                        .into_iter()
+                        .find(|s| root.find(s).is_some_and(|n| n.range.start >= range.end))
+                        .or_else(|| Some(node_id.to_owned()))
+                })
+            }
             ComposeOp::Remove { .. } => match parent {
                 Some((p, _))
                     if matches!(node.kind, NodeKind::Slot)
@@ -2024,6 +2354,702 @@ pub fn compose(
         },
         select,
     })
+}
+
+// ---- structural carets: sides, navigation, insertion ---------------------------
+
+/// Which side of a node a structural caret sits on.  A caret is a `(node,
+/// side)` pair — authoring identity, stable within one projection
+/// generation, never persisted: the draft text stays the authored state.
+/// `Before` a slot and `After` it are the slot itself (typing into it).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Side {
+    Before,
+    After,
+}
+
+/// A structural caret position and the byte offset it stands at.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Caret {
+    pub node: String,
+    pub side: Side,
+    pub offset: u32,
+}
+
+/// A structural motion over the projection.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Motion {
+    /// The previous / next caret in source order (`Before` a node, its
+    /// children's carets, `After` it).
+    Left,
+    Right,
+    /// The parent's caret on the same side; the root stays.
+    Up,
+    /// The first child's `Before` (from `Before`), the last child's
+    /// `After` (from `After`); a leaf stays.
+    Down,
+    /// `After` the parent.
+    Exit,
+    /// The next / previous slot in source order, wrapping.
+    NextSlot,
+    PreviousSlot,
+}
+
+/// The caret sequence of a tree in source order: `Before` each node, its
+/// children's carets, `After` it.
+fn caret_sequence(root: &FormulaNode) -> Vec<Caret> {
+    fn go(n: &FormulaNode, out: &mut Vec<Caret>) {
+        out.push(Caret {
+            node: n.id.clone(),
+            side: Side::Before,
+            offset: n.range.start,
+        });
+        for c in &n.children {
+            go(c, out);
+        }
+        out.push(Caret {
+            node: n.id.clone(),
+            side: Side::After,
+            offset: n.range.end,
+        });
+    }
+    let mut out = Vec::new();
+    go(root, &mut out);
+    out
+}
+
+/// Where a caret sits, as a byte offset into the projection's source.
+pub fn caret_offset(root: &FormulaNode, node: &str, side: Side) -> Option<u32> {
+    let n = root.find(node)?;
+    Some(match side {
+        Side::Before => n.range.start,
+        Side::After => n.range.end,
+    })
+}
+
+/// Move a structural caret.  Pure over the projection: the same tree and
+/// the same motion give the same answer, and nothing is kept between
+/// calls.  `None` when the caret names no node of the tree.
+pub fn navigate(root: &FormulaNode, node: &str, side: Side, motion: Motion) -> Option<Caret> {
+    let seq = caret_sequence(root);
+    let here = seq.iter().position(|c| c.node == node && c.side == side)?;
+    let at = |i: usize| seq.get(i).cloned();
+    match motion {
+        Motion::Left => at(here.saturating_sub(1)),
+        Motion::Right => at((here + 1).min(seq.len() - 1)),
+        Motion::Up => {
+            let parent = root.parent_of(node).map(|(p, _)| p.id.clone());
+            match parent {
+                Some(p) => seq.iter().find(|c| c.node == p && c.side == side).cloned(),
+                None => at(here),
+            }
+        }
+        Motion::Down => {
+            let n = root.find(node)?;
+            let child = match side {
+                Side::Before => n.children.first(),
+                Side::After => n.children.last(),
+            };
+            match child {
+                Some(c) => seq
+                    .iter()
+                    .find(|x| x.node == c.id && x.side == side)
+                    .cloned(),
+                None => at(here),
+            }
+        }
+        Motion::Exit => {
+            let parent = root.parent_of(node).map(|(p, _)| p.id.clone());
+            match parent {
+                Some(p) => seq
+                    .iter()
+                    .find(|c| c.node == p && c.side == Side::After)
+                    .cloned(),
+                None => at(here),
+            }
+        }
+        Motion::NextSlot | Motion::PreviousSlot => {
+            let mut slots = Vec::new();
+            root.slots(&mut slots);
+            if slots.is_empty() {
+                return at(here);
+            }
+            let offset = seq[here].offset;
+            let mut ordered: Vec<(u32, String)> = slots
+                .into_iter()
+                .filter_map(|s| root.find(&s).map(|n| (n.range.start, s)))
+                .collect();
+            ordered.sort();
+            let pick = match motion {
+                Motion::NextSlot => ordered
+                    .iter()
+                    .find(|(o, s)| *o > offset || (*o == offset && s != node))
+                    .or(ordered.first()),
+                _ => ordered
+                    .iter()
+                    .rev()
+                    .find(|(o, s)| *o < offset || (*o == offset && s != node))
+                    .or(ordered.last()),
+            };
+            pick.map(|(o, s)| Caret {
+                node: s.clone(),
+                side: Side::Before,
+                offset: *o,
+            })
+        }
+    }
+}
+
+/// The two-sided operators the keyboard may insert at a caret.
+const OPERATORS: &[&str] = &[
+    "+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&&", "||", "??", "in",
+];
+
+/// A unit by registry id or by canonical spelling.
+fn resolve_unit_ref(text: &str) -> Option<units::UnitExpr> {
+    if let Some(def) = units::by_id(text) {
+        return units::UnitExpr::atom(def).ok();
+    }
+    units::UnitExpr::parse_canonical(text).ok()
+}
+
+/// The canonical text a word stands for when it fills a slot: an
+/// equation with one slot per argument, a relationship with inputs as a
+/// call, `if` as a choice, a binder word as its form, else the word.
+fn canonical_fill(design: &Design, block: &MappingBlock, root: &FormulaNode, word: &str) -> String {
+    match word {
+        "if" => return "if ? then ? else ?".into(),
+        "all" | "any" | "map" | "filter" => {
+            let local = fresh_local(design, block, root, "");
+            return format!("{word} {local} in ?: ?");
+        }
+        "delay" => return "delay(?, ?)".into(),
+        "sync" => return "sync(?, ?, ?)".into(),
+        _ => {}
+    }
+    if let Some(m) = design.mappings.values().find(|m| m.name == word) {
+        if !m.signature.is_unit_domain() {
+            let slots = vec!["?"; m.signature.inputs.len()].join(", ");
+            return format!("{word}({slots})");
+        }
+        return word.to_owned();
+    }
+    if let Some(e) = equations::lookup(word) {
+        let args: Vec<&str> = e
+            .scheme
+            .params
+            .iter()
+            .map(|p| match p {
+                PTy::Arr(a, _) => match a.as_ref() {
+                    PTy::Prod(..) => "(x, y) => ?",
+                    _ => "x => ?",
+                },
+                _ => "?",
+            })
+            .collect();
+        return format!("{word}({})", args.join(", "));
+    }
+    word.to_owned()
+}
+
+/// Interpret keyboard `text` at the caret `(node, side)`: the byte range
+/// to replace and the text to put there.
+#[allow(clippy::too_many_arguments)]
+fn insertion(
+    node: &FormulaNode,
+    parent: Option<(&FormulaNode, usize)>,
+    side: Side,
+    text: &str,
+    root: &FormulaNode,
+    design: &Design,
+    block: &MappingBlock,
+) -> Result<(TextRange, String), QueryError> {
+    let text = text.trim();
+    if text.is_empty() {
+        return Err(QueryError::NotApplicable {
+            reason: "nothing to insert".into(),
+        });
+    }
+    let is_slot = matches!(node.kind, NodeKind::Slot);
+    let is_number = matches!(
+        node.kind,
+        NodeKind::Number { .. } | NodeKind::Quantity { .. }
+    );
+    let _ = parent;
+    // an operator after (or before) a value: the value becomes one operand
+    if OPERATORS.contains(&text) && !is_slot {
+        let p = op_precedence(text);
+        let before = side == Side::Before;
+        let under = if is_comparison(text) {
+            COMPARISON_OPERAND
+        } else if before {
+            p + 1
+        } else {
+            p
+        };
+        let operand = operand(node, under);
+        let made = if before {
+            format!("? {text} {operand}")
+        } else {
+            format!("{operand} {text} ?")
+        };
+        return Ok((node.range, made));
+    }
+    if text == "!" && (is_slot || side == Side::Before) {
+        return Ok((node.range, format!("!{}", operand(node, UNARY))));
+    }
+    if text == "(" {
+        // a slot becomes a grouped slot; a value is grouped
+        let inner = if is_slot {
+            "?".to_owned()
+        } else {
+            node.text.trim().to_owned()
+        };
+        return Ok((node.range, format!("({inner})")));
+    }
+    // a unit word, `per`, `*` or `^` after a number extends its unit: the
+    // literal's text grows; a resulting incomplete unit (`10 deg per`) is a
+    // draft state the parser names, and completion offers the units
+    if is_number && side == Side::After {
+        let base = node.text.trim();
+        let extended = match text {
+            "per" | "*" | "^" => {
+                if matches!(node.kind, NodeKind::Number { .. }) {
+                    return Err(QueryError::NotApplicable {
+                        reason: "a plain number has no unit to extend; write a unit first".into(),
+                    });
+                }
+                if text == "^" {
+                    format!("{base}^")
+                } else {
+                    format!("{base} {text} ")
+                }
+            }
+            w if units::lookup(w).is_some() => format!("{base} {w}"),
+            w if w.chars().all(|c| c.is_ascii_digit() || c == '-') && base.ends_with('^') => {
+                format!("{base}{w}")
+            }
+            _ => {
+                return Err(QueryError::NotApplicable {
+                    reason: format!(
+                        "`{text}` cannot follow a number here; a unit, `per`, `*` or `^` can"
+                    ),
+                })
+            }
+        };
+        return Ok((node.range, extended));
+    }
+    // a word or number into a slot: its canonical form
+    if is_slot {
+        let filled = if text.parse::<f64>().is_ok() || text == "true" || text == "false" {
+            text.to_owned()
+        } else if text.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+            canonical_fill(design, block, root, text)
+        } else {
+            return Err(QueryError::NotApplicable {
+                reason: format!(
+                    "`{text}` is not something a slot takes; type a name, a number or a form"
+                ),
+            });
+        };
+        return Ok((node.range, filled));
+    }
+    Err(QueryError::NotApplicable {
+        reason: format!(
+            "`{text}` cannot stand {} `{}`; insert an operator first",
+            match side {
+                Side::Before => "before",
+                Side::After => "after",
+            },
+            node.text.trim()
+        ),
+    })
+}
+
+// ---- signature help --------------------------------------------------------------
+
+/// One parameter of a call, for signature help.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ParameterHelp {
+    pub name: String,
+    /// What the parameter takes, in the designer's words, when known
+    /// (the equation's scheme instantiated by the arguments written; a
+    /// relationship's input concept).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub expected: String,
+}
+
+/// What a call at or around a caret takes: the callee, its parameters,
+/// its result and which argument the caret is in.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SignatureHelp {
+    /// The call node.
+    pub node: String,
+    pub name: String,
+    /// `clamp(x, lo, hi)`.
+    pub shape: String,
+    pub parameters: Vec<ParameterHelp>,
+    /// What the call gives, in the designer's words.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub result: String,
+    /// The argument the caret is in, when it is in one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active: Option<u32>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub summary: String,
+}
+
+/// The signature help for the innermost call enclosing `node` (or `node`
+/// itself when it is a call); `None` when no call encloses it.
+pub fn signature(
+    projection: &FormulaProjection,
+    design: &Design,
+    node: &str,
+) -> Option<SignatureHelp> {
+    let root = projection.root.as_ref()?;
+    // walk up from the node to the nearest call, remembering which child
+    // we came from
+    let mut current = node.to_owned();
+    let mut active: Option<u32> = None;
+    loop {
+        let n = root.find(&current)?;
+        if let NodeKind::Call {
+            name,
+            equation,
+            entity,
+        } = &n.kind
+        {
+            let (params, result, summary): (Vec<ParameterHelp>, String, String) = if *equation {
+                let e = equations::lookup(name)?;
+                let params = e
+                    .params
+                    .iter()
+                    .enumerate()
+                    .map(|(i, p)| ParameterHelp {
+                        name: (*p).to_owned(),
+                        expected: n
+                            .children
+                            .get(i)
+                            .and_then(|c| c.expected.as_ref())
+                            .map(|t| t.description.clone())
+                            .unwrap_or_default(),
+                    })
+                    .collect();
+                (
+                    params,
+                    n.actual
+                        .as_ref()
+                        .map(|t| t.description.clone())
+                        .unwrap_or_default(),
+                    e.summary.to_owned(),
+                )
+            } else if let Some(EntityRef::Mapping(id)) = entity {
+                let m = design.mappings.get(id)?;
+                let params = m
+                    .signature
+                    .inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(i, c)| ParameterHelp {
+                        name: m
+                            .parameters
+                            .get(i)
+                            .filter(|p| !p.is_empty())
+                            .cloned()
+                            .or_else(|| design.concepts.get(c).map(|c| c.name.clone()))
+                            .unwrap_or_default(),
+                        expected: design
+                            .concepts
+                            .get(c)
+                            .map(|c| c.name.clone())
+                            .unwrap_or_default(),
+                    })
+                    .collect();
+                (
+                    params,
+                    design
+                        .concepts
+                        .get(&m.signature.output)
+                        .map(|c| c.name.clone())
+                        .unwrap_or_default(),
+                    m.description.clone(),
+                )
+            } else {
+                (Vec::new(), String::new(), String::new())
+            };
+            let shape = format!(
+                "{name}({})",
+                params
+                    .iter()
+                    .map(|p| p.name.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            return Some(SignatureHelp {
+                node: n.id.clone(),
+                name: name.clone(),
+                shape,
+                parameters: params,
+                result,
+                active,
+                summary,
+            });
+        }
+        let (p, i) = root.parent_of(&current)?;
+        active = Some(i as u32);
+        current = p.id.clone();
+    }
+}
+
+// ---- the read-only render --------------------------------------------------------
+
+/// One piece of a rendered formula, in source order: the node it belongs
+/// to (a leaf's own text, or the words and marks between a node's
+/// children) and what it is.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Fragment {
+    pub text: String,
+    /// `reference`, `local`, `number`, `unit`, `bool`, `slot`,
+    /// `operator`, `keyword`, `punctuation`, `pattern`, `name`.
+    pub kind: String,
+    /// The node the fragment belongs to (`r.1` for the `+` of `a + b`).
+    pub node: String,
+    pub range: TextRange,
+}
+
+/// The display projection of a formula: the same tree the editor uses,
+/// flattened to fragments a canvas node can lay out — nothing parsed a
+/// second time.  Composite units carry their mathematical rendering
+/// beside the source text.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct FormulaRender {
+    pub fragments: Vec<Fragment>,
+    /// The formatted source on one line, for a compact summary.
+    pub compact: String,
+    /// The result type, in the designer's words.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub result: String,
+    pub error_count: u32,
+    pub warning_count: u32,
+    /// The references the formula makes, by name.
+    pub references: Vec<String>,
+}
+
+/// Flatten a projection into fragments.
+pub fn render(projection: &FormulaProjection) -> FormulaRender {
+    let source = projection.source.as_str();
+    let mut fragments = Vec::new();
+    let mut references = Vec::new();
+    fn kind_of_gap(text: &str) -> &'static str {
+        if text.chars().all(|c| c.is_ascii_alphabetic() || c == '_') {
+            "keyword"
+        } else if text
+            .chars()
+            .all(|c| matches!(c, '(' | ')' | '[' | ']' | '{' | '}' | ',' | ';' | ':'))
+        {
+            "punctuation"
+        } else {
+            "operator"
+        }
+    }
+    fn gap(source: &str, from: u32, to: u32, node: &str, out: &mut Vec<Fragment>) {
+        if to <= from {
+            return;
+        }
+        let Some(text) = source.get(from as usize..to as usize) else {
+            return;
+        };
+        // each maximal run of one class — a word, an operator, a single
+        // delimiter — is one fragment; whitespace separates
+        let class = |c: char| -> u8 {
+            if c.is_whitespace() {
+                0
+            } else if c.is_ascii_alphanumeric() || c == '_' {
+                1
+            } else if matches!(c, '(' | ')' | '[' | ']' | '{' | '}' | ',' | ';' | ':') {
+                3
+            } else {
+                2
+            }
+        };
+        let mut start = from as usize;
+        let mut current = 0u8;
+        let flush = |start: usize, end: usize, out: &mut Vec<Fragment>| {
+            if end > start {
+                let t = &source[start..end];
+                out.push(Fragment {
+                    text: t.to_owned(),
+                    kind: kind_of_gap(t).into(),
+                    node: node.to_owned(),
+                    range: TextRange::new(start as u32, end as u32),
+                });
+            }
+        };
+        for (i, c) in text.char_indices() {
+            let abs = from as usize + i;
+            let k = class(c);
+            if k == 0 {
+                flush(start, abs, out);
+                start = abs + c.len_utf8();
+                current = 0;
+                continue;
+            }
+            // a delimiter is always its own fragment; a class change ends a run
+            if k != current || k == 3 {
+                flush(start, abs, out);
+                start = abs;
+                current = k;
+            }
+        }
+        flush(start, to as usize, out);
+    }
+    fn go(n: &FormulaNode, source: &str, out: &mut Vec<Fragment>, refs: &mut Vec<String>) {
+        let leaf_kind = match &n.kind {
+            NodeKind::Reference { local: true, .. } => Some("local"),
+            NodeKind::Reference { name, .. } => {
+                if !refs.contains(name) {
+                    refs.push(name.clone());
+                }
+                Some("reference")
+            }
+            NodeKind::Number { .. } => Some("number"),
+            NodeKind::Bool { .. } => Some("bool"),
+            NodeKind::Slot => Some("slot"),
+            NodeKind::Opaque { .. } => Some("punctuation"),
+            _ => None,
+        };
+        if let Some(k) = leaf_kind {
+            out.push(Fragment {
+                text: n.text.trim().to_owned(),
+                kind: k.into(),
+                node: n.id.clone(),
+                range: n.range,
+            });
+            return;
+        }
+        if let NodeKind::Quantity {
+            coordinate,
+            unit,
+            unit_display,
+            ..
+        } = &n.kind
+        {
+            let coord_end = n.range.start + coordinate.len() as u32;
+            out.push(Fragment {
+                text: coordinate.clone(),
+                kind: "number".into(),
+                node: n.id.clone(),
+                range: TextRange::new(n.range.start, coord_end),
+            });
+            out.push(Fragment {
+                text: unit_display.clone().unwrap_or_else(|| unit.clone()),
+                kind: "unit".into(),
+                node: n.id.clone(),
+                range: TextRange::new(coord_end, n.range.end),
+            });
+            return;
+        }
+        // an inner node: the text between its children is its own —
+        // operators, keywords, delimiters, a pattern before `=>`; a call's
+        // head word is the reference it makes
+        let head_word = match &n.kind {
+            NodeKind::Call { name, equation, .. } => {
+                if !*equation && !refs.contains(name) {
+                    refs.push(name.clone());
+                }
+                Some(name.clone())
+            }
+            NodeKind::Delay => Some("delay".to_owned()),
+            NodeKind::Sync => Some("sync".to_owned()),
+            _ => None,
+        };
+        let first = out.len();
+        let mut cursor = n.range.start;
+        for c in &n.children {
+            let skip_pattern = matches!(n.kind, NodeKind::Arm { .. } | NodeKind::Let { .. });
+            if skip_pattern && cursor == n.range.start {
+                // the pattern (and `let`) before the child
+                let head = source
+                    .get(cursor as usize..c.range.start as usize)
+                    .unwrap_or("");
+                let head_trim = head.trim_end();
+                if let NodeKind::Arm { pattern, .. } | NodeKind::Let { pattern, .. } = &n.kind {
+                    let pat_start = head_trim
+                        .rfind(pattern.as_str())
+                        .map(|i| cursor as usize + i);
+                    if let Some(ps) = pat_start {
+                        gap(source, cursor, ps as u32, &n.id, out);
+                        out.push(Fragment {
+                            text: pattern.clone(),
+                            kind: "pattern".into(),
+                            node: n.id.clone(),
+                            range: TextRange::new(ps as u32, (ps + pattern.len()) as u32),
+                        });
+                        gap(
+                            source,
+                            (ps + pattern.len()) as u32,
+                            c.range.start,
+                            &n.id,
+                            out,
+                        );
+                        go(c, source, out, refs);
+                        cursor = c.range.end;
+                        continue;
+                    }
+                }
+            }
+            gap(source, cursor, c.range.start, &n.id, out);
+            go(c, source, out, refs);
+            cursor = c.range.end;
+        }
+        gap(source, cursor, n.range.end, &n.id, out);
+        if let Some(word) = head_word {
+            if let Some(f) = out[first..].iter_mut().find(|f| f.text == word) {
+                f.kind = if matches!(n.kind, NodeKind::Call { equation: true, .. }) {
+                    "equation".into()
+                } else if matches!(n.kind, NodeKind::Call { .. }) {
+                    "reference".into()
+                } else {
+                    "keyword".into()
+                };
+            }
+        }
+    }
+    if let Some(root) = &projection.root {
+        go(root, source, &mut fragments, &mut references);
+    }
+    let (mut errors, mut warnings) = (0u32, 0u32);
+    let mut count = |ds: &[SemanticDiagnostic]| {
+        for d in ds {
+            match d.severity {
+                crate::diagnostics::SemanticSeverity::Error => errors += 1,
+                crate::diagnostics::SemanticSeverity::Warning => warnings += 1,
+                _ => {}
+            }
+        }
+    };
+    if let Some(root) = &projection.root {
+        let mut all = Vec::new();
+        root.walk(&mut all);
+        for n in all {
+            count(&n.diagnostics);
+        }
+    }
+    count(&projection.unplaced);
+    FormulaRender {
+        compact: source.split_whitespace().collect::<Vec<_>>().join(" "),
+        result: projection
+            .result
+            .as_ref()
+            .map(|t| t.description.clone())
+            .unwrap_or_default(),
+        error_count: errors,
+        warning_count: warnings,
+        references,
+        fragments,
+    }
 }
 
 /// A readable fresh name for a binder's local: the collection's name

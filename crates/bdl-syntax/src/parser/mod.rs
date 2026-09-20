@@ -169,7 +169,12 @@ impl<'s> Parser<'s> {
     }
 
     pub fn current_text(&self) -> &'s str {
-        match self.nth_index(0) {
+        self.nth_text(0)
+    }
+
+    /// The text of the `n`-th non-trivia token from the current one.
+    pub fn nth_text(&self, n: usize) -> &'s str {
+        match self.nth_index(n) {
             Some(i) => self.tokens[i].text(self.src),
             None => "",
         }

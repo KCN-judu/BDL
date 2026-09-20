@@ -307,7 +307,8 @@ Module@0..1298
                 Number@749..751 "90"
                 Whitespace@751..752 " "
                 UnitSuffix@752..755
-                  Ident@752..755 "deg"
+                  UnitFactor@752..755
+                    Ident@752..755 "deg"
               RParen@755..756 ")"
       Whitespace@756..760 "\n\n  "
       PortDecl@760..843

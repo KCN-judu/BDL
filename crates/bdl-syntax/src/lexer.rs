@@ -104,6 +104,9 @@ enum Raw {
     /// `??` — the value when present, a default when absent.
     #[token("??")]
     QuestionQuestion,
+    /// `^` — a unit power (`s^2`), inside a unit expression only.
+    #[token("^")]
+    Caret,
 }
 
 fn line_comment(lex: &mut logos::Lexer<Raw>) {
@@ -185,6 +188,7 @@ pub fn lex(src: &str) -> (Vec<Token>, Vec<SyntaxError>) {
             Ok(Raw::DotDot) => SyntaxKind::DotDot,
             Ok(Raw::Question) => SyntaxKind::Question,
             Ok(Raw::QuestionQuestion) => SyntaxKind::QuestionQuestion,
+            Ok(Raw::Caret) => SyntaxKind::Caret,
             Err(()) => {
                 errors.push(SyntaxError::new(
                     SyntaxErrorCode::InvalidCharacter,

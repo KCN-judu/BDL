@@ -125,8 +125,28 @@ impl BinderForm {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Unit {
+    /// The spelling, one space between tokens (`deg`, `m per s^2`).
     pub name: String,
     pub span: Span,
+    /// The factors before `per` and after it, as written; the elaborator
+    /// resolves each symbol against the registry and builds the unit
+    /// expression (`bdl_model::units::UnitExpr::build`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub numerator: Vec<SurfaceUnitFactor>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub denominator: Vec<SurfaceUnitFactor>,
+}
+
+/// One factor of a unit expression as written: the symbol and its
+/// exponent (`1` when none is written).  A non-integer or oversized
+/// exponent is a lowering error (`syntax.malformed_unit`), so every
+/// factor that reaches the elaborator has a whole-number exponent that
+/// fits an `i64`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SurfaceUnitFactor {
+    pub symbol: String,
+    pub span: Span,
+    pub exponent: i64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -1018,6 +1038,46 @@ impl PatternKind {
     }
 }
 
+/// The unit expression after a number.  The parser has checked every
+/// exponent is a whole number that fits (`syntax.malformed_unit`
+/// otherwise), so lowering only reads it; `None` for a tree the parser
+/// left incomplete.
+fn unit(u: &ast::UnitSuffix) -> Option<Unit> {
+    let factor = |f: &ast::UnitFactor| -> Option<SurfaceUnitFactor> {
+        let symbol = f.symbol()?;
+        let exponent = match f.exponent() {
+            None => 1,
+            Some(tok) => {
+                let n = tok.text().parse::<i64>().ok()?;
+                if f.negative() {
+                    -n
+                } else {
+                    n
+                }
+            }
+        };
+        Some(SurfaceUnitFactor {
+            symbol: symbol.text().to_owned(),
+            span: crate::syntax::span_of(symbol.text_range()),
+            exponent,
+        })
+    };
+    let mut numerator = Vec::new();
+    for f in u.numerator() {
+        numerator.push(factor(&f)?);
+    }
+    let mut denominator = Vec::new();
+    for f in u.denominator() {
+        denominator.push(factor(&f)?);
+    }
+    Some(Unit {
+        name: u.as_str(),
+        span: u.span(),
+        numerator,
+        denominator,
+    })
+}
+
 fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
     let span = e.span();
     let kind = match e {
@@ -1026,13 +1086,10 @@ fn expr(e: &ast::Expr) -> Option<SurfaceExpr> {
             LiteralKind::Bool(b) => ExprKind::Bool(b),
             LiteralKind::Number(n) => ExprKind::Number {
                 literal: n.literal(),
-                unit: l.unit().and_then(|u| {
-                    let tok = u.ident()?;
-                    Some(Unit {
-                        name: tok.text().to_owned(),
-                        span: crate::syntax::span_of(tok.text_range()),
-                    })
-                }),
+                unit: match l.unit() {
+                    Some(u) => Some(unit(&u)?),
+                    None => None,
+                },
             },
         },
         ast::Expr::Paren(p) => expr(&p.inner()?)?.kind,

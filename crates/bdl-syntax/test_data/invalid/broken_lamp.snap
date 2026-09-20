@@ -56,7 +56,8 @@ Module@0..155
               Number@84..86 "10"
               Whitespace@86..87 " "
               UnitSuffix@87..90
-                Ident@87..90 "deg"
+                UnitFactor@87..90
+                  Ident@87..90 "deg"
           Whitespace@90..91 " "
           Lt@91..92 "<"
           Whitespace@92..93 " "
@@ -64,7 +65,8 @@ Module@0..155
             Number@93..95 "20"
             Whitespace@95..96 " "
             UnitSuffix@96..99
-              Ident@96..99 "deg"
+              UnitFactor@96..99
+                Ident@96..99 "deg"
         Whitespace@99..100 " "
         KwThen@100..104 "then"
         Whitespace@104..109 "\n    "

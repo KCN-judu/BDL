@@ -474,6 +474,14 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             Resp::ConceptTemplates(convert::concept_templates_response(libraries())),
             None,
         ),
+        Req::ListValueCategories(_) => (
+            Resp::ValueCategories(convert::value_categories_response()),
+            None,
+        ),
+        Req::NavigateFormula(r) => (navigate_formula(session, &r), None),
+        Req::CompleteFormulaCaret(r) => (complete_formula_caret(session, &r), None),
+        Req::GetFormulaSignature(r) => (get_formula_signature(session, &r), None),
+        Req::GetFormulaRender(r) => (get_formula_render(session, &r), None),
         Req::InstantiateConceptTemplate(r) => instantiate_concept_template(session, &r),
         Req::ListLibraryItems(_) => (
             Resp::LibraryItems(convert::library_items_response(libraries())),
@@ -624,6 +632,91 @@ fn completion_to_pb(c: &bdl_ide::SemanticCompletion) -> pb::DraftCompletionItem 
         resulting_type: c.resulting_type.clone().unwrap_or_default(),
         documentation: c.documentation.clone().unwrap_or_default(),
         relevance: u32::from(c.relevance),
+        structured_insert: c.structured_insert.clone().unwrap_or_default(),
+    }
+}
+
+fn navigate_formula(session: &mut Session, r: &pb::NavigateFormulaRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    let (Some(side), Some(motion)) = (
+        formula::side_from_pb(r.side()),
+        formula::motion_from_pb(r.motion()),
+    ) else {
+        return Resp::Error(error(
+            "protocol.missing_field",
+            "a caret side and a motion are required",
+        ));
+    };
+    match session.navigate_formula(
+        component_scope(r.component),
+        id,
+        &r.source,
+        &r.node_id,
+        side,
+        motion,
+    ) {
+        Ok(c) => Resp::NavigateFormula(pb::NavigateFormulaResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            node_id: c.node,
+            side: formula::side_to_pb(c.side).into(),
+            offset: c.offset,
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn complete_formula_caret(session: &mut Session, r: &pb::CompleteFormulaCaretRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    let Some(side) = formula::side_from_pb(r.side()) else {
+        return Resp::Error(error("protocol.missing_field", "a caret side is required"));
+    };
+    match session.caret_completion(
+        component_scope(r.component),
+        id,
+        &r.source,
+        &r.node_id,
+        side,
+        &r.prefix,
+    ) {
+        Ok(items) => Resp::DraftCompletion(pb::DraftCompletionResponse {
+            revision: r.revision,
+            mapping_id: r.mapping_id,
+            items: items.iter().map(completion_to_pb).collect(),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn get_formula_signature(session: &mut Session, r: &pb::GetFormulaSignatureRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.formula_signature(component_scope(r.component), id, &r.source, &r.node_id) {
+        Ok(s) => Resp::FormulaSignature(formula::signature_to_pb(
+            s.as_ref(),
+            r.revision,
+            r.mapping_id,
+        )),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn get_formula_render(session: &mut Session, r: &pb::GetFormulaRenderRequest) -> Resp {
+    if let Err(e) = draft_revision(session, r.revision) {
+        return Resp::Error(e);
+    }
+    let id = bdl_model::DeclId::from_raw(r.mapping_id);
+    match session.formula_render(component_scope(r.component), id) {
+        Ok(render) => Resp::FormulaRender(formula::render_to_pb(&render, r.revision, r.mapping_id)),
+        Err(e) => Resp::Error(session_error(&e)),
     }
 }
 
@@ -1078,9 +1171,8 @@ fn create_source(session: &mut Session, r: &pb::CreateSourceRequest) -> (Resp, O
         // a new concept and the Source over it: two planned steps in one
         // transaction, the key resolved inside it
         Some(pb::create_source_request::Concept::NewConcept(c)) => {
-            let representation = match c.representation.as_ref() {
-                None => None,
-                Some(rep) => match convert::representation_from_pb(rep) {
+            let representation = match (c.representation.as_ref(), c.category_id.as_deref()) {
+                (Some(rep), _) => match convert::representation_from_pb(rep) {
                     Ok(r) => Some(r),
                     Err(e) => {
                         return (
@@ -1089,6 +1181,19 @@ fn create_source(session: &mut Session, r: &pb::CreateSourceRequest) -> (Resp, O
                         )
                     }
                 },
+                (None, Some(id)) => match convert::representation_of_category(id) {
+                    Some(r) => Some(r),
+                    None => {
+                        return (
+                            Resp::Error(error(
+                                "library.unknown_category",
+                                &format!("no value category `{id}`"),
+                            )),
+                            None,
+                        )
+                    }
+                },
+                (None, None) => None,
             };
             let steps = [
                 PlannedStep::Concept {
@@ -1828,6 +1933,11 @@ fn payload_name(p: &Req) -> &'static str {
         Req::GetFormulaSlot(_) => "get_formula_slot",
         Req::ComposeFormula(_) => "compose_formula",
         Req::ListConceptTemplates(_) => "list_concept_templates",
+        Req::ListValueCategories(_) => "list_value_categories",
+        Req::NavigateFormula(_) => "navigate_formula",
+        Req::CompleteFormulaCaret(_) => "complete_formula_caret",
+        Req::GetFormulaSignature(_) => "get_formula_signature",
+        Req::GetFormulaRender(_) => "get_formula_render",
         Req::InstantiateConceptTemplate(_) => "instantiate_concept_template",
         Req::ListLibraryItems(_) => "list_library_items",
         Req::InstantiateLibraryItem(_) => "instantiate_library_item",

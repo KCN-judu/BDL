@@ -90,6 +90,8 @@ pub enum SyntaxKind {
     DotDot,
     /// `??` — a default for an absent value (docs/spec/textual-syntax.md §17).
     QuestionQuestion,
+    /// `^` — a unit power (docs/spec/textual-syntax.md §5.2).
+    Caret,
 
     // ---- nodes -----------------------------------------------------------
     Module,
@@ -129,6 +131,8 @@ pub enum SyntaxKind {
     Name,
     NameRef,
     UnitSuffix,
+    /// One factor of a unit expression: `m`, `s^2`, `s^-1`.
+    UnitFactor,
     NamedType,
     FunctionType,
     ParenType,
@@ -352,6 +356,7 @@ impl SyntaxKind {
             Question => "?",
             DotDot => "..",
             QuestionQuestion => "??",
+            Caret => "^",
             _ => return None,
         })
     }
@@ -466,6 +471,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     Question,
     DotDot,
     QuestionQuestion,
+    Caret,
     Module,
     Formula,
     ConceptDecl,
@@ -502,6 +508,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     Name,
     NameRef,
     UnitSuffix,
+    UnitFactor,
     NamedType,
     FunctionType,
     ParenType,

@@ -77,6 +77,11 @@ enum ClientMessage_Payload {
   listFlashDevices,
   flashFirmware,
   listTemplates,
+  listValueCategories,
+  navigateFormula,
+  completeFormulaCaret,
+  getFormulaSignature,
+  getFormulaRender,
   notSet
 }
 
@@ -138,6 +143,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     ListFlashDevicesRequest? listFlashDevices,
     FlashFirmwareRequest? flashFirmware,
     ListTemplatesRequest? listTemplates,
+    ListValueCategoriesRequest? listValueCategories,
+    NavigateFormulaRequest? navigateFormula,
+    CompleteFormulaCaretRequest? completeFormulaCaret,
+    GetFormulaSignatureRequest? getFormulaSignature,
+    GetFormulaRenderRequest? getFormulaRender,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -198,6 +208,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (listFlashDevices != null) result.listFlashDevices = listFlashDevices;
     if (flashFirmware != null) result.flashFirmware = flashFirmware;
     if (listTemplates != null) result.listTemplates = listTemplates;
+    if (listValueCategories != null) result.listValueCategories = listValueCategories;
+    if (navigateFormula != null) result.navigateFormula = navigateFormula;
+    if (completeFormulaCaret != null) result.completeFormulaCaret = completeFormulaCaret;
+    if (getFormulaSignature != null) result.getFormulaSignature = getFormulaSignature;
+    if (getFormulaRender != null) result.getFormulaRender = getFormulaRender;
     return result;
   }
 
@@ -266,6 +281,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     73: ClientMessage_Payload.listFlashDevices,
     74: ClientMessage_Payload.flashFirmware,
     75: ClientMessage_Payload.listTemplates,
+    76: ClientMessage_Payload.listValueCategories,
+    77: ClientMessage_Payload.navigateFormula,
+    78: ClientMessage_Payload.completeFormulaCaret,
+    79: ClientMessage_Payload.getFormulaSignature,
+    80: ClientMessage_Payload.getFormulaRender,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -326,7 +346,12 @@ class ClientMessage extends $pb.GeneratedMessage {
       72,
       73,
       74,
-      75
+      75,
+      76,
+      77,
+      78,
+      79,
+      80
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -440,6 +465,16 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: FlashFirmwareRequest.$_createMessage)
     ..aOM<ListTemplatesRequest>(75, _omitFieldNames ? '' : 'listTemplates',
         subBuilder: ListTemplatesRequest.$_createMessage)
+    ..aOM<ListValueCategoriesRequest>(76, _omitFieldNames ? '' : 'listValueCategories',
+        subBuilder: ListValueCategoriesRequest.$_createMessage)
+    ..aOM<NavigateFormulaRequest>(77, _omitFieldNames ? '' : 'navigateFormula',
+        subBuilder: NavigateFormulaRequest.$_createMessage)
+    ..aOM<CompleteFormulaCaretRequest>(78, _omitFieldNames ? '' : 'completeFormulaCaret',
+        subBuilder: CompleteFormulaCaretRequest.$_createMessage)
+    ..aOM<GetFormulaSignatureRequest>(79, _omitFieldNames ? '' : 'getFormulaSignature',
+        subBuilder: GetFormulaSignatureRequest.$_createMessage)
+    ..aOM<GetFormulaRenderRequest>(80, _omitFieldNames ? '' : 'getFormulaRender',
+        subBuilder: GetFormulaRenderRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -517,6 +552,11 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(73)
   @$pb.TagNumber(74)
   @$pb.TagNumber(75)
+  @$pb.TagNumber(76)
+  @$pb.TagNumber(77)
+  @$pb.TagNumber(78)
+  @$pb.TagNumber(79)
+  @$pb.TagNumber(80)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -573,6 +613,11 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(73)
   @$pb.TagNumber(74)
   @$pb.TagNumber(75)
+  @$pb.TagNumber(76)
+  @$pb.TagNumber(77)
+  @$pb.TagNumber(78)
+  @$pb.TagNumber(79)
+  @$pb.TagNumber(80)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1204,6 +1249,62 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearListTemplates() => $_clearField(75);
   @$pb.TagNumber(75)
   ListTemplatesRequest ensureListTemplates() => $_ensure(55);
+
+  /// 0.27: the authoring vocabulary and the Formula view's structure
+  @$pb.TagNumber(76)
+  ListValueCategoriesRequest get listValueCategories => $_getN(56);
+  @$pb.TagNumber(76)
+  set listValueCategories(ListValueCategoriesRequest value) => $_setField(76, value);
+  @$pb.TagNumber(76)
+  $core.bool hasListValueCategories() => $_has(56);
+  @$pb.TagNumber(76)
+  void clearListValueCategories() => $_clearField(76);
+  @$pb.TagNumber(76)
+  ListValueCategoriesRequest ensureListValueCategories() => $_ensure(56);
+
+  @$pb.TagNumber(77)
+  NavigateFormulaRequest get navigateFormula => $_getN(57);
+  @$pb.TagNumber(77)
+  set navigateFormula(NavigateFormulaRequest value) => $_setField(77, value);
+  @$pb.TagNumber(77)
+  $core.bool hasNavigateFormula() => $_has(57);
+  @$pb.TagNumber(77)
+  void clearNavigateFormula() => $_clearField(77);
+  @$pb.TagNumber(77)
+  NavigateFormulaRequest ensureNavigateFormula() => $_ensure(57);
+
+  @$pb.TagNumber(78)
+  CompleteFormulaCaretRequest get completeFormulaCaret => $_getN(58);
+  @$pb.TagNumber(78)
+  set completeFormulaCaret(CompleteFormulaCaretRequest value) => $_setField(78, value);
+  @$pb.TagNumber(78)
+  $core.bool hasCompleteFormulaCaret() => $_has(58);
+  @$pb.TagNumber(78)
+  void clearCompleteFormulaCaret() => $_clearField(78);
+  @$pb.TagNumber(78)
+  CompleteFormulaCaretRequest ensureCompleteFormulaCaret() => $_ensure(58);
+
+  @$pb.TagNumber(79)
+  GetFormulaSignatureRequest get getFormulaSignature => $_getN(59);
+  @$pb.TagNumber(79)
+  set getFormulaSignature(GetFormulaSignatureRequest value) => $_setField(79, value);
+  @$pb.TagNumber(79)
+  $core.bool hasGetFormulaSignature() => $_has(59);
+  @$pb.TagNumber(79)
+  void clearGetFormulaSignature() => $_clearField(79);
+  @$pb.TagNumber(79)
+  GetFormulaSignatureRequest ensureGetFormulaSignature() => $_ensure(59);
+
+  @$pb.TagNumber(80)
+  GetFormulaRenderRequest get getFormulaRender => $_getN(60);
+  @$pb.TagNumber(80)
+  set getFormulaRender(GetFormulaRenderRequest value) => $_setField(80, value);
+  @$pb.TagNumber(80)
+  $core.bool hasGetFormulaRender() => $_has(60);
+  @$pb.TagNumber(80)
+  void clearGetFormulaRender() => $_clearField(80);
+  @$pb.TagNumber(80)
+  GetFormulaRenderRequest ensureGetFormulaRender() => $_ensure(60);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1324,6 +1425,10 @@ enum Response_Payload {
   buildStatus,
   flashDevices,
   templates,
+  valueCategories,
+  navigateFormula,
+  formulaSignature,
+  formulaRender,
   notSet
 }
 
@@ -1362,6 +1467,10 @@ class Response extends $pb.GeneratedMessage {
     BuildStatusResponse? buildStatus,
     FlashDevicesResponse? flashDevices,
     TemplatesResponse? templates,
+    ValueCategoriesResponse? valueCategories,
+    NavigateFormulaResponse? navigateFormula,
+    FormulaSignatureResponse? formulaSignature,
+    FormulaRenderResponse? formulaRender,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1397,6 +1506,10 @@ class Response extends $pb.GeneratedMessage {
     if (buildStatus != null) result.buildStatus = buildStatus;
     if (flashDevices != null) result.flashDevices = flashDevices;
     if (templates != null) result.templates = templates;
+    if (valueCategories != null) result.valueCategories = valueCategories;
+    if (navigateFormula != null) result.navigateFormula = navigateFormula;
+    if (formulaSignature != null) result.formulaSignature = formulaSignature;
+    if (formulaRender != null) result.formulaRender = formulaRender;
     return result;
   }
 
@@ -1442,6 +1555,10 @@ class Response extends $pb.GeneratedMessage {
     55: Response_Payload.buildStatus,
     56: Response_Payload.flashDevices,
     57: Response_Payload.templates,
+    58: Response_Payload.valueCategories,
+    59: Response_Payload.navigateFormula,
+    60: Response_Payload.formulaSignature,
+    61: Response_Payload.formulaRender,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1479,7 +1596,11 @@ class Response extends $pb.GeneratedMessage {
       54,
       55,
       56,
-      57
+      57,
+      58,
+      59,
+      60,
+      61
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1545,6 +1666,14 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: FlashDevicesResponse.$_createMessage)
     ..aOM<TemplatesResponse>(57, _omitFieldNames ? '' : 'templates',
         subBuilder: TemplatesResponse.$_createMessage)
+    ..aOM<ValueCategoriesResponse>(58, _omitFieldNames ? '' : 'valueCategories',
+        subBuilder: ValueCategoriesResponse.$_createMessage)
+    ..aOM<NavigateFormulaResponse>(59, _omitFieldNames ? '' : 'navigateFormula',
+        subBuilder: NavigateFormulaResponse.$_createMessage)
+    ..aOM<FormulaSignatureResponse>(60, _omitFieldNames ? '' : 'formulaSignature',
+        subBuilder: FormulaSignatureResponse.$_createMessage)
+    ..aOM<FormulaRenderResponse>(61, _omitFieldNames ? '' : 'formulaRender',
+        subBuilder: FormulaRenderResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1599,6 +1728,10 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(55)
   @$pb.TagNumber(56)
   @$pb.TagNumber(57)
+  @$pb.TagNumber(58)
+  @$pb.TagNumber(59)
+  @$pb.TagNumber(60)
+  @$pb.TagNumber(61)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1632,6 +1765,10 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(55)
   @$pb.TagNumber(56)
   @$pb.TagNumber(57)
+  @$pb.TagNumber(58)
+  @$pb.TagNumber(59)
+  @$pb.TagNumber(60)
+  @$pb.TagNumber(61)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1994,6 +2131,50 @@ class Response extends $pb.GeneratedMessage {
   void clearTemplates() => $_clearField(57);
   @$pb.TagNumber(57)
   TemplatesResponse ensureTemplates() => $_ensure(32);
+
+  @$pb.TagNumber(58)
+  ValueCategoriesResponse get valueCategories => $_getN(33);
+  @$pb.TagNumber(58)
+  set valueCategories(ValueCategoriesResponse value) => $_setField(58, value);
+  @$pb.TagNumber(58)
+  $core.bool hasValueCategories() => $_has(33);
+  @$pb.TagNumber(58)
+  void clearValueCategories() => $_clearField(58);
+  @$pb.TagNumber(58)
+  ValueCategoriesResponse ensureValueCategories() => $_ensure(33);
+
+  @$pb.TagNumber(59)
+  NavigateFormulaResponse get navigateFormula => $_getN(34);
+  @$pb.TagNumber(59)
+  set navigateFormula(NavigateFormulaResponse value) => $_setField(59, value);
+  @$pb.TagNumber(59)
+  $core.bool hasNavigateFormula() => $_has(34);
+  @$pb.TagNumber(59)
+  void clearNavigateFormula() => $_clearField(59);
+  @$pb.TagNumber(59)
+  NavigateFormulaResponse ensureNavigateFormula() => $_ensure(34);
+
+  @$pb.TagNumber(60)
+  FormulaSignatureResponse get formulaSignature => $_getN(35);
+  @$pb.TagNumber(60)
+  set formulaSignature(FormulaSignatureResponse value) => $_setField(60, value);
+  @$pb.TagNumber(60)
+  $core.bool hasFormulaSignature() => $_has(35);
+  @$pb.TagNumber(60)
+  void clearFormulaSignature() => $_clearField(60);
+  @$pb.TagNumber(60)
+  FormulaSignatureResponse ensureFormulaSignature() => $_ensure(35);
+
+  @$pb.TagNumber(61)
+  FormulaRenderResponse get formulaRender => $_getN(36);
+  @$pb.TagNumber(61)
+  set formulaRender(FormulaRenderResponse value) => $_setField(61, value);
+  @$pb.TagNumber(61)
+  $core.bool hasFormulaRender() => $_has(36);
+  @$pb.TagNumber(61)
+  void clearFormulaRender() => $_clearField(61);
+  @$pb.TagNumber(61)
+  FormulaRenderResponse ensureFormulaRender() => $_ensure(36);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, buildProgress, flashProgress, notSet }
@@ -10976,6 +11157,12 @@ class FormulaNode extends $pb.GeneratedMessage {
     $core.bool? local,
     $core.String? param,
     TypeView? paramType,
+    $core.String? unitSource,
+    $core.String? unitDisplay,
+    $core.String? role,
+    $core.Iterable<$core.String>? locals,
+    $core.Iterable<$core.String>? binds,
+    $core.int? appendAt,
   }) {
     final result = FormulaNode._();
     if (id != null) result.id = id;
@@ -10996,6 +11183,12 @@ class FormulaNode extends $pb.GeneratedMessage {
     if (local != null) result.local = local;
     if (param != null) result.param = param;
     if (paramType != null) result.paramType = paramType;
+    if (unitSource != null) result.unitSource = unitSource;
+    if (unitDisplay != null) result.unitDisplay = unitDisplay;
+    if (role != null) result.role = role;
+    if (locals != null) result.locals.addAll(locals);
+    if (binds != null) result.binds.addAll(binds);
+    if (appendAt != null) result.appendAt = appendAt;
     return result;
   }
 
@@ -11031,6 +11224,12 @@ class FormulaNode extends $pb.GeneratedMessage {
     ..aOB(16, _omitFieldNames ? '' : 'local')
     ..aOS(17, _omitFieldNames ? '' : 'param')
     ..aOM<TypeView>(18, _omitFieldNames ? '' : 'paramType', subBuilder: TypeView.$_createMessage)
+    ..aOS(19, _omitFieldNames ? '' : 'unitSource')
+    ..aOS(20, _omitFieldNames ? '' : 'unitDisplay')
+    ..aOS(21, _omitFieldNames ? '' : 'role')
+    ..pPS(22, _omitFieldNames ? '' : 'locals')
+    ..pPS(23, _omitFieldNames ? '' : 'binds')
+    ..aI(24, _omitFieldNames ? '' : 'appendAt', fieldType: $pb.PbFieldType.OU3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -11108,7 +11307,10 @@ class FormulaNode extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   void clearName() => $_clearField(5);
 
-  /// A quantity literal's parts: `90 deg` → "90", "deg", "angle.deg".
+  /// A quantity literal's parts: `90 deg` → "90", "deg", "angle.deg";
+  /// `9.81 m per s^2` → "9.81", "m per s^2" (as written), "" (no single
+  /// atom), with `unit_source` the canonical spelling and `unit_display`
+  /// the mathematical rendering `m/s²` (0.27).
   @$pb.TagNumber(6)
   $core.String get coordinate => $_getSZ(5);
   @$pb.TagNumber(6)
@@ -11231,6 +11433,1102 @@ class FormulaNode extends $pb.GeneratedMessage {
   void clearParamType() => $_clearField(18);
   @$pb.TagNumber(18)
   TypeView ensureParamType() => $_ensure(17);
+
+  @$pb.TagNumber(19)
+  $core.String get unitSource => $_getSZ(18);
+  @$pb.TagNumber(19)
+  set unitSource($core.String value) => $_setString(18, value);
+  @$pb.TagNumber(19)
+  $core.bool hasUnitSource() => $_has(18);
+  @$pb.TagNumber(19)
+  void clearUnitSource() => $_clearField(19);
+
+  @$pb.TagNumber(20)
+  $core.String get unitDisplay => $_getSZ(19);
+  @$pb.TagNumber(20)
+  set unitDisplay($core.String value) => $_setString(19, value);
+  @$pb.TagNumber(20)
+  $core.bool hasUnitDisplay() => $_has(19);
+  @$pb.TagNumber(20)
+  void clearUnitDisplay() => $_clearField(20);
+
+  /// 0.27 — structure for a client that renders and navigates without
+  /// reparsing.  Kinds "match" (children: the subject, then one "arm"
+  /// each: `name` the pattern, `binds` its names, child the body), "block"
+  /// (children: one "let" each — `name` the pattern, `binds` its names,
+  /// child the value — then the result), "rule" (`binds` the parameters;
+  /// child the body), "list", "tuple", "delay" (initial, value), "sync"
+  /// (domain, initial, value) replace the former "opaque" forms; "opaque"
+  /// remains for `()`.
+  /// What the node is to its parent: "condition", "then", "else",
+  /// "numerator", "denominator", "left", "right", "operand", "argument 1",
+  /// "collection", "body", "subject", "arm 1", "value", "result", "item 1",
+  /// "part 1", "initial", "domain", "from", "to"; empty at the root.
+  @$pb.TagNumber(21)
+  $core.String get role => $_getSZ(20);
+  @$pb.TagNumber(21)
+  set role($core.String value) => $_setString(20, value);
+  @$pb.TagNumber(21)
+  $core.bool hasRole() => $_has(20);
+  @$pb.TagNumber(21)
+  void clearRole() => $_clearField(21);
+
+  /// The formula's own names in scope at this node, innermost last: what
+  /// a completion here may name besides the design's.
+  @$pb.TagNumber(22)
+  $pb.PbList<$core.String> get locals => $_getList(21);
+
+  /// The names a pattern, a `let` or a rule binds.
+  @$pb.TagNumber(23)
+  $pb.PbList<$core.String> get binds => $_getList(22);
+
+  /// Where a further child would be inserted (`f(a, b|)`, `[a, b|]`): the
+  /// byte offset before the closing delimiter; absent on fixed shapes.
+  @$pb.TagNumber(24)
+  $core.int get appendAt => $_getIZ(23);
+  @$pb.TagNumber(24)
+  set appendAt($core.int value) => $_setUnsignedInt32(23, value);
+  @$pb.TagNumber(24)
+  $core.bool hasAppendAt() => $_has(23);
+  @$pb.TagNumber(24)
+  void clearAppendAt() => $_clearField(24);
+}
+
+/// Move a structural caret over the draft `source`'s projection: pure —
+/// the same tree and motion give the same answer; the daemon keeps no
+/// caret.  Sets the draft overlay to `source` first.
+class NavigateFormulaRequest extends $pb.GeneratedMessage {
+  factory NavigateFormulaRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+    $core.String? nodeId,
+    CaretSide? side,
+    CaretMotion? motion,
+    $fixnum.Int64? component,
+  }) {
+    final result = NavigateFormulaRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    if (nodeId != null) result.nodeId = nodeId;
+    if (side != null) result.side = side;
+    if (motion != null) result.motion = motion;
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  NavigateFormulaRequest._();
+
+  factory NavigateFormulaRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NavigateFormulaRequest()..mergeFromBuffer(data, registry);
+  factory NavigateFormulaRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NavigateFormulaRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NavigateFormulaRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: NavigateFormulaRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..aOS(4, _omitFieldNames ? '' : 'nodeId')
+    ..aE<CaretSide>(5, _omitFieldNames ? '' : 'side', enumValues: CaretSide.values)
+    ..aE<CaretMotion>(6, _omitFieldNames ? '' : 'motion', enumValues: CaretMotion.values)
+    ..a<$fixnum.Int64>(7, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NavigateFormulaRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NavigateFormulaRequest copyWith(void Function(NavigateFormulaRequest) updates) =>
+      super.copyWith((message) => updates(message as NavigateFormulaRequest))
+          as NavigateFormulaRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use NavigateFormulaRequest() / NavigateFormulaRequest.new instead')
+  static NavigateFormulaRequest create() => NavigateFormulaRequest._();
+  static $pb.GeneratedMessage $_createMessage() => NavigateFormulaRequest._();
+  @$core.override
+  NavigateFormulaRequest createEmptyInstance() => NavigateFormulaRequest._();
+  @$core.pragma('dart2js:noInline')
+  static NavigateFormulaRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<NavigateFormulaRequest>(
+          NavigateFormulaRequest.$_createMessage);
+  static NavigateFormulaRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get nodeId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set nodeId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasNodeId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearNodeId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  CaretSide get side => $_getN(4);
+  @$pb.TagNumber(5)
+  set side(CaretSide value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSide() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSide() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  CaretMotion get motion => $_getN(5);
+  @$pb.TagNumber(6)
+  set motion(CaretMotion value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasMotion() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMotion() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $fixnum.Int64 get component => $_getI64(6);
+  @$pb.TagNumber(7)
+  set component($fixnum.Int64 value) => $_setInt64(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasComponent() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearComponent() => $_clearField(7);
+}
+
+class NavigateFormulaResponse extends $pb.GeneratedMessage {
+  factory NavigateFormulaResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? nodeId,
+    CaretSide? side,
+    $core.int? offset,
+  }) {
+    final result = NavigateFormulaResponse._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (nodeId != null) result.nodeId = nodeId;
+    if (side != null) result.side = side;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  NavigateFormulaResponse._();
+
+  factory NavigateFormulaResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NavigateFormulaResponse()..mergeFromBuffer(data, registry);
+  factory NavigateFormulaResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      NavigateFormulaResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NavigateFormulaResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: NavigateFormulaResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'nodeId')
+    ..aE<CaretSide>(4, _omitFieldNames ? '' : 'side', enumValues: CaretSide.values)
+    ..aI(5, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NavigateFormulaResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NavigateFormulaResponse copyWith(void Function(NavigateFormulaResponse) updates) =>
+      super.copyWith((message) => updates(message as NavigateFormulaResponse))
+          as NavigateFormulaResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use NavigateFormulaResponse() / NavigateFormulaResponse.new instead')
+  static NavigateFormulaResponse create() => NavigateFormulaResponse._();
+  static $pb.GeneratedMessage $_createMessage() => NavigateFormulaResponse._();
+  @$core.override
+  NavigateFormulaResponse createEmptyInstance() => NavigateFormulaResponse._();
+  @$core.pragma('dart2js:noInline')
+  static NavigateFormulaResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<NavigateFormulaResponse>(
+          NavigateFormulaResponse.$_createMessage);
+  static NavigateFormulaResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get nodeId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set nodeId($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasNodeId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearNodeId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  CaretSide get side => $_getN(3);
+  @$pb.TagNumber(4)
+  set side(CaretSide value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSide() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSide() => $_clearField(4);
+
+  /// The byte offset the caret stands at, in `source`.
+  @$pb.TagNumber(5)
+  $core.int get offset => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set offset($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOffset() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOffset() => $_clearField(5);
+}
+
+/// Completion at a structural caret: the position's expected type and its
+/// locals come from the projection, `prefix` is what was typed there.
+/// Items carry `structured_insert` for the Formula view (0.27).
+class CompleteFormulaCaretRequest extends $pb.GeneratedMessage {
+  factory CompleteFormulaCaretRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+    $core.String? nodeId,
+    CaretSide? side,
+    $core.String? prefix,
+    $fixnum.Int64? component,
+  }) {
+    final result = CompleteFormulaCaretRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    if (nodeId != null) result.nodeId = nodeId;
+    if (side != null) result.side = side;
+    if (prefix != null) result.prefix = prefix;
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  CompleteFormulaCaretRequest._();
+
+  factory CompleteFormulaCaretRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CompleteFormulaCaretRequest()..mergeFromBuffer(data, registry);
+  factory CompleteFormulaCaretRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CompleteFormulaCaretRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CompleteFormulaCaretRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CompleteFormulaCaretRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..aOS(4, _omitFieldNames ? '' : 'nodeId')
+    ..aE<CaretSide>(5, _omitFieldNames ? '' : 'side', enumValues: CaretSide.values)
+    ..aOS(6, _omitFieldNames ? '' : 'prefix')
+    ..a<$fixnum.Int64>(7, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CompleteFormulaCaretRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CompleteFormulaCaretRequest copyWith(void Function(CompleteFormulaCaretRequest) updates) =>
+      super.copyWith((message) => updates(message as CompleteFormulaCaretRequest))
+          as CompleteFormulaCaretRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CompleteFormulaCaretRequest() / CompleteFormulaCaretRequest.new instead')
+  static CompleteFormulaCaretRequest create() => CompleteFormulaCaretRequest._();
+  static $pb.GeneratedMessage $_createMessage() => CompleteFormulaCaretRequest._();
+  @$core.override
+  CompleteFormulaCaretRequest createEmptyInstance() => CompleteFormulaCaretRequest._();
+  @$core.pragma('dart2js:noInline')
+  static CompleteFormulaCaretRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CompleteFormulaCaretRequest>(
+          CompleteFormulaCaretRequest.$_createMessage);
+  static CompleteFormulaCaretRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get nodeId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set nodeId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasNodeId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearNodeId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  CaretSide get side => $_getN(4);
+  @$pb.TagNumber(5)
+  set side(CaretSide value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSide() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSide() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get prefix => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set prefix($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasPrefix() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearPrefix() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $fixnum.Int64 get component => $_getI64(6);
+  @$pb.TagNumber(7)
+  set component($fixnum.Int64 value) => $_setInt64(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasComponent() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearComponent() => $_clearField(7);
+}
+
+/// Signature help for the innermost call enclosing `node_id` (or the node
+/// itself when it is a call): the callee, its parameters with what each
+/// takes, the result, and the argument the caret is in.  `found` is false
+/// when no call encloses the node.
+class GetFormulaSignatureRequest extends $pb.GeneratedMessage {
+  factory GetFormulaSignatureRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.String? source,
+    $core.String? nodeId,
+    $fixnum.Int64? component,
+  }) {
+    final result = GetFormulaSignatureRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (source != null) result.source = source;
+    if (nodeId != null) result.nodeId = nodeId;
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  GetFormulaSignatureRequest._();
+
+  factory GetFormulaSignatureRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetFormulaSignatureRequest()..mergeFromBuffer(data, registry);
+  factory GetFormulaSignatureRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetFormulaSignatureRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetFormulaSignatureRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GetFormulaSignatureRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'source')
+    ..aOS(4, _omitFieldNames ? '' : 'nodeId')
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetFormulaSignatureRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetFormulaSignatureRequest copyWith(void Function(GetFormulaSignatureRequest) updates) =>
+      super.copyWith((message) => updates(message as GetFormulaSignatureRequest))
+          as GetFormulaSignatureRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GetFormulaSignatureRequest() / GetFormulaSignatureRequest.new instead')
+  static GetFormulaSignatureRequest create() => GetFormulaSignatureRequest._();
+  static $pb.GeneratedMessage $_createMessage() => GetFormulaSignatureRequest._();
+  @$core.override
+  GetFormulaSignatureRequest createEmptyInstance() => GetFormulaSignatureRequest._();
+  @$core.pragma('dart2js:noInline')
+  static GetFormulaSignatureRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GetFormulaSignatureRequest>(
+          GetFormulaSignatureRequest.$_createMessage);
+  static GetFormulaSignatureRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get source => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set source($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSource() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSource() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get nodeId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set nodeId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasNodeId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearNodeId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get component => $_getI64(4);
+  @$pb.TagNumber(5)
+  set component($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComponent() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComponent() => $_clearField(5);
+}
+
+class FormulaSignatureResponse extends $pb.GeneratedMessage {
+  factory FormulaSignatureResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.bool? found,
+    $core.String? nodeId,
+    $core.String? name,
+    $core.String? shape,
+    $core.Iterable<ParameterHelp>? parameters,
+    $core.String? result,
+    $core.int? active,
+    $core.String? summary,
+  }) {
+    final result$ = FormulaSignatureResponse._();
+    if (revision != null) result$.revision = revision;
+    if (mappingId != null) result$.mappingId = mappingId;
+    if (found != null) result$.found = found;
+    if (nodeId != null) result$.nodeId = nodeId;
+    if (name != null) result$.name = name;
+    if (shape != null) result$.shape = shape;
+    if (parameters != null) result$.parameters.addAll(parameters);
+    if (result != null) result$.result = result;
+    if (active != null) result$.active = active;
+    if (summary != null) result$.summary = summary;
+    return result$;
+  }
+
+  FormulaSignatureResponse._();
+
+  factory FormulaSignatureResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaSignatureResponse()..mergeFromBuffer(data, registry);
+  factory FormulaSignatureResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaSignatureResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'FormulaSignatureResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormulaSignatureResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(3, _omitFieldNames ? '' : 'found')
+    ..aOS(4, _omitFieldNames ? '' : 'nodeId')
+    ..aOS(5, _omitFieldNames ? '' : 'name')
+    ..aOS(6, _omitFieldNames ? '' : 'shape')
+    ..pPM<ParameterHelp>(7, _omitFieldNames ? '' : 'parameters',
+        subBuilder: ParameterHelp.$_createMessage)
+    ..aOS(8, _omitFieldNames ? '' : 'result')
+    ..aI(9, _omitFieldNames ? '' : 'active', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(10, _omitFieldNames ? '' : 'summary')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaSignatureResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaSignatureResponse copyWith(void Function(FormulaSignatureResponse) updates) =>
+      super.copyWith((message) => updates(message as FormulaSignatureResponse))
+          as FormulaSignatureResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormulaSignatureResponse() / FormulaSignatureResponse.new instead')
+  static FormulaSignatureResponse create() => FormulaSignatureResponse._();
+  static $pb.GeneratedMessage $_createMessage() => FormulaSignatureResponse._();
+  @$core.override
+  FormulaSignatureResponse createEmptyInstance() => FormulaSignatureResponse._();
+  @$core.pragma('dart2js:noInline')
+  static FormulaSignatureResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<FormulaSignatureResponse>(
+          FormulaSignatureResponse.$_createMessage);
+  static FormulaSignatureResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get found => $_getBF(2);
+  @$pb.TagNumber(3)
+  set found($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasFound() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearFound() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get nodeId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set nodeId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasNodeId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearNodeId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get name => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set name($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasName() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearName() => $_clearField(5);
+
+  /// `clamp(x, lo, hi)`.
+  @$pb.TagNumber(6)
+  $core.String get shape => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set shape($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasShape() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearShape() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<ParameterHelp> get parameters => $_getList(6);
+
+  @$pb.TagNumber(8)
+  $core.String get result => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set result($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasResult() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearResult() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.int get active => $_getIZ(8);
+  @$pb.TagNumber(9)
+  set active($core.int value) => $_setUnsignedInt32(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasActive() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearActive() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $core.String get summary => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set summary($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasSummary() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearSummary() => $_clearField(10);
+}
+
+class ParameterHelp extends $pb.GeneratedMessage {
+  factory ParameterHelp({
+    $core.String? name,
+    $core.String? expected,
+  }) {
+    final result = ParameterHelp._();
+    if (name != null) result.name = name;
+    if (expected != null) result.expected = expected;
+    return result;
+  }
+
+  ParameterHelp._();
+
+  factory ParameterHelp.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ParameterHelp()..mergeFromBuffer(data, registry);
+  factory ParameterHelp.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ParameterHelp()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ParameterHelp',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ParameterHelp.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'expected')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ParameterHelp clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ParameterHelp copyWith(void Function(ParameterHelp) updates) =>
+      super.copyWith((message) => updates(message as ParameterHelp)) as ParameterHelp;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ParameterHelp() / ParameterHelp.new instead')
+  static ParameterHelp create() => ParameterHelp._();
+  static $pb.GeneratedMessage $_createMessage() => ParameterHelp._();
+  @$core.override
+  ParameterHelp createEmptyInstance() => ParameterHelp._();
+  @$core.pragma('dart2js:noInline')
+  static ParameterHelp getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ParameterHelp>(ParameterHelp.$_createMessage);
+  static ParameterHelp? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  /// What the parameter takes, in the designer's words, when known.
+  @$pb.TagNumber(2)
+  $core.String get expected => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set expected($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasExpected() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearExpected() => $_clearField(2);
+}
+
+/// The read-only render of a mapping's effective definition, for a canvas
+/// node: the same projection the editor uses, flattened to fragments in
+/// source order.  No draft is set; a mapping defined by reference or with
+/// no formula answers an empty render.
+class GetFormulaRenderRequest extends $pb.GeneratedMessage {
+  factory GetFormulaRenderRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $fixnum.Int64? component,
+  }) {
+    final result = GetFormulaRenderRequest._();
+    if (revision != null) result.revision = revision;
+    if (mappingId != null) result.mappingId = mappingId;
+    if (component != null) result.component = component;
+    return result;
+  }
+
+  GetFormulaRenderRequest._();
+
+  factory GetFormulaRenderRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetFormulaRenderRequest()..mergeFromBuffer(data, registry);
+  factory GetFormulaRenderRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetFormulaRenderRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetFormulaRenderRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GetFormulaRenderRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'component', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetFormulaRenderRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetFormulaRenderRequest copyWith(void Function(GetFormulaRenderRequest) updates) =>
+      super.copyWith((message) => updates(message as GetFormulaRenderRequest))
+          as GetFormulaRenderRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GetFormulaRenderRequest() / GetFormulaRenderRequest.new instead')
+  static GetFormulaRenderRequest create() => GetFormulaRenderRequest._();
+  static $pb.GeneratedMessage $_createMessage() => GetFormulaRenderRequest._();
+  @$core.override
+  GetFormulaRenderRequest createEmptyInstance() => GetFormulaRenderRequest._();
+  @$core.pragma('dart2js:noInline')
+  static GetFormulaRenderRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GetFormulaRenderRequest>(
+          GetFormulaRenderRequest.$_createMessage);
+  static GetFormulaRenderRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get component => $_getI64(2);
+  @$pb.TagNumber(3)
+  set component($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasComponent() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearComponent() => $_clearField(3);
+}
+
+class FormulaRenderResponse extends $pb.GeneratedMessage {
+  factory FormulaRenderResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? mappingId,
+    $core.Iterable<FormulaFragment>? fragments,
+    $core.String? compact,
+    $core.String? result,
+    $core.int? errorCount,
+    $core.int? warningCount,
+    $core.Iterable<$core.String>? references,
+  }) {
+    final result$ = FormulaRenderResponse._();
+    if (revision != null) result$.revision = revision;
+    if (mappingId != null) result$.mappingId = mappingId;
+    if (fragments != null) result$.fragments.addAll(fragments);
+    if (compact != null) result$.compact = compact;
+    if (result != null) result$.result = result;
+    if (errorCount != null) result$.errorCount = errorCount;
+    if (warningCount != null) result$.warningCount = warningCount;
+    if (references != null) result$.references.addAll(references);
+    return result$;
+  }
+
+  FormulaRenderResponse._();
+
+  factory FormulaRenderResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaRenderResponse()..mergeFromBuffer(data, registry);
+  factory FormulaRenderResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaRenderResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'FormulaRenderResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormulaRenderResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<FormulaFragment>(3, _omitFieldNames ? '' : 'fragments',
+        subBuilder: FormulaFragment.$_createMessage)
+    ..aOS(4, _omitFieldNames ? '' : 'compact')
+    ..aOS(5, _omitFieldNames ? '' : 'result')
+    ..aI(6, _omitFieldNames ? '' : 'errorCount', fieldType: $pb.PbFieldType.OU3)
+    ..aI(7, _omitFieldNames ? '' : 'warningCount', fieldType: $pb.PbFieldType.OU3)
+    ..pPS(8, _omitFieldNames ? '' : 'references')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaRenderResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaRenderResponse copyWith(void Function(FormulaRenderResponse) updates) =>
+      super.copyWith((message) => updates(message as FormulaRenderResponse))
+          as FormulaRenderResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormulaRenderResponse() / FormulaRenderResponse.new instead')
+  static FormulaRenderResponse create() => FormulaRenderResponse._();
+  static $pb.GeneratedMessage $_createMessage() => FormulaRenderResponse._();
+  @$core.override
+  FormulaRenderResponse createEmptyInstance() => FormulaRenderResponse._();
+  @$core.pragma('dart2js:noInline')
+  static FormulaRenderResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<FormulaRenderResponse>(
+          FormulaRenderResponse.$_createMessage);
+  static FormulaRenderResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get mappingId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set mappingId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMappingId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMappingId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<FormulaFragment> get fragments => $_getList(2);
+
+  /// The source on one line.
+  @$pb.TagNumber(4)
+  $core.String get compact => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set compact($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasCompact() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearCompact() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get result => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set result($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasResult() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearResult() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.int get errorCount => $_getIZ(5);
+  @$pb.TagNumber(6)
+  set errorCount($core.int value) => $_setUnsignedInt32(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasErrorCount() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearErrorCount() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.int get warningCount => $_getIZ(6);
+  @$pb.TagNumber(7)
+  set warningCount($core.int value) => $_setUnsignedInt32(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasWarningCount() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearWarningCount() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $pb.PbList<$core.String> get references => $_getList(7);
+}
+
+class FormulaFragment extends $pb.GeneratedMessage {
+  factory FormulaFragment({
+    $core.String? text,
+    $core.String? kind,
+    $core.String? nodeId,
+    SourceSpan? range,
+  }) {
+    final result = FormulaFragment._();
+    if (text != null) result.text = text;
+    if (kind != null) result.kind = kind;
+    if (nodeId != null) result.nodeId = nodeId;
+    if (range != null) result.range = range;
+    return result;
+  }
+
+  FormulaFragment._();
+
+  factory FormulaFragment.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaFragment()..mergeFromBuffer(data, registry);
+  factory FormulaFragment.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormulaFragment()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FormulaFragment',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormulaFragment.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'text')
+    ..aOS(2, _omitFieldNames ? '' : 'kind')
+    ..aOS(3, _omitFieldNames ? '' : 'nodeId')
+    ..aOM<SourceSpan>(4, _omitFieldNames ? '' : 'range', subBuilder: SourceSpan.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaFragment clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormulaFragment copyWith(void Function(FormulaFragment) updates) =>
+      super.copyWith((message) => updates(message as FormulaFragment)) as FormulaFragment;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormulaFragment() / FormulaFragment.new instead')
+  static FormulaFragment create() => FormulaFragment._();
+  static $pb.GeneratedMessage $_createMessage() => FormulaFragment._();
+  @$core.override
+  FormulaFragment createEmptyInstance() => FormulaFragment._();
+  @$core.pragma('dart2js:noInline')
+  static FormulaFragment getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FormulaFragment>(FormulaFragment.$_createMessage);
+  static FormulaFragment? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get text => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set text($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasText() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearText() => $_clearField(1);
+
+  /// "reference", "local", "number", "unit" (its text is the mathematical
+  /// rendering, `m/s²`), "bool", "slot", "operator", "keyword",
+  /// "punctuation", "pattern".
+  @$pb.TagNumber(2)
+  $core.String get kind => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set kind($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKind() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKind() => $_clearField(2);
+
+  /// The node the fragment belongs to.
+  @$pb.TagNumber(3)
+  $core.String get nodeId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set nodeId($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasNodeId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearNodeId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  SourceSpan get range => $_getN(3);
+  @$pb.TagNumber(4)
+  set range(SourceSpan value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasRange() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearRange() => $_clearField(4);
+  @$pb.TagNumber(4)
+  SourceSpan ensureRange() => $_ensure(3);
 }
 
 class TypeView extends $pb.GeneratedMessage {
@@ -11624,11 +12922,13 @@ class UnitCandidate extends $pb.GeneratedMessage {
     $core.String? id,
     $core.String? symbol,
     $core.String? measures,
+    $core.String? display,
   }) {
     final result = UnitCandidate._();
     if (id != null) result.id = id;
     if (symbol != null) result.symbol = symbol;
     if (measures != null) result.measures = measures;
+    if (display != null) result.display = display;
     return result;
   }
 
@@ -11647,6 +12947,7 @@ class UnitCandidate extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'id')
     ..aOS(2, _omitFieldNames ? '' : 'symbol')
     ..aOS(3, _omitFieldNames ? '' : 'measures')
+    ..aOS(4, _omitFieldNames ? '' : 'display')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -11669,6 +12970,7 @@ class UnitCandidate extends $pb.GeneratedMessage {
       $pb.GeneratedMessage.$_defaultFor<UnitCandidate>(UnitCandidate.$_createMessage);
   static UnitCandidate? _defaultInstance;
 
+  /// The registry id of an atom (`angle.deg`); empty for a composite.
   @$pb.TagNumber(1)
   $core.String get id => $_getSZ(0);
   @$pb.TagNumber(1)
@@ -11678,6 +12980,8 @@ class UnitCandidate extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearId() => $_clearField(1);
 
+  /// The canonical source spelling: `deg`, `rad per s`, `m per s^2` (0.27:
+  /// composites of the expected dimension are listed after the atoms).
   @$pb.TagNumber(2)
   $core.String get symbol => $_getSZ(1);
   @$pb.TagNumber(2)
@@ -11695,6 +12999,16 @@ class UnitCandidate extends $pb.GeneratedMessage {
   $core.bool hasMeasures() => $_has(2);
   @$pb.TagNumber(3)
   void clearMeasures() => $_clearField(3);
+
+  /// The mathematical rendering, for display: `rad/s`, `m/s²` (0.27).
+  @$pb.TagNumber(4)
+  $core.String get display => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set display($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDisplay() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDisplay() => $_clearField(4);
 }
 
 class ReferenceCandidate extends $pb.GeneratedMessage {
@@ -12015,6 +13329,7 @@ enum ComposeAction_Action {
   binder,
   range,
   choose,
+  insert,
   notSet
 }
 
@@ -12030,6 +13345,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     ComposeBinder? binder,
     Unit? range,
     Unit? choose,
+    ComposeInsert? insert,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -12042,6 +13358,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (binder != null) result.binder = binder;
     if (range != null) result.range = range;
     if (choose != null) result.choose = choose;
+    if (insert != null) result.insert = insert;
     return result;
   }
 
@@ -12064,12 +13381,13 @@ class ComposeAction extends $pb.GeneratedMessage {
     8: ComposeAction_Action.binder,
     9: ComposeAction_Action.range,
     10: ComposeAction_Action.choose,
+    11: ComposeAction_Action.insert,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -12083,6 +13401,8 @@ class ComposeAction extends $pb.GeneratedMessage {
         subBuilder: ComposeBinder.$_createMessage)
     ..aOM<Unit>(9, _omitFieldNames ? '' : 'range', subBuilder: Unit.$_createMessage)
     ..aOM<Unit>(10, _omitFieldNames ? '' : 'choose', subBuilder: Unit.$_createMessage)
+    ..aOM<ComposeInsert>(11, _omitFieldNames ? '' : 'insert',
+        subBuilder: ComposeInsert.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -12114,6 +13434,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -12124,6 +13445,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -12242,6 +13564,18 @@ class ComposeAction extends $pb.GeneratedMessage {
   void clearChoose() => $_clearField(10);
   @$pb.TagNumber(10)
   Unit ensureChoose() => $_ensure(9);
+
+  /// Keyboard input at a structural caret (0.27).
+  @$pb.TagNumber(11)
+  ComposeInsert get insert => $_getN(10);
+  @$pb.TagNumber(11)
+  set insert(ComposeInsert value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasInsert() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearInsert() => $_clearField(11);
+  @$pb.TagNumber(11)
+  ComposeInsert ensureInsert() => $_ensure(10);
 }
 
 class ComposeBinder extends $pb.GeneratedMessage {
@@ -12478,6 +13812,8 @@ class ComposeSetUnit extends $pb.GeneratedMessage {
       $pb.GeneratedMessage.$_defaultFor<ComposeSetUnit>(ComposeSetUnit.$_createMessage);
   static ComposeSetUnit? _defaultInstance;
 
+  /// A registry id (`angle.deg`) or a canonical spelling (`rad per s`,
+  /// 0.27).
   @$pb.TagNumber(1)
   $core.String get unitId => $_getSZ(0);
   @$pb.TagNumber(1)
@@ -12495,6 +13831,78 @@ class ComposeSetUnit extends $pb.GeneratedMessage {
   $core.bool hasPreserveValue() => $_has(1);
   @$pb.TagNumber(2)
   void clearPreserveValue() => $_clearField(2);
+}
+
+/// Keyboard input at a structural caret (0.27): interpreted by the
+/// grammar — an operator makes `node op ?`, `(` groups, a word fills a slot
+/// with its canonical form (`clamp` → `clamp(?, ?, ?)`, `if` → `if ? then ?
+/// else ?`), a unit word after a number becomes the literal's unit, `per`,
+/// `*` or `^` after a quantity extend its unit.  Refused with the reason
+/// when the text cannot stand there.
+class ComposeInsert extends $pb.GeneratedMessage {
+  factory ComposeInsert({
+    CaretSide? side,
+    $core.String? text,
+  }) {
+    final result = ComposeInsert._();
+    if (side != null) result.side = side;
+    if (text != null) result.text = text;
+    return result;
+  }
+
+  ComposeInsert._();
+
+  factory ComposeInsert.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComposeInsert()..mergeFromBuffer(data, registry);
+  factory ComposeInsert.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ComposeInsert()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeInsert',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ComposeInsert.$_createMessage)
+    ..aE<CaretSide>(1, _omitFieldNames ? '' : 'side', enumValues: CaretSide.values)
+    ..aOS(2, _omitFieldNames ? '' : 'text')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComposeInsert clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ComposeInsert copyWith(void Function(ComposeInsert) updates) =>
+      super.copyWith((message) => updates(message as ComposeInsert)) as ComposeInsert;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ComposeInsert() / ComposeInsert.new instead')
+  static ComposeInsert create() => ComposeInsert._();
+  static $pb.GeneratedMessage $_createMessage() => ComposeInsert._();
+  @$core.override
+  ComposeInsert createEmptyInstance() => ComposeInsert._();
+  @$core.pragma('dart2js:noInline')
+  static ComposeInsert getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ComposeInsert>(ComposeInsert.$_createMessage);
+  static ComposeInsert? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  CaretSide get side => $_getN(0);
+  @$pb.TagNumber(1)
+  set side(CaretSide value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSide() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSide() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get text => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set text($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasText() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearText() => $_clearField(2);
 }
 
 class ComposeFormulaResponse extends $pb.GeneratedMessage {
@@ -12956,6 +14364,7 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
     $core.String? resultingType,
     $core.String? documentation,
     $core.int? relevance,
+    $core.String? structuredInsert,
   }) {
     final result = DraftCompletionItem._();
     if (label != null) result.label = label;
@@ -12966,6 +14375,7 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
     if (resultingType != null) result.resultingType = resultingType;
     if (documentation != null) result.documentation = documentation;
     if (relevance != null) result.relevance = relevance;
+    if (structuredInsert != null) result.structuredInsert = structuredInsert;
     return result;
   }
 
@@ -12989,6 +14399,7 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
     ..aOS(6, _omitFieldNames ? '' : 'resultingType')
     ..aOS(7, _omitFieldNames ? '' : 'documentation')
     ..aI(8, _omitFieldNames ? '' : 'relevance', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(9, _omitFieldNames ? '' : 'structuredInsert')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13021,7 +14432,7 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
   void clearLabel() => $_clearField(1);
 
   /// "input", "unit", "keyword", "concept", "representation", "mapping",
-  /// "template", "equation" (an equation of the library, 0.11).
+  /// "template", "equation" (an equation of the library, 0.11), "local".
   @$pb.TagNumber(2)
   $core.String get kind => $_getSZ(1);
   @$pb.TagNumber(2)
@@ -13087,6 +14498,19 @@ class DraftCompletionItem extends $pb.GeneratedMessage {
   $core.bool hasRelevance() => $_has(7);
   @$pb.TagNumber(8)
   void clearRelevance() => $_clearField(8);
+
+  /// The canonical structured form for a Formula-view acceptance, when it
+  /// differs from `insert`: `clamp(?, ?, ?)`, `if ? then ? else ?`, a
+  /// relationship call with a slot per input, a composite unit's whole
+  /// spelling (0.27).  A client never synthesises slots itself.
+  @$pb.TagNumber(9)
+  $core.String get structuredInsert => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set structuredInsert($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasStructuredInsert() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearStructuredInsert() => $_clearField(9);
 }
 
 /// The concept under a byte `offset` into the draft `source`, as the IDE
@@ -14514,12 +15938,14 @@ class QuantityView extends $pb.GeneratedMessage {
     $core.String? typeName,
     $core.String? unit,
     Dim? dim,
+    UnitExprView? preferredUnit,
   }) {
     final result = QuantityView._();
     if (id != null) result.id = id;
     if (typeName != null) result.typeName = typeName;
     if (unit != null) result.unit = unit;
     if (dim != null) result.dim = dim;
+    if (preferredUnit != null) result.preferredUnit = preferredUnit;
     return result;
   }
 
@@ -14539,6 +15965,8 @@ class QuantityView extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'typeName')
     ..aOS(3, _omitFieldNames ? '' : 'unit')
     ..aOM<Dim>(4, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
+    ..aOM<UnitExprView>(5, _omitFieldNames ? '' : 'preferredUnit',
+        subBuilder: UnitExprView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -14579,6 +16007,8 @@ class QuantityView extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearTypeName() => $_clearField(2);
 
+  /// The preferred unit's mathematical rendering (`m/s`, `N·m`): display,
+  /// as before 0.27.
   @$pb.TagNumber(3)
   $core.String get unit => $_getSZ(2);
   @$pb.TagNumber(3)
@@ -14598,6 +16028,442 @@ class QuantityView extends $pb.GeneratedMessage {
   void clearDim() => $_clearField(4);
   @$pb.TagNumber(4)
   Dim ensureDim() => $_ensure(3);
+
+  /// 0.27: the preferred unit as a descriptor (its canonical source
+  /// spelling `m per s`, its display, its dimension); absent for the
+  /// dimensionless quantity.
+  @$pb.TagNumber(5)
+  UnitExprView get preferredUnit => $_getN(4);
+  @$pb.TagNumber(5)
+  set preferredUnit(UnitExprView value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasPreferredUnit() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearPreferredUnit() => $_clearField(5);
+  @$pb.TagNumber(5)
+  UnitExprView ensurePreferredUnit() => $_ensure(4);
+}
+
+/// A unit expression: a finite product of registered linear atoms with
+/// signed integer powers, normalised (0.27).  Never a semantic type: it
+/// denotes a dimension and a scale from the authored coordinate to the
+/// canonical magnitude.
+class UnitExprView extends $pb.GeneratedMessage {
+  factory UnitExprView({
+    $core.String? source,
+    $core.String? display,
+    Dim? dim,
+    $core.String? atomId,
+    $core.Iterable<UnitFactorView>? factors,
+  }) {
+    final result = UnitExprView._();
+    if (source != null) result.source = source;
+    if (display != null) result.display = display;
+    if (dim != null) result.dim = dim;
+    if (atomId != null) result.atomId = atomId;
+    if (factors != null) result.factors.addAll(factors);
+    return result;
+  }
+
+  UnitExprView._();
+
+  factory UnitExprView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      UnitExprView()..mergeFromBuffer(data, registry);
+  factory UnitExprView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      UnitExprView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UnitExprView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: UnitExprView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'source')
+    ..aOS(2, _omitFieldNames ? '' : 'display')
+    ..aOM<Dim>(3, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
+    ..aOS(4, _omitFieldNames ? '' : 'atomId')
+    ..pPM<UnitFactorView>(5, _omitFieldNames ? '' : 'factors',
+        subBuilder: UnitFactorView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UnitExprView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UnitExprView copyWith(void Function(UnitExprView) updates) =>
+      super.copyWith((message) => updates(message as UnitExprView)) as UnitExprView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use UnitExprView() / UnitExprView.new instead')
+  static UnitExprView create() => UnitExprView._();
+  static $pb.GeneratedMessage $_createMessage() => UnitExprView._();
+  @$core.override
+  UnitExprView createEmptyInstance() => UnitExprView._();
+  @$core.pragma('dart2js:noInline')
+  static UnitExprView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UnitExprView>(UnitExprView.$_createMessage);
+  static UnitExprView? _defaultInstance;
+
+  /// The canonical BDL spelling: `deg`, `rad per s`, `m per s^2`, `N * m`.
+  @$pb.TagNumber(1)
+  $core.String get source => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set source($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSource() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSource() => $_clearField(1);
+
+  /// The mathematical rendering, presentation only: `rad/s`, `m/s²`, `N·m`.
+  @$pb.TagNumber(2)
+  $core.String get display => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set display($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDisplay() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDisplay() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Dim get dim => $_getN(2);
+  @$pb.TagNumber(3)
+  set dim(Dim value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDim() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDim() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Dim ensureDim() => $_ensure(2);
+
+  /// The registry id when the unit is one atom (`angle.deg`).
+  @$pb.TagNumber(4)
+  $core.String get atomId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set atomId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasAtomId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearAtomId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<UnitFactorView> get factors => $_getList(4);
+}
+
+class UnitFactorView extends $pb.GeneratedMessage {
+  factory UnitFactorView({
+    $core.String? atomId,
+    $core.String? symbol,
+    $core.int? exponent,
+  }) {
+    final result = UnitFactorView._();
+    if (atomId != null) result.atomId = atomId;
+    if (symbol != null) result.symbol = symbol;
+    if (exponent != null) result.exponent = exponent;
+    return result;
+  }
+
+  UnitFactorView._();
+
+  factory UnitFactorView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      UnitFactorView()..mergeFromBuffer(data, registry);
+  factory UnitFactorView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      UnitFactorView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UnitFactorView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: UnitFactorView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'atomId')
+    ..aOS(2, _omitFieldNames ? '' : 'symbol')
+    ..aI(3, _omitFieldNames ? '' : 'exponent', fieldType: $pb.PbFieldType.OS3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UnitFactorView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UnitFactorView copyWith(void Function(UnitFactorView) updates) =>
+      super.copyWith((message) => updates(message as UnitFactorView)) as UnitFactorView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use UnitFactorView() / UnitFactorView.new instead')
+  static UnitFactorView create() => UnitFactorView._();
+  static $pb.GeneratedMessage $_createMessage() => UnitFactorView._();
+  @$core.override
+  UnitFactorView createEmptyInstance() => UnitFactorView._();
+  @$core.pragma('dart2js:noInline')
+  static UnitFactorView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UnitFactorView>(UnitFactorView.$_createMessage);
+  static UnitFactorView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get atomId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set atomId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAtomId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAtomId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get symbol => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set symbol($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSymbol() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSymbol() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get exponent => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set exponent($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasExponent() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearExponent() => $_clearField(3);
+}
+
+/// The compiler-owned authoring categories (0.27): every named quantity of
+/// the vocabulary as a value category, plus the truth value and the count
+/// — what a concept may be represented by, with the units a designer is
+/// offered for it.  A category is type vocabulary, never a concept: `Angle`
+/// here, `LidAngle` in a design with its own identity.  Independent of any
+/// project.
+class ListValueCategoriesRequest extends $pb.GeneratedMessage {
+  factory ListValueCategoriesRequest() => ListValueCategoriesRequest._();
+
+  ListValueCategoriesRequest._();
+
+  factory ListValueCategoriesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListValueCategoriesRequest()..mergeFromBuffer(data, registry);
+  factory ListValueCategoriesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListValueCategoriesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListValueCategoriesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListValueCategoriesRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListValueCategoriesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListValueCategoriesRequest copyWith(void Function(ListValueCategoriesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListValueCategoriesRequest))
+          as ListValueCategoriesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListValueCategoriesRequest() / ListValueCategoriesRequest.new instead')
+  static ListValueCategoriesRequest create() => ListValueCategoriesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListValueCategoriesRequest._();
+  @$core.override
+  ListValueCategoriesRequest createEmptyInstance() => ListValueCategoriesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListValueCategoriesRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListValueCategoriesRequest>(
+          ListValueCategoriesRequest.$_createMessage);
+  static ListValueCategoriesRequest? _defaultInstance;
+}
+
+class ValueCategoriesResponse extends $pb.GeneratedMessage {
+  factory ValueCategoriesResponse({
+    $core.Iterable<ValueCategoryView>? categories,
+  }) {
+    final result = ValueCategoriesResponse._();
+    if (categories != null) result.categories.addAll(categories);
+    return result;
+  }
+
+  ValueCategoriesResponse._();
+
+  factory ValueCategoriesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueCategoriesResponse()..mergeFromBuffer(data, registry);
+  factory ValueCategoriesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueCategoriesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ValueCategoriesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ValueCategoriesResponse.$_createMessage)
+    ..pPM<ValueCategoryView>(1, _omitFieldNames ? '' : 'categories',
+        subBuilder: ValueCategoryView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueCategoriesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueCategoriesResponse copyWith(void Function(ValueCategoriesResponse) updates) =>
+      super.copyWith((message) => updates(message as ValueCategoriesResponse))
+          as ValueCategoriesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ValueCategoriesResponse() / ValueCategoriesResponse.new instead')
+  static ValueCategoriesResponse create() => ValueCategoriesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => ValueCategoriesResponse._();
+  @$core.override
+  ValueCategoriesResponse createEmptyInstance() => ValueCategoriesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static ValueCategoriesResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ValueCategoriesResponse>(
+          ValueCategoriesResponse.$_createMessage);
+  static ValueCategoriesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<ValueCategoryView> get categories => $_getList(0);
+}
+
+class ValueCategoryView extends $pb.GeneratedMessage {
+  factory ValueCategoryView({
+    $core.String? id,
+    $core.String? displayName,
+    $core.String? typeName,
+    Representation? representation,
+    Dim? dim,
+    UnitExprView? preferredUnit,
+    $core.Iterable<UnitExprView>? units,
+  }) {
+    final result = ValueCategoryView._();
+    if (id != null) result.id = id;
+    if (displayName != null) result.displayName = displayName;
+    if (typeName != null) result.typeName = typeName;
+    if (representation != null) result.representation = representation;
+    if (dim != null) result.dim = dim;
+    if (preferredUnit != null) result.preferredUnit = preferredUnit;
+    if (units != null) result.units.addAll(units);
+    return result;
+  }
+
+  ValueCategoryView._();
+
+  factory ValueCategoryView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueCategoryView()..mergeFromBuffer(data, registry);
+  factory ValueCategoryView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ValueCategoryView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ValueCategoryView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ValueCategoryView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'displayName')
+    ..aOS(3, _omitFieldNames ? '' : 'typeName')
+    ..aOM<Representation>(4, _omitFieldNames ? '' : 'representation',
+        subBuilder: Representation.$_createMessage)
+    ..aOM<Dim>(5, _omitFieldNames ? '' : 'dim', subBuilder: Dim.$_createMessage)
+    ..aOM<UnitExprView>(6, _omitFieldNames ? '' : 'preferredUnit',
+        subBuilder: UnitExprView.$_createMessage)
+    ..pPM<UnitExprView>(7, _omitFieldNames ? '' : 'units', subBuilder: UnitExprView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueCategoryView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ValueCategoryView copyWith(void Function(ValueCategoryView) updates) =>
+      super.copyWith((message) => updates(message as ValueCategoryView)) as ValueCategoryView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ValueCategoryView() / ValueCategoryView.new instead')
+  static ValueCategoryView create() => ValueCategoryView._();
+  static $pb.GeneratedMessage $_createMessage() => ValueCategoryView._();
+  @$core.override
+  ValueCategoryView createEmptyInstance() => ValueCategoryView._();
+  @$core.pragma('dart2js:noInline')
+  static ValueCategoryView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ValueCategoryView>(ValueCategoryView.$_createMessage);
+  static ValueCategoryView? _defaultInstance;
+
+  /// `angular_velocity`, `boolean`, `count`.
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  /// The canonical English word: `angular velocity`; a client localizes by
+  /// `id`.
+  @$pb.TagNumber(2)
+  $core.String get displayName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set displayName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDisplayName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDisplayName() => $_clearField(2);
+
+  /// The textual type name (`AngularVelocity`, `Bool`, `Count`): what the
+  /// Code view writes.
+  @$pb.TagNumber(3)
+  $core.String get typeName => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set typeName($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTypeName() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTypeName() => $_clearField(3);
+
+  /// The value form a concept of this category is represented by.
+  @$pb.TagNumber(4)
+  Representation get representation => $_getN(3);
+  @$pb.TagNumber(4)
+  set representation(Representation value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasRepresentation() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearRepresentation() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Representation ensureRepresentation() => $_ensure(3);
+
+  /// For a quantity: its dimension.
+  @$pb.TagNumber(5)
+  Dim get dim => $_getN(4);
+  @$pb.TagNumber(5)
+  set dim(Dim value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDim() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDim() => $_clearField(5);
+  @$pb.TagNumber(5)
+  Dim ensureDim() => $_ensure(4);
+
+  /// For a quantity: the preferred unit, and the units a designer is
+  /// offered — the registered atoms of the dimension, then the curated
+  /// composites (`rad per s`, `deg per s`, `turn per s`).  A bounded list,
+  /// never every compatible atom combined.
+  @$pb.TagNumber(6)
+  UnitExprView get preferredUnit => $_getN(5);
+  @$pb.TagNumber(6)
+  set preferredUnit(UnitExprView value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasPreferredUnit() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearPreferredUnit() => $_clearField(6);
+  @$pb.TagNumber(6)
+  UnitExprView ensurePreferredUnit() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<UnitExprView> get units => $_getList(6);
 }
 
 /// The one instantiation operation: the daemon builds the CreateConcept
@@ -15621,11 +17487,13 @@ class NewConcept extends $pb.GeneratedMessage {
     $core.String? name,
     $core.String? description,
     Representation? representation,
+    $core.String? categoryId,
   }) {
     final result = NewConcept._();
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (representation != null) result.representation = representation;
+    if (categoryId != null) result.categoryId = categoryId;
     return result;
   }
 
@@ -15645,6 +17513,7 @@ class NewConcept extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'description')
     ..aOM<Representation>(3, _omitFieldNames ? '' : 'representation',
         subBuilder: Representation.$_createMessage)
+    ..aOS(4, _omitFieldNames ? '' : 'categoryId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -15696,6 +17565,20 @@ class NewConcept extends $pb.GeneratedMessage {
   void clearRepresentation() => $_clearField(3);
   @$pb.TagNumber(3)
   Representation ensureRepresentation() => $_ensure(2);
+
+  /// 0.27: a value category by id (`angular_velocity`, `boolean`, `count`
+  /// — ListValueCategories) in place of a representation: the daemon
+  /// resolves it, so a client builds no Representation.  `representation`
+  /// wins when both are given; an unknown id is `library.unknown_category`.
+  /// A chosen unit is presentation and is never part of the concept.
+  @$pb.TagNumber(4)
+  $core.String get categoryId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set categoryId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasCategoryId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearCategoryId() => $_clearField(4);
 }
 
 /// The concepts a Source may be created over, in the order the creation

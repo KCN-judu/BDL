@@ -87,7 +87,8 @@ Module@0..311
                 Number@162..164 "90"
                 Whitespace@164..165 " "
                 UnitSuffix@165..168
-                  Ident@165..168 "deg"
+                  UnitFactor@165..168
+                    Ident@165..168 "deg"
               RParen@168..169 ")"
           Comma@169..170 ","
           Whitespace@170..171 " "

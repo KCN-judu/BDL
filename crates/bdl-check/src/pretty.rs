@@ -79,6 +79,17 @@ pub fn describe_dim(dim: Dim) -> String {
             return name.into();
         }
     }
+    // the shared vocabulary names the derived dimensions (an acceleration,
+    // a force, a torque …); the article follows the first letter
+    if let Some(q) = bdl_model::quantity::by_dim(dim) {
+        let word = q.display_name();
+        let article = if word.starts_with(['a', 'e', 'i', 'o', 'u']) {
+            "an"
+        } else {
+            "a"
+        };
+        return format!("{article} {word}");
+    }
     format!("a quantity of {}", symbol(dim))
 }
 

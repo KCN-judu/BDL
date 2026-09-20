@@ -33,6 +33,10 @@ pub enum SyntaxErrorCode {
     UnterminatedComment,
     LiteralPattern,
     Empty,
+    /// A unit expression after a number is not well formed: `per` with
+    /// nothing after it, a power without a whole-number exponent, a
+    /// second `per` (docs/spec/textual-syntax.md §5.2).
+    MalformedUnit,
 }
 
 impl SyntaxErrorCode {
@@ -46,6 +50,7 @@ impl SyntaxErrorCode {
             SyntaxErrorCode::UnterminatedComment => "syntax.unterminated_comment",
             SyntaxErrorCode::LiteralPattern => "syntax.literal_pattern",
             SyntaxErrorCode::Empty => "syntax.empty",
+            SyntaxErrorCode::MalformedUnit => "syntax.malformed_unit",
         }
     }
 }

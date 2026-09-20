@@ -23,6 +23,16 @@ pub enum CompletionContext {
     /// source is the snapshot's effective definition, `offset` is
     /// body-relative.
     Formula { mapping: DeclId, offset: u32 },
+    /// At a structural caret of the mapping's formula projection: the
+    /// Formula view's completion.  The position's expected type and its
+    /// locals come from the projection, never from the text around the
+    /// offset; `prefix` is what the designer has typed there so far.
+    FormulaCaret {
+        mapping: DeclId,
+        node: String,
+        side: crate::formula::Side,
+        prefix: String,
+    },
     /// At a byte offset in a text document.
     Document { document: DocumentId, offset: u32 },
 }
@@ -136,6 +146,13 @@ pub struct SemanticCompletion {
     /// [`CompletionKind::Template`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub template: Option<String>,
+    /// The canonical structured form for a Formula-view acceptance, when
+    /// it differs from `insert`: `clamp(?, ?, ?)` where text mode inserts
+    /// `clamp(`; `if ? then ? else ?`; a relationship call with a slot
+    /// per input; a composite unit's full spelling.  A client never
+    /// synthesises slots itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub structured_insert: Option<String>,
 }
 
 const KEYWORDS: &[&str] = &["if", "then", "else", "true", "false", "in"];
@@ -177,7 +194,54 @@ pub fn completion(snapshot: &AnalysisSnapshot, ctx: &CompletionContext) -> Vec<S
                 // A reference has no formula text to complete in.
                 Some(Definition::Reference { .. }) | None => "",
             };
-            formula_completions(snapshot, *mapping, source, *offset)
+            formula_completions(snapshot, *mapping, source, *offset, None)
+        }
+        CompletionContext::FormulaCaret {
+            mapping,
+            node,
+            side,
+            prefix,
+        } => {
+            let Ok(projection) = crate::formula::formula_projection(snapshot, *mapping) else {
+                return Vec::new();
+            };
+            let Some(root) = projection.root.as_ref() else {
+                // an empty formula: everything the result may be
+                return formula_completions(
+                    snapshot,
+                    *mapping,
+                    "",
+                    0,
+                    Some(CaretHint {
+                        prefix: prefix.clone(),
+                        expected: projection.result.as_ref().and_then(expected_of_view),
+                        locals: Vec::new(),
+                    }),
+                );
+            };
+            let Some(n) = root.find(node) else {
+                return Vec::new();
+            };
+            let Some(offset) = crate::formula::caret_offset(root, node, *side) else {
+                return Vec::new();
+            };
+            // a slot's own expectation; at the root, the result
+            let expected = if n.id == root.id && n.expected.is_none() {
+                projection.result.as_ref().and_then(expected_of_view)
+            } else {
+                n.expected.as_ref().and_then(expected_of_view)
+            };
+            formula_completions(
+                snapshot,
+                *mapping,
+                &projection.source,
+                offset,
+                Some(CaretHint {
+                    prefix: prefix.clone(),
+                    expected,
+                    locals: n.locals.clone(),
+                }),
+            )
         }
         CompletionContext::Document { document, offset } => {
             document_completions(snapshot, *document, *offset)
@@ -218,23 +282,60 @@ fn after_number(source: &str, range: TextRange) -> bool {
         .is_some_and(|c| c.is_ascii_digit() || c == '.')
 }
 
+/// What a structural caret adds to a text completion: the prefix typed
+/// there (the text has none), the position's expectation from the
+/// projection, and the locals the projection knows to be in scope.
+pub(crate) struct CaretHint {
+    pub prefix: String,
+    pub expected: Option<ExpectedType>,
+    pub locals: Vec<String>,
+}
+
+/// The expected type a projection's type view stands for.
+fn expected_of_view(t: &crate::formula::TypeView) -> Option<ExpectedType> {
+    use crate::formula::TypeKindView;
+    Some(match t.kind {
+        TypeKindView::Quantity | TypeKindView::Concept => match t.dim {
+            Some(dim) => ExpectedType::Quantity { dim },
+            None => ExpectedType::Structured {
+                description: t.description.clone(),
+            },
+        },
+        TypeKindView::Boolean => ExpectedType::Boolean,
+        TypeKindView::Count => ExpectedType::Count,
+        TypeKindView::Unknown => return None,
+        _ => ExpectedType::Structured {
+            description: t.description.clone(),
+        },
+    })
+}
+
 fn formula_completions(
     snapshot: &AnalysisSnapshot,
     mapping: DeclId,
     source: &str,
     offset: u32,
+    caret: Option<CaretHint>,
 ) -> Vec<SemanticCompletion> {
     let design = &snapshot.effective().design;
     let Some(block) = design.mappings.get(&mapping) else {
         return Vec::new();
     };
-    let (prefix, replace) = prefix_at(source, offset);
-    let expected = ExpectedType::of(
-        design
-            .concepts
-            .get(&block.signature.output)
-            .and_then(|c| c.representation.as_ref()),
-    );
+    let (prefix, replace) = match &caret {
+        // at a structural caret the prefix is what was typed there: the
+        // range replaced is the (empty) caret position
+        Some(c) => (c.prefix.clone(), TextRange::new(offset, offset)),
+        None => prefix_at(source, offset),
+    };
+    let expected = match caret.as_ref().and_then(|c| c.expected.clone()) {
+        Some(e) => e,
+        None => ExpectedType::of(
+            design
+                .concepts
+                .get(&block.signature.output)
+                .and_then(|c| c.representation.as_ref()),
+        ),
+    };
     let matches = |label: &str| {
         prefix.is_empty()
             || label
@@ -279,6 +380,7 @@ fn formula_completions(
             insert: name,
             relevance,
             template: None,
+            structured_insert: None,
             documentation: Some(format!(
                 "input of `{}` ({}){}",
                 block.name,
@@ -341,6 +443,8 @@ fn formula_completions(
                 entity: Some(EntityRef::Mapping(m.id)),
                 resulting_type: Some(ty.describe()),
                 replace,
+                structured_insert: callable
+                    .then(|| format!("{name}({})", vec!["?"; params.len()].join(", "))),
                 insert: if callable {
                     format!("{name}(")
                 } else {
@@ -369,6 +473,11 @@ fn formula_completions(
                 resulting_type: None,
                 replace,
                 insert: format!("{name}("),
+                structured_insert: Some(if name == "delay" {
+                    "delay(?, ?)".into()
+                } else {
+                    "sync(?, ?, ?)".into()
+                }),
                 relevance: 15,
                 documentation: Some(doc.to_string()),
                 template: None,
@@ -380,7 +489,13 @@ fn formula_completions(
     // body, a rule's parameters, a pattern's names.  They shadow the
     // design, so they rank above its names.
     if !unit_position {
-        for local in locals_in_scope(source, offset) {
+        // the locals: the projection's at a structural caret, else read
+        // off the tree around the offset
+        let locals = match &caret {
+            Some(c) => c.locals.clone(),
+            None => locals_in_scope(source, offset),
+        };
+        for local in locals {
             if !matches(&local) {
                 continue;
             }
@@ -394,6 +509,7 @@ fn formula_completions(
                 relevance: 70,
                 documentation: Some("local of this formula: one element, or a rule's input".into()),
                 template: None,
+                structured_insert: None,
             });
         }
     }
@@ -441,6 +557,10 @@ fn formula_completions(
                     entity: None,
                     resulting_type: ty.map(|t| t.describe()),
                     replace,
+                    structured_insert: Some(format!(
+                        "{word} {local} in {}: ?",
+                        if coll.is_empty() { "?" } else { &coll }
+                    )),
                     insert: format!(
                         "{word} {local} in {coll}{}",
                         if coll.is_empty() { "" } else { ": " }
@@ -464,6 +584,18 @@ fn formula_completions(
         if unit_position || !matches(e.name) || design.mappings.values().any(|m| m.name == e.name) {
             continue;
         }
+        let args: Vec<&str> = e
+            .scheme
+            .params
+            .iter()
+            .map(|p| match p {
+                bdl_equations::PTy::Arr(a, _) => match a.as_ref() {
+                    bdl_equations::PTy::Prod(..) => "(x, y) => ?",
+                    _ => "x => ?",
+                },
+                _ => "?",
+            })
+            .collect();
         out.push(SemanticCompletion {
             label: e.shape(),
             kind: CompletionKind::Equation,
@@ -471,18 +603,39 @@ fn formula_completions(
             resulting_type: None,
             replace,
             insert: format!("{}(", e.name),
+            structured_insert: Some(format!("{}({})", e.name, args.join(", "))),
             relevance: 12,
             documentation: Some(equation_documentation(e)),
             template: None,
         });
     }
 
+    // Units.  After a number every atom is offered, the ones of the
+    // expected dimension first, and the curated composites of the
+    // expected dimension by their whole spelling (`rad per s` for an
+    // angular velocity); after `per`, `*` or `^` of a unit being written,
+    // the atoms that complete it to the expected dimension come first.
+    let unit_so_far: Option<(bdl_model::units::UnitExpr, &str)> = if unit_position {
+        None
+    } else {
+        unit_continuation(source, replace.start)
+    };
+    let after_unit_word = unit_so_far.is_some();
     for u in bdl_elab::units::UNITS {
         if !matches(u.symbol) {
             continue;
         }
-        let ty = ExpectedType::Quantity { dim: u.dim };
-        let relevance = if unit_position {
+        let atom = bdl_model::units::UnitExpr::atom(u).ok();
+        let resulting = match (&unit_so_far, &atom) {
+            (Some((so_far, word)), Some(a)) => match *word {
+                "per" => so_far.per(a).ok(),
+                _ => so_far.mul(a).ok(),
+            },
+            _ => atom.clone(),
+        };
+        let dim = resulting.as_ref().map(|r| r.dim()).unwrap_or(u.dim);
+        let ty = ExpectedType::Quantity { dim };
+        let relevance = if unit_position || after_unit_word {
             60 + rank(&expected, &ty) / 2
         } else {
             10 + rank(&expected, &ty) / 4
@@ -491,13 +644,41 @@ fn formula_completions(
             label: u.symbol.to_owned(),
             kind: CompletionKind::Unit,
             entity: None,
-            resulting_type: Some(pretty::describe_dim(u.dim)),
+            resulting_type: Some(pretty::describe_dim(dim)),
             replace,
             insert: u.symbol.to_owned(),
+            structured_insert: None,
             relevance,
             template: None,
             documentation: Some(format!("unit of {}", pretty::describe_dim(u.dim))),
         });
+    }
+    if unit_position {
+        if let ExpectedType::Quantity { dim } = &expected {
+            for c in bdl_model::units::candidates_for(*dim) {
+                if c.as_atom().is_some() {
+                    continue;
+                }
+                let spelling = c.source();
+                if !matches(&spelling) {
+                    continue;
+                }
+                out.push(SemanticCompletion {
+                    label: format!("{spelling}  ({})", c.display()),
+                    kind: CompletionKind::Unit,
+                    entity: None,
+                    resulting_type: Some(pretty::describe_dim(c.dim())),
+                    replace,
+                    insert: spelling.clone(),
+                    structured_insert: Some(spelling),
+                    // above an atom of another dimension (95), below an
+                    // atom of the expected one (110)
+                    relevance: 98,
+                    template: None,
+                    documentation: Some(format!("unit of {}", pretty::describe_dim(c.dim()))),
+                });
+            }
+        }
     }
 
     if !unit_position {
@@ -521,6 +702,7 @@ fn formula_completions(
                 resulting_type: ty.map(|t| t.describe()),
                 replace,
                 insert: (*k).to_owned(),
+                structured_insert: (*k == "if").then(|| "if ? then ? else ?".to_owned()),
                 relevance,
                 documentation: None,
                 template: None,
@@ -528,6 +710,35 @@ fn formula_completions(
         }
     }
     out
+}
+
+/// A unit being extended at `offset`: the text before it ends in `<number>
+/// <unit …> per` / `*` — the unit written so far and the word.
+fn unit_continuation(
+    source: &str,
+    offset: u32,
+) -> Option<(bdl_model::units::UnitExpr, &'static str)> {
+    let before = source.get(..offset as usize)?.trim_end();
+    let (head, word) = if let Some(h) = before.strip_suffix("per") {
+        (h, "per")
+    } else if let Some(h) = before.strip_suffix('*') {
+        (h, "*")
+    } else {
+        return None;
+    };
+    // the unit before the word: the tokens after the last number
+    let head = head.trim_end();
+    let start = head
+        .rfind(|c: char| c.is_ascii_digit() || c == '.')
+        .map(|i| i + 1)?;
+    let unit_text = head[start..].trim();
+    if unit_text.is_empty() {
+        return None;
+    }
+    let spelled = unit_text.split_whitespace().collect::<Vec<_>>().join(" ");
+    bdl_model::units::UnitExpr::parse_canonical(&spelled)
+        .ok()
+        .map(|u| (u, word))
 }
 
 /// The locals a name at `offset` could be: parameters of the binders and
@@ -765,7 +976,7 @@ fn document_completions(
     if let Some(a) = body_anchor {
         if let (Some(m), Some(r)) = (a.entity.as_mapping(), a.text_range()) {
             let body = &source[r.start as usize..r.end as usize];
-            let mut items = formula_completions(snapshot, m, body, offset - r.start);
+            let mut items = formula_completions(snapshot, m, body, offset - r.start, None);
             for i in &mut items {
                 i.replace = i.replace.offset(r.start);
             }
@@ -786,7 +997,8 @@ fn document_completions(
                 .map(|i| i as u32)
                 .unwrap_or(body.len() as u32);
             let body = &body[..end as usize];
-            let mut items = formula_completions(snapshot, m, body, (offset - body_start).min(end));
+            let mut items =
+                formula_completions(snapshot, m, body, (offset - body_start).min(end), None);
             for i in &mut items {
                 i.replace = i.replace.offset(body_start);
             }
@@ -847,6 +1059,7 @@ fn document_completions(
                 },
                 documentation: Some(format!("{} — {}", t.display_name, t.description)),
                 template: Some(t.id.clone()),
+                structured_insert: None,
             });
         }
         return out;
@@ -870,6 +1083,7 @@ fn document_completions(
                         relevance: 50,
                         documentation: None,
                         template: None,
+                        structured_insert: None,
                     });
                 }
             }
@@ -890,6 +1104,7 @@ fn document_completions(
                         relevance: 50,
                         documentation: None,
                         template: None,
+                        structured_insert: None,
                     });
                 }
             }
@@ -910,6 +1125,7 @@ fn document_completions(
                     relevance: 50,
                     documentation: None,
                     template: None,
+                    structured_insert: None,
                 });
             }
         }

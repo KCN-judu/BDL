@@ -93,6 +93,7 @@ impl Out {
             relevance,
             documentation: doc,
             template: None,
+            structured_insert: None,
         });
     }
     fn keyword(&mut self, k: &str) {

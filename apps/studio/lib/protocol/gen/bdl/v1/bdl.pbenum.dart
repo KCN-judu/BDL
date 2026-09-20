@@ -312,6 +312,76 @@ class DiagnosticSeverity extends $pb.ProtobufEnum {
   const DiagnosticSeverity._(super.value, super.name);
 }
 
+/// A structural caret: a node and a side.  Authoring identity, stable
+/// within one projection generation, never kept by the daemon (0.27).
+class CaretSide extends $pb.ProtobufEnum {
+  static const CaretSide CARET_SIDE_UNSPECIFIED =
+      CaretSide._(0, _omitEnumNames ? '' : 'CARET_SIDE_UNSPECIFIED');
+  static const CaretSide CARET_SIDE_BEFORE =
+      CaretSide._(1, _omitEnumNames ? '' : 'CARET_SIDE_BEFORE');
+  static const CaretSide CARET_SIDE_AFTER =
+      CaretSide._(2, _omitEnumNames ? '' : 'CARET_SIDE_AFTER');
+
+  static const $core.List<CaretSide> values = <CaretSide>[
+    CARET_SIDE_UNSPECIFIED,
+    CARET_SIDE_BEFORE,
+    CARET_SIDE_AFTER,
+  ];
+
+  static final $core.List<CaretSide?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static CaretSide? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const CaretSide._(super.value, super.name);
+}
+
+class CaretMotion extends $pb.ProtobufEnum {
+  static const CaretMotion CARET_MOTION_UNSPECIFIED =
+      CaretMotion._(0, _omitEnumNames ? '' : 'CARET_MOTION_UNSPECIFIED');
+
+  /// The previous / next caret in source order (before a node, its
+  /// children's carets, after it).
+  static const CaretMotion CARET_MOTION_LEFT =
+      CaretMotion._(1, _omitEnumNames ? '' : 'CARET_MOTION_LEFT');
+  static const CaretMotion CARET_MOTION_RIGHT =
+      CaretMotion._(2, _omitEnumNames ? '' : 'CARET_MOTION_RIGHT');
+
+  /// The parent's caret on the same side.
+  static const CaretMotion CARET_MOTION_UP =
+      CaretMotion._(3, _omitEnumNames ? '' : 'CARET_MOTION_UP');
+
+  /// The first child's before (from before), the last child's after.
+  static const CaretMotion CARET_MOTION_DOWN =
+      CaretMotion._(4, _omitEnumNames ? '' : 'CARET_MOTION_DOWN');
+
+  /// After the parent.
+  static const CaretMotion CARET_MOTION_EXIT =
+      CaretMotion._(5, _omitEnumNames ? '' : 'CARET_MOTION_EXIT');
+
+  /// The next / previous slot in source order, wrapping.
+  static const CaretMotion CARET_MOTION_NEXT_SLOT =
+      CaretMotion._(6, _omitEnumNames ? '' : 'CARET_MOTION_NEXT_SLOT');
+  static const CaretMotion CARET_MOTION_PREVIOUS_SLOT =
+      CaretMotion._(7, _omitEnumNames ? '' : 'CARET_MOTION_PREVIOUS_SLOT');
+
+  static const $core.List<CaretMotion> values = <CaretMotion>[
+    CARET_MOTION_UNSPECIFIED,
+    CARET_MOTION_LEFT,
+    CARET_MOTION_RIGHT,
+    CARET_MOTION_UP,
+    CARET_MOTION_DOWN,
+    CARET_MOTION_EXIT,
+    CARET_MOTION_NEXT_SLOT,
+    CARET_MOTION_PREVIOUS_SLOT,
+  ];
+
+  static final $core.List<CaretMotion?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 7);
+  static CaretMotion? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const CaretMotion._(super.value, super.name);
+}
+
 class ActionApplicability extends $pb.ProtobufEnum {
   static const ActionApplicability ACTION_APPLICABILITY_UNSPECIFIED =
       ActionApplicability._(0, _omitEnumNames ? '' : 'ACTION_APPLICABILITY_UNSPECIFIED');

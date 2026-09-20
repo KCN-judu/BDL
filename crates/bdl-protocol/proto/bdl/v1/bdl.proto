@@ -1,4 +1,4 @@
-// BDL Studio <-> bdld protocol, version 0.26.
+// BDL Studio <-> bdld protocol, version 0.27.
 //
 // Transport-independent.  Messages are exchanged as length-prefixed frames
 // (see crates/bdl-protocol/src/framing.rs); the transport is a child-process
@@ -97,6 +97,12 @@ message ClientMessage {
     ListFlashDevicesRequest list_flash_devices = 73;
     FlashFirmwareRequest flash_firmware = 74;
     ListTemplatesRequest list_templates = 75;
+    // 0.27: the authoring vocabulary and the Formula view's structure
+    ListValueCategoriesRequest list_value_categories = 76;
+    NavigateFormulaRequest navigate_formula = 77;
+    CompleteFormulaCaretRequest complete_formula_caret = 78;
+    GetFormulaSignatureRequest get_formula_signature = 79;
+    GetFormulaRenderRequest get_formula_render = 80;
   }
 }
 
@@ -142,6 +148,10 @@ message Response {
     BuildStatusResponse build_status = 55;
     FlashDevicesResponse flash_devices = 56;
     TemplatesResponse templates = 57;
+    ValueCategoriesResponse value_categories = 58;
+    NavigateFormulaResponse navigate_formula = 59;
+    FormulaSignatureResponse formula_signature = 60;
+    FormulaRenderResponse formula_render = 61;
   }
 }
 
@@ -1058,10 +1068,15 @@ message FormulaNode {
   // opaque region is ("a match"), a bool literal's value, or a binder's
   // word ("all", "any", "map", "filter").
   string name = 5;
-  // A quantity literal's parts: `90 deg` → "90", "deg", "angle.deg".
+  // A quantity literal's parts: `90 deg` → "90", "deg", "angle.deg";
+  // `9.81 m per s^2` → "9.81", "m per s^2" (as written), "" (no single
+  // atom), with `unit_source` the canonical spelling and `unit_display`
+  // the mathematical rendering `m/s²` (0.27).
   string coordinate = 6;
   string unit = 7;
   string unit_id = 8;
+  string unit_source = 19;
+  string unit_display = 20;
   // A call: an equation of the library (true) or a relationship (false).
   bool equation = 9;
   optional EntityRef entity = 10;
@@ -1082,6 +1097,152 @@ message FormulaNode {
   // the body (0.13).
   string param = 17;
   optional TypeView param_type = 18;
+  // 0.27 — structure for a client that renders and navigates without
+  // reparsing.  Kinds "match" (children: the subject, then one "arm"
+  // each: `name` the pattern, `binds` its names, child the body), "block"
+  // (children: one "let" each — `name` the pattern, `binds` its names,
+  // child the value — then the result), "rule" (`binds` the parameters;
+  // child the body), "list", "tuple", "delay" (initial, value), "sync"
+  // (domain, initial, value) replace the former "opaque" forms; "opaque"
+  // remains for `()`.
+  // What the node is to its parent: "condition", "then", "else",
+  // "numerator", "denominator", "left", "right", "operand", "argument 1",
+  // "collection", "body", "subject", "arm 1", "value", "result", "item 1",
+  // "part 1", "initial", "domain", "from", "to"; empty at the root.
+  string role = 21;
+  // The formula's own names in scope at this node, innermost last: what
+  // a completion here may name besides the design's.
+  repeated string locals = 22;
+  // The names a pattern, a `let` or a rule binds.
+  repeated string binds = 23;
+  // Where a further child would be inserted (`f(a, b|)`, `[a, b|]`): the
+  // byte offset before the closing delimiter; absent on fixed shapes.
+  optional uint32 append_at = 24;
+}
+
+// A structural caret: a node and a side.  Authoring identity, stable
+// within one projection generation, never kept by the daemon (0.27).
+enum CaretSide {
+  CARET_SIDE_UNSPECIFIED = 0;
+  CARET_SIDE_BEFORE = 1;
+  CARET_SIDE_AFTER = 2;
+}
+
+enum CaretMotion {
+  CARET_MOTION_UNSPECIFIED = 0;
+  // The previous / next caret in source order (before a node, its
+  // children's carets, after it).
+  CARET_MOTION_LEFT = 1;
+  CARET_MOTION_RIGHT = 2;
+  // The parent's caret on the same side.
+  CARET_MOTION_UP = 3;
+  // The first child's before (from before), the last child's after.
+  CARET_MOTION_DOWN = 4;
+  // After the parent.
+  CARET_MOTION_EXIT = 5;
+  // The next / previous slot in source order, wrapping.
+  CARET_MOTION_NEXT_SLOT = 6;
+  CARET_MOTION_PREVIOUS_SLOT = 7;
+}
+
+// Move a structural caret over the draft `source`'s projection: pure —
+// the same tree and motion give the same answer; the daemon keeps no
+// caret.  Sets the draft overlay to `source` first.
+message NavigateFormulaRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
+  string node_id = 4;
+  CaretSide side = 5;
+  CaretMotion motion = 6;
+  optional uint64 component = 7;
+}
+
+message NavigateFormulaResponse {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string node_id = 3;
+  CaretSide side = 4;
+  // The byte offset the caret stands at, in `source`.
+  uint32 offset = 5;
+}
+
+// Completion at a structural caret: the position's expected type and its
+// locals come from the projection, `prefix` is what was typed there.
+// Items carry `structured_insert` for the Formula view (0.27).
+message CompleteFormulaCaretRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
+  string node_id = 4;
+  CaretSide side = 5;
+  string prefix = 6;
+  optional uint64 component = 7;
+}
+
+// Signature help for the innermost call enclosing `node_id` (or the node
+// itself when it is a call): the callee, its parameters with what each
+// takes, the result, and the argument the caret is in.  `found` is false
+// when no call encloses the node.
+message GetFormulaSignatureRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  string source = 3;
+  string node_id = 4;
+  optional uint64 component = 5;
+}
+
+message FormulaSignatureResponse {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  bool found = 3;
+  string node_id = 4;
+  string name = 5;
+  // `clamp(x, lo, hi)`.
+  string shape = 6;
+  repeated ParameterHelp parameters = 7;
+  string result = 8;
+  optional uint32 active = 9;
+  string summary = 10;
+}
+
+message ParameterHelp {
+  string name = 1;
+  // What the parameter takes, in the designer's words, when known.
+  string expected = 2;
+}
+
+// The read-only render of a mapping's effective definition, for a canvas
+// node: the same projection the editor uses, flattened to fragments in
+// source order.  No draft is set; a mapping defined by reference or with
+// no formula answers an empty render.
+message GetFormulaRenderRequest {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  optional uint64 component = 3;
+}
+
+message FormulaRenderResponse {
+  uint64 revision = 1;
+  uint64 mapping_id = 2;
+  repeated FormulaFragment fragments = 3;
+  // The source on one line.
+  string compact = 4;
+  string result = 5;
+  uint32 error_count = 6;
+  uint32 warning_count = 7;
+  repeated string references = 8;
+}
+
+message FormulaFragment {
+  string text = 1;
+  // "reference", "local", "number", "unit" (its text is the mathematical
+  // rendering, `m/s²`), "bool", "slot", "operator", "keyword",
+  // "punctuation", "pattern".
+  string kind = 2;
+  // The node the fragment belongs to.
+  string node_id = 3;
+  SourceSpan range = 4;
 }
 
 message TypeView {
@@ -1129,9 +1290,14 @@ message FormulaSlotResponse {
 }
 
 message UnitCandidate {
+  // The registry id of an atom (`angle.deg`); empty for a composite.
   string id = 1;
+  // The canonical source spelling: `deg`, `rad per s`, `m per s^2` (0.27:
+  // composites of the expected dimension are listed after the atoms).
   string symbol = 2;
   string measures = 3;
+  // The mathematical rendering, for display: `rad/s`, `m/s²` (0.27).
+  string display = 4;
 }
 
 message ReferenceCandidate {
@@ -1185,6 +1351,8 @@ message ComposeAction {
     // A choice (0.17): a slot becomes `if ? then ? else ?`; any other
     // node becomes one outcome of it, `if ? then node else ?`.
     Unit choose = 10;
+    // Keyboard input at a structural caret (0.27).
+    ComposeInsert insert = 11;
   }
 }
 
@@ -1204,8 +1372,21 @@ message ComposeCall {
 }
 
 message ComposeSetUnit {
+  // A registry id (`angle.deg`) or a canonical spelling (`rad per s`,
+  // 0.27).
   string unit_id = 1;
   bool preserve_value = 2;
+}
+
+// Keyboard input at a structural caret (0.27): interpreted by the
+// grammar — an operator makes `node op ?`, `(` groups, a word fills a slot
+// with its canonical form (`clamp` → `clamp(?, ?, ?)`, `if` → `if ? then ?
+// else ?`), a unit word after a number becomes the literal's unit, `per`,
+// `*` or `^` after a quantity extend its unit.  Refused with the reason
+// when the text cannot stand there.
+message ComposeInsert {
+  CaretSide side = 1;
+  string text = 2;
 }
 
 message ComposeFormulaResponse {
@@ -1254,7 +1435,7 @@ message DraftCompletionResponse {
 message DraftCompletionItem {
   string label = 1;
   // "input", "unit", "keyword", "concept", "representation", "mapping",
-  // "template", "equation" (an equation of the library, 0.11).
+  // "template", "equation" (an equation of the library, 0.11), "local".
   string kind = 2;
   // Replace the byte range [replace_start, replace_end) of the source
   // with `insert`.
@@ -1265,6 +1446,11 @@ message DraftCompletionItem {
   string resulting_type = 6;
   string documentation = 7;
   uint32 relevance = 8;
+  // The canonical structured form for a Formula-view acceptance, when it
+  // differs from `insert`: `clamp(?, ?, ?)`, `if ? then ? else ?`, a
+  // relationship call with a slot per input, a composite unit's whole
+  // spelling (0.27).  A client never synthesises slots itself.
+  string structured_insert = 9;
 }
 
 // The concept under a byte `offset` into the draft `source`, as the IDE
@@ -1446,8 +1632,68 @@ message ConceptTemplateView {
 message QuantityView {
   string id = 1;
   string type_name = 2;
+  // The preferred unit's mathematical rendering (`m/s`, `N·m`): display,
+  // as before 0.27.
   string unit = 3;
   Dim dim = 4;
+  // 0.27: the preferred unit as a descriptor (its canonical source
+  // spelling `m per s`, its display, its dimension); absent for the
+  // dimensionless quantity.
+  optional UnitExprView preferred_unit = 5;
+}
+
+// A unit expression: a finite product of registered linear atoms with
+// signed integer powers, normalised (0.27).  Never a semantic type: it
+// denotes a dimension and a scale from the authored coordinate to the
+// canonical magnitude.
+message UnitExprView {
+  // The canonical BDL spelling: `deg`, `rad per s`, `m per s^2`, `N * m`.
+  string source = 1;
+  // The mathematical rendering, presentation only: `rad/s`, `m/s²`, `N·m`.
+  string display = 2;
+  Dim dim = 3;
+  // The registry id when the unit is one atom (`angle.deg`).
+  string atom_id = 4;
+  repeated UnitFactorView factors = 5;
+}
+
+message UnitFactorView {
+  string atom_id = 1;
+  string symbol = 2;
+  sint32 exponent = 3;
+}
+
+// The compiler-owned authoring categories (0.27): every named quantity of
+// the vocabulary as a value category, plus the truth value and the count
+// — what a concept may be represented by, with the units a designer is
+// offered for it.  A category is type vocabulary, never a concept: `Angle`
+// here, `LidAngle` in a design with its own identity.  Independent of any
+// project.
+message ListValueCategoriesRequest {}
+
+message ValueCategoriesResponse {
+  repeated ValueCategoryView categories = 1;
+}
+
+message ValueCategoryView {
+  // `angular_velocity`, `boolean`, `count`.
+  string id = 1;
+  // The canonical English word: `angular velocity`; a client localizes by
+  // `id`.
+  string display_name = 2;
+  // The textual type name (`AngularVelocity`, `Bool`, `Count`): what the
+  // Code view writes.
+  string type_name = 3;
+  // The value form a concept of this category is represented by.
+  Representation representation = 4;
+  // For a quantity: its dimension.
+  optional Dim dim = 5;
+  // For a quantity: the preferred unit, and the units a designer is
+  // offered — the registered atoms of the dimension, then the curated
+  // composites (`rad per s`, `deg per s`, `turn per s`).  A bounded list,
+  // never every compatible atom combined.
+  optional UnitExprView preferred_unit = 6;
+  repeated UnitExprView units = 7;
 }
 
 // The one instantiation operation: the daemon builds the CreateConcept
@@ -1582,6 +1828,12 @@ message NewConcept {
   string description = 2;
   // Absent: the value form is decided later, as for CreateConcept.
   optional Representation representation = 3;
+  // 0.27: a value category by id (`angular_velocity`, `boolean`, `count`
+  // — ListValueCategories) in place of a representation: the daemon
+  // resolves it, so a client builds no Representation.  `representation`
+  // wins when both are given; an unknown id is `library.unknown_category`.
+  // A chosen unit is presentation and is never part of the concept.
+  optional string category_id = 4;
 }
 
 // The concepts a Source may be created over, in the order the creation

@@ -66,9 +66,10 @@ pub use edit_plan::{Precondition, SemanticEditPlan, SemanticOperation};
 pub use explain::{explain, Explanation, ExplanationSection};
 pub use format::format_document;
 pub use formula::{
-    compose, formula_projection, formula_slot, ComposeOp, ComposeResult, EquationCandidate,
-    FormulaNode, FormulaProjection, NodeKind, ReferenceCandidate, SlotInfo, TypeKindView, TypeView,
-    UnitCandidate,
+    caret_offset, compose, formula_projection, formula_slot, navigate, render, signature, Caret,
+    ComposeOp, ComposeResult, EquationCandidate, FormulaNode, FormulaProjection, FormulaRender,
+    Fragment, Motion, NodeKind, ParameterHelp, ReferenceCandidate, Side, SignatureHelp, SlotInfo,
+    TypeKindView, TypeView, UnitCandidate,
 };
 pub use hover::{hover, EntityStatus, HoverDetail, SemanticHover};
 pub use inlay::{inlay_hints, InlayHint, InlayKind};

@@ -1177,6 +1177,201 @@ fn definition_drafts_over_stdio() {
     };
     assert_eq!(e.code, "draft.stale_revision");
 
+    // 0.26: the structure on the wire — a composite unit literal with its
+    // canonical spelling and display, roles, a caret moved, keyboard
+    // insertion, completion at a caret, signature help, the render, the
+    // value categories with their unit candidates
+    let Resp::DefinitionDraft(d) = draft(
+        &mut c,
+        &mut events,
+        revision,
+        mapping,
+        11,
+        "clamp(Tilt / (180 deg per s * 2 s), ?, 1)",
+    ) else {
+        panic!("expected a draft analysis")
+    };
+    let tree = d.projection.unwrap().root.unwrap();
+    assert_eq!(tree.children[0].role, "argument 1");
+    assert_eq!(tree.children[0].children[1].role, "denominator");
+    let lit = &tree.children[0].children[1].children[0];
+    assert_eq!(
+        (lit.kind.as_str(), lit.unit.as_str()),
+        ("quantity", "deg per s")
+    );
+    assert_eq!(
+        (lit.unit_source.as_str(), lit.unit_display.as_str()),
+        ("deg per s", "deg/s")
+    );
+    assert!(lit.unit_id.is_empty());
+    assert_eq!(tree.append_at, Some(tree.range.as_ref().unwrap().end - 1));
+    let Resp::NavigateFormula(nav) = c.call(
+        Req::NavigateFormula(pb::NavigateFormulaRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "clamp(Tilt / (180 deg per s * 2 s), ?, 1)".into(),
+            node_id: "r".into(),
+            side: pb::CaretSide::Before.into(),
+            motion: pb::CaretMotion::NextSlot.into(),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a caret")
+    };
+    assert_eq!(
+        (nav.node_id.as_str(), nav.side(), nav.offset),
+        ("r.1", pb::CaretSide::Before, 36)
+    );
+    let Resp::ComposeFormula(inserted) = c.call(
+        Req::ComposeFormula(pb::ComposeFormulaRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "?".into(),
+            action: Some(pb::ComposeAction {
+                node_id: "r".into(),
+                action: Some(pb::compose_action::Action::Insert(pb::ComposeInsert {
+                    side: pb::CaretSide::Before.into(),
+                    text: "clamp".into(),
+                })),
+            }),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a composed formula")
+    };
+    assert_eq!(inserted.source, "clamp(?, ?, ?)");
+    assert_eq!(inserted.select, "r.0");
+    let Resp::DraftCompletion(caret) = c.call(
+        Req::CompleteFormulaCaret(pb::CompleteFormulaCaretRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "?".into(),
+            node_id: "r".into(),
+            side: pb::CaretSide::Before.into(),
+            prefix: "cl".into(),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected completions")
+    };
+    let clamp = caret
+        .items
+        .iter()
+        .find(|i| i.label.starts_with("clamp"))
+        .expect("clamp at the caret");
+    assert_eq!(clamp.structured_insert, "clamp(?, ?, ?)");
+    assert_eq!((clamp.replace_start, clamp.replace_end), (0, 0));
+    let Resp::FormulaSignature(sig) = c.call(
+        Req::GetFormulaSignature(pb::GetFormulaSignatureRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+            source: "clamp(Tilt, ?, 1)".into(),
+            node_id: "r.1".into(),
+        }),
+        &mut events,
+    ) else {
+        panic!("expected signature help")
+    };
+    assert!(sig.found);
+    assert_eq!((sig.name.as_str(), sig.active), ("clamp", Some(1)));
+    assert_eq!(sig.parameters.len(), 3);
+    // the render is of the saved formula — nothing is saved yet, so it is
+    // empty while a draft is open; after a commit it reads the committed
+    // text, not the draft
+    let Resp::FormulaRender(rendered) = c.call(
+        Req::GetFormulaRender(pb::GetFormulaRenderRequest {
+            component: None,
+            revision,
+            mapping_id: mapping,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a render")
+    };
+    assert!(rendered.fragments.is_empty());
+    let saved = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "saved".into(),
+            description: String::new(),
+            signature: Some(pb::Signature {
+                inputs: vec![tilt],
+                output: brightness,
+            }),
+            definition: Some(pb::Definition {
+                kind: Some(pb::definition::Kind::Formula("Tilt / 90 deg".into())),
+            }),
+            clock_id: None,
+        }),
+    )
+    .outcome
+    .unwrap()
+    .created_mapping
+    .unwrap();
+    let Resp::FormulaRender(rendered) = c.call(
+        Req::GetFormulaRender(pb::GetFormulaRenderRequest {
+            component: None,
+            revision: c.last_revision,
+            mapping_id: saved,
+        }),
+        &mut events,
+    ) else {
+        panic!("expected a render")
+    };
+    let kinds: Vec<&str> = rendered.fragments.iter().map(|f| f.kind.as_str()).collect();
+    assert_eq!(kinds, ["reference", "operator", "number", "unit"]);
+    assert_eq!(rendered.references, vec!["Tilt"]);
+    assert_eq!(rendered.compact, "Tilt / 90 deg");
+    // back to the world the rest of this test expects
+    let undone = c.call(Req::Undo(pb::UndoRequest {}), &mut events);
+    assert!(
+        matches!(undone, Resp::EditApplied(_) | Resp::SystemEditApplied(_)),
+        "{undone:?}"
+    );
+    assert_eq!(c.last_revision, revision + 2, "one edit, one undo");
+    let Resp::ValueCategories(cats) = c.call(
+        Req::ListValueCategories(pb::ListValueCategoriesRequest {}),
+        &mut events,
+    ) else {
+        panic!("expected the value categories")
+    };
+    let angular = cats
+        .categories
+        .iter()
+        .find(|k| k.id == "angular_velocity")
+        .expect("angular velocity");
+    assert_eq!(angular.display_name, "angular velocity");
+    assert_eq!(angular.type_name, "AngularVelocity");
+    let preferred = angular.preferred_unit.as_ref().unwrap();
+    assert_eq!(
+        (preferred.source.as_str(), preferred.display.as_str()),
+        ("rad per s", "rad/s")
+    );
+    let offered: Vec<&str> = angular.units.iter().map(|u| u.source.as_str()).collect();
+    assert_eq!(
+        offered,
+        ["rad per s", "deg per s", "turn per s", "deg per min"]
+    );
+    assert!(cats
+        .categories
+        .iter()
+        .any(|k| k.id == "boolean" && k.type_name == "Bool"));
+    assert!(cats.categories.iter().any(|k| k.id == "count"));
+    let Resp::ConceptTemplates(ct) = c.call(
+        Req::ListConceptTemplates(pb::ListConceptTemplatesRequest {}),
+        &mut events,
+    ) else {
+        panic!("expected the templates")
+    };
+    let speed = ct.quantities.iter().find(|q| q.id == "speed").unwrap();
+    assert_eq!(speed.unit, "m/s", "the display, as 0.25 clients read it");
+    assert_eq!(speed.preferred_unit.as_ref().unwrap().source, "m per s");
+
     // an open draft: a concept without a representation is Open, not an error
     let warmth = apply(
         &mut c,

@@ -122,7 +122,7 @@ fn the_projection_is_the_surface_tree_with_types_expected_types_and_ranges() {
     // the denominator: a quantity literal with its unit, parentheses in its range
     let ninety = node(&p, "r.0.1");
     assert!(
-        matches!(&ninety.kind, NodeKind::Quantity { coordinate, unit, unit_id: Some(id) } if coordinate == "90" && unit == "deg" && id == "angle.deg")
+        matches!(&ninety.kind, NodeKind::Quantity { coordinate, unit, unit_id: Some(id), .. } if coordinate == "90" && unit == "deg" && id == "angle.deg")
     );
     assert_eq!(
         &p.source[ninety.range.start as usize..ninety.range.end as usize],
@@ -150,11 +150,22 @@ fn the_projection_is_the_surface_tree_with_types_expected_types_and_ranges() {
 fn unsupported_forms_are_opaque_regions_and_parse_failures_have_no_tree() {
     let lamp = lamp();
     let mut host = IdeHost::new(lamp.snapshot.clone());
+    // a match is structured (0.27): the subject, then one arm per case,
+    // each with its pattern and its body
     host.set_definition_draft(lamp.dim_by_tilt, "match Tilt { _ => 0 }");
     let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
-    assert!(matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("match")));
-    assert!(node(&p, "r").children.is_empty());
-    assert!(p.complete, "an opaque form is still a valid formula");
+    assert!(matches!(&node(&p, "r").kind, NodeKind::Match));
+    assert_eq!(node(&p, "r").children.len(), 2);
+    assert_eq!(node(&p, "r.0").role, "subject");
+    assert!(matches!(&node(&p, "r.1").kind, NodeKind::Arm { pattern, .. } if pattern == "_"));
+    assert_eq!(node(&p, "r.1.0").role, "body");
+    assert!(p.complete, "a structured form is still a valid formula");
+    // the one form that stays opaque: the empty product
+    host.set_definition_draft(lamp.dim_by_tilt, "dimByTilt(())");
+    let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
+    assert!(
+        matches!(&node(&p, "r.0").kind, NodeKind::Opaque { what } if what.contains("empty product"))
+    );
     host.set_definition_draft(lamp.dim_by_tilt, "Tilt / (");
     let p = formula_projection(&host.snapshot(), lamp.dim_by_tilt).expect("projection");
     assert!(!p.parse_ok && p.root.is_none() && !p.complete);
@@ -1048,7 +1059,7 @@ fn composed_sources_keep_the_intended_precedence() {
     let _ = &mut host;
 }
 
-/// An unsupported form is an opaque node: its exact source, selectable,
+/// A structured form keeps its exact source, is selectable as a whole,
 /// and the structure around it stays editable.
 #[test]
 fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable() {
@@ -1059,12 +1070,12 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
     host.set_definition_draft(m, src);
     let p = formula_projection(&host.snapshot(), m).expect("projection");
     let opaque = node(&p, "r.0");
-    assert!(matches!(&opaque.kind, NodeKind::Opaque { what } if what.contains("match")));
+    assert!(matches!(&opaque.kind, NodeKind::Match));
     assert_eq!(
         &src[opaque.range.start as usize..opaque.range.end as usize],
         "(match Tilt { _ => 1 })"
     );
-    assert!(opaque.children.is_empty());
+    assert_eq!(opaque.children.len(), 2);
     assert_eq!(
         dim_of(&node(&p, "r.1").expected),
         Some(Dim::ZERO),
@@ -1095,12 +1106,12 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
         },
     );
     assert_eq!(r.source, "((match Tilt { _ => 1 }) + ?) * ?");
-    // a temporal form and a rule are opaque too, with their own sentence
+    // a temporal form is structured too: the initial value and the value
     host.set_definition_draft(lamp.dim_by_tilt, "delay(0, Tilt)");
     let p = formula_projection(&host.snapshot(), m).expect("projection");
-    assert!(
-        matches!(&node(&p, "r").kind, NodeKind::Opaque { what } if what.contains("remembered"))
-    );
+    assert!(matches!(&node(&p, "r").kind, NodeKind::Delay));
+    assert_eq!(node(&p, "r.0").role, "initial");
+    assert_eq!(node(&p, "r.1").role, "value");
 }
 
 // ---- boolean logic and choices -------------------------------------------------------

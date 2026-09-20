@@ -20,7 +20,7 @@ pub mod pb {
 /// `major` are compatible.
 pub const PROTOCOL_VERSION: pb::Version = pb::Version {
     major: 0,
-    minor: 26,
+    minor: 27,
     patch: 0,
 };
 

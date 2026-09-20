@@ -21,8 +21,10 @@ pub struct QuantityDef {
     pub id: &'static str,
     /// The textual type name (`Illuminance`).
     pub type_name: &'static str,
-    /// The canonical unit symbol, for display (`lx`, `m/s`); empty for a
-    /// dimensionless quantity.
+    /// The preferred unit, in the canonical BDL spelling (`lx`,
+    /// `m per s`, `N * m`; `units::UnitExpr::parse_canonical` reads it);
+    /// empty for a dimensionless quantity.  Its mathematical rendering
+    /// (`m/s`, `N·m`) is `UnitExpr::display`, never stored here.
     pub unit: &'static str,
     pub dim: Dim,
 }
@@ -93,19 +95,19 @@ pub const QUANTITIES: &[QuantityDef] = &[
     QuantityDef {
         id: "speed",
         type_name: "Speed",
-        unit: "m/s",
+        unit: "m per s",
         dim: dim!(length: 1, time: -1),
     },
     QuantityDef {
         id: "acceleration",
         type_name: "Acceleration",
-        unit: "m/s²",
+        unit: "m per s^2",
         dim: dim!(length: 1, time: -2),
     },
     QuantityDef {
         id: "angular_velocity",
         type_name: "AngularVelocity",
-        unit: "rad/s",
+        unit: "rad per s",
         dim: dim!(angle: 1, time: -1),
     },
     QuantityDef {
@@ -129,7 +131,7 @@ pub const QUANTITIES: &[QuantityDef] = &[
     QuantityDef {
         id: "torque",
         type_name: "Torque",
-        unit: "N·m",
+        unit: "N * m",
         dim: dim!(mass: 1, length: 2, time: -2),
     },
     QuantityDef {
@@ -151,6 +153,37 @@ pub const QUANTITIES: &[QuantityDef] = &[
         dim: dim!(luminous: 1, angle: 2, length: -2),
     },
 ];
+
+/// The curated composite units a designer is offered for a named
+/// quantity, beyond the registered atoms of its dimension (canonical
+/// spellings; `units::candidates_for` parses them).  Bounded on purpose:
+/// the useful forms, never the product of every compatible atom.
+pub fn preferred_units(id: &str) -> &'static [&'static str] {
+    match id {
+        "angular_velocity" => &["rad per s", "deg per s", "turn per s", "deg per min"],
+        "speed" => &["m per s", "mm per s", "km per h"],
+        "acceleration" => &["m per s^2", "mm per s^2"],
+        "torque" => &["N * m"],
+        "frequency" => &["s^-1"],
+        _ => &[],
+    }
+}
+
+impl QuantityDef {
+    /// The designer's word for the category (`angular velocity`,
+    /// `illuminance`): the type name spelled out in English, the shared
+    /// vocabulary's own language; a client localizes by `id`.
+    pub fn display_name(&self) -> String {
+        let mut out = String::new();
+        for (i, c) in self.type_name.chars().enumerate() {
+            if c.is_ascii_uppercase() && i > 0 {
+                out.push(' ');
+            }
+            out.push(c.to_ascii_lowercase());
+        }
+        out
+    }
+}
 
 /// By library id (`"illuminance"`).
 pub fn lookup(id: &str) -> Option<&'static QuantityDef> {

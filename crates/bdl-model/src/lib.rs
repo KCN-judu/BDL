@@ -28,6 +28,7 @@ pub mod layout;
 pub mod persist;
 pub mod quantity;
 pub mod surface;
+pub mod units;
 
 pub use dim::Dim;
 pub use edit::{apply_edit, Applied, EditError, EditKind, EditOp, EditOutcome, Invalidation};

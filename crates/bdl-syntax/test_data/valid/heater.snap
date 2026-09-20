@@ -99,7 +99,8 @@ Module@0..1031
           Number@381..384 "315"
           Whitespace@384..385 " "
           UnitSuffix@385..386
-            Ident@385..386 "K"
+            UnitFactor@385..386
+              Ident@385..386 "K"
   Whitespace@386..388 "\n\n"
   MappingDecl@388..469
     KwMapping@388..395 "mapping"
@@ -144,7 +145,8 @@ Module@0..1031
             Number@450..453 "335"
             Whitespace@453..454 " "
             UnitSuffix@454..455
-              Ident@454..455 "K"
+              UnitFactor@454..455
+                Ident@454..455 "K"
         Whitespace@455..456 " "
         AndAnd@456..458 "&&"
         Whitespace@458..459 " "
@@ -163,7 +165,8 @@ Module@0..1031
                 Number@465..466 "0"
                 Whitespace@466..467 " "
                 UnitSuffix@467..468
-                  Ident@467..468 "K"
+                  UnitFactor@467..468
+                    Ident@467..468 "K"
             RParen@468..469 ")"
   Whitespace@469..471 "\n\n"
   MappingDecl@471..703
@@ -441,7 +444,8 @@ Module@0..1031
                 Number@936..939 "293"
                 Whitespace@939..940 " "
                 UnitSuffix@940..941
-                  Ident@940..941 "K"
+                  UnitFactor@940..941
+                    Ident@940..941 "K"
             RParen@941..942 ")"
           Whitespace@942..943 " "
           Slash@943..944 "/"
@@ -452,7 +456,8 @@ Module@0..1031
               Number@946..949 "2.5"
               Whitespace@949..950 " "
               UnitSuffix@950..951
-                Ident@950..951 "s"
+                UnitFactor@950..951
+                  Ident@950..951 "s"
             RParen@951..952 ")"
         Whitespace@952..953 " "
         Star@953..954 "*"

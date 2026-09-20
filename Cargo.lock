@@ -408,6 +408,7 @@ name = "bdl-syntax"
 version = "0.1.0"
 dependencies = [
  "bdl-diagnostics",
+ "bdl-model",
  "logos 0.16.1",
  "proptest",
  "rowan",

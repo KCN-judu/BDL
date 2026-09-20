@@ -33,7 +33,7 @@ pub use kind::{BdlLanguage, SyntaxKind};
 pub use literal::{Decimal, NumberLiteral};
 pub use lower::{
     lower_formula, lower_module, BinaryOp, BinderForm, ExprKind, PatternKind, SurfaceExpr,
-    SurfaceModule, SurfacePattern, SurfaceType, TypeKind, UnaryOp, Unit,
+    SurfaceModule, SurfacePattern, SurfaceType, SurfaceUnitFactor, TypeKind, UnaryOp, Unit,
 };
 pub use parser::{parse_formula, parse_module};
 pub use syntax::{Parse, SyntaxElement, SyntaxError, SyntaxErrorCode, SyntaxNode, SyntaxToken};

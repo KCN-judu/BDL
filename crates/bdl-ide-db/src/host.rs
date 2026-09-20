@@ -387,6 +387,26 @@ impl IdeHost {
         Ok(s)
     }
 
+    /// The committed world alone, with no overlay applied: what a saved
+    /// formula's render reads while the designer may be drafting another.
+    /// Composed on demand; the text ground, when one exists, is the
+    /// committed text.
+    pub fn committed_snapshot(&mut self) -> Arc<AnalysisSnapshot> {
+        if self.overlays.is_empty() {
+            return self.snapshot();
+        }
+        let none = OverlaySet::default();
+        let token = CancellationToken::never();
+        let s = match &self.text {
+            Some(ground) => AnalysisSnapshot::compose_text(ground, &none, &self.uris, &token),
+            None => AnalysisSnapshot::compose(self.committed.clone(), &none, &self.uris, &token),
+        };
+        match s {
+            Ok(s) => Arc::new(s.with_port_backed(self.port_backed.clone())),
+            Err(Cancelled) => unreachable!("a never-cancelled token cannot cancel"),
+        }
+    }
+
     /// Whether a result stamped `stamp` still describes the current world.
     pub fn is_current(&self, stamp: SnapshotStamp) -> bool {
         stamp == self.stamp()

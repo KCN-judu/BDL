@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 bdl-diagnostics = { workspace = true }
+bdl-model = { workspace = true }
 serde = { workspace = true }
 logos = { workspace = true }
 rowan = { workspace = true }

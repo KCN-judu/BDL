@@ -43,7 +43,8 @@ Module@0..122
               Number@36..37 "1"
               Whitespace@37..38 " "
               UnitSuffix@38..41
-                Ident@38..41 "deg"
+                UnitFactor@38..41
+                  Ident@38..41 "deg"
           Whitespace@41..42 " "
           Lt@42..43 "<"
           Whitespace@43..44 " "
@@ -51,7 +52,8 @@ Module@0..122
             Number@44..45 "2"
             Whitespace@45..46 " "
             UnitSuffix@46..49
-              Ident@46..49 "deg"
+              UnitFactor@46..49
+                Ident@46..49 "deg"
         Whitespace@49..50 " "
         EqEq@50..52 "=="
         Whitespace@52..53 " "

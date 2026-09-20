@@ -741,7 +741,16 @@ ast_node!(
     LiteralExpr,
     LiteralExpr
 );
-ast_node!(UnitSuffix, UnitSuffix);
+ast_node!(
+    /// The unit expression after a number: `deg`, `m per s^2`, `N * m`.
+    UnitSuffix,
+    UnitSuffix
+);
+ast_node!(
+    /// One factor: a symbol and an optional `^` exponent.
+    UnitFactor,
+    UnitFactor
+);
 ast_node!(ParenExpr, ParenExpr);
 ast_node!(
     /// `callee(args)`
@@ -882,13 +891,76 @@ impl LiteralExpr {
 }
 
 impl UnitSuffix {
+    /// The first symbol (the whole unit when there is one factor).
     pub fn ident(&self) -> Option<SyntaxToken> {
+        self.factors().next().and_then(|f| f.symbol())
+    }
+    /// The factors before `per` and the factors after it.
+    pub fn numerator(&self) -> Vec<UnitFactor> {
+        self.sides().0
+    }
+    pub fn denominator(&self) -> Vec<UnitFactor> {
+        self.sides().1
+    }
+    fn sides(&self) -> (Vec<UnitFactor>, Vec<UnitFactor>) {
+        let mut num = Vec::new();
+        let mut den = Vec::new();
+        let mut after_per = false;
+        for el in self.0.children_with_tokens() {
+            match el {
+                rowan::NodeOrToken::Token(t)
+                    if t.kind() == SyntaxKind::Ident && t.text() == "per" =>
+                {
+                    after_per = true;
+                }
+                rowan::NodeOrToken::Node(n) => {
+                    if let Some(f) = UnitFactor::cast(n) {
+                        if after_per {
+                            den.push(f);
+                        } else {
+                            num.push(f);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        (num, den)
+    }
+    pub fn factors(&self) -> impl Iterator<Item = UnitFactor> {
+        children::<UnitFactor>(&self.0)
+    }
+    /// The spelling with one space between tokens: `m per s^2`.
+    pub fn as_str(&self) -> String {
+        let mut out = String::new();
+        for el in self.0.descendants_with_tokens() {
+            if let rowan::NodeOrToken::Token(t) = el {
+                if t.kind().is_trivia() {
+                    continue;
+                }
+                let glue = matches!(t.kind(), SyntaxKind::Caret)
+                    || out.ends_with('^')
+                    || (out.ends_with('-') && t.kind() == SyntaxKind::Number);
+                if !out.is_empty() && !glue {
+                    out.push(' ');
+                }
+                out.push_str(t.text());
+            }
+        }
+        out
+    }
+}
+
+impl UnitFactor {
+    pub fn symbol(&self) -> Option<SyntaxToken> {
         token(&self.0, SyntaxKind::Ident)
     }
-    pub fn as_str(&self) -> String {
-        self.ident()
-            .map(|t| t.text().to_owned())
-            .unwrap_or_default()
+    /// The exponent's number token, when `^` is written.
+    pub fn exponent(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Number)
+    }
+    pub fn negative(&self) -> bool {
+        token(&self.0, SyntaxKind::Minus).is_some()
     }
 }
 

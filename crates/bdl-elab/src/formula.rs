@@ -345,6 +345,17 @@ fn run(
     match (&out_rep, &body_ty) {
         (None, _) => el.diags.push(el.unbound(out, surface.span, "produces")),
         (Some(_), STy::Error) => {}
+        // a lone literal whose unit measures something else: named by the
+        // unit (`formula.unit.dimension`), the same fault a nested
+        // position reports
+        (Some(STy::Q(want)), STy::Q(found))
+            if want != found && matches!(&surface.kind, ExprKind::Number { unit: Some(_), .. }) =>
+        {
+            if let ExprKind::Number { unit: Some(u), .. } = &surface.kind {
+                let d = el.unit_dimension_fault(u, *found, *want);
+                el.diags.push(d);
+            }
+        }
         (Some(expected), found) if expected != found => {
             let out_name = el.concept_name(out);
             el.diags.push(
@@ -797,19 +808,33 @@ impl<'a> Elab<'a> {
                 };
                 match unit {
                     None => (self.lit(Dim::ZERO, value), STy::Q(Dim::ZERO)),
-                    Some(u) => match units::lookup(&u.name) {
-                        Some(def) => (self.lit(def.dim, def.to_canonical(value)), STy::Q(def.dim)),
-                        None => {
-                            let d = self
-                                .error(
-                                    "formula.unit.unknown",
-                                    u.span,
-                                    format!("`{}` is not a unit.", u.name),
-                                )
-                                .fix(format!("Units available: {}.", units::names().join(", ")));
-                            self.push(d);
-                            self.placeholder()
+                    Some(u) => match self.unit_expr(u) {
+                        Some(unit) => {
+                            let dim = unit.dim();
+                            // a literal whose unit measures something else
+                            // than the position asks for: named by the
+                            // unit, not by a later mismatch
+                            // a composite unit in a position that asks for
+                            // a plain quantity of another dimension is
+                            // named by the unit; an atomic literal keeps the
+                            // operator's or equation's own fault, which
+                            // names both sides
+                            let composite = u.numerator.len() + u.denominator.len() > 1
+                                || u.numerator.iter().any(|f| f.exponent != 1);
+                            let want = match expect {
+                                Some(STy::Q(d)) if composite => Some(*d),
+                                _ => None,
+                            };
+                            if let Some(want) = want {
+                                if want != dim {
+                                    let d = self.unit_dimension_fault(u, dim, want);
+                                    self.push(d);
+                                    return self.placeholder();
+                                }
+                            }
+                            (self.lit(dim, unit.to_canonical(value)), STy::Q(dim))
                         }
+                        None => self.placeholder(),
                     },
                 }
             }
@@ -846,6 +871,75 @@ impl<'a> Elab<'a> {
                     .explain("A rule is given to an equation that applies it, such as any, all, map, filter or foldr; it cannot be stored, returned or compared.");
                 self.push(d);
                 self.placeholder()
+            }
+        }
+    }
+
+    /// `formula.unit.dimension`: the literal's unit measures `found`, the
+    /// position asks for `want`.
+    fn unit_dimension_fault(&self, u: &bdl_syntax::Unit, found: Dim, want: Dim) -> Diagnostic {
+        self.error(
+            "formula.unit.dimension",
+            u.span,
+            format!(
+                "`{}` is a unit of {}, but this value must be {}.",
+                u.name,
+                pretty::describe_dim(found),
+                pretty::describe_dim(want)
+            ),
+        )
+        .explain("A unit fixes the physical dimension of the number it follows; choose a unit of the dimension this position expects, or change what the position expects.")
+    }
+
+    /// The unit expression a literal's suffix denotes: every factor a
+    /// registered linear atom, the powers within the dimension's range
+    /// (`bdl_model::units::UnitExpr`).  `None` after a diagnostic.
+    fn unit_expr(&mut self, u: &bdl_syntax::Unit) -> Option<units::UnitExpr> {
+        let num: Vec<(String, i64)> = u
+            .numerator
+            .iter()
+            .map(|f| (f.symbol.clone(), f.exponent))
+            .collect();
+        let den: Vec<(String, i64)> = u
+            .denominator
+            .iter()
+            .map(|f| (f.symbol.clone(), f.exponent))
+            .collect();
+        match units::UnitExpr::build(&num, &den) {
+            Ok(unit) => Some(unit),
+            Err((index, fault)) => {
+                let factor = u.numerator.iter().chain(u.denominator.iter()).nth(index);
+                let span = factor.map(|f| f.span).unwrap_or(u.span);
+                let composite = u.numerator.len() + u.denominator.len() > 1;
+                let d = match fault {
+                    units::UnitError::UnknownAtom { symbol } => self
+                        .error(
+                            "formula.unit.unknown",
+                            span,
+                            if composite {
+                                format!("`{symbol}` in `{}` is not a unit.", u.name)
+                            } else {
+                                format!("`{symbol}` is not a unit.")
+                            },
+                        )
+                        .fix(format!("Units available: {}.", units::names().join(", "))),
+                    units::UnitError::AffineAtom { symbol } => self
+                        .error(
+                            "formula.unit.affine",
+                            span,
+                            format!("`{symbol}` is an absolute temperature unit: it cannot be multiplied, divided or raised to a power."),
+                        )
+                        .explain("An absolute temperature scale has an offset (0 °C is 273.15 K), so `°C per s` or `°C^2` has no single meaning; only units with a plain scale — kelvin, or a temperature difference — combine."),
+                    units::UnitError::ExponentRange { symbol, exponent } => self
+                        .error(
+                            "formula.unit.exponent",
+                            span,
+                            format!("`{symbol}^{exponent}` is beyond the unit powers this version represents (up to ±{}).", units::MAX_EXPONENT),
+                        )
+                        .explain("Physical dimensions carry small whole-number exponents; a power this large has no physical reading."),
+                };
+                self.push(d);
+                None
             }
         }
     }
