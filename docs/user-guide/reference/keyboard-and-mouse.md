@@ -51,8 +51,24 @@ their shortcuts but are reached by clicking today.
 | ⌘↩ | Add / Save the definition |
 | Esc | Revert the draft; with completion open, close it first |
 | Return | new line |
-| ⌃Space | completion |
+| ⌃Space | completion (in the Formula view it also opens as you type a name) |
 | ↑ / ↓ · Return / Tab | move in the completion list · accept |
+
+## Formula view
+
+| Keys | Does |
+| --- | --- |
+| ← → | the previous / next place — out of a denominator, past a parenthesis, into the next part |
+| ↑ ↓ | the row above / below (a numerator from its denominator, a branch from the next) |
+| Home / End | the ends of the enclosing part; again, the ends of the formula |
+| Tab / ⇧Tab | the next / previous empty slot |
+| ) , | leave the parentheses / the next argument |
+| letters, digits | type into the slot or the name or number at the caret; a space after a number starts its unit |
+| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side |
+| ! | negate the part |
+| ( | apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
+| ⌫ / ⌦ | a character, or the whole part beside the caret |
+| click | place the caret and select the part |
 
 ## Code view
 

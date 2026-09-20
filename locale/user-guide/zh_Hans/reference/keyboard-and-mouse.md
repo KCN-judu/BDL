@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/reference/keyboard-and-mouse.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/reference/keyboard-and-mouse.md) · 简体中文 · [日本語](../../ja/reference/keyboard-and-mouse.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 键盘与鼠标
 
@@ -52,8 +54,24 @@
 | ⌘↩ | 添加 / 保存定义 |
 | Esc | 还原草稿；补全打开时先关闭它 |
 | Return | 换行 |
-| ⌃Space | 补全 |
+| ⌃Space | completion (in the Formula view it also opens as you type a name) |
 | ↑ / ↓ · Return / Tab | 在补全列表中移动 · 接受 |
+
+## Formula view
+
+| 按键 | 作用 |
+| --- | --- |
+| ← → | the previous / next place — out of a denominator, past a parenthesis, into the next part |
+| ↑ ↓ | the row above / below (a numerator from its denominator, a branch from the next) |
+| Home / End | the ends of the enclosing part; again, the ends of the formula |
+| Tab / ⇧Tab | the next / previous empty slot |
+| ) , | leave the parentheses / the next argument |
+| letters, digits | type into the slot or the name or number at the caret; a space after a number starts its unit |
+| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side |
+| ! | negate the part |
+| ( | apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
+| ⌫ / ⌦ | a character, or the whole part beside the caret |
+| 点击 | place the caret and select the part |
 
 ## 代码视图
 

@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/reference/keyboard-and-mouse.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/reference/keyboard-and-mouse.md) · [简体中文](../../zh_Hans/reference/keyboard-and-mouse.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # キーボードとマウス
 
@@ -52,8 +54,24 @@
 | ⌘↩ | 定義を追加 / 保存 |
 | Esc | 下書きを元に戻す。補完が開いていれば先にそれを閉じる |
 | Return | 改行 |
-| ⌃Space | 補完 |
+| ⌃Space | completion (in the Formula view it also opens as you type a name) |
 | ↑ / ↓ · Return / Tab | 補完リスト内を移動 · 確定 |
+
+## Formula view
+
+| キー | 動作 |
+| --- | --- |
+| ← → | the previous / next place — out of a denominator, past a parenthesis, into the next part |
+| ↑ ↓ | the row above / below (a numerator from its denominator, a branch from the next) |
+| Home / End | the ends of the enclosing part; again, the ends of the formula |
+| Tab / ⇧Tab | the next / previous empty slot |
+| ) , | leave the parentheses / the next argument |
+| letters, digits | type into the slot or the name or number at the caret; a space after a number starts its unit |
+| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side |
+| ! | negate the part |
+| ( | apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
+| ⌫ / ⌦ | a character, or the whole part beside the caret |
+| クリック | place the caret and select the part |
 
 ## コードビュー
 

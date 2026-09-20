@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/canvas.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/canvas.md) · 简体中文 · [日本語](../../ja/studio/canvas.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 画布
 
@@ -32,7 +34,11 @@ _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）
 
 **概念**是一行：它的名字，左侧一个输入插口（有东西生成这个概念），右侧一个输出插口（关系从这里读取它）。两个插口都带有概念的颜色和形状。
 
-**关系**是一个方框：标题栏有名字，以及在状态成立时的唯一状态词（读取了某些概念但尚无公式的关系显示 _已声明_）；左侧每个读取的概念一个输入插槽，各自标注概念名；右侧一个输出插槽，标注它产出的概念；下方一行是公式，关系有时序域时其名字在右缘。
+A **relationship** is a box: a header with the name and, while it applies, the one state word (_declared_ on a relationship that reads something and has no formula yet); one input socket per concept it reads, on the left, each labelled with the concept; one output socket on the right, labelled with the concept it produces; and the formula on the line below, with the timing domain's name at the right edge when the relationship has one. A relationship with a formula carries a small chevron at that line: click it (or **Show Formula** in its menu) and the node unfolds to show the formula the way the [Formula editor](formula-editor.md) draws it — a fraction, a branch, the units — with its first finding beneath and **Edit formula**, which opens the inspector. The unfolded formula is for reading: clicking it selects the node and changes nothing. Which nodes are unfolded is not saved with the project.
+
+![The relationship node dimByTilt with its formula line Tilt / 90 deg and a downward chevron, extended below by a region showing Tilt over a rule over 90 deg and the link Edit formula.](../../../../docs/user-guide/assets/studio/formula-unfolded.png)
+
+_dimByTilt unfolded: the chevron at its formula line turned down, and the saved formula Tilt / 90 deg drawn as a fraction inside the node, with Edit formula beneath._
 
 不读公式也能从方框分辨三种形态。读取了某些概念的关系——上图的 `dimByTilt`——是一条**规则**：它有输入插槽，并且在标题词位置没有被其他词占用时显示 _规则_。它是一个函数；在某个值的公式应用它之前，设计不会用它计算任何东西。不读取任何概念且有公式的关系——`brightness`——是一个**值**：没有输入插槽、没有词，它的公式提到它所依赖的值和规则。每一个被提到的关系都通过一条**引用连线**与它相连：从那个关系的输出插槽到 `brightness` 公式行左端的一条细灰线。引用连线是设计的依赖关系，读自编译器对公式的分析；分析到达时它们才出现，且不能拖拽——改变公式才能改变它们。没有任何公式应用的规则，不会有引用连线通向任何公式行。
 
@@ -87,7 +93,7 @@ _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）
 | ⌫ / Delete | 删除选区——可一次删除多个对象；若其中某个仍被选区之外的东西使用，则什么也不删除，并由横幅说明原因 |
 | 双击概念或关系节点 | 原地重命名（输出在检查器中重命名；实例则打开它的来源） |
 | 右键点击，或 Control-点击 | 上下文菜单（见下） |
-| 把库标签页中的一行拖到画布上 | 在放下的位置插入该概念；它的名字进入编辑状态 |
+| 把库标签页中的一行拖到画布上 | open the concept sheet for that category; the concept you name lands at the drop point |
 
 **从概念驱动输出。** 输出由关系驱动——一个值或一个来源，恰好生成输出所接受的概念，且位于输出的时序域——而从不由概念本身驱动。你不必先去找那个关系：把概念的输出插口拖到输出上即可。只有一个关系能驱动它时，立刻连接。有多个时，一个小菜单列出它们的名字（_由 brightness 驱动_、_由 dimmer 驱动_），由你选择；工具不会替你选。没有关系能驱动时，菜单会说明——_Servo 接受 ServoPosition，但当前没有任何关系可以驱动它。_——并把输出交给检查器。已被驱动的输出会得到替换选项（_用 rest 替换 lifted_）：旧的驱动方先放开，新的再连上，中间不会出现输出有两个驱动方的时刻。画布上的连线仍然从驱动关系出发——驱动输出的正是它——输出的上下文菜单也会点名（_显示驱动方：brightness_）。
 
@@ -97,9 +103,9 @@ _倾角灯上的节点构造：概念行、关系节点（选中了 dimByTilt）
 
 菜单只关于你右键点击的那个对象。菜单打开期间，画布等待：菜单后面没有任何东西会移动、滚动或高亮；在外面第一次点击只会关闭菜单，不做别的；在别处右键点击则把菜单移到那里。↑ ↓ ⏎ 和 Esc 与任何菜单中一样。
 
-在**空白画布**上：**添加概念 ▸**——_最近_、_输入_、_输出_、三个最常用的类别、_更多…_（打开库标签页）；**添加来源 ▸**——_新建来源…_ 与各预设（_温度输入_、_倾斜输入_……），每一项都打开[来源表单](../../../../docs/user-guide/studio/library.md#sources)，在那里选择来源所提供的概念——已有的，或随之新建的；**添加实例 ▸** _组件_ 和**新建行为组**；然后是**全选**和**显示全部**。
+On **empty canvas**: **Add Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](../../../../docs/user-guide/studio/library.md#creating-a-concept) where you name the concept; **Add Source ▸** — _New source…_, opening the [Source sheet](../../../../docs/user-guide/studio/library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**.
 
-在**关系**上：**编辑定义**（来源没有此项——它的值由环境提供）、**重命名**、**在代码中显示**（分栏视图打开到它的声明处）；**修正 ▸**——编译器为它提供的修正，与检查器的“修正”部分相同：就绪的修正直接执行，需要选择的列出选项，语言尚不能表达的以灰色显示并附原因；然后是**归为行为**、**添加到组 ▸** 或**从 … 移出**；以及**删除 _名字_**。
+On a **relationship**: **Edit Definition** (not for a Source — the environment provides its value), **Show Formula** / **Hide Formula** (when it has one), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**.
 
 在**概念**上：**重命名**、**在代码中显示**、**修正 ▸**、**删除 _名字_**。在**输出**上：**显示驱动方：_名字_**、**重命名**、**在代码中显示**、**修正 ▸**（连接一个值、断开驱动方）、**删除 _名字_**。在**连线**上：**显示 _一端_**、**显示 _另一端_**、**断开**（组件之间的绑定还有**显示绑定**）。在**实例**上：**编辑来源**、**重命名**、**在代码中显示**、**删除 _名字_**。在**行为**上：**重命名**、**折叠** / **展开**、**打包为可复用组件…**、**取消分组**。
 

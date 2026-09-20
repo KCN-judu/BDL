@@ -14,14 +14,12 @@ Source (in a domain)  →  rule(s)  →  value (defined, in the domain)  →  ph
 
 ## Steps
 
-1. **A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientLight`,
-   Quantity, unit **illuminance** (`lx`). (The Library tab's _Ambient Light_
-   item gives the same.)
+1. **A concept for the new sensor.** Sidebar → _Concepts_ **+**, or the Library
+   tab's _Illuminance_ row: name it `AmbientLight`; _Measured in_ shows `lx`.
 2. **The Source.** _Mappings_ **+**: `ambient`, reads nothing, produces
    AmbientLight — a Source; leave it without a formula. **Timing › Updates in**:
-   _interaction_. (The Library's _Ambient Light Input_ opens the Source sheet
-   with steps 1 and 2 prefilled: choose _New concept_ and both are made at
-   once.)
+   _interaction_. (The Library's _Source_ row opens the Source sheet, where _New
+   concept_ makes steps 1 and 2 at once.)
 3. **The rule.** _Mappings_ **+**: `adaptBrightness`, reads **Brightness** and
    **AmbientLight**, produces **Brightness**. Formula:
 

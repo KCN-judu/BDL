@@ -40,7 +40,19 @@ one state word (_declared_ on a relationship that reads something and has no
 formula yet); one input socket per concept it reads, on the left, each labelled
 with the concept; one output socket on the right, labelled with the concept it
 produces; and the formula on the line below, with the timing domain's name at
-the right edge when the relationship has one.
+the right edge when the relationship has one. A relationship with a formula
+carries a small chevron at that line: click it (or **Show Formula** in its menu)
+and the node unfolds to show the formula the way the
+[Formula editor](formula-editor.md) draws it — a fraction, a branch, the units —
+with its first finding beneath and **Edit formula**, which opens the inspector.
+The unfolded formula is for reading: clicking it selects the node and changes
+nothing. Which nodes are unfolded is not saved with the project.
+
+![The relationship node dimByTilt with its formula line Tilt / 90 deg and a downward chevron, extended below by a region showing Tilt over a rule over 90 deg and the link Edit formula.](../assets/studio/formula-unfolded.png)
+
+_dimByTilt unfolded: the chevron at its formula line turned down, and the saved
+formula Tilt / 90 deg drawn as a fraction inside the node, with Edit formula
+beneath._
 
 The box tells the three shapes apart without the formula. A relationship that
 reads something — `dimByTilt` above — is a **rule**: it has input sockets and,
@@ -128,7 +140,7 @@ one and it.
 | ⌫ / Delete                                                            | delete the selection — several objects at once; if one of them is still used by something outside the selection, nothing is deleted and a banner says what |
 | double-click a concept or relationship node                           | rename in place (an output is renamed in the inspector; an instance opens its source)                                                                      |
 | right-click, or Control-click                                         | the context menu (below)                                                                                                                                   |
-| drag a row from the Library tab onto the canvas                       | insert that concept at the drop point; its name opens for editing                                                                                          |
+| drag a row from the Library tab onto the canvas                       | open the concept sheet for that category; the concept you name lands at the drop point                                                                     |
 
 **Driving an output from its concept.** An output is driven by a relationship —
 a value or a Source that produces exactly what the output accepts, in the
@@ -153,20 +165,22 @@ canvas waits: nothing behind the menu moves, scrolls or lights up; the first
 click outside closes it and does nothing else; a right-click somewhere else
 moves it there. Use ↑ ↓ ⏎ and Esc as in any menu.
 
-On **empty canvas**: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three
-most common categories, _More…_ (which opens the Library tab); **Add Source ▸**
-— _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each
-opening the [Source sheet](library.md#sources), where you choose the concept the
-Source provides — an existing one, or a new one made with it; **Add Instance ▸**
-_component_ and **New Behavior Group**; then **Select All** and **Frame All**.
+On **empty canvas**: **Add Concept ▸** — _Recent_, the four kinds of value (_On
+/ off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_,
+…), _More…_ (which opens the Library tab), each opening the
+[concept sheet](library.md#creating-a-concept) where you name the concept; **Add
+Source ▸** — _New source…_, opening the [Source sheet](library.md#sources),
+where you choose the concept the Source provides — an existing one, or a new one
+made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then
+**Select All** and **Frame All**.
 
 On a **relationship**: **Edit Definition** (not for a Source — the environment
-provides its value), **Rename**, **Reveal in Code** (the Split view opens at its
-declaration); **Fix ▸** — the fixes the compiler offers for it, as in the
-inspector's Fixes section: a ready fix runs, one that needs a choice lists the
-choices, one the language cannot express yet is shown greyed with the reason;
-then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and
-**Delete _name_**.
+provides its value), **Show Formula** / **Hide Formula** (when it has one),
+**Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix
+▸** — the fixes the compiler offers for it, as in the inspector's Fixes section:
+a ready fix runs, one that needs a choice lists the choices, one the language
+cannot express yet is shown greyed with the reason; then **Group as Behavior**,
+**Add to Group ▸** or **Remove from …**; and **Delete _name_**.
 
 On a **concept**: **Rename**, **Reveal in Code**, **Fix ▸**, **Delete _name_**.
 On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix

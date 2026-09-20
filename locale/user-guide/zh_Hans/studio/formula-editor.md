@@ -1,18 +1,34 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/formula-editor.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/formula-editor.md) · 简体中文 · [日本語](../../ja/studio/formula-editor.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 公式编辑器
 
 关系检查器的**关系**分区是编写公式的地方。它不是普通的文本框：编译器在你输入时就检查你输入的内容，而且在你确认之前，什么都不会进入设计。
 
-编辑器对同一个公式有两种视图，用顶部的**公式 | 文本**开关选择。**公式**把表达式显示为你拼装的部件——引用、带单位的数、运算符、函数——并告诉你每个空槽位期望什么。**文本**是写出来的公式。切换对公式没有影响：两者编辑的是同一份草稿，在一个视图里搭建的就是在另一个视图里读到的。
+The editor has two views of the same formula, chosen with the **Formula | Text** switch at its top. **Formula** shows the expression as the mathematics it is — references, numbers with their units, a fraction for a division, a function and its arguments, a choice as a branch — with a caret you type at and a selected part the buttons beneath act on, and tells you what each empty slot expects. **Text** is the formula as written. Switching does nothing to the formula: both edit one draft, and what you build in one is what you read in the other.
+
+## Typing a formula
+
+The Formula view is written at a **caret**, like a text field, but the caret moves through the formula's parts rather than its characters: before and after each part, inside an empty slot, inside a name or a number, just inside a pair of parentheses. Click where you want to write, or start typing in an empty formula (_Type to write, or choose a part_).
+
+- **Letters and digits** type into the slot or the name or number the caret touches. Typing `Til` opens the completion list at the caret — the concepts this relationship reads, the design's relationships, the equations, ranked by what this place expects — and **Return** or **Tab** takes the highlighted row. A **space after a number** starts its unit: `90` `⎵` `deg`.
+- **`+ − * /`, `< >`, `=`, `&`, `|`** put that operator after the part the caret touches, with a slot for the other side; `/` draws a fraction and puts the caret in the denominator. **`!`** negates the part.
+- **`(`** after an equation's name applies it: `clamp` becomes `clamp(?, ?, ?)` with the first slot ready to type into. `(` in an empty slot opens a group.
+- **← →** move to the previous / next place — out of a denominator, past a parenthesis, into the next part. **↑ ↓** move between the rows of a fraction or a choice. **Home / End** go to the ends of the enclosing part, and again to the ends of the formula. **Tab / ⇧Tab** jump to the next / previous empty slot. **`)`** leaves the parentheses you are in; **`,`** moves to the next argument.
+- **⌫ / ⌦** delete a character of a name or a number, or a whole part when the caret is beside one — a slot's operator goes with it.
+
+So `clamp(Tilt / 90 deg, 0, 1)` is typed as `clamp` `(` `Tilt` `/` `90` `⎵deg` `,` `0` `,` `1` — 22 keys, and the completion list would have taken `clamp` after `cl` and `Tilt` after `Ti`. The part you are typing into is shown as text until the compiler has read it — a moment — and the rest of the formula keeps its shape. A key that cannot act where the caret is says why beneath the field (_Type an operator before adding a value here._) and changes nothing.
+
+The pointer works alongside: clicking a part places the caret there _and_ selects the part, so the buttons beneath the field (below) act on it; the caret follows every action to the part that comes next. There is no mode to switch.
 
 ## 拼装公式
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
-_选中分母槽位的公式视图：编译器说明该槽位期望角度及原因，并提供带角度单位的数字、合适的引用，以及结果类型合适的方程。_
+_The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._
 
 空公式是一个**槽位**——一个写着 `?` 的虚线框，即尚待写入值的位置。点击槽位，编译器会说明它在那里期望什么，并提供合适的选项：
 
@@ -26,13 +42,13 @@ _选中分母槽位的公式视图：编译器说明该槽位期望角度及原�
 
 字段下方那行——_期望：角度，因为角度 ÷ 角度 = 无量纲量。_——是编译器用平实语言给出的推理。它根据槽位周围的内容推算槽位必须是什么：关系必须生成的结果，以及运算符的另一侧。速度的 `? / 1 s` 期望长度；力矩的 `Force * ?` 期望长度。当槽位周围什么都还不知道时——两个槽位的乘积——它会这样说明并且不提供单位；先填另一侧。**解释**用编译器的记号显示同样的内容。
 
-**带单位的数**是两个字段：数和它的单位。编辑数是同一单位下的一个新量。从弹出菜单选择另一个单位会保持量不变并重写数：`180 deg` 变成 `3.141592653589793 rad`。这两者是不同的事，弹出菜单永远不做前者。
+A **number with a unit** is its number and its unit; a unit made of several — `m per s^2` in the text — is drawn the way it is read, `m/s²`. Selecting the number shows the unit pop-up. Editing the number is a new quantity in the same unit. Choosing another unit from the pop-up keeps the quantity and rewrites the number: `180 deg` becomes `3.141592653589793 rad`. The two are different things, and the pop-up never does the first.
 
-选择按其读法绘制：`if` 和它的条件在一行，`then` 和 `else` 及各自的结果缩进在下面。每一部分都是普通部件：条件期望真或假，两个结果都期望这个选择必须给出的东西——在最外层是关系的结果，在更大的公式内部则是另一个结果已经是的东西。逻辑运算符以单词 **and**、**or** 和 **not** 显示（文本中是 `&&`、`||` 和 `!`），字重与语言自身的关键字相同。
+A **division** is drawn as a fraction, the numerator over the denominator; the line between them is the division itself — click it to select the whole quotient. A **choice** is drawn as a branch: `if` and its condition on the spine, `then` and `else` with their outcomes on the rows under it. Each part is an ordinary component: the condition expects true or false, and both outcomes expect what the choice must give — the relationship's result at the top, or, inside a larger formula, whatever the other outcome already is. The logical operators are shown as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in the weight of the language's own words. A **`match`** is its subject on the spine and one row per case — the pattern, `⇒`, the outcome; a block with **`let`** is one row per local binding over a line over the result; a rule `x => …` is its parameter, `⇒`, the body; a collection `[…]` or a group `(…)` its items; **`delay`** and **`sync`** a shaded region with a bar on its left, the word and its arguments. Every part reads aloud to a screen reader as what it is — _Tilt over 90 deg_, _a choice: if Held, then 1, else 0_.
 
 作用于集合的公式按其读法绘制：`all reading in readings:` 一行，条件缩进在它下面。元素名在出现的所有地方都是斜体——它属于这个公式，而不是设计，所以重命名概念永远不会影响它——选中它会说明一个元素是什么。范围是 `..` 两侧的两端；每一端期望的种类与 `in` 之前的值相同，因此其单位弹出菜单列出该种类的单位。
 
-公式底层是普通文本：`clamp(Tilt / 90 deg, 0, 1)` 在**文本**视图中就是这样，以文本输入的公式也会出现在**公式**视图中——文本留下槽位的地方显示 `?`；以文本输入的 `all reading in readings: reading < limit` 和 `if RoomTemp > 299.15 K && ButtonHeld then true else false` 会以同样的文字回来，每个部件都可选中。有些形式——`match`、带 `let` 的块、规则 `x => …`、集合或分组字面量、`delay` / `sync`——在公式视图中以文本显示，在文本视图中编辑。无法读作公式的文本会原样保留你输入的内容；公式视图不为它显示部件，而是说 _文本无法读作公式。_ 并提供**以文本编辑**。任何更改之后，公式视图会等待编译器读取新文本——_正在等待编译器读取公式…_，部件变暗——然后才提供下一步操作，因此你点击的任何东西都不会作用于已经变化的文本。
+The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads exactly so in the **Text** view, and a formula typed as text appears in the **Formula** view — with `?` wherever text left a slot; `all reading in readings: reading < limit` and `if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come back as the same words, every part selectable. Only an empty group `()` is shown as text. Text that cannot be read as a formula keeps exactly what you typed; the Formula view shows no parts for it, says _The text cannot be read as a formula._ and offers **Edit as text**. After any change the Formula view waits for the compiler's reading of the new text — _Waiting for the compiler to read the formula…_, the parts dimmed — before it offers the next action, so nothing you click ever acts on text that has already changed.
 
 ## 文本字段及其结论
 
@@ -56,22 +72,28 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 ## 按键
 
 | 键 | 作用 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | **⌘↩** | 添加 / 保存定义 |
 | **Esc** | 还原草稿（补全打开时，第一次 Esc 先关闭它） |
 | **Return** | 在文本视图中换行——公式可以跨行；在数字输入中，插入该数 |
-| **⌃Space** | 打开补全（文本视图） |
+| **⌃Space** | open completion (both views; the Formula view also opens it as you type a name) |
 | **↑ / ↓**、**Return / Tab** | 在补全列表中移动并接受 |
-| **Tab** | 在公式视图中，移到下一个部件 |
-| **+ − \* /**、**< >** | 在公式视图中选中的部件上：把该运算符放在它后面，另一侧留一个槽位 |
+| **← →** | Formula view: the previous / next place — out of a denominator, past a parenthesis, into the next part |
+| **↑ ↓** | Formula view: the row above / below (a numerator from its denominator, a branch from the next) |
+| **Home / End** | Formula view: the ends of the enclosing part; again, the ends of the formula |
+| **Tab / ⇧Tab** | Formula view: the next / previous empty slot |
+| **) ,** | Formula view: leave the parentheses / move to the next argument |
+| **letters, digits, space** | Formula view: type into the slot or the name or number at the caret; a space after a number starts its unit |
+| **+ − \* /**、**< >** | Formula view: put that operator after the part at the caret (or the selected part), with a slot for the other side |
 | **=**、**&**、**\|** | 同理 `==`、`&&`（and）、`\|\|`（or）；`<=`、`>=` 和 `!=` 在**比较**弹出菜单中 |
-| **!** | 原地否定选中的部件（`not …`） |
-| **⌫** | 移除选中的部件（空槽位会连同它的运算符一起移除） |
+| **!** | negate the part in place (`not …`) |
+| **(** | Formula view: apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
+| **⌫ / ⌦** | Formula view: a character of a name or number, or the whole part beside the caret (an empty slot takes its operator with it) |
 | **⌘S** | _保存项目_——从不保存草稿；未添加的公式和未保存的项目是两种不同的状态 |
 
 ## 补全与悬停
 
-在文本视图中，**⌃Space** 在光标处打开一个列表：作用域内的概念、设计中的关系（规则带有 `(`）、数字后的单位、关键字，以及在允许的位置的 `delay(…)` / `sync(…)`。列表由编译器提供，并由它过滤和排序；每一行显示种类和结果类型。打开期间每次按键都会重新询问。
+**⌃Space** opens a list at the caret — in the Formula view it also opens as you type a name: the concepts in scope, the design's relationships (rules come with a `(`), units after a number, keywords, and `delay(…)` / `sync(…)` where they are allowed. The list is the compiler's, filtered and ordered by it — in a formula, by what the place you are typing in expects: in `? / CycleTime` the lengths come before a speed — and each row shows the kind and the resulting type. It re-asks on every keystroke while open.
 
 把指针在名字上停留片刻会显示一张**卡片**：这个名字是什么、它的值形式、状态、描述。从不显示形式化术语——那些在 _解释_ 中。
 

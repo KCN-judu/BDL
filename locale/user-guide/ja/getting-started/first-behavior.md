@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/first-behavior.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · [简体中文](../../zh_Hans/getting-started/first-behavior.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 最初の振る舞い
 
@@ -59,9 +61,9 @@ _宣言済みの関係：破線の輪郭と、ヘッダーの「宣言済み」�
 
 どちらのビューも同じ数式を編集します。**⌘↩** を押すか、**定義を追加**をクリックします。
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
-_分母のスロットを選択した数式ビュー：コンパイラはスロットが角度を期待することとその理由を述べ、角度の単位付きの数値、適合する参照、結果が適合する方程式を提示する。_
+_The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._
 
 ノードは本体に数式を示し、実線で描かれます。
 

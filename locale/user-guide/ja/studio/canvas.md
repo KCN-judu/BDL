@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/canvas.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/canvas.md) · [简体中文](../../zh_Hans/studio/canvas.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # キャンバス
 
@@ -32,7 +34,11 @@ _傾きランプのノードの構造：コンセプト行、関係ノード（d
 
 **コンセプト**は 1 行です。名前、左の入力ソケット（何かがこのコンセプトを生成する）、右の出力ソケット（関係はここから読み取る）。両方のソケットがコンセプトの色と形を持ちます。
 
-**関係**は箱です。ヘッダーには名前と、該当する間だけ唯一の状態語（何かを読み取り数式がまだない関係には _宣言済み_）。左側には読み取る概念ごとに一つの入力ソケットがあり、それぞれ概念名が添えられます。右側には生成する概念名を添えた出力ソケットが一つ。その下の行に数式があり、関係にタイミングドメインがあれば右端にその名前が出ます。
+A **relationship** is a box: a header with the name and, while it applies, the one state word (_declared_ on a relationship that reads something and has no formula yet); one input socket per concept it reads, on the left, each labelled with the concept; one output socket on the right, labelled with the concept it produces; and the formula on the line below, with the timing domain's name at the right edge when the relationship has one. A relationship with a formula carries a small chevron at that line: click it (or **Show Formula** in its menu) and the node unfolds to show the formula the way the [Formula editor](formula-editor.md) draws it — a fraction, a branch, the units — with its first finding beneath and **Edit formula**, which opens the inspector. The unfolded formula is for reading: clicking it selects the node and changes nothing. Which nodes are unfolded is not saved with the project.
+
+![The relationship node dimByTilt with its formula line Tilt / 90 deg and a downward chevron, extended below by a region showing Tilt over a rule over 90 deg and the link Edit formula.](../../../../docs/user-guide/assets/studio/formula-unfolded.png)
+
+_dimByTilt unfolded: the chevron at its formula line turned down, and the saved formula Tilt / 90 deg drawn as a fraction inside the node, with Edit formula beneath._
 
 箱を見れば、数式を読まずに三つの形を見分けられます。何かを読み取る関係——上の `dimByTilt`——は**ルール**です。入力ソケットがあり、ヘッダーの語を他に必要とするものがなければ _ルール_ と表示されます。関数なので、値の数式がこれを適用するまで設計は何も計算しません。何も読み取らず数式を持つ関係——`brightness`——は**値**です。入力ソケットも語もなく、その数式が依存する値とルールを名指します。名指された関係のそれぞれは**参照リンク**で結ばれます。その関係の出力ソケットから `brightness` の数式行の左端へ引かれた細い灰色の線です。参照リンクは設計の依存関係で、コンパイラーによる数式の分析から読み取られます。分析が届いたときに現れ、引っ張ることはできません——変えるには数式を変えます。どの数式にも適用されないルールからは、どの数式行へも参照リンクは出ていきません。
 
@@ -87,7 +93,7 @@ _傾きランプのノードの構造：コンセプト行、関係ノード（d
 | ⌫ / Delete | 選択を削除する——複数のオブジェクトを一度に。そのうちの 1 つが選択の外からまだ使われていれば何も削除されず、バナーが理由を述べる |
 | コンセプトまたは関係ノードをダブルクリック | その場で名前を変更する（出力はインスペクターで名前を変更。インスタンスはソースを開く） |
 | 右クリック、または Control-クリック | コンテキストメニュー（下記） |
-| ライブラリタブの行をキャンバスへドラッグ | そのコンセプトを落とした位置に挿入する。名前が編集状態で開く |
+| ライブラリタブの行をキャンバスへドラッグ | open the concept sheet for that category; the concept you name lands at the drop point |
 
 **コンセプトから出力を駆動する。** 出力は関係——出力が受け付けるものをちょうど生成する値または入力元で、出力のタイミングドメインにあるもの——によって駆動され、コンセプト自体が駆動することはありません。その関係を先に探す必要はありません。コンセプトの出力ソケットを出力へドラッグしてください。駆動できる関係が 1 つなら、すぐに接続されます。複数あれば小さなメニューがそれらを名前で示し（_brightness で駆動_、_dimmer で駆動_）、あなたが選びます。勝手には選ばれません。1 つもなければメニューがそう述べ——_Servo は ServoPosition を受け付けますが、それを駆動できる関係が今はありません。_——インスペクターで出力を示します。すでに駆動されている出力には置き換えが提案されます（_lifted を rest に置き換え_）。古い駆動元が離れ、次に新しいものが接続され、その間に出力が 2 つの駆動元を持つことはありません。キャンバスのエッジは引き続き駆動する関係から伸びます——出力を駆動しているのはそれです——出力のコンテキストメニューもそれを名指しします（_駆動元を表示：brightness_）。
 
@@ -97,9 +103,9 @@ _傾きランプのノードの構造：コンセプト行、関係ノード（d
 
 メニューは右クリックしたものについてだけです。開いている間、キャンバスは待ちます。メニューの後ろでは何も動かず、スクロールせず、光りません。外側での最初のクリックはメニューを閉じるだけで、他には何もしません。別の場所で右クリックすればそこへ移ります。↑ ↓ ⏎ と Esc は他のメニューと同じです。
 
-**空のキャンバス**で：**コンセプトを追加 ▸** — _最近_、_入力_、_出力_、よく使う三つのカテゴリー、_その他…_（ライブラリタブを開く）；**入力元を追加 ▸** — _新しい入力元…_ とプリセット（_温度入力_、_傾き入力_ …）。どれも[入力元シート](../../../../docs/user-guide/studio/library.md#sources)を開き、そこで入力元が提供するコンセプト（既存のもの、または一緒に作る新しいもの）を選びます；**インスタンスを追加 ▸** _コンポーネント_ と**新しい振る舞いグループ**；続いて**すべて選択**と**全体を表示**。
+On **empty canvas**: **Add Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](../../../../docs/user-guide/studio/library.md#creating-a-concept) where you name the concept; **Add Source ▸** — _New source…_, opening the [Source sheet](../../../../docs/user-guide/studio/library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**.
 
-**関係**で：**定義を編集**（入力元にはない——その値は環境が与える）、**名前を変更**、**コードで表示**（分割ビューがその宣言の位置で開く）；**修正 ▸** — コンパイラーがそれに提示する修正で、インスペクターの「修正」セクションと同じ。すぐ実行できる修正は実行され、選択が必要なものは選択肢を列挙し、言語がまだ表現できないものは理由付きでグレー表示される；続いて**振る舞いとしてグループ化**、**グループに追加 ▸** または **… から外す**；そして **_名前_ を削除**。
+On a **relationship**: **Edit Definition** (not for a Source — the environment provides its value), **Show Formula** / **Hide Formula** (when it has one), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**.
 
 **コンセプト**で：**名前を変更**、**コードで表示**、**修正 ▸**、**_名前_ を削除**。**出力**で：**駆動元を表示：_名前_**、**名前を変更**、**コードで表示**、**修正 ▸**（値を接続、駆動元を切断）、**_名前_ を削除**。**リンク**で：**_一方の端_ を表示**、**_もう一方_ を表示**、**切断**（コンポーネント間のバインディングでは**バインディングを表示**も）。**インスタンス**で：**ソースを編集**、**名前を変更**、**コードで表示**、**_名前_ を削除**。**振る舞い**で：**名前を変更**、**折りたたむ** / **展開**、**再利用可能なコンポーネントとしてパッケージ化…**、**グループ解除**。
 

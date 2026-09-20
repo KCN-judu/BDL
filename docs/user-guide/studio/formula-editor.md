@@ -5,19 +5,59 @@ written. It is not a plain text box: the compiler checks what you type as you
 type it, and nothing reaches the design until you say so.
 
 The editor has two views of the same formula, chosen with the **Formula | Text**
-switch at its top. **Formula** shows the expression as parts you assemble —
-references, numbers with their units, operators, functions — and tells you what
-each empty slot expects. **Text** is the formula as written. Switching does
-nothing to the formula: both edit one draft, and what you build in one is what
-you read in the other.
+switch at its top. **Formula** shows the expression as the mathematics it is —
+references, numbers with their units, a fraction for a division, a function and
+its arguments, a choice as a branch — with a caret you type at and a selected
+part the buttons beneath act on, and tells you what each empty slot expects.
+**Text** is the formula as written. Switching does nothing to the formula: both
+edit one draft, and what you build in one is what you read in the other.
+
+## Typing a formula
+
+The Formula view is written at a **caret**, like a text field, but the caret
+moves through the formula's parts rather than its characters: before and after
+each part, inside an empty slot, inside a name or a number, just inside a pair
+of parentheses. Click where you want to write, or start typing in an empty
+formula (_Type to write, or choose a part_).
+
+- **Letters and digits** type into the slot or the name or number the caret
+  touches. Typing `Til` opens the completion list at the caret — the concepts
+  this relationship reads, the design's relationships, the equations, ranked by
+  what this place expects — and **Return** or **Tab** takes the highlighted row.
+  A **space after a number** starts its unit: `90` `⎵` `deg`.
+- **`+ − * /`, `< >`, `=`, `&`, `|`** put that operator after the part the caret
+  touches, with a slot for the other side; `/` draws a fraction and puts the
+  caret in the denominator. **`!`** negates the part.
+- **`(`** after an equation's name applies it: `clamp` becomes `clamp(?, ?, ?)`
+  with the first slot ready to type into. `(` in an empty slot opens a group.
+- **← →** move to the previous / next place — out of a denominator, past a
+  parenthesis, into the next part. **↑ ↓** move between the rows of a fraction
+  or a choice. **Home / End** go to the ends of the enclosing part, and again to
+  the ends of the formula. **Tab / ⇧Tab** jump to the next / previous empty
+  slot. **`)`** leaves the parentheses you are in; **`,`** moves to the next
+  argument.
+- **⌫ / ⌦** delete a character of a name or a number, or a whole part when the
+  caret is beside one — a slot's operator goes with it.
+
+So `clamp(Tilt / 90 deg, 0, 1)` is typed as `clamp` `(` `Tilt` `/` `90` `⎵deg`
+`,` `0` `,` `1` — 22 keys, and the completion list would have taken `clamp`
+after `cl` and `Tilt` after `Ti`. The part you are typing into is shown as text
+until the compiler has read it — a moment — and the rest of the formula keeps
+its shape. A key that cannot act where the caret is says why beneath the field
+(_Type an operator before adding a value here._) and changes nothing.
+
+The pointer works alongside: clicking a part places the caret there _and_
+selects the part, so the buttons beneath the field (below) act on it; the caret
+follows every action to the part that comes next. There is no mode to switch.
 
 ## Assembling a formula
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../assets/studio/formula-composer.png)
 
-_The Formula view with the denominator slot selected: the compiler says the slot
-expects an angle and why, and offers a number with the angle units, the
-references that fit and the equations whose result fits._
+_The Formula view with the denominator slot selected: the quotient drawn as a
+fraction; the compiler says the slot expects an angle and why, and offers a
+number with the angle units, the references that fit and the equations whose
+result fits._
 
 An empty formula is one **slot** — a dashed box reading `?`, the place where a
 value is still to be written. Click a slot and the compiler says what it expects
@@ -69,19 +109,28 @@ length; `Force * ?` for a torque expects a length. When nothing around a slot is
 known yet — a product of two slots — it says so and offers no unit; fill the
 other side first. **Explain** shows the same in the compiler's notation.
 
-A **number with a unit** is two fields: the number and its unit. Editing the
-number is a new quantity in the same unit. Choosing another unit from the pop-up
-keeps the quantity and rewrites the number: `180 deg` becomes
-`3.141592653589793 rad`. The two are different things, and the pop-up never does
-the first.
+A **number with a unit** is its number and its unit; a unit made of several —
+`m per s^2` in the text — is drawn the way it is read, `m/s²`. Selecting the
+number shows the unit pop-up. Editing the number is a new quantity in the same
+unit. Choosing another unit from the pop-up keeps the quantity and rewrites the
+number: `180 deg` becomes `3.141592653589793 rad`. The two are different things,
+and the pop-up never does the first.
 
-A choice is drawn the way it reads: `if` and its condition on one line, `then`
-and `else` with their outcomes indented under it. Each part is an ordinary
-component: the condition expects true or false, and both outcomes expect what
-the choice must give — the relationship's result at the top, or, inside a larger
-formula, whatever the other outcome already is. The logical operators are shown
-as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in
-the weight of the language's own words.
+A **division** is drawn as a fraction, the numerator over the denominator; the
+line between them is the division itself — click it to select the whole
+quotient. A **choice** is drawn as a branch: `if` and its condition on the
+spine, `then` and `else` with their outcomes on the rows under it. Each part is
+an ordinary component: the condition expects true or false, and both outcomes
+expect what the choice must give — the relationship's result at the top, or,
+inside a larger formula, whatever the other outcome already is. The logical
+operators are shown as the words **and**, **or** and **not** (`&&`, `||` and `!`
+in the text), in the weight of the language's own words. A **`match`** is its
+subject on the spine and one row per case — the pattern, `⇒`, the outcome; a
+block with **`let`** is one row per local binding over a line over the result; a
+rule `x => …` is its parameter, `⇒`, the body; a collection `[…]` or a group
+`(…)` its items; **`delay`** and **`sync`** a shaded region with a bar on its
+left, the word and its arguments. Every part reads aloud to a screen reader as
+what it is — _Tilt over 90 deg_, _a choice: if Held, then 1, else 0_.
 
 A formula over a collection is drawn the way it reads:
 `all reading in readings:` on one line and the condition indented under it. The
@@ -96,15 +145,13 @@ exactly so in the **Text** view, and a formula typed as text appears in the
 **Formula** view — with `?` wherever text left a slot;
 `all reading in readings: reading < limit` and
 `if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come
-back as the same words, every part selectable. Some forms — `match`, a block
-with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` —
-are shown as text in the Formula view and edited in the Text view. Text that
-cannot be read as a formula keeps exactly what you typed; the Formula view shows
-no parts for it, says _The text cannot be read as a formula._ and offers **Edit
-as text**. After any change the Formula view waits for the compiler's reading of
-the new text — _Waiting for the compiler to read the formula…_, the parts dimmed
-— before it offers the next action, so nothing you click ever acts on text that
-has already changed.
+back as the same words, every part selectable. Only an empty group `()` is shown
+as text. Text that cannot be read as a formula keeps exactly what you typed; the
+Formula view shows no parts for it, says _The text cannot be read as a formula._
+and offers **Edit as text**. After any change the Formula view waits for the
+compiler's reading of the new text — _Waiting for the compiler to read the
+formula…_, the parts dimmed — before it offers the next action, so nothing you
+click ever acts on text that has already changed.
 
 ## The text field and its verdict
 
@@ -151,27 +198,35 @@ it is right, just as a concept may exist before its value form is chosen.
 
 ## Keys
 
-| Key                         | Does                                                                                                  |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **⌘↩**                      | Add / Save the definition                                                                             |
-| **Esc**                     | Revert a draft (a second Esc when completion is open closes it first)                                 |
-| **Return**                  | in the Text view a new line — formulas may span lines; in a number entry, insert the number           |
-| **⌃Space**                  | open completion (Text view)                                                                           |
-| **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                           |
-| **Tab**                     | in the Formula view, move to the next part                                                            |
-| **+ − \* /**, **< >**       | on a selected part in the Formula view: put that operator after it, with a slot for the other side    |
-| **=**, **&**, **\|**        | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up             |
-| **!**                       | negate the selected part in place (`not …`)                                                           |
-| **⌫**                       | remove the selected part (an empty slot takes its operator with it)                                   |
-| **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states |
+| Key                         | Does                                                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **⌘↩**                      | Add / Save the definition                                                                                                    |
+| **Esc**                     | Revert a draft (a second Esc when completion is open closes it first)                                                        |
+| **Return**                  | in the Text view a new line — formulas may span lines; in a number entry, insert the number                                  |
+| **⌃Space**                  | open completion (both views; the Formula view also opens it as you type a name)                                              |
+| **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                                                  |
+| **← →**                     | Formula view: the previous / next place — out of a denominator, past a parenthesis, into the next part                       |
+| **↑ ↓**                     | Formula view: the row above / below (a numerator from its denominator, a branch from the next)                               |
+| **Home / End**              | Formula view: the ends of the enclosing part; again, the ends of the formula                                                 |
+| **Tab / ⇧Tab**              | Formula view: the next / previous empty slot                                                                                 |
+| **) ,**                     | Formula view: leave the parentheses / move to the next argument                                                              |
+| **letters, digits, space**  | Formula view: type into the slot or the name or number at the caret; a space after a number starts its unit                  |
+| **+ − \* /**, **< >**       | Formula view: put that operator after the part at the caret (or the selected part), with a slot for the other side           |
+| **=**, **&**, **\|**        | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up                                    |
+| **!**                       | negate the part in place (`not …`)                                                                                           |
+| **(**                       | Formula view: apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot                                  |
+| **⌫ / ⌦**                   | Formula view: a character of a name or number, or the whole part beside the caret (an empty slot takes its operator with it) |
+| **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states                        |
 
 ## Completion and hover
 
-In the Text view, **⌃Space** opens a list at the caret: the concepts in scope,
-the design's relationships (rules come with a `(`), units after a number,
-keywords, and `delay(…)` / `sync(…)` where they are allowed. The list is the
-compiler's, filtered and ordered by it; each row shows the kind and the
-resulting type. It re-asks on every keystroke while open.
+**⌃Space** opens a list at the caret — in the Formula view it also opens as you
+type a name: the concepts in scope, the design's relationships (rules come with
+a `(`), units after a number, keywords, and `delay(…)` / `sync(…)` where they
+are allowed. The list is the compiler's, filtered and ordered by it — in a
+formula, by what the place you are typing in expects: in `? / CycleTime` the
+lengths come before a speed — and each row shows the kind and the resulting
+type. It re-asks on every keystroke while open.
 
 Resting the pointer on a name for a moment shows a **card**: what the name is,
 its value form, its status, a description. Never a formal term — those are in

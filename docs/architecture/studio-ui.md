@@ -186,11 +186,24 @@ header word precedence is `Source` › `declared` › port word › sink state �
   socket, and a definition region below the sockets. The region holds the
   definition's summary line, or nothing while declared. A definition the
   compiler cannot accept gets a **red mark at the definition line** — where the
-  problem lives — and no word in the header. A declared mapping — one with reads
-  and no definition — is drawn with a dashed outline and the word _declared_;
-  dashed survives selection (accent changes the colour, never the meaning).
-  Never red. A relationship with no reads and no definition is a Source (above),
-  not declared.
+  problem lives — and no word in the header. A defined mapping's region ends in
+  a **disclosure** (a chevron at the definition line): open, the node extends
+  downward with the formula **unfolded** — the same rendering the Formula view
+  draws (`ui/expanded_formula.dart` over `FormulaRender`, dense), read-only,
+  from the daemon's projection of the committed definition
+  (`GetFormulaProjection` per revision, `EditorState.formulaPreviews`), with the
+  first finding beneath it and _Edit Formula_ to open the inspector; while the
+  projection is on its way, or when the compiler cannot draw it, the region says
+  so in one line. Which nodes are open and how tall each is (measured, capped at
+  220 px) is `EditorState.expandedFormulas` — view state like a collapsed
+  group's box, never a revision and never saved; the scene
+  (`buildScene(expanded:)`, `NodeShape.formulaRegion`) grows the node and moves
+  nothing else. A tap on the unfolded formula selects the node and nothing more;
+  no click on the canvas rewrites a formula (ADR-0042). A declared mapping — one
+  with reads and no definition — is drawn with a dashed outline and the word
+  _declared_; dashed survives selection (accent changes the colour, never the
+  meaning). Never red. A relationship with no reads and no definition is a
+  Source (above), not declared.
 - **Links** are cubic Béziers from an output socket (right edge) to an input
   socket (left edge), tangents horizontal, colour of the concept, 2 px, selected
   links thicker. Data flows left → right. These are the **signature edges**:
@@ -346,17 +359,17 @@ stable groups in a fixed order — the object's primary command, IDE navigation,
 the service's fixes, structure, the destructive command — and each item is
 present only when its command exists for that object today:
 
-| Context                          | Items                                                                                                                                                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| empty canvas                     | Add Concept ▸ (Recent, by role, three categories, More…) · Add Source ▸ (New Source…, the presets) · Add Instance ▸ (system canvas) · New Behavior Group — then Select All ⌘A · Frame All ⌘0                     |
-| relationship — a rule or a value | Edit Definition · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                           |
-| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port) |
-| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                  |
-| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                      |
-| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                            |
-| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                        |
-| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect                                                                                                                                                  |
-| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                   |
+| Context                          | Items                                                                                                                                                                                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| empty canvas                     | Add Concept ▸ (Recent, the four value forms, Quantities ▸, a third-party library's groups, More…) · Add Source ▸ (New Source…, a third-party library's presets) · Add Instance ▸ (system canvas) · New Behavior Group — then Select All ⌘A · Frame All ⌘0 |
+| relationship — a rule or a value | Edit Definition · Show Formula / Hide Formula (when defined) · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                       |
+| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port)                                          |
+| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                                                           |
+| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                                                               |
+| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                                                                     |
+| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                                                                 |
+| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect                                                                                                                                                                                           |
+| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                                                            |
 
 **Fix ▸** is the IDE service's own list for the object — the one the reducer
 asks for on every selection (`ListSemanticActions`, `EditorState.actions`) and
@@ -403,39 +416,61 @@ layout service on open and on commit (ADR-0023 §7,
 `docs/architecture/overview.md`), and the projection carries the result. No node
 type exists per arithmetic operator — formulas live in the inspector.
 
-### Create-then-rename (library items)
+### The concept sheet (library items)
 
-Inserting a library item — from the right-click menu, a drag from the Library
-tab, or the tab's rows — is one request (`InstantiateLibraryItem`,
-`docs/spec/concept-library.md`); when the projection with the new objects
-arrives, the concept lands where the pointer was (layout, never a revision), is
-selected, and its name opens for editing on the canvas with the default name
-selected: Return commits a rename edit, Esc keeps the default, leaving the field
-commits what was typed (Finder's new-folder behaviour). Add _Temperature_, type
-_MotorTemperature_, keep designing — no sheet for routine insertion.
+A Standard Library item is a **value category** — a value form or a named
+physical quantity — and never a product concept (ADR-0041,
+`docs/spec/concept-library.md`): choosing one anywhere — the right-click menu, a
+drag from the Library tab, a row's double-click or Return, the Project tab's `+`
+— dispatches `NewConceptRequested(presetId?, position?)` and opens the **concept
+sheet** (`ui/concept_sheet.dart`, a `SheetScrim` sheet like the Source sheet's)
+with the category preset. Its one required answer is the **name** the concept
+has in this product — _Angle_ → `LidAngle` — an identifier, free in the design,
+refused on the sheet before the daemon would refuse it; then the category (one
+pop-up over the same items), _Measured in_, the meaning, a live preview of the
+node and the declaration the Code view will write. _Create_ dispatches
+`CreateConceptRequested` — one `CreateConcept` edit; when the projection arrives
+the concept lands where the pointer was (layout, never a revision), selected and
+named as typed: nothing opens for renaming, because the name came first. Cancel
+dispatches `ConceptSheetDismissed`. Create-then- rename
+(`InstantiateLibraryItem` with the item's default name, then an inline rename)
+is no longer a concept flow; the code path stays for a third-party item a client
+inserts without a name.
 
-The sidebar has two tabs: **Project** (the project's objects, "+" per section)
-and **Library** (`ui/library_panel.dart`: search, then two sections — _Concepts_
-and _Sources_ — each with its groups; a Concept row carries a grey socket glyph,
-filled when the item chooses a representation, hollow for _decide later_; a
-Source row the Source silhouette (`MappingGlyph(source:)`); the unit or kind
-word in the right column — for a Source preset the value form it suggests, never
-a signature over a concept nobody has chosen; the description, and for a preset
-what it does — _an input for a Temperature concept you choose_ — on hover).
-Recent items in the menu are a Studio preference, never project state.
+**_Measured in_ is a fact, not a choice.** A concept stores its dimension and no
+unit, so the row lists the compiler's unit candidates for the category
+(`AppState.valueCategories`, `ListValueCategories` at the handshake;
+`UnitExprView.display`, preferred first — `rad`, `deg`, `turn`; `rad/s`,
+`deg/s`) as what a formula over the concept may write, and sends none of them.
+Studio concatenates no unit string and infers no dimension: a composite is the
+compiler's rendering. A per-concept display unit is ISS-0019.
+
+The sidebar has two tabs: **Project** (the project's objects, "+" per section —
+the concepts' opens the sheet with no category, _choose a category_) and
+**Library** (`ui/library_panel.dart`: search, then _Recent_, **Values** (the
+four forms), **Quantities** (the vocabulary's order), a **Sources** row and one
+section per third-party library served; a category row carries a grey socket
+glyph, filled when the category is a value form, hollow for _decide later_; the
+vocabulary's preferred unit or the form's word in the right column — a fact; the
+description on hover; the _Sources_ row the Source silhouette
+(`MappingGlyph(source:)`) and what it does — _a value the environment provides,
+over a concept you choose_). Recent items in the menu are a Studio preference,
+never project state.
 
 Item names, descriptions and search tags are Studio strings like any other:
 generated by id from `locale/library/std.json` into the ARB catalogs
 (`scripts/gen_library_l10n.py`, `lib/l10n/library_strings.dart`), looked up by
 `itemName` / `itemDescription`; the daemon's canonical English is the fallback
 for an item the catalog does not know. `searchItems` matches the localized name
-and tags, the English name and keywords, the default names, the group and
-section words and the unit. Nothing localized reaches a request or a project.
+and tags, the English name and synonyms (the product words the presets used to
+be: _tilt_, _servo_, _heater_, _battery_ …), the category's type name, the group
+and section words and the display and source spellings of the category's units
+(`deg`, `lux`, `rad/s`). Nothing localized reaches a request or a project.
 
 **The Source sheet** (`ui/source_sheet.dart`, `docs/spec/concept-library.md` §
 Creating a Source): a Source is never created without a concrete concept, so
 every Source entry point — the canvas menu's **Add Source ▸** (_New Source…_,
-then the presets _Temperature Input_ … _External Input_), a Source row's
+then any preset a third-party library ships), the Library's _Sources_ row's
 double-click, Return or drag — dispatches
 `NewSourceRequested(presetId?, position?)` and nothing else; the reducer asks
 the daemon for the ranked candidates (`ListSourceCandidates`) and the sheet
@@ -443,21 +478,21 @@ opens over the design (`SheetScrim`, in-tree and prop-driven like the packaging
 sheet) once they arrive. Its one decision is the **concept**: _Existing concept_
 (a pop-up of the design's concepts, the preset's value form first, each with its
 value form beside it — two concepts of one form are two rows, never merged) or
-_New concept_ (name, value form, unit, meaning, prefilled by the preset); then
-the **Source name** (suggested as `<concept>Input`, made free, and never
-replacing what the designer typed) and its meaning; a live node preview; and the
-exact declarations that will be committed, as the Code view will write them.
-_Create Source_ dispatches `CreateSourceRequested` (one `CreateSource` request:
-one edit over an existing concept, one transaction for a new concept and its
-Source); Cancel dispatches `SourceSheetDismissed` and the project is untouched.
-The `() -> ?` of an unmade choice is drawn on the sheet only. When the answer
-arrives, a new concept lands where the designer pointed and opens for renaming
-with its Source a node width (240 px) to the left (the environment side); a
-Source over an existing concept lands where the designer pointed and is
-selected. The preset never decides the identity: Studio sends the chosen
-`SemanticId`, or the new concept's description, and infers nothing from names,
-value forms or units — the daemon ranks (`bdl_library::rank_concepts`) and hides
-nothing.
+_New concept_ (the concept sheet's form: name, category, the units as a fact,
+meaning — prefilled by a preset when one was named); then the **Source name**
+(suggested as `<concept>Input`, made free, and never replacing what the designer
+typed) and its meaning; a live node preview; and the exact declarations that
+will be committed, as the Code view will write them. _Create Source_ dispatches
+`CreateSourceRequested` (one `CreateSource` request: one edit over an existing
+concept, one transaction for a new concept and its Source); Cancel dispatches
+`SourceSheetDismissed` and the project is untouched. The `() -> ?` of an unmade
+choice is drawn on the sheet only. When the answer arrives, a new concept lands
+where the designer pointed and opens for renaming with its Source a node width
+(240 px) to the left (the environment side); a Source over an existing concept
+lands where the designer pointed and is selected. The preset never decides the
+identity: Studio sends the chosen `SemanticId`, or the new concept's
+description, and infers nothing from names, value forms or units — the daemon
+ranks (`bdl_library::rank_concepts`) and hides nothing.
 
 ## 3. Look and feel (macOS)
 
@@ -607,82 +642,146 @@ restores them — no modal.
 ### 4b. The Formula view
 
 The definition editor has two projections of the one draft, chosen with a
-**Formula | Text** segmented control at its top (`lib/ui/formula_composer.dart`;
-ADR-0028): the Text view is the field of §4a; the Formula view draws the
-compiler's `FormulaProjection` as the expression it is —
-`clamp( [Tilt] ÷ [90][deg ▾], [0], [1] )` — never as a graph inside the node.
-Studio owns the mode, the selected component and the open pop-up; the compiler
-owns the tree, every expected type, every candidate and the text every action
-makes (`ComposeFormula` → `DefinitionDraftChanged` → the ordinary verdict).
+**Formula | Text** segmented control at its top (`lib/ui/formula_composer.dart`,
+the rendering `lib/ui/formula_render.dart`, the caret `lib/app/caret.dart`;
+ADR-0028, ADR-0042): the Text view is the field of §4a; the Formula view draws
+the compiler's `FormulaProjection` as the mathematics it states — `clamp` of a
+fraction `[Tilt]` over `[90][deg ▾]`, `[0]`, `[1]` — never as a graph inside the
+node, and is edited two ways at once over that one draft: a **structural caret**
+the keyboard types at and a **selected part** the palette acts on. Studio owns
+the caret, the selection, the mode and the open pop-up; the compiler owns the
+tree, every expected type, every candidate and the text every action makes
+(`ComposeFormula` → `DefinitionDraftChanged` → the ordinary verdict). Nothing in
+Studio parses, types, converts a unit or decides what fits.
 
-Encodings, by channel (the table in §3 gains these rows): a **slot** — an
+**Encodings**, by channel (the table in §3 gains these rows): a **slot** — an
 expression not yet written, `?` in the text — is a dashed hollow chip (dashed =
 not decided, as the canvas's _declared_ node); a **reference** is a chip with
 its concept's socket glyph (shape = kind of value, as on the canvas); a
-**literal** is two fields, the coordinate and a unit pop-up listing the
-compiler's units for the literal's own dimension — the pop-up switches the unit
-and keeps the quantity (`180 deg` → `3.141592653589793 rad`); the coordinate
-field is the other action (a new quantity, the same unit). Only a literal has a
-unit pop-up: a reference's kind is its declaration's, and the Composer never
-rewrites it. **Operators** are their glyphs (× ÷ − ≤ ≥ ≠); the logical ones
-(`&&`, `||`, `!`) are their words, _and_, _or_, _not_, in the keyword weight —
-the operator's reading, as × is `*`'s, never a localized label; a **call** its
-name and parentheses; a **choice** (`if c then a else b`) is `if` and its
-condition on one line with `then` and `else` and their outcomes indented under
-it, the three words selecting the choice and every part an ordinary component
-(the condition expects true or false, both outcomes what the choice gives — the
-position's expectation, else what the other outcome already is); an
-**unsupported form** (`match`, a block, a rule, a collection or grouped literal,
-`delay`/`sync`) its text in monospace, selectable and edited as text. A
-**binder** (`all reading in readings: …`) is a head row — the word in bold, the
-local as an italic chip with a lighter frame, `in`, the collection, the colon —
-over its body indented beneath it; the local's uses in the body are the same
-italic chip, so what the formula itself binds is told apart from what the design
-provides (a design reference stays upright with its socket glyph); selecting the
-declaration selects the binder and the panel says _angle is each element: an
-angle._ A **range** is its two ends around a `..` glyph; each end is an ordinary
-component (a literal end has its own unit pop-up, an empty end a slot expecting
-the subject's kind). Selection is the selection tint; keyboard focus the accent
-ring; a finding is a red underline on the component _and_ its row under the
-field — one diagnostic, two projections.
+**literal** is its coordinate and its unit — a composite drawn as the compiler
+renders it (`unit_display`, `m/s²`) — with a unit pop-up when selected, listing
+the compiler's candidates for the literal's own dimension (`UnitCandidate`,
+`display`) — the pop-up switches the unit and keeps the quantity (`180 deg` →
+`3.141592653589793 rad`). Only a literal has a unit pop-up: a reference's kind
+is its declaration's, and the Composer never rewrites it. A **quotient** (`/`)
+is a **fraction**: the numerator over a rule over the denominator, the rule the
+operator's own part; the other **operators** are their glyphs (× − ≤ ≥ ≠) and
+the logical ones (`&&`, `||`, `!`) their words, _and_, _or_, _not_, in the
+keyword weight — the operator's reading, never a localized label;
+**parentheses** grow with their content; a **call** is its name and parentheses;
+a **choice** (`if c then a else b`) is a branch diagram — `if` and the condition
+on a spine, `then` and `else` with their outcomes on rows under it, the words
+selecting the choice and every part an ordinary component (the condition expects
+true or false, both outcomes what the choice gives); a **match** is the subject
+on the spine and one row per arm — the pattern (the arm's own text, in the
+local's italics; it is not a part) before `⇒` and the body; a **`let` block** is
+one row per binding (`let`, the pattern, `=`, the value) over a rule over the
+result; a **rule** (`x => …`) its parameters in italics, `⇒`, the body; a
+**collection** or a **group** its items between `[ ]` or `( )`; **`delay`** and
+**`sync`** a region with a bar on its left — the temporal boundary — the word
+and its arguments. Only `()` stays opaque, as the compiler says
+(`kind: opaque`); nothing else is monospace text. A **binder**
+(`all reading in readings: …`) is a head row — the word in bold, the local as an
+italic chip with a lighter frame, `in`, the collection, the colon — over its
+body indented beneath it; the local's uses in the body are the same italic chip,
+so what the formula itself binds is told apart from what the design provides (a
+design reference stays upright with its socket glyph). A **range** is its two
+ends around a `..` glyph. Selection is the selection tint; the caret a thin
+accent bar; keyboard focus the accent ring; a finding is a red underline on the
+component _and_ its row under the field — one diagnostic, two projections. Every
+part has a **reading** for assistive technology (`describeNode`), assembled from
+the tree in product words — _Tilt over 90 deg_, _a choice: if Held, then 1, else
+0_, _a match on Tilt with 2 cases_, _a block with 1 local bindings_, _a delay
+boundary of 0, half_ — never from the text.
 
-Beneath the field, for the selected component: the compiler's sentence —
-_Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._ —
-with the kernel's notation behind **Explain**; for a slot, a number entry whose
-unit pop-up holds the units of the expected dimension (none for a dimensionless
-slot; none, with a sentence, when the position is not determined) — or, where
-the compiler answers with the truth values (`booleans`: a position that is true
-or false, or a concept represented by one), **true** and **false** buttons in
-its place — then _References_ by type and _Equations_ folded, then the forms a
-slot opens: **Choose** (`if ? then ? else ?`) and, for a truth value or an
-undetermined position, **not** (`!?`); for a component, **+ − × ÷**, **and** /
-**or** (a slot after it) and **not** (in place, no slot) unless the component is
-known not to be a truth value, **Compare**, **Function** (the equations whose
-result fits, wrapping the component as the first argument), **Each element**
-(all / any / map / filter — offered when the component is a collection or its
-kind is unknown; the compiler picks the local's name), **Range** (`… in ? .. ?`,
-not offered on a truth value), **Choose** (the component becomes the `then`
-outcome, `if ? then … else ?`, the condition selected next) and **Remove** (an
-empty operand of a two-sided operator, `&&` and `||` included, removes the
-operator; an empty negation is its slot). Whether a component _may_ be a truth
-value is read off the projection (`actual.kind`, a concept's representation) —
-presentation only, never a judgment. Keys, the primary path (typing is primary;
-the structure is a live rendering of what was typed): Tab across components in
-reading order; a click selects and takes the focus; on a selected component
-`+ − * / < >` insert that operator after it with a slot, `=` inserts `==`, `&`
-and `|` insert `&&` and `||`, `!` negates in place, ⌫ removes; digits and Return
-in a number entry; Esc clears the selection. The Formula and Text views express
-the same set of forms for logic — comparisons, `&&`, `||`, `!`, `if` — and
-switching loses nothing. The stale-projection policy (`app/composer.dart`
-`composerInSync`): a projection is current only when it is of exactly the text
-on screen and that text parsed; otherwise the field is dimmed with a notice —
-_Waiting for the compiler to read the formula…_ while the verdict for this text
-is on its way, _The text cannot be read as a formula._ when it never will be
-(then no tree is shown: none is invented) — no component answers a click, no
-slot panel opens, no key acts, and the reducer refuses a structured action (or a
-second one in flight) and discards an answer for text that has moved on; **Edit
-as text** is the way out. Save, revert, conflict and detach are §4a's,
-unchanged: a formula with a slot may be saved and is _invalid_ until filled.
+**Typed structure** (ADR-0042). The **caret** is a place in the tree: a byte
+offset with the _stop_ it stands at (`CaretState`), the stops read off the
+projection by `caretStops` — _before_ and _after_ each part at its byte range,
+_in_ an empty slot, _open_ / _close_ just inside a parenthesised part, and the
+character positions inside a leaf (a name, a number, a unit) — in reading order,
+each with the part it belongs to and the part enclosing it (the positions
+`NavigateFormula` moves between, walked locally so no key waits). It is drawn
+where the rendered part is (`FormulaGeometry`: a key per part, its inner row,
+its text; `_stopRect` measures the text up to the caret's character with the
+leaf's own style), never over character columns. Keys: ← → the previous / next
+stop (the last stop in a denominator is followed by the stop after the fraction
+— how a nested part is left; a parenthesis is passed, not skipped); ↑ ↓ the
+nearest stop on the row above / below (a numerator from its denominator, a
+branch from the next; measured, not counted); Home / End the first / last stop
+of the enclosing part, again of the whole formula; Tab / ⇧Tab the next /
+previous empty slot, wrapping; `)` leaves the enclosing parentheses; `,` moves
+to the next argument. What a key **does** at a stop is one `KeyPlan`
+(`characterAt`, `operatorAt`, `openParenAt`, `backspaceAt`, `deleteAt`): a
+**text edit** of the draft at the stop's byte offset — letters and digits into a
+slot or extending the name or number the caret touches, a space after a number
+starting its unit, a character of a leaf deleted — sent as
+`DefinitionDraftChanged` and read by the compiler like any typing; a
+**structured action** the compiler answers with text — `+ − * / < > = & | !` on
+the part the caret touches with a slot for the other side (`operator`), `(`
+after a name applying it (`clamp` → `clamp(?, ?, ?)`, `apply`, 0.28), ⌫ / ⌦ on a
+whole part (`remove`); a **move**; or a **refusal** with a sentence under the
+field (_type an operator first_ — a letter after a complete part). Nothing here
+parses: the compiler reads the result. While the text differs from what the
+compiler last read, the part being typed into is shown as text in place
+(`PendingText`, the region `changedRegion` names) and the rest keeps its
+structure; the picture follows the compiler's next reading, and the caret is put
+back at the byte it was typed at (`FormulaCaretMoved`). An empty draft is typed
+into directly. **Completion** is asked on every typed character at the caret's
+byte offset (`CompletionRequested` → `CompleteDefinitionDraft`, ranked by the
+position's expected type) and on ⌃Space, shown beside the caret
+(`CompletionPopup`); ↑ ↓ choose, Return or Tab accepts (Tab moves to the next
+slot when the candidate is already written), Esc closes it, then clears the
+caret and the selection. **Pointer** and keyboard share the draft: a click
+places the caret at the nearest stop of the part under it and selects the part
+(`onTapNode`; a click in the field's empty space places the caret at the nearest
+stop), the caret follows every compiler answer to the part it selects, and the
+palette below acts on the selection as before — there is no mode to enter or
+leave.
+
+**The palette**, beneath the field, for the selected component: the compiler's
+sentence — _Expected: an angle, because an angle ÷ an angle = a dimensionless
+quantity._ — with the kernel's notation behind **Explain**; for a slot, a number
+entry whose unit pop-up holds the units of the expected dimension (none for a
+dimensionless slot; none, with a sentence, when the position is not determined)
+— or, where the compiler answers with the truth values (`booleans`: a position
+that is true or false, or a concept represented by one), **true** and **false**
+buttons in its place — then _References_ by type and _Equations_ folded, then
+the forms a slot opens: **Choose** (`if ? then ? else ?`) and, for a truth value
+or an undetermined position, **not** (`!?`); for a component, **+ − × ÷**,
+**and** / **or** (a slot after it) and **not** (in place, no slot) unless the
+component is known not to be a truth value, **Compare**, **Function** (the
+equations whose result fits, wrapping the component as the first argument),
+**Each element** (all / any / map / filter — offered when the component is a
+collection or its kind is unknown; the compiler picks the local's name),
+**Range** (`… in ? .. ?`, not offered on a truth value), **Choose** (the
+component becomes the `then` outcome, `if ? then … else ?`, the condition
+selected next) and **Remove** (an empty operand of a two-sided operator, `&&`
+and `||` included, removes the operator; an empty negation is its slot). Whether
+a component _may_ be a truth value is read off the projection (`actual.kind`, a
+concept's representation) — presentation only, never a judgment. The palette is
+contextual — what the slot expects, what fits the selected part — and never a
+whole keyboard: the keyboard is the way to write.
+
+The Formula and Text views express the same set of forms and switching loses
+nothing. The stale-projection policy (`app/composer.dart` `composerInSync`): a
+projection is current only when it is of exactly the text on screen and that
+text parsed; otherwise the field is dimmed with a notice — _Waiting for the
+compiler to read the formula…_ while the verdict for this text is on its way,
+_The text cannot be read as a formula._ when it never will be (then no tree is
+shown: none is invented) — no component answers a click, no slot panel opens, no
+structural key acts, and the reducer refuses a structured action (or a second
+one in flight) and discards an answer for text that has moved on; **Edit as
+text** is the way out. Save, revert, conflict and detach are §4a's, unchanged: a
+formula with a slot may be saved and is _invalid_ until filled.
+
+What was borrowed from the mature math editors, and what was not: from GeoGebra,
+the fraction built by `/` with the caret staying in the denominator until an
+arrow leaves it, the right bracket exiting a group, completion while typing a
+name; from MathLive, Tab across placeholders, Home / End to a group's ends, a
+reading per part; from Desmos, the sentence under the field. Not borrowed: any
+styling, LaTeX or a local parser (the compiler reads every character), a virtual
+keyboard, a local unit algebra, and the free-text field with rendered
+decorations.
 
 Screenshot: `docs/user-guide/assets/studio/formula-composer.png`
 (`docs/user-guide/screenshots/manifest.json`, `formula-composer`).
@@ -853,7 +952,11 @@ path…_ / _New at path…_ as a typed fallback.
 Contexts, transports and clock boundaries as canvas regions (a domain is a word
 on the node today); cycles emphasised on the canvas; value plots and a board
 picture (both pages are tables); Monitor content; a native menu bar; draft
-indication on the canvas; the device name on a sink node.
+indication on the canvas; the device name on a sink node; editing a formula on
+the canvas (the unfolded formula is read-only; the inspector edits); a
+per-concept display unit (ISS-0019); the daemon's `NavigateFormula`,
+`CompleteFormulaCaret` and `ComposeAction.insert` are served but Studio walks
+the tree it holds and types as text (ADR-0042).
 docs/architecture/studio-compiler-integration.md §3 places each.
 
 ### Collections, grouped values, equations
