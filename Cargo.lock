@@ -115,6 +115,7 @@ dependencies = [
  "bdl-output",
  "bdl-reactive",
  "bdl-runtime-core",
+ "bdl-runtime-embassy",
  "bdl-runtime-host",
  "bdl-text",
  "proptest",
@@ -373,10 +374,18 @@ name = "bdl-runtime-core"
 version = "0.1.0"
 
 [[package]]
+name = "bdl-runtime-embassy"
+version = "0.1.0"
+dependencies = [
+ "bdl-runtime-core",
+]
+
+[[package]]
 name = "bdl-runtime-host"
 version = "0.1.0"
 dependencies = [
  "bdl-runtime-core",
+ "bdl-runtime-embassy",
  "serde",
  "serde_json",
 ]

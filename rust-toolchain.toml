@@ -1,3 +1,6 @@
 [toolchain]
 channel = "1.89.0"
 components = ["rustfmt", "clippy", "rust-analyzer", "rust-src"]
+# The first embedded target (RP2040, docs/architecture/embedded-adapter.md):
+# the generated firmware cross-compiles for it in the workspace tests.
+targets = ["thumbv6m-none-eabi"]

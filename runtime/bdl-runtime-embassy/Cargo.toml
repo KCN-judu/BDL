@@ -1,0 +1,14 @@
+[package]
+name = "bdl-runtime-embassy"
+description = "no_std vocabulary of the platform adapter every generated BDL firmware is built on: the numeric policy from raw commands to peripheral values, the sink traits a target implements, and the fault a refused command leaves; knows no HAL"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bdl-runtime-core = { workspace = true }
+
+[lints]
+workspace = true

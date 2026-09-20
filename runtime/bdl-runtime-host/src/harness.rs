@@ -122,6 +122,24 @@ impl Cargo {
         Ok(self.target_dir.join("debug").join(format!("{bin}{suffix}")))
     }
 
+    /// Cross-build the firmware `<package>-<target>` (feature `<target>`,
+    /// release profile) for `triple`; the path of the ELF.
+    pub fn build_firmware(&self, target: &str, triple: &str) -> Result<PathBuf, HarnessError> {
+        let bin = format!("{}-{target}", self.package_name()?);
+        self.run_ok(&[
+            "build",
+            "--quiet",
+            "--release",
+            "--target",
+            triple,
+            "--features",
+            target,
+            "--bin",
+            &bin,
+        ])?;
+        Ok(self.target_dir.join(triple).join("release").join(bin))
+    }
+
     /// Build if needed and run one request through the host binary.
     pub fn run_host(&self, req: &RunRequest) -> Result<RunTrace, HarnessError> {
         let bin = self.build_host()?;

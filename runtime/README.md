@@ -11,6 +11,14 @@ Crates linked into, or driving, generated programs — never into the compiler.
   builds and runs a generated crate. Used by the differential tests and by
   tooling.
 
-Planned: `bdl-runtime-embassy`, the first platform adapter
-(docs/project/roadmap.md P–S). See docs/spec/runtime-semantics.md and
-docs/architecture/codegen-rust.md.
+- `bdl-runtime-embassy` — `no_std`, depends on `bdl-runtime-core` only: the
+  platform adapter's vocabulary — the numeric policy at the raw command boundary
+  (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_*`, `CommandFault`,
+  the compiled schedule as `ActiveDomains`. Knows no HAL.
+- `bdl-runtime-embassy-rp` — the RP2040 binding over `embassy-rp` (PWM slices,
+  GPIO pads, the arena, the fault halt). **Outside the workspace** so the HAL's
+  dependency tree never enters the host lockfile; built only into generated
+  firmware (`cargo` in its directory; the `embedded-rp` preflight check).
+
+See docs/spec/runtime-semantics.md, docs/architecture/codegen-rust.md and
+docs/architecture/embedded-adapter.md.

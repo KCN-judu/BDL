@@ -161,6 +161,78 @@ pub struct TickTrace {
     /// `None` when the driver was not due.  Absent from older traces.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub commands: Vec<Option<DynValue>>,
+    /// What the generated adapter did with each command this tick, in
+    /// sink order, through the recording sinks of [`mock`]; empty for a
+    /// core generated without a target.  Absent from older traces.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub adapter: Vec<AdapterOp>,
+}
+
+/// One physical operation the platform adapter performed — or declined —
+/// for one machine sink at one tick (docs/architecture/embedded-adapter.md).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum AdapterOp {
+    /// The PWM line was set to this 8-bit duty.
+    Pwm { device_id: u64, duty: u8 },
+    /// The digital line was set high or low.
+    Level { device_id: u64, high: bool },
+    /// The command was refused by the numeric policy; the line holds.
+    Refused { device_id: u64, fault: String },
+    /// The driver was not due: no command, the line holds.
+    Held { device_id: u64 },
+}
+
+/// Recording sinks: what a target would do, as data.  A generated host
+/// applies each tick's commands to these through the same `adapter::apply`
+/// the firmware uses, so `TickTrace.adapter` is the firmware's operation
+/// sequence for the host's inputs.
+pub mod mock {
+    use bdl_runtime_embassy::{Level, PwmDuty8};
+
+    #[derive(Clone, Debug, Default, PartialEq, Eq)]
+    pub struct MockPwm {
+        pub duty: Option<u8>,
+    }
+    impl PwmDuty8 for MockPwm {
+        fn set_duty8(&mut self, duty: u8) {
+            self.duty = Some(duty);
+        }
+    }
+
+    #[derive(Clone, Debug, Default, PartialEq, Eq)]
+    pub struct MockLine {
+        pub high: Option<bool>,
+    }
+    impl Level for MockLine {
+        fn set_level(&mut self, high: bool) {
+            self.high = Some(high);
+        }
+    }
+}
+
+impl AdapterOp {
+    /// The record of one applied duty command.
+    pub fn duty(
+        device_id: u64,
+        r: Option<Result<u8, bdl_runtime_embassy::CommandFault>>,
+    ) -> AdapterOp {
+        match r {
+            None => AdapterOp::Held { device_id },
+            Some(Ok(duty)) => AdapterOp::Pwm { device_id, duty },
+            Some(Err(fault)) => AdapterOp::Refused {
+                device_id,
+                fault: format!("{fault:?}"),
+            },
+        }
+    }
+    /// The record of one applied level command.
+    pub fn level(device_id: u64, r: Option<bool>) -> AdapterOp {
+        match r {
+            None => AdapterOp::Held { device_id },
+            Some(high) => AdapterOp::Level { device_id, high },
+        }
+    }
 }
 
 /// [`RuntimeError`] in serialisable form.
@@ -241,6 +313,9 @@ pub trait HostProgram {
     fn outputs_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
     /// The raw commands of the realised outputs; empty when none.
     fn commands_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
+    /// The adapter's operations for this tick's commands over recording
+    /// sinks; empty for a core generated without a target.
+    fn adapter_ops(tick: &Self::Tick) -> Vec<AdapterOp>;
     fn state_bytes() -> usize;
 }
 
@@ -286,6 +361,7 @@ pub fn run<P: HostProgram>(req: &RunRequest) -> RunTrace {
                 values: P::values_to_dyn(&out),
                 outputs: P::outputs_to_dyn(&out),
                 commands: P::commands_to_dyn(&out),
+                adapter: P::adapter_ops(&out),
             }),
             Err(e) => {
                 trace.error = Some(TraceError {
@@ -359,6 +435,9 @@ mod tests {
             vec![]
         }
         fn commands_to_dyn(_: &Self::Tick) -> Vec<Option<DynValue>> {
+            vec![]
+        }
+        fn adapter_ops(_: &Self::Tick) -> Vec<AdapterOp> {
             vec![]
         }
         fn state_bytes() -> usize {

@@ -1,0 +1,25 @@
+[package]
+name = "bdl-runtime-embassy-rp"
+description = "The RP2040 half of the BDL platform adapter: Embassy PWM and GPIO peripherals as bdl-runtime-embassy sinks, the collection arena, the fault halt; built only into generated firmware"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/KCN-judu/BDL"
+publish = false
+
+# Not a member of the BDL workspace: the HAL and its ~60 crates belong to
+# the firmware's own dependency graph (docs/architecture/embedded-adapter.md).
+[workspace]
+
+[dependencies]
+bdl-runtime-embassy = { path = "../bdl-runtime-embassy" }
+embassy-rp = { version = "0.10.0", default-features = false, features = ["rt", "rp2040", "time-driver", "critical-section-impl", "boot2-w25q080"] }
+cortex-m = "0.7.7"
+embedded-alloc = { version = "0.7.0", optional = true }
+
+[features]
+default = []
+# A design that carries lists: the global allocator over a static arena
+# sized from the manifest's collection bounds.
+collections = ["dep:embedded-alloc"]

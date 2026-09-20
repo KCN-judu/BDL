@@ -1,0 +1,7 @@
+# The firmware toolchain is the workspace's (rust-toolchain.toml); the HAL
+# tree is resolved against that compiler's version, never a newer one.
+[resolver]
+incompatible-rust-versions = "fallback"
+
+[target.thumbv6m-none-eabi]
+rustflags = ["-C", "link-arg=--nmagic", "-C", "link-arg=-Tlink.x", "-C", "link-arg=-Tlink-rp.x"]
