@@ -38,12 +38,32 @@ class WelcomePage extends StatelessWidget {
           // Narrow (< 760 pt): one column, Recent below.
           final wide = c.maxWidth >= 760;
           final pad = c.maxWidth < 600 ? 20.0 : 40.0;
+          // The Start list (New, Open, Preferences, the demos) must stay
+          // above the fold at the smallest supported window: the hero
+          // keeps its aspect ratio but gives up height before the list
+          // does.
+          final startHeight =
+              24.0 +
+              48 +
+              33.0 *
+                  (3 +
+                      (state.editor.deploy.templates.isEmpty
+                          ? 0
+                          : 1 + state.editor.deploy.templates.length));
+          final heroMaxHeight = (c.maxHeight - 2 * pad - startHeight).clamp(240.0, 720.0);
           final left = Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // The hero keeps a fixed aspect ratio and fills the column.
-              AspectRatio(aspectRatio: 1.15, child: HeroMark(version: kStudioVersion)),
+              // The hero keeps a fixed aspect ratio and fills the column,
+              // shrinking when the window is short.
+              Align(
+                alignment: Alignment.topLeft,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: heroMaxHeight),
+                  child: AspectRatio(aspectRatio: 1.15, child: HeroMark(version: kStudioVersion)),
+                ),
+              ),
               const SizedBox(height: 24),
               _Start(
                 connected: connected,

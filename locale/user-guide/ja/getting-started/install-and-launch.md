@@ -32,7 +32,7 @@ just studio
 
 Studio は**プロジェクトマネージャー**で開きます。左にワードマーク、その下に _開始_ の操作、右に _最近_ のプロジェクトです。
 
-![Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
+![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
 
 _プロジェクトマネージャー：左に開始の操作、右に最近のプロジェクト。_
 

@@ -730,6 +730,10 @@ void main() {
         }
       } else if (entry['view'] != 'welcome') {
         scene.wrong('a fixture is required for every view but "welcome"');
+      } else {
+        // The Welcome page lists the daemon's demos: they arrive after the
+        // handshake, and the shot is of the page with them.
+        await scene.settle((s) => s.editor.deploy.templatesLoaded, why: 'the demo templates');
       }
 
       // 4. navigate

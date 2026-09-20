@@ -37,7 +37,7 @@ intended way.
 Studio opens on the **project manager**: the wordmark on the left with _Start_
 actions under it, _Recent_ projects on the right.
 
-![Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
+![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
 
 _The project manager: Start actions on the left, Recent on the right._
 

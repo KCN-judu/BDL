@@ -32,7 +32,7 @@ just studio
 
 Studio 打开时显示**项目管理器**：左侧是标志字，下面是 _开始_ 操作，右侧是 _最近_ 项目。
 
-![Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
+![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
 
 _项目管理器：左侧是开始操作，右侧是最近项目。_
 

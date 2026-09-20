@@ -16,14 +16,21 @@
       "view": "welcome",
       "steps": [],
       "expect": {
-        "texts": ["New Project…", "Open Project…", "Recent"]
+        "texts": [
+          "New Project…",
+          "Open Project…",
+          "Recent",
+          "Demos",
+          "Button → Lamp",
+          "Button → Lamp, wired"
+        ]
       },
       "crop": {
         "region": "window"
       },
       "output": "getting-started/project-manager.png",
       "caption": "The project manager: Start actions on the left, Recent on the right.",
-      "alt": "Studio's start screen with New Project and Open Project buttons on the left and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
+      "alt": "Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
       "purpose": "What a reader sees first after launching Studio."
     },
     {
