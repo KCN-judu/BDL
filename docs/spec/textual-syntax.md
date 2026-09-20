@@ -440,39 +440,84 @@ an error. C's silent `(a < b) < c` is not inherited.
 
 ```ebnf
 LiteralExpr ::= Number UnitSuffix?
-UnitSuffix  ::= Ident
+UnitSuffix  ::= UnitProduct ("per" UnitProduct)?
+UnitProduct ::= UnitFactor ("*" UnitFactor)*
+UnitFactor  ::= Ident ("^" "-"? Number)?          (* the exponent a whole number *)
 ```
 
-A unit is a bare identifier written after a number: `90 deg`, `25.4 mm`,
-`2.5 s`. The space is optional (`90deg` lexes as `90` `deg` and parses the same
-way) but canonical formatting writes one. This is unambiguous only because BDL
-has no juxtaposition application — an identifier can never follow a complete
-expression for any other reason. Rules:
+A unit is written after a number: an atom (`90 deg`, `25.4 mm`, `2.5 s`) or a
+**unit expression** over atoms (ADR-0040) — `180 deg per s`, `9.81 m per s^2`,
+`1 N * m`, `1 kg * m per s^2`, `2 s^-1`. `per` is the unit quotient, `*` the
+unit product, `^n` a whole-number power; `*` binds tighter than `per`, so
+`kg * m per s^2` is `(kg·m) / s²`, and `^` binds tightest. The space after the
+number is optional (`90deg` lexes as `90` `deg` and parses the same way) but
+canonical formatting writes one, one around `per` and `*`, and none around `^`.
+This is unambiguous only because BDL has no juxtaposition application — an
+identifier can never follow a complete expression for any other reason. Rules:
 
-- The lexer and parser do **not** know which identifiers are units. `90 foobar`
-  parses; elaboration reports _`foobar` is not a unit_ (`formula.unit.unknown`).
-  Units are semantic vocabulary.
+- The lexer and parser do **not** know which identifiers are units — with one
+  narrow exception below. `90 foobar` and `10 m per foobar` parse; elaboration
+  reports _`foobar` is not a unit_ / _`foobar` in `m per foobar` is not a unit_
+  (`formula.unit.unknown`). Units are semantic vocabulary.
+- `per` is a **contextual keyword**: an identifier everywhere else (a
+  relationship may be named `per`), the quotient only inside a unit suffix,
+  where a name can never be a reference. Everything after `per` is unit syntax.
+- `*` continues a unit **only when the word after it is a registered atom
+  symbol**: `1 N * m` is one literal, `90 deg * gain` and `2 m * width` are the
+  value multiplications they always were. This is the one place the parser
+  consults the unit registry (`bdl-model::units`), so no formula written before
+  unit expressions existed changes meaning. `/` is never a unit spelling:
+  `10 m / s` is a length divided by a reference named `s`; `Distance / Duration`
+  is arithmetic; `10 m per s` is one quantity literal.
+- One `per` per unit: `m per s per s` is refused (`syntax.malformed_unit`, _a
+  unit expression has one `per`: write a power instead, as in `m per s^2`_) —
+  the power spells the result more clearly than a left-associated chain would. A
+  unit cannot start with `per`; `per` and `*` need a unit after them; `^` needs
+  a whole-number exponent (`s^2`, `s^-1`; `^1.5`, `^^2` and an exponent that
+  does not fit are refused, each named). Powers are bounded by the dimension
+  representation (±127): `m^1000` is `formula.unit.exponent`, never wrapped or
+  saturated.
+- A unit expression denotes a **dimension** — `Σ eᵢ · dim(atomᵢ)` in the group
+  of dimensions — and a **scale** `Π scale(atomᵢ)^eᵢ` from the authored
+  coordinate to the canonical magnitude; `rad per s` is `ANGLE − TIME` (angle is
+  a base dimension; `Hz` is not an angular rate), `deg per s` scales by π/180
+  against it, `m per s^2` is `LENGTH − 2·TIME`. Two spellings of one physical
+  unit — `m * s per s` and `m`, `m^2 per m` and `m`, `N * m` and
+  `kg * m^2 per s^2` — have one dimension and one scale; the canonical spelling
+  (`bdl_model::units::UnitExpr::source`) is what the formatter and every tool
+  writes, and `m/s²`, `rad/s`, `kg·m/s²` are a display rendering
+  (`UnitExpr::display`), never source.
+- Only **linear** atoms combine. An affine chart (°C, °F) has no multiplicative
+  algebra: `°C per s`, `°F * m`, `°C^2` are refused at the algebra
+  (`formula.unit.affine`) before any such symbol is surface-addressable
+  (ISS-0004).
+- A literal whose unit measures another dimension than a plain-quantity position
+  asks for is named by the unit: _`deg per s` is a unit of an angular rate, but
+  this value must be a length._ (`formula.unit.dimension`); a concept's position
+  keeps its own, concept-naming fault.
 - Units attach to number literals only. `x deg` and `f(x) mm` are syntax errors
   (an identifier after an expression), diagnosed as _expected an operator … — a
   unit can only follow a number, as in `90 deg`_.
 - Dimensioned expressions get their dimension from typing, never from a postfix.
   Use parentheses and arithmetic: `distance / (2 s)`,
   `(tilt + offset) / (90 deg)`.
-- The unit vocabulary is the registry in `bdl-elab::units` (FV Phase 10,
-  `Surface/Units.lean`; Phase 10b `Surface/Charts.lean`): each unit has a stable
-  id (`angle.deg`), a symbol, a dimension and a **chart** onto the canonical
-  magnitude (radians, metres, seconds, kilograms, …) — linear (`scale`) or
-  affine (`scale`, `offset`); the chart owns the conversion, and
-  `convert(x, from, to)` is `coord_to ∘ reconstruct_from` for either shape.
-  Every unit a formula can write is linear today; the affine temperature charts
-  exist as tested infrastructure outside the registry. Registered today:
-  `rad deg turn` (angle), `mm cm m km inch ft` (length), `ms s min h` (time),
-  `g kg` (mass), `A mA`, `K`, `cd`, `mol`, and the derived
-  `Hz N Pa kPa W V mV lx`. Inch is spelled `inch` because `in` is the membership
-  keyword. °C and °F are affine, not linear, and are not registered (ISS-0004).
-  A literal `n u` elaborates to the kernel literal `n × scale(u)` of the unit's
-  dimension — `withUnit` — and nothing about a unit reaches `Ty`, `Value` or the
-  runtime.
+- The unit vocabulary is the registry in `bdl-model::units` (re-exported as
+  `bdl-elab::units`; FV Phase 10, `Surface/Units.lean`; Phase 10b
+  `Surface/Charts.lean`): each atom has a stable id (`angle.deg`), a symbol, a
+  dimension and a **chart** onto the canonical magnitude (radians, metres,
+  seconds, kilograms, …) — linear (`scale`) or affine (`scale`, `offset`); the
+  chart owns the conversion, and `convert(x, from, to)` is
+  `coord_to ∘ reconstruct_from` for either shape. Every unit a formula can write
+  is linear today; the affine temperature charts exist as tested infrastructure
+  outside the registry. Registered today: `rad deg turn` (angle),
+  `mm cm m km inch ft` (length), `ms s min h` (time), `g kg` (mass), `A mA`,
+  `K`, `cd`, `mol`, and the derived `Hz N Pa kPa W V mV lx`. Inch is spelled
+  `inch` because `in` is the membership keyword. °C and °F are affine, not
+  linear, and are not registered (ISS-0004). A literal `n u` elaborates to the
+  kernel literal `n × scale(u)` of the unit's dimension — `withUnit` — for an
+  atom and a unit expression alike, and nothing about a unit reaches `Ty`,
+  `Value` or the runtime. The registry stays finite: no composite is a registry
+  row.
 - There is no expression-level unit cast (`(x) deg`), and none is planned.
 - One lookahead exception, for recovery only: a name followed by `=>` or `(` is
   never taken as a unit, because nothing but an operator may follow a unit. So a

@@ -349,7 +349,7 @@ msgstr ""
 #: docs/user-guide/concepts/relationships.md:131
 #: docs/user-guide/concepts/timing.md:114
 #: docs/user-guide/reference/cli.md:71
-#: docs/user-guide/reference/formula-language.md:87
+#: docs/user-guide/reference/formula-language.md:102
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:190
 #: docs/user-guide/studio/code-view.md:152
@@ -367,7 +367,7 @@ msgstr ""
 #: docs/user-guide/troubleshooting/incomplete-design.md:92
 #: docs/user-guide/troubleshooting/text-project-errors.md:121
 #: docs/user-guide/troubleshooting/timing-errors.md:82
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:109
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:127
 #: docs/user-guide/workflows/component-versioning.md:59
 #: docs/user-guide/workflows/cross-domain-transport.md:78
 #: docs/user-guide/workflows/multi-output-behavior.md:54
@@ -1056,7 +1056,7 @@ msgid "The states of an output"
 msgstr ""
 
 #: docs/user-guide/concepts/physical-outputs.md:25
-#: docs/user-guide/reference/formula-language.md:53
+#: docs/user-guide/reference/formula-language.md:68
 #: docs/user-guide/reference/status-meanings.md:9
 #: docs/user-guide/reference/status-meanings.md:28
 #: docs/user-guide/reference/status-meanings.md:44
@@ -2078,7 +2078,7 @@ msgid "Version"
 msgstr "版本"
 
 #: docs/user-guide/getting-started/install-and-launch.md:9
-#: docs/user-guide/reference/formula-language.md:34
+#: docs/user-guide/reference/formula-language.md:49
 #: docs/user-guide/studio/inspector.md:14
 #: docs/user-guide/studio/inspector.md:23
 #: docs/user-guide/studio/inspector.md:52
@@ -2678,7 +2678,7 @@ msgid "Literals"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:21
-#: docs/user-guide/reference/formula-language.md:53
+#: docs/user-guide/reference/formula-language.md:68
 #: docs/user-guide/textual/syntax-basics.md:165
 msgid "Example"
 msgstr ""
@@ -2700,337 +2700,349 @@ msgid "`90 deg`, `2.5 s`, `300 lx`, `25.4 mm`"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:25
-msgid "on / off"
+msgid "number with a compound unit"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:25
+msgid "`180 deg per s`, `9.81 m per s^2`, `1 N * m`, `1 kg * m per s^2`, `2 s^-1`"
+msgstr ""
+
+#: docs/user-guide/reference/formula-language.md:26
+msgid "on / off"
+msgstr ""
+
+#: docs/user-guide/reference/formula-language.md:26
 msgid "`true`, `false`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:27
-msgid "Units: `rad deg · s ms min h · m mm cm km · kg g · A mA · K · cd · mol · Hz · N · Pa kPa · W · V mV · lx`. A unit follows a number only; `x deg` is a syntax error. A quantity's dimension comes from arithmetic — write `Tilt / (90 deg)`, not `(Tilt) deg`."
+#: docs/user-guide/reference/formula-language.md:28
+msgid "Units: `rad deg turn · s ms min h · m mm cm km inch ft · kg g · A mA · K · cd · mol · Hz · N · Pa kPa · W · V mV · lx`. A unit follows a number only; `x deg` is a syntax error. A quantity's dimension comes from arithmetic — write `Tilt / (90 deg)`, not `(Tilt) deg`."
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:32
+#: docs/user-guide/reference/formula-language.md:33
+msgid "A **compound unit** joins those with `per` (a rate: `deg per s`, `m per s`, `turn per min`), `*` (a product: `N * m`) and `^` with a whole number (a power: `m^2`, `s^-1`, `m per s^2`). `*` binds tighter than `per`, so `kg * m per s^2` is kilogram-metres per second squared. Write `m per s^2`, not `m per s per s` (one `per` per unit). `per` is a word of the unit only — a relationship may still be called `per` — and `/` between values stays ordinary division: `10 m / s` divides ten metres by a relationship named `s`; `10 m per s` is one speed. A compound unit means exactly what its parts multiply to: `180 deg per s` is π radians per second, `36 km per h` is `10 m per s`, and `N * m` is the same physical unit as `kg * m^2 per s^2`. Angle stays its own dimension, so `rad per s` is an angular rate, not a frequency. Studio may show a compound unit as `m/s²` or `N·m`; what you type and what is saved is the `per` / `*` / `^` form."
+msgstr ""
+
+#: docs/user-guide/reference/formula-language.md:47
 msgid "Operators, loosest to tightest"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:34
+#: docs/user-guide/reference/formula-language.md:49
 msgid "Operators"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:36
+#: docs/user-guide/reference/formula-language.md:51
 msgid "or"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:36
+#: docs/user-guide/reference/formula-language.md:51
 msgid "`\\|\\|`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:37
+#: docs/user-guide/reference/formula-language.md:52
 msgid "and"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:37
+#: docs/user-guide/reference/formula-language.md:52
 msgid "`&&`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:38
+#: docs/user-guide/reference/formula-language.md:53
 msgid "equality"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:38
+#: docs/user-guide/reference/formula-language.md:53
 msgid "`==` `!=`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:38
+#: docs/user-guide/reference/formula-language.md:53
 msgid "same dimension both sides; no chaining"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:39
+#: docs/user-guide/reference/formula-language.md:54
 #: docs/user-guide/textual/syntax-basics.md:169
 msgid "comparison"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:39
+#: docs/user-guide/reference/formula-language.md:54
 msgid "`<` `<=` `>` `>=` `in`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:39
+#: docs/user-guide/reference/formula-language.md:54
 msgid "same dimension both sides; no chaining (`a < b && b < c`); `x in xs` is membership, `x in lo .. hi` a closed range"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:40
+#: docs/user-guide/reference/formula-language.md:55
 msgid "range"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:40
+#: docs/user-guide/reference/formula-language.md:55
 msgid "`lo .. hi`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:40
+#: docs/user-guide/reference/formula-language.md:55
 msgid "only after `in`; both ends must be comparable with the value: `angle in -45 deg .. 45 deg`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:41
+#: docs/user-guide/reference/formula-language.md:56
 msgid "default"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:41
+#: docs/user-guide/reference/formula-language.md:56
 msgid "`x ?? d`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:41
+#: docs/user-guide/reference/formula-language.md:56
 msgid "`x` when it has a value, `d` when it is absent"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:42
+#: docs/user-guide/reference/formula-language.md:57
 msgid "additive"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:42
+#: docs/user-guide/reference/formula-language.md:57
 msgid "`+` `-`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:42
+#: docs/user-guide/reference/formula-language.md:57
 msgid "same dimension both sides"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:43
+#: docs/user-guide/reference/formula-language.md:58
 msgid "multiplicative"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:43
+#: docs/user-guide/reference/formula-language.md:58
 msgid "`*` `/`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:43
+#: docs/user-guide/reference/formula-language.md:58
 msgid "dimensions combine: `m / s` is a speed"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:44
+#: docs/user-guide/reference/formula-language.md:59
 msgid "prefix"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:44
+#: docs/user-guide/reference/formula-language.md:59
 msgid "`!` `-`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:45
+#: docs/user-guide/reference/formula-language.md:60
 msgid "call"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:45
+#: docs/user-guide/reference/formula-language.md:60
 msgid "`f(x, y)`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:47
+#: docs/user-guide/reference/formula-language.md:62
 msgid "Concepts and their values: a concept in a formula is used through its value form — `Tilt / 90 deg` divides the angle — and the result must have the value form of the concept the relationship produces."
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:51
+#: docs/user-guide/reference/formula-language.md:66
 msgid "Forms"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:53
+#: docs/user-guide/reference/formula-language.md:68
 #: docs/user-guide/textual/syntax-basics.md:165
 msgid "Form"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:55
+#: docs/user-guide/reference/formula-language.md:70
 #: docs/user-guide/textual/syntax-basics.md:171
 msgid "conditional"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:55
+#: docs/user-guide/reference/formula-language.md:70
 msgid "`if Held then dimByTilt(Tilt) else 0`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:55
+#: docs/user-guide/reference/formula-language.md:70
 msgid "both branches the same kind"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:56
+#: docs/user-guide/reference/formula-language.md:71
 msgid "block with bindings"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:56
+#: docs/user-guide/reference/formula-language.md:71
 msgid "`{ let half = Brightness / 2; let dark = AmbientLight < 10 lx; if dark then Brightness else half }`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:56
+#: docs/user-guide/reference/formula-language.md:71
 msgid "`let` names a value for the rest of the block; may shadow"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:57
+#: docs/user-guide/reference/formula-language.md:72
 #: docs/user-guide/textual/syntax-basics.md:175
 msgid "options"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:57
+#: docs/user-guide/reference/formula-language.md:72
 #: docs/user-guide/textual/syntax-basics.md:175
 msgid "`Some(e)`, `None`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:57
+#: docs/user-guide/reference/formula-language.md:72
 msgid "an optional value; `None` takes its kind from a sibling"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:58
+#: docs/user-guide/reference/formula-language.md:73
 msgid "match"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:58
+#: docs/user-guide/reference/formula-language.md:73
 msgid "`match reading { Some(v) => v, None => 0 }`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:58
+#: docs/user-guide/reference/formula-language.md:73
 msgid "on true/false, options, whole numbers, or a concept's value; must be exhaustive (`_ =>` catches the rest)"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:59
+#: docs/user-guide/reference/formula-language.md:74
 #: docs/user-guide/textual/syntax-basics.md:177
 msgid "memory"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:59
+#: docs/user-guide/reference/formula-language.md:74
 msgid "`delay(0, acc + x)`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:59
+#: docs/user-guide/reference/formula-language.md:74
 msgid "last tick's value of the expression; `0` before there was one"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:60
+#: docs/user-guide/reference/formula-language.md:75
 msgid "across domains"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:60
+#: docs/user-guide/reference/formula-language.md:75
 msgid "`sync(interaction, 0, brightness)`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:60
+#: docs/user-guide/reference/formula-language.md:75
 msgid "the source domain's last value strictly before this tick; `0` before the source has run"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:61
+#: docs/user-guide/reference/formula-language.md:76
 msgid "every / some element"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:61
+#: docs/user-guide/reference/formula-language.md:76
 msgid "`all reading in readings: reading < limit` · `any fault in faults: fault > 2`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:61
+#: docs/user-guide/reference/formula-language.md:76
 msgid "true or false for a whole collection; the name after the word stands for one element inside the body only"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:62
+#: docs/user-guide/reference/formula-language.md:77
 msgid "transform / keep"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:62
+#: docs/user-guide/reference/formula-language.md:77
 msgid "`map reading in readings: reading / 2` · `filter reading in readings: reading in 10 K .. 40 K`"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:62
+#: docs/user-guide/reference/formula-language.md:77
 msgid "a new collection: each element transformed, or the elements that pass"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:64
+#: docs/user-guide/reference/formula-language.md:79
 msgid "`delay` and `sync` belong in a **value's** formula (no inputs), at the top level or in a `let`, an `if` branch or a `match` scrutinee — not in a rule, a `match` arm or a block's result. Each written `delay` / `sync` is its own memory cell. The relationship must have a timing domain."
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:69
+#: docs/user-guide/reference/formula-language.md:84
 #: docs/user-guide/studio/formula-editor.md:180
 msgid "What is checked"
 msgstr "检查什么"
 
-#: docs/user-guide/reference/formula-language.md:71
+#: docs/user-guide/reference/formula-language.md:86
 msgid "Check"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:71
+#: docs/user-guide/reference/formula-language.md:86
 msgid "Example finding"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:73
+#: docs/user-guide/reference/formula-language.md:88
 msgid "dimensions"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:73
+#: docs/user-guide/reference/formula-language.md:88
 msgid "*This expression adds values with different physical dimensions: an angle and a time.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:74
+#: docs/user-guide/reference/formula-language.md:89
 msgid "the produced concept"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:74
+#: docs/user-guide/reference/formula-language.md:89
 msgid "*Brightness is a dimensionless quantity, but this formula produces an angle.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:75
+#: docs/user-guide/reference/formula-language.md:90
 msgid "names in scope"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:75
+#: docs/user-guide/reference/formula-language.md:90
 msgid "*`x` is not something this mapping reads or can call.* — inside `all x in xs: …` the fix lists the locals in scope"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:76
+#: docs/user-guide/reference/formula-language.md:91
 msgid "binders and ranges"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:76
+#: docs/user-guide/reference/formula-language.md:91
 msgid "*all expects a collection after 'in'.* · *The body of 'filter' must be true or false.* · *This range endpoint must be an angle.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:77
+#: docs/user-guide/reference/formula-language.md:92
 msgid "concept identity in calls"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:77
+#: docs/user-guide/reference/formula-language.md:92
 msgid "*dimByTilt reads Tilt here, but this is Brightness.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:78
+#: docs/user-guide/reference/formula-language.md:93
 msgid "arity and shape"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:78
+#: docs/user-guide/reference/formula-language.md:93
 msgid "*dimByTilt reads Tilt; give it those values.* · *tilt reads nothing; it is a value, not something to apply.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:79
+#: docs/user-guide/reference/formula-language.md:94
 msgid "placement of memory"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:79
+#: docs/user-guide/reference/formula-language.md:94
 msgid "*`delay` can only be used in a relationship without inputs.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:80
+#: docs/user-guide/reference/formula-language.md:95
 msgid "exhaustiveness"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:80
+#: docs/user-guide/reference/formula-language.md:95
 msgid "*… non-exhaustive*; unreachable arms are warnings"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:81
+#: docs/user-guide/reference/formula-language.md:96
 msgid "units"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:81
+#: docs/user-guide/reference/formula-language.md:96
 msgid "*`foobar` is not a unit.*"
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:83
+#: docs/user-guide/reference/formula-language.md:98
 msgid "Not in the language: user-defined functions beyond the design's relationships, loops, strings, lists, user enums (they parse in text but cannot be used yet), unit casts on expressions."
 msgstr ""
 
-#: docs/user-guide/reference/formula-language.md:89
+#: docs/user-guide/reference/formula-language.md:104
 msgid "[Formula editor](../studio/formula-editor.md) · [Types, units and concepts](../troubleshooting/type-and-concept-errors.md) · [Syntax basics](../textual/syntax-basics.md)"
 msgstr ""
 
@@ -8348,7 +8360,7 @@ msgid "**What to do.** Usually a unit is missing on a number: `Tilt > 45` should
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:34
-msgid "_`foobar` is not a unit._ — _Units available: rad deg s ms min h m mm cm km kg g A mA K cd mol Hz N Pa kPa W V mV lx._"
+msgid "_`foobar` is not a unit._ / _`foobar` in `m per foobar` is not a unit._ — _Units available: rad deg turn s ms min h m mm cm km inch ft kg g A mA K cd mol Hz N Pa kPa W V mV lx._"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:36
@@ -8356,110 +8368,134 @@ msgid "**What to do.** Use one of the listed units, or write the quantity withou
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:39
-msgid "_`x` is not something this mapping reads or can call._"
+msgid "_`deg per s` is a unit of an angular rate, but this value must be a length._"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:41
-msgid "**What it means.** A name in the formula is neither a concept this relationship reads nor a relationship of the design."
+msgid "**What it means.** The compound unit you wrote measures one kind of quantity and the position asks for another."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:44
-msgid "**What to do.** Inside a **rule**, name the concepts it reads (_Tilt_, as in the _Reads_ section). Inside a **value**, name the design's values (`tilt`) and apply its rules (`dimByTilt(tilt)`). Check the spelling — completion (⌃Space) lists what is in scope. Code: `formula.name.unknown`."
+msgid "**What to do.** Choose a unit of the dimension the position expects (the unit pop-up lists them), or change what the relationship produces. Code: `formula.unit.dimension`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:49
-msgid "_dimByTilt does not read AmbientLight._"
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:48
+msgid "_Unit powers use a whole-number exponent, such as `s^2` or `s^-1`._ / _a unit expression has one `per`: write a power instead, as in `m per s^2`_ / _expected a unit after `per`_"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:51
-msgid "**What it means.** The formula names a concept the relationship does not read."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:50
+msgid "**What it means.** The compound unit is not well formed: a fractional or missing exponent, a second `per`, or `per` with nothing after it."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:53
-msgid "**Why.** A rule sees only its inputs; that is what makes it a rule."
+msgid "**What to do.** Write the unit with `per`, `*` and a whole-number `^n`: `m per s^2`, `N * m`, `kg * m per s^2`. Code: `syntax.malformed_unit`; `formula.unit.exponent` for a power beyond ±127."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:55
-msgid "**What to do.** Add the concept under _Reads_ (the fix _Connect AmbientLight to dimByTilt as an input_ does it), or drop it from the formula. Code: `formula.name.not_an_input`."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:57
+msgid "_`x` is not something this mapping reads or can call._"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:59
-msgid "_dimByTilt reads Tilt here, but this is Brightness._"
+msgid "**What it means.** A name in the formula is neither a concept this relationship reads nor a relationship of the design."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:61
-msgid "**What it means.** You applied a rule to a value of the wrong concept."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:62
+msgid "**What to do.** Inside a **rule**, name the concepts it reads (_Tilt_, as in the _Reads_ section). Inside a **value**, name the design's values (`tilt`) and apply its rules (`dimByTilt(tilt)`). Check the spelling — completion (⌃Space) lists what is in scope. Code: `formula.name.unknown`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:63
-msgid "**Why.** Concepts are identities: a _Brightness_ is never a _Tilt_, even if both are plain numbers."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:66
-msgid "**What to do.** Pass a Tilt — an input of this relationship, or a value that produces Tilt. Code: `formula.call.argument_type`."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:67
+msgid "_dimByTilt does not read AmbientLight._"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:69
-msgid "_tilt reads nothing; it is a value, not something to apply._"
+msgid "**What it means.** The formula names a concept the relationship does not read."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:71
-msgid "**What to do.** Write `tilt`, not `tilt()`. Code: `formula.call.arity`."
+msgid "**Why.** A rule sees only its inputs; that is what makes it a rule."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:73
-msgid "_dimByTilt reads Tilt; give it those values._"
-msgstr ""
-
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:75
-msgid "**What it means.** A rule was named as if it were a value."
+msgid "**What to do.** Add the concept under _Reads_ (the fix _Connect AmbientLight to dimByTilt as an input_ does it), or drop it from the formula. Code: `formula.name.not_an_input`."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:77
-msgid "**Why.** A rule with inputs can only be applied; it cannot be stored or passed along."
+msgid "_dimByTilt reads Tilt here, but this is Brightness._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:80
-msgid "**What to do.** Write `dimByTilt(tilt)`. Code: `formula.mapping.needs_arguments`."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:79
+msgid "**What it means.** You applied a rule to a value of the wrong concept."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:83
-msgid "_Only a named relationship can be applied._ / _Tilt is a concept, not a relationship; it cannot be applied._"
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:81
+msgid "**Why.** Concepts are identities: a _Brightness_ is never a _Tilt_, even if both are plain numbers."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:85
-msgid "**What to do.** Calls apply a relationship of the design to its inputs; the result of a call cannot be called again (`f(x)(y)`), and a concept has nothing to apply. Code: `formula.call.not_a_relationship`."
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:84
+msgid "**What to do.** Pass a Tilt — an input of this relationship, or a value that produces Tilt. Code: `formula.call.argument_type`."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:87
+msgid "_tilt reads nothing; it is a value, not something to apply._"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:89
-msgid "A number pattern in `match` is refused — _This pattern is a plain number, but the value matched is a count._"
+msgid "**What to do.** Write `tilt`, not `tilt()`. Code: `formula.call.arity`."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/type-and-concept-errors.md:91
+msgid "_dimByTilt reads Tilt; give it those values._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:93
+msgid "**What it means.** A rule was named as if it were a value."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:95
+msgid "**Why.** A rule with inputs can only be applied; it cannot be stored or passed along."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:98
+msgid "**What to do.** Write `dimByTilt(tilt)`. Code: `formula.mapping.needs_arguments`."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:101
+msgid "_Only a named relationship can be applied._ / _Tilt is a concept, not a relationship; it cannot be applied._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:103
+msgid "**What to do.** Calls apply a relationship of the design to its inputs; the result of a call cannot be called again (`f(x)(y)`), and a concept has nothing to apply. Code: `formula.call.not_a_relationship`."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:107
+msgid "A number pattern in `match` is refused — _This pattern is a plain number, but the value matched is a count._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:109
 msgid "**What to do.** Counts cannot be matched against number patterns; write `if x == 10 then … else …`. Code: `formula.unsupported` / `dimension.mismatch`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:94
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:112
 msgid "_… is not exhaustive_ / an arm is unreachable"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:96
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:114
 msgid "**What to do.** Add the missing case (`_ =>` catches the rest), or remove the arm that can never match. Codes: `formula.match.non_exhaustive` (error), `formula.match.unreachable` (warning)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:100
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:118
 msgid "A syntax error"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:102
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:120
 msgid "**What it means.** The text does not parse; the finding points at the place and says what was expected (_comparisons cannot be chained — write `a < b && b < c`_, _a unit can only follow a number, as in `90 deg`_)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:106
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:124
 msgid "**What to do.** Fix the text; the check re-runs as you type. Code: `formula.parse.unexpected_token`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/type-and-concept-errors.md:111
+#: docs/user-guide/troubleshooting/type-and-concept-errors.md:129
 msgid "[Formula language](../reference/formula-language.md) · [Formula editor](../studio/formula-editor.md)"
 msgstr ""
 

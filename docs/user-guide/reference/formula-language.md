@@ -22,12 +22,27 @@ the same as `tilt`; write `tilt`.
 | --- | --- |
 | number | `0`, `0.5`, `1e-3`, `-2` |
 | number with a unit | `90 deg`, `2.5 s`, `300 lx`, `25.4 mm` |
+| number with a compound unit | `180 deg per s`, `9.81 m per s^2`, `1 N * m`, `1 kg * m per s^2`, `2 s^-1` |
 | on / off | `true`, `false` |
 
-Units: `rad deg · s ms min h · m mm cm km · kg g · A mA · K · cd · mol ·
-Hz · N · Pa kPa · W · V mV · lx`. A unit follows a number only; `x deg` is
-a syntax error. A quantity's dimension comes from arithmetic — write
+Units: `rad deg turn · s ms min h · m mm cm km inch ft · kg g · A mA · K ·
+cd · mol · Hz · N · Pa kPa · W · V mV · lx`. A unit follows a number only;
+`x deg` is a syntax error. A quantity's dimension comes from arithmetic — write
 `Tilt / (90 deg)`, not `(Tilt) deg`.
+
+A **compound unit** joins those with `per` (a rate: `deg per s`, `m per s`,
+`turn per min`), `*` (a product: `N * m`) and `^` with a whole number (a power:
+`m^2`, `s^-1`, `m per s^2`). `*` binds tighter than `per`, so
+`kg * m per s^2` is kilogram-metres per second squared. Write `m per s^2`, not
+`m per s per s` (one `per` per unit). `per` is a word of the unit only — a
+relationship may still be called `per` — and `/` between values stays ordinary
+division: `10 m / s` divides ten metres by a relationship named `s`; `10 m per
+s` is one speed. A compound unit means exactly what its parts multiply to:
+`180 deg per s` is π radians per second, `36 km per h` is `10 m per s`, and
+`N * m` is the same physical unit as `kg * m^2 per s^2`. Angle stays its own
+dimension, so `rad per s` is an angular rate, not a frequency. Studio may show
+a compound unit as `m/s²` or `N·m`; what you type and what is saved is the
+`per` / `*` / `^` form.
 
 ## Operators, loosest to tightest
 

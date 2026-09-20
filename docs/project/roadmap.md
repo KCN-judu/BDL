@@ -38,12 +38,18 @@ formal result arrives.
 - The equation language's remaining edges: `zip`'s cost in the generated core
   (ISS-0013); record syntax lowering to nested grouped values — only if a case
   asks (FV Phase 11 removes the general quantifier and comprehension, FVD-0113).
-- The Formula Composer's next slices: `match`, blocks (`let`), rules (`x => …`),
-  collection and grouped literals and `delay` / `sync` as structured components
-  (the Composer shows them as text, `NodeKind::Opaque`); a preferred display
+- The Formula Composer's next slices: Studio drawing the structured `match`,
+  `let`, rule, collection, grouped, `delay` / `sync` projections and the
+  Formula-mode caret the service now serves (protocol 0.27); a preferred display
   unit per concept and per simulation input (presentation only, FV Phase 10 §9);
   hover cards on components; affine units (°C, °F) once the formal
-  point/difference follow-up lands (ISS-0004); drag-and-drop from the palette.
+  point/difference follow-up lands (ISS-0004) — never as a factor of a unit
+  expression; drag-and-drop from the palette; unit multiplication and powers in
+  completion beyond `per` (the grammar has them, completion ranks `per`
+  continuations only).
+- Studio authoring from the compiler-owned value categories
+  (`ListValueCategories`, `NewConcept.category_id`) in place of the Standard
+  Library's concept presets, which stay served and loadable.
 - Studio: the collections report (readiness, byte bounds, window requirements)
   on the Deploy page, and the schedule as deployment data there — today
   `bdld compile --period` only.

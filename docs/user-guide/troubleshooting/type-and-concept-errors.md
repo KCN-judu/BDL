@@ -31,10 +31,28 @@ physicist does.
 addition, subtraction and comparison need the same one. Code:
 `dimension.mismatch`.
 
-## _`foobar` is not a unit._ — _Units available: rad deg s ms min h m mm cm km kg g A mA K cd mol Hz N Pa kPa W V mV lx._
+## _`foobar` is not a unit._ / _`foobar` in `m per foobar` is not a unit._ — _Units available: rad deg turn s ms min h m mm cm km inch ft kg g A mA K cd mol Hz N Pa kPa W V mV lx._
 
 **What to do.** Use one of the listed units, or write the quantity without a
 unit if it really is a plain number. Code: `formula.unit.unknown`.
+
+## _`deg per s` is a unit of an angular rate, but this value must be a length._
+
+**What it means.** The compound unit you wrote measures one kind of quantity and
+the position asks for another.
+
+**What to do.** Choose a unit of the dimension the position expects (the unit
+pop-up lists them), or change what the relationship produces. Code:
+`formula.unit.dimension`.
+
+## _Unit powers use a whole-number exponent, such as `s^2` or `s^-1`._ / _a unit expression has one `per`: write a power instead, as in `m per s^2`_ / _expected a unit after `per`_
+
+**What it means.** The compound unit is not well formed: a fractional or missing
+exponent, a second `per`, or `per` with nothing after it.
+
+**What to do.** Write the unit with `per`, `*` and a whole-number `^n`:
+`m per s^2`, `N * m`, `kg * m per s^2`. Code: `syntax.malformed_unit`;
+`formula.unit.exponent` for a power beyond ±127.
 
 ## _`x` is not something this mapping reads or can call._
 

@@ -391,7 +391,7 @@ naming `refForms_agree` (a Source is observed, not called) or
 surfaces from the same rule (`relationshipRole` in `app/state.dart`), so the two
 never disagree on a given projection.
 
-### The Formula Composer (protocol 0.12, 0.13)
+### The Formula Composer (protocol 0.12, 0.13, 0.27)
 
 `bdl-ide::formula` gives the Studio definition editor its structured projection,
 on the same overlay path (docs/architecture/studio-ui.md §4b, ADR-0028):
@@ -421,9 +421,12 @@ set the overlay to the request's source, like completion). Local inference is
 `Composer.lean`'s `solve`: `+ −` propagate the result to both sides, `×` gives
 the unknown side `result − known`, `÷` the numerator `result + denominator` and
 the denominator `numerator − result`; two unknown operands are _insufficient
-information_, never searched. Candidate units are exactly the registered units
-of the solved dimension (`unitsFor`); for a literal, of its own dimension (a
-switch keeps the quantity). Tests: `crates/bdl-ide/tests/formula_composer.rs`.
+information_, never searched. Candidate units are the registered atoms of the
+solved dimension (`unitsFor`) followed by the curated composites of its named
+quantity (`units::candidates_for`, ADR-0040); for a literal, of its own
+dimension (a switch keeps the quantity — by atom id or by canonical spelling,
+`180 deg per s` → `30 turn per min`). Tests:
+`crates/bdl-ide/tests/formula_composer.rs`.
 
 The natural forms (docs/spec/textual-syntax.md §17) reach the projection as
 their own nodes, never desugared there:
@@ -471,6 +474,79 @@ arm or earlier `let` that binds the spelling) is consulted by the index, the
 textual anchors and the token classifier — the binder word is a keyword only in
 the head position, the local a parameter (declaration and uses), `..` an
 operator.
+
+**The Formula view's structure (0.27).** The projection carries, on every node,
+what a client needs to render and navigate without reparsing: `role` — what the
+node is to its parent (`condition` / `then` / `else`, `numerator` /
+`denominator`, `argument 1`, `collection` / `body`, `subject` / `arm 1`, `value`
+/ `result`, `item 1`, `initial` / `value`, `domain`, `from` / `to`); `locals` —
+the formula's own names in scope there (a binder's or rule's parameters, an
+arm's pattern names, the `let`s before), computed while building; `append_at` —
+the byte before a call's, list's, tuple's or match's closing delimiter. The
+forms that were opaque are structured: `NodeKind::Match` (the subject, then
+`Arm { pattern, binds }` nodes over their bodies), `Block`
+(`Let { pattern, binds }` nodes over their values, then the result),
+`Rule { params }`, `List`, `Tuple`, `Delay` (initial, value), `Sync` (domain,
+initial, value); `Opaque` remains for `()`. `solve` propagates the position's
+expectation to every arm's body, a block's result, a delay's and a sync's
+values, a list's items (its element). A composite unit literal (ADR-0040) is a
+`Quantity` node with the unit as written, its canonical spelling (`unit_source`)
+and its rendering (`unit_display`); `unit_id` names the atom only when the unit
+is one.
+
+A **structural caret** is a `(node, Side)` pair — `Before` or `After` a node;
+both sides of a slot are the slot itself. `caret_offset` gives its byte offset;
+`navigate(root, node, side, Motion)` is pure over the tree: `Left` / `Right`
+walk the caret sequence in source order (before a node, its children's carets,
+after it), `Up` keeps the side on the parent, `Down` takes the first child's
+`Before` (or the last child's `After`), `Exit` is `After` the parent, `NextSlot`
+/ `PreviousSlot` wrap. The daemon keeps no caret and no second tree: every
+request names the draft source and a caret in its projection.
+
+**Keyboard insertion** is `ComposeOp::Insert { node, side, text }`, interpreted
+by the grammar and answered with a text edit like every other action: a
+two-sided operator makes `node op ?` (or `? op node` before), `!` the prefix
+form, `(` groups the node (or a slot), a word into a slot becomes its canonical
+form (`canonical_fill`: an equation with one slot per argument, a relationship
+with inputs as a call with slots, `if ? then ? else ?`, a binder with a fresh
+local, `delay(?, ?)`), a number or `true` / `false` fills as written; after a
+quantity literal a unit word becomes its unit, `per` and `*` extend the unit
+(`180 deg per` — a draft state the parser names until a unit follows; `*` gives
+`180 deg * ?`, whose slot filled with an atom the parser reads as one composite
+literal) and `^` opens a power. What cannot stand at the caret is refused with
+the reason (`insert an operator first`). The Formula view and the text field
+edit one draft; neither side has a grammar of its own.
+
+**Completion at a caret**
+(`CompletionContext::FormulaCaret { mapping, node, side, prefix }`) runs the
+formula completion at the caret's offset with the projection's expectation for
+the position and its `locals` — the text is not scanned for either; the prefix
+is the client's. Every item carries `structured_insert` where its Formula-view
+form differs from the text insert (`clamp(?, ?, ?)` beside `clamp(`; `spin(?)`;
+`if ? then ? else ?`; a binder template with a slot; a composite unit's whole
+spelling), so a client never synthesises slots. Units: after a number every atom
+is offered with the ones of the expected dimension first, and the curated
+composites of the expected dimension by their spelling (`10 d` → `deg`,
+`deg per s` for an angular velocity); after `per` or `*` of a unit being
+written, the atoms are ranked by the dimension they would complete the unit to
+(`10 deg per` → `s` first).
+
+**Signature help** (`signature(projection, design, node)`) finds the innermost
+call enclosing a node: an equation's parameter names with what each takes (the
+scheme instantiated by the arguments already written, from the projection's
+expectations), a relationship's inputs by concept and its result, and the
+argument the caret is in.
+
+**The render** (`render(projection)`) flattens the tree into fragments in source
+order — a leaf's own text as `reference` / `local` / `number` / `unit` (its text
+the rendering, `m/s²`) / `bool` / `slot`, the words and marks between a node's
+children as `operator` / `keyword` / `punctuation` / `pattern`, a call's head as
+`reference` or `equation` — with the compact one-line source, the result's
+description, the diagnostic counts and the references; the daemon serves it for
+the **committed** formula (`IdeHost::committed_snapshot`: the world with no
+overlay, so a canvas node shows the saved formula while the inspector drafts
+another). No second rendering grammar exists. Tests:
+`crates/bdl-ide/tests/formula_structure.rs`.
 
 ### Component-scoped drafts (system projects)
 

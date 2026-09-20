@@ -168,15 +168,21 @@ each of its questions was answered is in the
   [evidence/pico-smoke-test.md](evidence/pico-smoke-test.md)), is priority 1;
   the platform adapter beyond one line and one duty (ISS-0018, ISS-0017) is
   second; nothing else is in progress in this repository.
-- **Recently changed:** the first hardware demo end to end (ADR-0039, protocol
-  0.26 — the daemon builds the firmware stage by stage and flashes the Pico over
-  its own bootloader; an image's identity is the content it was built from and a
-  stale one is never flashed; the Deploy page ends in Build · Flash · Observe
-  with one action per state; the Button → Lamp demo as two templates on the
-  Welcome page; `bdld build` / `flash` / `init --template`), the Source half of
-  the platform adapter (ADR-0038, protocol 0.25 — a device is for an output or a
-  Source; a provider profile from `bdl-catalogue` turns the line's reading into
-  the Source's value; the Pico firmware reads the line before each tick; an
+- **Recently changed:** composite units and the Formula view's structure
+  (ADR-0040, protocol 0.27 — `180 deg per s`, `9.81 m per s^2`, `1 N * m` as a
+  derived surface over the registered atoms with the dimension and scale the
+  algebra gives; the compiler-owned value categories and unit candidates; roles,
+  locals, structured forms, structural carets, keyboard insertion, completion at
+  a caret, signature help and the saved-formula render in the IDE service), the
+  first hardware demo end to end (ADR-0039, protocol 0.26 — the daemon builds
+  the firmware stage by stage and flashes the Pico over its own bootloader; an
+  image's identity is the content it was built from and a stale one is never
+  flashed; the Deploy page ends in Build · Flash · Observe with one action per
+  state; the Button → Lamp demo as two templates on the Welcome page;
+  `bdld build` / `flash` / `init --template`), the Source half of the platform
+  adapter (ADR-0038, protocol 0.25 — a device is for an output or a Source; a
+  provider profile from `bdl-catalogue` turns the line's reading into the
+  Source's value; the Pico firmware reads the line before each tick; an
   unprovided Source is an incomplete deployment with the reason), the first
   embedded platform adapter (ADR-0037 — `bdld compile --target rp2040_pico`
   generates the Embassy firmware beside the core; raw PWM and GPIO commands
