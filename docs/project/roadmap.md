@@ -67,10 +67,13 @@ formal result arrives.
 - Projection deltas and a persisted edit history — ISS-0009.
 - Team / project / package libraries of items (LIB-2); a device library that
   provides values and generates requirements (LIB-3, with ISS-0016 and PRP-0001)
-  — `docs/spec/concept-library.md`. Output-side realization (a device encoder
-  from a concept's representation to a raw command, chosen at deployment) is
-  formally investigated (FV Phase 14) and has no production record: it starts as
-  a proposal, if at all.
+  — `docs/spec/concept-library.md`. Output-side realization exists in its first
+  slice (ADR-0036: five registry profiles, a pure encoder per profile,
+  three-judgment admissibility, machine sinks, the generated `Commands`); what
+  remains is ISS-0017 — a device catalogue beyond the witnesses, stateful
+  adapters, a device clock, atomic frames, and the adapter's correspondence to
+  the raw trace — each after an FV phase, none before the first platform
+  adapter.
 - Native menu bar (`PlatformMenuBar` on macOS, in-window on Windows).
 - An incremental query engine for the IDE service — only if profiling on real
   projects asks for it (baseline: ~2 ms per full analysis at 400 mappings).

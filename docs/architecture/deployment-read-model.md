@@ -21,10 +21,13 @@ and `TargetView` (docs/spec/protocol.md 0.5), composed at the daemon by
 | Is the deployment configuration complete? | `DeploymentAnalysis`: every output with a domain has a device, every device an output          | `status == INCOMPLETE`; `missing[]` kinds `OUTPUT_NO_DEVICE`, `DEVICE_NO_OUTPUT`                                                        |
 | Do the devices fit _this_ target?         | `DeploymentAnalysis`: `solve` / `diagnose`                                                     | `status` (`FEASIBLE` / `INFEASIBLE` / `INCOMPLETE`), `rows[]`, `blocker`                                                                |
 
-`deployable = design_ready && status == FEASIBLE`. It is the only field that
-means "you can deploy this"; `status` alone never does — a design whose devices
-fit perfectly is still not deployable while a relationship does not check, and
-the message then names the relationship, not the board.
+`deployable = design_ready && status == FEASIBLE && no chosen realization is invalid`
+(`MissingKind::REALIZATION_INVALID`; the judgment itself is
+`DeploymentAnalysis.realizations`, docs/architecture/output-realization.md). It
+is the only field that means "you can deploy this"; `status` alone never does —
+a design whose devices fit perfectly is still not deployable while a
+relationship does not check, and the message then names the relationship, not
+the board.
 
 The distinctions are load-bearing:
 

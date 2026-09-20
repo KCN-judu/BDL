@@ -13,10 +13,16 @@ by `bdl-compiler::analyze_deployment`.
 ## Pipeline
 
 ```text
-OutputId  →  DeviceBinding{kind, fixed_pins}  →  Requirements  →  solve(board)  →  Assignment
-                                                                       ↓ (none)
-                                                                   diagnose → DeadEnd
+OutputId  →  DeviceBinding{kind, realization?, fixed_pins}  →  Requirements  →  solve(board)  →  Assignment
+                                                                                    ↓ (none)
+                                                                                diagnose → DeadEnd
 ```
+
+A binding may also name an **output realization profile** (`realization`,
+ADR-0036): the profile prescribes the kind, and its encoder is judged apart from
+this pipeline — the solver never sees an encoder, the encoder never sees a board
+(`docs/architecture/output-realization.md`). The kind stays the whole of what
+the _solver_ reads.
 
 The design (`Δ, Κ, Ω, β`) is never an argument of the solver. Swapping the board
 re-solves the same requirements with the design untouched. Hardware allocation

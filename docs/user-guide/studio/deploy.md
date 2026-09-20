@@ -39,7 +39,31 @@ row; in it you set
 The kind decides what the device needs from the board (a PWM channel needs one
 PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor
 needs SDA and SCL on the same bus). You never edit those requirements; the pin
-fields are the only manual choice.
+fields and the realization are the only manual choices.
+
+### Realization
+
+Once a board has answered, each device card shows a **Realization** pop-up: how
+the output's value becomes the command the device takes. The choices are the
+compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255),
+_PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_
+(register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written),
+_H-bridge, signed level_ (direction and duty) — with the ones that fit what the
+output carries listed first and the others marked _does not fit_. Choosing one
+also sets the device's kind to what the profile needs. _None — place by kind_
+leaves the device placed as before and generates no command.
+
+Beside the pop-up the card shows the three checks a realization must pass —
+**encoder** (the profile's conversion is a well-typed pure function), **fits**
+(it converts exactly what this output carries), **placed** (the board has the
+pins) — and, when one fails, the sentence that says which: _pwmLight cannot
+realise light with `gpio_level`: the output carries q[1] but the profile encodes
+bool._ A failing realization blocks deployment until changed; a missing one does
+not.
+
+A realization is deployment data like the kind and the pins: choosing, changing
+or removing one changes nothing on the Design page, in the simulator's samples
+or in any verdict about the design.
 
 Devices are saved with the project. They are deployment data, not design data:
 adding, changing or removing one leaves every Design-page verdict unchanged.

@@ -57,6 +57,7 @@ Not a proof — the correspondence the differential tests check.
 | `Prim::Eq { ty }` (`Value::structurally_equal`)                               | `PrimOp::Eq`                                          | `(a == b)` — `PartialEq` on `f64`, `bool`, `u64`, `SemN`, `Option`, `Vec`, tuples is the same elementwise equality                                                                         |
 | `ClockId` (nominal)                                                           | `ClockSlot` (dense)                                   | `pub const CLOCK_k: ClockSlot`; `ActiveDomains` bitset                                                                                                                                     |
 | `output_values(sample, valid_bindings)`                                       | `OutputPlan { driver }`                               | `Outputs.output_n = decl_driver.clone()`, built after the write phase                                                                                                                      |
+| the encoder body `encode (rep d)` of a realization (no reference form)        | `SinkPlan { driver, command }`                        | `let command_d = if decl_driver.is_some() { Some(…) } else { None }` after the commit; `Commands.command_d`; `commands_to_dyn` in the host (docs/architecture/output-realization.md)       |
 | `RuntimeError::{MissingInput, DivisionByZero, NonFinite}` with `decl`, `tick` | same                                                  | `bdl_runtime_core::RuntimeError` with `decl` (raw `DeclId`); the host adds the tick                                                                                                        |
 
 The runtime vocabulary — `ActiveDomains`, `ClockSlot`, `RuntimeError`, the
@@ -122,7 +123,8 @@ pub struct State { pub cells: Cells }
 pub struct Inputs { pub decl_n: Option<T>, … }   // unresolved declarations
 pub struct Values { pub decl_n: Option<T>, … }   // every declaration, None when not due
 pub struct Outputs { pub output_n: Option<T>, … }
-pub struct Tick { pub values: Values, pub outputs: Outputs }
+pub struct Commands { pub command_d: Option<Raw>, … }   // one per realised output (device id d), after the outputs
+pub struct Tick { pub values: Values, pub outputs: Outputs, pub commands: Commands }
 pub fn init() -> State;
 pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result<Tick, RuntimeError>;
 ```

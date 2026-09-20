@@ -5,7 +5,7 @@ date: 2026-09-15
 area: deployment
 supersedes: []
 superseded-by: []
-related: []
+related: [ADR-0036]
 fv: ["informed by FV: BDL_FV BDL/Validation/Hardware.lean (Phase 7)"]
 ---
 
@@ -54,3 +54,15 @@ to add `HardwareFeasible` as the top rung of `MappingStatus`, or to let
   (`Invalidation::Deployment`).
 - The first-dead-end diagnosis is one explanation, not a minimal core (DI-21);
   numeric/electrical constraints are out of scope (DI-22).
+
+## Amendment (2026-09-20, output realization — ADR-0036)
+
+`analyze_deployment` additionally judges each device binding's chosen
+realization profile: it types the profile's _closed_ encoder under no grant
+against the concept representations and checks `EFits`, and reports the result
+beside the placement (`DeploymentAnalysis.realizations`). This narrows the third
+bullet of the Decision: the deployment analysis still never reads a declaration,
+a mapping's `HasType`, causality, clocks or the evaluator, and `analyze` still
+consults no target; it does consult `Ty`, `Grant::None` and `Θ` for the encoder
+alone. Everything else above stays as written. The judgments and their
+diagnostics are in `docs/architecture/output-realization.md`.

@@ -112,15 +112,19 @@ previous tick.
 ## Physical outputs: evaluate, then commit
 
 ```text
-sample inputs → evaluate → next state → publish snapshot → final OutputId values → commit via adapter
+sample inputs → evaluate → next state → publish snapshot → final OutputId values → raw commands → commit via adapter
 ```
 
-Only the single final driver of each `OutputId` reaches the adapter. No mapping
-block touches the HAL; supplied components never receive GPIO/PWM handles or
-output writers. All combination (priority, blend, max, clamp) is ordinary
-computation upstream of the one drive edge, and code generation must preserve
-that: never two writers to one actuator, never a hidden first-wins / last-wins /
-task-priority rule.
+Only the single final driver of each `OutputId` reaches the adapter — as the
+concept's value at the output slot and, where the device binding chose a
+realization profile, additionally as the profile's raw command (`Commands`,
+computed after the outputs by the profile's pure encoder from that one value;
+docs/architecture/output-realization.md). The commands are downstream of the
+tick: no declaration, cell or output reads one. No mapping block touches the
+HAL; supplied components never receive GPIO/PWM handles or output writers. All
+combination (priority, blend, max, clamp) is ordinary computation upstream of
+the one drive edge, and code generation must preserve that: never two writers to
+one actuator, never a hidden first-wins / last-wins / task-priority rule.
 
 ## Numerics
 

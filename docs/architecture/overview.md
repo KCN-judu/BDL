@@ -255,15 +255,21 @@ What that means in the code today:
   implies a protocol, and `OutputSpec` names none. The generated core produces
   the driver's value at the output slot; the platform adapter, not the design,
   turns it into an effect (`docs/spec/runtime-semantics.md`).
+- How that value becomes a raw command is a **realization profile** the binding
+  may name (`DeviceBinding.realization`, ADR-0036): a pure, typed encoder
+  `Rep(C) → raw` from a registry, judged apart from the board (well formed ∧
+  fits ∧ placed), lowered as a machine sink _below_ the behavior plan so the
+  generated core also carries `Commands`; choosing a profile changes no analysis
+  and no sample (`docs/architecture/output-realization.md`).
 - A Source is `s : () -> C` with no realization, a value entering the model from
   its environment (ADR-0032); what provides it at deployment — a device, a host,
   a network — is a separate, later choice (ISS-0016, PRP-0001), and the Standard
   Library's _… Input_ presets are authoring intent, not a device catalogue.
 - Not implemented, formally investigated: a device transducer that realizes a
-  Source (FV Phase 13, PRP-0001) and a device encoder from a concept's
-  representation to a raw output command (FV Phase 14) —
-  `docs/project/formal-correspondence.md`. Nothing in `bdl-model`, `bdl-lower`
-  or the runtime carries either.
+  Source (FV Phase 13, PRP-0001, ISS-0016) — the other physical boundary, kept
+  separate from output realization; and, on the output side, stateful adapters,
+  a device clock and atomic frames (FVI-0022, ISS-0017) —
+  `docs/project/formal-correspondence.md`.
 
 This is an architectural position, not a usability result: whether the
 separation makes behaviour easier to design is an open research question, not a

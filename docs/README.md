@@ -30,7 +30,7 @@ header that `just docs-check` verifies against its folder.
 | I want…                                                          | Read                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **current language truth**                                       | [spec/kernel.md](spec/kernel.md) · [spec/textual-syntax.md](spec/textual-syntax.md) · [spec/runtime-semantics.md](spec/runtime-semantics.md) · [spec/equation-library.md](spec/equation-library.md)                                                                                                |
-| **current file and wire formats**                                | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) (0.23) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/deployment-capacity.md](spec/deployment-capacity.md) · [spec/concept-library.md](spec/concept-library.md) (the Standard Library)         |
+| **current file and wire formats**                                | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) (0.24) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/deployment-capacity.md](spec/deployment-capacity.md) · [spec/concept-library.md](spec/concept-library.md) (the Standard Library)         |
 | **current architecture**                                         | [architecture/overview.md](architecture/overview.md), then the page for the area                                                                                                                                                                                                                   |
 | **why a decision exists**                                        | [decisions/README.md](decisions/README.md)                                                                                                                                                                                                                                                         |
 | **whether a change is proposed or decided**                      | [proposals/README.md](proposals/README.md); anything not there and not an ADR is not decided                                                                                                                                                                                                       |
@@ -55,7 +55,7 @@ header that `just docs-check` verifies against its folder.
 | [textual-syntax.md](spec/textual-syntax.md)           | textual     | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix                                                              |
 | [runtime-semantics.md](spec/runtime-semantics.md)     | runtime     | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve                                                  |
 | [project-format.md](spec/project-format.md)           | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules                                                               |
-| [protocol.md](spec/protocol.md)                       | protocol    | the Studio ↔ bdld messages, current version 0.23, compatibility rule                                                               |
+| [protocol.md](spec/protocol.md)                       | protocol    | the Studio ↔ bdld messages, current version 0.24, compatibility rule                                                               |
 | [hardware-model.md](spec/hardware-model.md)           | deployment  | capabilities, requirements, board description files                                                                                |
 | [concept-library.md](spec/concept-library.md)         | language    | the Standard Library: Concept items, Source presets, the catalogue file (schema 2), Source creation, one-transaction instantiation |
 | [equation-library.md](spec/equation-library.md)       | language    | the data core (collections, grouped and optional values), the equations, equality and order, diagnostics                           |
@@ -72,6 +72,7 @@ header that `just docs-check` verifies against its folder.
 | [codegen-rust.md](architecture/codegen-rust.md)                               | codegen          | the owned Rust AST, printed crate, host bridge, differential tests                     |
 | [behavior-systems.md](architecture/behavior-systems.md)                       | behavior-systems | components, contracts, instances, bindings, flattening, groups — implementation design |
 | [deployment-read-model.md](architecture/deployment-read-model.md)             | deployment       | what a Deploy surface is handed                                                        |
+| [output-realization.md](architecture/output-realization.md)                   | deployment       | a logical output, a deployment-chosen profile, a pure encoder, three judgments, sinks  |
 | [ide-service.md](architecture/ide-service.md)                                 | ide              | overlays, projections, text workspaces, the LSP adapter                                |
 | [relationship-roles.md](architecture/relationship-roles.md)                   | compiler         | Source / Rule / Value: the derived role, its states, the boundary, the matrix          |
 | [syntax-highlighting.md](architecture/syntax-highlighting.md)                 | ide              | one token classifier, the LSP vocabulary, two wire forms, Studio's theme               |
@@ -141,26 +142,31 @@ each of its questions was answered is in the
   reference edges; _produces_ is the signature, _carried by_ a value per tick),
   0035 (highlighting is the IDE service's semantic tokens; Studio classifies
   nothing), 0031 (locale is presentation only).
-- **Unresolved:** thirteen design issues — occurrence windows, candidate
+- **Unresolved:** fourteen design issues — occurrence windows, candidate
   definitions, the evidence model, affine units, user enums, `f32` on device,
   nested packaging, a structural output entity, projection deltas, temporal
   modifiers, `zip`'s cost in the core, the compiler's diagnostic sentences in
-  one language, a device binding for a Source; one proposal (PRP-0001, Source
-  provision by device profile). Output-side realization — how a logical output
-  reaches PWM, GPIO, I²C or UART without the behaviour model knowing — is a
-  formal investigation (FV Phase 14) with no production record yet
+  one language, a device binding for a Source, output realization beyond a pure
+  encoder (ISS-0017); one proposal (PRP-0001, Source provision by device
+  profile). Output-side realization — how a logical output reaches PWM, GPIO,
+  I²C or an H-bridge without the behaviour model knowing — is ADR-0036 and
+  [architecture/output-realization.md](architecture/output-realization.md),
+  consumed from FV Phase 14
   ([formal-correspondence.md](project/formal-correspondence.md)).
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** the Source sheet (protocol 0.23 — a Source is created
-  over a concept the designer chooses, existing or new in one transaction; the
-  Standard Library's Source items are presets named _… Input_), the Code view as
-  an IDE surface (protocol 0.22 — completion, hover, definition, references and
-  _Format_ from `bdl-ide` over the text as typed), semantic highlighting
-  (ADR-0035, protocol 0.21), one derived relationship role stated by the daemon
-  (protocol 0.20, ADR-0032 amended), reference edges (ADR-0034, protocol 0.18).
-  The full list, oldest last, is [changes/unreleased/](changes/unreleased/); the
-  protocol's history is
+- **Recently changed:** output realization (ADR-0036, protocol 0.24 — a device
+  binding chooses a realization profile on the Deploy page; the profile's pure
+  encoder lowers the output's value to a raw command below the behavior plan;
+  admissibility is three judgments), the Source sheet (protocol 0.23 — a Source
+  is created over a concept the designer chooses, existing or new in one
+  transaction; the Standard Library's Source items are presets named _… Input_),
+  the Code view as an IDE surface (protocol 0.22 — completion, hover,
+  definition, references and _Format_ from `bdl-ide` over the text as typed),
+  semantic highlighting (ADR-0035, protocol 0.21), one derived relationship role
+  stated by the daemon (protocol 0.20, ADR-0032 amended), reference edges
+  (ADR-0034, protocol 0.18). The full list, oldest last, is
+  [changes/unreleased/](changes/unreleased/); the protocol's history is
   [changes/history/protocol-versions.md](changes/history/protocol-versions.md).
 
 ## Rules in one paragraph

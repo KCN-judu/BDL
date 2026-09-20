@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/deploy.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/deploy.md) · 简体中文 · [日本語](../../ja/studio/deploy.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 部署
 
@@ -26,7 +28,15 @@ _部署页：选中 Arduino Nano，light 上有一个 PWM 设备，以及结论�
 - 该种类的每个需求一个**引脚栏**——留空让布置自行选择，或输入板子引脚名（`D3`、`A4`）手动固定；
 - **移除**。
 
-种类决定设备需要板子提供什么（PWM 通道需要一个支持 PWM 的引脚；H 桥需要一个 PWM 引脚和一个数字引脚；I²C 传感器需要同一总线上的 SDA 和 SCL）。你永远不编辑这些需求；引脚栏是唯一的手动选择。
+The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices.
+
+### Realization
+
+Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command.
+
+Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not.
+
+A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design.
 
 设备随项目保存。它们是部署数据，不是设计数据：添加、更改或移除设备不会改变设计页的任何结论。
 

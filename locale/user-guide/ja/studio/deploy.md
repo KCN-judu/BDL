@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/deploy.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/deploy.md) · [简体中文](../../zh_Hans/studio/deploy.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # デプロイ
 
@@ -26,7 +28,15 @@ _デプロイページ：Arduino Nano を選択、light に PWM デバイス 1 �
 - その種類の**要件ごとに 1 つのピンフィールド**——空のままにして配置に選ばせるか、ボードのピン名（`D3`、`A4`）を入力して手動で固定します、
 - **削除**。
 
-種類がデバイスがボードに必要とするものを決めます（PWM チャネルは PWM 対応ピン 1 つ、H ブリッジは PWM ピンとデジタルピン、I²C センサーは同じバス上の SDA と SCL）。これらの要件を編集することはありません。ピンフィールドが唯一の手動の選択です。
+The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices.
+
+### Realization
+
+Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command.
+
+Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not.
+
+A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design.
 
 デバイスはプロジェクトとともに保存されます。デプロイのデータであって設計のデータではありません。追加、変更、削除しても設計ページの判定は何も変わりません。
 

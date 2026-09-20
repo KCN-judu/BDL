@@ -18,16 +18,17 @@ DesignIr (Θ Δ Κ Ω β)  ──bdl-lower──▶  ExecIr  ──bdl-codegen-r
 
 ## What is explicit
 
-| In the plan                                                        | From                                                                          | Order                                                         |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `ClockPlan { slot, id, name }`                                     | every `ClockId` in `Κ`, `Ω`, and every `sync` source                          | `ClockId`                                                     |
-| `ConceptPlan { id, name, representation }`                         | every concept a carried type mentions                                         | `SemanticId`                                                  |
-| `InputPlan { slot, decl }`                                         | unresolved value declarations                                                 | `DeclId`                                                      |
-| `DeclPlan { index, id, ty, activation, kind }`                     | value declarations                                                            | **evaluation order** (below)                                  |
-| `CellPlan { slot, cell: StateCellId, owner, ty, writer, operand }` | every `delay`/`sync` site                                                     | `StateCellId` (declaration, then path) — also the write order |
-| `OutputPlan { slot, id, driver, ty }`                              | the _validated_ drive edges (`OutputAnalysis::valid_bindings`), never raw `β` | `OutputId`                                                    |
-| `FunctionPlan { id, name, ty }`                                    | declarations inlined away (relationships with inputs)                         | `DeclId`                                                      |
-| `has_domains`                                                      | `Κ ≠ ∅`                                                                       | —                                                             |
+| In the plan                                                        | From                                                                                                                                                                                      | Order                                                         |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `ClockPlan { slot, id, name }`                                     | every `ClockId` in `Κ`, `Ω`, and every `sync` source                                                                                                                                      | `ClockId`                                                     |
+| `ConceptPlan { id, name, representation }`                         | every concept a carried type mentions                                                                                                                                                     | `SemanticId`                                                  |
+| `InputPlan { slot, decl }`                                         | unresolved value declarations                                                                                                                                                             | `DeclId`                                                      |
+| `DeclPlan { index, id, ty, activation, kind }`                     | value declarations                                                                                                                                                                        | **evaluation order** (below)                                  |
+| `CellPlan { slot, cell: StateCellId, owner, ty, writer, operand }` | every `delay`/`sync` site                                                                                                                                                                 | `StateCellId` (declaration, then path) — also the write order |
+| `OutputPlan { slot, id, driver, ty }`                              | the _validated_ drive edges (`OutputAnalysis::valid_bindings`), never raw `β`                                                                                                             | `OutputId`                                                    |
+| `SinkPlan { slot, device, output, driver, profile, raw, command }` | one admissible output realization (`bdl-lower::Realization`): the raw command below the outputs, due when the driver is, no `DeclId` of its own (docs/architecture/output-realization.md) | `DeviceId`                                                    |
+| `FunctionPlan { id, name, ty }`                                    | declarations inlined away (relationships with inputs)                                                                                                                                     | `DeclId`                                                      |
+| `has_domains`                                                      | `Κ ≠ ∅`                                                                                                                                                                                   | —                                                             |
 
 `Activation` is `Domain { clock }` or `Agnostic`. An agnostic declaration is
 never given a domain: it runs whenever any domain is active, and at every tick
@@ -119,6 +120,6 @@ manifest (`collections`) and `bdl-compiler::collections`
 
 ## Versioning
 
-`ExecIr.version` = `EXEC_IR_VERSION` (2: `Fold`, the list and pair operators).
-The IR is serde data (JSON-serialisable) so an artefact can carry it; it is not
-a stable external format yet.
+`ExecIr.version` = `EXEC_IR_VERSION` (3: machine sinks; 2: `Fold`, the list and
+pair operators). The IR is serde data (JSON-serialisable) so an artefact can
+carry it; it is not a stable external format yet.

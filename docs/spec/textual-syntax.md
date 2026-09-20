@@ -797,9 +797,9 @@ Reserved punctuation with no token yet: `#`, `|`, `&`, `..`, `::`. They lex as
 v0.1 spelled concepts, relationships and enums; the sources must spell
 everything the model holds (ADR-0020, ADR-0023). v0.2 adds the items below.
 Every one lowers to an existing `bdl-model` / `bdl-system` structure; none adds
-a semantic notion. The item keywords are real keywords; `for`, `pin`, `init`,
-`as`, `optional` are **contextual** — identifiers everywhere else, recognised by
-spelling only where the grammar expects them.
+a semantic notion. The item keywords are real keywords; `for`, `pin`,
+`realization`, `init`, `as`, `optional` are **contextual** — identifiers
+everywhere else, recognised by spelling only where the grammar expects them.
 
 ### 14.1 Timing domains, physical outputs, drives, devices
 
@@ -814,8 +814,9 @@ MappingDecl   ::= "mapping" Name ":" Type ClockTag? MappingDef?
 OutputDecl    ::= "output" Name ":" Type ClockTag? ("optional")?
 DriveDecl     ::= "drive" NameRef "=" NameRef       (* output = relationship *)
 DeviceDecl    ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?
-DeviceBody    ::= "{" ( PinFix ","? )* "}"
+DeviceBody    ::= "{" ( (PinFix | RealizationFix) ","? )* "}"
 PinFix        ::= "pin" Number "=" Ident
+RealizationFix::= "realization" Ident             (* the output realization profile *)
 ```
 
 ```bdl
@@ -829,7 +830,7 @@ output light : Brightness @interaction            // a physical output, required
 output indicator : Brightness @interaction optional
 drive light = brightness                          // the single drive edge
 
-device pwmLight : pwm_channel for light { pin 0 = D3 }
+device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
 ```
 
 - `output` is a **physical output**
@@ -846,6 +847,16 @@ device pwmLight : pwm_channel for light { pin 0 = D3 }
   `uart`); `for` names the output it realises (absent for a sensor); pins are
   fixed by the device's requirement index and a board-relative pin name, which
   is an identifier (`D3`, `A4`, `GP15`).
+- `realization <id>` names the **output realization profile** the device uses
+  (`DeviceBinding.realization`, ADR-0036): a stable identifier from the
+  compiler's registry (`pwm_duty8`, `pwm_duty4`, `i2c_level8`, `gpio_level`,
+  `hbridge_signed`), written at most once per body — the last one wins — in any
+  order with the pins; the printer writes it first. The profile prescribes the
+  kind; a body that names a profile of another kind still parses and is
+  diagnosed at deployment (`deploy.realization_kind_mismatch`), as is an id the
+  registry does not know. A body without one (every file written before profiles
+  existed) leaves the device placing by kind and generating no raw command
+  (`docs/architecture/output-realization.md`).
 
 ### 14.2 Components
 
