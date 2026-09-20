@@ -246,3 +246,62 @@ fn migrate_unit_domain_rewrites_only_the_legacy_signatures_and_keeps_identities(
     assert_eq!(code, 0);
     assert!(out.contains("nothing to migrate"), "{out}");
 }
+
+/// `compile --target rp2040_pico` writes the firmware beside the core from
+/// the placement; a design with a Source, or an unknown board, is refused
+/// before anything is written.
+#[test]
+fn compile_for_a_board_writes_the_adapter_from_the_placement() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("lamp");
+    // no Source: a level that climbs; a PWM device realising the output
+    let main = "mapping level : () -> Brightness @interaction\nlevel() = delay(0, level + 5)\n\noutput light : Brightness @interaction\ndrive light = level\n\ndevice lamp : pwm_channel for light { realization pwm_duty8 }\n";
+    project(&root, main);
+    let r = root.to_string_lossy().into_owned();
+    let out_dir = dir.path().join("gen");
+    let o = out_dir.to_str().expect("utf8");
+    let (code, out, err) = bdld(&[
+        "compile",
+        &r,
+        "--out",
+        o,
+        "--target",
+        "rp2040_pico",
+        "--tick-micros",
+        "20000",
+    ]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out_dir.join("src/bin/rp2040.rs").is_file());
+    assert!(out_dir.join("src/adapter.rs").is_file());
+    assert!(out_dir.join("memory.x").is_file());
+    let manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(out_dir.join("bdl-manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["adapter"]["board"], "rp2040_pico");
+    assert_eq!(manifest["adapter"]["tick_micros"], 20000);
+    assert_eq!(manifest["adapter"]["bindings"][0]["capability"], "pwm");
+    assert_eq!(manifest["adapter"]["bindings"][0]["resource"], "GP0");
+
+    let (code, _, err) = bdld(&["compile", &r, "--out", o, "--target", "toaster"]);
+    assert_eq!(code, 2);
+    assert!(err.contains("no target named `toaster`"), "{err}");
+
+    // a Source has no device to provide it: refused with the reason
+    let root2 = dir.path().join("lamp2");
+    project(
+        &root2,
+        &format!("{MAIN}\ndevice lamp : pwm_channel for light {{ realization pwm_duty8 }}\n"),
+    );
+    let r = root2.to_string_lossy().into_owned();
+    let (code, out, _) = bdld(&["compile", &r, "--out", o, "--target", "rp2040_pico"]);
+    assert_eq!(code, 1, "{out}");
+    assert!(out.contains("adapter.inputs_unbound"), "{out}");
+    assert!(out.contains("No device provides tilt"), "{out}");
+    // and without a device at all the placement is not finished
+    let root3 = dir.path().join("lamp3");
+    project(&root3, MAIN);
+    let r = root3.to_string_lossy().into_owned();
+    let (code, out, _) = bdld(&["compile", &r, "--out", o, "--target", "rp2040_pico"]);
+    assert_eq!(code, 1, "{out}");
+    assert!(out.contains("adapter.deployment_not_feasible"), "{out}");
+}

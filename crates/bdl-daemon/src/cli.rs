@@ -228,6 +228,10 @@ pub struct CompileCli {
     pub bounded_memory: bool,
     /// `domain=period`, one per entry.
     pub periods: Vec<String>,
+    /// A board id: also generate the platform adapter for it.
+    pub target: Option<String>,
+    /// The firmware's base tick in microseconds.
+    pub tick_micros: u64,
 }
 
 /// `--period name=N`: a timing domain of the design and its activation
@@ -294,14 +298,37 @@ pub fn compile(
     let options = bdl_compiler::CompileOptions {
         require_complete: true,
         codegen: Default::default(),
-        memory: if cli.bounded_memory {
+        // a board has finite memory: an unbounded collection is refused
+        memory: if cli.bounded_memory || cli.target.is_some() {
             bdl_compiler::MemoryPolicy::Bounded
         } else {
             bdl_compiler::MemoryPolicy::Host
         },
         schedule,
     };
-    let artifact = bdl_compiler::compile(&project.current, &options);
+    let artifact = match &cli.target {
+        None => bdl_compiler::compile(&project.current, &options),
+        Some(board) => {
+            let Some(hw) = bdl_hardware::boards::by_name(board) else {
+                let known: Vec<String> = bdl_hardware::boards::targets()
+                    .into_iter()
+                    .map(|t| t.id)
+                    .collect();
+                return Err(Failure::Open(format!(
+                    "no target named `{board}` (known: {})",
+                    known.join(", ")
+                )));
+            };
+            bdl_compiler::compile_for_target(
+                &project.current,
+                &hw,
+                &bdl_compiler::TargetOptions {
+                    tick_micros: cli.tick_micros,
+                },
+                &options,
+            )
+        }
+    };
     let all: Vec<(String, Diagnostic)> = artifact
         .diagnostics
         .iter()

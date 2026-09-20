@@ -53,6 +53,15 @@ enum Command {
         /// repeatable.  Decides what each cross-domain window needs.
         #[arg(long = "period")]
         periods: Vec<String>,
+        /// Also generate the platform adapter for this board (`rp2040_pico`):
+        /// the placement must be feasible and every realization admissible;
+        /// the crate gains `src/bin/rp2040.rs` and builds with
+        /// `cargo build --release --target thumbv6m-none-eabi --features rp2040`.
+        #[arg(long)]
+        target: Option<String>,
+        /// The firmware's base tick in microseconds (with `--target`).
+        #[arg(long, default_value_t = 10_000)]
+        tick_micros: u64,
         #[arg(long)]
         json: bool,
     },
@@ -112,11 +121,15 @@ fn main() -> anyhow::Result<()> {
             out,
             bounded_memory,
             periods,
+            target,
+            tick_micros,
             json,
         } => {
             let options = cli::CompileCli {
                 bounded_memory,
                 periods,
+                target,
+                tick_micros,
             };
             exit_with(cli::compile(&root, COMPILER_VERSION, &out, &options, json))
         }

@@ -745,7 +745,7 @@ fn outputs_and_deployment_over_stdio() {
         panic!()
     };
     let ids: Vec<&str> = t.targets.iter().map(|t| t.id.as_str()).collect();
-    assert_eq!(ids, ["arduino_nano", "big_board"]);
+    assert_eq!(ids, ["arduino_nano", "big_board", "rp2040_pico"]);
 
     let deploy = |c: &mut Client, events: &mut Vec<pb::Event>, target: &str| match c.call(
         Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
