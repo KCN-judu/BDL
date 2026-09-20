@@ -15,6 +15,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod realization;
+
 use bdl_check::pretty;
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_ir::DesignIr;
