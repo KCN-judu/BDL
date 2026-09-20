@@ -39,6 +39,10 @@ impl HostProgram for Bridge {
         vec![tick.outputs.output_4.clone().map(|v| DynValue::sem(1_u64, { let v = v.0; DynValue::Quantity { value: v } }))]
     }
 
+    fn commands_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
+        vec![]
+    }
+
     fn state_bytes() -> usize {
         std::mem::size_of::<design::State>()
     }

@@ -74,11 +74,17 @@ pub struct Values {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Outputs {}
 
+/// Raw commands of the realised outputs at one tick: each device binding's encoder applied to its output's value, `None` when the driver was not due.
+/// Downstream of `Values` and `Outputs`, which never depend on it (docs/architecture/output-realization.md).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Commands {}
+
 /// The observable result of one tick.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Tick {
     pub values: Values,
     pub outputs: Outputs,
+    pub commands: Commands,
 }
 
 /// The initial state: no cell has been written.
@@ -117,5 +123,6 @@ pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result
     if write_1.is_some() { state.cells.cell_1 = write_1; }
     if write_2.is_some() { state.cells.cell_2 = write_2; }
     if write_3.is_some() { state.cells.cell_3 = write_3; }
-    Ok(Tick { values: Values { decl_0: decl_0, decl_1: decl_1, decl_2: decl_2, decl_3: decl_3, decl_4: decl_4, decl_5: decl_5 }, outputs: Outputs {} })
+    // machine sinks: each realised output's raw command, when its driver was due
+    Ok(Tick { values: Values { decl_0: decl_0, decl_1: decl_1, decl_2: decl_2, decl_3: decl_3, decl_4: decl_4, decl_5: decl_5 }, outputs: Outputs {}, commands: Commands {} })
 }

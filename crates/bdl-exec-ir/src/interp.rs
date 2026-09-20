@@ -30,6 +30,9 @@ pub struct TickResult {
     pub values: Vec<Option<Value>>,
     /// Per output slot; `None` when the driver was not due.
     pub outputs: Vec<Option<Value>>,
+    /// Per machine sink; `None` when the driver was not due.  Downstream
+    /// of `values` and `outputs`, which never depend on it.
+    pub commands: Vec<Option<Value>>,
 }
 
 /// One global tick.  `inputs` is indexed by input slot.
@@ -87,10 +90,29 @@ pub fn step(
         .iter()
         .map(|o| values[o.driver.0 as usize].clone())
         .collect();
+    let mut commands = Vec::with_capacity(ir.sinks.len());
+    for s in &ir.sinks {
+        let driver = ir
+            .decl(s.driver)
+            .ok_or_else(|| RuntimeError::Internal(format!("sink driver {:?} missing", s.driver)))?;
+        if values[s.driver.0 as usize].is_none() {
+            commands.push(None);
+            continue;
+        }
+        let mut cx = Cx {
+            owner: driver.id,
+            tick,
+            prev: state,
+            values: &values,
+            locals: BTreeMap::new(),
+        };
+        commands.push(Some(cx.eval(&s.command)?));
+    }
     Ok(TickResult {
         next,
         values,
         outputs,
+        commands,
     })
 }
 

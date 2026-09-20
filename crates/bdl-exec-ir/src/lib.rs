@@ -17,6 +17,12 @@
 //! * Every clock domain is a dense **clock slot**; every unresolved
 //!   declaration an **input slot**; every physical output an **output
 //!   slot** projected from its single driver.
+//! * Every realised output additionally has a **machine sink**
+//!   ([`SinkPlan`]): the raw command a chosen realization profile's encoder
+//!   makes of the driver's value, evaluated after the outputs in the
+//!   driver's own domain.  Sinks are downstream of behavior — no
+//!   declaration, cell or output reads one — so a design lowered with or
+//!   without them has the same `values` and `outputs` at every tick.
 //! * Declarations are listed in the order they are evaluated — the
 //!   reference evaluator's traversal order, so that when several
 //!   declarations fail at one tick both engines name the same one.
@@ -31,12 +37,12 @@ pub mod bounds;
 pub mod interp;
 
 use bdl_ir::{Scalar, Ty};
-use bdl_model::{ClockId, DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
 use bdl_reactive::StateCellId;
 use serde::{Deserialize, Serialize};
 
 /// Bumped on any change to this representation.
-pub const EXEC_IR_VERSION: u32 = 2;
+pub const EXEC_IR_VERSION: u32 = 3;
 
 macro_rules! slot {
     ($(#[$m:meta])* $name:ident($t:ty)) => {
@@ -62,6 +68,10 @@ slot!(
 slot!(
     /// Dense index of a physical output.
     OutputSlot(u32)
+);
+slot!(
+    /// Dense index of a machine sink (a realised output's raw command).
+    SinkSlot(u32)
 );
 slot!(
     /// Position of a declaration in the evaluation plan.
@@ -151,6 +161,25 @@ pub struct OutputPlan {
     pub ty: Ty,
 }
 
+/// A machine sink: the raw command one device binding makes of its
+/// output's value (`lowerΩ`/`lowerβ`, docs/architecture/output-realization.md).
+/// `command` reads the driver and nothing else; it is due exactly when the
+/// driver is, and carries no state.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SinkPlan {
+    pub slot: SinkSlot,
+    /// The device binding this command is for.
+    pub device: DeviceId,
+    pub device_name: String,
+    /// The logical output it realises, and that output's driver.
+    pub output: OutputId,
+    pub driver: DeclIndex,
+    pub profile: OutputProfileId,
+    /// The raw command type — sem-free data.
+    pub raw: Ty,
+    pub command: ExecExpr,
+}
+
 /// A declaration lowered away entirely (a function inlined at its uses).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FunctionPlan {
@@ -180,6 +209,9 @@ pub struct ExecIr {
     pub outputs: Vec<OutputPlan>,
     /// In `DeclId` order.
     pub functions: Vec<FunctionPlan>,
+    /// In `DeviceId` order; empty when no output has a realization.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sinks: Vec<SinkPlan>,
 }
 
 impl ExecIr {

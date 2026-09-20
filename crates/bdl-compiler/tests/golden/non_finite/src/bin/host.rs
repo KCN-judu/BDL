@@ -39,6 +39,10 @@ impl HostProgram for Bridge {
         vec![]
     }
 
+    fn commands_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
+        vec![]
+    }
+
     fn state_bytes() -> usize {
         std::mem::size_of::<design::State>()
     }

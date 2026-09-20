@@ -67,11 +67,17 @@ pub struct Values {
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Outputs {}
 
+/// Raw commands of the realised outputs at one tick: each device binding's encoder applied to its output's value, `None` when the driver was not due.
+/// Downstream of `Values` and `Outputs`, which never depend on it (docs/architecture/output-realization.md).
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct Commands {}
+
 /// The observable result of one tick.
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Tick {
     pub values: Values,
     pub outputs: Outputs,
+    pub commands: Commands,
 }
 
 /// The initial state: no cell has been written.
@@ -90,5 +96,6 @@ pub fn step(state: &mut State, active: ActiveDomains, inputs: &Inputs) -> Result
     let decl_2: Option<Sem1> = if active.is_active(CLOCK_0) { Some({ let l0 = read_decl(&decl_0, 0_u64)?; Sem1(num::div(l0.0, 1.5707963267948966_f64, 2_u64)?) }) } else { None };
     // write phase: every active writer's operand, before any commit
     // commit: only the cells written this tick change; nothing else is copied
-    Ok(Tick { values: Values { decl_0: decl_0, decl_2: decl_2 }, outputs: Outputs {} })
+    // machine sinks: each realised output's raw command, when its driver was due
+    Ok(Tick { values: Values { decl_0: decl_0, decl_2: decl_2 }, outputs: Outputs {}, commands: Commands {} })
 }

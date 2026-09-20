@@ -51,7 +51,12 @@ use bdl_hardware::{
 };
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
-use bdl_model::{DeclId, OutputId, RelationshipRole, Revision, SemanticId};
+use bdl_model::{
+    DeclId, DeviceId, OutputId, OutputProfileId, RelationshipRole, Revision, SemanticId,
+};
+use bdl_output::realization::{
+    self, check_binding, FitFault, OutputProfile, RealizationCheck, RealizationStatus,
+};
 use bdl_output::{check_outputs, OutputAnalysis};
 use bdl_reactive::{
     analyze_dependencies, check_causality, check_clocks, CausalityAnalysis, ClockAnalysis,
@@ -459,6 +464,32 @@ pub enum DeploymentStatus {
     Incomplete,
 }
 
+/// One device binding's realization, judged (docs/architecture/output-realization.md).
+/// Admissible = the encoder is well formed ∧ the representation fits ∧
+/// the hardware places — three judgments a reader can inspect one by one;
+/// the first two are target-independent and live in `check`, the third is
+/// `hardware_placed`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeviceRealization {
+    pub device: DeviceId,
+    pub output: Option<OutputId>,
+    pub profile: Option<OutputProfileId>,
+    pub check: RealizationCheck,
+    /// Every requirement of this device is placed by `assignment`.
+    pub hardware_placed: bool,
+    /// Every registry profile, with whether its encoder fits the output
+    /// this device is bound to (`None` when the device is bound to nothing
+    /// the design knows).
+    pub candidates: Vec<(OutputProfile, Option<bool>)>,
+}
+
+impl DeviceRealization {
+    /// `Admissible`: well formed ∧ fits ∧ solvable.
+    pub fn admissible(&self) -> bool {
+        self.check.is_valid() && self.hardware_placed
+    }
+}
+
 /// Target-relative result.  Independent of the semantic analysis: it reads
 /// only the device bindings, so it is meaningful for a design that is still
 /// open — and equally meaningless as a statement about the design's
@@ -479,7 +510,142 @@ pub struct DeploymentAnalysis {
     pub unbound_devices: BTreeSet<bdl_model::DeviceId>,
     /// Outputs with a domain that no device realises on this target.
     pub unrealised_outputs: BTreeSet<OutputId>,
+    /// The realization judgment of every device, in `DeviceId` order.
+    #[serde(default)]
+    pub realizations: BTreeMap<DeviceId, DeviceRealization>,
     pub diagnostics: Vec<Diagnostic>,
+}
+
+impl DeploymentAnalysis {
+    /// A chosen realization that is not valid: the artefact is refused
+    /// until it is fixed, whatever the board says.
+    pub fn realization_blocked(&self) -> bool {
+        self.realizations.values().any(|r| r.check.is_blocking())
+    }
+}
+
+/// The representation the surface concept carries, as the kernel type.
+fn representation_ty(design: &bdl_model::surface::Design, s: SemanticId) -> Option<Ty> {
+    design
+        .concepts
+        .get(&s)
+        .and_then(|c| c.representation.as_ref())
+        .map(bdl_elab::representation_ty)
+}
+
+/// Judge every device binding's realization against the design, with no
+/// board in sight; the hardware judgment is filled in from the placement.
+fn judge_realizations(
+    design: &bdl_model::surface::Design,
+    requirements: &[Requirement],
+    assignment: Option<&Assignment>,
+) -> BTreeMap<DeviceId, DeviceRealization> {
+    let theta = |s: SemanticId| representation_ty(design, s);
+    let all = realization::profiles();
+    design
+        .devices
+        .values()
+        .map(|d| {
+            let output = d.output.filter(|o| design.outputs.contains_key(o));
+            let accepts = output.map(|o| Ty::sem(design.outputs[&o].accepts));
+            let check = check_binding(d, accepts.as_ref(), theta);
+            let candidates = all
+                .iter()
+                .map(|p| {
+                    let fit = accepts
+                        .as_ref()
+                        .map(|a| realization::fits(a, theta, &p.encoder).is_ok());
+                    (p.clone(), fit)
+                })
+                .collect();
+            let hardware_placed = assignment.is_some_and(|a| {
+                requirements
+                    .iter()
+                    .filter(|r| r.id.device == d.id)
+                    .all(|r| a.contains_key(&r.id))
+            });
+            (
+                d.id,
+                DeviceRealization {
+                    device: d.id,
+                    output,
+                    profile: d.realization.clone(),
+                    check,
+                    hardware_placed,
+                    candidates,
+                },
+            )
+        })
+        .collect()
+}
+
+/// Product-language rendering of a realization judgment that is not valid.
+fn realization_diagnostic(
+    design: &bdl_model::surface::Design,
+    r: &DeviceRealization,
+) -> Option<Diagnostic> {
+    let device = design
+        .devices
+        .get(&r.device)
+        .map(|d| d.name.clone())
+        .unwrap_or_else(|| r.device.to_string());
+    let output = r
+        .output
+        .and_then(|o| design.outputs.get(&o))
+        .map(|o| o.name.clone())
+        .unwrap_or_else(|| "its output".into());
+    let profile = r.profile.as_ref().map(|p| p.0.clone()).unwrap_or_default();
+    let d = match &r.check.status {
+        RealizationStatus::Valid => return None,
+        // An unbound device is already reported as such.
+        RealizationStatus::NotChosen if r.output.is_none() => return None,
+        RealizationStatus::NotChosen => Diagnostic::info(
+            "deploy.realization_unspecified",
+            Entity::Project,
+            format!("{device} has no realization chosen for {output}."),
+        )
+        .explain("The device places on the board by its kind, but no raw command is generated for it until a realization profile is chosen on the Deploy page.")
+        .technical(format!("device {} realization = none", r.device)),
+        RealizationStatus::UnknownProfile => Diagnostic::error(
+            "deploy.realization_unknown_profile",
+            Entity::Project,
+            format!("{device} refers to a realization profile this version does not know."),
+        )
+        .explain(format!("The project chose `{profile}` for {output}, which is not in this version's registry. Choose an available profile on the Deploy page; the design itself is unchanged."))
+        .technical(format!("device {} realization = {profile}: not in registry", r.device)),
+        RealizationStatus::KindMismatch { profile_kind } => Diagnostic::error(
+            "deploy.realization_kind_mismatch",
+            Entity::Project,
+            format!("{device} is not the kind of device its realization needs."),
+        )
+        .explain(format!("The profile `{profile}` needs {}; choose the profile again so the device kind follows it.", bdl_hardware::devices::device_kind_label(*profile_kind)))
+        .technical(format!("device {} kind {:?} ≠ profile kind {:?}", r.device, design.devices.get(&r.device).map(|d| d.kind), profile_kind)),
+        RealizationStatus::Incompatible(fault) => {
+            let why = match fault {
+                FitFault::NoRepresentation { .. } => "the concept it carries has no representation yet".to_string(),
+                FitFault::Representation { carried, expected } => format!(
+                    "the output carries {} but the profile encodes {}",
+                    pretty::kernel(carried),
+                    pretty::kernel(expected)
+                ),
+            };
+            Diagnostic::error(
+                "deploy.realization_incompatible",
+                Entity::Project,
+                format!("{device} cannot realise {output} with `{profile}`: {why}."),
+            )
+            .explain("A realization profile encodes one representation. Choose a profile that fits what the output carries, or change what the output accepts on the Design page.")
+            .technical(format!("EFits fails for device {}: {fault:?}", r.device))
+        }
+        RealizationStatus::EncoderInvalid(fault) => Diagnostic::error(
+            "deploy.realization_encoder_invalid",
+            Entity::Project,
+            format!("The realization profile `{profile}` chosen for {device} is defective."),
+        )
+        .explain("Its encoder is not a typed pure function from the representation to the raw command. This is a defect of the profile registry, not of the design; choose another profile and report it.")
+        .technical(format!("Encoder.WF fails for `{profile}`: {fault:?}")),
+    };
+    Some(d)
 }
 
 /// Run the hardware pass for one target.  Pure and deterministic.
@@ -546,6 +712,10 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
     }
 
     let assignment = solve(target, &requirements);
+    let realizations = judge_realizations(design, &requirements, assignment.as_ref());
+    for r in realizations.values() {
+        diagnostics.extend(realization_diagnostic(design, r));
+    }
     let (status, dead_end) = match &assignment {
         Some(a) => {
             debug_assert!(validate(target, &requirements, a).is_empty());
@@ -573,6 +743,7 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
         dead_end,
         unbound_devices,
         unrealised_outputs,
+        realizations,
         diagnostics,
     }
 }
@@ -1271,7 +1442,12 @@ mod tests {
             d.assignment.as_ref().unwrap().values().next().unwrap().0,
             "D3"
         );
-        assert!(d.diagnostics.is_empty());
+        // A binding from before realization existed: placed by kind, and
+        // told (not blocked) that no raw command is generated for it.
+        let codes: Vec<&str> = d.diagnostics.iter().map(|d| d.code.as_str()).collect();
+        assert_eq!(codes, ["deploy.realization_unspecified"]);
+        assert!(d.diagnostics.iter().all(|d| !d.is_error()));
+        assert!(!d.realization_blocked());
         let d = analyze_deployment(&pwm, &gpio_only);
         assert_eq!(d.status, DeploymentStatus::Infeasible);
         assert_eq!(

@@ -18,6 +18,14 @@
 //! are decided on the lowered plan: the [`crate::collections`] report is
 //! always computed, and under [`MemoryPolicy::Bounded`] an unbounded
 //! remembered collection refuses the artefact (`deployment.*`).
+//!
+//! Output realizations (docs/architecture/output-realization.md) are
+//! deployment data that the artefact *does* carry: every device binding
+//! with a chosen profile whose encoder is well formed and fits its output
+//! becomes a machine sink below the behavior plan; one whose profile is
+//! unknown, incompatible or defective refuses the artefact
+//! (`backend.realization_invalid`) — the board's feasibility stays with
+//! `analyze_deployment`, as before.
 
 use crate::collections::{
     collections_diagnostics, collections_report, CollectionsReport, MemoryPolicy,
@@ -26,8 +34,11 @@ use crate::{analyze, analyze_design_ir, MappingStatus, ProjectAnalysis};
 use bdl_codegen_rust::{CodegenOptions, GeneratedCrate};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::ExecIr;
-use bdl_ir::DesignIr;
-use bdl_model::surface::ProjectSnapshot;
+use bdl_ir::{DesignIr, Ty};
+use bdl_lower::{Realization, Realizations};
+use bdl_model::surface::{Design, ProjectSnapshot};
+use bdl_model::SemanticId;
+use bdl_output::realization::{check_binding, encoder_body};
 use bdl_reactive::Schedule;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
@@ -141,21 +152,88 @@ pub fn readiness(a: &ProjectAnalysis, require_complete: bool) -> Vec<Diagnostic>
 pub fn compile(snapshot: &ProjectSnapshot, options: &CompileOptions) -> CompileArtifact {
     let analysis = analyze(snapshot);
     let name = snapshot.design.name.clone();
-    compile_analysis(analysis, &name, options)
+    let (realizations, refusals) = realizations_of(&snapshot.design, &analysis);
+    compile_analysis(analysis, &name, options, realizations, refusals)
 }
 
 /// [`compile`] for a Design IR built directly (see [`analyze_design_ir`]).
+/// A Design IR carries no device bindings, so no sink is lowered.
 pub fn compile_design_ir(ir: DesignIr, name: &str, options: &CompileOptions) -> CompileArtifact {
     let analysis = analyze_design_ir(ir);
-    compile_analysis(analysis, name, options)
+    compile_analysis(analysis, name, options, Realizations::new(), Vec::new())
+}
+
+/// The machine sinks to lower — one per device binding whose chosen
+/// profile is valid and whose output is validly driven — and the refusals
+/// for chosen profiles that are not valid.  A binding without a profile
+/// lowers nothing (the design behaves exactly as before realization
+/// existed); a valid profile on an output that is not driven yet has
+/// nothing to encode and lowers nothing either.
+fn realizations_of(design: &Design, analysis: &ProjectAnalysis) -> (Realizations, Vec<Diagnostic>) {
+    let ir = &analysis.ir;
+    let theta = |s: SemanticId| ir.representation_of(s).cloned();
+    let mut realizations = Realizations::new();
+    let mut refusals = Vec::new();
+    for d in design.devices.values() {
+        if d.realization.is_none() {
+            continue;
+        }
+        let output = d.output.filter(|o| design.outputs.contains_key(o));
+        let accepts = output.map(|o| Ty::sem(design.outputs[&o].accepts));
+        let check = check_binding(d, accepts.as_ref(), theta);
+        if check.is_blocking() {
+            let profile = d
+                .realization
+                .as_ref()
+                .map(|p| p.0.clone())
+                .unwrap_or_default();
+            refusals.push(
+                Diagnostic::error(
+                    "backend.realization_invalid",
+                    Entity::Project,
+                    format!("{} cannot generate a raw command with `{profile}`.", d.name),
+                )
+                .explain("The realization chosen for this device is unknown, does not fit what its output carries, or is defective. The Deploy page names which; the design's behavior is unaffected.")
+                .technical(format!("device {} realization {profile}: {:?}", d.id, check.status)),
+            );
+            continue;
+        }
+        let (Some(profile), Some(output), Some(accepts)) = (check.profile, output, accepts) else {
+            continue;
+        };
+        let Some((driver, _)) = analysis
+            .outputs
+            .valid_bindings
+            .iter()
+            .find(|(_, o)| **o == output)
+        else {
+            continue;
+        };
+        realizations.insert(
+            d.id,
+            Realization {
+                device: d.id,
+                device_name: d.name.clone(),
+                output,
+                profile: profile.id.clone(),
+                raw: profile.encoder.raw.clone(),
+                body: encoder_body(&accepts, &profile.encoder, *driver),
+            },
+        );
+    }
+    (realizations, refusals)
 }
 
 fn compile_analysis(
     analysis: ProjectAnalysis,
     name: &str,
     options: &CompileOptions,
+    realizations: Realizations,
+    refusals: Vec<Diagnostic>,
 ) -> CompileArtifact {
     let mut diagnostics = readiness(&analysis, options.require_complete);
+    diagnostics.extend(refusals);
+    sort_diagnostics(&mut diagnostics);
     if !diagnostics.is_empty() {
         return CompileArtifact {
             analysis,
@@ -165,7 +243,12 @@ fn compile_analysis(
             diagnostics,
         };
     }
-    let exec_ir = match bdl_lower::lower(&analysis.ir, name, &analysis.outputs.valid_bindings) {
+    let exec_ir = match bdl_lower::lower(
+        &analysis.ir,
+        name,
+        &analysis.outputs.valid_bindings,
+        &realizations,
+    ) {
         Ok(e) => e,
         Err(ds) => {
             diagnostics.extend(ds);

@@ -157,6 +157,10 @@ pub struct TickTrace {
     pub values: Vec<Option<DynValue>>,
     /// One entry per output slot; `None` when the driver was not due.
     pub outputs: Vec<Option<DynValue>>,
+    /// One entry per machine sink (a realised output's raw command);
+    /// `None` when the driver was not due.  Absent from older traces.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub commands: Vec<Option<DynValue>>,
 }
 
 /// [`RuntimeError`] in serialisable form.
@@ -235,6 +239,8 @@ pub trait HostProgram {
     fn inputs_from_dyn(slots: &[Option<DynValue>]) -> Result<Self::Inputs, BridgeError>;
     fn values_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
     fn outputs_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
+    /// The raw commands of the realised outputs; empty when none.
+    fn commands_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
     fn state_bytes() -> usize;
 }
 
@@ -279,6 +285,7 @@ pub fn run<P: HostProgram>(req: &RunRequest) -> RunTrace {
                 tick,
                 values: P::values_to_dyn(&out),
                 outputs: P::outputs_to_dyn(&out),
+                commands: P::commands_to_dyn(&out),
             }),
             Err(e) => {
                 trace.error = Some(TraceError {
@@ -349,6 +356,9 @@ mod tests {
             ]
         }
         fn outputs_to_dyn(_: &Self::Tick) -> Vec<Option<DynValue>> {
+            vec![]
+        }
+        fn commands_to_dyn(_: &Self::Tick) -> Vec<Option<DynValue>> {
             vec![]
         }
         fn state_bytes() -> usize {

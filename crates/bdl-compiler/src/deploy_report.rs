@@ -74,6 +74,9 @@ pub enum MissingKind {
     OutputNoDevice,
     /// A device is bound to no output (or to one that no longer exists).
     DeviceNoOutput,
+    /// A device's chosen realization is unknown, does not fit its output
+    /// or is defective (docs/architecture/output-realization.md).
+    RealizationInvalid,
 }
 
 impl MissingKind {
@@ -82,7 +85,9 @@ impl MissingKind {
     pub fn is_semantic(self) -> bool {
         !matches!(
             self,
-            MissingKind::OutputNoDevice | MissingKind::DeviceNoOutput
+            MissingKind::OutputNoDevice
+                | MissingKind::DeviceNoOutput
+                | MissingKind::RealizationInvalid
         )
     }
 }
@@ -357,6 +362,31 @@ pub fn deployment_report(
                     .into(),
         });
     }
+    for r in deployment.realizations.values() {
+        if !r.check.is_blocking() {
+            continue;
+        }
+        let name = device_name(r.device);
+        let d = deployment.diagnostics.iter().find(|d| {
+            d.code.as_str().starts_with("deploy.realization_")
+                && d.technical.contains(&format!("device {}", r.device))
+        });
+        missing.push(MissingItem {
+            kind: MissingKind::RealizationInvalid,
+            output: r.output,
+            output_name: r.output.and_then(output_name),
+            device: Some(r.device),
+            device_name: Some(name.clone()),
+            mapping: None,
+            mapping_name: None,
+            message: d
+                .map(|d| d.message.clone())
+                .unwrap_or_else(|| format!("{name} has a realization that cannot be used.")),
+            explanation: d
+                .map(|d| d.explanation.clone())
+                .unwrap_or_else(|| "Choose another realization profile on the Deploy page.".into()),
+        });
+    }
     let design_ready = not_checking.is_empty()
         && analysis.causality.valid
         && analysis.clocks.valid
@@ -450,7 +480,9 @@ pub fn deployment_report(
         }
     });
 
-    let deployable = design_ready && deployment.status == DeploymentStatus::Feasible;
+    let deployable = design_ready
+        && deployment.status == DeploymentStatus::Feasible
+        && !deployment.realization_blocked();
     DeploymentReport {
         revision: deployment.revision,
         target: describe(target),

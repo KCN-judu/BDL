@@ -19,6 +19,7 @@
 //! | `Local` | `l_n` moved when it is the local's only use in its own scope, `l_n.clone()` otherwise (a captured local is always cloned) |
 //! | `Ty::List` / `Ty::Prod` | `Vec<T>` (feature `collections`, `extern crate alloc`) / `(A, B)` |
 //! | `OutputPlan` | `Outputs.output_n = decl_driver.clone()` after the write phase |
+//! | `SinkPlan` | `Commands.command_n = if driver due { Some(encoder(decl_driver)) } else { None }`, after the outputs; reads nothing else |
 //!
 //! A program without lists derives `Copy` on its records and never
 //! allocates; one with lists derives `Clone` only and turns the runtime's
@@ -191,6 +192,19 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
         name: "Outputs".into(),
         fields: Fields::Named(output_fields),
     });
+    let mut command_fields = Vec::new();
+    for s in &ir.sinks {
+        command_fields.push((names::command(s.device), Type::option(rust_type(&s.raw)?)));
+    }
+    items.push(Item::Struct {
+        doc: vec![
+            "Raw commands of the realised outputs at one tick: each device binding's encoder applied to its output's value, `None` when the driver was not due.".into(),
+            "Downstream of `Values` and `Outputs`, which never depend on it (docs/architecture/output-realization.md).".into(),
+        ],
+        derives: derives(DERIVES_RECORD, copy),
+        name: "Commands".into(),
+        fields: Fields::Named(command_fields),
+    });
     items.push(Item::Struct {
         doc: vec!["The observable result of one tick.".into()],
         derives: derives(DERIVES_RECORD, copy),
@@ -198,6 +212,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
         fields: Fields::Named(vec![
             ("values".into(), Type::path("Values")),
             ("outputs".into(), Type::path("Outputs")),
+            ("commands".into(), Type::path("Commands")),
         ]),
     });
 
@@ -351,6 +366,37 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
             )
         }),
     );
+    stmts.push(Stmt::Comment(
+        "machine sinks: each realised output's raw command, when its driver was due".into(),
+    ));
+    for s in &ir.sinks {
+        let driver = ir
+            .decl(s.driver)
+            .ok_or_else(|| EmitError(format!("sink {:?} driver missing", s.slot)))?;
+        stmts.push(Stmt::Comment(format!(
+            "{} realises {} as `{}`",
+            s.device_name, driver.name, s.profile
+        )));
+        stmts.push(Stmt::Let {
+            name: names::command(s.device),
+            mutable: false,
+            ty: Some(Type::option(rust_type(&s.raw)?)),
+            value: Expr::if_else(
+                Expr::method(Expr::path(names::decl(driver.id)), "is_some", []),
+                Expr::some(expr(ir, &s.command, driver.id)?),
+                Expr::none(),
+            ),
+        });
+    }
+    let commands = Expr::strukt(
+        "Commands",
+        ir.sinks.iter().map(|s| {
+            (
+                names::command(s.device),
+                Expr::path(names::command(s.device)),
+            )
+        }),
+    );
     let tail = Expr::call(
         "Ok",
         [Expr::strukt(
@@ -358,6 +404,7 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
             [
                 ("values".to_string(), values),
                 ("outputs".to_string(), outputs),
+                ("commands".to_string(), commands),
             ],
         )],
     );

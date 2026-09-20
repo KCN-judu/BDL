@@ -3,7 +3,7 @@
   "generator": "bdl-codegen-rust 0.1.0",
   "design": "buffer",
   "package": "bdl_design_buffer",
-  "exec_ir_version": 2,
+  "exec_ir_version": 3,
   "has_domains": true,
   "requires_allocator": true,
   "collections": {

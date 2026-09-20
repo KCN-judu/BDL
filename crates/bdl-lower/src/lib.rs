@@ -33,8 +33,16 @@
 //!   runtime is refused with `backend.unsupported_higher_order` (option A
 //!   of the brief; DI-24).
 //!
+//! * **Machine sinks.** Every admissible [`Realization`] the compiler hands
+//!   over becomes a [`SinkPlan`] below the outputs: its command is the
+//!   encoder applied to the driver's value, lowered in the driver's own
+//!   context under no grant.  Sinks introduce no declaration, no cell and
+//!   no clock: the behavior plan is the same with or without them
+//!   (`lower_transparent`, docs/architecture/output-realization.md).
+//!
 //! Lowering trusts the analysis that ran before it: types, causality,
-//! clock consistency and `DriveWF`/`SingleDriver` are inputs, not re-derived.
+//! clock consistency, `DriveWF`/`SingleDriver` and realization
+//! admissibility are inputs, not re-derived.
 //! Where an invariant it relies on is nonetheless missing it returns
 //! `backend.internal_lowering`, never a panic.
 
@@ -45,10 +53,10 @@ use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::{
     Activation, CellPlan, ClockPlan, ClockSlot, ConceptPlan, DeclIndex, DeclKind, DeclPlan,
     ExecExpr, ExecIr, FunctionPlan, InputPlan, InputSlot, LocalId, OutputPlan, OutputSlot, PrimOp,
-    StateSlot, EXEC_IR_VERSION,
+    SinkPlan, SinkSlot, StateSlot, EXEC_IR_VERSION,
 };
 use bdl_ir::{DesignIr, Expr, Prim, Ty};
-use bdl_model::{ClockId, DeclId, OutputId, SemanticId};
+use bdl_model::{ClockId, DeclId, DeviceId, OutputId, OutputProfileId, SemanticId};
 use bdl_reactive::StateCellId;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -56,14 +64,31 @@ use std::collections::{BTreeMap, BTreeSet};
 /// projects exactly these, never `β` itself.
 pub type ValidBindings = BTreeMap<DeclId, OutputId>;
 
+/// One admissible realization to lower into a machine sink: the output,
+/// the profile chosen for it, its raw command type and the encoder body
+/// (`encode (rep d)` for the output's driver `d`, built by
+/// `bdl_output::realization::encoder_body`).  Keyed by device binding.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Realization {
+    pub device: DeviceId,
+    pub device_name: String,
+    pub output: OutputId,
+    pub profile: OutputProfileId,
+    pub raw: Ty,
+    pub body: Expr,
+}
+
+pub type Realizations = BTreeMap<DeviceId, Realization>;
+
 /// Lower a checked design.  On failure every diagnostic is returned (in
 /// the documented order); nothing partial is produced.
 pub fn lower(
     ir: &DesignIr,
     name: &str,
     bindings: &ValidBindings,
+    realizations: &Realizations,
 ) -> Result<ExecIr, Vec<Diagnostic>> {
-    let mut lw = Lowerer::new(ir, name, bindings);
+    let mut lw = Lowerer::new(ir, name, bindings, realizations);
     match lw.run() {
         Ok(exec) if lw.diagnostics.is_empty() => Ok(exec),
         _ => {
@@ -85,6 +110,7 @@ struct Lowerer<'a> {
     ir: &'a DesignIr,
     name: String,
     bindings: &'a ValidBindings,
+    realizations: &'a Realizations,
     diagnostics: Vec<Diagnostic>,
     clocks: BTreeMap<ClockId, ClockSlot>,
     cells: BTreeMap<StateCellId, StateSlot>,
@@ -124,11 +150,17 @@ enum Arg<'e> {
 }
 
 impl<'a> Lowerer<'a> {
-    fn new(ir: &'a DesignIr, name: &str, bindings: &'a ValidBindings) -> Self {
+    fn new(
+        ir: &'a DesignIr,
+        name: &str,
+        bindings: &'a ValidBindings,
+        realizations: &'a Realizations,
+    ) -> Self {
         Lowerer {
             ir,
             name: name.to_owned(),
             bindings,
+            realizations,
             diagnostics: Vec::new(),
             clocks: BTreeMap::new(),
             cells: BTreeMap::new(),
@@ -320,6 +352,69 @@ impl<'a> Lowerer<'a> {
             });
         }
 
+        // Machine sinks: one per admissible realization, in DeviceId order,
+        // below the outputs.  The command is lowered in the driver's
+        // context under no grant, so it can construct nothing and read
+        // only what the driver already is.
+        let mut sinks = Vec::new();
+        for (i, r) in self.realizations.values().enumerate() {
+            let Some(plan) = outputs.iter().find(|o| o.id == r.output) else {
+                self.internal(
+                    None,
+                    format!(
+                        "realization of {} for an output that is not driven",
+                        r.output
+                    ),
+                );
+                continue;
+            };
+            let Some(driver) = ir.decls.get(&plan_driver_id(&decls, plan.driver)) else {
+                self.internal(None, format!("driver of {} missing", r.output));
+                continue;
+            };
+            match infer(ir, &Grant::None, &[], &r.body) {
+                Ok(t) if t == r.raw => {}
+                Ok(t) => {
+                    self.internal(
+                        Some(driver.id),
+                        format!(
+                            "raw command of {} has type {} but the profile says {}",
+                            r.output,
+                            bdl_check::pretty::kernel(&t),
+                            bdl_check::pretty::kernel(&r.raw)
+                        ),
+                    );
+                    continue;
+                }
+                Err(e) => {
+                    self.internal(
+                        Some(driver.id),
+                        format!("raw command of {} does not type: {:?}", r.output, e.kind),
+                    );
+                    continue;
+                }
+            }
+            let mut cx = ExprCx {
+                owner: driver.id,
+                grant: Grant::None,
+                env: Vec::new(),
+            };
+            let mut path = ExprPath::new();
+            let Some(command) = self.expr(&mut cx, &r.body, &mut path) else {
+                continue;
+            };
+            sinks.push(SinkPlan {
+                slot: SinkSlot(i as u32),
+                device: r.device,
+                device_name: r.device_name.clone(),
+                output: r.output,
+                driver: plan.driver,
+                profile: r.profile.clone(),
+                raw: r.raw.clone(),
+                command,
+            });
+        }
+
         if !self.diagnostics.is_empty() {
             return Err(());
         }
@@ -387,6 +482,7 @@ impl<'a> Lowerer<'a> {
             cells,
             outputs,
             functions,
+            sinks,
         })
     }
 
@@ -918,6 +1014,14 @@ impl<'a> Lowerer<'a> {
     }
 }
 
+/// The `DeclId` at a plan position.
+fn plan_driver_id(decls: &[DeclPlan], i: DeclIndex) -> DeclId {
+    decls
+        .get(i.0 as usize)
+        .map(|d| d.id)
+        .unwrap_or(DeclId::from_raw(u64::MAX))
+}
+
 #[derive(Clone)]
 struct ExprCx<'e> {
     owner: DeclId,
@@ -1210,7 +1314,8 @@ mod tests {
         ticks: usize,
         inputs: &dyn Fn(u64, DeclId) -> Option<Value>,
     ) -> Vec<interp::TickResult> {
-        let exec = lower(ir, "t", &BTreeMap::new()).unwrap_or_else(|d| panic!("{d:?}"));
+        let exec =
+            lower(ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|d| panic!("{d:?}"));
         let all: BTreeSet<ClockId> = ir.clocks.values().copied().collect();
         let slots: Vec<ClockSlot> = exec.clocks.iter().map(|c| c.slot).collect();
         let mut rs = State::default();
@@ -1341,7 +1446,7 @@ mod tests {
                 realization: Some(f),
             },
         );
-        let exec = lower(&ir, "t", &BTreeMap::new()).unwrap();
+        let exec = lower(&ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap();
         assert_eq!(exec.functions.len(), 1);
         assert_eq!(exec.cells.len(), 1);
         assert_eq!(
@@ -1378,7 +1483,7 @@ mod tests {
             ),
         ]);
         ir.clock_names.insert(c(0), "fast".into());
-        let exec = lower(&ir, "t", &BTreeMap::new()).unwrap();
+        let exec = lower(&ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap();
         assert_eq!(exec.clocks.len(), 2);
         assert_eq!(exec.cells[0].writer, ClockSlot(0));
         assert_eq!(exec.cells[1].writer, ClockSlot(1));
@@ -1426,7 +1531,7 @@ mod tests {
             )),
             Some(0),
         )]);
-        let ds = lower(&ir, "t", &BTreeMap::new()).unwrap_err();
+        let ds = lower(&ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap_err();
         assert_eq!(ds[0].code.as_str(), "backend.unsupported_higher_order");
         assert_eq!(ds[0].message, "This relationship cannot be generated yet.");
         // a partially applied primitive
@@ -1439,7 +1544,7 @@ mod tests {
             Some(0),
         )]);
         assert_eq!(
-            lower(&ir, "t", &BTreeMap::new()).unwrap_err()[0]
+            lower(&ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap_err()[0]
                 .code
                 .as_str(),
             "backend.unsupported_higher_order"
@@ -1596,7 +1701,7 @@ mod tests {
         assert_eq!(out[2].values[6], Some(Value::boolean(true)));
         assert_eq!(out[1].values[7], Some(xs(0)));
         // the plan is first-order: no closure anywhere, one Fold per recursor
-        let exec = lower(&ir, "t", &BTreeMap::new()).unwrap();
+        let exec = lower(&ir, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap();
         assert!(exec.uses_lists());
         let folds = exec
             .decls
@@ -1636,7 +1741,7 @@ mod tests {
             (3, Some(lit(5.0)), None),
         ]);
         let _ = ir;
-        let exec = lower(&ir2, "t", &BTreeMap::new()).unwrap();
+        let exec = lower(&ir2, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap();
         let order: Vec<DeclId> = exec.decls.iter().map(|x| x.id).collect();
         assert_eq!(order, vec![d(3), d(2), d(0), d(1)]);
         assert_eq!(exec.decls[2].activation, Activation::Agnostic);
@@ -1644,7 +1749,7 @@ mod tests {
         agree(&ir2, 2, &|_, _| None);
         // no domain at all: everything runs every tick
         let ir3 = ir_with(&[(0, Some(lit(1.0)), None)]);
-        let exec = lower(&ir3, "t", &BTreeMap::new()).unwrap();
+        let exec = lower(&ir3, "t", &BTreeMap::new(), &BTreeMap::new()).unwrap();
         assert!(!exec.has_domains);
         let r = interp::step(&exec, 0, &[], &CellState::init(&exec), &[]).unwrap();
         assert_eq!(r.values[0], Some(Value::scalar(1.0)));

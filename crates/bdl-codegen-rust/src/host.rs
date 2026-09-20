@@ -127,6 +127,34 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
         ret: Some(Type::path("Vec<Option<DynValue>>")),
         body: Block::expr(Expr::VecMacro(outputs)),
     };
+    let mut commands = Vec::new();
+    for s in &ir.sinks {
+        commands.push(Expr::method(
+            Expr::method(
+                Expr::field(
+                    Expr::field(Expr::path("tick"), "commands"),
+                    names::command(s.device),
+                ),
+                "clone",
+                [],
+            ),
+            "map",
+            [Expr::closure(
+                ["v".to_string()],
+                None,
+                to_dyn(&reps, &s.raw)?,
+            )],
+        ));
+    }
+    let commands_fn = Function {
+        doc: vec![],
+        attrs: vec![],
+        public: false,
+        name: "commands_to_dyn".into(),
+        params: vec![("tick".into(), Type::path("&design::Tick"))],
+        ret: Some(Type::path("Vec<Option<DynValue>>")),
+        body: Block::expr(Expr::VecMacro(commands)),
+    };
 
     items.push(Item::Impl {
         trait_: Some("HostProgram".into()),
@@ -167,6 +195,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
             ImplItem::Fn(inputs_fn),
             ImplItem::Fn(values_fn),
             ImplItem::Fn(outputs_fn),
+            ImplItem::Fn(commands_fn),
             ImplItem::Fn(Function {
                 doc: vec![],
                 attrs: vec![],

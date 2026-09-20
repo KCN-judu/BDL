@@ -36,6 +36,10 @@ pub struct Manifest {
     pub outputs: Vec<OutputEntry>,
     /// Declarations inlined away (relationships with inputs).
     pub functions: Vec<FunctionEntry>,
+    /// Machine sinks: the raw command each realised output's device
+    /// binding receives (docs/architecture/output-realization.md).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sinks: Vec<SinkEntry>,
 }
 
 /// The static bounds of the lists a program carries: per state cell the
@@ -168,6 +172,19 @@ pub struct OutputEntry {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SinkEntry {
+    pub slot: u32,
+    pub device_id: u64,
+    pub device_name: String,
+    pub symbol: String,
+    pub output_id: u64,
+    pub driver_decl_id: u64,
+    pub profile: String,
+    /// The raw command type.
+    pub ty: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FunctionEntry {
     pub decl_id: u64,
     pub name: String,
@@ -270,6 +287,20 @@ pub fn manifest(ir: &ExecIr, package: &str, generator: &str) -> Manifest {
                 decl_id: f.id.raw(),
                 name: f.name.clone(),
                 ty: pretty::kernel(&f.ty),
+            })
+            .collect(),
+        sinks: ir
+            .sinks
+            .iter()
+            .map(|s| SinkEntry {
+                slot: s.slot.0,
+                device_id: s.device.raw(),
+                device_name: s.device_name.clone(),
+                symbol: names::command(s.device),
+                output_id: s.output.raw(),
+                driver_decl_id: ir.decl(s.driver).map(|d| d.id.raw()).unwrap_or(u64::MAX),
+                profile: s.profile.0.clone(),
+                ty: pretty::kernel(&s.raw),
             })
             .collect(),
     }
