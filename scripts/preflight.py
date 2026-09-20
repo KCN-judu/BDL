@@ -155,14 +155,16 @@ NPX_LIKE = {"npx", "npm", "flutter", "dart", "protoc"}
 
 
 def tracked(pattern: str) -> list[str]:
-    """Tracked files matching a git pathspec, cross-platform."""
+    """Files matching a git pathspec, cross-platform: the tracked ones and
+    the untracked, not-ignored ones — so a page written this session is
+    formatted and checked before it is committed, not first by CI."""
     out = subprocess.run(
-        ["git", "ls-files", "-z", "--", pattern],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", pattern],
         cwd=ROOT,
         capture_output=True,
         check=True,
     ).stdout
-    return [p for p in out.decode("utf-8").split("\0") if p]
+    return sorted({p for p in out.decode("utf-8").split("\0") if p})
 
 
 def chunked(items: list[str], limit: int = 6000) -> list[list[str]]:
