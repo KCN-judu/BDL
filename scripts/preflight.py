@@ -80,6 +80,11 @@ WINDOWS_RUST_CRATES = {
 WINDOWS_FLUTTER_TAGS = "daemon || filesystem"
 
 
+class Skip(Exception):
+    """A check that cannot run on this host for a stated reason; reported
+    as SKIP, never as a pass."""
+
+
 class Failure(Exception):
     def __init__(self, message: str, hint: str = ""):
         super().__init__(message)
@@ -283,6 +288,44 @@ def rust_build_daemon(r: Runner) -> None:
 EMBASSY_RP = ROOT / "runtime" / "bdl-runtime-embassy-rp"
 
 
+ARDUINO = ROOT / "runtime" / "bdl-runtime-arduino"
+AVR_NIGHTLY = "nightly-2025-04-27"
+
+
+def avr_toolchain_present() -> bool:
+    """The pinned AVR nightly (with rust-src) and avr-gcc, the AVR linker."""
+    try:
+        ok = subprocess.run(
+            ["rustup", "run", AVR_NIGHTLY, "rustc", "--version"], capture_output=True, text=True
+        ).returncode == 0
+    except OSError:
+        ok = False
+    return ok and shutil.which("avr-gcc") is not None
+
+
+def embedded_avr(r: Runner) -> None:
+    """The Arduino binding crate sits outside the workspace and builds on
+    the pinned AVR nightly only: formatted (stable rustfmt), and
+    clippy-clean for `avr-none` with the Nano feature.  Skipped, with a
+    notice, where the toolchain is absent — unless BDL_REQUIRE_AVR says CI
+    must have it."""
+    if not avr_toolchain_present():
+        if os.environ.get("BDL_REQUIRE_AVR"):
+            raise Failure(
+                "the AVR toolchain is missing",
+                f"rustup toolchain install {AVR_NIGHTLY} --component rust-src clippy; avr-gcc on PATH",
+            )
+        raise Skip(f"{AVR_NIGHTLY} or avr-gcc not installed")
+    r.cmd(["cargo", "fmt", "--", "--check"], cwd=ARDUINO, hint="cd runtime/bdl-runtime-arduino && cargo fmt")
+    r.cmd(
+        [
+            "rustup", "run", AVR_NIGHTLY, "cargo", "clippy", "--target", "avr-none",
+            "-Zbuild-std=core", "--features", "arduino-nano", "--", "-D", "warnings",
+        ],
+        cwd=ARDUINO,
+    )
+
+
 def embedded_rp(r: Runner) -> None:
     """The RP2040 binding crate sits outside the workspace (its HAL tree
     stays out of the host lockfile): formatted, and clippy-clean for the
@@ -396,6 +439,7 @@ CHECKS: dict[str, Check] = {
         Check("rust-test", "Rust tests (workspace)", rust_test, ("cargo",)),
         Check("rust-build-daemon", "Build bdld", rust_build_daemon, ("cargo",)),
         Check("embedded-rp", "RP2040 adapter crate (fmt, clippy for thumbv6m)", embedded_rp, ("cargo", "rustup")),
+        Check("embedded-avr", "Arduino adapter crate (fmt, clippy for avr-none on the AVR nightly)", embedded_avr, ("cargo", "rustup")),
         Check("flutter-deps", "flutter pub get", flutter_deps, ("flutter",)),
         Check("dart-format", "Dart formatting", dart_format, ("dart",)),
         Check("flutter-analyze", "flutter analyze", flutter_analyze, ("flutter",)),
@@ -433,6 +477,7 @@ PROFILES: dict[str, list[str]] = {
         "l10n",
         "rust-clippy",
         "embedded-rp",
+        "embedded-avr",
         "rust-test",
         "flutter-deps",
         "dart-format",
@@ -453,6 +498,7 @@ PROFILES: dict[str, list[str]] = {
         "l10n",
         "rust-clippy",
         "embedded-rp",
+        "embedded-avr",
         "rust-test",
     ],
     "flutter-ci": ["flutter-deps", "dart-format", "flutter-analyze", "studio-l10n-generated", "flutter-test"],
@@ -533,6 +579,11 @@ def run(names: list[str], verbose: bool, allow_mutation: bool) -> int:
         started = time.monotonic()
         try:
             c.run(r)
+        except Skip as why:
+            elapsed = time.monotonic() - started
+            print(f"{label} SKIP ({why})")
+            outcomes.append(Outcome(c.name, c.title, "SKIP", elapsed))
+            continue
         except Failure as f:
             elapsed = time.monotonic() - started
             print(f"{label} FAIL {fmt_seconds(elapsed)}")

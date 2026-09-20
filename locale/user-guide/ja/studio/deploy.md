@@ -14,7 +14,7 @@ _デプロイページ：Arduino Nano を選択、light に PWM デバイス 1 �
 
 ## ターゲット
 
-The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**, the first board firmware can be generated for (`bdld compile --target rp2040_pico`, [CLI](../../../../docs/user-guide/reference/cli.md); flashing it is not in Studio yet). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design.
+コンパイラサービスが知っているボード。現在は **Arduino Nano**、PWM ピンが多いテスト用ターゲットの **Big board (mock)**、そして **Raspberry Pi Pico (RP2040)** です。Pico と Nano にはファームウェアを生成できます（`bdld compile --target rp2040_pico` / `--target arduino_nano`、[CLI](../../../../docs/user-guide/reference/cli.md) 参照。書き込みはまだ Studio にはありません）。ボードの選択は**セッションの設定**です。プロジェクトとともには保存されず、変えても設計は決して変わりません。
 
 ボードを選ぶまで、ページは _ボードを選ぶと、この設計が収まるかどうかを確認できます。_ と表示します。
 

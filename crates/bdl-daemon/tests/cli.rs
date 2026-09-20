@@ -310,6 +310,23 @@ fn compile_for_a_board_writes_the_adapter_from_the_placement() {
     assert_eq!(manifest["adapter"]["bindings"][0]["capability"], "pwm");
     assert_eq!(manifest["adapter"]["bindings"][0]["resource"], "GP0");
 
+    // the Arduino Nano: the same core, the avr-hal firmware beside it
+    let out_nano = dir.path().join("gen-nano");
+    let on = out_nano.to_str().expect("utf8");
+    let (code, out, err) = bdld(&["compile", &r, "--out", on, "--target", "arduino_nano"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out_nano.join("src/bin/arduino_nano.rs").is_file());
+    let manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(out_nano.join("bdl-manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["adapter"]["family"], "avr");
+    assert_eq!(manifest["adapter"]["bindings"][0]["resource"], "D3");
+    assert_eq!(
+        std::fs::read_to_string(out_nano.join("src/lib.rs")).unwrap(),
+        std::fs::read_to_string(out_dir.join("src/lib.rs")).unwrap(),
+        "the core is the same for both boards"
+    );
+
     let (code, _, err) = bdld(&["compile", &r, "--out", o, "--target", "toaster"]);
     assert_eq!(code, 2);
     assert!(err.contains("no target named `toaster`"), "{err}");

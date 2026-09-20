@@ -15,11 +15,12 @@ the placement._
 ## Target
 
 The boards the compiler service knows. Today: **Arduino Nano**, **Big board
-(mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**,
-the first board firmware can be generated for
-(`bdld compile --target rp2040_pico`, [CLI](../reference/cli.md); flashing it is
-not in Studio yet). The board choice is a **session preference**: it is not
-saved with the project, and changing it never changes the design.
+(mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**.
+Firmware can be generated for the Pico and the Nano
+(`bdld compile --target rp2040_pico` / `--target arduino_nano`,
+[CLI](../reference/cli.md); flashing is not in Studio yet). The board choice is
+a **session preference**: it is not saved with the project, and changing it
+never changes the design.
 
 Until a board is chosen the page says _Choose a board to see whether this design
 fits it._

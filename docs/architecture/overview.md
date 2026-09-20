@@ -88,6 +88,7 @@ runtime/
   bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver, recording sinks (→ runtime-core, runtime-embassy)
   bdl-runtime-adapter     no_std adapter vocabulary: the numeric policy at the raw command boundary, sink traits, the compiled schedule (→ runtime-core)
   bdl-runtime-embassy-rp  the RP2040 binding over embassy-rp — outside the workspace, built only into generated firmware (docs/architecture/embedded-adapter.md)
+  bdl-runtime-arduino     the Arduino binding over avr-hal — outside the workspace, nightly-only, built only into generated firmware
 ```
 
 Editor integration outside the workspace: `editors/vscode` (a thin client of
@@ -152,7 +153,8 @@ trace for trace (ADR-0016, `docs/architecture/codegen-rust.md`). The core is
 target-independent and knows no board: the platform adapter that binds
 `DeploymentAnalysis`'s assignment to peripherals is a separate artefact
 generated beside it behind features the host never enables — the RP2040 over
-Embassy first (ADR-0037, `docs/architecture/embedded-adapter.md`).
+Embassy first, the Arduino Nano over `avr-hal` second, one target entry per
+family (ADR-0037, `docs/architecture/embedded-adapter.md`).
 
 ## The compiler is a pipeline of explicit passes
 

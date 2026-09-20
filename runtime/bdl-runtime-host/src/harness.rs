@@ -72,9 +72,20 @@ impl Cargo {
     }
 
     fn command(&self, args: &[&str]) -> Command {
-        let mut c = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()));
-        c.args(args)
-            .current_dir(&self.crate_dir)
+        // `+<toolchain>` is rustup's, not cargo's: route through `rustup run`
+        let mut c = match args.first().and_then(|a| a.strip_prefix('+')) {
+            Some(toolchain) => {
+                let mut c = Command::new("rustup");
+                c.args(["run", toolchain, "cargo"]).args(&args[1..]);
+                c
+            }
+            None => {
+                let mut c = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()));
+                c.args(args);
+                c
+            }
+        };
+        c.current_dir(&self.crate_dir)
             .env("CARGO_TARGET_DIR", &self.target_dir)
             .env_remove("RUSTFLAGS")
             .env_remove("CARGO_ENCODED_RUSTFLAGS");
@@ -125,8 +136,26 @@ impl Cargo {
     /// Cross-build the firmware `<package>-<target>` (feature `<target>`,
     /// release profile) for `triple`; the path of the ELF.
     pub fn build_firmware(&self, target: &str, triple: &str) -> Result<PathBuf, HarnessError> {
+        self.build_firmware_with(target, triple, None, &[])
+    }
+
+    /// [`build_firmware`](Self::build_firmware) on another toolchain
+    /// (`cargo +<toolchain>`) with extra cargo arguments (`-Zbuild-std=core`
+    /// for a tier-3 target); the ELF's path.
+    pub fn build_firmware_with(
+        &self,
+        target: &str,
+        triple: &str,
+        toolchain: Option<&str>,
+        extra: &[&str],
+    ) -> Result<PathBuf, HarnessError> {
         let bin = format!("{}-{target}", self.package_name()?);
-        self.run_ok(&[
+        let plus = toolchain.map(|t| format!("+{t}"));
+        let mut args: Vec<&str> = Vec::new();
+        if let Some(p) = &plus {
+            args.push(p);
+        }
+        args.extend([
             "build",
             "--quiet",
             "--release",
@@ -136,8 +165,17 @@ impl Cargo {
             target,
             "--bin",
             &bin,
-        ])?;
-        Ok(self.target_dir.join(triple).join("release").join(bin))
+        ]);
+        args.extend_from_slice(extra);
+        self.run_ok(&args)?;
+        // cargo names an AVR binary `<bin>.elf`
+        let dir = self.target_dir.join(triple).join("release");
+        let plain = dir.join(&bin);
+        if plain.is_file() {
+            Ok(plain)
+        } else {
+            Ok(dir.join(format!("{bin}.elf")))
+        }
     }
 
     /// Build if needed and run one request through the host binary.

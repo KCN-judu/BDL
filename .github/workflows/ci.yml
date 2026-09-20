@@ -34,6 +34,13 @@ jobs:
           components: rustfmt, clippy
           # the first embedded target (rust-toolchain.toml)
           targets: thumbv6m-none-eabi
+      # The Arduino family builds on avr-hal's pinned nightly with
+      # -Zbuild-std=core and avr-gcc as the linker (embedded-avr, and the
+      # Nano cross-build in the workspace tests: BDL_REQUIRE_AVR).
+      - name: AVR toolchain
+        run: |
+          rustup toolchain install nightly-2025-04-27 --profile minimal --component rust-src,clippy
+          sudo apt-get update -q && sudo apt-get install -y -q gcc-avr avr-libc
       # Caches the registry, git deps and the dependency artifacts under
       # target/ (workspace crates are rebuilt); sets CARGO_INCREMENTAL=0.
       - uses: Swatinem/rust-cache@v2
@@ -41,8 +48,11 @@ jobs:
         with:
           node-version: "22"
       # rust-format, docs-format, docs-lint, docs-validate, ci-scripts,
-      # screenshots, l10n, rust-clippy, rust-test — cheap checks first
+      # screenshots, l10n, rust-clippy, embedded-rp, embedded-avr,
+      # rust-test — cheap checks first
       - run: python3 scripts/preflight.py rust-ci
+        env:
+          BDL_REQUIRE_AVR: "1"
       - name: Upload bdld for the Flutter job
         uses: actions/upload-artifact@v4
         with:
