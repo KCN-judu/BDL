@@ -43,9 +43,9 @@ pub use migrate::{
 pub use names::{identifier_from, is_identifier, why_not_identifier};
 pub use splice::{write_back, WriteBack};
 pub use workspace::{
-    discover_sources, init_project, init_text_project, load_project, load_project_with,
-    load_text_project, load_workspace, save_project, save_project_with, save_text_project,
-    write_authoring, write_authoring_with, write_identities, DefinitionDraftFile, Drafts,
-    LoadedWorkspace, SourceDraftFile, SourceFile, TextError, AUTHORING_FILE, IDENTITIES_FILE,
-    SOURCE_DIR,
+    discover_sources, init_project, init_project_with_source, init_text_project, load_project,
+    load_project_with, load_text_project, load_workspace, save_project, save_project_with,
+    save_text_project, write_authoring, write_authoring_with, write_identities,
+    DefinitionDraftFile, Drafts, LoadedWorkspace, SourceDraftFile, SourceFile, TextError,
+    AUTHORING_FILE, IDENTITIES_FILE, SOURCE_DIR,
 };

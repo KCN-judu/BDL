@@ -25,6 +25,9 @@ bdl-hardware = { workspace = true }
 bdl-reactive = { workspace = true }
 bdl-exec-ir = { workspace = true }
 bdl-diagnostics = { workspace = true }
+bdl-codegen-rust = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
 prost = { workspace = true }
 bytes = { workspace = true }
 tokio = { workspace = true }

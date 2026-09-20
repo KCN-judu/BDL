@@ -131,6 +131,7 @@ fn rover(dir: &tempfile::TempDir) -> (Client, u64, u64, u64, u64) {
     c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: dir.path().join("rover").to_string_lossy().into(),
         name: "rover".into(),
+        template: None,
     }));
     let speed = c
         .apply(pb::edit_op::Op::CreateConcept(pb::CreateConcept {

@@ -7,10 +7,12 @@
 #![forbid(unsafe_code)]
 
 mod cli;
+mod firmware;
 mod formula;
 mod rename;
 mod server;
 mod session;
+mod templates;
 
 use clap::{Parser, Subcommand};
 
@@ -90,6 +92,48 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Build a board's firmware: generate the crate under
+    /// `<project>/build/<target>/`, compile it with cargo, write the image
+    /// the board takes (a UF2 for the Raspberry Pi Pico) and a build
+    /// record beside it.  Every stage is printed; a failure names its
+    /// stage and code.
+    Build {
+        root: std::path::PathBuf,
+        /// The board (`rp2040_pico`).
+        #[arg(long)]
+        target: String,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Write the last built firmware to the board.  With no device named,
+    /// the one reachable device is used; with several, `--list` shows
+    /// them and `--device` chooses.  A firmware older than the project as
+    /// it is now is refused: build again first.
+    Flash {
+        root: std::path::PathBuf,
+        #[arg(long)]
+        target: String,
+        /// A device id from `--list`.
+        #[arg(long)]
+        device: Option<String>,
+        /// Only list the reachable devices.
+        #[arg(long)]
+        list: bool,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Create a project, empty or from a template (`--template`, see
+    /// `templates`).
+    Init {
+        root: std::path::PathBuf,
+        /// The project's name (the directory's name when absent).
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        template: Option<String>,
+    },
+    /// List the templates `init --template` accepts.
+    Templates,
     /// Run the reference evaluator over a project for a number of ticks.
     Simulate {
         root: std::path::PathBuf,
@@ -151,6 +195,49 @@ fn main() -> anyhow::Result<()> {
             inputs,
             json,
         } => exit_with(cli::simulate(&root, COMPILER_VERSION, ticks, &inputs, json)),
+        Command::Build { root, target, json } => {
+            exit_with(cli::build(&root, COMPILER_VERSION, &target, json))
+        }
+        Command::Flash {
+            root,
+            target,
+            device,
+            list,
+            json,
+        } => exit_with(cli::flash(
+            &root,
+            COMPILER_VERSION,
+            &target,
+            device.as_deref(),
+            list,
+            json,
+        )),
+        Command::Init {
+            root,
+            name,
+            template,
+        } => exit_with(cli::init(
+            &root,
+            COMPILER_VERSION,
+            name.as_deref(),
+            template.as_deref(),
+        )),
+        Command::Templates => {
+            for t in templates::templates() {
+                println!(
+                    "{}\t{}{}\n    {}",
+                    t.id,
+                    t.display_name,
+                    if t.configured {
+                        " (deployment included)"
+                    } else {
+                        ""
+                    },
+                    t.description
+                );
+            }
+            Ok(())
+        }
         Command::MigrateUnitDomain {
             root,
             dry_run,

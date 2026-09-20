@@ -526,6 +526,10 @@ pub struct CommittedSystem {
 }
 
 impl Session {
+    pub fn compiler_version(&self) -> &str {
+        &self.compiler_version
+    }
+
     pub fn new(compiler_version: &str) -> Self {
         Session {
             project: None,
@@ -564,8 +568,24 @@ impl Session {
 
     /// Create a project: `src/main.bdl`, the sidecars, the manifest.
     pub fn init(&mut self, root: &Path, name: &str) -> Result<&OpenProject, SessionError> {
+        self.init_with_source(root, name, None)
+    }
+
+    /// [`Session::init`] with `main.bdl` as given — a template's design
+    /// (`crate::templates`) — or empty.
+    pub fn init_with_source(
+        &mut self,
+        root: &Path,
+        name: &str,
+        main_source: Option<&str>,
+    ) -> Result<&OpenProject, SessionError> {
         self.ensure_closed()?;
-        let loaded = bdl_text::init_project(root, name, &self.compiler_version)?;
+        let loaded = match main_source {
+            Some(src) => {
+                bdl_text::init_project_with_source(root, name, &self.compiler_version, src)?
+            }
+            None => bdl_text::init_project(root, name, &self.compiler_version)?,
+        };
         let snapshot = SystemSnapshot::new(loaded.build.system.clone());
         let layout = loaded.layout.clone();
         self.install_system(root, snapshot, layout, Some(loaded));

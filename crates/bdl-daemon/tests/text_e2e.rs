@@ -568,6 +568,7 @@ fn code_view_edits_flow_through_the_model_and_keep_identities() {
     let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: root.to_string_lossy().into(),
         name: "lamp".into(),
+        template: None,
     })) else {
         panic!()
     };
@@ -813,6 +814,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
     let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: root.to_string_lossy().into(),
         name: "lamp".into(),
+        template: None,
     })) else {
         panic!()
     };
@@ -992,6 +994,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: root.to_string_lossy().into(),
         name: "lamp".into(),
+        template: None,
     })) else {
         panic!()
     };

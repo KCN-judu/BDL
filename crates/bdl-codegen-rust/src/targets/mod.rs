@@ -31,6 +31,28 @@ pub struct Peripheral {
     pub describe: String,
 }
 
+/// How a family's firmware reaches the board: the image its bootloader
+/// takes and the chip name a debug probe is told.  Metadata of the entry
+/// like its triple; the tooling that acts on it lives in the daemon.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FlashSpec {
+    /// The bootloader takes a UF2 image on a mounted volume of this label
+    /// (the Pico's `RPI-RP2` while BOOTSEL is held): the family id its
+    /// blocks carry, the flash the image covers.
+    pub uf2: Option<Uf2Family>,
+    /// The chip name `probe-rs` knows the target by, when a debug probe
+    /// can program it.
+    pub probe_chip: Option<&'static str>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Uf2Family {
+    pub family_id: u32,
+    pub volume_label: &'static str,
+    pub flash_start: u32,
+    pub flash_len: u32,
+}
+
 /// A board's target entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Entry {
@@ -111,6 +133,31 @@ impl Entry {
         }
     }
 
+    /// The firmware binary's name: `<package>-<feature>`.
+    pub fn binary(&self, package: &str) -> String {
+        format!("{package}-{}", self.feature())
+    }
+
+    /// How the built firmware reaches the board.  The Arduino's `avrdude`
+    /// path is not driven by the tooling yet: no image, no probe.
+    pub fn flash(&self) -> FlashSpec {
+        match self {
+            Entry::Rp2040 => FlashSpec {
+                uf2: Some(Uf2Family {
+                    family_id: rp2040::UF2_FAMILY_ID,
+                    volume_label: rp2040::UF2_VOLUME,
+                    flash_start: rp2040::FLASH_START,
+                    flash_len: rp2040::FLASH_LEN,
+                }),
+                probe_chip: Some(rp2040::PROBE_CHIP),
+            },
+            Entry::Arduino(_) => FlashSpec {
+                uf2: None,
+                probe_chip: None,
+            },
+        }
+    }
+
     /// The command that builds the firmware in the generated crate.
     pub fn build_command(&self, package: &str) -> String {
         match self {
@@ -159,6 +206,11 @@ impl Entry {
                 ("memory.x".into(), rp2040::MEMORY_X.into()),
                 ("build.rs".into(), rp2040::BUILD_RS.into()),
                 (".cargo/config.toml".into(), rp2040::CARGO_CONFIG.into()),
+                // The crate is built wherever the project lives, outside
+                // any checkout: it pins the toolchain the runtime was
+                // written against and names its target, so rustup
+                // installs both on first use.
+                ("rust-toolchain.toml".into(), self.toolchain_file()),
             ],
             Entry::Arduino(_) => vec![(".cargo/config.toml".into(), arduino::CARGO_CONFIG.into())],
         }
@@ -179,6 +231,21 @@ impl Entry {
             // dependencies must resolve as for 1.87
             Entry::Arduino(_) => arduino::RUST_VERSION,
         }
+    }
+
+    /// `rust-toolchain.toml` for the generated crate: the channel of
+    /// [`Entry::rust_version`] (its `.0` release) and the target.
+    pub fn toolchain_file(&self) -> String {
+        let channel = match self {
+            Entry::Rp2040 => format!("{}.0", self.rust_version()),
+            Entry::Arduino(_) => arduino::TOOLCHAIN.to_owned(),
+        };
+        format!(
+            "# Generated. The toolchain the BDL runtime was written against and the\n\
+             # board's Rust target; rustup installs what is missing on first use.\n\
+             [toolchain]\nchannel = \"{channel}\"\ntargets = [\"{}\"]\n",
+            self.triple()
+        )
     }
 
     /// The `[features]` line and the `[dependencies]` lines of the target

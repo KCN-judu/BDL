@@ -1,4 +1,4 @@
-//! The headless front end: `bdld check | compile | simulate <project>`.
+//! The headless front end: `bdld check | compile | build | flash | simulate | init <project>`.
 //!
 //! Every command opens the project through the session — the one loader
 //! Studio, the LSP and this front end share (`docs/spec/project-format.md`)
@@ -6,6 +6,7 @@
 //! editor reads it, and what checks here checks there.  Output is for a
 //! person on a terminal, or JSON with `--json` for a script.
 
+use crate::firmware::{self as build, flash as flashing, Plan};
 use crate::session::Session;
 use bdl_diagnostics::{Code, Diagnostic, Entity, Severity};
 use bdl_model::surface::Design;
@@ -666,4 +667,245 @@ fn report_migration(
             "rewritten to "
         }
     );
+}
+
+/// `build`: the whole path from the project to the board's image, every
+/// stage printed as it starts (`docs/architecture/firmware-build.md`).
+pub fn build(root: &Path, version: &str, target: &str, json: bool) -> Result<(), Failure> {
+    let session = open(root, version)?;
+    let project = session
+        .project()
+        .map_err(|e| Failure::Open(e.to_string()))?;
+    let Some(plan) = Plan::for_target(&project.root, target, version) else {
+        return Err(Failure::Open(format!(
+            "no firmware can be built for `{target}` (known boards with firmware: rp2040_pico, arduino_nano)"
+        )));
+    };
+    let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let mut progress = |p: build::Progress| {
+        if json {
+            println!(
+                "{}",
+                serde_json::json!({ "stage": p.stage, "message": p.message, "done": p.done, "detail": p.detail })
+            );
+        } else if !p.message.is_empty() {
+            match p.done {
+                Some(n) => println!("[{:?}] {} ({n} crates)", p.stage, p.message),
+                None => println!("[{:?}] {}", p.stage, p.message),
+            }
+        } else if !p.detail.is_empty() {
+            eprintln!("{}", p.detail);
+        }
+    };
+    match build::run(&plan, &project.current, &cancel, &mut progress) {
+        Ok(record) => {
+            if json {
+                println!("{}", serde_json::json!({ "record": record }));
+            } else {
+                println!(
+                    "{}: {} ({} bytes)\n  generated: {}\n  command:   {}",
+                    record.artifact.kind.to_uppercase(),
+                    record.artifact.path.display(),
+                    record.artifact.size_bytes,
+                    record.generated_dir.display(),
+                    record.command
+                );
+            }
+            Ok(())
+        }
+        Err(f) => {
+            if json {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "failed": { "stage": f.stage, "code": f.code, "message": f.message, "explanation": f.explanation,
+                            "diagnostics": f.diagnostics.iter().map(|d| serde_json::json!({ "code": d.code.as_str(), "message": d.message, "explanation": d.explanation })).collect::<Vec<_>>(),
+                            "command": f.command, "output": f.output }
+                    })
+                );
+            } else {
+                eprintln!("error[{}] at {:?}: {}", f.code, f.stage, f.message);
+                if !f.explanation.is_empty() {
+                    eprintln!("    {}", f.explanation);
+                }
+                for d in &f.diagnostics {
+                    eprintln!(
+                        "    {}[{}]: {}",
+                        format!("{:?}", d.severity).to_lowercase(),
+                        d.code.as_str(),
+                        d.message
+                    );
+                }
+                if !f.command.is_empty() {
+                    eprintln!("    command: {}", f.command);
+                }
+                for l in &f.output {
+                    eprintln!("    | {l}");
+                }
+            }
+            Err(Failure::Errors(1))
+        }
+    }
+}
+
+/// `flash`: the last built image onto the one reachable device, or the
+/// one named; `--list` only shows what is reachable.
+pub fn flash(
+    root: &Path,
+    version: &str,
+    target: &str,
+    device: Option<&str>,
+    list: bool,
+    json: bool,
+) -> Result<(), Failure> {
+    let session = open(root, version)?;
+    let project = session
+        .project()
+        .map_err(|e| Failure::Open(e.to_string()))?;
+    let Some(plan) = Plan::for_target(&project.root, target, version) else {
+        return Err(Failure::Open(format!(
+            "no firmware can be built for `{target}`"
+        )));
+    };
+    let spec = plan.entry.flash();
+    let (devices, methods) = flashing::discover(&spec);
+    if list {
+        if json {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "devices": devices.iter().map(|d| serde_json::json!({ "id": d.id, "label": d.label, "detail": d.detail })).collect::<Vec<_>>(),
+                    "methods": methods.iter().map(|m| serde_json::json!({ "label": m.label, "available": m.available, "hint": m.hint })).collect::<Vec<_>>(),
+                })
+            );
+        } else {
+            if devices.is_empty() {
+                println!("no device reachable");
+            }
+            for d in &devices {
+                println!("{}\t{} — {}", d.id, d.label, d.detail);
+            }
+            for m in &methods {
+                println!(
+                    "{}: {} — {}",
+                    m.label,
+                    if m.available {
+                        "available"
+                    } else {
+                        "not available"
+                    },
+                    m.hint
+                );
+            }
+        }
+        return Ok(());
+    }
+    let Some(record) = plan.record() else {
+        return Err(Failure::Open(format!(
+            "nothing has been built for {target} yet: `bdld build {} --target {target}` first",
+            root.display()
+        )));
+    };
+    let fresh = plan
+        .current_identity(&project.current)
+        .map(|id| id == record.artifact.identity)
+        .unwrap_or(false);
+    if !fresh {
+        return Err(Failure::Open(
+            "the last firmware was built from an earlier design or deployment: build again first"
+                .into(),
+        ));
+    }
+    let chosen = match device {
+        Some(id) => devices
+            .iter()
+            .find(|d| d.id == id)
+            .cloned()
+            .ok_or_else(|| Failure::Open(format!("no reachable device `{id}` (see --list)")))?,
+        None => match devices.as_slice() {
+            [] => {
+                return Err(Failure::Open(
+                    "no device reachable: hold BOOTSEL while plugging the board in, then flash"
+                        .into(),
+                ))
+            }
+            [one] => one.clone(),
+            _ => {
+                return Err(Failure::Open(
+                    "several devices are reachable: choose one with --device (see --list)".into(),
+                ))
+            }
+        },
+    };
+    let mut progress = |p: flashing::Progress| {
+        if json {
+            println!(
+                "{}",
+                serde_json::json!({ "stage": format!("{:?}", p.stage), "message": p.message })
+            );
+        } else {
+            println!("[{:?}] {}", p.stage, p.message);
+        }
+    };
+    match flashing::flash(&chosen, &record.artifact, &spec, &mut progress) {
+        Ok(()) => {
+            if !json {
+                println!(
+                    "flashed {} to {}",
+                    record.artifact.path.display(),
+                    chosen.label
+                );
+            }
+            Ok(())
+        }
+        Err(f) => {
+            if json {
+                println!(
+                    "{}",
+                    serde_json::json!({ "failed": { "stage": format!("{:?}", f.stage), "code": f.code, "message": f.message, "explanation": f.explanation, "command": f.command, "output": f.output } })
+                );
+            } else {
+                eprintln!("error[{}] at {:?}: {}", f.code, f.stage, f.message);
+                if !f.explanation.is_empty() {
+                    eprintln!("    {}", f.explanation);
+                }
+                for l in &f.output {
+                    eprintln!("    | {l}");
+                }
+            }
+            Err(Failure::Errors(1))
+        }
+    }
+}
+
+/// `init`: a project, empty or from a template.
+pub fn init(
+    root: &Path,
+    version: &str,
+    name: Option<&str>,
+    template: Option<&str>,
+) -> Result<(), Failure> {
+    let name = name
+        .map(str::to_owned)
+        .or_else(|| root.file_name().map(|n| n.to_string_lossy().into_owned()))
+        .unwrap_or_else(|| "project".to_owned());
+    let source = match template {
+        None => None,
+        Some(id) => Some(crate::templates::template(id).ok_or_else(|| {
+            Failure::Open(format!("no template named `{id}` (see `bdld templates`)"))
+        })?),
+    };
+    let mut session = Session::new(version);
+    session
+        .init_with_source(root, &name, source.as_ref().map(|t| t.source.as_str()))
+        .map_err(|e| Failure::Open(e.to_string()))?;
+    println!(
+        "{}: created at {}{}",
+        name,
+        root.display(),
+        source
+            .map(|t| format!(" from {}", t.id))
+            .unwrap_or_default()
+    );
+    Ok(())
 }

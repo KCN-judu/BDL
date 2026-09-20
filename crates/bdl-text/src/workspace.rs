@@ -467,9 +467,21 @@ pub fn init_project(
     name: &str,
     compiler_version: &str,
 ) -> Result<LoadedWorkspace, TextError> {
+    init_project_with_source(root, name, compiler_version, &format!("// {name}\n"))
+}
+
+/// [`init_project`] with `main.bdl` written as given — a template's
+/// design instead of an empty file.  Identities are assigned on the
+/// first load like any hand-written project's.
+pub fn init_project_with_source(
+    root: &Path,
+    name: &str,
+    compiler_version: &str,
+    main_source: &str,
+) -> Result<LoadedWorkspace, TextError> {
     persist::write_atomic(
         &root.join(SOURCE_DIR).join("main.bdl"),
-        format!("// {name}\n").as_bytes(),
+        main_source.as_bytes(),
     )?;
     write_json(&root.join(IDENTITIES_FILE), &IdentityTable::default())?;
     write_json(

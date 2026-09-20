@@ -184,9 +184,16 @@ fn every_sink_is_bound_to_its_assigned_pad_and_nothing_else() {
         "memory.x",
         "build.rs",
         ".cargo/config.toml",
+        "rust-toolchain.toml",
     ] {
         assert!(g.files.contains_key(file), "{file} missing");
     }
+    assert!(
+        g.files["rust-toolchain.toml"].contains("thumbv6m-none-eabi")
+            && g.files["rust-toolchain.toml"].contains("channel = \"1.89.0\""),
+        "{}",
+        g.files["rust-toolchain.toml"]
+    );
     let adapter = g.manifest.adapter.as_ref().expect("adapter entry");
     assert_eq!(
         (adapter.board.as_str(), adapter.family.as_str()),

@@ -1,4 +1,4 @@
-//! `bdld check | compile | simulate` over a text project: the headless
+//! `bdld check | compile | build | flash | simulate | init` over a text project: the headless
 //! front end reads the same sources through the same loader as the
 //! editors, and its exit code tells a script what it found.
 
@@ -349,4 +349,46 @@ fn compile_for_a_board_writes_the_adapter_from_the_placement() {
     let (code, out, _) = bdld(&["compile", &r, "--out", o, "--target", "rp2040_pico"]);
     assert_eq!(code, 1, "{out}");
     assert!(out.contains("adapter.deployment_not_feasible"), "{out}");
+}
+
+#[test]
+fn init_from_a_template_then_build_and_flash_report_their_stages_and_refusals() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let root = dir.path().join("demo");
+    let r = root.to_string_lossy().into_owned();
+
+    let (code, out, _) = bdld(&["templates"]);
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("button-lamp\t") && out.contains("button-lamp-configured\t"),
+        "{out}"
+    );
+
+    let (code, out, _) = bdld(&["init", &r, "--template", "button-lamp"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(root.join("src/main.bdl").is_file());
+    let (code, out, _) = bdld(&["check", &r]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("2 concept(s), 2 relationship(s), 1 output(s); checks"),
+        "{out}"
+    );
+
+    // The guided demo has no deployment: the build stops at Checking and
+    // names the refusal; the flash has nothing to write.
+    let (code, out, err) = bdld(&["build", &r, "--target", "rp2040_pico"]);
+    assert_eq!(code, 1, "{out}{err}");
+    assert!(out.contains("[Checking]"), "{out}");
+    assert!(err.contains("error[build.not_ready] at Checking"), "{err}");
+    assert!(err.contains("adapter."), "{err}");
+    let (code, _, err) = bdld(&["flash", &r, "--target", "rp2040_pico"]);
+    assert_eq!(code, 2);
+    assert!(err.contains("nothing has been built"), "{err}");
+    let x = dir.path().join("x").to_string_lossy().into_owned();
+    let (code, _, err) = bdld(&["init", &x, "--template", "nope"]);
+    assert_eq!(code, 2);
+    assert!(err.contains("no template named"), "{err}");
+    let (code, _, err) = bdld(&["build", &r, "--target", "big_board"]);
+    assert_eq!(code, 2);
+    assert!(err.contains("no firmware can be built"), "{err}");
 }

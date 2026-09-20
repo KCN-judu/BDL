@@ -17,6 +17,16 @@ use bdl_exec_ir::ExecIr;
 
 pub const FAMILY: &str = "rp2040";
 pub const TRIPLE: &str = "thumbv6m-none-eabi";
+/// The UF2 family id the RP2040's bootloader accepts.
+pub const UF2_FAMILY_ID: u32 = 0xe48b_ff56;
+/// The volume the bootloader mounts while BOOTSEL is held.
+pub const UF2_VOLUME: &str = "RPI-RP2";
+/// The XIP flash: 16 MiB at `0x1000_0000` (the Pico carries 2 MiB; the
+/// image covers what the linker placed).
+pub const FLASH_START: u32 = 0x1000_0000;
+pub const FLASH_LEN: u32 = 16 * 1024 * 1024;
+/// The chip name `probe-rs` programs.
+pub const PROBE_CHIP: &str = "RP2040";
 
 /// The Pico's pads.
 const MAX_PIN: u32 = 29;

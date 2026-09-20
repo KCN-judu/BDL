@@ -767,6 +767,7 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
     let Resp::Project(fp) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: flat_root.to_string_lossy().into(),
         name: "plain".into(),
+        template: None,
     })) else {
         panic!()
     };
@@ -1243,6 +1244,7 @@ fn the_role_is_one_answer_across_the_component_boundary() {
     let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: root.to_string_lossy().into(),
         name: "probe".into(),
+        template: None,
     })) else {
         panic!()
     };
@@ -1543,6 +1545,7 @@ fn a_source_is_created_over_a_chosen_concept() {
     let Resp::Project(p) = c.call(Req::InitProject(pb::InitProjectRequest {
         root_path: root.to_string_lossy().into(),
         name: "rig".into(),
+        template: None,
     })) else {
         panic!()
     };

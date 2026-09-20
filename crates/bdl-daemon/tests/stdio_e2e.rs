@@ -146,6 +146,7 @@ fn vertical_slice_steps_1_to_12() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "lamp".into(),
+            template: None,
         }),
         &mut events,
     ));
@@ -517,6 +518,7 @@ fn outputs_and_deployment_over_stdio() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "rover".into(),
+            template: None,
         }),
         &mut events,
     ));
@@ -915,6 +917,7 @@ fn definition_drafts_over_stdio() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "lamp".into(),
+            template: None,
         }),
         &mut events,
     ));
@@ -1406,6 +1409,7 @@ fn concept_templates_over_stdio() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "lamp".into(),
+            template: None,
         }),
         &mut events,
     ));
@@ -1555,6 +1559,7 @@ fn library_items_over_stdio() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "rig".into(),
+            template: None,
         }),
         &mut events,
     ));
@@ -1833,6 +1838,7 @@ fn a_library_transaction_is_all_or_nothing() {
         Req::InitProject(pb::InitProjectRequest {
             root_path: root.to_string_lossy().into(),
             name: "rig".into(),
+            template: None,
         }),
         &mut events,
     ));

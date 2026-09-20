@@ -5,6 +5,7 @@
 //! session and handles requests strictly in order.  Nothing else ever
 //! touches the session.
 
+use crate::firmware::protocol::Firmware;
 use crate::formula;
 use crate::session::{Committed, Session, SessionError, SimulationRun};
 use crate::COMPILER_VERSION;
@@ -91,6 +92,7 @@ async fn coordinate(
     tx: mpsc::Sender<pb::ServerMessage>,
 ) -> anyhow::Result<()> {
     let mut session = Session::new(COMPILER_VERSION);
+    let mut firmware = Firmware::default();
     let mut subscribed = false;
 
     while let Some(msg) = rx.recv().await {
@@ -114,7 +116,24 @@ async fn coordinate(
             subscribed = true;
         }
 
-        let (resp, committed) = handle(&mut session, payload);
+        // A build or a flash runs on its own thread and reports as
+        // events; it needs the sender, which the pure dispatch does not.
+        let (resp, committed) = match payload {
+            Req::BuildFirmware(r) => (firmware.start_build(&session, &r, &tx), None),
+            Req::FlashFirmware(r) => (firmware.start_flash(&session, &r, &tx), None),
+            Req::GetBuildStatus(r) => (
+                match firmware.status(&session, &r.target_id) {
+                    Ok(status) => Resp::BuildStatus(pb::BuildStatusResponse {
+                        status: Some(status),
+                    }),
+                    Err(e) => Resp::Error(e),
+                },
+                None,
+            ),
+            Req::CancelBuild(_) => (firmware.cancel(), None),
+            Req::ListFlashDevices(r) => (firmware.devices(&session, &r.target_id), None),
+            other => handle(&mut session, other),
+        };
         send_response(&tx, request_id, resp).await;
         if subscribed {
             if let Some(c) = committed {
@@ -170,10 +189,45 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
             Ok(_) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
         },
-        Req::InitProject(i) => match session.init(Path::new(&i.root_path), &i.name) {
-            Ok(_) => (project_response(session), None),
-            Err(e) => (Resp::Error(session_error(&e)), None),
-        },
+        Req::InitProject(i) => {
+            let template = match i.template.as_deref() {
+                None => None,
+                Some(id) => match crate::templates::template(id) {
+                    Some(t) => Some(t),
+                    None => {
+                        return (
+                            Resp::Error(error(
+                                "project.unknown_template",
+                                &format!("No template named {id}."),
+                            )),
+                            None,
+                        )
+                    }
+                },
+            };
+            match session.init_with_source(
+                Path::new(&i.root_path),
+                &i.name,
+                template.as_ref().map(|t| t.source.as_str()),
+            ) {
+                Ok(_) => (project_response(session), None),
+                Err(e) => (Resp::Error(session_error(&e)), None),
+            }
+        }
+        Req::ListTemplates(_) => (crate::firmware::protocol::templates_response(), None),
+        // Handled by the coordinator (they need the event sender); never
+        // reach the pure dispatch.
+        Req::BuildFirmware(_)
+        | Req::FlashFirmware(_)
+        | Req::GetBuildStatus(_)
+        | Req::CancelBuild(_)
+        | Req::ListFlashDevices(_) => (
+            Resp::Error(error(
+                "protocol.internal",
+                "firmware requests are coordinated",
+            )),
+            None,
+        ),
         Req::InitSystemProject(i) => match session.init_system(Path::new(&i.root_path), &i.name) {
             Ok(_) => (project_response(session), None),
             Err(e) => (Resp::Error(session_error(&e)), None),
@@ -1290,12 +1344,16 @@ fn analyze_deployment(session: &Session, r: &pb::AnalyzeDeploymentRequest) -> Re
     let analysis = bdl_compiler::analyze(&snapshot);
     let d = bdl_compiler::analyze_deployment(&snapshot, &target);
     let report = bdl_compiler::deployment_report(&snapshot, &analysis, &d, &target);
+    let mut deployment = convert::deployment_with_report_to_pb(&d, &report, &snapshot.design);
+    // Whether the firmware can be built now, and what stops it (0.26):
+    // the report's items and the firmware pass's own refusals, in one
+    // ordered list, so *Build* is offered exactly when it would pass.
+    let (ready, blockers) =
+        crate::firmware::protocol::readiness_to_pb(session, &snapshot, &r.target_id, &report);
+    deployment.build_ready = ready;
+    deployment.build_blockers = blockers;
     Resp::Deployment(pb::DeploymentResponse {
-        deployment: Some(convert::deployment_with_report_to_pb(
-            &d,
-            &report,
-            &snapshot.design,
-        )),
+        deployment: Some(deployment),
     })
 }
 
@@ -1748,6 +1806,12 @@ fn payload_name(p: &Req) -> &'static str {
         Req::ResetSimulation(_) => "reset_simulation",
         Req::ListTargets(_) => "list_targets",
         Req::AnalyzeDeployment(_) => "analyze_deployment",
+        Req::BuildFirmware(_) => "build_firmware",
+        Req::GetBuildStatus(_) => "get_build_status",
+        Req::CancelBuild(_) => "cancel_build",
+        Req::ListFlashDevices(_) => "list_flash_devices",
+        Req::FlashFirmware(_) => "flash_firmware",
+        Req::ListTemplates(_) => "list_templates",
         Req::AnalyzeDefinitionDraft(_) => "analyze_definition_draft",
         Req::DiscardDefinitionDraft(_) => "discard_definition_draft",
         Req::CompleteDefinitionDraft(_) => "complete_definition_draft",
