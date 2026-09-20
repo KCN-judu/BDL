@@ -122,6 +122,70 @@ would have named.
 **What to do.** Resolve it and check again; if a second one appears, it was
 there too.
 
+## _Not ready to build_ on the Firmware card, though the verdict is _Feasible_
+
+The verdict is the placement; the build needs more: the design ready, every
+output driven, every device's profile admissible, every Source provided by a
+profile this board's firmware reads. The card names the first missing thing and
+its remedy; a blocker about the design offers **Fix it on the Design page**. The
+order is the service's — design, devices, then the board's firmware — so fix the
+top one and read again.
+
+## _The build did not complete_ — _The Rust toolchain is not installed._
+
+Building firmware needs `cargo`. Install Rust from <https://rustup.rs>, open
+Studio again (it looks in `~/.cargo/bin` when the shell's `PATH` is not
+inherited), and Build again.
+
+## _The build did not complete_ — _The Rust target for Raspberry Pi Pico (RP2040) is not installed._
+
+The generated crate pins the target in its `rust-toolchain.toml` and `rustup`
+installs it on first use; when that did not happen, run the one command the card
+gives — `rustup target add thumbv6m-none-eabi` — and Build again.
+
+## _The build did not complete_ — _The BDL runtime crates were not found._
+
+The firmware depends on the repository's `runtime/` directory. Run Studio (or
+`bdld`) from a checkout, or set `BDL_RUNTIME_DIR` to that directory.
+
+## _The build did not complete_ — _The firmware for … did not compile._
+
+Open **Details**: the compiler's output is there, with the command. The first
+build of a board downloads its libraries; without a network it fails here —
+connect once, Build again. A generated crate that does not compile with the
+network up is a defect in Behavior Designer: keep the output and report it.
+
+## _No board is reachable._
+
+Hold the **BOOTSEL** button on the Pico while plugging it in over USB, then
+release it; the Pico appears as a drive named `RPI-RP2`. Click **Look again**. A
+cable that only carries power shows nothing. A Pico that was flashed once runs
+its firmware on plugging in — BOOTSEL is what puts it back into the bootloader.
+
+## _Several boards are reachable — choose one._
+
+Two Picos are in bootloader mode (or a debug probe sits beside one). Studio
+never guesses; choose in the pop-up, then Flash — or unplug the other.
+
+## _The flash did not complete_ — _The board is no longer in bootloader mode._
+
+The drive disappeared before the image was written — the board was unplugged, or
+it restarted. Hold BOOTSEL while plugging it in again, then Flash.
+
+## _The firmware is from an earlier design or deployment._
+
+Something the image was built from changed: the design, a device, a profile, a
+pin, the board. Build again; Flash returns when the image is current. A moved
+node is not a change: layout is not part of the firmware.
+
+## The board does not do what the design says, though the flash succeeded
+
+Studio can only know that the image was written. Check the wiring against the
+pins the Placement table names; check that the Source's provider matches the
+circuit (_active low_ is a button to ground with the line pulled up; _active
+high_ a button to 3V3 with the line pulled down); then the design, on the
+Simulate page, with the Source set by hand.
+
 ## Related
 
 [Deploy](../studio/deploy.md) ·

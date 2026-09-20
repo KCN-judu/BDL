@@ -121,38 +121,38 @@ msgid "Contents"
 msgstr ""
 
 #: docs/user-guide/README.md:50
-msgid "**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md)"
+msgid "**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md) · [Your first board](getting-started/pico-demo.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:56
+#: docs/user-guide/README.md:57
 msgid "**Concepts** — the ideas, one page each [Concepts](concepts/concepts.md) · [Relationships](concepts/relationships.md) · [Incomplete designs](concepts/incomplete-designs.md) · [Timing](concepts/timing.md) · [Physical outputs](concepts/physical-outputs.md) · [Behavior groups](concepts/behavior-groups.md) · [Components](concepts/components.md) · [Behavior systems](concepts/behavior-systems.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:64
+#: docs/user-guide/README.md:65
 msgid "**Studio** — the interface, one panel or page each [Workspace](studio/workspace.md) · [Canvas](studio/canvas.md) · [Library](studio/library.md) · [Inspector](studio/inspector.md) · [Formula editor](studio/formula-editor.md) · [Simulate](studio/simulate.md) · [Deploy](studio/deploy.md) · [System projects](studio/system-projects.md) · [Design, Code and Split](studio/code-view.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:71
+#: docs/user-guide/README.md:72
 msgid "**Workflows** — one goal each, on the same lamp [From sensor to output](workflows/sensor-to-output.md) · [A second output](workflows/multi-output-behavior.md) · [Grouping a behavior](workflows/grouping-behavior.md) · [Packaging a behavior as a component](workflows/package-as-component.md) · [Composing components](workflows/composing-components.md) · [Carrying a value across timing domains](workflows/cross-domain-transport.md) · [Versioning a component](workflows/component-versioning.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:81
+#: docs/user-guide/README.md:82
 msgid "**Textual BDL** [Overview and current status](textual/overview.md) · [Syntax basics](textual/syntax-basics.md) · [Editor and language server](textual/editor-and-lsp.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:86
+#: docs/user-guide/README.md:87
 msgid "**Troubleshooting** [Start here](troubleshooting/README.md) · [Incomplete design](troubleshooting/incomplete-design.md) · [Types, units and concepts](troubleshooting/type-and-concept-errors.md) · [Timing](troubleshooting/timing-errors.md) · [Connections](troubleshooting/connection-errors.md) · [Deployment](troubleshooting/deployment-errors.md) · [Source files](troubleshooting/text-project-errors.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:94
+#: docs/user-guide/README.md:95
 msgid "**Reference** [Terminology](reference/terminology.md) · [Keyboard and mouse](reference/keyboard-and-mouse.md) · [Status meanings](reference/status-meanings.md) · [Formula language](reference/formula-language.md) · [Project files](reference/project-files.md) · [Command line](reference/cli.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:100
+#: docs/user-guide/README.md:101
 msgid "**About this guide** [Style guide](STYLE_GUIDE.md) · [Verification matrix](VERIFICATION.md) · [Screenshot plan](SCREENSHOT_PLAN.md) · [Documentation research](DOCUMENTATION_RESEARCH.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:104
+#: docs/user-guide/README.md:105
 msgid "The technical documentation for people building the tool itself lives one level up in `docs/` (architecture, compiler pipeline, protocol, formal notes). This guide links to it from _Going deeper_ sections and does not repeat it."
 msgstr ""
 
@@ -347,12 +347,12 @@ msgstr ""
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
 #: docs/user-guide/concepts/timing.md:114
-#: docs/user-guide/reference/cli.md:43
+#: docs/user-guide/reference/cli.md:71
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:190
 #: docs/user-guide/studio/code-view.md:152
-#: docs/user-guide/studio/deploy.md:143
+#: docs/user-guide/studio/deploy.md:185
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:80
 #: docs/user-guide/studio/library.md:89
@@ -362,7 +362,7 @@ msgstr ""
 #: docs/user-guide/textual/editor-and-lsp.md:83
 #: docs/user-guide/textual/syntax-basics.md:202
 #: docs/user-guide/troubleshooting/connection-errors.md:136
-#: docs/user-guide/troubleshooting/deployment-errors.md:125
+#: docs/user-guide/troubleshooting/deployment-errors.md:189
 #: docs/user-guide/troubleshooting/incomplete-design.md:92
 #: docs/user-guide/troubleshooting/text-project-errors.md:121
 #: docs/user-guide/troubleshooting/timing-errors.md:82
@@ -1064,7 +1064,7 @@ msgstr ""
 #: docs/user-guide/reference/status-meanings.md:74
 #: docs/user-guide/reference/status-meanings.md:83
 #: docs/user-guide/reference/terminology.md:8
-#: docs/user-guide/studio/deploy.md:113
+#: docs/user-guide/studio/deploy.md:114
 #: docs/user-guide/troubleshooting/connection-errors.md:116
 msgid "Meaning"
 msgstr ""
@@ -1770,7 +1770,7 @@ msgid "The design is _executable_: every relationship the output depends on is d
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:211
-#: docs/user-guide/getting-started/first-deployment.md:93
+#: docs/user-guide/getting-started/first-deployment.md:94
 #: docs/user-guide/getting-started/first-simulation.md:83
 msgid "If something does not work"
 msgstr ""
@@ -1792,9 +1792,10 @@ msgid "**Nothing checks and the bottom line says _Compiler not connected_.** See
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:224
-#: docs/user-guide/getting-started/first-deployment.md:106
+#: docs/user-guide/getting-started/first-deployment.md:107
 #: docs/user-guide/getting-started/first-simulation.md:96
-#: docs/user-guide/getting-started/install-and-launch.md:71
+#: docs/user-guide/getting-started/install-and-launch.md:72
+#: docs/user-guide/getting-started/pico-demo.md:152
 #: docs/user-guide/getting-started/what-is-bdl.md:77
 #: docs/user-guide/textual/overview.md:124
 #: docs/user-guide/workflows/authoring-as-text.md:109
@@ -1822,124 +1823,124 @@ msgid "**Time.** Ten minutes."
 msgstr ""
 
 #: docs/user-guide/getting-started/first-deployment.md:8
-msgid "Deployment in Behavior Designer today means _checking placement_: which board pin each physical output's device would use, or why none can. It does not build firmware or flash a board yet."
+msgid "This page is the _placement check_: which board pin each physical output's device would use, or why none can. Building the firmware and putting it on a board is the page after — [Your first board](pico-demo.md) — and needs a board this build has firmware for; the Nano here is a placement exercise."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:12
+#: docs/user-guide/getting-started/first-deployment.md:13
 msgid "1. Open the Deploy page"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:14
+#: docs/user-guide/getting-started/first-deployment.md:15
 msgid "Click **Deploy** in the page bar (or **⌘3**). On the left, a **Target** pop-up and a **Devices** list; in the middle, the verdict for the chosen board."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:17
+#: docs/user-guide/getting-started/first-deployment.md:18
 msgid "Until you choose a board the page says _Choose a board to see whether this design fits it._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:20
+#: docs/user-guide/getting-started/first-deployment.md:21
 msgid "2. Choose a board"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:22
+#: docs/user-guide/getting-started/first-deployment.md:23
 msgid "In **Target**, choose **Arduino Nano**. The verdict reads:"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:24
+#: docs/user-guide/getting-started/first-deployment.md:25
 msgid "Fits Arduino Nano so far — the binding is not finished."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:26
+#: docs/user-guide/getting-started/first-deployment.md:27
 msgid "and under it: _No device on arduino_nano for: light._ (this line names the board by its short id). The design has an output but nothing says what piece of hardware realises it."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:30
+#: docs/user-guide/getting-started/first-deployment.md:31
 msgid "3. Add a device"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:32
+#: docs/user-guide/getting-started/first-deployment.md:33
 msgid "A **device** is the hardware that realises one output on the board: a PWM channel for a dimmable light, a digital output for a relay, an H-bridge for a motor."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:36
+#: docs/user-guide/getting-started/first-deployment.md:37
 msgid "Click **Add device**. A row appears in _Devices_."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:37
+#: docs/user-guide/getting-started/first-deployment.md:38
 msgid "Name it `pwmLight`. In its kind pop-up choose **PWM channel**. In its output pop-up choose **light**."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:40
+#: docs/user-guide/getting-started/first-deployment.md:41
 msgid "The line about `light` disappears and a _Placement on arduino_nano_ table shows the one line the lamp needs: `pwmLight`, its _PWM_ requirement, and the pin it was given, such as `D3`. The verdict stays **Fits Arduino Nano so far — the binding is not finished.**, and one line remains under it: _tilt has no device on Arduino Nano._ The lamp's output is placed; its Source is not."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:46
+#: docs/user-guide/getting-started/first-deployment.md:47
 msgid "**What you made.** A deployment configuration for one board. It lives in the project with the design, but it is a separate layer: the Design page's verdicts did not change when you added the device, and they will not change if you pick another board."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:51
+#: docs/user-guide/getting-started/first-deployment.md:52
 msgid "**About `tilt`.** A [Source](../concepts/relationships.md) is a value the environment provides, and on a board a device has to provide it — the same kind of binding as for an output, chosen in the device's pop-up (_tilt — Source_) with a **Provider** instead of a Realization. The providers this build has read a digital line as on/off; `tilt` is an angle, so nothing fits it yet, and the deployment honestly stays _not finished_. That is a state, not an error: the design simulates, and the placement of `light` is real."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:61
-#: docs/user-guide/studio/deploy.md:12
+#: docs/user-guide/getting-started/first-deployment.md:62
+#: docs/user-guide/studio/deploy.md:13
 msgid "_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:64
+#: docs/user-guide/getting-started/first-deployment.md:65
 msgid "4. Make it fail on purpose"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:66
+#: docs/user-guide/getting-started/first-deployment.md:67
 msgid "Each device row has one pin field per requirement. In `pwmLight`'s pin field type `D4` — a pin that cannot do PWM on the Nano."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:69
+#: docs/user-guide/getting-started/first-deployment.md:70
 msgid "Not feasible on Arduino Nano."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:72
+#: docs/user-guide/getting-started/first-deployment.md:73
 msgid " D4 cannot carry pwmLight PWM on arduino_nano. The pin chosen by hand, D4, cannot carry pwmLight PWM here."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:74
+#: docs/user-guide/getting-started/first-deployment.md:75
 msgid "Clear the field: it fits again. Now switch **Target** to **Big board (mock)**: it fits there too, on a different pin. Switch back."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:77
+#: docs/user-guide/getting-started/first-deployment.md:78
 msgid "**What happened.** Feasibility is a fact about _this design on this board_. The board choice is a session preference — it is not saved with the project — and the placement is recomputed for whatever board is chosen."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:83
+#: docs/user-guide/getting-started/first-deployment.md:84
 msgid "_Not feasible: the pin chosen by hand cannot carry PWM._"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:85
+#: docs/user-guide/getting-started/first-deployment.md:86
 msgid "What \"feasible\" means, and does not"
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:87
+#: docs/user-guide/getting-started/first-deployment.md:88
 msgid "_Feasible_ means every device's requirements can be placed on distinct pins with the right capabilities. It does not mean the circuit will work electrically: current, voltage and timing resolution are not modelled. When several placements are possible the tool shows one; when none is, it shows the first dead end it hit, which is _a_ conflict, not necessarily the only one."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:95
+#: docs/user-guide/getting-started/first-deployment.md:96
 msgid "**The status line still says _not causal_ or _outputs incomplete_.** The Deploy verdict is only about the board; the design itself is not ready. Fix it on the Design page first. See [Deployment](../troubleshooting/deployment-errors.md)."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:99
+#: docs/user-guide/getting-started/first-deployment.md:100
 msgid "**Not connected to an output or Source: …** — a device with nothing chosen in its pop-up."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:101
+#: docs/user-guide/getting-started/first-deployment.md:102
 msgid "**… has no device on Arduino Nano.** — a Source no device provides; the deployment stays _not finished_ until one does."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:103
+#: docs/user-guide/getting-started/first-deployment.md:104
 msgid "**Nothing on Arduino Nano can carry …** — the board has no free pin with that capability; try another kind of device, another board, or fewer devices."
 msgstr ""
 
-#: docs/user-guide/getting-started/first-deployment.md:108
-msgid "You have built, simulated and placed a behavior. Read the [Concepts](../concepts/concepts.md) pages for the ideas you used, or go straight to [From sensor to output](../workflows/sensor-to-output.md) to extend the lamp with an ambient-light sensor."
+#: docs/user-guide/getting-started/first-deployment.md:109
+msgid "You have built, simulated and placed a behavior. With a Raspberry Pi Pico at hand, [Your first board](pico-demo.md) builds a design and runs it. Or read the [Concepts](../concepts/concepts.md) pages for the ideas you used, or go straight to [From sensor to output](../workflows/sensor-to-output.md) to extend the lamp with an ambient-light sensor."
 msgstr ""
 
 #: docs/user-guide/getting-started/first-simulation.md:1
@@ -2093,7 +2094,7 @@ msgid "1.89 — pinned by the repository, installed by `rustup`"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:11
-msgid "builds the compiler service"
+msgid "builds the compiler service, and the firmware for a board (the board's target, `thumbv6m-none-eabi` for the Raspberry Pi Pico, is installed by `rustup` the first time a build needs it)"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:12
@@ -2153,7 +2154,7 @@ msgid "Action"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:44
-#: docs/user-guide/reference/cli.md:7
+#: docs/user-guide/reference/cli.md:8
 msgid "What it does"
 msgstr ""
 
@@ -2174,31 +2175,228 @@ msgid "opens an existing project folder"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:48
-msgid "a _Recent_ row"
+msgid "a _Demos_ row"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:48
+msgid "a new project that starts with a design in it: **Button → Lamp** (the design alone) and **Button → Lamp, wired** (with its devices and pins for a Raspberry Pi Pico) — [Your first board](pico-demo.md)"
+msgstr ""
+
+#: docs/user-guide/getting-started/install-and-launch.md:49
+msgid "a _Recent_ row"
+msgstr ""
+
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "reopens that project; rows whose folder is gone are greyed _not found_"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:50
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "A **project** is a folder. Everything in it is saved as plain files ([Project files](../reference/project-files.md)): the design as `.bdl` text you can also edit in a code editor, and the canvas layout beside it. There is one kind of project; behavior groups, components and instances ([System projects](../studio/system-projects.md)) and the **Code** view ([Design, Code and Split](../studio/code-view.md)) are available in every one."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:57
+#: docs/user-guide/getting-started/install-and-launch.md:58
 msgid "The bottom line of the window shows the connection to the compiler service: _Compiler 0.1.0_ when connected, _Connecting to the compiler_ while it starts, _Compiler not connected_ if it could not. Studio does nothing semantic on its own — every check, value and verdict in the guide comes from that service — so this line is the first thing to look at if the app seems inert."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:63
+#: docs/user-guide/getting-started/install-and-launch.md:64
 msgid "Try the finished example"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:65
+#: docs/user-guide/getting-started/install-and-launch.md:66
 msgid "The repository ships one complete project, `examples/smart_lamp`. _Open Project…_ → choose that folder. It is the lamp the tutorials build, with an ambient-light sensor added: two inputs, three relationships, one required output, one PWM device. You can walk its Design, Simulate and Deploy pages before building your own."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:73
-msgid "[Your first behavior](first-behavior.md)."
+#: docs/user-guide/getting-started/install-and-launch.md:74
+msgid "[Your first behavior](first-behavior.md) — or, with a Raspberry Pi Pico at hand, [Your first board](pico-demo.md)."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:1
+msgid "Your first board: Button → Lamp on a Raspberry Pi Pico"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:3
+msgid "**Goal.** Make a push button control a lamp — and run it on a real board. You will open a small product, tell Studio which pins the button and the lamp are on, build the firmware, put it on the board, and press the button."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:7
+msgid "**Time.** Fifteen minutes, plus the first build's download of the board's libraries."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:10
+msgid "**Needs.** A Raspberry Pi Pico (the RP2040 board), a USB cable that carries data, one push button, two jumper wires. No LED: the demo drives the Pico's own on-board LED. Nothing to install beyond Studio and the Rust toolchain the installation page asks for ([Install and launch](install-and-launch.md))."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:15
+msgid "1. Wire the button"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:17
+msgid "The button goes between **GP2** and **GND**: one leg to GP2, the other to any GND pin. Nothing else. The Pico pulls the line up on its own, so the line reads low while the button is held — the demo says as much when you look at the device."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:22
+msgid "Pico pin"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:22
+msgid "Wire"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:24
+msgid "GP2"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:24
+msgid "one leg of the button"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:25
+msgid "GND"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:25
+msgid "the other leg"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:26
+msgid "GP25"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:26
+msgid "nothing — it is the on-board LED"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:28
+msgid "2. Open the demo"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:30
+msgid "On the Welcome page, under **Demos**, choose **Button → Lamp, wired**. Studio asks where to put the project (it is an ordinary project: a folder with `src/main.bdl` in it) and opens it on the Design page."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:36
+msgid "_The demo's design: the Source pressed, the value lit that follows it, and the lamp it drives._"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:39
+msgid "Three objects. **pressed** is a _Source_: a value the environment provides — the design does not say how, and the canvas shows no pin. **lit** is a relationship whose formula is simply `pressed`. **lamp** is the physical output, driven by `lit`. Nothing here is about a board; that is the next page."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:44
+msgid "The other demo, **Button → Lamp**, is the same design without its deployment: take it when you want to make the device choices yourself (step 3 explains them); the wired one has them made."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:48
+msgid "3. Deploy"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:50
+msgid "Click **Deploy** (⌘3) and, in **Target**, choose **Raspberry Pi Pico (RP2040)**."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:54
+#: docs/user-guide/studio/deploy.md:141
+msgid "_The wired demo on the Deploy page: the Pico chosen, both devices admissible and placed, and the one thing left to do — Build._"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:57
+msgid "Read the page top to bottom:"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:59
+msgid "**Feasible on Raspberry Pi Pico (RP2040).** — the devices fit the board."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:60
+msgid "**Devices.** A _device_ is the piece of hardware that stands for one thing in the design. `button` is a **Digital input** for `pressed — Source`, with the **Provider** _GPIO input, active low_ (low is true: a button to ground) on pin **GP2**. `led` is a **Digital output** for `lamp`, with the **Realization** _GPIO, on/off_ on pin **GP25**. The ticks under each — for a Source _transducer · fits · placed · readable_, for an output _encoder · fits · placed_ — are the compiler's judgments; every one holds."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:67
+msgid "**Placement.** Which pin carries what."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:68
+msgid "**Firmware.** Where you are on the way to a running board — _✓ Deployment · **Build** · Flash · Observe_ — and the one thing to do next."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:71
+msgid "With the guided demo the page instead says **Not ready to build** and names the first missing thing — _pressed has no device on Raspberry Pi Pico._ — and you make the two devices: **Add device**, name it, choose its kind, choose what it is for in the third pop-up (`pressed — Source` or `lamp`), choose the Provider or Realization, type the pin. The sentence changes as you go, until it reads _Ready to build_."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:78
+msgid "4. Build"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:80
+msgid "Click **Build for Raspberry Pi Pico (RP2040)**. The card shows what is happening — _Checking the deployment_, _Generating the crate_, _Preparing the toolchain_, _Compiling_ with the count of pieces compiled, _Writing the image_ — and ends with **Firmware built at _time_** and the image's size. The first build fetches the board's libraries and takes a few minutes; later ones take seconds. **Stop** ends a build early."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:87
+msgid "If it ends with **The build did not complete**, the card says which step and why — _The Rust target for Raspberry Pi Pico is not installed._ with the one command to run, for instance — and **Details** holds the compiler's own words. See [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:92
+msgid "5. Flash"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:94
+msgid "Under the built firmware the card says **No board is reachable.** and how to make one reachable: **hold the BOOTSEL button on the Pico while plugging it in** over USB. The Pico appears to the computer as a small drive named `RPI-RP2`; click **Look again** and the card names it — _Raspberry Pi Pico in BOOTSEL mode (RPI-RP2)_ — with a **Flash** button."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:102
+msgid "_Built: the image is current, no board is plugged in yet, and the page says what to do._"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:105
+msgid "Click **Flash**. The image is copied onto the drive; the Pico restarts into it and the drive disappears. The card says **Flashed to Raspberry Pi Pico in BOOTSEL mode (RPI-RP2) at _time_** and then:"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:109
+msgid "Try it: act on pressed; lamp should follow the design."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:111
+msgid "If two Picos are plugged in, the card asks which one; it never picks."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:113
+msgid "6. Try it"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:115
+msgid "Press the button. The on-board LED lights while the button is held and goes out when you let go: `lit` is `pressed`, and `lamp` is `lit`."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:118
+msgid "That the flash succeeded is all Studio can tell you; whether the board behaves is yours to see. If the LED does not follow the button, check the wiring first (GP2 and GND, a button that actually closes), then [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:123
+msgid "7. Change it, and again"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:125
+msgid "Change the design — make `lit` be `!pressed`, say, so the lamp is lit until you press — or the deployment — the button on GP3. The Firmware card says at once: **The firmware is from an earlier design or deployment.** and, if you had flashed, _The board runs an earlier design — build and flash again to update it._ Only **Build again** is offered; Flash comes back once the image is current. Studio never lets an old image pass for the design on screen."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:132
+msgid "What you did, in the design's terms"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:134
+msgid "The design never learned about GP2 or GP25. The **Source** is what the environment provides; the **provider** — a catalogue profile, chosen on the Deploy page — is how a device reads it for the board, and the **realization** is how a device carries the output's value out. Change the board and the design stays; change the provider and the design stays. That separation is the point of the two pages ([Deploy](../studio/deploy.md))."
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:141
+msgid "Without Studio"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:143
+msgid "The same path from a terminal, for scripts and for checking a build without the app ([Command line](../reference/cli.md)):"
+msgstr ""
+
+#: docs/user-guide/getting-started/pico-demo.md:154
+msgid "[From sensor to output](../workflows/sensor-to-output.md) extends a design with a second Source; [Deploy](../studio/deploy.md) has every state of the Firmware card."
 msgstr ""
 
 #: docs/user-guide/getting-started/what-is-bdl.md:1
@@ -2278,115 +2476,159 @@ msgid "Command line"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:3
-msgid "`bdld` is Studio's compiler service; it also has three headless commands that read a project — flat, system or text — with the same loader Studio and the language server use."
+msgid "`bdld` is Studio's compiler service; it also has headless commands that read a project — flat, system or text — with the same loader Studio and the language server use, and the build and flash commands Studio's Deploy page runs through it."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:7
+#: docs/user-guide/reference/cli.md:8
 msgid "Command"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:7
+#: docs/user-guide/reference/cli.md:8
 msgid "Exit code"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:9
+#: docs/user-guide/reference/cli.md:10
 msgid "`bdld check <project>`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:9
+#: docs/user-guide/reference/cli.md:10
 msgid "opens the project and prints every finding (`error[code] place: message`, with `file:line:col` for findings about the source files), then one line: name, counts, *checks, outputs complete* / *checks, outputs not yet complete* / *N error(s)*"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:9
+#: docs/user-guide/reference/cli.md:10
 msgid "0 no errors · 1 errors · 2 the project did not open"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:10
+#: docs/user-guide/reference/cli.md:11
 msgid "`bdld compile <project> [--out DIR]`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:10
+#: docs/user-guide/reference/cli.md:11
 msgid "generates the Rust crate into `DIR` (default `target/bdl`); refuses while the design is not ready, printing why"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:10
+#: docs/user-guide/reference/cli.md:11
 msgid "0 written · 1 not ready · 2 did not open"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:11
+#: docs/user-guide/reference/cli.md:12
 msgid "`bdld compile <project> --target rp2040_pico [--tick-micros N] [--period domain=N …]`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:11
+#: docs/user-guide/reference/cli.md:12
 msgid "also generates the firmware for that board beside the core: every output needs a device with a realization placed on the board, and every Source a device with a provider the board can read (an unprovided Source is refused by name, `adapter.source_unprovided`); `--tick-micros` is the firmware's base tick (default 10000); build it with `cargo build --release --target thumbv6m-none-eabi --features rp2040` in `DIR`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:11
+#: docs/user-guide/reference/cli.md:12
 msgid "0 written · 1 refused, printing why · 2 did not open or unknown board"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "`bdld compile <project> --target arduino_nano …`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "the same for the Arduino Nano over `avr-hal`: a blocking tick loop, PWM on the board's timers, no collections; build it with `cargo +nightly-2025-04-27 build --release --target avr-none -Zbuild-std=core --features arduino_nano` in `DIR` (needs that nightly with `rust-src`, and `avr-gcc`); the exact command is in `bdl-manifest.json` under `adapter.build`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "as above"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:13
-msgid "`bdld simulate <project> [--ticks N] [--input rel=value …]`"
-msgstr ""
-
-#: docs/user-guide/reference/cli.md:13
-msgid "runs the reference evaluator for `N` activations (default 1) with constant inputs and prints every relationship's value per tick"
-msgstr ""
-
-#: docs/user-guide/reference/cli.md:13
-msgid "0 · 1 findings · 2 did not open or a runtime error"
+#: docs/user-guide/reference/cli.md:14
+msgid "`bdld build <project> --target rp2040_pico`"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:14
-msgid "`bdld migrate-unit-domain <project> [--dry-run] [--json]`"
+msgid "the whole path to the board's image: judges the deployment (*Checking*), writes the crate under `<project>/build/rp2040_pico/` (*Generating*; with a `rust-toolchain.toml` that pins the runtime's toolchain and the board's target, so `rustup` installs both on first use), finds cargo and the runtime crates (*Preparing*; `BDL_RUNTIME_DIR` names the repository's `runtime/` when `bdld` is not run from a checkout), runs `cargo build` printing each crate as it compiles (*Compiling*), writes the UF2 image beside the ELF (*Packaging*) and a `bdl-build.json` record with the image's fingerprint; a failure names its stage and code (`build.not_ready`, `build.toolchain_missing`, `build.target_missing`, `build.runtime_missing`, `build.cargo_failed`, `build.package_failed`) and prints the tool's words"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:14
-msgid "rewrites every legacy zero-input signature `mapping f : A` to the preferred `mapping f : () -> A`, one insertion each — comments, spacing, definitions and identities untouched; refuses if the design would change; `--dry-run` only reports"
-msgstr ""
-
-#: docs/user-guide/reference/cli.md:14
-#: docs/user-guide/reference/cli.md:15
-msgid "0 · 2 did not open or refused"
+msgid "0 built · 1 refused or failed, printing why · 2 did not open or unknown board"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:15
-msgid "`bdld migrate-drive-by <project> [--dry-run] [--json]`"
+msgid "`bdld flash <project> --target rp2040_pico [--device ID] [--list]`"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:15
-msgid "rewrites every legacy drive `drive o = m` to the preferred `drive o by m` — the `=` becomes `by`, nothing else moves; the same guards and options as above"
+msgid "writes the last built image to the board: with `--list`, the devices reachable now and how (the Pico's bootloader drive `RPI-RP2` — hold BOOTSEL while plugging in — and, when `probe-rs` is installed, its probes); with exactly one device none need be named; with several, `--device` chooses one and nothing is written otherwise; a stale image (the project changed since the build) is refused: build again first"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:15
+msgid "0 flashed · 1 failed · 2 nothing built, stale, no or ambiguous device"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:16
+msgid "`bdld init <dir> [--name N] [--template ID]` · `bdld templates`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:16
+msgid "creates a project, empty or from a template — `button-lamp` (the Button → Lamp design for the Raspberry Pi Pico) and `button-lamp-configured` (the same with its devices and pins), as `templates` lists them"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:16
+msgid "0 · 2 could not create"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:17
-msgid "`--json` on any of them prints one JSON object instead of text."
+msgid "`bdld simulate <project> [--ticks N] [--input rel=value …]`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:17
+msgid "runs the reference evaluator for `N` activations (default 1) with constant inputs and prints every relationship's value per tick"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:17
+msgid "0 · 1 findings · 2 did not open or a runtime error"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:18
+msgid "`bdld migrate-unit-domain <project> [--dry-run] [--json]`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:18
+msgid "rewrites every legacy zero-input signature `mapping f : A` to the preferred `mapping f : () -> A`, one insertion each — comments, spacing, definitions and identities untouched; refuses if the design would change; `--dry-run` only reports"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:18
+#: docs/user-guide/reference/cli.md:19
+msgid "0 · 2 did not open or refused"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:19
-msgid "Inputs"
+msgid "`bdld migrate-drive-by <project> [--dry-run] [--json]`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:19
+msgid "rewrites every legacy drive `drive o = m` to the preferred `drive o by m` — the `=` becomes `by`, nothing else moves; the same guards and options as above"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:21
+msgid "`--json` on any of them prints one JSON object instead of text."
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:23
+msgid "A board, end to end"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:44
+msgid "The build's stand-in when nothing is plugged in: `flash --list` prints *no device reachable* and the ways to make one reachable."
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:47
+msgid "Inputs"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:49
 msgid "`--input name=value` sets a relationship that reads nothing to a constant for every tick: `true` / `false` for a *Bool* concept, a whole number for a *Count*, a number in the concept's base unit otherwise (radians for an angle, metres for a length, seconds for a time). A relationship left without a value and without a definition stops the run with a *missing input* error."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:37
+#: docs/user-guide/reference/cli.md:65
 msgid "Values print as *Concept(value)* — a truth value as `on` / `off`, a number with six significant digits — the same text Studio shows; a relationship with inputs prints as `<function>` (it is applied where it is called, not sampled); an input you set is listed as the evaluator read it, at the ticks its domain activated."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:45
+#: docs/user-guide/reference/cli.md:73
 msgid "[Project files](project-files.md) · [Textual BDL](../textual/overview.md)"
 msgstr ""
 
@@ -4186,7 +4428,7 @@ msgid "the hardware the placement is checked against"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:37
-#: docs/user-guide/studio/deploy.md:15
+#: docs/user-guide/studio/deploy.md:16
 msgid "Target"
 msgstr ""
 
@@ -5061,147 +5303,267 @@ msgid "Deploy"
 msgstr ""
 
 #: docs/user-guide/studio/deploy.md:3
-msgid "The Deploy page (⌘3) answers _does this design fit this board_. It is a placement check: for each physical output's device, which board resources it would use — or the first reason it cannot be placed. The page is one column: the **Target** pop-up, the **verdict**, the **Devices** and, once a board has answered, the **Placement**. It does not build firmware or flash a board yet; see [What is not there](#what-is-not-there)."
+msgid "The Deploy page (⌘3) answers _does this design fit this board_ — and then puts it on the board. It is a placement check: for each physical output's device, which board resources it would use — or the first reason it cannot be placed. The page is one column: the **Target** pop-up, the **verdict**, the **Devices**, once a board has answered the **Placement**, and last the **Firmware** — one action at a time, from _Build_ to _Flash_ to trying the product ([Firmware](#firmware))."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:17
-msgid "The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**. Firmware can be generated for the Pico and the Nano (`bdld compile --target rp2040_pico` / `--target arduino_nano`, [CLI](../reference/cli.md); flashing is not in Studio yet). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design."
+#: docs/user-guide/studio/deploy.md:18
+msgid "The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**. Firmware can be built for the Pico and the Nano; the Pico is the one Studio flashes ([Firmware](#firmware); the Nano's firmware is built with `bdld build --target arduino_nano` and loaded with `avrdude` by hand, [CLI](../reference/cli.md)). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:25
+#: docs/user-guide/studio/deploy.md:26
 msgid "Until a board is chosen the page says _Choose a board to see whether this design fits it._"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:28
+#: docs/user-guide/studio/deploy.md:29
 msgid "Devices"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:30
+#: docs/user-guide/studio/deploy.md:31
 msgid "A **device** realises one physical output on the board, or provides one [Source](../concepts/relationships.md) to it — one or the other, never both. **Add device** creates a row; in it you set"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:34
+#: docs/user-guide/studio/deploy.md:35
 msgid "a **name**;"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:35
+#: docs/user-guide/studio/deploy.md:36
 msgid "a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _Digital input_ (a button, a switch), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:39
+#: docs/user-guide/studio/deploy.md:40
 msgid "what it is **for**: an output it realises, or a Source it provides — the pop-up lists the outputs by name and the Sources as _tilt — Source_ (or _not connected_);"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:42
+#: docs/user-guide/studio/deploy.md:43
 msgid "one **pin field per requirement** of the kind — leave empty to let the placement choose, or type a board pin name (`D3`, `A4`) to fix it by hand;"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:44
+#: docs/user-guide/studio/deploy.md:45
 msgid "**Remove**."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:46
+#: docs/user-guide/studio/deploy.md:47
 msgid "The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:51
+#: docs/user-guide/studio/deploy.md:52
 msgid "Realization"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:53
+#: docs/user-guide/studio/deploy.md:54
 msgid "Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:63
+#: docs/user-guide/studio/deploy.md:64
 msgid "Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:71
+#: docs/user-guide/studio/deploy.md:72
 msgid "A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:75
+#: docs/user-guide/studio/deploy.md:76
 msgid "Devices are saved with the project. They are deployment data, not design data: adding, changing or removing one leaves every Design-page verdict unchanged."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:78
+#: docs/user-guide/studio/deploy.md:79
 msgid "Provider"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:80
+#: docs/user-guide/studio/deploy.md:81
 msgid "A device that is for a Source shows a **Provider** pop-up instead: how the device's reading becomes the value the Source carries. The choices are the catalogue's input profiles, the ones that fit the Source first, the others marked _— does not fit_, and _None — place by kind_. Today there are two, both reading a digital line as on/off: _GPIO input, active high_ (the line high is _on_) and _GPIO input, active low_ (the line low is _on_; a button to ground). Choosing one also sets the device's kind to what the profile needs."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:88
+#: docs/user-guide/studio/deploy.md:89
 msgid "Beside the pop-up: the raw reading type (_raw reading bool_), and four checks — **transducer** (the profile's conversion is a well-typed pure function), **fits** (it produces exactly what this Source carries), **placed** (the board has the line), **readable** (this board's firmware can read the profile) — with the sentence that says which fails: _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._ A failing provider blocks deployment until changed; a missing one does not. _Readable_ failing is different: the design and the placement are fine, but this board's firmware has no reader for the profile yet (the Arduino Nano reads none; the Raspberry Pi Pico reads both) — the placement stands and the firmware is refused by name."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:100
+#: docs/user-guide/studio/deploy.md:101
 msgid "A Source no device provides keeps the verdict at _so far_ with the line _tilt has no device on Arduino Nano._ — a state, like an output without a device. Every project written before providers existed reads this way until a device is bound; nothing in the design changes when one is."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:105
+#: docs/user-guide/studio/deploy.md:106
 msgid "The inspector's _Realization_ row for a Source shows the same fact for the board chosen here: _Provided by the environment; no device on Raspberry Pi Pico yet._, _Provided by sensor on Raspberry Pi Pico._, or _Provided by sensor as GPIO input, active low on Raspberry Pi Pico._; with no board chosen it says _Provided by the environment; no device is bound yet._"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:111
+#: docs/user-guide/studio/deploy.md:112
 msgid "The verdict"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:113
+#: docs/user-guide/studio/deploy.md:114
 msgid "Verdict"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:115
+#: docs/user-guide/studio/deploy.md:116
 msgid "**Feasible on Arduino Nano.**"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:115
+#: docs/user-guide/studio/deploy.md:116
 msgid "every device's requirements were placed on distinct pins with the right capabilities; the _Placement on …_ table lists device · requirement · → pin"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:116
+#: docs/user-guide/studio/deploy.md:117
 msgid "**Fits Arduino Nano so far — the binding is not finished.**"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:116
+#: docs/user-guide/studio/deploy.md:117
 msgid "what is bound fits, but an output has no device (_No device on … for: …_), a Source has no device (_… has no device on Arduino Nano._) or a device nothing (_Not connected to an output or Source: …_)"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:117
+#: docs/user-guide/studio/deploy.md:118
 msgid "**Not feasible on Arduino Nano.**"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:117
+#: docs/user-guide/studio/deploy.md:118
 msgid "one requirement could not be placed; a red box names it and why — _arduino_nano has nothing that can carry pwmLight PWM._ (no pin has the capability), _D4 cannot carry pwmLight PWM on arduino_nano._ with _The pin chosen by hand, D4, cannot carry … here._ (a pin fixed by hand), or the pins that block it, each with what holds it; _Placed before the dead end:_ lists what was placed"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:119
+#: docs/user-guide/studio/deploy.md:120
 msgid "The verdict is only about the board. Whether the **design** itself is ready — every relationship checks, no instantaneous cycle, every required output driven — is the Design page's business and is not restated here: a design whose formulas are wrong can still be _feasible_, and the status line at the bottom keeps showing _not causal_ or _outputs incomplete_ while you are on this page. Both have to hold before anything could run."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:126
+#: docs/user-guide/studio/deploy.md:127
 msgid "_Not feasible_ reports the **first dead end** the placement hit under its own order — one conflict, honestly named, not necessarily the only one."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:129
+#: docs/user-guide/studio/deploy.md:130
+msgid "Firmware"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:132
+msgid "The last section is where the board gets the design. Its header shows where you are — **Deployment · Build · Flash · Observe**, the steps done with a check, the current one in bold — and the card below has one primary action for that step, or the one thing that stands in its way. Every word on it is the compiler service's: Studio asks whether a build would pass, runs nothing itself, and watches the service's progress."
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:144
+msgid "The card says"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:144
+msgid "Meaning, and what to do"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:146
+msgid "**Not ready to build** — _pressed has no device on Raspberry Pi Pico._"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:146
+msgid "one thing stands in the way, the smallest first; its second line says what to do. A blocker about the design itself (_lit is not fully defined_) offers **Fix it on the Design page**; one about a device is on this page, above. The list behind it is the service's, in its order: the design, then the devices, then what this board's firmware cannot do (_… which Arduino Nano cannot read yet_)"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:147
+msgid "**Ready to build for Raspberry Pi Pico (RP2040).** — **Build for …**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:147
+msgid "everything the firmware needs holds. The button starts the build"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:148
+msgid "**Building…** _Compiling · 84 crates compiled_ — **Stop**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:148
+msgid "the stages as they happen: _Checking the deployment_, _Generating the crate_, _Preparing the toolchain_, _Compiling_ (with the count), _Writing the image_. The first build of a board fetches its libraries — minutes; later builds take seconds. Stop ends it; nothing reaches the board"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:149
+msgid "**The build did not complete** — _The Rust target for … is not installed._"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:149
+msgid "the stage that failed, in red, with the one thing to do (_Run `rustup target add thumbv6m-none-eabi` once, then build again._); **Build again**; **Details** opens with the compiler's words"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:150
+msgid "**Firmware built at 23:33** _6144 bytes_ — **Build again**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:150
+msgid "the image is current: it was made from the design and deployment on screen. Under it, the board"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:151
+msgid "**No board is reachable.** _Hold BOOTSEL while plugging the board in over USB; it appears as a drive named RPI-RP2._ — **Look again**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:151
+msgid "nothing to write to; the line says how to make the Pico reachable (its own bootloader, no tool, no probe). Look again after plugging it in"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:152
+msgid "_Raspberry Pi Pico in BOOTSEL mode (RPI-RP2) — /Volumes/RPI-RP2_ — **Flash**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:152
+msgid "one board: Flash writes the image to it"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:153
+msgid "**Several boards are reachable — choose one.** with a pop-up"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:153
+msgid "two Picos in bootloader mode (or a debug probe beside one): Studio never picks. Choose, then Flash"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:154
+msgid "**Flashing…** _Writing the image · Restarting the board_"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:154
+msgid "the image is copied; the Pico restarts into it and its drive disappears"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:155
+msgid "**Flashed to … at 23:35** — _Try it: act on pressed; lamp should follow the design._"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:155
+msgid "done, with the trial to make, in the design's names. That the flash succeeded is all Studio knows; the behavior is yours to see"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:156
+msgid "**The flash did not complete** — _The board is no longer in bootloader mode._"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:156
+msgid "the reason and the remedy; the image is still current, Flash again when the board is back"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:157
+msgid "**The firmware is from an earlier design or deployment.** — **Build again**"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:157
+msgid "the design, a device, a pin or a profile changed since the image was built (a moved node does not count): the image is stale, and only Build again is offered — never Flash. If it had been flashed: _The board runs an earlier design — build and flash again to update it._"
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:159
+msgid "**Details** (closed unless a build failed) holds the developer's facts: the generated crate's folder (`build/rp2040_pico/` inside the project), the exact `cargo` command, the Rust target, the image's path, and the compiler's output. Nothing in the normal flow needs them."
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:164
+msgid "**What \"current\" means.** The service keeps, beside the image, a fingerprint of exactly what it was built from — the generated code, the board, the settings, the compiler version. After every change it compares; the card says _stale_ the moment they differ. An image is never flashed while stale, and a board is never said to run the design on screen when it does not."
+msgstr ""
+
+#: docs/user-guide/studio/deploy.md:170
 msgid "What \"feasible\" leaves out"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:131
+#: docs/user-guide/studio/deploy.md:172
 msgid "Electrical and numeric constraints: current, voltage, PWM frequency, timer resolution, bus speed. _Feasible_ means the pins can be allocated, not that the circuit works. A later layer may narrow _feasible_; it will never widen it."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:135
+#: docs/user-guide/studio/deploy.md:176
 msgid "What is not there"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:137
-msgid "Generating and building firmware from the Deploy page, flashing a board, and reading values back from it. The compiler can already generate a Rust core for a design and checks it trace for trace against the simulator in the repository's tests, but that path has no Studio surface yet; the roadmap in `docs/project/roadmap.md` lists it."
+#: docs/user-guide/studio/deploy.md:178
+msgid "Reading values back from the board (the Monitor page is a placeholder); flashing the Arduino Nano from Studio (its firmware builds; `avrdude` loads it); a debug probe as the first-choice path (probe-rs is used when it is installed and a probe is wired to the Pico's SWD pins, and listed beside the USB bootloader); the board's tick and the domains' periods chosen here (`bdld compile --period` only)."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:145
-msgid "[Your first deployment check](../getting-started/first-deployment.md) · [Physical outputs](../concepts/physical-outputs.md) · [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)"
+#: docs/user-guide/studio/deploy.md:187
+msgid "[Your first board](../getting-started/pico-demo.md) · [Your first deployment check](../getting-started/first-deployment.md) · [Physical outputs](../concepts/physical-outputs.md) · [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)"
 msgstr ""
 
 #: docs/user-guide/studio/formula-editor.md:1
@@ -7484,7 +7846,87 @@ msgstr ""
 msgid "**What to do.** Resolve it and check again; if a second one appears, it was there too."
 msgstr ""
 
+#: docs/user-guide/troubleshooting/deployment-errors.md:125
+msgid "_Not ready to build_ on the Firmware card, though the verdict is _Feasible_"
+msgstr ""
+
 #: docs/user-guide/troubleshooting/deployment-errors.md:127
+msgid "The verdict is the placement; the build needs more: the design ready, every output driven, every device's profile admissible, every Source provided by a profile this board's firmware reads. The card names the first missing thing and its remedy; a blocker about the design offers **Fix it on the Design page**. The order is the service's — design, devices, then the board's firmware — so fix the top one and read again."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:134
+msgid "_The build did not complete_ — _The Rust toolchain is not installed._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:136
+msgid "Building firmware needs `cargo`. Install Rust from <https://rustup.rs>, open Studio again (it looks in `~/.cargo/bin` when the shell's `PATH` is not inherited), and Build again."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:140
+msgid "_The build did not complete_ — _The Rust target for Raspberry Pi Pico (RP2040) is not installed._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:142
+msgid "The generated crate pins the target in its `rust-toolchain.toml` and `rustup` installs it on first use; when that did not happen, run the one command the card gives — `rustup target add thumbv6m-none-eabi` — and Build again."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:146
+msgid "_The build did not complete_ — _The BDL runtime crates were not found._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:148
+msgid "The firmware depends on the repository's `runtime/` directory. Run Studio (or `bdld`) from a checkout, or set `BDL_RUNTIME_DIR` to that directory."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:151
+msgid "_The build did not complete_ — _The firmware for … did not compile._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:153
+msgid "Open **Details**: the compiler's output is there, with the command. The first build of a board downloads its libraries; without a network it fails here — connect once, Build again. A generated crate that does not compile with the network up is a defect in Behavior Designer: keep the output and report it."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:158
+msgid "_No board is reachable._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:160
+msgid "Hold the **BOOTSEL** button on the Pico while plugging it in over USB, then release it; the Pico appears as a drive named `RPI-RP2`. Click **Look again**. A cable that only carries power shows nothing. A Pico that was flashed once runs its firmware on plugging in — BOOTSEL is what puts it back into the bootloader."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:165
+msgid "_Several boards are reachable — choose one._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:167
+msgid "Two Picos are in bootloader mode (or a debug probe sits beside one). Studio never guesses; choose in the pop-up, then Flash — or unplug the other."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:170
+msgid "_The flash did not complete_ — _The board is no longer in bootloader mode._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:172
+msgid "The drive disappeared before the image was written — the board was unplugged, or it restarted. Hold BOOTSEL while plugging it in again, then Flash."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:175
+msgid "_The firmware is from an earlier design or deployment._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:177
+msgid "Something the image was built from changed: the design, a device, a profile, a pin, the board. Build again; Flash returns when the image is current. A moved node is not a change: layout is not part of the firmware."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:181
+msgid "The board does not do what the design says, though the flash succeeded"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:183
+msgid "Studio can only know that the image was written. Check the wiring against the pins the Placement table names; check that the Source's provider matches the circuit (_active low_ is a button to ground with the line pulled up; _active high_ a button to 3V3 with the line pulled down); then the design, on the Simulate page, with the Source set by hand."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/deployment-errors.md:191
 msgid "[Deploy](../studio/deploy.md) · [Physical outputs](../concepts/physical-outputs.md)"
 msgstr ""
 

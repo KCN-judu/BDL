@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/README.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../docs/user-guide/README.md) · 简体中文 · [日本語](../ja/README.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # Behavior Designer — 用户指南
 
@@ -34,7 +36,7 @@ Behavior Designer 是一款桌面工具，用于设计**产品如何行为**：�
 
 ## 目录
 
-**入门** [什么是 BDL？](getting-started/what-is-bdl.md) · [安装与启动](getting-started/install-and-launch.md) · [你的第一个行为](getting-started/first-behavior.md) · [你的第一次仿真](getting-started/first-simulation.md) · [你的第一次部署检查](getting-started/first-deployment.md)
+**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md) · [Your first board](getting-started/pico-demo.md)
 
 **概念** — 每个想法一页 [概念](../../../docs/user-guide/concepts/concepts.md) · [关系](../../../docs/user-guide/concepts/relationships.md) · [未完成的设计](../../../docs/user-guide/concepts/incomplete-designs.md) · [时序](../../../docs/user-guide/concepts/timing.md) · [物理输出](../../../docs/user-guide/concepts/physical-outputs.md) · [行为组](../../../docs/user-guide/concepts/behavior-groups.md) · [组件](../../../docs/user-guide/concepts/components.md) · [行为系统](../../../docs/user-guide/concepts/behavior-systems.md)
 

@@ -5,9 +5,10 @@ fits an Arduino Nano — and see what "does not fit" looks like.
 
 **Time.** Ten minutes.
 
-Deployment in Behavior Designer today means _checking placement_: which board
-pin each physical output's device would use, or why none can. It does not build
-firmware or flash a board yet.
+This page is the _placement check_: which board pin each physical output's
+device would use, or why none can. Building the firmware and putting it on a
+board is the page after — [Your first board](pico-demo.md) — and needs a board
+this build has firmware for; the Nano here is a placement exercise.
 
 ## 1. Open the Deploy page
 
@@ -105,7 +106,8 @@ hit, which is _a_ conflict, not necessarily the only one.
 
 ## Next
 
-You have built, simulated and placed a behavior. Read the
+You have built, simulated and placed a behavior. With a Raspberry Pi Pico at
+hand, [Your first board](pico-demo.md) builds a design and runs it. Or read the
 [Concepts](../concepts/concepts.md) pages for the ideas you used, or go straight
 to [From sensor to output](../workflows/sensor-to-output.md) to extend the lamp
 with an ambient-light sensor.

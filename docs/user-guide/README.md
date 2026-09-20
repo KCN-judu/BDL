@@ -51,7 +51,8 @@ importing components from other projects. The guide says so where it matters.
 [Install and launch](getting-started/install-and-launch.md) ·
 [Your first behavior](getting-started/first-behavior.md) ·
 [Your first simulation](getting-started/first-simulation.md) ·
-[Your first deployment check](getting-started/first-deployment.md)
+[Your first deployment check](getting-started/first-deployment.md) ·
+[Your first board](getting-started/pico-demo.md)
 
 **Concepts** — the ideas, one page each [Concepts](concepts/concepts.md) ·
 [Relationships](concepts/relationships.md) ·

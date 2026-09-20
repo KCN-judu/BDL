@@ -1,66 +1,91 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/deploy.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/deploy.md) · [简体中文](../../zh_Hans/studio/deploy.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # デプロイ
 
-デプロイページ（⌘3）は _この設計はこのボードに収まるか_ に答えます。配置の確認です。各物理出力のデバイスがボードのどのリソースを使うか——または配置できない最初の理由。ページは 1 列で、**ターゲット**ポップアップ、**判定**、**デバイス**、そしてボードが答えたら**配置**です。ファームウェアのビルドやボードへの書き込みはまだ行いません。[まだないもの](#まだないもの) を参照。
+デプロイページ（⌘3）は _この設計はこのボードに収まるか_ に答え——そしてボードに載せます。配置チェックです。各物理出力のデバイスについて、ボードのどのリソースを使うか——あるいは配置できない最初の理由。ページは一列です。**ターゲット**のポップアップ、**判定**、**デバイス**、ボードが答えた後の**配置**、最後に**ファームウェア**——一度に一つの操作で、_ビルド_ から _書き込み_、そして製品を試すまで（[ファームウェア](#firmware)）。
 
 ![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
-_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._
+_デプロイページ：Arduino Nano を選択、light に 1 つの PWM デバイス、配置、そしてまだ提供されていない入力元。_
 
 ## ターゲット
 
-コンパイラサービスが知っているボード。現在は **Arduino Nano**、PWM ピンが多いテスト用ターゲットの **Big board (mock)**、そして **Raspberry Pi Pico (RP2040)** です。Pico と Nano にはファームウェアを生成できます（`bdld compile --target rp2040_pico` / `--target arduino_nano`、[CLI](../../../../docs/user-guide/reference/cli.md) 参照。書き込みはまだ Studio にはありません）。ボードの選択は**セッションの設定**です。プロジェクトとともには保存されず、変えても設計は決して変わりません。
+コンパイラサービスが知っているボードです。現在は **Arduino Nano**、**Big board (mock)**（PWM ピンの多いテスト用ターゲット）、**Raspberry Pi Pico (RP2040)**。ファームウェアは Pico と Nano 向けにビルドできます。Studio が書き込めるのは Pico です（[ファームウェア](#firmware)。Nano のファームウェアは `bdld build --target arduino_nano` でビルドし、手作業で `avrdude` によって載せます。[コマンドライン](../../../../docs/user-guide/reference/cli.md)）。ボードの選択は**セッションの設定**です。プロジェクトとともに保存されず、変えても設計は決して変わりません。
 
 ボードを選ぶまで、ページは _ボードを選ぶと、この設計が収まるかどうかを確認できます。_ と表示します。
 
 ## デバイス
 
-A **device** realises one physical output on the board, or provides one [Source](../../../../docs/user-guide/concepts/relationships.md) to it — one or the other, never both. **Add device** creates a row; in it you set
+**デバイス**はボード上で 1 つの物理出力を実現するか、1 つの[入力元](../../../../docs/user-guide/concepts/relationships.md)をボードに提供します——どちらか一方で、両方は決してありません。**デバイスを追加**で行が作られ、そこで次を設定します。
 
 - **名前**、
-- a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _Digital input_ (a button, a switch), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;
-- what it is **for**: an output it realises, or a Source it provides — the pop-up lists the outputs by name and the Sources as _tilt — Source_ (or _not connected_);
+- **種類** — _PWM チャンネル_（調光できる照明、サーボ信号）、_デジタル出力_（リレー、スイッチ負荷）、_デジタル入力_（ボタン、スイッチ）、_H ブリッジチャンネル_（モーター：PWM 線 1 本と方向線 1 本）、_I²C センサー_、_ロータリーエンコーダー_、_UART_。
+- 何の**ため**か：実現する出力、または提供する入力元——ポップアップには出力が名前で、入力元は _tilt — 入力元_ として並びます（または _未接続_）。
 - その種類の**要件ごとに 1 つのピンフィールド**——空のままにして配置に選ばせるか、ボードのピン名（`D3`、`A4`）を入力して手動で固定します、
 - **削除**。
 
-The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices.
+種類がデバイスがボードに求めるものを決めます（PWM チャンネルは PWM 対応ピン 1 本、H ブリッジは PWM ピンとデジタルピン、I²C センサーは同じバス上の SDA と SCL）。これらの要件を編集することはありません。ピンのフィールドと実現方式だけが手動の選択です。
 
-### Realization
+### 実現方式
 
-Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command.
+ボードが答えると、各デバイスカードに**実現方式**のポップアップが現れます。出力の値がデバイスの受け取るコマンドにどうなるかです。選択肢はコンパイラのプロファイル——_PWM、8 ビットデューティ_（0–100 のレベルが 0–255 のデューティに）、_PWM、4 段階_（4 つのデューティ、近いレベルは同じものに）、_I2C レジスタ、8 ビット_（レジスタ 42 と 0–255 の値）、_GPIO、オン/オフ_（真偽値をそのまま）、_H ブリッジ、符号付きレベル_（方向とデューティ）——で、出力が運ぶものに適合するものが先に、それ以外は _適合しません_ と印が付きます。1 つ選ぶとデバイスの種類もプロファイルが必要とするものに設定されます。_なし — 種類で配置_ はデバイスをこれまでどおり配置し、コマンドを生成しません。
 
-Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not.
+ポップアップの横に、実現方式が通らなければならない 3 つのチェックが並びます——**エンコーダ**（プロファイルの変換が正しく型付けされた純粋関数である）、**適合**（この出力が運ぶものをちょうど変換する）、**配置済み**（ボードにピンがある）——そして 1 つでも失敗すれば、どれかを述べる文が出ます。_pwmLight は `gpio_level` で light を実現できません。出力は q[1] を運びますが、プロファイルは bool をエンコードします。_ 失敗した実現方式は変更されるまでデプロイを止めます。未選択のものは止めません。
 
-A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design.
+実現方式は種類やピンと同じくデプロイのデータです。選んでも、変えても、外しても、設計ページ、シミュレーターのサンプル、設計についての判定は何も変わりません。
 
 デバイスはプロジェクトとともに保存されます。デプロイのデータであって設計のデータではありません。追加、変更、削除しても設計ページの判定は何も変わりません。
 
-### Provider
+### 提供方式
 
-A device that is for a Source shows a **Provider** pop-up instead: how the device's reading becomes the value the Source carries. The choices are the catalogue's input profiles, the ones that fit the Source first, the others marked _— does not fit_, and _None — place by kind_. Today there are two, both reading a digital line as on/off: _GPIO input, active high_ (the line high is _on_) and _GPIO input, active low_ (the line low is _on_; a button to ground). Choosing one also sets the device's kind to what the profile needs.
+入力元のためのデバイスには代わりに**提供方式**のポップアップが現れます。デバイスの読み値が入力元の運ぶ値にどうなるかです。選択肢はカタログの入力プロファイルで、入力元に適合するものが先、それ以外は _— 適合しません_、そして _なし — 種類で配置_。現在は 2 つあり、どちらもデジタル線をオン/オフとして読みます。_GPIO 入力、アクティブ High_（線が high で _オン_）と _GPIO 入力、アクティブ Low_（線が low で _オン_、グランドへのボタン）です。1 つ選ぶとデバイスの種類もプロファイルが必要とするものに設定されます。
 
-Beside the pop-up: the raw reading type (_raw reading bool_), and four checks — **transducer** (the profile's conversion is a well-typed pure function), **fits** (it produces exactly what this Source carries), **placed** (the board has the line), **readable** (this board's firmware can read the profile) — with the sentence that says which fails: _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._ A failing provider blocks deployment until changed; a missing one does not. _Readable_ failing is different: the design and the placement are fine, but this board's firmware has no reader for the profile yet (the Arduino Nano reads none; the Raspberry Pi Pico reads both) — the placement stands and the firmware is refused by name.
+ポップアップの横には、生の読み値の型（_生の読み値 bool_）と 4 つのチェック——**変換器**（プロファイルの変換が正しく型付けされた純粋関数である）、**適合**（この入力元が運ぶものをちょうど生成する）、**配置済み**（ボードに線がある）、**読み取り可**（このボードのファームウェアがプロファイルを読める）——そしてどれが失敗したかを述べる文があります。_sensor は `gpio_level_in` で tilt を提供できません。入力元は q[1] を運びますが、プロファイルは bool を読みます。_ 失敗した提供方式は変更されるまでデプロイを止めます。未選択のものは止めません。_読み取り可_ の失敗は別物です。設計も配置も問題なく、ただこのボードのファームウェアにそのプロファイルの読み取り手段がまだないだけです（Arduino Nano はどれも読めず、Raspberry Pi Pico は両方読めます）——配置はそのまま成り立ち、ファームウェアは名指しで拒否されます。
 
-A Source no device provides keeps the verdict at _so far_ with the line _tilt has no device on Arduino Nano._ — a state, like an output without a device. Every project written before providers existed reads this way until a device is bound; nothing in the design changes when one is.
+どのデバイスも提供していない入力元は判定を _今のところ_ に留め、_tilt には Arduino Nano 上のデバイスがありません。_ という行が付きます——デバイスのない出力と同じく、これは状態です。提供方式が存在する前に書かれたプロジェクトはすべて、デバイスが割り当てられるまでこう読めます。割り当てても設計は何も変わりません。
 
-The inspector's _Realization_ row for a Source shows the same fact for the board chosen here: _Provided by the environment; no device on Raspberry Pi Pico yet._, _Provided by sensor on Raspberry Pi Pico._, or _Provided by sensor as GPIO input, active low on Raspberry Pi Pico._; with no board chosen it says _Provided by the environment; no device is bound yet._
+インスペクターの入力元の _実現方式_ 行は、ここで選んだボードについて同じ事実を示します。_環境から与えられます。Raspberry Pi Pico 上のデバイスはまだありません。_、_Raspberry Pi Pico 上で sensor が提供します。_、または _Raspberry Pi Pico 上で sensor が GPIO 入力、アクティブ Low として提供します。_ ボードを選んでいなければ _環境から与えられます。デバイスはまだ割り当てられていません。_ と述べます。
 
 ## 判定
 
 | 判定 | 意味 |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Arduino Nano に配置可能です。** | すべてのデバイスの要件が、適切な能力を持つ互いに異なるピンに配置された。_… 上の配置_ 表がデバイス · 要件 · → ピンを列挙する |
-| **今のところ Arduino Nano に収まります — バインディングは未完了です。** | what is bound fits, but an output has no device (_No device on … for: …_), a Source has no device (_… has no device on Arduino Nano._) or a device nothing (_Not connected to an output or Source: …_) |
+| **今のところ Arduino Nano に収まります — バインディングは未完了です。** | 割り当てられたものは収まりますが、出力にデバイスがない（_… 上に … 用のデバイスがありません_）、入力元にデバイスがない（_… には Arduino Nano 上のデバイスがありません。_）、あるいはデバイスが何にも付いていない（_出力または入力元に未接続：…_） |
 | **Arduino Nano には配置できません。** | ある要件が配置できなかった。赤い箱がそれと理由を示す——_arduino_nano 上に pwmLight の PWM を担えるものがありません。_（能力を持つピンがない）、_arduino_nano 上で D4 は pwmLight の PWM を担えません。_ と _手動で選んだピン D4 は、ここでは … を担えません。_（手動で固定したピン）、あるいはそれを阻むピンとそれぞれを占めているもの。_行き止まりの前に配置済み：_ は配置されたものを列挙する |
 
 判定はボードについてだけです。**設計**自体の準備——すべての関係が検査を通り、瞬時サイクルがなく、すべての必須出力が駆動されている——は設計ページの仕事で、ここでは繰り返しません。数式が間違った設計でも _配置可能_ にはなりえ、このページにいる間も下部のステータス行は _瞬時サイクルあり_ や _出力が未完了_ を表示し続けます。何かが動くには両方が成り立つ必要があります。
 
 _配置不可_ は配置がその順序で突き当たった**最初の行き止まり**を報告します——正直に名指しされた 1 つの衝突であり、唯一のものとは限りません。
+
+## ファームウェア
+
+最後のセクションは、ボードが設計を受け取る場所です。見出しは今どこにいるかを示し——**デプロイ · ビルド · 書き込み · 観察**、済んだ段階にはチェック、現在の段階は太字——下のカードにはその段階の主要な操作が一つ、あるいは道を塞ぐ一つのことがあります。そこにある言葉はすべてコンパイラサービスのものです。Studio はビルドが通るかを尋ね、自分では何も実行せず、サービスの進行を見守ります。
+
+![The Deploy page: the Target pop-up showing Raspberry Pi Pico (RP2040); the green verdict Feasible on Raspberry Pi Pico (RP2040); two device cards — button, a Digital input for pressed — Source with the provider GPIO input, active low and pin GP2, and led, a Digital output for lamp with the realization GPIO, on/off and pin GP25 — each with its judgments checked; the placement table with button and led on GP2 and GP25; and at the bottom the Firmware section with the steps Deployment done, Build current, Flash and Observe to come, a green dot with Ready to build for Raspberry Pi Pico (RP2040), and one primary button, Build for Raspberry Pi Pico (RP2040).](../../../../docs/user-guide/assets/getting-started/pico-firmware-ready.png)
+
+_デプロイページの wired デモ：Pico を選択、両デバイスとも受け入れ可能で配置済み、残る一つのこと — ビルド。_
+
+| カードの表示 | 意味と、すべきこと |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **まだビルドできません** — _pressed には Raspberry Pi Pico 上のデバイスがありません。_ | 一つのことが道を塞いでいて、最小のものが先です。2 行目がすべきことを述べます。設計そのものに関する障害（_lit は完全には定義されていません_）は**設計ページで修正**を提供し、デバイスに関するものはこのページの上にあります。背後にあるリストはサービスのもので、その順序どおりです。設計、次にデバイス、次にこのボードのファームウェアができないこと（_… Arduino Nano はまだ読めません_） |
+| **Raspberry Pi Pico (RP2040) 向けにビルドできます。** — **… 向けにビルド** | ファームウェアが必要とするものがすべて成り立っています。ボタンでビルドが始まります |
+| **ビルド中…** _コンパイル中 · 84 個のクレートをコンパイル済み_ — **停止** | 段階が起きるたびに表示されます。_デプロイを確認中_、_クレートを生成中_、_ツールチェーンを準備中_、_コンパイル中_（数付き）、_イメージを書き出し中_。ボードの最初のビルドはライブラリを取得します——数分。以後のビルドは数秒です。停止で終わり、ボードには何も届きません |
+| **ビルドは完了しませんでした** — _… 向けの Rust ターゲットがインストールされていません。_ | 失敗した段階が赤で、すべき一つのこと付きで示されます（_一度 `rustup target add thumbv6m-none-eabi` を実行してから再ビルドしてください。_）。**再ビルド**。**詳細**が開き、コンパイラの言葉が出ます |
+| **23:33 にファームウェアをビルドしました** _6144 バイト_ — **再ビルド** | イメージは最新です。画面上の設計とデプロイから作られました。その下にボードが示されます |
+| **接続できるボードがありません。** _BOOTSEL を押したまま USB でボードを差し込んでください。RPI-RP2 という名前のドライブとして現れます。_ — **再検出** | 書き込む先がありません。この行は Pico を接続可能にする方法を述べています（Pico 自身のブートローダー、ツールもプローブも不要）。差し込んだら再検出します |
+| _Raspberry Pi Pico in BOOTSEL mode (RPI-RP2) — /Volumes/RPI-RP2_ — **書き込む** | ボードが 1 枚：書き込むでイメージがそこに書かれます |
+| **複数のボードが見つかりました。1 つ選んでください。**とポップアップ | ブートローダーモードの Pico が 2 枚（または 1 枚の横にデバッグプローブ）：Studio は決して選びません。選んでから書き込みます |
+| **書き込み中…** _イメージを書き込み中 · ボードを再起動中_ | イメージがコピーされ、Pico はそれで再起動し、ドライブが消えます |
+| **23:35 に … へ書き込みました** — _試してみましょう。pressed を操作すると、lamp が設計どおりに追従するはずです。_ | 完了。設計の名前で、行うべき試行が示されます。Studio が知っているのは書き込みが成功したことまでで、振る舞いは自分の目で確かめます |
+| **書き込みは完了しませんでした** — _ボードはもうブートローダーモードではありません。_ | 理由と対処法。イメージはまだ最新なので、ボードが戻ったらもう一度書き込みます |
+| **このファームウェアは以前の設計またはデプロイのものです。** — **再ビルド** | イメージがビルドされてから設計、デバイス、ピン、プロファイルのいずれかが変わりました（ノードの移動は数えません）。イメージは古く、提供されるのは再ビルドだけで、書き込みは決して提供されません。書き込み済みなら：_ボードは以前の設計で動いています。更新するには再ビルドして書き込んでください。_ |
+
+**詳細**（ビルドが失敗しない限り閉じています）には開発者向けの事実があります。生成されたクレートのフォルダ（プロジェクト内の `build/rp2040_pico/`）、正確な `cargo` コマンド、Rust ターゲット、イメージのパス、コンパイラの出力。通常の流れでは必要ありません。
+
+**「最新」の意味。** サービスはイメージの横に、それが正確に何からビルドされたかの指紋を保持します——生成されたコード、ボード、設定、コンパイラのバージョン。変更のたびに比較し、違った瞬間にカードは _古い_ と述べます。古いイメージが書き込まれることはなく、そうでないのにボードが画面上の設計を動かしていると言われることもありません。
 
 ## 「配置可能」が含まないもの
 
@@ -68,8 +93,8 @@ _配置不可_ は配置がその順序で突き当たった**最初の行き止
 
 ## まだないもの
 
-デプロイページからのファームウェアの生成とビルド、ボードへの書き込み、ボードからの値の読み戻し。コンパイラはすでに設計の Rust コアを生成でき、リポジトリのテストでシミュレータとトレースごとに照合していますが、その経路にはまだ Studio の画面がありません。`docs/project/roadmap.md` のロードマップに挙げられています。
+ボードから値を読み戻すこと（モニターページはプレースホルダーです）。Studio から Arduino Nano へ書き込むこと（ファームウェアはビルドでき、`avrdude` が載せます）。デバッグプローブを第一の経路にすること（probe-rs がインストールされ、プローブが Pico の SWD ピンに配線されていれば使われ、USB ブートローダーの横に並びます）。ボードのティックとドメインの周期をここで選ぶこと（`bdld compile --period` のみ）。
 
 ## 関連
 
-[最初のデプロイ確認](../getting-started/first-deployment.md) · [物理出力](../../../../docs/user-guide/concepts/physical-outputs.md) · [トラブルシューティング：デプロイ](../../../../docs/user-guide/troubleshooting/deployment-errors.md)
+[はじめてのボード](../getting-started/pico-demo.md) · [はじめてのデプロイチェック](../getting-started/first-deployment.md) · [物理出力](../../../../docs/user-guide/concepts/physical-outputs.md) · [トラブルシューティング：デプロイ](../../../../docs/user-guide/troubleshooting/deployment-errors.md)

@@ -1,11 +1,12 @@
 # Deploy
 
-The Deploy page (⌘3) answers _does this design fit this board_. It is a
-placement check: for each physical output's device, which board resources it
-would use — or the first reason it cannot be placed. The page is one column: the
-**Target** pop-up, the **verdict**, the **Devices** and, once a board has
-answered, the **Placement**. It does not build firmware or flash a board yet;
-see [What is not there](#what-is-not-there).
+The Deploy page (⌘3) answers _does this design fit this board_ — and then puts
+it on the board. It is a placement check: for each physical output's device,
+which board resources it would use — or the first reason it cannot be placed.
+The page is one column: the **Target** pop-up, the **verdict**, the **Devices**,
+once a board has answered the **Placement**, and last the **Firmware** — one
+action at a time, from _Build_ to _Flash_ to trying the product
+([Firmware](#firmware)).
 
 ![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../assets/studio/deploy-page.png)
 
@@ -16,11 +17,11 @@ and the Source still to provide._
 
 The boards the compiler service knows. Today: **Arduino Nano**, **Big board
 (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**.
-Firmware can be generated for the Pico and the Nano
-(`bdld compile --target rp2040_pico` / `--target arduino_nano`,
-[CLI](../reference/cli.md); flashing is not in Studio yet). The board choice is
-a **session preference**: it is not saved with the project, and changing it
-never changes the design.
+Firmware can be built for the Pico and the Nano; the Pico is the one Studio
+flashes ([Firmware](#firmware); the Nano's firmware is built with
+`bdld build --target arduino_nano` and loaded with `avrdude` by hand,
+[CLI](../reference/cli.md)). The board choice is a **session preference**: it is
+not saved with the project, and changing it never changes the design.
 
 Until a board is chosen the page says _Choose a board to see whether this design
 fits it._
@@ -126,6 +127,46 @@ Both have to hold before anything could run.
 _Not feasible_ reports the **first dead end** the placement hit under its own
 order — one conflict, honestly named, not necessarily the only one.
 
+## Firmware
+
+The last section is where the board gets the design. Its header shows where you
+are — **Deployment · Build · Flash · Observe**, the steps done with a check, the
+current one in bold — and the card below has one primary action for that step,
+or the one thing that stands in its way. Every word on it is the compiler
+service's: Studio asks whether a build would pass, runs nothing itself, and
+watches the service's progress.
+
+![The Deploy page: the Target pop-up showing Raspberry Pi Pico (RP2040); the green verdict Feasible on Raspberry Pi Pico (RP2040); two device cards — button, a Digital input for pressed — Source with the provider GPIO input, active low and pin GP2, and led, a Digital output for lamp with the realization GPIO, on/off and pin GP25 — each with its judgments checked; the placement table with button and led on GP2 and GP25; and at the bottom the Firmware section with the steps Deployment done, Build current, Flash and Observe to come, a green dot with Ready to build for Raspberry Pi Pico (RP2040), and one primary button, Build for Raspberry Pi Pico (RP2040).](../assets/getting-started/pico-firmware-ready.png)
+
+_The wired demo on the Deploy page: the Pico chosen, both devices admissible and
+placed, and the one thing left to do — Build._
+
+| The card says                                                                                                                         | Meaning, and what to do                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Not ready to build** — _pressed has no device on Raspberry Pi Pico._                                                                | one thing stands in the way, the smallest first; its second line says what to do. A blocker about the design itself (_lit is not fully defined_) offers **Fix it on the Design page**; one about a device is on this page, above. The list behind it is the service's, in its order: the design, then the devices, then what this board's firmware cannot do (_… which Arduino Nano cannot read yet_) |
+| **Ready to build for Raspberry Pi Pico (RP2040).** — **Build for …**                                                                  | everything the firmware needs holds. The button starts the build                                                                                                                                                                                                                                                                                                                                      |
+| **Building…** _Compiling · 84 crates compiled_ — **Stop**                                                                             | the stages as they happen: _Checking the deployment_, _Generating the crate_, _Preparing the toolchain_, _Compiling_ (with the count), _Writing the image_. The first build of a board fetches its libraries — minutes; later builds take seconds. Stop ends it; nothing reaches the board                                                                                                            |
+| **The build did not complete** — _The Rust target for … is not installed._                                                            | the stage that failed, in red, with the one thing to do (_Run `rustup target add thumbv6m-none-eabi` once, then build again._); **Build again**; **Details** opens with the compiler's words                                                                                                                                                                                                          |
+| **Firmware built at 23:33** _6144 bytes_ — **Build again**                                                                            | the image is current: it was made from the design and deployment on screen. Under it, the board                                                                                                                                                                                                                                                                                                       |
+| **No board is reachable.** _Hold BOOTSEL while plugging the board in over USB; it appears as a drive named RPI-RP2._ — **Look again** | nothing to write to; the line says how to make the Pico reachable (its own bootloader, no tool, no probe). Look again after plugging it in                                                                                                                                                                                                                                                            |
+| _Raspberry Pi Pico in BOOTSEL mode (RPI-RP2) — /Volumes/RPI-RP2_ — **Flash**                                                          | one board: Flash writes the image to it                                                                                                                                                                                                                                                                                                                                                               |
+| **Several boards are reachable — choose one.** with a pop-up                                                                          | two Picos in bootloader mode (or a debug probe beside one): Studio never picks. Choose, then Flash                                                                                                                                                                                                                                                                                                    |
+| **Flashing…** _Writing the image · Restarting the board_                                                                              | the image is copied; the Pico restarts into it and its drive disappears                                                                                                                                                                                                                                                                                                                               |
+| **Flashed to … at 23:35** — _Try it: act on pressed; lamp should follow the design._                                                  | done, with the trial to make, in the design's names. That the flash succeeded is all Studio knows; the behavior is yours to see                                                                                                                                                                                                                                                                       |
+| **The flash did not complete** — _The board is no longer in bootloader mode._                                                         | the reason and the remedy; the image is still current, Flash again when the board is back                                                                                                                                                                                                                                                                                                             |
+| **The firmware is from an earlier design or deployment.** — **Build again**                                                           | the design, a device, a pin or a profile changed since the image was built (a moved node does not count): the image is stale, and only Build again is offered — never Flash. If it had been flashed: _The board runs an earlier design — build and flash again to update it._                                                                                                                         |
+
+**Details** (closed unless a build failed) holds the developer's facts: the
+generated crate's folder (`build/rp2040_pico/` inside the project), the exact
+`cargo` command, the Rust target, the image's path, and the compiler's output.
+Nothing in the normal flow needs them.
+
+**What "current" means.** The service keeps, beside the image, a fingerprint of
+exactly what it was built from — the generated code, the board, the settings,
+the compiler version. After every change it compares; the card says _stale_ the
+moment they differ. An image is never flashed while stale, and a board is never
+said to run the design on screen when it does not.
+
 ## What "feasible" leaves out
 
 Electrical and numeric constraints: current, voltage, PWM frequency, timer
@@ -134,14 +175,16 @@ circuit works. A later layer may narrow _feasible_; it will never widen it.
 
 ## What is not there
 
-Generating and building firmware from the Deploy page, flashing a board, and
-reading values back from it. The compiler can already generate a Rust core for a
-design and checks it trace for trace against the simulator in the repository's
-tests, but that path has no Studio surface yet; the roadmap in
-`docs/project/roadmap.md` lists it.
+Reading values back from the board (the Monitor page is a placeholder); flashing
+the Arduino Nano from Studio (its firmware builds; `avrdude` loads it); a debug
+probe as the first-choice path (probe-rs is used when it is installed and a
+probe is wired to the Pico's SWD pins, and listed beside the USB bootloader);
+the board's tick and the domains' periods chosen here (`bdld compile --period`
+only).
 
 ## Related
 
+[Your first board](../getting-started/pico-demo.md) ·
 [Your first deployment check](../getting-started/first-deployment.md) ·
 [Physical outputs](../concepts/physical-outputs.md) ·
 [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)

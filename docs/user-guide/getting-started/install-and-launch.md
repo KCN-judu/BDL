@@ -6,11 +6,11 @@ service it talks to (`bdld`), which Studio starts for you.
 
 ## What you need
 
-| Tool    | Version                                                | Notes                                                  |
-| ------- | ------------------------------------------------------ | ------------------------------------------------------ |
-| Rust    | 1.89 — pinned by the repository, installed by `rustup` | builds the compiler service                            |
-| Flutter | 3.47                                                   | builds Studio; on macOS, `brew install --cask flutter` |
-| `just`  | any                                                    | the task runner the repository uses                    |
+| Tool    | Version                                                | Notes                                                                                                                                                                                    |
+| ------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rust    | 1.89 — pinned by the repository, installed by `rustup` | builds the compiler service, and the firmware for a board (the board's target, `thumbv6m-none-eabi` for the Raspberry Pi Pico, is installed by `rustup` the first time a build needs it) |
+| Flutter | 3.47                                                   | builds Studio; on macOS, `brew install --cask flutter`                                                                                                                                   |
+| `just`  | any                                                    | the task runner the repository uses                                                                                                                                                      |
 
 macOS and Windows are the supported desktops. Linux builds as a by-product but
 is not exercised.
@@ -41,11 +41,12 @@ actions under it, _Recent_ projects on the right.
 
 _The project manager: Start actions on the left, Recent on the right._
 
-| Action            | What it does                                                                      |
-| ----------------- | --------------------------------------------------------------------------------- |
-| **New Project…**  | asks for a folder name and location, creates a project there, opens the workspace |
-| **Open Project…** | opens an existing project folder                                                  |
-| a _Recent_ row    | reopens that project; rows whose folder is gone are greyed _not found_            |
+| Action            | What it does                                                                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **New Project…**  | asks for a folder name and location, creates a project there, opens the workspace                                                                                                                       |
+| **Open Project…** | opens an existing project folder                                                                                                                                                                        |
+| a _Demos_ row     | a new project that starts with a design in it: **Button → Lamp** (the design alone) and **Button → Lamp, wired** (with its devices and pins for a Raspberry Pi Pico) — [Your first board](pico-demo.md) |
+| a _Recent_ row    | reopens that project; rows whose folder is gone are greyed _not found_                                                                                                                                  |
 
 A **project** is a folder. Everything in it is saved as plain files
 ([Project files](../reference/project-files.md)): the design as `.bdl` text you
@@ -70,4 +71,5 @@ before building your own.
 
 ## Next
 
-[Your first behavior](first-behavior.md).
+[Your first behavior](first-behavior.md) — or, with a Raspberry Pi Pico at hand,
+[Your first board](pico-demo.md).

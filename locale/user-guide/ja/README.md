@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/README.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../docs/user-guide/README.md) · [简体中文](../zh_Hans/README.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # Behavior Designer — ユーザーガイド
 
@@ -34,7 +36,7 @@ Behavior Designer は、**製品がどう振る舞うか**——何を感知し�
 
 ## 目次
 
-**はじめに** [BDL とは？](getting-started/what-is-bdl.md) · [インストールと起動](getting-started/install-and-launch.md) · [最初の振る舞い](getting-started/first-behavior.md) · [最初のシミュレーション](getting-started/first-simulation.md) · [最初のデプロイ確認](getting-started/first-deployment.md)
+**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md) · [Your first board](getting-started/pico-demo.md)
 
 **コンセプト** — 考え方を 1 ページずつ [コンセプト](../../../docs/user-guide/concepts/concepts.md) · [関係](../../../docs/user-guide/concepts/relationships.md) · [未完成の設計](../../../docs/user-guide/concepts/incomplete-designs.md) · [タイミング](../../../docs/user-guide/concepts/timing.md) · [物理出力](../../../docs/user-guide/concepts/physical-outputs.md) · [振る舞いグループ](../../../docs/user-guide/concepts/behavior-groups.md) · [コンポーネント](../../../docs/user-guide/concepts/components.md) · [振る舞いシステム](../../../docs/user-guide/concepts/behavior-systems.md)
 

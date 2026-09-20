@@ -1,66 +1,91 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/deploy.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/deploy.md) · 简体中文 · [日本語](../../ja/studio/deploy.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 部署
 
-部署页（⌘3）回答 _这个设计能放进这块板子吗_。这是一次布置检查：对每个物理输出的设备，它会使用板子的哪些资源——或者无法布置的第一个原因。页面是一列：**目标板**弹出菜单、**结论**、**设备**，以及板子回答之后的**布置**。它还不会构建固件或烧录板子；见 [尚未实现的](#尚未实现的)。
+部署页（⌘3）回答 _这个设计能否放入这块板子_——然后把它放到板子上。它是放置检查：对每个物理输出的设备，它会用到板子的哪些资源——或者不能放置的第一个原因。页面是一列：**目标板**弹出菜单、**结论**、**设备**，板子给出回答后的**放置**，最后是**固件**——一次一个动作，从 _构建_ 到 _烧录_ 再到试用产品（[固件](#firmware)）。
 
 ![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
-_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._
+_部署页：选择了 Arduino Nano，light 上有一个 PWM 设备，放置结果，以及尚待提供的来源。_
 
 ## 目标板
 
-编译器服务已知的板子。目前有：**Arduino Nano**、**Big board (mock)**——一个带更多 PWM 引脚的测试目标——以及 **Raspberry Pi Pico (RP2040)**。可以为 Pico 和 Nano 生成固件（`bdld compile --target rp2040_pico` / `--target arduino_nano`，见 [CLI](../../../../docs/user-guide/reference/cli.md)；烧录尚未进入 Studio）。板子的选择是**会话偏好**：不随项目保存，更改它永远不会改变设计。
+编译器服务认识的板子。目前有：**Arduino Nano**、**Big board (mock)**（一个 PWM 引脚更多的测试目标）和 **Raspberry Pi Pico (RP2040)**。Pico 和 Nano 都能构建固件；Studio 能烧录的是 Pico（[固件](#firmware)；Nano 的固件用 `bdld build --target arduino_nano` 构建，再手动用 `avrdude` 载入，[命令行](../../../../docs/user-guide/reference/cli.md)）。板子的选择是**会话偏好**：不随项目保存，改变它也永远不会改变设计。
 
 在选择板子之前，页面显示 _选择一块板子，看这个设计能否放进去。_
 
 ## 设备
 
-A **device** realises one physical output on the board, or provides one [Source](../../../../docs/user-guide/concepts/relationships.md) to it — one or the other, never both. **Add device** creates a row; in it you set
+**设备**在板子上实现一个物理输出，或向板子提供一个[来源](../../../../docs/user-guide/concepts/relationships.md)——二者选一，绝不同时。**添加设备**创建一行；在其中你设置
 
 - 一个**名称**；
-- a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _Digital input_ (a button, a switch), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;
-- what it is **for**: an output it realises, or a Source it provides — the pop-up lists the outputs by name and the Sources as _tilt — Source_ (or _not connected_);
+- **种类**——_PWM 通道_（可调光的灯、舵机信号）、_数字输出_（继电器、开关负载）、_数字输入_（按钮、开关）、_H 桥通道_（电机：一条 PWM 线加一条方向线）、_I²C 传感器_、_正交编码器_、_UART_；
+- 它是**为了**什么：它实现的输出，或它提供的来源——弹出菜单按名字列出输出，来源写作 _tilt — 来源_（或 _未连接_）；
 - 该种类的每个需求一个**引脚栏**——留空让布置自行选择，或输入板子引脚名（`D3`、`A4`）手动固定；
 - **移除**。
 
-The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices.
+种类决定设备需要板子提供什么（PWM 通道需要一个支持 PWM 的引脚；H 桥需要一个 PWM 引脚和一个数字引脚；I²C 传感器需要同一总线上的 SDA 和 SCL）。你从不编辑这些需求；引脚字段和实现方式是仅有的手动选择。
 
-### Realization
+### 实现方式
 
-Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command.
+板子给出回答后，每张设备卡片显示一个**实现方式**弹出菜单：输出的值如何变成设备接受的命令。选项是编译器的配置——_PWM，8 位占空比_（0–100 的电平变成 0–255 的占空比）、_PWM，4 档_（四个占空比；相近的电平共用一个）、_I2C 寄存器，8 位_（寄存器 42 和 0–255 的值）、_GPIO，开/关_（真值原样写出）、_H 桥，带符号电平_（方向和占空比）——与输出所携带内容匹配的排在前面，其他的标为 _不匹配_。选择一项也会把设备的种类设为该配置所需的种类。_无 — 按种类放置_ 让设备照旧放置，不生成命令。
 
-Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not.
+弹出菜单旁边，卡片显示实现方式必须通过的三项检查——**编码器**（配置的转换是良类型的纯函数）、**匹配**（它恰好转换这个输出所携带的内容）、**已放置**（板子有这些引脚）——某项不通过时，会有一句话说明是哪项：_pwmLight 无法用 `gpio_level` 实现 light：输出携带 q[1]，而该配置编码 bool。_ 不通过的实现方式在修改之前会阻止部署；缺失的则不会。
 
-A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design.
+实现方式和种类、引脚一样是部署数据：选择、更改或移除它，不会改变设计页上的任何东西、仿真器的采样，或关于设计的任何结论。
 
 设备随项目保存。它们是部署数据，不是设计数据：添加、更改或移除设备不会改变设计页的任何结论。
 
-### Provider
+### 提供方式
 
-A device that is for a Source shows a **Provider** pop-up instead: how the device's reading becomes the value the Source carries. The choices are the catalogue's input profiles, the ones that fit the Source first, the others marked _— does not fit_, and _None — place by kind_. Today there are two, both reading a digital line as on/off: _GPIO input, active high_ (the line high is _on_) and _GPIO input, active low_ (the line low is _on_; a button to ground). Choosing one also sets the device's kind to what the profile needs.
+为来源服务的设备则显示**提供方式**弹出菜单：设备的读数如何变成来源所携带的值。选项是目录中的输入配置，与来源匹配的排在前面，其他的标为 _— 不匹配_，还有 _无 — 按种类放置_。目前有两个，都把数字线读为开/关：_GPIO 输入，高电平有效_（线为高即 _开_）和 _GPIO 输入，低电平有效_（线为低即 _开_；按钮接地）。选择一项也会把设备的种类设为该配置所需的种类。
 
-Beside the pop-up: the raw reading type (_raw reading bool_), and four checks — **transducer** (the profile's conversion is a well-typed pure function), **fits** (it produces exactly what this Source carries), **placed** (the board has the line), **readable** (this board's firmware can read the profile) — with the sentence that says which fails: _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._ A failing provider blocks deployment until changed; a missing one does not. _Readable_ failing is different: the design and the placement are fine, but this board's firmware has no reader for the profile yet (the Arduino Nano reads none; the Raspberry Pi Pico reads both) — the placement stands and the firmware is refused by name.
+弹出菜单旁边：原始读数类型（_原始读数 bool_）和四项检查——**转换器**（配置的转换是良类型的纯函数）、**匹配**（它恰好生成这个来源所携带的内容）、**已放置**（板子有这条线）、**可读取**（这块板子的固件能读取该配置）——以及说明哪项不通过的句子：_sensor 无法用 `gpio_level_in` 提供 tilt：来源携带 q[1]，而该配置读取 bool。_ 不通过的提供方式在修改之前会阻止部署；缺失的则不会。_可读取_ 不通过则不同：设计和放置都没问题，只是这块板子的固件还没有该配置的读取器（Arduino Nano 一个都读不了；Raspberry Pi Pico 两个都能读）——放置仍然成立，固件则被点名拒绝。
 
-A Source no device provides keeps the verdict at _so far_ with the line _tilt has no device on Arduino Nano._ — a state, like an output without a device. Every project written before providers existed reads this way until a device is bound; nothing in the design changes when one is.
+没有设备提供的来源让结论停在 _目前_，并附一行 _tilt 在 Arduino Nano 上没有设备。_——这是一种状态，就像没有设备的输出一样。所有在提供方式出现之前写的项目在绑定设备之前都是这样；绑定之后设计中没有任何东西改变。
 
-The inspector's _Realization_ row for a Source shows the same fact for the board chosen here: _Provided by the environment; no device on Raspberry Pi Pico yet._, _Provided by sensor on Raspberry Pi Pico._, or _Provided by sensor as GPIO input, active low on Raspberry Pi Pico._; with no board chosen it says _Provided by the environment; no device is bound yet._
+检查器中来源的 _实现方式_ 行显示这里所选板子上的同一事实：_由环境提供；Raspberry Pi Pico 上尚无设备。_、_在 Raspberry Pi Pico 上由 sensor 提供。_，或 _在 Raspberry Pi Pico 上由 sensor 以 GPIO 输入，低电平有效提供。_；没选板子时写 _由环境提供；尚未绑定设备。_
 
 ## 结论
 
 | 结论 | 含义 |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **可部署到 Arduino Nano。** | 每个设备的需求都被放到了具备相应能力的、互不相同的引脚上；_… 上的布置_ 表格列出设备 · 需求 · → 引脚 |
-| **目前能放进 Arduino Nano——绑定尚未完成。** | what is bound fits, but an output has no device (_No device on … for: …_), a Source has no device (_… has no device on Arduino Nano._) or a device nothing (_Not connected to an output or Source: …_) |
+| **目前能放进 Arduino Nano——绑定尚未完成。** | 已绑定的部分能放入，但某个输出没有设备（_… 上没有用于 … 的设备_）、某个来源没有设备（_… 在 Arduino Nano 上没有设备。_）或某个设备什么也没连（_未连接到输出或来源：…_） |
 | **无法部署到 Arduino Nano。** | 某个需求无法布置；红框指出它和原因——_arduino_nano 上没有东西能承载 pwmLight 的 PWM。_（没有引脚具备该能力）、_在 arduino_nano 上 D4 无法承载 pwmLight 的 PWM。_ 加上 _手动选择的引脚 D4 在这里无法承载 …_（手动固定的引脚），或者阻塞它的引脚及各自被占用的原因；_死路之前已布置：_ 列出已布置的内容 |
 
 结论只关乎板子。**设计**本身是否就绪——每个关系通过检查、没有瞬时环路、每个必需输出都被驱动——是设计页的事，这里不再重述：公式错误的设计仍然可以 _可部署_，而你在本页时底部状态行仍会显示 _存在瞬时环路_ 或 _输出未完成_。两者都成立，才谈得上运行。
 
 _无法部署_ 报告的是布置按自身顺序遇到的**第一个死路**——一个如实指出的冲突，不一定是唯一的。
+
+## 固件
+
+最后一节是板子得到设计的地方。它的标题显示你走到了哪一步——**部署 · 构建 · 烧录 · 观察**，已完成的步骤打勾，当前步骤加粗——下面的卡片给出该步骤的一个主要动作，或者挡在路上的那一件事。上面每一个字都来自编译器服务：Studio 询问构建是否能通过，自己不运行任何东西，只观察服务的进度。
+
+![The Deploy page: the Target pop-up showing Raspberry Pi Pico (RP2040); the green verdict Feasible on Raspberry Pi Pico (RP2040); two device cards — button, a Digital input for pressed — Source with the provider GPIO input, active low and pin GP2, and led, a Digital output for lamp with the realization GPIO, on/off and pin GP25 — each with its judgments checked; the placement table with button and led on GP2 and GP25; and at the bottom the Firmware section with the steps Deployment done, Build current, Flash and Observe to come, a green dot with Ready to build for Raspberry Pi Pico (RP2040), and one primary button, Build for Raspberry Pi Pico (RP2040).](../../../../docs/user-guide/assets/getting-started/pico-firmware-ready.png)
+
+_部署页上的 wired 演示：选择了 Pico，两个设备都可接受并已放置，只剩一件事要做——构建。_
+
+| 卡片写着 | 含义，以及该做什么 |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **尚不能构建**——_pressed 在 Raspberry Pi Pico 上没有设备。_ | 有一件事挡在路上，最小的排在最前；第二行说明该做什么。关于设计本身的阻碍（_lit 尚未完全定义_）提供**在设计页修正**；关于设备的就在本页上方。背后的列表是服务的，按它的顺序：先是设计，再是设备，然后是这块板子的固件做不到的事（_… Arduino Nano 尚不能读取_） |
+| **已可为 Raspberry Pi Pico (RP2040) 构建。**——**为 … 构建** | 固件需要的一切都成立。按钮开始构建 |
+| **正在构建…** _编译 · 已编译 84 个 crate_——**停止** | 各阶段随发生显示：_检查部署_、_生成代码_、_准备工具链_、_编译_（附计数）、_写入镜像_。一块板子的第一次构建要获取它的库——需要几分钟；之后的构建只要几秒。停止会结束它；没有任何东西到达板子 |
+| **构建未完成**——_尚未安装 … 的 Rust 目标。_ | 失败的阶段以红色显示，附带要做的那一件事（_运行一次 `rustup target add thumbv6m-none-eabi`，然后重新构建。_）；**重新构建**；**详细信息**展开，显示编译器的话 |
+| **固件已于 23:33 构建** _6144 字节_——**重新构建** | 镜像是最新的：它由屏幕上的设计和部署生成。下面是板子 |
+| **未找到可连接的开发板。** _按住 BOOTSEL 并通过 USB 插入开发板；它会以名为 RPI-RP2 的磁盘出现。_——**重新查找** | 没有可写入的对象；这一行说明如何让 Pico 可连接（它自己的引导程序，不需要工具，不需要调试探针）。插入后重新查找 |
+| _Raspberry Pi Pico in BOOTSEL mode (RPI-RP2) — /Volumes/RPI-RP2_——**烧录** | 一块板子：烧录把镜像写到它上面 |
+| **找到多块开发板——请选择一块。**附带弹出菜单 | 两块处于引导模式的 Pico（或者一块旁边还有调试探针）：Studio 从不替你选。选一块，再烧录 |
+| **正在烧录…** _写入镜像 · 重启开发板_ | 镜像被复制；Pico 重启进入新固件，磁盘消失 |
+| **已于 23:35 烧录到 …**——_试一试：操作 pressed；lamp 应按设计响应。_ | 完成，附带要做的试验，用设计中的名字表述。Studio 只知道烧录成功了；行为要你自己看 |
+| **烧录未完成**——_开发板已不在引导模式。_ | 原因和补救办法；镜像仍是最新的，板子回来后再次烧录 |
+| **固件来自更早的设计或部署。**——**重新构建** | 自镜像构建以来，设计、某个设备、某个引脚或某个配置改变了（移动节点不算）：镜像已过时，只提供重新构建——绝不提供烧录。如果已经烧录过：_开发板运行的是更早的设计——重新构建并烧录以更新。_ |
+
+**详细信息**（除非构建失败，否则折叠）保存开发者关心的事实：生成的 crate 文件夹（项目内的 `build/rp2040_pico/`）、精确的 `cargo` 命令、Rust 目标、镜像路径，以及编译器输出。正常流程中不需要它们。
+
+**“最新”是什么意思。** 服务在镜像旁边保存了它究竟由什么构建而来的指纹——生成的代码、板子、设置、编译器版本。每次改动后它都会比较；一旦不同，卡片就写 _过时_。过时的镜像绝不会被烧录，板子也绝不会在并非如此时被说成运行着屏幕上的设计。
 
 ## “可部署”没有涵盖的
 
@@ -68,8 +93,8 @@ _无法部署_ 报告的是布置按自身顺序遇到的**第一个死路**—�
 
 ## 尚未实现的
 
-从部署页生成并构建固件、烧录板子、从板子读回值。编译器已经能为设计生成 Rust 核心，并在仓库测试中逐条轨迹地与仿真器对照检查，但这条路径在 Studio 中还没有界面；`docs/project/roadmap.md` 中的路线图列出了它。
+从板子读回值（监控页是占位符）；从 Studio 烧录 Arduino Nano（它的固件能构建；由 `avrdude` 载入）；把调试探针作为首选路径（安装了 probe-rs 且探针接在 Pico 的 SWD 引脚上时会使用它，并列在 USB 引导程序旁边）；在这里选择板子的节拍和各域的周期（仅 `bdld compile --period`）。
 
 ## 相关
 
-[你的第一次部署检查](../getting-started/first-deployment.md) · [物理输出](../../../../docs/user-guide/concepts/physical-outputs.md) · [故障排除：部署](../../../../docs/user-guide/troubleshooting/deployment-errors.md)
+[你的第一块板子](../getting-started/pico-demo.md) · [你的第一次部署检查](../getting-started/first-deployment.md) · [物理输出](../../../../docs/user-guide/concepts/physical-outputs.md) · [故障排除：部署](../../../../docs/user-guide/troubleshooting/deployment-errors.md)

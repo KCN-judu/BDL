@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-deployment.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-deployment.md) · 简体中文 · [日本語](../../ja/getting-started/first-deployment.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一次部署检查
 
@@ -10,7 +8,7 @@
 
 **用时。** 十分钟。
 
-今天 Behavior Designer 中的部署指的是 _检查布置_：每个物理输出的设备会用板子的哪个引脚，或者为什么没有引脚可用。它还不会构建固件或烧录板子。
+本页是 _放置检查_：每个物理输出的设备会用到板子的哪个引脚，或者为什么没有引脚可用。构建固件并把它放到板子上是下一页——[你的第一块板子](pico-demo.md)——那需要一块本版本能生成固件的板子；这里的 Nano 只是放置练习。
 
 ## 1. 打开部署页
 
@@ -33,15 +31,15 @@
 1. 点击**添加设备**。_设备_ 中出现一行。
 2. 命名为 `pwmLight`。在它的种类弹出菜单中选择 **PWM 通道**。在它的输出弹出菜单中选择 **light**。
 
-The line about `light` disappears and a _Placement on arduino_nano_ table shows the one line the lamp needs: `pwmLight`, its _PWM_ requirement, and the pin it was given, such as `D3`. The verdict stays **Fits Arduino Nano so far — the binding is not finished.**, and one line remains under it: _tilt has no device on Arduino Nano._ The lamp's output is placed; its Source is not.
+关于 `light` 的那一行消失了，_在 arduino_nano 上的放置_ 表格显示这盏灯需要的唯一一行：`pwmLight`、它的 _PWM_ 需求，以及分配给它的引脚，例如 `D3`。结论仍是**目前可放入 Arduino Nano——绑定尚未完成。**，下面还留着一行：_tilt 在 Arduino Nano 上没有设备。_ 灯的输出已放置；它的来源还没有。
 
 **你做了什么。** 一块板子的部署配置。它和设计一起保存在项目中，但是独立的一层：添加设备时设计页的结论没有变，换另一块板子它们也不会变。
 
-**About `tilt`.** A [Source](../../../../docs/user-guide/concepts/relationships.md) is a value the environment provides, and on a board a device has to provide it — the same kind of binding as for an output, chosen in the device's pop-up (_tilt — Source_) with a **Provider** instead of a Realization. The providers this build has read a digital line as on/off; `tilt` is an angle, so nothing fits it yet, and the deployment honestly stays _not finished_. That is a state, not an error: the design simulates, and the placement of `light` is real.
+**关于 `tilt`。** [来源](../../../../docs/user-guide/concepts/relationships.md)是环境提供的值，在板子上必须由一个设备来提供它——与输出同一种绑定，在设备的弹出菜单中选择（_tilt — 来源_），用**提供方式**代替实现方式。本版本的提供方式把数字线读为开/关；`tilt` 是角度，所以目前没有匹配的，部署也就诚实地停在 _尚未完成_。这是一种状态，不是错误：设计可以仿真，`light` 的放置是真实的。
 
 ![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
-_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._
+_部署页：选择了 Arduino Nano，light 上有一个 PWM 设备，放置结果，以及尚待提供的来源。_
 
 ## 4. 故意让它失败
 
@@ -50,7 +48,7 @@ _The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, a
 > 无法部署到 Arduino Nano。
 > 在 arduino_nano 上 D4 无法承载 pwmLight 的 PWM。手动选择的引脚 D4 在这里无法承载 pwmLight 的 PWM。
 
-Clear the field: it fits again. Now switch **Target** to **Big board (mock)**: it fits there too, on a different pin. Switch back.
+清空该字段：又可以放入了。现在把**目标板**切换到 **Big board (mock)**：在那里也能放入，只是引脚不同。切换回来。
 
 **发生了什么。** 可部署性是关于 _这个设计在这块板子上_ 的事实。板子的选择是会话偏好——不随项目保存——布置会针对所选的任何板子重新计算。
 
@@ -65,10 +63,10 @@ _可部署_ 意味着每个设备的需求都能放到具备相应能力的、�
 ## 如果有什么不对
 
 - **状态行仍然显示 _存在瞬时环路_ 或 _输出未完成_。** 部署结论只关乎板子；设计本身还没准备好。先在设计页修好它。见 [部署](../../../../docs/user-guide/troubleshooting/deployment-errors.md)。
-- **Not connected to an output or Source: …** — a device with nothing chosen in its pop-up.
-- **… has no device on Arduino Nano.** — a Source no device provides; the deployment stays _not finished_ until one does.
+- **未连接到输出或来源：…**——弹出菜单中什么也没选的设备。
+- **… 在 Arduino Nano 上没有设备。**——没有任何设备提供的来源；在有设备提供之前，部署停在 _尚未完成_。
 - **Arduino Nano 上没有东西能承载 …**——板子上没有具备该能力的空闲引脚；试试另一种设备、另一块板子，或更少的设备。
 
 ## 下一步
 
-你已经搭建、仿真并布置了一个行为。阅读 [概念](../../../../docs/user-guide/concepts/concepts.md) 页面了解你用到的想法，或者直接去 [从传感器到输出](../../../../docs/user-guide/workflows/sensor-to-output.md)，给灯加上环境光传感器。
+你已经搭建、仿真并放置了一个行为。手边有 Raspberry Pi Pico 的话，[你的第一块板子](pico-demo.md)会构建一个设计并让它运行起来。也可以阅读[概念](../../../../docs/user-guide/concepts/concepts.md)各页了解你用到的想法，或直接前往[从传感器到输出](../../../../docs/user-guide/workflows/sensor-to-output.md)，给灯加一个环境光传感器。
