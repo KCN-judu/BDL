@@ -13,7 +13,7 @@ tiltValue() = tilt
 
 output light : Brightness @interaction
 output indicator : Brightness @interaction optional
-drive light = brightness
+drive light by brightness
 
 device pwmLight : pwm_channel for light { pin 0 = D3 }
 device imu : i2c_sensor

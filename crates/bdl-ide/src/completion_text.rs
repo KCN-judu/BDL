@@ -362,8 +362,12 @@ pub fn text_completions(
             }
         }
         "drive" => {
-            if line.before.contains('=') {
+            // `drive light |` → `by`; `drive light by |` → the relationships;
+            // the legacy `=` still completes the relationship after it
+            if line.ends_with_word("by") || line.before.contains('=') {
                 out.mappings_of(design_in_scope, scope.is_none());
+            } else if line.words.len() >= 2 && !line.words.contains(&"by") {
+                out.keyword("by");
             } else {
                 out.outputs_of(design_in_scope, scope.is_none());
             }

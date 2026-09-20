@@ -458,7 +458,11 @@ document (a `mapping`'s bare signature, nothing else), anchored to the bound
 mapping with `EntityRole::Signature`; `actions_for` answers it with _Make empty
 domain explicit_, a `SemanticOperation::Text` inserting `() ->`.
 `hover::declared_spelling` reads the anchored signature text so hover and
-Explain can show the declared spelling beside the canonical type. The Studio
+Explain can show the declared spelling beside the canonical type. The legacy
+drive spelling `drive o = m` (preferred: `drive o by m`) is `text.legacy_drive`
+on the same pattern — `bdl_syntax::migrate::legacy_drive_decls`, anchored to the
+driving mapping with `EntityRole::DriveEdge` at the `=` token; `actions_for`
+answers it with _Write `by`_, one `TextEdit` replacing that token. The Studio
 Code view (fed by `bdl-text` load faults, not this service) shows no hint today.
 
 References, rename and semantic tokens never take a local for an entity:

@@ -331,7 +331,8 @@ pub struct OutputItem {
     pub span: Span,
 }
 
-/// `drive output = relationship`
+/// `drive output by relationship` (or the legacy `drive output = relationship`:
+/// one relation, whichever spelling)
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DriveItem {
     pub output: Ident,

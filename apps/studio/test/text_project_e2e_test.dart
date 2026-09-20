@@ -51,7 +51,7 @@ mapping brightness : Brightness @interaction
 brightness() = dimByTilt(tiltValue)
 
 output light : Brightness @interaction
-drive light = brightness
+drive light by brightness
 ''';
 
 void main() {

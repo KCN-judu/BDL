@@ -38,7 +38,7 @@ the same project in Studio, and keep both sides agreeing.
    dimByTilt(t) = t / (90 deg)
 
    output light : Brightness @interaction
-   drive light = brightness
+   drive light by brightness
    ```
 
    As you type, findings appear on the line they concern; hovering `Brightness`

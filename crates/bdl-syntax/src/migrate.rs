@@ -58,6 +58,45 @@ pub fn make_unit_domains_explicit(src: &str) -> (String, usize) {
     (apply(src, &edits), edits.len())
 }
 
+/// Every drive declaration written in the legacy spelling `drive o = m`
+/// (the preferred one is `drive o by m`, docs/spec/textual-syntax.md
+/// §14.1): the declaration and the span of its `=`, in source order.
+pub fn legacy_drive_decls(src: &str) -> Vec<(ast::DriveDecl, Span)> {
+    let parse = crate::parser::parse_module(src);
+    parse
+        .syntax_node()
+        .descendants()
+        .filter_map(ast::DriveDecl::cast)
+        .filter_map(|d| {
+            let eq = d.legacy_eq()?;
+            Some((d, crate::syntax::span_of(eq.text_range())))
+        })
+        .collect()
+}
+
+/// The edits that rewrite every legacy `drive o = m` as `drive o by m`:
+/// the `=` token becomes `by`, nothing else moves.  A source with syntax
+/// errors yields no edits.
+pub fn drive_by_edits(src: &str) -> Vec<SourceEdit> {
+    if !crate::parser::parse_module(src).errors().is_empty() {
+        return Vec::new();
+    }
+    legacy_drive_decls(src)
+        .into_iter()
+        .map(|(_, span)| SourceEdit {
+            span,
+            text: "by".to_string(),
+        })
+        .collect()
+}
+
+/// Apply [`drive_by_edits`]: the migrated source and how many drives were
+/// rewritten.
+pub fn make_drives_by(src: &str) -> (String, usize) {
+    let edits = drive_by_edits(src);
+    (apply(src, &edits), edits.len())
+}
+
 /// Apply non-overlapping edits, in any order.
 pub fn apply(src: &str, edits: &[SourceEdit]) -> String {
     let mut sorted: Vec<&SourceEdit> = edits.iter().collect();
@@ -99,5 +138,20 @@ mod tests {
         // the parenthesised and product forms are explicit already or not the shorthand
         assert_eq!(make_unit_domains_explicit("mapping f : (A) -> B\n").1, 0);
         assert_eq!(make_unit_domains_explicit("mapping f : (A, B) -> C\n").1, 0);
+    }
+
+    /// `=` becomes `by`, token for token; comments, spacing, the preferred
+    /// form and every other `=` are untouched.
+    #[test]
+    fn the_drive_migration_replaces_only_the_relation_token() {
+        let src = "output light : Brightness @main\nmapping level : () -> Brightness @main\nlevel() = 5\ndrive light   =  level   // the edge\ndrive glow by level\ndrive /* out */ other = level\n";
+        let (out, n) = make_drives_by(src);
+        assert_eq!(n, 2);
+        assert_eq!(
+            out,
+            "output light : Brightness @main\nmapping level : () -> Brightness @main\nlevel() = 5\ndrive light   by  level   // the edge\ndrive glow by level\ndrive /* out */ other by level\n"
+        );
+        assert_eq!(make_drives_by(&out), (out.clone(), 0));
+        assert_eq!(make_drives_by("drive light =\n").1, 0);
     }
 }

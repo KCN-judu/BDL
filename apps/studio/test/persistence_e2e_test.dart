@@ -127,7 +127,7 @@ void main() {
         await act(const DesignViewChanged(DesignView.code));
         var s = await canvas.settle(store, (s) => s.editor.sources.revision == s.revision);
         final typed =
-            '${s.editor.sources.text.trimRight()}\n\n// half a sink\noutput light : Brightness\ndrive light =\n';
+            '${s.editor.sources.text.trimRight()}\n\n// half a sink\noutput light : Brightness\ndrive light by\n';
         await tester.enterText(
           find.descendant(of: find.byType(CodePane), matching: find.byType(TextField)),
           typed,

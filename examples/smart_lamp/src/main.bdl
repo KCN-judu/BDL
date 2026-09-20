@@ -33,6 +33,6 @@ brightness() =
 /// The lamp itself.
 output light : Brightness @interaction
 
-drive light = brightness
+drive light by brightness
 
 device pwmLight : pwm_channel for light

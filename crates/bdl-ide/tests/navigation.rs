@@ -51,7 +51,7 @@ const B: &str = "\
 mapping brightness : () -> Brightness @main
 brightness() = dimByTilt(tilt)
 output light : Brightness @main
-drive light = brightness
+drive light by brightness
 ";
 
 #[test]

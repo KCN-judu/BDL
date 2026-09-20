@@ -68,7 +68,7 @@
         },
         {
           "name": "keyword.other.contextual.bdl",
-          "match": "\\b(for|pin|init|as|optional)\\b"
+          "match": "\\b(for|by|pin|realization|init|as|optional)\\b"
         },
         {
           "name": "constant.language.bdl",

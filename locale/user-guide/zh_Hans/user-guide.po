@@ -346,7 +346,7 @@ msgstr ""
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
 #: docs/user-guide/concepts/timing.md:114
-#: docs/user-guide/reference/cli.md:41
+#: docs/user-guide/reference/cli.md:42
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:128
@@ -359,7 +359,7 @@ msgstr ""
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:95
 #: docs/user-guide/textual/editor-and-lsp.md:83
-#: docs/user-guide/textual/syntax-basics.md:196
+#: docs/user-guide/textual/syntax-basics.md:202
 #: docs/user-guide/troubleshooting/connection-errors.md:136
 #: docs/user-guide/troubleshooting/deployment-errors.md:71
 #: docs/user-guide/troubleshooting/incomplete-design.md:92
@@ -1234,13 +1234,13 @@ msgstr ""
 
 #: docs/user-guide/concepts/relationships.md:29
 #: docs/user-guide/concepts/relationships.md:31
-#: docs/user-guide/textual/syntax-basics.md:162
-#: docs/user-guide/textual/syntax-basics.md:163
-#: docs/user-guide/textual/syntax-basics.md:164
-#: docs/user-guide/textual/syntax-basics.md:165
-#: docs/user-guide/textual/syntax-basics.md:167
 #: docs/user-guide/textual/syntax-basics.md:168
 #: docs/user-guide/textual/syntax-basics.md:169
+#: docs/user-guide/textual/syntax-basics.md:170
+#: docs/user-guide/textual/syntax-basics.md:171
+#: docs/user-guide/textual/syntax-basics.md:173
+#: docs/user-guide/textual/syntax-basics.md:174
+#: docs/user-guide/textual/syntax-basics.md:175
 msgid "yes"
 msgstr ""
 
@@ -1752,7 +1752,7 @@ msgid "relationship reading nothing: a value"
 msgstr "不读取任何东西的关系：值"
 
 #: docs/user-guide/getting-started/first-behavior.md:205
-#: docs/user-guide/textual/syntax-basics.md:166
+#: docs/user-guide/textual/syntax-basics.md:172
 msgid "`dimByTilt(tilt)`"
 msgstr "`dimByTilt(tilt)`"
 
@@ -2337,26 +2337,35 @@ msgid "rewrites every legacy zero-input signature `mapping f : A` to the preferr
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:13
+#: docs/user-guide/reference/cli.md:14
 msgid "0 · 2 did not open or refused"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:15
+#: docs/user-guide/reference/cli.md:14
+msgid "`bdld migrate-drive-by <project> [--dry-run] [--json]`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:14
+msgid "rewrites every legacy drive `drive o = m` to the preferred `drive o by m` — the `=` becomes `by`, nothing else moves; the same guards and options as above"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:16
 msgid "`--json` on any of them prints one JSON object instead of text."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:17
+#: docs/user-guide/reference/cli.md:18
 msgid "Inputs"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:19
+#: docs/user-guide/reference/cli.md:20
 msgid "`--input name=value` sets a relationship that reads nothing to a constant for every tick: `true` / `false` for a *Bool* concept, a whole number for a *Count*, a number in the concept's base unit otherwise (radians for an angle, metres for a length, seconds for a time). A relationship left without a value and without a definition stops the run with a *missing input* error."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:35
+#: docs/user-guide/reference/cli.md:36
 msgid "Values print as *Concept(value)* — a truth value as `on` / `off`, a number with six significant digits — the same text Studio shows; a relationship with inputs prints as `<function>` (it is applied where it is called, not sampled); an input you set is listed as the evaluator read it, at the ticks its domain activated."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:43
+#: docs/user-guide/reference/cli.md:44
 msgid "[Project files](project-files.md) · [Textual BDL](../textual/overview.md)"
 msgstr ""
 
@@ -2406,7 +2415,7 @@ msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:21
 #: docs/user-guide/reference/formula-language.md:53
-#: docs/user-guide/textual/syntax-basics.md:159
+#: docs/user-guide/textual/syntax-basics.md:165
 msgid "Example"
 msgstr ""
 
@@ -2475,7 +2484,7 @@ msgid "same dimension both sides; no chaining"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:39
-#: docs/user-guide/textual/syntax-basics.md:163
+#: docs/user-guide/textual/syntax-basics.md:169
 msgid "comparison"
 msgstr ""
 
@@ -2560,12 +2569,12 @@ msgid "Forms"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:53
-#: docs/user-guide/textual/syntax-basics.md:159
+#: docs/user-guide/textual/syntax-basics.md:165
 msgid "Form"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:55
-#: docs/user-guide/textual/syntax-basics.md:165
+#: docs/user-guide/textual/syntax-basics.md:171
 msgid "conditional"
 msgstr ""
 
@@ -2590,12 +2599,12 @@ msgid "`let` names a value for the rest of the block; may shadow"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:57
-#: docs/user-guide/textual/syntax-basics.md:169
+#: docs/user-guide/textual/syntax-basics.md:175
 msgid "options"
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:57
-#: docs/user-guide/textual/syntax-basics.md:169
+#: docs/user-guide/textual/syntax-basics.md:175
 msgid "`Some(e)`, `None`"
 msgstr ""
 
@@ -2616,7 +2625,7 @@ msgid "on true/false, options, whole numbers, or a concept's value; must be exha
 msgstr ""
 
 #: docs/user-guide/reference/formula-language.md:59
-#: docs/user-guide/textual/syntax-basics.md:171
+#: docs/user-guide/textual/syntax-basics.md:177
 msgid "memory"
 msgstr ""
 
@@ -6461,7 +6470,7 @@ msgid "output node, _Drives_"
 msgstr ""
 
 #: docs/user-guide/textual/overview.md:104
-msgid "`output light : Brightness @interaction`, `drive light = brightness`"
+msgid "`output light : Brightness @interaction`, `drive light by brightness`"
 msgstr ""
 
 #: docs/user-guide/textual/overview.md:105
@@ -6609,182 +6618,182 @@ msgid "Timing domains, outputs, drivers, devices"
 msgstr ""
 
 #: docs/user-guide/textual/syntax-basics.md:99
-msgid "A physical output names the concept it accepts and its domain; `optional` marks one that may stay undriven. `drive` names one relationship as an output's driver — a second `drive` of the same output is a finding, and the first stays. A device has a kind — `pwm_channel`, `digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`, `uart` — optionally the output it realises (`for light`) and pins fixed by position (`pin 0 = D3`)."
+msgid "A physical output names the concept it accepts and its domain; `optional` marks one that may stay undriven. `drive light by brightness` says that `brightness` drives the logical output `light` — the output is driven by the relationship, which is the whole of the relation; a second `drive` of the same output is a finding, and the first stays. Older files write `drive light = brightness`; that spelling still opens and means the same drive, the editor marks it with a hint — _Prefer `by` for output driving_ — with the fix **Write `by`**, and `bdld migrate-drive-by <project>` rewrites a whole project when you ask; the formatter never rewrites it for you. A device has a kind — `pwm_channel`, `digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`, `uart` — optionally the output it realises (`for light`) and pins fixed by position (`pin 0 = D3`)."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:106
+#: docs/user-guide/textual/syntax-basics.md:112
 msgid "**Checked?** Yes: drivers are checked as in Studio (one driver, right concept and domain); devices take part in deployment analysis."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:109
+#: docs/user-guide/textual/syntax-basics.md:115
 msgid "Components, instances, bindings"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:142
+#: docs/user-guide/textual/syntax-basics.md:148
 msgid "Inside a component body the ordinary items apply (`concept`, `mapping`, `clock`, `output`, `drive`, `device`); a concept declared _in_ the body is private to each instance, a `use concept` is the project's concept shared by all. `requires`, `provides` and `param` declare ports — each is a relationship of the body with a contract other components can rely on ([Components](../concepts/components.md)). An instance gives every clock parameter a domain and every `param` a constant, in braces. `bind` connects an instance's port to a relationship or to another instance's port; when the two sides update in different domains, `init` gives the value before the source has one."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:153
+#: docs/user-guide/textual/syntax-basics.md:159
 msgid "**Checked?** Yes — composition is validated as in Studio: a port bound to the wrong concept, an instance missing a parameter, a domain crossing without `init`, are findings on the line concerned."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:157
+#: docs/user-guide/textual/syntax-basics.md:163
 msgid "Expressions"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:159
+#: docs/user-guide/textual/syntax-basics.md:165
 msgid "Checked?"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:161
+#: docs/user-guide/textual/syntax-basics.md:167
 msgid "numbers, with a unit"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:161
+#: docs/user-guide/textual/syntax-basics.md:167
 msgid "`90 deg`, `2.5 s`, `300 lx`, `0.5`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:161
+#: docs/user-guide/textual/syntax-basics.md:167
 msgid "yes — units are checked as dimensions; unknown units are reported"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:162
+#: docs/user-guide/textual/syntax-basics.md:168
 msgid "arithmetic"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:162
+#: docs/user-guide/textual/syntax-basics.md:168
 msgid "`a + b`, `a - b`, `a * b`, `a / b`, `-a`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:163
+#: docs/user-guide/textual/syntax-basics.md:169
 msgid "`<`, `<=`, `>`, `>=`, `==`, `!=` (no chaining: write `a < b && b < c`)"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:164
+#: docs/user-guide/textual/syntax-basics.md:170
 msgid "logic"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:164
+#: docs/user-guide/textual/syntax-basics.md:170
 msgid "`&&`, `\\|\\|`, `!`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:165
+#: docs/user-guide/textual/syntax-basics.md:171
 msgid "`if c then a else b`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:166
+#: docs/user-guide/textual/syntax-basics.md:172
 msgid "call a relationship"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:166
+#: docs/user-guide/textual/syntax-basics.md:172
 msgid "yes — with the right number of arguments; a rule as a _value_ or a partial call is refused"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:167
+#: docs/user-guide/textual/syntax-basics.md:173
 msgid "name a value"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:167
+#: docs/user-guide/textual/syntax-basics.md:173
 msgid "`tilt`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:168
+#: docs/user-guide/textual/syntax-basics.md:174
 msgid "block with `let`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:168
+#: docs/user-guide/textual/syntax-basics.md:174
 msgid "`{ let x = …; let y = …; x + y }`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:170
+#: docs/user-guide/textual/syntax-basics.md:176
 msgid "`match`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:170
+#: docs/user-guide/textual/syntax-basics.md:176
 msgid "on true/false, options, whole numbers, and a concept through its value"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:170
+#: docs/user-guide/textual/syntax-basics.md:176
 msgid "yes, with exhaustiveness checking"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:171
+#: docs/user-guide/textual/syntax-basics.md:177
 msgid "`delay(init, e)`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:171
+#: docs/user-guide/textual/syntax-basics.md:177
 msgid "yes — in a value's formula; at the top level or in a `let`, an `if` branch or a `match` scrutinee"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:172
+#: docs/user-guide/textual/syntax-basics.md:178
 msgid "cross-domain read"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:172
+#: docs/user-guide/textual/syntax-basics.md:178
 msgid "`sync(domain, init, e)`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:172
+#: docs/user-guide/textual/syntax-basics.md:178
 msgid "yes — same placement rule"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:173
+#: docs/user-guide/textual/syntax-basics.md:179
 msgid "`enum` items and their constructors"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:173
+#: docs/user-guide/textual/syntax-basics.md:179
 msgid "`enum Mode { Off, Manual(Brightness) }`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:173
+#: docs/user-guide/textual/syntax-basics.md:179
 msgid "parses; reported as _open_ — not usable in formulas yet"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:174
+#: docs/user-guide/textual/syntax-basics.md:180
 msgid "a relationship's parameter"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:174
+#: docs/user-guide/textual/syntax-basics.md:180
 msgid "`t` in `dimByTilt(t) = t / (90 deg)`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:174
+#: docs/user-guide/textual/syntax-basics.md:180
 msgid "yes — the parameter name is the name; the concept's name is not needed"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:175
+#: docs/user-guide/textual/syntax-basics.md:181
 msgid "generic types in a signature"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:175
+#: docs/user-guide/textual/syntax-basics.md:181
 msgid "`Option<Brightness>`"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:175
+#: docs/user-guide/textual/syntax-basics.md:181
 msgid "parses; meaning decided by the checker"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:177
+#: docs/user-guide/textual/syntax-basics.md:183
 msgid "Units attach to numbers only: `90 deg` is a literal; `x deg` is a syntax error. A dimensioned expression gets its dimension from arithmetic: `(tilt + offset) / (90 deg)`."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:181
+#: docs/user-guide/textual/syntax-basics.md:187
 msgid "Patterns"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:183
+#: docs/user-guide/textual/syntax-basics.md:189
 msgid "`_`, a name, `true` / `false`, a whole number, `Some(p)`, `None`. No guards, ranges or or-patterns."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:186
+#: docs/user-guide/textual/syntax-basics.md:192
 msgid "Where Studio and text differ"
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:188
+#: docs/user-guide/textual/syntax-basics.md:194
 msgid "The formula field in Studio is the expression language above — nothing more, nothing less. What the file adds is the items around it. Two things Studio has that the text does not carry: **behavior groups** and **canvas layout** — both are authoring metadata, kept in files beside the sources ([Project files](../reference/project-files.md)). `enum` items parse but are reported as _open_: the design model has no sum types yet. The words `context` and `require` are reserved."
 msgstr ""
 
-#: docs/user-guide/textual/syntax-basics.md:198
+#: docs/user-guide/textual/syntax-basics.md:204
 msgid "[Overview and current status](overview.md) · [Editor and language server](editor-and-lsp.md) · [Authoring a project as text](../workflows/authoring-as-text.md) · [Formula language](../reference/formula-language.md)"
 msgstr ""
 

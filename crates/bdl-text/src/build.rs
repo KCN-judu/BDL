@@ -67,7 +67,7 @@ pub enum AnchorRole {
     /// A name that refers to the entity (a signature type, a clock tag, a
     /// binding end, a `drive`, a `use`).
     Reference,
-    /// A `drive o = m` item, anchored to the driving relationship `m`.
+    /// A `drive o by m` item, anchored to the driving relationship `m`.
     Drive,
     /// A component's `{ … }` body (new body items are inserted before its
     /// closing brace).

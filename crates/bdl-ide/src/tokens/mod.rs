@@ -327,6 +327,15 @@ fn identifier_token(t: &SyntaxToken) -> Option<SemanticToken> {
         // `all x in xs: …`: the word is a construct here (and an ordinary
         // name anywhere else)
         SyntaxKind::BinderExpr => Some(SemanticToken::new(range, TokenType::Keyword)),
+        // the contextual item words — `by` in a drive, `for` in a device,
+        // `optional` on an output, `pin` and `realization` in a device
+        // body: a bare identifier directly under the item (every name is
+        // wrapped in `Name`/`NameRef`, so only the word itself sits here)
+        SyntaxKind::DriveDecl
+        | SyntaxKind::DeviceDecl
+        | SyntaxKind::OutputDecl
+        | SyntaxKind::PinFix
+        | SyntaxKind::RealizationFix => Some(SemanticToken::new(range, TokenType::Keyword)),
         // the local a binder, a lambda, a pattern or a rule declares
         SyntaxKind::Name
             if matches!(

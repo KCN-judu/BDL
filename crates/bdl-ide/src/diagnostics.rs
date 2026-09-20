@@ -398,6 +398,37 @@ fn lift_all(snapshot: &AnalysisSnapshot) -> Vec<SemanticDiagnostic> {
                 actions: Vec::new(),
             });
         }
+        // the legacy drive spelling `drive o = m` for `drive o by m`
+        // (docs/spec/textual-syntax.md §14.1): a hint with a quick fix at
+        // the `=`; the relation itself is the same either way
+        for (decl, span) in bdl_syntax::migrate::legacy_drive_decls(&doc.source) {
+            let entity = snapshot
+                .projections()
+                .document_anchors(doc.document)
+                .iter()
+                .find(|a| {
+                    a.role == EntityRole::DriveEdge
+                        && a.text_range() == Some(TextRange::from(decl.span()))
+                })
+                .map(|a| a.entity)
+                .unwrap_or(EntityRef::Project);
+            let output = decl.output().map(|n| n.as_str()).unwrap_or_default();
+            let driver = decl.driver().map(|n| n.as_str()).unwrap_or_default();
+            out.push(SemanticDiagnostic {
+                code: "text.legacy_drive".into(),
+                severity: SemanticSeverity::Hint,
+                primary: SemanticAnchor::new(entity, EntityRole::DriveEdge).at(at(span.into())),
+                related: Vec::new(),
+                message: format!(
+                    "Prefer `by` for output driving: `drive {output} by {driver}` says that `{driver}` drives `{output}`."
+                ),
+                explanation: "Both spellings declare the one drive edge; `=` is the earlier spelling, still accepted and never generated."
+                    .into(),
+                technical: String::new(),
+                fixes: vec![format!("Write `drive {output} by {driver}`.")],
+                actions: Vec::new(),
+            });
+        }
         for f in &doc.binding_faults {
             out.push(SemanticDiagnostic {
                 code: f.code.clone(),

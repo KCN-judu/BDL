@@ -90,18 +90,24 @@ clock display
 
 output light : Brightness @interaction              // required: the design is incomplete until driven
 output indicator : Brightness @interaction optional // may stay undriven
-drive light = brightness                            // the relationship that is light's final driver
+drive light by brightness                            // the relationship that is light's final driver
 
 device pwmLight : pwm_channel for light { pin 0 = D3 }
 device imu : i2c_sensor
 ```
 
 A physical output names the concept it accepts and its domain; `optional` marks
-one that may stay undriven. `drive` names one relationship as an output's driver
-— a second `drive` of the same output is a finding, and the first stays. A
-device has a kind — `pwm_channel`, `digital_output`, `h_bridge_channel`,
-`i2c_sensor`, `quadrature_encoder`, `uart` — optionally the output it realises
-(`for light`) and pins fixed by position (`pin 0 = D3`).
+one that may stay undriven. `drive light by brightness` says that `brightness`
+drives the logical output `light` — the output is driven by the relationship,
+which is the whole of the relation; a second `drive` of the same output is a
+finding, and the first stays. Older files write `drive light = brightness`; that
+spelling still opens and means the same drive, the editor marks it with a hint —
+_Prefer `by` for output driving_ — with the fix **Write `by`**, and
+`bdld migrate-drive-by <project>` rewrites a whole project when you ask; the
+formatter never rewrites it for you. A device has a kind — `pwm_channel`,
+`digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`, `uart`
+— optionally the output it realises (`for light`) and pins fixed by position
+(`pin 0 = D3`).
 
 **Checked?** Yes: drivers are checked as in Studio (one driver, right concept
 and domain); devices take part in deployment analysis.

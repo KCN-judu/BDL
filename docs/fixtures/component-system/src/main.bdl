@@ -61,4 +61,4 @@ bind mirror = second.brightness
 
 /// The lamp itself.
 output light : Brightness @main
-drive light = brightness
+drive light by brightness

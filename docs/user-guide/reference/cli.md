@@ -11,6 +11,7 @@ loader Studio and the language server use.
 | `bdld compile <project> --target rp2040_pico [--tick-micros N] [--period domain=N …]` | also generates the firmware for that board beside the core: every output needs a device with a realization placed on the board, and a design with a Source is refused (no device provides values yet); `--tick-micros` is the firmware's base tick (default 10000); build it with `cargo build --release --target thumbv6m-none-eabi --features rp2040` in `DIR` | 0 written · 1 refused, printing why · 2 did not open or unknown board |
 | `bdld simulate <project> [--ticks N] [--input rel=value …]` | runs the reference evaluator for `N` activations (default 1) with constant inputs and prints every relationship's value per tick | 0 · 1 findings · 2 did not open or a runtime error |
 | `bdld migrate-unit-domain <project> [--dry-run] [--json]` | rewrites every legacy zero-input signature `mapping f : A` to the preferred `mapping f : () -> A`, one insertion each — comments, spacing, definitions and identities untouched; refuses if the design would change; `--dry-run` only reports | 0 · 2 did not open or refused |
+| `bdld migrate-drive-by <project> [--dry-run] [--json]` | rewrites every legacy drive `drive o = m` to the preferred `drive o by m` — the `=` becomes `by`, nothing else moves; the same guards and options as above | 0 · 2 did not open or refused |
 
 `--json` on any of them prints one JSON object instead of text.
 

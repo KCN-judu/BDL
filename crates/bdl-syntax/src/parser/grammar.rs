@@ -343,7 +343,11 @@ fn output_decl(p: &mut Parser<'_>, scope: Scope) {
     m.complete(p, OutputDecl);
 }
 
-/// `DriveDecl ::= "drive" NameRef "=" NameRef`
+/// `DriveDecl ::= "drive" NameRef "by" NameRef` — `by` is contextual, an
+/// identifier everywhere else.  The legacy spelling `"drive" NameRef "="
+/// NameRef` still parses (compatibility syntax, docs/spec/textual-syntax.md
+/// §14.1); the `=` token stays in the tree so a tool can tell the two
+/// apart, and both lower to the one `DriveItem`.
 fn drive_decl(p: &mut Parser<'_>, scope: Scope) {
     let m = p.start();
     p.bump(); // drive
@@ -351,19 +355,39 @@ fn drive_decl(p: &mut Parser<'_>, scope: Scope) {
         name_ref(p);
     } else {
         p.error_expecting("expected the output's name after `drive`", &[Ident]);
-        p.hint("`drive light = brightness` connects the relationship `brightness` to the output `light`.");
+        p.hint("`drive light by brightness` says that the relationship `brightness` drives the output `light`.");
     }
-    if p.eat(Eq) {
-        if p.at(Ident) {
-            name_ref(p);
-        } else {
-            p.error_expecting(
-                "expected the driving relationship's name after `=`",
-                &[Ident],
-            );
-        }
+    let relation = if p.at(Ident) && p.current_text() == "by" {
+        p.bump(); // by
+        Some("by")
+    } else if p.eat(Eq) {
+        Some("=")
     } else {
-        p.error_expecting("expected `=` and the driving relationship", &[Eq]);
+        None
+    };
+    match relation {
+        Some(word) => {
+            if p.at(Ident) {
+                name_ref(p);
+            } else {
+                p.error_expecting(
+                    &format!("expected the driving relationship's name after `{word}`"),
+                    &[Ident],
+                );
+            }
+        }
+        None => {
+            p.error_expecting(
+                "expected `by` between the output and the relationship that drives it",
+                &[],
+            );
+            p.hint("`drive light by brightness` says that the relationship `brightness` drives the output `light`.");
+            // `drive light level`: keep the name as the driver so the tree
+            // stays one declaration with one fault
+            if p.at(Ident) {
+                name_ref(p);
+            }
+        }
     }
     recover_item(p, scope);
     m.complete(p, DriveDecl);

@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::Command;
 
 const CONCEPTS: &str = "concept Tilt : Angle\nconcept Brightness : Scalar\nclock interaction\n";
-const MAIN: &str = "mapping tilt : Tilt @interaction\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) = t / (90 deg)\n\nmapping brightness : Brightness @interaction\nbrightness() = dimByTilt(tiltValue)\n\noutput light : Brightness @interaction\ndrive light = brightness\n";
+const MAIN: &str = "mapping tilt : Tilt @interaction\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) = t / (90 deg)\n\nmapping brightness : Brightness @interaction\nbrightness() = dimByTilt(tiltValue)\n\noutput light : Brightness @interaction\ndrive light by brightness\n";
 
 fn project(root: &Path, main: &str) {
     std::fs::create_dir_all(root.join("src")).expect("mkdir");
@@ -245,6 +245,34 @@ fn migrate_unit_domain_rewrites_only_the_legacy_signatures_and_keeps_identities(
     let (code, out, _) = bdld(&["migrate-unit-domain", &r]);
     assert_eq!(code, 0);
     assert!(out.contains("nothing to migrate"), "{out}");
+
+    // the drive spelling is its own migration: the `=` becomes `by` and
+    // nothing else moves — not the unit-domain rewrite above, not a
+    // comment, not a spacing
+    let (code, out, err) = bdld(&["migrate-drive-by", &r, "--dry-run"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(
+        out.contains("1 drive(s) in 1 file(s) would be rewritten"),
+        "{out}"
+    );
+    let (code, out, err) = bdld(&["migrate-drive-by", &r, "--json"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let v: serde_json::Value = serde_json::from_str(out.trim()).expect("json");
+    assert_eq!(v["drives"], 1);
+    assert_eq!(
+        std::fs::read_to_string(root.join("src/main.bdl")).expect("main"),
+        migrated.replace("drive light = brightness", "drive light by brightness")
+    );
+    let (code, out, _) = bdld(&["check", &r]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("checks, outputs complete"), "{out}");
+    assert_eq!(
+        std::fs::read_to_string(root.join(".bdl/identities.json")).expect("ids"),
+        ids_before
+    );
+    let (code, out, _) = bdld(&["migrate-drive-by", &r]);
+    assert_eq!(code, 0);
+    assert!(out.contains("nothing to migrate"), "{out}");
 }
 
 /// `compile --target rp2040_pico` writes the firmware beside the core from
@@ -255,7 +283,7 @@ fn compile_for_a_board_writes_the_adapter_from_the_placement() {
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path().join("lamp");
     // no Source: a level that climbs; a PWM device realising the output
-    let main = "mapping level : () -> Brightness @interaction\nlevel() = delay(0, level + 5)\n\noutput light : Brightness @interaction\ndrive light = level\n\ndevice lamp : pwm_channel for light { realization pwm_duty8 }\n";
+    let main = "mapping level : () -> Brightness @interaction\nlevel() = delay(0, level + 5)\n\noutput light : Brightness @interaction\ndrive light by level\n\ndevice lamp : pwm_channel for light { realization pwm_duty8 }\n";
     project(&root, main);
     let r = root.to_string_lossy().into_owned();
     let out_dir = dir.path().join("gen");

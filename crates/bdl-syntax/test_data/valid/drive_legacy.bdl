@@ -1,0 +1,14 @@
+// The legacy drive spelling stays accepted; `by` is an ordinary name
+// everywhere but between an output and its driver.
+concept Level : Scalar
+clock main
+
+mapping by : () -> Level @main
+by() = 5
+mapping level : () -> Level @main
+level() = by + 1
+
+output light : Level @main
+output glow : Level @main
+drive light = level
+drive glow   by   by

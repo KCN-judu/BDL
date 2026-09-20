@@ -362,7 +362,7 @@ fn duplicates_and_unknown_names_are_faults_not_panics() {
 
 #[test]
 fn write_back_splices_only_what_changed_and_keeps_comments() {
-    let src = "// The lamp.\n\nconcept Tilt : Angle   // how far\nconcept Brightness : Scalar\n\nclock main\n\n// inputs\nmapping tilt : Tilt @main\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) =\n  t / (90 deg)\n\nmapping brightness : Brightness @main\nbrightness() = dimByTilt(tilt)\n\noutput light : Brightness @main\ndrive light = brightness\n";
+    let src = "// The lamp.\n\nconcept Tilt : Angle   // how far\nconcept Brightness : Scalar\n\nclock main\n\n// inputs\nmapping tilt : Tilt @main\n\nmapping dimByTilt : Tilt -> Brightness\ndimByTilt(t) =\n  t / (90 deg)\n\nmapping brightness : Brightness @main\nbrightness() = dimByTilt(tilt)\n\noutput light : Brightness @main\ndrive light by brightness\n";
     let fs = files(&[("src/lamp.bdl", src)]);
     let b = load_workspace("lamp", &fs, &IdentityTable::default());
     assert!(!b.has_errors(), "{:#?}", b.faults);
@@ -802,4 +802,53 @@ fn a_large_project_loads_in_bounded_time() {
         reloaded < std::time::Duration::from_secs(5),
         "reload took {reloaded:?}"
     );
+}
+
+/// `drive o by m` and the legacy `drive o = m` build the one drive
+/// relation — across files, with the output in one and the drive in
+/// another — and the written-back text spells it `by`.
+#[test]
+fn the_two_drive_spellings_build_the_same_system_across_files() {
+    let concepts = "concept Level : Scalar\nclock main\noutput light : Level @main\n";
+    let by = "mapping level : () -> Level @main\nlevel() = 5\ndrive light by level\n";
+    let eq = "mapping level : () -> Level @main\nlevel() = 5\ndrive light = level\n";
+    let a = load_workspace(
+        "lamp",
+        &files(&[("src/concepts.bdl", concepts), ("src/main.bdl", by)]),
+        &IdentityTable::default(),
+    );
+    let b = load_workspace(
+        "lamp",
+        &files(&[("src/concepts.bdl", concepts), ("src/main.bdl", eq)]),
+        &IdentityTable::default(),
+    );
+    assert!(!a.has_errors(), "{:#?}", a.faults);
+    assert!(!b.has_errors(), "{:#?}", b.faults);
+    assert_eq!(a.system, b.system);
+    assert_eq!(a.table, b.table);
+    let light = a
+        .system
+        .base
+        .outputs
+        .values()
+        .find(|o| o.name == "light")
+        .unwrap();
+    let level = a
+        .system
+        .base
+        .mappings
+        .values()
+        .find(|m| m.name == "level")
+        .unwrap();
+    assert_eq!(level.drives, Some(light.id));
+    assert_eq!(
+        bdl_text::print::drive(&a.system.base, level).as_deref(),
+        Some("drive light by level")
+    );
+    // the same analysis, hence the same simulation and lowering
+    let sa = analyze_system(&SystemSnapshot::new(a.system.clone()));
+    let sb = analyze_system(&SystemSnapshot::new(b.system.clone()));
+    assert_eq!(sa.analysis.ir, sb.analysis.ir);
+    assert_eq!(sa.analysis.outputs, sb.analysis.outputs);
+    assert!(sa.analysis.output_complete);
 }

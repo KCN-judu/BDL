@@ -1,0 +1,159 @@
+Module@0..343
+  ConceptDecl@0..144
+    LineComment@0..69 "// The legacy drive spelling stays accepted; `by` is an ordinary name"
+    Whitespace@69..70 "\n"
+    LineComment@70..121 "// everywhere but between an output and its driver."
+    Whitespace@121..122 "\n"
+    KwConcept@122..129 "concept"
+    Whitespace@129..130 " "
+    Name@130..135
+      Ident@130..135 "Level"
+    Whitespace@135..136 " "
+    Colon@136..137 ":"
+    Whitespace@137..138 " "
+    NamedType@138..144
+      NameRef@138..144
+        Ident@138..144 "Scalar"
+  Whitespace@144..145 "\n"
+  ClockDecl@145..155
+    KwClock@145..150 "clock"
+    Whitespace@150..151 " "
+    Name@151..155
+      Ident@151..155 "main"
+  Whitespace@155..157 "\n\n"
+  MappingDecl@157..196
+    KwMapping@157..164 "mapping"
+    Whitespace@164..165 " "
+    Name@165..167
+      Ident@165..167 "by"
+    Whitespace@167..168 " "
+    Colon@168..169 ":"
+    Whitespace@169..170 " "
+    FunctionType@170..181
+      UnitType@170..172
+        LParen@170..171 "("
+        RParen@171..172 ")"
+      Whitespace@172..173 " "
+      Arrow@173..175 "->"
+      Whitespace@175..176 " "
+      NamedType@176..181
+        NameRef@176..181
+          Ident@176..181 "Level"
+    Whitespace@181..182 " "
+    ClockTag@182..187
+      At@182..183 "@"
+      NameRef@183..187
+        Ident@183..187 "main"
+    Whitespace@187..188 "\n"
+    MappingDef@188..196
+      NameRef@188..190
+        Ident@188..190 "by"
+      ParamList@190..192
+        LParen@190..191 "("
+        RParen@191..192 ")"
+      Whitespace@192..193 " "
+      Eq@193..194 "="
+      Whitespace@194..195 " "
+      LiteralExpr@195..196
+        Number@195..196 "5"
+  Whitespace@196..197 "\n"
+  MappingDecl@197..247
+    KwMapping@197..204 "mapping"
+    Whitespace@204..205 " "
+    Name@205..210
+      Ident@205..210 "level"
+    Whitespace@210..211 " "
+    Colon@211..212 ":"
+    Whitespace@212..213 " "
+    FunctionType@213..224
+      UnitType@213..215
+        LParen@213..214 "("
+        RParen@214..215 ")"
+      Whitespace@215..216 " "
+      Arrow@216..218 "->"
+      Whitespace@218..219 " "
+      NamedType@219..224
+        NameRef@219..224
+          Ident@219..224 "Level"
+    Whitespace@224..225 " "
+    ClockTag@225..230
+      At@225..226 "@"
+      NameRef@226..230
+        Ident@226..230 "main"
+    Whitespace@230..231 "\n"
+    MappingDef@231..247
+      NameRef@231..236
+        Ident@231..236 "level"
+      ParamList@236..238
+        LParen@236..237 "("
+        RParen@237..238 ")"
+      Whitespace@238..239 " "
+      Eq@239..240 "="
+      Whitespace@240..241 " "
+      BinaryExpr@241..247
+        NameExpr@241..243
+          NameRef@241..243
+            Ident@241..243 "by"
+        Whitespace@243..244 " "
+        Plus@244..245 "+"
+        Whitespace@245..246 " "
+        LiteralExpr@246..247
+          Number@246..247 "1"
+  Whitespace@247..249 "\n\n"
+  OutputDecl@249..275
+    KwOutput@249..255 "output"
+    Whitespace@255..256 " "
+    Name@256..261
+      Ident@256..261 "light"
+    Whitespace@261..262 " "
+    Colon@262..263 ":"
+    Whitespace@263..264 " "
+    NamedType@264..269
+      NameRef@264..269
+        Ident@264..269 "Level"
+    Whitespace@269..270 " "
+    ClockTag@270..275
+      At@270..271 "@"
+      NameRef@271..275
+        Ident@271..275 "main"
+  Whitespace@275..276 "\n"
+  OutputDecl@276..301
+    KwOutput@276..282 "output"
+    Whitespace@282..283 " "
+    Name@283..287
+      Ident@283..287 "glow"
+    Whitespace@287..288 " "
+    Colon@288..289 ":"
+    Whitespace@289..290 " "
+    NamedType@290..295
+      NameRef@290..295
+        Ident@290..295 "Level"
+    Whitespace@295..296 " "
+    ClockTag@296..301
+      At@296..297 "@"
+      NameRef@297..301
+        Ident@297..301 "main"
+  Whitespace@301..302 "\n"
+  DriveDecl@302..321
+    KwDrive@302..307 "drive"
+    Whitespace@307..308 " "
+    NameRef@308..313
+      Ident@308..313 "light"
+    Whitespace@313..314 " "
+    Eq@314..315 "="
+    Whitespace@315..316 " "
+    NameRef@316..321
+      Ident@316..321 "level"
+  Whitespace@321..322 "\n"
+  DriveDecl@322..342
+    KwDrive@322..327 "drive"
+    Whitespace@327..328 " "
+    NameRef@328..332
+      Ident@328..332 "glow"
+    Whitespace@332..335 "   "
+    Ident@335..337 "by"
+    Whitespace@337..340 "   "
+    NameRef@340..342
+      Ident@340..342 "by"
+  Whitespace@342..343 "\n"
+lowered: 1 concept(s), 2 mapping(s), 0 enum(s)

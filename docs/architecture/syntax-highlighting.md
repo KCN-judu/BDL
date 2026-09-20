@@ -41,26 +41,28 @@ snapshot (committed + overlays) ──semantic layer─▶ tokens₂ ┘
 a node like any other, and every token the lexer recognised is under it. The
 layer classifies by the tree, never by spelling:
 
-| Token                                                                                         | Class                                        |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| a keyword token (`concept`, `mapping`, `if`, `then`, `else`, `true`, `false`, `in`, `let`, …) | `keyword`                                    |
-| a binder word (`all`, `any`, `sum`, `choose`, …) in head position (`BinderExpr`)              | `keyword`                                    |
-| the same spelling as a name elsewhere                                                         | a name (the semantic layer says which)       |
-| `Number`                                                                                      | `number`                                     |
-| the identifier under `UnitSuffix` (`90 deg`)                                                  | `unit`                                       |
-| `?`                                                                                           | `slot`                                       |
-| `_` (a discarded pattern)                                                                     | `parameter`                                  |
-| `+ - * / ! && \|\| == != < <= > >= = -> => ?? .. @ .`                                         | `operator`                                   |
-| brackets, commas, colons, braces                                                              | nothing (punctuation is plain)               |
-| comments                                                                                      | `comment` (a block comment may span lines)   |
-| a name bound by a binder, a lambda, a match arm, a `let`, or a rule's parameter list          | `parameter` (+ `declaration` at the binding) |
-| a constructor in a pattern                                                                    | `enumMember`                                 |
+| Token                                                                                                                                                                                      | Class                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| a keyword token (`concept`, `mapping`, `if`, `then`, `else`, `true`, `false`, `in`, `let`, …)                                                                                              | `keyword`                                    |
+| a binder word (`all`, `any`, `sum`, `choose`, …) in head position (`BinderExpr`)                                                                                                           | `keyword`                                    |
+| a contextual item word in its place — `by` in a drive, `for` in a device, `optional` on an output, `pin` / `realization` in a device body (a bare identifier directly under the item node) | `keyword`                                    |
+| the same spelling as a name elsewhere                                                                                                                                                      | a name (the semantic layer says which)       |
+| `Number`                                                                                                                                                                                   | `number`                                     |
+| the identifier under `UnitSuffix` (`90 deg`)                                                                                                                                               | `unit`                                       |
+| `?`                                                                                                                                                                                        | `slot`                                       |
+| `_` (a discarded pattern)                                                                                                                                                                  | `parameter`                                  |
+| `+ - * / ! && \|\| == != < <= > >= = -> => ?? .. @ .`                                                                                                                                      | `operator`                                   |
+| brackets, commas, colons, braces                                                                                                                                                           | nothing (punctuation is plain)               |
+| comments                                                                                                                                                                                   | `comment` (a block comment may span lines)   |
+| a name bound by a binder, a lambda, a match arm, a `let`, or a rule's parameter list                                                                                                       | `parameter` (+ `declaration` at the binding) |
+| a constructor in a pattern                                                                                                                                                                 | `enumMember`                                 |
 
 Units are tokenized by position — the identifier that follows a number inside a
 `UnitSuffix` — never by a table of unit spellings: `deg` as a rule parameter is
 `parameter`, `deg` after `90` is `unit`. Contextual words are keywords only
 where the grammar makes them keywords: `all` at the head of a binder is a
-keyword; `all` declared as a value is a value.
+keyword; `all` declared as a value is a value; `by` between an output and its
+driver is a keyword, `by` as a relationship's name is a value.
 
 **Semantic layer** — `semantic_tokens(snapshot, document)` for a file,
 `formula_tokens(snapshot, mapping)` for a definition draft. It walks the

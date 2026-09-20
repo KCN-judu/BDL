@@ -1,0 +1,73 @@
+Module@0..104
+  DriveDecl@0..14
+    KwDrive@0..5 "drive"
+    Whitespace@5..6 " "
+    NameRef@6..11
+      Ident@6..11 "light"
+    Whitespace@11..12 " "
+    Ident@12..14 "by"
+  Whitespace@14..15 "\n"
+  DriveDecl@15..29
+    KwDrive@15..20 "drive"
+    Whitespace@20..21 " "
+    NameRef@21..23
+      Ident@21..23 "by"
+    Whitespace@23..24 " "
+    NameRef@24..29
+      Ident@24..29 "level"
+  Whitespace@29..30 "\n"
+  DriveDecl@30..47
+    KwDrive@30..35 "drive"
+    Whitespace@35..36 " "
+    NameRef@36..41
+      Ident@36..41 "light"
+    Whitespace@41..42 " "
+    NameRef@42..47
+      Ident@42..47 "level"
+  Whitespace@47..48 "\n"
+  DriveDecl@48..61
+    KwDrive@48..53 "drive"
+    Whitespace@53..54 " "
+    NameRef@54..59
+      Ident@54..59 "light"
+    Whitespace@59..60 " "
+    Eq@60..61 "="
+  Whitespace@61..62 "\n"
+  DriveDecl@62..82
+    KwDrive@62..67 "drive"
+    Whitespace@67..68 " "
+    NameRef@68..73
+      Ident@68..73 "light"
+    Whitespace@73..74 " "
+    ErrorNode@74..82
+      EqEq@74..76 "=="
+      Whitespace@76..77 " "
+      Ident@77..82 "level"
+  Whitespace@82..83 "\n"
+  DriveDecl@83..103
+    KwDrive@83..88 "drive"
+    Whitespace@88..89 " "
+    NameRef@89..94
+      Ident@89..94 "light"
+    Whitespace@94..95 " "
+    Ident@95..97 "by"
+    Whitespace@97..98 " "
+    NameRef@98..103
+      Ident@98..103 "level"
+  Whitespace@103..104 "\n"
+error 15..20 syntax.expected: expected the driving relationship's name after `by`
+  expected a name, found `drive`
+error 24..29 syntax.expected: expected `by` between the output and the relationship that drives it
+  found the name `level`
+  hint: `drive light by brightness` says that the relationship `brightness` drives the output `light`.
+error 42..47 syntax.expected: expected `by` between the output and the relationship that drives it
+  found the name `level`
+  hint: `drive light by brightness` says that the relationship `brightness` drives the output `light`.
+error 62..67 syntax.expected: expected the driving relationship's name after `=`
+  expected a name, found `drive`
+error 74..76 syntax.expected: expected `by` between the output and the relationship that drives it
+  found `==`
+  hint: `drive light by brightness` says that the relationship `brightness` drives the output `light`.
+error 74..76 syntax.unexpected: expected a declaration here: `concept`, `mapping`, `enum`, `clock`, `output`, `drive`, `device`, `component`, `instance`, `bind` or `export`
+  found `==`
+lowered: 0 concept(s), 0 mapping(s), 0 enum(s)

@@ -812,7 +812,8 @@ ClockDecl     ::= "clock" Name
 ClockTag      ::= "@" NameRef                      (* the domain a declaration updates in *)
 MappingDecl   ::= "mapping" Name ":" Type ClockTag? MappingDef?
 OutputDecl    ::= "output" Name ":" Type ClockTag? ("optional")?
-DriveDecl     ::= "drive" NameRef "=" NameRef       (* output = relationship *)
+DriveDecl     ::= "drive" NameRef "by" NameRef      (* the output is driven by the relationship *)
+                | "drive" NameRef "=" NameRef       (* legacy compatibility spelling *)
 DeviceDecl    ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?
 DeviceBody    ::= "{" ( (PinFix | RealizationFix) ","? )* "}"
 PinFix        ::= "pin" Number "=" Ident
@@ -828,7 +829,7 @@ brightness() = dimByTilt(tilt)
 
 output light : Brightness @interaction            // a physical output, required by default
 output indicator : Brightness @interaction optional
-drive light = brightness                          // the single drive edge
+drive light by brightness                          // the single drive edge
 
 device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
 ```
@@ -838,10 +839,25 @@ device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
   produced concept and never a provided port — those are `mapping … : T` and
   `provides` (§14.2). The clock tag is optional (an output without one is
   _open_).
-- `drive o = m` is `MappingBlock.drives = Some(o)`; a relationship drives at
-  most one output and an output is driven by at most one relationship, as the
-  model already requires. A second `drive` for the same output is a lowering
-  fault, not a merge.
+- `drive o by m` is `MappingBlock.drives = Some(o)` — _`o` is driven by `m`_; a
+  relationship drives at most one output and an output is driven by at most one
+  relationship, as the model already requires. A second `drive` for the same
+  output is a lowering fault, not a merge. `by` is contextual: an identifier
+  everywhere else (a relationship or an output may be named `by`;
+  `drive light by by` is well formed).
+- **The legacy drive spelling.** `drive o = m` is compatibility syntax for the
+  same declaration: it parses, binds and elaborates identically (one
+  `DriveItem`, one `MappingBlock.drives`, the same `DriveWF` / `SingleDriver`
+  judgment, the same IR), and nothing generated ever writes it — `bdl-text` (the
+  Code view, write-back), the IDE's renderers and every example write `by`. The
+  IDE reports it as a hint, never an error (`text.legacy_drive`: _Prefer `by`
+  for output driving: `drive light by brightness` says that `brightness` drives
+  `light`._) with the quick fix _Write `by`_ — the `=` token replaced, nothing
+  else moved. The formatter preserves the authored spelling (§10): formatting is
+  never a migration. Opt-in, `bdld migrate-drive-by <project>` rewrites every
+  legacy drive of a project losslessly (`bdl_syntax::migrate::make_drives_by`,
+  the same guards as the unit-domain migration). The same staged policy as the
+  output-only shorthand (§4.1) applies; no removal is scheduled.
 - A device's kind is a `DeviceKind` name in snake case (`pwm_channel`,
   `digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`,
   `uart`); `for` names the output it realises (absent for a sensor); pins are

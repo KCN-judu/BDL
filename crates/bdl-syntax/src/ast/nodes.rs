@@ -151,7 +151,7 @@ ast_node!(
     OutputDecl
 );
 ast_node!(
-    /// `drive NameRef = NameRef`
+    /// `drive NameRef by NameRef` (legacy: `drive NameRef = NameRef`)
     DriveDecl,
     DriveDecl
 );
@@ -288,6 +288,12 @@ impl DriveDecl {
     }
     pub fn driver(&self) -> Option<NameRef> {
         nth_child(&self.0, 1)
+    }
+    /// The `=` of the legacy spelling `drive o = m`, when that is how the
+    /// declaration was written; `None` for the preferred `drive o by m`.
+    /// Syntax provenance only: both spellings are one drive relation.
+    pub fn legacy_eq(&self) -> Option<SyntaxToken> {
+        token(&self.0, SyntaxKind::Eq)
     }
 }
 

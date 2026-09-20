@@ -78,6 +78,18 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Rewrite legacy drive declarations (`drive o = m`) into the preferred
+    /// spelling (`drive o by m`), project-wide and losslessly: the `=`
+    /// becomes `by`, nothing else moves, refused if the design would
+    /// change.  Opt-in; nothing else rewrites a source.
+    MigrateDriveBy {
+        root: std::path::PathBuf,
+        /// Report what would change without writing.
+        #[arg(long)]
+        dry_run: bool,
+        #[arg(long)]
+        json: bool,
+    },
     /// Run the reference evaluator over a project for a number of ticks.
     Simulate {
         root: std::path::PathBuf,
@@ -144,6 +156,11 @@ fn main() -> anyhow::Result<()> {
             dry_run,
             json,
         } => exit_with(cli::migrate_unit_domain(&root, dry_run, json)),
+        Command::MigrateDriveBy {
+            root,
+            dry_run,
+            json,
+        } => exit_with(cli::migrate_drive_by(&root, dry_run, json)),
     }
 }
 

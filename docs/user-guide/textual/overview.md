@@ -22,7 +22,7 @@ mapping dimByTilt : Tilt -> Brightness
 dimByTilt(t) = t / (90 deg)
 
 output light : Brightness @interaction
-drive light = brightness
+drive light by brightness
 ```
 
 ## Current status
@@ -95,20 +95,20 @@ the items inside a component, the component's name). So:
 
 One semantic model, two ways of writing it:
 
-|                         | Studio                                            | Text                                                                 |
-| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
-| concept                 | sheet: name, value form, description              | `concept Tilt : Angle`, a `///` line above                           |
-| relationship            | sheet: reads, produces, domain; the formula field | `mapping f : A -> B @domain` then `f(a) = …`                         |
-| formula                 | the same expression language                      | the same expression language                                         |
-| timing domain           | the domain list                                   | `clock interaction`, `@interaction` on items                         |
-| physical output, driver | output node, _Drives_                             | `output light : Brightness @interaction`, `drive light = brightness` |
-| device                  | device sheet with pins                            | `device pwmLight : pwm_channel for light { pin 0 = D3 }`             |
-| component, ports        | component context, port sheet                     | `component Lamp { … requires … provides … param … }`                 |
-| instance, binding       | instance node, wire                               | `instance a : Lamp { … }`, `bind a.port = value`                     |
-| behavior group          | group box                                         | not in the text: kept in `.bdl/authoring.json`                       |
-| layout                  | the canvas                                        | not in the text: `ui/layout.json`                                    |
-| findings                | inspector, with spans                             | LSP diagnostics, with the same spans, in the right file              |
-| identity                | stable ids; names are labels                      | stable ids in `.bdl/identities.json`; names are how the text refers  |
+|                         | Studio                                            | Text                                                                  |
+| ----------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
+| concept                 | sheet: name, value form, description              | `concept Tilt : Angle`, a `///` line above                            |
+| relationship            | sheet: reads, produces, domain; the formula field | `mapping f : A -> B @domain` then `f(a) = …`                          |
+| formula                 | the same expression language                      | the same expression language                                          |
+| timing domain           | the domain list                                   | `clock interaction`, `@interaction` on items                          |
+| physical output, driver | output node, _Drives_                             | `output light : Brightness @interaction`, `drive light by brightness` |
+| device                  | device sheet with pins                            | `device pwmLight : pwm_channel for light { pin 0 = D3 }`              |
+| component, ports        | component context, port sheet                     | `component Lamp { … requires … provides … param … }`                  |
+| instance, binding       | instance node, wire                               | `instance a : Lamp { … }`, `bind a.port = value`                      |
+| behavior group          | group box                                         | not in the text: kept in `.bdl/authoring.json`                        |
+| layout                  | the canvas                                        | not in the text: `ui/layout.json`                                     |
+| findings                | inspector, with spans                             | LSP diagnostics, with the same spans, in the right file               |
+| identity                | stable ids; names are labels                      | stable ids in `.bdl/identities.json`; names are how the text refers   |
 
 The language server, the command line and Studio's compiler service (`bdld`)
 share one loader and one compiler, so a design gets the same verdict on every

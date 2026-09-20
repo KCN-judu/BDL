@@ -149,6 +149,32 @@ pub fn actions_for(snapshot: &AnalysisSnapshot, d: &SemanticDiagnostic) -> Vec<S
                 });
             }
         }
+        // the legacy drive spelling: the `=` token becomes `by`, nothing
+        // else in the declaration moves
+        "text.legacy_drive" => {
+            if let Some(SourceSpan {
+                origin: SourceOrigin::Document { document },
+                range,
+            }) = d.primary.source
+            {
+                let mut plan = SemanticEditPlan::new("Write `by`", snapshot.stamp());
+                plan.affected_entities.insert(entity);
+                plan.operations.push(SemanticOperation::Text {
+                    document,
+                    edits: vec![TextEdit::replace(range, "by")],
+                });
+                out.push(SemanticAction {
+                    id: SemanticActionId(format!("text.drive_by:{}:{}", document.0, range.start)),
+                    title: "Write `by`".into(),
+                    kind: ActionKind::QuickFix,
+                    applicability: Applicability::Ready,
+                    plan: Some(plan),
+                    explanation: "Replaces `=` with `by`, the preferred spelling of output driving: the output is driven by the relationship. The meaning does not change."
+                        .into(),
+                    addresses: vec![code.to_owned()],
+                });
+            }
+        }
         "output.clock_mismatch" => {
             if let (Some(m), Some(o)) = (entity.as_mapping(), drives_of(snapshot, entity)) {
                 let design = &snapshot.effective().design;

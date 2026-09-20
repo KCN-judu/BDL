@@ -15,7 +15,7 @@ const CONCEPTS: &str = "// Shared vocabulary.\nconcept Tilt : Angle\nconcept Bri
 
 const LAMP: &str = "component AdaptiveLamp {\n  use concept Tilt\n  use concept Brightness\n  use concept Gain\n  param clock main\n\n  requires tiltValue : Tilt @main\n  param gain : Gain\n\n  mapping dimByTilt : Tilt -> Brightness\n  dimByTilt(t) = t / (90 deg)\n\n  provides brightness : Brightness @main\n  brightness() = dimByTilt(tiltValue) * gain\n}\n";
 
-const MAIN: &str = "mapping tilt : Tilt @interaction\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\ninstance lampA : AdaptiveLamp { main = interaction, gain = 2 }\ninstance lampB : AdaptiveLamp { main = interaction, gain = 1 }\n\nmapping brightness : Brightness @interaction\nmapping mirror : Brightness @interaction\n\nbind lampA.tiltValue = tiltValue\nbind lampB.tiltValue = tiltValue\nbind brightness = lampA.brightness\nbind mirror = lampB.brightness\n\noutput light : Brightness @interaction\ndrive light = brightness\n";
+const MAIN: &str = "mapping tilt : Tilt @interaction\nmapping tiltValue : Tilt @interaction\ntiltValue() = tilt\n\ninstance lampA : AdaptiveLamp { main = interaction, gain = 2 }\ninstance lampB : AdaptiveLamp { main = interaction, gain = 1 }\n\nmapping brightness : Brightness @interaction\nmapping mirror : Brightness @interaction\n\nbind lampA.tiltValue = tiltValue\nbind lampB.tiltValue = tiltValue\nbind brightness = lampA.brightness\nbind mirror = lampB.brightness\n\noutput light : Brightness @interaction\ndrive light by brightness\n";
 
 struct Client {
     conn: Connection,
@@ -500,8 +500,8 @@ fn open_buffers_substitute_and_saves_reload_the_ground() {
         &mut c,
         &main_uri,
         &with_blank,
-        "drive light = brightness\n\n",
-        "drive light = brightness\n\n".len(),
+        "drive light by brightness\n\n",
+        "drive light by brightness\n\n".len(),
     );
     assert!(
         labels.contains(&"instance".into()) && labels.contains(&"bind".into()),

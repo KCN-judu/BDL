@@ -300,7 +300,7 @@ fn a_text_project_is_edited_over_the_wire_saved_as_source_and_reopened() {
     assert!(text.contains("mapping raw : () -> Tilt @main\n"), "{text}");
     assert!(!text.contains("mapping raw : Tilt"), "{text}");
     assert!(text.contains("output light : Brightness @main\n"), "{text}");
-    assert!(text.contains("drive light = brightness\n"), "{text}");
+    assert!(text.contains("drive light by brightness\n"), "{text}");
     let ids = std::fs::read_to_string(root.join(".bdl/identities.json")).unwrap();
     assert!(ids.contains("\"concept:Tilt\""), "{ids}");
 
@@ -880,7 +880,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
 
     // text that does not build, in the Code view
     let typed = format!(
-        "{}\n// a note\noutput light : Brightness\ndrive light =\n",
+        "{}\n// a note\noutput light : Brightness\ndrive light by\n",
         c.sources().files[0].text.trim_end()
     );
     let refused = c.source_edit("src/main.bdl", &typed);
@@ -960,7 +960,7 @@ fn unfinished_edits_survive_save_close_and_reopen() {
         panic!()
     };
     assert!(!saved.project.unwrap().dirty);
-    let fixed = typed.replace("drive light =\n", "drive light = level\n");
+    let fixed = typed.replace("drive light by\n", "drive light by level\n");
     let applied = c.source_edit("src/main.bdl", &fixed);
     assert!(applied.accepted, "{:?}", applied.sources);
     assert!(c.project().dirty);

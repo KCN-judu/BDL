@@ -593,33 +593,71 @@ pub fn simulate(
 pub fn migrate_unit_domain(root: &Path, dry_run: bool, json: bool) -> Result<(), Failure> {
     let report = bdl_text::make_unit_domains_explicit(root, dry_run)
         .map_err(|e| Failure::Open(e.to_string()))?;
+    report_migration(
+        &report,
+        dry_run,
+        json,
+        "signature",
+        "signatures",
+        "nothing to migrate: every relationship without inputs is written `() -> A`",
+        "`() -> A`",
+    );
+    Ok(())
+}
+
+/// `bdld migrate-drive-by`: the opt-in rewrite of legacy `drive o = m`
+/// into the preferred `drive o by m` (`bdl_text::make_drives_by`).
+pub fn migrate_drive_by(root: &Path, dry_run: bool, json: bool) -> Result<(), Failure> {
+    let report =
+        bdl_text::make_drives_by(root, dry_run).map_err(|e| Failure::Open(e.to_string()))?;
+    report_migration(
+        &report,
+        dry_run,
+        json,
+        "drive",
+        "drives",
+        "nothing to migrate: every drive is written `drive o by m`",
+        "`drive o by m`",
+    );
+    Ok(())
+}
+
+fn report_migration(
+    report: &bdl_text::UnitDomainMigration,
+    dry_run: bool,
+    json: bool,
+    noun: &str,
+    json_key: &str,
+    nothing: &str,
+    target: &str,
+) {
     if json {
         println!(
             "{}",
             serde_json::json!({
                 "dry_run": dry_run,
-                "signatures": report.total(),
+                json_key: report.total(),
                 "files": report
                     .files
                     .iter()
-                    .map(|(p, n)| serde_json::json!({ "path": p, "signatures": n }))
+                    .map(|(p, n)| serde_json::json!({ "path": p, json_key: n }))
                     .collect::<Vec<_>>(),
             })
         );
-        return Ok(());
+        return;
     }
     if report.files.is_empty() {
-        println!("nothing to migrate: every relationship without inputs is written `() -> A`");
-        return Ok(());
+        println!("{nothing}");
+        return;
     }
     for (path, n) in &report.files {
         println!(
-            "{path}: {n} signature(s) {}",
+            "{path}: {n} {noun}(s) {}",
             if dry_run { "would become" } else { "now" }
         );
     }
     println!(
-        "{} signature(s) in {} file(s) {}`() -> A`",
+        "{} {noun}(s) in {} file(s) {}{target}",
         report.total(),
         report.files.len(),
         if dry_run {
@@ -628,5 +666,4 @@ pub fn migrate_unit_domain(root: &Path, dry_run: bool, json: bool) -> Result<(),
             "rewritten to "
         }
     );
-    Ok(())
 }

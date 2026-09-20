@@ -582,7 +582,7 @@ instance lampA : AdaptiveLamp { main = interaction, gain = 2 }
 bind lampA.tiltValue = tiltValue
 
 output light : Brightness @interaction
-drive light = mirror
+drive light by mirror
 mapping mirror : Brightness @interaction
 mirror() = 1
 export lampA.brightness as lampOut

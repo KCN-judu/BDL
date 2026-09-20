@@ -336,6 +336,38 @@ pub fn make_unit_domains_explicit(
     root: &Path,
     dry_run: bool,
 ) -> Result<UnitDomainMigration, TextError> {
+    rewrite_sources(
+        root,
+        dry_run,
+        bdl_syntax::migrate::make_unit_domains_explicit,
+        "the explicit unit domains",
+    )
+}
+
+/// Rewrite every legacy `drive o = m` of the project's sources into the
+/// preferred `drive o by m` (docs/spec/textual-syntax.md §14.1): the `=`
+/// token becomes `by`, nothing else touched.  The same guards as
+/// [`make_unit_domains_explicit`]: opt-in, refused if the design or an
+/// identity would change, nothing written with `dry_run`.
+pub fn make_drives_by(root: &Path, dry_run: bool) -> Result<UnitDomainMigration, TextError> {
+    rewrite_sources(
+        root,
+        dry_run,
+        bdl_syntax::migrate::make_drives_by,
+        "the `by` drives",
+    )
+}
+
+/// One spelling migration over every source: `rewrite` gives a file's
+/// migrated text and how many sites it touched; the rewritten sources are
+/// built against the project's identity table before anything is written,
+/// and a system or a table that differs refuses the whole migration.
+fn rewrite_sources(
+    root: &Path,
+    dry_run: bool,
+    rewrite: fn(&str) -> (String, usize),
+    what: &str,
+) -> Result<UnitDomainMigration, TextError> {
     let manifest = persist::read_manifest(root)?;
     let files = crate::workspace::discover_sources(root)?;
     let table = crate::workspace::load_identities(root)?;
@@ -343,7 +375,7 @@ pub fn make_unit_domains_explicit(
     let mut report = UnitDomainMigration::default();
     let mut after_files = Vec::with_capacity(files.len());
     for f in &files {
-        let (text, n) = bdl_syntax::migrate::make_unit_domains_explicit(&f.text);
+        let (text, n) = rewrite(&f.text);
         if n > 0 {
             report.files.push((f.path.clone(), n));
         }
@@ -359,7 +391,7 @@ pub fn make_unit_domains_explicit(
     if after.system != before.system || after.table != before.table {
         return Err(TextError::Rewrite {
             path: root.to_path_buf(),
-            message: "the explicit unit domains would change the design or an identity; nothing was written".into(),
+            message: format!("{what} would change the design or an identity; nothing was written"),
         });
     }
     if after.faults.len() != before.faults.len() {

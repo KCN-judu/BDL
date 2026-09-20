@@ -163,11 +163,12 @@ pub fn output(design: &Design, o: &PhysicalOutput) -> String {
     doc(&o.description, s)
 }
 
-/// `drive output = driver` for a mapping that drives.
+/// `drive output by driver` for a mapping that drives — the preferred
+/// spelling; the legacy `=` is read, never written.
 pub fn drive(design: &Design, m: &MappingBlock) -> Option<String> {
     let o = m.drives?;
     Some(format!(
-        "drive {} = {}",
+        "drive {} by {}",
         output_name(design, o),
         ident(&m.name)
     ))

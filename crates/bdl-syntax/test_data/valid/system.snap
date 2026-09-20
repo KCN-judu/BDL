@@ -1,4 +1,4 @@
-Module@0..1297
+Module@0..1298
   LineComment@0..70 "// A system project in one file: the lamp, a component, two instances."
   Whitespace@70..72 "\n\n"
   ConceptDecl@72..92
@@ -134,449 +134,449 @@ Module@0..1297
     Whitespace@392..393 " "
     Ident@393..401 "optional"
   Whitespace@401..402 "\n"
-  DriveDecl@402..426
+  DriveDecl@402..427
     KwDrive@402..407 "drive"
     Whitespace@407..408 " "
     NameRef@408..413
       Ident@408..413 "light"
     Whitespace@413..414 " "
-    Eq@414..415 "="
-    Whitespace@415..416 " "
-    NameRef@416..426
-      Ident@416..426 "brightness"
-  Whitespace@426..428 "\n\n"
-  DeviceDecl@428..482
-    KwDevice@428..434 "device"
-    Whitespace@434..435 " "
-    Name@435..443
-      Ident@435..443 "pwmLight"
-    Whitespace@443..444 " "
-    Colon@444..445 ":"
-    Whitespace@445..446 " "
-    NameRef@446..457
-      Ident@446..457 "pwm_channel"
-    Whitespace@457..458 " "
-    Ident@458..461 "for"
-    Whitespace@461..462 " "
-    NameRef@462..467
-      Ident@462..467 "light"
-    Whitespace@467..468 " "
-    DeviceBody@468..482
-      LBrace@468..469 "{"
-      Whitespace@469..470 " "
-      PinFix@470..480
-        Ident@470..473 "pin"
-        Whitespace@473..474 " "
-        Number@474..475 "0"
-        Whitespace@475..476 " "
-        Eq@476..477 "="
-        Whitespace@477..478 " "
-        NameRef@478..480
-          Ident@478..480 "D3"
-      Whitespace@480..481 " "
-      RBrace@481..482 "}"
-  Whitespace@482..483 "\n"
-  DeviceDecl@483..506
-    KwDevice@483..489 "device"
-    Whitespace@489..490 " "
-    Name@490..493
-      Ident@490..493 "imu"
-    Whitespace@493..494 " "
-    Colon@494..495 ":"
-    Whitespace@495..496 " "
-    NameRef@496..506
-      Ident@496..506 "i2c_sensor"
-  Whitespace@506..508 "\n\n"
-  ComponentDecl@508..844
-    KwComponent@508..517 "component"
-    Whitespace@517..518 " "
-    Name@518..530
-      Ident@518..530 "AdaptiveLamp"
-    Whitespace@530..531 " "
-    ComponentBody@531..844
-      LBrace@531..532 "{"
-      Whitespace@532..535 "\n  "
-      UseDecl@535..551
-        KwUse@535..538 "use"
-        Whitespace@538..539 " "
-        KwConcept@539..546 "concept"
-        Whitespace@546..547 " "
-        NameRef@547..551
-          Ident@547..551 "Tilt"
-      Whitespace@551..554 "\n  "
-      UseDecl@554..576
-        KwUse@554..557 "use"
-        Whitespace@557..558 " "
-        KwConcept@558..565 "concept"
-        Whitespace@565..566 " "
-        NameRef@566..576
-          Ident@566..576 "Brightness"
-      Whitespace@576..579 "\n  "
-      UseDecl@579..595
-        KwUse@579..582 "use"
-        Whitespace@582..583 " "
-        KwConcept@583..590 "concept"
-        Whitespace@590..591 " "
-        NameRef@591..595
-          Ident@591..595 "Gain"
-      Whitespace@595..598 "\n  "
-      ParamClockDecl@598..614
-        KwParam@598..603 "param"
-        Whitespace@603..604 " "
-        KwClock@604..609 "clock"
-        Whitespace@609..610 " "
-        Name@610..614
-          Ident@610..614 "main"
-      Whitespace@614..617 "\n  "
-      ClockDecl@617..628
-        KwClock@617..622 "clock"
-        Whitespace@622..623 " "
-        Name@623..628
-          Ident@623..628 "blink"
-      Whitespace@628..632 "\n\n  "
-      PortDecl@632..663
-        KwRequires@632..640 "requires"
-        Whitespace@640..641 " "
-        Name@641..650
-          Ident@641..650 "tiltValue"
-        Whitespace@650..651 " "
-        Colon@651..652 ":"
-        Whitespace@652..653 " "
-        NamedType@653..657
-          NameRef@653..657
-            Ident@653..657 "Tilt"
-        Whitespace@657..658 " "
-        ClockTag@658..663
-          At@658..659 "@"
-          NameRef@659..663
-            Ident@659..663 "main"
-      Whitespace@663..666 "\n  "
-      PortDecl@666..683
-        KwParam@666..671 "param"
-        Whitespace@671..672 " "
-        Name@672..676
-          Ident@672..676 "gain"
-        Whitespace@676..677 " "
-        Colon@677..678 ":"
-        Whitespace@678..679 " "
-        NamedType@679..683
-          NameRef@679..683
-            Ident@679..683 "Gain"
-      Whitespace@683..687 "\n\n  "
-      MappingDecl@687..755
-        KwMapping@687..694 "mapping"
-        Whitespace@694..695 " "
-        Name@695..704
-          Ident@695..704 "dimByTilt"
-        Whitespace@704..705 " "
-        Colon@705..706 ":"
-        Whitespace@706..707 " "
-        FunctionType@707..725
-          NamedType@707..711
-            NameRef@707..711
-              Ident@707..711 "Tilt"
-          Whitespace@711..712 " "
-          Arrow@712..714 "->"
-          Whitespace@714..715 " "
-          NamedType@715..725
-            NameRef@715..725
-              Ident@715..725 "Brightness"
-        Whitespace@725..728 "\n  "
-        MappingDef@728..755
-          NameRef@728..737
-            Ident@728..737 "dimByTilt"
-          ParamList@737..740
-            LParen@737..738 "("
-            IdentPattern@738..739
-              Name@738..739
-                Ident@738..739 "t"
-            RParen@739..740 ")"
-          Whitespace@740..741 " "
-          Eq@741..742 "="
-          Whitespace@742..743 " "
-          BinaryExpr@743..755
-            NameExpr@743..744
-              NameRef@743..744
-                Ident@743..744 "t"
-            Whitespace@744..745 " "
-            Slash@745..746 "/"
-            Whitespace@746..747 " "
-            ParenExpr@747..755
-              LParen@747..748 "("
-              LiteralExpr@748..754
-                Number@748..750 "90"
-                Whitespace@750..751 " "
-                UnitSuffix@751..754
-                  Ident@751..754 "deg"
-              RParen@754..755 ")"
-      Whitespace@755..759 "\n\n  "
-      PortDecl@759..842
-        KwProvides@759..767 "provides"
-        Whitespace@767..768 " "
-        Name@768..778
-          Ident@768..778 "brightness"
-        Whitespace@778..779 " "
-        Colon@779..780 ":"
-        Whitespace@780..781 " "
-        NamedType@781..791
-          NameRef@781..791
-            Ident@781..791 "Brightness"
-        Whitespace@791..792 " "
-        ClockTag@792..797
-          At@792..793 "@"
-          NameRef@793..797
-            Ident@793..797 "main"
-        Whitespace@797..800 "\n  "
-        MappingDef@800..842
-          NameRef@800..810
-            Ident@800..810 "brightness"
-          ParamList@810..812
-            LParen@810..811 "("
-            RParen@811..812 ")"
-          Whitespace@812..813 " "
-          Eq@813..814 "="
-          Whitespace@814..815 " "
-          BinaryExpr@815..842
-            CallExpr@815..835
-              NameExpr@815..824
-                NameRef@815..824
-                  Ident@815..824 "dimByTilt"
-              ArgList@824..835
-                LParen@824..825 "("
-                NameExpr@825..834
-                  NameRef@825..834
-                    Ident@825..834 "tiltValue"
-                RParen@834..835 ")"
-            Whitespace@835..836 " "
-            Star@836..837 "*"
-            Whitespace@837..838 " "
-            NameExpr@838..842
-              NameRef@838..842
-                Ident@838..842 "gain"
-      Whitespace@842..843 "\n"
-      RBrace@843..844 "}"
-  Whitespace@844..846 "\n\n"
-  InstanceDecl@846..908
-    KwInstance@846..854 "instance"
-    Whitespace@854..855 " "
-    Name@855..860
-      Ident@855..860 "lampA"
-    Whitespace@860..861 " "
-    Colon@861..862 ":"
-    Whitespace@862..863 " "
-    NameRef@863..875
-      Ident@863..875 "AdaptiveLamp"
-    Whitespace@875..876 " "
-    InstanceBody@876..908
-      LBrace@876..877 "{"
-      Whitespace@877..878 " "
-      InstanceArg@878..896
-        NameRef@878..882
-          Ident@878..882 "main"
-        Whitespace@882..883 " "
-        Eq@883..884 "="
-        Whitespace@884..885 " "
-        NameExpr@885..896
-          NameRef@885..896
-            Ident@885..896 "interaction"
-      Comma@896..897 ","
-      Whitespace@897..898 " "
-      InstanceArg@898..906
-        NameRef@898..902
-          Ident@898..902 "gain"
-        Whitespace@902..903 " "
-        Eq@903..904 "="
-        Whitespace@904..905 " "
-        LiteralExpr@905..906
-          Number@905..906 "2"
-      Whitespace@906..907 " "
-      RBrace@907..908 "}"
-  Whitespace@908..909 "\n"
-  InstanceDecl@909..971
-    KwInstance@909..917 "instance"
-    Whitespace@917..918 " "
-    Name@918..923
-      Ident@918..923 "lampB"
-    Whitespace@923..924 " "
-    Colon@924..925 ":"
-    Whitespace@925..926 " "
-    NameRef@926..938
-      Ident@926..938 "AdaptiveLamp"
-    Whitespace@938..939 " "
-    InstanceBody@939..971
-      LBrace@939..940 "{"
-      Whitespace@940..941 " "
-      InstanceArg@941..959
-        NameRef@941..945
-          Ident@941..945 "main"
-        Whitespace@945..946 " "
-        Eq@946..947 "="
-        Whitespace@947..948 " "
-        NameExpr@948..959
-          NameRef@948..959
-            Ident@948..959 "interaction"
-      Comma@959..960 ","
-      Whitespace@960..961 " "
-      InstanceArg@961..969
-        NameRef@961..965
-          Ident@961..965 "gain"
-        Whitespace@965..966 " "
-        Eq@966..967 "="
-        Whitespace@967..968 " "
-        LiteralExpr@968..969
-          Number@968..969 "1"
-      Whitespace@969..970 " "
-      RBrace@970..971 "}"
-  Whitespace@971..973 "\n\n"
-  MappingDecl@973..1017
-    KwMapping@973..980 "mapping"
-    Whitespace@980..981 " "
-    Name@981..991
-      Ident@981..991 "brightness"
-    Whitespace@991..992 " "
-    Colon@992..993 ":"
-    Whitespace@993..994 " "
-    NamedType@994..1004
-      NameRef@994..1004
-        Ident@994..1004 "Brightness"
-    Whitespace@1004..1005 " "
-    ClockTag@1005..1017
-      At@1005..1006 "@"
-      NameRef@1006..1017
-        Ident@1006..1017 "interaction"
-  Whitespace@1017..1018 "\n"
-  MappingDecl@1018..1058
-    KwMapping@1018..1025 "mapping"
-    Whitespace@1025..1026 " "
-    Name@1026..1032
-      Ident@1026..1032 "mirror"
-    Whitespace@1032..1033 " "
-    Colon@1033..1034 ":"
-    Whitespace@1034..1035 " "
-    NamedType@1035..1045
-      NameRef@1035..1045
-        Ident@1035..1045 "Brightness"
-    Whitespace@1045..1046 " "
-    ClockTag@1046..1058
-      At@1046..1047 "@"
-      NameRef@1047..1058
-        Ident@1047..1058 "interaction"
-  Whitespace@1058..1059 "\n"
-  MappingDecl@1059..1093
-    KwMapping@1059..1066 "mapping"
-    Whitespace@1066..1067 " "
-    Name@1067..1071
-      Ident@1067..1071 "slow"
-    Whitespace@1071..1072 " "
-    Colon@1072..1073 ":"
-    Whitespace@1073..1074 " "
-    NamedType@1074..1084
-      NameRef@1074..1084
-        Ident@1074..1084 "Brightness"
-    Whitespace@1084..1085 " "
-    ClockTag@1085..1093
-      At@1085..1086 "@"
-      NameRef@1086..1093
-        Ident@1086..1093 "display"
-  Whitespace@1093..1095 "\n\n"
-  BindDecl@1095..1127
-    KwBind@1095..1099 "bind"
-    Whitespace@1099..1100 " "
-    BindEnd@1100..1115
-      NameRef@1100..1105
-        Ident@1100..1105 "lampA"
-      Dot@1105..1106 "."
-      NameRef@1106..1115
-        Ident@1106..1115 "tiltValue"
-    Whitespace@1115..1116 " "
-    Eq@1116..1117 "="
-    Whitespace@1117..1118 " "
-    BindEnd@1118..1127
-      NameRef@1118..1127
-        Ident@1118..1127 "tiltValue"
-  Whitespace@1127..1128 "\n"
-  BindDecl@1128..1160
-    KwBind@1128..1132 "bind"
-    Whitespace@1132..1133 " "
-    BindEnd@1133..1148
-      NameRef@1133..1138
-        Ident@1133..1138 "lampB"
-      Dot@1138..1139 "."
-      NameRef@1139..1148
-        Ident@1139..1148 "tiltValue"
-    Whitespace@1148..1149 " "
-    Eq@1149..1150 "="
-    Whitespace@1150..1151 " "
-    BindEnd@1151..1160
-      NameRef@1151..1160
-        Ident@1151..1160 "tiltValue"
-  Whitespace@1160..1161 "\n"
-  BindDecl@1161..1195
-    KwBind@1161..1165 "bind"
-    Whitespace@1165..1166 " "
-    BindEnd@1166..1176
-      NameRef@1166..1176
-        Ident@1166..1176 "brightness"
-    Whitespace@1176..1177 " "
-    Eq@1177..1178 "="
-    Whitespace@1178..1179 " "
-    BindEnd@1179..1195
-      NameRef@1179..1184
-        Ident@1179..1184 "lampA"
-      Dot@1184..1185 "."
-      NameRef@1185..1195
-        Ident@1185..1195 "brightness"
-  Whitespace@1195..1196 "\n"
-  BindDecl@1196..1226
-    KwBind@1196..1200 "bind"
-    Whitespace@1200..1201 " "
-    BindEnd@1201..1207
-      NameRef@1201..1207
-        Ident@1201..1207 "mirror"
-    Whitespace@1207..1208 " "
-    Eq@1208..1209 "="
-    Whitespace@1209..1210 " "
-    BindEnd@1210..1226
-      NameRef@1210..1215
-        Ident@1210..1215 "lampB"
-      Dot@1215..1216 "."
-      NameRef@1216..1226
-        Ident@1216..1226 "brightness"
-  Whitespace@1226..1227 "\n"
-  BindDecl@1227..1262
-    KwBind@1227..1231 "bind"
-    Whitespace@1231..1232 " "
-    BindEnd@1232..1236
-      NameRef@1232..1236
-        Ident@1232..1236 "slow"
-    Whitespace@1236..1237 " "
-    Eq@1237..1238 "="
-    Whitespace@1238..1239 " "
-    BindEnd@1239..1255
-      NameRef@1239..1244
-        Ident@1239..1244 "lampA"
-      Dot@1244..1245 "."
-      NameRef@1245..1255
-        Ident@1245..1255 "brightness"
-    Whitespace@1255..1256 " "
-    Ident@1256..1260 "init"
-    Whitespace@1260..1261 " "
-    LiteralExpr@1261..1262
-      Number@1261..1262 "0"
-  Whitespace@1262..1264 "\n\n"
-  ExportDecl@1264..1296
-    KwExport@1264..1270 "export"
-    Whitespace@1270..1271 " "
-    BindEnd@1271..1286
-      NameRef@1271..1276
-        Ident@1271..1276 "lampB"
-      Dot@1276..1277 "."
-      NameRef@1277..1286
-        Ident@1277..1286 "tiltValue"
-    Whitespace@1286..1287 " "
-    Ident@1287..1289 "as"
-    Whitespace@1289..1290 " "
-    Name@1290..1296
-      Ident@1290..1296 "tiltIn"
-  Whitespace@1296..1297 "\n"
+    Ident@414..416 "by"
+    Whitespace@416..417 " "
+    NameRef@417..427
+      Ident@417..427 "brightness"
+  Whitespace@427..429 "\n\n"
+  DeviceDecl@429..483
+    KwDevice@429..435 "device"
+    Whitespace@435..436 " "
+    Name@436..444
+      Ident@436..444 "pwmLight"
+    Whitespace@444..445 " "
+    Colon@445..446 ":"
+    Whitespace@446..447 " "
+    NameRef@447..458
+      Ident@447..458 "pwm_channel"
+    Whitespace@458..459 " "
+    Ident@459..462 "for"
+    Whitespace@462..463 " "
+    NameRef@463..468
+      Ident@463..468 "light"
+    Whitespace@468..469 " "
+    DeviceBody@469..483
+      LBrace@469..470 "{"
+      Whitespace@470..471 " "
+      PinFix@471..481
+        Ident@471..474 "pin"
+        Whitespace@474..475 " "
+        Number@475..476 "0"
+        Whitespace@476..477 " "
+        Eq@477..478 "="
+        Whitespace@478..479 " "
+        NameRef@479..481
+          Ident@479..481 "D3"
+      Whitespace@481..482 " "
+      RBrace@482..483 "}"
+  Whitespace@483..484 "\n"
+  DeviceDecl@484..507
+    KwDevice@484..490 "device"
+    Whitespace@490..491 " "
+    Name@491..494
+      Ident@491..494 "imu"
+    Whitespace@494..495 " "
+    Colon@495..496 ":"
+    Whitespace@496..497 " "
+    NameRef@497..507
+      Ident@497..507 "i2c_sensor"
+  Whitespace@507..509 "\n\n"
+  ComponentDecl@509..845
+    KwComponent@509..518 "component"
+    Whitespace@518..519 " "
+    Name@519..531
+      Ident@519..531 "AdaptiveLamp"
+    Whitespace@531..532 " "
+    ComponentBody@532..845
+      LBrace@532..533 "{"
+      Whitespace@533..536 "\n  "
+      UseDecl@536..552
+        KwUse@536..539 "use"
+        Whitespace@539..540 " "
+        KwConcept@540..547 "concept"
+        Whitespace@547..548 " "
+        NameRef@548..552
+          Ident@548..552 "Tilt"
+      Whitespace@552..555 "\n  "
+      UseDecl@555..577
+        KwUse@555..558 "use"
+        Whitespace@558..559 " "
+        KwConcept@559..566 "concept"
+        Whitespace@566..567 " "
+        NameRef@567..577
+          Ident@567..577 "Brightness"
+      Whitespace@577..580 "\n  "
+      UseDecl@580..596
+        KwUse@580..583 "use"
+        Whitespace@583..584 " "
+        KwConcept@584..591 "concept"
+        Whitespace@591..592 " "
+        NameRef@592..596
+          Ident@592..596 "Gain"
+      Whitespace@596..599 "\n  "
+      ParamClockDecl@599..615
+        KwParam@599..604 "param"
+        Whitespace@604..605 " "
+        KwClock@605..610 "clock"
+        Whitespace@610..611 " "
+        Name@611..615
+          Ident@611..615 "main"
+      Whitespace@615..618 "\n  "
+      ClockDecl@618..629
+        KwClock@618..623 "clock"
+        Whitespace@623..624 " "
+        Name@624..629
+          Ident@624..629 "blink"
+      Whitespace@629..633 "\n\n  "
+      PortDecl@633..664
+        KwRequires@633..641 "requires"
+        Whitespace@641..642 " "
+        Name@642..651
+          Ident@642..651 "tiltValue"
+        Whitespace@651..652 " "
+        Colon@652..653 ":"
+        Whitespace@653..654 " "
+        NamedType@654..658
+          NameRef@654..658
+            Ident@654..658 "Tilt"
+        Whitespace@658..659 " "
+        ClockTag@659..664
+          At@659..660 "@"
+          NameRef@660..664
+            Ident@660..664 "main"
+      Whitespace@664..667 "\n  "
+      PortDecl@667..684
+        KwParam@667..672 "param"
+        Whitespace@672..673 " "
+        Name@673..677
+          Ident@673..677 "gain"
+        Whitespace@677..678 " "
+        Colon@678..679 ":"
+        Whitespace@679..680 " "
+        NamedType@680..684
+          NameRef@680..684
+            Ident@680..684 "Gain"
+      Whitespace@684..688 "\n\n  "
+      MappingDecl@688..756
+        KwMapping@688..695 "mapping"
+        Whitespace@695..696 " "
+        Name@696..705
+          Ident@696..705 "dimByTilt"
+        Whitespace@705..706 " "
+        Colon@706..707 ":"
+        Whitespace@707..708 " "
+        FunctionType@708..726
+          NamedType@708..712
+            NameRef@708..712
+              Ident@708..712 "Tilt"
+          Whitespace@712..713 " "
+          Arrow@713..715 "->"
+          Whitespace@715..716 " "
+          NamedType@716..726
+            NameRef@716..726
+              Ident@716..726 "Brightness"
+        Whitespace@726..729 "\n  "
+        MappingDef@729..756
+          NameRef@729..738
+            Ident@729..738 "dimByTilt"
+          ParamList@738..741
+            LParen@738..739 "("
+            IdentPattern@739..740
+              Name@739..740
+                Ident@739..740 "t"
+            RParen@740..741 ")"
+          Whitespace@741..742 " "
+          Eq@742..743 "="
+          Whitespace@743..744 " "
+          BinaryExpr@744..756
+            NameExpr@744..745
+              NameRef@744..745
+                Ident@744..745 "t"
+            Whitespace@745..746 " "
+            Slash@746..747 "/"
+            Whitespace@747..748 " "
+            ParenExpr@748..756
+              LParen@748..749 "("
+              LiteralExpr@749..755
+                Number@749..751 "90"
+                Whitespace@751..752 " "
+                UnitSuffix@752..755
+                  Ident@752..755 "deg"
+              RParen@755..756 ")"
+      Whitespace@756..760 "\n\n  "
+      PortDecl@760..843
+        KwProvides@760..768 "provides"
+        Whitespace@768..769 " "
+        Name@769..779
+          Ident@769..779 "brightness"
+        Whitespace@779..780 " "
+        Colon@780..781 ":"
+        Whitespace@781..782 " "
+        NamedType@782..792
+          NameRef@782..792
+            Ident@782..792 "Brightness"
+        Whitespace@792..793 " "
+        ClockTag@793..798
+          At@793..794 "@"
+          NameRef@794..798
+            Ident@794..798 "main"
+        Whitespace@798..801 "\n  "
+        MappingDef@801..843
+          NameRef@801..811
+            Ident@801..811 "brightness"
+          ParamList@811..813
+            LParen@811..812 "("
+            RParen@812..813 ")"
+          Whitespace@813..814 " "
+          Eq@814..815 "="
+          Whitespace@815..816 " "
+          BinaryExpr@816..843
+            CallExpr@816..836
+              NameExpr@816..825
+                NameRef@816..825
+                  Ident@816..825 "dimByTilt"
+              ArgList@825..836
+                LParen@825..826 "("
+                NameExpr@826..835
+                  NameRef@826..835
+                    Ident@826..835 "tiltValue"
+                RParen@835..836 ")"
+            Whitespace@836..837 " "
+            Star@837..838 "*"
+            Whitespace@838..839 " "
+            NameExpr@839..843
+              NameRef@839..843
+                Ident@839..843 "gain"
+      Whitespace@843..844 "\n"
+      RBrace@844..845 "}"
+  Whitespace@845..847 "\n\n"
+  InstanceDecl@847..909
+    KwInstance@847..855 "instance"
+    Whitespace@855..856 " "
+    Name@856..861
+      Ident@856..861 "lampA"
+    Whitespace@861..862 " "
+    Colon@862..863 ":"
+    Whitespace@863..864 " "
+    NameRef@864..876
+      Ident@864..876 "AdaptiveLamp"
+    Whitespace@876..877 " "
+    InstanceBody@877..909
+      LBrace@877..878 "{"
+      Whitespace@878..879 " "
+      InstanceArg@879..897
+        NameRef@879..883
+          Ident@879..883 "main"
+        Whitespace@883..884 " "
+        Eq@884..885 "="
+        Whitespace@885..886 " "
+        NameExpr@886..897
+          NameRef@886..897
+            Ident@886..897 "interaction"
+      Comma@897..898 ","
+      Whitespace@898..899 " "
+      InstanceArg@899..907
+        NameRef@899..903
+          Ident@899..903 "gain"
+        Whitespace@903..904 " "
+        Eq@904..905 "="
+        Whitespace@905..906 " "
+        LiteralExpr@906..907
+          Number@906..907 "2"
+      Whitespace@907..908 " "
+      RBrace@908..909 "}"
+  Whitespace@909..910 "\n"
+  InstanceDecl@910..972
+    KwInstance@910..918 "instance"
+    Whitespace@918..919 " "
+    Name@919..924
+      Ident@919..924 "lampB"
+    Whitespace@924..925 " "
+    Colon@925..926 ":"
+    Whitespace@926..927 " "
+    NameRef@927..939
+      Ident@927..939 "AdaptiveLamp"
+    Whitespace@939..940 " "
+    InstanceBody@940..972
+      LBrace@940..941 "{"
+      Whitespace@941..942 " "
+      InstanceArg@942..960
+        NameRef@942..946
+          Ident@942..946 "main"
+        Whitespace@946..947 " "
+        Eq@947..948 "="
+        Whitespace@948..949 " "
+        NameExpr@949..960
+          NameRef@949..960
+            Ident@949..960 "interaction"
+      Comma@960..961 ","
+      Whitespace@961..962 " "
+      InstanceArg@962..970
+        NameRef@962..966
+          Ident@962..966 "gain"
+        Whitespace@966..967 " "
+        Eq@967..968 "="
+        Whitespace@968..969 " "
+        LiteralExpr@969..970
+          Number@969..970 "1"
+      Whitespace@970..971 " "
+      RBrace@971..972 "}"
+  Whitespace@972..974 "\n\n"
+  MappingDecl@974..1018
+    KwMapping@974..981 "mapping"
+    Whitespace@981..982 " "
+    Name@982..992
+      Ident@982..992 "brightness"
+    Whitespace@992..993 " "
+    Colon@993..994 ":"
+    Whitespace@994..995 " "
+    NamedType@995..1005
+      NameRef@995..1005
+        Ident@995..1005 "Brightness"
+    Whitespace@1005..1006 " "
+    ClockTag@1006..1018
+      At@1006..1007 "@"
+      NameRef@1007..1018
+        Ident@1007..1018 "interaction"
+  Whitespace@1018..1019 "\n"
+  MappingDecl@1019..1059
+    KwMapping@1019..1026 "mapping"
+    Whitespace@1026..1027 " "
+    Name@1027..1033
+      Ident@1027..1033 "mirror"
+    Whitespace@1033..1034 " "
+    Colon@1034..1035 ":"
+    Whitespace@1035..1036 " "
+    NamedType@1036..1046
+      NameRef@1036..1046
+        Ident@1036..1046 "Brightness"
+    Whitespace@1046..1047 " "
+    ClockTag@1047..1059
+      At@1047..1048 "@"
+      NameRef@1048..1059
+        Ident@1048..1059 "interaction"
+  Whitespace@1059..1060 "\n"
+  MappingDecl@1060..1094
+    KwMapping@1060..1067 "mapping"
+    Whitespace@1067..1068 " "
+    Name@1068..1072
+      Ident@1068..1072 "slow"
+    Whitespace@1072..1073 " "
+    Colon@1073..1074 ":"
+    Whitespace@1074..1075 " "
+    NamedType@1075..1085
+      NameRef@1075..1085
+        Ident@1075..1085 "Brightness"
+    Whitespace@1085..1086 " "
+    ClockTag@1086..1094
+      At@1086..1087 "@"
+      NameRef@1087..1094
+        Ident@1087..1094 "display"
+  Whitespace@1094..1096 "\n\n"
+  BindDecl@1096..1128
+    KwBind@1096..1100 "bind"
+    Whitespace@1100..1101 " "
+    BindEnd@1101..1116
+      NameRef@1101..1106
+        Ident@1101..1106 "lampA"
+      Dot@1106..1107 "."
+      NameRef@1107..1116
+        Ident@1107..1116 "tiltValue"
+    Whitespace@1116..1117 " "
+    Eq@1117..1118 "="
+    Whitespace@1118..1119 " "
+    BindEnd@1119..1128
+      NameRef@1119..1128
+        Ident@1119..1128 "tiltValue"
+  Whitespace@1128..1129 "\n"
+  BindDecl@1129..1161
+    KwBind@1129..1133 "bind"
+    Whitespace@1133..1134 " "
+    BindEnd@1134..1149
+      NameRef@1134..1139
+        Ident@1134..1139 "lampB"
+      Dot@1139..1140 "."
+      NameRef@1140..1149
+        Ident@1140..1149 "tiltValue"
+    Whitespace@1149..1150 " "
+    Eq@1150..1151 "="
+    Whitespace@1151..1152 " "
+    BindEnd@1152..1161
+      NameRef@1152..1161
+        Ident@1152..1161 "tiltValue"
+  Whitespace@1161..1162 "\n"
+  BindDecl@1162..1196
+    KwBind@1162..1166 "bind"
+    Whitespace@1166..1167 " "
+    BindEnd@1167..1177
+      NameRef@1167..1177
+        Ident@1167..1177 "brightness"
+    Whitespace@1177..1178 " "
+    Eq@1178..1179 "="
+    Whitespace@1179..1180 " "
+    BindEnd@1180..1196
+      NameRef@1180..1185
+        Ident@1180..1185 "lampA"
+      Dot@1185..1186 "."
+      NameRef@1186..1196
+        Ident@1186..1196 "brightness"
+  Whitespace@1196..1197 "\n"
+  BindDecl@1197..1227
+    KwBind@1197..1201 "bind"
+    Whitespace@1201..1202 " "
+    BindEnd@1202..1208
+      NameRef@1202..1208
+        Ident@1202..1208 "mirror"
+    Whitespace@1208..1209 " "
+    Eq@1209..1210 "="
+    Whitespace@1210..1211 " "
+    BindEnd@1211..1227
+      NameRef@1211..1216
+        Ident@1211..1216 "lampB"
+      Dot@1216..1217 "."
+      NameRef@1217..1227
+        Ident@1217..1227 "brightness"
+  Whitespace@1227..1228 "\n"
+  BindDecl@1228..1263
+    KwBind@1228..1232 "bind"
+    Whitespace@1232..1233 " "
+    BindEnd@1233..1237
+      NameRef@1233..1237
+        Ident@1233..1237 "slow"
+    Whitespace@1237..1238 " "
+    Eq@1238..1239 "="
+    Whitespace@1239..1240 " "
+    BindEnd@1240..1256
+      NameRef@1240..1245
+        Ident@1240..1245 "lampA"
+      Dot@1245..1246 "."
+      NameRef@1246..1256
+        Ident@1246..1256 "brightness"
+    Whitespace@1256..1257 " "
+    Ident@1257..1261 "init"
+    Whitespace@1261..1262 " "
+    LiteralExpr@1262..1263
+      Number@1262..1263 "0"
+  Whitespace@1263..1265 "\n\n"
+  ExportDecl@1265..1297
+    KwExport@1265..1271 "export"
+    Whitespace@1271..1272 " "
+    BindEnd@1272..1287
+      NameRef@1272..1277
+        Ident@1272..1277 "lampB"
+      Dot@1277..1278 "."
+      NameRef@1278..1287
+        Ident@1278..1287 "tiltValue"
+    Whitespace@1287..1288 " "
+    Ident@1288..1290 "as"
+    Whitespace@1290..1291 " "
+    Name@1291..1297
+      Ident@1291..1297 "tiltIn"
+  Whitespace@1297..1298 "\n"
 lowered: 3 concept(s), 5 mapping(s), 0 enum(s)
