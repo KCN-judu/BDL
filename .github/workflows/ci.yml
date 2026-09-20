@@ -18,6 +18,9 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # The generated RP2040 firmware must cross-compile in every Rust job;
+  # the test never skips for a missing target here.
+  BDL_REQUIRE_CROSS: "1"
 
 jobs:
   rust:
@@ -29,6 +32,8 @@ jobs:
         with:
           toolchain: "1.89.0"
           components: rustfmt, clippy
+          # the first embedded target (rust-toolchain.toml)
+          targets: thumbv6m-none-eabi
       # Caches the registry, git deps and the dependency artifacts under
       # target/ (workspace crates are rebuilt); sets CARGO_INCREMENTAL=0.
       - uses: Swatinem/rust-cache@v2
@@ -93,6 +98,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.89.0"
+          targets: thumbv6m-none-eabi
       # Dependencies only.  Caching the workspace crates as well was tried
       # (`cache-workspace-crates: true`, runs 2–4 in docs/project/ci.md):
       # a checkout gives every source a fresh mtime, so cargo's fingerprints

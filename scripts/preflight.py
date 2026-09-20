@@ -280,6 +280,20 @@ def rust_build_daemon(r: Runner) -> None:
     r.cmd(["cargo", "build", "-p", "bdl-daemon"])
 
 
+EMBASSY_RP = ROOT / "runtime" / "bdl-runtime-embassy-rp"
+
+
+def embedded_rp(r: Runner) -> None:
+    """The RP2040 binding crate sits outside the workspace (its HAL tree
+    stays out of the host lockfile): formatted, and clippy-clean for the
+    embedded triple with every feature."""
+    r.cmd(["cargo", "fmt", "--", "--check"], cwd=EMBASSY_RP, hint="cd runtime/bdl-runtime-embassy-rp && cargo fmt")
+    r.cmd(
+        ["cargo", "clippy", "--target", "thumbv6m-none-eabi", "--all-features", "--", "-D", "warnings"],
+        cwd=EMBASSY_RP,
+    )
+
+
 def flutter_deps(r: Runner) -> None:
     r.cmd(["flutter", "pub", "get"], cwd=STUDIO)
 
@@ -381,6 +395,7 @@ CHECKS: dict[str, Check] = {
         Check("rust-clippy", "Clippy (-D warnings)", rust_clippy, ("cargo",)),
         Check("rust-test", "Rust tests (workspace)", rust_test, ("cargo",)),
         Check("rust-build-daemon", "Build bdld", rust_build_daemon, ("cargo",)),
+        Check("embedded-rp", "RP2040 adapter crate (fmt, clippy for thumbv6m)", embedded_rp, ("cargo", "rustup")),
         Check("flutter-deps", "flutter pub get", flutter_deps, ("flutter",)),
         Check("dart-format", "Dart formatting", dart_format, ("dart",)),
         Check("flutter-analyze", "flutter analyze", flutter_analyze, ("flutter",)),
@@ -417,6 +432,7 @@ PROFILES: dict[str, list[str]] = {
         "screenshots",
         "l10n",
         "rust-clippy",
+        "embedded-rp",
         "rust-test",
         "flutter-deps",
         "dart-format",
@@ -436,6 +452,7 @@ PROFILES: dict[str, list[str]] = {
         "screenshots",
         "l10n",
         "rust-clippy",
+        "embedded-rp",
         "rust-test",
     ],
     "flutter-ci": ["flutter-deps", "dart-format", "flutter-analyze", "studio-l10n-generated", "flutter-test"],
