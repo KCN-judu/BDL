@@ -4810,7 +4810,7 @@ msgid "**Completion.** Press **⌃Space** and a list opens at the cursor with wh
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:113
-msgid "_The completion pop-up inside the component's body, after `dimByTilt(`: what can go here, from the compiler service, best first._"
+msgid "_The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first._"
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:116
@@ -4818,7 +4818,7 @@ msgid "**Hover.** Rest the pointer on a name and a card says what it is: its dec
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:124
-msgid "_The hover card over `dimByTilt` where the component's body applies it: its declaration, its role, its state._"
+msgid "_The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state._"
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:127

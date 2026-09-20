@@ -12,28 +12,27 @@
   compiler service's candidates for this spot: a concept after `:`, a clock
   after `@`, the items allowed at an item start, and inside a formula the
   inputs, other relationships (a rule as a call, a Source or a value as a name),
-  locals, the equation library, units after a number — ↑/↓, Return or Tab,
-  Esc, re-asked as you type. Resting the pointer on a name shows its card
+  locals, the equation library, units after a number — ↑/↓, Return or Tab, Esc,
+  re-asked as you type. Resting the pointer on a name shows its card
   (declaration, what it produces, its state, its role). ⌘-click or F12 goes to
-  where a name is declared, in this file or another; ⇧F12 lists every place
-  that names it under the editor. _Format_ in the file bar or ⌥⇧F lays the
-  file out the canonical way as one edit, keeping the caret's line and column;
-  a file that does not parse cleanly is left as it is. The formula field's
-  hover now also names a relationship, an equation of the library and a
-  parameter's concept.
-- **One answer to _what is at a position_**: `bdl_ide::navigation` —
-  `name_at`, `hover_at`, `definition_at`, `references_at` over a document and
+  where a name is declared, in this file or another; ⇧F12 lists every place that
+  names it under the editor. _Format_ in the file bar or ⌥⇧F lays the file out
+  the canonical way as one edit, keeping the caret's line and column; a file
+  that does not parse cleanly is left as it is. The formula field's hover now
+  also names a relationship, an equation of the library and a parameter's
+  concept.
+- **One answer to _what is at a position_**: `bdl_ide::navigation` — `name_at`,
+  `hover_at`, `definition_at`, `references_at` over a document and
   `formula_name_at`, `formula_hover_at` over a relationship's draft — resolved
   through the projection map and the elaborator's input environment, never by
-  spelling. Among the entities a name site stands for, the authored one wins
-  (a port over the flattened copies it backs) and a flattened copy is
-  presented by its authored name. The language server's hover, definition and
-  references, the daemon's formula hover and the Code view's queries all call
-  these.
-- **Completion** in a document finds the enclosing formula body by role
-  (a name anchor inside it no longer hides it), delegates a definition line
-  whose body has not built to the formula engine for the relationship the line
-  defines, and offers no equation after a number.
+  spelling. Among the entities a name site stands for, the authored one wins (a
+  port over the flattened copies it backs) and a flattened copy is presented by
+  its authored name. The language server's hover, definition and references, the
+  daemon's formula hover and the Code view's queries all call these.
+- **Completion** in a document finds the enclosing formula body by role (a name
+  anchor inside it no longer hides it), delegates a definition line whose body
+  has not built to the formula engine for the relationship the line defines, and
+  offers no equation after a number.
 - **Protocol 0.22**: `SourceCompletion`, `SourceHover`, `SourceDefinition`,
   `SourceReferences`, `FormatSource` over a source file's text as typed, on the
   overlay `SemanticTokens` set; `DraftHoverResponse.equation`. The daemon
@@ -48,25 +47,26 @@
 
 ## Compatibility and migration
 
-- Designers: nothing to do. The new keys are listed in the user guide's
-  keyboard reference; nothing that worked changed meaning.
+- Designers: nothing to do. The new keys are listed in the user guide's keyboard
+  reference; nothing that worked changed meaning.
 - Project files: nothing.
 - Protocol clients: protocol **0.22**, additive — five requests, three
   responses, one field. A 0.21 client is unaffected.
 - LSP clients: hover over whitespace, a keyword or a number now answers nothing
-  (it answered the enclosing item's card before); hover over an equation of
-  the library answers its shape and summary; every hover carries its range.
-- Developers: `bdl_ide::{name_at, hover_at, definition_at, references_at,
-  definition_sites, reference_sites, formula_name_at, formula_hover_at,
-  NameAt, HoverAt, HoverContent}`; `bdl_lsp::convert::hover_at`;
-  `Session::{source_completion, source_hover, source_definition,
-  source_references, format_source, draft_hover → Option<HoverAt>}`; Studio's
-  `CompletionState.mappingId` is nullable and `path` names a source pop-up,
-  `HoverState.path` a source hover; the actions `SourceCompletionRequested`,
-  `SourceHoverRequested`, `SourceDefinitionRequested`,
-  `SourceReferencesRequested`, `ReferencesDismissed`, `FormatSourceRequested`
-  and their `…Received` answers; the effects `CompleteSource`, `HoverSource`,
-  `DefineSource`, `ReferencesSource`, `FormatSource`.
+  (it answered the enclosing item's card before); hover over an equation of the
+  library answers its shape and summary; every hover carries its range.
+- Developers: `bdl_ide::name_at`, `hover_at`, `definition_at`, `references_at`,
+  `definition_sites`, `reference_sites`, `formula_name_at`, `formula_hover_at`,
+  `NameAt`, `HoverAt`, `HoverContent`; `bdl_lsp::convert::hover_at`;
+  `Session::source_completion`, `source_hover`, `source_definition`,
+  `source_references`, `format_source` (and `draft_hover` answers an
+  `Option<HoverAt>`); Studio's `CompletionState.mappingId` is nullable and
+  `path` names a source pop-up, `HoverState.path` a source hover; the actions
+  `SourceCompletionRequested`, `SourceHoverRequested`,
+  `SourceDefinitionRequested`, `SourceReferencesRequested`,
+  `ReferencesDismissed`, `FormatSourceRequested` and their `…Received` answers;
+  the effects `CompleteSource`, `HoverSource`, `DefineSource`,
+  `ReferencesSource`, `FormatSource`.
 
 ## Evidence
 

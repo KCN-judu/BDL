@@ -110,7 +110,7 @@ never a guess.
 
 ![A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.](../assets/studio/code-completion.png)
 
-_The completion pop-up inside the component's body, after `dimByTilt(`: what can
+_The completion pop-up inside the component's body, after dimByTilt(: what can
 go here, from the compiler service, best first._
 
 **Hover.** Rest the pointer on a name and a card says what it is: its
@@ -121,7 +121,7 @@ number or a unit there is no card. Typing or moving away hides it.
 
 ![A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.](../assets/studio/code-hover.png)
 
-_The hover card over `dimByTilt` where the component's body applies it: its
+_The hover card over dimByTilt where the component's body applies it: its
 declaration, its role, its state._
 
 **Go to definition.** **⌘-click** a name, or put the cursor on it and press

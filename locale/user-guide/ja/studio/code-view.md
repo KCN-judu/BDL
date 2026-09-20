@@ -59,13 +59,13 @@ The editor asks Studio's compiler service the same questions a code editor with 
 
 ![A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.](../../../../docs/user-guide/assets/studio/code-completion.png)
 
-_The completion pop-up inside the component's body, after `dimByTilt(`: what can go here, from the compiler service, best first._
+_The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first._
 
 **Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it.
 
 ![A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.](../../../../docs/user-guide/assets/studio/code-hover.png)
 
-_The hover card over `dimByTilt` where the component's body applies it: its declaration, its role, its state._
+_The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state._
 
 **Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy.
 
