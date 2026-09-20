@@ -1238,3 +1238,72 @@ judgment, not a new verdict.
 page; choosing a board's tick and periods here (`bdld compile` only); a
 Sources-first view for a design with many Sources and few devices — if a real
 project asks, it is a filter on the same cards, not a second list.
+
+## 15. Deploy: build, flash, observe
+
+The Deploy page ends where the product begins: the board running the design.
+This section records what was studied before the Firmware section was drawn,
+what it borrows, what it refuses, and what the first study will test.
+
+**The task.** _Put this design on this board, and try it._ The facts, ranked:
+(1) the next thing to do — one action, or the one blocker in its way; (2)
+whether the last image is still this design; (3) what a build or flash is doing
+now; (4) which board a flash would reach; (5) the developer's facts (crate,
+command, compiler output).
+
+**Where each fact lives.**
+
+| Fact                      | Home                     | Encoding                                                                                                                                                                   |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| where the designer stands | the section header       | _Deployment · Build · Flash · Observe_: done steps ✓ in the settled colour, the current step in the primary ink and semibold, the rest tertiary — position, then colour    |
+| the next thing to do      | the card, right          | exactly one primary (accent-filled) button — _Build for …_, _Build again_, _Flash_ — or none, when a sentence stands in its way; secondary actions are links               |
+| the one blocker           | the card, left           | an orange dot (the _open_ state, never red: an incomplete deployment is not wrong), the daemon's sentence and its remedy; a design blocker offers the Design page          |
+| the image's freshness     | the card's first line    | green dot + _Firmware built at hh:mm_ when current; orange dot + _from an earlier design or deployment_ when stale, with Flash withdrawn — the sentence, not a badge       |
+| progress                  | the card while running   | a spinner, the stage as a word, the daemon's message, the count of crates, an indeterminate accent bar (cargo gives no total), _Stop_                                      |
+| a failure                 | the card, red            | the stage's sentence and the remedy in product words; the compiler's words only behind _Details_, which opens itself on a failure                                          |
+| the reachable board       | under the image          | none: orange dot, _No board is reachable._ and the BOOTSEL line; one: green dot and its name; several: the sentence and a pop-up — the choice is shown as a choice         |
+| the outcome               | under the board          | _Flashed to … at hh:mm_, the daemon's restart sentence, and _Try it: act on pressed; lamp should follow the design_ — the design's own names, never a claim of correctness |
+| the developer's facts     | _Details_ (a disclosure) | crate, command, target, image, compiler output in the code face; closed unless a build failed                                                                              |
+
+**Design validity and deployment feasibility, kept apart.** The verdict line is
+about the board and says so (§14); the Firmware section reads the daemon's
+ordered blockers, whose first entries are the design's own problems — so a
+semantically invalid design with a feasible placement reads _Feasible on …_
+above and _Not ready to build — lit is not fully defined_ below, with a link to
+the Design page. Neither line ever says "ready" for the other's reason.
+
+**What was studied.**
+
+| Tool        | What was looked at                                                                                                                          | Borrowed                                                                                                                                                     | Rejected, and why                                                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| KiCad       | the schematic apart from the board; footprints assigned per symbol; ERC as markers with severities and exclusions; annotation before layout | the logical/physical split as two pages with one object on each side; a readiness gate before the physical step (annotation → our blockers); one-object rows | a marker list the designer sifts; the "?" designator as the readiness cue — BDL's blockers are sentences with a remedy, one at a time, ordered by the daemon                        |
+| Simulink    | the hardware board in the model's configuration; _Build, Deploy & Start_; the Diagnostic Viewer's stages and Fix links                      | stages as the unit of progress and of failure; a fix beside the message; the build reported per stage, not per line                                          | the configuration dialog as the home of the board (BDL's board is a page-level choice, a session preference); a viewer separate from the page — the stage lives where the action is |
+| LabVIEW     | the target as a node in the project tree; deploy on Run; _Deployment Progress_; build specifications for a standalone image                 | the deploy as one gesture from the same window; an explicit "deployed and running" outcome                                                                   | the target as a container of the design's files (BDL's design is target-free); build specifications as a second artifact the user manages                                           |
+| Arduino IDE | one board+port selector; Verify and Upload as two buttons; the console below; auto-detection of the board with a fallback dialog            | a detected device named in the flow; the port question asked only when it matters; Upload as the primary verb after a successful build                       | Verify as a separate top-level button (the build is the gate to the flash, not a peer); a raw console as the primary feedback — the console is _Details_                            |
+| PlatformIO  | a status-bar toolbar (Build, Upload, Monitor, env selector); auto-detected upload port; errors to the Problems panel via a matcher          | build and upload as a pair; auto-detection with an override                                                                                                  | a toolbar of peers (five equal buttons is what §25 of the brief forbids); the env selector's config file (BDL's target is a pop-up on the page)                                     |
+| Blender     | a modal job's progress bar with a cancel in the status bar; the report line coloured by kind; header text for a modal operator              | a running job as a bar with a cancel; one line of state in the state's colour; the modal state shown where the eye is                                        | the status bar as the home of the job — the build belongs to the page whose task it completes; the status line keeps its four clusters                                              |
+
+**What BDL keeps that none of them has.** A device is _for_ one design object
+and never on the design; a stale image is the daemon's judgment by content, not
+a timestamp; the blocker is ordered by the compiler's own layers (design →
+deployment → firmware) so the page never explains a firmware refusal before a
+design error; and no button is ever disabled without the sentence that says why
+— there is either the action or the reason.
+
+**Tested before the study** (`apps/studio/test/firmware_test.dart`,
+`firmware_e2e_test.dart`; the daemon's `firmware_e2e.rs`): every state above,
+the choice between two boards never made for the tester, the stale image never
+offered Flash, the trial sentence in the design's names.
+
+**What the first study asks** (`docs/project/ux-study-pico.md`): whether the
+path Design → Deploy is discoverable; whether the tester sees why the button's
+pin is absent from Design; whether _active low_ is read correctly; whether the
+Provider and Realization rows are read as the same shape without conflating a
+Source and an output; whether the verdict, the blocker, Build's readiness and
+Flash's BOOTSEL line are actionable; whether the status line and the verdict are
+read as two answers or one.
+
+**Not built.** A progress fraction (cargo has no total); a board picture
+lighting the pin the flash would use; the Nano's `avrdude`; a probe-first path;
+the runtime shipped with an installed Studio (a checkout or `BDL_RUNTIME_DIR`
+today).

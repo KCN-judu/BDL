@@ -367,9 +367,16 @@ The manifest's `adapter.build` carries the exact command for the board.
 
 The crate's `.cargo/config.toml` carries the linker inputs and the
 MSRV-respecting resolver (`incompatible-rust-versions = "fallback"`: the HAL's
-newest dependencies may want a newer compiler than the toolchain pins);
-`rust-toolchain.toml` lists the target. The host bridge is
-`cargo build --features host` as before.
+newest dependencies may want a newer compiler than the toolchain pins); the
+generated crate's own `rust-toolchain.toml` (ADR-0039) pins the channel the
+runtime was written against and lists the target, so a crate built where the
+project lives — outside any checkout — gets both from `rustup` on first use. The
+host bridge is `cargo build --features host` as before.
+
+`bdld build <project> --target rp2040_pico` runs this build itself, stage by
+stage, writes the UF2 beside the ELF and records what it built from;
+`bdld flash` puts the image on the board; Studio's Deploy page does the same
+through the protocol ([firmware-build.md](firmware-build.md)).
 
 ## Evidence
 
