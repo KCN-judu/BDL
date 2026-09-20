@@ -153,7 +153,7 @@ class _Start extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               context.l10n.waitingForTheCompilerTheStatusLine,
-              style: TextStyle(fontSize: 11, color: t.textTertiary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
             ),
           ),
       ],
@@ -179,7 +179,7 @@ class _Recent extends StatelessWidget {
           child: state.recent.isEmpty
               ? Text(
                   context.l10n.projectsYouOpenWillAppearHere,
-                  style: TextStyle(fontSize: 12, color: t.textTertiary),
+                  style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
                 )
               : ListView(
                   children: [
@@ -243,7 +243,7 @@ class _RecentRowState extends State<_RecentRow> {
                 Text(
                   r.name,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: MacType.body,
                     fontWeight: FontWeight.w500,
                     color: missing ? t.textTertiary : t.textPrimary,
                   ),
@@ -254,12 +254,15 @@ class _RecentRowState extends State<_RecentRow> {
                     Flexible(
                       child: Text(
                         r.path,
-                        style: TextStyle(fontSize: 11, color: t.textTertiary),
+                        style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (missing)
-                      Text(context.l10n.notFound, style: TextStyle(fontSize: 11, color: t.open)),
+                      Text(
+                        context.l10n.notFound,
+                        style: TextStyle(fontSize: MacType.secondary, color: t.open),
+                      ),
                   ],
                 ),
               ],
@@ -283,7 +286,7 @@ class _RecentRowState extends State<_RecentRow> {
                     relativeTime(r.lastOpened, l10n: context.l10n),
                     textAlign: TextAlign.right,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: MacType.secondary,
                       color: t.textTertiary,
                       fontFeatures: kTabularFigures,
                     ),

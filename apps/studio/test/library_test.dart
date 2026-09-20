@@ -566,7 +566,7 @@ void main() {
       library: library(),
     );
     for (final (locale, concepts, sources, sensor) in [
-      (const Locale('en'), 'CONCEPTS', 'SOURCES', 'Temperature Input'),
+      (const Locale('en'), 'Concepts', 'Sources', 'Temperature Input'),
       (const Locale('zh'), '概念', '来源', '温度输入'),
       (const Locale('ja'), 'コンセプト', '入力元', '温度入力'),
     ]) {
@@ -586,8 +586,9 @@ void main() {
       await t.pump();
       expect(find.byKey(const ValueKey('library-section-concept')), findsOneWidget);
       expect(find.byKey(const ValueKey('library-section-source')), findsOneWidget);
-      expect(find.text(concepts.toUpperCase()), findsOneWidget);
-      expect(find.text(sources.toUpperCase()), findsOneWidget);
+      // section titles in sentence case, like every panel header
+      expect(find.text(concepts), findsOneWidget);
+      expect(find.text(sources), findsOneWidget);
       expect(find.text(sensor), findsOneWidget);
       // the row names the value form the preset suggests, never a
       // signature over a concept nobody has chosen

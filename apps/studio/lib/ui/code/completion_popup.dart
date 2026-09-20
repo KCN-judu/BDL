@@ -39,7 +39,7 @@ class CompletionPopup extends StatelessWidget {
               padding: const EdgeInsets.all(6),
               child: Text(
                 context.l10n.looking,
-                style: TextStyle(fontSize: 11, color: t.textTertiary),
+                style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
               ),
             )
           : ListView.builder(
@@ -65,7 +65,7 @@ class CompletionPopup extends StatelessWidget {
                             width: 8,
                             child: Text(
                               selected ? '▸' : '',
-                              style: TextStyle(fontSize: 10, color: t.textSecondary),
+                              style: TextStyle(fontSize: MacType.caption, color: t.textSecondary),
                             ),
                           ),
                           Expanded(
@@ -73,13 +73,16 @@ class CompletionPopup extends StatelessWidget {
                               item.label,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: MacType.code,
                                 fontFamily: 'Menlo',
                                 color: t.textPrimary,
                               ),
                             ),
                           ),
-                          Text(item.kind, style: TextStyle(fontSize: 10, color: t.textTertiary)),
+                          Text(
+                            item.kind,
+                            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                          ),
                           if (item.resultingType.isNotEmpty)
                             SizedBox(
                               width: 72,
@@ -87,7 +90,10 @@ class CompletionPopup extends StatelessWidget {
                                 item.resultingType,
                                 textAlign: TextAlign.right,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10, color: t.textSecondary),
+                                style: TextStyle(
+                                  fontSize: MacType.secondary,
+                                  color: t.textSecondary,
+                                ),
                               ),
                             ),
                         ],

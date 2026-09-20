@@ -80,7 +80,7 @@ class _MacTextFieldState extends State<MacTextField> {
         cursorColor: t.accent,
         cursorWidth: 1.5,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: MacType.body,
           height: 1.3,
           color: t.textPrimary,
           fontFamily: widget.monospace ? 'Menlo' : null,
@@ -93,7 +93,7 @@ class _MacTextFieldState extends State<MacTextField> {
           focusedBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           hintText: widget.hint,
-          hintStyle: TextStyle(fontSize: 13, color: t.textTertiary),
+          hintStyle: TextStyle(fontSize: MacType.body, color: t.textTertiary),
         ),
       ),
     );
@@ -200,7 +200,7 @@ class _MacButtonState extends State<MacButton> {
               child: Text(
                 widget.label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: MacType.body,
                   fontWeight: primary ? FontWeight.w600 : FontWeight.w400,
                   color: fg,
                 ),

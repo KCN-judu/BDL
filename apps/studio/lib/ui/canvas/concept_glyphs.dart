@@ -192,7 +192,10 @@ class ConceptChip extends StatelessWidget {
         spacing: 5,
         children: [
           SocketGlyph.of(concept, t, size: 11),
-          Text(concept.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+          Text(
+            concept.name,
+            style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+          ),
           if (onRemove != null)
             IconButton(
               icon: const Icon(Icons.close, size: 12),

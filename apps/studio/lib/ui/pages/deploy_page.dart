@@ -168,7 +168,7 @@ class _Verdict extends StatelessWidget {
           child: Text(
             text,
             key: const ValueKey('deploy-verdict'),
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color),
+            style: TextStyle(fontSize: MacType.body, fontWeight: FontWeight.w500, color: color),
           ),
         ),
       ],
@@ -193,7 +193,7 @@ class _Devices extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: MacMetrics.gap,
@@ -253,7 +253,7 @@ class _DeviceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final id = device.id.toInt();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final fixed = {for (final f in device.fixedPins) f.index: f.resource};
     return Container(
       padding: const EdgeInsets.all(12),
@@ -306,7 +306,10 @@ class _DeviceCard extends StatelessWidget {
               rows: [
                 for (final r in device.requirements)
                   [
-                    Text(r.label, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                    Text(
+                      r.label,
+                      style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+                    ),
                     Text(r.capability, style: small),
                     Row(
                       spacing: MacMetrics.gap,
@@ -351,7 +354,7 @@ class _RealizationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final l10n = context.l10n;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final r = realization;
     if (r == null) {
       return Text(l10n.chooseABoardToSeeRealizations, style: small);
@@ -410,7 +413,10 @@ class _RealizationRow extends StatelessWidget {
         if (!ok && r.message.isNotEmpty)
           Text(
             r.explanation.isEmpty ? r.message : '${r.message} ${r.explanation}',
-            style: TextStyle(fontSize: 11, color: notChosen ? t.textSecondary : t.error),
+            style: TextStyle(
+              fontSize: MacType.secondary,
+              color: notChosen ? t.textSecondary : t.error,
+            ),
           ),
       ],
     );
@@ -430,7 +436,10 @@ class _Judgment extends StatelessWidget {
       spacing: 2,
       children: [
         Icon(holds ? Icons.check : Icons.close, size: 12, color: holds ? t.settled : t.error),
-        Text(label, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+        Text(
+          label,
+          style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+        ),
       ],
     );
   }
@@ -458,7 +467,7 @@ class _Result extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final a = analysis;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -476,7 +485,11 @@ class _Result extends StatelessWidget {
                   Text(
                     '→ ${pl.resource}',
                     key: ValueKey('placement-${pl.deviceId}-${pl.index}'),
-                    style: TextStyle(fontFamily: 'Menlo', fontSize: 12, color: t.textPrimary),
+                    style: TextStyle(
+                      fontFamily: 'Menlo',
+                      fontSize: MacType.code,
+                      color: t.textPrimary,
+                    ),
                   ),
                 ],
             ],
@@ -517,7 +530,7 @@ class _DeadEndView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     String device(int id) =>
         project.devices.where((d) => d.id.toInt() == id).map((d) => d.name).firstOrNull ?? '?';
     final req = analysis.requirements
@@ -548,7 +561,11 @@ class _DeadEndView extends StatelessWidget {
           Text(
             headline ?? context.l10n.couldNotPlaceOf(what, who),
             key: const ValueKey('dead-end-headline'),
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+            style: TextStyle(
+              fontSize: MacType.body,
+              fontWeight: FontWeight.w600,
+              color: t.textPrimary,
+            ),
           ),
           if (explanation != null && explanation.isNotEmpty) Text(explanation, style: small),
           switch (deadEnd.whichReason()) {
@@ -565,7 +582,10 @@ class _DeadEndView extends StatelessWidget {
               rows: [
                 for (final c in deadEnd.blocked.candidates)
                   [
-                    Text(c.resource, style: TextStyle(fontFamily: 'Menlo', fontSize: 12)),
+                    Text(
+                      c.resource,
+                      style: TextStyle(fontFamily: 'Menlo', fontSize: MacType.code),
+                    ),
                     Text(
                       'held by ${device(c.heldByDeviceId.toInt())} '
                       '(${analysis.requirements.where((r) => r.deviceId == c.heldByDeviceId && r.index == c.heldByIndex).map((r) => r.label).firstOrNull ?? '#${c.heldByIndex}'})',

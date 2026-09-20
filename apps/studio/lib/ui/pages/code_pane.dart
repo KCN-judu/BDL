@@ -488,7 +488,7 @@ class _CodePaneState extends State<CodePane> {
                               keyboardType: TextInputType.multiline,
                               textAlignVertical: TextAlignVertical.top,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: MacType.code,
                                 fontFamily: 'Menlo',
                                 height: _lineHeight / 12,
                                 color: t.textPrimary,
@@ -627,11 +627,11 @@ class _FileBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
+          // The file's name is the pane's title — the same 11 semibold
+          // secondary every panel header wears, so the chrome never competes
+          // with the source text below it.
           if (files.length <= 1)
-            Text(
-              sources.openPath ?? '',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
-            )
+            Text(sources.openPath ?? '', style: Theme.of(context).textTheme.titleSmall)
           else
             SizedBox(
               width: 240,
@@ -698,7 +698,7 @@ class _References extends StatelessWidget {
                           ? context.l10n.nothingNames(references.title)
                           : context.l10n.placesNaming(rows.length, references.title),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MacType.body,
                         fontWeight: FontWeight.w600,
                         color: t.textPrimary,
                       ),
@@ -735,7 +735,7 @@ class _References extends StatelessWidget {
                                 '${l.path}:${_lineOf(sources.file(l.path)?.text ?? '', l.start)}',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: MacType.secondary,
                                   color: t.textSecondary,
                                   fontFeatures: const [FontFeature.tabularFigures()],
                                 ),
@@ -747,7 +747,7 @@ class _References extends StatelessWidget {
                                 _lineText(sources.file(l.path)?.text ?? '', l.start),
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: MacType.code,
                                   fontFamily: 'Menlo',
                                   color: t.textPrimary,
                                 ),
@@ -792,7 +792,10 @@ class _Banner extends StatelessWidget {
           Icon(icon, size: 16, color: t.textSecondary),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+            child: Text(
+              text,
+              style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+            ),
           ),
         ],
       ),
@@ -848,7 +851,7 @@ class _Diagnostics extends StatelessWidget {
                           '${_lineOf(text, d.start)}',
                           textAlign: TextAlign.right,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: MacType.secondary,
                             color: t.textSecondary,
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
@@ -859,7 +862,7 @@ class _Diagnostics extends StatelessWidget {
                         child: Text(
                           localizedMessage(context.l10n, d.code, d.message),
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: t.textPrimary),
+                          style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
                         ),
                       ),
                     ],

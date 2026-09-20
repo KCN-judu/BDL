@@ -129,10 +129,16 @@ class MacLink extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[Icon(icon, size: 16, color: t.accent), const SizedBox(width: 8)],
-            Text(label, style: TextStyle(fontSize: 13, color: t.accent)),
+            Text(
+              label,
+              style: TextStyle(fontSize: MacType.body, color: t.accent),
+            ),
             if (shortcut != null) ...[
               const SizedBox(width: 10),
-              Text(shortcut!, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+              Text(
+                shortcut!,
+                style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+              ),
             ],
           ],
         ),

@@ -249,8 +249,8 @@ class SourceSheetFormState extends State<SourceSheetForm> {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final l10n = context.l10n;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
-    final mono = TextStyle(fontSize: 12, fontFamily: 'Menlo', color: t.textPrimary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    final mono = TextStyle(fontSize: MacType.code, fontFamily: 'Menlo', color: t.textPrimary);
     final sourceName = _sourceName.text.trim();
     // The preview is the objects that will be committed, nothing else: a
     // concept only on the new-concept path; the Source over the chosen

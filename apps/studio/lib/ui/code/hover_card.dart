@@ -29,18 +29,32 @@ class HoverCard extends StatelessWidget {
         children: [
           Text(
             card.title,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+            style: TextStyle(
+              fontSize: MacType.body,
+              fontWeight: FontWeight.w600,
+              color: t.textPrimary,
+            ),
           ),
           if (card.signature.isNotEmpty)
             Text(
               card.signature,
-              style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary),
+              style: TextStyle(
+                fontSize: MacType.secondary,
+                fontFamily: 'Menlo',
+                color: t.textSecondary,
+              ),
             ),
           if (card.representation.isNotEmpty)
-            Text(card.representation, style: TextStyle(fontSize: 11, color: t.textPrimary)),
+            Text(
+              card.representation,
+              style: TextStyle(fontSize: MacType.secondary, color: t.textPrimary),
+            ),
           Text(
             card.status,
-            style: TextStyle(fontSize: 11, color: card.open ? t.open : t.textSecondary),
+            style: TextStyle(
+              fontSize: MacType.secondary,
+              color: card.open ? t.open : t.textSecondary,
+            ),
           ),
           for (final d in card.details)
             Row(
@@ -49,15 +63,24 @@ class HoverCard extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 80,
-                  child: Text(d.label, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+                  child: Text(
+                    d.label,
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+                  ),
                 ),
                 Expanded(
-                  child: Text(d.value, style: TextStyle(fontSize: 11, color: t.textPrimary)),
+                  child: Text(
+                    d.value,
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textPrimary),
+                  ),
                 ),
               ],
             ),
           if (card.explanation.isNotEmpty)
-            Text(card.explanation, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+            Text(
+              card.explanation,
+              style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+            ),
         ],
       ),
     );

@@ -267,7 +267,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
                         ? context.l10n.waitingForTheCompilerToReadThe
                         : context.l10n.theTextCannotBeReadAsA,
                     key: const ValueKey('composer-out-of-sync'),
-                    style: TextStyle(fontSize: 11, color: t.textSecondary),
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
                   ),
                 ),
                 if (widget.onEditAsText != null)
@@ -314,7 +314,10 @@ class _FormulaComposerState extends State<FormulaComposer> {
             dashed: true,
             onTap: enabled ? () => _select(n.id) : null,
             semantics: 'empty slot${n.hasExpected() ? ', expects ${n.expected.description}' : ''}',
-            child: Text('?', style: TextStyle(fontSize: 12, color: t.textSecondary)),
+            child: Text(
+              '?',
+              style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+            ),
           ),
         ];
       case 'reference':
@@ -428,7 +431,10 @@ class _FormulaComposerState extends State<FormulaComposer> {
             error: hasError,
             onTap: enabled ? () => _select(n.id) : null,
             semantics: n.name,
-            child: Text(n.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+            child: Text(
+              n.name,
+              style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+            ),
           ),
         ];
       case 'unary':
@@ -518,7 +524,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
             semantics: '${n.name}, edited as text',
             child: Text(
               n.text,
-              style: TextStyle(fontSize: 12, fontFamily: 'Menlo', color: t.textPrimary),
+              style: TextStyle(fontSize: MacType.code, fontFamily: 'Menlo', color: t.textPrimary),
             ),
           ),
         ];
@@ -534,7 +540,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
 /// so what the formula itself binds is told apart from what the design
 /// provides.
 TextStyle _nameStyle(MacTokens t, {required bool local}) => TextStyle(
-  fontSize: 12,
+  fontSize: MacType.body,
   color: t.textPrimary,
   fontStyle: local ? FontStyle.italic : FontStyle.normal,
 );
@@ -635,7 +641,7 @@ class _Glyph extends StatelessWidget {
     final label = Text(
       text,
       style: TextStyle(
-        fontSize: keyword ? 12 : 13,
+        fontSize: MacType.body,
         color: error ? t.error : t.textSecondary,
         fontWeight: selected || keyword ? FontWeight.w600 : FontWeight.w400,
       ),
@@ -812,10 +818,16 @@ class _EmptySlot extends StatelessWidget {
           dashed: true,
           onTap: onTap,
           semantics: 'empty slot, $hint',
-          child: Text('?', style: TextStyle(fontSize: 12, color: t.textSecondary)),
+          child: Text(
+            '?',
+            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+          ),
         ),
         Expanded(
-          child: Text(hint, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+          child: Text(
+            hint,
+            style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+          ),
         ),
       ],
     );
@@ -883,7 +895,7 @@ class _SlotPanelState extends State<_SlotPanel> {
     final t = MacTokens.of(context);
     final s = widget.slot;
     final n = widget.node;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final units = s?.units ?? const <pb.UnitCandidate>[];
     final unitSymbol = _unit ?? (units.isEmpty ? null : units.first.symbol);
     return Column(
@@ -898,7 +910,7 @@ class _SlotPanelState extends State<_SlotPanel> {
               child: Text(
                 s == null ? context.l10n.askingWhatFitsHere : s.explanation,
                 key: const ValueKey('slot-explanation'),
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             if (s != null && s.technical.isNotEmpty)
@@ -914,7 +926,11 @@ class _SlotPanelState extends State<_SlotPanel> {
             child: Text(
               s.technical,
               key: const ValueKey('slot-technical'),
-              style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary),
+              style: TextStyle(
+                fontSize: MacType.secondary,
+                fontFamily: 'Menlo',
+                color: t.textSecondary,
+              ),
             ),
           ),
         if (n != null && n.hasActual() && !_isSlot)
@@ -1214,13 +1230,16 @@ class _CandidateRow extends StatelessWidget {
       child: Row(
         spacing: MacMetrics.gap,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+          Text(
+            label,
+            style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+          ),
           Expanded(
             child: Text(
               detail,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: t.textSecondary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
             ),
           ),
         ],

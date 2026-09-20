@@ -93,7 +93,7 @@ class FormRow extends StatelessWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 11, color: t.textSecondary),
+                style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
               ),
             ),
           ),
@@ -249,7 +249,7 @@ class MacSegmented<T> extends StatelessWidget {
                   child: Text(
                     e.value,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: MacType.secondary,
                       fontWeight: e.key == value ? FontWeight.w600 : FontWeight.w400,
                       color: t.textPrimary,
                     ),
@@ -357,7 +357,7 @@ class MacDropdown<T> extends StatelessWidget {
                         child: Text(
                           label(i),
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, color: t.textPrimary),
+                          style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
                         ),
                       ),
                     ],
@@ -368,7 +368,7 @@ class MacDropdown<T> extends StatelessWidget {
                     : Text(
                         detailOf!(i),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: MacType.secondary,
                           color: t.textSecondary,
                           fontFeatures: kTabularFigures,
                         ),
@@ -403,7 +403,7 @@ class MacDropdown<T> extends StatelessWidget {
                     value == null ? (hint ?? '') : label(value as T),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: MacType.body,
                       color: value == null ? t.textTertiary : t.textPrimary,
                     ),
                   ),
@@ -414,14 +414,17 @@ class MacDropdown<T> extends StatelessWidget {
                     child: Text(
                       detailOf!(value as T),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MacType.secondary,
                         color: t.textSecondary,
                         fontFeatures: kTabularFigures,
                       ),
                     ),
                   ),
               ] else
-                Text(hint ?? '', style: TextStyle(fontSize: 13, color: t.textSecondary)),
+                Text(
+                  hint ?? '',
+                  style: TextStyle(fontSize: MacType.body, color: t.textSecondary),
+                ),
               Icon(Icons.unfold_more, size: 14, color: t.textSecondary),
             ],
           ),
@@ -561,7 +564,7 @@ class DiagnosticCard extends StatelessWidget {
                 if (showMessage)
                   Text(
                     localizedMessage(context.l10n, d.code, d.message),
-                    style: TextStyle(fontSize: 12, color: t.textPrimary),
+                    style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
                   ),
                 if (excerpt != null)
                   Container(
@@ -572,13 +575,23 @@ class DiagnosticCard extends StatelessWidget {
                     ),
                     child: Text(
                       excerpt,
-                      style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textPrimary),
+                      style: TextStyle(
+                        fontSize: MacType.secondary,
+                        fontFamily: 'Menlo',
+                        color: t.textPrimary,
+                      ),
                     ),
                   ),
                 if (d.explanation.isNotEmpty)
-                  Text(d.explanation, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+                  Text(
+                    d.explanation,
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                  ),
                 for (final f in d.fixes)
-                  Text(f, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+                  Text(
+                    f,
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                  ),
               ],
             ),
           ),
@@ -661,7 +674,12 @@ class ExplainLine extends StatelessWidget {
     final t = MacTokens.of(context);
     return SelectableText(
       text,
-      style: TextStyle(fontSize: 11, fontFamily: 'Menlo', color: t.textSecondary, height: 1.35),
+      style: TextStyle(
+        fontSize: MacType.secondary,
+        fontFamily: 'Menlo',
+        color: t.textSecondary,
+        height: 1.35,
+      ),
     );
   }
 }

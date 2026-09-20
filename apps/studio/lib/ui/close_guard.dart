@@ -51,7 +51,7 @@ class CloseGuardSheet extends StatelessWidget {
             children: [
               Text(
                 context.l10n.unsavedChangesExplanation(what),
-                style: TextStyle(fontSize: 12, color: t.textSecondary),
+                style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
               ),
               const SizedBox(height: 18),
               Row(

@@ -55,7 +55,10 @@ class _PreferencesBodyState extends State<_PreferencesBody> {
           child: LanguageDropdown(dispatch: widget.dispatch),
         ),
         const SizedBox(height: 8),
-        Text(l10n.languageHelp, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+        Text(
+          l10n.languageHelp,
+          style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+        ),
       ],
     );
   }

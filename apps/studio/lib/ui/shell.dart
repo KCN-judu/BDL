@@ -241,18 +241,29 @@ class _StatusLine extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.project;
     final conn = state.connection;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary, fontFeatures: kTabularFigures);
-    final dim = TextStyle(fontSize: 11, color: t.textTertiary);
+    final small = TextStyle(
+      fontSize: MacType.secondary,
+      color: t.textSecondary,
+      fontFeatures: kTabularFigures,
+    );
+    final dim = TextStyle(fontSize: MacType.secondary, color: t.textTertiary);
 
     // Facts are cells separated by whitespace, never by punctuation.  The
     // leading cell is what a glance is for: is my work saved.  Counts are an
     // overview of what the canvas already shows; the compiler's revision
     // counter and protocol version are not designer facts (Explain has the
     // revision).
-    final facts = <Widget>[];
+    // Four clusters, read left to right at the pace a glance needs: the
+    // document (is my work saved), the design (what is there, what is still
+    // open), the deployment (target-relative), the compiler.  Within a
+    // cluster the facts sit a group gap apart; clusters a section gap.
+    final document = <Widget>[];
+    final design = <Widget>[];
+    final deployment = <Widget>[];
     if (p == null) {
-      facts.add(Text(context.l10n.noProject, style: small));
+      document.add(Text(context.l10n.noProject, style: small));
     } else {
+      final facts = design;
       // *Not yet defined* is exactly what the canvas draws dashed: a Source
       // reads nothing and has no formula, and nothing is missing from it
       // (docs/user-guide/concepts/incomplete-designs.md); it is a count of
@@ -264,7 +275,14 @@ class _StatusLine extends StatelessWidget {
               .where((m) => m.status == pb.MappingStatus.MAPPING_STATUS_INVALID)
               .length ??
           0;
-      facts.add(Text(p.dirty ? context.l10n.edited : context.l10n.saved, style: small));
+      // The document's state leads, in the primary colour: the one fact
+      // every glance is for.
+      document.add(
+        Text(
+          p.dirty ? context.l10n.edited : context.l10n.saved,
+          style: small.copyWith(color: t.textPrimary),
+        ),
+      );
       facts.add(Text(context.l10n.conceptsCount(p.concepts.length), style: small));
       facts.add(Text(context.l10n.mappingsCount(p.mappings.length), style: small));
       if (sources > 0) {
@@ -310,7 +328,7 @@ class _StatusLine extends StatelessWidget {
       final deploy = state.editor.deploy;
       if (deploy.analysis case final d? when d.revision == p.revision) {
         final board = deploy.target?.name ?? d.target;
-        facts.add(switch (d.status) {
+        deployment.add(switch (d.status) {
           pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE => Text(
             context.l10n.feasibleOnBoard(board),
             style: small.copyWith(color: t.settled),
@@ -353,7 +371,13 @@ class _StatusLine extends StatelessWidget {
             // the row scrolls rather than clips or overflows.
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Row(spacing: MacMetrics.gapGroup, children: facts),
+              child: Row(
+                spacing: MacMetrics.gapSection,
+                children: [
+                  for (final cluster in [document, design, deployment])
+                    if (cluster.isNotEmpty) Row(spacing: MacMetrics.gapGroup, children: cluster),
+                ],
+              ),
             ),
           ),
           if (state.editor.pendingRequests > 0)
@@ -471,7 +495,7 @@ class _PageButton extends StatelessWidget {
                 label,
                 softWrap: false,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: MacType.caption,
                   color: color,
                   fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                 ),

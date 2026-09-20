@@ -118,7 +118,7 @@ class _Blockers extends StatelessWidget {
     final blockers = simulationBlockers(state);
     final notes = simulationNotes(state);
     if (blockers.isEmpty && notes.isEmpty) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     String nameOf(int mappingId) => state.mapping(mappingId)?.name ?? '?';
     return Container(
       padding: const EdgeInsets.fromLTRB(MacMetrics.gapGroup, 10, MacMetrics.gapGroup, 10),
@@ -143,7 +143,10 @@ class _Blockers extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: MacMetrics.gapTight,
                     children: [
-                      Text(blockerSentence(context.l10n, b), style: const TextStyle(fontSize: 12)),
+                      Text(
+                        blockerSentence(context.l10n, b),
+                        style: const TextStyle(fontSize: MacType.body),
+                      ),
                       if (b.conceptId != null || b.mappingId != null)
                         MacLink(
                           label: context.l10n.show,
@@ -175,7 +178,7 @@ class _Blockers extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: MacMetrics.gapTight,
                     children: [
-                      Text(n.message, style: const TextStyle(fontSize: 12)),
+                      Text(n.message, style: const TextStyle(fontSize: MacType.body)),
                       if (n.explanation.isNotEmpty) Text(n.explanation, style: small),
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -222,7 +225,7 @@ class _InputsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final inputs = simulationInputs(project);
     final functions = [
       for (final m in project.mappings)
@@ -279,7 +282,7 @@ class _InputControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final repr = value != null && value!.hasSemantic() ? value!.semantic.repr : null;
     final id = mapping.id.toInt();
     final Widget control;
@@ -405,7 +408,7 @@ class _InputControl extends StatelessWidget {
                 Flexible(
                   child: Text(
                     mapping.name,
-                    style: TextStyle(fontSize: 12, color: t.textPrimary),
+                    style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -441,7 +444,7 @@ class _DomainsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     return InspectorSection(
       title: context.l10n.timingDomains,
       children: [
@@ -455,7 +458,9 @@ class _DomainsSection extends StatelessWidget {
             child: Row(
               spacing: MacMetrics.gap,
               children: [
-                Expanded(child: Text('↻ ${c.name}', style: TextStyle(fontSize: 12))),
+                Expanded(
+                  child: Text('↻ ${c.name}', style: TextStyle(fontSize: MacType.body)),
+                ),
                 Text('every', style: small),
                 SizedBox(
                   width: 48,
@@ -525,14 +530,18 @@ class _Controls extends StatelessWidget {
           const SizedBox(width: MacMetrics.gap),
           Text(
             context.l10n.tickN(sim.nextTick),
-            style: TextStyle(fontSize: 12, color: t.textSecondary, fontFeatures: kTabularFigures),
+            style: TextStyle(
+              fontSize: MacType.secondary,
+              color: t.textSecondary,
+              fontFeatures: kTabularFigures,
+            ),
           ),
           const SizedBox(width: MacMetrics.gap),
           Expanded(
             child: Text(
               line,
               key: const ValueKey('simulation-line'),
-              style: TextStyle(fontSize: 12, color: color),
+              style: TextStyle(fontSize: MacType.body, color: color),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -587,7 +596,7 @@ class _Trace extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.flat!;
     final sim = state.editor.simulation;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     // One column per Source and per value (the role the daemon states):
     // a rule's value at a tick is a function, never a sample.
     final columns = [
@@ -606,8 +615,12 @@ class _Trace extends StatelessWidget {
         child: Text(context.l10n.noTicksEvaluatedYet, style: TextStyle(color: t.textTertiary)),
       );
     }
-    final mono = TextStyle(fontFamily: 'Menlo', fontSize: 12, color: t.textPrimary);
-    final head = TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.textSecondary);
+    final mono = TextStyle(fontFamily: 'Menlo', fontSize: MacType.code, color: t.textPrimary);
+    final head = TextStyle(
+      fontSize: MacType.secondary,
+      fontWeight: FontWeight.w600,
+      color: t.textSecondary,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.all(MacMetrics.gapGroup),
       child: SingleChildScrollView(
@@ -680,8 +693,12 @@ class _Probe extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.flat!;
     final sim = state.editor.simulation;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
-    final value = TextStyle(fontSize: 13, color: t.textPrimary, fontFeatures: kTabularFigures);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    final value = TextStyle(
+      fontSize: MacType.body,
+      color: t.textPrimary,
+      fontFeatures: kTabularFigures,
+    );
     Widget body;
     switch (state.editor.selection) {
       case NoSelection() ||
@@ -831,7 +848,7 @@ class _Probe extends StatelessWidget {
                   child: driverName == null
                       ? Text(
                           context.l10n.noneYet,
-                          style: TextStyle(fontSize: 13, color: t.textTertiary),
+                          style: TextStyle(fontSize: MacType.body, color: t.textTertiary),
                         )
                       : MacLink(
                           label: driverName,
@@ -879,7 +896,11 @@ class _Series extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final cell = TextStyle(fontSize: 12, fontFeatures: kTabularFigures, color: t.textPrimary);
+    final cell = TextStyle(
+      fontSize: MacType.body,
+      fontFeatures: kTabularFigures,
+      color: t.textPrimary,
+    );
     final rows = [
       for (final s in sim.samples)
         if (sampleOf(s, mappingId) case final v?)
@@ -891,7 +912,7 @@ class _Series extends StatelessWidget {
         if (rows.isEmpty)
           Text(
             context.l10n.notEvaluatedAtAnyTickYet,
-            style: TextStyle(fontSize: 11, color: t.textSecondary),
+            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
           )
         else
           MacTable(

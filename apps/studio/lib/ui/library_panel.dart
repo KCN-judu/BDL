@@ -300,7 +300,7 @@ class _LibraryPanelState extends State<LibraryPanel> {
             padding: const EdgeInsets.fromLTRB(12, MacMetrics.gapTight, 12, MacMetrics.gap),
             child: Text(
               [for (final l in library.libraries) '${l.name} ${l.version}'].join(' · '),
-              style: TextStyle(fontSize: 10, color: t.textTertiary),
+              style: TextStyle(fontSize: MacType.caption, color: t.textTertiary),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -316,13 +316,11 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(fontSize: 10, letterSpacing: 0.6, color: t.textTertiary),
-      ),
+      // A section title as the sidebar's: 11 semibold, secondary — sentence
+      // case, no letter-spacing (docs/architecture/studio-ui.md §3).
+      child: Text(title, style: Theme.of(context).textTheme.titleSmall),
     );
   }
 }
@@ -377,9 +375,11 @@ class _ItemRow extends StatelessWidget {
           Expanded(child: Text(itemName(l10n, item), overflow: TextOverflow.ellipsis)),
           Text(
             itemWord(l10n, item),
+            // The unit column: secondary, tabular — read to act on, so never
+            // below 11 or tertiary.
             style: TextStyle(
-              fontSize: 10,
-              color: t.textTertiary,
+              fontSize: MacType.secondary,
+              color: t.textSecondary,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -489,7 +489,7 @@ class ItemDragFeedback extends StatelessWidget {
               child: Text(
                 item.creates.map((o) => o.name).join(' · '),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: MacType.nodeTitle,
                   fontWeight: FontWeight.w600,
                   color: t.textPrimary,
                   decoration: TextDecoration.none,

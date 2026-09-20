@@ -69,7 +69,10 @@ Future<T?> showMacSheet<T>(
                   Text(title_, style: Theme.of(ctx).textTheme.titleMedium),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                    ),
                   ],
                   const SizedBox(height: 14),
                   content,
@@ -268,7 +271,7 @@ class _NewConceptFormState extends State<_NewConceptForm> {
           _Kind.quantity => context.l10n.roundSocketAMeasuredQuantityItsUnit,
           _Kind.boolean => context.l10n.diamondSocketOnOrOffActivatesContexts,
           _Kind.count => context.l10n.squareSocketAWholeNumberOccurrencesSteps,
-        }, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+        }, style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary)),
         const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -421,7 +424,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
                   _inputs.map(_conceptName).join(', '),
                   _conceptName(_output!),
                 ),
-          style: TextStyle(fontSize: 11, color: t.textSecondary),
+          style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
         ),
         const SizedBox(height: 18),
         Row(
@@ -473,7 +476,10 @@ class _ConceptToggle extends StatelessWidget {
             spacing: 6,
             children: [
               SocketGlyph.of(concept, t, size: 11),
-              Text(concept.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+              Text(
+                concept.name,
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+              ),
             ],
           ),
         ),
@@ -554,7 +560,7 @@ class _NewClockFormState extends State<_NewClockForm> {
         if (_taken)
           Text(
             context.l10n.domainAlreadyExists(name),
-            style: TextStyle(fontSize: 11, color: t.open),
+            style: TextStyle(fontSize: MacType.secondary, color: t.open),
           ),
         const SizedBox(height: 18),
         Row(
@@ -665,7 +671,7 @@ class _NewOutputFormState extends State<_NewOutputForm> {
                 Expanded(
                   child: Text(
                     context.l10n.theDesignIsIncompleteUntilSomethingDrives,
-                    style: TextStyle(fontSize: 11, color: t.textSecondary),
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
                   ),
                 ),
               ],

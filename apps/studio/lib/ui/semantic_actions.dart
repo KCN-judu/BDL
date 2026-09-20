@@ -73,7 +73,7 @@ class FixItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final x = action;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: MacMetrics.gapTight,
@@ -93,7 +93,10 @@ class FixItem extends StatelessWidget {
             labelOf: (i) => x.options[i].label,
             onChanged: (i) => dispatch(SemanticActionApplied(actionId: x.id, option: i)),
           ),
-          _ => Text(x.title, style: TextStyle(fontSize: 12, color: t.textTertiary)),
+          _ => Text(
+            x.title,
+            style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+          ),
         },
         if (x.applicability == pb.ActionApplicability.ACTION_APPLICABILITY_BLOCKED)
           Text(context.l10n.notPossibleYet(x.reason), style: small)
@@ -103,7 +106,7 @@ class FixItem extends StatelessWidget {
             x.applicability != pb.ActionApplicability.ACTION_APPLICABILITY_BLOCKED)
           Text(
             x.invalidation[0].toUpperCase() + x.invalidation.substring(1),
-            style: TextStyle(fontSize: 11, color: t.textTertiary),
+            style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
           ),
       ],
     );

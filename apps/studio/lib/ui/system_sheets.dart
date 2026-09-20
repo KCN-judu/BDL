@@ -54,7 +54,10 @@ class SheetScrim extends StatelessWidget {
               Text(title, style: Theme.of(context).textTheme.titleMedium),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
-                Text(subtitle!, style: TextStyle(fontSize: 12, color: t.textSecondary)),
+                Text(
+                  subtitle!,
+                  style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                ),
               ],
               const SizedBox(height: 14),
               Flexible(child: child),
@@ -97,7 +100,7 @@ class _PendingBindSheetState extends State<PendingBindSheet> {
     final t = MacTokens.of(context);
     final b = widget.bind;
     final s = widget.state;
-    final small = TextStyle(fontSize: 12, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final from = endLabel(s, b.source);
     final to = endLabel(s, b.destination);
     final existing = b.replaces == null ? null : s.binding(b.replaces!);
@@ -181,8 +184,8 @@ class ExtractionSheet extends StatelessWidget {
     final t = MacTokens.of(context);
     final x = extraction;
     final p = x.preview;
-    final small = TextStyle(fontSize: 12, color: t.textSecondary);
-    final body = TextStyle(fontSize: 12, color: t.textPrimary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    final body = TextStyle(fontSize: MacType.body, color: t.textPrimary);
     final project = state.project;
     String conceptName(pb.PreviewPortView port) =>
         project?.concepts.where((c) => c.id == port.concept).firstOrNull?.name ?? '';
@@ -216,7 +219,10 @@ class ExtractionSheet extends StatelessWidget {
             if (x.error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(x.error!, style: TextStyle(fontSize: 12, color: t.error)),
+                child: Text(
+                  x.error!,
+                  style: TextStyle(fontSize: MacType.body, color: t.error),
+                ),
               ),
             if (p == null && x.error == null)
               Text(context.l10n.workingOutTheBoundary, style: small)
@@ -376,7 +382,10 @@ class _Heading extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(note, style: TextStyle(fontSize: 11, color: t.textTertiary)),
+            child: Text(
+              note,
+              style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+            ),
           ),
         ],
       ),
@@ -403,9 +412,15 @@ class _PortLine extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Text(name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+          Text(
+            name,
+            style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+          ),
           const SizedBox(width: 8),
-          Text(concept, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+          Text(
+            concept,
+            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+          ),
         ],
       ),
     );
