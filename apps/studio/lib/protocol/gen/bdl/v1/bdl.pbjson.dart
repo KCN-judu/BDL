@@ -4295,6 +4295,7 @@ const ComposeAction$json = {
     {'1': 'range', '3': 9, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'range'},
     {'1': 'choose', '3': 10, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'choose'},
     {'1': 'insert', '3': 11, '4': 1, '5': 11, '6': '.bdl.v1.ComposeInsert', '9': 0, '10': 'insert'},
+    {'1': 'apply', '3': 12, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'apply'},
   ],
   '8': [
     {'1': 'action'},
@@ -4311,7 +4312,8 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'YxLlVuaXRIAFIGcmVtb3ZlEi8KBmJpbmRlchgIIAEoCzIVLmJkbC52MS5Db21wb3NlQmluZGVy'
         'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlEiYKBmNob2'
         '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZRIvCgZpbnNlcnQYCyABKAsyFS5iZGwu'
-        'djEuQ29tcG9zZUluc2VydEgAUgZpbnNlcnRCCAoGYWN0aW9u');
+        'djEuQ29tcG9zZUluc2VydEgAUgZpbnNlcnQSJAoFYXBwbHkYDCABKAsyDC5iZGwudjEuVW5pdE'
+        'gAUgVhcHBseUIICgZhY3Rpb24=');
 
 @$core.Deprecated('Use composeBinderDescriptor instead')
 const ComposeBinder$json = {

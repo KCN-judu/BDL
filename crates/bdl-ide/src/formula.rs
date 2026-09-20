@@ -1877,6 +1877,11 @@ pub enum ComposeOp {
     /// A choice: a slot becomes `if ? then ? else ?`; any other node
     /// becomes one outcome of it, `if ? then node else ?`.
     Choose { node: String },
+    /// A reference naming an equation or a rule becomes a call with one
+    /// slot per argument (`clamp` → `clamp(?, ?, ?)`); the arity is the
+    /// library's or the rule's signature's — `(` typed after a name.
+    /// Refused on a value or a literal.
+    Apply { node: String },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -2081,7 +2086,8 @@ pub fn compose(
         | ComposeOp::Binder { node, .. }
         | ComposeOp::Range { node }
         | ComposeOp::Insert { node, .. }
-        | ComposeOp::Choose { node } => node.as_str(),
+        | ComposeOp::Choose { node }
+        | ComposeOp::Apply { node } => node.as_str(),
     };
     let Some(node) = root.find(node_id) else {
         return Err(QueryError::NotApplicable {
@@ -2190,6 +2196,45 @@ pub fn compose(
                 node.range,
                 grouped(format!("if ? then {outcome} else ?"), 0),
             )
+        }
+        ComposeOp::Apply { .. } => {
+            let NodeKind::Reference { name, entity, .. } = &node.kind else {
+                return Err(QueryError::NotApplicable {
+                    reason: "only a name can be applied".into(),
+                });
+            };
+            let arity = match entity {
+                Some(EntityRef::Mapping(id)) => {
+                    let n = design
+                        .mappings
+                        .get(id)
+                        .map(|m| m.signature.inputs.len())
+                        .unwrap_or(0);
+                    if n == 0 {
+                        // a relationship without inputs is a value, written
+                        // by its name (ADR-0029): nothing to apply it to
+                        return Err(QueryError::NotApplicable {
+                            reason: format!("`{name}` is a value, not a rule or an equation"),
+                        });
+                    }
+                    n
+                }
+                Some(_) => {
+                    return Err(QueryError::NotApplicable {
+                        reason: format!("`{name}` is a value, not a rule or an equation"),
+                    })
+                }
+                None => match equations::lookup(name) {
+                    Some(e) => e.scheme.params.len(),
+                    None => {
+                        return Err(QueryError::NotApplicable {
+                            reason: format!("`{name}` is not an equation or a rule"),
+                        })
+                    }
+                },
+            };
+            let args = vec!["?"; arity];
+            (node.range, format!("{name}({})", args.join(", ")))
         }
         ComposeOp::Call { name, arity, .. } => {
             let mut args = vec![node.text.trim().to_owned()];
@@ -2313,6 +2358,7 @@ pub fn compose(
                 Some(format!("{node_id}.{}", if *before { 0 } else { 1 }))
             }
             ComposeOp::Call { arity, .. } if *arity > 1 => Some(format!("{node_id}.1")),
+            ComposeOp::Apply { .. } => Some(format!("{node_id}.0")),
             ComposeOp::Binder { .. } => Some(format!("{node_id}.1")),
             ComposeOp::Range { .. } => Some(format!("{node_id}.1.0")),
             ComposeOp::Choose { .. } => Some(format!("{node_id}.0")),

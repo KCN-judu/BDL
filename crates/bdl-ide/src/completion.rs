@@ -292,6 +292,42 @@ pub(crate) struct CaretHint {
 }
 
 /// The expected type a projection's type view stands for.
+/// The expected type of the innermost projection node containing `range`
+/// of the draft `source` (the overlay already holds it): `None` when the
+/// text does not parse, the projection is of another text, or the
+/// position is not determined.
+fn positional_expectation(
+    snapshot: &AnalysisSnapshot,
+    mapping: DeclId,
+    source: &str,
+    range: TextRange,
+) -> Option<ExpectedType> {
+    let p = crate::formula::formula_projection(snapshot, mapping).ok()?;
+    if p.source != source {
+        return None;
+    }
+    fn innermost(
+        n: &crate::formula::FormulaNode,
+        range: TextRange,
+    ) -> Option<&crate::formula::FormulaNode> {
+        if n.range.start > range.start || n.range.end < range.end {
+            return None;
+        }
+        n.children
+            .iter()
+            .find_map(|c| innermost(c, range))
+            .or(Some(n))
+    }
+    let root = p.root.as_ref()?;
+    let node = innermost(root, range)?;
+    let expected = if node.id == root.id && node.expected.is_none() {
+        p.result.as_ref()
+    } else {
+        node.expected.as_ref()
+    };
+    expected.and_then(expected_of_view)
+}
+
 fn expected_of_view(t: &crate::formula::TypeView) -> Option<ExpectedType> {
     use crate::formula::TypeKindView;
     Some(match t.kind {
@@ -327,14 +363,21 @@ fn formula_completions(
         Some(c) => (c.prefix.clone(), TextRange::new(offset, offset)),
         None => prefix_at(source, offset),
     };
+    // what the position expects: the caret's, else the projection's local
+    // inference at the offset (the other side of the operator, the
+    // equation's argument, the choice's outcome — `Composer.lean`'s
+    // `solve`) when the text parses and the position is determined, else
+    // what the whole formula must produce
     let expected = match caret.as_ref().and_then(|c| c.expected.clone()) {
         Some(e) => e,
-        None => ExpectedType::of(
-            design
-                .concepts
-                .get(&block.signature.output)
-                .and_then(|c| c.representation.as_ref()),
-        ),
+        None => positional_expectation(snapshot, mapping, source, replace).unwrap_or_else(|| {
+            ExpectedType::of(
+                design
+                    .concepts
+                    .get(&block.signature.output)
+                    .and_then(|c| c.representation.as_ref()),
+            )
+        }),
     };
     let matches = |label: &str| {
         prefix.is_empty()

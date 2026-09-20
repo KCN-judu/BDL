@@ -13330,6 +13330,7 @@ enum ComposeAction_Action {
   range,
   choose,
   insert,
+  apply,
   notSet
 }
 
@@ -13346,6 +13347,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     Unit? range,
     Unit? choose,
     ComposeInsert? insert,
+    Unit? apply,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -13359,6 +13361,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (range != null) result.range = range;
     if (choose != null) result.choose = choose;
     if (insert != null) result.insert = insert;
+    if (apply != null) result.apply = apply;
     return result;
   }
 
@@ -13382,12 +13385,13 @@ class ComposeAction extends $pb.GeneratedMessage {
     9: ComposeAction_Action.range,
     10: ComposeAction_Action.choose,
     11: ComposeAction_Action.insert,
+    12: ComposeAction_Action.apply,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -13403,6 +13407,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     ..aOM<Unit>(10, _omitFieldNames ? '' : 'choose', subBuilder: Unit.$_createMessage)
     ..aOM<ComposeInsert>(11, _omitFieldNames ? '' : 'insert',
         subBuilder: ComposeInsert.$_createMessage)
+    ..aOM<Unit>(12, _omitFieldNames ? '' : 'apply', subBuilder: Unit.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13435,6 +13440,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
+  @$pb.TagNumber(12)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -13446,6 +13452,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
+  @$pb.TagNumber(12)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -13576,6 +13583,21 @@ class ComposeAction extends $pb.GeneratedMessage {
   void clearInsert() => $_clearField(11);
   @$pb.TagNumber(11)
   ComposeInsert ensureInsert() => $_ensure(10);
+
+  /// Apply (0.28): a reference naming an equation or a rule becomes a
+  /// call with one slot per argument (`clamp` → `clamp(?, ?, ?)`); the
+  /// arity is the compiler's — `(` typed after a name in the Formula
+  /// view.  Refused on a value or a literal.
+  @$pb.TagNumber(12)
+  Unit get apply => $_getN(11);
+  @$pb.TagNumber(12)
+  set apply(Unit value) => $_setField(12, value);
+  @$pb.TagNumber(12)
+  $core.bool hasApply() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearApply() => $_clearField(12);
+  @$pb.TagNumber(12)
+  Unit ensureApply() => $_ensure(11);
 }
 
 class ComposeBinder extends $pb.GeneratedMessage {

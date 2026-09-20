@@ -266,6 +266,7 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
             side: side_from_pb(i.side())?,
             text: i.text.clone(),
         },
+        Action::Apply(_) => ComposeOp::Apply { node },
     })
 }
 

@@ -1353,6 +1353,11 @@ message ComposeAction {
     Unit choose = 10;
     // Keyboard input at a structural caret (0.27).
     ComposeInsert insert = 11;
+    // Apply (0.28): a reference naming an equation or a rule becomes a
+    // call with one slot per argument (`clamp` → `clamp(?, ?, ?)`); the
+    // arity is the compiler's — `(` typed after a name in the Formula
+    // view.  Refused on a value or a literal.
+    Unit apply = 12;
   }
 }
 

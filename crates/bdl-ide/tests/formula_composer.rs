@@ -2077,3 +2077,82 @@ fn completion_offers_binder_locals_in_bodies_and_binder_templates_over_collectio
         "{items:#?}"
     );
 }
+
+// ---- apply and positional completion (0.28) ------------------------------------------
+
+/// Apply: a name that is an equation or a rule becomes a call with one
+/// slot per argument, the first selected; a value or a literal is refused.
+#[test]
+fn apply_turns_a_name_into_a_call_with_the_compilers_arity() {
+    let ph = physics();
+    let mut host = IdeHost::new(ph.snapshot.clone());
+    let r = composed(
+        &mut host,
+        ph.speed_of,
+        "clamp",
+        ComposeOp::Apply { node: "r".into() },
+    );
+    assert_eq!(r.source, "clamp(?, ?, ?)");
+    assert_eq!(r.select.as_deref(), Some("r.0"));
+    // a rule of the design: its signature's arity
+    let r = composed(
+        &mut host,
+        ph.torque_of,
+        "speedOf",
+        ComposeOp::Apply { node: "r".into() },
+    );
+    assert_eq!(r.source, "speedOf(?)");
+    // a value or a literal cannot be applied
+    host.set_definition_draft(ph.speed_of, "armLength");
+    let e = compose(
+        &host.snapshot(),
+        ph.speed_of,
+        "armLength",
+        &ComposeOp::Apply { node: "r".into() },
+    )
+    .expect_err("a value is not applied");
+    assert!(matches!(e, QueryError::NotApplicable { .. }));
+    let e = compose(
+        &host.snapshot(),
+        ph.speed_of,
+        "1 m",
+        &ComposeOp::Apply { node: "r".into() },
+    )
+    .expect_err("a literal is not applied");
+    assert!(matches!(e, QueryError::NotApplicable { .. }));
+}
+
+/// Completion in the text of a formula ranks by what the *position*
+/// expects — the projection's local inference at the offset — not only
+/// by what the whole formula produces: in the numerator of `? / cycleTime`
+/// for a speed a length-valued name outranks a speed-valued one.
+#[test]
+fn text_completion_ranks_by_the_positions_expected_type() {
+    let ph = physics();
+    let mut host = IdeHost::new(ph.snapshot.clone());
+    host.set_definition_draft(ph.speed_of, "? / cycleTime");
+    let items = completion(
+        &host.snapshot(),
+        &CompletionContext::Formula {
+            mapping: ph.speed_of,
+            offset: 0,
+        },
+    );
+    let labels: Vec<&str> = items.iter().map(|i| i.label.as_str()).collect();
+    let pos = |name: &str| labels.iter().position(|l| *l == name).unwrap_or(usize::MAX);
+    assert!(pos("armLength") < pos("speedLimit"), "{labels:?}");
+    assert!(pos("wheelRadius") < pos("load"), "{labels:?}");
+    // in the denominator a time is expected: cycleTime ranks first
+    host.set_definition_draft(ph.speed_of, "armLength / ?");
+    let items = completion(
+        &host.snapshot(),
+        &CompletionContext::Formula {
+            mapping: ph.speed_of,
+            offset: 12,
+        },
+    );
+    let labels: Vec<&str> = items.iter().map(|i| i.label.as_str()).collect();
+    let pos = |name: &str| labels.iter().position(|l| *l == name).unwrap_or(usize::MAX);
+    assert!(pos("cycleTime") < pos("armLength"), "{labels:?}");
+    assert!(pos("cycleTime") < pos("speedLimit"), "{labels:?}");
+}
