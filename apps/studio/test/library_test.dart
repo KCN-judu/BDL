@@ -40,44 +40,99 @@ pb.ConceptTemplateView tpl(
   keywords: keywords,
 );
 
+/// The value categories of the standard library (ADR-0041), a few of
+/// them: two quantities, a level, a value form, and *decide later*.
 final temperature = tpl(
-  'std.environment.temperature',
+  'std.quantity.temperature',
   'Temperature',
+  category: 'quantity',
   representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
   unit: 'K',
   keywords: ['temp', 'heat'],
 );
 final light = tpl(
-  'std.environment.ambient_light',
-  'Ambient Light',
+  'std.quantity.illuminance',
+  'Illuminance',
+  category: 'quantity',
   representation: pb.Representation(quantity: pb.Dim(luminous: 1, angle: 2, length: -2)),
   unit: 'lx',
   keywords: ['light', 'lux'],
 );
-final motorSpeed = tpl(
-  'std.actuator.motor_speed',
-  'Motor Speed',
-  category: 'actuation',
-  role: pb.RoleHint.ROLE_HINT_OUTPUT,
+final level = tpl(
+  'std.value.level',
+  'Level',
+  category: 'form',
   representation: pb.Representation(quantity: pb.Dim()),
-  keywords: ['motor', 'pwm'],
+  keywords: ['ratio', 'brightness', 'motor speed'],
 );
-final motorAngle = tpl(
-  'std.actuator.motor_angle',
-  'Motor Angle',
-  category: 'actuation',
-  role: pb.RoleHint.ROLE_HINT_OUTPUT,
+final angle = tpl(
+  'std.quantity.angle',
+  'Angle',
+  category: 'quantity',
   representation: pb.Representation(quantity: pb.Dim(angle: 1)),
-  unit: 'deg',
-  keywords: ['motor'],
+  unit: 'rad',
+  keywords: ['rotation', 'tilt', 'servo', 'motor'],
 );
 final pressed = tpl(
-  'std.human.button_pressed',
-  'Button Pressed',
-  category: 'human',
+  'std.value.boolean',
+  'On / off',
+  category: 'form',
   representation: pb.Representation(boolean: pb.Unit()),
+  keywords: ['button', 'pressed'],
 );
-final open = tpl('std.x.open', 'Open Thing', category: 'x');
+final open = tpl('std.value.open', 'Decide later', category: 'form');
+final teamThing = tpl('team.x.open', 'Open Thing', category: 'x');
+
+/// The quantity vocabulary as served: dimension and display symbol; and
+/// the compiler's value categories with the units each is measured in.
+final quantities = [
+  pb.QuantityView(id: 'angle', typeName: 'Angle', unit: 'rad', dim: pb.Dim(angle: 1)),
+  pb.QuantityView(
+    id: 'temperature',
+    typeName: 'Temperature',
+    unit: 'K',
+    dim: pb.Dim(temperature: 1),
+  ),
+  pb.QuantityView(
+    id: 'illuminance',
+    typeName: 'Illuminance',
+    unit: 'lx',
+    dim: pb.Dim(luminous: 1, angle: 2, length: -2),
+  ),
+  pb.QuantityView(
+    id: 'angular_velocity',
+    typeName: 'AngularVelocity',
+    unit: 'rad/s',
+    dim: pb.Dim(angle: 1, time: -1),
+  ),
+];
+
+pb.UnitExprView unitOf(String source, String display, pb.Dim dim) =>
+    pb.UnitExprView(source: source, display: display, dim: dim);
+
+final categories = [
+  pb.ValueCategoryView(
+    id: 'angle',
+    typeName: 'Angle',
+    dim: pb.Dim(angle: 1),
+    preferredUnit: unitOf('rad', 'rad', pb.Dim(angle: 1)),
+    units: [
+      unitOf('rad', 'rad', pb.Dim(angle: 1)),
+      unitOf('deg', 'deg', pb.Dim(angle: 1)),
+      unitOf('turn', 'turn', pb.Dim(angle: 1)),
+    ],
+  ),
+  pb.ValueCategoryView(
+    id: 'angular_velocity',
+    typeName: 'AngularVelocity',
+    dim: pb.Dim(angle: 1, time: -1),
+    preferredUnit: unitOf('rad per s', 'rad/s', pb.Dim(angle: 1, time: -1)),
+    units: [
+      unitOf('rad per s', 'rad/s', pb.Dim(angle: 1, time: -1)),
+      unitOf('deg per s', 'deg/s', pb.Dim(angle: 1, time: -1)),
+    ],
+  ),
+];
 
 /// A Concept item carrying its template view.
 pb.LibraryItemView conceptItem(pb.ConceptTemplateView t) => pb.LibraryItemView(
@@ -104,7 +159,7 @@ pb.LibraryItemView conceptItem(pb.ConceptTemplateView t) => pb.LibraryItemView(
 /// the names, value form and unit it suggests — beside what the legacy
 /// request would create.
 final temperatureInput = pb.LibraryItemView(
-  id: 'std.source.temperature',
+  id: 'team.source.temperature',
   category: 'source',
   displayName: 'Temperature Input',
   description: 'A temperature the environment provides.',
@@ -137,7 +192,7 @@ final temperatureInput = pb.LibraryItemView(
 
 /// The External Input Source item: a preset whose value form is left open.
 final externalInput = pb.LibraryItemView(
-  id: 'std.source.external',
+  id: 'team.source.external',
   category: 'source',
   displayName: 'External Input',
   description: 'A value provided from outside the product.',
@@ -155,22 +210,32 @@ final externalInput = pb.LibraryItemView(
   preset: pb.SourcePresetView(conceptName: 'ExternalValue', sourceName: 'externalInput'),
 );
 
+/// The served libraries: the standard value categories, and a team
+/// library that ships Source presets (the standard one ships none).
 pb.LibraryItemsResponse library() => pb.LibraryItemsResponse(
   libraries: [
     pb.LibraryView(
       id: 'std',
       name: 'Standard',
       schemaVersion: 2,
-      version: '0.2',
+      version: '0.3',
       items: [
-        externalInput,
-
-        for (final t in [temperature, light, motorSpeed, motorAngle, pressed, open]) conceptItem(t),
-        temperatureInput,
+        for (final t in [pressed, level, open, angle, temperature, light]) conceptItem(t),
       ],
     ),
+    pb.LibraryView(
+      id: 'team',
+      name: 'Team',
+      schemaVersion: 2,
+      version: '0.1',
+      items: [externalInput, conceptItem(teamThing), temperatureInput],
+    ),
   ],
+  quantities: quantities,
 );
+
+/// Every item of every served library, in order.
+List<pb.LibraryItemView> allItems() => [for (final l in library().libraries) ...l.items];
 
 pb.ProjectProjection project({int revision = 1, List<pb.ConceptView> concepts = const []}) =>
     pb.ProjectProjection(revision: Int64(revision), name: 'lamp', rootPath: '/p')
@@ -189,7 +254,7 @@ Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const
       final r = m.instantiateLibraryItem;
       final id = nextId++;
       revision += 1;
-      final item = library().libraries.single.items.firstWhere((i) => i.id == r.itemId);
+      final item = allItems().firstWhere((i) => i.id == r.itemId);
       // a Source item: the concept and the relationship, in one answer
       final mapping = item.creates.where((o) => o.kind == 'mapping').firstOrNull;
       final mappingId = mapping == null ? null : nextId++;
@@ -217,9 +282,7 @@ Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const
       // ranked by the daemon: the design's concepts, the preset's value
       // form first (here: every concept, in id order)
       final r = m.listSourceCandidates;
-      final item = r.itemId.isEmpty
-          ? null
-          : library().libraries.single.items.firstWhere((i) => i.id == r.itemId);
+      final item = r.itemId.isEmpty ? null : allItems().firstWhere((i) => i.id == r.itemId);
       return pb.Response(
         sourceCandidates: pb.SourceCandidatesResponse(
           revision: r.revision,
@@ -284,11 +347,11 @@ Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const
 void main() {
   test('the library is asked for once per connection and kept apart from the project', () async {
     final (store, daemon) = await connected();
-    expect(store.state.templates.map((t) => t.id), contains('std.environment.temperature'));
-    expect(store.state.library!.libraries.single.version, '0.2');
+    expect(store.state.templates.map((t) => t.id), contains('std.quantity.temperature'));
+    expect(store.state.library!.libraries.first.version, '0.3');
     expect(store.state.libraryItems.where((i) => i.category == 'source').map((i) => i.id), [
-      'std.source.external',
-      'std.source.temperature',
+      'team.source.external',
+      'team.source.temperature',
     ]);
     // Closing the project does not lose the vocabulary.
     store.dispatch(const ProjectClosed());
@@ -306,27 +369,27 @@ void main() {
     );
     final fromMenu = reduce(
       s,
-      const InsertLibraryItemRequested('std.environment.temperature', position: Offset(100, 40)),
+      const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(100, 40)),
     );
     final fromDrag = reduce(
       s,
-      const InsertLibraryItemRequested('std.environment.temperature', position: Offset(300, 80)),
+      const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(300, 80)),
     );
-    final fromPanel = reduce(s, const InsertLibraryItemRequested('std.environment.temperature'));
+    final fromPanel = reduce(s, const InsertLibraryItemRequested('std.quantity.temperature'));
     for (final t in [fromMenu, fromDrag, fromPanel]) {
       expect(t.effects, hasLength(1));
       final e = t.effects.single as InstantiateLibraryItem;
-      expect(e.itemId, 'std.environment.temperature');
+      expect(e.itemId, 'std.quantity.temperature');
       expect(e.baseRevision, 1);
       expect(t.state.editor.pendingRequests, 1);
-      expect(t.state.editor.recentTemplates, ['std.environment.temperature']);
+      expect(t.state.editor.recentTemplates, ['std.quantity.temperature']);
     }
     expect(fromMenu.state.editor.pendingInsert!.position, const Offset(100, 40));
     expect(fromDrag.state.editor.pendingInsert!.position, const Offset(300, 80));
     expect(fromPanel.state.editor.pendingInsert!.position, isNull);
     // A second insertion waits for the first to be answered.
     expect(
-      reduce(fromMenu.state, const InsertLibraryItemRequested('std.motion.tilt')).effects,
+      reduce(fromMenu.state, const InsertLibraryItemRequested('std.quantity.angle')).effects,
       isEmpty,
     );
   });
@@ -334,7 +397,7 @@ void main() {
   test('create-then-rename: the answer places, selects and opens the name', () async {
     final (store, daemon) = await connected();
     store.dispatch(
-      const InsertLibraryItemRequested('std.environment.temperature', position: Offset(120, 64)),
+      const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(120, 64)),
     );
     final s = await store.until((x) => x.editor.pendingRequests == 0);
     final id = s.project!.concepts.single.id.toInt();
@@ -374,7 +437,7 @@ void main() {
     'an insertion the panel started auto-places: no layout, still selected and renaming',
     () async {
       final (store, daemon) = await connected();
-      store.dispatch(const InsertLibraryItemRequested('std.human.button_pressed'));
+      store.dispatch(const InsertLibraryItemRequested('std.value.boolean'));
       final s = await store.until((x) => x.editor.pendingRequests == 0);
       final id = s.project!.concepts.single.id.toInt();
       expect((s.editor.selection as ConceptSelected).id, id);
@@ -395,7 +458,7 @@ void main() {
     store.dispatch(const AppStarted());
     await store.until((s) => s.library != null);
     store.dispatch(ProjectReceived(project()));
-    store.dispatch(const InsertLibraryItemRequested('std.environment.temperature'));
+    store.dispatch(const InsertLibraryItemRequested('std.quantity.temperature'));
     final s = await store.until((x) => x.editor.pendingRequests == 0);
     expect(s.editor.pendingInsert, isNull);
     expect(s.editor.lastError?.code, 'edit.stale_revision');
@@ -414,48 +477,69 @@ void main() {
     expect(rememberTemplate(recent, 'e').length, EditorState.maxRecentTemplates);
   });
 
-  test('search matches display name, default name, keywords, unit and category', () {
-    final all = library().libraries.single.items;
-    List<String> ids(String q) => searchItems(all, q).map((t) => t.id).toList();
-    expect(ids('lux'), ['std.environment.ambient_light']);
-    expect(ids('LX'), ['std.environment.ambient_light']);
-    expect(ids('motor'), ['std.actuator.motor_speed', 'std.actuator.motor_angle']);
-    expect(ids('ambientlight'), ['std.environment.ambient_light']);
-    expect(ids('Actuation'), ['std.actuator.motor_speed', 'std.actuator.motor_angle']);
-    expect(ids('heat'), ['std.environment.temperature']);
-    expect(ids('sensor'), ['std.source.temperature']);
-    expect(ids('temperatureInput'), ['std.source.temperature']);
+  test('search matches name, keywords, units, dimension words and category', () {
+    final all = allItems();
+    List<String> ids(String q) => searchItems(
+      all,
+      q,
+      quantities: quantities,
+      categories: categories,
+    ).map((t) => t.id).toList();
+    // a category by its name, its synonyms, the row's unit
+    expect(ids('lux'), ['std.quantity.illuminance']);
+    expect(ids('LX'), ['std.quantity.illuminance']);
+    expect(ids('illuminance'), ['std.quantity.illuminance']);
+    expect(ids('motor'), ['std.value.level', 'std.quantity.angle']);
+    expect(ids('rotation'), ['std.quantity.angle']);
+    expect(ids('Quantities'), [
+      'std.quantity.angle',
+      'std.quantity.temperature',
+      'std.quantity.illuminance',
+    ]);
+    expect(ids('heat'), contains('std.quantity.temperature'));
+    // every registered unit of the category's dimension, and its type
+    // name — the compiler's, served with the vocabulary
+    expect(ids('deg'), ['std.quantity.angle']);
+    expect(ids('turn'), ['std.quantity.angle']);
+    expect(ids('Angle'), ['std.quantity.angle']);
+    // a served library's Source presets, by section and relationship name
+    expect(ids('sensor'), contains('team.source.temperature'));
+    expect(ids('temperatureInput'), ['team.source.temperature']);
     expect(ids(''), hasLength(all.length));
     expect(ids('zzz'), isEmpty);
-    final concepts = library().libraries.single.items
-        .where((i) => i.hasConcept())
-        .map((i) => i.concept);
-    expect(searchTemplates(concepts, 'heat').map((t) => t.id), ['std.environment.temperature']);
+    final concepts = allItems().where((i) => i.hasConcept()).map((i) => i.concept);
+    expect(
+      searchTemplates(concepts, 'heat').map((t) => t.id),
+      contains('std.quantity.temperature'),
+    );
   });
 
   test('search and names follow the locale; what is created does not', () {
-    final all = library().libraries.single.items;
+    final all = allItems();
     final zh = lookupAppLocalizations(const Locale('zh'));
     final ja = lookupAppLocalizations(const Locale('ja'));
-    List<String> ids(AppLocalizations l, String q) =>
-        searchItems(all, q, l10n: l).map((t) => t.id).toList();
-    // the localized name and tags
-    expect(ids(zh, '温度'), ['std.environment.temperature', 'std.source.temperature']);
-    expect(ids(ja, '温度'), ['std.environment.temperature', 'std.source.temperature']);
-    expect(ids(zh, '传感器'), ['std.source.temperature']);
-    expect(ids(ja, 'センサー'), ['std.source.temperature']);
-    // the canonical English still matches in every locale
-    expect(ids(zh, 'Temperature Input'), ['std.source.temperature']);
-    expect(ids(ja, 'lux'), ['std.environment.ambient_light']);
-    // the required cases, per locale: a name, a keyword, a tag
-    expect(ids(kEnglish, 'temperature'), contains('std.source.temperature'));
-    expect(ids(kEnglish, 'sensor'), contains('std.source.temperature'));
-    expect(ids(kEnglish, 'external'), ['std.source.external']);
-    expect(ids(zh, '外部'), ['std.source.external']);
-    expect(ids(ja, '外部'), ['std.source.external']);
-    expect(ids(ja, 'センサー'), isNot(contains('std.source.external')));
-    expect(ids(zh, '输入'), containsAll(['std.source.temperature', 'std.source.external']));
-    expect(ids(ja, '入力'), containsAll(['std.source.temperature', 'std.source.external']));
+    List<String> ids(AppLocalizations l, String q) => searchItems(
+      all,
+      q,
+      l10n: l,
+      quantities: quantities,
+      categories: categories,
+    ).map((t) => t.id).toList();
+    // the localized name and tags of a standard category
+    expect(ids(zh, '温度'), ['std.quantity.temperature']);
+    expect(ids(ja, '温度'), ['std.quantity.temperature']);
+    expect(ids(zh, '角度'), ['std.quantity.angle']);
+    expect(ids(ja, '回転'), ['std.quantity.angle']);
+    expect(ids(zh, '照度'), ['std.quantity.illuminance']);
+    // the canonical English, the units and the type names match in
+    // every locale
+    expect(ids(zh, 'Temperature'), ['std.quantity.temperature', 'team.source.temperature']);
+    expect(ids(ja, 'lux'), ['std.quantity.illuminance']);
+    expect(ids(ja, 'deg'), ['std.quantity.angle']);
+    // a team library's items keep their canonical English (no catalog)
+    expect(ids(kEnglish, 'sensor'), contains('team.source.temperature'));
+    expect(ids(kEnglish, 'external'), contains('team.source.external'));
+    expect(ids(zh, 'Temperature Input'), ['team.source.temperature']);
     // a Source item is a preset: its row says the value form it suggests
     // — never a signature over a concept nobody has chosen — and an open
     // one says so in the sheet's words
@@ -465,23 +549,27 @@ void main() {
     expect(sourceItemHover(kEnglish, temperatureInput), contains('Temperature'));
     expect(sourceItemHover(kEnglish, temperatureInput), isNot(contains('() ->')));
     expect(sourceItemHover(kEnglish, externalInput), kEnglish.inputForAConcept);
-    // names and descriptions in each locale; the section titles
-    expect(itemName(kEnglish, temperatureInput), 'Temperature Input');
-    expect(itemName(zh, temperatureInput), '温度输入');
-    expect(itemName(ja, temperatureInput), '温度入力');
-    expect(itemDescription(zh, temperatureInput), isNot(temperatureInput.description));
-    expect(itemDescription(ja, temperatureInput), isNotEmpty);
+    // names and descriptions of a standard category in each locale; a
+    // foreign item's fall back to the daemon's English; the section titles
+    expect(itemName(kEnglish, conceptItem(temperature)), 'Temperature');
+    expect(itemName(zh, conceptItem(temperature)), '温度');
+    expect(itemName(ja, conceptItem(temperature)), '温度');
+    expect(itemName(zh, conceptItem(angle)), '角度');
+    expect(itemDescription(zh, conceptItem(temperature)), isNot(temperature.description));
+    expect(itemDescription(ja, conceptItem(temperature)), isNotEmpty);
+    expect(itemName(ja, temperatureInput), 'Temperature Input');
     expect(categoryTitle(kEnglish, 'source'), 'Sources');
     expect(categoryTitle(zh, 'source'), '来源');
     expect(categoryTitle(ja, 'source'), '入力元');
-    expect(categoryTitle(kEnglish, 'concept'), 'Concepts');
+    expect(categoryLabel(zh, 'quantity'), '物理量');
+    expect(categoryLabel(ja, 'form'), '値');
     // what a preset suggests is the daemon's: identifiers and units alike
     for (final l in [kEnglish, zh, ja]) {
       expect(temperatureInput.preset.conceptName, 'Temperature');
       expect(temperatureInput.preset.sourceName, 'temperatureInput');
       expect(itemWord(l, temperatureInput), 'K');
+      expect(conceptItem(temperature).creates.single.name, 'Temperature');
     }
-    // an item the catalog does not know keeps its canonical English
     final foreign = pb.LibraryItemView(id: 'team.x', category: 'concept', displayName: 'X Thing');
     expect(itemName(ja, foreign), 'X Thing');
   });
@@ -495,17 +583,17 @@ void main() {
     );
     final before = store.state.revision;
     store.dispatch(
-      const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(120, 64)),
+      const NewSourceRequested(presetId: 'team.source.temperature', position: Offset(120, 64)),
     );
     var s = await store.until((x) => x.editor.sourceSheet?.ready ?? false);
     expect(s.revision, before, reason: 'nothing committed');
     expect(daemon.requests.where((r) => r.hasCreateSource()), isEmpty);
     expect(daemon.requests.where((r) => r.hasInstantiateLibraryItem()), isEmpty);
     final sheet = s.editor.sourceSheet!;
-    expect(sheet.presetId, 'std.source.temperature');
+    expect(sheet.presetId, 'team.source.temperature');
     expect(sheet.candidates!.candidates.map((c) => c.conceptId.toInt()), [1, 2]);
     expect(sheet.candidates!.suggestedSourceName, 'temperatureInput');
-    expect(s.editor.recentTemplates, ['std.source.temperature']);
+    expect(s.editor.recentTemplates, ['team.source.temperature']);
     // cancelling leaves the project as it was
     store.dispatch(const SourceSheetDismissed());
     expect(store.state.editor.sourceSheet, isNull);
@@ -535,7 +623,7 @@ void main() {
     // a new concept: both created in one answer; the concept lands where
     // pointed and opens for naming, the Source to its left
     store.dispatch(
-      const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(300, 100)),
+      const NewSourceRequested(presetId: 'team.source.temperature', position: Offset(300, 100)),
     );
     await store.until((x) => x.editor.sourceSheet?.ready ?? false);
     store.dispatch(
@@ -555,20 +643,21 @@ void main() {
       const Offset(300, 100) - const Offset(240, 0),
     );
     expect((s.editor.selection as ConceptSelected).id, concept);
-    expect(s.editor.renaming, NodeRef.concept(concept));
+    // named on the sheet: not opened for renaming
+    expect(s.editor.renaming, isNull);
     await store.dispose();
   });
 
-  testWidgets('the panel shows Concepts and Sources as sections, localized', (t) async {
+  testWidgets('the panel shows Values, Quantities and Sources as sections, localized', (t) async {
     final s = AppState(
       connection: Connected(executable: 'x', handshake: pb.HandshakeResponse()),
       project: project(),
       library: library(),
     );
-    for (final (locale, concepts, sources, sensor) in [
-      (const Locale('en'), 'Concepts', 'Sources', 'Temperature Input'),
-      (const Locale('zh'), '概念', '来源', '温度输入'),
-      (const Locale('ja'), 'コンセプト', '入力元', '温度入力'),
+    for (final (locale, values, quantities, sources, temperature, source) in [
+      (const Locale('en'), 'Values', 'Quantities', 'Sources', 'Temperature', 'Source'),
+      (const Locale('zh'), '值', '物理量', '来源', '温度', '来源'),
+      (const Locale('ja'), '値', '物理量', '入力元', '温度', 'Source'),
     ]) {
       await t.pumpWidget(
         MaterialApp(
@@ -584,26 +673,51 @@ void main() {
         ),
       );
       await t.pump();
-      expect(find.byKey(const ValueKey('library-section-concept')), findsOneWidget);
+      // the standard library's two groups are the Values and Quantities
+      // sections; the generic Source row is its own section; a team
+      // library keeps its own sections and groups
+      expect(find.byKey(const ValueKey('library-section-form')), findsOneWidget);
+      expect(find.byKey(const ValueKey('library-section-quantity')), findsOneWidget);
       expect(find.byKey(const ValueKey('library-section-source')), findsOneWidget);
+      expect(find.byKey(const ValueKey('library-section-other-source')), findsOneWidget);
+      expect(find.byKey(const ValueKey('library-section-other-concept')), findsOneWidget);
       // section titles in sentence case, like every panel header
-      expect(find.text(concepts), findsOneWidget);
-      expect(find.text(sources), findsOneWidget);
-      expect(find.text(sensor), findsOneWidget);
-      // the row names the value form the preset suggests, never a
-      // signature over a concept nobody has chosen
+      expect(find.text(values), findsOneWidget);
+      expect(find.text(quantities), findsOneWidget);
+      expect(find.text(sources), findsWidgets);
+      expect(find.text(temperature), findsWidgets);
+      expect(find.byKey(const ValueKey('library-item-source')), findsOneWidget);
+      expect(find.text(source), findsWidgets);
+      // a category's row says its unit; a preset's row the value form it
+      // suggests — never a signature over a concept nobody has chosen
       expect(find.text('K'), findsWidgets);
+      expect(find.text('rad'), findsOneWidget);
       expect(find.textContaining('() ->'), findsNothing);
-      expect(find.byKey(const ValueKey('library-item-std.source.temperature')), findsOneWidget);
+      expect(find.byKey(const ValueKey('library-item-std.quantity.angle')), findsOneWidget);
+      expect(find.byKey(const ValueKey('library-item-team.source.temperature')), findsOneWidget);
+      // no product-named concept anywhere: categories only
+      expect(find.text('Motor Angle'), findsNothing);
+      expect(find.text('Temperature Input'), findsOneWidget, reason: 'the team preset, English');
     }
   });
 
   test('rows say what a value is measured as in the contract\'s words', () {
     expect(representationWord(kEnglish, temperature), 'K');
-    expect(representationWord(kEnglish, motorSpeed), 'no unit');
+    expect(representationWord(kEnglish, level), 'no unit');
     expect(representationWord(kEnglish, pressed), 'on–off');
     expect(representationWord(kEnglish, open), 'decide later');
-    expect(categoryLabel(kEnglish, 'human'), 'Human interaction');
+    // a composite dimension the registry has no symbol for: the
+    // vocabulary's display symbol, read off the served quantities
+    final omega = tpl(
+      'std.quantity.angular_velocity',
+      'Angular velocity',
+      category: 'quantity',
+      representation: pb.Representation(quantity: pb.Dim(angle: 1, time: -1)),
+    );
+    expect(representationWord(kEnglish, omega), 'no unit');
+    expect(representationWord(kEnglish, omega, quantities), 'rad/s');
+    expect(categoryLabel(kEnglish, 'form'), 'Values');
+    expect(categoryLabel(kEnglish, 'quantity'), 'Quantities');
     expect(categoryLabel(kEnglish, 'custom'), 'Custom');
   });
 

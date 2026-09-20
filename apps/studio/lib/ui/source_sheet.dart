@@ -7,11 +7,14 @@
 /// unmade choice exists only on this sheet, never in the project
 /// (docs/spec/concept-library.md).
 ///
-/// A Standard Library Source item is a preset for this sheet: it prefills
-/// the names, the value form and the unit of a new concept, and the daemon
-/// lists the existing concepts of that value form first
-/// (`ListSourceCandidates`).  The preset decides no identity: the
-/// concept is the designer's choice either way.
+/// A new concept is described as on the concept sheet (ADR-0041): a value
+/// category of the Library — a value form or a named quantity — and the
+/// name it has in this product; the units the category is measured in are
+/// the compiler's, shown as a fact.  A served library's Source item is a
+/// preset for this sheet: it prefills the names and the category, and the
+/// daemon lists the existing concepts of that value form first
+/// (`ListSourceCandidates`).  The preset decides no identity: the concept
+/// is the designer's choice either way.
 library;
 
 import 'package:fixnum/fixnum.dart';
@@ -23,6 +26,7 @@ import '../l10n/l10n.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/concept_glyphs.dart';
 import 'canvas/node_canvas.dart' show NodePreview;
+import 'concept_sheet.dart' show MeasuredInRow, ValueCategoryField, looksLikeIdentifier;
 import 'library_panel.dart' show itemName;
 import 'mac/controls.dart';
 import 'mac/tokens.dart';
@@ -32,8 +36,6 @@ import 'units.dart';
 
 /// Which concept the Source is created over.
 enum SourceConceptChoice { existing, newConcept }
-
-enum _Kind { open, quantity, boolean, count }
 
 /// `RoomTemperature` → `roomTemperatureInput`, made free among [taken]
 /// (`roomTemperatureInput2`, …).  A suggestion the designer may change;
@@ -83,6 +85,9 @@ class SourceSheet extends StatelessWidget {
           for (final m in project?.mappings ?? const <pb.MappingView>[]) m.name,
         ],
         unitPresets: unitPresetsFrom(state.library?.quantities ?? const [], context.l10n),
+        categories: state.libraryItems.where((i) => i.hasConcept()).toList(),
+        quantities: state.library?.quantities ?? const [],
+        valueCategories: state.valueCategories,
         onCreate: dispatch,
         onCancel: () => dispatch(const SourceSheetDismissed()),
       ),
@@ -97,11 +102,20 @@ class SourceSheetForm extends StatefulWidget {
     required this.concepts,
     required this.taken,
     required this.unitPresets,
+    this.categories = const [],
+    this.quantities = const [],
+    this.valueCategories = const [],
     required this.onCreate,
     required this.onCancel,
   });
 
   final SourceSheetState sheet;
+
+  /// The value categories a new concept is created from (the Library's
+  /// Concept items), and the vocabulary their units are read off.
+  final List<pb.LibraryItemView> categories;
+  final List<pb.QuantityView> quantities;
+  final List<pb.ValueCategoryView> valueCategories;
 
   /// The concepts of the design in view (the candidates name them by id).
   final List<pb.ConceptView> concepts;
@@ -135,30 +149,30 @@ class SourceSheetFormState extends State<SourceSheetForm> {
     text: _cands.suggestedConceptName,
   );
   final TextEditingController _conceptMeaning = TextEditingController();
-  late _Kind _kind = _kindOf(_preset?.hasRepresentation() == true ? _preset!.representation : null);
-  late UnitPreset _unit = _presetUnit();
+
+  /// The value category of a new concept: the library item whose value
+  /// form and unit the preset suggests, else *decide later*.
+  late String? _category = _presetCategory();
   late final TextEditingController _sourceName = TextEditingController(text: _suggestedName());
   final TextEditingController _sourceMeaning = TextEditingController();
 
   /// Once the designer edits the Source name, no suggestion replaces it.
   bool _nameTouched = false;
 
-  static _Kind _kindOf(pb.Representation? r) => switch (r?.whichKind()) {
-    pb.Representation_Kind.quantity => _Kind.quantity,
-    pb.Representation_Kind.boolean => _Kind.boolean,
-    pb.Representation_Kind.count => _Kind.count,
-    _ => _Kind.open,
-  };
-
-  UnitPreset _presetUnit() {
+  /// The category matching the preset's value form (the same
+  /// representation), else the open one, else none.
+  String? _presetCategory() {
     final p = _preset;
-    if (p != null && p.hasRepresentation() && p.representation.hasQuantity()) {
-      final bySymbol = widget.unitPresets.where((u) => u.symbol == p.unit).firstOrNull;
-      if (bySymbol != null) return bySymbol;
-      final byDim = widget.unitPresets.where((u) => u.dim == p.representation.quantity).firstOrNull;
-      if (byDim != null) return byDim;
+    final rep = p != null && p.hasRepresentation() ? p.representation : null;
+    bool same(pb.LibraryItemView i) {
+      final t = i.concept;
+      if (rep == null) return !t.hasRepresentation();
+      return t.hasRepresentation() && t.representation == rep;
     }
-    return widget.unitPresets.first;
+
+    return widget.categories.where(same).firstOrNull?.id ??
+        widget.categories.where((i) => !i.concept.hasRepresentation()).firstOrNull?.id ??
+        widget.categories.firstOrNull?.id;
   }
 
   String _conceptNameChosen() => switch (_choice) {
@@ -184,18 +198,17 @@ class SourceSheetFormState extends State<SourceSheetForm> {
     if (!_nameTouched) _sourceName.text = _suggestedName();
   }
 
-  pb.Representation? get _representation => switch (_kind) {
-    _Kind.open => null,
-    _Kind.quantity => pb.Representation(quantity: _unit.dim),
-    _Kind.boolean => pb.Representation(boolean: pb.Unit()),
-    _Kind.count => pb.Representation(count: pb.Unit()),
-  };
+  pb.Representation? get _representation {
+    final t = widget.categories.where((i) => i.id == _category).firstOrNull?.concept;
+    return t != null && t.hasRepresentation() ? t.representation : null;
+  }
 
   bool get _complete =>
       _sourceName.text.trim().isNotEmpty &&
       switch (_choice) {
         SourceConceptChoice.existing => _existing != null,
-        SourceConceptChoice.newConcept => _conceptName.text.trim().isNotEmpty,
+        SourceConceptChoice.newConcept =>
+          _conceptName.text.trim().isNotEmpty && looksLikeIdentifier(_conceptName.text.trim()),
       };
 
   void _submit() {
@@ -239,7 +252,13 @@ class SourceSheetFormState extends State<SourceSheetForm> {
   /// `Bool`, `Count`; nothing while open) — never localized.
   String _typeName(pb.Representation? r) => switch (r?.whichKind()) {
     pb.Representation_Kind.quantity =>
-      widget.unitPresets.where((u) => u.dim == r!.quantity).firstOrNull?.typeName ?? 'Scalar',
+      widget.categories
+              .where((i) => i.id == _category)
+              .map((i) => i.concept.typeName)
+              .where((n) => n.isNotEmpty)
+              .firstOrNull ??
+          widget.unitPresets.where((u) => u.dim == r!.quantity).firstOrNull?.typeName ??
+          'Scalar',
     pb.Representation_Kind.boolean => 'Bool',
     pb.Representation_Kind.count => 'Count',
     _ => '',
@@ -341,29 +360,16 @@ class SourceSheetFormState extends State<SourceSheetForm> {
             ),
           ),
           FormRow(
-            label: l10n.value,
-            child: MacSegmented<_Kind>(
-              value: _kind,
-              options: {
-                _Kind.quantity: l10n.quantity,
-                _Kind.boolean: l10n.onOff,
-                _Kind.count: l10n.count,
-                _Kind.open: l10n.decideLater,
-              },
-              onChanged: (k) => setState(() => _kind = k),
+            label: l10n.valueCategory,
+            child: ValueCategoryField(
+              dropdownKey: const ValueKey('source-concept-category'),
+              items: widget.categories,
+              quantities: widget.quantities,
+              value: _category,
+              onChanged: (id) => setState(() => _category = id),
             ),
           ),
-          if (_kind == _Kind.quantity)
-            FormRow(
-              label: l10n.unit,
-              child: MacDropdown<UnitPreset>(
-                value: _unit,
-                items: widget.unitPresets,
-                labelOf: (p) => p.name,
-                detailOf: (p) => p.symbol,
-                onChanged: (p) => setState(() => _unit = p),
-              ),
-            ),
+          MeasuredInRow(categories: widget.valueCategories, representation: _representation),
           FormRow(
             label: l10n.meaning,
             child: MacTextField(controller: _conceptMeaning, onSubmitted: (_) => _submit()),

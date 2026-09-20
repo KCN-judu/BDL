@@ -2376,405 +2376,308 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get libItem_std_environment_temperature_name => '温度';
+  String get libraryValues => '値';
 
   @override
-  String get libItem_std_environment_temperature_description => '空気・部屋・モーターなど、何かがどれだけ温かいか。';
+  String get libraryQuantities => '物理量';
 
   @override
-  String get libItem_std_environment_temperature_tags => '温度 熱 冷たさ';
+  String get sourceRow => 'Source';
 
   @override
-  String get libItem_std_environment_ambient_light_name => '環境光';
+  String get sourceRowHint => '環境が提供する値——既存または新規の、あなたが選ぶコンセプトのために。';
 
   @override
-  String get libItem_std_environment_ambient_light_description => '周囲から製品に当たる光の量。';
+  String get conceptSheetSubtitle => 'ライブラリの値カテゴリと、この製品でのその名前。';
 
   @override
-  String get libItem_std_environment_ambient_light_tags => '光 照度 明るさ 日光 暗さ';
+  String get valueCategory => '値';
 
   @override
-  String get libItem_std_environment_humidity_name => '湿度';
+  String get measuredIn => '単位';
 
   @override
-  String get libItem_std_environment_humidity_description => '空気の相対湿度。0（乾燥）から 1（飽和）。';
+  String get nameRequired => '名前が必要です。';
 
   @override
-  String get libItem_std_environment_humidity_tags => '湿度 湿気 水分';
+  String nameTaken(String name) {
+    return '$name は既に使われています。';
+  }
 
   @override
-  String get libItem_std_environment_air_pressure_name => '気圧';
+  String get nameNotIdentifier => '名前は英字・数字・_ からなり、数字で始められません。';
 
   @override
-  String get libItem_std_environment_air_pressure_description => '大気圧。高度で下がり、天候で変わる。';
+  String get createConcept => 'コンセプトを作成';
 
   @override
-  String get libItem_std_environment_air_pressure_tags => '気圧 圧力 大気 高度 天気';
+  String get conceptSheetCaption => 'コード表示が書くとおりに、コンセプトを一つ作成します。';
 
   @override
-  String get libItem_std_environment_sound_level_name => '音の大きさ';
+  String get chooseACategory => 'カテゴリを選ぶ';
 
   @override
-  String get libItem_std_environment_sound_level_description => '周囲がどれだけ騒がしいか。0（無音）から 1 のレベル。';
+  String get showFormula => '数式を表示';
 
   @override
-  String get libItem_std_environment_sound_level_tags => '音 騒音 音量 マイク';
+  String get hideFormula => '数式を隠す';
 
   @override
-  String get libItem_std_human_button_pressed_name => 'ボタン押下';
+  String get editFormula => '数式を編集';
 
   @override
-  String get libItem_std_human_button_pressed_description => 'いまボタンが押されているかどうか。';
+  String get formulaPreviewUnavailable => 'ここでは数式を表示できません。';
 
   @override
-  String get libItem_std_human_button_pressed_tags => 'ボタン 押下 キー クリック';
+  String get formulaPreviewLoading => '数式を読み込み中…';
 
   @override
-  String get libItem_std_human_touch_name => 'タッチ';
+  String get resultLabel => '結果';
 
   @override
-  String get libItem_std_human_touch_description => '表面が触れられているかどうか。';
+  String get typeToWrite => '入力して書くか、部分を選ぶ';
 
   @override
-  String get libItem_std_human_touch_tags => 'タッチ 触れる 静電容量 指';
+  String get typeAnOperatorFirst => 'ここに値を加える前に演算子を入力してください。';
 
   @override
-  String get libItem_std_human_switch_state_name => 'スイッチ状態';
+  String caretBefore(String what) {
+    return '$what の前';
+  }
 
   @override
-  String get libItem_std_human_switch_state_description => 'トグルスイッチがオンかどうか。';
+  String caretAfter(String what) {
+    return '$what の後';
+  }
 
   @override
-  String get libItem_std_human_switch_state_tags => 'スイッチ トグル オン オフ';
+  String get caretIn => '空のスロット内';
 
   @override
-  String get libItem_std_human_dial_position_name => 'ダイヤル位置';
+  String caretInside(String what) {
+    return '$what の内側';
+  }
 
   @override
-  String get libItem_std_human_dial_position_description => 'つまみがどれだけ回されたか。';
+  String fractionOf(String numerator, String denominator) {
+    return '$numerator ÷ $denominator';
+  }
 
   @override
-  String get libItem_std_human_dial_position_tags => 'ダイヤル つまみ 回転 ポテンショメータ';
+  String choiceSemantics(String condition, String then, String otherwise) {
+    return '選択：$condition なら $then、そうでなければ $otherwise';
+  }
 
   @override
-  String get libItem_std_human_slider_position_name => 'スライダー位置';
+  String matchSemantics(String value, int count) {
+    return '$value のマッチ、$count 個のケース';
+  }
 
   @override
-  String get libItem_std_human_slider_position_description => 'スライダーが両端の間のどこにあるか。0 から 1。';
+  String blockSemantics(int count) {
+    return '$count 個のローカル束縛を持つブロック';
+  }
 
   @override
-  String get libItem_std_human_slider_position_tags => 'スライダー フェーダー 位置';
+  String temporalSemantics(String word) {
+    return '$word 境界';
+  }
 
   @override
-  String get libItem_std_motion_distance_name => '距離';
+  String get libItem_std_value_boolean_name => 'オン / オフ';
 
   @override
-  String get libItem_std_motion_distance_description => '何かがどれだけ離れているか。';
+  String get libItem_std_value_boolean_description => '真か偽かの値：オンかオフ、押されているか否か、有るか無いか。';
 
   @override
-  String get libItem_std_motion_distance_tags => '距離 遠近 測距 近接 超音波';
+  String get libItem_std_value_boolean_tags => 'ブール 真偽 スイッチ ボタン 押下 タッチ 状態 フラグ';
 
   @override
-  String get libItem_std_motion_position_name => '位置';
+  String get libItem_std_value_count_name => '個数';
 
   @override
-  String get libItem_std_motion_position_description => '何かが一つの軸に沿ってどこにあるか。';
+  String get libItem_std_value_count_description => '物の整数の数：パルス、押下、個数、ステップ。';
 
   @override
-  String get libItem_std_motion_position_tags => '位置 変位 軸 ストローク';
+  String get libItem_std_value_count_tags => '個数 カウント 整数 パルス 回数 ステップ';
 
   @override
-  String get libItem_std_motion_angle_name => '角度';
+  String get libItem_std_value_level_name => 'レベル';
 
   @override
-  String get libItem_std_motion_angle_description => '何かがどれだけ回転しているか。';
+  String get libItem_std_value_level_description => '単位のない数：0 から 1 のレベル、比率、係数、百分率。';
 
   @override
-  String get libItem_std_motion_angle_tags => '角度 回転 度 ラジアン 方位';
+  String get libItem_std_value_level_tags => 'スカラー 比率 係数 パーセント 無次元 明るさ 音量 湿度 バッテリー 強度 開度';
 
   @override
-  String get libItem_std_motion_tilt_name => '傾き';
+  String get libItem_std_value_open_name => 'あとで決める';
 
   @override
-  String get libItem_std_motion_tilt_description => '何かが水平からどれだけ傾いているか。';
+  String get libItem_std_value_open_description => '値の形をまだ選んでいないコンセプト。関係はすでに使え、形は分かってから決める。';
 
   @override
-  String get libItem_std_motion_tilt_tags => '傾き 傾斜 水平 加速度センサー';
+  String get libItem_std_value_open_tags => '未定 あとで 不明 アナログ 外部 生データ ホスト ネットワーク';
 
   @override
-  String get libItem_std_motion_speed_name => '速度';
+  String get libItem_std_quantity_angle_name => '角度';
 
   @override
-  String get libItem_std_motion_speed_description => '何かがどれだけ速く動いているか。';
+  String get libItem_std_quantity_angle_description => 'どれだけ回っているか：傾き、向き、ダイヤル、ふた、軸。';
 
   @override
-  String get libItem_std_motion_speed_tags => '速度 速さ';
+  String get libItem_std_quantity_angle_tags => '角度 回転 傾き 向き 方位 ダイヤル サーボ エンコーダ 軸 ふた ラジアン 度';
 
   @override
-  String get libItem_std_motion_acceleration_name => '加速度';
+  String get libItem_std_quantity_length_name => '長さ';
 
   @override
-  String get libItem_std_motion_acceleration_description => '速度がどれだけ速く変わるか。衝撃や衝突はここにピークとして現れる。';
+  String get libItem_std_quantity_length_description => '直線に沿った距離や位置：どれだけ遠いか、長いか、高いか。';
 
   @override
-  String get libItem_std_motion_acceleration_tags => '加速度 衝撃 衝突 振動';
+  String get libItem_std_quantity_length_tags => '長さ 距離 位置 範囲 高さ 幅 深さ ストローク 障害物 近接 メートル ミリ センチ';
 
   @override
-  String get libItem_std_motion_angular_velocity_name => '角速度';
+  String get libItem_std_quantity_time_name => '時間';
 
   @override
-  String get libItem_std_motion_angular_velocity_description => '何かがどれだけ速く回っているか。';
+  String get libItem_std_quantity_time_description => '継続時間や間隔：どれだけかかるか、続くか。';
 
   @override
-  String get libItem_std_motion_angular_velocity_tags => '角速度 回転速度 ジャイロ';
+  String get libItem_std_quantity_time_tags => '時間 期間 間隔 遅延 周期 タイムアウト 経過 秒 ミリ秒 分 時';
 
   @override
-  String get libItem_std_motion_orientation_name => '向き';
+  String get libItem_std_quantity_mass_name => '質量';
 
   @override
-  String get libItem_std_motion_orientation_description => '何かがどちらを向いているか。方位として。';
+  String get libItem_std_quantity_mass_description => '物にどれだけの物質があるか：負荷、はかりの重さ。';
 
   @override
-  String get libItem_std_motion_orientation_tags => '向き 方位 進行方向 コンパス';
+  String get libItem_std_quantity_mass_tags => '質量 重さ 負荷 はかり キログラム グラム';
 
   @override
-  String get libItem_std_mechanical_force_name => '力';
+  String get libItem_std_quantity_current_name => '電流';
 
   @override
-  String get libItem_std_mechanical_force_description => '何かがどれだけ強く押す・引くか。';
+  String get libItem_std_quantity_current_description => '電流：どれだけの電荷が流れるか、モーターや電源が引く量。';
 
   @override
-  String get libItem_std_mechanical_force_tags => '力 押す力 引く力 荷重';
+  String get libItem_std_quantity_current_tags => '電流 電気 アンペア 消費 ミリアンペア';
 
   @override
-  String get libItem_std_mechanical_pressure_name => '圧力';
+  String get libItem_std_quantity_temperature_name => '温度';
 
   @override
-  String get libItem_std_mechanical_pressure_description => '面積あたりの力。タイヤ、配管、握力。';
+  String get libItem_std_quantity_temperature_description => '空気・部屋・モーター・表面など、何かがどれだけ温かいか。';
 
   @override
-  String get libItem_std_mechanical_pressure_tags => '圧力 タイヤ 配管';
+  String get libItem_std_quantity_temperature_tags => '温度 熱 冷たさ 温度計 ケルビン 摂氏';
 
   @override
-  String get libItem_std_mechanical_torque_name => 'トルク';
+  String get libItem_std_quantity_amount_name => '物質量';
 
   @override
-  String get libItem_std_mechanical_torque_description => '軸にかかる回転力。';
+  String get libItem_std_quantity_amount_description => '物質がどれだけあるか、モルで数える。';
 
   @override
-  String get libItem_std_mechanical_torque_tags => 'トルク 軸 モーター';
+  String get libItem_std_quantity_amount_tags => '物質量 物質 モル 化学';
 
   @override
-  String get libItem_std_electrical_voltage_name => '電圧';
+  String get libItem_std_quantity_luminous_intensity_name => '光度';
 
   @override
-  String get libItem_std_electrical_voltage_description => 'ある点の電位。電源レール、セル、センス線。';
+  String get libItem_std_quantity_luminous_intensity_description => '光源が一方向にどれだけ明るいか。';
 
   @override
-  String get libItem_std_electrical_voltage_tags => '電圧 電位 ボルト 電源';
+  String get libItem_std_quantity_luminous_intensity_tags => '光度 カンデラ 光源 ランプ';
 
   @override
-  String get libItem_std_electrical_current_name => '電流';
+  String get libItem_std_quantity_speed_name => '速さ';
 
   @override
-  String get libItem_std_electrical_current_description => 'ある経路を流れる電流。';
+  String get libItem_std_quantity_speed_description => '直線に沿ってどれだけ速く動くか：車両、ベルト、風。';
 
   @override
-  String get libItem_std_electrical_current_tags => '電流 アンペア 負荷';
+  String get libItem_std_quantity_speed_tags => '速さ 速度 レート 車輪 車両 コンベア 風';
 
   @override
-  String get libItem_std_electrical_battery_level_name => 'バッテリー残量';
+  String get libItem_std_quantity_acceleration_name => '加速度';
 
   @override
-  String get libItem_std_electrical_battery_level_description => 'バッテリーがどれだけ満ちているか。0（空）から 1（満充電）。';
+  String get libItem_std_quantity_acceleration_description => '速さがどれだけ速く変わるか：衝撃、重力で感じる傾き、車両の発進。';
 
   @override
-  String get libItem_std_electrical_battery_level_tags => 'バッテリー 残量 充電 電池';
+  String get libItem_std_quantity_acceleration_tags => '加速度 加速度計 衝撃 振動 IMU';
 
   @override
-  String get libItem_std_output_brightness_name => '明るさ';
+  String get libItem_std_quantity_angular_velocity_name => '角速度';
 
   @override
-  String get libItem_std_output_brightness_description => '光をどれだけ明るくするか。0（消灯）から 1（最大）。';
+  String get libItem_std_quantity_angular_velocity_description => 'どれだけ速く回るか：軸、車輪、ジャイロの読み。';
 
   @override
-  String get libItem_std_output_brightness_tags => '明るさ 照明 調光 LED';
+  String get libItem_std_quantity_angular_velocity_tags => '角速度 回転速度 rpm ジャイロ 軸 車輪 モーター回転数';
 
   @override
-  String get libItem_std_output_color_name => '色';
+  String get libItem_std_quantity_frequency_name => '周波数';
 
   @override
-  String get libItem_std_output_color_description => '光が示す色。色相環上の色相として。';
+  String get libItem_std_quantity_frequency_description => '毎秒何回繰り返すか：音高、パルス率、点滅。';
 
   @override
-  String get libItem_std_output_color_tags => '色 色相 RGB 照明';
+  String get libItem_std_quantity_frequency_tags => '周波数 レート 音高 音程 ヘルツ パルス 点滅 サイクル';
 
   @override
-  String get libItem_std_output_display_value_name => '表示値';
+  String get libItem_std_quantity_force_name => '力';
 
   @override
-  String get libItem_std_output_display_value_description => 'ディスプレイに表示する数値。';
+  String get libItem_std_quantity_force_description => '押す力や引く力：ロードセルの読み、握力、ばね。';
 
   @override
-  String get libItem_std_output_display_value_tags => '表示 数値 画面 読み';
+  String get libItem_std_quantity_force_tags => '力 押す 引く ロードセル 握力 ばね 推力 ニュートン';
 
   @override
-  String get libItem_std_actuator_motor_speed_name => 'モーター速度';
+  String get libItem_std_quantity_pressure_name => '圧力';
 
   @override
-  String get libItem_std_actuator_motor_speed_description => 'モーターをどれだけ速く回すか。最高速度に対する割合、−1 から 1。';
+  String get libItem_std_quantity_pressure_description => '面積あたりの力：空気、流体、パッドへの押し。';
 
   @override
-  String get libItem_std_actuator_motor_speed_tags => 'モーター 速度 PWM';
+  String get libItem_std_quantity_pressure_tags => '圧力 気圧計 大気 高度 天気 流体 タイヤ パスカル キロパスカル';
 
   @override
-  String get libItem_std_actuator_motor_angle_name => 'モーター角度';
+  String get libItem_std_quantity_torque_name => 'トルク';
 
   @override
-  String get libItem_std_actuator_motor_angle_description => 'モーターやステッパーが保つべき角度。';
+  String get libItem_std_quantity_torque_description => '回す力：モーターが軸に伝えるもの。';
 
   @override
-  String get libItem_std_actuator_motor_angle_tags => 'モーター 角度 ステッパー';
+  String get libItem_std_quantity_torque_tags => 'トルク モーメント 回転力 モーター 軸 ニュートンメートル';
 
   @override
-  String get libItem_std_actuator_servo_position_name => 'サーボ位置';
+  String get libItem_std_quantity_power_name => '電力';
 
   @override
-  String get libItem_std_actuator_servo_position_description => 'サーボアームが動くべき角度。';
+  String get libItem_std_quantity_power_description => '毎秒のエネルギー：ヒーター、モーター、ランプが引く量や出す量。';
 
   @override
-  String get libItem_std_actuator_servo_position_tags => 'サーボ 角度 位置';
+  String get libItem_std_quantity_power_tags => '電力 ワット キロワット ヒーター 消費 ワット数';
 
   @override
-  String get libItem_std_actuator_vibration_intensity_name => '振動強度';
+  String get libItem_std_quantity_voltage_name => '電圧';
 
   @override
-  String get libItem_std_actuator_vibration_intensity_description =>
-      'ハプティックモーターをどれだけ強く振動させるか。0 から 1。';
+  String get libItem_std_quantity_voltage_description => '電位：バッテリー、電源レール、ボルト単位のアナログ読み。';
 
   @override
-  String get libItem_std_actuator_vibration_intensity_tags => '振動 ハプティック バイブ';
+  String get libItem_std_quantity_voltage_tags => '電圧 ボルト 電位 バッテリー 電源 アナログ ミリボルト';
 
   @override
-  String get libItem_std_actuator_heater_power_name => 'ヒーター出力';
+  String get libItem_std_quantity_illuminance_name => '照度';
 
   @override
-  String get libItem_std_actuator_heater_power_description => 'ヒーターをどれだけ働かせるか。0 から 1。';
+  String get libItem_std_quantity_illuminance_description => '面にどれだけ光が当たるか：環境光、日光、フォトセルの読み。';
 
   @override
-  String get libItem_std_actuator_heater_power_tags => 'ヒーター 加熱 出力';
-
-  @override
-  String get libItem_std_actuator_fan_speed_name => 'ファン速度';
-
-  @override
-  String get libItem_std_actuator_fan_speed_description => 'ファンをどれだけ速く回すか。0（停止）から 1（最大）。';
-
-  @override
-  String get libItem_std_actuator_fan_speed_tags => 'ファン 速度 冷却';
-
-  @override
-  String get libItem_std_actuator_valve_opening_name => 'バルブ開度';
-
-  @override
-  String get libItem_std_actuator_valve_opening_description => 'バルブがどれだけ開いているか。0（閉）から 1（全開）。';
-
-  @override
-  String get libItem_std_actuator_valve_opening_tags => 'バルブ 開度 流量';
-
-  @override
-  String get libItem_std_audio_volume_name => '音量';
-
-  @override
-  String get libItem_std_audio_volume_description => '製品の再生音量。0（無音）から 1（最大）。';
-
-  @override
-  String get libItem_std_audio_volume_tags => '音量 スピーカー 音';
-
-  @override
-  String get libItem_std_audio_pitch_name => 'ピッチ';
-
-  @override
-  String get libItem_std_audio_pitch_description => '鳴らす音の周波数。';
-
-  @override
-  String get libItem_std_audio_pitch_tags => 'ピッチ 周波数 音程 ブザー';
-
-  @override
-  String get libItem_std_source_temperature_name => '温度入力';
-
-  @override
-  String get libItem_std_source_temperature_description => '環境が与える温度（部屋、表面、空気）を、活性化ごとに一度読む。';
-
-  @override
-  String get libItem_std_source_temperature_tags => '温度 入力 センサー 熱 サーミスタ';
-
-  @override
-  String get libItem_std_source_tilt_name => '傾き入力';
-
-  @override
-  String get libItem_std_source_tilt_description =>
-      '製品が水平からどれだけ傾いているかを、環境が与える値として。ランプヘッド、ハンドヘルド、車体。';
-
-  @override
-  String get libItem_std_source_tilt_tags => '傾き 入力 センサー 傾斜 加速度センサー 水平';
-
-  @override
-  String get libItem_std_source_distance_name => '距離入力';
-
-  @override
-  String get libItem_std_source_distance_description =>
-      'いちばん近いものがどれだけ離れているかを、環境が与える値として。障害物、手、液面。どのセンサーで測るかはデプロイ時の選択。';
-
-  @override
-  String get libItem_std_source_distance_tags => '距離 入力 センサー 測距 近接 超音波 レーザー';
-
-  @override
-  String get libItem_std_source_ambient_light_name => '環境光入力';
-
-  @override
-  String get libItem_std_source_ambient_light_description =>
-      '製品に当たる光の量を、環境が与える値として。調光、画面の起動、日光の検出に。';
-
-  @override
-  String get libItem_std_source_ambient_light_tags => '環境光 入力 センサー 照度 光 日光 明るさ';
-
-  @override
-  String get libItem_std_source_button_name => 'ボタン入力';
-
-  @override
-  String get libItem_std_source_button_description =>
-      'いまボタンが押されているか、スイッチが入っているかを、環境が活性化ごとに与える値として。イベントではなく安定した状態。';
-
-  @override
-  String get libItem_std_source_button_tags => 'ボタン 入力 スイッチ 状態 押下 キー';
-
-  @override
-  String get libItem_std_source_encoder_name => 'エンコーダー入力';
-
-  @override
-  String get libItem_std_source_encoder_description => '軸やつまみが回った角度を、環境が与える値として。パルスを数えるのはデプロイの仕事。';
-
-  @override
-  String get libItem_std_source_encoder_tags => 'エンコーダー 入力 位置 つまみ 軸 角度';
-
-  @override
-  String get libItem_std_source_analog_name => 'アナログ入力';
-
-  @override
-  String get libItem_std_source_analog_description =>
-      '振る舞いが解釈する汎用のアナログ読み値。値の形はあなたに委ねる。入力が何を測るか分かったら、コンセプトに選ぶ。';
-
-  @override
-  String get libItem_std_source_analog_tags => 'アナログ 入力 ADC 電圧 読み値 汎用';
-
-  @override
-  String get libItem_std_source_external_name => '外部入力';
-
-  @override
-  String get libItem_std_source_external_description =>
-      '製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力はセンサーとは限らない。';
-
-  @override
-  String get libItem_std_source_external_tags => '外部 入力 入力元 ホスト ネットワーク シミュレーション';
+  String get libItem_std_quantity_illuminance_tags => '照度 光 ルクス 環境光 日光 暗さ フォトセル 光センサー';
 }

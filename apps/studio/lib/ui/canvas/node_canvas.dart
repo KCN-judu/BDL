@@ -30,6 +30,7 @@ import '../../l10n/library_strings.dart';
 import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
 import '../mac/menus.dart';
 import '../mac/tokens.dart';
+import '../expanded_formula.dart';
 import 'canvas_geometry.dart';
 
 class NodeCanvas extends StatefulWidget {
@@ -56,7 +57,18 @@ class NodeCanvas extends StatefulWidget {
     this.groupsEnabled = false,
     this.actions,
     this.hasSources = false,
+    this.expanded = const {},
+    this.previews = const {},
+    this.analyses = const {},
   });
+
+  /// The mappings whose saved formula is shown on the node, with the
+  /// height of the picture (measured once drawn; the initial height
+  /// before), the committed definitions' projections fetched for them
+  /// (`FormulaPreview`), and the analyses their findings come from.
+  final Map<int, double> expanded;
+  final Map<int, FormulaPreview> previews;
+  final Map<int, pb.MappingAnalysis> analyses;
 
   final pb.ProjectProjection project;
   final Map<NodeRef, Offset> layout;
@@ -365,6 +377,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     refs: widget.refs,
     unapplied: widget.unapplied,
     system: _sceneInput,
+    expanded: widget.expanded,
   );
 
   bool get _isSystemCanvas => widget.system.system != null && widget.context is SystemContext;
@@ -377,8 +390,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
   static Offset nodeOriginFor(Offset scenePoint) =>
       scenePoint - const Offset(NodeMetrics.conceptWidth / 2, NodeMetrics.headerHeight / 2);
 
-  void _insert(String templateId, Offset scenePoint) {
-    widget.dispatch(InsertLibraryItemRequested(templateId, position: nodeOriginFor(scenePoint)));
+  /// A value category opens the concept sheet at the point: the concept
+  /// is named before it is created (ADR-0041), and lands here.
+  void _newConceptAt(String presetId, Offset scenePoint) {
+    widget.dispatch(NewConceptRequested(presetId: presetId, position: nodeOriginFor(scenePoint)));
   }
 
   /// A Source item is a preset for the Source sheet: nothing is created
@@ -547,7 +562,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
             ..current = _toScene(e.localPosition)
             ..proxyChoices = targets.length > 1 ? targets : null;
         });
-      case HitNode(:final node):
+      case HitNode(:final node) || HitDisclosure(:final node):
         // Dragging a selected node moves the selected set; an unselected
         // one becomes the selection first (⌘/Ctrl adds it instead).
         var set = _selectedSet;
@@ -662,6 +677,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
         }
       case HitSocket(:final node):
         _primaryModifier ? _toggle(node.ref) : _clickNode(node.ref);
+      case HitDisclosure(:final node):
+        // the one control on a node: show or hide the saved formula; the
+        // node is not selected by it (reading, not choosing)
+        widget.dispatch(FormulaExpansionToggled(node.ref.id));
       case HitGroup(:final group):
         final ref = NodeRef.group(group.id);
         _primaryModifier
@@ -843,7 +862,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final hit = hitTest(scene, _toScene(e.localPosition));
     final (NodeRef? node, SocketRef? socket) = switch (hit) {
       HitSocket(:final socket, :final node) => (node.ref, socket.ref),
-      HitNode(:final node) => (node.ref, null),
+      HitNode(:final node) || HitDisclosure(:final node) => (node.ref, null),
       HitGroup(:final group) => (NodeRef.group(group.id), null),
       HitLink() || HitNothing() => (null, null),
     };
@@ -868,7 +887,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final hit = hitTest(scene, p);
     final MenuContext ctx;
     switch (hit) {
-      case HitNode(:final node) || HitSocket(:final node):
+      case HitNode(:final node) || HitSocket(:final node) || HitDisclosure(:final node):
         final set = _selectedSet;
         if (set.length > 1 && set.contains(node.ref)) {
           ctx = SelectionMenuContext(set, active: _active);
@@ -1048,6 +1067,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
             MacMenuItem(
               label: l10n.editDefinition,
               onPressed: () => widget.dispatch(EditDefinitionRequested(node.id)),
+            ),
+          // reading: the saved formula on the node, folded or shown
+          if (m != null && m.hasDefinition())
+            MacMenuItem(
+              label: widget.expanded.containsKey(node.id) ? l10n.hideFormula : l10n.showFormula,
+              onPressed: () => widget.dispatch(FormulaExpansionToggled(node.id)),
             ),
           MacMenuItem(
             label: l10n.rename,
@@ -1234,15 +1259,16 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   /// Empty canvas: creation, then the canvas itself.  The quick-insert
-  /// tree is the library's — Recent, by role, the three most common
-  /// categories, then the Library tab for the rest.
+  /// tree is the library's — Recent, the value forms, the quantities in a
+  /// submenu, then the Library tab for the rest.  Every category opens the
+  /// concept sheet at the pointer: the concept is named there.
   List<Widget> _canvasMenu(BuildContext context, Offset at) {
     final l10n = context.l10n;
     final all = widget.templates;
     final byId = {for (final t in all) t.id: t};
     Widget item(pb.ConceptTemplateView t) => MacMenuItem(
       label: libraryItemStrings(l10n, t.id)?.name ?? t.displayName,
-      onPressed: widget.canInsert ? () => _insert(t.id, at) : null,
+      onPressed: widget.canInsert ? () => _newConceptAt(t.id, at) : null,
     );
     List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
     Widget sourceItem(pb.LibraryItemView s) => MacMenuItem(
@@ -1254,11 +1280,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
       for (final id in widget.recentTemplates)
         if (byId[id] case final t?) item(t) else if (sourceById[id] case final s?) sourceItem(s),
     ];
-    final environment = all.where((t) => t.category == 'environment');
-    final motion = all.where((t) => t.category == 'motion');
-    final human = all.where((t) => t.category == 'human');
-    final inputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_OUTPUT);
-    final outputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_INPUT);
+    final forms = all.where((t) => t.category == 'form');
+    final quantities = all.where((t) => t.category == 'quantity');
+    // any other served library's categories, by their groups
+    final otherGroups = <String>[];
+    for (final t in all) {
+      if (t.category != 'form' && t.category != 'quantity' && !otherGroups.contains(t.category)) {
+        otherGroups.add(t.category);
+      }
+    }
     return [
       MacSubmenu(
         label: l10n.addConcept,
@@ -1267,12 +1297,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
             MacSubmenu(label: l10n.recent, children: recent),
             const MacMenuDivider(),
           ],
-          MacSubmenu(label: l10n.input, children: group(inputs)),
-          MacSubmenu(label: l10n.output, children: group(outputs)),
-          const MacMenuDivider(),
-          MacSubmenu(label: categoryLabel(l10n, 'environment'), children: group(environment)),
-          MacSubmenu(label: categoryLabel(l10n, 'motion'), children: group(motion)),
-          MacSubmenu(label: categoryLabel(l10n, 'human'), children: group(human)),
+          ...group(forms),
+          if (quantities.isNotEmpty)
+            MacSubmenu(label: l10n.libraryQuantities, children: group(quantities)),
+          for (final g in otherGroups)
+            MacSubmenu(
+              label: categoryLabel(l10n, g),
+              children: group(all.where((t) => t.category == g)),
+            ),
           const MacMenuDivider(),
           MacMenuItem(
             label: l10n.more,
@@ -1282,7 +1314,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
       ),
       // A Source is an ordinary relationship the environment provides
       // (ADR-0032), created over a concept the designer chooses on the
-      // Source sheet: the generic entry, then the presets that prefill it.
+      // Source sheet: the generic entry, then any preset a served library
+      // ships.
       MacSubmenu(
         label: l10n.addSource,
         children: [
@@ -1745,7 +1778,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
               if (d.data.source) {
                 _newSourceAt(d.data.itemId, scene);
               } else {
-                _insert(d.data.itemId, scene);
+                _newConceptAt(d.data.itemId, scene);
               }
             },
             builder: (context, candidates, _) => MacMenuAnchor(
@@ -1810,6 +1843,30 @@ class _NodeCanvasState extends State<NodeCanvas> {
                                 ),
                               ),
                             ),
+                          // Expanded formulas: the saved definition rendered
+                          // on the node, read only (a deliberate action edits
+                          // it in the inspector).
+                          for (final shape in scene.nodes)
+                            if (shape.expanded && shape.ref.kind == NodeKind.mapping)
+                              ExpandedFormula(
+                                key: ValueKey('expanded-${shape.ref.id}'),
+                                mappingId: shape.ref.id,
+                                rect: Rect.fromLTWH(
+                                  shape.formulaRegion.left * _zoom + _pan.dx,
+                                  shape.formulaRegion.top * _zoom + _pan.dy,
+                                  shape.formulaRegion.width * _zoom,
+                                  shape.formulaRegion.height * _zoom,
+                                ),
+                                sceneWidth: shape.formulaRegion.width,
+                                zoom: _zoom,
+                                preview: widget.previews[shape.ref.id],
+                                analysis: widget.analyses[shape.ref.id],
+                                concepts: {
+                                  for (final c in widget.project.concepts) c.id.toInt(): c,
+                                },
+                                selected: selectedSet.contains(shape.ref),
+                                dispatch: widget.dispatch,
+                              ),
                           if (widget.renaming case final node?) ...[
                             for (final shape in scene.nodes.where((n) => n.ref == node))
                               _InlineRename(
@@ -2468,10 +2525,11 @@ class NodePainter {
         alignRight: true,
       );
     }
-    // The timing domain, quietly, at the body's right edge.
+    // The timing domain, quietly, at the body's right edge — left of the
+    // disclosure when the definition line carries one.
     if (n.timing.isNotEmpty) {
       final at = n.ref.kind == NodeKind.mapping
-          ? n.definitionRegion.topRight + const Offset(-10, 5)
+          ? n.definitionRegion.topRight + Offset(n.definition != null ? -28 : -10, 5)
           : n.rect.bottomRight + const Offset(-12, -NodeMetrics.rowHeight + 5);
       _text(
         canvas,
@@ -2563,8 +2621,41 @@ class NodePainter {
           FontWeight.w400,
           11,
           n.wrong ? tokens.textPrimary : tokens.textSecondary,
-          maxWidth: region.right - 10 - left - (n.timing.isEmpty ? 0 : 64),
+          maxWidth: region.right - 10 - left - 18 - (n.timing.isEmpty ? 0 : 64),
         );
+        // the disclosure: a chevron at the line's right end — right while
+        // the formula is folded, down while it is shown on the node
+        final d = n.disclosure;
+        final c = d.center;
+        final chevron = Path();
+        if (n.expanded) {
+          chevron
+            ..moveTo(c.dx - 3.5, c.dy - 2)
+            ..lineTo(c.dx, c.dy + 2)
+            ..lineTo(c.dx + 3.5, c.dy - 2);
+        } else {
+          chevron
+            ..moveTo(c.dx - 2, c.dy - 3.5)
+            ..lineTo(c.dx + 2, c.dy)
+            ..lineTo(c.dx - 2, c.dy + 3.5);
+        }
+        canvas.drawPath(
+          chevron,
+          Paint()
+            ..color = tokens.textSecondary
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.4
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round,
+        );
+        if (n.expanded) {
+          final f = n.formulaRegion;
+          canvas.drawLine(
+            f.topLeft + const Offset(1, 0),
+            f.topRight + const Offset(-1, 0),
+            Paint()..color = tokens.hairline,
+          );
+        }
       }
     }
   }

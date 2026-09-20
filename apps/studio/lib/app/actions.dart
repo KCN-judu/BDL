@@ -102,10 +102,71 @@ class RedoRequested extends UserAction {
 }
 
 class CreateConceptRequested extends UserAction {
-  const CreateConceptRequested({required this.name, this.description = '', this.representation});
+  const CreateConceptRequested({
+    required this.name,
+    this.description = '',
+    this.representation,
+    this.position,
+    this.presetId = '',
+  });
   final String name;
   final String description;
   final pb.Representation? representation;
+
+  /// Where the concept lands (scene coordinates) when it was asked for at
+  /// a point on the canvas; `null` auto-places.
+  final Offset? position;
+
+  /// The value category (a library item) the concept sheet was opened
+  /// with, remembered among the recent items; empty when none.
+  final String presetId;
+}
+
+/// Open the concept sheet (ADR-0041): a concept is created from a value
+/// category the designer names before anything is created.  [presetId]
+/// names the library item (the category) that prefills the sheet — empty
+/// for the Project tab's *New concept*; [position] is where the concept
+/// lands.  Every concept entry point — a library row's double-click, Return
+/// or drag, the canvas menu, the Project tab's `+` — dispatches exactly
+/// this; nothing is committed by it.
+class NewConceptRequested extends UserAction {
+  const NewConceptRequested({this.presetId = '', this.position});
+  final String presetId;
+  final Offset? position;
+}
+
+/// The concept sheet was closed without creating anything.
+class ConceptSheetDismissed extends UserAction {
+  const ConceptSheetDismissed();
+}
+
+/// Show or hide a mapping's saved formula on its canvas node (a reading
+/// state of the editor; editing stays in the inspector).
+class FormulaExpansionToggled extends UserAction {
+  const FormulaExpansionToggled(this.mappingId);
+  final int mappingId;
+}
+
+/// The expanded formula's picture was drawn and measured: the node takes
+/// its height (at most the maximum).
+class FormulaExpansionMeasured extends AppAction {
+  const FormulaExpansionMeasured({required this.mappingId, required this.height});
+  final int mappingId;
+  final double height;
+}
+
+/// The committed definition's projection for an expanded node arrived.
+class FormulaPreviewReceived extends AppAction {
+  const FormulaPreviewReceived({required this.generation, required this.response});
+  final int generation;
+  final pb.FormulaProjectionResponse response;
+}
+
+/// The structural caret moved (or left: [caret] `null`).
+class FormulaCaretMoved extends UserAction {
+  const FormulaCaretMoved({required this.mappingId, required this.caret});
+  final int mappingId;
+  final CaretState? caret;
 }
 
 /// Insert a library item (right-click menu, a drag from the Library panel,
@@ -1395,6 +1456,12 @@ class TemplatesReceived extends ResponseAction {
 }
 
 /// The daemon's libraries arrived, as items (asked once per connection).
+/// The compiler's value categories arrived (asked once per connection).
+class ValueCategoriesReceived extends ResponseAction {
+  const ValueCategoriesReceived(this.categories);
+  final List<pb.ValueCategoryView> categories;
+}
+
 class LibraryItemsReceived extends ResponseAction {
   const LibraryItemsReceived(this.library);
   final pb.LibraryItemsResponse library;

@@ -11,7 +11,9 @@
   "screenshots": [
     {
       "id": "project-manager",
-      "pages": ["getting-started/install-and-launch.md"],
+      "pages": [
+        "getting-started/install-and-launch.md"
+      ],
       "fixture": null,
       "view": "welcome",
       "steps": [],
@@ -35,7 +37,9 @@
     },
     {
       "id": "workspace",
-      "pages": ["studio/workspace.md"],
+      "pages": [
+        "studio/workspace.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "design",
       "steps": [
@@ -54,7 +58,13 @@
           "brightness",
           "light"
         ],
-        "texts": ["Design", "Simulate", "Deploy", "Monitor", "Inspector"]
+        "texts": [
+          "Design",
+          "Simulate",
+          "Deploy",
+          "Monitor",
+          "Inspector"
+        ]
       },
       "crop": {
         "region": "window"
@@ -65,16 +75,59 @@
       "purpose": "The six regions of the workspace, on a real design."
     },
     {
+      "id": "concept-sheet",
+      "pages": [
+        "studio/library.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "concept": {
+            "category": "std.quantity.angle"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Name",
+          "Measured in",
+          "Create Concept"
+        ],
+        "textsContaining": [
+          "A value category from the Library"
+        ]
+      },
+      "crop": {
+        "key": "sheet",
+        "pad": 24
+      },
+      "output": "studio/concept-sheet.png",
+      "caption": "The concept sheet for Angle: the name is yours to give; the units an angle is measured in are shown, not chosen.",
+      "alt": "A sheet titled New concept — A value category from the Library, and the name it has in this product — with an empty Name field, a Value pop-up reading Angle, a Measured in row listing rad, deg and turn, a Meaning field, a preview of the node, the declaration concept … : Angle, the line Creates one concept, as the Code view will write it., and Cancel and Create Concept buttons.",
+      "purpose": "Creating a concept: a category and a product-specific name, the units as a fact."
+    },
+    {
       "id": "declared-relationship",
-      "pages": ["getting-started/first-behavior.md"],
+      "pages": [
+        "getting-started/first-behavior.md"
+      ],
       "fixture": "tilt-lamp-declared",
       "view": "design",
       "steps": [],
       "expect": {
-        "nodes": ["Tilt", "Brightness", "dimByTilt"]
+        "nodes": [
+          "Tilt",
+          "Brightness",
+          "dimByTilt"
+        ]
       },
       "crop": {
-        "nodes": ["Tilt", "dimByTilt", "Brightness"],
+        "nodes": [
+          "Tilt",
+          "dimByTilt",
+          "Brightness"
+        ],
         "pad": 32
       },
       "output": "getting-started/declared-relationship.png",
@@ -107,8 +160,12 @@
         }
       ],
       "expect": {
-        "texts": ["Tilt / 90 s"],
-        "textsContaining": ["Brightness"]
+        "texts": [
+          "Tilt / 90 s"
+        ],
+        "textsContaining": [
+          "Brightness"
+        ]
       },
       "crop": {
         "union": [
@@ -157,8 +214,18 @@
         }
       ],
       "expect": {
-        "texts": ["Formula", "Text", "Tilt", "÷", "?", "Insert", "References"],
-        "textsContaining": ["Expected: an angle", "Equations ("]
+        "texts": [
+          "Formula",
+          "Text",
+          "Tilt",
+          "?",
+          "Insert",
+          "References"
+        ],
+        "textsContaining": [
+          "Expected: an angle",
+          "Equations ("
+        ]
       },
       "crop": {
         "union": [
@@ -172,13 +239,15 @@
         "pad": 8
       },
       "output": "studio/formula-composer.png",
-      "caption": "The Formula view with the denominator slot selected: the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits.",
-      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula as components — a Tilt chip, a division sign and a dashed empty slot with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.",
+      "caption": "The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits.",
+      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.",
       "purpose": "How a formula is assembled without typing, and how the compiler guides each slot."
     },
     {
       "id": "complete-lamp",
-      "pages": ["getting-started/first-behavior.md"],
+      "pages": [
+        "getting-started/first-behavior.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "design",
       "steps": [],
@@ -211,7 +280,9 @@
     },
     {
       "id": "node-anatomy",
-      "pages": ["studio/canvas.md"],
+      "pages": [
+        "studio/canvas.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "design",
       "steps": [
@@ -248,8 +319,44 @@
       "purpose": "The parts of every node kind, on real nodes."
     },
     {
+      "id": "formula-unfolded",
+      "pages": [
+        "studio/canvas.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "expand": {
+            "mapping": "dimByTilt"
+          }
+        }
+      ],
+      "expect": {
+        "nodes": [
+          "dimByTilt"
+        ],
+        "texts": [
+          "Edit formula"
+        ]
+      },
+      "crop": {
+        "nodes": [
+          "dimByTilt"
+        ],
+        "pad": 40
+      },
+      "output": "studio/formula-unfolded.png",
+      "caption": "dimByTilt unfolded: the chevron at its formula line turned down, and the saved formula Tilt / 90 deg drawn as a fraction inside the node, with Edit formula beneath.",
+      "alt": "The relationship node dimByTilt with its formula line Tilt / 90 deg and a downward chevron, extended below by a region showing Tilt over a rule over 90 deg and the link Edit formula.",
+      "purpose": "A saved formula read on the canvas without opening the inspector."
+    },
+    {
       "id": "simulate-page",
-      "pages": ["getting-started/first-simulation.md", "studio/simulate.md"],
+      "pages": [
+        "getting-started/first-simulation.md",
+        "studio/simulate.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "simulate",
       "steps": [
@@ -269,7 +376,10 @@
         }
       ],
       "expect": {
-        "texts": ["Sources", "Timing domains"],
+        "texts": [
+          "Sources",
+          "Timing domains"
+        ],
         "ticks": 3
       },
       "crop": {
@@ -283,12 +393,16 @@
     },
     {
       "id": "simulate-readiness",
-      "pages": ["studio/simulate.md"],
+      "pages": [
+        "studio/simulate.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "simulate",
       "steps": [],
       "expect": {
-        "textsContaining": ["needs a value before simulation can step"]
+        "textsContaining": [
+          "needs a value before simulation can step"
+        ]
       },
       "crop": {
         "union": [
@@ -309,7 +423,10 @@
     },
     {
       "id": "deploy-page",
-      "pages": ["getting-started/first-deployment.md", "studio/deploy.md"],
+      "pages": [
+        "getting-started/first-deployment.md",
+        "studio/deploy.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "deploy",
       "steps": [
@@ -318,8 +435,13 @@
         }
       ],
       "expect": {
-        "texts": ["Fits Arduino Nano so far — the binding is not finished."],
-        "textsContaining": ["pwmLight", "tilt has no device"]
+        "texts": [
+          "Fits Arduino Nano so far — the binding is not finished."
+        ],
+        "textsContaining": [
+          "pwmLight",
+          "tilt has no device"
+        ]
       },
       "crop": {
         "region": "page",
@@ -332,7 +454,9 @@
     },
     {
       "id": "deploy-dead-end",
-      "pages": ["getting-started/first-deployment.md"],
+      "pages": [
+        "getting-started/first-deployment.md"
+      ],
       "fixture": "tilt-lamp",
       "view": "deploy",
       "steps": [
@@ -348,8 +472,12 @@
         }
       ],
       "expect": {
-        "texts": ["Not feasible on Arduino Nano."],
-        "textsContaining": ["D4"]
+        "texts": [
+          "Not feasible on Arduino Nano."
+        ],
+        "textsContaining": [
+          "D4"
+        ]
       },
       "crop": {
         "union": [
@@ -369,16 +497,30 @@
     },
     {
       "id": "pico-design",
-      "pages": ["getting-started/pico-demo.md"],
+      "pages": [
+        "getting-started/pico-demo.md"
+      ],
       "fixture": "pico-button-lamp",
       "view": "design",
       "steps": [],
       "expect": {
-        "nodes": ["Pressed", "Lit", "pressed", "lit", "lamp"],
+        "nodes": [
+          "Pressed",
+          "Lit",
+          "pressed",
+          "lit",
+          "lamp"
+        ],
         "outputComplete": true
       },
       "crop": {
-        "nodes": ["Pressed", "Lit", "pressed", "lit", "lamp"],
+        "nodes": [
+          "Pressed",
+          "Lit",
+          "pressed",
+          "lit",
+          "lamp"
+        ],
         "pad": 40
       },
       "output": "getting-started/pico-design.png",
@@ -388,7 +530,10 @@
     },
     {
       "id": "pico-firmware-ready",
-      "pages": ["getting-started/pico-demo.md", "studio/deploy.md"],
+      "pages": [
+        "getting-started/pico-demo.md",
+        "studio/deploy.md"
+      ],
       "fixture": "pico-button-lamp",
       "view": "deploy",
       "steps": [
@@ -408,7 +553,12 @@
           "Build for Raspberry Pi Pico (RP2040)",
           "Ready to build for Raspberry Pi Pico (RP2040)."
         ],
-        "textsContaining": ["button", "led", "GP2", "GP25"]
+        "textsContaining": [
+          "button",
+          "led",
+          "GP2",
+          "GP25"
+        ]
       },
       "crop": {
         "region": "page",
@@ -421,7 +571,9 @@
     },
     {
       "id": "pico-firmware-built",
-      "pages": ["getting-started/pico-demo.md"],
+      "pages": [
+        "getting-started/pico-demo.md"
+      ],
       "fixture": "pico-button-lamp",
       "view": "deploy",
       "steps": [
@@ -436,8 +588,14 @@
         }
       ],
       "expect": {
-        "texts": ["No board is reachable."],
-        "textsContaining": ["Firmware built at", "bytes", "Hold BOOTSEL"]
+        "texts": [
+          "No board is reachable."
+        ],
+        "textsContaining": [
+          "Firmware built at",
+          "bytes",
+          "Hold BOOTSEL"
+        ]
       },
       "crop": {
         "key": "firmware-card",
@@ -450,7 +608,10 @@
     },
     {
       "id": "instance-nodes",
-      "pages": ["studio/system-projects.md", "concepts/behavior-systems.md"],
+      "pages": [
+        "studio/system-projects.md",
+        "concepts/behavior-systems.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -461,7 +622,13 @@
         }
       ],
       "expect": {
-        "nodes": ["adaptiveLamp", "second", "tiltValue", "brightness", "mirror"]
+        "nodes": [
+          "adaptiveLamp",
+          "second",
+          "tiltValue",
+          "brightness",
+          "mirror"
+        ]
       },
       "crop": {
         "nodes": [
@@ -480,7 +647,9 @@
     },
     {
       "id": "component-source",
-      "pages": ["studio/system-projects.md"],
+      "pages": [
+        "studio/system-projects.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -491,8 +660,14 @@
         }
       ],
       "expect": {
-        "nodes": ["tiltValue", "dimByTilt", "brightness"],
-        "textsContaining": ["AdaptiveLamp"]
+        "nodes": [
+          "tiltValue",
+          "dimByTilt",
+          "brightness"
+        ],
+        "textsContaining": [
+          "AdaptiveLamp"
+        ]
       },
       "crop": {
         "union": [
@@ -518,7 +693,9 @@
     },
     {
       "id": "code-view",
-      "pages": ["studio/code-view.md"],
+      "pages": [
+        "studio/code-view.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -527,7 +704,9 @@
         }
       ],
       "expect": {
-        "textsContaining": ["src/main.bdl"]
+        "textsContaining": [
+          "src/main.bdl"
+        ]
       },
       "crop": {
         "region": "page"
@@ -539,7 +718,9 @@
     },
     {
       "id": "code-completion",
-      "pages": ["studio/code-view.md"],
+      "pages": [
+        "studio/code-view.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -553,7 +734,9 @@
         }
       ],
       "expect": {
-        "textsContaining": ["tiltValue"]
+        "textsContaining": [
+          "tiltValue"
+        ]
       },
       "crop": {
         "key": "completion-popup",
@@ -568,7 +751,9 @@
     },
     {
       "id": "code-hover",
-      "pages": ["studio/code-view.md"],
+      "pages": [
+        "studio/code-view.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -582,7 +767,9 @@
         }
       ],
       "expect": {
-        "textsContaining": ["dimByTilt"]
+        "textsContaining": [
+          "dimByTilt"
+        ]
       },
       "crop": {
         "key": "hover-card",
@@ -611,17 +798,33 @@
         }
       ],
       "expect": {
-        "nodes": ["tiltValue", "dimByTilt", "brightness", "indicator", "light"],
-        "groups": ["Adaptive lamp"],
-        "texts": ["Boundary"]
+        "nodes": [
+          "tiltValue",
+          "dimByTilt",
+          "brightness",
+          "indicator",
+          "light"
+        ],
+        "groups": [
+          "Adaptive lamp"
+        ],
+        "texts": [
+          "Boundary"
+        ]
       },
       "crop": {
         "union": [
           {
-            "nodes": ["tiltValue", "indicator", "light"]
+            "nodes": [
+              "tiltValue",
+              "indicator",
+              "light"
+            ]
           },
           {
-            "groups": ["Adaptive lamp"]
+            "groups": [
+              "Adaptive lamp"
+            ]
           }
         ],
         "pad": 32
@@ -633,7 +836,9 @@
     },
     {
       "id": "behavior-collapsed",
-      "pages": ["workflows/grouping-behavior.md"],
+      "pages": [
+        "workflows/grouping-behavior.md"
+      ],
       "fixture": "behavior-group",
       "view": "design",
       "steps": [
@@ -644,10 +849,20 @@
         }
       ],
       "expect": {
-        "nodes": ["tiltValue", "Adaptive lamp", "indicator", "light"]
+        "nodes": [
+          "tiltValue",
+          "Adaptive lamp",
+          "indicator",
+          "light"
+        ]
       },
       "crop": {
-        "nodes": ["tiltValue", "Adaptive lamp", "indicator", "light"],
+        "nodes": [
+          "tiltValue",
+          "Adaptive lamp",
+          "indicator",
+          "light"
+        ],
         "pad": 32
       },
       "output": "workflows/behavior-collapsed.png",
@@ -657,7 +872,9 @@
     },
     {
       "id": "packaging-sheet",
-      "pages": ["workflows/package-as-component.md"],
+      "pages": [
+        "workflows/package-as-component.md"
+      ],
       "fixture": "behavior-group",
       "view": "design",
       "steps": [
@@ -668,8 +885,14 @@
         }
       ],
       "expect": {
-        "texts": ["Requires", "Provides"],
-        "textsContaining": ["tiltValue", "brightness"]
+        "texts": [
+          "Requires",
+          "Provides"
+        ],
+        "textsContaining": [
+          "tiltValue",
+          "brightness"
+        ]
       },
       "crop": {
         "key": "sheet",
@@ -682,7 +905,9 @@
     },
     {
       "id": "transport-sheet",
-      "pages": ["workflows/cross-domain-transport.md"],
+      "pages": [
+        "workflows/cross-domain-transport.md"
+      ],
       "fixture": "component-system",
       "view": "design",
       "steps": [
@@ -694,8 +919,12 @@
         }
       ],
       "expect": {
-        "texts": ["Carry across timing domains"],
-        "textsContaining": ["Starts at"]
+        "texts": [
+          "Carry across timing domains"
+        ],
+        "textsContaining": [
+          "Starts at"
+        ]
       },
       "crop": {
         "key": "sheet",

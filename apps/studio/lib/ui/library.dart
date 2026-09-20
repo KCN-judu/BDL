@@ -18,7 +18,6 @@ import 'dialogs.dart';
 import 'mac/widgets.dart';
 import 'mac/interactive.dart';
 import 'mac/tokens.dart';
-import 'units.dart';
 
 /// Left sidebar, two tabs: **Project** — the project's objects by kind —
 /// and **Library** — the concept libraries to insert from
@@ -130,21 +129,8 @@ class _ProjectObjects extends StatelessWidget {
               children: [
                 _Section(
                   title: context.l10n.concepts,
-                  onAdd: () async {
-                    final r = await showNewConceptSheet(
-                      context,
-                      presets: unitPresetsFrom(state.library?.quantities ?? const [], context.l10n),
-                    );
-                    if (r != null) {
-                      dispatch(
-                        CreateConceptRequested(
-                          name: r.name,
-                          description: r.description,
-                          representation: r.representation,
-                        ),
-                      );
-                    }
-                  },
+                  // the concept sheet, with the category to choose there
+                  onAdd: () => dispatch(const NewConceptRequested()),
                 ),
                 for (final c in p.concepts)
                   _Row(

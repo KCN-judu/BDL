@@ -469,8 +469,9 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
     return CallbackShortcuts(
       bindings: {
         // The pop-up takes the navigation keys only while it is open; Esc
-        // then closes it rather than reverting the draft.
-        if (_completionOpen) ...{
+        // then closes it rather than reverting the draft.  In Formula mode
+        // the composer owns the pop-up's keys and its own completion.
+        if (_completionOpen && !formulaMode) ...{
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
               widget.dispatch(const CompletionMoved(1)),
           const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
@@ -480,9 +481,12 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
           const SingleActivator(LogicalKeyboardKey.escape): () =>
               widget.dispatch(const CompletionDismissed()),
         } else ...{
+          // (in Formula mode the composer clears its caret first; a second
+          // Esc reaches this)
           if (m.canRevert) const SingleActivator(LogicalKeyboardKey.escape): _revert,
         },
-        const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
+        if (!formulaMode)
+          const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
         if (m.canCommit) const SingleActivator(LogicalKeyboardKey.enter, meta: true): _commit,
       },
       child: Column(
@@ -513,6 +517,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
               composer: widget.composer,
               concepts: widget.concepts,
               dispatch: widget.dispatch,
+              completion: completion,
               outOfSync: !inSync,
               onEditAsText: () => widget.dispatch(const FormulaModeChanged(false)),
             )

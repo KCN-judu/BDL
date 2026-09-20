@@ -65,6 +65,11 @@ abstract final class NodeMetrics {
   /// height of its title band.
   static const double regionPadding = 16;
   static const double regionTitle = 22;
+
+  /// The expanded formula region's bounds (the editor state's, so the
+  /// reducer needs no geometry).
+  static const double formulaInitialHeight = EditorState.formulaInitialHeight;
+  static const double formulaMaxHeight = EditorState.formulaMaxHeight;
 }
 
 enum SocketSide { input, output }
@@ -195,11 +200,20 @@ class NodeShape {
     this.rule = false,
     this.dependsOn = const [],
     this.unapplied = false,
+    this.formulaHeight = 0,
   });
   final NodeRef ref;
   final Rect rect;
   final String title;
   final List<SocketShape> sockets;
+
+  /// The height of the expanded formula region under the definition line
+  /// (docs/architecture/studio-ui.md §2, *Expanded formula*): 0 when the
+  /// mapping's saved formula is not shown on the node.  A reading state of
+  /// the editor, never layout data.
+  final double formulaHeight;
+
+  bool get expanded => formulaHeight > 0;
 
   /// A rule (ADR-0034): a relationship that reads something — a function
   /// from its inputs to its output, applied by other formulas; it has no
@@ -262,12 +276,27 @@ class NodeShape {
 
   Rect get header => Rect.fromLTWH(rect.left, rect.top, rect.width, NodeMetrics.headerHeight);
 
-  /// The definition region of a mapping (below the socket rows).
+  /// The definition region of a mapping (below the socket rows): the
+  /// summary line; the expanded formula, when shown, sits under it.
   Rect get definitionRegion => Rect.fromLTWH(
     rect.left,
-    rect.bottom - NodeMetrics.bodyHeight,
+    rect.bottom - formulaHeight - NodeMetrics.bodyHeight,
     rect.width,
     NodeMetrics.bodyHeight,
+  );
+
+  /// The expanded formula region (empty when collapsed).
+  Rect get formulaRegion =>
+      Rect.fromLTWH(rect.left, rect.bottom - formulaHeight, rect.width, formulaHeight);
+
+  /// The disclosure at the right end of the definition line — the one
+  /// control on a node: a click shows or hides the saved formula.  Only a
+  /// mapping with a definition has one.
+  Rect get disclosure => Rect.fromLTWH(
+    definitionRegion.right - 18,
+    definitionRegion.top + 4,
+    14,
+    NodeMetrics.bodyHeight - 8,
   );
 
   /// Where a reference edge enters a mapping: the left end of its formula
@@ -396,6 +425,12 @@ class HitSocket extends CanvasHit {
   final NodeShape node;
 }
 
+/// The disclosure of a mapping's saved formula.
+class HitDisclosure extends CanvasHit {
+  const HitDisclosure(this.node);
+  final NodeShape node;
+}
+
 /// The title band of an expanded group region.
 class HitGroup extends CanvasHit {
   const HitGroup(this.group);
@@ -455,6 +490,7 @@ CanvasScene buildScene(
   Map<int, List<int>> refs = const {},
   Set<int> unapplied = const {},
   SystemSceneInput system = const SystemSceneInput(),
+  Map<int, double> expanded = const {},
 }) {
   final concepts = [...p.concepts]..sort((a, b) => a.id.compareTo(b.id));
   final mappings = [...p.mappings]..sort((a, b) => a.id.compareTo(b.id));
@@ -514,11 +550,16 @@ CanvasScene buildScene(
     if (hiddenMembers.containsKey(m.id.toInt())) continue;
     final inputs = m.signature.inputs.map((i) => i.toInt()).toList();
     final rows = inputs.isEmpty ? 1 : inputs.length;
+    // the expanded formula region: only a mapping with a definition has one
+    final formulaHeight = m.hasDefinition() ? (expanded[m.id.toInt()] ?? 0) : 0.0;
     final rect = Rect.fromLTWH(
       pos.dx,
       pos.dy,
       NodeMetrics.mappingWidth,
-      NodeMetrics.headerHeight + rows * NodeMetrics.rowHeight + NodeMetrics.bodyHeight,
+      NodeMetrics.headerHeight +
+          rows * NodeMetrics.rowHeight +
+          NodeMetrics.bodyHeight +
+          formulaHeight,
     );
     final sockets = <SocketShape>[];
     final labels = <SocketRef, String>{};
@@ -608,6 +649,7 @@ CanvasScene buildScene(
         socketLabels: labels,
         timing: m.hasClockId() ? clockName(m.clockId) : '',
         headerWord: system.portWords[m.id.toInt()] ?? '',
+        formulaHeight: formulaHeight,
       ),
     );
   }
@@ -1235,7 +1277,12 @@ CanvasHit hitTest(CanvasScene scene, Offset point) {
     }
   }
   for (final n in scene.nodes.reversed) {
-    if (n.rect.contains(point)) return HitNode(n, header: n.header.contains(point));
+    if (n.rect.contains(point)) {
+      if (n.ref.kind == NodeKind.mapping && n.definition != null && n.disclosure.contains(point)) {
+        return HitDisclosure(n);
+      }
+      return HitNode(n, header: n.header.contains(point));
+    }
   }
   // Signature and binding edges have a hit area (a contextual menu, a
   // binding's selection); reference edges have none (ADR-0034).

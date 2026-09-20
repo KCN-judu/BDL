@@ -389,8 +389,12 @@ class MacDropdown<T> extends StatelessWidget {
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: t.hairline),
           ),
-          child: Row(
+          child: Flex(
+            direction: Axis.horizontal,
             mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+            // a label ellipsises; a fraction of a pixel of text rounding
+            // is clipped, never an overflow
+            clipBehavior: Clip.hardEdge,
             children: [
               if (!compact) ...[
                 if (value != null && leadingOf != null)
@@ -408,7 +412,7 @@ class MacDropdown<T> extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (detailOf != null && value != null)
+                if (detailOf != null && value != null && detailOf!(value as T).isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(right: MacMetrics.gap),
                     child: Text(

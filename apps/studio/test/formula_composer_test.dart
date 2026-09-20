@@ -869,9 +869,9 @@ void main() {
         DraftAnalysisReceived(verdict(generation: 1, projection: tiltOverSlot())),
       ).state;
       final h = await pump(t, s);
-      // the tree: a reference, the operator, a dashed slot
+      // the tree: a fraction — the reference over the rule over a dashed slot
       expect(find.byKey(const ValueKey('node-r.0')), findsOneWidget);
-      expect(find.text('÷'), findsOneWidget);
+      expect(find.byKey(const ValueKey('fraction-r')), findsOneWidget);
       expect(find.byKey(const ValueKey('node-r.1')), findsOneWidget);
       await t.tap(find.byKey(const ValueKey('node-r.1')));
       await t.pump();
@@ -991,17 +991,18 @@ void main() {
           ),
         ).state;
         final h = await pump(t, s);
-        // the literal is a coordinate field and a unit pop-up; the reference is a chip
-        expect(find.byKey(const ValueKey('coordinate-r.1')), findsOneWidget);
-        expect(find.byKey(const ValueKey('unit-r.1')), findsOneWidget);
-        expect(find.byKey(const ValueKey('unit-r.0')), findsNothing);
-        // selecting the literal fetches its own units
-        await t.tap(find.byKey(const ValueKey('coordinate-r.1')));
+        // the literal and the reference are chips; the unit pop-up appears
+        // on the literal once it is selected (its own units are fetched)
+        expect(find.byKey(const ValueKey('node-r.1')), findsOneWidget);
+        expect(find.byKey(const ValueKey('unit-r.1')), findsNothing);
+        await t.tap(find.byKey(const ValueKey('node-r.1')));
         await t.pump();
         final e = h.effects.whereType<GetFormulaSlot>().single;
         expect(e.nodeId, 'r.1');
         h.answer(FormulaSlotReceived(generation: e.generation, result: angleSlot('r.1')));
         await t.pump();
+        expect(find.byKey(const ValueKey('unit-r.1')), findsOneWidget);
+        expect(find.byKey(const ValueKey('unit-r.0')), findsNothing);
         await t.tap(find.byKey(const ValueKey('unit-r.1')));
         await t.pumpAndSettle();
         await t.tap(find.text('rad').last);
@@ -1040,18 +1041,21 @@ void main() {
           ),
         );
         await t.pump();
-        expect(find.text('0.7853981633974483'), findsOneWidget);
-        // typing a coordinate and Return is the other action
-        await t.enterText(
-          find.descendant(
-            of: find.byKey(const ValueKey('coordinate-r.1')),
-            matching: find.byType(TextField),
-          ),
-          '90',
-        );
-        await t.testTextInput.receiveAction(TextInputAction.done);
+        expect(find.textContaining('0.7853981633974483'), findsOneWidget);
+        // a reference never has a unit pop-up, selected or not
+        await t.tap(find.byKey(const ValueKey('node-r.0')));
         await t.pump();
-        expect(h.effects.whereType<ComposeFormula>().last.action.setCoordinate, '90');
+        expect(find.byKey(const ValueKey('unit-r.0')), findsNothing);
+        // typing at the caret after the literal is a text edit of the
+        // draft: the same path as the Text view, read by the compiler
+        await t.tap(find.byKey(const ValueKey('node-r.1')));
+        await t.pump();
+        expect(h.state.editor.composer.caret, isNotNull);
+        await t.sendKeyEvent(LogicalKeyboardKey.end);
+        await t.pump();
+        await t.sendKeyEvent(LogicalKeyboardKey.backspace);
+        await t.pump();
+        expect(h.state.draft(dim)!.source, 'Tilt / 0.7853981633974483 ra');
       },
     );
 
@@ -1060,7 +1064,7 @@ void main() {
       s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / (45 deg)')).state;
       s = reduce(s, DraftAnalysisReceived(verdict(generation: 1, projection: tiltOver45()))).state;
       final h = await pump(t, s);
-      expect(find.text('45'), findsOneWidget);
+      expect(find.textContaining('45'), findsOneWidget);
       // to Text: the same source, as text
       await t.tap(find.text('Text'));
       await t.pump();
@@ -1083,7 +1087,7 @@ void main() {
       );
       await t.tap(find.text('Formula'));
       await t.pump();
-      expect(find.text('30'), findsOneWidget);
+      expect(find.textContaining('30'), findsOneWidget);
       expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
       // invalid text: exact text kept, the last readable form shown, out of sync
       await t.tap(find.text('Text'));
@@ -1147,7 +1151,7 @@ void main() {
       );
       await t.pump();
       expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
-      expect(find.text('60'), findsOneWidget);
+      expect(find.textContaining('60'), findsOneWidget);
     });
 
     testWidgets('a binder is a head over an indented body; its local is visibly the formula\'s', (
@@ -1249,7 +1253,7 @@ void main() {
       s = drafted(s, 'Tilt / (45 deg)', projection: tiltOver45());
       final h = await pump(t, s);
       // a quantity: the range action; no binder action (it is no collection)
-      await t.tap(find.byKey(const ValueKey('coordinate-r.1')));
+      await t.tap(find.byKey(const ValueKey('node-r.1')));
       await t.pump();
       final e = h.effects.whereType<GetFormulaSlot>().single;
       h.answer(FormulaSlotReceived(generation: e.generation, result: angleSlot('r.1')));
@@ -1596,6 +1600,134 @@ void main() {
       await t.tap(find.byKey(const ValueKey('node-r.2')));
       await t.pump();
       expect(h.state.editor.composer.selectedNode, 'r.2');
+    });
+
+    testWidgets('typed structure: keys type at the caret, structure is the compiler\'s, the '
+        'part being typed shows as text until read, a structural key waits', (t) async {
+      var s = connected(lamp());
+      s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / ?')).state;
+      s = reduce(
+        s,
+        DraftAnalysisReceived(verdict(generation: 1, projection: tiltOverSlot())),
+      ).state;
+      final h = await pump(t, s);
+      // a click on the slot puts the caret in it and selects it
+      await t.tap(find.byKey(const ValueKey('node-r.1')));
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r.1:in');
+      expect(h.state.editor.composer.selectedNode, 'r.1');
+      // the caret is placed once the parts are laid out
+      await t.pump();
+      expect(find.byKey(const ValueKey('composer-caret')), findsOneWidget);
+      // a digit replaces the `?`: a text edit of the draft, no compose
+      await t.sendKeyEvent(LogicalKeyboardKey.digit9, character: '9');
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'Tilt / 9');
+      expect(h.effects.whereType<ComposeFormula>(), isEmpty);
+      expect(h.state.editor.composer.caret?.offset, 8);
+      // until the compiler reads it the slot's part shows as the text typed,
+      // the rest keeps its structure; no notice, nothing dimmed
+      expect(find.text('9'), findsOneWidget);
+      expect(find.byKey(const ValueKey('node-r.0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
+      // a structural key while the compiler reads: nothing is sent
+      await t.sendKeyEvent(LogicalKeyboardKey.slash, character: '/');
+      await t.pump();
+      expect(h.effects.whereType<ComposeFormula>(), isEmpty);
+      expect(h.state.draft(dim)!.source, 'Tilt / 9');
+      // the compiler's reading arrives: the number is a part now
+      final nine = tiltOverSlot()
+        ..source = 'Tilt / 9'
+        ..root.text = 'Tilt / 9'
+        ..slots.clear()
+        ..root.children[1] = pb.FormulaNode(
+          id: 'r.1',
+          kind: 'number',
+          text: '9',
+          coordinate: '9',
+          range: pb.SourceSpan(start: 7, end: 8),
+          expected: angle(),
+        );
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(generation: h.state.draft(dim)!.generation, projection: nine),
+        ),
+      );
+      await t.pump();
+      expect(find.byKey(const ValueKey('node-r.1')), findsOneWidget);
+      // another digit extends the number at the caret
+      await t.sendKeyEvent(LogicalKeyboardKey.digit0, character: '0');
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'Tilt / 90');
+      // Left moves the caret into the number; Home to the formula's start
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(
+            generation: h.state.draft(dim)!.generation,
+            projection: nine
+              ..source = 'Tilt / 90'
+              ..root.text = 'Tilt / 90'
+              ..root.range = pb.SourceSpan(start: 0, end: 9)
+              ..root.children[1].text = '90'
+              ..root.children[1].coordinate = '90'
+              ..root.children[1].range = pb.SourceSpan(start: 7, end: 9),
+          ),
+        ),
+      );
+      await t.pump();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r.1@1');
+      await t.sendKeyEvent(LogicalKeyboardKey.home);
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r.1:before');
+      await t.sendKeyEvent(LogicalKeyboardKey.home);
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r:before');
+      // Right into Tilt, then along its characters to its end; an
+      // operator there is the compiler's action on Tilt
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r.0:before');
+      for (var i = 0; i < 4; i++) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pump();
+      }
+      expect(h.state.editor.composer.caret?.id, 'r.0:after');
+      // End from inside the quotient: its end; again: the formula's
+      await t.sendKeyEvent(LogicalKeyboardKey.end);
+      await t.pump();
+      expect(h.state.editor.composer.caret?.id, 'r:after');
+      // Left, four times: back past the number into the stop after Tilt
+      for (var i = 0; i < 4; i++) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await t.pump();
+      }
+      expect(h.state.editor.composer.caret?.id, 'r.0:after');
+      await t.sendKeyEvent(LogicalKeyboardKey.equal, character: '+');
+      await t.pump();
+      final c = h.effects.whereType<ComposeFormula>().single;
+      expect((c.action.nodeId, c.action.operator.op), ('r.0', '+'));
+      // the answer lands as a draft change; the caret goes into the slot
+      // the edit wrote, by its byte and the name the projection will give it
+      h.answer(
+        ComposeReceived(
+          generation: c.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: '(Tilt + ?) / 90',
+            edits: [pb.DraftTextEdit(start: 0, end: 4, newText: '(Tilt + ?)')],
+            select: 'r.0.1',
+          ),
+        ),
+      );
+      await t.pump();
+      expect(h.state.draft(dim)!.source, '(Tilt + ?) / 90');
+      expect(h.state.editor.composer.caret, const CaretState(8, id: 'r.0.1:in'));
+      expect(h.state.editor.composer.selectedNode, 'r.0.1');
+      // assistive technology hears the parts
+      expect(find.bySemanticsLabel(RegExp('Tilt')), findsWidgets);
     });
 
     testWidgets('save, revert and a conflict work the same in Formula mode', (t) async {

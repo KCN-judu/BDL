@@ -18,8 +18,9 @@ import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 /// view writes (`Temperature`), never localized.
 typedef UnitPreset = ({String name, String symbol, pb.Dim dim, String typeName});
 
+/// *No unit*: a dimensionless quantity has no symbol to show.
 UnitPreset noUnit([AppLocalizations? l10n]) =>
-    (name: (l10n ?? kEnglish).noUnit, symbol: 'dimensionless', dim: pb.Dim(), typeName: 'Scalar');
+    (name: (l10n ?? kEnglish).noUnit, symbol: '', dim: pb.Dim(), typeName: 'Scalar');
 
 /// Fallback presets: no unit, the seven SI base dimensions plus angle.
 List<UnitPreset> builtinUnitPresets([AppLocalizations? l10n]) {

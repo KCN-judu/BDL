@@ -14,6 +14,7 @@ import '../mac/tokens.dart';
 import '../mac/widgets.dart';
 import 'code_pane.dart';
 import '../system_inspector.dart' show portKindWord;
+import '../concept_sheet.dart';
 import '../source_sheet.dart';
 import '../system_sheets.dart';
 
@@ -127,6 +128,12 @@ class DesignPage extends StatelessWidget {
                 actions: state.editor.actions,
                 hasSources: true,
                 groupsEnabled: state.isSystem,
+                expanded: state.editor.expandedFormulas,
+                previews: state.editor.formulaPreviews,
+                analyses: {
+                  for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+                    m.id.toInt(): m,
+                },
               ),
               if (state.editor.pendingBind case final b?)
                 PendingBindSheet(state: state, bind: b, dispatch: dispatch),
@@ -137,6 +144,10 @@ class DesignPage extends StatelessWidget {
               // concept is chosen there.
               if (state.editor.sourceSheet case final s? when s.ready)
                 SourceSheet(state: state, sheet: s, dispatch: dispatch),
+              // The concept sheet: a value category and a name, before
+              // anything is created (ADR-0041).
+              if (state.editor.conceptSheet case final c?)
+                ConceptSheet(state: state, sheet: c, dispatch: dispatch),
             ],
           ),
         ),

@@ -262,6 +262,12 @@ class EffectExecutor {
           (r) => _dispatch(LibraryItemsReceived(r.libraryItems)),
           counted: false,
         );
+      case ListValueCategories():
+        await _call(
+          pb.ClientMessage(listValueCategories: pb.ListValueCategoriesRequest()),
+          (r) => _dispatch(ValueCategoriesReceived(r.valueCategories.categories)),
+          counted: false,
+        );
       case InstantiateLibraryItem(:final baseRevision, :final itemId, :final component):
         await _call(
           pb.ClientMessage(
@@ -526,6 +532,25 @@ class EffectExecutor {
             ),
           ),
           (r) => _dispatch(HoverReceived(generation: generation, result: r.draftHover)),
+        );
+      case GetFormulaPreview(
+        :final revision,
+        :final mappingId,
+        :final generation,
+        :final component,
+      ):
+        await _tooling(
+          generation,
+          pb.ClientMessage(
+            getFormulaProjection: pb.GetFormulaProjectionRequest(
+              revision: Int64(revision),
+              mappingId: Int64(mappingId),
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          (r) => _dispatch(
+            FormulaPreviewReceived(generation: generation, response: r.formulaProjection),
+          ),
         );
       case GetFormulaProjection(
         :final revision,

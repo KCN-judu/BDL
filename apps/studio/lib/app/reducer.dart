@@ -79,16 +79,86 @@ Transition reduce(AppState s, AppAction action) {
     ),
 
     // ---- concepts ----------------------------------------------------------
-    CreateConceptRequested(:final name, :final description, :final representation) => _edit(
+    CreateConceptRequested(
+      :final name,
+      :final description,
+      :final representation,
+      :final position,
+      :final presetId,
+    ) =>
+      _whenProject(s, () {
+        if (s.editor.pendingInsert != null) return Transition(s);
+        // one ordinary edit; the concept lands where the sheet was asked
+        // for, selected, named as typed — nothing opens for renaming
+        final t = _edit(
+          s.copyWith(
+            editor: s.editor.copyWith(
+              clearConceptSheet: true,
+              clearRenaming: true,
+              recentTemplates: presetId.isEmpty
+                  ? s.editor.recentTemplates
+                  : rememberTemplate(s.editor.recentTemplates, presetId),
+            ),
+          ),
+          pb.EditOp(
+            createConcept: pb.CreateConcept(
+              name: name,
+              description: description,
+              representation: representation,
+            ),
+          ),
+        );
+        if (t.effects.isEmpty) return t;
+        return Transition(
+          t.state.copyWith(
+            editor: t.state.editor.copyWith(
+              pendingInsert: PendingInsert(
+                templateId: presetId.isEmpty ? PendingInsert.kConceptInsert : presetId,
+                position: position,
+                named: true,
+              ),
+            ),
+          ),
+          t.effects,
+        );
+      }),
+    NewConceptRequested(:final presetId, :final position) => _whenProject(
       s,
-      pb.EditOp(
-        createConcept: pb.CreateConcept(
-          name: name,
-          description: description,
-          representation: representation,
-        ),
-      ),
+      () => s.editor.pendingInsert != null
+          ? Transition(s)
+          : Transition(
+              s.copyWith(
+                editor: s.editor.copyWith(
+                  conceptSheet: ConceptSheetState(presetId: presetId, position: position),
+                  clearSourceSheet: true,
+                ),
+              ),
+            ),
     ),
+    ConceptSheetDismissed() => Transition(
+      s.copyWith(editor: s.editor.copyWith(clearConceptSheet: true)),
+    ),
+    FormulaExpansionToggled(:final mappingId) => _whenProject(s, () {
+      final open = {...s.editor.expandedFormulas};
+      if (open.remove(mappingId) == null) open[mappingId] = EditorState.formulaInitialHeight;
+      final next = s.copyWith(editor: s.editor.copyWith(expandedFormulas: open));
+      return open.containsKey(mappingId) ? formulaPreviewsNeeded(next) : Transition(next);
+    }),
+    FormulaExpansionMeasured(:final mappingId, :final height) => () {
+      final open = s.editor.expandedFormulas;
+      if (!open.containsKey(mappingId)) return Transition(s);
+      final h = height.clamp(22.0, EditorState.formulaMaxHeight).toDouble();
+      if (open[mappingId] == h) return Transition(s);
+      return Transition(
+        s.copyWith(editor: s.editor.copyWith(expandedFormulas: {...open, mappingId: h})),
+      );
+    }(),
+    FormulaPreviewReceived(:final generation, :final response) => formulaPreviewReceived(
+      s,
+      generation,
+      response,
+    ),
+    FormulaCaretMoved(:final mappingId, :final caret) => formulaCaretMoved(s, mappingId, caret),
     RenameConceptRequested(:final id, :final name) => _edit(
       s,
       pb.EditOp(
@@ -686,9 +756,12 @@ Transition reduce(AppState s, AppAction action) {
         return Transition(
           busy.copyWith(
             editor: busy.editor.copyWith(
+              // the concept, when new, was named on the sheet: it lands
+              // selected, never opened for renaming (ADR-0041)
               pendingInsert: PendingInsert(
                 templateId: PendingInsert.kSourceInsert,
                 position: s.editor.sourceSheet?.position,
+                named: true,
               ),
               clearSourceSheet: true,
               clearRenaming: true,
@@ -737,6 +810,9 @@ Transition reduce(AppState s, AppAction action) {
     ),
     InlineRenameFinished(:final node, :final name) => _inlineRenameFinished(s, node, name),
     LibraryItemsReceived(:final library) => Transition(s.copyWith(library: library)),
+    ValueCategoriesReceived(:final categories) => Transition(
+      s.copyWith(valueCategories: categories),
+    ),
     // A collapsed group's box is layout of its own kind.
     NodeMoved(:final node, :final position) when node.kind == NodeKind.group => systemAction(
       s,
@@ -789,10 +865,14 @@ Transition reduce(AppState s, AppAction action) {
                 '${handshake.protocolVersion.major}.x, Studio does not',
               ),
       ),
-      // The concept libraries and the demo templates are the daemon's; ask
-      // once per connection.
+      // The concept libraries, the value categories with their units and
+      // the demo templates are the daemon's; ask once per connection.
       [
-        if (handshake.compatible) ...const [ListLibraryItems(), ListTemplates()],
+        if (handshake.compatible) ...const [
+          ListLibraryItems(),
+          ListValueCategories(),
+          ListTemplates(),
+        ],
       ],
     ),
     DaemonConnectionFailed(:final reason) => Transition(
@@ -1368,9 +1448,10 @@ Transition projectReceived(
       : surviving(next, s.editor.selection);
   // An inline rename survives pushed projections (the daemon echoes every
   // commit) as long as its node still exists.
-  // Create-then-rename opens the name of a created concept; a Source over
-  // an existing concept keeps the name the sheet gave it.
-  final renaming = created != null && created.kind == NodeKind.concept
+  // Create-then-rename opens the name of a created concept (the legacy
+  // item path); a concept named on the concept sheet and a Source over an
+  // existing concept keep the name the sheet gave them.
+  final renaming = created != null && created.kind == NodeKind.concept && !(insert?.named ?? false)
       ? created
       : s.editor.renaming;
   final renamingValid = renaming != null && nodeExists(next, renaming);
@@ -1443,7 +1524,8 @@ Transition projectReceived(
           )
           .thenQueued(fromRequest && sameProject ? outcome : null)
           .thenActions(changed: !sameProject || incoming.revision != current.revision)
-          .thenDeployment(changed: !sameProject || incoming.revision != current.revision);
+          .thenDeployment(changed: !sameProject || incoming.revision != current.revision)
+          .thenPreviews(sameProject: sameProject);
   // An unload or a guarded save waited on this answer (app/lifecycle.dart).
   final decided =
       unloadDecided(transition.state, incoming, fromRequest) ??
@@ -1453,6 +1535,22 @@ Transition projectReceived(
 }
 
 extension on Transition {
+  /// The expanded formulas on the canvas are pictures of a revision: a new
+  /// one re-asks for each (another project: none stay expanded).
+  Transition thenPreviews({required bool sameProject}) {
+    if (!sameProject) {
+      return Transition(
+        state.copyWith(
+          editor: state.editor.copyWith(expandedFormulas: const {}, formulaPreviews: const {}),
+        ),
+        effects,
+      );
+    }
+    if (state.editor.expandedFormulas.isEmpty) return this;
+    final t = formulaPreviewsNeeded(state);
+    return Transition(t.state, [...effects, ...t.effects]);
+  }
+
   /// A deployment answer is about a revision; a new one drops it and asks
   /// again for the chosen board.
   Transition thenDeployment({required bool changed}) {

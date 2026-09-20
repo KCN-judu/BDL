@@ -20,225 +20,115 @@ class LibraryItemStrings {
 }
 
 LibraryItemStrings? libraryItemStrings(AppLocalizations l10n, String id) => switch (id) {
-  'std.environment.temperature' => LibraryItemStrings(
-    name: l10n.libItem_std_environment_temperature_name,
-    description: l10n.libItem_std_environment_temperature_description,
-    tags: l10n.libItem_std_environment_temperature_tags,
+  'std.value.boolean' => LibraryItemStrings(
+    name: l10n.libItem_std_value_boolean_name,
+    description: l10n.libItem_std_value_boolean_description,
+    tags: l10n.libItem_std_value_boolean_tags,
   ),
-  'std.environment.ambient_light' => LibraryItemStrings(
-    name: l10n.libItem_std_environment_ambient_light_name,
-    description: l10n.libItem_std_environment_ambient_light_description,
-    tags: l10n.libItem_std_environment_ambient_light_tags,
+  'std.value.count' => LibraryItemStrings(
+    name: l10n.libItem_std_value_count_name,
+    description: l10n.libItem_std_value_count_description,
+    tags: l10n.libItem_std_value_count_tags,
   ),
-  'std.environment.humidity' => LibraryItemStrings(
-    name: l10n.libItem_std_environment_humidity_name,
-    description: l10n.libItem_std_environment_humidity_description,
-    tags: l10n.libItem_std_environment_humidity_tags,
+  'std.value.level' => LibraryItemStrings(
+    name: l10n.libItem_std_value_level_name,
+    description: l10n.libItem_std_value_level_description,
+    tags: l10n.libItem_std_value_level_tags,
   ),
-  'std.environment.air_pressure' => LibraryItemStrings(
-    name: l10n.libItem_std_environment_air_pressure_name,
-    description: l10n.libItem_std_environment_air_pressure_description,
-    tags: l10n.libItem_std_environment_air_pressure_tags,
+  'std.value.open' => LibraryItemStrings(
+    name: l10n.libItem_std_value_open_name,
+    description: l10n.libItem_std_value_open_description,
+    tags: l10n.libItem_std_value_open_tags,
   ),
-  'std.environment.sound_level' => LibraryItemStrings(
-    name: l10n.libItem_std_environment_sound_level_name,
-    description: l10n.libItem_std_environment_sound_level_description,
-    tags: l10n.libItem_std_environment_sound_level_tags,
+  'std.quantity.angle' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_angle_name,
+    description: l10n.libItem_std_quantity_angle_description,
+    tags: l10n.libItem_std_quantity_angle_tags,
   ),
-  'std.human.button_pressed' => LibraryItemStrings(
-    name: l10n.libItem_std_human_button_pressed_name,
-    description: l10n.libItem_std_human_button_pressed_description,
-    tags: l10n.libItem_std_human_button_pressed_tags,
+  'std.quantity.length' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_length_name,
+    description: l10n.libItem_std_quantity_length_description,
+    tags: l10n.libItem_std_quantity_length_tags,
   ),
-  'std.human.touch' => LibraryItemStrings(
-    name: l10n.libItem_std_human_touch_name,
-    description: l10n.libItem_std_human_touch_description,
-    tags: l10n.libItem_std_human_touch_tags,
+  'std.quantity.time' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_time_name,
+    description: l10n.libItem_std_quantity_time_description,
+    tags: l10n.libItem_std_quantity_time_tags,
   ),
-  'std.human.switch_state' => LibraryItemStrings(
-    name: l10n.libItem_std_human_switch_state_name,
-    description: l10n.libItem_std_human_switch_state_description,
-    tags: l10n.libItem_std_human_switch_state_tags,
+  'std.quantity.mass' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_mass_name,
+    description: l10n.libItem_std_quantity_mass_description,
+    tags: l10n.libItem_std_quantity_mass_tags,
   ),
-  'std.human.dial_position' => LibraryItemStrings(
-    name: l10n.libItem_std_human_dial_position_name,
-    description: l10n.libItem_std_human_dial_position_description,
-    tags: l10n.libItem_std_human_dial_position_tags,
+  'std.quantity.current' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_current_name,
+    description: l10n.libItem_std_quantity_current_description,
+    tags: l10n.libItem_std_quantity_current_tags,
   ),
-  'std.human.slider_position' => LibraryItemStrings(
-    name: l10n.libItem_std_human_slider_position_name,
-    description: l10n.libItem_std_human_slider_position_description,
-    tags: l10n.libItem_std_human_slider_position_tags,
+  'std.quantity.temperature' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_temperature_name,
+    description: l10n.libItem_std_quantity_temperature_description,
+    tags: l10n.libItem_std_quantity_temperature_tags,
   ),
-  'std.motion.distance' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_distance_name,
-    description: l10n.libItem_std_motion_distance_description,
-    tags: l10n.libItem_std_motion_distance_tags,
+  'std.quantity.amount' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_amount_name,
+    description: l10n.libItem_std_quantity_amount_description,
+    tags: l10n.libItem_std_quantity_amount_tags,
   ),
-  'std.motion.position' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_position_name,
-    description: l10n.libItem_std_motion_position_description,
-    tags: l10n.libItem_std_motion_position_tags,
+  'std.quantity.luminous_intensity' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_luminous_intensity_name,
+    description: l10n.libItem_std_quantity_luminous_intensity_description,
+    tags: l10n.libItem_std_quantity_luminous_intensity_tags,
   ),
-  'std.motion.angle' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_angle_name,
-    description: l10n.libItem_std_motion_angle_description,
-    tags: l10n.libItem_std_motion_angle_tags,
+  'std.quantity.speed' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_speed_name,
+    description: l10n.libItem_std_quantity_speed_description,
+    tags: l10n.libItem_std_quantity_speed_tags,
   ),
-  'std.motion.tilt' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_tilt_name,
-    description: l10n.libItem_std_motion_tilt_description,
-    tags: l10n.libItem_std_motion_tilt_tags,
+  'std.quantity.acceleration' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_acceleration_name,
+    description: l10n.libItem_std_quantity_acceleration_description,
+    tags: l10n.libItem_std_quantity_acceleration_tags,
   ),
-  'std.motion.speed' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_speed_name,
-    description: l10n.libItem_std_motion_speed_description,
-    tags: l10n.libItem_std_motion_speed_tags,
+  'std.quantity.angular_velocity' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_angular_velocity_name,
+    description: l10n.libItem_std_quantity_angular_velocity_description,
+    tags: l10n.libItem_std_quantity_angular_velocity_tags,
   ),
-  'std.motion.acceleration' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_acceleration_name,
-    description: l10n.libItem_std_motion_acceleration_description,
-    tags: l10n.libItem_std_motion_acceleration_tags,
+  'std.quantity.frequency' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_frequency_name,
+    description: l10n.libItem_std_quantity_frequency_description,
+    tags: l10n.libItem_std_quantity_frequency_tags,
   ),
-  'std.motion.angular_velocity' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_angular_velocity_name,
-    description: l10n.libItem_std_motion_angular_velocity_description,
-    tags: l10n.libItem_std_motion_angular_velocity_tags,
+  'std.quantity.force' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_force_name,
+    description: l10n.libItem_std_quantity_force_description,
+    tags: l10n.libItem_std_quantity_force_tags,
   ),
-  'std.motion.orientation' => LibraryItemStrings(
-    name: l10n.libItem_std_motion_orientation_name,
-    description: l10n.libItem_std_motion_orientation_description,
-    tags: l10n.libItem_std_motion_orientation_tags,
+  'std.quantity.pressure' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_pressure_name,
+    description: l10n.libItem_std_quantity_pressure_description,
+    tags: l10n.libItem_std_quantity_pressure_tags,
   ),
-  'std.mechanical.force' => LibraryItemStrings(
-    name: l10n.libItem_std_mechanical_force_name,
-    description: l10n.libItem_std_mechanical_force_description,
-    tags: l10n.libItem_std_mechanical_force_tags,
+  'std.quantity.torque' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_torque_name,
+    description: l10n.libItem_std_quantity_torque_description,
+    tags: l10n.libItem_std_quantity_torque_tags,
   ),
-  'std.mechanical.pressure' => LibraryItemStrings(
-    name: l10n.libItem_std_mechanical_pressure_name,
-    description: l10n.libItem_std_mechanical_pressure_description,
-    tags: l10n.libItem_std_mechanical_pressure_tags,
+  'std.quantity.power' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_power_name,
+    description: l10n.libItem_std_quantity_power_description,
+    tags: l10n.libItem_std_quantity_power_tags,
   ),
-  'std.mechanical.torque' => LibraryItemStrings(
-    name: l10n.libItem_std_mechanical_torque_name,
-    description: l10n.libItem_std_mechanical_torque_description,
-    tags: l10n.libItem_std_mechanical_torque_tags,
+  'std.quantity.voltage' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_voltage_name,
+    description: l10n.libItem_std_quantity_voltage_description,
+    tags: l10n.libItem_std_quantity_voltage_tags,
   ),
-  'std.electrical.voltage' => LibraryItemStrings(
-    name: l10n.libItem_std_electrical_voltage_name,
-    description: l10n.libItem_std_electrical_voltage_description,
-    tags: l10n.libItem_std_electrical_voltage_tags,
-  ),
-  'std.electrical.current' => LibraryItemStrings(
-    name: l10n.libItem_std_electrical_current_name,
-    description: l10n.libItem_std_electrical_current_description,
-    tags: l10n.libItem_std_electrical_current_tags,
-  ),
-  'std.electrical.battery_level' => LibraryItemStrings(
-    name: l10n.libItem_std_electrical_battery_level_name,
-    description: l10n.libItem_std_electrical_battery_level_description,
-    tags: l10n.libItem_std_electrical_battery_level_tags,
-  ),
-  'std.output.brightness' => LibraryItemStrings(
-    name: l10n.libItem_std_output_brightness_name,
-    description: l10n.libItem_std_output_brightness_description,
-    tags: l10n.libItem_std_output_brightness_tags,
-  ),
-  'std.output.color' => LibraryItemStrings(
-    name: l10n.libItem_std_output_color_name,
-    description: l10n.libItem_std_output_color_description,
-    tags: l10n.libItem_std_output_color_tags,
-  ),
-  'std.output.display_value' => LibraryItemStrings(
-    name: l10n.libItem_std_output_display_value_name,
-    description: l10n.libItem_std_output_display_value_description,
-    tags: l10n.libItem_std_output_display_value_tags,
-  ),
-  'std.actuator.motor_speed' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_motor_speed_name,
-    description: l10n.libItem_std_actuator_motor_speed_description,
-    tags: l10n.libItem_std_actuator_motor_speed_tags,
-  ),
-  'std.actuator.motor_angle' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_motor_angle_name,
-    description: l10n.libItem_std_actuator_motor_angle_description,
-    tags: l10n.libItem_std_actuator_motor_angle_tags,
-  ),
-  'std.actuator.servo_position' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_servo_position_name,
-    description: l10n.libItem_std_actuator_servo_position_description,
-    tags: l10n.libItem_std_actuator_servo_position_tags,
-  ),
-  'std.actuator.vibration_intensity' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_vibration_intensity_name,
-    description: l10n.libItem_std_actuator_vibration_intensity_description,
-    tags: l10n.libItem_std_actuator_vibration_intensity_tags,
-  ),
-  'std.actuator.heater_power' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_heater_power_name,
-    description: l10n.libItem_std_actuator_heater_power_description,
-    tags: l10n.libItem_std_actuator_heater_power_tags,
-  ),
-  'std.actuator.fan_speed' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_fan_speed_name,
-    description: l10n.libItem_std_actuator_fan_speed_description,
-    tags: l10n.libItem_std_actuator_fan_speed_tags,
-  ),
-  'std.actuator.valve_opening' => LibraryItemStrings(
-    name: l10n.libItem_std_actuator_valve_opening_name,
-    description: l10n.libItem_std_actuator_valve_opening_description,
-    tags: l10n.libItem_std_actuator_valve_opening_tags,
-  ),
-  'std.audio.volume' => LibraryItemStrings(
-    name: l10n.libItem_std_audio_volume_name,
-    description: l10n.libItem_std_audio_volume_description,
-    tags: l10n.libItem_std_audio_volume_tags,
-  ),
-  'std.audio.pitch' => LibraryItemStrings(
-    name: l10n.libItem_std_audio_pitch_name,
-    description: l10n.libItem_std_audio_pitch_description,
-    tags: l10n.libItem_std_audio_pitch_tags,
-  ),
-  'std.source.temperature' => LibraryItemStrings(
-    name: l10n.libItem_std_source_temperature_name,
-    description: l10n.libItem_std_source_temperature_description,
-    tags: l10n.libItem_std_source_temperature_tags,
-  ),
-  'std.source.tilt' => LibraryItemStrings(
-    name: l10n.libItem_std_source_tilt_name,
-    description: l10n.libItem_std_source_tilt_description,
-    tags: l10n.libItem_std_source_tilt_tags,
-  ),
-  'std.source.distance' => LibraryItemStrings(
-    name: l10n.libItem_std_source_distance_name,
-    description: l10n.libItem_std_source_distance_description,
-    tags: l10n.libItem_std_source_distance_tags,
-  ),
-  'std.source.ambient_light' => LibraryItemStrings(
-    name: l10n.libItem_std_source_ambient_light_name,
-    description: l10n.libItem_std_source_ambient_light_description,
-    tags: l10n.libItem_std_source_ambient_light_tags,
-  ),
-  'std.source.button' => LibraryItemStrings(
-    name: l10n.libItem_std_source_button_name,
-    description: l10n.libItem_std_source_button_description,
-    tags: l10n.libItem_std_source_button_tags,
-  ),
-  'std.source.encoder' => LibraryItemStrings(
-    name: l10n.libItem_std_source_encoder_name,
-    description: l10n.libItem_std_source_encoder_description,
-    tags: l10n.libItem_std_source_encoder_tags,
-  ),
-  'std.source.analog' => LibraryItemStrings(
-    name: l10n.libItem_std_source_analog_name,
-    description: l10n.libItem_std_source_analog_description,
-    tags: l10n.libItem_std_source_analog_tags,
-  ),
-  'std.source.external' => LibraryItemStrings(
-    name: l10n.libItem_std_source_external_name,
-    description: l10n.libItem_std_source_external_description,
-    tags: l10n.libItem_std_source_external_tags,
+  'std.quantity.illuminance' => LibraryItemStrings(
+    name: l10n.libItem_std_quantity_illuminance_name,
+    description: l10n.libItem_std_quantity_illuminance_description,
+    tags: l10n.libItem_std_quantity_illuminance_tags,
   ),
   _ => null,
 };

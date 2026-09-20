@@ -1156,11 +1156,19 @@ class ComposerState {
     this.pendingCompose = false,
     this.composeGeneration,
     this.composeSource,
+    this.caret,
   });
 
   /// Formula (structured) or Text — a preference of the editor, not of
   /// any mapping.
   final bool formulaMode;
+
+  /// The structural caret (`app/caret.dart`): where typing lands, as a
+  /// byte offset into the draft source and, when the projection on screen
+  /// has it, the compiler's caret it stands at — two carets may share a
+  /// byte (after the denominator, after the fraction) and be two places.
+  /// `null`: no caret.
+  final CaretState? caret;
 
   /// The mapping the selection, slot and committed projection belong to.
   final int? mappingId;
@@ -1200,6 +1208,8 @@ class ComposerState {
     int? composeGeneration,
     String? composeSource,
     bool clearCompose = false,
+    CaretState? caret,
+    bool clearCaret = false,
   }) => ComposerState(
     formulaMode: formulaMode ?? this.formulaMode,
     mappingId: clearMapping ? null : (mappingId ?? this.mappingId),
@@ -1215,7 +1225,29 @@ class ComposerState {
     pendingCompose: clearCompose ? false : (pendingCompose ?? this.pendingCompose),
     composeGeneration: clearCompose ? null : (composeGeneration ?? this.composeGeneration),
     composeSource: clearCompose ? null : (composeSource ?? this.composeSource),
+    caret: clearCaret ? null : (caret ?? this.caret),
   );
+}
+
+/// The structural caret of the Formula view: a byte [offset] into the
+/// draft on screen — what a typed character is inserted at — and the
+/// compiler caret [id] it was placed at (`r.0:after`, or Studio's own
+/// `r.0.0@2` inside a name), when known.  The id decides between carets
+/// that share a byte; the offset survives a text edit the id does not.
+@immutable
+class CaretState {
+  const CaretState(this.offset, {this.id});
+  final int offset;
+  final String? id;
+
+  @override
+  bool operator ==(Object other) => other is CaretState && other.offset == offset && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(offset, id);
+
+  @override
+  String toString() => 'CaretState($offset, $id)';
 }
 
 /// A completion pop-up over the definition field: the service's candidates
@@ -1484,18 +1516,44 @@ enum SidebarTab { project, library }
 /// editing — the create-then-rename flow.
 @immutable
 class PendingInsert {
-  const PendingInsert({required this.templateId, this.position});
+  const PendingInsert({required this.templateId, this.position, this.named = false});
 
   /// The library item, or [kSourceInsert] for a Source created through the
-  /// Source sheet (the created objects are placed the same way).
+  /// Source sheet (the created objects are placed the same way), or
+  /// [kConceptInsert] for a concept created through the concept sheet.
   final String templateId;
 
   /// Scene position of the drop / right-click; `null` for a keyboard or
   /// panel insertion (auto-placed).
   final Offset? position;
 
+  /// The designer named the object before it was created (the concept
+  /// sheet): it lands selected and its name does not open for editing.
+  /// The legacy create-then-rename path (an item instantiated with its
+  /// default name) opens the name.
+  final bool named;
+
   /// The [templateId] of a Source created over a chosen concept.
   static const String kSourceInsert = 'source';
+
+  /// The [templateId] of a concept created on the concept sheet.
+  static const String kConceptInsert = 'concept';
+}
+
+/// The concept sheet (ADR-0041): a concept is created from a *value
+/// category* — a Standard Library item — and a name the designer gives
+/// before anything is created.  `null` when the sheet is closed.
+@immutable
+class ConceptSheetState {
+  const ConceptSheetState({this.presetId = '', this.position});
+
+  /// The library item (a value category) prefilling the sheet; empty for
+  /// the Project tab's *New concept*, where the category is chosen on the
+  /// sheet.
+  final String presetId;
+
+  /// Where the concept lands (scene coordinates); `null` auto-places.
+  final Offset? position;
 }
 
 /// The Source sheet, open over the design: a Source is created over a
@@ -1528,6 +1586,18 @@ class SourceSheetState {
 
   SourceSheetState withCandidates(pb.SourceCandidatesResponse c) =>
       SourceSheetState(presetId: presetId, revision: revision, position: position, candidates: c);
+}
+
+/// A committed definition's projection for an expanded node on the canvas:
+/// requested at [revision] (the answer is applied only for that revision
+/// and [generation]); [projection] is `null` while the answer is on its
+/// way.
+@immutable
+class FormulaPreview {
+  const FormulaPreview({required this.revision, required this.generation, this.projection});
+  final int revision;
+  final int generation;
+  final pb.FormulaProjection? projection;
 }
 
 /// The Simulate page: Studio's input trace and schedule (UI state), and the
@@ -1632,6 +1702,9 @@ class EditorState {
     this.recentTemplates = const [],
     this.pendingInsert,
     this.sourceSheet,
+    this.conceptSheet,
+    this.expandedFormulas = const {},
+    this.formulaPreviews = const {},
     this.renaming,
     this.context = const SystemContext(),
     this.layouts = const CanvasLayout(),
@@ -1799,10 +1872,34 @@ class EditorState {
   /// The Source sheet, while open (`null` otherwise).
   final SourceSheetState? sourceSheet;
 
+  /// The concept sheet, while open (`null` otherwise).
+  final ConceptSheetState? conceptSheet;
+
+  /// The mappings whose saved formula is shown expanded on the canvas
+  /// (docs/architecture/studio-ui.md §2, *Expanded formula*), each with
+  /// the height of its picture — the initial height until the picture is
+  /// drawn and measured, then its own, never above the maximum: a reading
+  /// state of the editor, never project data, kept across selections and
+  /// revisions while the mapping exists.
+  final Map<int, double> expandedFormulas;
+
+  /// The committed definitions' projections fetched for the expanded
+  /// nodes, by mapping id, each stamped with the revision it is of: a
+  /// preview of another revision is stale and is replaced, never drawn as
+  /// current.
+  final Map<int, FormulaPreview> formulaPreviews;
+
   /// The node whose name is being edited inline on the canvas.
   final NodeRef? renaming;
 
   static const int maxRecentTemplates = 6;
+
+  /// An expanded formula region's height before its picture is measured,
+  /// and the most it may grow to (`docs/architecture/studio-ui.md` §2,
+  /// *Expanded formula*): a long formula is clipped on the node, the rest
+  /// read in the inspector — never a node that swallows the graph.
+  static const double formulaInitialHeight = 64;
+  static const double formulaMaxHeight = 220;
 
   EditorState copyWith({
     StudioPage? page,
@@ -1833,6 +1930,10 @@ class EditorState {
     bool clearPendingInsert = false,
     SourceSheetState? sourceSheet,
     bool clearSourceSheet = false,
+    ConceptSheetState? conceptSheet,
+    bool clearConceptSheet = false,
+    Map<int, double>? expandedFormulas,
+    Map<int, FormulaPreview>? formulaPreviews,
     NodeRef? renaming,
     bool clearRenaming = false,
     DesignContext? context,
@@ -1891,6 +1992,9 @@ class EditorState {
       recentTemplates: recentTemplates ?? this.recentTemplates,
       pendingInsert: clearPendingInsert ? null : (pendingInsert ?? this.pendingInsert),
       sourceSheet: clearSourceSheet ? null : (sourceSheet ?? this.sourceSheet),
+      conceptSheet: clearConceptSheet ? null : (conceptSheet ?? this.conceptSheet),
+      expandedFormulas: expandedFormulas ?? this.expandedFormulas,
+      formulaPreviews: formulaPreviews ?? this.formulaPreviews,
       renaming: clearRenaming ? null : (renaming ?? this.renaming),
       context: context ?? this.context,
       layouts: layouts ?? this.layouts,
@@ -1967,6 +2071,7 @@ class AppState {
     this.recent = const [],
     this.preferences = const AppPreferences(),
     this.library,
+    this.valueCategories = const [],
     this.editor = const EditorState(),
     this.render = const RenderState(),
   });
@@ -2010,6 +2115,14 @@ class AppState {
   /// vocabulary, independent of any project; `null` until the daemon
   /// answered.
   final pb.LibraryItemsResponse? library;
+
+  /// The value categories the compiler serves (`ListValueCategories`,
+  /// protocol 0.27): every category a concept may be represented by —
+  /// the named quantities, the truth value, the count — with its
+  /// preferred unit and the units a designer is offered, as the
+  /// compiler's descriptors.  Studio composes no unit string.  Empty until
+  /// the daemon answered.
+  final List<pb.ValueCategoryView> valueCategories;
   final EditorState editor;
   final RenderState render;
 
@@ -2164,6 +2277,7 @@ class AppState {
     List<RecentProject>? recent,
     AppPreferences? preferences,
     pb.LibraryItemsResponse? library,
+    List<pb.ValueCategoryView>? valueCategories,
     EditorState? editor,
     RenderState? render,
   }) {
@@ -2179,6 +2293,7 @@ class AppState {
       recent: recent ?? this.recent,
       preferences: preferences ?? this.preferences,
       library: library ?? this.library,
+      valueCategories: valueCategories ?? this.valueCategories,
       editor: editor ?? this.editor,
       render: render ?? this.render,
     );

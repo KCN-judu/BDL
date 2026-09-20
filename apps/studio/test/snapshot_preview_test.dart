@@ -245,21 +245,12 @@ void main() {
               schemaVersion: 2,
               version: '0.2',
               items: [
-                for (final (cat, name, rep, unit, role) in [
-                  ('environment', 'Temperature', pb.Dim(temperature: 1), 'K', 1),
-                  (
-                    'environment',
-                    'Ambient Light',
-                    pb.Dim(luminous: 1, angle: 2, length: -2),
-                    'lx',
-                    1,
-                  ),
-                  ('environment', 'Humidity', pb.Dim(), '', 1),
-                  ('motion', 'Tilt', pb.Dim(angle: 1), 'deg', 1),
-                  ('motion', 'Distance', pb.Dim(length: 1), 'm', 1),
-                  ('actuation', 'Motor Speed', pb.Dim(), '', 2),
-                  ('actuation', 'Motor Angle', pb.Dim(angle: 1), 'deg', 2),
-                  ('actuation', 'Heater Power', pb.Dim(), '', 2),
+                for (final (cat, name, rep, unit) in [
+                  ('form', 'Level', pb.Dim(), ''),
+                  ('quantity', 'Angle', pb.Dim(angle: 1), 'rad'),
+                  ('quantity', 'Length', pb.Dim(length: 1), 'm'),
+                  ('quantity', 'Temperature', pb.Dim(temperature: 1), 'K'),
+                  ('quantity', 'Illuminance', pb.Dim(luminous: 1, angle: 2, length: -2), 'lx'),
                 ])
                   conceptItem(
                     pb.ConceptTemplateView(
@@ -268,44 +259,21 @@ void main() {
                       defaultName: name.replaceAll(' ', ''),
                       description: 'How $name is measured.',
                       category: cat,
-                      roleHint: pb.RoleHint.valueOf(role)!,
+                      roleHint: pb.RoleHint.ROLE_HINT_EITHER,
                       representation: pb.Representation(quantity: rep),
                       unit: unit,
                     ),
                   ),
                 conceptItem(
                   pb.ConceptTemplateView(
-                    id: 'std.human.button_pressed',
-                    displayName: 'Button Pressed',
-                    defaultName: 'ButtonPressed',
-                    description: 'Whether a button is held down.',
-                    category: 'human',
-                    roleHint: pb.RoleHint.ROLE_HINT_INPUT,
+                    id: 'std.value.boolean',
+                    displayName: 'On / off',
+                    defaultName: 'Switch',
+                    description: 'Either true or false.',
+                    category: 'form',
+                    roleHint: pb.RoleHint.ROLE_HINT_EITHER,
                     representation: pb.Representation(boolean: pb.Unit()),
                   ),
-                ),
-                pb.LibraryItemView(
-                  id: 'std.source.temperature',
-                  category: 'source',
-                  displayName: 'Temperature Sensor',
-                  description: 'A temperature the product measures.',
-                  group: 'environment',
-                  creates: [
-                    pb.LibraryObjectView(
-                      kind: 'concept',
-                      key: 'value',
-                      name: 'RoomTemp',
-                      typeName: 'Temperature',
-                      representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
-                      unit: 'K',
-                    ),
-                    pb.LibraryObjectView(
-                      kind: 'mapping',
-                      key: 'source',
-                      name: 'TempSensor',
-                      signature: '() -> RoomTemp',
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -313,7 +281,7 @@ void main() {
         ),
         editor: state.editor.copyWith(
           sidebar: SidebarTab.library,
-          librarySearch: 'mo',
+          librarySearch: 'an',
           selection: const ConceptSelected(2),
           renaming: const NodeRef.concept(2),
         ),

@@ -266,6 +266,7 @@ class Scene {
         o.id.toInt(): o.state,
     },
     system: sceneInput(),
+    expanded: s.editor.expandedFormulas,
   );
 
   /// Scene → window coordinates.  The fixture pins the canvas viewport in
@@ -554,6 +555,29 @@ class Scene {
         LinkEndsRequested(source: from, destination: to),
         (s) => s.editor.pendingBind != null || s.system!.bindings.any((b) => b.destination == to),
         why: 'the binding or its question',
+      );
+      return;
+    }
+    if (step['expand'] case final Map<String, dynamic> by) {
+      // a saved formula unfolded on its node: the daemon's projection of it
+      final id = mapping(by['mapping'] as String);
+      await act(
+        FormulaExpansionToggled(id),
+        (s) =>
+            s.editor.expandedFormulas.containsKey(id) &&
+            s.editor.formulaPreviews[id]?.projection != null,
+        why: 'the formula preview',
+      );
+      // the node measured its formula: one more frame
+      await tester.pump(const Duration(milliseconds: 50));
+      return;
+    }
+    if (step['concept'] case final Map<String, dynamic> c) {
+      // the concept sheet over a category, with the compiler's units
+      await act(
+        NewConceptRequested(presetId: c['category'] as String),
+        (s) => s.editor.conceptSheet != null && s.valueCategories.isNotEmpty,
+        why: 'the concept sheet',
       );
       return;
     }

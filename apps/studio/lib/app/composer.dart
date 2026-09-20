@@ -10,6 +10,8 @@
 /// there is no second commit path and no second formula store.
 library;
 
+import 'dart:convert' show utf8;
+
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'drafts.dart' show draftChanged;
 import 'effects.dart';
@@ -209,10 +211,25 @@ Transition composeReceived(AppState s, int generation, pb.ComposeFormulaResponse
     );
   }
   // the answer is a draft change like any typing; then select what the
-  // service says comes next (the new slot, else the edited node)
+  // service says comes next (the new slot, else the edited node), and put
+  // the caret there — in the slot the edit wrote, else after the edit —
+  // by its byte offset and the id the projection will name it by
   final t = draftChanged(s, mappingId, r.source);
   final next = r.select.isEmpty ? null : r.select;
-  final settled = t.state.editor.composer.copyWith(clearCompose: true, clearSelection: true);
+  final edit = r.edits.firstOrNull;
+  final slotAt = edit == null ? -1 : edit.newText.indexOf('?');
+  final caret = edit == null
+      ? null
+      : CaretState(
+          slotAt >= 0 ? edit.start + slotAt : edit.start + utf8.encode(edit.newText).length,
+          id: next == null ? null : '$next:in',
+        );
+  final settled = t.state.editor.composer.copyWith(
+    clearCompose: true,
+    clearSelection: true,
+    caret: caret,
+    clearCaret: caret == null,
+  );
   final withSelection = Transition(
     t.state.copyWith(editor: t.state.editor.copyWith(composer: settled)),
     t.effects,
@@ -233,8 +250,84 @@ EditorState composerAfterFailure(EditorState e, int generation) {
   return identical(next, c) ? e : e.copyWith(composer: next);
 }
 
+/// The structural caret moved (a click, an arrow key, a typed character):
+/// a byte offset into the draft on screen.  Refused for another mapping's
+/// composer; `null` clears.  Moving the caret keeps the selected node
+/// (the palette stays about it) — typing then decides.
+Transition formulaCaretMoved(AppState s, int mappingId, CaretState? caret) {
+  final c = s.editor.composer;
+  if (s.project == null || s.mapping(mappingId) == null) return Transition(s);
+  final base = c.mappingId == mappingId
+      ? c
+      : c.copyWith(clearProjection: true, clearSelection: true);
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(
+        composer: caret == null
+            ? base.copyWith(mappingId: mappingId, clearCaret: true)
+            : base.copyWith(mappingId: mappingId, caret: caret),
+      ),
+    ),
+  );
+}
+
+/// The expanded canvas nodes' previews: one `GetFormulaProjection` per
+/// expanded mapping whose preview is missing or of another revision — at
+/// every new revision the pictures follow the design.  Nothing is asked
+/// for a mapping that no longer exists (it leaves the expanded set).
+Transition formulaPreviewsNeeded(AppState s) {
+  final p = s.project;
+  if (p == null) return Transition(s);
+  var e = s.editor;
+  final open = {...e.expandedFormulas}
+    ..removeWhere((id, _) => s.mapping(id) == null || !s.mapping(id)!.hasDefinition());
+  final previews = {...e.formulaPreviews}..removeWhere((id, _) => !open.containsKey(id));
+  final effects = <Effect>[];
+  var generation = e.toolingGeneration;
+  for (final id in open.keys) {
+    final have = previews[id];
+    if (have != null && have.revision == s.revision) continue;
+    generation += 1;
+    previews[id] = FormulaPreview(revision: s.revision, generation: generation);
+    effects.add(
+      GetFormulaPreview(
+        revision: s.revision,
+        mappingId: id,
+        generation: generation,
+        component: e.componentScope,
+      ),
+    );
+  }
+  e = e.copyWith(expandedFormulas: open, formulaPreviews: previews, toolingGeneration: generation);
+  return Transition(s.copyWith(editor: e), effects);
+}
+
+Transition formulaPreviewReceived(AppState s, int generation, pb.FormulaProjectionResponse r) {
+  final id = r.mappingId.toInt();
+  final have = s.editor.formulaPreviews[id];
+  // only the answer awaited, for the revision on screen
+  if (have == null || have.generation != generation || r.revision.toInt() != s.revision) {
+    return Transition(s);
+  }
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(
+        formulaPreviews: {
+          ...s.editor.formulaPreviews,
+          id: FormulaPreview(
+            revision: have.revision,
+            generation: generation,
+            projection: r.hasProjection() ? r.projection : null,
+          ),
+        },
+      ),
+    ),
+  );
+}
+
 /// A new selection or projection: the Composer's selection is about the
 /// old text.
-EditorState withoutComposerSelection(EditorState e) => e.composer.selectedNode == null
+EditorState withoutComposerSelection(EditorState e) =>
+    e.composer.selectedNode == null && e.composer.caret == null
     ? e
-    : e.copyWith(composer: e.composer.copyWith(clearSelection: true));
+    : e.copyWith(composer: e.composer.copyWith(clearSelection: true, clearCaret: true));

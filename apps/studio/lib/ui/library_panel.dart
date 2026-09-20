@@ -1,25 +1,25 @@
-/// The Library tab of the sidebar: the Standard Library the daemon serves —
-/// reusable authoring fragments built from ordinary BDL structures — in two
-/// sections, **Concepts** and **Sources**, for browsing and discovery.
-/// Fast insertion is the canvas's right-click menu; this panel is where a
-/// designer looks for "the one for lux" or "a temperature sensor".
+/// The Library tab of the sidebar: the Standard Library the daemon serves
+/// — the **value categories** a concept is created from (ADR-0041) — in
+/// three sections, **Recent**, **Values** and **Quantities**, then
+/// **Sources** (the one generic entry: a Source is created over a concept
+/// the designer chooses on the Source sheet), then any other served
+/// library in its own section.  Fast insertion is the canvas's right-click
+/// menu; this panel is where a designer looks for "the one for deg" or "a
+/// rotation speed".
 ///
-/// A row is an *item*, not a project object: a Concept item's glyph is grey
-/// because the identity (hue) is the compiler's to allocate on insertion,
-/// filled when the item chooses a representation and hollow when it leaves
-/// it to be decided.  A Source item is a **preset** for the Source sheet:
-/// its row says it creates an input for a concept the designer chooses —
-/// existing, or new — and names the value form it suggests; it shows no
-/// signature, because the concept is not decided here and the item owns
-/// no identity.  Names and descriptions are localized by item id
-/// ([libraryItemStrings]); what gets created — identifiers, source text —
-/// never changes with the locale.
+/// A row is a *category*, not a project object: its glyph is grey because
+/// the identity (hue) is the compiler's to allocate on creation, filled
+/// when the category chooses a value form and hollow for *decide later*;
+/// its right column is the unit the category is measured in (the
+/// canonical symbol) or the form's word.  Names, descriptions and search
+/// tags are localized by item id ([libraryItemStrings]); what gets
+/// created never changes with the locale.
 ///
-/// Insertion from here — a drag onto the canvas, a double-click, or Return
+/// Choosing a category — a drag onto the canvas, a double-click, or Return
 /// on a focused row — dispatches exactly what the right-click menu does:
-/// [InsertLibraryItemRequested] for a Concept item (one creation path, one
-/// transaction) and [NewSourceRequested] for a Source item (the sheet,
-/// prefilled by the preset).
+/// [NewConceptRequested], which opens the concept sheet where the concept
+/// is **named before it is created**; nothing is committed by the row.
+/// The Source row dispatches [NewSourceRequested].
 library;
 
 import 'package:flutter/material.dart';
@@ -38,6 +38,8 @@ import 'mac/tokens.dart';
 /// Product wording for a library group id.  One place, used by the
 /// panel's section headers and the canvas menu alike.
 String categoryLabel(AppLocalizations l10n, String category) => switch (category) {
+  'form' => l10n.libraryValues,
+  'quantity' => l10n.libraryQuantities,
   'environment' => l10n.environment,
   'human' => l10n.humanInteraction,
   'motion' => l10n.geometryMotion,
@@ -65,11 +67,22 @@ String itemDescription(AppLocalizations l10n, pb.LibraryItemView item) =>
     libraryItemStrings(l10n, item.id)?.description ?? item.description;
 
 /// What a template's value is measured as, in the words the sheet and the
-/// canvas use: the unit symbol, *on–off*, *count*, *decide later*.
-String representationWord(AppLocalizations l10n, pb.ConceptTemplateView t) {
+/// canvas use: the unit symbol, *on–off*, *count*, *decide later*.  A
+/// quantity whose row has no registered symbol shows the vocabulary's
+/// display symbol when [quantities] knows the dimension (`rad/s`), else
+/// *no unit*.
+String representationWord(
+  AppLocalizations l10n,
+  pb.ConceptTemplateView t, [
+  Iterable<pb.QuantityView> quantities = const [],
+]) {
   if (!t.hasRepresentation()) return l10n.decideLaterLower;
   return switch (t.representation.whichKind()) {
-    pb.Representation_Kind.quantity => t.unit.isEmpty ? l10n.noUnit : t.unit,
+    pb.Representation_Kind.quantity =>
+      t.unit.isNotEmpty
+          ? t.unit
+          : (quantities.where((q) => q.dim == t.representation.quantity).firstOrNull?.unit ?? '')
+                .let((u) => u.isEmpty ? l10n.noUnit : u),
     pb.Representation_Kind.boolean => l10n.formOnOffShort,
     pb.Representation_Kind.count => l10n.formCountShort,
     pb.Representation_Kind.list => l10n.formCollectionShort,
@@ -82,8 +95,12 @@ String representationWord(AppLocalizations l10n, pb.ConceptTemplateView t) {
 /// The right-hand word of a row: the concept's value form for a Concept
 /// item; for a Source item the value form its preset suggests for a new
 /// concept — never a signature, since the concept is chosen on the sheet.
-String itemWord(AppLocalizations l10n, pb.LibraryItemView item) {
-  if (item.hasConcept()) return representationWord(l10n, item.concept);
+String itemWord(
+  AppLocalizations l10n,
+  pb.LibraryItemView item, [
+  Iterable<pb.QuantityView> quantities = const [],
+]) {
+  if (item.hasConcept()) return representationWord(l10n, item.concept, quantities);
   if (item.hasPreset()) {
     final p = item.preset;
     return representationWord(
@@ -92,6 +109,7 @@ String itemWord(AppLocalizations l10n, pb.LibraryItemView item) {
         representation: p.hasRepresentation() ? p.representation : null,
         unit: p.unit,
       ),
+      quantities,
     );
   }
   return l10n.chooseConcept;
@@ -135,18 +153,35 @@ List<String> itemPreview(AppLocalizations l10n, pb.LibraryItemView item) => [
 
 /// The items matching [query], in library order.  Matches the localized
 /// name and tags, the canonical English name, the default names of what
-/// is created, the English keywords, the group and the unit,
-/// case-insensitively — authoring convenience, never resolution; BDL
-/// source is never searched as localized text.
+/// is created, the English keywords, the group and section words, the
+/// type name, the row's unit and every registered unit of the category's
+/// dimension (`deg` finds Angle, `mV` finds Voltage), case-insensitively —
+/// authoring convenience, never resolution; BDL source is never searched
+/// as localized text.
 List<pb.LibraryItemView> searchItems(
   Iterable<pb.LibraryItemView> all,
   String query, {
   AppLocalizations? l10n,
+  Iterable<pb.QuantityView> quantities = const [],
+  Iterable<pb.ValueCategoryView> categories = const [],
 }) {
   l10n ??= kEnglish;
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return all.toList();
   bool hit(String s) => s.toLowerCase().contains(q);
+  // the vocabulary's display symbol and type name; every unit the
+  // compiler offers for the category, by its spelling or its rendering
+  bool unitHit(pb.LibraryItemView i) {
+    if (!i.hasConcept() || !i.concept.hasRepresentation()) return false;
+    final r = i.concept.representation;
+    if (!r.hasQuantity()) return false;
+    final served = quantities.where((x) => x.dim == r.quantity).firstOrNull;
+    final category = categories.where((c) => c.hasDim() && c.dim == r.quantity).firstOrNull;
+    return (served != null && (hit(served.unit) || hit(served.typeName))) ||
+        (category != null &&
+            category.units.any((u) => u.display.toLowerCase() == q || u.source.toLowerCase() == q));
+  }
+
   return [
     for (final i in all)
       if (hit(itemName(l10n, i)) ||
@@ -156,7 +191,8 @@ List<pb.LibraryItemView> searchItems(
           hit(categoryLabel(l10n, i.group)) ||
           hit(categoryTitle(l10n, i.category)) ||
           i.keywords.any(hit) ||
-          i.creates.any((o) => hit(o.name) || hit(o.unit)))
+          i.creates.any((o) => hit(o.name) || hit(o.unit) || hit(o.typeName)) ||
+          unitHit(i))
         i,
   ];
 }
@@ -181,19 +217,21 @@ List<pb.ConceptTemplateView> searchTemplates(
           hit(t.category) ||
           hit(categoryLabel(l10n, t.category)) ||
           hit(t.unit) ||
+          hit(t.typeName) ||
           t.keywords.any(hit))
         t,
   ];
 }
 
 /// The drag payload from a library row: the item id.  Dropped on the
-/// canvas, it becomes one [InsertLibraryItemRequested] at the drop point.
+/// canvas, it opens the concept sheet at the drop point (a category) or
+/// the Source sheet (a Source item, or the generic Source row: an empty
+/// id).
 class LibraryItemDrag {
   const LibraryItemDrag(this.itemId, {this.source = false});
   final String itemId;
 
-  /// A Source item: the drop opens the Source sheet at the drop point
-  /// instead of inserting (the concept is chosen there).
+  /// A Source: the drop opens the Source sheet at the drop point.
   final bool source;
 }
 
@@ -227,24 +265,57 @@ class _LibraryPanelState extends State<LibraryPanel> {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
+    final l10n = context.l10n;
     final s = widget.state;
     final library = s.library;
+    final quantities = library?.quantities ?? const <pb.QuantityView>[];
     final canInsert = s.project != null && s.editor.pendingInsert == null;
     final query = s.editor.librarySearch;
     final all = s.libraryItems.toList();
-    final shown = searchItems(all, query, l10n: context.l10n);
-    // the two sections, Concepts then Sources, each with its groups in
-    // library order
-    final sections = <String, List<String>>{};
-    for (final x in shown) {
-      final groups = sections.putIfAbsent(x.category, () => []);
+    final shown = searchItems(
+      all,
+      query,
+      l10n: l10n,
+      quantities: quantities,
+      categories: s.valueCategories,
+    );
+    final searching = query.trim().isNotEmpty;
+    // the standard library: its two groups are the Values and Quantities
+    // sections; any other library keeps its own sections and groups
+    final std = shown.where((i) => i.id.startsWith('std.')).toList();
+    final others = shown.where((i) => !i.id.startsWith('std.')).toList();
+    final byId = {for (final i in all) i.id: i};
+    final recent = [
+      for (final id in s.editor.recentTemplates)
+        if (byId[id] case final i? when i.hasConcept() && shown.contains(i)) i,
+    ];
+    final stdGroups = <String>[];
+    for (final i in std) {
+      if (!stdGroups.contains(i.group)) stdGroups.add(i.group);
+    }
+    final otherSections = <String, List<String>>{};
+    for (final x in others) {
+      final groups = otherSections.putIfAbsent(x.category, () => []);
       if (!groups.contains(x.group)) groups.add(x.group);
     }
-    final order = [
-      'concept',
-      'source',
-      ...sections.keys.where((c) => c != 'concept' && c != 'source'),
-    ];
+    // the generic Source row matches the section word and its hint
+    final sourceMatches =
+        !searching ||
+        l10n.sourceRow.toLowerCase().contains(query.trim().toLowerCase()) ||
+        l10n.categorySources.toLowerCase().contains(query.trim().toLowerCase()) ||
+        'source input environment'.contains(query.trim().toLowerCase());
+
+    Widget conceptRow(pb.LibraryItemView item) => _ItemRow(
+      key: ValueKey('library-item-${item.id}'),
+      item: item,
+      word: itemWord(l10n, item, quantities),
+      enabled: canInsert,
+      onInsert: () => widget.dispatch(
+        item.category == 'source'
+            ? NewSourceRequested(presetId: item.id)
+            : NewConceptRequested(presetId: item.id),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -253,7 +324,7 @@ class _LibraryPanelState extends State<LibraryPanel> {
           padding: const EdgeInsets.fromLTRB(MacMetrics.gap, MacMetrics.gap, MacMetrics.gap, 0),
           child: MacTextField(
             controller: _search,
-            hint: context.l10n.searchLibrary,
+            hint: l10n.searchLibrary,
             onChanged: (q) => widget.dispatch(LibrarySearchChanged(q)),
           ),
         ),
@@ -261,37 +332,46 @@ class _LibraryPanelState extends State<LibraryPanel> {
           child: library == null
               ? _Note(
                   s.connection is Connected
-                      ? context.l10n.loadingTheLibrary
-                      : context.l10n.theLibraryArrivesWithTheCompiler,
+                      ? l10n.loadingTheLibrary
+                      : l10n.theLibraryArrivesWithTheCompiler,
                 )
-              : shown.isEmpty
-              ? _Note(context.l10n.noLibraryMatches(query.trim()))
+              : shown.isEmpty && !sourceMatches
+              ? _Note(l10n.noLibraryMatches(query.trim()))
               : ListView(
                   padding: const EdgeInsets.symmetric(vertical: MacMetrics.gapTight),
                   children: [
-                    for (final category in order)
-                      if (sections.containsKey(category)) ...[
-                        _SectionHeader(
-                          categoryTitle(context.l10n, category),
-                          key: ValueKey('library-section-$category'),
-                        ),
-                        for (final g in sections[category]!) ...[
-                          _CategoryHeader(categoryLabel(context.l10n, g)),
-                          for (final item in shown)
-                            if (item.category == category && item.group == g)
-                              _ItemRow(
-                                key: ValueKey('library-item-${item.id}'),
-                                item: item,
-                                enabled: canInsert,
-                                onInsert: () => widget.dispatch(
-                                  item.category == 'source'
-                                      ? NewSourceRequested(presetId: item.id)
-                                      : InsertLibraryItemRequested(item.id),
-                                ),
-                              ),
-                        ],
+                    if (recent.isNotEmpty && !searching) ...[
+                      _SectionHeader(l10n.recent, key: const ValueKey('library-section-recent')),
+                      for (final item in recent) conceptRow(item),
+                    ],
+                    for (final g in stdGroups) ...[
+                      _SectionHeader(categoryLabel(l10n, g), key: ValueKey('library-section-$g')),
+                      for (final item in std)
+                        if (item.group == g) conceptRow(item),
+                    ],
+                    if (sourceMatches) ...[
+                      _SectionHeader(
+                        l10n.categorySources,
+                        key: const ValueKey('library-section-source'),
+                      ),
+                      _SourceRow(
+                        key: const ValueKey('library-item-source'),
+                        enabled: canInsert,
+                        onInsert: () => widget.dispatch(const NewSourceRequested()),
+                      ),
+                    ],
+                    for (final category in otherSections.keys) ...[
+                      _SectionHeader(
+                        categoryTitle(l10n, category),
+                        key: ValueKey('library-section-other-$category'),
+                      ),
+                      for (final g in otherSections[category]!) ...[
+                        _CategoryHeader(categoryLabel(l10n, g)),
+                        for (final item in others)
+                          if (item.category == category && item.group == g) conceptRow(item),
                       ],
-                    if (s.project == null) _Note(context.l10n.openAProjectToInsertFrom),
+                    ],
+                    if (s.project == null) _Note(l10n.openAProjectToInsertFrom),
                   ],
                 ),
         ),
@@ -299,7 +379,7 @@ class _LibraryPanelState extends State<LibraryPanel> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, MacMetrics.gapTight, 12, MacMetrics.gap),
             child: Text(
-              [for (final l in library.libraries) '${l.name} ${l.version}'].join(' · '),
+              [for (final l in library.libraries) '${l.name} ${l.version}'].join('   '),
               style: TextStyle(fontSize: MacType.caption, color: t.textTertiary),
               overflow: TextOverflow.ellipsis,
             ),
@@ -309,7 +389,7 @@ class _LibraryPanelState extends State<LibraryPanel> {
   }
 }
 
-/// A section of the library: Concepts, Sources.
+/// A section of the library: Recent, Values, Quantities, Sources.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, {super.key});
   final String title;
@@ -350,51 +430,26 @@ class _Note extends StatelessWidget {
   }
 }
 
-class _ItemRow extends StatelessWidget {
-  const _ItemRow({super.key, required this.item, required this.enabled, required this.onInsert});
-  final pb.LibraryItemView item;
+/// A row that opens a sheet on double-click, Return, or a drag onto the
+/// canvas.
+class _ActivatableRow extends StatelessWidget {
+  const _ActivatableRow({
+    required this.child,
+    required this.tooltip,
+    required this.enabled,
+    required this.onInsert,
+    required this.drag,
+  });
+  final Widget child;
+  final String tooltip;
   final bool enabled;
   final VoidCallback onInsert;
+  final LibraryItemDrag drag;
 
   @override
   Widget build(BuildContext context) {
-    final t = MacTokens.of(context);
-    final l10n = context.l10n;
-    // A Source item opens the Source sheet, prefilled: its row wears the
-    // Source silhouette (the canvas's glyph, ADR-0032); a Concept item's
-    // row wears the socket-to-be.
-    final row = SizedBox(
-      height: MacMetrics.rowHeight,
-      child: Row(
-        children: [
-          if (item.category == 'source')
-            const MappingGlyph(declared: false, wrong: false, source: true)
-          else
-            ItemGlyph(item: item),
-          const SizedBox(width: MacMetrics.gap),
-          Expanded(child: Text(itemName(l10n, item), overflow: TextOverflow.ellipsis)),
-          Text(
-            itemWord(l10n, item),
-            // The unit column: secondary, tabular — read to act on, so never
-            // below 11 or tertiary.
-            style: TextStyle(
-              fontSize: MacType.secondary,
-              color: t.textSecondary,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
-    );
-    // the tooltip: the description, then — for a Source preset — what it
-    // does: an input for a concept the designer chooses on the sheet
-    final message = [
-      itemDescription(l10n, item),
-      if (item.category == 'source') '',
-      if (item.category == 'source') sourceItemHover(l10n, item),
-    ].join('\n');
     final interactive = Tooltip(
-      message: message,
+      message: tooltip,
       waitDuration: const Duration(milliseconds: 600),
       child: Shortcuts(
         shortcuts: const {
@@ -414,7 +469,7 @@ class _ItemRow extends StatelessWidget {
             onTap: () {},
             onDoubleTap: enabled ? onInsert : null,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: row,
+            child: child,
           ),
         ),
       ),
@@ -425,11 +480,103 @@ class _ItemRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Draggable<LibraryItemDrag>(
-        data: LibraryItemDrag(item.id, source: item.category == 'source'),
+        data: drag,
         dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: ItemDragFeedback(item: item),
+        feedback: _DragFeedback(child: child),
         child: interactive,
       ),
+    );
+  }
+}
+
+class _ItemRow extends StatelessWidget {
+  const _ItemRow({
+    super.key,
+    required this.item,
+    required this.word,
+    required this.enabled,
+    required this.onInsert,
+  });
+  final pb.LibraryItemView item;
+  final String word;
+  final bool enabled;
+  final VoidCallback onInsert;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    // A Source item opens the Source sheet, prefilled: its row wears the
+    // Source silhouette (the canvas's glyph, ADR-0032); a category's row
+    // wears the socket-to-be.
+    final row = SizedBox(
+      height: MacMetrics.rowHeight,
+      child: Row(
+        children: [
+          if (item.category == 'source')
+            const MappingGlyph(declared: false, wrong: false, source: true)
+          else
+            ItemGlyph(item: item),
+          const SizedBox(width: MacMetrics.gap),
+          Expanded(child: Text(itemName(l10n, item), overflow: TextOverflow.ellipsis)),
+          Text(
+            word,
+            // The unit column: secondary, tabular — read to act on, so never
+            // below 11 or tertiary.
+            style: TextStyle(
+              fontSize: MacType.secondary,
+              color: t.textSecondary,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+    final message = [
+      itemDescription(l10n, item),
+      if (item.category == 'source') '',
+      if (item.category == 'source') sourceItemHover(l10n, item),
+    ].join('\n');
+    return _ActivatableRow(
+      tooltip: message,
+      enabled: enabled,
+      onInsert: onInsert,
+      drag: LibraryItemDrag(item.id, source: item.category == 'source'),
+      child: row,
+    );
+  }
+}
+
+/// The generic Source row: the Source sheet, where the concept is chosen.
+class _SourceRow extends StatelessWidget {
+  const _SourceRow({super.key, required this.enabled, required this.onInsert});
+  final bool enabled;
+  final VoidCallback onInsert;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    final row = SizedBox(
+      height: MacMetrics.rowHeight,
+      child: Row(
+        children: [
+          const MappingGlyph(declared: false, wrong: false, source: true),
+          const SizedBox(width: MacMetrics.gap),
+          Expanded(child: Text(l10n.sourceRow, overflow: TextOverflow.ellipsis)),
+          Text(
+            l10n.chooseConcept,
+            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+          ),
+        ],
+      ),
+    );
+    return _ActivatableRow(
+      tooltip: l10n.sourceRowHint,
+      enabled: enabled,
+      onInsert: onInsert,
+      drag: const LibraryItemDrag('', source: true),
+      child: row,
     );
   }
 }
@@ -461,11 +608,11 @@ class ItemGlyph extends StatelessWidget {
   }
 }
 
-/// What travels under the pointer during a drag: the node's header as it
-/// will look, with the grey socket — the value's name, then the source's.
-class ItemDragFeedback extends StatelessWidget {
-  const ItemDragFeedback({super.key, required this.item});
-  final pb.LibraryItemView item;
+/// What travels under the pointer during a drag: the row itself, on a
+/// node-coloured card.
+class _DragFeedback extends StatelessWidget {
+  const _DragFeedback({required this.child});
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -473,33 +620,27 @@ class ItemDragFeedback extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        width: 168,
-        height: 26,
+        width: 200,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: t.isDark ? const Color(0xFF3A4556) : const Color(0xFFDCE3EE),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(color: t.hairline),
         ),
-        child: Row(
-          children: [
-            ItemGlyph(item: item),
-            const SizedBox(width: MacMetrics.gap),
-            Expanded(
-              child: Text(
-                item.creates.map((o) => o.name).join(' · '),
-                style: TextStyle(
-                  fontSize: MacType.nodeTitle,
-                  fontWeight: FontWeight.w600,
-                  color: t.textPrimary,
-                  decoration: TextDecoration.none,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+        child: DefaultTextStyle(
+          style: TextStyle(
+            fontSize: MacType.nodeTitle,
+            fontWeight: FontWeight.w600,
+            color: t.textPrimary,
+            decoration: TextDecoration.none,
+          ),
+          child: child,
         ),
       ),
     );
   }
+}
+
+extension<T> on T {
+  R let<R>(R Function(T) f) => f(this);
 }

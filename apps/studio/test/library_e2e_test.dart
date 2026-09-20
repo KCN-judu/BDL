@@ -1,9 +1,11 @@
 /// The Standard Library end to end: Studio's reducer and executor
 /// against the real `bdld` (skipped when it is not built).  The library
-/// Studio shows is the daemon's; inserting a template twice yields two
-/// concepts; renaming one leaves the other's defaults alone; the project
-/// saves and reopens without the library.  A Source item is one transaction
-/// of two ordinary edits, written as `mapping S : () -> C`.
+/// Studio shows is the daemon's value categories with the compiler's units
+/// (ADR-0041); a concept is created from a category with the name the
+/// designer gives, twice for two concepts; the legacy item path still
+/// works; the project saves and reopens without the library.  A Source is
+/// created over a chosen concept, new or existing, written as
+/// `mapping S : () -> C`.
 @Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
@@ -12,9 +14,6 @@ import 'dart:io';
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/simulation.dart';
 import 'package:bdl_studio/app/state.dart';
-import 'package:bdl_studio/l10n/l10n.dart';
-import 'package:bdl_studio/ui/library_panel.dart' show itemName;
-import 'package:flutter/widgets.dart' show Locale;
 import 'package:bdl_studio/daemon/daemon_client.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
@@ -43,34 +42,63 @@ void main() {
       store.dispatch(const AppStarted());
       await store.until((s) => s.library != null || s.connection is ConnectionFailed);
       expect(store.state.connection, isA<Connected>(), reason: '${store.state.connection}');
-      final temperature = store.state.template('std.environment.temperature');
+      // the categories: the value forms, then one per named quantity,
+      // each with the compiler's units for its dimension
+      final temperature = store.state.template('std.quantity.temperature');
       expect(temperature, isNotNull);
       expect(temperature!.unit, 'K');
       expect(temperature.typeName, 'Temperature');
-      expect(store.state.templates.length, greaterThanOrEqualTo(30));
+      expect(store.state.templates.length, inInclusiveRange(15, 30));
+      expect(store.state.templates.any((t) => t.displayName == 'Motor Angle'), isFalse);
+      expect(store.state.libraryItems.where((i) => i.category == 'source'), isEmpty);
       expect(store.state.library!.quantities.any((q) => q.typeName == 'Illuminance'), isTrue);
+      // the value categories arrive with the library: the units each is
+      // measured in are the compiler's, composites included
+      await store.until((s) => s.valueCategories.isNotEmpty);
+      final angle = store.state.valueCategories.firstWhere((c) => c.typeName == 'Angle');
+      expect(angle.units.map((u) => u.display), containsAll(['rad', 'deg', 'turn']));
+      final omega = store.state.valueCategories.firstWhere((c) => c.typeName == 'AngularVelocity');
+      expect(omega.preferredUnit.display, 'rad/s');
+      expect(omega.units.map((u) => u.display), contains('deg/s'));
 
       final root = p.join(dir.path, 'lamp');
       store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
       await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
 
-      // Right-click insertion, then a drag insertion of the same template.
+      // The concept sheet: a category and a name, then one ordinary edit;
+      // the concept lands where the sheet was asked for, selected, named.
       store.dispatch(
-        const InsertLibraryItemRequested('std.environment.temperature', position: Offset(40, 40)),
+        const NewConceptRequested(presetId: 'std.quantity.temperature', position: Offset(40, 40)),
+      );
+      expect(store.state.editor.conceptSheet?.presetId, 'std.quantity.temperature');
+      final fresh = store.state.revision;
+      expect(store.state.project!.concepts, isEmpty, reason: 'nothing is created by the sheet');
+      store.dispatch(
+        CreateConceptRequested(
+          name: 'RoomTemperature',
+          representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+          position: const Offset(40, 40),
+          presetId: 'std.quantity.temperature',
+        ),
       );
       await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 1);
       final first = store.state.project!.concepts.single;
-      expect(store.state.editor.renaming, NodeRef.concept(first.id.toInt()));
+      expect(first.name, 'RoomTemperature');
+      expect(store.state.revision, fresh + 1, reason: 'one ordinary edit');
+      expect(store.state.editor.conceptSheet, isNull);
+      expect(store.state.editor.renaming, isNull, reason: 'named on the sheet');
+      expect(store.state.editor.selection, ConceptSelected(first.id.toInt()));
+      expect(store.state.editor.layout[NodeRef.concept(first.id.toInt())], const Offset(40, 40));
+      expect(store.state.editor.recentTemplates, ['std.quantity.temperature']);
+      // the legacy item path (an older client, a third-party library):
+      // the category's default name, then create-then-rename
       store.dispatch(
-        InlineRenameFinished(NodeRef.concept(first.id.toInt()), name: 'RoomTemperature'),
-      );
-      await store.until((s) => s.editor.pendingRequests == 0);
-      store.dispatch(
-        const InsertLibraryItemRequested('std.environment.temperature', position: Offset(40, 200)),
+        const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(40, 200)),
       );
       await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 2);
       final second = store.state.project!.concepts.firstWhere((c) => c.id != first.id);
-      expect(second.name, 'Temperature', reason: 'the default name is free again');
+      expect(second.name, 'Temperature', reason: 'the category\'s default name');
+      expect(store.state.editor.renaming, NodeRef.concept(second.id.toInt()));
       store.dispatch(
         InlineRenameFinished(NodeRef.concept(second.id.toInt()), name: 'MotorTemperature'),
       );
@@ -81,8 +109,8 @@ void main() {
       expect(concepts[0].id, isNot(concepts[1].id));
       for (final c in concepts) {
         expect(c.representation.quantity, pb.Dim(temperature: 1));
-        expect(c.description, temperature.description);
       }
+      expect(second.description, temperature.description);
       expect(store.state.editor.layout[NodeRef.concept(second.id.toInt())], const Offset(40, 200));
 
       // Saved and reopened without any library lookup: names, identities,
@@ -112,35 +140,10 @@ void main() {
       store.dispatch(const AppStarted());
       await store.until((s) => s.library != null || s.connection is ConnectionFailed);
       expect(store.state.connection, isA<Connected>(), reason: '${store.state.connection}');
-      // the library serves eight Source presets — an input for a concept
-      // the designer chooses — with the concept templates holding none
-      final sources = store.state.libraryItems.where((i) => i.category == 'source').toList();
-      expect(sources.map((i) => i.id), [
-        'std.source.temperature',
-        'std.source.tilt',
-        'std.source.distance',
-        'std.source.ambient_light',
-        'std.source.button',
-        'std.source.encoder',
-        'std.source.analog',
-        'std.source.external',
-      ]);
-      for (final i in sources) {
-        expect(i.hasPreset(), isTrue, reason: i.id);
-        expect(i.preset.sourceName, endsWith('Input'), reason: i.id);
-        expect(itemName(kEnglish, i), endsWith('Input'), reason: i.id);
-      }
+      // the standard library ships no Source preset: a Source is created
+      // on the sheet over a concept the designer chooses
+      expect(store.state.libraryItems.where((i) => i.category == 'source'), isEmpty);
       expect(store.state.templates.any((t) => t.id.startsWith('std.source.')), isFalse);
-      final temp = store.state.libraryItem('std.source.temperature')!;
-      expect(temp.preset.conceptName, 'Temperature');
-      expect(temp.preset.unit, 'K');
-      expect(itemName(kEnglish, temp), 'Temperature Input');
-      expect(itemName(lookupAppLocalizations(const Locale('zh')), temp), '温度输入');
-      expect(itemName(lookupAppLocalizations(const Locale('ja')), temp), '温度入力');
-      // Analog Input and External Input leave the value form to the designer
-      for (final id in ['std.source.analog', 'std.source.external']) {
-        expect(store.state.libraryItem(id)!.preset.hasRepresentation(), isFalse, reason: id);
-      }
 
       final root = p.join(dir.path, 'lamp');
       store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
@@ -161,26 +164,22 @@ void main() {
       final motor = await concept('MotorTemperature');
       final base = store.state.revision;
 
-      // the preset opens the sheet with both ranked first; cancelling
-      // changes nothing
-      store.dispatch(
-        const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(400, 40)),
-      );
+      // the sheet opens with both concepts as candidates, nothing hidden;
+      // cancelling changes nothing
+      store.dispatch(const NewSourceRequested(position: Offset(400, 40)));
       var s = await store.until((x) => x.editor.sourceSheet?.ready ?? false);
       expect(
         s.editor.sourceSheet!.candidates!.candidates.map((c) => (c.conceptId.toInt(), c.preferred)),
-        [(room, true), (motor, true)],
+        [(room, false), (motor, false)],
       );
-      expect(s.editor.sourceSheet!.candidates!.suggestedSourceName, 'temperatureInput');
+      expect(s.editor.sourceSheet!.candidates!.hasPreset(), isFalse);
       expect(s.revision, base);
       store.dispatch(const SourceSheetDismissed());
       expect(store.state.revision, base);
       expect(store.state.project!.mappings, isEmpty);
 
       // an existing concept: only the Source, at the drop point, selected
-      store.dispatch(
-        const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(400, 40)),
-      );
+      store.dispatch(const NewSourceRequested(position: Offset(400, 40)));
       await store.until((x) => x.editor.sourceSheet?.ready ?? false);
       store.dispatch(
         CreateSourceRequested(sourceName: 'roomTemperatureInput', existingConcept: room),
@@ -231,7 +230,8 @@ void main() {
       expect(relationshipRole(input), RelationshipRole.source);
       expect(s.editor.layout[NodeRef.concept(humidity.id.toInt())], const Offset(400, 200));
       expect(s.editor.layout[NodeRef.mapping(input.id.toInt())], const Offset(160, 200));
-      expect(s.editor.renaming, NodeRef.concept(humidity.id.toInt()));
+      expect((s.editor.selection as ConceptSelected).id, humidity.id.toInt());
+      expect(s.editor.renaming, isNull, reason: 'named on the sheet');
       store.dispatch(const UndoRequested());
       s = await store.until(
         (x) => x.editor.pendingRequests == 0 && x.project!.concepts.length == 2,

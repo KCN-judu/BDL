@@ -116,7 +116,7 @@ class HarnessState extends State<Harness> {
 /// (what it suggests) beside what the legacy request would create, in the
 /// canonical English; Studio localizes by id.
 pb.LibraryItemView sourceItem() => pb.LibraryItemView(
-  id: 'std.source.temperature',
+  id: 'team.source.temperature',
   category: 'source',
   displayName: 'Temperature Input',
   description: 'A temperature the environment provides.',
@@ -147,29 +147,49 @@ pb.LibraryItemView sourceItem() => pb.LibraryItemView(
   ),
 );
 
+/// The Temperature value category of the standard library (ADR-0041).
 pb.LibraryItemView conceptItem() => pb.LibraryItemView(
-  id: 'std.environment.humidity',
+  id: 'std.quantity.temperature',
   category: 'concept',
-  displayName: 'Humidity',
-  description: 'How damp the air is.',
-  group: 'environment',
+  displayName: 'Temperature',
+  description: 'How warm something is.',
+  group: 'quantity',
+  keywords: ['temp', 'thermal'],
   creates: [
     pb.LibraryObjectView(
       kind: 'concept',
       key: 'concept',
-      name: 'Humidity',
-      typeName: 'Scalar',
-      representation: pb.Representation(quantity: pb.Dim()),
+      name: 'Temperature',
+      typeName: 'Temperature',
+      representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+      unit: 'K',
     ),
   ],
   concept: pb.ConceptTemplateView(
-    id: 'std.environment.humidity',
-    displayName: 'Humidity',
-    defaultName: 'Humidity',
-    description: 'How damp the air is.',
-    category: 'environment',
-    roleHint: pb.RoleHint.ROLE_HINT_INPUT,
-    representation: pb.Representation(quantity: pb.Dim()),
+    id: 'std.quantity.temperature',
+    displayName: 'Temperature',
+    defaultName: 'Temperature',
+    description: 'How warm something is.',
+    category: 'quantity',
+    roleHint: pb.RoleHint.ROLE_HINT_EITHER,
+    representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+    typeName: 'Temperature',
+    unit: 'K',
+  ),
+);
+
+/// The *decide later* category.
+pb.LibraryItemView openItem() => pb.LibraryItemView(
+  id: 'std.value.open',
+  category: 'concept',
+  displayName: 'Decide later',
+  group: 'form',
+  creates: [pb.LibraryObjectView(kind: 'concept', key: 'concept', name: 'Value')],
+  concept: pb.ConceptTemplateView(
+    id: 'std.value.open',
+    displayName: 'Decide later',
+    defaultName: 'Value',
+    category: 'form',
   ),
 );
 
@@ -420,10 +440,14 @@ void main() {
       final t = sourceItem();
       expect(t.category, 'source');
       expect(conceptItem().category, 'concept');
+      // a served team library's preset keeps its canonical English: only
+      // the standard catalog is localized
       expect(itemName(kEnglish, t), 'Temperature Input');
-      expect(itemName(zh, t), '温度输入');
-      expect(itemName(ja, t), '温度入力');
-      expect(itemDescription(ja, t), isNot(t.description));
+      expect(itemName(zh, t), 'Temperature Input');
+      // the standard category is localized by id
+      expect(itemName(zh, conceptItem()), '温度');
+      expect(itemName(ja, conceptItem()), '温度');
+      expect(itemDescription(ja, conceptItem()), isNot(conceptItem().description));
       for (final l in [kEnglish, zh, ja]) {
         // the preset's suggestions are identifiers in every locale; the
         // row says the value form, never a signature
@@ -437,18 +461,21 @@ void main() {
       expect(itemName(ja, foreign), 'X Sensor');
     });
 
-    test('search finds a Source by its localized name, its tags and its relationship name', () {
+    test('search finds a Source by its section, its tags and its relationship name', () {
       final all = [sourceItem(), conceptItem()];
       List<String> ids(String q, AppLocalizations l) =>
           searchItems(all, q, l10n: l).map((t) => t.id).toList();
-      expect(ids('温度', zh), ['std.source.temperature']);
-      expect(ids('传感器', zh), ['std.source.temperature']);
-      expect(ids('温度', ja), ['std.source.temperature']);
-      expect(ids('センサー', ja), ['std.source.temperature']);
-      expect(ids('temperatureInput', kEnglish), ['std.source.temperature']);
-      expect(ids('Sources', kEnglish), ['std.source.temperature']);
-      expect(ids('来源', zh), ['std.source.temperature']);
-      expect(ids('humid', kEnglish), ['std.environment.humidity']);
+      expect(ids('温度', zh), ['std.quantity.temperature']);
+      expect(ids('温度', ja), ['std.quantity.temperature']);
+      expect(ids('temperatureInput', kEnglish), ['team.source.temperature']);
+      expect(ids('Sources', kEnglish), ['team.source.temperature']);
+      expect(ids('来源', zh), ['team.source.temperature']);
+      expect(ids('入力元', ja), ['team.source.temperature']);
+      expect(ids('input', kEnglish), ['team.source.temperature']);
+      expect(
+        ids('temp', kEnglish),
+        containsAll(['team.source.temperature', 'std.quantity.temperature']),
+      );
     });
 
     testWidgets('the row glyph names a Source for assistive technology', (t) async {
@@ -477,6 +504,7 @@ void main() {
           pendingInsert: PendingInsert(
             templateId: PendingInsert.kSourceInsert,
             position: Offset(300, 100),
+            named: true,
           ),
         ),
       );
@@ -492,7 +520,9 @@ void main() {
       );
       expect(t.state.editor.layout[const NodeRef.concept(10)], const Offset(300, 100));
       expect(t.state.editor.layout[const NodeRef.mapping(11)], const Offset(60, 100));
-      expect(t.state.editor.renaming, const NodeRef.concept(10));
+      // named on the sheet: selected, not opened for renaming
+      expect(t.state.editor.renaming, isNull);
+      expect(t.state.editor.selection, const ConceptSelected(10));
       expect(relationshipRole(of(next, 11)), RelationshipRole.source);
     });
 
@@ -563,6 +593,24 @@ void main() {
                 for (final m in design().mappings) m.name,
               ],
               unitPresets: builtinUnitPresets(kEnglish),
+              categories: [conceptItem(), openItem()],
+              quantities: [
+                pb.QuantityView(
+                  id: 'temperature',
+                  typeName: 'Temperature',
+                  unit: 'K',
+                  dim: pb.Dim(temperature: 1),
+                ),
+              ],
+              valueCategories: [
+                pb.ValueCategoryView(
+                  id: 'temperature',
+                  typeName: 'Temperature',
+                  dim: pb.Dim(temperature: 1),
+                  preferredUnit: pb.UnitExprView(source: 'K', display: 'K'),
+                  units: [pb.UnitExprView(source: 'K', display: 'K')],
+                ),
+              ],
               onCreate: created.add,
               onCancel: onCancel ?? () {},
             ),
@@ -604,7 +652,7 @@ void main() {
     });
 
     testWidgets('new concept: the preset prefills, the preview lists both objects', (t) async {
-      final created = await pumpSheet(t, sheetState(presetId: 'std.source.temperature'));
+      final created = await pumpSheet(t, sheetState(presetId: 'team.source.temperature'));
       await t.tap(find.text('New concept'));
       await t.pumpAndSettle();
       expect(find.text('concept Temperature : Temperature'), findsOneWidget);
@@ -624,7 +672,7 @@ void main() {
     });
 
     testWidgets('a preset never forces a new concept: the existing ones stay a choice', (t) async {
-      final created = await pumpSheet(t, sheetState(presetId: 'std.source.temperature'));
+      final created = await pumpSheet(t, sheetState(presetId: 'team.source.temperature'));
       // opens on the existing concepts the daemon ranked
       expect(find.text('mapping temperatureInput : () -> Tilt'), findsNothing);
       expect(find.text('mapping tiltInput : () -> Tilt'), findsOneWidget);

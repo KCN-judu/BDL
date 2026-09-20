@@ -184,6 +184,11 @@ class PreviewExtraction extends Effect {
 }
 
 /// Ask the daemon for its libraries, as items.  Not counted as pending.
+/// The compiler's value categories with their units (`ListValueCategories`).
+class ListValueCategories extends Effect {
+  const ListValueCategories();
+}
+
 class ListLibraryItems extends Effect {
   const ListLibraryItems();
 }
@@ -295,6 +300,22 @@ class CompleteDraft extends Effect {
 /// The hover card for a formula name (draft overlay) — uncounted.
 /// The Formula Composer's requests (protocol 0.12), tagged like the other
 /// tooling requests.
+/// The committed definition's projection for an expanded canvas node
+/// (`GetFormulaProjection`, answered as [FormulaPreviewReceived]); the
+/// composer's own fetch is [GetFormulaProjection].
+class GetFormulaPreview extends Effect {
+  const GetFormulaPreview({
+    required this.revision,
+    required this.mappingId,
+    required this.generation,
+    this.component,
+  });
+  final int revision;
+  final int mappingId;
+  final int generation;
+  final int? component;
+}
+
 class GetFormulaProjection extends Effect {
   const GetFormulaProjection({
     required this.revision,
