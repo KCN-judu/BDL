@@ -222,31 +222,176 @@ header word precedence is `Source` › `declared` › port word › sink state �
   the Library). Painted nodes expose semantics in product language for assistive
   technology.
 
-### Interaction (Blender's, on a Mac)
+### Interaction — desktop CAD selection over a node editor
 
-| Gesture                                                   | Result                                                                                                                                                                            | Blender equivalent |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| drag empty canvas                                         | pan                                                                                                                                                                               | MMB drag           |
-| scroll / pinch                                            | zoom about the pointer                                                                                                                                                            | wheel / ctrl-MMB   |
-| click node                                                | select (active); ⇧-click adds                                                                                                                                                     | LMB / ⇧LMB         |
-| drag node body                                            | move selected nodes; on release the layout is committed (no revision)                                                                                                             | G                  |
-| drag from output socket to input socket                   | make link (edit: adds the concept to the mapping's inputs, or sets the mapping's output)                                                                                          | LMB drag           |
-| drag from an input socket away and release on empty space | disconnect                                                                                                                                                                        | drag link away     |
-| drop link on empty space                                  | discard (no auto-create)                                                                                                                                                          | discard            |
-| ⌘-drag across links                                       | cut links                                                                                                                                                                         | Ctrl-RMB cut       |
-| drag on empty canvas with ⇧                               | box select                                                                                                                                                                        | B                  |
-| ⌫ / Delete                                                | delete selection (concept in use → banner: "_Tilt_ is used by _dimByTilt_")                                                                                                       | X                  |
-| ⌘A / ⌘D                                                   | select all / duplicate (later)                                                                                                                                                    | A / ⇧D             |
-| Home / ⌘0                                                 | frame all                                                                                                                                                                         | Home               |
-| ⌘F                                                        | find node by name                                                                                                                                                                 | Ctrl-F             |
-| double-click node header                                  | rename inline                                                                                                                                                                     | —                  |
-| H                                                         | collapse selected nodes                                                                                                                                                           | H                  |
-| right-click                                               | context menu: Rename · Delete over a node; **Add Concept ▸** Recent / Input / Output / Environment / Geometry & motion / Human interaction / More… (docs/spec/concept-library.md) | RMB                |
-| drop a Library row                                        | a Concept item: insert the concept at the drop point; a Source preset: open the Source sheet                                                                                      | —                  |
+The canvas is one interaction state machine (`ui/canvas/node_canvas.dart`):
+every pointer sequence has exactly one owner, decided once — a press is a
+_candidate_ until it moves 4 pt (`kDragThreshold`), then it becomes a marquee, a
+node move, a group move, a link drag or a pan, and nothing else can claim it; a
+press that never moves is a click. The selection algebra is the one desktop CAD
+and EDA tools share (AutoCAD and Altium for the directional rectangle; KiCad and
+Blender's node editor for the rest); the node anatomy above and the drop rules
+stay Blender's. Blender's own selection keymap (⇧-click adds, drag on empty
+space pans, B for box select) was the first version and is replaced: it made a
+plain drag ambiguous between pan and select, needed a modifier to start a
+rectangle, and used ⇧ where every other desktop tool uses ⌘.
+
+| Gesture                                                         | Result                                                                                                                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| click node                                                      | select it alone; on a member of the selected set: keep the set, make it the active object                                                                                                               |
+| click empty canvas                                              | clear the selection                                                                                                                                                                                     |
+| ⌘-click (Ctrl on Windows / Linux)                               | toggle the node in the set; the node toggled in becomes active                                                                                                                                          |
+| ⇧-click node                                                    | the one shortest chain of signature edges from the active object to it, when exactly one exists; otherwise the node alone is added (never a guessed branch; reference edges never count)                |
+| drag on empty canvas, left → right                              | **window** marquee: nodes wholly inside are selected — solid outline, restrained fill                                                                                                                   |
+| drag on empty canvas, right → left                              | **crossing** marquee: nodes inside or touched — dashed outline, fainter fill; the vertical direction means nothing                                                                                      |
+| ⌘-marquee / ⇧-marquee                                           | union into / subtraction from the selected set (a `+` / `−` at the moving corner); what the release will do is previewed on the nodes before the button comes up                                        |
+| drag a selected node                                            | the selected movable set moves together, offsets kept, committed on release as one layout write (`NodesMoved`, no revision); a lone relationship dropped into or out of a region changes its membership |
+| drag an unselected node                                         | it becomes the selection (⌘: joins it) and moves                                                                                                                                                        |
+| drag a group's title band                                       | its members move                                                                                                                                                                                        |
+| middle-button drag · Space + drag · trackpad two-finger scroll  | pan                                                                                                                                                                                                     |
+| mouse wheel · pinch · ⌘ + trackpad scroll                       | zoom about the pointer (0.25–3×)                                                                                                                                                                        |
+| drag from output socket to input socket                         | make link (adds the concept to the mapping's reads, sets the mapping's output, drives the sink); every socket the link could land on wears a halo, an incompatible one the forbidden cursor             |
+| drag a **concept**'s value socket onto a **sink** accepting it  | Concept → Output (below): the relationship that can drive the sink connects                                                                                                                             |
+| drag from a connected input socket away, release on empty space | disconnect                                                                                                                                                                                              |
+| drop a new link on empty space                                  | discard (no auto-create)                                                                                                                                                                                |
+| ⌫ / Delete                                                      | delete the selection — a set as one checked plan (below); a concept in use → banner: "_Tilt_ is used by _dimByTilt_"                                                                                    |
+| ⌘A                                                              | select every visible node of the canvas on screen (a collapsed group is its box; hidden members, links and reference edges are not nodes)                                                               |
+| Esc                                                             | the innermost thing first: a submenu, a menu, a gesture in progress (nothing is committed), then the selection                                                                                          |
+| ← → ↑ ↓                                                         | nudge the selected set one grid step (8 pt); ⇧: one point                                                                                                                                               |
+| Home / ⌘0                                                       | frame all                                                                                                                                                                                               |
+| double-click node header                                        | rename inline (an instance: open its source)                                                                                                                                                            |
+| right-click · Control-click (macOS)                             | the contextual menu for what is under the pointer (below)                                                                                                                                               |
+| drop a Library row                                              | a Concept item: insert the concept at the drop point; a Source preset: open the Source sheet                                                                                                            |
+
+Cursors: precise over a socket and during a marquee; forbidden over a socket the
+link cannot reach; move while nodes are dragged; grab while Space is held,
+grabbing while panning; the arrow otherwise. Shortcuts fire only while the
+canvas itself has the keyboard: a text field inside it (the inline rename) or
+beside it (the Code view, the formula editor, a sheet) keeps every key.
+
+**Selected and active.** A selection is a _set_ of canvas nodes and, among them,
+the _active_ object (`MultiSelected.nodes`, `.active`; a single selection is its
+own active object): the one the last plain or ⌘-click named, the anchor of a ⇧
+range or chain, what the inspector shows first. It is named, never the first of
+the set. The set wears the accent outline on every member; the active one also a
+second, outer ring (the platform's focus-ring shape — a shape, not a hue). A
+selection is editor state: it never dirties the project, never enters Undo, and
+survives a new projection, an analysis, hover and viewport changes; a member
+that ceases to exist leaves the set, the rest stays (`surviving`).
+
+**The Project list** follows the same algebra: a plain click selects one row; ⌘
+/ Ctrl toggles it; ⇧ selects the contiguous range from the active object (the
+anchor) to the clicked row, in the list's own order; ⌘⇧ adds the range. The
+active row is semibold; every selected row wears the selection tint.
+
+**Multi-delete.** Deleting a selected set is one plan of the model's own
+deletes, in the order it accepts — relationships, sinks, concepts, instances —
+checked before its first edit is sent: a concept still used by a relationship
+outside the set, or a sink still driven from outside it or realised by a device,
+would be refused half-way and leave a partial design, so nothing is sent and the
+banner names the objects and their users (_Nothing was deleted: Tilt is used by
+dimByTilt_). The plan is then one queued edit per step, each a revision (Undo
+steps back one at a time — the model has no multi-delete transaction; recorded
+as a follow-up); a refusal ends the plan, as every queued plan does. A lone
+group deletes as an ungroup (its relationships stay); a group among other
+objects is left alone.
+
+**Concept → Output.** A sink is driven by a relationship (`SetMappingDrive`,
+DriveWF, SingleDriver), never by a concept — and the designer reaches for the
+concept, not for whichever relationship happens to produce it. So a concept's
+value socket dropped on a sink that accepts the concept is an _authoring
+gesture_ over the model's own edit: the candidates are read off the projection
+by the pass's rule (`driveCandidates`: a value or a Source — never a rule, whose
+type is an arrow — producing exactly the accepted concept, updating in the
+sink's domain when it has one, not the final target of another sink), the same
+list the sink's inspector offers under _Connect_. One candidate connects at
+once. Several are offered by name in the chooser (_Drive with brightness_ /
+_Drive with dimmer_); nothing is chosen for the designer. None: the chooser says
+so where the pointer is (_Servo accepts ServoPosition, but no current
+relationship can drive it_) and offers the sink in the inspector; nothing is
+synthesized. A driven sink is offered a _replacement_ (_Replace lifted with
+rest_), one plan in which the current driver lets go before the next connects
+(`ReplaceDriverRequested`) — the sink never has two drivers in between, and the
+direct Mapping → Output drag keeps today's semantics (a second drive is a
+conflict the output pass reports). `canLink` is unchanged: the concept never
+links the sink; `isAuthoringTarget` names the gesture, and the sink's socket
+wears the halo while the concept is dragged. The projection is unchanged too:
+the drive edge is drawn from the driver's own output socket (the true
+SingleDriver identity), the producer edge from the driver to its concept — both
+true; routing the drive through the concept would say the concept drives, which
+is false. Its inspector, its contextual menu (_Show Driver: brightness_) and the
+socket's halo make the driver legible from the concept's side.
+
+### Contextual menus
+
+A contextual menu is a **modal input state** of the canvas: while one is open,
+the canvas takes no pointer, no hover, no wheel — nodes under the menu do not
+react, the canvas neither pans nor zooms — and the first outside press dismisses
+the menu and does nothing else (the same press never selects, pans, moves or
+draws). A right-click elsewhere while a menu is open retargets it: the old menu
+closes, the new context is set, the items are rebuilt from it in the next frame
+and the menu opens there — never the last target's items at a new place. The
+chooser (aggregate sockets, Concept → Output) is the same kind of overlay and
+the two are never both open. A menu whose target is deleted, or whose canvas is
+left, closes. Esc closes a submenu, then the menu, before it touches anything
+else. Menus are keyboard menus: the first row has focus when the menu opens, ↑ ↓
+move, → opens a submenu, ⏎ runs the row.
+
+The context is one explicit thing (`MenuContext`): the empty canvas at a point,
+a node, an expanded group's band, a link, or the selected set (a right-click on
+one of several selected nodes keeps the set and asks about all of them; on an
+unselected object, that object is selected first; on blank canvas the selection
+stays as it is and the menu is about the canvas alone). Each context's items are
+stable groups in a fixed order — the object's primary command, IDE navigation,
+the service's fixes, structure, the destructive command — and each item is
+present only when its command exists for that object today:
+
+| Context                          | Items                                                                                                                                                                                                            |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| empty canvas                     | Add Concept ▸ (Recent, by role, three categories, More…) · Add Source ▸ (New Source…, the presets) · Add Instance ▸ (system canvas) · New Behavior Group — then Select All ⌘A · Frame All ⌘0                     |
+| relationship — a rule or a value | Edit Definition · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                           |
+| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port) |
+| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                  |
+| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                      |
+| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                            |
+| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                        |
+| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect                                                                                                                                                  |
+| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                   |
+
+**Fix ▸** is the IDE service's own list for the object — the one the reducer
+asks for on every selection (`ListSemanticActions`, `EditorState.actions`) and
+the inspector's _Fixes_ section shows: a _ready_ action is a command, one that
+_needs a choice_ is a submenu of the service's options, a _blocked_ one is
+disabled with its reason beneath it; the titles are the service's. The list is
+offered only when it is about this object at this revision; a stale list is not
+a menu, and `SemanticActionApplied` refuses a stale one anyway. **Reveal in
+Code** selects the object, shows the Split view when the canvas alone was on
+show, and opens the file declaring it at its declaration through the Code view's
+own reveal (`RevealInCodeRequested` → the same `SourceReveal` definition
+navigation uses; the anchors of the sources). **Edit Definition** selects the
+relationship and gives the inspector's definition editor the keyboard. Not
+offered, because no service Studio has today backs them: _Find References_ (the
+daemon's `references_at` needs a name site, and a source anchor gives the item's
+range, not its name — a name-based search is not acceptable), _Explain_ as a
+compiler command (`bdl_ide::explain` has no protocol request; the inspector's
+disclosure is Studio's own), alignment and distribution.
+
+The menu itself is `ui/mac/menus.dart` — `MacMenuAnchor`, `MacMenuItem` (label,
+shortcut column, an optional detail line, destructive in the error colour,
+disabled at 40 %), `MacSubmenu`, `MacMenuDivider` — over Flutter's `MenuAnchor`
+family, which owns the overlay, focus traversal and roles; the look is the
+theme's (`menuTheme`, `menuButtonTheme`: the content colour, a hairline, 24 pt
+rows in the body size, the accent tint on the focused row). Nothing styles a
+menu anywhere else.
 
 Dragging a node over a link does **not** auto-insert it (Blender's auto attach);
 BDL links are typed by concept, and silent insertion would be a semantic edit.
-Muting nodes (M) has no BDL meaning and is not offered.
+Muting nodes (M) has no BDL meaning and is not offered. Deferred, recorded in
+`docs/changes/unreleased/2026-09-studio-interaction.md`: align and distribute, a
+snap policy, auto-pan at the viewport's edge during a long drag, zoom to
+selection, duplicate and copy/paste, a lasso, keyboard navigation between nodes,
+a whole-graph relayout, selection filters, Find References, a multi-delete
+transaction.
 
 ### What the canvas never means
 
