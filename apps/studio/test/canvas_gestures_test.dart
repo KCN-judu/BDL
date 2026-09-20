@@ -6,6 +6,7 @@ library;
 
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/state.dart';
+import 'package:bdl_studio/platform/desktop.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/canvas/node_canvas.dart';
@@ -273,16 +274,20 @@ void main() {
       final sel = actions.whereType<SelectionChanged>().last.selection;
       expect(sel, isA<MultiSelected>());
       expect((sel as MultiSelected).mappings.toSet(), {tiltValue, a, b});
-      // ⌘-click follower: added and active; ⌘-click A: removed
+      // ⌘-click follower (Ctrl-click where Ctrl is the primary modifier):
+      // added and active; the same on A: removed
       final origin = tester.getTopLeft(find.byType(NodeCanvas));
       final scene = sceneOf(layout);
+      final primary = primaryModifierIsControl
+          ? LogicalKeyboardKey.controlLeft
+          : LogicalKeyboardKey.metaLeft;
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(primary);
       await tester.tapAt(origin + scene.node(const NodeRef.mapping(follower)).header.center);
       await tester.pump(const Duration(milliseconds: 400));
       await tester.tapAt(origin + scene.node(const NodeRef.mapping(a)).header.center);
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyUpEvent(primary);
       final sel2 = actions.whereType<SelectionChanged>().last.selection as MultiSelected;
       expect(sel2.mappings.toSet(), {tiltValue, b, follower});
       expect(sel2.active, const NodeRef.mapping(follower));
