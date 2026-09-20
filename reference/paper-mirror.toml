@@ -1,0 +1,12 @@
+# Provenance of `reference/paper/` — the production mirror of the BDL Design
+# and Formalization Monograph.  The canonical source is the `paper/` directory
+# of KCN-judu/BDL_FV; this mirror is a byte-for-byte copy of that directory at
+# the commit below and is never edited here (reference/README.md).  Refresh it
+# with `just paper-mirror <path-to-BDL_FV> [commit]`; verify it with
+# `just paper-mirror-check <path-to-BDL_FV>`.
+source = "KCN-judu/BDL_FV"
+directory = "paper/"
+commit = "cbb3ec1dc46de7d1fb67c022b714c3b052ad7dcf"
+mirrored = "2026-09-20"
+# What the monograph describes production as of (its own `snapshot`).
+production-snapshot = "6be778b07f07bebaba26f580f2b4af74a13ce9df"

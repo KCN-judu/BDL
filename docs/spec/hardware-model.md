@@ -6,9 +6,9 @@ status: current
 
 # Hardware model
 
-The Phase-7 validation layer of the paper, kept independent of any HAL.
-Implemented in `crates/bdl-hardware` (model, devices, boards, solver) and driven
-by `bdl-compiler::analyze_deployment`.
+The Phase-7 validation layer (the monograph, Part X), kept independent of any
+HAL. Implemented in `crates/bdl-hardware` (model, devices, boards, solver) and
+driven by `bdl-compiler::analyze_deployment`.
 
 ## Pipeline
 

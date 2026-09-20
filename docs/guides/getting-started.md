@@ -101,7 +101,7 @@ crates/
   bdl-daemon/           bdld: session (owns the IdeHost), coordinator, transport
 assets/brand/           the compass-λ mark (generator, SVGs, icons)
 docs/                   architecture, formats, pipeline, IR, protocol, ADRs, design issues
-reference/paper/        the paper (PDF + markdown source)
+reference/paper/        the BDL Design and Formalization Monograph, mirrored from BDL_FV/paper (reference/README.md)
 hardware/boards/        board descriptions as data
 library/std/            the Standard Library, concepts.toml
 examples/smart_lamp/    the canonical example project (Design → Simulate → Deploy)
@@ -139,7 +139,7 @@ persistence edges.
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | use Studio as a designer or prototyper | `docs/user-guide/README.md` — tutorials, concepts, the interface, troubleshooting                                                                                          |
 | understand the system                  | `docs/README.md` (the front door), `docs/architecture/overview.md`, then `docs/decisions/` (short, numbered)                                                               |
-| understand the language                | `docs/background/paper-digest.md`, `docs/spec/kernel.md` (exact kernel contract), then the paper                                                                           |
+| understand the language                | `docs/spec/kernel.md` (exact kernel contract), then the monograph (`reference/paper/paper.md`, Parts I–II first)                                                           |
 | add a compiler pass                    | `docs/architecture/compiler-pipeline.md`, `docs/architecture/ir.md`, `crates/bdl-ir`, then the pass crate it belongs to                                                    |
 | touch the editor                       | `docs/architecture/studio-ui.md` (design system + interaction standard), `apps/studio/lib/app/reducer.dart`                                                                |
 | change the wire format                 | `docs/spec/protocol.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto`                                                                                   |

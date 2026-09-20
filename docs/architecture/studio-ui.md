@@ -86,7 +86,7 @@ _As built: [workspace](../user-guide/assets/studio/workspace.png)._
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-Pages, in workflow order (the paper's own sequence: intent → refine → time →
+Pages, in workflow order (the design's own sequence: intent → refine → time →
 contexts → outputs → domains → board → observe):
 
 | Page         | Centre                                                                                                                                                                                          | Left                                                                                                                                                           | Right                                                       | Answers                    |
@@ -545,7 +545,7 @@ Screenshot: `docs/user-guide/assets/studio/formula-composer.png`
 ## 5. Sheets teach by showing, not by example text
 
 A creation sheet never carries a sample value as a hint ("Tilt") — that repeats
-the paper and tells the designer nothing about what the field _means_. Instead
+the label and tells the designer nothing about what the field _means_. Instead
 the sheet renders, live and at canvas fidelity, the node the entries will become
 (`NodePreview`, painted by the same `NodePainter` as the canvas):
 

@@ -43,8 +43,8 @@ DeclId      = { n : Nat }   -- a declaration (it is a value)
 
 Display names are not in the kernel.
 
-Dimensions: an exponent vector over three base dimensions (the paper says "not
-an SI catalogue"; the implementation may extend it):
+Dimensions: an exponent vector over three base dimensions (not an SI catalogue;
+the implementation may extend it):
 
 ```text
 Dim = { length, time, angle : Int }

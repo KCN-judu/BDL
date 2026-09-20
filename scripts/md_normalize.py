@@ -48,9 +48,17 @@ def label(text: str) -> str:
     return "".join(out)
 
 
+# Never rewritten: `reference/` mirrors documents this repository does not
+# own (the monograph under reference/paper/ is byte-for-byte BDL_FV's), as
+# .prettierignore and .markdownlint-cli2.yaml already say for their tools.
+SKIP_PREFIXES = ("reference/",)
+
+
 def main(paths: list[str]) -> int:
     changed = 0
     for name in paths:
+        if Path(name).as_posix().startswith(SKIP_PREFIXES):
+            continue
         path = Path(name)
         text = path.read_text(encoding="utf-8")
         new = label(text)

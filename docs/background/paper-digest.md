@@ -6,10 +6,14 @@ status: current
 
 # BDL paper digest (for the engineering implementation)
 
-Sources: `reference/paper/paper.md` (_BDL: A Behavior Design Language_, the
-2026-09-15 revision) and the formal development
-[KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV) (Lean 4, Phases 0–7, no
-`sorry`).
+Sources: the conference-era manuscript _BDL: A Behavior Design Language_ (the
+2026-09-15 revision, archived as
+`reference/paper/archive/paper-2026-09-conference-manuscript.md`) and the formal
+development [KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV) (Lean 4,
+Phases 0–7, no `sorry`). That manuscript has been superseded by the **BDL Design
+and Formalization Monograph** (`reference/paper/paper.md`, mirrored from
+`BDL_FV/paper/`); this digest is kept as the historical record of what the
+implementation was first built to.
 
 This page records only what is **binding on the engineering implementation**;
 the arguments and the counterexamples are in BDL_FV's `REPORT.md` /

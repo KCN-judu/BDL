@@ -40,7 +40,7 @@ library/std/        the Standard Library (concepts.toml)
 examples/           smart_lamp — the canonical Design → Simulate → Deploy example
 docs/               architecture, formats, pipeline, ADRs, paper digest, the user guide
 locale/             the terminology glossary and the user guide's zh-Hans / ja catalogs and pages
-reference/paper/    the BDL paper
+reference/paper/    the BDL Design and Formalization Monograph — a mirror of BDL_FV/paper (reference/README.md)
 ```
 
 ## Build

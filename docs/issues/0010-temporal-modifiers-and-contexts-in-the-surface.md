@@ -11,13 +11,14 @@ related: ["docs/03-open-questions.md"]
 
 ## Problem
 
-The paper's surface vocabulary has temporal modifiers (`for`, `after … by`,
-`while`, `until`) and contexts (`StateHandler`) that the paper does not execute;
-BDL has reserved the words `context` and `require` and elaborates none of them.
+The monograph's surface vocabulary (Part II, _Time_; designed, not offered) has
+temporal modifiers (`for`, `after … by`, `while`, `until`) and contexts
+(`StateHandler`) that it does not execute; BDL has reserved the words `context`
+and `require` and elaborates none of them.
 
 ## Why it matters
 
-They are the paper's answer to _when_ a behaviour holds; without them timing is
+They are the design's answer to _when_ a behaviour holds; without them timing is
 expressed only through domains and `delay`/`sync`.
 
 ## Current evidence

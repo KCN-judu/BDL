@@ -226,8 +226,8 @@ categories; it is a model, not UI folklore.
 
 A project can be typed, causal, clock-consistent and output-complete and still
 not fit the chosen board. Board selection reruns deployment analysis only, and
-the workspace reports the two in different places (paper §Target- Specific
-Hardware Validation; ADR-0006). In code this is two functions:
+the workspace reports the two in different places (the monograph, Part X
+_Target-specific hardware validation_; ADR-0006). In code this is two functions:
 `analyze(snapshot)` never takes a target; `analyze_deployment(snapshot, target)`
 never touches `Ty`, `Grant`, causality, clocks or the evaluator (ADR-0015). The
 same `OutputId` bound to a PWM channel on one board and a digital output on

@@ -42,6 +42,7 @@ header that `just docs-check` verifies against its folder.
 | **which test backs a claim**                                     | [evidence/testing.md](evidence/testing.md) · [evidence/behavior-systems-correspondence.md](evidence/behavior-systems-correspondence.md) · [architecture/studio-compiler-integration.md §3](architecture/studio-compiler-integration.md) · [user-guide/VERIFICATION.md](user-guide/VERIFICATION.md) |
 | **what CI proves, and how to run it before a push**              | [project/ci.md](project/ci.md) — `python scripts/preflight.py fast \| full \| platform`                                                                                                                                                                                                            |
 | **how to enter the codebase**                                    | [guides/getting-started.md](guides/getting-started.md)                                                                                                                                                                                                                                             |
+| **the narrative design record — why every construct is there**   | the BDL Design and Formalization Monograph, `reference/paper/paper.md` (and the PDF) — a mirror of `KCN-judu/BDL_FV/paper/` at the commit in `reference/paper-mirror.toml`; edited there, never here (`reference/README.md`)                                                                       |
 | **how these records work**                                       | [project/governance.md](project/governance.md) · [project/research.md](project/research.md) · [project/migration-report.md](project/migration-report.md)                                                                                                                                           |
 | **how Studio and the guide are translated**                      | [project/localization-style.md](project/localization-style.md) · `locale/glossary.json`                                                                                                                                                                                                            |
 
@@ -107,9 +108,11 @@ one design out to a pin.
 
 ### Background
 
-[paper-digest.md](background/paper-digest.md) — the paper's engineering-binding
-content · [ide-service-research.md](background/ide-service-research.md) — the
-precedents behind the IDE service.
+[paper-digest.md](background/paper-digest.md) — the engineering-binding content
+of the conference-era manuscript (2026-09-15, archived in
+`reference/paper/archive/`; superseded by the monograph) ·
+[ide-service-research.md](background/ide-service-research.md) — the precedents
+behind the IDE service.
 
 ### Archive
 

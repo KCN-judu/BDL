@@ -33,6 +33,19 @@ docs-lint:
 docs-check:
     python3 scripts/preflight.py docs-format docs-lint docs-validate screenshots l10n
 
+# ---- Reference mirror (optional; never part of `check`) -------------------
+
+# Compare reference/paper/ with BDL_FV/paper/ at the commit recorded in
+# reference/paper-mirror.toml.  Needs a local BDL_FV checkout; nothing in
+# the build depends on one (ADR-0010).
+paper-mirror-check fv="../BDL_FV":
+    python3 scripts/paper_mirror.py check {{fv}}
+
+# Re-mirror the monograph from a BDL_FV checkout (its HEAD, or `commit`)
+# and record the commit; commit the result.
+paper-mirror fv="../BDL_FV" commit="HEAD":
+    python3 scripts/paper_mirror.py refresh {{fv}} {{commit}}
+
 # ---- Localization ---------------------------------------------------------
 
 # Regenerate the user-guide catalogs (POT, the two POs) and the localized

@@ -338,14 +338,14 @@ concept ordered, 0.11; `EditOp.set_concept_ordered { id, ordered }` sets it).
 where `requirements` is the kind's requirement table (index, capability, label)
 so a pin editor needs no hardware knowledge and `realization` (0.24) is the
 chosen output realization profile id, absent when none. `MappingView.state`
-carries the paper's workspace state (`declared` / `defined`; the ladder proper
-is in `ProjectAnalysis`). `MappingView.role` (0.20) carries the derived role —
-`RelationshipRole`: `SOURCE` (the unit domain, no realization), `RULE` (a domain
-with inputs), `VALUE` (the unit domain with a realization) — stated by the
-daemon from the authored design of the projection (the flat design, a component
-body, or the system view's base, where a base relationship a binding realises is
-a Value); never persisted, never authored; a client presents it and never
-re-derives it (`docs/architecture/relationship-roles.md`).
+carries the monograph's workspace state (`declared` / `defined`; the ladder
+proper is in `ProjectAnalysis`). `MappingView.role` (0.20) carries the derived
+role — `RelationshipRole`: `SOURCE` (the unit domain, no realization), `RULE` (a
+domain with inputs), `VALUE` (the unit domain with a realization) — stated by
+the daemon from the authored design of the projection (the flat design, a
+component body, or the system view's base, where a base relationship a binding
+realises is a Value); never persisted, never authored; a client presents it and
+never re-derives it (`docs/architecture/relationship-roles.md`).
 
 `ProjectAnalysis` adds
 `outputs[] { id, state: undriven | driven | ill_formed | conflict, driver?, claimants[] }`,
