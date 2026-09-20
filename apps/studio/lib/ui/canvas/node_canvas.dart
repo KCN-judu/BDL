@@ -307,7 +307,6 @@ class _NodeCanvasState extends State<NodeCanvas> {
   /// The last primary click, for double-click detection.
   Duration? _lastClickAt;
   Offset? _lastClickLocal;
-  final Stopwatch _clock = Stopwatch()..start();
 
   @override
   void didUpdateWidget(NodeCanvas old) {
@@ -636,7 +635,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
   /// A primary press that never moved: a click, or the second of a
   /// double-click.
   void _click(_PressCandidate c, PointerUpEvent e) {
-    final now = _clock.elapsed;
+    // The pointer's own clock, never the wall's: a test's taps are timed
+    // by its binding, and a loaded machine does not turn a double-click
+    // into two clicks.
+    final now = e.timeStamp;
     final isDouble =
         _lastClickAt != null &&
         now - _lastClickAt! < kDoubleClickInterval &&
