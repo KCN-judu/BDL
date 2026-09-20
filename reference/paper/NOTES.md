@@ -184,3 +184,67 @@ the note of the original 2026-09 draft.
 - **Mirror policy.** `paper/README.md` states that this directory is the
   canonical monograph source and that `KCN-judu/BDL/reference/paper/` is a
   reference mirror that does not evolve independently.
+
+## The narrative restructure and the production snapshot `081296d` (2026-09-20, latest revision)
+
+- **From a topic taxonomy to one argument.** The fifteen concept-Parts of the
+  previous revision are reorganized as seven Parts that a reader can follow
+  from beginning to end: I *Why Behavior Needs a Design Medium* (the
+  asymmetry of media, the central question, what BDL is not, who it is for,
+  the empirical discipline); II *The BDL Architecture* (the design path and
+  the tooling path in one Typst figure, `fig:architecture`, with the
+  formal-layer figure beside it; ten architectural principles; the state of
+  the record); III one interactive physical product — the tilt-dimmed lamp
+  with a warming base — walked through the whole lifecycle from concepts to a
+  board, each step naming the failure the layer avoids and deferring every
+  proof; IV the formal model derived in dependency order (declarations and
+  refinement → identity and quantities → data and equations → units → time →
+  composition → the physical boundary as one chain with per-arrow evidence
+  → validation and deployment), with the phase numbers as provenance only; V
+  the toolchain by responsibility (owns / consumes / emits / never decides),
+  with the reference evaluator as a chapter of its own, the two adapter
+  families from one plan, and the IDE service last as the bridge to VI; VI
+  Studio and the IDE as a design argument (user, workflow and constraints;
+  why not a node editor, a code editor or an Arduino-style IDE; principles;
+  what is borrowed and refused from DaVinci Resolve, Blender, CAD/EDA and
+  IDE/LSP practice; the semantic projection compiler → IDE service → Code +
+  Canvas; canvas, roles, gestures and context menus; diagnostics; the Code
+  view; the Formula Composer; the Library and the Source sheet; Simulate and
+  Deploy; the UX claims stated as hypotheses); VII the evidence — the
+  correspondence, the rejected designs retold as ten arguments
+  (pressure / candidate / failure / kept) before the ledger, minimality
+  bounded, the open agenda in three classes. Related work follows the
+  argument. The old front matter is a preface and a reading guide; the claim
+  strength vocabulary and the identifier rules are Appendix I.
+- **Content preserved by construction.** The revision was assembled from the
+  previous revision's text by section, with headings demoted and Part
+  references remapped; every technical claim was classified retained / moved
+  / merged / appendix / removed before it moved, and the map is Appendix J.
+  Only navigational text and the front-matter duplicate of the revision log
+  were removed. New prose: the Part I chapters on what BDL is not and who it
+  is for; Part II; the lifecycle spine and the failure-avoided notes of Part
+  III; the chapter openings and the anchoring paragraphs of Part IV; the
+  ownership table, §V.3 and the two-families paragraph of Part V; §VI.1–VI.3,
+  VI.4's diagram, VI.6, VI.7 and VI.12's hypotheses; VII.2's ten arguments.
+- **Production snapshot moved** from `6be778b` to
+  `081296df606d577eece7e269ed250b255547d497` (2026-09-20): the Arduino Nano
+  over `avr-hal` as the second platform-adapter family (ADR-0037 amended; one
+  `targets::Entry` per family; a blocking `tick_wait`, PWM on the ATmega
+  timers, no arena, a nightly cross-build); the vocabulary crate renamed
+  `bdl-runtime-adapter`; the monograph mirrored under `reference/paper/`.
+  `docs/project/production-correspondence.md` carries the same hash and the
+  Arduino paragraph; `main.typ`'s title page and Appendix F re-pinned.
+- **Formal development** described through Phase 15 (the adapter boundary
+  and the explicit device clock; the open-item audit), previous commit
+  `dce5ac4`; 21 phase reports, 60 modules, about 1 300 theorem and lemma
+  declarations, 142 decisions (one superseded), 28 open items
+  (8 open, 9 deferred, 11 resolved), derived from the tree.
+- **References audited.** No section is cited by its previous Part number;
+  ranges such as "Parts III–VIII" became "§IV.1–IV.6"; in-chapter
+  cross-references say "this chapter"; the figures sit where first needed
+  (`fig:architecture` and `fig:arch` in Part II, `fig:levels` in §III.11).
+  Every example uses the current syntax (`drive light by brightness`; the
+  `=` form appears only as the legacy spelling it is).
+- **Not changed.** `paper/archive/`, the earlier entries of this file, the
+  reports and decisions in `docs/`, and production's mirror (refreshed from
+  here, never edited there).

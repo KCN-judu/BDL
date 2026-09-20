@@ -1,9 +1,13 @@
 # The BDL Design and Formalization Monograph
 
-This directory holds the monograph: the living technical record of BDL — its
-design position, the mechanically derived kernel, the production toolchain,
-the formal ↔ production correspondence, the rejected alternatives and the open
-agenda. It is not a paper and is not prepared for publication; the directory
+This directory holds the monograph: the living technical record of BDL,
+written as one argument in seven Parts — why behavior needs a design medium;
+the architecture; one interactive physical product walked through the whole
+lifecycle; the formal model derived in dependency order; the toolchain by
+responsibility; Studio and the IDE as a design argument; the evidence, the
+rejected designs and the open agenda — with the reference apparatus in the
+appendices (Appendix J maps the previous revision's sections to this one). It
+is not a paper and is not prepared for publication; the directory
 keeps its historical name because renaming it would break history. The
 reader-facing name is _the monograph_ or _the record_.
 
@@ -43,7 +47,7 @@ bundled Libertinus family.
 
 ## Conventions
 
-- Production is described as of one pinned commit, stated in the front matter
+- Production is described as of one pinned commit, stated in the preface
   and in Appendix F, and the formal repository's canonical copy of that hash is
   the `snapshot` field of `docs/project/production-correspondence.md`.
 - Formal decisions are cited as `FVD-NNNN`, formal open items as `FVI-NNNN`,
@@ -51,8 +55,8 @@ bundled Libertinus family.
   production record it concerns are cited together. The map from the retired
   `D-NN` numbers is Appendix E.
 - Theorem names are Lean identifiers and never change to track a document id.
-- Every substantive claim carries one of the strength labels of the front
-  matter.
+- Every substantive claim carries one of the strength labels of the preface;
+  the full vocabulary is Appendix I.
 
 ## Canonical source and the production mirror
 

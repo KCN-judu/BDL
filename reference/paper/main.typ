@@ -50,8 +50,9 @@
   #v(10pt)
   #text(size: 13pt)[
     A Behavior Design Language for Interactive Physical Products: \
-    Design Position, Mechanically Derived Kernel, the Physical Boundary, \
-    Production Toolchain, Correspondence, Rejected Alternatives and Open Agenda
+    Why Behavior Needs a Design Medium, the Architecture, \
+    One Product Through the Lifecycle, the Derived Formal Model, \
+    the Toolchain, Studio, and the Evidence
   ]
   #v(24pt)
   #text(size: 11pt)[ZHU ZHEHAO]
@@ -59,14 +60,14 @@
   #text(size: 9.5pt, style: "italic")[Living technical record — revision of 2026-09-20]
   #v(4pt)
   #text(size: 9pt)[
-    Formal development `KCN-judu/BDL_FV` — this working tree, through Phase 14 and its hardening (previous commit `8e65c63`) \
-    Production `KCN-judu/BDL` at `6be778b07f07bebaba26f580f2b4af74a13ce9df` (2026-09-20, protocol 0.24)
+    Formal development `KCN-judu/BDL_FV` — this working tree, through Phase 15 (previous commit `dce5ac4`) \
+    Production `KCN-judu/BDL` at `081296df606d577eece7e269ed250b255547d497` (2026-09-20, protocol 0.24)
   ]
   #v(1.6in)
   #block(width: 88%)[
     #set par(justify: true)
     #set text(size: 9.3pt)
-    This document is the authoritative narrative design record of BDL — a behavior-design language for interactive physical products — and a bridge between its formal model and its production system. Its canonical source is `paper/` in `KCN-judu/BDL_FV`; the production repository carries a reference mirror that does not evolve on its own. It is not a paper, not a submission and not written to a page limit; it records what the language is, why each construct exists or was rejected, which theorem, counterexample or executed example supports each claim, how production implements it, where production deviates from the formal model, and what remains open — including the alternatives that failed. Every claim carries a strength label (formally proved; formally characterized under restricted hypotheses; mechanically executed example; counterexample; informed by FV; production implemented and tested; production architecture decision; proposal / not implemented; design recommendation; open empirical question). No usability claim in it has been tested with users.
+    This document is the authoritative narrative design record of BDL — a behavior-design language for interactive physical products — written as one argument, from the design problem through the architecture, one product's lifecycle, the derived formal model, the toolchain and the authoring environment to the evidence, and a bridge between its formal model and its production system. Its canonical source is `paper/` in `KCN-judu/BDL_FV`; the production repository carries a reference mirror that does not evolve on its own. It is not a paper, not a submission and not written to a page limit; it records what the language is, why each construct exists or was rejected, which theorem, counterexample or executed example supports each claim, how production implements it, where production deviates from the formal model, and what remains open — including the alternatives that failed. Every claim carries a strength label (formally proved; formally characterized under restricted hypotheses; mechanically executed example; counterexample; informed by FV; production implemented and tested; production architecture decision; proposal / not implemented; design recommendation; open empirical question). No usability claim in it has been tested with users.
   ]
 ]
 
