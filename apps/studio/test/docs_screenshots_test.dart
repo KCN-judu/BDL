@@ -296,8 +296,12 @@ class Scene {
 
   // -- waiting
 
-  Future<AppState> settle(bool Function(AppState) test, {String? why}) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 20));
+  Future<AppState> settle(
+    bool Function(AppState) test, {
+    String? why,
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
     while (!test(store.state)) {
       if (store.failure != null) wrong('reducer failed: ${store.failure}');
       if (DateTime.now().isAfter(deadline)) {
@@ -313,9 +317,14 @@ class Scene {
     return store.state;
   }
 
-  Future<AppState> act(AppAction action, bool Function(AppState) test, {String? why}) async {
+  Future<AppState> act(
+    AppAction action,
+    bool Function(AppState) test, {
+    String? why,
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
     await tester.runAsync(() async => store.dispatch(action));
-    return settle(test, why: why);
+    return settle(test, why: why, timeout: timeout);
   }
 
   bool quiet(AppState s) => s.editor.pendingRequests == 0 && s.editor.queuedEdits.isEmpty;
@@ -472,6 +481,37 @@ class Scene {
         (s) => s.editor.deploy.targetId == target && s.editor.deploy.analysis != null,
         why: 'the placement on $target',
       );
+      return;
+    }
+    if (step['scrollTo'] case final String key) {
+      // A page that scrolls: bring the keyed widget into view before the
+      // crop, as a reader would.
+      final f = find.byKey(ValueKey(key));
+      if (f.evaluate().isEmpty) wrong('no widget keyed "$key" to scroll to');
+      await tester.ensureVisible(f.first);
+      await tester.pumpAndSettle(const Duration(milliseconds: 100));
+      return;
+    }
+    if (step['firmware'] case final String what) {
+      // "status": the daemon's word on the last firmware (none yet for a
+      // fresh fixture); "build": the real cross-build of the fixture, for
+      // the board chosen — minutes cold, seconds warm.
+      await settle(
+        (s) => s.editor.deploy.firmware.status != null && !s.editor.deploy.firmware.isBuilding,
+        why: 'the firmware status',
+      );
+      if (what == 'build') {
+        await act(
+          const BuildRequested(),
+          (s) =>
+              !s.editor.deploy.firmware.isBuilding &&
+              s.editor.deploy.firmware.artifact != null &&
+              s.editor.deploy.firmware.artifactFresh &&
+              s.editor.deploy.firmware.devicesLoaded,
+          why: 'the firmware built (is the Rust target installed?)',
+          timeout: const Duration(minutes: 10),
+        );
+      }
       return;
     }
     if (step['pin'] case final Map<String, dynamic> pin) {
@@ -676,6 +716,10 @@ void main() {
       if (entry['fixture'] case final String fixture) {
         final root = p.join(manifest.fixturesDir, fixture);
         if (!Directory(root).existsSync()) scene.wrong('fixture $root does not exist');
+        // A firmware built by an earlier shot is not the fixture: every
+        // shot starts with nothing built.
+        final built = Directory(p.join(root, 'build'));
+        if (built.existsSync()) built.deleteSync(recursive: true);
         await scene.act(
           OpenProjectRequested(root),
           scene.analysed,
@@ -777,8 +821,16 @@ Future<String> _git(List<String> args) async {
 /// A hash over a fixture's files (path and content), independent of the
 /// machine — what `scripts/check_screenshots.py` recomputes.
 String hashTree(String root) {
-  final files = Directory(root).listSync(recursive: true).whereType<File>().toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  // A fixture's `build/` is what a firmware step wrote, never fixture
+  // content (git ignores it too); it is deleted before the fixture opens
+  // and left out of the hash.
+  final files =
+      Directory(root)
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => !p.split(p.relative(f.path, from: root)).contains('build'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
   final bytes = BytesBuilder(copy: false);
   for (final f in files) {
     bytes.add(utf8.encode('${p.relative(f.path, from: root).replaceAll(r'\', '/')}\n'));

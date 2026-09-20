@@ -3241,6 +3241,228 @@
       }
     }
   },
+  "firmware": "Firmware",
+  "@firmware": {
+    "description": "Deploy page: the section that builds the board's firmware and flashes it."
+  },
+  "stepDeployment": "Deployment",
+  "@stepDeployment": {
+    "description": "Deploy page progression: the deployment step (devices, providers, realizations, placement)."
+  },
+  "stepBuild": "Build",
+  "@stepBuild": {
+    "description": "Deploy page progression: the build step."
+  },
+  "stepFlash": "Flash",
+  "@stepFlash": {
+    "description": "Deploy page progression: the flash step."
+  },
+  "stepObserve": "Observe",
+  "@stepObserve": {
+    "description": "Deploy page progression: the step after flashing — try the product."
+  },
+  "buildForBoard": "Build for {board}",
+  "@buildForBoard": {
+    "description": "Primary button: build the firmware for the chosen board.",
+    "placeholders": {
+      "board": {
+        "type": "String"
+      }
+    }
+  },
+  "buildAgain": "Build again",
+  "@buildAgain": {
+    "description": "Button: rebuild after a failure or a change."
+  },
+  "stopBuild": "Stop",
+  "@stopBuild": {
+    "description": "Link: cancel the running build."
+  },
+  "flash": "Flash",
+  "@flash": {
+    "description": "Primary button: write the firmware to the board."
+  },
+  "flashAgain": "Flash again",
+  "@flashAgain": {
+    "description": "Secondary action after a flash."
+  },
+  "lookAgain": "Look again",
+  "@lookAgain": {
+    "description": "Link: look again for reachable boards."
+  },
+  "notReadyToBuild": "Not ready to build",
+  "@notReadyToBuild": {
+    "description": "Firmware section heading while a blocker stands."
+  },
+  "fixOnTheDesignPage": "Fix it on the Design page",
+  "@fixOnTheDesignPage": {
+    "description": "Link beside a blocker about the design itself."
+  },
+  "building": "Building…",
+  "@building": {
+    "description": "Firmware section heading while a build runs."
+  },
+  "stageChecking": "Checking the deployment",
+  "@stageChecking": {
+    "description": "Build stage label."
+  },
+  "stageGenerating": "Generating the crate",
+  "@stageGenerating": {
+    "description": "Build stage label."
+  },
+  "stagePreparing": "Preparing the toolchain",
+  "@stagePreparing": {
+    "description": "Build stage label."
+  },
+  "stageCompiling": "Compiling",
+  "@stageCompiling": {
+    "description": "Build stage label."
+  },
+  "stagePackaging": "Writing the image",
+  "@stagePackaging": {
+    "description": "Build stage label."
+  },
+  "stageCancelled": "Stopped",
+  "@stageCancelled": {
+    "description": "Build outcome: cancelled by the designer."
+  },
+  "cratesCompiled": "{count, plural, =1{1 crate compiled} other{{count} crates compiled}}",
+  "@cratesCompiled": {
+    "description": "Progress while compiling.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "firmwareBuiltAt": "Firmware built at {time}",
+  "@firmwareBuiltAt": {
+    "description": "Firmware section heading once an image exists and is current.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "firmwareStale": "The firmware is from an earlier design or deployment.",
+  "@firmwareStale": {
+    "description": "Firmware section heading when the last image is stale."
+  },
+  "buildDidNotComplete": "The build did not complete",
+  "@buildDidNotComplete": {
+    "description": "Firmware section heading after a failed build."
+  },
+  "imageSize": "{bytes} bytes",
+  "@imageSize": {
+    "description": "The image's size.",
+    "placeholders": {
+      "bytes": {
+        "type": "String"
+      }
+    }
+  },
+  "noBoardReachable": "No board is reachable.",
+  "@noBoardReachable": {
+    "description": "Flash step: nothing to write to."
+  },
+  "chooseTheBoardToFlash": "Several boards are reachable — choose one.",
+  "@chooseTheBoardToFlash": {
+    "description": "Flash step: a choice is needed."
+  },
+  "flashing": "Flashing…",
+  "@flashing": {
+    "description": "Firmware section heading while a flash runs."
+  },
+  "flashPreparing": "Preparing",
+  "@flashPreparing": {
+    "description": "Flash stage label."
+  },
+  "flashWriting": "Writing the image",
+  "@flashWriting": {
+    "description": "Flash stage label."
+  },
+  "flashRestarting": "Restarting the board",
+  "@flashRestarting": {
+    "description": "Flash stage label."
+  },
+  "flashedToAt": "Flashed to {device} at {time}",
+  "@flashedToAt": {
+    "description": "Firmware section heading after a flash.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "flashDidNotComplete": "The flash did not complete",
+  "@flashDidNotComplete": {
+    "description": "Firmware section heading after a failed flash."
+  },
+  "tryItOnTheBoard": "Try it: act on {sources}; {outputs} should follow the design.",
+  "@tryItOnTheBoard": {
+    "description": "Next step after a flash, naming the design's Sources and outputs.",
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      },
+      "outputs": {
+        "type": "String"
+      }
+    }
+  },
+  "tryItOutputsOnly": "Try it: {outputs} should behave as designed.",
+  "@tryItOutputsOnly": {
+    "description": "Next step after a flash for a design without Sources.",
+    "placeholders": {
+      "outputs": {
+        "type": "String"
+      }
+    }
+  },
+  "boardRunsEarlierDesign": "The board runs an earlier design — build and flash again to update it.",
+  "@boardRunsEarlierDesign": {
+    "description": "After a flash, once the design or deployment changed."
+  },
+  "details": "Details",
+  "@details": {
+    "description": "Disclosure: the advanced build details."
+  },
+  "generatedCrate": "Generated crate",
+  "@generatedCrate": {
+    "description": "Details row label."
+  },
+  "buildCommand": "Command",
+  "@buildCommand": {
+    "description": "Details row label."
+  },
+  "rustTarget": "Target",
+  "@rustTarget": {
+    "description": "Details row label: the Rust target triple."
+  },
+  "imageFile": "Image",
+  "@imageFile": {
+    "description": "Details row label: the flashable image."
+  },
+  "compilerOutput": "Compiler output",
+  "@compilerOutput": {
+    "description": "Details row label."
+  },
+  "demos": "Demos",
+  "@demos": {
+    "description": "Welcome page: the section of templates a new project can start from."
+  },
+  "readyToBuild": "Ready to build for {board}.",
+  "@readyToBuild": {
+    "description": "Firmware section heading when everything before the build holds.",
+    "placeholders": {
+      "board": {
+        "type": "String"
+      }
+    }
+  },
   "libItem_std_environment_temperature_name": "Temperature",
   "@libItem_std_environment_temperature_name": {
     "description": "Standard Library item (library/std/concepts.toml); generated by scripts/gen_library_l10n.py."

@@ -428,6 +428,118 @@
       "purpose": "How a placement failure is explained."
     },
     {
+      "id": "pico-design",
+      "pages": [
+        "getting-started/pico-demo.md"
+      ],
+      "fixture": "pico-button-lamp",
+      "view": "design",
+      "steps": [],
+      "expect": {
+        "nodes": [
+          "Pressed",
+          "Lit",
+          "pressed",
+          "lit",
+          "lamp"
+        ],
+        "outputComplete": true
+      },
+      "crop": {
+        "nodes": [
+          "Pressed",
+          "Lit",
+          "pressed",
+          "lit",
+          "lamp"
+        ],
+        "pad": 40
+      },
+      "output": "getting-started/pico-design.png",
+      "caption": "The demo's design: the Source pressed, the value lit that follows it, and the lamp it drives.",
+      "alt": "The canvas with the concept rows Pressed and Lit at the top, the Source node pressed with its entry arrow and the word Source, the relationship node lit below it with the formula pressed, and the lamp sink at the right, joined by links; each carries the domain name main.",
+      "purpose": "What the tester sees first: three objects, nothing about pins."
+    },
+    {
+      "id": "pico-firmware-ready",
+      "pages": [
+        "getting-started/pico-demo.md",
+        "studio/deploy.md"
+      ],
+      "fixture": "pico-button-lamp",
+      "view": "deploy",
+      "steps": [
+        {
+          "target": "rp2040_pico"
+        },
+        {
+          "firmware": "status"
+        },
+        {
+          "scrollTo": "firmware-card"
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Feasible on Raspberry Pi Pico (RP2040).",
+          "Build for Raspberry Pi Pico (RP2040)",
+          "Ready to build for Raspberry Pi Pico (RP2040)."
+        ],
+        "textsContaining": [
+          "button",
+          "led",
+          "GP2",
+          "GP25"
+        ]
+      },
+      "crop": {
+        "region": "page",
+        "maxHeight": 900
+      },
+      "output": "getting-started/pico-firmware-ready.png",
+      "caption": "The wired demo on the Deploy page: the Pico chosen, both devices admissible and placed, and the one thing left to do — Build.",
+      "alt": "The Deploy page: the Target pop-up showing Raspberry Pi Pico (RP2040); the green verdict Feasible on Raspberry Pi Pico (RP2040); two device cards — button, a Digital input for pressed — Source with the provider GPIO input, active low and pin GP2, and led, a Digital output for lamp with the realization GPIO, on/off and pin GP25 — each with its judgments checked; the placement table with button and led on GP2 and GP25; and at the bottom the Firmware section with the steps Deployment done, Build current, Flash and Observe to come, a green dot with Ready to build for Raspberry Pi Pico (RP2040), and one primary button, Build for Raspberry Pi Pico (RP2040).",
+      "purpose": "One primary action when everything before it holds."
+    },
+    {
+      "id": "pico-firmware-built",
+      "pages": [
+        "getting-started/pico-demo.md",
+        "studio/deploy.md"
+      ],
+      "fixture": "pico-button-lamp",
+      "view": "deploy",
+      "steps": [
+        {
+          "target": "rp2040_pico"
+        },
+        {
+          "firmware": "build"
+        },
+        {
+          "scrollTo": "firmware-card"
+        }
+      ],
+      "expect": {
+        "texts": [
+          "No board is reachable."
+        ],
+        "textsContaining": [
+          "Firmware built at",
+          "bytes",
+          "Hold BOOTSEL"
+        ]
+      },
+      "crop": {
+        "key": "firmware-card",
+        "pad": 4
+      },
+      "output": "getting-started/pico-firmware-built.png",
+      "caption": "Built: the image is current, no board is plugged in yet, and the page says what to do.",
+      "alt": "The Firmware card after a build: a green dot and Firmware built at a time with the image's size in bytes, a Build again link; below, an orange dot with No board is reachable and the line Hold BOOTSEL while plugging the board in over USB; it appears as a drive named RPI-RP2, and a Look again link.",
+      "purpose": "The Flash step before the board is there: the hint, not a disabled button."
+    },
+    {
       "id": "instance-nodes",
       "pages": [
         "studio/system-projects.md",

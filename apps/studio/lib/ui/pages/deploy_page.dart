@@ -1,7 +1,7 @@
-/// The Deploy page: which board, whether this design fits it, and where
-/// each device lands.
+/// The Deploy page: which board, whether this design fits it, where each
+/// device lands — and, at the end, the board running it.
 ///
-/// Task: "choose a target and see whether the design can be placed on it".
+/// Task: "choose a target, connect the devices, build, flash, try it".
 /// The facts, ranked: (1) the verdict for the chosen board — feasible,
 /// incomplete or not feasible *on that board*, never "design invalid";
 /// (2) the placement, device → requirement → pin; (3) what stopped a
@@ -9,8 +9,9 @@
 /// (4) what is not bound yet (a device without an output or a Source, an
 /// output without a device, a Source without a device); (5) the devices
 /// themselves, editable — each *for* one output it realises or one Source
-/// it provides, never both.  Boards come from bdld; nothing here allocates
-/// a pin, judges a profile or reads a transducer.
+/// it provides, never both; (6) the firmware — one next action per state
+/// (`firmware_section.dart`).  Boards come from bdld; nothing here
+/// allocates a pin, judges a profile, reads a transducer or runs a tool.
 library;
 
 import 'package:fixnum/fixnum.dart';
@@ -24,6 +25,7 @@ import '../mac/controls.dart';
 import '../mac/interactive.dart';
 import '../mac/tokens.dart';
 import '../mac/widgets.dart';
+import 'firmware_section.dart';
 
 /// Product words for a device kind (presentation of the protocol enum).
 String deviceKindLabel(AppLocalizations l10n, pb.DeviceKind k) => switch (k) {
@@ -80,6 +82,7 @@ class DeployPage extends StatelessWidget {
               _Verdict(deploy: d, project: p),
               _Devices(project: p, analysis: analysis, dispatch: dispatch),
               if (analysis != null) _Result(analysis: analysis, project: p, dispatch: dispatch),
+              FirmwareSection(state: state, analysis: analysis, dispatch: dispatch),
             ],
           ),
         ),

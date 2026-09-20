@@ -5803,6 +5803,7 @@ const FlashProgress$json = {
       '10': 'failure',
       '17': true
     },
+    {'1': 'at', '3': 8, '4': 1, '5': 4, '10': 'at'},
   ],
   '8': [
     {'1': '_artifact'},
@@ -5817,7 +5818,8 @@ final $typed_data.Uint8List flashProgressDescriptor = $convert
         'Z2USGAoHbWVzc2FnZRgEIAEoCVIHbWVzc2FnZRIrCgZkZXZpY2UYBSABKAsyEy5iZGwudjEuRm'
         'xhc2hEZXZpY2VSBmRldmljZRI2CghhcnRpZmFjdBgGIAEoCzIVLmJkbC52MS5CdWlsZEFydGlm'
         'YWN0SABSCGFydGlmYWN0iAEBEjMKB2ZhaWx1cmUYByABKAsyFC5iZGwudjEuRmxhc2hGYWlsdX'
-        'JlSAFSB2ZhaWx1cmWIAQFCCwoJX2FydGlmYWN0QgoKCF9mYWlsdXJl');
+        'JlSAFSB2ZhaWx1cmWIAQESDgoCYXQYCCABKARSAmF0QgsKCV9hcnRpZmFjdEIKCghfZmFpbHVy'
+        'ZQ==');
 
 @$core.Deprecated('Use flashFailureDescriptor instead')
 const FlashFailure$json = {

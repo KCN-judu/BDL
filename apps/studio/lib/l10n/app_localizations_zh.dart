@@ -2205,6 +2205,155 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get firmware => '固件';
+
+  @override
+  String get stepDeployment => '部署';
+
+  @override
+  String get stepBuild => '构建';
+
+  @override
+  String get stepFlash => '烧录';
+
+  @override
+  String get stepObserve => '观察';
+
+  @override
+  String buildForBoard(String board) {
+    return '为 $board 构建';
+  }
+
+  @override
+  String get buildAgain => '重新构建';
+
+  @override
+  String get stopBuild => '停止';
+
+  @override
+  String get flash => '烧录';
+
+  @override
+  String get flashAgain => '再次烧录';
+
+  @override
+  String get lookAgain => '重新查找';
+
+  @override
+  String get notReadyToBuild => '尚不能构建';
+
+  @override
+  String get fixOnTheDesignPage => '在设计页修正';
+
+  @override
+  String get building => '正在构建…';
+
+  @override
+  String get stageChecking => '检查部署';
+
+  @override
+  String get stageGenerating => '生成代码';
+
+  @override
+  String get stagePreparing => '准备工具链';
+
+  @override
+  String get stageCompiling => '编译';
+
+  @override
+  String get stagePackaging => '写入镜像';
+
+  @override
+  String get stageCancelled => '已停止';
+
+  @override
+  String cratesCompiled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '已编译 $count 个 crate');
+    return '$_temp0';
+  }
+
+  @override
+  String firmwareBuiltAt(String time) {
+    return '固件已于 $time 构建';
+  }
+
+  @override
+  String get firmwareStale => '固件来自更早的设计或部署。';
+
+  @override
+  String get buildDidNotComplete => '构建未完成';
+
+  @override
+  String imageSize(String bytes) {
+    return '$bytes 字节';
+  }
+
+  @override
+  String get noBoardReachable => '未找到可连接的开发板。';
+
+  @override
+  String get chooseTheBoardToFlash => '找到多块开发板——请选择一块。';
+
+  @override
+  String get flashing => '正在烧录…';
+
+  @override
+  String get flashPreparing => '准备';
+
+  @override
+  String get flashWriting => '写入镜像';
+
+  @override
+  String get flashRestarting => '重启开发板';
+
+  @override
+  String flashedToAt(String device, String time) {
+    return '已于 $time 烧录到 $device';
+  }
+
+  @override
+  String get flashDidNotComplete => '烧录未完成';
+
+  @override
+  String tryItOnTheBoard(String sources, String outputs) {
+    return '试一试：操作 $sources；$outputs 应按设计响应。';
+  }
+
+  @override
+  String tryItOutputsOnly(String outputs) {
+    return '试一试：$outputs 应按设计运行。';
+  }
+
+  @override
+  String get boardRunsEarlierDesign => '开发板运行的是更早的设计——重新构建并烧录以更新。';
+
+  @override
+  String get details => '详细信息';
+
+  @override
+  String get generatedCrate => '生成的 crate';
+
+  @override
+  String get buildCommand => '命令';
+
+  @override
+  String get rustTarget => '目标';
+
+  @override
+  String get imageFile => '镜像';
+
+  @override
+  String get compilerOutput => '编译器输出';
+
+  @override
+  String get demos => '演示';
+
+  @override
+  String readyToBuild(String board) {
+    return '已可为 $board 构建。';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override

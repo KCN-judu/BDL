@@ -3855,6 +3855,270 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 other} other{{count} others}}'**
   String othersCount(int count);
 
+  /// Deploy page: the section that builds the board's firmware and flashes it.
+  ///
+  /// In en, this message translates to:
+  /// **'Firmware'**
+  String get firmware;
+
+  /// Deploy page progression: the deployment step (devices, providers, realizations, placement).
+  ///
+  /// In en, this message translates to:
+  /// **'Deployment'**
+  String get stepDeployment;
+
+  /// Deploy page progression: the build step.
+  ///
+  /// In en, this message translates to:
+  /// **'Build'**
+  String get stepBuild;
+
+  /// Deploy page progression: the flash step.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash'**
+  String get stepFlash;
+
+  /// Deploy page progression: the step after flashing — try the product.
+  ///
+  /// In en, this message translates to:
+  /// **'Observe'**
+  String get stepObserve;
+
+  /// Primary button: build the firmware for the chosen board.
+  ///
+  /// In en, this message translates to:
+  /// **'Build for {board}'**
+  String buildForBoard(String board);
+
+  /// Button: rebuild after a failure or a change.
+  ///
+  /// In en, this message translates to:
+  /// **'Build again'**
+  String get buildAgain;
+
+  /// Link: cancel the running build.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopBuild;
+
+  /// Primary button: write the firmware to the board.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash'**
+  String get flash;
+
+  /// Secondary action after a flash.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash again'**
+  String get flashAgain;
+
+  /// Link: look again for reachable boards.
+  ///
+  /// In en, this message translates to:
+  /// **'Look again'**
+  String get lookAgain;
+
+  /// Firmware section heading while a blocker stands.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ready to build'**
+  String get notReadyToBuild;
+
+  /// Link beside a blocker about the design itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix it on the Design page'**
+  String get fixOnTheDesignPage;
+
+  /// Firmware section heading while a build runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Building…'**
+  String get building;
+
+  /// Build stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the deployment'**
+  String get stageChecking;
+
+  /// Build stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating the crate'**
+  String get stageGenerating;
+
+  /// Build stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the toolchain'**
+  String get stagePreparing;
+
+  /// Build stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Compiling'**
+  String get stageCompiling;
+
+  /// Build stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the image'**
+  String get stagePackaging;
+
+  /// Build outcome: cancelled by the designer.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get stageCancelled;
+
+  /// Progress while compiling.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 crate compiled} other{{count} crates compiled}}'**
+  String cratesCompiled(int count);
+
+  /// Firmware section heading once an image exists and is current.
+  ///
+  /// In en, this message translates to:
+  /// **'Firmware built at {time}'**
+  String firmwareBuiltAt(String time);
+
+  /// Firmware section heading when the last image is stale.
+  ///
+  /// In en, this message translates to:
+  /// **'The firmware is from an earlier design or deployment.'**
+  String get firmwareStale;
+
+  /// Firmware section heading after a failed build.
+  ///
+  /// In en, this message translates to:
+  /// **'The build did not complete'**
+  String get buildDidNotComplete;
+
+  /// The image's size.
+  ///
+  /// In en, this message translates to:
+  /// **'{bytes} bytes'**
+  String imageSize(String bytes);
+
+  /// Flash step: nothing to write to.
+  ///
+  /// In en, this message translates to:
+  /// **'No board is reachable.'**
+  String get noBoardReachable;
+
+  /// Flash step: a choice is needed.
+  ///
+  /// In en, this message translates to:
+  /// **'Several boards are reachable — choose one.'**
+  String get chooseTheBoardToFlash;
+
+  /// Firmware section heading while a flash runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashing…'**
+  String get flashing;
+
+  /// Flash stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing'**
+  String get flashPreparing;
+
+  /// Flash stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the image'**
+  String get flashWriting;
+
+  /// Flash stage label.
+  ///
+  /// In en, this message translates to:
+  /// **'Restarting the board'**
+  String get flashRestarting;
+
+  /// Firmware section heading after a flash.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashed to {device} at {time}'**
+  String flashedToAt(String device, String time);
+
+  /// Firmware section heading after a failed flash.
+  ///
+  /// In en, this message translates to:
+  /// **'The flash did not complete'**
+  String get flashDidNotComplete;
+
+  /// Next step after a flash, naming the design's Sources and outputs.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it: act on {sources}; {outputs} should follow the design.'**
+  String tryItOnTheBoard(String sources, String outputs);
+
+  /// Next step after a flash for a design without Sources.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it: {outputs} should behave as designed.'**
+  String tryItOutputsOnly(String outputs);
+
+  /// After a flash, once the design or deployment changed.
+  ///
+  /// In en, this message translates to:
+  /// **'The board runs an earlier design — build and flash again to update it.'**
+  String get boardRunsEarlierDesign;
+
+  /// Disclosure: the advanced build details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// Details row label.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated crate'**
+  String get generatedCrate;
+
+  /// Details row label.
+  ///
+  /// In en, this message translates to:
+  /// **'Command'**
+  String get buildCommand;
+
+  /// Details row label: the Rust target triple.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get rustTarget;
+
+  /// Details row label: the flashable image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get imageFile;
+
+  /// Details row label.
+  ///
+  /// In en, this message translates to:
+  /// **'Compiler output'**
+  String get compilerOutput;
+
+  /// Welcome page: the section of templates a new project can start from.
+  ///
+  /// In en, this message translates to:
+  /// **'Demos'**
+  String get demos;
+
+  /// Firmware section heading when everything before the build holds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to build for {board}.'**
+  String readyToBuild(String board);
+
   /// Standard Library item (library/std/concepts.toml); generated by scripts/gen_library_l10n.py.
   ///
   /// In en, this message translates to:

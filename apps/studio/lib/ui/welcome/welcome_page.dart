@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
 import '../../platform/desktop.dart';
+import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../../protocol/versions.dart';
 import '../../l10n/l10n.dart';
 import '../dialogs.dart';
@@ -47,6 +48,7 @@ class WelcomePage extends StatelessWidget {
               _Start(
                 connected: connected,
                 dispatch: dispatch,
+                templates: state.editor.deploy.templates,
                 pathFallback: state.editor.pickerUnavailable,
               ),
             ],
@@ -90,7 +92,15 @@ class WelcomePage extends StatelessWidget {
 }
 
 class _Start extends StatelessWidget {
-  const _Start({required this.connected, required this.dispatch, this.pathFallback = false});
+  const _Start({
+    required this.connected,
+    required this.dispatch,
+    this.templates = const [],
+    this.pathFallback = false,
+  });
+
+  /// The designs a new project can start from, as bdld lists them.
+  final List<pb.TemplateView> templates;
   final bool connected;
   final void Function(AppAction) dispatch;
 
@@ -148,6 +158,25 @@ class _Start extends StatelessWidget {
           label: context.l10n.preferencesMenu,
           onTap: () => showPreferencesSheet(context, dispatch: dispatch),
         ),
+        if (templates.isNotEmpty) ...[
+          const SizedBox(height: MacMetrics.gapGroup),
+          Text(context.l10n.demos, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          // A demo is a template: the same New Project, with a design in
+          // it (and, for the wired one, its deployment).
+          for (final tpl in templates)
+            Tooltip(
+              message: tpl.description,
+              waitDuration: const Duration(milliseconds: 600),
+              child: MacLink(
+                key: ValueKey('template-${tpl.id}'),
+                icon: Icons.memory_outlined,
+                label: tpl.displayName,
+                enabled: connected,
+                onTap: () => dispatch(NewProjectPickRequested(template: tpl.id)),
+              ),
+            ),
+        ],
         if (!connected)
           Padding(
             padding: const EdgeInsets.only(top: 6),

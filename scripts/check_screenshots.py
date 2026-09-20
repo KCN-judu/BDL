@@ -49,7 +49,8 @@ def images(text: str):
 def hash_tree(root: Path) -> str:
     """The harness's fixture hash: path and content of every file, sorted."""
     h = hashlib.sha256()
-    for f in sorted(p for p in root.rglob("*") if p.is_file()):
+    # `build/` is a firmware step's output, never fixture content.
+    for f in sorted(p for p in root.rglob("*") if p.is_file() and "build" not in p.relative_to(root).parts):
         h.update(f"{f.relative_to(root).as_posix()}\n".encode())
         h.update(f.read_bytes())
         h.update(b"\n")

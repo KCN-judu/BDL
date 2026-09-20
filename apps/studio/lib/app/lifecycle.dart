@@ -156,9 +156,11 @@ Transition _close(AppState s, UnloadIntent intent) {
 List<Effect> _run(UnloadIntent intent) => switch (intent) {
   CloseOnly() => const [],
   OpenAnother(:final rootPath) => [OpenProject(rootPath)],
-  CreateAnother(:final rootPath, :final name) => [InitProject(rootPath: rootPath, name: name)],
+  CreateAnother(:final rootPath, :final name, :final template) => [
+    InitProject(rootPath: rootPath, name: name, template: template),
+  ],
   PickAnother() => const [PickProjectToOpen()],
-  PickNew() => const [PickNewProjectLocation()],
+  PickNew(:final template) => [PickNewProjectLocation(template: template)],
   Quit() => const [QuitApplication()],
 };
 

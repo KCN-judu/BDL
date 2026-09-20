@@ -61,16 +61,16 @@ pub fn templates() -> Vec<Template> {
     vec![
         Template {
             id: "button-lamp",
-            display_name: "Button → Lamp (Raspberry Pi Pico)",
-            description: "A push button and a lamp that follows it: one Source, one relationship, one physical output. The deployment — which device provides the button, which realises the lamp, on which pads — is yours to make on the Deploy page.",
+            display_name: "Button → Lamp",
+            description: "For the Raspberry Pi Pico: a push button and a lamp that follows it — one Source, one relationship, one physical output. The deployment (which device provides the button, which realises the lamp, on which pads) is yours to make on the Deploy page.",
             target_id: "rp2040_pico",
             configured: false,
             source: DESIGN.to_owned(),
         },
         Template {
             id: "button-lamp-configured",
-            display_name: "Button → Lamp, wired (Raspberry Pi Pico)",
-            description: "The same design with its deployment made: the button between GP2 and ground, the lamp on the on-board LED. Open the Deploy page, Build, Flash.",
+            display_name: "Button → Lamp, wired",
+            description: "For the Raspberry Pi Pico: the same design with its deployment made — the button between GP2 and ground, the lamp on the on-board LED. Open the Deploy page, Build, Flash.",
             target_id: "rp2040_pico",
             configured: true,
             source: format!("{DESIGN}{DEPLOYMENT}"),

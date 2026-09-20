@@ -2162,6 +2162,8 @@ message FlashProgress {
   optional BuildArtifact artifact = 6;
   // On FAILED.
   optional FlashFailure failure = 7;
+  // When this stage was reached, seconds since the Unix epoch.
+  uint64 at = 8;
 }
 
 message FlashFailure {

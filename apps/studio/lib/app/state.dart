@@ -150,14 +150,20 @@ class OpenAnother extends UnloadIntent {
 }
 
 class CreateAnother extends UnloadIntent {
-  const CreateAnother({required this.rootPath, required this.name});
+  const CreateAnother({required this.rootPath, required this.name, this.template});
   final String rootPath;
   final String name;
+
+  /// A template id the project starts from (a demo), or empty.
+  final String? template;
   @override
   bool operator ==(Object other) =>
-      other is CreateAnother && other.rootPath == rootPath && other.name == name;
+      other is CreateAnother &&
+      other.rootPath == rootPath &&
+      other.name == name &&
+      other.template == template;
   @override
-  int get hashCode => Object.hash(CreateAnother, rootPath, name);
+  int get hashCode => Object.hash(CreateAnother, rootPath, name, template);
 }
 
 /// Then show the OS picker to open a project.
@@ -171,9 +177,12 @@ class PickAnother extends UnloadIntent {
 
 /// Then show the OS save dialog to create a project.
 class PickNew extends UnloadIntent {
-  const PickNew();
+  const PickNew({this.template});
+
+  /// A template id the new project starts from, or empty.
+  final String? template;
   @override
-  bool operator ==(Object other) => other is PickNew;
+  bool operator ==(Object other) => other is PickNew && other.template == template;
   @override
   int get hashCode => 3;
 }
@@ -1297,6 +1306,101 @@ class HoverState {
   );
 }
 
+/// The firmware of the chosen board, as the daemon reports it: the last
+/// build's status (its artifact and whether it is still the design on
+/// screen), the build or flash running now, the devices a flash could
+/// reach, the last flash.  Every fact here is the daemon's; Studio asks
+/// and shows (docs/architecture/firmware-build.md).
+@immutable
+class FirmwareState {
+  const FirmwareState({
+    this.status,
+    this.statusGeneration = 0,
+    this.building,
+    this.output = const [],
+    this.devices = const [],
+    this.methods = const [],
+    this.devicesLoaded = false,
+    this.chosenDevice,
+    this.flashing,
+    this.flashed,
+    this.error,
+  });
+
+  /// `GetBuildStatus`'s answer, or the final `BuildProgress`'s.
+  final pb.BuildStatus? status;
+
+  /// Request tag; only the latest answer is applied.
+  final int statusGeneration;
+
+  /// The build running now, as the last event described it.
+  final pb.BuildProgress? building;
+
+  /// The compiler's lines of the running build (advanced view).
+  final List<String> output;
+
+  /// What a flash could reach, as last asked.
+  final List<pb.FlashDevice> devices;
+  final List<pb.FlashMethodView> methods;
+  final bool devicesLoaded;
+
+  /// The device chosen when several are reachable.
+  final String? chosenDevice;
+
+  /// The flash running now, as the last event described it.
+  final pb.FlashProgress? flashing;
+
+  /// The last flash's outcome (COMPLETED or FAILED) for this target.
+  final pb.FlashProgress? flashed;
+
+  /// A refused build or flash request (product language).
+  final String? error;
+
+  bool get isBuilding => building != null;
+  bool get isFlashing => flashing != null;
+  pb.BuildArtifact? get artifact => status?.hasArtifact() == true ? status!.artifact : null;
+  bool get artifactFresh => status?.artifactFresh ?? false;
+
+  /// The one device a flash may take without a choice: exactly one
+  /// reachable, or the chosen one when several are.
+  pb.FlashDevice? get flashTarget {
+    if (devices.length == 1) return devices.single;
+    return devices.where((d) => d.id == chosenDevice).firstOrNull;
+  }
+
+  FirmwareState copyWith({
+    pb.BuildStatus? status,
+    bool clearStatus = false,
+    int? statusGeneration,
+    pb.BuildProgress? building,
+    bool clearBuilding = false,
+    List<String>? output,
+    List<pb.FlashDevice>? devices,
+    List<pb.FlashMethodView>? methods,
+    bool? devicesLoaded,
+    String? chosenDevice,
+    bool clearChosenDevice = false,
+    pb.FlashProgress? flashing,
+    bool clearFlashing = false,
+    pb.FlashProgress? flashed,
+    bool clearFlashed = false,
+    String? error,
+    bool clearError = false,
+  }) => FirmwareState(
+    status: clearStatus ? null : (status ?? this.status),
+    statusGeneration: statusGeneration ?? this.statusGeneration,
+    building: clearBuilding ? null : (building ?? this.building),
+    output: output ?? this.output,
+    devices: devices ?? this.devices,
+    methods: methods ?? this.methods,
+    devicesLoaded: devicesLoaded ?? this.devicesLoaded,
+    chosenDevice: clearChosenDevice ? null : (chosenDevice ?? this.chosenDevice),
+    flashing: clearFlashing ? null : (flashing ?? this.flashing),
+    flashed: clearFlashed ? null : (flashed ?? this.flashed),
+    error: clearError ? null : (error ?? this.error),
+  );
+}
+
 /// The Deploy page: which board is being asked about, and the compiler's
 /// target-relative answer.  Never part of the design; the board choice is
 /// an editor preference for the session.
@@ -1310,6 +1414,9 @@ class DeployState {
     this.pending = false,
     this.generation = 0,
     this.error,
+    this.firmware = const FirmwareState(),
+    this.templates = const [],
+    this.templatesLoaded = false,
   });
 
   /// The boards bdld knows, as it lists them.
@@ -1330,6 +1437,13 @@ class DeployState {
   /// Why the last analysis could not be made (product language).
   final String? error;
 
+  /// The chosen board's firmware; reset when the board changes.
+  final FirmwareState firmware;
+
+  /// The templates a new project can start from, as bdld lists them.
+  final List<pb.TemplateView> templates;
+  final bool templatesLoaded;
+
   pb.TargetView? get target => targets.where((t) => t.id == targetId).firstOrNull;
 
   DeployState copyWith({
@@ -1343,6 +1457,9 @@ class DeployState {
     int? generation,
     String? error,
     bool clearError = false,
+    FirmwareState? firmware,
+    List<pb.TemplateView>? templates,
+    bool? templatesLoaded,
   }) => DeployState(
     targets: targets ?? this.targets,
     targetsLoaded: targetsLoaded ?? this.targetsLoaded,
@@ -1351,6 +1468,9 @@ class DeployState {
     pending: pending ?? this.pending,
     generation: generation ?? this.generation,
     error: clearError ? null : (error ?? this.error),
+    firmware: firmware ?? this.firmware,
+    templates: templates ?? this.templates,
+    templatesLoaded: templatesLoaded ?? this.templatesLoaded,
   );
 }
 

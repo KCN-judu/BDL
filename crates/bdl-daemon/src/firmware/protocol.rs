@@ -483,6 +483,7 @@ impl Firmware {
                             device: Some(device_pb.clone()),
                             artifact: Some(artifact_to_pb(&artifact)),
                             failure,
+                            at: build::now_unix(),
                         },
                     )));
                 };

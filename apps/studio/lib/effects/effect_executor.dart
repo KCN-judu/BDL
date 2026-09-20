@@ -109,26 +109,30 @@ class EffectExecutor {
           () => fs.getDirectoryPath(confirmButtonText: _l10n.dialogOpenProject),
         );
         if (dir != null) _dispatch(OpenProjectRequested(dir));
-      case PickNewProjectLocation():
+      case PickNewProjectLocation(:final template):
         // A save dialog names the new project directory — the native idiom
         // for creating a document on both macOS and Windows.
         final loc = await _picker(
           () => fs.getSaveLocation(
-            suggestedName: _l10n.dialogUntitledProject,
+            suggestedName: template ?? _l10n.dialogUntitledProject,
             confirmButtonText: _l10n.dialogCreateProject,
           ),
         );
         if (loc != null) {
           _dispatch(
-            NewProjectRequested(rootPath: loc.path, name: p.basenameWithoutExtension(loc.path)),
+            NewProjectRequested(
+              rootPath: loc.path,
+              name: p.basenameWithoutExtension(loc.path),
+              template: template,
+            ),
           );
         }
       case OpenProject(:final rootPath):
         await _project(pb.ClientMessage(openProject: pb.OpenProjectRequest(rootPath: rootPath)));
-      case InitProject(:final rootPath, :final name):
+      case InitProject(:final rootPath, :final name, :final template):
         await _project(
           pb.ClientMessage(
-            initProject: pb.InitProjectRequest(rootPath: rootPath, name: name),
+            initProject: pb.InitProjectRequest(rootPath: rootPath, name: name, template: template),
           ),
         );
       case GetSources():
@@ -670,6 +674,45 @@ class EffectExecutor {
             DeploymentFailed(generation: generation, code: 'studio.transport', message: '$e'),
           );
         }
+      case BuildFirmware(:final targetId, :final revision):
+        await _firmware(
+          pb.ClientMessage(
+            buildFirmware: pb.BuildFirmwareRequest(targetId: targetId, revision: Int64(revision)),
+          ),
+        );
+      case CancelBuild():
+        await _firmware(pb.ClientMessage(cancelBuild: pb.CancelBuildRequest()));
+      case GetBuildStatus(:final targetId, :final generation):
+        await _call(
+          pb.ClientMessage(getBuildStatus: pb.GetBuildStatusRequest(targetId: targetId)),
+          (r) =>
+              _dispatch(BuildStatusReceived(generation: generation, status: r.buildStatus.status)),
+          counted: false,
+        );
+      case ListFlashDevices(:final targetId):
+        await _call(
+          pb.ClientMessage(listFlashDevices: pb.ListFlashDevicesRequest(targetId: targetId)),
+          (r) => _dispatch(
+            FlashDevicesReceived(
+              targetId: targetId,
+              devices: r.flashDevices.devices,
+              methods: r.flashDevices.methods,
+            ),
+          ),
+          counted: false,
+        );
+      case FlashFirmware(:final targetId, :final deviceId):
+        await _firmware(
+          pb.ClientMessage(
+            flashFirmware: pb.FlashFirmwareRequest(targetId: targetId, deviceId: deviceId),
+          ),
+        );
+      case ListTemplates():
+        await _call(
+          pb.ClientMessage(listTemplates: pb.ListTemplatesRequest()),
+          (r) => _dispatch(TemplatesReceived(r.templates.templates)),
+          counted: false,
+        );
       case DiscardDraft(:final mappingId, :final component):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();
@@ -826,6 +869,10 @@ class EffectExecutor {
         );
       case pb.Event_Payload.analysisReady:
         _dispatch(AnalysisReceived(event.analysisReady.analysis));
+      case pb.Event_Payload.buildProgress:
+        _dispatch(BuildProgressReceived(event.buildProgress));
+      case pb.Event_Payload.flashProgress:
+        _dispatch(FlashProgressReceived(event.flashProgress));
       case pb.Event_Payload.log:
         _dispatch(DaemonLogged('[${event.log.level}] ${event.log.message}'));
       case pb.Event_Payload.notSet:
@@ -853,6 +900,28 @@ class EffectExecutor {
 
   Future<void> _project(pb.ClientMessage m) =>
       _call(m, (r) => _dispatch(ProjectReceived(r.project.project)));
+
+  /// A build or flash request: acknowledged at once, then events; a
+  /// refusal is the page's to show, never a banner.
+  Future<void> _firmware(pb.ClientMessage m) async {
+    final client = _client;
+    if (client == null) {
+      _dispatch(
+        const FirmwareRequestFailed(
+          code: 'studio.not_connected',
+          message: 'The compiler service is not connected.',
+        ),
+      );
+      return;
+    }
+    try {
+      await client.request(m);
+    } on DaemonError catch (e) {
+      _dispatch(FirmwareRequestFailed(code: e.code, message: e.message));
+    } catch (e) {
+      _dispatch(FirmwareRequestFailed(code: 'studio.transport', message: '$e'));
+    }
+  }
 
   /// Send one request.  A `counted` request was registered as pending by the
   /// reducer and must be settled by exactly one terminal action: whatever

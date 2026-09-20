@@ -42,7 +42,10 @@ class OpenProjectPickRequested extends UserAction {
 /// one kind of project (ADR-0023): sources under `src/`, a behaviour
 /// system, shown as Design, Code or Split.
 class NewProjectPickRequested extends UserAction {
-  const NewProjectPickRequested();
+  const NewProjectPickRequested({this.template});
+
+  /// A template id (a demo) the new project starts from, or empty.
+  final String? template;
 }
 
 class OpenProjectRequested extends UserAction {
@@ -52,9 +55,12 @@ class OpenProjectRequested extends UserAction {
 
 /// Create a project (docs/spec/project-format.md, ADR-0023).
 class NewProjectRequested extends UserAction {
-  const NewProjectRequested({required this.rootPath, required this.name});
+  const NewProjectRequested({required this.rootPath, required this.name, this.template});
   final String rootPath;
   final String name;
+
+  /// A template id (a demo) the project starts from, or empty.
+  final String? template;
 }
 
 /// Save.  A text project whose sources changed on disk since they were
@@ -908,6 +914,35 @@ class TargetSelected extends UserAction {
   final String? targetId;
 }
 
+/// Build the chosen board's firmware from the project as it is.
+class BuildRequested extends UserAction {
+  const BuildRequested();
+}
+
+class CancelBuildRequested extends UserAction {
+  const CancelBuildRequested();
+}
+
+/// Write the last firmware to the reachable device (or the chosen one).
+class FlashRequested extends UserAction {
+  const FlashRequested();
+}
+
+/// Look again for the devices a flash could reach.
+class FlashDevicesRequested extends UserAction {
+  const FlashDevicesRequested();
+}
+
+class FlashDeviceChosen extends UserAction {
+  const FlashDeviceChosen(this.deviceId);
+  final String? deviceId;
+}
+
+/// The templates a new project can start from (the Welcome page).
+class TemplatesRequested extends UserAction {
+  const TemplatesRequested();
+}
+
 /// Ask again for the chosen board at the current revision.
 class DeploymentRequested extends UserAction {
   const DeploymentRequested();
@@ -1315,6 +1350,48 @@ class DeploymentFailed extends ResponseAction {
   final int generation;
   final String code;
   final String message;
+}
+
+class BuildStatusReceived extends ResponseAction {
+  const BuildStatusReceived({required this.generation, required this.status});
+  final int generation;
+  final pb.BuildStatus status;
+}
+
+/// A stage of the running build (an event).
+class BuildProgressReceived extends ResponseAction {
+  const BuildProgressReceived(this.progress);
+  final pb.BuildProgress progress;
+}
+
+/// A stage of the running flash (an event).
+class FlashProgressReceived extends ResponseAction {
+  const FlashProgressReceived(this.progress);
+  final pb.FlashProgress progress;
+}
+
+class FlashDevicesReceived extends ResponseAction {
+  const FlashDevicesReceived({
+    required this.targetId,
+    required this.devices,
+    required this.methods,
+  });
+  final String targetId;
+  final List<pb.FlashDevice> devices;
+  final List<pb.FlashMethodView> methods;
+}
+
+/// A build or flash request the daemon refused (`build.busy`,
+/// `flash.no_device`, `flash.ambiguous_device`, `flash.artifact_stale`, …).
+class FirmwareRequestFailed extends ResponseAction {
+  const FirmwareRequestFailed({required this.code, required this.message});
+  final String code;
+  final String message;
+}
+
+class TemplatesReceived extends ResponseAction {
+  const TemplatesReceived(this.templates);
+  final List<pb.TemplateView> templates;
 }
 
 /// The daemon's libraries arrived, as items (asked once per connection).

@@ -41,18 +41,23 @@ Transition reduce(AppState s, AppAction action) {
     // Every path that unloads a project goes through one guard
     // (app/lifecycle.dart); with no project open the intent runs at once.
     OpenProjectPickRequested() => _whenConnected(s, () => unloadRequested(s, const PickAnother())),
-    NewProjectPickRequested() => _whenConnected(s, () => unloadRequested(s, const PickNew())),
+    NewProjectPickRequested(:final template) => _whenConnected(
+      s,
+      () => unloadRequested(s, PickNew(template: template)),
+    ),
     OpenProjectRequested(:final rootPath) => _whenConnected(
       s,
       () => s.project == null
           ? Transition(pending(s), [OpenProject(rootPath)])
           : unloadRequested(s, OpenAnother(rootPath)),
     ),
-    NewProjectRequested(:final rootPath, :final name) => _whenConnected(
+    NewProjectRequested(:final rootPath, :final name, :final template) => _whenConnected(
       s,
       () => s.project == null
-          ? Transition(pending(s), [InitProject(rootPath: rootPath, name: name)])
-          : unloadRequested(s, CreateAnother(rootPath: rootPath, name: name)),
+          ? Transition(pending(s), [
+              InitProject(rootPath: rootPath, name: name, template: template),
+            ])
+          : unloadRequested(s, CreateAnother(rootPath: rootPath, name: name, template: template)),
     ),
     QuitRequested() => unloadRequested(s, const Quit()),
     CloseGuardAnswered(:final answer) => closeGuardAnswered(s, answer),
@@ -514,6 +519,27 @@ Transition reduce(AppState s, AppAction action) {
       analysis,
     ),
     DeploymentFailed(:final generation, :final message) => deploymentFailed(s, generation, message),
+    BuildRequested() => buildRequested(s),
+    CancelBuildRequested() => cancelBuildRequested(s),
+    FlashRequested() => flashRequested(s),
+    FlashDevicesRequested() => flashDevicesRequested(s),
+    FlashDeviceChosen(:final deviceId) => flashDeviceChosen(s, deviceId),
+    BuildStatusReceived(:final generation, :final status) => buildStatusReceived(
+      s,
+      generation,
+      status,
+    ),
+    BuildProgressReceived(:final progress) => buildProgressReceived(s, progress),
+    FlashProgressReceived(:final progress) => flashProgressReceived(s, progress),
+    FlashDevicesReceived(:final targetId, :final devices, :final methods) => flashDevicesReceived(
+      s,
+      targetId,
+      devices,
+      methods,
+    ),
+    FirmwareRequestFailed(:final message) => firmwareRequestFailed(s, message),
+    TemplatesRequested() => templatesRequested(s),
+    TemplatesReceived(:final templates) => templatesReceived(s, templates),
 
     // ---- editor state ------------------------------------------------------
     PageSelected(:final page) => () {
@@ -763,8 +789,11 @@ Transition reduce(AppState s, AppAction action) {
                 '${handshake.protocolVersion.major}.x, Studio does not',
               ),
       ),
-      // The concept libraries are the daemon's; ask once per connection.
-      [if (handshake.compatible) const ListLibraryItems()],
+      // The concept libraries and the demo templates are the daemon's; ask
+      // once per connection.
+      [
+        if (handshake.compatible) ...const [ListLibraryItems(), ListTemplates()],
+      ],
     ),
     DaemonConnectionFailed(:final reason) => Transition(
       s.copyWith(connection: ConnectionFailed(reason)),

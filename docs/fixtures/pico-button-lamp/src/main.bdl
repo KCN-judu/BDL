@@ -1,0 +1,26 @@
+/// Whether the button is held down.
+concept Pressed : Bool
+
+/// Whether the lamp is lit.
+concept Lit : Bool
+
+clock main
+
+/// The push button: the environment provides it, read once per activation.
+mapping pressed : Pressed @main
+
+/// The lamp is lit exactly while the button is pressed.
+mapping lit : Lit @main
+lit() =
+  pressed
+
+/// The lamp itself.
+output lamp : Lit @main
+
+drive lamp by lit
+
+// The Raspberry Pi Pico: the button between GP2 and ground (the line is
+// pulled up, pressed reads low), the lamp on the on-board LED.
+device button : digital_input for pressed { provider gpio_level_in_low, pin 0 = GP2 }
+
+device led : digital_output for lamp { realization gpio_level, pin 0 = GP25 }

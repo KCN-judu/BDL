@@ -2369,6 +2369,161 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get firmware => 'Firmware';
+
+  @override
+  String get stepDeployment => 'Deployment';
+
+  @override
+  String get stepBuild => 'Build';
+
+  @override
+  String get stepFlash => 'Flash';
+
+  @override
+  String get stepObserve => 'Observe';
+
+  @override
+  String buildForBoard(String board) {
+    return 'Build for $board';
+  }
+
+  @override
+  String get buildAgain => 'Build again';
+
+  @override
+  String get stopBuild => 'Stop';
+
+  @override
+  String get flash => 'Flash';
+
+  @override
+  String get flashAgain => 'Flash again';
+
+  @override
+  String get lookAgain => 'Look again';
+
+  @override
+  String get notReadyToBuild => 'Not ready to build';
+
+  @override
+  String get fixOnTheDesignPage => 'Fix it on the Design page';
+
+  @override
+  String get building => 'Building…';
+
+  @override
+  String get stageChecking => 'Checking the deployment';
+
+  @override
+  String get stageGenerating => 'Generating the crate';
+
+  @override
+  String get stagePreparing => 'Preparing the toolchain';
+
+  @override
+  String get stageCompiling => 'Compiling';
+
+  @override
+  String get stagePackaging => 'Writing the image';
+
+  @override
+  String get stageCancelled => 'Stopped';
+
+  @override
+  String cratesCompiled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count crates compiled',
+      one: '1 crate compiled',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String firmwareBuiltAt(String time) {
+    return 'Firmware built at $time';
+  }
+
+  @override
+  String get firmwareStale => 'The firmware is from an earlier design or deployment.';
+
+  @override
+  String get buildDidNotComplete => 'The build did not complete';
+
+  @override
+  String imageSize(String bytes) {
+    return '$bytes bytes';
+  }
+
+  @override
+  String get noBoardReachable => 'No board is reachable.';
+
+  @override
+  String get chooseTheBoardToFlash => 'Several boards are reachable — choose one.';
+
+  @override
+  String get flashing => 'Flashing…';
+
+  @override
+  String get flashPreparing => 'Preparing';
+
+  @override
+  String get flashWriting => 'Writing the image';
+
+  @override
+  String get flashRestarting => 'Restarting the board';
+
+  @override
+  String flashedToAt(String device, String time) {
+    return 'Flashed to $device at $time';
+  }
+
+  @override
+  String get flashDidNotComplete => 'The flash did not complete';
+
+  @override
+  String tryItOnTheBoard(String sources, String outputs) {
+    return 'Try it: act on $sources; $outputs should follow the design.';
+  }
+
+  @override
+  String tryItOutputsOnly(String outputs) {
+    return 'Try it: $outputs should behave as designed.';
+  }
+
+  @override
+  String get boardRunsEarlierDesign =>
+      'The board runs an earlier design — build and flash again to update it.';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get generatedCrate => 'Generated crate';
+
+  @override
+  String get buildCommand => 'Command';
+
+  @override
+  String get rustTarget => 'Target';
+
+  @override
+  String get imageFile => 'Image';
+
+  @override
+  String get compilerOutput => 'Compiler output';
+
+  @override
+  String get demos => 'Demos';
+
+  @override
+  String readyToBuild(String board) {
+    return 'Ready to build for $board.';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => 'Temperature';
 
   @override

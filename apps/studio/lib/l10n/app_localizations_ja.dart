@@ -2223,6 +2223,159 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get firmware => 'ファームウェア';
+
+  @override
+  String get stepDeployment => 'デプロイ';
+
+  @override
+  String get stepBuild => 'ビルド';
+
+  @override
+  String get stepFlash => '書き込み';
+
+  @override
+  String get stepObserve => '観察';
+
+  @override
+  String buildForBoard(String board) {
+    return '$board 向けにビルド';
+  }
+
+  @override
+  String get buildAgain => '再ビルド';
+
+  @override
+  String get stopBuild => '停止';
+
+  @override
+  String get flash => '書き込む';
+
+  @override
+  String get flashAgain => 'もう一度書き込む';
+
+  @override
+  String get lookAgain => '再検出';
+
+  @override
+  String get notReadyToBuild => 'まだビルドできません';
+
+  @override
+  String get fixOnTheDesignPage => '設計ページで修正';
+
+  @override
+  String get building => 'ビルド中…';
+
+  @override
+  String get stageChecking => 'デプロイを確認中';
+
+  @override
+  String get stageGenerating => 'クレートを生成中';
+
+  @override
+  String get stagePreparing => 'ツールチェーンを準備中';
+
+  @override
+  String get stageCompiling => 'コンパイル中';
+
+  @override
+  String get stagePackaging => 'イメージを書き出し中';
+
+  @override
+  String get stageCancelled => '停止しました';
+
+  @override
+  String cratesCompiled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個のクレートをコンパイル済み',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String firmwareBuiltAt(String time) {
+    return '$time にファームウェアをビルドしました';
+  }
+
+  @override
+  String get firmwareStale => 'このファームウェアは以前の設計またはデプロイのものです。';
+
+  @override
+  String get buildDidNotComplete => 'ビルドは完了しませんでした';
+
+  @override
+  String imageSize(String bytes) {
+    return '$bytes バイト';
+  }
+
+  @override
+  String get noBoardReachable => '接続できるボードがありません。';
+
+  @override
+  String get chooseTheBoardToFlash => '複数のボードが見つかりました。1 つ選んでください。';
+
+  @override
+  String get flashing => '書き込み中…';
+
+  @override
+  String get flashPreparing => '準備中';
+
+  @override
+  String get flashWriting => 'イメージを書き込み中';
+
+  @override
+  String get flashRestarting => 'ボードを再起動中';
+
+  @override
+  String flashedToAt(String device, String time) {
+    return '$time に $device へ書き込みました';
+  }
+
+  @override
+  String get flashDidNotComplete => '書き込みは完了しませんでした';
+
+  @override
+  String tryItOnTheBoard(String sources, String outputs) {
+    return '試してみましょう。$sources を操作すると、$outputs が設計どおりに追従するはずです。';
+  }
+
+  @override
+  String tryItOutputsOnly(String outputs) {
+    return '試してみましょう。$outputs が設計どおりに動くはずです。';
+  }
+
+  @override
+  String get boardRunsEarlierDesign => 'ボードは以前の設計で動いています。更新するには再ビルドして書き込んでください。';
+
+  @override
+  String get details => '詳細';
+
+  @override
+  String get generatedCrate => '生成されたクレート';
+
+  @override
+  String get buildCommand => 'コマンド';
+
+  @override
+  String get rustTarget => 'ターゲット';
+
+  @override
+  String get imageFile => 'イメージ';
+
+  @override
+  String get compilerOutput => 'コンパイラー出力';
+
+  @override
+  String get demos => 'デモ';
+
+  @override
+  String readyToBuild(String board) {
+    return '$board 向けにビルドできます。';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override

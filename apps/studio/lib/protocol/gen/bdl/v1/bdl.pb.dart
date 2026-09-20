@@ -19786,6 +19786,7 @@ class FlashProgress extends $pb.GeneratedMessage {
     FlashDevice? device,
     BuildArtifact? artifact,
     FlashFailure? failure,
+    $fixnum.Int64? at,
   }) {
     final result = FlashProgress._();
     if (flashId != null) result.flashId = flashId;
@@ -19795,6 +19796,7 @@ class FlashProgress extends $pb.GeneratedMessage {
     if (device != null) result.device = device;
     if (artifact != null) result.artifact = artifact;
     if (failure != null) result.failure = failure;
+    if (at != null) result.at = at;
     return result;
   }
 
@@ -19820,6 +19822,8 @@ class FlashProgress extends $pb.GeneratedMessage {
         subBuilder: BuildArtifact.$_createMessage)
     ..aOM<FlashFailure>(7, _omitFieldNames ? '' : 'failure',
         subBuilder: FlashFailure.$_createMessage)
+    ..a<$fixnum.Int64>(8, _omitFieldNames ? '' : 'at', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -19912,6 +19916,16 @@ class FlashProgress extends $pb.GeneratedMessage {
   void clearFailure() => $_clearField(7);
   @$pb.TagNumber(7)
   FlashFailure ensureFailure() => $_ensure(6);
+
+  /// When this stage was reached, seconds since the Unix epoch.
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get at => $_getI64(7);
+  @$pb.TagNumber(8)
+  set at($fixnum.Int64 value) => $_setInt64(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasAt() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearAt() => $_clearField(8);
 }
 
 class FlashFailure extends $pb.GeneratedMessage {

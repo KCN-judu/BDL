@@ -43,7 +43,10 @@ class PickProjectToOpen extends Effect {
 /// Show the OS save dialog to choose where a new project directory goes;
 /// the executor dispatches `NewProjectRequested(rootPath, name)`.
 class PickNewProjectLocation extends Effect {
-  const PickNewProjectLocation();
+  const PickNewProjectLocation({this.template});
+
+  /// Carried to the `NewProjectRequested` the picker dispatches.
+  final String? template;
 }
 
 class OpenProject extends Effect {
@@ -52,9 +55,43 @@ class OpenProject extends Effect {
 }
 
 class InitProject extends Effect {
-  const InitProject({required this.rootPath, required this.name});
+  const InitProject({required this.rootPath, required this.name, this.template});
   final String rootPath;
   final String name;
+  final String? template;
+}
+
+/// Firmware (0.26): the daemon owns the build and the flash; Studio asks
+/// and watches the events.
+class BuildFirmware extends Effect {
+  const BuildFirmware({required this.targetId, required this.revision});
+  final String targetId;
+  final int revision;
+}
+
+class CancelBuild extends Effect {
+  const CancelBuild();
+}
+
+class GetBuildStatus extends Effect {
+  const GetBuildStatus({required this.targetId, required this.generation});
+  final String targetId;
+  final int generation;
+}
+
+class ListFlashDevices extends Effect {
+  const ListFlashDevices(this.targetId);
+  final String targetId;
+}
+
+class FlashFirmware extends Effect {
+  const FlashFirmware({required this.targetId, this.deviceId});
+  final String targetId;
+  final String? deviceId;
+}
+
+class ListTemplates extends Effect {
+  const ListTemplates();
 }
 
 /// The Code view's sources (uncounted: a view fetch, answered by
