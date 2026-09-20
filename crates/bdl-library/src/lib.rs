@@ -797,12 +797,38 @@ impl LibrarySet {
         }
     }
 
-    /// The Standard Library set, loaded once per process: what the daemon
+    /// The library set of this process, loaded once: what the daemon
     /// serves and completion reads — one registry, never two parses that
-    /// could disagree.
+    /// could disagree.  The Standard Library, then every library file the
+    /// `BDL_LIBRARIES` environment variable names (a path list in the
+    /// platform's separator): the discovery rule for a team, project or
+    /// package library.  A file that does not load is reported on stderr
+    /// and skipped — the daemon still serves the rest; a library whose id
+    /// is already served replaces the earlier one.
     pub fn shared() -> &'static LibrarySet {
         static SHARED: std::sync::OnceLock<LibrarySet> = std::sync::OnceLock::new();
-        SHARED.get_or_init(LibrarySet::standard)
+        SHARED.get_or_init(LibrarySet::from_environment)
+    }
+
+    /// [`LibrarySet::standard`] plus the files `BDL_LIBRARIES` names.
+    pub fn from_environment() -> LibrarySet {
+        let mut set = LibrarySet::standard();
+        let Some(paths) = std::env::var_os("BDL_LIBRARIES") else {
+            return set;
+        };
+        for path in std::env::split_paths(&paths) {
+            if path.as_os_str().is_empty() {
+                continue;
+            }
+            match std::fs::read_to_string(&path)
+                .map_err(|e| e.to_string())
+                .and_then(|text| Library::from_toml(&text).map_err(|e| e.to_string()))
+            {
+                Ok(lib) => set = set.with(lib),
+                Err(e) => eprintln!("bdl-library: {} not loaded: {e}", path.display()),
+            }
+        }
+        set
     }
 
     pub fn with(mut self, library: Library) -> LibrarySet {
@@ -992,6 +1018,83 @@ mod tests {
     use bdl_model::Dim;
     use std::collections::BTreeMap;
 
+    /// A schema-2 library with Source items: the preset mechanics the
+    /// loader, the planner and the Source sheet keep for any library that
+    /// ships them (the standard library ships none since 0.3).
+    const FIXTURE: &str = r#"
+[library]
+id = "fx"
+name = "Fixture"
+schema_version = 2
+version = "0.1"
+
+[[template]]
+id = "fx.temperature"
+display_name = "Temperature"
+default_name = "Temperature"
+description = "How warm something is."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temp"]
+icon = "temperature"
+
+[[template]]
+id = "fx.ambient_light"
+display_name = "Ambient Light"
+default_name = "AmbientLight"
+description = "How much light falls on the product."
+category = "environment"
+representation = { quantity = "illuminance" }
+unit = "lx"
+keywords = ["lux"]
+
+[[source]]
+id = "fx.source.temperature"
+display_name = "Temperature Input"
+description = "A temperature the environment provides."
+category = "environment"
+keywords = ["temp", "sensor"]
+icon = "temperature"
+[source.value]
+default_name = "Temperature"
+description = "How warm something is."
+representation = { quantity = "temperature" }
+unit = "K"
+[source.relationship]
+default_name = "temperatureInput"
+description = "Provides the temperature."
+
+[[source]]
+id = "fx.source.analog"
+display_name = "Analog Input"
+description = "A level read from an analog pin."
+category = "electrical"
+keywords = ["adc"]
+[source.value]
+default_name = "AnalogValue"
+representation = "open"
+[source.relationship]
+default_name = "analogInput"
+
+[[source]]
+id = "fx.source.external"
+display_name = "External Input"
+description = "A value a host provides."
+category = "external"
+keywords = ["host"]
+[source.value]
+default_name = "ExternalValue"
+representation = "open"
+[source.relationship]
+default_name = "externalInput"
+"#;
+
+    fn fixture() -> Library {
+        Library::from_toml(FIXTURE).expect("fixture library")
+    }
+
     /// The one concept edit a Concept item plans (what the daemon applies
     /// for the legacy request), with an optional chosen name.
     fn concept_edit(design: &Design, item: &LibraryItem, name: Option<&str>) -> EditOp {
@@ -1008,61 +1111,62 @@ mod tests {
 
     /// The Standard Library's registry shape: the evidence for
     /// docs/spec/concept-library.md's counts — asserted here only, never
-    /// in product logic.
+    /// in product logic.  Since 0.3 the library is the value categories:
+    /// four value forms, then one item per named quantity of the shared
+    /// vocabulary but the dimensionless one; no Source item.
     #[test]
     fn the_standard_library_registry_shape() {
         let lib = Library::standard();
-        assert_eq!(lib.items().len(), 44);
+        let quantities = quantity::QUANTITIES
+            .iter()
+            .filter(|q| q.dim != Dim::ZERO)
+            .count();
+        assert_eq!(lib.items().len(), 4 + quantities);
+        assert_eq!(lib.items().len(), 22);
         let by_category = |c: ItemCategory| lib.items().iter().filter(|i| i.category == c).count();
-        assert_eq!(by_category(ItemCategory::Concept), 36);
-        assert_eq!(by_category(ItemCategory::Source), 8);
-        assert_eq!(lib.templates().len(), 36);
-        // every Concept item is exactly one concept keyed `concept`; every
-        // Source item a `value` concept then a `source` mapping over it
+        assert_eq!(by_category(ItemCategory::Concept), lib.items().len());
+        assert_eq!(by_category(ItemCategory::Source), 0);
+        // every item is exactly one concept keyed `concept`
         for i in lib.items() {
             let keys: Vec<&str> = i.fragment.objects.iter().map(|o| o.key()).collect();
-            match i.category {
-                ItemCategory::Concept => {
-                    assert_eq!(keys, ["concept"], "{}", i.id);
-                    assert!(i.as_concept_template().is_some(), "{}", i.id);
-                }
-                ItemCategory::Source => {
-                    assert_eq!(keys, ["value", "source"], "{}", i.id);
-                    assert!(i.as_concept_template().is_none(), "{}", i.id);
-                    let FragmentObject::Mapping(m) = &i.fragment.objects[1] else {
-                        panic!("{}", i.id)
-                    };
-                    assert!(m.inputs.is_empty() && m.output == "value", "{}", i.id);
-                }
+            assert_eq!(keys, ["concept"], "{}", i.id);
+            assert!(i.as_concept_template().is_some(), "{}", i.id);
+        }
+        // two groups, in this order: the value forms, then the quantities
+        let mut groups = Vec::new();
+        for i in lib.items() {
+            if !groups.contains(&i.group.as_str()) {
+                groups.push(i.group.as_str());
             }
         }
-        // groups, in first-seen order, per section
-        let groups = |c: ItemCategory| -> Vec<&str> {
-            let mut out = Vec::new();
-            for i in lib.items().iter().filter(|i| i.category == c) {
-                if !out.contains(&i.group.as_str()) {
-                    out.push(i.group.as_str());
-                }
-            }
-            out
-        };
-        assert_eq!(
-            groups(ItemCategory::Concept),
-            [
-                "environment",
-                "human",
-                "motion",
-                "mechanical",
-                "electrical",
-                "visual",
-                "actuation",
-                "audio"
-            ]
-        );
-        assert_eq!(
-            groups(ItemCategory::Source),
-            ["environment", "motion", "human", "electrical", "external"]
-        );
+        assert_eq!(groups, ["form", "quantity"]);
+        // one quantity item per named quantity, in the vocabulary's order,
+        // with the vocabulary's dimension and type name
+        let served: Vec<&str> = lib
+            .templates()
+            .iter()
+            .filter(|t| t.category == "quantity")
+            .map(|t| t.id.as_str())
+            .collect();
+        let expected: Vec<String> = quantity::QUANTITIES
+            .iter()
+            .filter(|q| q.dim != Dim::ZERO)
+            .map(|q| format!("std.quantity.{}", q.id))
+            .collect();
+        assert_eq!(served, expected);
+        for q in quantity::QUANTITIES.iter().filter(|q| q.dim != Dim::ZERO) {
+            let t = lib
+                .get(&format!("std.quantity.{}", q.id))
+                .unwrap_or_else(|| panic!("no item for {}", q.id));
+            assert_eq!(
+                t.representation(),
+                Some(Representation::Quantity { dim: q.dim })
+            );
+            assert_eq!(t.type_name(), Some(q.type_name));
+            // the row's unit symbol is the registry's when one measures the
+            // dimension, else the vocabulary's display symbol
+            assert_eq!(t.unit_symbol(), q.unit, "{}", q.id);
+        }
         // loading is deterministic: the same file, the same library
         assert_eq!(Library::standard(), Library::standard());
     }
@@ -1073,44 +1177,10 @@ mod tests {
         assert_eq!(lib.info.id, "std");
         assert_eq!(lib.info.schema_version, SCHEMA_VERSION);
         assert!(
-            (30..=50).contains(&lib.templates().len()),
-            "deliberately small: {} templates",
+            (15..=30).contains(&lib.templates().len()),
+            "deliberately small: {} categories",
             lib.templates().len()
         );
-        // the Sources category: eight items, each a concept and an
-        // unresolved relationship without inputs
-        let sources: Vec<&LibraryItem> = lib
-            .items()
-            .iter()
-            .filter(|i| i.category == ItemCategory::Source)
-            .collect();
-        assert_eq!(
-            sources.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(),
-            vec![
-                "std.source.temperature",
-                "std.source.tilt",
-                "std.source.distance",
-                "std.source.ambient_light",
-                "std.source.button",
-                "std.source.encoder",
-                "std.source.analog",
-                "std.source.external",
-            ]
-        );
-        for i in &sources {
-            assert_eq!(i.fragment.objects.len(), 2, "{}", i.id);
-            let created = i.creates();
-            assert_eq!(created[0].kind, "concept");
-            assert_eq!(created[1].kind, "mapping");
-            assert!(
-                created[1].signature.starts_with("() -> "),
-                "{}: {}",
-                i.id,
-                created[1].signature
-            );
-            assert!(!i.description.is_empty());
-        }
-        assert_eq!(lib.items().len(), lib.templates().len() + 8);
         for t in lib.templates() {
             assert!(
                 t.representation().is_some()
@@ -1120,20 +1190,41 @@ mod tests {
                     )
             );
             assert!(!t.description.is_empty(), "{} has no description", t.id);
+            assert!(!t.keywords.is_empty(), "{} has no search words", t.id);
         }
-        let light = lib
-            .get("std.environment.ambient_light")
-            .expect("ambient light");
-        assert_eq!(light.type_name(), Some("Illuminance"));
-        assert_eq!(light.unit_symbol(), "lx");
-        assert_eq!(light.to_string(), "concept AmbientLight : Illuminance");
-        // Brightness is a level, not a photometric quantity.
-        let b = lib.get("std.output.brightness").expect("brightness");
+        // the four value forms
+        let form = |id: &str| lib.get(id).unwrap_or_else(|| panic!("{id}"));
         assert_eq!(
-            b.representation(),
+            form("std.value.boolean").representation(),
+            Some(Representation::Boolean)
+        );
+        assert_eq!(
+            form("std.value.count").representation(),
+            Some(Representation::Count)
+        );
+        assert_eq!(
+            form("std.value.level").representation(),
             Some(Representation::Quantity { dim: Dim::ZERO })
         );
-        assert_eq!(b.type_name(), Some("Scalar"));
+        assert_eq!(form("std.value.level").type_name(), Some("Scalar"));
+        assert_eq!(form("std.value.open").representation(), None);
+        // a quantity category: the vocabulary's kind, the canonical unit
+        let angle = lib.get("std.quantity.angle").expect("angle");
+        assert_eq!(angle.type_name(), Some("Angle"));
+        assert_eq!(angle.unit_symbol(), "rad");
+        assert_eq!(angle.to_string(), "concept Angle : Angle");
+        // a composite the registry has no symbol for shows the vocabulary's
+        let w = lib.get("std.quantity.angular_velocity").expect("ω");
+        assert_eq!(
+            w.unit_symbol(),
+            quantity::lookup("angular_velocity").unwrap().unit
+        );
+        // no product-specific concept is a category: what was *Motor
+        // Angle*, *Servo Position*, *Fan Speed* is a category plus a name
+        assert!(lib.items().iter().all(|i| !i.display_name.contains("Motor")
+            && !i.display_name.contains("Servo")
+            && !i.display_name.contains("Fan")
+            && !i.display_name.ends_with("Input")));
     }
 
     /// A Source item plans a concept and a relationship `() -> Value`;
@@ -1142,8 +1233,8 @@ mod tests {
     /// leave the value form open.
     #[test]
     fn a_source_item_plans_a_concept_and_an_unresolved_unit_domain_relationship() {
-        let lib = Library::standard();
-        let item = lib.item("std.source.temperature").expect("item");
+        let lib = fixture();
+        let item = lib.item("fx.source.temperature").expect("item");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
         let steps = plan(&s.design, item, &Default::default()).expect("plan");
         assert_eq!(steps.len(), 2);
@@ -1206,7 +1297,7 @@ mod tests {
         assert_eq!(
             plan(&s.design, item, &names),
             Err(PlanError::UnknownKey {
-                item: "std.source.temperature".into(),
+                item: "fx.source.temperature".into(),
                 key: "sensor".into(),
                 keys: "`value`, `source`".into(),
             })
@@ -1216,7 +1307,7 @@ mod tests {
             plan(&b.snapshot.design, item, &Default::default()),
             plan(&b.snapshot.design, item, &Default::default())
         );
-        for id in ["std.source.analog", "std.source.external"] {
+        for id in ["fx.source.analog", "fx.source.external"] {
             let i = lib.item(id).expect(id);
             let steps = plan(&s.design, i, &Default::default()).expect("plan");
             assert!(matches!(
@@ -1231,10 +1322,10 @@ mod tests {
             ));
         }
         // the concept view of the library is unchanged by the sources
-        assert!(lib.get("std.source.temperature").is_none());
-        assert!(lib.get("std.environment.temperature").is_some());
+        assert!(lib.get("fx.source.temperature").is_none());
+        assert!(lib.get("fx.temperature").is_some());
         assert_eq!(
-            lib.item("std.environment.temperature")
+            lib.item("fx.temperature")
                 .and_then(|i| i.as_concept_template())
                 .map(|t| t.default_name),
             Some("Temperature".into())
@@ -1247,12 +1338,8 @@ mod tests {
     /// open one is listed — with the preset's value form first.
     #[test]
     fn a_source_item_is_a_preset_that_ranks_and_suggests_and_owns_no_identity() {
-        let lib = Library::standard();
-        let preset = lib
-            .item("std.source.temperature")
-            .unwrap()
-            .preset()
-            .unwrap();
+        let lib = fixture();
+        let preset = lib.item("fx.source.temperature").unwrap().preset().unwrap();
         assert_eq!(preset.concept_name, "Temperature");
         assert_eq!(preset.source_name, "temperatureInput");
         assert_eq!(preset.type_name, "Temperature");
@@ -1263,12 +1350,15 @@ mod tests {
                 dim: Dim::TEMPERATURE
             })
         );
-        assert!(lib
-            .item("std.environment.temperature")
-            .unwrap()
-            .preset()
-            .is_none());
-        let open = lib.item("std.source.external").unwrap().preset().unwrap();
+        assert!(lib.item("fx.temperature").unwrap().preset().is_none());
+        assert!(
+            Library::standard()
+                .items()
+                .iter()
+                .all(|i| i.preset().is_none()),
+            "the standard library ships no Source preset: the Source sheet is the one path"
+        );
+        let open = lib.item("fx.source.external").unwrap().preset().unwrap();
         assert_eq!(open.representation, None);
         assert_eq!(open.type_name, "");
         for i in lib
@@ -1333,30 +1423,35 @@ mod tests {
     fn search_matches_names_keywords_units_and_categories() {
         let lib = Library::standard();
         let ids = |q: &str| -> Vec<String> { lib.search_items(q).map(|t| t.id.clone()).collect() };
-        assert_eq!(
-            ids("lux"),
-            vec!["std.environment.ambient_light", "std.source.ambient_light"]
+        // a category by its name, its synonyms, its units, its dimension's
+        // words: what a designer types when looking for the kind of value
+        assert_eq!(ids("lux"), vec!["std.quantity.illuminance"]);
+        assert!(
+            ids("deg").starts_with(&["std.quantity.angle".to_owned()]),
+            "deg: the angle first, then deg/s"
         );
-        assert!(ids("tilt").contains(&"std.motion.tilt".to_owned()));
-        assert!(ids("tilt").contains(&"std.source.tilt".to_owned()));
-        let motor = ids("motor");
-        assert!(motor.contains(&"std.actuator.motor_speed".to_owned()));
-        assert!(motor.contains(&"std.actuator.motor_angle".to_owned()));
-        assert!(ids("environment").len() >= 5);
-        assert_eq!(ids("source").len(), 8, "every Source, by its section");
-        assert_eq!(ids("sensor").len(), 4, "a Source is not always a sensor");
-        assert_eq!(ids("external"), vec!["std.source.external"]);
-        assert!(ids("temperatureInput").contains(&"std.source.temperature".to_owned()));
+        assert!(ids("rotation").contains(&"std.quantity.angle".to_owned()));
+        assert!(ids("rotation").contains(&"std.quantity.angular_velocity".to_owned()));
+        assert!(ids("tilt").contains(&"std.quantity.angle".to_owned()));
+        assert!(ids("servo").contains(&"std.quantity.angle".to_owned()));
+        assert!(ids("rpm").contains(&"std.quantity.angular_velocity".to_owned()));
+        assert_eq!(ids("temperature"), vec!["std.quantity.temperature"]);
+        assert!(ids("brightness").contains(&"std.value.level".to_owned()));
+        assert!(ids("button").contains(&"std.value.boolean".to_owned()));
+        assert!(ids("quantity").len() >= 15, "the group word");
         assert_eq!(ids("").len(), lib.items().len());
         assert!(ids("zzzz").is_empty());
+        // a library that ships Source items is searched by section word too
+        let fx = fixture();
+        let fids = |q: &str| -> Vec<String> { fx.search_items(q).map(|t| t.id.clone()).collect() };
+        assert_eq!(fids("source").len(), 3, "every Source, by its section");
+        assert!(fids("temperatureInput").contains(&"fx.source.temperature".to_owned()));
     }
 
     #[test]
     fn two_instantiations_are_two_concepts_with_independent_defaults() {
         let lib = Library::standard();
-        let t = lib
-            .item("std.environment.temperature")
-            .expect("temperature");
+        let t = lib.item("std.quantity.temperature").expect("temperature");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
         let a = apply_edit(&s, &concept_edit(&s.design, t, None)).expect("first");
         let id_a = a.outcome.created_concept.expect("id");
@@ -1408,10 +1503,8 @@ mod tests {
 
     #[test]
     fn a_project_persists_without_the_library_and_a_template_change_does_not_reach_it() {
-        let lib = Library::standard();
-        let t = lib
-            .item("std.environment.ambient_light")
-            .expect("ambient light");
+        let lib = fixture();
+        let t = lib.item("fx.ambient_light").expect("ambient light");
         let s = ProjectSnapshot::new(Design::empty("lamp"));
         let a = apply_edit(&s, &concept_edit(&s.design, t, None)).expect("create");
         let id = a.outcome.created_concept.expect("id");
@@ -1421,14 +1514,13 @@ mod tests {
             .expect("save");
 
         // The library "moves on": AmbientLight becomes a Scalar level.
-        let changed = STANDARD_LIBRARY_TOML.replace(
+        let changed = FIXTURE.replace(
             "representation = { quantity = \"illuminance\" }\nunit = \"lx\"",
             "representation = { quantity = \"scalar\" }",
         );
         let v2 = Library::from_toml(&changed).expect("v2 parses");
         assert_eq!(
-            v2.get("std.environment.ambient_light")
-                .and_then(|t| t.type_name()),
+            v2.get("fx.ambient_light").and_then(|t| t.type_name()),
             Some("Scalar")
         );
 
@@ -1450,7 +1542,7 @@ mod tests {
         let bad_unit = STANDARD_LIBRARY_TOML.replacen("unit = \"K\"", "unit = \"m\"", 1);
         assert!(matches!(
             Library::from_toml(&bad_unit),
-            Err(LibraryError::Template { id, .. }) if id == "std.environment.temperature"
+            Err(LibraryError::Template { id, .. }) if id == "std.quantity.temperature"
         ));
         let bad_quantity = STANDARD_LIBRARY_TOML.replacen(
             "quantity = \"temperature\"",
@@ -1464,15 +1556,15 @@ mod tests {
             Library::from_toml(&bad_schema),
             Err(LibraryError::Schema { found: 3 })
         );
-        // a source whose relationship names no concept of its own fragment
-        let bad_source = STANDARD_LIBRARY_TOML.replacen(
+        // a source whose relationship has no identifier for a name
+        let bad_source = FIXTURE.replacen(
             "default_name = \"temperatureInput\"",
             "default_name = \"Temp Sensor\"",
             1,
         );
         assert!(matches!(
             Library::from_toml(&bad_source),
-            Err(LibraryError::Template { id, .. }) if id == "std.source.temperature"
+            Err(LibraryError::Template { id, .. }) if id == "fx.source.temperature"
         ));
         // a relationship must name concepts created before it, so a plan
         // never resolves a key an earlier step has not allocated
@@ -1499,7 +1591,7 @@ mod tests {
         );
         assert_eq!(set.libraries().len(), 2);
         assert!(set.get("team.x").is_some());
-        assert!(set.get("std.motion.tilt").is_some());
+        assert!(set.get("std.quantity.angle").is_some());
         assert_eq!(set.get("team.x").and_then(|t| t.representation()), None);
     }
 }

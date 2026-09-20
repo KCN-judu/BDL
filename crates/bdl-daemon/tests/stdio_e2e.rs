@@ -20,6 +20,12 @@ impl Client {
     fn spawn() -> Client {
         let child = Command::new(env!("CARGO_BIN_EXE_bdld"))
             .arg("serve")
+            // the preset fixture beside the Standard Library: the Source
+            // item mechanics stay covered though std ships none (0.3)
+            .env(
+                "BDL_LIBRARIES",
+                concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/presets.toml"),
+            )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -1565,8 +1571,9 @@ fn concept_templates_over_stdio() {
         &mut events,
     );
 
-    // The library is served before any project is open, and it is the
-    // embedded standard library, template for template.
+    // The libraries are served before any project is open: the embedded
+    // standard library, template for template, and the fixture library
+    // `BDL_LIBRARIES` names beside it.
     let listed = match c.call(
         Req::ListConceptTemplates(pb::ListConceptTemplatesRequest {}),
         &mut events,
@@ -1575,8 +1582,9 @@ fn concept_templates_over_stdio() {
         other => panic!("expected templates, got {other:?}"),
     };
     let std = bdl_library::Library::standard();
-    assert_eq!(listed.libraries.len(), 1);
+    assert_eq!(listed.libraries.len(), 2);
     assert_eq!(listed.libraries[0].id, "std");
+    assert_eq!(listed.libraries[1].id, "fx");
     assert_eq!(listed.libraries[0].version, std.info.version);
     let served: Vec<&str> = listed.libraries[0]
         .templates
@@ -1585,10 +1593,10 @@ fn concept_templates_over_stdio() {
         .collect();
     let embedded: Vec<&str> = std.templates().iter().map(|t| t.id.as_str()).collect();
     assert_eq!(served, embedded);
-    let light = listed.libraries[0]
+    let light = listed.libraries[1]
         .templates
         .iter()
-        .find(|t| t.id == "std.environment.ambient_light")
+        .find(|t| t.id == "fx.ambient_light")
         .unwrap();
     assert_eq!(light.type_name, "Illuminance");
     assert_eq!(light.unit, "lx");
@@ -1615,7 +1623,7 @@ fn concept_templates_over_stdio() {
             Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
                 component: None,
                 base_revision: base,
-                template_id: "std.environment.temperature".into(),
+                template_id: "fx.temperature".into(),
                 name: None,
                 ..Default::default()
             }),
@@ -1653,7 +1661,7 @@ fn concept_templates_over_stdio() {
         Req::InstantiateConceptTemplate(pb::InstantiateConceptTemplateRequest {
             component: None,
             base_revision: base,
-            template_id: "std.environment.temperature".into(),
+            template_id: "fx.temperature".into(),
             name: Some("OvenTemperature".into()),
             ..Default::default()
         }),
@@ -1709,24 +1717,28 @@ fn library_items_over_stdio() {
         other => panic!("expected items, got {other:?}"),
     };
     let std = bdl_library::Library::standard();
-    assert_eq!(listed.libraries.len(), 1);
-    let items = &listed.libraries[0].items;
-    assert_eq!(items.len(), std.items().len());
+    assert_eq!(listed.libraries.len(), 2);
+    assert_eq!(listed.libraries[0].items.len(), std.items().len());
+    assert!(
+        listed.libraries[0]
+            .items
+            .iter()
+            .all(|i| i.category == "concept"),
+        "the standard library is value categories only"
+    );
+    let items = &listed.libraries[1].items;
     let concepts = items.iter().filter(|i| i.category == "concept").count();
     let sources: Vec<&pb::LibraryItemView> =
         items.iter().filter(|i| i.category == "source").collect();
-    assert_eq!(concepts, std.templates().len());
-    assert_eq!(sources.len(), 8);
+    assert_eq!(concepts, 3);
+    assert_eq!(sources.len(), 5);
     // a Concept item carries its template view; a Source item what it creates
-    let temp = items
-        .iter()
-        .find(|i| i.id == "std.environment.temperature")
-        .unwrap();
+    let temp = items.iter().find(|i| i.id == "fx.temperature").unwrap();
     assert_eq!(temp.concept.as_ref().unwrap().type_name, "Temperature");
     assert_eq!(temp.creates.len(), 1);
     let sensor = items
         .iter()
-        .find(|i| i.id == "std.source.temperature")
+        .find(|i| i.id == "fx.source.temperature")
         .unwrap();
     assert_eq!(sensor.display_name, "Temperature Input");
     assert_eq!(sensor.creates.len(), 2);
@@ -1791,8 +1803,8 @@ fn library_items_over_stdio() {
     }
     assert!(c.last_revision > before);
     let p = project(c.call(Req::GetProject(pb::GetProjectRequest {}), &mut events));
-    assert_eq!(p.concepts.len(), 8);
-    assert_eq!(p.mappings.len(), 8);
+    assert_eq!(p.concepts.len(), 5);
+    assert_eq!(p.mappings.len(), 5);
     let mapping_names: Vec<&str> = p.mappings.iter().map(|m| m.name.as_str()).collect();
     assert_eq!(
         mapping_names,
@@ -1800,9 +1812,6 @@ fn library_items_over_stdio() {
             "temperatureInput",
             "tiltInput",
             "distanceInput",
-            "ambientLightInput",
-            "buttonInput",
-            "encoderInput",
             "analogInput",
             "externalInput"
         ]
@@ -1831,14 +1840,14 @@ fn library_items_over_stdio() {
         assert!(x.representation.is_none(), "{name}");
     }
     // a collision: the next free names, on both kinds; a chosen name wins
-    let e = insert(&mut c, &mut events, "std.source.temperature", vec![]);
+    let e = insert(&mut c, &mut events, "fx.source.temperature", vec![]);
     let p = e.project.unwrap();
     assert!(p.concepts.iter().any(|x| x.name == "Temperature2"));
     assert!(p.mappings.iter().any(|m| m.name == "temperatureInput2"));
     let e = insert(
         &mut c,
         &mut events,
-        "std.source.temperature",
+        "fx.source.temperature",
         vec![("value", "OvenTemp"), ("source", "ovenInput")],
     );
     let p = e.project.unwrap();
@@ -1881,7 +1890,7 @@ fn library_items_over_stdio() {
     match c.call(
         Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
             base_revision: rev,
-            item_id: "std.source.nope".into(),
+            item_id: "fx.source.nope".into(),
             names: Default::default(),
             component: None,
         }),
@@ -1897,7 +1906,7 @@ fn library_items_over_stdio() {
     match c.call(
         Req::InstantiateLibraryItem(pb::InstantiateLibraryItemRequest {
             base_revision: rev,
-            item_id: "std.source.tilt".into(),
+            item_id: "fx.source.tilt".into(),
             names: [
                 ("value".to_string(), "LeanAngle".to_string()),
                 ("source".to_string(), "lean sensor".to_string()),
@@ -1916,7 +1925,7 @@ fn library_items_over_stdio() {
     assert_eq!(p_after.concepts.len(), p_before.concepts.len());
     assert!(!p_after.concepts.iter().any(|x| x.name == "LeanAngle"));
     // a Concept item through the same request
-    let e = insert(&mut c, &mut events, "std.environment.humidity", vec![]);
+    let e = insert(&mut c, &mut events, "fx.humidity", vec![]);
     assert!(e
         .project
         .unwrap()
@@ -2003,7 +2012,7 @@ fn library_items_over_stdio() {
             .map(|x| x.id),
         Some(room_temp)
     );
-    assert_eq!(reopened.mappings.len(), 10);
+    assert_eq!(reopened.mappings.len(), 7);
     c.call(Req::Shutdown(pb::ShutdownRequest {}), &mut events);
 }
 
@@ -2063,7 +2072,7 @@ fn a_library_transaction_is_all_or_nothing() {
     // exactly one revision, one history entry, both objects placed
     let before = c.last_revision;
     let Resp::SystemEditApplied(e) =
-        instantiate(&mut c, &mut events, "std.source.temperature", vec![], None)
+        instantiate(&mut c, &mut events, "fx.source.temperature", vec![], None)
     else {
         panic!("instantiate")
     };
@@ -2147,21 +2156,21 @@ fn a_library_transaction_is_all_or_nothing() {
     let refusals = [
         // the language cannot spell the relationship's name
         (
-            "std.source.tilt",
+            "fx.source.tilt",
             vec![("source", "lean sensor")],
             "edit.invalid_name",
         ),
         // the chosen concept name is taken (never a silent `Temperature2`)
-        ("std.source.tilt", vec![("value", "Temperature")], "edit."),
+        ("fx.source.tilt", vec![("value", "Temperature")], "edit."),
         // the chosen relationship name is taken, after a good first step
         (
-            "std.source.tilt",
+            "fx.source.tilt",
             vec![("source", "temperatureInput")],
             "edit.",
         ),
         // a key the item does not create
         (
-            "std.source.tilt",
+            "fx.source.tilt",
             vec![("sensor", "X")],
             "library.invalid_plan",
         ),
@@ -2187,13 +2196,8 @@ fn a_library_transaction_is_all_or_nothing() {
     }
     // no identity was consumed by the refused first steps: the next
     // concept gets the id it would have got anyway
-    let Resp::SystemEditApplied(e) = instantiate(
-        &mut c,
-        &mut events,
-        "std.environment.humidity",
-        vec![],
-        None,
-    ) else {
+    let Resp::SystemEditApplied(e) = instantiate(&mut c, &mut events, "fx.humidity", vec![], None)
+    else {
         panic!("instantiate")
     };
     let humidity = e.outcome.unwrap().inner.unwrap().created_concept.unwrap();
@@ -2229,7 +2233,7 @@ fn a_library_transaction_is_all_or_nothing() {
     let Resp::SystemEditApplied(e) = instantiate(
         &mut c,
         &mut events,
-        "std.source.distance",
+        "fx.source.distance",
         vec![],
         Some(probe),
     ) else {
@@ -2286,7 +2290,7 @@ fn a_library_transaction_is_all_or_nothing() {
         "a body without an instance adds nothing to the flat design"
     );
     // an unknown component is refused whole
-    match instantiate(&mut c, &mut events, "std.source.tilt", vec![], Some(999)) {
+    match instantiate(&mut c, &mut events, "fx.source.tilt", vec![], Some(999)) {
         Resp::Error(e) => assert_eq!(e.code, "system.unknown_component"),
         other => panic!("expected a refusal, got {other:?}"),
     }

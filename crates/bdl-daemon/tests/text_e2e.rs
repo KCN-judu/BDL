@@ -23,6 +23,12 @@ impl Client {
     fn spawn() -> Client {
         let child = Command::new(env!("CARGO_BIN_EXE_bdld"))
             .arg("serve")
+            // the preset fixture beside the Standard Library: the Source
+            // item mechanics stay covered though std ships none (0.3)
+            .env(
+                "BDL_LIBRARIES",
+                concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/presets.toml"),
+            )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -1007,11 +1013,15 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     else {
         panic!()
     };
-    let std = &t.libraries[0];
+    let std = t
+        .libraries
+        .iter()
+        .find(|l| l.id == "fx")
+        .expect("the fixture library beside std");
     let temp = std
         .items
         .iter()
-        .find(|x| x.id == "std.source.temperature")
+        .find(|x| x.id == "fx.source.temperature")
         .expect("served");
     assert_eq!(temp.category, "source");
     assert_eq!(temp.display_name, "Temperature Input");
@@ -1042,13 +1052,13 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
         assert!(!legacy.libraries[0]
             .templates
             .iter()
-            .any(|x| x.id.starts_with("std.source.")));
+            .any(|x| x.id.starts_with("fx.source.")));
         // the legacy request knows no Source: a 0.16 `source_name` changes
         // nothing, and a Source id is not a template
         let Resp::Error(e) = c.call(Req::InstantiateConceptTemplate(
             pb::InstantiateConceptTemplateRequest {
                 base_revision: c.last_revision,
-                template_id: "std.source.temperature".into(),
+                template_id: "fx.source.temperature".into(),
                 name: None,
                 component: None,
                 source_name: Some("temperatureInput".into()),
@@ -1060,7 +1070,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
         let Resp::SystemEditApplied(e) = c.call(Req::InstantiateConceptTemplate(
             pb::InstantiateConceptTemplateRequest {
                 base_revision: c.last_revision,
-                template_id: "std.environment.humidity".into(),
+                template_id: "fx.humidity".into(),
                 name: None,
                 component: None,
                 source_name: Some("Hygrometer".into()),
@@ -1086,7 +1096,7 @@ fn a_source_item_is_two_ordinary_edits_in_one_commit_and_writes_the_unit_domain(
     let Resp::SystemEditApplied(e) = c.call(Req::InstantiateLibraryItem(
         pb::InstantiateLibraryItemRequest {
             base_revision: before,
-            item_id: "std.source.temperature".into(),
+            item_id: "fx.source.temperature".into(),
             names: [
                 ("value".to_string(), "Temperature".to_string()),
                 ("source".to_string(), "temperatureInput".to_string()),

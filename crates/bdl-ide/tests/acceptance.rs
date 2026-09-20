@@ -698,17 +698,17 @@ fn every_library_template_is_a_textual_completion_from_the_same_data() {
             t.id
         );
     }
-    let light = items
+    let angle = items
         .iter()
-        .find(|i| i.template.as_deref() == Some("std.environment.ambient_light"))
-        .expect("ambient light offered");
-    assert_eq!(light.kind, CompletionKind::Template);
-    assert_eq!(light.insert, "AmbientLight : Illuminance");
-    assert_eq!(light.replace, TextRange::new(8, 9));
-    assert!(light
+        .find(|i| i.template.as_deref() == Some("std.quantity.angle"))
+        .expect("angle offered");
+    assert_eq!(angle.kind, CompletionKind::Template);
+    assert_eq!(angle.insert, "Angle : Angle");
+    assert_eq!(angle.replace, TextRange::new(8, 9));
+    assert!(angle
         .documentation
         .as_deref()
-        .is_some_and(|d| d.contains("Ambient Light")));
+        .is_some_and(|d| d.contains("Angle")));
 
     // With no prefix, everything is offered — the whole library is one
     // list on both surfaces.

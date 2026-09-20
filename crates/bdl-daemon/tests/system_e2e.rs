@@ -24,6 +24,12 @@ impl Client {
     fn spawn() -> Client {
         let child = Command::new(env!("CARGO_BIN_EXE_bdld"))
             .arg("serve")
+            // the preset fixture beside the Standard Library: the Source
+            // item mechanics stay covered though std ships none (0.3)
+            .env(
+                "BDL_LIBRARIES",
+                concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/presets.toml"),
+            )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -1603,7 +1609,7 @@ fn a_source_is_created_over_a_chosen_concept() {
         c.call(Req::ListSourceCandidates(pb::ListSourceCandidatesRequest {
             revision: c.last_revision,
             component: None,
-            item_id: "std.source.temperature".into(),
+            item_id: "fx.source.temperature".into(),
         }))
     else {
         panic!()
@@ -1896,7 +1902,7 @@ fn a_source_is_created_over_a_chosen_concept() {
         c.call(Req::ListSourceCandidates(pb::ListSourceCandidatesRequest {
             revision: c.last_revision,
             component: Some(probe),
-            item_id: "std.source.tilt".into(),
+            item_id: "fx.source.tilt".into(),
         }))
     else {
         panic!()

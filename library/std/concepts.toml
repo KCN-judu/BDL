@@ -1,601 +1,299 @@
-# BDL Standard Library — reusable authoring fragments built from ordinary
-# BDL structures (docs/spec/concept-library.md).
+# BDL Standard Library — the value categories a concept is created from
+# (docs/spec/concept-library.md).
 #
-# [[template]] — a Concept item: instantiating it produces one
-# CreateConcept edit with these defaults and a fresh SemanticId.
-# [[source]] — a Source item: a PRESET for creating a Source — a value
-# entering the behavior model from the environment, `<source> : () -> C`
-# with no definition — over a concept the designer chooses: an existing
-# concept of the design, or a new one created in the same transaction.
-# `value` describes the new concept the preset suggests (name, value form,
-# unit) and `relationship` the Source it suggests (name); Studio's Source
-# sheet prefills them and ranks existing concepts by the value form.  The
-# item owns no identity.  (The legacy `InstantiateLibraryItem` request
-# still creates both objects at once from the same data.)  Nothing here
-# is a sensor primitive, an I/O operation, a kernel type, a device or a
-# global identity; a project never depends on this file after the objects
-# exist.  Display names and descriptions are the canonical English;
-# Studio localizes them by id.
+# A [[template]] is a Concept item: a *value category* — a value form
+# (on / off, count, a level, decide later) or a named physical quantity of
+# the shared vocabulary (bdl_model::quantity) — and never a product-specific
+# concept.  The Library provides the category; the project provides the
+# semantic identity and its name: choosing *Angle* asks for a name
+# (`LidAngle`) before anything is created, and the concept it makes is an
+# ordinary `CreateConcept` with that name and the category's representation
+# (Studio's concept sheet, ADR-0041).  `default_name` is the name the legacy
+# path (`InstantiateLibraryItem` without a chosen name) and the textual
+# completion (`concept Ang…` → `Angle : Angle`) fall back to; a client that
+# asks for a name never uses it.
 #
-# representation: { quantity = "<quantity id>" } — from the shared quantity
-# vocabulary (bdl_model::quantity), "boolean", "count", or "open" (decide
-# later).  unit: a symbol from the shared unit table (bdl-elab), shown as
-# the default; the dimension is the quantity's, never the unit's.
-# role_hint: input | output | either — authoring/discovery only.
+# The units a quantity is measured in are the compiler's (the unit registry,
+# served with the vocabulary as `QuantityView.units`); a concept stores its
+# dimension and no unit, so `unit` here is the symbol a row shows, nothing
+# more — and it is left empty where the registry has no symbol for the
+# dimension yet (a composite such as rad/s), so the row shows the
+# vocabulary's own display symbol.
+#
+# `keywords` are the search synonyms in English: what a designer types when
+# looking for the category — old product names (tilt, servo, encoder), the
+# units, the dimension's words.  Localized names, descriptions and tags live
+# in locale/library/std.json (presentation only, ADR-0031).
+#
+# Nothing here is a kernel type, a device or a global identity; a project
+# never depends on this file after the objects exist.  There is no Source
+# item: a Source is created on the Source sheet over a concept the designer
+# chooses (existing, or new — from these same categories).
 
 [library]
 id = "std"
 name = "BDL Standard Library"
 schema_version = 2
-version = "0.2"
+version = "0.3"
 
-# ---- environment ----------------------------------------------------------
-
-[[template]]
-id = "std.environment.temperature"
-display_name = "Temperature"
-default_name = "Temperature"
-description = "How warm something is: the air, a room, a motor."
-category = "environment"
-role_hint = "input"
-representation = { quantity = "temperature" }
-unit = "K"
-keywords = ["temp", "thermal", "heat", "warm", "cold", "K", "°C", "celsius"]
-icon = "temperature"
+# ---- value forms ------------------------------------------------------------
 
 [[template]]
-id = "std.environment.ambient_light"
-display_name = "Ambient Light"
-default_name = "AmbientLight"
-description = "How much light falls on the product from its surroundings."
-category = "environment"
-role_hint = "input"
-representation = { quantity = "illuminance" }
-unit = "lx"
-keywords = ["light", "lux", "brightness", "daylight", "dark", "photocell"]
-icon = "light"
-
-[[template]]
-id = "std.environment.humidity"
-display_name = "Humidity"
-default_name = "Humidity"
-description = "Relative humidity of the air, 0 (dry) to 1 (saturated)."
-category = "environment"
-role_hint = "input"
-representation = { quantity = "scalar" }
-keywords = ["moisture", "damp", "rh", "relative humidity", "%"]
-icon = "humidity"
-
-[[template]]
-id = "std.environment.air_pressure"
-display_name = "Air Pressure"
-default_name = "AirPressure"
-description = "Atmospheric pressure; falls with altitude, moves with weather."
-category = "environment"
-role_hint = "input"
-representation = { quantity = "pressure" }
-unit = "Pa"
-keywords = ["barometer", "atmospheric", "altitude", "weather", "hPa", "kPa"]
-icon = "pressure"
-
-[[template]]
-id = "std.environment.sound_level"
-display_name = "Sound Level"
-default_name = "SoundLevel"
-description = "How loud the surroundings are, as a level from 0 (silence) to 1."
-category = "environment"
-role_hint = "input"
-representation = { quantity = "scalar" }
-keywords = ["noise", "loud", "microphone", "audio", "dB", "volume"]
-icon = "sound"
-
-# ---- human interaction ----------------------------------------------------
-
-[[template]]
-id = "std.human.button_pressed"
-display_name = "Button Pressed"
-default_name = "ButtonPressed"
-description = "Whether a button is being held down right now."
-category = "human"
-role_hint = "input"
+id = "std.value.boolean"
+display_name = "On / off"
+default_name = "Switch"
+description = "A value that is either true or false: on or off, pressed or not, present or absent."
+category = "form"
+role_hint = "either"
 representation = "boolean"
-keywords = ["button", "press", "push", "click", "key", "held"]
-icon = "button"
-
-[[template]]
-id = "std.human.touch"
-display_name = "Touch"
-default_name = "Touch"
-description = "Whether a surface is being touched."
-category = "human"
-role_hint = "input"
-representation = "boolean"
-keywords = ["touch", "contact", "capacitive", "tap", "finger"]
-icon = "touch"
-
-[[template]]
-id = "std.human.switch_state"
-display_name = "Switch State"
-default_name = "SwitchState"
-description = "Whether a toggle switch is on."
-category = "human"
-role_hint = "input"
-representation = "boolean"
-keywords = ["switch", "toggle", "on", "off", "enabled"]
+keywords = ["bool", "boolean", "true", "false", "flag", "toggle", "switch", "button", "pressed", "held", "touch", "contact", "state"]
 icon = "switch"
 
 [[template]]
-id = "std.human.dial_position"
-display_name = "Dial Position"
-default_name = "DialPosition"
-description = "How far a knob has been turned."
-category = "human"
-role_hint = "input"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["dial", "knob", "rotary", "potentiometer", "turn"]
-icon = "dial"
-
-[[template]]
-id = "std.human.slider_position"
-display_name = "Slider Position"
-default_name = "SliderPosition"
-description = "Where a slider sits between its two ends, 0 to 1."
-category = "human"
-role_hint = "input"
-representation = { quantity = "scalar" }
-keywords = ["slider", "fader", "level", "position", "potentiometer"]
-icon = "slider"
-
-# ---- geometry and motion --------------------------------------------------
-
-[[template]]
-id = "std.motion.distance"
-display_name = "Distance"
-default_name = "Distance"
-description = "How far away something is."
-category = "motion"
-role_hint = "input"
-representation = { quantity = "length" }
-unit = "m"
-keywords = ["range", "proximity", "far", "near", "ultrasonic", "lidar", "cm", "mm"]
-icon = "distance"
-
-[[template]]
-id = "std.motion.position"
-display_name = "Position"
-default_name = "Position"
-description = "Where something is along one axis."
-category = "motion"
+id = "std.value.count"
+display_name = "Count"
+default_name = "Count"
+description = "A whole number of things: pulses, presses, items, steps."
+category = "form"
 role_hint = "either"
-representation = { quantity = "length" }
-unit = "m"
-keywords = ["location", "axis", "offset", "displacement", "mm"]
-icon = "position"
+representation = "count"
+keywords = ["count", "integer", "number of", "pulses", "presses", "items", "steps", "tally"]
+icon = "count"
 
 [[template]]
-id = "std.motion.angle"
+id = "std.value.level"
+display_name = "Level"
+default_name = "Level"
+description = "A plain number with no unit: a level from 0 to 1, a ratio, a factor, a percentage."
+category = "form"
+role_hint = "either"
+representation = { quantity = "scalar" }
+keywords = ["scalar", "ratio", "factor", "percent", "%", "fraction", "dimensionless", "brightness", "volume", "humidity", "battery", "speed setting", "intensity", "opening", "dimmer", "fan", "heater", "power setting"]
+icon = "level"
+
+[[template]]
+id = "std.value.open"
+display_name = "Decide later"
+default_name = "Value"
+description = "A concept whose value form is not chosen yet; relationships can already use it, and the form is decided once known."
+category = "form"
+role_hint = "either"
+representation = "open"
+keywords = ["open", "unknown", "later", "undecided", "analog", "external", "raw", "host", "network"]
+icon = "open"
+
+# ---- physical quantities ----------------------------------------------------
+# One per named quantity of the shared vocabulary (bdl_model::quantity),
+# in its order: the base dimensions, then the derived ones.
+
+[[template]]
+id = "std.quantity.angle"
 display_name = "Angle"
 default_name = "Angle"
-description = "How far something is rotated."
-category = "motion"
+description = "How far something is turned: a tilt, a heading, a dial, a lid, a shaft."
+category = "quantity"
 role_hint = "either"
 representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["rotation", "degrees", "radians", "heading", "bearing"]
+unit = "rad"
+keywords = ["angle", "rotation", "turn", "tilt", "orientation", "heading", "dial", "servo", "encoder", "shaft", "lid", "rad", "deg", "degrees", "radians", "°"]
 icon = "angle"
 
 [[template]]
-id = "std.motion.tilt"
-display_name = "Tilt"
-default_name = "Tilt"
-description = "How far something leans from level."
-category = "motion"
-role_hint = "input"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["lean", "incline", "pitch", "roll", "level", "accelerometer"]
-icon = "tilt"
+id = "std.quantity.length"
+display_name = "Length"
+default_name = "Length"
+description = "A distance or a position along a line: how far, how long, how high."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "length" }
+unit = "m"
+keywords = ["length", "distance", "position", "range", "height", "width", "depth", "travel", "obstacle", "proximity", "m", "mm", "cm", "km", "inch", "ft", "metre", "meter"]
+icon = "length"
 
 [[template]]
-id = "std.motion.speed"
+id = "std.quantity.time"
+display_name = "Time"
+default_name = "Duration"
+description = "A duration or an interval: how long something takes or lasts."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "time" }
+unit = "s"
+keywords = ["time", "duration", "interval", "delay", "period", "timeout", "elapsed", "s", "ms", "min", "h", "seconds", "minutes", "hours"]
+icon = "time"
+
+[[template]]
+id = "std.quantity.mass"
+display_name = "Mass"
+default_name = "Mass"
+description = "How much matter something has: a load, a weight on a scale."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "mass" }
+unit = "kg"
+keywords = ["mass", "weight", "load", "scale", "kg", "g", "gram", "kilogram"]
+icon = "mass"
+
+[[template]]
+id = "std.quantity.current"
+display_name = "Current"
+default_name = "Current"
+description = "Electric current: how much charge flows, as a motor or a supply draws."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "current" }
+unit = "A"
+keywords = ["current", "electric", "amps", "ampere", "draw", "A", "mA", "milliamp"]
+icon = "current"
+
+[[template]]
+id = "std.quantity.temperature"
+display_name = "Temperature"
+default_name = "Temperature"
+description = "How warm something is: the air, a room, a motor, a surface."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temperature", "temp", "thermal", "heat", "warm", "cold", "hot", "thermometer", "K", "kelvin", "°C", "celsius"]
+icon = "temperature"
+
+[[template]]
+id = "std.quantity.amount"
+display_name = "Amount of substance"
+default_name = "Amount"
+description = "How much of a substance, counted in moles."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "amount" }
+unit = "mol"
+keywords = ["amount", "substance", "mol", "mole", "moles", "chemical"]
+icon = "amount"
+
+[[template]]
+id = "std.quantity.luminous_intensity"
+display_name = "Luminous intensity"
+default_name = "LuminousIntensity"
+description = "How bright a light source is in one direction."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "luminous_intensity" }
+unit = "cd"
+keywords = ["luminous", "intensity", "candela", "cd", "light source", "lamp"]
+icon = "light"
+
+[[template]]
+id = "std.quantity.speed"
 display_name = "Speed"
 default_name = "Speed"
-description = "How fast something moves."
-category = "motion"
+description = "How fast something moves along a line: a vehicle, a belt, a wind."
+category = "quantity"
 role_hint = "either"
 representation = { quantity = "speed" }
-keywords = ["velocity", "fast", "slow", "m/s", "km/h", "rate"]
+keywords = ["speed", "velocity", "pace", "rate", "m/s", "km/h", "wheel", "vehicle", "conveyor", "wind"]
 icon = "speed"
 
 [[template]]
-id = "std.motion.acceleration"
+id = "std.quantity.acceleration"
 display_name = "Acceleration"
 default_name = "Acceleration"
-description = "How quickly speed is changing; a shock or a bump is a spike here."
-category = "motion"
-role_hint = "input"
+description = "How quickly speed changes: a shock, a tilt sensed by gravity, a vehicle pulling away."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "acceleration" }
-keywords = ["accelerometer", "shock", "bump", "g", "m/s²", "impact"]
+keywords = ["acceleration", "accelerometer", "g-force", "shock", "vibration", "m/s²", "imu"]
 icon = "acceleration"
 
 [[template]]
-id = "std.motion.angular_velocity"
-display_name = "Angular Velocity"
+id = "std.quantity.angular_velocity"
+display_name = "Angular velocity"
 default_name = "AngularVelocity"
-description = "How fast something is turning."
-category = "motion"
-role_hint = "input"
+description = "How fast something turns: a shaft, a wheel, a gyroscope's reading."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "angular_velocity" }
-keywords = ["gyro", "gyroscope", "spin", "rotation rate", "rad/s", "rpm", "yaw rate"]
+keywords = ["angular velocity", "angular speed", "rotation speed", "rpm", "spin", "gyro", "gyroscope", "shaft", "wheel", "rad/s", "deg/s", "revolutions", "motor speed"]
 icon = "rotation"
 
 [[template]]
-id = "std.motion.orientation"
-display_name = "Orientation"
-default_name = "Orientation"
-description = "Which way something faces, as a heading."
-category = "motion"
-role_hint = "input"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["heading", "compass", "yaw", "facing", "magnetometer"]
-icon = "compass"
-
-# ---- mechanical -----------------------------------------------------------
+id = "std.quantity.frequency"
+display_name = "Frequency"
+default_name = "Frequency"
+description = "How often something repeats each second: a pitch, a pulse rate, a blink."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "frequency" }
+unit = "Hz"
+keywords = ["frequency", "rate", "pitch", "tone", "hertz", "Hz", "kHz", "pulse", "blink", "cycles"]
+icon = "frequency"
 
 [[template]]
-id = "std.mechanical.force"
+id = "std.quantity.force"
 display_name = "Force"
 default_name = "Force"
-description = "How hard something pushes or pulls."
-category = "mechanical"
-role_hint = "input"
+description = "A push or a pull: a load cell's reading, a grip, a spring."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "force" }
 unit = "N"
-keywords = ["load", "push", "pull", "weight", "newton", "load cell"]
+keywords = ["force", "push", "pull", "load cell", "grip", "spring", "thrust", "N", "newton"]
 icon = "force"
 
 [[template]]
-id = "std.mechanical.pressure"
+id = "std.quantity.pressure"
 display_name = "Pressure"
 default_name = "Pressure"
-description = "Force over an area: a tyre, a pipe, a grip."
-category = "mechanical"
-role_hint = "input"
+description = "Force over an area: the air, a fluid, a touch on a pad."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "pressure" }
 unit = "Pa"
-keywords = ["psi", "bar", "kPa", "pneumatic", "hydraulic", "tyre", "grip"]
+keywords = ["pressure", "barometer", "atmospheric", "altitude", "weather", "fluid", "tyre", "pad", "Pa", "kPa", "hPa", "bar", "psi"]
 icon = "pressure"
 
 [[template]]
-id = "std.mechanical.torque"
+id = "std.quantity.torque"
 display_name = "Torque"
 default_name = "Torque"
-description = "Turning force on a shaft."
-category = "mechanical"
+description = "A turning force: what a motor delivers to a shaft."
+category = "quantity"
 role_hint = "either"
 representation = { quantity = "torque" }
-keywords = ["twist", "moment", "shaft", "N·m", "Nm"]
+keywords = ["torque", "moment", "turning force", "motor", "shaft", "N·m", "Nm", "newton metre"]
 icon = "torque"
 
-# ---- electrical and system ------------------------------------------------
+[[template]]
+id = "std.quantity.power"
+display_name = "Power"
+default_name = "Power"
+description = "Energy per second: what a heater, a motor or a lamp draws or delivers."
+category = "quantity"
+role_hint = "either"
+representation = { quantity = "power" }
+unit = "W"
+keywords = ["power", "watt", "W", "kW", "heater", "consumption", "wattage"]
+icon = "power"
 
 [[template]]
-id = "std.electrical.voltage"
+id = "std.quantity.voltage"
 display_name = "Voltage"
 default_name = "Voltage"
-description = "Electrical potential at a point: a rail, a cell, a sense line."
-category = "electrical"
-role_hint = "input"
+description = "Electric potential: a battery, a supply rail, an analog reading in volts."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "voltage" }
 unit = "V"
-keywords = ["volt", "potential", "rail", "supply", "mV", "adc"]
-icon = "electrical"
+keywords = ["voltage", "volts", "potential", "battery", "supply", "rail", "analog", "adc", "V", "mV"]
+icon = "voltage"
 
 [[template]]
-id = "std.electrical.current"
-display_name = "Current"
-default_name = "Current"
-description = "Electrical current through a path."
-category = "electrical"
-role_hint = "input"
-representation = { quantity = "current" }
-unit = "A"
-keywords = ["amp", "ampere", "mA", "draw", "load", "shunt"]
-icon = "electrical"
-
-[[template]]
-id = "std.electrical.battery_level"
-display_name = "Battery Level"
-default_name = "BatteryLevel"
-description = "How full the battery is, 0 (empty) to 1 (full)."
-category = "electrical"
-role_hint = "input"
-representation = { quantity = "scalar" }
-keywords = ["battery", "charge", "soc", "fuel gauge", "%", "low battery"]
-icon = "battery"
-
-# ---- visual and display ---------------------------------------------------
-
-[[template]]
-id = "std.output.brightness"
-display_name = "Brightness"
-default_name = "Brightness"
-description = "How bright a light should be, 0 (off) to 1 (full)."
-category = "visual"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["light", "led", "lamp", "dim", "level", "pwm", "intensity"]
-icon = "light"
-
-[[template]]
-id = "std.output.color"
-display_name = "Color"
-default_name = "Color"
-description = "Which colour a light shows, as a hue around the wheel."
-category = "visual"
-role_hint = "output"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["colour", "hue", "rgb", "led", "tint"]
-icon = "color"
-
-[[template]]
-id = "std.output.display_value"
-display_name = "Display Value"
-default_name = "DisplayValue"
-description = "A number shown on a display."
-category = "visual"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["display", "screen", "readout", "digits", "show"]
-icon = "display"
-
-# ---- actuation ------------------------------------------------------------
-
-[[template]]
-id = "std.actuator.motor_speed"
-display_name = "Motor Speed"
-default_name = "MotorSpeed"
-description = "How fast a motor should turn, as a share of its full speed, −1 to 1."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["motor", "drive", "pwm", "rpm", "throttle", "h-bridge"]
-icon = "motor"
-
-[[template]]
-id = "std.actuator.motor_angle"
-display_name = "Motor Angle"
-default_name = "MotorAngle"
-description = "The angle a motor or stepper should hold."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["motor", "stepper", "position", "rotation", "target"]
-icon = "motor"
-
-[[template]]
-id = "std.actuator.servo_position"
-display_name = "Servo Position"
-default_name = "ServoPosition"
-description = "The angle a servo arm should move to."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "angle" }
-unit = "deg"
-keywords = ["servo", "arm", "sg90", "pwm", "angle"]
-icon = "servo"
-
-[[template]]
-id = "std.actuator.vibration_intensity"
-display_name = "Vibration Intensity"
-default_name = "VibrationIntensity"
-description = "How strongly a haptic motor should buzz, 0 to 1."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["haptic", "buzz", "rumble", "vibrate", "motor"]
-icon = "vibration"
-
-[[template]]
-id = "std.actuator.heater_power"
-display_name = "Heater Power"
-default_name = "HeaterPower"
-description = "How much a heater should be on, 0 to 1."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["heat", "heater", "element", "warm", "pwm", "duty"]
-icon = "heat"
-
-[[template]]
-id = "std.actuator.fan_speed"
-display_name = "Fan Speed"
-default_name = "FanSpeed"
-description = "How fast a fan should run, 0 (off) to 1 (full)."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["fan", "cooling", "blower", "pwm", "airflow"]
-icon = "fan"
-
-[[template]]
-id = "std.actuator.valve_opening"
-display_name = "Valve Opening"
-default_name = "ValveOpening"
-description = "How far a valve is open, 0 (closed) to 1 (fully open)."
-category = "actuation"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["valve", "flow", "open", "closed", "solenoid"]
-icon = "valve"
-
-# ---- audio ----------------------------------------------------------------
-
-[[template]]
-id = "std.audio.volume"
-display_name = "Volume"
-default_name = "Volume"
-description = "How loud the product should play, 0 (silent) to 1 (full)."
-category = "audio"
-role_hint = "output"
-representation = { quantity = "scalar" }
-keywords = ["loudness", "speaker", "gain", "mute", "audio"]
-icon = "sound"
-
-[[template]]
-id = "std.audio.pitch"
-display_name = "Pitch"
-default_name = "Pitch"
-description = "The frequency of a tone to play."
-category = "audio"
-role_hint = "output"
-representation = { quantity = "frequency" }
-unit = "Hz"
-keywords = ["tone", "note", "frequency", "buzzer", "beep", "Hz"]
-icon = "sound"
-
-# ---- sources ----------------------------------------------------------------
-#
-# A Source is a value entering the behavior model from the environment,
-# observed once per activation: `<name> : () -> C`, no definition.  Which
-# concept `C` it provides is the designer's choice, never this file's — an
-# existing concept of the design (RoomTemperature, MotorTemperature: two
-# identities of one value form stay two choices) or a new one created in
-# the same transaction.  Each item below is a preset for that choice: the
-# words on the row, a suggested Source name, and the new concept it would
-# suggest (name, value form, unit); existing concepts of that value form
-# are listed first.  The canvas shows the result as a Source because of its
-# shape and state (ADR-0032), not because of anything here.  An input is
-# not a sensor — External Input is a host or network value — and what
-# realizes it (an I2C sensor, an ADC channel, a GPIO pin; FV Phase 13) is
-# deployment's, never the item's.  Display text is the canonical English;
-# Studio localizes by id (locale/library/std.json).
-
-[[source]]
-id = "std.source.temperature"
-display_name = "Temperature Input"
-description = "A temperature the environment provides — a room, a surface, the air — read once per activation."
-category = "environment"
-keywords = ["temp", "thermal", "thermometer", "thermistor", "K", "°C", "celsius", "sensor", "input", "source"]
-icon = "temperature"
-[source.value]
-default_name = "Temperature"
-description = "How warm something is."
-representation = { quantity = "temperature" }
-unit = "K"
-[source.relationship]
-default_name = "temperatureInput"
-description = "Provides the temperature, one reading per activation."
-
-[[source]]
-id = "std.source.tilt"
-display_name = "Tilt Input"
-description = "How far the product leans from level, as the environment provides it — a lamp head, a handheld, a vehicle body."
-category = "motion"
-keywords = ["tilt", "lean", "incline", "pitch", "roll", "accelerometer", "imu", "level", "sensor", "input", "source"]
-icon = "tilt"
-[source.value]
-default_name = "Tilt"
-description = "How far something leans from level."
-representation = { quantity = "angle" }
-unit = "deg"
-[source.relationship]
-default_name = "tiltInput"
-description = "Provides the tilt, one reading per activation."
-
-[[source]]
-id = "std.source.distance"
-display_name = "Distance Input"
-description = "How far away the nearest thing is, as the environment provides it — an obstacle, a hand, a fill level. Which sensor measures it is a deployment choice."
-category = "motion"
-keywords = ["range", "proximity", "far", "near", "obstacle", "ultrasonic", "lidar", "tof", "sensor", "input", "source"]
-icon = "distance"
-[source.value]
-default_name = "Distance"
-description = "How far away something is."
-representation = { quantity = "length" }
-unit = "m"
-[source.relationship]
-default_name = "distanceInput"
-description = "Provides the distance, one reading per activation."
-
-[[source]]
-id = "std.source.ambient_light"
-display_name = "Ambient Light Input"
-description = "How much light falls on the product, as the environment provides it — for dimming, waking a display, daylight detection."
-category = "environment"
-keywords = ["light", "lux", "daylight", "dark", "photocell", "photodiode", "sensor", "input", "source"]
-icon = "light"
-[source.value]
-default_name = "AmbientLight"
-description = "The illuminance of the surroundings."
+id = "std.quantity.illuminance"
+display_name = "Illuminance"
+default_name = "Illuminance"
+description = "How much light falls on a surface: ambient light, daylight, a photocell's reading."
+category = "quantity"
+role_hint = "either"
 representation = { quantity = "illuminance" }
 unit = "lx"
-[source.relationship]
-default_name = "ambientLightInput"
-description = "Provides the ambient light level, one reading per activation."
-
-[[source]]
-id = "std.source.button"
-display_name = "Button Input"
-description = "Whether a button is held or a switch is on right now, as the environment provides it each activation — a stable state, never an event."
-category = "human"
-keywords = ["button", "switch", "press", "push", "key", "held", "input", "source"]
-icon = "button"
-[source.value]
-default_name = "ButtonHeld"
-description = "Whether the button is being held down."
-representation = "boolean"
-[source.relationship]
-default_name = "buttonInput"
-description = "Provides the button's state, one reading per activation."
-
-[[source]]
-id = "std.source.encoder"
-display_name = "Encoder Input"
-description = "The angle a shaft or knob has turned to, as the environment provides it. Counting pulses is the deployment's job."
-category = "human"
-keywords = ["encoder", "rotary", "knob", "shaft", "position", "angle", "quadrature", "input", "source"]
-icon = "dial"
-[source.value]
-default_name = "ShaftAngle"
-description = "The angle the shaft or knob has turned to."
-representation = { quantity = "angle" }
-unit = "deg"
-[source.relationship]
-default_name = "encoderInput"
-description = "Provides the encoder's position, one reading per activation."
-
-[[source]]
-id = "std.source.analog"
-display_name = "Analog Input"
-description = "A generic analog reading the behavior interprets. The value's kind is left to you: choose a value form for the concept once you know what the input measures."
-category = "electrical"
-keywords = ["analog", "adc", "voltage", "reading", "generic", "input", "source"]
-icon = "electrical"
-[source.value]
-default_name = "AnalogValue"
-description = "What the analog input measures — decide the value form."
-representation = "open"
-[source.relationship]
-default_name = "analogInput"
-description = "Provides the analog reading, one per activation."
-
-[[source]]
-id = "std.source.external"
-display_name = "External Input"
-description = "A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. An input is not always a sensor."
-category = "external"
-keywords = ["host", "network", "remote", "simulation", "external", "provided", "input", "source"]
-icon = "external"
-[source.value]
-default_name = "ExternalValue"
-description = "The value the environment provides — decide its value form."
-representation = "open"
-[source.relationship]
-default_name = "externalInput"
-description = "Provides the external value, one per activation."
+keywords = ["illuminance", "light", "lux", "lx", "ambient", "daylight", "dark", "photocell", "light sensor"]
+icon = "light"

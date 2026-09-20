@@ -1,0 +1,120 @@
+# A schema-2 library with Source items, served beside the Standard Library
+# through `BDL_LIBRARIES` by the daemon's end-to-end tests: the preset
+# mechanics (ListSourceCandidates with an item, the legacy
+# InstantiateLibraryItem of a Source item) work for any library that ships
+# them, whether or not the standard one does.
+
+[library]
+id = "fx"
+name = "Fixture Presets"
+schema_version = 2
+version = "0.1"
+
+[[template]]
+id = "fx.temperature"
+display_name = "Temperature"
+default_name = "Temperature"
+description = "How warm something is."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "temperature" }
+unit = "K"
+keywords = ["temp"]
+icon = "temperature"
+
+[[template]]
+id = "fx.humidity"
+display_name = "Humidity"
+default_name = "Humidity"
+description = "Relative humidity, 0 to 1."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "scalar" }
+keywords = ["moisture"]
+icon = "humidity"
+
+[[template]]
+id = "fx.ambient_light"
+display_name = "Ambient Light"
+default_name = "AmbientLight"
+description = "How much light falls on the product."
+category = "environment"
+role_hint = "input"
+representation = { quantity = "illuminance" }
+unit = "lx"
+keywords = ["lux"]
+icon = "light"
+
+[[source]]
+id = "fx.source.temperature"
+display_name = "Temperature Input"
+description = "A temperature the environment provides."
+category = "environment"
+keywords = ["temp", "sensor", "input"]
+icon = "temperature"
+[source.value]
+default_name = "Temperature"
+description = "How warm something is."
+representation = { quantity = "temperature" }
+unit = "K"
+[source.relationship]
+default_name = "temperatureInput"
+description = "Provides the temperature."
+
+[[source]]
+id = "fx.source.tilt"
+display_name = "Tilt Input"
+description = "How far the product is tilted."
+category = "motion"
+keywords = ["tilt", "angle", "input"]
+icon = "tilt"
+[source.value]
+default_name = "Tilt"
+description = "How far the product is tilted from level."
+representation = { quantity = "angle" }
+unit = "deg"
+[source.relationship]
+default_name = "tiltInput"
+description = "Provides the tilt."
+
+[[source]]
+id = "fx.source.distance"
+display_name = "Distance Input"
+description = "How far away the nearest thing is."
+category = "motion"
+keywords = ["distance", "range", "input"]
+icon = "distance"
+[source.value]
+default_name = "Distance"
+description = "How far away the nearest thing is."
+representation = { quantity = "length" }
+unit = "m"
+[source.relationship]
+default_name = "distanceInput"
+description = "Provides the distance."
+
+[[source]]
+id = "fx.source.analog"
+display_name = "Analog Input"
+description = "A level read from an analog pin."
+category = "electrical"
+keywords = ["adc", "input"]
+icon = "analog"
+[source.value]
+default_name = "AnalogValue"
+representation = "open"
+[source.relationship]
+default_name = "analogInput"
+
+[[source]]
+id = "fx.source.external"
+display_name = "External Input"
+description = "A value a host provides."
+category = "external"
+keywords = ["host", "input"]
+icon = "external"
+[source.value]
+default_name = "ExternalValue"
+representation = "open"
+[source.relationship]
+default_name = "externalInput"

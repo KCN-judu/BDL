@@ -2,532 +2,268 @@
   "$schema_version": 1,
   "$description": "Localized presentation of the BDL Standard Library items (library/std/concepts.toml), keyed by item id. English is canonical and lives in the TOML; these entries are the zh-Hans and ja names, descriptions and search tags. Generated BDL source and identifiers never change with the locale. scripts/gen_library_l10n.py writes them into the Studio ARB catalogs as libItem_* keys.",
   "items": {
-    "std.environment.temperature": {
+    "std.value.boolean": {
       "zh-Hans": {
-        "name": "温度",
-        "description": "某物有多热：空气、房间、电机。",
-        "tags": "温度 热 冷 热量"
+        "name": "开 / 关",
+        "description": "非真即假的值：开或关、按下或未按下、有或无。",
+        "tags": "布尔 开关 真 假 按钮 按下 触摸 状态 标志"
       },
       "ja": {
-        "name": "温度",
-        "description": "空気・部屋・モーターなど、何かがどれだけ温かいか。",
-        "tags": "温度 熱 冷たさ"
+        "name": "オン / オフ",
+        "description": "真か偽かの値：オンかオフ、押されているか否か、有るか無いか。",
+        "tags": "ブール 真偽 スイッチ ボタン 押下 タッチ 状態 フラグ"
       }
     },
-    "std.environment.ambient_light": {
+    "std.value.count": {
       "zh-Hans": {
-        "name": "环境光",
-        "description": "周围环境照射到产品上的光量。",
-        "tags": "光 照度 亮度 日光 黑暗"
+        "name": "计数",
+        "description": "事物的整数个数：脉冲、按压、件数、步数。",
+        "tags": "计数 整数 个数 脉冲 按压 次数 步数"
       },
       "ja": {
-        "name": "環境光",
-        "description": "周囲から製品に当たる光の量。",
-        "tags": "光 照度 明るさ 日光 暗さ"
+        "name": "個数",
+        "description": "物の整数の数：パルス、押下、個数、ステップ。",
+        "tags": "個数 カウント 整数 パルス 回数 ステップ"
       }
     },
-    "std.environment.humidity": {
+    "std.value.level": {
       "zh-Hans": {
-        "name": "湿度",
-        "description": "空气的相对湿度，0（干燥）到 1（饱和）。",
-        "tags": "湿度 潮湿 水分"
+        "name": "水平值",
+        "description": "无单位的普通数：0 到 1 的水平、比率、系数、百分比。",
+        "tags": "标量 比率 系数 百分比 无量纲 亮度 音量 湿度 电量 强度 开度"
       },
       "ja": {
-        "name": "湿度",
-        "description": "空気の相対湿度。0（乾燥）から 1（飽和）。",
-        "tags": "湿度 湿気 水分"
+        "name": "レベル",
+        "description": "単位のない数：0 から 1 のレベル、比率、係数、百分率。",
+        "tags": "スカラー 比率 係数 パーセント 無次元 明るさ 音量 湿度 バッテリー 強度 開度"
       }
     },
-    "std.environment.air_pressure": {
+    "std.value.open": {
       "zh-Hans": {
-        "name": "气压",
-        "description": "大气压力；随海拔降低，随天气变化。",
-        "tags": "气压 压力 大气 海拔 天气"
+        "name": "稍后决定",
+        "description": "尚未选定值形式的概念；关系已可使用它，形式在明确后再定。",
+        "tags": "未定 稍后 未知 模拟 外部 原始 主机 网络"
       },
       "ja": {
-        "name": "気圧",
-        "description": "大気圧。高度で下がり、天候で変わる。",
-        "tags": "気圧 圧力 大気 高度 天気"
+        "name": "あとで決める",
+        "description": "値の形をまだ選んでいないコンセプト。関係はすでに使え、形は分かってから決める。",
+        "tags": "未定 あとで 不明 アナログ 外部 生データ ホスト ネットワーク"
       }
     },
-    "std.environment.sound_level": {
-      "zh-Hans": {
-        "name": "声音强度",
-        "description": "周围环境有多吵，从 0（安静）到 1 的等级。",
-        "tags": "声音 噪声 音量 麦克风"
-      },
-      "ja": {
-        "name": "音の大きさ",
-        "description": "周囲がどれだけ騒がしいか。0（無音）から 1 のレベル。",
-        "tags": "音 騒音 音量 マイク"
-      }
-    },
-    "std.human.button_pressed": {
-      "zh-Hans": {
-        "name": "按钮按下",
-        "description": "此刻按钮是否被按住。",
-        "tags": "按钮 按下 按键 点击"
-      },
-      "ja": {
-        "name": "ボタン押下",
-        "description": "いまボタンが押されているかどうか。",
-        "tags": "ボタン 押下 キー クリック"
-      }
-    },
-    "std.human.touch": {
-      "zh-Hans": {
-        "name": "触摸",
-        "description": "表面是否正被触摸。",
-        "tags": "触摸 触控 电容 手指"
-      },
-      "ja": {
-        "name": "タッチ",
-        "description": "表面が触れられているかどうか。",
-        "tags": "タッチ 触れる 静電容量 指"
-      }
-    },
-    "std.human.switch_state": {
-      "zh-Hans": {
-        "name": "开关状态",
-        "description": "拨动开关是否处于打开状态。",
-        "tags": "开关 拨动 打开 关闭"
-      },
-      "ja": {
-        "name": "スイッチ状態",
-        "description": "トグルスイッチがオンかどうか。",
-        "tags": "スイッチ トグル オン オフ"
-      }
-    },
-    "std.human.dial_position": {
-      "zh-Hans": {
-        "name": "旋钮位置",
-        "description": "旋钮被转动了多少。",
-        "tags": "旋钮 转动 电位器 角度"
-      },
-      "ja": {
-        "name": "ダイヤル位置",
-        "description": "つまみがどれだけ回されたか。",
-        "tags": "ダイヤル つまみ 回転 ポテンショメータ"
-      }
-    },
-    "std.human.slider_position": {
-      "zh-Hans": {
-        "name": "滑块位置",
-        "description": "滑块在两端之间的位置，0 到 1。",
-        "tags": "滑块 推子 位置 电位器"
-      },
-      "ja": {
-        "name": "スライダー位置",
-        "description": "スライダーが両端の間のどこにあるか。0 から 1。",
-        "tags": "スライダー フェーダー 位置"
-      }
-    },
-    "std.motion.distance": {
-      "zh-Hans": {
-        "name": "距离",
-        "description": "某物离得有多远。",
-        "tags": "距离 远近 测距 接近 超声波"
-      },
-      "ja": {
-        "name": "距離",
-        "description": "何かがどれだけ離れているか。",
-        "tags": "距離 遠近 測距 近接 超音波"
-      }
-    },
-    "std.motion.position": {
-      "zh-Hans": {
-        "name": "位置",
-        "description": "某物沿一条轴所在的位置。",
-        "tags": "位置 位移 轴 行程"
-      },
-      "ja": {
-        "name": "位置",
-        "description": "何かが一つの軸に沿ってどこにあるか。",
-        "tags": "位置 変位 軸 ストローク"
-      }
-    },
-    "std.motion.angle": {
+    "std.quantity.angle": {
       "zh-Hans": {
         "name": "角度",
-        "description": "某物旋转了多少。",
-        "tags": "角度 旋转 度 弧度 朝向"
+        "description": "转动了多少：倾斜、朝向、旋钮、盖子、轴。",
+        "tags": "角度 旋转 转 倾斜 朝向 航向 旋钮 舵机 编码器 轴 盖 弧度 度"
       },
       "ja": {
         "name": "角度",
-        "description": "何かがどれだけ回転しているか。",
-        "tags": "角度 回転 度 ラジアン 方位"
+        "description": "どれだけ回っているか：傾き、向き、ダイヤル、ふた、軸。",
+        "tags": "角度 回転 傾き 向き 方位 ダイヤル サーボ エンコーダ 軸 ふた ラジアン 度"
       }
     },
-    "std.motion.tilt": {
+    "std.quantity.length": {
       "zh-Hans": {
-        "name": "倾斜",
-        "description": "某物偏离水平的程度。",
-        "tags": "倾斜 倾角 水平 加速度计"
+        "name": "长度",
+        "description": "沿直线的距离或位置：多远、多长、多高。",
+        "tags": "长度 距离 位置 范围 高度 宽度 深度 行程 障碍 接近 米 毫米 厘米"
       },
       "ja": {
-        "name": "傾き",
-        "description": "何かが水平からどれだけ傾いているか。",
-        "tags": "傾き 傾斜 水平 加速度センサー"
+        "name": "長さ",
+        "description": "直線に沿った距離や位置：どれだけ遠いか、長いか、高いか。",
+        "tags": "長さ 距離 位置 範囲 高さ 幅 深さ ストローク 障害物 近接 メートル ミリ センチ"
       }
     },
-    "std.motion.speed": {
+    "std.quantity.time": {
       "zh-Hans": {
-        "name": "速度",
-        "description": "某物移动得有多快。",
-        "tags": "速度 速率 快慢"
+        "name": "时间",
+        "description": "持续时间或间隔：某事花多久、持续多久。",
+        "tags": "时间 时长 间隔 延迟 周期 超时 已用 秒 毫秒 分 小时"
       },
       "ja": {
-        "name": "速度",
-        "description": "何かがどれだけ速く動いているか。",
-        "tags": "速度 速さ"
+        "name": "時間",
+        "description": "継続時間や間隔：どれだけかかるか、続くか。",
+        "tags": "時間 期間 間隔 遅延 周期 タイムアウト 経過 秒 ミリ秒 分 時"
       }
     },
-    "std.motion.acceleration": {
+    "std.quantity.mass": {
       "zh-Hans": {
-        "name": "加速度",
-        "description": "速度变化得有多快；冲击或碰撞在这里表现为尖峰。",
-        "tags": "加速度 冲击 碰撞 振动"
+        "name": "质量",
+        "description": "某物有多少物质：负载、秤上的重量。",
+        "tags": "质量 重量 负载 秤 千克 克"
       },
       "ja": {
-        "name": "加速度",
-        "description": "速度がどれだけ速く変わるか。衝撃や衝突はここにピークとして現れる。",
-        "tags": "加速度 衝撃 衝突 振動"
+        "name": "質量",
+        "description": "物にどれだけの物質があるか：負荷、はかりの重さ。",
+        "tags": "質量 重さ 負荷 はかり キログラム グラム"
       }
     },
-    "std.motion.angular_velocity": {
-      "zh-Hans": {
-        "name": "角速度",
-        "description": "某物转动得有多快。",
-        "tags": "角速度 转速 陀螺仪 旋转"
-      },
-      "ja": {
-        "name": "角速度",
-        "description": "何かがどれだけ速く回っているか。",
-        "tags": "角速度 回転速度 ジャイロ"
-      }
-    },
-    "std.motion.orientation": {
-      "zh-Hans": {
-        "name": "朝向",
-        "description": "某物面向哪个方向，作为航向。",
-        "tags": "朝向 航向 方位 罗盘"
-      },
-      "ja": {
-        "name": "向き",
-        "description": "何かがどちらを向いているか。方位として。",
-        "tags": "向き 方位 進行方向 コンパス"
-      }
-    },
-    "std.mechanical.force": {
-      "zh-Hans": {
-        "name": "力",
-        "description": "某物推或拉的力度。",
-        "tags": "力 推力 拉力 重量 载荷"
-      },
-      "ja": {
-        "name": "力",
-        "description": "何かがどれだけ強く押す・引くか。",
-        "tags": "力 押す力 引く力 荷重"
-      }
-    },
-    "std.mechanical.pressure": {
-      "zh-Hans": {
-        "name": "压强",
-        "description": "单位面积上的力：轮胎、管道、握力。",
-        "tags": "压强 压力 轮胎 管道"
-      },
-      "ja": {
-        "name": "圧力",
-        "description": "面積あたりの力。タイヤ、配管、握力。",
-        "tags": "圧力 タイヤ 配管"
-      }
-    },
-    "std.mechanical.torque": {
-      "zh-Hans": {
-        "name": "扭矩",
-        "description": "作用在轴上的转动力。",
-        "tags": "扭矩 转矩 轴 电机"
-      },
-      "ja": {
-        "name": "トルク",
-        "description": "軸にかかる回転力。",
-        "tags": "トルク 軸 モーター"
-      }
-    },
-    "std.electrical.voltage": {
-      "zh-Hans": {
-        "name": "电压",
-        "description": "某点的电势：电源轨、电池单元、检测线。",
-        "tags": "电压 电势 伏特 电源"
-      },
-      "ja": {
-        "name": "電圧",
-        "description": "ある点の電位。電源レール、セル、センス線。",
-        "tags": "電圧 電位 ボルト 電源"
-      }
-    },
-    "std.electrical.current": {
+    "std.quantity.current": {
       "zh-Hans": {
         "name": "电流",
-        "description": "通过某条路径的电流。",
-        "tags": "电流 安培 负载"
+        "description": "电流：流过多少电荷，如电机或电源的消耗。",
+        "tags": "电流 电 安培 消耗 毫安"
       },
       "ja": {
         "name": "電流",
-        "description": "ある経路を流れる電流。",
-        "tags": "電流 アンペア 負荷"
+        "description": "電流：どれだけの電荷が流れるか、モーターや電源が引く量。",
+        "tags": "電流 電気 アンペア 消費 ミリアンペア"
       }
     },
-    "std.electrical.battery_level": {
+    "std.quantity.temperature": {
       "zh-Hans": {
-        "name": "电池电量",
-        "description": "电池有多满，0（空）到 1（满）。",
-        "tags": "电池 电量 充电 剩余"
+        "name": "温度",
+        "description": "某物有多热：空气、房间、电机、表面。",
+        "tags": "温度 热 冷 热量 温度计 开尔文 摄氏"
       },
       "ja": {
-        "name": "バッテリー残量",
-        "description": "バッテリーがどれだけ満ちているか。0（空）から 1（満充電）。",
-        "tags": "バッテリー 残量 充電 電池"
+        "name": "温度",
+        "description": "空気・部屋・モーター・表面など、何かがどれだけ温かいか。",
+        "tags": "温度 熱 冷たさ 温度計 ケルビン 摂氏"
       }
     },
-    "std.output.brightness": {
+    "std.quantity.amount": {
       "zh-Hans": {
-        "name": "亮度",
-        "description": "灯应有多亮，0（关）到 1（全亮）。",
-        "tags": "亮度 灯 调光 LED"
+        "name": "物质的量",
+        "description": "某种物质有多少，以摩尔计。",
+        "tags": "物质的量 物质 摩尔 化学"
       },
       "ja": {
-        "name": "明るさ",
-        "description": "光をどれだけ明るくするか。0（消灯）から 1（最大）。",
-        "tags": "明るさ 照明 調光 LED"
+        "name": "物質量",
+        "description": "物質がどれだけあるか、モルで数える。",
+        "tags": "物質量 物質 モル 化学"
       }
     },
-    "std.output.color": {
+    "std.quantity.luminous_intensity": {
       "zh-Hans": {
-        "name": "颜色",
-        "description": "灯显示的颜色，作为色环上的色相。",
-        "tags": "颜色 色相 RGB 灯"
+        "name": "发光强度",
+        "description": "光源在某一方向上有多亮。",
+        "tags": "发光强度 光强 坎德拉 光源 灯"
       },
       "ja": {
-        "name": "色",
-        "description": "光が示す色。色相環上の色相として。",
-        "tags": "色 色相 RGB 照明"
+        "name": "光度",
+        "description": "光源が一方向にどれだけ明るいか。",
+        "tags": "光度 カンデラ 光源 ランプ"
       }
     },
-    "std.output.display_value": {
+    "std.quantity.speed": {
       "zh-Hans": {
-        "name": "显示数值",
-        "description": "显示屏上显示的一个数字。",
-        "tags": "显示 数值 屏幕 读数"
+        "name": "速度",
+        "description": "沿直线移动多快：车辆、传送带、风。",
+        "tags": "速度 速率 快慢 车轮 车辆 传送带 风"
       },
       "ja": {
-        "name": "表示値",
-        "description": "ディスプレイに表示する数値。",
-        "tags": "表示 数値 画面 読み"
+        "name": "速さ",
+        "description": "直線に沿ってどれだけ速く動くか：車両、ベルト、風。",
+        "tags": "速さ 速度 レート 車輪 車両 コンベア 風"
       }
     },
-    "std.actuator.motor_speed": {
+    "std.quantity.acceleration": {
       "zh-Hans": {
-        "name": "电机转速",
-        "description": "电机应转多快，以满速的比例表示，−1 到 1。",
-        "tags": "电机 转速 马达 PWM"
+        "name": "加速度",
+        "description": "速度变化多快：冲击、重力感知的倾斜、车辆起步。",
+        "tags": "加速度 加速度计 冲击 振动 惯性"
       },
       "ja": {
-        "name": "モーター速度",
-        "description": "モーターをどれだけ速く回すか。最高速度に対する割合、−1 から 1。",
-        "tags": "モーター 速度 PWM"
+        "name": "加速度",
+        "description": "速さがどれだけ速く変わるか：衝撃、重力で感じる傾き、車両の発進。",
+        "tags": "加速度 加速度計 衝撃 振動 IMU"
       }
     },
-    "std.actuator.motor_angle": {
+    "std.quantity.angular_velocity": {
       "zh-Hans": {
-        "name": "电机角度",
-        "description": "电机或步进电机应保持的角度。",
-        "tags": "电机 角度 步进 马达"
+        "name": "角速度",
+        "description": "转动多快：轴、轮、陀螺仪读数。",
+        "tags": "角速度 转速 旋转速度 转每分 陀螺仪 轴 轮 电机转速"
       },
       "ja": {
-        "name": "モーター角度",
-        "description": "モーターやステッパーが保つべき角度。",
-        "tags": "モーター 角度 ステッパー"
+        "name": "角速度",
+        "description": "どれだけ速く回るか：軸、車輪、ジャイロの読み。",
+        "tags": "角速度 回転速度 rpm ジャイロ 軸 車輪 モーター回転数"
       }
     },
-    "std.actuator.servo_position": {
+    "std.quantity.frequency": {
       "zh-Hans": {
-        "name": "舵机位置",
-        "description": "舵机臂应转到的角度。",
-        "tags": "舵机 伺服 角度 位置"
+        "name": "频率",
+        "description": "每秒重复多少次：音高、脉冲率、闪烁。",
+        "tags": "频率 速率 音高 音调 赫兹 脉冲 闪烁 周期"
       },
       "ja": {
-        "name": "サーボ位置",
-        "description": "サーボアームが動くべき角度。",
-        "tags": "サーボ 角度 位置"
+        "name": "周波数",
+        "description": "毎秒何回繰り返すか：音高、パルス率、点滅。",
+        "tags": "周波数 レート 音高 音程 ヘルツ パルス 点滅 サイクル"
       }
     },
-    "std.actuator.vibration_intensity": {
+    "std.quantity.force": {
       "zh-Hans": {
-        "name": "振动强度",
-        "description": "触觉马达应振动得多强，0 到 1。",
-        "tags": "振动 触觉 马达 震动"
+        "name": "力",
+        "description": "推或拉：称重传感器读数、握力、弹簧。",
+        "tags": "力 推 拉 称重传感器 握力 弹簧 推力 牛顿"
       },
       "ja": {
-        "name": "振動強度",
-        "description": "ハプティックモーターをどれだけ強く振動させるか。0 から 1。",
-        "tags": "振動 ハプティック バイブ"
+        "name": "力",
+        "description": "押す力や引く力：ロードセルの読み、握力、ばね。",
+        "tags": "力 押す 引く ロードセル 握力 ばね 推力 ニュートン"
       }
     },
-    "std.actuator.heater_power": {
+    "std.quantity.pressure": {
       "zh-Hans": {
-        "name": "加热功率",
-        "description": "加热器应开到多大，0 到 1。",
-        "tags": "加热 加热器 功率 温控"
+        "name": "压强",
+        "description": "单位面积上的力：空气、流体、触摸板上的按压。",
+        "tags": "压强 压力 气压计 大气 海拔 天气 流体 轮胎 帕 千帕"
       },
       "ja": {
-        "name": "ヒーター出力",
-        "description": "ヒーターをどれだけ働かせるか。0 から 1。",
-        "tags": "ヒーター 加熱 出力"
+        "name": "圧力",
+        "description": "面積あたりの力：空気、流体、パッドへの押し。",
+        "tags": "圧力 気圧計 大気 高度 天気 流体 タイヤ パスカル キロパスカル"
       }
     },
-    "std.actuator.fan_speed": {
+    "std.quantity.torque": {
       "zh-Hans": {
-        "name": "风扇转速",
-        "description": "风扇应转多快，0（关）到 1（全速）。",
-        "tags": "风扇 转速 散热 冷却"
+        "name": "转矩",
+        "description": "转动的力：电机输出到轴上的力矩。",
+        "tags": "转矩 力矩 扭矩 电机 轴 牛米"
       },
       "ja": {
-        "name": "ファン速度",
-        "description": "ファンをどれだけ速く回すか。0（停止）から 1（最大）。",
-        "tags": "ファン 速度 冷却"
+        "name": "トルク",
+        "description": "回す力：モーターが軸に伝えるもの。",
+        "tags": "トルク モーメント 回転力 モーター 軸 ニュートンメートル"
       }
     },
-    "std.actuator.valve_opening": {
+    "std.quantity.power": {
       "zh-Hans": {
-        "name": "阀门开度",
-        "description": "阀门打开的程度，0（关闭）到 1（全开）。",
-        "tags": "阀门 开度 流量 水"
+        "name": "功率",
+        "description": "每秒的能量：加热器、电机或灯的消耗或输出。",
+        "tags": "功率 瓦 千瓦 加热器 消耗 瓦数"
       },
       "ja": {
-        "name": "バルブ開度",
-        "description": "バルブがどれだけ開いているか。0（閉）から 1（全開）。",
-        "tags": "バルブ 開度 流量"
+        "name": "電力",
+        "description": "毎秒のエネルギー：ヒーター、モーター、ランプが引く量や出す量。",
+        "tags": "電力 ワット キロワット ヒーター 消費 ワット数"
       }
     },
-    "std.audio.volume": {
+    "std.quantity.voltage": {
       "zh-Hans": {
-        "name": "音量",
-        "description": "产品播放的响度，0（静音）到 1（最大）。",
-        "tags": "音量 响度 扬声器 声音"
+        "name": "电压",
+        "description": "电势：电池、电源轨、以伏特计的模拟读数。",
+        "tags": "电压 伏特 电势 电池 电源 模拟 毫伏"
       },
       "ja": {
-        "name": "音量",
-        "description": "製品の再生音量。0（無音）から 1（最大）。",
-        "tags": "音量 スピーカー 音"
+        "name": "電圧",
+        "description": "電位：バッテリー、電源レール、ボルト単位のアナログ読み。",
+        "tags": "電圧 ボルト 電位 バッテリー 電源 アナログ ミリボルト"
       }
     },
-    "std.audio.pitch": {
+    "std.quantity.illuminance": {
       "zh-Hans": {
-        "name": "音高",
-        "description": "要播放的音调的频率。",
-        "tags": "音高 频率 音调 蜂鸣器"
+        "name": "照度",
+        "description": "落在表面上的光有多少：环境光、日光、光敏电阻读数。",
+        "tags": "照度 光 勒克斯 环境光 日光 黑暗 光敏 光传感器"
       },
       "ja": {
-        "name": "ピッチ",
-        "description": "鳴らす音の周波数。",
-        "tags": "ピッチ 周波数 音程 ブザー"
-      }
-    },
-    "std.source.temperature": {
-      "zh-Hans": {
-        "name": "温度输入",
-        "description": "由环境提供的温度——房间、表面、空气——每次激活读取一次。",
-        "tags": "温度 输入 传感器 热 测温 热敏电阻"
-      },
-      "ja": {
-        "name": "温度入力",
-        "description": "環境が与える温度（部屋、表面、空気）を、活性化ごとに一度読む。",
-        "tags": "温度 入力 センサー 熱 サーミスタ"
-      }
-    },
-    "std.source.tilt": {
-      "zh-Hans": {
-        "name": "倾斜输入",
-        "description": "产品偏离水平的程度，由环境提供——灯头、手持设备、车身。",
-        "tags": "倾斜 输入 传感器 倾角 加速度计 水平"
-      },
-      "ja": {
-        "name": "傾き入力",
-        "description": "製品が水平からどれだけ傾いているかを、環境が与える値として。ランプヘッド、ハンドヘルド、車体。",
-        "tags": "傾き 入力 センサー 傾斜 加速度センサー 水平"
-      }
-    },
-    "std.source.distance": {
-      "zh-Hans": {
-        "name": "距离输入",
-        "description": "最近的物体离得有多远，由环境提供——障碍物、手、液位。用哪种传感器测量是部署时的选择。",
-        "tags": "距离 输入 传感器 测距 接近 超声波 激光"
-      },
-      "ja": {
-        "name": "距離入力",
-        "description": "いちばん近いものがどれだけ離れているかを、環境が与える値として。障害物、手、液面。どのセンサーで測るかはデプロイ時の選択。",
-        "tags": "距離 入力 センサー 測距 近接 超音波 レーザー"
-      }
-    },
-    "std.source.ambient_light": {
-      "zh-Hans": {
-        "name": "环境光输入",
-        "description": "照射到产品上的光量，由环境提供——用于调光、唤醒显示、检测日光。",
-        "tags": "环境光 输入 传感器 照度 光 日光 亮度"
-      },
-      "ja": {
-        "name": "環境光入力",
-        "description": "製品に当たる光の量を、環境が与える値として。調光、画面の起動、日光の検出に。",
-        "tags": "環境光 入力 センサー 照度 光 日光 明るさ"
-      }
-    },
-    "std.source.button": {
-      "zh-Hans": {
-        "name": "按钮输入",
-        "description": "此刻按钮是否被按住或开关是否打开，由环境在每次激活时提供——一个稳定状态，而不是事件。",
-        "tags": "按钮 输入 开关 状态 按下 按键"
-      },
-      "ja": {
-        "name": "ボタン入力",
-        "description": "いまボタンが押されているか、スイッチが入っているかを、環境が活性化ごとに与える値として。イベントではなく安定した状態。",
-        "tags": "ボタン 入力 スイッチ 状態 押下 キー"
-      }
-    },
-    "std.source.encoder": {
-      "zh-Hans": {
-        "name": "编码器输入",
-        "description": "轴或旋钮转到的角度，由环境提供。计脉冲是部署的事。",
-        "tags": "编码器 输入 位置 旋钮 轴 角度"
-      },
-      "ja": {
-        "name": "エンコーダー入力",
-        "description": "軸やつまみが回った角度を、環境が与える値として。パルスを数えるのはデプロイの仕事。",
-        "tags": "エンコーダー 入力 位置 つまみ 軸 角度"
-      }
-    },
-    "std.source.analog": {
-      "zh-Hans": {
-        "name": "模拟输入",
-        "description": "由行为解释的通用模拟读数。值的形式留给你：知道输入测量什么之后，再为概念选择。",
-        "tags": "模拟 输入 ADC 电压 读数 通用"
-      },
-      "ja": {
-        "name": "アナログ入力",
-        "description": "振る舞いが解釈する汎用のアナログ読み値。値の形はあなたに委ねる。入力が何を測るか分かったら、コンセプトに選ぶ。",
-        "tags": "アナログ 入力 ADC 電圧 読み値 汎用"
-      }
-    },
-    "std.source.external": {
-      "zh-Hans": {
-        "name": "外部输入",
-        "description": "由产品外部提供的值——来自主机、网络或仿真——作为行为读取的值。输入并不总是传感器。",
-        "tags": "外部 输入 来源 主机 网络 仿真 提供"
-      },
-      "ja": {
-        "name": "外部入力",
-        "description": "製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力はセンサーとは限らない。",
-        "tags": "外部 入力 入力元 ホスト ネットワーク シミュレーション"
+        "name": "照度",
+        "description": "面にどれだけ光が当たるか：環境光、日光、フォトセルの読み。",
+        "tags": "照度 光 ルクス 環境光 日光 暗さ フォトセル 光センサー"
       }
     }
   }

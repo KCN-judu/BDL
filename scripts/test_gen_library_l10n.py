@@ -28,8 +28,8 @@ class Validation(unittest.TestCase):
         all_items = g.items()
         l10n = json.loads(g.L10N.read_text(encoding="utf-8"))
         g.validate(all_items, l10n)
-        self.assertEqual(len(all_items), 44)
-        self.assertEqual(len(l10n["items"]), 44)
+        self.assertEqual(len(all_items), 22)
+        self.assertEqual(len(l10n["items"]), 22)
 
     def test_a_missing_item_is_refused(self) -> None:
         items = [{"id": "std.a", "name": "A", "description": "", "keywords": []}]
