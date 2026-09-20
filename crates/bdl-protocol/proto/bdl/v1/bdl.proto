@@ -1,4 +1,4 @@
-// BDL Studio <-> bdld protocol, version 0.1.
+// BDL Studio <-> bdld protocol, version 0.26.
 //
 // Transport-independent.  Messages are exchanged as length-prefixed frames
 // (see crates/bdl-protocol/src/framing.rs); the transport is a child-process
@@ -88,6 +88,15 @@ message ClientMessage {
     SourceDefinitionRequest source_definition = 67;
     SourceReferencesRequest source_references = 68;
     FormatSourceRequest format_source = 69;
+    // Firmware (0.26): build the chosen target's firmware, its status and
+    // artifact, the devices a flash can reach, the flash itself; the demo
+    // templates a new project can start from.
+    BuildFirmwareRequest build_firmware = 70;
+    GetBuildStatusRequest get_build_status = 71;
+    CancelBuildRequest cancel_build = 72;
+    ListFlashDevicesRequest list_flash_devices = 73;
+    FlashFirmwareRequest flash_firmware = 74;
+    ListTemplatesRequest list_templates = 75;
   }
 }
 
@@ -130,6 +139,9 @@ message Response {
     SourceLocationsResponse source_locations = 52;
     FormatSourceResponse format_source = 53;
     SourceCandidatesResponse source_candidates = 54;
+    BuildStatusResponse build_status = 55;
+    FlashDevicesResponse flash_devices = 56;
+    TemplatesResponse templates = 57;
   }
 }
 
@@ -140,6 +152,10 @@ message Event {
     // Pushed to subscribers after every committed revision, following the
     // ProjectChanged event for the same revision.
     AnalysisReady analysis_ready = 3;
+    // A running build's or flash's stages as they happen (0.26); the last
+    // one carries the outcome.
+    BuildProgress build_progress = 4;
+    FlashProgress flash_progress = 5;
   }
 }
 
@@ -189,6 +205,9 @@ message OpenProjectRequest {
 message InitProjectRequest {
   string root_path = 1;
   string name = 2;
+  // A template id from `ListTemplates` (0.26): the project starts with
+  // that design instead of an empty source.  Absent: an empty project.
+  optional string template = 3;
 }
 
 message SaveProjectRequest {
@@ -1693,6 +1712,28 @@ message DeploymentAnalysis {
   // Source could use.  A Source with no row here does not exist; a Source
   // with no device is an incomplete deployment.
   repeated ProvisionView provisions = 17;
+  // Whether this board's firmware can be built from the project as it is
+  // (0.26): the design is ready, every output driven, every device
+  // admissible and placed, every Source provided by a profile this
+  // board's adapter reads.  The same judgments the build makes, made
+  // before the button is offered; nothing about the toolchain.
+  bool build_ready = 18;
+  // When not ready: what stands in the way, the smallest actionable thing
+  // first.  Empty when `build_ready`.
+  repeated BuildBlocker build_blockers = 19;
+}
+
+// One thing that stops a build, in product language, with the object it
+// is about so a page can lead to it.
+message BuildBlocker {
+  // A stable code: a MissingKind's name in snake case (`output_no_device`)
+  // or an `adapter.*` diagnostic's code.
+  string code = 1;
+  string message = 2;
+  string explanation = 3;
+  optional uint64 output_id = 4;
+  optional uint64 device_id = 5;
+  optional uint64 mapping_id = 6;
 }
 
 // How a Source's provision stands (0.25).  The same shape as
@@ -1927,6 +1968,229 @@ message BlockedCandidate {
   string resource = 1;
   uint64 held_by_device_id = 2;
   uint32 held_by_index = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Firmware: build, artifact, flash (0.26)
+// ---------------------------------------------------------------------------
+//
+// The daemon owns the whole path from the project to the board: it
+// generates the crate, drives cargo, packages the image and writes it to
+// the device.  A client asks and watches; it never runs a tool itself.
+// A build is a sequence of stages reported as events; its outcome is a
+// status a client can ask for again (after reopening the project, say).
+// The artifact carries the identity of what it was built from, so a
+// changed design, deployment or setting makes it stale and a stale image
+// is never flashed.
+
+// Start building the firmware of `target_id` from the project as it is.
+// Answers Ack at once (or `build.busy`, `build.unknown_target`,
+// `build.not_ready`); progress arrives as BuildProgress events.
+message BuildFirmwareRequest {
+  string target_id = 1;
+  // Refused with `build.stale_revision` unless it is the project's.
+  optional uint64 revision = 2;
+}
+
+message GetBuildStatusRequest {
+  string target_id = 1;
+}
+
+// Stop the running build, if any; the build ends CANCELLED.
+message CancelBuildRequest {}
+
+enum BuildStage {
+  BUILD_STAGE_UNSPECIFIED = 0;
+  // The deployment is judged: every refusal the firmware would meet.
+  BUILD_STAGE_CHECKING = 1;
+  // The crate is generated and written.
+  BUILD_STAGE_GENERATING = 2;
+  // The toolchain and the runtime crates are located.
+  BUILD_STAGE_PREPARING = 3;
+  // cargo compiles the crate for the board.
+  BUILD_STAGE_COMPILING = 4;
+  // The image the board takes (UF2) is written from the ELF.
+  BUILD_STAGE_PACKAGING = 5;
+  BUILD_STAGE_COMPLETED = 6;
+  BUILD_STAGE_FAILED = 7;
+  BUILD_STAGE_CANCELLED = 8;
+}
+
+message BuildProgress {
+  uint64 build_id = 1;
+  string target_id = 2;
+  BuildStage stage = 3;
+  // What is happening now, in product language ("Compiling embassy-rp").
+  string message = 4;
+  // Crates compiled so far, when known.
+  optional uint32 done = 5;
+  // A line for the advanced view (a compiler line, a command); may be empty.
+  string detail = 6;
+  // On COMPLETED, FAILED or CANCELLED: the status as `GetBuildStatus` gives it.
+  optional BuildStatus status = 7;
+}
+
+message BuildStatusResponse {
+  BuildStatus status = 1;
+}
+
+// What is known about the firmware of one target for the open project.
+message BuildStatus {
+  string target_id = 1;
+  bool running = 2;
+  // The running build's stage, or the last build's outcome stage
+  // (COMPLETED, FAILED, CANCELLED); UNSPECIFIED when nothing was built.
+  BuildStage stage = 3;
+  // The last artifact built for this target, if one exists on disk.
+  optional BuildArtifact artifact = 4;
+  // Whether `artifact` was built from what the project says now: the same
+  // generated crate, the same settings, the same compiler.  False means
+  // the image on the board — if it was flashed — is not the design on
+  // screen.
+  bool artifact_fresh = 5;
+  // The last build's failure, until a build succeeds or is started again.
+  optional BuildFailure failure = 6;
+  // Advanced: where the crate is, what is run, for which triple, what the
+  // compiler said (the last lines).
+  string generated_dir = 7;
+  string command = 8;
+  string triple = 9;
+  repeated string output = 10;
+}
+
+message BuildArtifact {
+  // The image to write to the board (a UF2 for the Raspberry Pi Pico).
+  string path = 1;
+  // "uf2", "elf" or "hex".
+  string kind = 2;
+  // The linked ELF the image was made from.
+  string elf_path = 3;
+  // The content identity of what it was built from (a hash).
+  string identity = 4;
+  // Seconds since the Unix epoch.
+  uint64 built_at = 5;
+  // The project revision the build started from (informational; identity
+  // is what freshness is judged by).
+  uint64 revision = 6;
+  string compiler_version = 7;
+  uint64 size_bytes = 8;
+}
+
+message BuildFailure {
+  BuildStage stage = 1;
+  // `build.not_ready`, `build.toolchain_missing`, `build.target_missing`,
+  // `build.runtime_missing`, `build.cargo_failed`, `build.package_failed`,
+  // `build.io`.
+  string code = 2;
+  string message = 3;
+  string explanation = 4;
+  // On CHECKING: the compiler's refusals (`adapter.*`, `backend.*`).
+  repeated Diagnostic diagnostics = 5;
+  // Advanced: the command that failed and what it printed (the tail).
+  string command = 6;
+  repeated string output = 7;
+}
+
+// The devices a flash of `target_id` could reach now, and the ways this
+// host can flash it.
+message ListFlashDevicesRequest {
+  string target_id = 1;
+}
+
+message FlashDevicesResponse {
+  repeated FlashDevice devices = 1;
+  repeated FlashMethodView methods = 2;
+}
+
+enum FlashMethod {
+  FLASH_METHOD_UNSPECIFIED = 0;
+  // The board's own bootloader mounted as a volume (RPI-RP2 on the Pico,
+  // held BOOTSEL while plugging in); the image is copied onto it.
+  FLASH_METHOD_UF2_VOLUME = 1;
+  // A debug probe driven by probe-rs.
+  FLASH_METHOD_PROBE = 2;
+}
+
+message FlashDevice {
+  // Opaque; pass back to FlashFirmware.
+  string id = 1;
+  FlashMethod method = 2;
+  // "Raspberry Pi Pico in BOOTSEL mode (RPI-RP2)", "Debug Probe (CMSIS-DAP)".
+  string label = 3;
+  // The volume's path, the probe's identity.
+  string detail = 4;
+}
+
+message FlashMethodView {
+  FlashMethod method = 1;
+  // Whether this host can use the method at all (a tool is installed, the
+  // target supports it).
+  bool available = 2;
+  string label = 3;
+  // What to do to make it available or to make a device appear.
+  string hint = 4;
+}
+
+// Write the last artifact to one device.  Refused with `flash.no_artifact`,
+// `flash.artifact_stale` (build again first), `flash.no_device`,
+// `flash.ambiguous_device` (several reachable, none chosen — never flashed
+// silently), `flash.unknown_device`, `flash.busy`.  Progress arrives as
+// FlashProgress events.
+message FlashFirmwareRequest {
+  string target_id = 1;
+  // From ListFlashDevices; may be absent when exactly one device is reachable.
+  optional string device_id = 2;
+}
+
+enum FlashStage {
+  FLASH_STAGE_UNSPECIFIED = 0;
+  FLASH_STAGE_PREPARING = 1;
+  FLASH_STAGE_WRITING = 2;
+  // The board restarts into the new image.
+  FLASH_STAGE_RESTARTING = 3;
+  FLASH_STAGE_COMPLETED = 4;
+  FLASH_STAGE_FAILED = 5;
+}
+
+message FlashProgress {
+  uint64 flash_id = 1;
+  string target_id = 2;
+  FlashStage stage = 3;
+  string message = 4;
+  FlashDevice device = 5;
+  // The artifact written.
+  optional BuildArtifact artifact = 6;
+  // On FAILED.
+  optional FlashFailure failure = 7;
+}
+
+message FlashFailure {
+  FlashStage stage = 1;
+  // `flash.write_failed`, `flash.device_gone`, `flash.tool_failed`.
+  string code = 2;
+  string message = 3;
+  string explanation = 4;
+  string command = 5;
+  repeated string output = 6;
+}
+
+// The designs a new project can start from (0.26).
+message ListTemplatesRequest {}
+
+message TemplatesResponse {
+  repeated TemplateView templates = 1;
+}
+
+message TemplateView {
+  // Pass to InitProject.template.
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  // The board the template is written for, when it is a hardware demo.
+  string target_id = 4;
+  // Whether the template comes with its deployment (devices, providers,
+  // realizations, pins) or leaves it to the designer.
+  bool configured = 5;
 }
 
 // ---------------------------------------------------------------------------

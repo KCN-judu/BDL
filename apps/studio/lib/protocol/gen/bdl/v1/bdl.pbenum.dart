@@ -557,6 +557,113 @@ class MissingKind extends $pb.ProtobufEnum {
   const MissingKind._(super.value, super.name);
 }
 
+class BuildStage extends $pb.ProtobufEnum {
+  static const BuildStage BUILD_STAGE_UNSPECIFIED =
+      BuildStage._(0, _omitEnumNames ? '' : 'BUILD_STAGE_UNSPECIFIED');
+
+  /// The deployment is judged: every refusal the firmware would meet.
+  static const BuildStage BUILD_STAGE_CHECKING =
+      BuildStage._(1, _omitEnumNames ? '' : 'BUILD_STAGE_CHECKING');
+
+  /// The crate is generated and written.
+  static const BuildStage BUILD_STAGE_GENERATING =
+      BuildStage._(2, _omitEnumNames ? '' : 'BUILD_STAGE_GENERATING');
+
+  /// The toolchain and the runtime crates are located.
+  static const BuildStage BUILD_STAGE_PREPARING =
+      BuildStage._(3, _omitEnumNames ? '' : 'BUILD_STAGE_PREPARING');
+
+  /// cargo compiles the crate for the board.
+  static const BuildStage BUILD_STAGE_COMPILING =
+      BuildStage._(4, _omitEnumNames ? '' : 'BUILD_STAGE_COMPILING');
+
+  /// The image the board takes (UF2) is written from the ELF.
+  static const BuildStage BUILD_STAGE_PACKAGING =
+      BuildStage._(5, _omitEnumNames ? '' : 'BUILD_STAGE_PACKAGING');
+  static const BuildStage BUILD_STAGE_COMPLETED =
+      BuildStage._(6, _omitEnumNames ? '' : 'BUILD_STAGE_COMPLETED');
+  static const BuildStage BUILD_STAGE_FAILED =
+      BuildStage._(7, _omitEnumNames ? '' : 'BUILD_STAGE_FAILED');
+  static const BuildStage BUILD_STAGE_CANCELLED =
+      BuildStage._(8, _omitEnumNames ? '' : 'BUILD_STAGE_CANCELLED');
+
+  static const $core.List<BuildStage> values = <BuildStage>[
+    BUILD_STAGE_UNSPECIFIED,
+    BUILD_STAGE_CHECKING,
+    BUILD_STAGE_GENERATING,
+    BUILD_STAGE_PREPARING,
+    BUILD_STAGE_COMPILING,
+    BUILD_STAGE_PACKAGING,
+    BUILD_STAGE_COMPLETED,
+    BUILD_STAGE_FAILED,
+    BUILD_STAGE_CANCELLED,
+  ];
+
+  static final $core.List<BuildStage?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 8);
+  static BuildStage? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const BuildStage._(super.value, super.name);
+}
+
+class FlashMethod extends $pb.ProtobufEnum {
+  static const FlashMethod FLASH_METHOD_UNSPECIFIED =
+      FlashMethod._(0, _omitEnumNames ? '' : 'FLASH_METHOD_UNSPECIFIED');
+
+  /// The board's own bootloader mounted as a volume (RPI-RP2 on the Pico,
+  /// held BOOTSEL while plugging in); the image is copied onto it.
+  static const FlashMethod FLASH_METHOD_UF2_VOLUME =
+      FlashMethod._(1, _omitEnumNames ? '' : 'FLASH_METHOD_UF2_VOLUME');
+
+  /// A debug probe driven by probe-rs.
+  static const FlashMethod FLASH_METHOD_PROBE =
+      FlashMethod._(2, _omitEnumNames ? '' : 'FLASH_METHOD_PROBE');
+
+  static const $core.List<FlashMethod> values = <FlashMethod>[
+    FLASH_METHOD_UNSPECIFIED,
+    FLASH_METHOD_UF2_VOLUME,
+    FLASH_METHOD_PROBE,
+  ];
+
+  static final $core.List<FlashMethod?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static FlashMethod? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const FlashMethod._(super.value, super.name);
+}
+
+class FlashStage extends $pb.ProtobufEnum {
+  static const FlashStage FLASH_STAGE_UNSPECIFIED =
+      FlashStage._(0, _omitEnumNames ? '' : 'FLASH_STAGE_UNSPECIFIED');
+  static const FlashStage FLASH_STAGE_PREPARING =
+      FlashStage._(1, _omitEnumNames ? '' : 'FLASH_STAGE_PREPARING');
+  static const FlashStage FLASH_STAGE_WRITING =
+      FlashStage._(2, _omitEnumNames ? '' : 'FLASH_STAGE_WRITING');
+
+  /// The board restarts into the new image.
+  static const FlashStage FLASH_STAGE_RESTARTING =
+      FlashStage._(3, _omitEnumNames ? '' : 'FLASH_STAGE_RESTARTING');
+  static const FlashStage FLASH_STAGE_COMPLETED =
+      FlashStage._(4, _omitEnumNames ? '' : 'FLASH_STAGE_COMPLETED');
+  static const FlashStage FLASH_STAGE_FAILED =
+      FlashStage._(5, _omitEnumNames ? '' : 'FLASH_STAGE_FAILED');
+
+  static const $core.List<FlashStage> values = <FlashStage>[
+    FLASH_STAGE_UNSPECIFIED,
+    FLASH_STAGE_PREPARING,
+    FLASH_STAGE_WRITING,
+    FLASH_STAGE_RESTARTING,
+    FLASH_STAGE_COMPLETED,
+    FLASH_STAGE_FAILED,
+  ];
+
+  static final $core.List<FlashStage?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 5);
+  static FlashStage? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const FlashStage._(super.value, super.name);
+}
+
 class PortKind extends $pb.ProtobufEnum {
   static const PortKind PORT_KIND_UNSPECIFIED =
       PortKind._(0, _omitEnumNames ? '' : 'PORT_KIND_UNSPECIFIED');

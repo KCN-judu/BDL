@@ -319,6 +319,65 @@ final $typed_data.Uint8List missingKindDescriptor = $convert
         '9LSU5EX1NPVVJDRV9OT19ERVZJQ0UQChIhCh1NSVNTSU5HX0tJTkRfUFJPVklERVJfSU5WQUxJ'
         'RBAL');
 
+@$core.Deprecated('Use buildStageDescriptor instead')
+const BuildStage$json = {
+  '1': 'BuildStage',
+  '2': [
+    {'1': 'BUILD_STAGE_UNSPECIFIED', '2': 0},
+    {'1': 'BUILD_STAGE_CHECKING', '2': 1},
+    {'1': 'BUILD_STAGE_GENERATING', '2': 2},
+    {'1': 'BUILD_STAGE_PREPARING', '2': 3},
+    {'1': 'BUILD_STAGE_COMPILING', '2': 4},
+    {'1': 'BUILD_STAGE_PACKAGING', '2': 5},
+    {'1': 'BUILD_STAGE_COMPLETED', '2': 6},
+    {'1': 'BUILD_STAGE_FAILED', '2': 7},
+    {'1': 'BUILD_STAGE_CANCELLED', '2': 8},
+  ],
+};
+
+/// Descriptor for `BuildStage`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List buildStageDescriptor = $convert
+    .base64Decode('CgpCdWlsZFN0YWdlEhsKF0JVSUxEX1NUQUdFX1VOU1BFQ0lGSUVEEAASGAoUQlVJTERfU1RBR0'
+        'VfQ0hFQ0tJTkcQARIaChZCVUlMRF9TVEFHRV9HRU5FUkFUSU5HEAISGQoVQlVJTERfU1RBR0Vf'
+        'UFJFUEFSSU5HEAMSGQoVQlVJTERfU1RBR0VfQ09NUElMSU5HEAQSGQoVQlVJTERfU1RBR0VfUE'
+        'FDS0FHSU5HEAUSGQoVQlVJTERfU1RBR0VfQ09NUExFVEVEEAYSFgoSQlVJTERfU1RBR0VfRkFJ'
+        'TEVEEAcSGQoVQlVJTERfU1RBR0VfQ0FOQ0VMTEVEEAg=');
+
+@$core.Deprecated('Use flashMethodDescriptor instead')
+const FlashMethod$json = {
+  '1': 'FlashMethod',
+  '2': [
+    {'1': 'FLASH_METHOD_UNSPECIFIED', '2': 0},
+    {'1': 'FLASH_METHOD_UF2_VOLUME', '2': 1},
+    {'1': 'FLASH_METHOD_PROBE', '2': 2},
+  ],
+};
+
+/// Descriptor for `FlashMethod`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List flashMethodDescriptor = $convert
+    .base64Decode('CgtGbGFzaE1ldGhvZBIcChhGTEFTSF9NRVRIT0RfVU5TUEVDSUZJRUQQABIbChdGTEFTSF9NRV'
+        'RIT0RfVUYyX1ZPTFVNRRABEhYKEkZMQVNIX01FVEhPRF9QUk9CRRAC');
+
+@$core.Deprecated('Use flashStageDescriptor instead')
+const FlashStage$json = {
+  '1': 'FlashStage',
+  '2': [
+    {'1': 'FLASH_STAGE_UNSPECIFIED', '2': 0},
+    {'1': 'FLASH_STAGE_PREPARING', '2': 1},
+    {'1': 'FLASH_STAGE_WRITING', '2': 2},
+    {'1': 'FLASH_STAGE_RESTARTING', '2': 3},
+    {'1': 'FLASH_STAGE_COMPLETED', '2': 4},
+    {'1': 'FLASH_STAGE_FAILED', '2': 5},
+  ],
+};
+
+/// Descriptor for `FlashStage`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List flashStageDescriptor = $convert
+    .base64Decode('CgpGbGFzaFN0YWdlEhsKF0ZMQVNIX1NUQUdFX1VOU1BFQ0lGSUVEEAASGQoVRkxBU0hfU1RBR0'
+        'VfUFJFUEFSSU5HEAESFwoTRkxBU0hfU1RBR0VfV1JJVElORxACEhoKFkZMQVNIX1NUQUdFX1JF'
+        'U1RBUlRJTkcQAxIZChVGTEFTSF9TVEFHRV9DT01QTEVURUQQBBIWChJGTEFTSF9TVEFHRV9GQU'
+        'lMRUQQBQ==');
+
 @$core.Deprecated('Use portKindDescriptor instead')
 const PortKind$json = {
   '1': 'PortKind',
@@ -838,6 +897,60 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'formatSource'
     },
+    {
+      '1': 'build_firmware',
+      '3': 70,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildFirmwareRequest',
+      '9': 0,
+      '10': 'buildFirmware'
+    },
+    {
+      '1': 'get_build_status',
+      '3': 71,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.GetBuildStatusRequest',
+      '9': 0,
+      '10': 'getBuildStatus'
+    },
+    {
+      '1': 'cancel_build',
+      '3': 72,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.CancelBuildRequest',
+      '9': 0,
+      '10': 'cancelBuild'
+    },
+    {
+      '1': 'list_flash_devices',
+      '3': 73,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListFlashDevicesRequest',
+      '9': 0,
+      '10': 'listFlashDevices'
+    },
+    {
+      '1': 'flash_firmware',
+      '3': 74,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FlashFirmwareRequest',
+      '9': 0,
+      '10': 'flashFirmware'
+    },
+    {
+      '1': 'list_templates',
+      '3': 75,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ListTemplatesRequest',
+      '9': 0,
+      '10': 'listTemplates'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -913,8 +1026,15 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'ZV9kZWZpbml0aW9uGEMgASgLMh8uYmRsLnYxLlNvdXJjZURlZmluaXRpb25SZXF1ZXN0SABSEH'
         'NvdXJjZURlZmluaXRpb24STgoRc291cmNlX3JlZmVyZW5jZXMYRCABKAsyHy5iZGwudjEuU291'
         'cmNlUmVmZXJlbmNlc1JlcXVlc3RIAFIQc291cmNlUmVmZXJlbmNlcxJCCg1mb3JtYXRfc291cm'
-        'NlGEUgASgLMhsuYmRsLnYxLkZvcm1hdFNvdXJjZVJlcXVlc3RIAFIMZm9ybWF0U291cmNlQgkK'
-        'B3BheWxvYWQ=');
+        'NlGEUgASgLMhsuYmRsLnYxLkZvcm1hdFNvdXJjZVJlcXVlc3RIAFIMZm9ybWF0U291cmNlEkUK'
+        'DmJ1aWxkX2Zpcm13YXJlGEYgASgLMhwuYmRsLnYxLkJ1aWxkRmlybXdhcmVSZXF1ZXN0SABSDW'
+        'J1aWxkRmlybXdhcmUSSQoQZ2V0X2J1aWxkX3N0YXR1cxhHIAEoCzIdLmJkbC52MS5HZXRCdWls'
+        'ZFN0YXR1c1JlcXVlc3RIAFIOZ2V0QnVpbGRTdGF0dXMSPwoMY2FuY2VsX2J1aWxkGEggASgLMh'
+        'ouYmRsLnYxLkNhbmNlbEJ1aWxkUmVxdWVzdEgAUgtjYW5jZWxCdWlsZBJPChJsaXN0X2ZsYXNo'
+        'X2RldmljZXMYSSABKAsyHy5iZGwudjEuTGlzdEZsYXNoRGV2aWNlc1JlcXVlc3RIAFIQbGlzdE'
+        'ZsYXNoRGV2aWNlcxJFCg5mbGFzaF9maXJtd2FyZRhKIAEoCzIcLmJkbC52MS5GbGFzaEZpcm13'
+        'YXJlUmVxdWVzdEgAUg1mbGFzaEZpcm13YXJlEkUKDmxpc3RfdGVtcGxhdGVzGEsgASgLMhwuYm'
+        'RsLnYxLkxpc3RUZW1wbGF0ZXNSZXF1ZXN0SABSDWxpc3RUZW1wbGF0ZXNCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1184,6 +1304,33 @@ const Response$json = {
       '9': 0,
       '10': 'sourceCandidates'
     },
+    {
+      '1': 'build_status',
+      '3': 55,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildStatusResponse',
+      '9': 0,
+      '10': 'buildStatus'
+    },
+    {
+      '1': 'flash_devices',
+      '3': 56,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FlashDevicesResponse',
+      '9': 0,
+      '10': 'flashDevices'
+    },
+    {
+      '1': 'templates',
+      '3': 57,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.TemplatesResponse',
+      '9': 0,
+      '10': 'templates'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1227,8 +1374,11 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'aW9ucxg0IAEoCzIfLmJkbC52MS5Tb3VyY2VMb2NhdGlvbnNSZXNwb25zZUgAUg9zb3VyY2VMb2'
         'NhdGlvbnMSQwoNZm9ybWF0X3NvdXJjZRg1IAEoCzIcLmJkbC52MS5Gb3JtYXRTb3VyY2VSZXNw'
         'b25zZUgAUgxmb3JtYXRTb3VyY2USTwoRc291cmNlX2NhbmRpZGF0ZXMYNiABKAsyIC5iZGwudj'
-        'EuU291cmNlQ2FuZGlkYXRlc1Jlc3BvbnNlSABSEHNvdXJjZUNhbmRpZGF0ZXNCCQoHcGF5bG9h'
-        'ZA==');
+        'EuU291cmNlQ2FuZGlkYXRlc1Jlc3BvbnNlSABSEHNvdXJjZUNhbmRpZGF0ZXMSQAoMYnVpbGRf'
+        'c3RhdHVzGDcgASgLMhsuYmRsLnYxLkJ1aWxkU3RhdHVzUmVzcG9uc2VIAFILYnVpbGRTdGF0dX'
+        'MSQwoNZmxhc2hfZGV2aWNlcxg4IAEoCzIcLmJkbC52MS5GbGFzaERldmljZXNSZXNwb25zZUgA'
+        'UgxmbGFzaERldmljZXMSOQoJdGVtcGxhdGVzGDkgASgLMhkuYmRsLnYxLlRlbXBsYXRlc1Jlc3'
+        'BvbnNlSABSCXRlbXBsYXRlc0IJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -1253,6 +1403,24 @@ const Event$json = {
       '9': 0,
       '10': 'analysisReady'
     },
+    {
+      '1': 'build_progress',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildProgress',
+      '9': 0,
+      '10': 'buildProgress'
+    },
+    {
+      '1': 'flash_progress',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FlashProgress',
+      '9': 0,
+      '10': 'flashProgress'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1264,7 +1432,9 @@ final $typed_data.Uint8List eventDescriptor = $convert
     .base64Decode('CgVFdmVudBJBCg9wcm9qZWN0X2NoYW5nZWQYASABKAsyFi5iZGwudjEuUHJvamVjdENoYW5nZW'
         'RIAFIOcHJvamVjdENoYW5nZWQSJQoDbG9nGAIgASgLMhEuYmRsLnYxLkRhZW1vbkxvZ0gAUgNs'
         'b2cSPgoOYW5hbHlzaXNfcmVhZHkYAyABKAsyFS5iZGwudjEuQW5hbHlzaXNSZWFkeUgAUg1hbm'
-        'FseXNpc1JlYWR5QgkKB3BheWxvYWQ=');
+        'FseXNpc1JlYWR5Ej4KDmJ1aWxkX3Byb2dyZXNzGAQgASgLMhUuYmRsLnYxLkJ1aWxkUHJvZ3Jl'
+        'c3NIAFINYnVpbGRQcm9ncmVzcxI+Cg5mbGFzaF9wcm9ncmVzcxgFIAEoCzIVLmJkbC52MS5GbG'
+        'FzaFByb2dyZXNzSABSDWZsYXNoUHJvZ3Jlc3NCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use ackDescriptor instead')
 const Ack$json = {
@@ -1370,13 +1540,18 @@ const InitProjectRequest$json = {
   '2': [
     {'1': 'root_path', '3': 1, '4': 1, '5': 9, '10': 'rootPath'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'template', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'template', '17': true},
+  ],
+  '8': [
+    {'1': '_template'},
   ],
 };
 
 /// Descriptor for `InitProjectRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List initProjectRequestDescriptor = $convert
     .base64Decode('ChJJbml0UHJvamVjdFJlcXVlc3QSGwoJcm9vdF9wYXRoGAEgASgJUghyb290UGF0aBISCgRuYW'
-        '1lGAIgASgJUgRuYW1l');
+        '1lGAIgASgJUgRuYW1lEh8KCHRlbXBsYXRlGAMgASgJSABSCHRlbXBsYXRliAEBQgsKCV90ZW1w'
+        'bGF0ZQ==');
 
 @$core.Deprecated('Use saveProjectRequestDescriptor instead')
 const SaveProjectRequest$json = {
@@ -4869,6 +5044,15 @@ const DeploymentAnalysis$json = {
       '10': 'realizations'
     },
     {'1': 'provisions', '3': 17, '4': 3, '5': 11, '6': '.bdl.v1.ProvisionView', '10': 'provisions'},
+    {'1': 'build_ready', '3': 18, '4': 1, '5': 8, '10': 'buildReady'},
+    {
+      '1': 'build_blockers',
+      '3': 19,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.BuildBlocker',
+      '10': 'buildBlockers'
+    },
   ],
   '8': [
     {'1': '_dead_end'},
@@ -4892,7 +5076,35 @@ final $typed_data.Uint8List deploymentAnalysisDescriptor = $convert
         '5Bc3NpZ25tZW50Um93UgRyb3dzEi4KB2Jsb2NrZXIYDyABKAsyDy5iZGwudjEuQmxvY2tlckgB'
         'UgdibG9ja2VyiAEBEjsKDHJlYWxpemF0aW9ucxgQIAMoCzIXLmJkbC52MS5SZWFsaXphdGlvbl'
         'ZpZXdSDHJlYWxpemF0aW9ucxI1Cgpwcm92aXNpb25zGBEgAygLMhUuYmRsLnYxLlByb3Zpc2lv'
-        'blZpZXdSCnByb3Zpc2lvbnNCCwoJX2RlYWRfZW5kQgoKCF9ibG9ja2Vy');
+        'blZpZXdSCnByb3Zpc2lvbnMSHwoLYnVpbGRfcmVhZHkYEiABKAhSCmJ1aWxkUmVhZHkSOwoOYn'
+        'VpbGRfYmxvY2tlcnMYEyADKAsyFC5iZGwudjEuQnVpbGRCbG9ja2VyUg1idWlsZEJsb2NrZXJz'
+        'QgsKCV9kZWFkX2VuZEIKCghfYmxvY2tlcg==');
+
+@$core.Deprecated('Use buildBlockerDescriptor instead')
+const BuildBlocker$json = {
+  '1': 'BuildBlocker',
+  '2': [
+    {'1': 'code', '3': 1, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'message', '3': 2, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 3, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'output_id', '3': 4, '4': 1, '5': 4, '9': 0, '10': 'outputId', '17': true},
+    {'1': 'device_id', '3': 5, '4': 1, '5': 4, '9': 1, '10': 'deviceId', '17': true},
+    {'1': 'mapping_id', '3': 6, '4': 1, '5': 4, '9': 2, '10': 'mappingId', '17': true},
+  ],
+  '8': [
+    {'1': '_output_id'},
+    {'1': '_device_id'},
+    {'1': '_mapping_id'},
+  ],
+};
+
+/// Descriptor for `BuildBlocker`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildBlockerDescriptor = $convert
+    .base64Decode('CgxCdWlsZEJsb2NrZXISEgoEY29kZRgBIAEoCVIEY29kZRIYCgdtZXNzYWdlGAIgASgJUgdtZX'
+        'NzYWdlEiAKC2V4cGxhbmF0aW9uGAMgASgJUgtleHBsYW5hdGlvbhIgCglvdXRwdXRfaWQYBCAB'
+        'KARIAFIIb3V0cHV0SWSIAQESIAoJZGV2aWNlX2lkGAUgASgESAFSCGRldmljZUlkiAEBEiIKCm'
+        '1hcHBpbmdfaWQYBiABKARIAlIJbWFwcGluZ0lkiAEBQgwKCl9vdXRwdXRfaWRCDAoKX2Rldmlj'
+        'ZV9pZEINCgtfbWFwcGluZ19pZA==');
 
 @$core.Deprecated('Use provisionViewDescriptor instead')
 const ProvisionView$json = {
@@ -5302,6 +5514,370 @@ final $typed_data.Uint8List blockedCandidateDescriptor = $convert
     .base64Decode('ChBCbG9ja2VkQ2FuZGlkYXRlEhoKCHJlc291cmNlGAEgASgJUghyZXNvdXJjZRIpChFoZWxkX2'
         'J5X2RldmljZV9pZBgCIAEoBFIOaGVsZEJ5RGV2aWNlSWQSIgoNaGVsZF9ieV9pbmRleBgDIAEo'
         'DVILaGVsZEJ5SW5kZXg=');
+
+@$core.Deprecated('Use buildFirmwareRequestDescriptor instead')
+const BuildFirmwareRequest$json = {
+  '1': 'BuildFirmwareRequest',
+  '2': [
+    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'revision', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'revision', '17': true},
+  ],
+  '8': [
+    {'1': '_revision'},
+  ],
+};
+
+/// Descriptor for `BuildFirmwareRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildFirmwareRequestDescriptor = $convert
+    .base64Decode('ChRCdWlsZEZpcm13YXJlUmVxdWVzdBIbCgl0YXJnZXRfaWQYASABKAlSCHRhcmdldElkEh8KCH'
+        'JldmlzaW9uGAIgASgESABSCHJldmlzaW9uiAEBQgsKCV9yZXZpc2lvbg==');
+
+@$core.Deprecated('Use getBuildStatusRequestDescriptor instead')
+const GetBuildStatusRequest$json = {
+  '1': 'GetBuildStatusRequest',
+  '2': [
+    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+  ],
+};
+
+/// Descriptor for `GetBuildStatusRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getBuildStatusRequestDescriptor = $convert
+    .base64Decode('ChVHZXRCdWlsZFN0YXR1c1JlcXVlc3QSGwoJdGFyZ2V0X2lkGAEgASgJUgh0YXJnZXRJZA==');
+
+@$core.Deprecated('Use cancelBuildRequestDescriptor instead')
+const CancelBuildRequest$json = {
+  '1': 'CancelBuildRequest',
+};
+
+/// Descriptor for `CancelBuildRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List cancelBuildRequestDescriptor =
+    $convert.base64Decode('ChJDYW5jZWxCdWlsZFJlcXVlc3Q=');
+
+@$core.Deprecated('Use buildProgressDescriptor instead')
+const BuildProgress$json = {
+  '1': 'BuildProgress',
+  '2': [
+    {'1': 'build_id', '3': 1, '4': 1, '5': 4, '10': 'buildId'},
+    {'1': 'target_id', '3': 2, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'stage', '3': 3, '4': 1, '5': 14, '6': '.bdl.v1.BuildStage', '10': 'stage'},
+    {'1': 'message', '3': 4, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'done', '3': 5, '4': 1, '5': 13, '9': 0, '10': 'done', '17': true},
+    {'1': 'detail', '3': 6, '4': 1, '5': 9, '10': 'detail'},
+    {
+      '1': 'status',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildStatus',
+      '9': 1,
+      '10': 'status',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_done'},
+    {'1': '_status'},
+  ],
+};
+
+/// Descriptor for `BuildProgress`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildProgressDescriptor = $convert
+    .base64Decode('Cg1CdWlsZFByb2dyZXNzEhkKCGJ1aWxkX2lkGAEgASgEUgdidWlsZElkEhsKCXRhcmdldF9pZB'
+        'gCIAEoCVIIdGFyZ2V0SWQSKAoFc3RhZ2UYAyABKA4yEi5iZGwudjEuQnVpbGRTdGFnZVIFc3Rh'
+        'Z2USGAoHbWVzc2FnZRgEIAEoCVIHbWVzc2FnZRIXCgRkb25lGAUgASgNSABSBGRvbmWIAQESFg'
+        'oGZGV0YWlsGAYgASgJUgZkZXRhaWwSMAoGc3RhdHVzGAcgASgLMhMuYmRsLnYxLkJ1aWxkU3Rh'
+        'dHVzSAFSBnN0YXR1c4gBAUIHCgVfZG9uZUIJCgdfc3RhdHVz');
+
+@$core.Deprecated('Use buildStatusResponseDescriptor instead')
+const BuildStatusResponse$json = {
+  '1': 'BuildStatusResponse',
+  '2': [
+    {'1': 'status', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.BuildStatus', '10': 'status'},
+  ],
+};
+
+/// Descriptor for `BuildStatusResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildStatusResponseDescriptor = $convert
+    .base64Decode('ChNCdWlsZFN0YXR1c1Jlc3BvbnNlEisKBnN0YXR1cxgBIAEoCzITLmJkbC52MS5CdWlsZFN0YX'
+        'R1c1IGc3RhdHVz');
+
+@$core.Deprecated('Use buildStatusDescriptor instead')
+const BuildStatus$json = {
+  '1': 'BuildStatus',
+  '2': [
+    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'running', '3': 2, '4': 1, '5': 8, '10': 'running'},
+    {'1': 'stage', '3': 3, '4': 1, '5': 14, '6': '.bdl.v1.BuildStage', '10': 'stage'},
+    {
+      '1': 'artifact',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildArtifact',
+      '9': 0,
+      '10': 'artifact',
+      '17': true
+    },
+    {'1': 'artifact_fresh', '3': 5, '4': 1, '5': 8, '10': 'artifactFresh'},
+    {
+      '1': 'failure',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildFailure',
+      '9': 1,
+      '10': 'failure',
+      '17': true
+    },
+    {'1': 'generated_dir', '3': 7, '4': 1, '5': 9, '10': 'generatedDir'},
+    {'1': 'command', '3': 8, '4': 1, '5': 9, '10': 'command'},
+    {'1': 'triple', '3': 9, '4': 1, '5': 9, '10': 'triple'},
+    {'1': 'output', '3': 10, '4': 3, '5': 9, '10': 'output'},
+  ],
+  '8': [
+    {'1': '_artifact'},
+    {'1': '_failure'},
+  ],
+};
+
+/// Descriptor for `BuildStatus`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildStatusDescriptor = $convert
+    .base64Decode('CgtCdWlsZFN0YXR1cxIbCgl0YXJnZXRfaWQYASABKAlSCHRhcmdldElkEhgKB3J1bm5pbmcYAi'
+        'ABKAhSB3J1bm5pbmcSKAoFc3RhZ2UYAyABKA4yEi5iZGwudjEuQnVpbGRTdGFnZVIFc3RhZ2US'
+        'NgoIYXJ0aWZhY3QYBCABKAsyFS5iZGwudjEuQnVpbGRBcnRpZmFjdEgAUghhcnRpZmFjdIgBAR'
+        'IlCg5hcnRpZmFjdF9mcmVzaBgFIAEoCFINYXJ0aWZhY3RGcmVzaBIzCgdmYWlsdXJlGAYgASgL'
+        'MhQuYmRsLnYxLkJ1aWxkRmFpbHVyZUgBUgdmYWlsdXJliAEBEiMKDWdlbmVyYXRlZF9kaXIYBy'
+        'ABKAlSDGdlbmVyYXRlZERpchIYCgdjb21tYW5kGAggASgJUgdjb21tYW5kEhYKBnRyaXBsZRgJ'
+        'IAEoCVIGdHJpcGxlEhYKBm91dHB1dBgKIAMoCVIGb3V0cHV0QgsKCV9hcnRpZmFjdEIKCghfZm'
+        'FpbHVyZQ==');
+
+@$core.Deprecated('Use buildArtifactDescriptor instead')
+const BuildArtifact$json = {
+  '1': 'BuildArtifact',
+  '2': [
+    {'1': 'path', '3': 1, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'kind', '3': 2, '4': 1, '5': 9, '10': 'kind'},
+    {'1': 'elf_path', '3': 3, '4': 1, '5': 9, '10': 'elfPath'},
+    {'1': 'identity', '3': 4, '4': 1, '5': 9, '10': 'identity'},
+    {'1': 'built_at', '3': 5, '4': 1, '5': 4, '10': 'builtAt'},
+    {'1': 'revision', '3': 6, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'compiler_version', '3': 7, '4': 1, '5': 9, '10': 'compilerVersion'},
+    {'1': 'size_bytes', '3': 8, '4': 1, '5': 4, '10': 'sizeBytes'},
+  ],
+};
+
+/// Descriptor for `BuildArtifact`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildArtifactDescriptor = $convert
+    .base64Decode('Cg1CdWlsZEFydGlmYWN0EhIKBHBhdGgYASABKAlSBHBhdGgSEgoEa2luZBgCIAEoCVIEa2luZB'
+        'IZCghlbGZfcGF0aBgDIAEoCVIHZWxmUGF0aBIaCghpZGVudGl0eRgEIAEoCVIIaWRlbnRpdHkS'
+        'GQoIYnVpbHRfYXQYBSABKARSB2J1aWx0QXQSGgoIcmV2aXNpb24YBiABKARSCHJldmlzaW9uEi'
+        'kKEGNvbXBpbGVyX3ZlcnNpb24YByABKAlSD2NvbXBpbGVyVmVyc2lvbhIdCgpzaXplX2J5dGVz'
+        'GAggASgEUglzaXplQnl0ZXM=');
+
+@$core.Deprecated('Use buildFailureDescriptor instead')
+const BuildFailure$json = {
+  '1': 'BuildFailure',
+  '2': [
+    {'1': 'stage', '3': 1, '4': 1, '5': 14, '6': '.bdl.v1.BuildStage', '10': 'stage'},
+    {'1': 'code', '3': 2, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'message', '3': 3, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 4, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'diagnostics', '3': 5, '4': 3, '5': 11, '6': '.bdl.v1.Diagnostic', '10': 'diagnostics'},
+    {'1': 'command', '3': 6, '4': 1, '5': 9, '10': 'command'},
+    {'1': 'output', '3': 7, '4': 3, '5': 9, '10': 'output'},
+  ],
+};
+
+/// Descriptor for `BuildFailure`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List buildFailureDescriptor = $convert
+    .base64Decode('CgxCdWlsZEZhaWx1cmUSKAoFc3RhZ2UYASABKA4yEi5iZGwudjEuQnVpbGRTdGFnZVIFc3RhZ2'
+        'USEgoEY29kZRgCIAEoCVIEY29kZRIYCgdtZXNzYWdlGAMgASgJUgdtZXNzYWdlEiAKC2V4cGxh'
+        'bmF0aW9uGAQgASgJUgtleHBsYW5hdGlvbhI0CgtkaWFnbm9zdGljcxgFIAMoCzISLmJkbC52MS'
+        '5EaWFnbm9zdGljUgtkaWFnbm9zdGljcxIYCgdjb21tYW5kGAYgASgJUgdjb21tYW5kEhYKBm91'
+        'dHB1dBgHIAMoCVIGb3V0cHV0');
+
+@$core.Deprecated('Use listFlashDevicesRequestDescriptor instead')
+const ListFlashDevicesRequest$json = {
+  '1': 'ListFlashDevicesRequest',
+  '2': [
+    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+  ],
+};
+
+/// Descriptor for `ListFlashDevicesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listFlashDevicesRequestDescriptor = $convert
+    .base64Decode('ChdMaXN0Rmxhc2hEZXZpY2VzUmVxdWVzdBIbCgl0YXJnZXRfaWQYASABKAlSCHRhcmdldElk');
+
+@$core.Deprecated('Use flashDevicesResponseDescriptor instead')
+const FlashDevicesResponse$json = {
+  '1': 'FlashDevicesResponse',
+  '2': [
+    {'1': 'devices', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.FlashDevice', '10': 'devices'},
+    {'1': 'methods', '3': 2, '4': 3, '5': 11, '6': '.bdl.v1.FlashMethodView', '10': 'methods'},
+  ],
+};
+
+/// Descriptor for `FlashDevicesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashDevicesResponseDescriptor = $convert
+    .base64Decode('ChRGbGFzaERldmljZXNSZXNwb25zZRItCgdkZXZpY2VzGAEgAygLMhMuYmRsLnYxLkZsYXNoRG'
+        'V2aWNlUgdkZXZpY2VzEjEKB21ldGhvZHMYAiADKAsyFy5iZGwudjEuRmxhc2hNZXRob2RWaWV3'
+        'UgdtZXRob2Rz');
+
+@$core.Deprecated('Use flashDeviceDescriptor instead')
+const FlashDevice$json = {
+  '1': 'FlashDevice',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'method', '3': 2, '4': 1, '5': 14, '6': '.bdl.v1.FlashMethod', '10': 'method'},
+    {'1': 'label', '3': 3, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'detail', '3': 4, '4': 1, '5': 9, '10': 'detail'},
+  ],
+};
+
+/// Descriptor for `FlashDevice`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashDeviceDescriptor = $convert
+    .base64Decode('CgtGbGFzaERldmljZRIOCgJpZBgBIAEoCVICaWQSKwoGbWV0aG9kGAIgASgOMhMuYmRsLnYxLk'
+        'ZsYXNoTWV0aG9kUgZtZXRob2QSFAoFbGFiZWwYAyABKAlSBWxhYmVsEhYKBmRldGFpbBgEIAEo'
+        'CVIGZGV0YWls');
+
+@$core.Deprecated('Use flashMethodViewDescriptor instead')
+const FlashMethodView$json = {
+  '1': 'FlashMethodView',
+  '2': [
+    {'1': 'method', '3': 1, '4': 1, '5': 14, '6': '.bdl.v1.FlashMethod', '10': 'method'},
+    {'1': 'available', '3': 2, '4': 1, '5': 8, '10': 'available'},
+    {'1': 'label', '3': 3, '4': 1, '5': 9, '10': 'label'},
+    {'1': 'hint', '3': 4, '4': 1, '5': 9, '10': 'hint'},
+  ],
+};
+
+/// Descriptor for `FlashMethodView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashMethodViewDescriptor = $convert
+    .base64Decode('Cg9GbGFzaE1ldGhvZFZpZXcSKwoGbWV0aG9kGAEgASgOMhMuYmRsLnYxLkZsYXNoTWV0aG9kUg'
+        'ZtZXRob2QSHAoJYXZhaWxhYmxlGAIgASgIUglhdmFpbGFibGUSFAoFbGFiZWwYAyABKAlSBWxh'
+        'YmVsEhIKBGhpbnQYBCABKAlSBGhpbnQ=');
+
+@$core.Deprecated('Use flashFirmwareRequestDescriptor instead')
+const FlashFirmwareRequest$json = {
+  '1': 'FlashFirmwareRequest',
+  '2': [
+    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'device_id', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'deviceId', '17': true},
+  ],
+  '8': [
+    {'1': '_device_id'},
+  ],
+};
+
+/// Descriptor for `FlashFirmwareRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashFirmwareRequestDescriptor = $convert
+    .base64Decode('ChRGbGFzaEZpcm13YXJlUmVxdWVzdBIbCgl0YXJnZXRfaWQYASABKAlSCHRhcmdldElkEiAKCW'
+        'RldmljZV9pZBgCIAEoCUgAUghkZXZpY2VJZIgBAUIMCgpfZGV2aWNlX2lk');
+
+@$core.Deprecated('Use flashProgressDescriptor instead')
+const FlashProgress$json = {
+  '1': 'FlashProgress',
+  '2': [
+    {'1': 'flash_id', '3': 1, '4': 1, '5': 4, '10': 'flashId'},
+    {'1': 'target_id', '3': 2, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'stage', '3': 3, '4': 1, '5': 14, '6': '.bdl.v1.FlashStage', '10': 'stage'},
+    {'1': 'message', '3': 4, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'device', '3': 5, '4': 1, '5': 11, '6': '.bdl.v1.FlashDevice', '10': 'device'},
+    {
+      '1': 'artifact',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.BuildArtifact',
+      '9': 0,
+      '10': 'artifact',
+      '17': true
+    },
+    {
+      '1': 'failure',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FlashFailure',
+      '9': 1,
+      '10': 'failure',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_artifact'},
+    {'1': '_failure'},
+  ],
+};
+
+/// Descriptor for `FlashProgress`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashProgressDescriptor = $convert
+    .base64Decode('Cg1GbGFzaFByb2dyZXNzEhkKCGZsYXNoX2lkGAEgASgEUgdmbGFzaElkEhsKCXRhcmdldF9pZB'
+        'gCIAEoCVIIdGFyZ2V0SWQSKAoFc3RhZ2UYAyABKA4yEi5iZGwudjEuRmxhc2hTdGFnZVIFc3Rh'
+        'Z2USGAoHbWVzc2FnZRgEIAEoCVIHbWVzc2FnZRIrCgZkZXZpY2UYBSABKAsyEy5iZGwudjEuRm'
+        'xhc2hEZXZpY2VSBmRldmljZRI2CghhcnRpZmFjdBgGIAEoCzIVLmJkbC52MS5CdWlsZEFydGlm'
+        'YWN0SABSCGFydGlmYWN0iAEBEjMKB2ZhaWx1cmUYByABKAsyFC5iZGwudjEuRmxhc2hGYWlsdX'
+        'JlSAFSB2ZhaWx1cmWIAQFCCwoJX2FydGlmYWN0QgoKCF9mYWlsdXJl');
+
+@$core.Deprecated('Use flashFailureDescriptor instead')
+const FlashFailure$json = {
+  '1': 'FlashFailure',
+  '2': [
+    {'1': 'stage', '3': 1, '4': 1, '5': 14, '6': '.bdl.v1.FlashStage', '10': 'stage'},
+    {'1': 'code', '3': 2, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'message', '3': 3, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 4, '4': 1, '5': 9, '10': 'explanation'},
+    {'1': 'command', '3': 5, '4': 1, '5': 9, '10': 'command'},
+    {'1': 'output', '3': 6, '4': 3, '5': 9, '10': 'output'},
+  ],
+};
+
+/// Descriptor for `FlashFailure`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List flashFailureDescriptor = $convert
+    .base64Decode('CgxGbGFzaEZhaWx1cmUSKAoFc3RhZ2UYASABKA4yEi5iZGwudjEuRmxhc2hTdGFnZVIFc3RhZ2'
+        'USEgoEY29kZRgCIAEoCVIEY29kZRIYCgdtZXNzYWdlGAMgASgJUgdtZXNzYWdlEiAKC2V4cGxh'
+        'bmF0aW9uGAQgASgJUgtleHBsYW5hdGlvbhIYCgdjb21tYW5kGAUgASgJUgdjb21tYW5kEhYKBm'
+        '91dHB1dBgGIAMoCVIGb3V0cHV0');
+
+@$core.Deprecated('Use listTemplatesRequestDescriptor instead')
+const ListTemplatesRequest$json = {
+  '1': 'ListTemplatesRequest',
+};
+
+/// Descriptor for `ListTemplatesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listTemplatesRequestDescriptor =
+    $convert.base64Decode('ChRMaXN0VGVtcGxhdGVzUmVxdWVzdA==');
+
+@$core.Deprecated('Use templatesResponseDescriptor instead')
+const TemplatesResponse$json = {
+  '1': 'TemplatesResponse',
+  '2': [
+    {'1': 'templates', '3': 1, '4': 3, '5': 11, '6': '.bdl.v1.TemplateView', '10': 'templates'},
+  ],
+};
+
+/// Descriptor for `TemplatesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List templatesResponseDescriptor = $convert
+    .base64Decode('ChFUZW1wbGF0ZXNSZXNwb25zZRIyCgl0ZW1wbGF0ZXMYASADKAsyFC5iZGwudjEuVGVtcGxhdG'
+        'VWaWV3Ugl0ZW1wbGF0ZXM=');
+
+@$core.Deprecated('Use templateViewDescriptor instead')
+const TemplateView$json = {
+  '1': 'TemplateView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'display_name', '3': 2, '4': 1, '5': 9, '10': 'displayName'},
+    {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'target_id', '3': 4, '4': 1, '5': 9, '10': 'targetId'},
+    {'1': 'configured', '3': 5, '4': 1, '5': 8, '10': 'configured'},
+  ],
+};
+
+/// Descriptor for `TemplateView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List templateViewDescriptor = $convert
+    .base64Decode('CgxUZW1wbGF0ZVZpZXcSDgoCaWQYASABKAlSAmlkEiEKDGRpc3BsYXlfbmFtZRgCIAEoCVILZG'
+        'lzcGxheU5hbWUSIAoLZGVzY3JpcHRpb24YAyABKAlSC2Rlc2NyaXB0aW9uEhsKCXRhcmdldF9p'
+        'ZBgEIAEoCVIIdGFyZ2V0SWQSHgoKY29uZmlndXJlZBgFIAEoCFIKY29uZmlndXJlZA==');
 
 @$core.Deprecated('Use initSystemProjectRequestDescriptor instead')
 const InitSystemProjectRequest$json = {

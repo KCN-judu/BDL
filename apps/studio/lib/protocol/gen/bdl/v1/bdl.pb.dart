@@ -71,6 +71,12 @@ enum ClientMessage_Payload {
   sourceDefinition,
   sourceReferences,
   formatSource,
+  buildFirmware,
+  getBuildStatus,
+  cancelBuild,
+  listFlashDevices,
+  flashFirmware,
+  listTemplates,
   notSet
 }
 
@@ -126,6 +132,12 @@ class ClientMessage extends $pb.GeneratedMessage {
     SourceDefinitionRequest? sourceDefinition,
     SourceReferencesRequest? sourceReferences,
     FormatSourceRequest? formatSource,
+    BuildFirmwareRequest? buildFirmware,
+    GetBuildStatusRequest? getBuildStatus,
+    CancelBuildRequest? cancelBuild,
+    ListFlashDevicesRequest? listFlashDevices,
+    FlashFirmwareRequest? flashFirmware,
+    ListTemplatesRequest? listTemplates,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -180,6 +192,12 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (sourceDefinition != null) result.sourceDefinition = sourceDefinition;
     if (sourceReferences != null) result.sourceReferences = sourceReferences;
     if (formatSource != null) result.formatSource = formatSource;
+    if (buildFirmware != null) result.buildFirmware = buildFirmware;
+    if (getBuildStatus != null) result.getBuildStatus = getBuildStatus;
+    if (cancelBuild != null) result.cancelBuild = cancelBuild;
+    if (listFlashDevices != null) result.listFlashDevices = listFlashDevices;
+    if (flashFirmware != null) result.flashFirmware = flashFirmware;
+    if (listTemplates != null) result.listTemplates = listTemplates;
     return result;
   }
 
@@ -242,6 +260,12 @@ class ClientMessage extends $pb.GeneratedMessage {
     67: ClientMessage_Payload.sourceDefinition,
     68: ClientMessage_Payload.sourceReferences,
     69: ClientMessage_Payload.formatSource,
+    70: ClientMessage_Payload.buildFirmware,
+    71: ClientMessage_Payload.getBuildStatus,
+    72: ClientMessage_Payload.cancelBuild,
+    73: ClientMessage_Payload.listFlashDevices,
+    74: ClientMessage_Payload.flashFirmware,
+    75: ClientMessage_Payload.listTemplates,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -296,7 +320,13 @@ class ClientMessage extends $pb.GeneratedMessage {
       66,
       67,
       68,
-      69
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -398,6 +428,18 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: SourceReferencesRequest.$_createMessage)
     ..aOM<FormatSourceRequest>(69, _omitFieldNames ? '' : 'formatSource',
         subBuilder: FormatSourceRequest.$_createMessage)
+    ..aOM<BuildFirmwareRequest>(70, _omitFieldNames ? '' : 'buildFirmware',
+        subBuilder: BuildFirmwareRequest.$_createMessage)
+    ..aOM<GetBuildStatusRequest>(71, _omitFieldNames ? '' : 'getBuildStatus',
+        subBuilder: GetBuildStatusRequest.$_createMessage)
+    ..aOM<CancelBuildRequest>(72, _omitFieldNames ? '' : 'cancelBuild',
+        subBuilder: CancelBuildRequest.$_createMessage)
+    ..aOM<ListFlashDevicesRequest>(73, _omitFieldNames ? '' : 'listFlashDevices',
+        subBuilder: ListFlashDevicesRequest.$_createMessage)
+    ..aOM<FlashFirmwareRequest>(74, _omitFieldNames ? '' : 'flashFirmware',
+        subBuilder: FlashFirmwareRequest.$_createMessage)
+    ..aOM<ListTemplatesRequest>(75, _omitFieldNames ? '' : 'listTemplates',
+        subBuilder: ListTemplatesRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -469,6 +511,12 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(67)
   @$pb.TagNumber(68)
   @$pb.TagNumber(69)
+  @$pb.TagNumber(70)
+  @$pb.TagNumber(71)
+  @$pb.TagNumber(72)
+  @$pb.TagNumber(73)
+  @$pb.TagNumber(74)
+  @$pb.TagNumber(75)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -519,6 +567,12 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(67)
   @$pb.TagNumber(68)
   @$pb.TagNumber(69)
+  @$pb.TagNumber(70)
+  @$pb.TagNumber(71)
+  @$pb.TagNumber(72)
+  @$pb.TagNumber(73)
+  @$pb.TagNumber(74)
+  @$pb.TagNumber(75)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1081,6 +1135,75 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearFormatSource() => $_clearField(69);
   @$pb.TagNumber(69)
   FormatSourceRequest ensureFormatSource() => $_ensure(49);
+
+  /// Firmware (0.26): build the chosen target's firmware, its status and
+  /// artifact, the devices a flash can reach, the flash itself; the demo
+  /// templates a new project can start from.
+  @$pb.TagNumber(70)
+  BuildFirmwareRequest get buildFirmware => $_getN(50);
+  @$pb.TagNumber(70)
+  set buildFirmware(BuildFirmwareRequest value) => $_setField(70, value);
+  @$pb.TagNumber(70)
+  $core.bool hasBuildFirmware() => $_has(50);
+  @$pb.TagNumber(70)
+  void clearBuildFirmware() => $_clearField(70);
+  @$pb.TagNumber(70)
+  BuildFirmwareRequest ensureBuildFirmware() => $_ensure(50);
+
+  @$pb.TagNumber(71)
+  GetBuildStatusRequest get getBuildStatus => $_getN(51);
+  @$pb.TagNumber(71)
+  set getBuildStatus(GetBuildStatusRequest value) => $_setField(71, value);
+  @$pb.TagNumber(71)
+  $core.bool hasGetBuildStatus() => $_has(51);
+  @$pb.TagNumber(71)
+  void clearGetBuildStatus() => $_clearField(71);
+  @$pb.TagNumber(71)
+  GetBuildStatusRequest ensureGetBuildStatus() => $_ensure(51);
+
+  @$pb.TagNumber(72)
+  CancelBuildRequest get cancelBuild => $_getN(52);
+  @$pb.TagNumber(72)
+  set cancelBuild(CancelBuildRequest value) => $_setField(72, value);
+  @$pb.TagNumber(72)
+  $core.bool hasCancelBuild() => $_has(52);
+  @$pb.TagNumber(72)
+  void clearCancelBuild() => $_clearField(72);
+  @$pb.TagNumber(72)
+  CancelBuildRequest ensureCancelBuild() => $_ensure(52);
+
+  @$pb.TagNumber(73)
+  ListFlashDevicesRequest get listFlashDevices => $_getN(53);
+  @$pb.TagNumber(73)
+  set listFlashDevices(ListFlashDevicesRequest value) => $_setField(73, value);
+  @$pb.TagNumber(73)
+  $core.bool hasListFlashDevices() => $_has(53);
+  @$pb.TagNumber(73)
+  void clearListFlashDevices() => $_clearField(73);
+  @$pb.TagNumber(73)
+  ListFlashDevicesRequest ensureListFlashDevices() => $_ensure(53);
+
+  @$pb.TagNumber(74)
+  FlashFirmwareRequest get flashFirmware => $_getN(54);
+  @$pb.TagNumber(74)
+  set flashFirmware(FlashFirmwareRequest value) => $_setField(74, value);
+  @$pb.TagNumber(74)
+  $core.bool hasFlashFirmware() => $_has(54);
+  @$pb.TagNumber(74)
+  void clearFlashFirmware() => $_clearField(74);
+  @$pb.TagNumber(74)
+  FlashFirmwareRequest ensureFlashFirmware() => $_ensure(54);
+
+  @$pb.TagNumber(75)
+  ListTemplatesRequest get listTemplates => $_getN(55);
+  @$pb.TagNumber(75)
+  set listTemplates(ListTemplatesRequest value) => $_setField(75, value);
+  @$pb.TagNumber(75)
+  $core.bool hasListTemplates() => $_has(55);
+  @$pb.TagNumber(75)
+  void clearListTemplates() => $_clearField(75);
+  @$pb.TagNumber(75)
+  ListTemplatesRequest ensureListTemplates() => $_ensure(55);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1198,6 +1321,9 @@ enum Response_Payload {
   sourceLocations,
   formatSource,
   sourceCandidates,
+  buildStatus,
+  flashDevices,
+  templates,
   notSet
 }
 
@@ -1233,6 +1359,9 @@ class Response extends $pb.GeneratedMessage {
     SourceLocationsResponse? sourceLocations,
     FormatSourceResponse? formatSource,
     SourceCandidatesResponse? sourceCandidates,
+    BuildStatusResponse? buildStatus,
+    FlashDevicesResponse? flashDevices,
+    TemplatesResponse? templates,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1265,6 +1394,9 @@ class Response extends $pb.GeneratedMessage {
     if (sourceLocations != null) result.sourceLocations = sourceLocations;
     if (formatSource != null) result.formatSource = formatSource;
     if (sourceCandidates != null) result.sourceCandidates = sourceCandidates;
+    if (buildStatus != null) result.buildStatus = buildStatus;
+    if (flashDevices != null) result.flashDevices = flashDevices;
+    if (templates != null) result.templates = templates;
     return result;
   }
 
@@ -1307,6 +1439,9 @@ class Response extends $pb.GeneratedMessage {
     52: Response_Payload.sourceLocations,
     53: Response_Payload.formatSource,
     54: Response_Payload.sourceCandidates,
+    55: Response_Payload.buildStatus,
+    56: Response_Payload.flashDevices,
+    57: Response_Payload.templates,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1341,7 +1476,10 @@ class Response extends $pb.GeneratedMessage {
       51,
       52,
       53,
-      54
+      54,
+      55,
+      56,
+      57
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1401,6 +1539,12 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: FormatSourceResponse.$_createMessage)
     ..aOM<SourceCandidatesResponse>(54, _omitFieldNames ? '' : 'sourceCandidates',
         subBuilder: SourceCandidatesResponse.$_createMessage)
+    ..aOM<BuildStatusResponse>(55, _omitFieldNames ? '' : 'buildStatus',
+        subBuilder: BuildStatusResponse.$_createMessage)
+    ..aOM<FlashDevicesResponse>(56, _omitFieldNames ? '' : 'flashDevices',
+        subBuilder: FlashDevicesResponse.$_createMessage)
+    ..aOM<TemplatesResponse>(57, _omitFieldNames ? '' : 'templates',
+        subBuilder: TemplatesResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1452,6 +1596,9 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
   @$pb.TagNumber(54)
+  @$pb.TagNumber(55)
+  @$pb.TagNumber(56)
+  @$pb.TagNumber(57)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1482,6 +1629,9 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(52)
   @$pb.TagNumber(53)
   @$pb.TagNumber(54)
+  @$pb.TagNumber(55)
+  @$pb.TagNumber(56)
+  @$pb.TagNumber(57)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1811,20 +1961,57 @@ class Response extends $pb.GeneratedMessage {
   void clearSourceCandidates() => $_clearField(54);
   @$pb.TagNumber(54)
   SourceCandidatesResponse ensureSourceCandidates() => $_ensure(29);
+
+  @$pb.TagNumber(55)
+  BuildStatusResponse get buildStatus => $_getN(30);
+  @$pb.TagNumber(55)
+  set buildStatus(BuildStatusResponse value) => $_setField(55, value);
+  @$pb.TagNumber(55)
+  $core.bool hasBuildStatus() => $_has(30);
+  @$pb.TagNumber(55)
+  void clearBuildStatus() => $_clearField(55);
+  @$pb.TagNumber(55)
+  BuildStatusResponse ensureBuildStatus() => $_ensure(30);
+
+  @$pb.TagNumber(56)
+  FlashDevicesResponse get flashDevices => $_getN(31);
+  @$pb.TagNumber(56)
+  set flashDevices(FlashDevicesResponse value) => $_setField(56, value);
+  @$pb.TagNumber(56)
+  $core.bool hasFlashDevices() => $_has(31);
+  @$pb.TagNumber(56)
+  void clearFlashDevices() => $_clearField(56);
+  @$pb.TagNumber(56)
+  FlashDevicesResponse ensureFlashDevices() => $_ensure(31);
+
+  @$pb.TagNumber(57)
+  TemplatesResponse get templates => $_getN(32);
+  @$pb.TagNumber(57)
+  set templates(TemplatesResponse value) => $_setField(57, value);
+  @$pb.TagNumber(57)
+  $core.bool hasTemplates() => $_has(32);
+  @$pb.TagNumber(57)
+  void clearTemplates() => $_clearField(57);
+  @$pb.TagNumber(57)
+  TemplatesResponse ensureTemplates() => $_ensure(32);
 }
 
-enum Event_Payload { projectChanged, log, analysisReady, notSet }
+enum Event_Payload { projectChanged, log, analysisReady, buildProgress, flashProgress, notSet }
 
 class Event extends $pb.GeneratedMessage {
   factory Event({
     ProjectChanged? projectChanged,
     DaemonLog? log,
     AnalysisReady? analysisReady,
+    BuildProgress? buildProgress,
+    FlashProgress? flashProgress,
   }) {
     final result = Event._();
     if (projectChanged != null) result.projectChanged = projectChanged;
     if (log != null) result.log = log;
     if (analysisReady != null) result.analysisReady = analysisReady;
+    if (buildProgress != null) result.buildProgress = buildProgress;
+    if (flashProgress != null) result.flashProgress = flashProgress;
     return result;
   }
 
@@ -1841,17 +2028,23 @@ class Event extends $pb.GeneratedMessage {
     1: Event_Payload.projectChanged,
     2: Event_Payload.log,
     3: Event_Payload.analysisReady,
+    4: Event_Payload.buildProgress,
+    5: Event_Payload.flashProgress,
     0: Event_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Event',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: Event.$_createMessage)
-    ..oo(0, [1, 2, 3])
+    ..oo(0, [1, 2, 3, 4, 5])
     ..aOM<ProjectChanged>(1, _omitFieldNames ? '' : 'projectChanged',
         subBuilder: ProjectChanged.$_createMessage)
     ..aOM<DaemonLog>(2, _omitFieldNames ? '' : 'log', subBuilder: DaemonLog.$_createMessage)
     ..aOM<AnalysisReady>(3, _omitFieldNames ? '' : 'analysisReady',
         subBuilder: AnalysisReady.$_createMessage)
+    ..aOM<BuildProgress>(4, _omitFieldNames ? '' : 'buildProgress',
+        subBuilder: BuildProgress.$_createMessage)
+    ..aOM<FlashProgress>(5, _omitFieldNames ? '' : 'flashProgress',
+        subBuilder: FlashProgress.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1877,10 +2070,14 @@ class Event extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
   Event_Payload whichPayload() => _Event_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
+  @$pb.TagNumber(4)
+  @$pb.TagNumber(5)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1917,6 +2114,30 @@ class Event extends $pb.GeneratedMessage {
   void clearAnalysisReady() => $_clearField(3);
   @$pb.TagNumber(3)
   AnalysisReady ensureAnalysisReady() => $_ensure(2);
+
+  /// A running build's or flash's stages as they happen (0.26); the last
+  /// one carries the outcome.
+  @$pb.TagNumber(4)
+  BuildProgress get buildProgress => $_getN(3);
+  @$pb.TagNumber(4)
+  set buildProgress(BuildProgress value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasBuildProgress() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearBuildProgress() => $_clearField(4);
+  @$pb.TagNumber(4)
+  BuildProgress ensureBuildProgress() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  FlashProgress get flashProgress => $_getN(4);
+  @$pb.TagNumber(5)
+  set flashProgress(FlashProgress value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasFlashProgress() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearFlashProgress() => $_clearField(5);
+  @$pb.TagNumber(5)
+  FlashProgress ensureFlashProgress() => $_ensure(4);
 }
 
 class Ack extends $pb.GeneratedMessage {
@@ -2348,10 +2569,12 @@ class InitProjectRequest extends $pb.GeneratedMessage {
   factory InitProjectRequest({
     $core.String? rootPath,
     $core.String? name,
+    $core.String? template,
   }) {
     final result = InitProjectRequest._();
     if (rootPath != null) result.rootPath = rootPath;
     if (name != null) result.name = name;
+    if (template != null) result.template = template;
     return result;
   }
 
@@ -2369,6 +2592,7 @@ class InitProjectRequest extends $pb.GeneratedMessage {
       createEmptyInstance: InitProjectRequest.$_createMessage)
     ..aOS(1, _omitFieldNames ? '' : 'rootPath')
     ..aOS(2, _omitFieldNames ? '' : 'name')
+    ..aOS(3, _omitFieldNames ? '' : 'template')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2408,6 +2632,17 @@ class InitProjectRequest extends $pb.GeneratedMessage {
   $core.bool hasName() => $_has(1);
   @$pb.TagNumber(2)
   void clearName() => $_clearField(2);
+
+  /// A template id from `ListTemplates` (0.26): the project starts with
+  /// that design instead of an empty source.  Absent: an empty project.
+  @$pb.TagNumber(3)
+  $core.String get template => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set template($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTemplate() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTemplate() => $_clearField(3);
 }
 
 class SaveProjectRequest extends $pb.GeneratedMessage {
@@ -16187,6 +16422,8 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     Blocker? blocker,
     $core.Iterable<RealizationView>? realizations,
     $core.Iterable<ProvisionView>? provisions,
+    $core.bool? buildReady,
+    $core.Iterable<BuildBlocker>? buildBlockers,
   }) {
     final result = DeploymentAnalysis._();
     if (revision != null) result.revision = revision;
@@ -16206,6 +16443,8 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     if (blocker != null) result.blocker = blocker;
     if (realizations != null) result.realizations.addAll(realizations);
     if (provisions != null) result.provisions.addAll(provisions);
+    if (buildReady != null) result.buildReady = buildReady;
+    if (buildBlockers != null) result.buildBlockers.addAll(buildBlockers);
     return result;
   }
 
@@ -16245,6 +16484,9 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
         subBuilder: RealizationView.$_createMessage)
     ..pPM<ProvisionView>(17, _omitFieldNames ? '' : 'provisions',
         subBuilder: ProvisionView.$_createMessage)
+    ..aOB(18, _omitFieldNames ? '' : 'buildReady')
+    ..pPM<BuildBlocker>(19, _omitFieldNames ? '' : 'buildBlockers',
+        subBuilder: BuildBlocker.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -16388,6 +16630,146 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
   /// with no device is an incomplete deployment.
   @$pb.TagNumber(17)
   $pb.PbList<ProvisionView> get provisions => $_getList(16);
+
+  /// Whether this board's firmware can be built from the project as it is
+  /// (0.26): the design is ready, every output driven, every device
+  /// admissible and placed, every Source provided by a profile this
+  /// board's adapter reads.  The same judgments the build makes, made
+  /// before the button is offered; nothing about the toolchain.
+  @$pb.TagNumber(18)
+  $core.bool get buildReady => $_getBF(17);
+  @$pb.TagNumber(18)
+  set buildReady($core.bool value) => $_setBool(17, value);
+  @$pb.TagNumber(18)
+  $core.bool hasBuildReady() => $_has(17);
+  @$pb.TagNumber(18)
+  void clearBuildReady() => $_clearField(18);
+
+  /// When not ready: what stands in the way, the smallest actionable thing
+  /// first.  Empty when `build_ready`.
+  @$pb.TagNumber(19)
+  $pb.PbList<BuildBlocker> get buildBlockers => $_getList(18);
+}
+
+/// One thing that stops a build, in product language, with the object it
+/// is about so a page can lead to it.
+class BuildBlocker extends $pb.GeneratedMessage {
+  factory BuildBlocker({
+    $core.String? code,
+    $core.String? message,
+    $core.String? explanation,
+    $fixnum.Int64? outputId,
+    $fixnum.Int64? deviceId,
+    $fixnum.Int64? mappingId,
+  }) {
+    final result = BuildBlocker._();
+    if (code != null) result.code = code;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    if (outputId != null) result.outputId = outputId;
+    if (deviceId != null) result.deviceId = deviceId;
+    if (mappingId != null) result.mappingId = mappingId;
+    return result;
+  }
+
+  BuildBlocker._();
+
+  factory BuildBlocker.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildBlocker()..mergeFromBuffer(data, registry);
+  factory BuildBlocker.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildBlocker()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildBlocker',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildBlocker.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'code')
+    ..aOS(2, _omitFieldNames ? '' : 'message')
+    ..aOS(3, _omitFieldNames ? '' : 'explanation')
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'outputId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(6, _omitFieldNames ? '' : 'mappingId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildBlocker clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildBlocker copyWith(void Function(BuildBlocker) updates) =>
+      super.copyWith((message) => updates(message as BuildBlocker)) as BuildBlocker;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildBlocker() / BuildBlocker.new instead')
+  static BuildBlocker create() => BuildBlocker._();
+  static $pb.GeneratedMessage $_createMessage() => BuildBlocker._();
+  @$core.override
+  BuildBlocker createEmptyInstance() => BuildBlocker._();
+  @$core.pragma('dart2js:noInline')
+  static BuildBlocker getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildBlocker>(BuildBlocker.$_createMessage);
+  static BuildBlocker? _defaultInstance;
+
+  /// A stable code: a MissingKind's name in snake case (`output_no_device`)
+  /// or an `adapter.*` diagnostic's code.
+  @$pb.TagNumber(1)
+  $core.String get code => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set code($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCode() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCode() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get message => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set message($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMessage() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMessage() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get explanation => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set explanation($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasExplanation() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearExplanation() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get outputId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set outputId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasOutputId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOutputId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get deviceId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set deviceId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDeviceId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDeviceId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get mappingId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set mappingId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasMappingId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMappingId() => $_clearField(6);
 }
 
 class ProvisionView extends $pb.GeneratedMessage {
@@ -18224,6 +18606,1615 @@ class BlockedCandidate extends $pb.GeneratedMessage {
   $core.bool hasHeldByIndex() => $_has(2);
   @$pb.TagNumber(3)
   void clearHeldByIndex() => $_clearField(3);
+}
+
+/// Start building the firmware of `target_id` from the project as it is.
+/// Answers Ack at once (or `build.busy`, `build.unknown_target`,
+/// `build.not_ready`); progress arrives as BuildProgress events.
+class BuildFirmwareRequest extends $pb.GeneratedMessage {
+  factory BuildFirmwareRequest({
+    $core.String? targetId,
+    $fixnum.Int64? revision,
+  }) {
+    final result = BuildFirmwareRequest._();
+    if (targetId != null) result.targetId = targetId;
+    if (revision != null) result.revision = revision;
+    return result;
+  }
+
+  BuildFirmwareRequest._();
+
+  factory BuildFirmwareRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildFirmwareRequest()..mergeFromBuffer(data, registry);
+  factory BuildFirmwareRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildFirmwareRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildFirmwareRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildFirmwareRequest.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildFirmwareRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildFirmwareRequest copyWith(void Function(BuildFirmwareRequest) updates) =>
+      super.copyWith((message) => updates(message as BuildFirmwareRequest)) as BuildFirmwareRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildFirmwareRequest() / BuildFirmwareRequest.new instead')
+  static BuildFirmwareRequest create() => BuildFirmwareRequest._();
+  static $pb.GeneratedMessage $_createMessage() => BuildFirmwareRequest._();
+  @$core.override
+  BuildFirmwareRequest createEmptyInstance() => BuildFirmwareRequest._();
+  @$core.pragma('dart2js:noInline')
+  static BuildFirmwareRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildFirmwareRequest>(BuildFirmwareRequest.$_createMessage);
+  static BuildFirmwareRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get targetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set targetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTargetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTargetId() => $_clearField(1);
+
+  /// Refused with `build.stale_revision` unless it is the project's.
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get revision => $_getI64(1);
+  @$pb.TagNumber(2)
+  set revision($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRevision() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRevision() => $_clearField(2);
+}
+
+class GetBuildStatusRequest extends $pb.GeneratedMessage {
+  factory GetBuildStatusRequest({
+    $core.String? targetId,
+  }) {
+    final result = GetBuildStatusRequest._();
+    if (targetId != null) result.targetId = targetId;
+    return result;
+  }
+
+  GetBuildStatusRequest._();
+
+  factory GetBuildStatusRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetBuildStatusRequest()..mergeFromBuffer(data, registry);
+  factory GetBuildStatusRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetBuildStatusRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetBuildStatusRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: GetBuildStatusRequest.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetBuildStatusRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetBuildStatusRequest copyWith(void Function(GetBuildStatusRequest) updates) =>
+      super.copyWith((message) => updates(message as GetBuildStatusRequest))
+          as GetBuildStatusRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GetBuildStatusRequest() / GetBuildStatusRequest.new instead')
+  static GetBuildStatusRequest create() => GetBuildStatusRequest._();
+  static $pb.GeneratedMessage $_createMessage() => GetBuildStatusRequest._();
+  @$core.override
+  GetBuildStatusRequest createEmptyInstance() => GetBuildStatusRequest._();
+  @$core.pragma('dart2js:noInline')
+  static GetBuildStatusRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GetBuildStatusRequest>(
+          GetBuildStatusRequest.$_createMessage);
+  static GetBuildStatusRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get targetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set targetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTargetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTargetId() => $_clearField(1);
+}
+
+/// Stop the running build, if any; the build ends CANCELLED.
+class CancelBuildRequest extends $pb.GeneratedMessage {
+  factory CancelBuildRequest() => CancelBuildRequest._();
+
+  CancelBuildRequest._();
+
+  factory CancelBuildRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CancelBuildRequest()..mergeFromBuffer(data, registry);
+  factory CancelBuildRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CancelBuildRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CancelBuildRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: CancelBuildRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CancelBuildRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CancelBuildRequest copyWith(void Function(CancelBuildRequest) updates) =>
+      super.copyWith((message) => updates(message as CancelBuildRequest)) as CancelBuildRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CancelBuildRequest() / CancelBuildRequest.new instead')
+  static CancelBuildRequest create() => CancelBuildRequest._();
+  static $pb.GeneratedMessage $_createMessage() => CancelBuildRequest._();
+  @$core.override
+  CancelBuildRequest createEmptyInstance() => CancelBuildRequest._();
+  @$core.pragma('dart2js:noInline')
+  static CancelBuildRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CancelBuildRequest>(CancelBuildRequest.$_createMessage);
+  static CancelBuildRequest? _defaultInstance;
+}
+
+class BuildProgress extends $pb.GeneratedMessage {
+  factory BuildProgress({
+    $fixnum.Int64? buildId,
+    $core.String? targetId,
+    BuildStage? stage,
+    $core.String? message,
+    $core.int? done,
+    $core.String? detail,
+    BuildStatus? status,
+  }) {
+    final result = BuildProgress._();
+    if (buildId != null) result.buildId = buildId;
+    if (targetId != null) result.targetId = targetId;
+    if (stage != null) result.stage = stage;
+    if (message != null) result.message = message;
+    if (done != null) result.done = done;
+    if (detail != null) result.detail = detail;
+    if (status != null) result.status = status;
+    return result;
+  }
+
+  BuildProgress._();
+
+  factory BuildProgress.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildProgress()..mergeFromBuffer(data, registry);
+  factory BuildProgress.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildProgress()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildProgress',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildProgress.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'buildId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'targetId')
+    ..aE<BuildStage>(3, _omitFieldNames ? '' : 'stage', enumValues: BuildStage.values)
+    ..aOS(4, _omitFieldNames ? '' : 'message')
+    ..aI(5, _omitFieldNames ? '' : 'done', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(6, _omitFieldNames ? '' : 'detail')
+    ..aOM<BuildStatus>(7, _omitFieldNames ? '' : 'status', subBuilder: BuildStatus.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildProgress clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildProgress copyWith(void Function(BuildProgress) updates) =>
+      super.copyWith((message) => updates(message as BuildProgress)) as BuildProgress;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildProgress() / BuildProgress.new instead')
+  static BuildProgress create() => BuildProgress._();
+  static $pb.GeneratedMessage $_createMessage() => BuildProgress._();
+  @$core.override
+  BuildProgress createEmptyInstance() => BuildProgress._();
+  @$core.pragma('dart2js:noInline')
+  static BuildProgress getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildProgress>(BuildProgress.$_createMessage);
+  static BuildProgress? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get buildId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set buildId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBuildId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBuildId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get targetId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set targetId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTargetId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTargetId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  BuildStage get stage => $_getN(2);
+  @$pb.TagNumber(3)
+  set stage(BuildStage value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasStage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearStage() => $_clearField(3);
+
+  /// What is happening now, in product language ("Compiling embassy-rp").
+  @$pb.TagNumber(4)
+  $core.String get message => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set message($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasMessage() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMessage() => $_clearField(4);
+
+  /// Crates compiled so far, when known.
+  @$pb.TagNumber(5)
+  $core.int get done => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set done($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDone() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDone() => $_clearField(5);
+
+  /// A line for the advanced view (a compiler line, a command); may be empty.
+  @$pb.TagNumber(6)
+  $core.String get detail => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set detail($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasDetail() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearDetail() => $_clearField(6);
+
+  /// On COMPLETED, FAILED or CANCELLED: the status as `GetBuildStatus` gives it.
+  @$pb.TagNumber(7)
+  BuildStatus get status => $_getN(6);
+  @$pb.TagNumber(7)
+  set status(BuildStatus value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasStatus() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearStatus() => $_clearField(7);
+  @$pb.TagNumber(7)
+  BuildStatus ensureStatus() => $_ensure(6);
+}
+
+class BuildStatusResponse extends $pb.GeneratedMessage {
+  factory BuildStatusResponse({
+    BuildStatus? status,
+  }) {
+    final result = BuildStatusResponse._();
+    if (status != null) result.status = status;
+    return result;
+  }
+
+  BuildStatusResponse._();
+
+  factory BuildStatusResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildStatusResponse()..mergeFromBuffer(data, registry);
+  factory BuildStatusResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildStatusResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildStatusResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildStatusResponse.$_createMessage)
+    ..aOM<BuildStatus>(1, _omitFieldNames ? '' : 'status', subBuilder: BuildStatus.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildStatusResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildStatusResponse copyWith(void Function(BuildStatusResponse) updates) =>
+      super.copyWith((message) => updates(message as BuildStatusResponse)) as BuildStatusResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildStatusResponse() / BuildStatusResponse.new instead')
+  static BuildStatusResponse create() => BuildStatusResponse._();
+  static $pb.GeneratedMessage $_createMessage() => BuildStatusResponse._();
+  @$core.override
+  BuildStatusResponse createEmptyInstance() => BuildStatusResponse._();
+  @$core.pragma('dart2js:noInline')
+  static BuildStatusResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildStatusResponse>(BuildStatusResponse.$_createMessage);
+  static BuildStatusResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  BuildStatus get status => $_getN(0);
+  @$pb.TagNumber(1)
+  set status(BuildStatus value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStatus() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStatus() => $_clearField(1);
+  @$pb.TagNumber(1)
+  BuildStatus ensureStatus() => $_ensure(0);
+}
+
+/// What is known about the firmware of one target for the open project.
+class BuildStatus extends $pb.GeneratedMessage {
+  factory BuildStatus({
+    $core.String? targetId,
+    $core.bool? running,
+    BuildStage? stage,
+    BuildArtifact? artifact,
+    $core.bool? artifactFresh,
+    BuildFailure? failure,
+    $core.String? generatedDir,
+    $core.String? command,
+    $core.String? triple,
+    $core.Iterable<$core.String>? output,
+  }) {
+    final result = BuildStatus._();
+    if (targetId != null) result.targetId = targetId;
+    if (running != null) result.running = running;
+    if (stage != null) result.stage = stage;
+    if (artifact != null) result.artifact = artifact;
+    if (artifactFresh != null) result.artifactFresh = artifactFresh;
+    if (failure != null) result.failure = failure;
+    if (generatedDir != null) result.generatedDir = generatedDir;
+    if (command != null) result.command = command;
+    if (triple != null) result.triple = triple;
+    if (output != null) result.output.addAll(output);
+    return result;
+  }
+
+  BuildStatus._();
+
+  factory BuildStatus.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildStatus()..mergeFromBuffer(data, registry);
+  factory BuildStatus.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildStatus()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildStatus',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildStatus.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..aOB(2, _omitFieldNames ? '' : 'running')
+    ..aE<BuildStage>(3, _omitFieldNames ? '' : 'stage', enumValues: BuildStage.values)
+    ..aOM<BuildArtifact>(4, _omitFieldNames ? '' : 'artifact',
+        subBuilder: BuildArtifact.$_createMessage)
+    ..aOB(5, _omitFieldNames ? '' : 'artifactFresh')
+    ..aOM<BuildFailure>(6, _omitFieldNames ? '' : 'failure',
+        subBuilder: BuildFailure.$_createMessage)
+    ..aOS(7, _omitFieldNames ? '' : 'generatedDir')
+    ..aOS(8, _omitFieldNames ? '' : 'command')
+    ..aOS(9, _omitFieldNames ? '' : 'triple')
+    ..pPS(10, _omitFieldNames ? '' : 'output')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildStatus clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildStatus copyWith(void Function(BuildStatus) updates) =>
+      super.copyWith((message) => updates(message as BuildStatus)) as BuildStatus;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildStatus() / BuildStatus.new instead')
+  static BuildStatus create() => BuildStatus._();
+  static $pb.GeneratedMessage $_createMessage() => BuildStatus._();
+  @$core.override
+  BuildStatus createEmptyInstance() => BuildStatus._();
+  @$core.pragma('dart2js:noInline')
+  static BuildStatus getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildStatus>(BuildStatus.$_createMessage);
+  static BuildStatus? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get targetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set targetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTargetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTargetId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get running => $_getBF(1);
+  @$pb.TagNumber(2)
+  set running($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRunning() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRunning() => $_clearField(2);
+
+  /// The running build's stage, or the last build's outcome stage
+  /// (COMPLETED, FAILED, CANCELLED); UNSPECIFIED when nothing was built.
+  @$pb.TagNumber(3)
+  BuildStage get stage => $_getN(2);
+  @$pb.TagNumber(3)
+  set stage(BuildStage value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasStage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearStage() => $_clearField(3);
+
+  /// The last artifact built for this target, if one exists on disk.
+  @$pb.TagNumber(4)
+  BuildArtifact get artifact => $_getN(3);
+  @$pb.TagNumber(4)
+  set artifact(BuildArtifact value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasArtifact() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearArtifact() => $_clearField(4);
+  @$pb.TagNumber(4)
+  BuildArtifact ensureArtifact() => $_ensure(3);
+
+  /// Whether `artifact` was built from what the project says now: the same
+  /// generated crate, the same settings, the same compiler.  False means
+  /// the image on the board — if it was flashed — is not the design on
+  /// screen.
+  @$pb.TagNumber(5)
+  $core.bool get artifactFresh => $_getBF(4);
+  @$pb.TagNumber(5)
+  set artifactFresh($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasArtifactFresh() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearArtifactFresh() => $_clearField(5);
+
+  /// The last build's failure, until a build succeeds or is started again.
+  @$pb.TagNumber(6)
+  BuildFailure get failure => $_getN(5);
+  @$pb.TagNumber(6)
+  set failure(BuildFailure value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasFailure() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearFailure() => $_clearField(6);
+  @$pb.TagNumber(6)
+  BuildFailure ensureFailure() => $_ensure(5);
+
+  /// Advanced: where the crate is, what is run, for which triple, what the
+  /// compiler said (the last lines).
+  @$pb.TagNumber(7)
+  $core.String get generatedDir => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set generatedDir($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasGeneratedDir() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearGeneratedDir() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get command => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set command($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasCommand() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearCommand() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.String get triple => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set triple($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasTriple() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearTriple() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $pb.PbList<$core.String> get output => $_getList(9);
+}
+
+class BuildArtifact extends $pb.GeneratedMessage {
+  factory BuildArtifact({
+    $core.String? path,
+    $core.String? kind,
+    $core.String? elfPath,
+    $core.String? identity,
+    $fixnum.Int64? builtAt,
+    $fixnum.Int64? revision,
+    $core.String? compilerVersion,
+    $fixnum.Int64? sizeBytes,
+  }) {
+    final result = BuildArtifact._();
+    if (path != null) result.path = path;
+    if (kind != null) result.kind = kind;
+    if (elfPath != null) result.elfPath = elfPath;
+    if (identity != null) result.identity = identity;
+    if (builtAt != null) result.builtAt = builtAt;
+    if (revision != null) result.revision = revision;
+    if (compilerVersion != null) result.compilerVersion = compilerVersion;
+    if (sizeBytes != null) result.sizeBytes = sizeBytes;
+    return result;
+  }
+
+  BuildArtifact._();
+
+  factory BuildArtifact.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildArtifact()..mergeFromBuffer(data, registry);
+  factory BuildArtifact.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildArtifact()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildArtifact',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildArtifact.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'path')
+    ..aOS(2, _omitFieldNames ? '' : 'kind')
+    ..aOS(3, _omitFieldNames ? '' : 'elfPath')
+    ..aOS(4, _omitFieldNames ? '' : 'identity')
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'builtAt', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(6, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(7, _omitFieldNames ? '' : 'compilerVersion')
+    ..a<$fixnum.Int64>(8, _omitFieldNames ? '' : 'sizeBytes', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildArtifact clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildArtifact copyWith(void Function(BuildArtifact) updates) =>
+      super.copyWith((message) => updates(message as BuildArtifact)) as BuildArtifact;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildArtifact() / BuildArtifact.new instead')
+  static BuildArtifact create() => BuildArtifact._();
+  static $pb.GeneratedMessage $_createMessage() => BuildArtifact._();
+  @$core.override
+  BuildArtifact createEmptyInstance() => BuildArtifact._();
+  @$core.pragma('dart2js:noInline')
+  static BuildArtifact getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildArtifact>(BuildArtifact.$_createMessage);
+  static BuildArtifact? _defaultInstance;
+
+  /// The image to write to the board (a UF2 for the Raspberry Pi Pico).
+  @$pb.TagNumber(1)
+  $core.String get path => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set path($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPath() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPath() => $_clearField(1);
+
+  /// "uf2", "elf" or "hex".
+  @$pb.TagNumber(2)
+  $core.String get kind => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set kind($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKind() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKind() => $_clearField(2);
+
+  /// The linked ELF the image was made from.
+  @$pb.TagNumber(3)
+  $core.String get elfPath => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set elfPath($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasElfPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearElfPath() => $_clearField(3);
+
+  /// The content identity of what it was built from (a hash).
+  @$pb.TagNumber(4)
+  $core.String get identity => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set identity($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasIdentity() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearIdentity() => $_clearField(4);
+
+  /// Seconds since the Unix epoch.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get builtAt => $_getI64(4);
+  @$pb.TagNumber(5)
+  set builtAt($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasBuiltAt() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearBuiltAt() => $_clearField(5);
+
+  /// The project revision the build started from (informational; identity
+  /// is what freshness is judged by).
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get revision => $_getI64(5);
+  @$pb.TagNumber(6)
+  set revision($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasRevision() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearRevision() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get compilerVersion => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set compilerVersion($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasCompilerVersion() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearCompilerVersion() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get sizeBytes => $_getI64(7);
+  @$pb.TagNumber(8)
+  set sizeBytes($fixnum.Int64 value) => $_setInt64(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasSizeBytes() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearSizeBytes() => $_clearField(8);
+}
+
+class BuildFailure extends $pb.GeneratedMessage {
+  factory BuildFailure({
+    BuildStage? stage,
+    $core.String? code,
+    $core.String? message,
+    $core.String? explanation,
+    $core.Iterable<Diagnostic>? diagnostics,
+    $core.String? command,
+    $core.Iterable<$core.String>? output,
+  }) {
+    final result = BuildFailure._();
+    if (stage != null) result.stage = stage;
+    if (code != null) result.code = code;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    if (diagnostics != null) result.diagnostics.addAll(diagnostics);
+    if (command != null) result.command = command;
+    if (output != null) result.output.addAll(output);
+    return result;
+  }
+
+  BuildFailure._();
+
+  factory BuildFailure.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildFailure()..mergeFromBuffer(data, registry);
+  factory BuildFailure.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      BuildFailure()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BuildFailure',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: BuildFailure.$_createMessage)
+    ..aE<BuildStage>(1, _omitFieldNames ? '' : 'stage', enumValues: BuildStage.values)
+    ..aOS(2, _omitFieldNames ? '' : 'code')
+    ..aOS(3, _omitFieldNames ? '' : 'message')
+    ..aOS(4, _omitFieldNames ? '' : 'explanation')
+    ..pPM<Diagnostic>(5, _omitFieldNames ? '' : 'diagnostics',
+        subBuilder: Diagnostic.$_createMessage)
+    ..aOS(6, _omitFieldNames ? '' : 'command')
+    ..pPS(7, _omitFieldNames ? '' : 'output')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildFailure clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  BuildFailure copyWith(void Function(BuildFailure) updates) =>
+      super.copyWith((message) => updates(message as BuildFailure)) as BuildFailure;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use BuildFailure() / BuildFailure.new instead')
+  static BuildFailure create() => BuildFailure._();
+  static $pb.GeneratedMessage $_createMessage() => BuildFailure._();
+  @$core.override
+  BuildFailure createEmptyInstance() => BuildFailure._();
+  @$core.pragma('dart2js:noInline')
+  static BuildFailure getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BuildFailure>(BuildFailure.$_createMessage);
+  static BuildFailure? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  BuildStage get stage => $_getN(0);
+  @$pb.TagNumber(1)
+  set stage(BuildStage value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStage() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStage() => $_clearField(1);
+
+  /// `build.not_ready`, `build.toolchain_missing`, `build.target_missing`,
+  /// `build.runtime_missing`, `build.cargo_failed`, `build.package_failed`,
+  /// `build.io`.
+  @$pb.TagNumber(2)
+  $core.String get code => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set code($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCode() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCode() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get message => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set message($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMessage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMessage() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get explanation => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set explanation($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasExplanation() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearExplanation() => $_clearField(4);
+
+  /// On CHECKING: the compiler's refusals (`adapter.*`, `backend.*`).
+  @$pb.TagNumber(5)
+  $pb.PbList<Diagnostic> get diagnostics => $_getList(4);
+
+  /// Advanced: the command that failed and what it printed (the tail).
+  @$pb.TagNumber(6)
+  $core.String get command => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set command($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasCommand() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearCommand() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<$core.String> get output => $_getList(6);
+}
+
+/// The devices a flash of `target_id` could reach now, and the ways this
+/// host can flash it.
+class ListFlashDevicesRequest extends $pb.GeneratedMessage {
+  factory ListFlashDevicesRequest({
+    $core.String? targetId,
+  }) {
+    final result = ListFlashDevicesRequest._();
+    if (targetId != null) result.targetId = targetId;
+    return result;
+  }
+
+  ListFlashDevicesRequest._();
+
+  factory ListFlashDevicesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListFlashDevicesRequest()..mergeFromBuffer(data, registry);
+  factory ListFlashDevicesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListFlashDevicesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListFlashDevicesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListFlashDevicesRequest.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListFlashDevicesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListFlashDevicesRequest copyWith(void Function(ListFlashDevicesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListFlashDevicesRequest))
+          as ListFlashDevicesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListFlashDevicesRequest() / ListFlashDevicesRequest.new instead')
+  static ListFlashDevicesRequest create() => ListFlashDevicesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListFlashDevicesRequest._();
+  @$core.override
+  ListFlashDevicesRequest createEmptyInstance() => ListFlashDevicesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListFlashDevicesRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListFlashDevicesRequest>(
+          ListFlashDevicesRequest.$_createMessage);
+  static ListFlashDevicesRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get targetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set targetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTargetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTargetId() => $_clearField(1);
+}
+
+class FlashDevicesResponse extends $pb.GeneratedMessage {
+  factory FlashDevicesResponse({
+    $core.Iterable<FlashDevice>? devices,
+    $core.Iterable<FlashMethodView>? methods,
+  }) {
+    final result = FlashDevicesResponse._();
+    if (devices != null) result.devices.addAll(devices);
+    if (methods != null) result.methods.addAll(methods);
+    return result;
+  }
+
+  FlashDevicesResponse._();
+
+  factory FlashDevicesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashDevicesResponse()..mergeFromBuffer(data, registry);
+  factory FlashDevicesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashDevicesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashDevicesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashDevicesResponse.$_createMessage)
+    ..pPM<FlashDevice>(1, _omitFieldNames ? '' : 'devices', subBuilder: FlashDevice.$_createMessage)
+    ..pPM<FlashMethodView>(2, _omitFieldNames ? '' : 'methods',
+        subBuilder: FlashMethodView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashDevicesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashDevicesResponse copyWith(void Function(FlashDevicesResponse) updates) =>
+      super.copyWith((message) => updates(message as FlashDevicesResponse)) as FlashDevicesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashDevicesResponse() / FlashDevicesResponse.new instead')
+  static FlashDevicesResponse create() => FlashDevicesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => FlashDevicesResponse._();
+  @$core.override
+  FlashDevicesResponse createEmptyInstance() => FlashDevicesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static FlashDevicesResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashDevicesResponse>(FlashDevicesResponse.$_createMessage);
+  static FlashDevicesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<FlashDevice> get devices => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<FlashMethodView> get methods => $_getList(1);
+}
+
+class FlashDevice extends $pb.GeneratedMessage {
+  factory FlashDevice({
+    $core.String? id,
+    FlashMethod? method,
+    $core.String? label,
+    $core.String? detail,
+  }) {
+    final result = FlashDevice._();
+    if (id != null) result.id = id;
+    if (method != null) result.method = method;
+    if (label != null) result.label = label;
+    if (detail != null) result.detail = detail;
+    return result;
+  }
+
+  FlashDevice._();
+
+  factory FlashDevice.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashDevice()..mergeFromBuffer(data, registry);
+  factory FlashDevice.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashDevice()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashDevice',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashDevice.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aE<FlashMethod>(2, _omitFieldNames ? '' : 'method', enumValues: FlashMethod.values)
+    ..aOS(3, _omitFieldNames ? '' : 'label')
+    ..aOS(4, _omitFieldNames ? '' : 'detail')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashDevice clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashDevice copyWith(void Function(FlashDevice) updates) =>
+      super.copyWith((message) => updates(message as FlashDevice)) as FlashDevice;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashDevice() / FlashDevice.new instead')
+  static FlashDevice create() => FlashDevice._();
+  static $pb.GeneratedMessage $_createMessage() => FlashDevice._();
+  @$core.override
+  FlashDevice createEmptyInstance() => FlashDevice._();
+  @$core.pragma('dart2js:noInline')
+  static FlashDevice getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashDevice>(FlashDevice.$_createMessage);
+  static FlashDevice? _defaultInstance;
+
+  /// Opaque; pass back to FlashFirmware.
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  FlashMethod get method => $_getN(1);
+  @$pb.TagNumber(2)
+  set method(FlashMethod value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMethod() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMethod() => $_clearField(2);
+
+  /// "Raspberry Pi Pico in BOOTSEL mode (RPI-RP2)", "Debug Probe (CMSIS-DAP)".
+  @$pb.TagNumber(3)
+  $core.String get label => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set label($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasLabel() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearLabel() => $_clearField(3);
+
+  /// The volume's path, the probe's identity.
+  @$pb.TagNumber(4)
+  $core.String get detail => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set detail($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDetail() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDetail() => $_clearField(4);
+}
+
+class FlashMethodView extends $pb.GeneratedMessage {
+  factory FlashMethodView({
+    FlashMethod? method,
+    $core.bool? available,
+    $core.String? label,
+    $core.String? hint,
+  }) {
+    final result = FlashMethodView._();
+    if (method != null) result.method = method;
+    if (available != null) result.available = available;
+    if (label != null) result.label = label;
+    if (hint != null) result.hint = hint;
+    return result;
+  }
+
+  FlashMethodView._();
+
+  factory FlashMethodView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashMethodView()..mergeFromBuffer(data, registry);
+  factory FlashMethodView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashMethodView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashMethodView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashMethodView.$_createMessage)
+    ..aE<FlashMethod>(1, _omitFieldNames ? '' : 'method', enumValues: FlashMethod.values)
+    ..aOB(2, _omitFieldNames ? '' : 'available')
+    ..aOS(3, _omitFieldNames ? '' : 'label')
+    ..aOS(4, _omitFieldNames ? '' : 'hint')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashMethodView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashMethodView copyWith(void Function(FlashMethodView) updates) =>
+      super.copyWith((message) => updates(message as FlashMethodView)) as FlashMethodView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashMethodView() / FlashMethodView.new instead')
+  static FlashMethodView create() => FlashMethodView._();
+  static $pb.GeneratedMessage $_createMessage() => FlashMethodView._();
+  @$core.override
+  FlashMethodView createEmptyInstance() => FlashMethodView._();
+  @$core.pragma('dart2js:noInline')
+  static FlashMethodView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashMethodView>(FlashMethodView.$_createMessage);
+  static FlashMethodView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  FlashMethod get method => $_getN(0);
+  @$pb.TagNumber(1)
+  set method(FlashMethod value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMethod() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMethod() => $_clearField(1);
+
+  /// Whether this host can use the method at all (a tool is installed, the
+  /// target supports it).
+  @$pb.TagNumber(2)
+  $core.bool get available => $_getBF(1);
+  @$pb.TagNumber(2)
+  set available($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAvailable() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAvailable() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get label => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set label($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasLabel() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearLabel() => $_clearField(3);
+
+  /// What to do to make it available or to make a device appear.
+  @$pb.TagNumber(4)
+  $core.String get hint => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set hint($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasHint() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearHint() => $_clearField(4);
+}
+
+/// Write the last artifact to one device.  Refused with `flash.no_artifact`,
+/// `flash.artifact_stale` (build again first), `flash.no_device`,
+/// `flash.ambiguous_device` (several reachable, none chosen — never flashed
+/// silently), `flash.unknown_device`, `flash.busy`.  Progress arrives as
+/// FlashProgress events.
+class FlashFirmwareRequest extends $pb.GeneratedMessage {
+  factory FlashFirmwareRequest({
+    $core.String? targetId,
+    $core.String? deviceId,
+  }) {
+    final result = FlashFirmwareRequest._();
+    if (targetId != null) result.targetId = targetId;
+    if (deviceId != null) result.deviceId = deviceId;
+    return result;
+  }
+
+  FlashFirmwareRequest._();
+
+  factory FlashFirmwareRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashFirmwareRequest()..mergeFromBuffer(data, registry);
+  factory FlashFirmwareRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashFirmwareRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashFirmwareRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashFirmwareRequest.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..aOS(2, _omitFieldNames ? '' : 'deviceId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashFirmwareRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashFirmwareRequest copyWith(void Function(FlashFirmwareRequest) updates) =>
+      super.copyWith((message) => updates(message as FlashFirmwareRequest)) as FlashFirmwareRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashFirmwareRequest() / FlashFirmwareRequest.new instead')
+  static FlashFirmwareRequest create() => FlashFirmwareRequest._();
+  static $pb.GeneratedMessage $_createMessage() => FlashFirmwareRequest._();
+  @$core.override
+  FlashFirmwareRequest createEmptyInstance() => FlashFirmwareRequest._();
+  @$core.pragma('dart2js:noInline')
+  static FlashFirmwareRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashFirmwareRequest>(FlashFirmwareRequest.$_createMessage);
+  static FlashFirmwareRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get targetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set targetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTargetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTargetId() => $_clearField(1);
+
+  /// From ListFlashDevices; may be absent when exactly one device is reachable.
+  @$pb.TagNumber(2)
+  $core.String get deviceId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set deviceId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDeviceId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDeviceId() => $_clearField(2);
+}
+
+class FlashProgress extends $pb.GeneratedMessage {
+  factory FlashProgress({
+    $fixnum.Int64? flashId,
+    $core.String? targetId,
+    FlashStage? stage,
+    $core.String? message,
+    FlashDevice? device,
+    BuildArtifact? artifact,
+    FlashFailure? failure,
+  }) {
+    final result = FlashProgress._();
+    if (flashId != null) result.flashId = flashId;
+    if (targetId != null) result.targetId = targetId;
+    if (stage != null) result.stage = stage;
+    if (message != null) result.message = message;
+    if (device != null) result.device = device;
+    if (artifact != null) result.artifact = artifact;
+    if (failure != null) result.failure = failure;
+    return result;
+  }
+
+  FlashProgress._();
+
+  factory FlashProgress.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashProgress()..mergeFromBuffer(data, registry);
+  factory FlashProgress.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashProgress()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashProgress',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashProgress.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'flashId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'targetId')
+    ..aE<FlashStage>(3, _omitFieldNames ? '' : 'stage', enumValues: FlashStage.values)
+    ..aOS(4, _omitFieldNames ? '' : 'message')
+    ..aOM<FlashDevice>(5, _omitFieldNames ? '' : 'device', subBuilder: FlashDevice.$_createMessage)
+    ..aOM<BuildArtifact>(6, _omitFieldNames ? '' : 'artifact',
+        subBuilder: BuildArtifact.$_createMessage)
+    ..aOM<FlashFailure>(7, _omitFieldNames ? '' : 'failure',
+        subBuilder: FlashFailure.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashProgress clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashProgress copyWith(void Function(FlashProgress) updates) =>
+      super.copyWith((message) => updates(message as FlashProgress)) as FlashProgress;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashProgress() / FlashProgress.new instead')
+  static FlashProgress create() => FlashProgress._();
+  static $pb.GeneratedMessage $_createMessage() => FlashProgress._();
+  @$core.override
+  FlashProgress createEmptyInstance() => FlashProgress._();
+  @$core.pragma('dart2js:noInline')
+  static FlashProgress getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashProgress>(FlashProgress.$_createMessage);
+  static FlashProgress? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get flashId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set flashId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFlashId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFlashId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get targetId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set targetId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTargetId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTargetId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  FlashStage get stage => $_getN(2);
+  @$pb.TagNumber(3)
+  set stage(FlashStage value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasStage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearStage() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get message => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set message($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasMessage() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMessage() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  FlashDevice get device => $_getN(4);
+  @$pb.TagNumber(5)
+  set device(FlashDevice value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDevice() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDevice() => $_clearField(5);
+  @$pb.TagNumber(5)
+  FlashDevice ensureDevice() => $_ensure(4);
+
+  /// The artifact written.
+  @$pb.TagNumber(6)
+  BuildArtifact get artifact => $_getN(5);
+  @$pb.TagNumber(6)
+  set artifact(BuildArtifact value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasArtifact() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearArtifact() => $_clearField(6);
+  @$pb.TagNumber(6)
+  BuildArtifact ensureArtifact() => $_ensure(5);
+
+  /// On FAILED.
+  @$pb.TagNumber(7)
+  FlashFailure get failure => $_getN(6);
+  @$pb.TagNumber(7)
+  set failure(FlashFailure value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasFailure() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearFailure() => $_clearField(7);
+  @$pb.TagNumber(7)
+  FlashFailure ensureFailure() => $_ensure(6);
+}
+
+class FlashFailure extends $pb.GeneratedMessage {
+  factory FlashFailure({
+    FlashStage? stage,
+    $core.String? code,
+    $core.String? message,
+    $core.String? explanation,
+    $core.String? command,
+    $core.Iterable<$core.String>? output,
+  }) {
+    final result = FlashFailure._();
+    if (stage != null) result.stage = stage;
+    if (code != null) result.code = code;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    if (command != null) result.command = command;
+    if (output != null) result.output.addAll(output);
+    return result;
+  }
+
+  FlashFailure._();
+
+  factory FlashFailure.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashFailure()..mergeFromBuffer(data, registry);
+  factory FlashFailure.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FlashFailure()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FlashFailure',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FlashFailure.$_createMessage)
+    ..aE<FlashStage>(1, _omitFieldNames ? '' : 'stage', enumValues: FlashStage.values)
+    ..aOS(2, _omitFieldNames ? '' : 'code')
+    ..aOS(3, _omitFieldNames ? '' : 'message')
+    ..aOS(4, _omitFieldNames ? '' : 'explanation')
+    ..aOS(5, _omitFieldNames ? '' : 'command')
+    ..pPS(6, _omitFieldNames ? '' : 'output')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashFailure clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FlashFailure copyWith(void Function(FlashFailure) updates) =>
+      super.copyWith((message) => updates(message as FlashFailure)) as FlashFailure;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FlashFailure() / FlashFailure.new instead')
+  static FlashFailure create() => FlashFailure._();
+  static $pb.GeneratedMessage $_createMessage() => FlashFailure._();
+  @$core.override
+  FlashFailure createEmptyInstance() => FlashFailure._();
+  @$core.pragma('dart2js:noInline')
+  static FlashFailure getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FlashFailure>(FlashFailure.$_createMessage);
+  static FlashFailure? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  FlashStage get stage => $_getN(0);
+  @$pb.TagNumber(1)
+  set stage(FlashStage value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStage() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStage() => $_clearField(1);
+
+  /// `flash.write_failed`, `flash.device_gone`, `flash.tool_failed`.
+  @$pb.TagNumber(2)
+  $core.String get code => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set code($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCode() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCode() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get message => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set message($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMessage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMessage() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get explanation => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set explanation($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasExplanation() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearExplanation() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get command => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set command($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCommand() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearCommand() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<$core.String> get output => $_getList(5);
+}
+
+/// The designs a new project can start from (0.26).
+class ListTemplatesRequest extends $pb.GeneratedMessage {
+  factory ListTemplatesRequest() => ListTemplatesRequest._();
+
+  ListTemplatesRequest._();
+
+  factory ListTemplatesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListTemplatesRequest()..mergeFromBuffer(data, registry);
+  factory ListTemplatesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ListTemplatesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ListTemplatesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ListTemplatesRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListTemplatesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListTemplatesRequest copyWith(void Function(ListTemplatesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListTemplatesRequest)) as ListTemplatesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ListTemplatesRequest() / ListTemplatesRequest.new instead')
+  static ListTemplatesRequest create() => ListTemplatesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ListTemplatesRequest._();
+  @$core.override
+  ListTemplatesRequest createEmptyInstance() => ListTemplatesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ListTemplatesRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListTemplatesRequest>(ListTemplatesRequest.$_createMessage);
+  static ListTemplatesRequest? _defaultInstance;
+}
+
+class TemplatesResponse extends $pb.GeneratedMessage {
+  factory TemplatesResponse({
+    $core.Iterable<TemplateView>? templates,
+  }) {
+    final result = TemplatesResponse._();
+    if (templates != null) result.templates.addAll(templates);
+    return result;
+  }
+
+  TemplatesResponse._();
+
+  factory TemplatesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TemplatesResponse()..mergeFromBuffer(data, registry);
+  factory TemplatesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TemplatesResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'TemplatesResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: TemplatesResponse.$_createMessage)
+    ..pPM<TemplateView>(1, _omitFieldNames ? '' : 'templates',
+        subBuilder: TemplateView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TemplatesResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TemplatesResponse copyWith(void Function(TemplatesResponse) updates) =>
+      super.copyWith((message) => updates(message as TemplatesResponse)) as TemplatesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use TemplatesResponse() / TemplatesResponse.new instead')
+  static TemplatesResponse create() => TemplatesResponse._();
+  static $pb.GeneratedMessage $_createMessage() => TemplatesResponse._();
+  @$core.override
+  TemplatesResponse createEmptyInstance() => TemplatesResponse._();
+  @$core.pragma('dart2js:noInline')
+  static TemplatesResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TemplatesResponse>(TemplatesResponse.$_createMessage);
+  static TemplatesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<TemplateView> get templates => $_getList(0);
+}
+
+class TemplateView extends $pb.GeneratedMessage {
+  factory TemplateView({
+    $core.String? id,
+    $core.String? displayName,
+    $core.String? description,
+    $core.String? targetId,
+    $core.bool? configured,
+  }) {
+    final result = TemplateView._();
+    if (id != null) result.id = id;
+    if (displayName != null) result.displayName = displayName;
+    if (description != null) result.description = description;
+    if (targetId != null) result.targetId = targetId;
+    if (configured != null) result.configured = configured;
+    return result;
+  }
+
+  TemplateView._();
+
+  factory TemplateView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TemplateView()..mergeFromBuffer(data, registry);
+  factory TemplateView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TemplateView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'TemplateView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: TemplateView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'displayName')
+    ..aOS(3, _omitFieldNames ? '' : 'description')
+    ..aOS(4, _omitFieldNames ? '' : 'targetId')
+    ..aOB(5, _omitFieldNames ? '' : 'configured')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TemplateView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TemplateView copyWith(void Function(TemplateView) updates) =>
+      super.copyWith((message) => updates(message as TemplateView)) as TemplateView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use TemplateView() / TemplateView.new instead')
+  static TemplateView create() => TemplateView._();
+  static $pb.GeneratedMessage $_createMessage() => TemplateView._();
+  @$core.override
+  TemplateView createEmptyInstance() => TemplateView._();
+  @$core.pragma('dart2js:noInline')
+  static TemplateView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TemplateView>(TemplateView.$_createMessage);
+  static TemplateView? _defaultInstance;
+
+  /// Pass to InitProject.template.
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get displayName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set displayName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDisplayName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDisplayName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get description => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set description($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDescription() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDescription() => $_clearField(3);
+
+  /// The board the template is written for, when it is a hardware demo.
+  @$pb.TagNumber(4)
+  $core.String get targetId => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set targetId($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTargetId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTargetId() => $_clearField(4);
+
+  /// Whether the template comes with its deployment (devices, providers,
+  /// realizations, pins) or leaves it to the designer.
+  @$pb.TagNumber(5)
+  $core.bool get configured => $_getBF(4);
+  @$pb.TagNumber(5)
+  set configured($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasConfigured() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearConfigured() => $_clearField(5);
 }
 
 class InitSystemProjectRequest extends $pb.GeneratedMessage {
