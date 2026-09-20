@@ -5,7 +5,7 @@
 //! deployment, never here — says which board resource carries each sink
 //! and how the firmware ticks; this module turns it into:
 //!
-//! * `src/adapter.rs`, target-independent glue over `bdl-runtime-embassy`:
+//! * `src/adapter.rs`, target-independent glue over `bdl-runtime-adapter`:
 //!   `SINKS` (the bindings as data), `Applied` (what became of each
 //!   command at one tick) and `apply(tick, sink, …)`, one `&mut dyn`
 //!   sink parameter per machine sink in sink order — no map, no name, no
@@ -27,7 +27,7 @@ use bdl_model::{DeviceId, OutputProfileId};
 /// applied through and the numeric policy on the way.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SinkKind {
-    /// A `q[1]` raw duty, `bdl_runtime_embassy::duty8`, a `PwmDuty8` sink.
+    /// A `q[1]` raw duty, `bdl_runtime_adapter::duty8`, a `PwmDuty8` sink.
     PwmDuty8,
     /// A `bool` raw command, a `Level` sink.
     Level,
@@ -83,12 +83,12 @@ pub struct AdapterPlan {
 /// `src/adapter.rs`.
 pub fn adapter_module(ir: &ExecIr, plan: &AdapterPlan, generator: &str) -> Module {
     let mut items = vec![
-        Item::Use("bdl_runtime_embassy::apply_duty8".into()),
-        Item::Use("bdl_runtime_embassy::apply_level".into()),
-        Item::Use("bdl_runtime_embassy::CommandFault".into()),
-        Item::Use("bdl_runtime_embassy::Level".into()),
-        Item::Use("bdl_runtime_embassy::PwmDuty8".into()),
-        Item::Use("bdl_runtime_embassy::SinkBinding".into()),
+        Item::Use("bdl_runtime_adapter::apply_duty8".into()),
+        Item::Use("bdl_runtime_adapter::apply_level".into()),
+        Item::Use("bdl_runtime_adapter::CommandFault".into()),
+        Item::Use("bdl_runtime_adapter::Level".into()),
+        Item::Use("bdl_runtime_adapter::PwmDuty8".into()),
+        Item::Use("bdl_runtime_adapter::SinkBinding".into()),
     ];
     let bindings: Vec<Expr> = plan
         .sinks
@@ -208,7 +208,7 @@ pub fn adapter_module(ir: &ExecIr, plan: &AdapterPlan, generator: &str) -> Modul
             ),
             String::new(),
             "The platform adapter's target-independent glue: each machine sink's raw command".into(),
-            "(`Tick.commands`) applied to one sink through `bdl-runtime-embassy`'s numeric policy.".into(),
+            "(`Tick.commands`) applied to one sink through `bdl-runtime-adapter`'s numeric policy.".into(),
             "Behavior ends at the command; physical effect begins in the sink (docs/architecture/embedded-adapter.md).".into(),
         ],
         inner_attrs: vec![

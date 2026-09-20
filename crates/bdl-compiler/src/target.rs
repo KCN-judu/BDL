@@ -71,6 +71,15 @@ pub fn adapter_plan(
 ) -> Result<AdapterPlan, Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
 
+    let entry = bdl_codegen_rust::targets::Entry::for_board(&target.family, &target.name);
+    if entry.is_none() {
+        diagnostics.push(refuse(
+            "adapter.target_unsupported",
+            format!("No firmware can be generated for {} yet.", target.display()),
+            "The board is known to the placement, but no target entry drives its peripherals; the Raspberry Pi Pico and the Arduino Nano have one.",
+            format!("no target entry for family `{}`, board `{}`", target.family, target.name),
+        ));
+    }
     if deployment.status != DeploymentStatus::Feasible {
         diagnostics.push(refuse(
             "adapter.deployment_not_feasible",
@@ -111,8 +120,21 @@ pub fn adapter_plan(
             format!("{} input slot(s)", exec.inputs.len()),
         ));
     }
+    let supports_collections = entry.as_ref().is_some_and(|e| e.supports_collections());
     let arena_bytes = match collections.readiness {
         CollectionsReadiness::ScalarOnly => None,
+        CollectionsReadiness::Bounded if !supports_collections => {
+            diagnostics.push(refuse(
+                "adapter.collections_unsupported",
+                format!(
+                    "{} cannot carry the collections this design keeps.",
+                    target.display()
+                ),
+                "This board has no memory for a collection arena; a design that carries lists needs a board that does (docs/spec/deployment-capacity.md).",
+                format!("collections readiness {:?} on `{}`", collections.readiness, target.name),
+            ));
+            None
+        }
         CollectionsReadiness::Bounded => {
             let floor =
                 collections.state_bytes_max.unwrap_or(0) + collections.tick_bytes_max.unwrap_or(0);

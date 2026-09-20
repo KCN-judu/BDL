@@ -48,10 +48,12 @@ pub struct CodegenOptions {
     pub runtime_core_path: String,
     /// Path to `bdl-runtime-host`.
     pub runtime_host_path: String,
-    /// Path to `bdl-runtime-embassy` (the adapter vocabulary).
-    pub runtime_embassy_path: String,
+    /// Path to `bdl-runtime-adapter` (the adapter vocabulary).
+    pub runtime_adapter_path: String,
     /// Path to `bdl-runtime-embassy-rp` (the RP2040 binding).
     pub runtime_embassy_rp_path: String,
+    /// Path to `bdl-runtime-arduino` (the Arduino binding).
+    pub runtime_arduino_path: String,
 }
 
 impl Default for CodegenOptions {
@@ -59,8 +61,9 @@ impl Default for CodegenOptions {
         CodegenOptions {
             runtime_core_path: "../../runtime/bdl-runtime-core".into(),
             runtime_host_path: "../../runtime/bdl-runtime-host".into(),
-            runtime_embassy_path: "../../runtime/bdl-runtime-embassy".into(),
+            runtime_adapter_path: "../../runtime/bdl-runtime-adapter".into(),
             runtime_embassy_rp_path: "../../runtime/bdl-runtime-embassy-rp".into(),
+            runtime_arduino_path: "../../runtime/bdl-runtime-arduino".into(),
         }
     }
 }
@@ -95,7 +98,7 @@ pub fn generate(ir: &ExecIr, options: &CodegenOptions) -> Result<GeneratedCrate,
 
 /// [`generate`] plus, with a plan, the platform adapter for one target:
 /// the `adapter` module in the core crate (feature `adapter`), the target
-/// firmware (feature `rp2040`), and the host bridge's recorded operations.
+/// firmware (feature `<target>`), and the host bridge's recorded operations.
 pub fn generate_with_adapter(
     ir: &ExecIr,
     options: &CodegenOptions,
@@ -105,17 +108,22 @@ pub fn generate_with_adapter(
     let generator = generator();
     let mut core = emit::core_module(ir, &generator)?;
     let host = host::host_module(ir, &package, &generator, plan)?;
-    let manifest = manifest::manifest(ir, &package, &generator, plan)?;
+    let entry = match plan {
+        None => None,
+        Some(plan) => Some(
+            targets::Entry::for_board(&plan.family, &plan.board).ok_or_else(|| {
+                EmitError(format!(
+                    "no target entry for board `{}` of family `{}`",
+                    plan.board, plan.family
+                ))
+            })?,
+        ),
+    };
+    let manifest = manifest::manifest(ir, &package, &generator, plan, entry.as_ref())?;
     let manifest_json =
         serde_json::to_string_pretty(&manifest).map_err(|e| EmitError(e.to_string()))?;
     let mut files = BTreeMap::new();
-    if let Some(plan) = plan {
-        if plan.family != targets::rp2040::FAMILY {
-            return Err(EmitError(format!(
-                "no target entry for board family `{}` (board `{}`)",
-                plan.family, plan.board
-            )));
-        }
+    if let (Some(plan), Some(entry)) = (plan, &entry) {
         core.items.push(Item::Comment(vec![
             "The platform adapter's glue, generated beside the core (docs/architecture/embedded-adapter.md).".into(),
         ]));
@@ -125,24 +133,23 @@ pub fn generate_with_adapter(
         });
         let glue = adapter::adapter_module(ir, plan, &generator);
         files.insert("src/adapter.rs".to_string(), print::module(&glue));
-        let firmware = targets::rp2040::firmware_module(ir, &package, plan, &generator)?;
-        files.insert("src/bin/rp2040.rs".to_string(), print::module(&firmware));
+        let firmware = entry.firmware_module(ir, &package, plan, &generator)?;
         files.insert(
-            "memory.x".to_string(),
-            targets::rp2040::MEMORY_X.to_string(),
+            format!("src/bin/{}.rs", entry.feature()),
+            print::module(&firmware),
         );
-        files.insert(
-            "build.rs".to_string(),
-            targets::rp2040::BUILD_RS.to_string(),
-        );
-        files.insert(
-            ".cargo/config.toml".to_string(),
-            targets::rp2040::CARGO_CONFIG.to_string(),
-        );
+        for (path, text) in entry.files() {
+            files.insert(path, text);
+        }
     }
     files.insert(
         "Cargo.toml".to_string(),
-        cargo_toml(&package, options, ir.uses_lists(), plan),
+        match (plan, &entry) {
+            (Some(plan), Some(entry)) => {
+                cargo_toml_target(&package, options, ir.uses_lists(), plan, entry)
+            }
+            _ => cargo_toml_core(&package, options, ir.uses_lists()),
+        },
     );
     files.insert("src/lib.rs".to_string(), print::module(&core));
     files.insert("src/bin/host.rs".to_string(), print::module(&host));
@@ -154,44 +161,36 @@ pub fn generate_with_adapter(
     })
 }
 
-fn cargo_toml(
+/// The manifest of a crate with a target: the core's sections plus the
+/// target feature's binary, features and dependencies.
+fn cargo_toml_target(
     package: &str,
     o: &CodegenOptions,
     collections: bool,
-    plan: Option<&adapter::AdapterPlan>,
+    plan: &adapter::AdapterPlan,
+    entry: &targets::Entry,
 ) -> String {
     let features = if collections {
         r#", features = ["collections"]"#
     } else {
         ""
     };
-    let Some(plan) = plan else {
-        return cargo_toml_core(package, o, features);
-    };
-    let rp_features = if plan.arena_bytes.is_some() {
-        r#", features = ["collections"]"#
+    let feature = entry.feature();
+    let build = if entry.has_build_script() {
+        "build = \"build.rs\"\n"
     } else {
         ""
     };
-    let static_cell_dep = if plan.arena_bytes.is_some() {
-        "static-cell = { version = \"2.1\", optional = true }\n"
-    } else {
-        ""
-    };
-    let static_cell_feature = if plan.arena_bytes.is_some() {
-        ", \"dep:static-cell\""
-    } else {
-        ""
-    };
+    let (feature_line, dep_lines) = entry.cargo_sections(o, plan);
     format!(
         "# Generated by {gen} for target `{board}`. Do not edit.\n\
          [package]\n\
          name = \"{package}\"\n\
          version = \"0.1.0\"\n\
          edition = \"2021\"\n\
-         rust-version = \"1.89\"\n\
+         rust-version = \"{rust_version}\"\n\
          publish = false\n\
-         build = \"build.rs\"\n\
+         {build}\
          \n\
          # A generated crate is its own workspace, wherever it is written.\n\
          [workspace]\n\
@@ -206,13 +205,13 @@ fn cargo_toml(
          path = \"src/bin/host.rs\"\n\
          required-features = [\"host\"]\n\
          \n\
-         # The firmware: `cargo build --release --target {triple} --features rp2040`.\n\
+         # The firmware: `{build_command}`.\n\
          [[bin]]\n\
-         name = \"{package}-rp2040\"\n\
-         path = \"src/bin/rp2040.rs\"\n\
+         name = \"{package}-{feature}\"\n\
+         path = \"src/bin/{feature}.rs\"\n\
          test = false\n\
          bench = false\n\
-         required-features = [\"rp2040\"]\n\
+         required-features = [\"{feature}\"]\n\
          \n\
          [features]\n\
          default = []\n\
@@ -220,37 +219,39 @@ fn cargo_toml(
          # glue to recording sinks (`TickTrace.adapter`).\n\
          host = [\"dep:bdl-runtime-host\", \"adapter\"]\n\
          # The target-independent adapter glue (`src/adapter.rs`).\n\
-         adapter = [\"dep:bdl-runtime-embassy\"]\n\
-         # The RP2040 firmware over Embassy.\n\
-         rp2040 = [\"adapter\", \"dep:bdl-runtime-embassy-rp\", \"dep:embassy-executor\", \"dep:embassy-rp\", \"dep:embassy-time\", \"dep:cortex-m-rt\", \"dep:panic-halt\"{static_cell_feature}]\n\
+         adapter = [\"dep:bdl-runtime-adapter\"]\n\
+         {feature_line}\
          \n\
          [dependencies]\n\
          bdl-runtime-core = {{ path = {core:?}{features} }}\n\
          bdl-runtime-host = {{ path = {host:?}, optional = true }}\n\
-         bdl-runtime-embassy = {{ path = {embassy:?}, optional = true }}\n\
-         bdl-runtime-embassy-rp = {{ path = {embassy_rp:?}{rp_features}, optional = true }}\n\
-         embassy-rp = {{ version = \"0.10.0\", default-features = false, features = [\"rt\", \"rp2040\", \"time-driver\", \"critical-section-impl\", \"boot2-w25q080\"], optional = true }}\n\
-         embassy-executor = {{ version = \"0.10.0\", features = [\"platform-cortex-m\", \"executor-thread\"], optional = true }}\n\
-         embassy-time = {{ version = \"0.5.1\", optional = true }}\n\
-         cortex-m-rt = {{ version = \"0.7.5\", optional = true }}\n\
-         panic-halt = {{ version = \"1.0.0\", optional = true }}\n\
-         {static_cell_dep}\
+         bdl-runtime-adapter = {{ path = {adapter:?}, optional = true }}\n\
+         {dep_lines}\
+         \n\
+         [profile.dev]\n\
+         panic = \"abort\"\n\
          \n\
          [profile.release]\n\
+         panic = \"abort\"\n\
          debug = false\n\
          lto = true\n\
          opt-level = \"s\"\n",
         gen = generator(),
         board = plan.board,
-        triple = targets::rp2040::TRIPLE,
+        rust_version = entry.rust_version(),
+        build_command = entry.build_command(package),
         core = o.runtime_core_path,
         host = o.runtime_host_path,
-        embassy = o.runtime_embassy_path,
-        embassy_rp = o.runtime_embassy_rp_path,
+        adapter = o.runtime_adapter_path,
     )
 }
 
-fn cargo_toml_core(package: &str, o: &CodegenOptions, features: &str) -> String {
+fn cargo_toml_core(package: &str, o: &CodegenOptions, collections: bool) -> String {
+    let features = if collections {
+        r#", features = ["collections"]"#
+    } else {
+        ""
+    };
     format!(
         "# Generated by {gen}. Do not edit.\n\
          [package]\n\

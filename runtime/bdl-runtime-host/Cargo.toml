@@ -9,7 +9,7 @@ repository.workspace = true
 
 [dependencies]
 bdl-runtime-core = { workspace = true }
-bdl-runtime-embassy = { workspace = true }
+bdl-runtime-adapter = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 

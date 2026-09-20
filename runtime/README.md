@@ -11,7 +11,7 @@ Crates linked into, or driving, generated programs — never into the compiler.
   builds and runs a generated crate. Used by the differential tests and by
   tooling.
 
-- `bdl-runtime-embassy` — `no_std`, depends on `bdl-runtime-core` only: the
+- `bdl-runtime-adapter` — `no_std`, depends on `bdl-runtime-core` only: the
   platform adapter's vocabulary — the numeric policy at the raw command boundary
   (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_*`, `CommandFault`,
   the compiled schedule as `ActiveDomains`. Knows no HAL.

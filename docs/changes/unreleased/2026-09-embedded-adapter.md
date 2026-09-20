@@ -49,7 +49,7 @@
   new `bdl-runtime-host`. `bdl-manifest.json` gains an optional `adapter` entry
   (manifest version unchanged, additive).
 - Developers:
-  `bdl_runtime_embassy::{duty8, CommandFault, PwmDuty8, Level, apply_duty8, apply_level, SinkBinding, schedule::active}`;
+  `bdl_runtime_adapter::{duty8, CommandFault, PwmDuty8, Level, apply_duty8, apply_level, SinkBinding, schedule::active}`;
   `bdl_runtime_embassy_rp::{PwmA, PwmB, Line, halt, arena, DUTY8_TOP, DEFAULT_PWM_DIVIDER}`
   (outside the workspace; `just`-less: `cargo` in its directory);
   `bdl_runtime_host::{AdapterOp, mock, TickTrace::adapter, HostProgram::adapter_ops, harness::Cargo::build_firmware}`;
@@ -67,7 +67,7 @@
 
 ## Evidence
 
-`runtime/bdl-runtime-embassy/src/lib.rs` (the policy's matrix, hold on refusal,
+`runtime/bdl-runtime-adapter/src/lib.rs` (the policy's matrix, hold on refusal,
 the schedule against the simulator's rule),
 `crates/bdl-codegen-rust/src/targets/rp2040.rs` (pad → peripheral; a foreign pad
 or a disagreeing slice is an error),

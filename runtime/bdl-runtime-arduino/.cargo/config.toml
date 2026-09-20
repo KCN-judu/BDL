@@ -1,0 +1,7 @@
+# The pinned AVR nightly is a 1.88 pre-release: the HAL's dependencies are
+# resolved as for the declared rust-version, never a newer one.
+[resolver]
+incompatible-rust-versions = "fallback"
+
+[target.avr-none]
+rustflags = ["-C", "target-cpu=atmega328p"]

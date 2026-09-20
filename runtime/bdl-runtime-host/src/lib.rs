@@ -188,7 +188,7 @@ pub enum AdapterOp {
 /// the firmware uses, so `TickTrace.adapter` is the firmware's operation
 /// sequence for the host's inputs.
 pub mod mock {
-    use bdl_runtime_embassy::{Level, PwmDuty8};
+    use bdl_runtime_adapter::{Level, PwmDuty8};
 
     #[derive(Clone, Debug, Default, PartialEq, Eq)]
     pub struct MockPwm {
@@ -215,7 +215,7 @@ impl AdapterOp {
     /// The record of one applied duty command.
     pub fn duty(
         device_id: u64,
-        r: Option<Result<u8, bdl_runtime_embassy::CommandFault>>,
+        r: Option<Result<u8, bdl_runtime_adapter::CommandFault>>,
     ) -> AdapterOp {
         match r {
             None => AdapterOp::Held { device_id },

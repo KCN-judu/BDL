@@ -1346,12 +1346,16 @@ pub fn options() -> CompileOptions {
         codegen: bdl_codegen_rust::CodegenOptions {
             runtime_core_path: root.join("runtime/bdl-runtime-core").display().to_string(),
             runtime_host_path: root.join("runtime/bdl-runtime-host").display().to_string(),
-            runtime_embassy_path: root
-                .join("runtime/bdl-runtime-embassy")
+            runtime_adapter_path: root
+                .join("runtime/bdl-runtime-adapter")
                 .display()
                 .to_string(),
             runtime_embassy_rp_path: root
                 .join("runtime/bdl-runtime-embassy-rp")
+                .display()
+                .to_string(),
+            runtime_arduino_path: root
+                .join("runtime/bdl-runtime-arduino")
                 .display()
                 .to_string(),
         },

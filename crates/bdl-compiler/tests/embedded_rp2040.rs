@@ -23,7 +23,7 @@ use bdl_model::surface::{
     Definition, Design, DeviceKind, ProjectSnapshot, Representation, Signature,
 };
 use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
-use bdl_runtime_embassy::{duty8, CommandFault};
+use bdl_runtime_adapter::{duty8, CommandFault};
 use bdl_runtime_host::{AdapterOp, DynValue, RunRequest, TickRequest};
 
 struct Surface {

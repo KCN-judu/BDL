@@ -26,7 +26,7 @@ The first platform adapter will meet this on the first constrained board.
 - Since ADR-0037 the RP2040 firmware runs the core's `f64` arithmetic as
   generated (the Cortex-M0+ has no FPU; software floating point) and converts
   only at the raw command boundary through one explicit policy
-  (`bdl_runtime_embassy::duty8`, `docs/architecture/embedded-adapter.md`).
+  (`bdl_runtime_adapter::duty8`, `docs/architecture/embedded-adapter.md`).
   Whether the core itself should compute in `f32` on such a target — and what
   the differential tests would then compare — is this issue, unchanged.
 

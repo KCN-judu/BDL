@@ -1,0 +1,32 @@
+[package]
+name = "bdl-runtime-arduino"
+description = "The Arduino half of the BDL platform adapter: avr-hal PWM pins and output lines as bdl-runtime-adapter sinks, the blocking tick wait, the fault halt; nightly-only, built only into generated firmware"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.87"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/KCN-judu/BDL"
+publish = false
+
+# Not a member of the BDL workspace: avr-hal is a git dependency that only
+# builds on its pinned nightly (docs/architecture/embedded-adapter.md § Arduino).
+[workspace]
+
+[dependencies]
+bdl-runtime-adapter = { path = "../bdl-runtime-adapter" }
+arduino-hal = { git = "https://github.com/Rahix/avr-hal", rev = "e0b0105b11a7c4209fb1704276a7921c3139d5cb" }
+avr-device = "0.8.1"
+
+[features]
+default = []
+# One board feature must be on for arduino-hal to know its pins; the
+# generated crate turns the board's on.
+arduino-nano = ["arduino-hal/arduino-nano"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true

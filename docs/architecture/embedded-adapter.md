@@ -35,7 +35,7 @@ interprets nothing.
 
 | Layer                         | Crate / file                                                                                          | Owns                                                                                                                                   | Never                                          |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| target-independent vocabulary | `runtime/bdl-runtime-embassy` (`no_std`, depends on `bdl-runtime-core` only)                          | the numeric policy (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_duty8` / `apply_level`, `CommandFault`, `schedule::active` | a HAL type, a pin, allocation                  |
+| target-independent vocabulary | `runtime/bdl-runtime-adapter` (`no_std`, depends on `bdl-runtime-core` only)                          | the numeric policy (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_duty8` / `apply_level`, `CommandFault`, `schedule::active` | a HAL type, a pin, allocation                  |
 | generated glue                | `<crate>/src/adapter.rs` (feature `adapter`)                                                          | `SINKS` (bindings as data), `Applied`, `apply(tick, sink₁, …)` — one `&mut dyn` sink per machine sink in sink order                    | a map, a name lookup, a string dispatch        |
 | generated firmware            | `<crate>/src/bin/rp2040.rs` (feature `rp2040`), `memory.x`, `build.rs`, `.cargo/config.toml`          | constructing the sinks on the assigned pads, the tick loop, the schedule, the arena, the fault halt                                    | a pin choice, a value the core did not produce |
 | RP2040 binding                | `runtime/bdl-runtime-embassy-rp` (outside the workspace: the HAL tree stays out of the host lockfile) | `PwmA` / `PwmB` / `Line` over `embassy-rp`, the PWM carrier, the startup levels, `halt`, `arena`                                       | reading a design                               |
@@ -85,7 +85,7 @@ peripheral: its pad is left unconfigured, and no value is invented for it.
 
 Production computes in `f64` (ISS-0006 stays open for the core's own
 arithmetic). At the boundary one explicit policy converts a raw command to what
-the peripheral takes, `bdl_runtime_embassy::duty8`:
+the peripheral takes, `bdl_runtime_adapter::duty8`:
 
 | Raw duty command (`q[1]`, from `pwm_duty8` / `pwm_duty4`) | Result                                                                     |
 | --------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -201,7 +201,7 @@ newest dependencies may want a newer compiler than the toolchain pins);
 
 ## Evidence
 
-`runtime/bdl-runtime-embassy/src/lib.rs` (the policy and the schedule),
+`runtime/bdl-runtime-adapter/src/lib.rs` (the policy and the schedule),
 `crates/bdl-codegen-rust/src/targets/rp2040.rs` (pad → peripheral, no fallback),
 `crates/bdl-compiler/tests/embedded_rp2040.rs` (sink ↔ pad ↔ peripheral chain,
 the host operations against `Tick.commands` for 0 %/5 %/50 %/100 %/out of range,

@@ -43,7 +43,7 @@ pub enum Peripheral {
 impl Peripheral {
     /// The constructor expression over `p` (`embassy_rp::init`'s
     /// `Peripherals`).
-    fn construct(&self) -> Expr {
+    pub fn construct(&self) -> Expr {
         match self {
             Peripheral::Pwm {
                 pin,
@@ -137,7 +137,7 @@ pub fn firmware_module(
     }
     let mut items = vec![
         Item::Use(format!("{package} as design")),
-        Item::Use("bdl_runtime_embassy::schedule".into()),
+        Item::Use("bdl_runtime_adapter::schedule".into()),
         Item::Use("bdl_runtime_embassy_rp::halt".into()),
         Item::Use("bdl_runtime_embassy_rp::Line".into()),
         Item::Use("bdl_runtime_embassy_rp::PwmA".into()),
@@ -376,6 +376,40 @@ pub fn firmware_module(
         inner_attrs: vec!["no_std".into(), "no_main".into()],
         items,
     })
+}
+
+/// The `[features]` line and the `[dependencies]` lines of the `rp2040`
+/// feature.
+pub fn cargo_sections(o: &crate::CodegenOptions, plan: &AdapterPlan) -> (String, String) {
+    let rp_features = if plan.arena_bytes.is_some() {
+        r#", features = ["collections"]"#
+    } else {
+        ""
+    };
+    let static_cell_feature = if plan.arena_bytes.is_some() {
+        ", \"dep:static-cell\""
+    } else {
+        ""
+    };
+    let static_cell_dep = if plan.arena_bytes.is_some() {
+        "static-cell = { version = \"2.1\", optional = true }\n"
+    } else {
+        ""
+    };
+    let feature = format!(
+        "# The RP2040 firmware over Embassy.\nrp2040 = [\"adapter\", \"dep:bdl-runtime-embassy-rp\", \"dep:embassy-executor\", \"dep:embassy-rp\", \"dep:embassy-time\", \"dep:cortex-m-rt\", \"dep:panic-halt\"{static_cell_feature}]\n"
+    );
+    let deps = format!(
+        "bdl-runtime-embassy-rp = {{ path = {rp:?}{rp_features}, optional = true }}\n\
+         embassy-rp = {{ version = \"0.10.0\", default-features = false, features = [\"rt\", \"rp2040\", \"time-driver\", \"critical-section-impl\", \"boot2-w25q080\"], optional = true }}\n\
+         embassy-executor = {{ version = \"0.10.0\", features = [\"platform-cortex-m\", \"executor-thread\"], optional = true }}\n\
+         embassy-time = {{ version = \"0.5.1\", optional = true }}\n\
+         cortex-m-rt = {{ version = \"0.7.5\", optional = true }}\n\
+         panic-halt = {{ version = \"1.0.0\", optional = true }}\n\
+         {static_cell_dep}",
+        rp = o.runtime_embassy_rp_path,
+    );
+    (feature, deps)
 }
 
 /// `memory.x` for the Pico's 2 MiB flash and 264 KiB SRAM; `BOOT2` is the

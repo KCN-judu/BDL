@@ -51,8 +51,14 @@ pub struct AdapterEntry {
     /// The board id and its family (the target entry).
     pub board: String,
     pub family: String,
-    /// The Rust target triple the firmware is built for.
+    /// The Rust target triple the firmware is built for, the Cargo feature
+    /// and binary suffix, the toolchain it needs beyond the pinned one (if
+    /// any), and the build command, verbatim.
     pub triple: String,
+    pub feature: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain: Option<String>,
+    pub build: String,
     pub tick_micros: u64,
     /// Activation period in ticks per clock slot, in slot order.
     pub periods: Vec<u64>,
@@ -232,13 +238,13 @@ pub fn manifest(
     package: &str,
     generator: &str,
     plan: Option<&crate::adapter::AdapterPlan>,
+    entry: Option<&crate::targets::Entry>,
 ) -> Result<Manifest, crate::emit::EmitError> {
-    let adapter = match plan {
-        None => None,
-        Some(plan) => {
+    let adapter = match (plan, entry) {
+        (Some(plan), Some(entry)) => {
             let mut bindings = Vec::new();
             for b in &plan.sinks {
-                let peripheral = crate::targets::rp2040::peripheral(b)?;
+                let peripheral = entry.peripheral(b)?;
                 bindings.push(AdapterBindingEntry {
                     slot: b.slot.0,
                     device_id: b.device.raw(),
@@ -250,19 +256,23 @@ pub fn manifest(
                     },
                     resource: b.resource.clone(),
                     capability: b.kind.capability().into(),
-                    peripheral: peripheral.describe(),
+                    peripheral: peripheral.describe,
                 });
             }
             Some(AdapterEntry {
                 board: plan.board.clone(),
                 family: plan.family.clone(),
-                triple: crate::targets::rp2040::TRIPLE.into(),
+                triple: entry.triple().into(),
+                feature: entry.feature(),
+                toolchain: entry.toolchain().map(str::to_owned),
+                build: entry.build_command(package),
                 tick_micros: plan.tick_micros,
                 periods: plan.periods.clone(),
                 arena_bytes: plan.arena_bytes,
                 bindings,
             })
         }
+        _ => None,
     };
     Ok(Manifest {
         manifest_version: MANIFEST_VERSION,

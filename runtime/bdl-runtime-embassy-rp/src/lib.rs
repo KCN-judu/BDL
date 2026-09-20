@@ -1,6 +1,6 @@
 //! The RP2040 half of the platform adapter (docs/architecture/embedded-adapter.md).
 //!
-//! Implements the sink traits of `bdl-runtime-embassy` over Embassy's
+//! Implements the sink traits of `bdl-runtime-adapter` over Embassy's
 //! RP2040 peripherals, owns the peripheral configuration a raw command
 //! never carries (the PWM carrier, the initial line level), the collection
 //! arena, and the latched fault halt.  Nothing here reads a design: the
@@ -13,7 +13,7 @@
 // the heap (`arena::init`), the discharge of which is written beside it.
 #![deny(unsafe_code)]
 
-use bdl_runtime_embassy::{Level, PwmDuty8};
+use bdl_runtime_adapter::{Level, PwmDuty8};
 use embassy_rp::gpio::Output;
 use embassy_rp::pwm::{ChannelAPin, ChannelBPin, Config, Pwm, Slice};
 use embassy_rp::Peri;

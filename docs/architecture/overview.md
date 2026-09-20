@@ -86,7 +86,7 @@ planned:
 runtime/
   bdl-runtime-core   no_std vocabulary of every generated core: ActiveDomains, ClockSlot, RuntimeError, checked numerics; feature `collections`: the list operators and the recursor over alloc::Vec (no deps)
   bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver, recording sinks (→ runtime-core, runtime-embassy)
-  bdl-runtime-embassy     no_std adapter vocabulary: the numeric policy at the raw command boundary, sink traits, the compiled schedule (→ runtime-core)
+  bdl-runtime-adapter     no_std adapter vocabulary: the numeric policy at the raw command boundary, sink traits, the compiled schedule (→ runtime-core)
   bdl-runtime-embassy-rp  the RP2040 binding over embassy-rp — outside the workspace, built only into generated firmware (docs/architecture/embedded-adapter.md)
 ```
 

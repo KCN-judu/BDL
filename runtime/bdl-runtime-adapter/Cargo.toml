@@ -1,5 +1,5 @@
 [package]
-name = "bdl-runtime-embassy"
+name = "bdl-runtime-adapter"
 description = "no_std vocabulary of the platform adapter every generated BDL firmware is built on: the numeric policy from raw commands to peripheral values, the sink traits a target implements, and the fault a refused command leaves; knows no HAL"
 version.workspace = true
 edition.workspace = true

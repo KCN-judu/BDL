@@ -62,7 +62,7 @@ differential tests hold it to this evaluator trace for trace.
 ```text
               generated core (no_std; runtime/bdl-runtime-core vocabulary)
                  ↑                          ↑
-     host bridge (runtime/bdl-runtime-host)   firmware (Embassy adapter: runtime/bdl-runtime-embassy{,-rp}, docs/architecture/embedded-adapter.md)
+     host bridge (runtime/bdl-runtime-host)   firmware (Embassy adapter: runtime/bdl-runtime-adapter{,-rp}, docs/architecture/embedded-adapter.md)
 ```
 
 Only the input provider, the clock activation source, the output adapter and the

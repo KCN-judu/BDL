@@ -142,3 +142,16 @@ correspondence unproved.
   `docs/architecture/overview.md`, `docs/project/formal-correspondence.md`,
   `docs/project/roadmap.md`, `docs/project/status.md`, a change fragment, the
   user guide's Deploy and CLI pages.
+
+## Amendment (2026-09-20, the Arduino family)
+
+The vocabulary crate of Decision 2 is `bdl-runtime-adapter` (renamed from
+`bdl-runtime-embassy` the same day): a second family — the Arduino Nano over
+`avr-hal`, a synchronous HAL with no Embassy — shares the numeric policy, the
+sink traits, the glue and the recorded host operations, so the crate's name says
+what it is rather than who first used it. `bdl-runtime-embassy-rp` keeps its
+name; `bdl-runtime-arduino` is the Arduino binding; the target entries live in
+`bdl-codegen-rust::targets` (`Entry`), one per family. Everything else above
+stays as written; the Arduino family's own policies (a blocking tick, no
+collection arena, nightly-only build) are
+`docs/architecture/embedded-adapter.md` § Arduino.
