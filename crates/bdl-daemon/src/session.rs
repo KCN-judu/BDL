@@ -1463,7 +1463,17 @@ impl Session {
         }
         let host = sys.text_ide.as_mut().ok_or(SessionError::NotASystem)?;
         let uri = bdl_ide_db::workspace::file_uri(path);
-        let (doc, _) = host.set_text_document(&uri, text);
+        let doc = host.document_id(&uri);
+        // The same text as the overlay already holds (a hover after the
+        // tokens, a completion after a hover) keeps the composed snapshot;
+        // only a changed text recomposes.
+        let same = host.overlays().iter().any(|e| {
+            matches!(&e.overlay, bdl_ide_db::Overlay::TextDocument { document, source }
+                if *document == doc && source == text)
+        });
+        if !same {
+            host.set_text_document(&uri, text);
+        }
         Ok((host.snapshot(), doc))
     }
 

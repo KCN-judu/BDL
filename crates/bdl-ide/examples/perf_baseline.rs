@@ -168,6 +168,34 @@ fn bench(name: &str, concepts: usize, mappings: usize, outputs: usize) {
     time("semantic tokens → LSP data (UTF-16)", 5, || {
         bdl_ide::tokens::encode::encode_data(&toks, &text, Default::default()).len()
     });
+    // the Code view's queries over the same document: at the last
+    // relationship's formula, and at its declaration name
+    let last_body = text.rfind(" * 2\n").map(|i| i as u32 + 3).unwrap_or(0);
+    let decl_name = text
+        .rfind("mapping ")
+        .map(|i| i as u32 + "mapping ".len() as u32)
+        .unwrap_or(0);
+    let n = time("completion (document, formula body)", 20, || {
+        completion(
+            &snap,
+            &CompletionContext::Document {
+                document: doc,
+                offset: last_body,
+            },
+        )
+        .len()
+    });
+    assert!(n > 3, "the probe sits in a formula body");
+    time("hover (document)", 20, || {
+        hover_at(&snap, doc, decl_name).is_some()
+    });
+    time("definition (document)", 20, || {
+        definition_at(&snap, doc, decl_name).len()
+    });
+    time("references (document)", 20, || {
+        references_at(&snap, doc, decl_name, true).len()
+    });
+    time("format (document)", 5, || format_document(&snap, doc).len());
     host.set_definition_draft(m, "clamp(Concept0 / (90 deg), 0, 1)");
     let snap = host.snapshot();
     time("formula tokens (draft)", 20, || {
