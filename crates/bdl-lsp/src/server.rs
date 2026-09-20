@@ -17,10 +17,10 @@
 use crate::convert;
 use crate::position::{LineIndex, PositionEncoding};
 use bdl_ide::{
-    actions_at, actions_for, completion, diagnostics, document_symbols, entity_at, explain,
-    format_document, hover, inlay_hints, plan_rename, preview_change, project_to_document,
-    references, semantic_tokens, virtual_document, CompletionContext, DiagnosticScope, EntityRole,
-    IdeHost,
+    actions_at, actions_for, completion, definition_at, diagnostics, document_symbols, entity_at,
+    explain, format_document, hover_at, inlay_hints, plan_rename, preview_change,
+    project_to_document, references_at, semantic_tokens, virtual_document, CompletionContext,
+    DiagnosticScope, EntityRole, IdeHost,
 };
 use bdl_ide_db::{CancelScope, DocumentId, DocumentUri, OverlayKey};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, RequestId, Response};
@@ -661,6 +661,20 @@ impl Ctx<'_> {
         resolve_document(self.snapshot, self.encoding, self.text_root, id)
     }
 
+    /// Text anchors as LSP locations, in the documents they are in.
+    fn locations(&self, anchors: Vec<bdl_ide::ProjectionAnchor>) -> Vec<lsp::Location> {
+        anchors
+            .into_iter()
+            .filter_map(|a| {
+                let (uri, index) = self.resolve(a.document()?)?;
+                Some(lsp::Location {
+                    uri,
+                    range: index.range(a.text_range()?),
+                })
+            })
+            .collect()
+    }
+
     fn entity_at(
         &self,
         uri: &Uri,
@@ -688,28 +702,21 @@ fn handle_request(ctx: &Ctx<'_>, req: Request) -> Result<serde_json::Value, Requ
             let p: lsp::HoverParams = params(&req)?;
             let pos = p.text_document_position_params;
             let h = ctx
-                .entity_at(&pos.text_document.uri, pos.position)
-                .and_then(|(_, _, e, _)| hover(ctx.snapshot, e))
-                .map(|h| convert::hover(&h));
+                .document(&pos.text_document.uri)
+                .and_then(|(doc, index)| {
+                    let offset = index.offset(pos.position);
+                    hover_at(ctx.snapshot, doc, offset).map(|h| convert::hover_at(&h, &index))
+                });
             ok(h)
         }
         r::GotoDefinition::METHOD => {
             let p: lsp::GotoDefinitionParams = params(&req)?;
             let pos = p.text_document_position_params;
             let locations: Vec<lsp::Location> = ctx
-                .entity_at(&pos.text_document.uri, pos.position)
-                .map(|(_, _, e, _)| {
-                    bdl_ide::definition_of(ctx.snapshot, e)
-                        .into_iter()
-                        .filter(|a| a.role == EntityRole::Name)
-                        .filter_map(|a| {
-                            let (uri, index) = ctx.resolve(a.document()?)?;
-                            Some(lsp::Location {
-                                uri,
-                                range: index.range(a.text_range()?),
-                            })
-                        })
-                        .collect()
+                .document(&pos.text_document.uri)
+                .map(|(doc, index)| {
+                    let offset = index.offset(pos.position);
+                    ctx.locations(definition_at(ctx.snapshot, doc, offset))
                 })
                 .unwrap_or_default();
             ok(if locations.is_empty() {
@@ -723,31 +730,10 @@ fn handle_request(ctx: &Ctx<'_>, req: Request) -> Result<serde_json::Value, Requ
             let pos = p.text_document_position;
             let include_decl = p.context.include_declaration;
             let locations: Vec<lsp::Location> = ctx
-                .entity_at(&pos.text_document.uri, pos.position)
-                .map(|(_, _, e, _)| {
-                    let result = references(ctx.snapshot, e);
-                    let mut anchors: Vec<_> = result.anchors.clone();
-                    if include_decl {
-                        anchors.extend(
-                            result
-                                .declaration
-                                .iter()
-                                .filter(|a| a.role == EntityRole::Name)
-                                .cloned(),
-                        );
-                    }
-                    anchors.sort();
-                    anchors.dedup();
-                    anchors
-                        .into_iter()
-                        .filter_map(|a| {
-                            let (uri, index) = ctx.resolve(a.document()?)?;
-                            Some(lsp::Location {
-                                uri,
-                                range: index.range(a.text_range()?),
-                            })
-                        })
-                        .collect()
+                .document(&pos.text_document.uri)
+                .map(|(doc, index)| {
+                    let offset = index.offset(pos.position);
+                    ctx.locations(references_at(ctx.snapshot, doc, offset, include_decl))
                 })
                 .unwrap_or_default();
             ok(locations)

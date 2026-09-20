@@ -458,9 +458,10 @@ fn formula_completions(
 
     // The equation library, in the designer's words: `min(a, b)` — the
     // smaller of two values of the same ordered kind.  A relationship of
-    // the design with the same name is offered above and wins.
+    // the design with the same name is offered above and wins.  Not after
+    // a number, where only a unit can follow.
     for e in bdl_equations::entries() {
-        if !matches(e.name) || design.mappings.values().any(|m| m.name == e.name) {
+        if unit_position || !matches(e.name) || design.mappings.values().any(|m| m.name == e.name) {
             continue;
         }
         out.push(SemanticCompletion {
@@ -670,6 +671,68 @@ fn visible_collections(
     out
 }
 
+/// The relationship a definition line defines and where its body text
+/// starts, when the line up to `at` is `name(…) = …` and `name` is a
+/// relationship in the scope the line is in (the system's, or the
+/// enclosing component body's, whose first flattened copy stands for the
+/// body).  A line the model has no relationship for is not a definition.
+fn defining_line(
+    world: &bdl_ide_db::TextWorld,
+    snapshot: &AnalysisSnapshot,
+    document: DocumentId,
+    source: &str,
+    at: u32,
+) -> Option<(DeclId, u32)> {
+    let line_start = source[..at as usize]
+        .rfind('\n')
+        .map(|i| i + 1)
+        .unwrap_or(0);
+    let line = &source[line_start..at as usize];
+    let eq = line.find('=')?;
+    let head = line[..eq].trim();
+    let head = head
+        .split(|c: char| c == '(' || c.is_whitespace())
+        .next()?
+        .trim();
+    if head.is_empty() || line[..eq].contains(':') {
+        return None;
+    }
+    if matches!(
+        head,
+        "bind" | "drive" | "instance" | "device" | "export" | "concept" | "mapping" | "output"
+    ) {
+        return None;
+    }
+    let body_start = (line_start + eq + 1) as u32;
+    let system = &world.system;
+    let mapping = match world.component_at(document, at) {
+        None => system.base.mappings.values().find(|m| m.name == head)?.id,
+        Some(c) => {
+            let comp = system.components.get(&c)?;
+            let d = comp.body.mappings.values().find(|m| m.name == head)?.id;
+            let flat = bdl_ide_db::workspace::flat_entities(
+                system,
+                bdl_text::TextEntity::BodyMapping(c, d),
+            );
+            let m = flat.into_iter().find_map(|e| e.as_mapping())?;
+            // the copy names the body's own spellings only through the
+            // scope its last built definition pinned; without one the
+            // body's names come from the text path
+            let block = snapshot.effective().design.mappings.get(&m)?;
+            if !matches!(block.definition, Some(Definition::ScopedFormula { .. })) {
+                return None;
+            }
+            m
+        }
+    };
+    snapshot
+        .effective()
+        .design
+        .mappings
+        .contains_key(&mapping)
+        .then_some((mapping, body_start))
+}
+
 /// 0..=100: how well a candidate's type fits the expected one.
 fn rank(expected: &ExpectedType, candidate: &ExpectedType) -> u8 {
     match (expected, candidate) {
@@ -690,21 +753,45 @@ fn document_completions(
     };
     let source = doc.source.as_str();
     let (prefix, replace) = prefix_at(source, offset);
-    // Inside a formula body: delegate with a body-relative offset.
-    if let Some(a) = snapshot.projections().anchor_at(document, offset) {
-        if a.role == EntityRole::Definition {
-            if let (Some(m), Some(r)) = (a.entity.as_mapping(), a.text_range()) {
-                let body = &source[r.start as usize..r.end as usize];
-                let mut items = formula_completions(snapshot, m, body, offset - r.start);
-                for i in &mut items {
-                    i.replace = i.replace.offset(r.start);
-                }
-                return items;
+    // Inside a formula body that built: the formula engine, with a
+    // body-relative offset (the body anchor encloses the smaller name
+    // anchors, so it is looked for by role, not as the innermost).
+    let body_anchor = snapshot
+        .projections()
+        .document_anchors(document)
+        .iter()
+        .filter(|a| a.role == EntityRole::Definition)
+        .find(|a| a.text_range().is_some_and(|r| r.contains(offset)));
+    if let Some(a) = body_anchor {
+        if let (Some(m), Some(r)) = (a.entity.as_mapping(), a.text_range()) {
+            let body = &source[r.start as usize..r.end as usize];
+            let mut items = formula_completions(snapshot, m, body, offset - r.start);
+            for i in &mut items {
+                i.replace = i.replace.offset(r.start);
             }
+            return items;
         }
     }
     // A text workspace decides scope from the authored system.
     if let Some(world) = snapshot.text() {
+        // A definition line whose body has not built yet (`level() = |`,
+        // an unclosed call): still the formula engine, for the relationship
+        // the line defines, over the text after `=`.
+        if let Some((m, body_start)) =
+            defining_line(world, snapshot, document, source, replace.start)
+        {
+            let body = &source[body_start as usize..];
+            let end = body
+                .find('\n')
+                .map(|i| i as u32)
+                .unwrap_or(body.len() as u32);
+            let body = &body[..end as usize];
+            let mut items = formula_completions(snapshot, m, body, (offset - body_start).min(end));
+            for i in &mut items {
+                i.replace = i.replace.offset(body_start);
+            }
+            return items;
+        }
         return crate::completion_text::text_completions(world, document, source, prefix, replace);
     }
     let matches = |label: &str| {

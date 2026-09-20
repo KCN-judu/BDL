@@ -18,9 +18,10 @@
 //! `bdl-ide`, never by a side path through the compiler.
 
 use bdl_ide::{
-    completion, draft_verdict, entity_at_formula, formula_tokens, hover, semantic_tokens,
-    AnalysisSnapshot, CompletionContext, DraftVerdict, EntityRef, IdeHost, OverlayKey, QueryError,
-    SemanticCompletion, SemanticHover, SemanticToken, TextRange,
+    completion, definition_at, draft_verdict, format_document, formula_hover_at, formula_tokens,
+    hover_at, name_at, references_at, semantic_tokens, AnalysisSnapshot, CompletionContext,
+    DraftVerdict, EntityRef, HoverAt, IdeHost, NameAt, OverlayKey, ProjectionAnchor, QueryError,
+    SemanticCompletion, SemanticToken,
 };
 use bdl_ide_db::CancelScope;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome};
@@ -97,6 +98,39 @@ fn written_back(sys: &SystemState) -> Result<bdl_text::WriteBack, SessionError> 
         &loaded.files,
         &sys.current.system,
     ))
+}
+
+/// A place in a source file of the workspace, by path and byte range.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SourceLocation {
+    pub path: String,
+    pub range: bdl_ide::TextRange,
+}
+
+/// Text anchors as locations in the workspace's files.
+fn locations(snapshot: &AnalysisSnapshot, anchors: Vec<ProjectionAnchor>) -> Vec<SourceLocation> {
+    anchors
+        .into_iter()
+        .filter_map(|a| {
+            let uri = snapshot.document_uri(a.document()?)?;
+            let path = bdl_ide_db::workspace::file_path(uri)?;
+            Some(SourceLocation {
+                path: path.to_owned(),
+                range: a.text_range()?,
+            })
+        })
+        .collect()
+}
+
+/// The display name of the entity at an offset, or empty.
+fn name_title(snapshot: &AnalysisSnapshot, doc: bdl_ide::DocumentId, offset: u32) -> String {
+    match name_at(snapshot, doc, offset) {
+        Some((_, NameAt::Entity { entity, .. })) => {
+            snapshot.name_of(entity).unwrap_or_default().to_owned()
+        }
+        Some((_, NameAt::Equation { name })) => name,
+        None => String::new(),
+    }
 }
 
 /// A source path the Code view may write: a `.bdl` file under `src/`,
@@ -1393,7 +1427,7 @@ impl Session {
         mapping: DeclId,
         source: &str,
         offset: u32,
-    ) -> Result<Option<(TextRange, SemanticHover)>, SessionError> {
+    ) -> Result<Option<HoverAt>, SessionError> {
         let snapshot = self.draft_snapshot(scope, mapping, source)?;
         if !snapshot.effective().design.mappings.contains_key(&mapping) {
             return Err(QueryError::UnknownEntity {
@@ -1401,25 +1435,20 @@ impl Session {
             }
             .into());
         }
-        let Some((range, _)) = snapshot.index().formula_name_at(mapping, offset) else {
-            return Ok(None);
-        };
-        let Some(entity) = entity_at_formula(&snapshot, mapping, offset) else {
-            return Ok(None);
-        };
-        Ok(hover(&snapshot, entity).map(|h| (range, h)))
+        Ok(formula_hover_at(&snapshot, mapping, offset))
     }
 
-    /// The tokens of one source file's text as typed (protocol 0.21): the
-    /// text becomes the file's overlay on the sources as written back, and
-    /// the one classifier answers over the resulting workspace.  A text
-    /// that does not build still gets its lexical tokens.  The path must
-    /// be one the Code view may write.
-    pub fn source_tokens(
+    /// The workspace with one source file's text as typed (protocol 0.21,
+    /// 0.22): the text becomes the file's overlay on the sources as written
+    /// back, so the other files' declarations resolve while this one is
+    /// mid-edit, and every IDE query — tokens, completion, hover,
+    /// navigation, formatting — reads the same snapshot.  The path must be
+    /// one the Code view may write.
+    fn source_snapshot(
         &mut self,
         path: &str,
         text: &str,
-    ) -> Result<Vec<SemanticToken>, SessionError> {
+    ) -> Result<(std::sync::Arc<AnalysisSnapshot>, bdl_ide::DocumentId), SessionError> {
         if !is_source_path(path) {
             return Err(SessionError::InvalidSourcePath {
                 path: path.to_owned(),
@@ -1435,8 +1464,101 @@ impl Session {
         let host = sys.text_ide.as_mut().ok_or(SessionError::NotASystem)?;
         let uri = bdl_ide_db::workspace::file_uri(path);
         let (doc, _) = host.set_text_document(&uri, text);
-        let snapshot = host.snapshot();
+        Ok((host.snapshot(), doc))
+    }
+
+    /// The tokens of one source file's text as typed.  A text that does
+    /// not build still gets its lexical tokens.
+    pub fn source_tokens(
+        &mut self,
+        path: &str,
+        text: &str,
+    ) -> Result<Vec<SemanticToken>, SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
         Ok(semantic_tokens(&snapshot, doc))
+    }
+
+    /// Completion at a byte offset of a source file's text as typed: the
+    /// same engine the language server calls (`bdl_ide::completion`,
+    /// `CompletionContext::Document`), which reads the slot the line is
+    /// filling from the authored system and, inside a formula body, the
+    /// body's own scope.
+    pub fn source_completion(
+        &mut self,
+        path: &str,
+        text: &str,
+        offset: u32,
+    ) -> Result<Vec<SemanticCompletion>, SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
+        Ok(completion(
+            &snapshot,
+            &CompletionContext::Document {
+                document: doc,
+                offset,
+            },
+        ))
+    }
+
+    /// The hover at a byte offset of a source file's text as typed
+    /// (`bdl_ide::hover_at`): an entity's card by identity, an equation's
+    /// words, or nothing.
+    pub fn source_hover(
+        &mut self,
+        path: &str,
+        text: &str,
+        offset: u32,
+    ) -> Result<Option<HoverAt>, SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
+        Ok(hover_at(&snapshot, doc, offset))
+    }
+
+    /// Where the entity named at a byte offset is declared, as locations
+    /// in the workspace's files (`bdl_ide::definition_at`), with the name.
+    pub fn source_definition(
+        &mut self,
+        path: &str,
+        text: &str,
+        offset: u32,
+    ) -> Result<(String, Vec<SourceLocation>), SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
+        let title = name_title(&snapshot, doc, offset);
+        Ok((
+            title,
+            locations(&snapshot, definition_at(&snapshot, doc, offset)),
+        ))
+    }
+
+    /// Every site referencing the entity named at a byte offset
+    /// (`bdl_ide::references_at`), with the name.
+    pub fn source_references(
+        &mut self,
+        path: &str,
+        text: &str,
+        offset: u32,
+        include_declaration: bool,
+    ) -> Result<(String, Vec<SourceLocation>), SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
+        let title = name_title(&snapshot, doc, offset);
+        Ok((
+            title,
+            locations(
+                &snapshot,
+                references_at(&snapshot, doc, offset, include_declaration),
+            ),
+        ))
+    }
+
+    /// The canonical layout of a source file's text as typed
+    /// (`bdl_ide::format_document`): `None` when it does not parse cleanly
+    /// or is already canonical.
+    pub fn format_source(
+        &mut self,
+        path: &str,
+        text: &str,
+    ) -> Result<Option<String>, SessionError> {
+        let (snapshot, doc) = self.source_snapshot(path, text)?;
+        let edits = format_document(&snapshot, doc);
+        Ok(edits.into_iter().next().map(|e| e.new_text))
     }
 
     /// The tokens of a relationship's definition as typed: the draft

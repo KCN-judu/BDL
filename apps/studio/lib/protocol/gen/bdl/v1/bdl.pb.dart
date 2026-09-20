@@ -64,6 +64,11 @@ enum ClientMessage_Payload {
   getSources,
   applySourceEdit,
   semanticTokens,
+  sourceCompletion,
+  sourceHover,
+  sourceDefinition,
+  sourceReferences,
+  formatSource,
   notSet
 }
 
@@ -112,6 +117,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     GetSourcesRequest? getSources,
     ApplySourceEditRequest? applySourceEdit,
     SemanticTokensRequest? semanticTokens,
+    SourceCompletionRequest? sourceCompletion,
+    SourceHoverRequest? sourceHover,
+    SourceDefinitionRequest? sourceDefinition,
+    SourceReferencesRequest? sourceReferences,
+    FormatSourceRequest? formatSource,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -159,6 +169,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (getSources != null) result.getSources = getSources;
     if (applySourceEdit != null) result.applySourceEdit = applySourceEdit;
     if (semanticTokens != null) result.semanticTokens = semanticTokens;
+    if (sourceCompletion != null) result.sourceCompletion = sourceCompletion;
+    if (sourceHover != null) result.sourceHover = sourceHover;
+    if (sourceDefinition != null) result.sourceDefinition = sourceDefinition;
+    if (sourceReferences != null) result.sourceReferences = sourceReferences;
+    if (formatSource != null) result.formatSource = formatSource;
     return result;
   }
 
@@ -214,6 +229,11 @@ class ClientMessage extends $pb.GeneratedMessage {
     62: ClientMessage_Payload.getSources,
     63: ClientMessage_Payload.applySourceEdit,
     64: ClientMessage_Payload.semanticTokens,
+    65: ClientMessage_Payload.sourceCompletion,
+    66: ClientMessage_Payload.sourceHover,
+    67: ClientMessage_Payload.sourceDefinition,
+    68: ClientMessage_Payload.sourceReferences,
+    69: ClientMessage_Payload.formatSource,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -261,7 +281,12 @@ class ClientMessage extends $pb.GeneratedMessage {
       61,
       62,
       63,
-      64
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -349,6 +374,16 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: ApplySourceEditRequest.$_createMessage)
     ..aOM<SemanticTokensRequest>(64, _omitFieldNames ? '' : 'semanticTokens',
         subBuilder: SemanticTokensRequest.$_createMessage)
+    ..aOM<SourceCompletionRequest>(65, _omitFieldNames ? '' : 'sourceCompletion',
+        subBuilder: SourceCompletionRequest.$_createMessage)
+    ..aOM<SourceHoverRequest>(66, _omitFieldNames ? '' : 'sourceHover',
+        subBuilder: SourceHoverRequest.$_createMessage)
+    ..aOM<SourceDefinitionRequest>(67, _omitFieldNames ? '' : 'sourceDefinition',
+        subBuilder: SourceDefinitionRequest.$_createMessage)
+    ..aOM<SourceReferencesRequest>(68, _omitFieldNames ? '' : 'sourceReferences',
+        subBuilder: SourceReferencesRequest.$_createMessage)
+    ..aOM<FormatSourceRequest>(69, _omitFieldNames ? '' : 'formatSource',
+        subBuilder: FormatSourceRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -413,6 +448,11 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(62)
   @$pb.TagNumber(63)
   @$pb.TagNumber(64)
+  @$pb.TagNumber(65)
+  @$pb.TagNumber(66)
+  @$pb.TagNumber(67)
+  @$pb.TagNumber(68)
+  @$pb.TagNumber(69)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -456,6 +496,11 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(62)
   @$pb.TagNumber(63)
   @$pb.TagNumber(64)
+  @$pb.TagNumber(65)
+  @$pb.TagNumber(66)
+  @$pb.TagNumber(67)
+  @$pb.TagNumber(68)
+  @$pb.TagNumber(69)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -937,6 +982,64 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearSemanticTokens() => $_clearField(64);
   @$pb.TagNumber(64)
   SemanticTokensRequest ensureSemanticTokens() => $_ensure(42);
+
+  /// The Code view's IDE queries over a text as typed (0.22): the same
+  /// overlay as SemanticTokens, the same bdl-ide answers as the language
+  /// server.
+  @$pb.TagNumber(65)
+  SourceCompletionRequest get sourceCompletion => $_getN(43);
+  @$pb.TagNumber(65)
+  set sourceCompletion(SourceCompletionRequest value) => $_setField(65, value);
+  @$pb.TagNumber(65)
+  $core.bool hasSourceCompletion() => $_has(43);
+  @$pb.TagNumber(65)
+  void clearSourceCompletion() => $_clearField(65);
+  @$pb.TagNumber(65)
+  SourceCompletionRequest ensureSourceCompletion() => $_ensure(43);
+
+  @$pb.TagNumber(66)
+  SourceHoverRequest get sourceHover => $_getN(44);
+  @$pb.TagNumber(66)
+  set sourceHover(SourceHoverRequest value) => $_setField(66, value);
+  @$pb.TagNumber(66)
+  $core.bool hasSourceHover() => $_has(44);
+  @$pb.TagNumber(66)
+  void clearSourceHover() => $_clearField(66);
+  @$pb.TagNumber(66)
+  SourceHoverRequest ensureSourceHover() => $_ensure(44);
+
+  @$pb.TagNumber(67)
+  SourceDefinitionRequest get sourceDefinition => $_getN(45);
+  @$pb.TagNumber(67)
+  set sourceDefinition(SourceDefinitionRequest value) => $_setField(67, value);
+  @$pb.TagNumber(67)
+  $core.bool hasSourceDefinition() => $_has(45);
+  @$pb.TagNumber(67)
+  void clearSourceDefinition() => $_clearField(67);
+  @$pb.TagNumber(67)
+  SourceDefinitionRequest ensureSourceDefinition() => $_ensure(45);
+
+  @$pb.TagNumber(68)
+  SourceReferencesRequest get sourceReferences => $_getN(46);
+  @$pb.TagNumber(68)
+  set sourceReferences(SourceReferencesRequest value) => $_setField(68, value);
+  @$pb.TagNumber(68)
+  $core.bool hasSourceReferences() => $_has(46);
+  @$pb.TagNumber(68)
+  void clearSourceReferences() => $_clearField(68);
+  @$pb.TagNumber(68)
+  SourceReferencesRequest ensureSourceReferences() => $_ensure(46);
+
+  @$pb.TagNumber(69)
+  FormatSourceRequest get formatSource => $_getN(47);
+  @$pb.TagNumber(69)
+  set formatSource(FormatSourceRequest value) => $_setField(69, value);
+  @$pb.TagNumber(69)
+  $core.bool hasFormatSource() => $_has(47);
+  @$pb.TagNumber(69)
+  void clearFormatSource() => $_clearField(69);
+  @$pb.TagNumber(69)
+  FormatSourceRequest ensureFormatSource() => $_ensure(47);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1050,6 +1153,9 @@ enum Response_Payload {
   composeFormula,
   libraryItems,
   semanticTokens,
+  sourceCompletion,
+  sourceLocations,
+  formatSource,
   notSet
 }
 
@@ -1081,6 +1187,9 @@ class Response extends $pb.GeneratedMessage {
     ComposeFormulaResponse? composeFormula,
     LibraryItemsResponse? libraryItems,
     SemanticTokensResponse? semanticTokens,
+    SourceCompletionResponse? sourceCompletion,
+    SourceLocationsResponse? sourceLocations,
+    FormatSourceResponse? formatSource,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1109,6 +1218,9 @@ class Response extends $pb.GeneratedMessage {
     if (composeFormula != null) result.composeFormula = composeFormula;
     if (libraryItems != null) result.libraryItems = libraryItems;
     if (semanticTokens != null) result.semanticTokens = semanticTokens;
+    if (sourceCompletion != null) result.sourceCompletion = sourceCompletion;
+    if (sourceLocations != null) result.sourceLocations = sourceLocations;
+    if (formatSource != null) result.formatSource = formatSource;
     return result;
   }
 
@@ -1147,6 +1259,9 @@ class Response extends $pb.GeneratedMessage {
     48: Response_Payload.composeFormula,
     49: Response_Payload.libraryItems,
     50: Response_Payload.semanticTokens,
+    51: Response_Payload.sourceCompletion,
+    52: Response_Payload.sourceLocations,
+    53: Response_Payload.formatSource,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1177,7 +1292,10 @@ class Response extends $pb.GeneratedMessage {
       47,
       48,
       49,
-      50
+      50,
+      51,
+      52,
+      53
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1229,6 +1347,12 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: LibraryItemsResponse.$_createMessage)
     ..aOM<SemanticTokensResponse>(50, _omitFieldNames ? '' : 'semanticTokens',
         subBuilder: SemanticTokensResponse.$_createMessage)
+    ..aOM<SourceCompletionResponse>(51, _omitFieldNames ? '' : 'sourceCompletion',
+        subBuilder: SourceCompletionResponse.$_createMessage)
+    ..aOM<SourceLocationsResponse>(52, _omitFieldNames ? '' : 'sourceLocations',
+        subBuilder: SourceLocationsResponse.$_createMessage)
+    ..aOM<FormatSourceResponse>(53, _omitFieldNames ? '' : 'formatSource',
+        subBuilder: FormatSourceResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1276,6 +1400,9 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(48)
   @$pb.TagNumber(49)
   @$pb.TagNumber(50)
+  @$pb.TagNumber(51)
+  @$pb.TagNumber(52)
+  @$pb.TagNumber(53)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1302,6 +1429,9 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(48)
   @$pb.TagNumber(49)
   @$pb.TagNumber(50)
+  @$pb.TagNumber(51)
+  @$pb.TagNumber(52)
+  @$pb.TagNumber(53)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1587,6 +1717,39 @@ class Response extends $pb.GeneratedMessage {
   void clearSemanticTokens() => $_clearField(50);
   @$pb.TagNumber(50)
   SemanticTokensResponse ensureSemanticTokens() => $_ensure(25);
+
+  @$pb.TagNumber(51)
+  SourceCompletionResponse get sourceCompletion => $_getN(26);
+  @$pb.TagNumber(51)
+  set sourceCompletion(SourceCompletionResponse value) => $_setField(51, value);
+  @$pb.TagNumber(51)
+  $core.bool hasSourceCompletion() => $_has(26);
+  @$pb.TagNumber(51)
+  void clearSourceCompletion() => $_clearField(51);
+  @$pb.TagNumber(51)
+  SourceCompletionResponse ensureSourceCompletion() => $_ensure(26);
+
+  @$pb.TagNumber(52)
+  SourceLocationsResponse get sourceLocations => $_getN(27);
+  @$pb.TagNumber(52)
+  set sourceLocations(SourceLocationsResponse value) => $_setField(52, value);
+  @$pb.TagNumber(52)
+  $core.bool hasSourceLocations() => $_has(27);
+  @$pb.TagNumber(52)
+  void clearSourceLocations() => $_clearField(52);
+  @$pb.TagNumber(52)
+  SourceLocationsResponse ensureSourceLocations() => $_ensure(27);
+
+  @$pb.TagNumber(53)
+  FormatSourceResponse get formatSource => $_getN(28);
+  @$pb.TagNumber(53)
+  set formatSource(FormatSourceResponse value) => $_setField(53, value);
+  @$pb.TagNumber(53)
+  $core.bool hasFormatSource() => $_has(28);
+  @$pb.TagNumber(53)
+  void clearFormatSource() => $_clearField(53);
+  @$pb.TagNumber(53)
+  FormatSourceResponse ensureFormatSource() => $_ensure(28);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, notSet }
@@ -12415,6 +12578,7 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     EntityRef? entity,
     $core.String? signature,
     $core.bool? open,
+    $core.String? equation,
   }) {
     final result = DraftHoverResponse._();
     if (revision != null) result.revision = revision;
@@ -12430,6 +12594,7 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     if (entity != null) result.entity = entity;
     if (signature != null) result.signature = signature;
     if (open != null) result.open = open;
+    if (equation != null) result.equation = equation;
     return result;
   }
 
@@ -12461,6 +12626,7 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
     ..aOM<EntityRef>(11, _omitFieldNames ? '' : 'entity', subBuilder: EntityRef.$_createMessage)
     ..aOS(12, _omitFieldNames ? '' : 'signature')
     ..aOB(13, _omitFieldNames ? '' : 'open')
+    ..aOS(14, _omitFieldNames ? '' : 'equation')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -12604,6 +12770,19 @@ class DraftHoverResponse extends $pb.GeneratedMessage {
   $core.bool hasOpen() => $_has(12);
   @$pb.TagNumber(13)
   void clearOpen() => $_clearField(13);
+
+  /// Set when the name under the cursor is an equation of the library
+  /// applied here, not an entity of the design (0.22): its name; `title`
+  /// is then its shape (`clamp(x, lo, hi)`) and `explanation` the
+  /// designer's-words summary.  No entity, no status.
+  @$pb.TagNumber(14)
+  $core.String get equation => $_getSZ(13);
+  @$pb.TagNumber(14)
+  set equation($core.String value) => $_setString(13, value);
+  @$pb.TagNumber(14)
+  $core.bool hasEquation() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearEquation() => $_clearField(14);
 }
 
 enum EntityRef_Kind { project, conceptId, mappingId, clockId, outputId, deviceId, notSet }
@@ -17768,6 +17947,898 @@ class SemanticToken extends $pb.GeneratedMessage {
   $core.bool hasTokenModifiers() => $_has(3);
   @$pb.TagNumber(4)
   void clearTokenModifiers() => $_clearField(4);
+}
+
+/// The Code view's IDE queries (protocol 0.22; ADR-0035,
+/// `docs/architecture/ide-service.md` § Studio integration).  Each carries
+/// the text of one source file exactly as the client has it, like
+/// SemanticTokens: the daemon sets it as that file's overlay on the
+/// workspace and answers from the same `bdl-ide` functions the language
+/// server calls.  `generation` is the client's own counter, echoed, so an
+/// answer to an older text is dropped; `offset` is a byte offset into
+/// `text`.  A text that does not build still answers what the tree and
+/// the last build still know; nothing is guessed from a spelling.
+class SourceCompletionRequest extends $pb.GeneratedMessage {
+  factory SourceCompletionRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? path,
+    $core.String? text,
+    $core.int? offset,
+  }) {
+    final result = SourceCompletionRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  SourceCompletionRequest._();
+
+  factory SourceCompletionRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCompletionRequest()..mergeFromBuffer(data, registry);
+  factory SourceCompletionRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCompletionRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceCompletionRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceCompletionRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'path')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..aI(5, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCompletionRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCompletionRequest copyWith(void Function(SourceCompletionRequest) updates) =>
+      super.copyWith((message) => updates(message as SourceCompletionRequest))
+          as SourceCompletionRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceCompletionRequest() / SourceCompletionRequest.new instead')
+  static SourceCompletionRequest create() => SourceCompletionRequest._();
+  static $pb.GeneratedMessage $_createMessage() => SourceCompletionRequest._();
+  @$core.override
+  SourceCompletionRequest createEmptyInstance() => SourceCompletionRequest._();
+  @$core.pragma('dart2js:noInline')
+  static SourceCompletionRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceCompletionRequest>(
+          SourceCompletionRequest.$_createMessage);
+  static SourceCompletionRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get path => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set path($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPath() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get offset => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set offset($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOffset() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOffset() => $_clearField(5);
+}
+
+class SourceCompletionResponse extends $pb.GeneratedMessage {
+  factory SourceCompletionResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.Iterable<DraftCompletionItem>? items,
+  }) {
+    final result = SourceCompletionResponse._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (items != null) result.items.addAll(items);
+    return result;
+  }
+
+  SourceCompletionResponse._();
+
+  factory SourceCompletionResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCompletionResponse()..mergeFromBuffer(data, registry);
+  factory SourceCompletionResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceCompletionResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceCompletionResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceCompletionResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..pPM<DraftCompletionItem>(3, _omitFieldNames ? '' : 'items',
+        subBuilder: DraftCompletionItem.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCompletionResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceCompletionResponse copyWith(void Function(SourceCompletionResponse) updates) =>
+      super.copyWith((message) => updates(message as SourceCompletionResponse))
+          as SourceCompletionResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceCompletionResponse() / SourceCompletionResponse.new instead')
+  static SourceCompletionResponse create() => SourceCompletionResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SourceCompletionResponse._();
+  @$core.override
+  SourceCompletionResponse createEmptyInstance() => SourceCompletionResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SourceCompletionResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceCompletionResponse>(
+          SourceCompletionResponse.$_createMessage);
+  static SourceCompletionResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  /// In the service's order: relevance, then label.  A relationship with
+  /// inputs (a rule) is a call (`f(`); a Source or a value is its name; a
+  /// unit its symbol; an equation of the library its call.  The insertion
+  /// text is the service's, never composed by a client.
+  @$pb.TagNumber(3)
+  $pb.PbList<DraftCompletionItem> get items => $_getList(2);
+}
+
+/// Answered by DraftHoverResponse (`mapping_id` unused; `found` false
+/// where nothing semantic is under the offset).
+class SourceHoverRequest extends $pb.GeneratedMessage {
+  factory SourceHoverRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? path,
+    $core.String? text,
+    $core.int? offset,
+  }) {
+    final result = SourceHoverRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  SourceHoverRequest._();
+
+  factory SourceHoverRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceHoverRequest()..mergeFromBuffer(data, registry);
+  factory SourceHoverRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceHoverRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceHoverRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceHoverRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'path')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..aI(5, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceHoverRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceHoverRequest copyWith(void Function(SourceHoverRequest) updates) =>
+      super.copyWith((message) => updates(message as SourceHoverRequest)) as SourceHoverRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceHoverRequest() / SourceHoverRequest.new instead')
+  static SourceHoverRequest create() => SourceHoverRequest._();
+  static $pb.GeneratedMessage $_createMessage() => SourceHoverRequest._();
+  @$core.override
+  SourceHoverRequest createEmptyInstance() => SourceHoverRequest._();
+  @$core.pragma('dart2js:noInline')
+  static SourceHoverRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceHoverRequest>(SourceHoverRequest.$_createMessage);
+  static SourceHoverRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get path => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set path($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPath() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get offset => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set offset($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOffset() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOffset() => $_clearField(5);
+}
+
+class SourceDefinitionRequest extends $pb.GeneratedMessage {
+  factory SourceDefinitionRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? path,
+    $core.String? text,
+    $core.int? offset,
+  }) {
+    final result = SourceDefinitionRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    if (offset != null) result.offset = offset;
+    return result;
+  }
+
+  SourceDefinitionRequest._();
+
+  factory SourceDefinitionRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceDefinitionRequest()..mergeFromBuffer(data, registry);
+  factory SourceDefinitionRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceDefinitionRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceDefinitionRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceDefinitionRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'path')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..aI(5, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceDefinitionRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceDefinitionRequest copyWith(void Function(SourceDefinitionRequest) updates) =>
+      super.copyWith((message) => updates(message as SourceDefinitionRequest))
+          as SourceDefinitionRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceDefinitionRequest() / SourceDefinitionRequest.new instead')
+  static SourceDefinitionRequest create() => SourceDefinitionRequest._();
+  static $pb.GeneratedMessage $_createMessage() => SourceDefinitionRequest._();
+  @$core.override
+  SourceDefinitionRequest createEmptyInstance() => SourceDefinitionRequest._();
+  @$core.pragma('dart2js:noInline')
+  static SourceDefinitionRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceDefinitionRequest>(
+          SourceDefinitionRequest.$_createMessage);
+  static SourceDefinitionRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get path => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set path($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPath() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get offset => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set offset($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOffset() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOffset() => $_clearField(5);
+}
+
+class SourceReferencesRequest extends $pb.GeneratedMessage {
+  factory SourceReferencesRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? path,
+    $core.String? text,
+    $core.int? offset,
+    $core.bool? includeDeclaration,
+  }) {
+    final result = SourceReferencesRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    if (offset != null) result.offset = offset;
+    if (includeDeclaration != null) result.includeDeclaration = includeDeclaration;
+    return result;
+  }
+
+  SourceReferencesRequest._();
+
+  factory SourceReferencesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceReferencesRequest()..mergeFromBuffer(data, registry);
+  factory SourceReferencesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceReferencesRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceReferencesRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceReferencesRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'path')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..aI(5, _omitFieldNames ? '' : 'offset', fieldType: $pb.PbFieldType.OU3)
+    ..aOB(6, _omitFieldNames ? '' : 'includeDeclaration')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceReferencesRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceReferencesRequest copyWith(void Function(SourceReferencesRequest) updates) =>
+      super.copyWith((message) => updates(message as SourceReferencesRequest))
+          as SourceReferencesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceReferencesRequest() / SourceReferencesRequest.new instead')
+  static SourceReferencesRequest create() => SourceReferencesRequest._();
+  static $pb.GeneratedMessage $_createMessage() => SourceReferencesRequest._();
+  @$core.override
+  SourceReferencesRequest createEmptyInstance() => SourceReferencesRequest._();
+  @$core.pragma('dart2js:noInline')
+  static SourceReferencesRequest getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceReferencesRequest>(
+          SourceReferencesRequest.$_createMessage);
+  static SourceReferencesRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get path => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set path($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPath() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get offset => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set offset($core.int value) => $_setUnsignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasOffset() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearOffset() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get includeDeclaration => $_getBF(5);
+  @$pb.TagNumber(6)
+  set includeDeclaration($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasIncludeDeclaration() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearIncludeDeclaration() => $_clearField(6);
+}
+
+/// Where an entity is declared or referenced, in the workspace's files —
+/// byte offsets into the text of `path` as the daemon holds it (the
+/// requested file's overlay, the other files as written back).  A body
+/// entity's site is in the component's authored source, never a
+/// flattened copy.
+class SourceLocation extends $pb.GeneratedMessage {
+  factory SourceLocation({
+    $core.String? path,
+    $core.int? start,
+    $core.int? end,
+  }) {
+    final result = SourceLocation._();
+    if (path != null) result.path = path;
+    if (start != null) result.start = start;
+    if (end != null) result.end = end;
+    return result;
+  }
+
+  SourceLocation._();
+
+  factory SourceLocation.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceLocation()..mergeFromBuffer(data, registry);
+  factory SourceLocation.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceLocation()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SourceLocation',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceLocation.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'path')
+    ..aI(2, _omitFieldNames ? '' : 'start', fieldType: $pb.PbFieldType.OU3)
+    ..aI(3, _omitFieldNames ? '' : 'end', fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceLocation clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceLocation copyWith(void Function(SourceLocation) updates) =>
+      super.copyWith((message) => updates(message as SourceLocation)) as SourceLocation;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceLocation() / SourceLocation.new instead')
+  static SourceLocation create() => SourceLocation._();
+  static $pb.GeneratedMessage $_createMessage() => SourceLocation._();
+  @$core.override
+  SourceLocation createEmptyInstance() => SourceLocation._();
+  @$core.pragma('dart2js:noInline')
+  static SourceLocation getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SourceLocation>(SourceLocation.$_createMessage);
+  static SourceLocation? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get path => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set path($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPath() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPath() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get start => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set start($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasStart() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearStart() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get end => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set end($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasEnd() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearEnd() => $_clearField(3);
+}
+
+class SourceLocationsResponse extends $pb.GeneratedMessage {
+  factory SourceLocationsResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? title,
+    $core.Iterable<SourceLocation>? locations,
+  }) {
+    final result = SourceLocationsResponse._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (title != null) result.title = title;
+    if (locations != null) result.locations.addAll(locations);
+    return result;
+  }
+
+  SourceLocationsResponse._();
+
+  factory SourceLocationsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceLocationsResponse()..mergeFromBuffer(data, registry);
+  factory SourceLocationsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SourceLocationsResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SourceLocationsResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SourceLocationsResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'title')
+    ..pPM<SourceLocation>(4, _omitFieldNames ? '' : 'locations',
+        subBuilder: SourceLocation.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceLocationsResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SourceLocationsResponse copyWith(void Function(SourceLocationsResponse) updates) =>
+      super.copyWith((message) => updates(message as SourceLocationsResponse))
+          as SourceLocationsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SourceLocationsResponse() / SourceLocationsResponse.new instead')
+  static SourceLocationsResponse create() => SourceLocationsResponse._();
+  static $pb.GeneratedMessage $_createMessage() => SourceLocationsResponse._();
+  @$core.override
+  SourceLocationsResponse createEmptyInstance() => SourceLocationsResponse._();
+  @$core.pragma('dart2js:noInline')
+  static SourceLocationsResponse getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SourceLocationsResponse>(
+          SourceLocationsResponse.$_createMessage);
+  static SourceLocationsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  /// The name under the offset, when it resolved to an entity.
+  @$pb.TagNumber(3)
+  $core.String get title => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set title($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTitle() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTitle() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $pb.PbList<SourceLocation> get locations => $_getList(3);
+}
+
+/// The canonical layout of a source file (`bdl_syntax::format`): the
+/// whole text, formatted.  `formatted` is false — and `text` is the
+/// request's — when the text does not parse cleanly or is already
+/// canonical; a client then changes nothing.
+class FormatSourceRequest extends $pb.GeneratedMessage {
+  factory FormatSourceRequest({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.String? path,
+    $core.String? text,
+  }) {
+    final result = FormatSourceRequest._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (path != null) result.path = path;
+    if (text != null) result.text = text;
+    return result;
+  }
+
+  FormatSourceRequest._();
+
+  factory FormatSourceRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormatSourceRequest()..mergeFromBuffer(data, registry);
+  factory FormatSourceRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormatSourceRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FormatSourceRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormatSourceRequest.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(3, _omitFieldNames ? '' : 'path')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormatSourceRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormatSourceRequest copyWith(void Function(FormatSourceRequest) updates) =>
+      super.copyWith((message) => updates(message as FormatSourceRequest)) as FormatSourceRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormatSourceRequest() / FormatSourceRequest.new instead')
+  static FormatSourceRequest create() => FormatSourceRequest._();
+  static $pb.GeneratedMessage $_createMessage() => FormatSourceRequest._();
+  @$core.override
+  FormatSourceRequest createEmptyInstance() => FormatSourceRequest._();
+  @$core.pragma('dart2js:noInline')
+  static FormatSourceRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FormatSourceRequest>(FormatSourceRequest.$_createMessage);
+  static FormatSourceRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get path => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set path($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPath() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPath() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
+}
+
+class FormatSourceResponse extends $pb.GeneratedMessage {
+  factory FormatSourceResponse({
+    $fixnum.Int64? revision,
+    $fixnum.Int64? generation,
+    $core.bool? formatted,
+    $core.String? text,
+  }) {
+    final result = FormatSourceResponse._();
+    if (revision != null) result.revision = revision;
+    if (generation != null) result.generation = generation;
+    if (formatted != null) result.formatted = formatted;
+    if (text != null) result.text = text;
+    return result;
+  }
+
+  FormatSourceResponse._();
+
+  factory FormatSourceResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormatSourceResponse()..mergeFromBuffer(data, registry);
+  factory FormatSourceResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      FormatSourceResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'FormatSourceResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: FormatSourceResponse.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'revision', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'generation', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOB(3, _omitFieldNames ? '' : 'formatted')
+    ..aOS(4, _omitFieldNames ? '' : 'text')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormatSourceResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FormatSourceResponse copyWith(void Function(FormatSourceResponse) updates) =>
+      super.copyWith((message) => updates(message as FormatSourceResponse)) as FormatSourceResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use FormatSourceResponse() / FormatSourceResponse.new instead')
+  static FormatSourceResponse create() => FormatSourceResponse._();
+  static $pb.GeneratedMessage $_createMessage() => FormatSourceResponse._();
+  @$core.override
+  FormatSourceResponse createEmptyInstance() => FormatSourceResponse._();
+  @$core.pragma('dart2js:noInline')
+  static FormatSourceResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FormatSourceResponse>(FormatSourceResponse.$_createMessage);
+  static FormatSourceResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get revision => $_getI64(0);
+  @$pb.TagNumber(1)
+  set revision($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRevision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRevision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get generation => $_getI64(1);
+  @$pb.TagNumber(2)
+  set generation($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGeneration() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGeneration() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get formatted => $_getBF(2);
+  @$pb.TagNumber(3)
+  set formatted($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasFormatted() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearFormatted() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get text => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set text($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasText() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearText() => $_clearField(4);
 }
 
 class GetSystemRequest extends $pb.GeneratedMessage {

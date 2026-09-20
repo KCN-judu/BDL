@@ -77,6 +77,14 @@ message ClientMessage {
     // Semantic tokens over a text as typed (0.21): the one classifier's
     // answer for the Code view and the formula editor alike.
     SemanticTokensRequest semantic_tokens = 64;
+    // The Code view's IDE queries over a text as typed (0.22): the same
+    // overlay as SemanticTokens, the same bdl-ide answers as the language
+    // server.
+    SourceCompletionRequest source_completion = 65;
+    SourceHoverRequest source_hover = 66;
+    SourceDefinitionRequest source_definition = 67;
+    SourceReferencesRequest source_references = 68;
+    FormatSourceRequest format_source = 69;
   }
 }
 
@@ -115,6 +123,9 @@ message Response {
     ComposeFormulaResponse compose_formula = 48;
     LibraryItemsResponse library_items = 49;
     SemanticTokensResponse semantic_tokens = 50;
+    SourceCompletionResponse source_completion = 51;
+    SourceLocationsResponse source_locations = 52;
+    FormatSourceResponse format_source = 53;
   }
 }
 
@@ -1225,6 +1236,11 @@ message DraftHoverResponse {
   // Whether the status is one of the open (undecided) states rather than
   // a settled or a wrong one.
   bool open = 13;
+  // Set when the name under the cursor is an equation of the library
+  // applied here, not an entity of the design (0.22): its name; `title`
+  // is then its shape (`clamp(x, lo, hi)`) and `explanation` the
+  // designer's-words summary.  No entity, no status.
+  string equation = 14;
 }
 
 // A stable entity of the design, by identity (never by name).
@@ -1857,6 +1873,97 @@ message SemanticToken {
   uint32 token_type = 3;
   // Bit set over `legend.modifiers` (bit i = modifiers[i]).
   uint32 token_modifiers = 4;
+}
+
+// The Code view's IDE queries (protocol 0.22; ADR-0035,
+// `docs/architecture/ide-service.md` § Studio integration).  Each carries
+// the text of one source file exactly as the client has it, like
+// SemanticTokens: the daemon sets it as that file's overlay on the
+// workspace and answers from the same `bdl-ide` functions the language
+// server calls.  `generation` is the client's own counter, echoed, so an
+// answer to an older text is dropped; `offset` is a byte offset into
+// `text`.  A text that does not build still answers what the tree and
+// the last build still know; nothing is guessed from a spelling.
+message SourceCompletionRequest {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  string path = 3;
+  string text = 4;
+  uint32 offset = 5;
+}
+
+message SourceCompletionResponse {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  // In the service's order: relevance, then label.  A relationship with
+  // inputs (a rule) is a call (`f(`); a Source or a value is its name; a
+  // unit its symbol; an equation of the library its call.  The insertion
+  // text is the service's, never composed by a client.
+  repeated DraftCompletionItem items = 3;
+}
+
+// Answered by DraftHoverResponse (`mapping_id` unused; `found` false
+// where nothing semantic is under the offset).
+message SourceHoverRequest {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  string path = 3;
+  string text = 4;
+  uint32 offset = 5;
+}
+
+message SourceDefinitionRequest {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  string path = 3;
+  string text = 4;
+  uint32 offset = 5;
+}
+
+message SourceReferencesRequest {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  string path = 3;
+  string text = 4;
+  uint32 offset = 5;
+  bool include_declaration = 6;
+}
+
+// Where an entity is declared or referenced, in the workspace's files —
+// byte offsets into the text of `path` as the daemon holds it (the
+// requested file's overlay, the other files as written back).  A body
+// entity's site is in the component's authored source, never a
+// flattened copy.
+message SourceLocation {
+  string path = 1;
+  uint32 start = 2;
+  uint32 end = 3;
+}
+
+message SourceLocationsResponse {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  // The name under the offset, when it resolved to an entity.
+  string title = 3;
+  repeated SourceLocation locations = 4;
+}
+
+// The canonical layout of a source file (`bdl_syntax::format`): the
+// whole text, formatted.  `formatted` is false — and `text` is the
+// request's — when the text does not parse cleanly or is already
+// canonical; a client then changes nothing.
+message FormatSourceRequest {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  string path = 3;
+  string text = 4;
+}
+
+message FormatSourceResponse {
+  uint64 revision = 1;
+  uint64 generation = 2;
+  bool formatted = 3;
+  string text = 4;
 }
 
 message GetSystemRequest {}

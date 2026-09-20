@@ -36,6 +36,7 @@ pub mod formula;
 pub mod hover;
 pub mod inlay;
 pub mod invalidation;
+pub mod navigation;
 pub mod references;
 pub mod rename;
 pub mod role;
@@ -72,6 +73,10 @@ pub use formula::{
 pub use hover::{hover, EntityStatus, HoverDetail, SemanticHover};
 pub use inlay::{inlay_hints, InlayHint, InlayKind};
 pub use invalidation::{preview_change, Fact, Invalidated, InvalidationPreview, StatusChange};
+pub use navigation::{
+    definition_at, definition_sites, formula_hover_at, formula_name_at, hover_at, name_at,
+    reference_sites, references_at, HoverAt, HoverContent, NameAt,
+};
 pub use references::{definition_of, entity_at, entity_at_formula, references, ReferenceResult};
 pub use rename::{plan_rename, RenameError};
 pub use role::{port_backed, provider, relationship_role, Provider, RelationshipRole};

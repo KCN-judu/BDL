@@ -721,6 +721,51 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'semanticTokens'
     },
+    {
+      '1': 'source_completion',
+      '3': 65,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceCompletionRequest',
+      '9': 0,
+      '10': 'sourceCompletion'
+    },
+    {
+      '1': 'source_hover',
+      '3': 66,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceHoverRequest',
+      '9': 0,
+      '10': 'sourceHover'
+    },
+    {
+      '1': 'source_definition',
+      '3': 67,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceDefinitionRequest',
+      '9': 0,
+      '10': 'sourceDefinition'
+    },
+    {
+      '1': 'source_references',
+      '3': 68,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceReferencesRequest',
+      '9': 0,
+      '10': 'sourceReferences'
+    },
+    {
+      '1': 'format_source',
+      '3': 69,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormatSourceRequest',
+      '9': 0,
+      '10': 'formatSource'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -787,7 +832,14 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'EuR2V0U291cmNlc1JlcXVlc3RIAFIKZ2V0U291cmNlcxJMChFhcHBseV9zb3VyY2VfZWRpdBg/'
         'IAEoCzIeLmJkbC52MS5BcHBseVNvdXJjZUVkaXRSZXF1ZXN0SABSD2FwcGx5U291cmNlRWRpdB'
         'JICg9zZW1hbnRpY190b2tlbnMYQCABKAsyHS5iZGwudjEuU2VtYW50aWNUb2tlbnNSZXF1ZXN0'
-        'SABSDnNlbWFudGljVG9rZW5zQgkKB3BheWxvYWQ=');
+        'SABSDnNlbWFudGljVG9rZW5zEk4KEXNvdXJjZV9jb21wbGV0aW9uGEEgASgLMh8uYmRsLnYxLl'
+        'NvdXJjZUNvbXBsZXRpb25SZXF1ZXN0SABSEHNvdXJjZUNvbXBsZXRpb24SPwoMc291cmNlX2hv'
+        'dmVyGEIgASgLMhouYmRsLnYxLlNvdXJjZUhvdmVyUmVxdWVzdEgAUgtzb3VyY2VIb3ZlchJOCh'
+        'Fzb3VyY2VfZGVmaW5pdGlvbhhDIAEoCzIfLmJkbC52MS5Tb3VyY2VEZWZpbml0aW9uUmVxdWVz'
+        'dEgAUhBzb3VyY2VEZWZpbml0aW9uEk4KEXNvdXJjZV9yZWZlcmVuY2VzGEQgASgLMh8uYmRsLn'
+        'YxLlNvdXJjZVJlZmVyZW5jZXNSZXF1ZXN0SABSEHNvdXJjZVJlZmVyZW5jZXMSQgoNZm9ybWF0'
+        'X3NvdXJjZRhFIAEoCzIbLmJkbC52MS5Gb3JtYXRTb3VyY2VSZXF1ZXN0SABSDGZvcm1hdFNvdX'
+        'JjZUIJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1021,6 +1073,33 @@ const Response$json = {
       '9': 0,
       '10': 'semanticTokens'
     },
+    {
+      '1': 'source_completion',
+      '3': 51,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceCompletionResponse',
+      '9': 0,
+      '10': 'sourceCompletion'
+    },
+    {
+      '1': 'source_locations',
+      '3': 52,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SourceLocationsResponse',
+      '9': 0,
+      '10': 'sourceLocations'
+    },
+    {
+      '1': 'format_source',
+      '3': 53,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.FormatSourceResponse',
+      '9': 0,
+      '10': 'formatSource'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1059,7 +1138,11 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'Bvc2VGb3JtdWxhUmVzcG9uc2VIAFIOY29tcG9zZUZvcm11bGESQwoNbGlicmFyeV9pdGVtcxgx'
         'IAEoCzIcLmJkbC52MS5MaWJyYXJ5SXRlbXNSZXNwb25zZUgAUgxsaWJyYXJ5SXRlbXMSSQoPc2'
         'VtYW50aWNfdG9rZW5zGDIgASgLMh4uYmRsLnYxLlNlbWFudGljVG9rZW5zUmVzcG9uc2VIAFIO'
-        'c2VtYW50aWNUb2tlbnNCCQoHcGF5bG9hZA==');
+        'c2VtYW50aWNUb2tlbnMSTwoRc291cmNlX2NvbXBsZXRpb24YMyABKAsyIC5iZGwudjEuU291cm'
+        'NlQ29tcGxldGlvblJlc3BvbnNlSABSEHNvdXJjZUNvbXBsZXRpb24STAoQc291cmNlX2xvY2F0'
+        'aW9ucxg0IAEoCzIfLmJkbC52MS5Tb3VyY2VMb2NhdGlvbnNSZXNwb25zZUgAUg9zb3VyY2VMb2'
+        'NhdGlvbnMSQwoNZm9ybWF0X3NvdXJjZRg1IAEoCzIcLmJkbC52MS5Gb3JtYXRTb3VyY2VSZXNw'
+        'b25zZUgAUgxmb3JtYXRTb3VyY2VCCQoHcGF5bG9hZA==');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -3757,6 +3840,7 @@ const DraftHoverResponse$json = {
     },
     {'1': 'signature', '3': 12, '4': 1, '5': 9, '10': 'signature'},
     {'1': 'open', '3': 13, '4': 1, '5': 8, '10': 'open'},
+    {'1': 'equation', '3': 14, '4': 1, '5': 9, '10': 'equation'},
   ],
   '8': [
     {'1': '_span'},
@@ -3775,7 +3859,8 @@ final $typed_data.Uint8List draftHoverResponseDescriptor = $convert
         'xzGAkgAygLMhMuYmRsLnYxLkhvdmVyRGV0YWlsUgdkZXRhaWxzEiAKC2V4cGxhbmF0aW9uGAog'
         'ASgJUgtleHBsYW5hdGlvbhIuCgZlbnRpdHkYCyABKAsyES5iZGwudjEuRW50aXR5UmVmSAJSBm'
         'VudGl0eYgBARIcCglzaWduYXR1cmUYDCABKAlSCXNpZ25hdHVyZRISCgRvcGVuGA0gASgIUgRv'
-        'cGVuQgcKBV9zcGFuQg0KC19jb25jZXB0X2lkQgkKB19lbnRpdHk=');
+        'cGVuEhoKCGVxdWF0aW9uGA4gASgJUghlcXVhdGlvbkIHCgVfc3BhbkINCgtfY29uY2VwdF9pZE'
+        'IJCgdfZW50aXR5');
 
 @$core.Deprecated('Use entityRefDescriptor instead')
 const EntityRef$json = {
@@ -4987,6 +5072,162 @@ final $typed_data.Uint8List semanticTokenDescriptor = $convert
     .base64Decode('Cg1TZW1hbnRpY1Rva2VuEhQKBXN0YXJ0GAEgASgNUgVzdGFydBIQCgNlbmQYAiABKA1SA2VuZB'
         'IdCgp0b2tlbl90eXBlGAMgASgNUgl0b2tlblR5cGUSJwoPdG9rZW5fbW9kaWZpZXJzGAQgASgN'
         'Ug50b2tlbk1vZGlmaWVycw==');
+
+@$core.Deprecated('Use sourceCompletionRequestDescriptor instead')
+const SourceCompletionRequest$json = {
+  '1': 'SourceCompletionRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'path', '3': 3, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'offset', '3': 5, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `SourceCompletionRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceCompletionRequestDescriptor = $convert
+    .base64Decode('ChdTb3VyY2VDb21wbGV0aW9uUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHg'
+        'oKZ2VuZXJhdGlvbhgCIAEoBFIKZ2VuZXJhdGlvbhISCgRwYXRoGAMgASgJUgRwYXRoEhIKBHRl'
+        'eHQYBCABKAlSBHRleHQSFgoGb2Zmc2V0GAUgASgNUgZvZmZzZXQ=');
+
+@$core.Deprecated('Use sourceCompletionResponseDescriptor instead')
+const SourceCompletionResponse$json = {
+  '1': 'SourceCompletionResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'items', '3': 3, '4': 3, '5': 11, '6': '.bdl.v1.DraftCompletionItem', '10': 'items'},
+  ],
+};
+
+/// Descriptor for `SourceCompletionResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceCompletionResponseDescriptor = $convert
+    .base64Decode('ChhTb3VyY2VDb21wbGV0aW9uUmVzcG9uc2USGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh'
+        '4KCmdlbmVyYXRpb24YAiABKARSCmdlbmVyYXRpb24SMQoFaXRlbXMYAyADKAsyGy5iZGwudjEu'
+        'RHJhZnRDb21wbGV0aW9uSXRlbVIFaXRlbXM=');
+
+@$core.Deprecated('Use sourceHoverRequestDescriptor instead')
+const SourceHoverRequest$json = {
+  '1': 'SourceHoverRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'path', '3': 3, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'offset', '3': 5, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `SourceHoverRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceHoverRequestDescriptor = $convert
+    .base64Decode('ChJTb3VyY2VIb3ZlclJlcXVlc3QSGgoIcmV2aXNpb24YASABKARSCHJldmlzaW9uEh4KCmdlbm'
+        'VyYXRpb24YAiABKARSCmdlbmVyYXRpb24SEgoEcGF0aBgDIAEoCVIEcGF0aBISCgR0ZXh0GAQg'
+        'ASgJUgR0ZXh0EhYKBm9mZnNldBgFIAEoDVIGb2Zmc2V0');
+
+@$core.Deprecated('Use sourceDefinitionRequestDescriptor instead')
+const SourceDefinitionRequest$json = {
+  '1': 'SourceDefinitionRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'path', '3': 3, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'offset', '3': 5, '4': 1, '5': 13, '10': 'offset'},
+  ],
+};
+
+/// Descriptor for `SourceDefinitionRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceDefinitionRequestDescriptor = $convert
+    .base64Decode('ChdTb3VyY2VEZWZpbml0aW9uUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHg'
+        'oKZ2VuZXJhdGlvbhgCIAEoBFIKZ2VuZXJhdGlvbhISCgRwYXRoGAMgASgJUgRwYXRoEhIKBHRl'
+        'eHQYBCABKAlSBHRleHQSFgoGb2Zmc2V0GAUgASgNUgZvZmZzZXQ=');
+
+@$core.Deprecated('Use sourceReferencesRequestDescriptor instead')
+const SourceReferencesRequest$json = {
+  '1': 'SourceReferencesRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'path', '3': 3, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'offset', '3': 5, '4': 1, '5': 13, '10': 'offset'},
+    {'1': 'include_declaration', '3': 6, '4': 1, '5': 8, '10': 'includeDeclaration'},
+  ],
+};
+
+/// Descriptor for `SourceReferencesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceReferencesRequestDescriptor = $convert
+    .base64Decode('ChdTb3VyY2VSZWZlcmVuY2VzUmVxdWVzdBIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHg'
+        'oKZ2VuZXJhdGlvbhgCIAEoBFIKZ2VuZXJhdGlvbhISCgRwYXRoGAMgASgJUgRwYXRoEhIKBHRl'
+        'eHQYBCABKAlSBHRleHQSFgoGb2Zmc2V0GAUgASgNUgZvZmZzZXQSLwoTaW5jbHVkZV9kZWNsYX'
+        'JhdGlvbhgGIAEoCFISaW5jbHVkZURlY2xhcmF0aW9u');
+
+@$core.Deprecated('Use sourceLocationDescriptor instead')
+const SourceLocation$json = {
+  '1': 'SourceLocation',
+  '2': [
+    {'1': 'path', '3': 1, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'start', '3': 2, '4': 1, '5': 13, '10': 'start'},
+    {'1': 'end', '3': 3, '4': 1, '5': 13, '10': 'end'},
+  ],
+};
+
+/// Descriptor for `SourceLocation`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceLocationDescriptor = $convert
+    .base64Decode('Cg5Tb3VyY2VMb2NhdGlvbhISCgRwYXRoGAEgASgJUgRwYXRoEhQKBXN0YXJ0GAIgASgNUgVzdG'
+        'FydBIQCgNlbmQYAyABKA1SA2VuZA==');
+
+@$core.Deprecated('Use sourceLocationsResponseDescriptor instead')
+const SourceLocationsResponse$json = {
+  '1': 'SourceLocationsResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'title', '3': 3, '4': 1, '5': 9, '10': 'title'},
+    {'1': 'locations', '3': 4, '4': 3, '5': 11, '6': '.bdl.v1.SourceLocation', '10': 'locations'},
+  ],
+};
+
+/// Descriptor for `SourceLocationsResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sourceLocationsResponseDescriptor = $convert
+    .base64Decode('ChdTb3VyY2VMb2NhdGlvbnNSZXNwb25zZRIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHg'
+        'oKZ2VuZXJhdGlvbhgCIAEoBFIKZ2VuZXJhdGlvbhIUCgV0aXRsZRgDIAEoCVIFdGl0bGUSNAoJ'
+        'bG9jYXRpb25zGAQgAygLMhYuYmRsLnYxLlNvdXJjZUxvY2F0aW9uUglsb2NhdGlvbnM=');
+
+@$core.Deprecated('Use formatSourceRequestDescriptor instead')
+const FormatSourceRequest$json = {
+  '1': 'FormatSourceRequest',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'path', '3': 3, '4': 1, '5': 9, '10': 'path'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+  ],
+};
+
+/// Descriptor for `FormatSourceRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formatSourceRequestDescriptor = $convert
+    .base64Decode('ChNGb3JtYXRTb3VyY2VSZXF1ZXN0EhoKCHJldmlzaW9uGAEgASgEUghyZXZpc2lvbhIeCgpnZW'
+        '5lcmF0aW9uGAIgASgEUgpnZW5lcmF0aW9uEhIKBHBhdGgYAyABKAlSBHBhdGgSEgoEdGV4dBgE'
+        'IAEoCVIEdGV4dA==');
+
+@$core.Deprecated('Use formatSourceResponseDescriptor instead')
+const FormatSourceResponse$json = {
+  '1': 'FormatSourceResponse',
+  '2': [
+    {'1': 'revision', '3': 1, '4': 1, '5': 4, '10': 'revision'},
+    {'1': 'generation', '3': 2, '4': 1, '5': 4, '10': 'generation'},
+    {'1': 'formatted', '3': 3, '4': 1, '5': 8, '10': 'formatted'},
+    {'1': 'text', '3': 4, '4': 1, '5': 9, '10': 'text'},
+  ],
+};
+
+/// Descriptor for `FormatSourceResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List formatSourceResponseDescriptor = $convert
+    .base64Decode('ChRGb3JtYXRTb3VyY2VSZXNwb25zZRIaCghyZXZpc2lvbhgBIAEoBFIIcmV2aXNpb24SHgoKZ2'
+        'VuZXJhdGlvbhgCIAEoBFIKZ2VuZXJhdGlvbhIcCglmb3JtYXR0ZWQYAyABKAhSCWZvcm1hdHRl'
+        'ZBISCgR0ZXh0GAQgASgJUgR0ZXh0');
 
 @$core.Deprecated('Use getSystemRequestDescriptor instead')
 const GetSystemRequest$json = {

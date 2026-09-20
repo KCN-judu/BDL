@@ -1368,3 +1368,269 @@ fn semantic_tokens_are_served_for_sources_and_formula_drafts() {
     };
     assert_eq!(e.code, "source.invalid_path");
 }
+
+/// The Code view's IDE queries over the wire (protocol 0.22): completion,
+/// hover, definition and references over the text as typed, across two
+/// files and inside a component's source, and formatting as one authored
+/// edit after which the tokens are over the new text.  Every answer echoes
+/// the client's generation; a stale revision is answered, not refused.
+#[test]
+fn source_queries_answer_over_the_text_as_typed() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("ws");
+    std::fs::create_dir_all(root.join("src")).unwrap();
+    std::fs::write(
+        root.join("bdl.toml"),
+        "schema_version = 1\nname = \"ws\"\nkind = \"text\"\n",
+    )
+    .unwrap();
+    let a = "\
+concept Tilt : Angle
+concept Brightness : Scalar
+clock main
+mapping tilt : () -> Tilt @main
+mapping dimByTilt : Tilt -> Brightness
+dimByTilt(t) = clamp(t / (90 deg), 0, 1)
+";
+    let b = "\
+mapping brightness : () -> Brightness @main
+brightness() = dimByTilt(tilt)
+";
+    std::fs::write(root.join("src/a.bdl"), a).unwrap();
+    std::fs::write(root.join("src/b.bdl"), b).unwrap();
+    let mut c = Client::spawn();
+    c.open(&root);
+    let rev = c.last_revision;
+    let at = |text: &str, needle: &str| text.find(needle).expect("needle") as u32;
+
+    // completion in b's formula, typed further than the daemon holds
+    let typed = format!("{b}mapping level : () -> Brightness @main\nlevel() = ");
+    let Resp::SourceCompletion(r) = c.call(Req::SourceCompletion(pb::SourceCompletionRequest {
+        revision: rev,
+        generation: 3,
+        path: "src/b.bdl".into(),
+        text: typed.clone(),
+        offset: typed.len() as u32,
+    })) else {
+        panic!("completion")
+    };
+    assert_eq!(r.generation, 3);
+    assert_eq!(r.revision, rev);
+    let labels: Vec<&str> = r.items.iter().map(|i| i.label.as_str()).collect();
+    assert!(labels.contains(&"tilt"), "{labels:?}");
+    assert!(labels.contains(&"brightness"), "{labels:?}");
+    let dim = r
+        .items
+        .iter()
+        .find(|i| i.label == "dimByTilt(Tilt)")
+        .expect("rule");
+    assert_eq!(dim.insert, "dimByTilt(");
+    assert_eq!(dim.kind, "mapping");
+    assert!(r
+        .items
+        .iter()
+        .any(|i| i.kind == "equation" && i.insert == "clamp("));
+    // the level's own name is not a candidate; the replace range is at the end
+    assert!(!labels.contains(&"level"));
+    assert_eq!(dim.replace_start, typed.len() as u32);
+
+    // hover in b on the rule declared in a: the card with its role
+    let Resp::DraftHover(h) = c.call(Req::SourceHover(pb::SourceHoverRequest {
+        revision: rev,
+        generation: 4,
+        path: "src/b.bdl".into(),
+        text: b.into(),
+        offset: at(b, "dimByTilt") + 3,
+    })) else {
+        panic!("hover")
+    };
+    assert!(h.found);
+    assert_eq!(h.title, "dimByTilt");
+    assert_eq!(
+        h.span.as_ref().map(|s| (s.start, s.end)),
+        Some((at(b, "dimByTilt"), at(b, "dimByTilt") + 9))
+    );
+    assert!(
+        h.details
+            .iter()
+            .any(|d| d.label == "role" && d.value == "Rule"),
+        "{:?}",
+        h.details
+    );
+    // hover on an equation: the library's words, no entity
+    let Resp::DraftHover(h) = c.call(Req::SourceHover(pb::SourceHoverRequest {
+        revision: rev,
+        generation: 5,
+        path: "src/a.bdl".into(),
+        text: a.into(),
+        offset: at(a, "clamp") + 1,
+    })) else {
+        panic!("hover")
+    };
+    assert!(h.found);
+    assert_eq!(h.equation, "clamp");
+    assert!(h.title.starts_with("clamp("));
+    assert!(h.entity.is_none());
+    // hover on nothing: not found, cleanly
+    let Resp::DraftHover(h) = c.call(Req::SourceHover(pb::SourceHoverRequest {
+        revision: rev,
+        generation: 6,
+        path: "src/a.bdl".into(),
+        text: a.into(),
+        offset: at(a, "90"),
+    })) else {
+        panic!("hover")
+    };
+    assert!(!h.found);
+
+    // definition across files: `tilt` in b → its declaration in a
+    let Resp::SourceLocations(d) = c.call(Req::SourceDefinition(pb::SourceDefinitionRequest {
+        revision: rev,
+        generation: 7,
+        path: "src/b.bdl".into(),
+        text: b.into(),
+        offset: at(b, "tilt)"),
+    })) else {
+        panic!("definition")
+    };
+    assert_eq!(d.generation, 7);
+    assert_eq!(d.title, "tilt");
+    assert_eq!(d.locations.len(), 1);
+    assert_eq!(d.locations[0].path, "src/a.bdl");
+    assert_eq!(
+        &a[d.locations[0].start as usize..d.locations[0].end as usize],
+        "tilt"
+    );
+    // references across files: `Brightness` from a → the signatures in b
+    let Resp::SourceLocations(r) = c.call(Req::SourceReferences(pb::SourceReferencesRequest {
+        revision: rev,
+        generation: 8,
+        path: "src/a.bdl".into(),
+        text: a.into(),
+        offset: at(a, "Brightness"),
+        include_declaration: true,
+    })) else {
+        panic!("references")
+    };
+    assert_eq!(r.title, "Brightness");
+    let in_b = r.locations.iter().filter(|l| l.path == "src/b.bdl").count();
+    assert_eq!(in_b, 1, "{:?}", r.locations);
+    assert!(r
+        .locations
+        .iter()
+        .any(|l| l.path == "src/a.bdl" && l.start == at(a, "Brightness")));
+    // the overlay of the edited file coexists: a reference typed in b
+    // that the project does not hold yet is found from a
+    let Resp::SourceLocations(r) = c.call(Req::SourceReferences(pb::SourceReferencesRequest {
+        revision: rev,
+        generation: 9,
+        path: "src/b.bdl".into(),
+        text: format!("{b}mapping level : () -> Brightness @main\n"),
+        offset: at(b, "Brightness"),
+        include_declaration: false,
+    })) else {
+        panic!("references")
+    };
+    assert_eq!(
+        r.locations.iter().filter(|l| l.path == "src/b.bdl").count(),
+        2,
+        "{:?}",
+        r.locations
+    );
+
+    // a stale revision is answered at the current one
+    let Resp::SourceLocations(d) = c.call(Req::SourceDefinition(pb::SourceDefinitionRequest {
+        revision: rev + 40,
+        generation: 10,
+        path: "src/b.bdl".into(),
+        text: b.into(),
+        offset: at(b, "tilt)"),
+    })) else {
+        panic!("definition")
+    };
+    assert_eq!(d.revision, rev);
+    assert_eq!(d.locations.len(), 1);
+
+    // format: the canonical layout, then the tokens are over that text
+    let messy = a
+        .replace("concept Tilt : Angle", "concept  Tilt:Angle")
+        .replace("mapping tilt :", "mapping   tilt  :");
+    let Resp::FormatSource(f) = c.call(Req::FormatSource(pb::FormatSourceRequest {
+        revision: rev,
+        generation: 11,
+        path: "src/a.bdl".into(),
+        text: messy.clone(),
+    })) else {
+        panic!("format")
+    };
+    assert_eq!(f.generation, 11);
+    assert!(f.formatted);
+    assert_ne!(f.text, messy);
+    assert_eq!(f.text, a);
+    let Resp::SemanticTokens(t) = c.call(Req::SemanticTokens(pb::SemanticTokensRequest {
+        revision: rev,
+        generation: 12,
+        text: f.text.clone(),
+        document: Some(pb::semantic_tokens_request::Document::Path(
+            "src/a.bdl".into(),
+        )),
+    })) else {
+        panic!("tokens")
+    };
+    assert_eq!(t.text_len, f.text.len() as u32);
+    assert!(!t.tokens.is_empty());
+    // already canonical, or not parseable: unchanged, and nothing moved
+    for text in [f.text.as_str(), "mapping x : (\n"] {
+        let Resp::FormatSource(f2) = c.call(Req::FormatSource(pb::FormatSourceRequest {
+            revision: rev,
+            generation: 13,
+            path: "src/a.bdl".into(),
+            text: text.into(),
+        })) else {
+            panic!("format")
+        };
+        assert!(!f2.formatted);
+        assert_eq!(f2.text, text);
+    }
+    assert_eq!(c.last_revision, rev);
+    assert_eq!(c.sources().files[0].text, a);
+    // the whole formatted file is one authored edit
+    let applied = c.source_edit("src/a.bdl", &f.text);
+    assert!(applied.accepted);
+    assert!(c.last_revision > rev);
+
+    // inside a component's source: the port, never a flattened copy
+    let sys = include_str!("../../bdl-syntax/test_data/valid/system.bdl");
+    std::fs::write(root.join("src/system.bdl"), sys).unwrap();
+    c.call(Req::ReloadProject(pb::ReloadProjectRequest {}));
+    let use_ = at(sys, "dimByTilt(tiltValue)") + "dimByTilt(".len() as u32;
+    let Resp::SourceLocations(d) = c.call(Req::SourceDefinition(pb::SourceDefinitionRequest {
+        revision: c.last_revision,
+        generation: 14,
+        path: "src/system.bdl".into(),
+        text: sys.into(),
+        offset: use_,
+    })) else {
+        panic!("definition")
+    };
+    assert!(!d.locations.is_empty());
+    let requires = at(sys, "requires tiltValue");
+    assert!(
+        d.locations
+            .iter()
+            .all(|l| l.path == "src/system.bdl" && l.start > requires && l.start < requires + 20),
+        "{:?}",
+        d.locations
+    );
+    let Resp::DraftHover(h) = c.call(Req::SourceHover(pb::SourceHoverRequest {
+        revision: c.last_revision,
+        generation: 15,
+        path: "src/system.bdl".into(),
+        text: sys.into(),
+        offset: at(sys, "dimByTilt(tiltValue)"),
+    })) else {
+        panic!("hover")
+    };
+    assert_eq!(h.title, "dimByTilt", "{h:?}");
+    assert!(!h.signature.contains("lampA"), "{}", h.signature);
+}

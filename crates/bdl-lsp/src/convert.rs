@@ -5,9 +5,9 @@
 
 use crate::position::LineIndex;
 use bdl_ide::{
-    ActionKind, Applicability, CompletionKind, EntityKind, EntityStatus, SemanticAction,
-    SemanticCompletion, SemanticEditPlan, SemanticHover, SemanticOperation, SemanticSeverity,
-    SemanticSymbol, SemanticToken, TextDiagnostic,
+    ActionKind, Applicability, CompletionKind, EntityKind, EntityStatus, HoverAt, HoverContent,
+    SemanticAction, SemanticCompletion, SemanticEditPlan, SemanticHover, SemanticOperation,
+    SemanticSeverity, SemanticSymbol, SemanticToken, TextDiagnostic,
 };
 use bdl_ide_db::{DocumentId, TextRange};
 use lsp_types::{
@@ -79,6 +79,27 @@ pub fn diagnostic(
         },
         data: None,
     }
+}
+
+/// A hover answer of the service at a position — an entity's card or an
+/// equation's words — with its range.
+pub fn hover_at(h: &HoverAt, index: &LineIndex) -> Hover {
+    let mut out = match &h.content {
+        HoverContent::Entity(e) => hover(e),
+        HoverContent::Equation {
+            shape,
+            documentation,
+            ..
+        } => Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: format!("```bdl\n{shape}\n```\n\n{documentation}\n"),
+            }),
+            range: None,
+        },
+    };
+    out.range = Some(index.range(h.range));
+    out
 }
 
 pub fn hover(h: &SemanticHover) -> Hover {

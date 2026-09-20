@@ -637,7 +637,7 @@ pub fn formula_tokens(snapshot: &AnalysisSnapshot, mapping: DeclId) -> Vec<Seman
 /// The callee ranges of calls to the equation library (`clamp(…)`,
 /// `any(xs, …)`).  A relationship of the design with the same name is an
 /// entity anchor and takes precedence in the merge.
-fn equation_callees(root: &SyntaxNode) -> Vec<TextRange> {
+pub(crate) fn equation_callees(root: &SyntaxNode) -> Vec<TextRange> {
     let mut out = Vec::new();
     for node in root.descendants() {
         let Some(call) = ast::CallExpr::cast(node) else {

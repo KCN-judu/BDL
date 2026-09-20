@@ -406,6 +406,11 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         Req::CompleteDefinitionDraft(r) => (complete_definition_draft(session, &r), None),
         Req::HoverDefinitionDraft(r) => (hover_definition_draft(session, &r), None),
         Req::SemanticTokens(r) => (semantic_tokens(session, &r), None),
+        Req::SourceCompletion(r) => (source_completion(session, &r), None),
+        Req::SourceHover(r) => (source_hover(session, &r), None),
+        Req::SourceDefinition(r) => (source_definition(session, &r), None),
+        Req::SourceReferences(r) => (source_references(session, &r), None),
+        Req::FormatSource(r) => (format_source(session, &r), None),
         Req::HoverEntity(r) => (hover_entity(session, &r), None),
         Req::ListSemanticActions(r) => (list_semantic_actions(session, &r), None),
         Req::GetFormulaProjection(r) => (get_formula_projection(session, &r), None),
@@ -547,21 +552,22 @@ fn complete_definition_draft(
         Ok(items) => Resp::DraftCompletion(pb::DraftCompletionResponse {
             revision: r.revision,
             mapping_id: r.mapping_id,
-            items: items
-                .iter()
-                .map(|c| pb::DraftCompletionItem {
-                    label: c.label.clone(),
-                    kind: format!("{:?}", c.kind).to_lowercase(),
-                    replace_start: c.replace.start,
-                    replace_end: c.replace.end,
-                    insert: c.insert.clone(),
-                    resulting_type: c.resulting_type.clone().unwrap_or_default(),
-                    documentation: c.documentation.clone().unwrap_or_default(),
-                    relevance: u32::from(c.relevance),
-                })
-                .collect(),
+            items: items.iter().map(completion_to_pb).collect(),
         }),
         Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn completion_to_pb(c: &bdl_ide::SemanticCompletion) -> pb::DraftCompletionItem {
+    pb::DraftCompletionItem {
+        label: c.label.clone(),
+        kind: format!("{:?}", c.kind).to_lowercase(),
+        replace_start: c.replace.start,
+        replace_end: c.replace.end,
+        insert: c.insert.clone(),
+        resulting_type: c.resulting_type.clone().unwrap_or_default(),
+        documentation: c.documentation.clone().unwrap_or_default(),
+        relevance: u32::from(c.relevance),
     }
 }
 
@@ -577,13 +583,9 @@ fn hover_definition_draft(session: &mut Session, r: &pb::HoverDefinitionDraftReq
             found: false,
             ..Default::default()
         }),
-        Ok(Some((range, h))) => Resp::DraftHover(pb::DraftHoverResponse {
+        Ok(Some(h)) => Resp::DraftHover(pb::DraftHoverResponse {
             mapping_id: r.mapping_id,
-            span: Some(pb::SourceSpan {
-                start: range.start,
-                end: range.end,
-            }),
-            ..hover_to_pb(h, r.revision)
+            ..hover_at_to_pb(h, r.revision)
         }),
         Err(e) => Resp::Error(session_error(&e)),
     }
@@ -633,6 +635,90 @@ fn semantic_tokens(session: &mut Session, r: &pb::SemanticTokensRequest) -> Resp
     }
 }
 
+fn current_revision(session: &Session) -> u64 {
+    session
+        .project()
+        .map(|p| p.current.revision.raw())
+        .unwrap_or_default()
+}
+
+/// The Code view's IDE queries (protocol 0.22): each over the text as
+/// typed, answered at the daemon's current revision with the client's
+/// generation echoed; a stale `revision` is not an error.
+fn source_completion(session: &mut Session, r: &pb::SourceCompletionRequest) -> Resp {
+    match session.source_completion(&r.path, &r.text, r.offset) {
+        Ok(items) => Resp::SourceCompletion(pb::SourceCompletionResponse {
+            revision: current_revision(session),
+            generation: r.generation,
+            items: items.iter().map(completion_to_pb).collect(),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn source_hover(session: &mut Session, r: &pb::SourceHoverRequest) -> Resp {
+    match session.source_hover(&r.path, &r.text, r.offset) {
+        Ok(None) => Resp::DraftHover(pb::DraftHoverResponse {
+            revision: current_revision(session),
+            found: false,
+            ..Default::default()
+        }),
+        Ok(Some(h)) => Resp::DraftHover(hover_at_to_pb(h, current_revision(session))),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn locations_to_pb(
+    revision: u64,
+    generation: u64,
+    title: String,
+    locations: Vec<crate::session::SourceLocation>,
+) -> Resp {
+    Resp::SourceLocations(pb::SourceLocationsResponse {
+        revision,
+        generation,
+        title,
+        locations: locations
+            .into_iter()
+            .map(|l| pb::SourceLocation {
+                path: l.path,
+                start: l.range.start,
+                end: l.range.end,
+            })
+            .collect(),
+    })
+}
+
+fn source_definition(session: &mut Session, r: &pb::SourceDefinitionRequest) -> Resp {
+    match session.source_definition(&r.path, &r.text, r.offset) {
+        Ok((title, locations)) => {
+            locations_to_pb(current_revision(session), r.generation, title, locations)
+        }
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn source_references(session: &mut Session, r: &pb::SourceReferencesRequest) -> Resp {
+    match session.source_references(&r.path, &r.text, r.offset, r.include_declaration) {
+        Ok((title, locations)) => {
+            locations_to_pb(current_revision(session), r.generation, title, locations)
+        }
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
+fn format_source(session: &mut Session, r: &pb::FormatSourceRequest) -> Resp {
+    match session.format_source(&r.path, &r.text) {
+        Ok(formatted) => Resp::FormatSource(pb::FormatSourceResponse {
+            revision: current_revision(session),
+            generation: r.generation,
+            formatted: formatted.is_some(),
+            text: formatted.unwrap_or_else(|| r.text.clone()),
+        }),
+        Err(e) => Resp::Error(session_error(&e)),
+    }
+}
+
 fn legend_to_pb(l: &bdl_ide::Legend) -> pb::SemanticTokenLegend {
     pb::SemanticTokenLegend {
         version: l.version,
@@ -675,6 +761,34 @@ pub(crate) fn entity_to_pb(e: bdl_ide::EntityRef) -> pb::EntityRef {
             | bdl_ide::EntityRef::Binding(_)
             | bdl_ide::EntityRef::Export(_) => Kind::Project(pb::Unit {}),
         }),
+    }
+}
+
+/// A hover at a position: the entity's card, or an equation's words,
+/// with the range of the name.
+fn hover_at_to_pb(h: bdl_ide::HoverAt, revision: u64) -> pb::DraftHoverResponse {
+    let span = Some(pb::SourceSpan {
+        start: h.range.start,
+        end: h.range.end,
+    });
+    match h.content {
+        bdl_ide::HoverContent::Entity(e) => pb::DraftHoverResponse {
+            span,
+            ..hover_to_pb(e, revision)
+        },
+        bdl_ide::HoverContent::Equation {
+            name,
+            shape,
+            documentation,
+        } => pb::DraftHoverResponse {
+            revision,
+            found: true,
+            span,
+            title: shape,
+            explanation: documentation,
+            equation: name,
+            ..Default::default()
+        },
     }
 }
 
@@ -1452,6 +1566,11 @@ fn payload_name(p: &Req) -> &'static str {
         Req::CompleteDefinitionDraft(_) => "complete_definition_draft",
         Req::HoverDefinitionDraft(_) => "hover_definition_draft",
         Req::SemanticTokens(_) => "semantic_tokens",
+        Req::SourceCompletion(_) => "source_completion",
+        Req::SourceHover(_) => "source_hover",
+        Req::SourceDefinition(_) => "source_definition",
+        Req::SourceReferences(_) => "source_references",
+        Req::FormatSource(_) => "format_source",
         Req::HoverEntity(_) => "hover_entity",
         Req::ListSemanticActions(_) => "list_semantic_actions",
         Req::GetFormulaProjection(_) => "get_formula_projection",
