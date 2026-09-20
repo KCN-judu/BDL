@@ -6,12 +6,15 @@ status: current
 
 # The embedded platform adapter
 
-How an already-lowered raw command becomes a physical effect on a board, without
-the board reaching back into the design. The first target is the Raspberry Pi
-Pico (RP2040) over Embassy; the second family is Arduino over `avr-hal`, with
-the Nano first; the decision is ADR-0037 (amended for the second family); the
-boundary they consume is `docs/architecture/output-realization.md`; the runtime
-semantics they must not alter are `docs/spec/runtime-semantics.md` and ADR-0004.
+How an already-lowered raw command becomes a physical effect on a board, and how
+a physical observation becomes the raw reading a Source's provider turns into an
+input — without the board reaching back into the design. The first target is the
+Raspberry Pi Pico (RP2040) over Embassy; the second family is Arduino over
+`avr-hal`, with the Nano first; the decisions are ADR-0037 (the output half,
+amended for the second family) and ADR-0038 (the input half and the catalogue);
+the boundary they consume and provide is
+`docs/architecture/output-realization.md`; the runtime semantics they must not
+alter are `docs/spec/runtime-semantics.md` and ADR-0004.
 
 ## The machine command boundary
 
@@ -34,16 +37,17 @@ interprets nothing.
 
 ## Ownership
 
-| Layer                         | Crate / file                                                                                          | Owns                                                                                                                                                       | Never                                          |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| target-independent vocabulary | `runtime/bdl-runtime-adapter` (`no_std`, depends on `bdl-runtime-core` only; every family shares it)  | the numeric policy (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_duty8` / `apply_level`, `CommandFault`, `schedule::active`                     | a HAL type, a pin, allocation                  |
-| generated glue                | `<crate>/src/adapter.rs` (feature `adapter`)                                                          | `SINKS` (bindings as data), `Applied`, `apply(tick, sink₁, …)` — one `&mut dyn` sink per machine sink in sink order                                        | a map, a name lookup, a string dispatch        |
-| generated firmware            | `<crate>/src/bin/rp2040.rs` (feature `rp2040`), `memory.x`, `build.rs`, `.cargo/config.toml`          | constructing the sinks on the assigned pads, the tick loop, the schedule, the arena, the fault halt                                                        | a pin choice, a value the core did not produce |
-| RP2040 binding                | `runtime/bdl-runtime-embassy-rp` (outside the workspace: the HAL tree stays out of the host lockfile) | `PwmA` / `PwmB` / `Line` over `embassy-rp`, the PWM carrier, the startup levels, `halt`, `arena`                                                           | reading a design                               |
-| Arduino binding               | `runtime/bdl-runtime-arduino` (outside the workspace: a git dependency on `avr-hal`, nightly-only)    | `PwmLine` / `Line` over `avr-hal`'s pins, the initial levels, `tick_wait`, `halt`                                                                          | reading a design                               |
-| target entries                | `bdl-codegen-rust::targets::Entry` — `rp2040`, `arduino` (the base) with `arduino::NANO` (the board)  | the resource → peripheral derivation, the firmware module, the files beside it, the Cargo sections, the build command, whether a family can carry an arena | choosing a resource; a second solver           |
-| host counterpart              | `bdl-runtime-host::mock` (`MockPwm`, `MockLine`), `TickTrace.adapter`, `AdapterOp`                    | the same `apply` over recording sinks, so a host trace carries the firmware's operation sequence                                                           | replacing the host path                        |
-| the plan                      | `bdl-compiler::target::adapter_plan` → `bdl-codegen-rust::adapter::AdapterPlan`                       | binding each machine sink to the solver-assigned resource; refusing what cannot be bound                                                                   | allocating; a second solver                    |
+| Layer                         | Crate / file                                                                                               | Owns                                                                                                                                                       | Never                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| target-independent vocabulary | `runtime/bdl-runtime-adapter` (`no_std`, depends on `bdl-runtime-core` only; every family shares it)       | the numeric policy (`duty8`), the sink traits (`PwmDuty8`, `Level`), `apply_duty8` / `apply_level`, `CommandFault`, `schedule::active`                     | a HAL type, a pin, allocation                  |
+| generated glue                | `<crate>/src/adapter.rs` (feature `adapter`)                                                               | `SINKS` (bindings as data), `Applied`, `apply(tick, sink₁, …)` — one `&mut dyn` sink per machine sink in sink order                                        | a map, a name lookup, a string dispatch        |
+| generated firmware            | `<crate>/src/bin/rp2040.rs` (feature `rp2040`), `memory.x`, `build.rs`, `.cargo/config.toml`               | constructing the sinks on the assigned pads, the tick loop, the schedule, the arena, the fault halt                                                        | a pin choice, a value the core did not produce |
+| RP2040 binding                | `runtime/bdl-runtime-embassy-rp` (outside the workspace: the HAL tree stays out of the host lockfile)      | `PwmA` / `PwmB` / `Line` over `embassy-rp`, the PWM carrier, the startup levels, `halt`, `arena`                                                           | reading a design                               |
+| Arduino binding               | `runtime/bdl-runtime-arduino` (outside the workspace: a git dependency on `avr-hal`, nightly-only)         | `PwmLine` / `Line` over `avr-hal`'s pins, the initial levels, `tick_wait`, `halt`                                                                          | reading a design                               |
+| target entries                | `bdl-codegen-rust::targets::Entry` — `rp2040`, `arduino` (the base) with `arduino::NANO` (the board)       | the resource → peripheral derivation, the firmware module, the files beside it, the Cargo sections, the build command, whether a family can carry an arena | choosing a resource; a second solver           |
+| host counterpart              | `bdl-runtime-host::mock` (`MockPwm`, `MockLine`), `TickTrace.adapter`, `AdapterOp`, `TickRequest.readings` | the same `apply` over recording sinks, so a host trace carries the firmware's operation sequence; the same `provide` over the request's raw readings       | replacing the host path                        |
+| the plan                      | `bdl-compiler::target::adapter_plan` → `bdl-codegen-rust::adapter::AdapterPlan`                            | binding each machine sink and each provider to the solver-assigned resource; refusing what cannot be bound                                                 | allocating; a second solver                    |
+| the catalogue                 | `crates/bdl-catalogue`                                                                                     | the input and output profiles a deployment may assign, each with an origin (builtin or a package); see § The package boundary                              | a judgment; a type rule; an evaluation rule    |
 
 The core crate (`src/lib.rs`) is unchanged by a target except for one
 `#[cfg(feature = "adapter")] pub mod adapter;` line; `cargo check --lib` of the
@@ -79,7 +83,11 @@ an error. Every step is checked, none has a fallback:
 | a sink's device has no assigned resource for its capability   | `adapter_plan`           | `adapter.sink_unbound`            |
 | the assigned resource lacks the capability                    | `adapter_plan`           | `adapter.resource_incompatible`   |
 | the profile has no sink (`i2c_level8`, `hbridge_signed`)      | `adapter_plan`           | `adapter.profile_unsupported`     |
-| the design has a Source (no device provides values, ISS-0016) | `adapter_plan`           | `adapter.inputs_unbound`          |
+| a Source no device provides                                   | `adapter_plan`           | `adapter.source_unprovided`       |
+| a device bound to a Source with no profile chosen             | `adapter_plan`           | `adapter.provider_unspecified`    |
+| a chosen provider is not admissible, or a Source is contested | `adapter_plan`           | `adapter.provider_invalid`        |
+| the family has no reader for the profile (Arduino, today)     | `adapter_plan`           | `adapter.provider_unsupported`    |
+| a provider's device has no assigned digital-in line           | `adapter_plan`           | `adapter.source_unbound`          |
 | a collection is input-bounded or unbounded                    | `adapter_plan`           | `adapter.collections_unbounded`   |
 | the base tick is zero                                         | `adapter_plan`           | `adapter.tick_invalid`            |
 | the board has no target entry (the mock `big_board`)          | `adapter_plan`           | `adapter.target_unsupported`      |
@@ -87,7 +95,89 @@ an error. Every step is checked, none has a fallback:
 | a resource is not a pad of the target, or the slice disagrees | the entry's `peripheral` | `backend.internal_lowering`       |
 
 A device that is placed but realises nothing (no profile) gets no sink and no
-peripheral: its pad is left unconfigured, and no value is invented for it.
+peripheral: its pad is left unconfigured, and no value is invented for it. A
+placement that is incomplete only because a Source has no device is named by the
+Source (`adapter.source_unprovided`), never by the placement.
+
+## The input half
+
+The mirror image of the command boundary (ADR-0038; FV Phase 13's provision and
+Phase 16's assignment):
+
+```text
+GPIO pad ─▶ Sense (pull) ─▶ LevelSource::level() ─▶ adapter::read(src₁, …) ─▶ provide(reading_<id>, …)
+                                                                                   │
+                                   (observation ends at the reading;               │   mk C (transduce r)
+                                    behavior begins at the input)                  ▼
+                                                                          crate::Inputs ─▶ design::step
+```
+
+- **The reading.** A provider profile (`bdl-catalogue::InputProfile`) names a
+  raw reading type, a transducer `raw → Rep(C)` — a closed pure term typed under
+  no grant — and the requirement template the device needs
+  (`DeviceKind::DigitalInput` ⇒ `digital_in`). The two builtin providers read a
+  line as a truth value: `gpio_level_in` (high is `true`, the pad pulled down)
+  and `gpio_level_in_low` (low is `true`, pulled up; the transducer is `not`).
+  The pull is peripheral configuration, never a value; the polarity is the
+  transducer's, never the reader's.
+- **The provision.** `bdl-output::provision` judges a device bound to a Source
+  the way `realization` judges one bound to an output: `well_formed` (typed pure
+  `raw → rep`), `fits` (the Source's concept carries `rep`) — the semantic
+  contract — then the placement's `hardware_placed` and the target entry's
+  `backend_supported` (`Entry::reads`). Four judgments, inspectable one by one;
+  the deployment analysis carries them per Source (`SourceProvision`), the
+  Deploy page shows them, and nothing folds them into one word.
+- **The lowering.** `bdl-lower` adds one `ProviderPlan` per admissible provision
+  below the inputs: the provision body `mk C (transduce r)` — the one term that
+  constructs, in the Source's own context under the Source's own grant — lowered
+  with the raw reading bound to a fresh local. The program's declarations,
+  cells, outputs and sinks are byte-identical with or without a provider; a
+  Source without one is a plain input slot the simulation supplies.
+  `interp::provide(ir, raw)` evaluates the providers before `step`.
+- **The glue.** Generated `src/adapter.rs` gains `SOURCES` (bindings as data),
+  `provide(reading_<id>: Option<Raw>, …) -> Result<Inputs, RuntimeError>` (each
+  provider's term over its reading; a reading not taken leaves the slot empty)
+  and `read(&mut dyn LevelSource, …)` (observe every source once, in input-slot
+  order, then `provide`). No map, no name, no string dispatch.
+- **The firmware.** Per tick: `read` the sources, `step`, `apply` the commands —
+  in that order, from the same `Tick` the interpreter sees. A failed `provide`
+  latches the fault like a failed step.
+- **The host.** `HostProgram::inputs_from_readings` applies the same `provide`
+  to `TickRequest.readings` (one raw reading per provider, in provider order),
+  writing the provided Sources over the request's inputs; a host trace and the
+  firmware make the same inputs from the same readings (tested).
+- **One reading per tick.** A provider observes its line once per global tick; a
+  scalar Source is the sample. FV Phase 17's provider occurrence contract — a
+  bounded batch `(list raw, bool)` of deliveries with transport identities,
+  deduplication of retries, an overflow flag, several raw sources as several
+  provisions — is proved and **not built** (ISS-0018): for a GPIO line there is
+  no transport identity, so the contract's clauses are vacuous and its bound is
+  one; nothing here preempts a batch reading, which would be a profile whose raw
+  type has two channels.
+- **Identity.** `DeviceBinding.id` names the `reading_<id>` parameter, the
+  manifest's `adapter.sources[]` entry and the requirement;
+  `DeviceBinding.source` is the Source's stable `DeclId`; the solver's
+  `ResourceId` names the pad (`GPn` ⇒ `PIN_n` as a `Sense`). Every step is
+  checked; the refusals are in the table above.
+
+## The package boundary
+
+`bdl-catalogue` is the one place a deployment's choices come from
+(`Catalogue::builtin()` today). An entry is a profile with an **origin** —
+`Origin::Builtin`, or `Origin::Package { id }` — and every judgment takes the
+profile and never the origin (`check_binding_in`, `check_provider`; FV
+`assign_indistinguishable`, `assignSource_origin_irrelevant`). What an entry may
+contribute: a profile id, a raw type, a representation, an encoder or a
+transducer, a requirement template. What it never contributes: a type rule, a
+primitive, an evaluation rule, a causality or clock judgment — a larger
+catalogue realizes and provisions more and nothing else (`realizable_mono`,
+`provisionable_mono`). `Catalogue::add_input` / `add_output` refuse an id
+already present, so a package cannot shadow a builtin. Ids are stable and
+persisted in project files (`realization <id>`, `provider <id>`); a project
+naming an id this version's catalogue lacks is reported
+(`deploy.*_unknown_profile`) and never rewritten. A package manager —
+resolution, validation, signing — does not exist and is not designed here; when
+it does, it adds entries and touches nothing downstream.
 
 ## Numeric policy at the boundary
 
@@ -136,6 +226,7 @@ tick `t`, activates the clock slots the compiled schedule says are due:
 ```text
 tick:  ticker.next().await
        active = schedule::active(tick, &PERIODS)
+       inputs = adapter::read(&mut reading_a, …)          // input-slot order; Err => halt()
        match design::step(&mut state, active, &inputs)   // one global step, ADR-0004
          Ok(t)  => adapter::apply(&t, &mut command_a, &mut command_b, …)  // sink order
          Err(_) => halt()
@@ -238,21 +329,27 @@ to an AVR ELF in CI (`the_firmware_cross_compiles_for_the_nano`,
 ## Physical effect boundary
 
 Phase 14 (FV) proves the model up to the raw command relation
-(`lower_correspondence`); the host tests prove the generated `Commands` against
-the interpreter; this page's tests prove the generated `adapter::apply` over
-recording sinks against those commands and the policy above, and that the
-firmware cross-compiles. What a PWM slice or a pad does with the register write
-is `embassy-rp` and silicon: the correspondence between the raw command trace
-and the physical effect is **not formally proved** (FVI-0022, ISS-0017) and this
-page claims none — the adapter is _production-tested_.
+(`lower_correspondence`) and Phase 13 up to the raw reading
+(`provision_transparent`); the host tests prove the generated `Commands` and
+`Inputs` against the interpreter; this page's tests prove the generated
+`adapter::apply` over recording sinks against those commands and the policy
+above, the generated `adapter::provide` against the interpreter's `provide`, and
+that the firmware cross-compiles. What a PWM slice or a pad does with the
+register write, and what level a pad reads, is `embassy-rp` and silicon: the
+correspondence between the raw trace and the physical effect or observation is
+**not formally proved** (FVI-0022, ISS-0017, ISS-0018) and this page claims none
+— the adapter is _production-tested_.
 
 ## Out of scope, by design
 
-Stateful adapters (slew, dithering, hysteresis), a device clock other than the
-output's, atomic multi-value frames, buffered or queued peripherals,
-backpressure, I²C and H-bridge sinks, flashing (roadmap priority 3), telemetry
-(priority 4), a third family (the ESP32-S3, priority 5), and `bdld`
-orchestrating the cargo build (priority 2).
+Stateful adapters and transducers (slew, dithering, hysteresis, debouncing), a
+device clock other than the output's or the global tick's, atomic multi-value
+frames, the provider occurrence contract (batches, transport identities, an
+overflow flag — FV Phase 17, ISS-0018), buffered or queued peripherals,
+backpressure, I²C and H-bridge sinks, analog and bus providers, an Arduino
+reader, flashing (roadmap priority 3), telemetry (priority 4), a third family
+(the ESP32-S3, priority 5), and `bdld` orchestrating the cargo build (priority
+2).
 
 ## Building the firmware
 
@@ -282,5 +379,10 @@ newest dependencies may want a newer compiler than the toolchain pins);
 the host operations against `Tick.commands` for 0 %/5 %/50 %/100 %/out of range,
 the quantized profile, the core and its commands unchanged by the target, the
 refusals, the arena, the schedule, determinism, the cross-build),
-`crates/bdl-daemon/tests/cli.rs` (`compile --target`),
-`crates/bdl-hardware/tests/solver.rs` (the Pico).
+`crates/bdl-compiler/tests/source_provision.rs` (the Source chain: assignment →
+profile → requirement → pad → `Sense` → `provide`; the host and the interpreter
+from the same readings; two providers of one Source with the same semantic
+trace, the same behaviour; the simulation untouched by a provider; an old
+project's Source as an incomplete deployment; every provider refusal; the Button
+→ Lamp firmware cross-built), `crates/bdl-daemon/tests/cli.rs`
+(`compile --target`), `crates/bdl-hardware/tests/solver.rs` (the Pico).

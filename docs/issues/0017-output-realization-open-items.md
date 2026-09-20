@@ -4,7 +4,7 @@ state: open
 area: deployment
 opened: 2026-09-20
 resolved-by: []
-related: [ADR-0036, ADR-0037, ISS-0016]
+related: [ADR-0036, ADR-0037, ADR-0038, ISS-0016, ISS-0018]
 ---
 
 # ISS-0017: Output realization beyond a pure encoder: stateful adapters, a device clock, atomic frames, the adapter's correspondence, a device catalogue
@@ -56,6 +56,35 @@ untouched.
 
 The first embedded platform adapter; for a device clock or stateful adapters an
 FV phase first (FVI-0022), then an ADR each.
+
+## Audit against FV Phases 15 – 17 (2026-09-20)
+
+The formal side has moved on three of the five items; production has consumed
+one:
+
+- **a device catalogue** — consumed. FV Phase 16 (`Catalogue`, `Origin`,
+  `assign_indistinguishable`, `realizable_mono`) is ADR-0038's `bdl-catalogue`:
+  the five output profiles moved there unchanged, an origin sits on the entry
+  and no judgment reads it, and a package adds entries. Parameters (register
+  addresses, resolutions) and `f64` where a register is a count stay open
+  (ISS-0006).
+- **a device clock** — proved, not built. FV Phase 15 lowers a realization into
+  an explicit device domain through `sync` (`lowerSync`, FVD-0140 … FVD-0142)
+  and Phase 17 gives the occurrence-preserving crossing (`lowerWindow`,
+  FVD-0152: the sink's type — `raw` or `list raw` — selects the lowering).
+  Production still refuses `sync` in an encoder and has no spelling for a device
+  domain; FVI-0024 is narrowed to the acknowledging device and `initRep`.
+- **stateful output adapters** — Phase 15 gives the adapter's policy, operation
+  and line (`Policy`, `Op`, `AdapterOp`, `Line`) and the rule that no stateful
+  realization primitive exists without a witness; Phase 17 gives the batch as a
+  list of operations and a fold (FVD-0153). Production's `duty8` policy and
+  `Applied` are that shape for one operation per tick; slew, dither and
+  hysteresis are still undecided between behaviour and adaptation.
+- **atomic frames** — unchanged (FVD-0136 stands; FVD-0148 for the paired axis
+  under batching).
+- **the adapter's correspondence** — unchanged (FVI-0022): tested through
+  recording sinks and a cross-build, never past the register write. The input
+  half now has the same evidence shape (ADR-0038, ISS-0018).
 
 ## Resolution
 

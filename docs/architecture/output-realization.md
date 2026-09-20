@@ -105,7 +105,8 @@ in the assignment.
 
 ## The first slice
 
-`bdl-output::realization::profiles()` — ids are stable and persisted:
+`bdl-catalogue::builtin_outputs()` (re-exported as
+`bdl-output::realization::profiles()`) — ids are stable and persisted:
 
 | Profile          | Kind               | `rep`  | `raw`         | Encoder                                                     |
 | ---------------- | ------------------ | ------ | ------------- | ----------------------------------------------------------- |
@@ -120,6 +121,23 @@ for 50 %: the exact value of the pure term, not a rounding the board does. There
 is no rounding primitive and none is added; a quantizing profile uses comparison
 and `ite`.
 
+## The catalogue
+
+Since ADR-0038 the profiles live in `crates/bdl-catalogue`, the production image
+of FV Phase 16's `Catalogue`: `OutputEntry { origin, profile }` and
+`InputEntry { origin, profile }`, with `Origin::Builtin` or
+`Origin::Package { id }`. The judgments above are unchanged and take the entry's
+profile only (`check_binding_in(&catalogue, …)`; `check_binding` is the builtin
+catalogue), so a packaged profile and a builtin one are told apart by nothing
+downstream (`assign_indistinguishable`). The input side — an `InputProfile` with
+a `Transducer { raw, rep, transduce }` and the provision judgments `well_formed`
+/ `fits` in `bdl-output::provision` — mirrors this page's principles one for
+one: the transducer is data, constructs nothing (typed under no grant), and the
+provision constructs the Source's concept in the Source's own context; see
+`docs/architecture/embedded-adapter.md` § The input half. A package manager does
+not exist; `Catalogue::add_output` / `add_input` are the whole of what one would
+call.
+
 ## Compatibility
 
 A project written before profiles existed has bindings without `realization`:
@@ -132,8 +150,9 @@ the Deploy page is the only way a project gains one.
 ## Not established
 
 FVI-0022, unchanged by this slice: stateful adapters (slew, dithering,
-batching), a device clock other than the output's (would be an explicit `sync`),
-atomic multi-value frames, the correspondence between the raw command trace and
-what a platform adapter emits, and commitments on outputs. Production implements
-none of these and refuses what would need them (`purity` rejects `delay` and
-`sync`).
+batching), atomic multi-value frames, the correspondence between the raw command
+trace and what a platform adapter emits, and commitments on outputs. A device
+clock other than the output's is since proved in the model (FV Phase 15's
+`lowerSync`, Phase 17's occurrence-preserving `lowerWindow`) and not built:
+production refuses what would need it (`purity` rejects `delay` and `sync`) and
+has no spelling for a device domain (ISS-0017).

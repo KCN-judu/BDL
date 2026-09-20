@@ -187,8 +187,9 @@ panic handler and the arena are the platform adapter's, outside the core.
 READY here means the generated core and its manifest carry what the adapter
 needs; "READY WITH ALLOCATOR" means the firmware declares one, which the RP2040
 firmware does from the manifest's bounds; "REQUIRES CAPACITY VALIDATION" is
-refused for a board until the adapter bounds its inputs (ISS-0016). The firmware
-is cross-compiled in CI; nothing has been flashed (roadmap priority 3).
+refused for a board until the adapter bounds its inputs (a list-valued Source
+has no provider yet, ISS-0018). The firmware is cross-compiled in CI; nothing
+has been flashed (roadmap priority 3).
 
 ## 7. Correspondence and claims
 

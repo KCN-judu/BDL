@@ -13,16 +13,19 @@ driven by `bdl-compiler::analyze_deployment`.
 ## Pipeline
 
 ```text
-OutputId  →  DeviceBinding{kind, realization?, fixed_pins}  →  Requirements  →  solve(board)  →  Assignment
+OutputId | DeclId  →  DeviceBinding{kind, realization? | provider?, fixed_pins}  →  Requirements  →  solve(board)  →  Assignment
                                                                                     ↓ (none)
                                                                                 diagnose → DeadEnd
 ```
 
 A binding may also name an **output realization profile** (`realization`,
-ADR-0036): the profile prescribes the kind, and its encoder is judged apart from
-this pipeline — the solver never sees an encoder, the encoder never sees a board
-(`docs/architecture/output-realization.md`). The kind stays the whole of what
-the _solver_ reads.
+ADR-0036) for the output it realises, or a **Source provider profile**
+(`provider`, ADR-0038) for the Source it provides — never both: the profile
+prescribes the kind, and its encoder or transducer is judged apart from this
+pipeline — the solver never sees an encoder or a transducer, neither sees a
+board (`docs/architecture/output-realization.md`,
+`docs/architecture/embedded-adapter.md` § The input half). The kind stays the
+whole of what the _solver_ reads.
 
 The design (`Δ, Κ, Ω, β`) is never an argument of the solver. Swapping the board
 re-solves the same requirements with the design untouched. Hardware allocation
@@ -92,6 +95,7 @@ a fixed order, and the solver never learns what an IMU is:
 | ------------------- | -------------------------------- | --------- |
 | `PwmChannel`        | 0: pwm                           |           |
 | `DigitalOutput`     | 0: digital_out                   |           |
+| `DigitalInput`      | 0: digital_in                    |           |
 | `HBridgeChannel`    | 0: pwm, 1: digital_out           |           |
 | `I2cSensor`         | 0: i2c_sda, 1: i2c_scl           | Same unit |
 | `QuadratureEncoder` | 0: interrupt, 1: interrupt       |           |

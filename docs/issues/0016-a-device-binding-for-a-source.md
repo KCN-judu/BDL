@@ -1,10 +1,10 @@
 ---
 id: ISS-0016
-state: open
+state: resolved
 area: deployment
 opened: 2026-09-19
-resolved-by: []
-related: [ADR-0032, ADR-0015, ADR-0037, PRP-0001]
+resolved-by: [ADR-0038]
+related: [ADR-0032, ADR-0015, ADR-0037, ADR-0038, ISS-0018, PRP-0001]
 ---
 
 # ISS-0016: A device binding for a Source
@@ -51,6 +51,16 @@ unchanged by any of it (ADR-0032 §1).
 
 ## Resolution
 
-Open. PRP-0001 proposes the shape of the binding's missing half — the transducer
-from the device's raw reading to the concept — as a formal construction over
-designs; the device catalog question above stays.
+Resolved by ADR-0038 (2026-09-20). The evidence above describes the tree before
+it; since then a device binding has a `for <source>` end (`DeviceBinding.source`
+by stable `DeclId`, `provider` by `InputProfileId`), the device kinds that
+provide are the catalogue's input profiles (`bdl-catalogue`: `gpio_level_in`,
+`gpio_level_in_low` over `DeviceKind::DigitalInput`), the deployment analysis
+judges every Source (`SourceProvision`), the Deploy page binds a device to a
+Source in the same pop-up as to an output, the inspector's _Realization_ row
+names the providing device and profile on the chosen board, and the RP2040
+firmware reads the line before each tick — `Button → rule → Lamp` runs as one
+firmware (`crates/bdl-compiler/tests/source_provision.rs`). The transducer is
+PRP-0001's and FV Phase 13's shape; the catalogue and its origin-irrelevance are
+FV Phase 16's. What the binding does _not_ yet carry — a batch with transport
+identities, a sampling period, a bus address, an analog channel — is ISS-0018.

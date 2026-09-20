@@ -150,31 +150,39 @@ each of its questions was answered is in the
   definitions, the evidence model, affine units, user enums, `f32` on device,
   nested packaging, a structural output entity, projection deltas, temporal
   modifiers, `zip`'s cost in the core, the compiler's diagnostic sentences in
-  one language, a device binding for a Source, output realization beyond a pure
-  encoder (ISS-0017); one proposal (PRP-0001, Source provision by device
-  profile). Output-side realization — how a logical output reaches PWM, GPIO,
-  I²C or an H-bridge without the behaviour model knowing — is ADR-0036 and
-  [architecture/output-realization.md](architecture/output-realization.md),
-  consumed from FV Phase 14
+  one language, output realization beyond a pure encoder (ISS-0017), the input
+  half beyond one line read once per tick (ISS-0018); one proposal (PRP-0001,
+  Source provision by device profile — consumed by ADR-0038). Realization on
+  both sides — how a logical output reaches PWM, GPIO, I²C or an H-bridge, and
+  how a Source is provided by a line, without the behaviour model knowing — is
+  ADR-0036 / ADR-0038,
+  [architecture/output-realization.md](architecture/output-realization.md) and
+  [architecture/embedded-adapter.md](architecture/embedded-adapter.md) § The
+  input half, consumed from FV Phases 13, 14 and 16
   ([formal-correspondence.md](project/formal-correspondence.md)).
-- **Active work:** the platform adapter's remaining half (a device that provides
-  a Source's value, ISS-0016) is priority 1; nothing else is in progress in this
-  repository.
-- **Recently changed:** the first embedded platform adapter (ADR-0037 —
-  `bdld compile --target rp2040_pico` generates the Embassy firmware beside the
-  core; raw PWM and GPIO commands reach the solver-assigned pads through an
-  explicit numeric policy; cross-compiled in CI), output realization (ADR-0036,
-  protocol 0.24 — a device binding chooses a realization profile on the Deploy
-  page; the profile's pure encoder lowers the output's value to a raw command
-  below the behavior plan; admissibility is three judgments), the Source sheet
-  (protocol 0.23 — a Source is created over a concept the designer chooses,
-  existing or new in one transaction; the Standard Library's Source items are
-  presets named _… Input_), the Code view as an IDE surface (protocol 0.22 —
-  completion, hover, definition, references and _Format_ from `bdl-ide` over the
-  text as typed), semantic highlighting (ADR-0035, protocol 0.21), one derived
-  relationship role stated by the daemon (protocol 0.20, ADR-0032 amended),
-  reference edges (ADR-0034, protocol 0.18). The full list, oldest last, is
-  [changes/unreleased/](changes/unreleased/); the protocol's history is
+- **Active work:** the platform adapter beyond one line and one duty (the
+  provider occurrence contract, analog and bus providers, an Arduino reader —
+  ISS-0018; the output device clock — ISS-0017) is priority 1; nothing else is
+  in progress in this repository.
+- **Recently changed:** the Source half of the platform adapter (ADR-0038,
+  protocol 0.25 — a device is for an output or a Source; a provider profile from
+  `bdl-catalogue` turns the line's reading into the Source's value; the Pico
+  firmware reads the line before each tick; an unprovided Source is an
+  incomplete deployment with the reason), the first embedded platform adapter
+  (ADR-0037 — `bdld compile --target rp2040_pico` generates the Embassy firmware
+  beside the core; raw PWM and GPIO commands reach the solver-assigned pads
+  through an explicit numeric policy; cross-compiled in CI), output realization
+  (ADR-0036, protocol 0.24 — a device binding chooses a realization profile on
+  the Deploy page; the profile's pure encoder lowers the output's value to a raw
+  command below the behavior plan; admissibility is three judgments), the Source
+  sheet (protocol 0.23 — a Source is created over a concept the designer
+  chooses, existing or new in one transaction; the Standard Library's Source
+  items are presets named _… Input_), the Code view as an IDE surface (protocol
+  0.22 — completion, hover, definition, references and _Format_ from `bdl-ide`
+  over the text as typed), semantic highlighting (ADR-0035, protocol 0.21), one
+  derived relationship role stated by the daemon (protocol 0.20, ADR-0032
+  amended), reference edges (ADR-0034, protocol 0.18). The full list, oldest
+  last, is [changes/unreleased/](changes/unreleased/); the protocol's history is
   [changes/history/protocol-versions.md](changes/history/protocol-versions.md).
 
 ## Rules in one paragraph

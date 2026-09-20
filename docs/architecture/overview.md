@@ -66,7 +66,8 @@ crates/
   bdl-elab         concepts → Θ · signatures → interfaces · formulas → Core (equations inlined at their instance) (→ ir, syntax, check, equations)
   bdl-check        Core typing · Grant · realization vs interface · pretty       (→ ir, diagnostics)
   bdl-reactive     dependency graph · causality · Clocked · reference evaluator · simulation (→ ir, check)
-  bdl-output       DriveWF · SingleDriver · CompleteOutputs · output_values       (→ ir, reactive)
+  bdl-catalogue    the catalogue: input profiles (transducer) · output profiles (encoder) · origin per entry (builtin | package) (→ model, ir)
+  bdl-output       DriveWF · SingleDriver · CompleteOutputs · output_values · realization and provision judgments (→ ir, reactive, catalogue)
   bdl-hardware     Capability/Resource/Hardware · device → requirements · boards · solve/diagnose (→ model)
   bdl-exec-ir      executable IR: slots, first-order expressions, evaluation plan; interpreter (→ ir, reactive)
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
@@ -269,13 +270,17 @@ What that means in the code today:
   begins there; choosing a profile changes no analysis and no sample
   (`docs/architecture/output-realization.md`).
 - A Source is `s : () -> C` with no realization, a value entering the model from
-  its environment (ADR-0032); what provides it at deployment — a device, a host,
-  a network — is a separate, later choice (ISS-0016, PRP-0001), and the Standard
-  Library's _… Input_ presets are authoring intent, not a device catalogue.
-- Not implemented, formally investigated: a device transducer that realizes a
-  Source (FV Phase 13, PRP-0001, ISS-0016) — the other physical boundary, kept
-  separate from output realization; and, on the output side, stateful adapters,
-  a device clock and atomic frames (FVI-0022, ISS-0017) —
+  its environment (ADR-0032); what provides it at deployment — a device through
+  a catalogue profile (ADR-0038: a pure transducer from the device's raw reading
+  to the Source's representation, the concept constructed in the Source's own
+  context), a host, a simulation — is deployment's and changes nothing in the
+  design; the Standard Library's _… Input_ presets are authoring intent, not the
+  catalogue (`bdl-catalogue`, whose entries carry an origin no judgment reads).
+- Not implemented, formally investigated: the provider occurrence contract (FV
+  Phase 17: batches with transport identities, an overflow flag — ISS-0018),
+  stateful transducers and a Source device clock (FVI-0020); on the output side,
+  stateful adapters, the device clock and the occurrence-preserving window (FV
+  Phases 15 and 17), atomic frames (FVI-0022, ISS-0017) —
   `docs/project/formal-correspondence.md`.
 
 This is an architectural position, not a usability result: whether the

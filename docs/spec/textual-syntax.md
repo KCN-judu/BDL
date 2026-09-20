@@ -815,9 +815,10 @@ OutputDecl    ::= "output" Name ":" Type ClockTag? ("optional")?
 DriveDecl     ::= "drive" NameRef "by" NameRef      (* the output is driven by the relationship *)
                 | "drive" NameRef "=" NameRef       (* legacy compatibility spelling *)
 DeviceDecl    ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?
-DeviceBody    ::= "{" ( (PinFix | RealizationFix) ","? )* "}"
+DeviceBody    ::= "{" ( (PinFix | RealizationFix | ProviderFix) ","? )* "}"
 PinFix        ::= "pin" Number "=" Ident
 RealizationFix::= "realization" Ident             (* the output realization profile *)
+ProviderFix   ::= "provider" Ident                (* the Source provider profile *)
 ```
 
 ```bdl
@@ -832,6 +833,7 @@ output indicator : Brightness @interaction optional
 drive light by brightness                          // the single drive edge
 
 device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
+device tiltSense : digital_input for tilt { provider gpio_level_in, pin 0 = D2 }
 ```
 
 - `output` is a **physical output**
@@ -859,10 +861,15 @@ device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
   the same guards as the unit-domain migration). The same staged policy as the
   output-only shorthand (§4.1) applies; no removal is scheduled.
 - A device's kind is a `DeviceKind` name in snake case (`pwm_channel`,
-  `digital_output`, `h_bridge_channel`, `i2c_sensor`, `quadrature_encoder`,
-  `uart`); `for` names the output it realises (absent for a sensor); pins are
-  fixed by the device's requirement index and a board-relative pin name, which
-  is an identifier (`D3`, `A4`, `GP15`).
+  `digital_output`, `digital_input`, `h_bridge_channel`, `i2c_sensor`,
+  `quadrature_encoder`, `uart`); `for` names the output it realises **or the
+  Source it provides** — one name, resolved as an output first and then as a
+  relationship, which must be a Source (unit domain, no definition; a Value or a
+  Rule is `text.not_a_source`, an unknown name `text.unknown_output`); a device
+  is for at most one of the two (`DeviceBinding.output` /
+  `DeviceBinding.source`, ADR-0038). Pins are fixed by the device's requirement
+  index and a board-relative pin name, which is an identifier (`D3`, `A4`,
+  `GP15`).
 - `realization <id>` names the **output realization profile** the device uses
   (`DeviceBinding.realization`, ADR-0036): a stable identifier from the
   compiler's registry (`pwm_duty8`, `pwm_duty4`, `i2c_level8`, `gpio_level`,
@@ -873,6 +880,15 @@ device pwmLight : pwm_channel for light { realization pwm_duty8, pin 0 = D3 }
   registry does not know. A body without one (every file written before profiles
   existed) leaves the device placing by kind and generating no raw command
   (`docs/architecture/output-realization.md`).
+- `provider <id>` names the **Source provider profile** the device uses
+  (`DeviceBinding.provider`, ADR-0038): a stable identifier from the catalogue
+  (`gpio_level_in`, `gpio_level_in_low`), with the same rules as `realization` —
+  at most once per body, the last one wins, any order with the pins, printed
+  after `realization`; the profile prescribes the kind; a mismatch or an unknown
+  id is diagnosed at deployment (`deploy.provider_kind_mismatch`,
+  `deploy.provider_unknown_profile`). A device for a Source with no `provider`
+  places by kind and reads nothing. `provider`, like `realization`, `pin` and
+  `for`, is contextual: an identifier everywhere else.
 
 ### 14.2 Components
 
