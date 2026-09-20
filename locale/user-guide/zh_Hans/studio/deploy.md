@@ -14,7 +14,7 @@ _部署页：选中 Arduino Nano，light 上有一个 PWM 设备，以及结论�
 
 ## 目标板
 
-编译器服务已知的板子。目前有：**Arduino Nano** 和 **Big board (mock)**——一个带更多 PWM 引脚的测试目标。板子的选择是**会话偏好**：不随项目保存，更改它永远不会改变设计。
+The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**, the first board firmware can be generated for (`bdld compile --target rp2040_pico`, [CLI](../../../../docs/user-guide/reference/cli.md); flashing it is not in Studio yet). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design.
 
 在选择板子之前，页面显示 _选择一块板子，看这个设计能否放进去。_
 

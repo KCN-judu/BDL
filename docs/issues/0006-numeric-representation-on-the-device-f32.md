@@ -4,7 +4,7 @@ state: deferred
 area: runtime
 opened: 2026-09-15
 resolved-by: []
-related: ["docs/archive/design-issues-ledger.md#di-28"]
+related: ["docs/archive/design-issues-ledger.md#di-28", ADR-0037]
 ---
 
 # ISS-0006: Numeric representation on the device (`f32`)
@@ -23,6 +23,12 @@ The first platform adapter will meet this on the first constrained board.
 
 - Production: `docs/architecture/codegen-rust.md`,
   `docs/spec/runtime-semantics.md` (numeric policy, DI-15); DI-1, DI-28.
+- Since ADR-0037 the RP2040 firmware runs the core's `f64` arithmetic as
+  generated (the Cortex-M0+ has no FPU; software floating point) and converts
+  only at the raw command boundary through one explicit policy
+  (`bdl_runtime_embassy::duty8`, `docs/architecture/embedded-adapter.md`).
+  Whether the core itself should compute in `f32` on such a target — and what
+  the differential tests would then compare — is this issue, unchanged.
 
 ## Dependencies
 

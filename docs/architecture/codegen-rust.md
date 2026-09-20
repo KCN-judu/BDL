@@ -17,7 +17,17 @@ ExecIr ──emit──▶ ast::Module ──print──▶ src/lib.rs        no
        ──host──▶ ast::Module ──print──▶ src/bin/host.rs   std bridge (feature "host")
        ──manifest──▶ bdl-manifest.json
        ───────────▶ Cargo.toml                            [workspace] of its own
++ AdapterPlan (compile_for_target)
+       ──adapter──▶ src/adapter.rs                        sink glue (feature "adapter")
+       ──targets::rp2040──▶ src/bin/rp2040.rs             Embassy firmware (feature "rp2040")
+                            memory.x, build.rs, .cargo/config.toml
 ```
+
+The adapter files exist only when a target was given (`compile_for_target`,
+`bdld compile --target`); the core's `src/lib.rs` then carries one
+`#[cfg(feature = "adapter")] pub mod adapter;` line and is otherwise byte for
+byte what `compile` writes. The plan, the identity route and the firmware's
+policies are `docs/architecture/embedded-adapter.md` (ADR-0037).
 
 The generated Rust is built as a small owned AST (`ast.rs`: the subset BDL needs
 — items, structs, fns, lets, calls, `if`/`match`, literals) and printed by one
@@ -156,9 +166,13 @@ static types and `DynValue` (the reference evaluator's value shape, dimensions
 dropped), `init`/`step` forwarding, `size_of::<State>()`.
 `bdl_runtime_host::main_stdio` reads a JSON
 `RunRequest { ticks: [{ active: [clock slots], inputs: [per input slot] }] }` on
-stdin and writes a `RunTrace { ticks: [{ values, outputs }], error?, metrics }`
-on stdout. `bdl_runtime_host::harness::Cargo` writes a generated crate,
-`cargo check`s the core, builds the host binary and runs a request — what the
+stdin and writes a
+`RunTrace { ticks: [{ values, outputs, commands, adapter }], error?, metrics }`
+on stdout — `adapter` being what the generated `adapter::apply` did with each
+command over recording sinks (`bdl_runtime_host::mock`), empty for a core
+generated without a target. `bdl_runtime_host::harness::Cargo` writes a
+generated crate, `cargo check`s the core, builds the host binary and runs a
+request, and cross-builds the firmware (`build_firmware`) — what the
 differential tests use (`target/bdl-generated/<design>/`, one shared
 `CARGO_TARGET_DIR` so the runtime crates compile once).
 
@@ -167,9 +181,11 @@ Rust symbol ↔ BDL identity is `bdl-manifest.json` (`manifest_version` 1): cloc
 type), decls (plan index, `DeclId`, symbol, type, activation, input slot), cells
 (slot, symbol, `StateCellId` as `decl_id` + `path`, writer slot, type), outputs
 (slot, `OutputId`, symbol, driver `DeclId`, type), functions (inlined
-declarations). Source spans are not in it yet: the surface elaborator's spans
-are per formula, and the manifest carries the expression path so they can be
-joined later.
+declarations), sinks (the machine sinks), and — for a target — `adapter` (board,
+family, triple, tick, periods, arena, one binding per sink with the assigned
+resource and the peripheral in the target's words). Source spans are not in it
+yet: the surface elaborator's spans are per formula, and the manifest carries
+the expression path so they can be joined later.
 
 ## Differential testing (`crates/bdl-compiler/tests/backend_*.rs`)
 

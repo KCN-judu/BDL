@@ -75,10 +75,13 @@ shareability) for `ListTargets`. `Capability::label()`,
 interrupt_) and `devices::device_kind_label(kind)` are the designer-facing
 wording used by the Deploy read model
 (docs/architecture/deployment-read-model.md). No Rust source fragments live
-here. A _separate_ platform mapping (`hardware/platforms/<board>.toml`, planned)
-answers "logical resource GP15 → HAL expression `p.PIN_15`". The registry
-(`boards::registry`) is what `ListTargets` reports; loading boards from the
-directory at runtime is the next step.
+here. The mapping "logical resource `GP15` → HAL expression `p.PIN_15`" is the
+target entry's (`bdl-codegen-rust::targets::rp2040`, derived from the pad number
+and checked against the board file's PWM unit,
+docs/architecture/embedded-adapter.md), not a second file. Boards:
+`arduino_nano`, `big_board` (mock) and `rp2040_pico` (the first embedded target,
+ADR-0037). The registry (`boards::registry`) is what `ListTargets` reports;
+loading boards from the directory at runtime is the next step.
 
 ## Devices generate requirements (`bdl-hardware::devices`)
 

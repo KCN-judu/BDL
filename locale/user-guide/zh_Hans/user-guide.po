@@ -346,12 +346,12 @@ msgstr ""
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
 #: docs/user-guide/concepts/timing.md:114
-#: docs/user-guide/reference/cli.md:40
+#: docs/user-guide/reference/cli.md:41
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:128
 #: docs/user-guide/studio/code-view.md:152
-#: docs/user-guide/studio/deploy.md:110
+#: docs/user-guide/studio/deploy.md:112
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
 #: docs/user-guide/studio/library.md:89
@@ -1063,7 +1063,7 @@ msgstr ""
 #: docs/user-guide/reference/status-meanings.md:74
 #: docs/user-guide/reference/status-meanings.md:83
 #: docs/user-guide/reference/terminology.md:8
-#: docs/user-guide/studio/deploy.md:80
+#: docs/user-guide/studio/deploy.md:82
 #: docs/user-guide/troubleshooting/connection-errors.md:116
 msgid "Meaning"
 msgstr "含义"
@@ -2305,46 +2305,58 @@ msgid "0 written · 1 not ready · 2 did not open"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:11
+msgid "`bdld compile <project> --target rp2040_pico [--tick-micros N] [--period domain=N …]`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:11
+msgid "also generates the firmware for that board beside the core: every output needs a device with a realization placed on the board, and a design with a Source is refused (no device provides values yet); `--tick-micros` is the firmware's base tick (default 10000); build it with `cargo build --release --target thumbv6m-none-eabi --features rp2040` in `DIR`"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:11
+msgid "0 written · 1 refused, printing why · 2 did not open or unknown board"
+msgstr ""
+
+#: docs/user-guide/reference/cli.md:12
 msgid "`bdld simulate <project> [--ticks N] [--input rel=value …]`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:11
+#: docs/user-guide/reference/cli.md:12
 msgid "runs the reference evaluator for `N` activations (default 1) with constant inputs and prints every relationship's value per tick"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:11
+#: docs/user-guide/reference/cli.md:12
 msgid "0 · 1 findings · 2 did not open or a runtime error"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "`bdld migrate-unit-domain <project> [--dry-run] [--json]`"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "rewrites every legacy zero-input signature `mapping f : A` to the preferred `mapping f : () -> A`, one insertion each — comments, spacing, definitions and identities untouched; refuses if the design would change; `--dry-run` only reports"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:12
+#: docs/user-guide/reference/cli.md:13
 msgid "0 · 2 did not open or refused"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:14
+#: docs/user-guide/reference/cli.md:15
 msgid "`--json` on any of them prints one JSON object instead of text."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:16
+#: docs/user-guide/reference/cli.md:17
 msgid "Inputs"
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:18
+#: docs/user-guide/reference/cli.md:19
 msgid "`--input name=value` sets a relationship that reads nothing to a constant for every tick: `true` / `false` for a *Bool* concept, a whole number for a *Count*, a number in the concept's base unit otherwise (radians for an angle, metres for a length, seconds for a time). A relationship left without a value and without a definition stops the run with a *missing input* error."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:34
+#: docs/user-guide/reference/cli.md:35
 msgid "Values print as *Concept(value)* — a truth value as `on` / `off`, a number with six significant digits — the same text Studio shows; a relationship with inputs prints as `<function>` (it is applied where it is called, not sampled); an input you set is listed as the evaluator read it, at the ticks its domain activated."
 msgstr ""
 
-#: docs/user-guide/reference/cli.md:42
+#: docs/user-guide/reference/cli.md:43
 msgid "[Project files](project-files.md) · [Textual BDL](../textual/overview.md)"
 msgstr ""
 
@@ -4853,126 +4865,126 @@ msgid "The Deploy page (⌘3) answers _does this design fit this board_. It is a
 msgstr "部署页（⌘3）回答 _这个设计能放进这块板子吗_。这是一次布置检查：对每个物理输出的设备，它会使用板子的哪些资源——或者无法布置的第一个原因。页面是一列：**目标板**弹出菜单、**结论**、**设备**，以及板子回答之后的**布置**。它还不会构建固件或烧录板子；见 [尚未实现的](#尚未实现的)。"
 
 #: docs/user-guide/studio/deploy.md:17
-msgid "The boards the compiler service knows. Today: **Arduino Nano** and **Big board (mock)**, a test target with more PWM pins. The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design."
-msgstr "编译器服务已知的板子。目前有：**Arduino Nano** 和 **Big board (mock)**——一个带更多 PWM 引脚的测试目标。板子的选择是**会话偏好**：不随项目保存，更改它永远不会改变设计。"
+msgid "The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**, the first board firmware can be generated for (`bdld compile --target rp2040_pico`, [CLI](../reference/cli.md); flashing it is not in Studio yet). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design."
+msgstr ""
 
-#: docs/user-guide/studio/deploy.md:22
+#: docs/user-guide/studio/deploy.md:24
 msgid "Until a board is chosen the page says _Choose a board to see whether this design fits it._"
 msgstr "在选择板子之前，页面显示 _选择一块板子，看这个设计能否放进去。_"
 
-#: docs/user-guide/studio/deploy.md:25
+#: docs/user-guide/studio/deploy.md:27
 msgid "Devices"
 msgstr "设备"
 
-#: docs/user-guide/studio/deploy.md:27
+#: docs/user-guide/studio/deploy.md:29
 msgid "A **device** realises one physical output on the board. **Add device** creates a row; in it you set"
 msgstr "**设备**在板子上实现一个物理输出。**添加设备**创建一行；在其中你设置"
 
-#: docs/user-guide/studio/deploy.md:30
+#: docs/user-guide/studio/deploy.md:32
 msgid "a **name**;"
 msgstr "一个**名称**；"
 
-#: docs/user-guide/studio/deploy.md:31
+#: docs/user-guide/studio/deploy.md:33
 msgid "a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;"
 msgstr "一个**种类**——_PWM 通道_（可调光灯、舵机信号）、_数字输出_（继电器、开关负载）、_H 桥通道_（电机：一条 PWM 线加一条方向线）、_I²C 传感器_、_正交编码器_、_UART_；"
 
-#: docs/user-guide/studio/deploy.md:34
+#: docs/user-guide/studio/deploy.md:36
 msgid "the **output** it realises (or none);"
 msgstr "它实现的**输出**（或者无）；"
 
-#: docs/user-guide/studio/deploy.md:35
+#: docs/user-guide/studio/deploy.md:37
 msgid "one **pin field per requirement** of the kind — leave empty to let the placement choose, or type a board pin name (`D3`, `A4`) to fix it by hand;"
 msgstr "该种类的每个需求一个**引脚栏**——留空让布置自行选择，或输入板子引脚名（`D3`、`A4`）手动固定；"
 
-#: docs/user-guide/studio/deploy.md:37
+#: docs/user-guide/studio/deploy.md:39
 msgid "**Remove**."
 msgstr "**移除**。"
 
-#: docs/user-guide/studio/deploy.md:39
+#: docs/user-guide/studio/deploy.md:41
 msgid "The kind decides what the device needs from the board (a PWM channel needs one PWM-capable pin; an H-bridge needs a PWM pin and a digital pin; an I²C sensor needs SDA and SCL on the same bus). You never edit those requirements; the pin fields and the realization are the only manual choices."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:44
+#: docs/user-guide/studio/deploy.md:46
 msgid "Realization"
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:46
+#: docs/user-guide/studio/deploy.md:48
 msgid "Once a board has answered, each device card shows a **Realization** pop-up: how the output's value becomes the command the device takes. The choices are the compiler's profiles — _PWM, 8-bit duty_ (a level 0–100 becomes a duty 0–255), _PWM, 4 levels_ (four duties; nearby levels share one), _I2C register, 8-bit_ (register 42 and a value 0–255), _GPIO, on/off_ (a truth value as written), _H-bridge, signed level_ (direction and duty) — with the ones that fit what the output carries listed first and the others marked _does not fit_. Choosing one also sets the device's kind to what the profile needs. _None — place by kind_ leaves the device placed as before and generates no command."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:56
+#: docs/user-guide/studio/deploy.md:58
 msgid "Beside the pop-up the card shows the three checks a realization must pass — **encoder** (the profile's conversion is a well-typed pure function), **fits** (it converts exactly what this output carries), **placed** (the board has the pins) — and, when one fails, the sentence that says which: _pwmLight cannot realise light with `gpio_level`: the output carries q[1] but the profile encodes bool._ A failing realization blocks deployment until changed; a missing one does not."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:64
+#: docs/user-guide/studio/deploy.md:66
 msgid "A realization is deployment data like the kind and the pins: choosing, changing or removing one changes nothing on the Design page, in the simulator's samples or in any verdict about the design."
 msgstr ""
 
-#: docs/user-guide/studio/deploy.md:68
+#: docs/user-guide/studio/deploy.md:70
 msgid "Devices are saved with the project. They are deployment data, not design data: adding, changing or removing one leaves every Design-page verdict unchanged."
 msgstr "设备随项目保存。它们是部署数据，不是设计数据：添加、更改或移除设备不会改变设计页的任何结论。"
 
-#: docs/user-guide/studio/deploy.md:71
+#: docs/user-guide/studio/deploy.md:73
 msgid "A [Source](canvas.md) — a value the environment provides — has no device binding yet: no kind on this page provides a value to the design, and the inspector's _Realization_ row says so (_Provided by the environment; no device is bound yet._). Binding a sensor, a button or an analog line to a Source is deployment work that will arrive with the first embedded platform; the design does not change when it does."
 msgstr "[来源](canvas.md)——由环境提供的值——还没有设备绑定：本页上没有任何种类会向设计供值，检查器的 _实现_ 一行也这样说明（_由环境提供；尚未绑定设备。_）。把传感器、按钮或模拟线路绑定到来源是部署工作，会随第一个嵌入式平台到来；到那时设计也不会改变。"
 
-#: docs/user-guide/studio/deploy.md:78
+#: docs/user-guide/studio/deploy.md:80
 msgid "The verdict"
 msgstr "结论"
 
-#: docs/user-guide/studio/deploy.md:80
+#: docs/user-guide/studio/deploy.md:82
 msgid "Verdict"
 msgstr "结论"
 
-#: docs/user-guide/studio/deploy.md:82
+#: docs/user-guide/studio/deploy.md:84
 msgid "**Feasible on Arduino Nano.**"
 msgstr "**可部署到 Arduino Nano。**"
 
-#: docs/user-guide/studio/deploy.md:82
+#: docs/user-guide/studio/deploy.md:84
 msgid "every device's requirements were placed on distinct pins with the right capabilities; the _Placement on …_ table lists device · requirement · → pin"
 msgstr "每个设备的需求都被放到了具备相应能力的、互不相同的引脚上；_… 上的布置_ 表格列出设备 · 需求 · → 引脚"
 
-#: docs/user-guide/studio/deploy.md:83
+#: docs/user-guide/studio/deploy.md:85
 msgid "**Fits Arduino Nano so far — the binding is not finished.**"
 msgstr "**目前能放进 Arduino Nano——绑定尚未完成。**"
 
-#: docs/user-guide/studio/deploy.md:83
+#: docs/user-guide/studio/deploy.md:85
 msgid "what is bound fits, but an output has no device (_No device on … for: …_) or a device no output (_Not connected to an output: …_)"
 msgstr "已绑定的部分能放下，但某个输出没有设备（_… 上没有对应的设备：…_）或某个设备没有输出（_未连接到输出：…_）"
 
-#: docs/user-guide/studio/deploy.md:84
+#: docs/user-guide/studio/deploy.md:86
 msgid "**Not feasible on Arduino Nano.**"
 msgstr "**无法部署到 Arduino Nano。**"
 
-#: docs/user-guide/studio/deploy.md:84
+#: docs/user-guide/studio/deploy.md:86
 msgid "one requirement could not be placed; a red box names it and why — _arduino_nano has nothing that can carry pwmLight PWM._ (no pin has the capability), _D4 cannot carry pwmLight PWM on arduino_nano._ with _The pin chosen by hand, D4, cannot carry … here._ (a pin fixed by hand), or the pins that block it, each with what holds it; _Placed before the dead end:_ lists what was placed"
 msgstr "某个需求无法布置；红框指出它和原因——_arduino_nano 上没有东西能承载 pwmLight 的 PWM。_（没有引脚具备该能力）、_在 arduino_nano 上 D4 无法承载 pwmLight 的 PWM。_ 加上 _手动选择的引脚 D4 在这里无法承载 …_（手动固定的引脚），或者阻塞它的引脚及各自被占用的原因；_死路之前已布置：_ 列出已布置的内容"
 
-#: docs/user-guide/studio/deploy.md:86
+#: docs/user-guide/studio/deploy.md:88
 msgid "The verdict is only about the board. Whether the **design** itself is ready — every relationship checks, no instantaneous cycle, every required output driven — is the Design page's business and is not restated here: a design whose formulas are wrong can still be _feasible_, and the status line at the bottom keeps showing _not causal_ or _outputs incomplete_ while you are on this page. Both have to hold before anything could run."
 msgstr "结论只关乎板子。**设计**本身是否就绪——每个关系通过检查、没有瞬时环路、每个必需输出都被驱动——是设计页的事，这里不再重述：公式错误的设计仍然可以 _可部署_，而你在本页时底部状态行仍会显示 _存在瞬时环路_ 或 _输出未完成_。两者都成立，才谈得上运行。"
 
-#: docs/user-guide/studio/deploy.md:93
+#: docs/user-guide/studio/deploy.md:95
 msgid "_Not feasible_ reports the **first dead end** the placement hit under its own order — one conflict, honestly named, not necessarily the only one."
 msgstr "_无法部署_ 报告的是布置按自身顺序遇到的**第一个死路**——一个如实指出的冲突，不一定是唯一的。"
 
-#: docs/user-guide/studio/deploy.md:96
+#: docs/user-guide/studio/deploy.md:98
 msgid "What \"feasible\" leaves out"
 msgstr "“可部署”没有涵盖的"
 
-#: docs/user-guide/studio/deploy.md:98
+#: docs/user-guide/studio/deploy.md:100
 msgid "Electrical and numeric constraints: current, voltage, PWM frequency, timer resolution, bus speed. _Feasible_ means the pins can be allocated, not that the circuit works. A later layer may narrow _feasible_; it will never widen it."
 msgstr "电气和数值约束：电流、电压、PWM 频率、定时器分辨率、总线速度。_可部署_ 意味着引脚可以分配，而不是电路能工作。以后的层可能收窄 _可部署_，但永远不会放宽它。"
 
-#: docs/user-guide/studio/deploy.md:102
+#: docs/user-guide/studio/deploy.md:104
 msgid "What is not there"
 msgstr "尚未实现的"
 
-#: docs/user-guide/studio/deploy.md:104
+#: docs/user-guide/studio/deploy.md:106
 msgid "Generating and building firmware from the Deploy page, flashing a board, and reading values back from it. The compiler can already generate a Rust core for a design and checks it trace for trace against the simulator in the repository's tests, but that path has no Studio surface yet; the roadmap in `docs/project/roadmap.md` lists it."
 msgstr "从部署页生成并构建固件、烧录板子、从板子读回值。编译器已经能为设计生成 Rust 核心，并在仓库测试中逐条轨迹地与仿真器对照检查，但这条路径在 Studio 中还没有界面；`docs/project/roadmap.md` 中的路线图列出了它。"
 
-#: docs/user-guide/studio/deploy.md:112
+#: docs/user-guide/studio/deploy.md:114
 msgid "[Your first deployment check](../getting-started/first-deployment.md) · [Physical outputs](../concepts/physical-outputs.md) · [Troubleshooting: deployment](../troubleshooting/deployment-errors.md)"
 msgstr "[你的第一次部署检查](../getting-started/first-deployment.md) · [物理输出](../concepts/physical-outputs.md) · [故障排除：部署](../troubleshooting/deployment-errors.md)"
 

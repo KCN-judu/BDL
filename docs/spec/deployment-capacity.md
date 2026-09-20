@@ -156,18 +156,20 @@ the unbounded form stays the formal construction it is.
 
 ## 6. Embedded targets: allocator, memory, failure
 
-What a list-carrying core requires of the first targets. These are **deployment
-recommendations** from the generated code's shape and the targets' documented
-memory models; no target has run a BDL core yet (roadmap priority 1).
+What a list-carrying core requires of the first targets. The RP2040 column is
+what the generated firmware does (ADR-0037,
+docs/architecture/embedded-adapter.md); the ESP32-S3 column is still a
+**deployment recommendation** from the generated code's shape and the target's
+documented memory model.
 
-| Requirement                | Host (std)                                                                                                                                                       | RP2040 / RP2350                                                                                                           | ESP32-S3                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| allocator                  | the system allocator                                                                                                                                             | a `#[global_allocator]` the firmware declares (`embedded-alloc`'s linked-list or TLSF heap over a static arena)           | `esp-alloc` over a static arena, or the PSRAM/heap the HAL exposes |
-| heap size                  | virtual memory                                                                                                                                                   | a fixed arena of the firmware's choosing; the report's `state_bytes_max` + `tick_bytes_max` is the core's floor           | the same; PSRAM on boards that have it                             |
-| out-of-memory              | abort                                                                                                                                                            | `alloc::alloc::handle_alloc_error` → panic → the firmware's panic handler (reset or halt): a fault, never a dropped value | the same                                                           |
-| ownership                  | the `State` record and one `Tick`                                                                                                                                | identical: the core owns its state and returns one `Tick` per step; nothing is shared, nothing is retained by the runtime | identical                                                          |
-| allocation per tick        | one per list a due declaration builds, one per list cell written (`cons`, `take`, folds); zero for unchanged cells and for `length`/`head`/`take`/`==`/`<` reads | the same, on the arena; bounded by the report when the design is `bounded`                                                | the same                                                           |
-| capacity growth at runtime | a `Vec` grows as its list does                                                                                                                                   | the same: a list grows to its bound and no further; an `unbounded` design is refused (`--bounded-memory`)                 | the same                                                           |
+| Requirement                | Host (std)                                                                                                                                                       | RP2040 / RP2350                                                                                                                                                                              | ESP32-S3                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| allocator                  | the system allocator                                                                                                                                             | `#[global_allocator] static HEAP` (`embedded-alloc`'s linked-list heap) over `static ARENA: StaticCell<[u8; N]>`, generated when the design is `bounded`; none for a scalar-only design      | `esp-alloc` over a static arena, or the PSRAM/heap the HAL exposes |
+| heap size                  | virtual memory                                                                                                                                                   | `N` = the report's `state_bytes_max + tick_bytes_max` rounded up to whole KiB (`manifest.adapter.arena_bytes`)                                                                               | the same; PSRAM on boards that have it                             |
+| out-of-memory              | abort                                                                                                                                                            | `alloc::alloc::handle_alloc_error` → panic → the firmware's panic handler (reset or halt): a fault, never a dropped value                                                                    | the same                                                           |
+| ownership                  | the `State` record and one `Tick`                                                                                                                                | identical: the core owns its state and returns one `Tick` per step; nothing is shared, nothing is retained by the runtime                                                                    | identical                                                          |
+| allocation per tick        | one per list a due declaration builds, one per list cell written (`cons`, `take`, folds); zero for unchanged cells and for `length`/`head`/`take`/`==`/`<` reads | the same, on the arena; bounded by the report when the design is `bounded`                                                                                                                   | the same                                                           |
+| capacity growth at runtime | a `Vec` grows as its list does                                                                                                                                   | the same: a list grows to its bound and no further; an `unbounded` or `input_bounded` design is refused for a board (`adapter.collections_unbounded`; `--target` implies `--bounded-memory`) | the same                                                           |
 
 The generated core is `no_std` and `forbid(unsafe_code)`; the allocator, the
 panic handler and the arena are the platform adapter's, outside the core.
@@ -183,9 +185,10 @@ panic handler and the arena are the platform adapter's, outside the core.
 | cross-domain buffer (the window above) | READY | READY WITH ALLOCATOR under a validated `--period` schedule      | READY WITH ALLOCATOR under a validated schedule |
 
 READY here means the generated core and its manifest carry what the adapter
-needs; "READY WITH ALLOCATOR" means the adapter must declare one; nothing has
-been flashed. `docs/project/roadmap.md` priority 1 is where this becomes
-evidence.
+needs; "READY WITH ALLOCATOR" means the firmware declares one, which the RP2040
+firmware does from the manifest's bounds; "REQUIRES CAPACITY VALIDATION" is
+refused for a board until the adapter bounds its inputs (ISS-0016). The firmware
+is cross-compiled in CI; nothing has been flashed (roadmap priority 3).
 
 ## 7. Correspondence and claims
 
@@ -195,4 +198,5 @@ evidence.
 | under sufficient capacity the bounded window equals the unbounded one           | formally proved in FV (`bounded_buffer_agrees`) for the policies as functions; production differentially tested on the bounded design across three engines |
 | every static bound holds at runtime                                             | tested implementation property (every corpus case, every tick)                                                                                             |
 | `map`/`filter`/`append`/`sum` are linear in the generated core, `zip` quadratic | performance observation (`collections_cost_measurement`, docs/evidence/testing.md)                                                                         |
-| the allocator and OOM behaviour on RP2040/ESP32-S3                              | deployment recommendation only                                                                                                                             |
+| the allocator and its size on the RP2040 follow the manifest's bounds           | tested (`the_arena_is_sized_from_the_bounds_and_an_unbounded_design_is_refused`); OOM → panic → halt is the firmware's policy, not exercised               |
+| the allocator and OOM behaviour on ESP32-S3                                     | deployment recommendation only                                                                                                                             |

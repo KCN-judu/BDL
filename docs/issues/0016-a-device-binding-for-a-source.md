@@ -4,7 +4,7 @@ state: open
 area: deployment
 opened: 2026-09-19
 resolved-by: []
-related: [ADR-0032, ADR-0015, PRP-0001]
+related: [ADR-0032, ADR-0015, ADR-0037, PRP-0001]
 ---
 
 # ISS-0016: A device binding for a Source
@@ -33,8 +33,10 @@ design would be guessed.
 
 ## Current evidence
 
-`crates/bdl-model` `Device { kind, output, pins }` — an output, never a
-declaration; `docs/spec/hardware-model.md`;
+Since ADR-0037 the RP2040 firmware refuses a design with a Source
+(`adapter.inputs_unbound`): its `Inputs` are all `None`, and a due input would
+fault the tick. `crates/bdl-model` `Device { kind, output, pins }` — an output,
+never a declaration; `docs/spec/hardware-model.md`;
 `apps/studio/lib/ui/pages/deploy_page.md` lists outputs;
 `apps/studio/lib/ui/inspector.dart` (`realizationEnvironment`); the generated
 core's input vector (`docs/architecture/codegen-rust.md`).

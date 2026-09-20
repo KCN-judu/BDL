@@ -4,7 +4,7 @@ state: open
 area: deployment
 opened: 2026-09-20
 resolved-by: []
-related: [ADR-0036, ISS-0016]
+related: [ADR-0036, ADR-0037, ISS-0016]
 ---
 
 # ISS-0017: Output realization beyond a pure encoder: stateful adapters, a device clock, atomic frames, the adapter's correspondence, a device catalogue
@@ -44,6 +44,13 @@ the records and past the three-judgment admissibility.
 `crates/bdl-output/src/realization.rs` (`purity` refuses `delay`/`sync`;
 `profiles()`), `crates/bdl-lower` (`SinkPlan` in the driver's domain),
 `docs/architecture/output-realization.md` § Not established, BDL_FV FVI-0022.
+Since ADR-0037 the first platform adapter consumes the raw commands on the
+RP2040 (`docs/architecture/embedded-adapter.md`): the adapter's correspondence
+is tested through recording sinks and a cross-build, never past the register
+write; `i2c_level8` and `hbridge_signed` are refused for the board
+(`adapter.profile_unsupported`), and the adapter applies each command
+independently — the stateful, device-clock and atomic-frame questions are
+untouched.
 
 ## Dependencies
 

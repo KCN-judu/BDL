@@ -63,22 +63,23 @@ header that `just docs-check` verifies against its folder.
 
 ### Architecture
 
-| Page                                                                          | Area             | Describes                                                                              |
-| ----------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------- |
-| [overview.md](architecture/overview.md)                                       | —                | the crates, the trust layers, the dependency direction                                 |
-| [compiler-pipeline.md](architecture/compiler-pipeline.md)                     | compiler         | every pass and its diagnostics                                                         |
-| [ir.md](architecture/ir.md)                                                   | compiler         | the intermediate representations and recorded deviations                               |
-| [executable-ir.md](architecture/executable-ir.md)                             | codegen          | slots, first-order expressions, the evaluation plan                                    |
-| [codegen-rust.md](architecture/codegen-rust.md)                               | codegen          | the owned Rust AST, printed crate, host bridge, differential tests                     |
-| [behavior-systems.md](architecture/behavior-systems.md)                       | behavior-systems | components, contracts, instances, bindings, flattening, groups — implementation design |
-| [deployment-read-model.md](architecture/deployment-read-model.md)             | deployment       | what a Deploy surface is handed                                                        |
-| [output-realization.md](architecture/output-realization.md)                   | deployment       | a logical output, a deployment-chosen profile, a pure encoder, three judgments, sinks  |
-| [ide-service.md](architecture/ide-service.md)                                 | ide              | overlays, projections, text workspaces, the LSP adapter                                |
-| [relationship-roles.md](architecture/relationship-roles.md)                   | compiler         | Source / Rule / Value: the derived role, its states, the boundary, the matrix          |
-| [syntax-highlighting.md](architecture/syntax-highlighting.md)                 | ide              | one token classifier, the LSP vocabulary, two wire forms, Studio's theme               |
-| [studio-ui.md](architecture/studio-ui.md)                                     | studio           | the design system and interaction standard of Studio                                   |
-| [studio-compiler-integration.md](architecture/studio-compiler-integration.md) | studio           | the Studio/compiler boundary and its evidence map                                      |
-| [component-boundary.md](architecture/component-boundary.md)                   | runtime          | supplied Rust computation blocks — designed, not built                                 |
+| Page                                                                          | Area             | Describes                                                                                |
+| ----------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------- |
+| [overview.md](architecture/overview.md)                                       | —                | the crates, the trust layers, the dependency direction                                   |
+| [compiler-pipeline.md](architecture/compiler-pipeline.md)                     | compiler         | every pass and its diagnostics                                                           |
+| [ir.md](architecture/ir.md)                                                   | compiler         | the intermediate representations and recorded deviations                                 |
+| [executable-ir.md](architecture/executable-ir.md)                             | codegen          | slots, first-order expressions, the evaluation plan                                      |
+| [codegen-rust.md](architecture/codegen-rust.md)                               | codegen          | the owned Rust AST, printed crate, host bridge, differential tests                       |
+| [behavior-systems.md](architecture/behavior-systems.md)                       | behavior-systems | components, contracts, instances, bindings, flattening, groups — implementation design   |
+| [deployment-read-model.md](architecture/deployment-read-model.md)             | deployment       | what a Deploy surface is handed                                                          |
+| [output-realization.md](architecture/output-realization.md)                   | deployment       | a logical output, a deployment-chosen profile, a pure encoder, three judgments, sinks    |
+| [embedded-adapter.md](architecture/embedded-adapter.md)                       | runtime          | raw commands to pads on the RP2040 over Embassy: identity, numeric policy, clocks, arena |
+| [ide-service.md](architecture/ide-service.md)                                 | ide              | overlays, projections, text workspaces, the LSP adapter                                  |
+| [relationship-roles.md](architecture/relationship-roles.md)                   | compiler         | Source / Rule / Value: the derived role, its states, the boundary, the matrix            |
+| [syntax-highlighting.md](architecture/syntax-highlighting.md)                 | ide              | one token classifier, the LSP vocabulary, two wire forms, Studio's theme                 |
+| [studio-ui.md](architecture/studio-ui.md)                                     | studio           | the design system and interaction standard of Studio                                     |
+| [studio-compiler-integration.md](architecture/studio-compiler-integration.md) | studio           | the Studio/compiler boundary and its evidence map                                        |
+| [component-boundary.md](architecture/component-boundary.md)                   | runtime          | supplied Rust computation blocks — designed, not built                                   |
 
 ### Project
 
@@ -153,19 +154,23 @@ each of its questions was answered is in the
   [architecture/output-realization.md](architecture/output-realization.md),
   consumed from FV Phase 14
   ([formal-correspondence.md](project/formal-correspondence.md)).
-- **Active work:** the first embedded platform adapter is priority 1; nothing
-  else is in progress in this repository.
-- **Recently changed:** output realization (ADR-0036, protocol 0.24 — a device
-  binding chooses a realization profile on the Deploy page; the profile's pure
-  encoder lowers the output's value to a raw command below the behavior plan;
-  admissibility is three judgments), the Source sheet (protocol 0.23 — a Source
-  is created over a concept the designer chooses, existing or new in one
-  transaction; the Standard Library's Source items are presets named _… Input_),
-  the Code view as an IDE surface (protocol 0.22 — completion, hover,
-  definition, references and _Format_ from `bdl-ide` over the text as typed),
-  semantic highlighting (ADR-0035, protocol 0.21), one derived relationship role
-  stated by the daemon (protocol 0.20, ADR-0032 amended), reference edges
-  (ADR-0034, protocol 0.18). The full list, oldest last, is
+- **Active work:** the platform adapter's remaining half (a device that provides
+  a Source's value, ISS-0016) is priority 1; nothing else is in progress in this
+  repository.
+- **Recently changed:** the first embedded platform adapter (ADR-0037 —
+  `bdld compile --target rp2040_pico` generates the Embassy firmware beside the
+  core; raw PWM and GPIO commands reach the solver-assigned pads through an
+  explicit numeric policy; cross-compiled in CI), output realization (ADR-0036,
+  protocol 0.24 — a device binding chooses a realization profile on the Deploy
+  page; the profile's pure encoder lowers the output's value to a raw command
+  below the behavior plan; admissibility is three judgments), the Source sheet
+  (protocol 0.23 — a Source is created over a concept the designer chooses,
+  existing or new in one transaction; the Standard Library's Source items are
+  presets named _… Input_), the Code view as an IDE surface (protocol 0.22 —
+  completion, hover, definition, references and _Format_ from `bdl-ide` over the
+  text as typed), semantic highlighting (ADR-0035, protocol 0.21), one derived
+  relationship role stated by the daemon (protocol 0.20, ADR-0032 amended),
+  reference edges (ADR-0034, protocol 0.18). The full list, oldest last, is
   [changes/unreleased/](changes/unreleased/); the protocol's history is
   [changes/history/protocol-versions.md](changes/history/protocol-versions.md).
 

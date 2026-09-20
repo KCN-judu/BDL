@@ -70,8 +70,8 @@ crates/
   bdl-hardware     Capability/Resource/Hardware · device → requirements · boards · solve/diagnose (→ model)
   bdl-exec-ir      executable IR: slots, first-order expressions, evaluation plan; interpreter (→ ir, reactive)
   bdl-lower        reactive lowering: DesignIr → ExecIr (clock/state/input/output slots, inlining, order) (→ exec-ir, check)
-  bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json (→ exec-ir)
-  bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact (→ elab, check, reactive, output, hardware, lower, codegen)
+  bdl-codegen-rust ExecIr → owned Rust AST → printed crate + host bridge + bdl-manifest.json; with an AdapterPlan, the adapter glue and the target firmware (→ exec-ir)
+  bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact; compile_for_target(snapshot, target, …) adds the adapter plan (→ elab, check, reactive, output, hardware, lower, codegen)
   bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · legacy system JSON reader (→ model, compiler)
   bdl-text         the project's persistence: source discovery · identity sidecar and reconciliation · load_workspace → BehaviorSystem · item-level write-back · legacy JSON migration · names are identifiers (→ model, system, syntax)
   bdl-layout       the layout service: deterministic, incremental placement of entities without a position; never semantics (→ model, system)
@@ -85,9 +85,9 @@ planned:
   bdl-component  supplied Rust component contracts (docs/architecture/component-boundary.md)
 runtime/
   bdl-runtime-core   no_std vocabulary of every generated core: ActiveDomains, ClockSlot, RuntimeError, checked numerics; feature `collections`: the list operators and the recursor over alloc::Vec (no deps)
-  bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver (→ runtime-core)
-planned:
-  bdl-runtime-embassy  first platform adapter (docs/project/roadmap.md, priority 1)
+  bdl-runtime-host   std harness: DynValue, JSON run request/trace over stdio, cargo driver, recording sinks (→ runtime-core, runtime-embassy)
+  bdl-runtime-embassy     no_std adapter vocabulary: the numeric policy at the raw command boundary, sink traits, the compiled schedule (→ runtime-core)
+  bdl-runtime-embassy-rp  the RP2040 binding over embassy-rp — outside the workspace, built only into generated firmware (docs/architecture/embedded-adapter.md)
 ```
 
 Editor integration outside the workspace: `editors/vscode` (a thin client of
@@ -150,7 +150,9 @@ that lowers representation — dense slots, static structs, `f64` fields, inline
 lambdas — and may not change meaning. The two are kept independent and compared
 trace for trace (ADR-0016, `docs/architecture/codegen-rust.md`). The core is
 target-independent and knows no board: the platform adapter that binds
-`DeploymentAnalysis`'s assignment to peripherals is a later, separate artefact.
+`DeploymentAnalysis`'s assignment to peripherals is a separate artefact
+generated beside it behind features the host never enables — the RP2040 over
+Embassy first (ADR-0037, `docs/architecture/embedded-adapter.md`).
 
 ## The compiler is a pipeline of explicit passes
 
@@ -259,8 +261,11 @@ What that means in the code today:
   may name (`DeviceBinding.realization`, ADR-0036): a pure, typed encoder
   `Rep(C) → raw` from a registry, judged apart from the board (well formed ∧
   fits ∧ placed), lowered as a machine sink _below_ the behavior plan so the
-  generated core also carries `Commands`; choosing a profile changes no analysis
-  and no sample (`docs/architecture/output-realization.md`).
+  generated core also carries `Commands`; the platform adapter applies those
+  commands to the pads the placement assigned through one explicit numeric
+  policy (`docs/architecture/embedded-adapter.md`), and the physical effect
+  begins there; choosing a profile changes no analysis and no sample
+  (`docs/architecture/output-realization.md`).
 - A Source is `s : () -> C` with no realization, a value entering the model from
   its environment (ADR-0032); what provides it at deployment — a device, a host,
   a network — is a separate, later choice (ISS-0016, PRP-0001), and the Standard
