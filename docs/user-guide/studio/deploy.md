@@ -7,7 +7,7 @@ would use — or the first reason it cannot be placed. The page is one column: t
 answered, the **Placement**. It does not build firmware or flash a board yet;
 see [What is not there](#what-is-not-there).
 
-![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../assets/studio/deploy-page.png)
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../assets/studio/deploy-page.png)
 
 _The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and
 the placement._

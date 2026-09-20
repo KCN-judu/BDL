@@ -8,7 +8,7 @@
 
 デプロイページ（⌘3）は _この設計はこのボードに収まるか_ に答えます。配置の確認です。各物理出力のデバイスがボードのどのリソースを使うか——または配置できない最初の理由。ページは 1 列で、**ターゲット**ポップアップ、**判定**、**デバイス**、そしてボードが答えたら**配置**です。ファームウェアのビルドやボードへの書き込みはまだ行いません。[まだないもの](#まだないもの) を参照。
 
-![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../../../../docs/user-guide/assets/studio/deploy-page.png)
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
 _デプロイページ：Arduino Nano を選択、light に PWM デバイス 1 つ、判定と配置。_
 
