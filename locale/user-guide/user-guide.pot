@@ -349,7 +349,7 @@ msgstr ""
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
 #: docs/user-guide/studio/canvas.md:127
-#: docs/user-guide/studio/code-view.md:104
+#: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:86
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
@@ -2768,6 +2768,7 @@ msgstr ""
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
 #: docs/user-guide/reference/keyboard-and-mouse.md:42
 #: docs/user-guide/reference/keyboard-and-mouse.md:52
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 #: docs/user-guide/studio/formula-editor.md:152
 msgid "Keys"
 msgstr ""
@@ -2775,6 +2776,7 @@ msgstr ""
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
 #: docs/user-guide/reference/keyboard-and-mouse.md:42
 #: docs/user-guide/reference/keyboard-and-mouse.md:52
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 #: docs/user-guide/studio/formula-editor.md:154
 msgid "Does"
 msgstr ""
@@ -2977,7 +2979,7 @@ msgid "Add / Save the definition"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:45
-#: docs/user-guide/reference/keyboard-and-mouse.md:55
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
 msgid "Esc"
 msgstr ""
 
@@ -2986,7 +2988,7 @@ msgid "Revert the draft; with completion open, close it first"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:46
-#: docs/user-guide/reference/keyboard-and-mouse.md:54
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
 msgid "Return"
 msgstr ""
 
@@ -2995,6 +2997,7 @@ msgid "new line"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:47
+#: docs/user-guide/reference/keyboard-and-mouse.md:54
 msgid "⌃Space"
 msgstr ""
 
@@ -3011,30 +3014,78 @@ msgid "move in the completion list · accept"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:50
-msgid "Inline rename (canvas, library rows)"
+msgid "Code view"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:54
-msgid "commit"
+msgid "completion at the caret"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:55
-msgid "keep the old name"
+msgid "↑ / ↓ · Return / Tab · Esc"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:55
+msgid "move in the completion list · accept · close it"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:56
-msgid "click elsewhere"
+msgid "rest the pointer on a name"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:56
-msgid "commit what was typed"
+msgid "its card; typing or moving away hides it"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:57
+msgid "⌘-click a name · F12"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:57
+msgid "go to where it is declared (another file opens)"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:58
+msgid "⇧F12"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:58
+msgid "list every place that names it; Esc or × closes the list"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+msgid "⌥⇧F · _Format_"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+msgid "lay the file out the canonical way, as one edit"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:61
+msgid "Inline rename (canvas, library rows)"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
+msgid "commit"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
+msgid "keep the old name"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:67
+msgid "click elsewhere"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:67
+msgid "commit what was typed"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:69
 msgid "Sheets"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:60
+#: docs/user-guide/reference/keyboard-and-mouse.md:71
 msgid "Return submits, Esc cancels; Cancel is left of the primary button."
 msgstr ""
 
@@ -4746,14 +4797,54 @@ msgid "**⌘S** writes the files exactly as the editor shows them — a file tha
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:96
-msgid "Not built yet"
+msgid "What the editor knows"
 msgstr ""
 
 #: docs/user-guide/studio/code-view.md:98
-msgid "Findings underlined in the text (the list and the cursor jump stand in); completion and hover in the editor (a code editor with the language server has them — [Editor and language server](../textual/editor-and-lsp.md)); a _Format_ command; creating a second source file from Studio (make it in a code editor; it appears on reload)."
+msgid "The editor asks Studio's compiler service the same questions a code editor with the [language server](../textual/editor-and-lsp.md) asks, about the text exactly as you have typed it."
 msgstr ""
 
-#: docs/user-guide/studio/code-view.md:106
+#: docs/user-guide/studio/code-view.md:102
+msgid "**Completion.** Press **⌃Space** and a list opens at the cursor with what can go here, best first: after a `:` the concepts, after an `@` the timing domains, at the start of a line the items allowed there, and inside a formula the inputs, the other relationships — a rule offered as a call, a Source or a value as its name — the names bound in the formula itself, the equations of the library, and after a number the units. ↑ and ↓ move, **Return** or **Tab** accept, **Esc** closes; the list narrows as you type. What is inserted is the service's text, never a guess."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:113
+msgid "_The completion pop-up inside the component's body, after `dimByTilt(`: what can go here, from the compiler service, best first._"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:116
+msgid "**Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:124
+msgid "_The hover card over `dimByTilt` where the component's body applies it: its declaration, its role, its state._"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:127
+msgid "**Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:132
+msgid "**References.** **⇧F12** on a name lists, under the editor, every place that names it, across all files, with the file and line; a row takes you there. Esc or the × closes the list. Two concepts with the same value form never share a list: the search is by identity, not by spelling."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:137
+msgid "**Format.** **⌥⇧F**, or _Format_ at the right of the file bar, lays the file out the canonical way — spacing, indentation, one blank line between items — and applies it as one edit, with the cursor kept on its line. A file that does not parse yet is left exactly as it is; fix it first."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:142
+msgid "Everything here works on the text as it stands, whether or not it builds: what the last version that built still knows is answered, and what nothing resolves gets no card and no destination, never a guess by spelling."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:146
+msgid "Not built yet"
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:148
+msgid "Findings underlined in the text (the list and the cursor jump stand in); rename from the editor (rename on the canvas, and the text follows); creating a second source file from Studio (make it in a code editor; it appears on reload)."
+msgstr ""
+
+#: docs/user-guide/studio/code-view.md:154
 msgid "[Canvas](canvas.md) · [Textual BDL](../textual/overview.md) · [Authoring a project as text](../workflows/authoring-as-text.md) · [Source files](../troubleshooting/text-project-errors.md)"
 msgstr ""
 

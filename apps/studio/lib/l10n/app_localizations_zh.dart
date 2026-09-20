@@ -1999,6 +1999,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get carriedBy => '承载于';
 
   @override
+  String get format => '格式化';
+
+  @override
+  String get formatTooltip => '按规范布局整理文件（⌥⇧F）';
+
+  @override
+  String nothingNames(String name) {
+    return '没有任何地方引用 $name。';
+  }
+
+  @override
+  String placesNaming(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 处引用了 $name');
+    return '$_temp0';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override
@@ -2396,23 +2413,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libItem_std_source_external_tags => '外部 来源 主机 网络 仿真 输入 提供';
-
-  @override
-  String get format => '格式化';
-
-  @override
-  String get formatTooltip => '按规范布局整理文件（⌥⇧F）';
-
-  @override
-  String nothingNames(String name) {
-    return '没有任何地方引用 $name。';
-  }
-
-  @override
-  String placesNaming(int count, String name) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 处引用了 $name');
-    return '$_temp0';
-  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).

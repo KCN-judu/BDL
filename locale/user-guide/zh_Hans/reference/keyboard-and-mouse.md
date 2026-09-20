@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/reference/keyboard-and-mouse.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/reference/keyboard-and-mouse.md) · 简体中文 · [日本語](../../ja/reference/keyboard-and-mouse.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 键盘与鼠标
 
@@ -47,6 +49,17 @@
 | Return | 换行 |
 | ⌃Space | 补全 |
 | ↑ / ↓ · Return / Tab | 在补全列表中移动 · 接受 |
+
+## Code view
+
+| 按键 | 作用 |
+| --- | --- |
+| ⌃Space | completion at the caret |
+| ↑ / ↓ · Return / Tab · Esc | move in the completion list · accept · close it |
+| rest the pointer on a name | its card; typing or moving away hides it |
+| ⌘-click a name · F12 | go to where it is declared (another file opens) |
+| ⇧F12 | list every place that names it; Esc or × closes the list |
+| ⌥⇧F · _Format_ | lay the file out the canonical way, as one edit |
 
 ## 内联重命名（画布、库行）
 

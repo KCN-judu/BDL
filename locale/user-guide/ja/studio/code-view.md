@@ -51,9 +51,33 @@ Because the colours come from the project, they tell you things spelling cannot:
 
 **⌘S** はファイルをエディタに表示されているとおりに書き込み——まだビルドできないファイルも含めて——次にレイアウトとサイドカーを書き込みます（[プロジェクトファイル](../reference/project-files.md)）。プロジェクトを再び開くと、同じテキストが同じバナーとともに、設計は最後にビルドできたバージョンとして表示されます。
 
+## What the editor knows
+
+The editor asks Studio's compiler service the same questions a code editor with the [language server](../../../../docs/user-guide/textual/editor-and-lsp.md) asks, about the text exactly as you have typed it.
+
+**Completion.** Press **⌃Space** and a list opens at the cursor with what can go here, best first: after a `:` the concepts, after an `@` the timing domains, at the start of a line the items allowed there, and inside a formula the inputs, the other relationships — a rule offered as a call, a Source or a value as its name — the names bound in the formula itself, the equations of the library, and after a number the units. ↑ and ↓ move, **Return** or **Tab** accept, **Esc** closes; the list narrows as you type. What is inserted is the service's text, never a guess.
+
+![A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.](../../../../docs/user-guide/assets/studio/code-completion.png)
+
+_The completion pop-up inside the component's body, after `dimByTilt(`: what can go here, from the compiler service, best first._
+
+**Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it.
+
+![A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.](../../../../docs/user-guide/assets/studio/code-hover.png)
+
+_The hover card over `dimByTilt` where the component's body applies it: its declaration, its role, its state._
+
+**Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy.
+
+**References.** **⇧F12** on a name lists, under the editor, every place that names it, across all files, with the file and line; a row takes you there. Esc or the × closes the list. Two concepts with the same value form never share a list: the search is by identity, not by spelling.
+
+**Format.** **⌥⇧F**, or _Format_ at the right of the file bar, lays the file out the canonical way — spacing, indentation, one blank line between items — and applies it as one edit, with the cursor kept on its line. A file that does not parse yet is left exactly as it is; fix it first.
+
+Everything here works on the text as it stands, whether or not it builds: what the last version that built still knows is answered, and what nothing resolves gets no card and no destination, never a guess by spelling.
+
 ## 未実装
 
-テキスト中の検出項目の下線（リストとカーソルジャンプが代わりです）。エディタ内の補完とホバー（言語サーバー付きのコードエディタにはあります——[エディタと言語サーバー](../../../../docs/user-guide/textual/editor-and-lsp.md)）。_フォーマット_ コマンド。Studio から 2 つ目のソースファイルを作ること（コードエディタで作ると、再読み込みで現れます）。
+Findings underlined in the text (the list and the cursor jump stand in); rename from the editor (rename on the canvas, and the text follows); creating a second source file from Studio (make it in a code editor; it appears on reload).
 
 ## 関連
 

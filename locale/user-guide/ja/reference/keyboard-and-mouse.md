@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/reference/keyboard-and-mouse.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/reference/keyboard-and-mouse.md) · [简体中文](../../zh_Hans/reference/keyboard-and-mouse.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # キーボードとマウス
 
@@ -47,6 +49,17 @@
 | Return | 改行 |
 | ⌃Space | 補完 |
 | ↑ / ↓ · Return / Tab | 補完リスト内を移動 · 確定 |
+
+## Code view
+
+| キー | 動作 |
+| --- | --- |
+| ⌃Space | completion at the caret |
+| ↑ / ↓ · Return / Tab · Esc | move in the completion list · accept · close it |
+| rest the pointer on a name | its card; typing or moving away hides it |
+| ⌘-click a name · F12 | go to where it is declared (another file opens) |
+| ⇧F12 | list every place that names it; Esc or × closes the list |
+| ⌥⇧F · _Format_ | lay the file out the canonical way, as one edit |
 
 ## インライン名前変更（キャンバス、ライブラリの行）
 

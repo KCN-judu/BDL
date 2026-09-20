@@ -349,6 +349,21 @@ with the legend; Studio keeps only the latest generation's answer, shifts the
 spans while typing, and maps the legend's names to a theme. No class is decided
 in Dart.
 
+The Code view's completion, hover, navigation and formatting take the same path
+(protocol 0.22): `SourceCompletion`, `SourceHover`, `SourceDefinition`,
+`SourceReferences` and `FormatSource` carry the text as typed, the daemon sets
+it as the file's overlay once per distinct text (`Session::source_snapshot`) and
+answers `completion(Document)`, `hover_at`, `definition_at`, `references_at` and
+`format_document` — the functions the language server calls for
+`textDocument/completion`, `hover`, `definition`, `references` and `formatting`.
+`bdl_ide::navigation` is the one answer to _what is at a position_: a name site
+in the projection map (the authored entity among a site's — a port over the
+flattened copies it backs — and a copy presented by its authored name), an
+equation callee inside a formula body, and, for the formula field, the
+elaborator's own input environment (`formula_name_at`), so the field's hover
+names a relationship, an equation and a parameter's concept as the Code view
+does.
+
 ### The canonical type of a relationship
 
 Hover carries `type: () -> RoomTemp` / `Angle -> Brightness` /
@@ -479,9 +494,9 @@ boundaries it answers with.
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `initialize`                           | negotiate position encoding (UTF-8 if offered, else UTF-16, else UTF-32); load the project at `initializationOptions.projectRoot` / the first workspace folder if it holds `bdl.toml`, else start empty                                                                             |
 | `didOpen` / `didChange` / `didClose`   | `host.set_text_document` / `close_text_document` (overlay)                                                                                                                                                                                                                          |
-| `textDocument/hover`                   | `entity_at` → `hover`                                                                                                                                                                                                                                                               |
-| `textDocument/definition`              | `entity_at` → `definition_of`                                                                                                                                                                                                                                                       |
-| `textDocument/references`              | `entity_at` → `references`                                                                                                                                                                                                                                                          |
+| `textDocument/hover`                   | `hover_at` (an entity's card, or an equation's words, with its range)                                                                                                                                                                                                               |
+| `textDocument/definition`              | `definition_at` (name sites, in every document of the workspace)                                                                                                                                                                                                                    |
+| `textDocument/references`              | `references_at` (reference sites, the declaration when asked)                                                                                                                                                                                                                       |
 | `textDocument/prepareRename`, `rename` | `plan_rename` → `WorkspaceEdit` (text operations; model operations are reported through `bdl/previewEdit`)                                                                                                                                                                          |
 | `textDocument/completion`              | `completion(Document { offset })` — inputs, relationships, units, keywords, and the equation library (`CompletionKind::Equation`, documented in the designer's words; a relationship of the design with the same name wins)                                                         |
 | `textDocument/diagnostic` (pull)       | `diagnostics(Document)` → `project_to_document`                                                                                                                                                                                                                                     |
@@ -555,7 +570,8 @@ Flutter + `bdld`).
 ## Performance baseline
 
 `cargo run --release -p bdl-ide --example perf_baseline` (best of N, one core,
-2026-09-15, Apple silicon; the token rows re-measured 2026-09-20):
+2026-09-15, Apple silicon; the token and document-query rows measured
+2026-09-20):
 
 | query                                      | small (3/3/1) | medium (60/80/10) | large (300/400/40) |
 | ------------------------------------------ | ------------- | ----------------- | ------------------ |
@@ -568,6 +584,10 @@ Flutter + `bdld`).
 | semantic tokens (whole document)           | 0.03 ms       | 0.50 ms           | 1.5 ms             |
 | semantic tokens → LSP data (UTF-16)        | <0.01 ms      | 0.07 ms           | 0.21 ms            |
 | formula tokens (one draft)                 | 0.01 ms       | 0.01 ms           | 0.01 ms            |
+| completion (document, formula body)        | 0.06 ms       | 0.07 ms           | 0.22 ms            |
+| hover (document)                           | 0.02 ms       | 0.14 ms           | 0.63 ms            |
+| definition / references (document)         | <0.01 ms      | <0.01 ms          | <0.01 ms           |
+| format (document)                          | 0.03 ms       | 0.28 ms           | 1.0 ms             |
 
 (concepts/mappings/outputs). Every keystroke recomputes the whole project; at
 these sizes that is well under a frame. Debug builds are roughly an order of

@@ -954,10 +954,30 @@ Dart, and the service is asked again 150 ms after typing pauses — no flicker, 
 stale colour over new text. The definition editor's field is the same controller
 and the same theme.
 
+**The editor knows the design.** The same IDE service that colours the text
+answers it (protocol 0.22, `app/code_tooling.dart`): ⌃Space opens the completion
+pop-up at the caret — the service's candidates for this spot, a rule as a call,
+a Source or a value as a name, a unit after a number, best first, ↑/↓, Return or
+Tab, Esc — the pop-up above the caret when the editor has no room below; a 250
+ms dwell over a name shows its card at the name (title, declaration, what it
+produces, its state, _role_, the description), gone on typing, not asked again
+inside the card's own span; ⌘-click or F12 goes to where the name is declared,
+in this file or another, and selects it; ⇧F12 lists every place that names it
+under the editor — file and line in tabular figures, the line's text — a row
+goes there, Esc or × closes; _Format_ in the file bar or ⌥⇧F asks for the
+canonical layout, which replaces the text as one edit with the caret kept at its
+line and column, or changes nothing when the file does not parse cleanly. The
+pop-up and the card are the formula field's (`ui/code/`); the Code view and the
+field differ in document scope and geometry only. Studio classifies, resolves
+and composes nothing: an unknown word has no card, a candidate's insertion text
+is the service's, the definition's range is the daemon's.
+
 **States.** No project: the page's empty state. Sources not yet here: _Reading
 the sources…_. Incomplete-but-valid (open faults): listed with the hollow ring,
-the graph in step. Not building: the banners and the list. Disconnected: the
-editor is read-only; the last colours stay.
+the graph in step; completion and hover still answer what the tree and the last
+build know, and _Format_ changes nothing. Not building: the banners and the
+list. Disconnected: the editor is read-only; the last colours stay; the pop-up,
+the card and _Format_ are not offered.
 
 **Saved as typed.** A save keeps the text of the editor whether or not it
 builds, and every formula draft (ADR-0030); reopening returns to it, the banners

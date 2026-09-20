@@ -572,6 +572,10 @@
   "noValueCarries": "まだ何も {concept} を運んでいません。これを生成する値も入力元もありません。",
   "ruleProducesNoValue": "{rule} はルールです。これを適用する値が {concept} を運びます。",
   "carriedBy": "運び手",
+  "format": "整形",
+  "formatTooltip": "ファイルを正規のレイアウトに整える（⌥⇧F）",
+  "nothingNames": "{name} を参照している箇所はありません。",
+  "placesNaming": "{count, plural, other{{count} 箇所が {name} を参照しています}}",
   "libItem_std_environment_temperature_name": "温度",
   "libItem_std_environment_temperature_description": "空気・部屋・モーターなど、何かがどれだけ温かいか。",
   "libItem_std_environment_temperature_tags": "温度 熱 冷たさ",
@@ -703,9 +707,5 @@
   "libItem_std_source_analog_tags": "アナログ 入力 ADC 電圧 読み値 汎用",
   "libItem_std_source_external_name": "外部値",
   "libItem_std_source_external_description": "製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力元はセンサーとは限らない。",
-  "libItem_std_source_external_tags": "外部 入力元 ホスト ネットワーク シミュレーション 入力",
-  "format": "整形",
-  "formatTooltip": "ファイルを正規のレイアウトに整える（⌥⇧F）",
-  "nothingNames": "{name} を参照している箇所はありません。",
-  "placesNaming": "{count, plural, other{{count} 箇所が {name} を参照しています}}"
+  "libItem_std_source_external_tags": "外部 入力元 ホスト ネットワーク シミュレーション 入力"
 }

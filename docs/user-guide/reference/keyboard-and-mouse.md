@@ -47,6 +47,17 @@ their shortcuts but are reached by clicking today.
 | ⌃Space | completion |
 | ↑ / ↓ · Return / Tab | move in the completion list · accept |
 
+## Code view
+
+| Keys | Does |
+| --- | --- |
+| ⌃Space | completion at the caret |
+| ↑ / ↓ · Return / Tab · Esc | move in the completion list · accept · close it |
+| rest the pointer on a name | its card; typing or moving away hides it |
+| ⌘-click a name · F12 | go to where it is declared (another file opens) |
+| ⇧F12 | list every place that names it; Esc or × closes the list |
+| ⌥⇧F · _Format_ | lay the file out the canonical way, as one edit |
+
 ## Inline rename (canvas, library rows)
 
 | Keys | Does |
