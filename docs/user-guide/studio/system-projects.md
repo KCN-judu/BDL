@@ -56,7 +56,7 @@ leads back to the system._
 | … across timing domains                                                                               | a sheet: _Carry across timing domains_ — a **Starts at** value; never an implicit transport           |
 | drag a bound input away, release on empty canvas                                                      | disconnect                                                                                            |
 | click a binding link, then ⌫                                                                          | disconnect                                                                                            |
-| ⇧-drag a box around relationships → **Group as Behavior** (inspector or right-click)                  | a behavior named _Behavior_, then renamed inline                                                      |
+| drag a box around relationships → **Group as Behavior** (inspector or right-click)                    | a behavior named _Behavior_, then renamed inline                                                      |
 | drag a relationship over an expanded region                                                           | it joins; from another region, it moves                                                               |
 | drag a relationship out of a region onto empty canvas                                                 | it leaves the behavior                                                                                |
 | drag a region's title band                                                                            | moves every member                                                                                    |

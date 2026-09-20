@@ -203,7 +203,9 @@ msgstr ""
 
 #: docs/user-guide/concepts/behavior-groups.md:29
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:88
+#: docs/user-guide/studio/canvas.md:90
+#: docs/user-guide/studio/canvas.md:110
+#: docs/user-guide/studio/canvas.md:122
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Do"
 msgstr "操作"
@@ -249,7 +251,7 @@ msgid "drag it out of the region onto empty canvas; or right-click → **Remove 
 msgstr ""
 
 #: docs/user-guide/concepts/behavior-groups.md:36
-#: docs/user-guide/reference/keyboard-and-mouse.md:36
+#: docs/user-guide/reference/keyboard-and-mouse.md:43
 #: docs/user-guide/studio/system-projects.md:63
 msgid "rename"
 msgstr "名前を変更"
@@ -349,7 +351,7 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:43
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:128
+#: docs/user-guide/studio/canvas.md:190
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:113
 #: docs/user-guide/studio/formula-editor.md:193
@@ -2795,17 +2797,17 @@ msgid "Application"
 msgstr "アプリケーション"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
-#: docs/user-guide/reference/keyboard-and-mouse.md:42
-#: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/reference/keyboard-and-mouse.md:63
+#: docs/user-guide/reference/keyboard-and-mouse.md:49
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:70
 #: docs/user-guide/studio/formula-editor.md:152
 msgid "Keys"
 msgstr "キー"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
-#: docs/user-guide/reference/keyboard-and-mouse.md:42
-#: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/reference/keyboard-and-mouse.md:63
+#: docs/user-guide/reference/keyboard-and-mouse.md:49
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:70
 #: docs/user-guide/studio/formula-editor.md:154
 msgid "Does"
 msgstr "動作"
@@ -2861,260 +2863,314 @@ msgid "Canvas"
 msgstr "キャンバス"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:88
+#: docs/user-guide/studio/canvas.md:90
+#: docs/user-guide/studio/canvas.md:110
+#: docs/user-guide/studio/canvas.md:122
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Result"
 msgstr "結果"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:90
-msgid "drag empty canvas"
-msgstr "空のキャンバスをドラッグ"
+msgid "drag empty canvas, left → right"
+msgstr "空のキャンバスを左 → 右にドラッグ"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:90
+msgid "select the nodes wholly inside (window)"
+msgstr "完全に囲まれたノードを選択（ウィンドウ）"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:25
+msgid "drag empty canvas, right → left"
+msgstr "空のキャンバスを右 → 左にドラッグ"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:25
+msgid "select the nodes inside or touched (crossing)"
+msgstr "囲まれた、または触れたノードを選択（交差）"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/studio/canvas.md:98
+msgid "⌘-drag / ⇧-drag a rectangle"
+msgstr "⌘-ドラッグ / ⇧-ドラッグで矩形"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:26
+msgid "add its nodes to the selection / remove them"
+msgstr "その中のノードを選択に加える / から外す"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:27
+msgid "middle-button drag · Space + drag · two fingers on a trackpad"
+msgstr "中ボタンドラッグ · Space + ドラッグ · トラックパッドの 2 本指"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:27
+#: docs/user-guide/studio/canvas.md:116
 msgid "pan"
 msgstr "パン"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:91
-msgid "scroll wheel / pinch"
-msgstr "スクロールホイール / ピンチ"
+#: docs/user-guide/reference/keyboard-and-mouse.md:28
+msgid "scroll wheel · pinch · ⌘ + two fingers"
+msgstr "スクロールホイール · ピンチ · ⌘ + 2 本指"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:91
+#: docs/user-guide/reference/keyboard-and-mouse.md:28
+#: docs/user-guide/studio/canvas.md:117
 msgid "zoom about the pointer"
 msgstr "ポインタを中心にズーム"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/reference/keyboard-and-mouse.md:29
 msgid "Home · ⌘0"
 msgstr "Home · ⌘0"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/reference/keyboard-and-mouse.md:29
 msgid "frame all"
 msgstr "全体を表示"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:27
+#: docs/user-guide/reference/keyboard-and-mouse.md:30
 msgid "click"
 msgstr "クリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:27
-msgid "select"
-msgstr "選択"
+#: docs/user-guide/reference/keyboard-and-mouse.md:30
+msgid "select one"
+msgstr "1 つを選択"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:28
-#: docs/user-guide/studio/canvas.md:94
+#: docs/user-guide/reference/keyboard-and-mouse.md:31
+msgid "⌘-click (Ctrl on Windows and Linux)"
+msgstr "⌘-クリック（Windows と Linux では Ctrl）"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:31
+msgid "add to / remove from the selection"
+msgstr "選択に加える / から外す"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:32
+#: docs/user-guide/studio/canvas.md:95
 msgid "⇧-click"
 msgstr "⇧-クリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:28
-msgid "add to / remove from the multi-selection"
-msgstr "複数選択に加える / から外す"
+#: docs/user-guide/reference/keyboard-and-mouse.md:32
+msgid "select the chain of connections from the active node, when there is one"
+msgstr "アクティブなノードからの接続の連鎖を選択（それが 1 本だけあるとき）"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:95
-msgid "⇧-drag on empty canvas"
-msgstr "空のキャンバスで ⇧-ドラッグ"
+#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/studio/canvas.md:99
+msgid "⌘A"
+msgstr "⌘A"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:95
-msgid "box-select"
-msgstr "矩形選択"
+#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/studio/canvas.md:99
+msgid "select every node in view"
+msgstr "表示中のすべてのノードを選択"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:30
+#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:52
+#: docs/user-guide/reference/keyboard-and-mouse.md:73
+#: docs/user-guide/studio/canvas.md:100
+msgid "Esc"
+msgstr "Esc"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:34
+msgid "cancel the gesture in progress; then clear the selection"
+msgstr "進行中の操作をキャンセル。その後は選択を解除"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:35
+msgid "← → ↑ ↓ (⇧: one point)"
+msgstr "← → ↑ ↓（⇧：1 ポイント）"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:35
+msgid "nudge the selection"
+msgstr "選択を少し動かす"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:36
 msgid "drag a node"
 msgstr "ノードをドラッグ"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:30
-msgid "move (layout only)"
-msgstr "移動（レイアウトのみ）"
+#: docs/user-guide/reference/keyboard-and-mouse.md:36
+msgid "move the selection (layout only)"
+msgstr "選択を移動（レイアウトのみ）"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:31
+#: docs/user-guide/reference/keyboard-and-mouse.md:37
+msgid "drag a concept's output socket onto an output"
+msgstr "コンセプトの出力ソケットを出力へドラッグ"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:37
+msgid "connect the relationship that drives it"
+msgstr "それを駆動する関係を接続"
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:38
 msgid "drag socket → socket"
 msgstr "ソケット → ソケットへドラッグ"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:31
+#: docs/user-guide/reference/keyboard-and-mouse.md:38
 msgid "link"
 msgstr "リンク"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:32
+#: docs/user-guide/reference/keyboard-and-mouse.md:39
 msgid "drag a connected input socket away → empty canvas"
 msgstr "接続済みの入力ソケットを引き離す → 空のキャンバス"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:32
-#: docs/user-guide/studio/canvas.md:98
+#: docs/user-guide/reference/keyboard-and-mouse.md:39
+#: docs/user-guide/studio/canvas.md:126
 #: docs/user-guide/studio/system-projects.md:57
 #: docs/user-guide/studio/system-projects.md:58
 msgid "disconnect"
 msgstr "切断"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:33
-#: docs/user-guide/studio/canvas.md:100
+#: docs/user-guide/reference/keyboard-and-mouse.md:40
+#: docs/user-guide/studio/canvas.md:128
 msgid "⌫ / Delete"
 msgstr "⌫ / Delete"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/reference/keyboard-and-mouse.md:40
 msgid "delete the selection (or disconnect a selected binding link)"
 msgstr "選択を削除（または選択中のバインディングリンクを切断）"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:41
 msgid "double-click a concept or relationship"
 msgstr "コンセプトまたは関係をダブルクリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:41
 msgid "rename in place"
 msgstr "その場で名前を変更"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:35
+#: docs/user-guide/reference/keyboard-and-mouse.md:42
 msgid "double-click an instance"
 msgstr "インスタンスをダブルクリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:35
+#: docs/user-guide/reference/keyboard-and-mouse.md:42
 msgid "open its component's source"
 msgstr "そのコンポーネントのソースを開く"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:36
+#: docs/user-guide/reference/keyboard-and-mouse.md:43
 msgid "double-click a behavior's title"
 msgstr "振る舞いのタイトルをダブルクリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:37
-#: docs/user-guide/studio/canvas.md:102
-msgid "right-click"
-msgstr "右クリック"
+#: docs/user-guide/reference/keyboard-and-mouse.md:44
+msgid "right-click · Control-click"
+msgstr "右クリック · Control-クリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:37
+#: docs/user-guide/reference/keyboard-and-mouse.md:44
 msgid "context menu"
 msgstr "コンテキストメニュー"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:38
+#: docs/user-guide/reference/keyboard-and-mouse.md:45
 msgid "drag a Library row onto the canvas"
 msgstr "ライブラリの行をキャンバスへドラッグ"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:38
+#: docs/user-guide/reference/keyboard-and-mouse.md:45
 msgid "insert a concept"
 msgstr "コンセプトを挿入"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:40
+#: docs/user-guide/reference/keyboard-and-mouse.md:47
 msgid "Formula field"
 msgstr "数式フィールド"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:44
+#: docs/user-guide/reference/keyboard-and-mouse.md:51
 msgid "⌘↩"
 msgstr "⌘↩"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:44
+#: docs/user-guide/reference/keyboard-and-mouse.md:51
 #: docs/user-guide/studio/formula-editor.md:156
 msgid "Add / Save the definition"
 msgstr "定義を追加 / 保存"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:45
-#: docs/user-guide/reference/keyboard-and-mouse.md:66
-msgid "Esc"
-msgstr "Esc"
-
-#: docs/user-guide/reference/keyboard-and-mouse.md:45
+#: docs/user-guide/reference/keyboard-and-mouse.md:52
 msgid "Revert the draft; with completion open, close it first"
 msgstr "下書きを元に戻す。補完が開いていれば先にそれを閉じる"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:46
-#: docs/user-guide/reference/keyboard-and-mouse.md:65
+#: docs/user-guide/reference/keyboard-and-mouse.md:53
+#: docs/user-guide/reference/keyboard-and-mouse.md:72
 msgid "Return"
 msgstr "Return"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:46
+#: docs/user-guide/reference/keyboard-and-mouse.md:53
 msgid "new line"
 msgstr "改行"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:47
 #: docs/user-guide/reference/keyboard-and-mouse.md:54
+#: docs/user-guide/reference/keyboard-and-mouse.md:61
 msgid "⌃Space"
 msgstr "⌃Space"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:47
+#: docs/user-guide/reference/keyboard-and-mouse.md:54
 msgid "completion"
 msgstr "補完"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:48
+#: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "↑ / ↓ · Return / Tab"
 msgstr "↑ / ↓ · Return / Tab"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:48
+#: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "move in the completion list · accept"
 msgstr "補完リスト内を移動 · 確定"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:50
+#: docs/user-guide/reference/keyboard-and-mouse.md:57
 msgid "Code view"
 msgstr "コードビュー"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:54
+#: docs/user-guide/reference/keyboard-and-mouse.md:61
 msgid "completion at the caret"
 msgstr "キャレット位置で補完"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:55
+#: docs/user-guide/reference/keyboard-and-mouse.md:62
 msgid "↑ / ↓ · Return / Tab · Esc"
 msgstr "↑ / ↓ · Return / Tab · Esc"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:55
+#: docs/user-guide/reference/keyboard-and-mouse.md:62
 msgid "move in the completion list · accept · close it"
 msgstr "補完リスト内を移動 · 確定 · 閉じる"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:56
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 msgid "rest the pointer on a name"
 msgstr "名前の上にポインタを置く"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:56
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 msgid "its card; typing or moving away hides it"
 msgstr "そのカード。入力するか離れると隠れる"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:57
+#: docs/user-guide/reference/keyboard-and-mouse.md:64
 msgid "⌘-click a name · F12"
 msgstr "名前を ⌘-クリック · F12"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:57
+#: docs/user-guide/reference/keyboard-and-mouse.md:64
 msgid "go to where it is declared (another file opens)"
 msgstr "宣言されている場所へ移動（別のファイルが開く）"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:58
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
 msgid "⇧F12"
 msgstr "⇧F12"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:58
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
 msgid "list every place that names it; Esc or × closes the list"
 msgstr "それを名指しするすべての場所を列挙。Esc か × でリストを閉じる"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
 msgid "⌥⇧F · _Format_"
 msgstr "⌥⇧F · _フォーマット_"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
 msgid "lay the file out the canonical way, as one edit"
 msgstr "ファイルを正規のレイアウトに整える、1 つの編集として"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:61
+#: docs/user-guide/reference/keyboard-and-mouse.md:68
 msgid "Inline rename (canvas, library rows)"
 msgstr "インライン名前変更（キャンバス、ライブラリの行）"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:65
+#: docs/user-guide/reference/keyboard-and-mouse.md:72
 msgid "commit"
 msgstr "確定"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:66
+#: docs/user-guide/reference/keyboard-and-mouse.md:73
 msgid "keep the old name"
 msgstr "元の名前を保つ"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:67
+#: docs/user-guide/reference/keyboard-and-mouse.md:74
 msgid "click elsewhere"
 msgstr "他の場所をクリック"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:67
+#: docs/user-guide/reference/keyboard-and-mouse.md:74
 msgid "commit what was typed"
 msgstr "入力した内容を確定"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:69
+#: docs/user-guide/reference/keyboard-and-mouse.md:76
 msgid "Sheets"
 msgstr "シート"
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:71
+#: docs/user-guide/reference/keyboard-and-mouse.md:78
 msgid "Return submits, Esc cancels; Cancel is left of the primary button."
 msgstr "Return で送信、Esc でキャンセル。キャンセルは主ボタンの左にあります。"
 
@@ -4606,102 +4662,218 @@ msgid "Every node has a place. A node you did not place — one made in the Code
 msgstr "すべてのノードに場所があります。あなたが配置していないノード——コードビューやコードエディタで作られたもの、古いプロジェクトの初回オープンで生じたもの——は自動で配置されます。その種類の列（左にコンセプト、中央に関係、右に出力）で、読み取るもの・生成するものの横、すでにあるものの下に。あなたが配置したものは動きません。好きな場所にドラッグしてください（[設計・コード・分割](code-view.md)）。"
 
 #: docs/user-guide/studio/canvas.md:86
-msgid "Gestures"
-msgstr "ジェスチャ"
+msgid "Selecting"
+msgstr "選択する"
+
+#: docs/user-guide/studio/canvas.md:88
+msgid "The canvas selects the way desktop CAD tools do."
+msgstr "キャンバスはデスクトップ CAD ツールと同じやり方で選択します。"
 
 #: docs/user-guide/studio/canvas.md:92
-msgid "Home, or ⌘0"
-msgstr "Home または ⌘0"
-
-#: docs/user-guide/studio/canvas.md:92
-msgid "frame the whole design"
-msgstr "設計全体を表示"
-
-#: docs/user-guide/studio/canvas.md:93
 msgid "click a node"
 msgstr "ノードをクリック"
 
+#: docs/user-guide/studio/canvas.md:92
+msgid "select it alone (the inspector follows); clicking a node that is already part of a selection keeps the selection and makes it the active one"
+msgstr "それだけを選択する（インスペクターが追従）。すでに選択に含まれるノードをクリックすると選択は保たれ、そのノードがアクティブになる"
+
 #: docs/user-guide/studio/canvas.md:93
-msgid "select it (the inspector follows)"
-msgstr "選択する（インスペクターが追従）"
+msgid "click empty canvas"
+msgstr "空のキャンバスをクリック"
+
+#: docs/user-guide/studio/canvas.md:93
+msgid "clear the selection"
+msgstr "選択を解除する"
 
 #: docs/user-guide/studio/canvas.md:94
-msgid "add to / remove from a multi-selection"
-msgstr "複数選択に加える / から外す"
+msgid "⌘-click (Ctrl-click on Windows and Linux)"
+msgstr "⌘-クリック（Windows と Linux では Ctrl-クリック）"
+
+#: docs/user-guide/studio/canvas.md:94
+msgid "add a node to the selection, or remove one that is in it"
+msgstr "ノードを選択に加える。すでに含まれていれば外す"
+
+#: docs/user-guide/studio/canvas.md:95
+msgid "select the chain of connections from the active node to this one — when there is exactly one; otherwise the node is added on its own"
+msgstr "アクティブなノードからこのノードまでの接続の連鎖を選択する——それがちょうど 1 本あるとき。そうでなければこのノードだけが加わる"
 
 #: docs/user-guide/studio/canvas.md:96
-msgid "drag a node body"
-msgstr "ノード本体をドラッグ"
+msgid "drag on empty canvas from **left to right**"
+msgstr "空のキャンバスで**左から右へ**ドラッグ"
 
 #: docs/user-guide/studio/canvas.md:96
-msgid "move it; released, the position is saved (not a design change)"
-msgstr "移動する。離すと位置が保存される（設計の変更ではない）"
+msgid "a **window**: every node wholly inside the rectangle is selected (solid outline)"
+msgstr "**ウィンドウ**：矩形に完全に含まれるノードがすべて選択される（実線の枠）"
 
 #: docs/user-guide/studio/canvas.md:97
+msgid "drag on empty canvas from **right to left**"
+msgstr "空のキャンバスで**右から左へ**ドラッグ"
+
+#: docs/user-guide/studio/canvas.md:97
+msgid "a **crossing**: every node inside _or touched_ by the rectangle is selected (dashed outline); up or down makes no difference"
+msgstr "**交差**：矩形に含まれる、_または触れた_ ノードがすべて選択される（破線の枠）。上下の向きは関係ない"
+
+#: docs/user-guide/studio/canvas.md:98
+msgid "add the rectangle's nodes to the selection / remove them from it (a `+` or `−` beside the pointer); the nodes show what will happen before you let go"
+msgstr "矩形内のノードを選択に加える / から外す（ポインターの横に `+` または `−`）。離す前にノードが結果を示す"
+
+#: docs/user-guide/studio/canvas.md:100
+msgid "cancel what is in progress — a rectangle, a move, a link; with nothing in progress, clear the selection"
+msgstr "進行中のもの——矩形、移動、リンク——をキャンセルする。何も進行していなければ選択を解除する"
+
+#: docs/user-guide/studio/canvas.md:102
+msgid "The selected nodes are outlined in the accent colour; when several are selected the _active_ one — the one you clicked last, the one the inspector shows first — wears a second ring around it. The Project sidebar selects the same way: a click for one row, ⌘-click to add or remove, ⇧-click for every row between the active one and it."
+msgstr "選択されたノードはアクセントカラーで縁取られます。複数を選択しているとき、_アクティブ_ なノード——最後にクリックしたもの、インスペクターが最初に示すもの——には二重目の輪が付きます。プロジェクトサイドバーも同じやり方で選択します。クリックで 1 行、⌘-クリックで加える／外す、⇧-クリックでアクティブな行からその行までのすべて。"
+
+#: docs/user-guide/studio/canvas.md:108
+msgid "Moving and looking around"
+msgstr "移動と表示"
+
+#: docs/user-guide/studio/canvas.md:112
+msgid "drag a selected node"
+msgstr "選択中のノードをドラッグ"
+
+#: docs/user-guide/studio/canvas.md:112
+msgid "the whole selection moves together, keeping its spacing; released, the positions are saved (not a design change)"
+msgstr "選択全体が間隔を保ったまま一緒に動く。離すと位置が保存される（設計の変更ではない）"
+
+#: docs/user-guide/studio/canvas.md:113
+msgid "drag an unselected node"
+msgstr "選択されていないノードをドラッグ"
+
+#: docs/user-guide/studio/canvas.md:113
+msgid "it becomes the selection and moves"
+msgstr "それが選択になり、動く"
+
+#: docs/user-guide/studio/canvas.md:114
+msgid "drag a behavior's title band"
+msgstr "振る舞いのタイトルバンドをドラッグ"
+
+#: docs/user-guide/studio/canvas.md:114
+msgid "its relationships move"
+msgstr "その関係が動く"
+
+#: docs/user-guide/studio/canvas.md:115
+msgid "← → ↑ ↓"
+msgstr "← → ↑ ↓"
+
+#: docs/user-guide/studio/canvas.md:115
+msgid "nudge the selection one grid step; with ⇧, one point"
+msgstr "選択をグリッド 1 段だけ動かす。⇧ で 1 ポイント"
+
+#: docs/user-guide/studio/canvas.md:116
+msgid "middle-button drag, Space + drag, two fingers on a trackpad"
+msgstr "中ボタンドラッグ、Space + ドラッグ、トラックパッドの 2 本指"
+
+#: docs/user-guide/studio/canvas.md:117
+msgid "scroll wheel, pinch, ⌘ + two fingers"
+msgstr "スクロールホイール、ピンチ、⌘ + 2 本指"
+
+#: docs/user-guide/studio/canvas.md:118
+msgid "Home, or ⌘0"
+msgstr "Home または ⌘0"
+
+#: docs/user-guide/studio/canvas.md:118
+msgid "frame the whole design"
+msgstr "設計全体を表示"
+
+#: docs/user-guide/studio/canvas.md:120
+msgid "Connecting"
+msgstr "接続する"
+
+#: docs/user-guide/studio/canvas.md:124
 msgid "drag from an output socket to an input socket"
 msgstr "出力ソケットから入力ソケットへドラッグ"
 
-#: docs/user-guide/studio/canvas.md:97
+#: docs/user-guide/studio/canvas.md:124
 msgid "make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor"
 msgstr "リンクを作る。ドラッグ中、受け入れられるすべてのソケットにハローが、互換性のないソケットには禁止カーソルが表示される"
 
-#: docs/user-guide/studio/canvas.md:98
+#: docs/user-guide/studio/canvas.md:125
+msgid "drag a **concept**'s output socket onto an **output** that accepts it"
+msgstr "**コンセプト**の出力ソケットを、それを受け付ける**出力**へドラッグ"
+
+#: docs/user-guide/studio/canvas.md:125
+msgid "connect the relationship that provides the concept as the output's driver (below)"
+msgstr "そのコンセプトを提供する関係を出力の駆動元として接続する（下記）"
+
+#: docs/user-guide/studio/canvas.md:126
 msgid "drag from a connected input socket away, release on empty canvas"
 msgstr "接続済みの入力ソケットから引き離し、空のキャンバスで離す"
 
-#: docs/user-guide/studio/canvas.md:99
+#: docs/user-guide/studio/canvas.md:127
 msgid "drop a dragged link on empty canvas"
 msgstr "ドラッグ中のリンクを空のキャンバスに落とす"
 
-#: docs/user-guide/studio/canvas.md:99
+#: docs/user-guide/studio/canvas.md:127
 msgid "nothing (no node is created)"
 msgstr "何も起きない（ノードは作られない）"
 
-#: docs/user-guide/studio/canvas.md:100
-msgid "delete the selection; a concept in use is refused with a banner naming its users"
-msgstr "選択を削除する。使用中のコンセプトは使用者を挙げたバナーとともに拒否される"
+#: docs/user-guide/studio/canvas.md:128
+msgid "delete the selection — several objects at once; if one of them is still used by something outside the selection, nothing is deleted and a banner says what"
+msgstr "選択を削除する——複数のオブジェクトを一度に。そのうちの 1 つが選択の外からまだ使われていれば何も削除されず、バナーが理由を述べる"
 
-#: docs/user-guide/studio/canvas.md:101
+#: docs/user-guide/studio/canvas.md:129
 msgid "double-click a concept or relationship node"
 msgstr "コンセプトまたは関係ノードをダブルクリック"
 
-#: docs/user-guide/studio/canvas.md:101
+#: docs/user-guide/studio/canvas.md:129
 msgid "rename in place (an output is renamed in the inspector; an instance opens its source)"
 msgstr "その場で名前を変更する（出力はインスペクターで名前を変更。インスタンスはソースを開く）"
 
-#: docs/user-guide/studio/canvas.md:102
+#: docs/user-guide/studio/canvas.md:130
+msgid "right-click, or Control-click"
+msgstr "右クリック、または Control-クリック"
+
+#: docs/user-guide/studio/canvas.md:130
 msgid "the context menu (below)"
 msgstr "コンテキストメニュー（下記）"
 
-#: docs/user-guide/studio/canvas.md:103
+#: docs/user-guide/studio/canvas.md:131
 msgid "drag a row from the Library tab onto the canvas"
 msgstr "ライブラリタブの行をキャンバスへドラッグ"
 
-#: docs/user-guide/studio/canvas.md:103
+#: docs/user-guide/studio/canvas.md:131
 msgid "insert that concept at the drop point; its name opens for editing"
 msgstr "そのコンセプトを落とした位置に挿入する。名前が編集状態で開く"
 
-#: docs/user-guide/studio/canvas.md:107
+#: docs/user-guide/studio/canvas.md:133
+msgid "**Driving an output from its concept.** An output is driven by a relationship — a value or a Source that produces exactly what the output accepts, in the output's timing domain — and never by a concept itself. You do not have to find that relationship first: drag the concept's output socket onto the output. When one relationship can drive it, it is connected at once. When several can, a small menu names them (_Drive with brightness_, _Drive with dimmer_) and you choose; nothing is chosen for you. When none can, the menu says so — _Servo accepts ServoPosition, but no current relationship can drive it_ — and offers the output in the inspector. An output that is already driven is offered a replacement (_Replace lifted with rest_): the old driver lets go, then the new one connects, and the output never has two drivers in between. The edge on the canvas still runs from the driving relationship — that is what drives the output — and the output's context menu names it (_Show Driver: brightness_)."
+msgstr "**コンセプトから出力を駆動する。** 出力は関係——出力が受け付けるものをちょうど生成する値または入力元で、出力のタイミングドメインにあるもの——によって駆動され、コンセプト自体が駆動することはありません。その関係を先に探す必要はありません。コンセプトの出力ソケットを出力へドラッグしてください。駆動できる関係が 1 つなら、すぐに接続されます。複数あれば小さなメニューがそれらを名前で示し（_brightness で駆動_、_dimmer で駆動_）、あなたが選びます。勝手には選ばれません。1 つもなければメニューがそう述べ——_Servo は ServoPosition を受け付けますが、それを駆動できる関係が今はありません。_——インスペクターで出力を示します。すでに駆動されている出力には置き換えが提案されます（_lifted を rest に置き換え_）。古い駆動元が離れ、次に新しいものが接続され、その間に出力が 2 つの駆動元を持つことはありません。キャンバスのエッジは引き続き駆動する関係から伸びます——出力を駆動しているのはそれです——出力のコンテキストメニューもそれを名指しします（_駆動元を表示：brightness_）。"
+
+#: docs/user-guide/studio/canvas.md:149
 msgid "The context menu"
 msgstr "コンテキストメニュー"
 
-#: docs/user-guide/studio/canvas.md:109
-msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**."
-msgstr "空のキャンバスで：**コンセプトを追加 ▸** — _最近_、_入力_、_出力_、よく使う三つのカテゴリー、_その他…_（ライブラリタブを開く）；**入力元を追加 ▸** — _新しい入力元…_ とプリセット（_温度入力_、_傾き入力_ …）。どれも[入力元シート](library.md#sources)を開き、そこで入力元が提供するコンセプト（既存のもの、または一緒に作る新しいもの）を選びます；**インスタンスを追加 ▸** _コンポーネント_ と**新しい振る舞いグループ**。"
+#: docs/user-guide/studio/canvas.md:151
+msgid "The menu is about what you right-clicked, and only that. While it is open the canvas waits: nothing behind the menu moves, scrolls or lights up; the first click outside closes it and does nothing else; a right-click somewhere else moves it there. Use ↑ ↓ ⏎ and Esc as in any menu."
+msgstr "メニューは右クリックしたものについてだけです。開いている間、キャンバスは待ちます。メニューの後ろでは何も動かず、スクロールせず、光りません。外側での最初のクリックはメニューを閉じるだけで、他には何もしません。別の場所で右クリックすればそこへ移ります。↑ ↓ ⏎ と Esc は他のメニューと同じです。"
 
-#: docs/user-guide/studio/canvas.md:116
-msgid "On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**, **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a behavior, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
-msgstr "ノード上で：**名前を変更**、**削除**。関係ではさらに**振る舞いとしてグループ化**、**グループに追加 ▸**、**… から外す**。インスタンスでは**ソースを編集**。振る舞いでは**折りたたむ** / **展開**、**再利用可能なコンポーネントとしてパッケージ化…**、**グループ解除**。"
+#: docs/user-guide/studio/canvas.md:156
+msgid "On **empty canvas**: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**."
+msgstr "**空のキャンバス**で：**コンセプトを追加 ▸** — _最近_、_入力_、_出力_、よく使う三つのカテゴリー、_その他…_（ライブラリタブを開く）；**入力元を追加 ▸** — _新しい入力元…_ とプリセット（_温度入力_、_傾き入力_ …）。どれも[入力元シート](library.md#sources)を開き、そこで入力元が提供するコンセプト（既存のもの、または一緒に作る新しいもの）を選びます；**インスタンスを追加 ▸** _コンポーネント_ と**新しい振る舞いグループ**；続いて**すべて選択**と**全体を表示**。"
 
-#: docs/user-guide/studio/canvas.md:121
+#: docs/user-guide/studio/canvas.md:163
+msgid "On a **relationship**: **Edit Definition** (not for a Source — the environment provides its value), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**."
+msgstr "**関係**で：**定義を編集**（入力元にはない——その値は環境が与える）、**名前を変更**、**コードで表示**（分割ビューがその宣言の位置で開く）；**修正 ▸** — コンパイラーがそれに提示する修正で、インスペクターの「修正」セクションと同じ。すぐ実行できる修正は実行され、選択が必要なものは選択肢を列挙し、言語がまだ表現できないものは理由付きでグレー表示される；続いて**振る舞いとしてグループ化**、**グループに追加 ▸** または **… から外す**；そして **_名前_ を削除**。"
+
+#: docs/user-guide/studio/canvas.md:171
+msgid "On a **concept**: **Rename**, **Reveal in Code**, **Fix ▸**, **Delete _name_**. On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**: **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding** for a binding between components). On an **instance**: **Edit Source**, **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**: **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
+msgstr "**コンセプト**で：**名前を変更**、**コードで表示**、**修正 ▸**、**_名前_ を削除**。**出力**で：**駆動元を表示：_名前_**、**名前を変更**、**コードで表示**、**修正 ▸**（値を接続、駆動元を切断）、**_名前_ を削除**。**リンク**で：**_一方の端_ を表示**、**_もう一方_ を表示**、**切断**（コンポーネント間のバインディングでは**バインディングを表示**も）。**インスタンス**で：**ソースを編集**、**名前を変更**、**コードで表示**、**_名前_ を削除**。**振る舞い**で：**名前を変更**、**折りたたむ** / **展開**、**再利用可能なコンポーネントとしてパッケージ化…**、**グループ解除**。"
+
+#: docs/user-guide/studio/canvas.md:180
+msgid "On one of **several selected nodes**: the menu is about all of them — **Group as Behavior (_n_ relationships)** and **Delete _n_ objects**."
+msgstr "**複数の選択ノード**の 1 つで：メニューはそれら全体についてです——**振る舞いとしてグループ化（_n_ 個の関係）**と **_n_ 個のオブジェクトを削除**。"
+
+#: docs/user-guide/studio/canvas.md:183
 msgid "What the canvas never shows"
 msgstr "キャンバスが決して示さないもの"
 
-#: docs/user-guide/studio/canvas.md:123
+#: docs/user-guide/studio/canvas.md:185
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its reference links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
 msgstr "下書きの数式（入力しただけで追加していない数式はキャンバス上の何も変えません——参照リンクも変わりません。ステータス行が数えます）、値（シミュレートページにあります）、関係が自身の前回の値を覚えていること（`delay` はリンクを描きません）、識別子や型名（説明にあります）。"
 
-#: docs/user-guide/studio/canvas.md:130
+#: docs/user-guide/studio/canvas.md:192
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[ワークスペース](workspace.md) · [インスペクター](inspector.md) · [システムプロジェクト](system-projects.md) · [キーボードとマウス](../reference/keyboard-and-mouse.md)"
 
@@ -5817,7 +5989,7 @@ msgid "click a binding link, then ⌫"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:59
-msgid "⇧-drag a box around relationships → **Group as Behavior** (inspector or right-click)"
+msgid "drag a box around relationships → **Group as Behavior** (inspector or right-click)"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:59
@@ -8114,7 +8286,7 @@ msgid "**Needs** a project with a few relationships — the lamp of [Your first 
 msgstr ""
 
 #: docs/user-guide/workflows/grouping-behavior.md:14
-msgid "**Select the members.** ⇧-drag a box around `dimByTilt` and `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2 relationships as Behavior**, with a note that they read each other."
+msgid "**Select the members.** Drag a box, left to right, around `dimByTilt` and `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2 relationships as Behavior**, with a note that they read each other."
 msgstr ""
 
 #: docs/user-guide/workflows/grouping-behavior.md:17

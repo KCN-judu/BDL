@@ -11,9 +11,9 @@ built in the [tests](../VERIFICATION.md): `raw` → `tiltValue` → `dimByTilt` 
 
 ## Steps
 
-1. **Select the members.** ⇧-drag a box around `dimByTilt` and `brightness` on
-   the canvas. The inspector shows _2 selected_ and **Group 2 relationships as
-   Behavior**, with a note that they read each other.
+1. **Select the members.** Drag a box, left to right, around `dimByTilt` and
+   `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2
+   relationships as Behavior**, with a note that they read each other.
 2. **Group.** Click it (or right-click → **Group as Behavior**). A region named
    _Behavior_ surrounds the two nodes and its name opens for editing: type
    `Adaptive lamp`, Return.

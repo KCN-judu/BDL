@@ -83,40 +83,102 @@ column of its kind (concepts left, relationships in the middle, outputs right),
 beside what it reads or produces, below anything already there. Nothing you
 placed moves; drag it where you like ([Design, Code and Split](code-view.md)).
 
-## Gestures
+## Selecting
 
-| Do                                                               | Result                                                                                                                 |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| drag empty canvas                                                | pan                                                                                                                    |
-| scroll wheel / pinch                                             | zoom about the pointer                                                                                                 |
-| Home, or ⌘0                                                      | frame the whole design                                                                                                 |
-| click a node                                                     | select it (the inspector follows)                                                                                      |
-| ⇧-click                                                          | add to / remove from a multi-selection                                                                                 |
-| ⇧-drag on empty canvas                                           | box-select                                                                                                             |
-| drag a node body                                                 | move it; released, the position is saved (not a design change)                                                         |
-| drag from an output socket to an input socket                    | make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor |
-| drag from a connected input socket away, release on empty canvas | disconnect                                                                                                             |
-| drop a dragged link on empty canvas                              | nothing (no node is created)                                                                                           |
-| ⌫ / Delete                                                       | delete the selection; a concept in use is refused with a banner naming its users                                       |
-| double-click a concept or relationship node                      | rename in place (an output is renamed in the inspector; an instance opens its source)                                  |
-| right-click                                                      | the context menu (below)                                                                                               |
-| drag a row from the Library tab onto the canvas                  | insert that concept at the drop point; its name opens for editing                                                      |
+The canvas selects the way desktop CAD tools do.
+
+| Do                                          | Result                                                                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| click a node                                | select it alone (the inspector follows); clicking a node that is already part of a selection keeps the selection and makes it the active one          |
+| click empty canvas                          | clear the selection                                                                                                                                   |
+| ⌘-click (Ctrl-click on Windows and Linux)   | add a node to the selection, or remove one that is in it                                                                                              |
+| ⇧-click                                     | select the chain of connections from the active node to this one — when there is exactly one; otherwise the node is added on its own                  |
+| drag on empty canvas from **left to right** | a **window**: every node wholly inside the rectangle is selected (solid outline)                                                                      |
+| drag on empty canvas from **right to left** | a **crossing**: every node inside _or touched_ by the rectangle is selected (dashed outline); up or down makes no difference                          |
+| ⌘-drag / ⇧-drag a rectangle                 | add the rectangle's nodes to the selection / remove them from it (a `+` or `−` beside the pointer); the nodes show what will happen before you let go |
+| ⌘A                                          | select every node in view                                                                                                                             |
+| Esc                                         | cancel what is in progress — a rectangle, a move, a link; with nothing in progress, clear the selection                                               |
+
+The selected nodes are outlined in the accent colour; when several are selected
+the _active_ one — the one you clicked last, the one the inspector shows first —
+wears a second ring around it. The Project sidebar selects the same way: a click
+for one row, ⌘-click to add or remove, ⇧-click for every row between the active
+one and it.
+
+## Moving and looking around
+
+| Do                                                          | Result                                                                                                           |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| drag a selected node                                        | the whole selection moves together, keeping its spacing; released, the positions are saved (not a design change) |
+| drag an unselected node                                     | it becomes the selection and moves                                                                               |
+| drag a behavior's title band                                | its relationships move                                                                                           |
+| ← → ↑ ↓                                                     | nudge the selection one grid step; with ⇧, one point                                                             |
+| middle-button drag, Space + drag, two fingers on a trackpad | pan                                                                                                              |
+| scroll wheel, pinch, ⌘ + two fingers                        | zoom about the pointer                                                                                           |
+| Home, or ⌘0                                                 | frame the whole design                                                                                           |
+
+## Connecting
+
+| Do                                                                    | Result                                                                                                                                                     |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| drag from an output socket to an input socket                         | make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor                                     |
+| drag a **concept**'s output socket onto an **output** that accepts it | connect the relationship that provides the concept as the output's driver (below)                                                                          |
+| drag from a connected input socket away, release on empty canvas      | disconnect                                                                                                                                                 |
+| drop a dragged link on empty canvas                                   | nothing (no node is created)                                                                                                                               |
+| ⌫ / Delete                                                            | delete the selection — several objects at once; if one of them is still used by something outside the selection, nothing is deleted and a banner says what |
+| double-click a concept or relationship node                           | rename in place (an output is renamed in the inspector; an instance opens its source)                                                                      |
+| right-click, or Control-click                                         | the context menu (below)                                                                                                                                   |
+| drag a row from the Library tab onto the canvas                       | insert that concept at the drop point; its name opens for editing                                                                                          |
+
+**Driving an output from its concept.** An output is driven by a relationship —
+a value or a Source that produces exactly what the output accepts, in the
+output's timing domain — and never by a concept itself. You do not have to find
+that relationship first: drag the concept's output socket onto the output. When
+one relationship can drive it, it is connected at once. When several can, a
+small menu names them (_Drive with brightness_, _Drive with dimmer_) and you
+choose; nothing is chosen for you. When none can, the menu says so — _Servo
+accepts ServoPosition, but no current relationship can drive it_ — and offers
+the output in the inspector. An output that is already driven is offered a
+replacement (_Replace lifted with rest_): the old driver lets go, then the new
+one connects, and the output never has two drivers in between. The edge on the
+canvas still runs from the driving relationship — that is what drives the output
+— and the output's context menu names it (_Show Driver: brightness_).
 
 <!-- figure F7: a link in mid-drag with the halo — pending, see SCREENSHOT_PLAN.md -->
 
 ## The context menu
 
-On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most
-common categories, _More…_ (which opens the Library tab); **Add Source ▸** —
-_New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each
+The menu is about what you right-clicked, and only that. While it is open the
+canvas waits: nothing behind the menu moves, scrolls or lights up; the first
+click outside closes it and does nothing else; a right-click somewhere else
+moves it there. Use ↑ ↓ ⏎ and Esc as in any menu.
+
+On **empty canvas**: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three
+most common categories, _More…_ (which opens the Library tab); **Add Source ▸**
+— _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each
 opening the [Source sheet](library.md#sources), where you choose the concept the
 Source provides — an existing one, or a new one made with it; **Add Instance ▸**
-_component_ and **New Behavior Group**.
+_component_ and **New Behavior Group**; then **Select All** and **Frame All**.
 
-On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**,
-**Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a
-behavior, **Collapse** / **Expand**, **Package as Reusable Component…**,
+On a **relationship**: **Edit Definition** (not for a Source — the environment
+provides its value), **Rename**, **Reveal in Code** (the Split view opens at its
+declaration); **Fix ▸** — the fixes the compiler offers for it, as in the
+inspector's Fixes section: a ready fix runs, one that needs a choice lists the
+choices, one the language cannot express yet is shown greyed with the reason;
+then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and
+**Delete _name_**.
+
+On a **concept**: **Rename**, **Reveal in Code**, **Fix ▸**, **Delete _name_**.
+On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix
+▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**:
+**Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding**
+for a binding between components). On an **instance**: **Edit Source**,
+**Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**:
+**Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**,
 **Ungroup**.
+
+On one of **several selected nodes**: the menu is about all of them — **Group as
+Behavior (_n_ relationships)** and **Delete _n_ objects**.
 
 ## What the canvas never shows
 

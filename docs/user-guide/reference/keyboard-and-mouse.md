@@ -21,20 +21,27 @@ their shortcuts but are reached by clicking today.
 
 | Do | Result |
 | --- | --- |
-| drag empty canvas | pan |
-| scroll wheel / pinch | zoom about the pointer |
+| drag empty canvas, left → right | select the nodes wholly inside (window) |
+| drag empty canvas, right → left | select the nodes inside or touched (crossing) |
+| ⌘-drag / ⇧-drag a rectangle | add its nodes to the selection / remove them |
+| middle-button drag · Space + drag · two fingers on a trackpad | pan |
+| scroll wheel · pinch · ⌘ + two fingers | zoom about the pointer |
 | Home · ⌘0 | frame all |
-| click | select |
-| ⇧-click | add to / remove from the multi-selection |
-| ⇧-drag on empty canvas | box-select |
-| drag a node | move (layout only) |
+| click | select one |
+| ⌘-click (Ctrl on Windows and Linux) | add to / remove from the selection |
+| ⇧-click | select the chain of connections from the active node, when there is one |
+| ⌘A | select every node in view |
+| Esc | cancel the gesture in progress; then clear the selection |
+| ← → ↑ ↓ (⇧: one point) | nudge the selection |
+| drag a node | move the selection (layout only) |
+| drag a concept's output socket onto an output | connect the relationship that drives it |
 | drag socket → socket | link |
 | drag a connected input socket away → empty canvas | disconnect |
 | ⌫ / Delete | delete the selection (or disconnect a selected binding link) |
 | double-click a concept or relationship | rename in place |
 | double-click an instance | open its component's source |
 | double-click a behavior's title | rename |
-| right-click | context menu |
+| right-click · Control-click | context menu |
 | drag a Library row onto the canvas | insert a concept |
 
 ## Formula field

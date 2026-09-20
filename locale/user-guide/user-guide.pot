@@ -202,7 +202,9 @@ msgstr ""
 
 #: docs/user-guide/concepts/behavior-groups.md:29
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:88
+#: docs/user-guide/studio/canvas.md:90
+#: docs/user-guide/studio/canvas.md:110
+#: docs/user-guide/studio/canvas.md:122
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Do"
 msgstr ""
@@ -248,7 +250,7 @@ msgid "drag it out of the region onto empty canvas; or right-click → **Remove 
 msgstr ""
 
 #: docs/user-guide/concepts/behavior-groups.md:36
-#: docs/user-guide/reference/keyboard-and-mouse.md:36
+#: docs/user-guide/reference/keyboard-and-mouse.md:43
 #: docs/user-guide/studio/system-projects.md:63
 msgid "rename"
 msgstr ""
@@ -348,7 +350,7 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:43
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:128
+#: docs/user-guide/studio/canvas.md:190
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:113
 #: docs/user-guide/studio/formula-editor.md:193
@@ -2794,17 +2796,17 @@ msgid "Application"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
-#: docs/user-guide/reference/keyboard-and-mouse.md:42
-#: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/reference/keyboard-and-mouse.md:63
+#: docs/user-guide/reference/keyboard-and-mouse.md:49
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:70
 #: docs/user-guide/studio/formula-editor.md:152
 msgid "Keys"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:9
-#: docs/user-guide/reference/keyboard-and-mouse.md:42
-#: docs/user-guide/reference/keyboard-and-mouse.md:52
-#: docs/user-guide/reference/keyboard-and-mouse.md:63
+#: docs/user-guide/reference/keyboard-and-mouse.md:49
+#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:70
 #: docs/user-guide/studio/formula-editor.md:154
 msgid "Does"
 msgstr ""
@@ -2860,260 +2862,314 @@ msgid "Canvas"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:22
-#: docs/user-guide/studio/canvas.md:88
+#: docs/user-guide/studio/canvas.md:90
+#: docs/user-guide/studio/canvas.md:110
+#: docs/user-guide/studio/canvas.md:122
 #: docs/user-guide/studio/system-projects.md:50
 msgid "Result"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:90
-msgid "drag empty canvas"
+msgid "drag empty canvas, left → right"
 msgstr ""
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:24
-#: docs/user-guide/studio/canvas.md:90
+msgid "select the nodes wholly inside (window)"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:25
+msgid "drag empty canvas, right → left"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:25
+msgid "select the nodes inside or touched (crossing)"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/studio/canvas.md:98
+msgid "⌘-drag / ⇧-drag a rectangle"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:26
+msgid "add its nodes to the selection / remove them"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:27
+msgid "middle-button drag · Space + drag · two fingers on a trackpad"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:27
+#: docs/user-guide/studio/canvas.md:116
 msgid "pan"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:91
-msgid "scroll wheel / pinch"
+#: docs/user-guide/reference/keyboard-and-mouse.md:28
+msgid "scroll wheel · pinch · ⌘ + two fingers"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:25
-#: docs/user-guide/studio/canvas.md:91
+#: docs/user-guide/reference/keyboard-and-mouse.md:28
+#: docs/user-guide/studio/canvas.md:117
 msgid "zoom about the pointer"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/reference/keyboard-and-mouse.md:29
 msgid "Home · ⌘0"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:26
+#: docs/user-guide/reference/keyboard-and-mouse.md:29
 msgid "frame all"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:27
+#: docs/user-guide/reference/keyboard-and-mouse.md:30
 msgid "click"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:27
-msgid "select"
+#: docs/user-guide/reference/keyboard-and-mouse.md:30
+msgid "select one"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:28
-#: docs/user-guide/studio/canvas.md:94
+#: docs/user-guide/reference/keyboard-and-mouse.md:31
+msgid "⌘-click (Ctrl on Windows and Linux)"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:31
+msgid "add to / remove from the selection"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:32
+#: docs/user-guide/studio/canvas.md:95
 msgid "⇧-click"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:28
-msgid "add to / remove from the multi-selection"
+#: docs/user-guide/reference/keyboard-and-mouse.md:32
+msgid "select the chain of connections from the active node, when there is one"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:95
-msgid "⇧-drag on empty canvas"
+#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/studio/canvas.md:99
+msgid "⌘A"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:29
-#: docs/user-guide/studio/canvas.md:95
-msgid "box-select"
+#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/studio/canvas.md:99
+msgid "select every node in view"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:30
+#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:52
+#: docs/user-guide/reference/keyboard-and-mouse.md:73
+#: docs/user-guide/studio/canvas.md:100
+msgid "Esc"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:34
+msgid "cancel the gesture in progress; then clear the selection"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:35
+msgid "← → ↑ ↓ (⇧: one point)"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:35
+msgid "nudge the selection"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:36
 msgid "drag a node"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:30
-msgid "move (layout only)"
+#: docs/user-guide/reference/keyboard-and-mouse.md:36
+msgid "move the selection (layout only)"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:31
+#: docs/user-guide/reference/keyboard-and-mouse.md:37
+msgid "drag a concept's output socket onto an output"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:37
+msgid "connect the relationship that drives it"
+msgstr ""
+
+#: docs/user-guide/reference/keyboard-and-mouse.md:38
 msgid "drag socket → socket"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:31
+#: docs/user-guide/reference/keyboard-and-mouse.md:38
 msgid "link"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:32
+#: docs/user-guide/reference/keyboard-and-mouse.md:39
 msgid "drag a connected input socket away → empty canvas"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:32
-#: docs/user-guide/studio/canvas.md:98
+#: docs/user-guide/reference/keyboard-and-mouse.md:39
+#: docs/user-guide/studio/canvas.md:126
 #: docs/user-guide/studio/system-projects.md:57
 #: docs/user-guide/studio/system-projects.md:58
 msgid "disconnect"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:33
-#: docs/user-guide/studio/canvas.md:100
+#: docs/user-guide/reference/keyboard-and-mouse.md:40
+#: docs/user-guide/studio/canvas.md:128
 msgid "⌫ / Delete"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:33
+#: docs/user-guide/reference/keyboard-and-mouse.md:40
 msgid "delete the selection (or disconnect a selected binding link)"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:41
 msgid "double-click a concept or relationship"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:34
+#: docs/user-guide/reference/keyboard-and-mouse.md:41
 msgid "rename in place"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:35
+#: docs/user-guide/reference/keyboard-and-mouse.md:42
 msgid "double-click an instance"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:35
+#: docs/user-guide/reference/keyboard-and-mouse.md:42
 msgid "open its component's source"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:36
+#: docs/user-guide/reference/keyboard-and-mouse.md:43
 msgid "double-click a behavior's title"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:37
-#: docs/user-guide/studio/canvas.md:102
-msgid "right-click"
+#: docs/user-guide/reference/keyboard-and-mouse.md:44
+msgid "right-click · Control-click"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:37
+#: docs/user-guide/reference/keyboard-and-mouse.md:44
 msgid "context menu"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:38
+#: docs/user-guide/reference/keyboard-and-mouse.md:45
 msgid "drag a Library row onto the canvas"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:38
+#: docs/user-guide/reference/keyboard-and-mouse.md:45
 msgid "insert a concept"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:40
+#: docs/user-guide/reference/keyboard-and-mouse.md:47
 msgid "Formula field"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:44
+#: docs/user-guide/reference/keyboard-and-mouse.md:51
 msgid "⌘↩"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:44
+#: docs/user-guide/reference/keyboard-and-mouse.md:51
 #: docs/user-guide/studio/formula-editor.md:156
 msgid "Add / Save the definition"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:45
-#: docs/user-guide/reference/keyboard-and-mouse.md:66
-msgid "Esc"
-msgstr ""
-
-#: docs/user-guide/reference/keyboard-and-mouse.md:45
+#: docs/user-guide/reference/keyboard-and-mouse.md:52
 msgid "Revert the draft; with completion open, close it first"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:46
-#: docs/user-guide/reference/keyboard-and-mouse.md:65
+#: docs/user-guide/reference/keyboard-and-mouse.md:53
+#: docs/user-guide/reference/keyboard-and-mouse.md:72
 msgid "Return"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:46
+#: docs/user-guide/reference/keyboard-and-mouse.md:53
 msgid "new line"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:47
 #: docs/user-guide/reference/keyboard-and-mouse.md:54
+#: docs/user-guide/reference/keyboard-and-mouse.md:61
 msgid "⌃Space"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:47
+#: docs/user-guide/reference/keyboard-and-mouse.md:54
 msgid "completion"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:48
+#: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "↑ / ↓ · Return / Tab"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:48
+#: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "move in the completion list · accept"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:50
+#: docs/user-guide/reference/keyboard-and-mouse.md:57
 msgid "Code view"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:54
+#: docs/user-guide/reference/keyboard-and-mouse.md:61
 msgid "completion at the caret"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:55
+#: docs/user-guide/reference/keyboard-and-mouse.md:62
 msgid "↑ / ↓ · Return / Tab · Esc"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:55
+#: docs/user-guide/reference/keyboard-and-mouse.md:62
 msgid "move in the completion list · accept · close it"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:56
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 msgid "rest the pointer on a name"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:56
+#: docs/user-guide/reference/keyboard-and-mouse.md:63
 msgid "its card; typing or moving away hides it"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:57
+#: docs/user-guide/reference/keyboard-and-mouse.md:64
 msgid "⌘-click a name · F12"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:57
+#: docs/user-guide/reference/keyboard-and-mouse.md:64
 msgid "go to where it is declared (another file opens)"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:58
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
 msgid "⇧F12"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:58
+#: docs/user-guide/reference/keyboard-and-mouse.md:65
 msgid "list every place that names it; Esc or × closes the list"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
 msgid "⌥⇧F · _Format_"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:59
+#: docs/user-guide/reference/keyboard-and-mouse.md:66
 msgid "lay the file out the canonical way, as one edit"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:61
+#: docs/user-guide/reference/keyboard-and-mouse.md:68
 msgid "Inline rename (canvas, library rows)"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:65
+#: docs/user-guide/reference/keyboard-and-mouse.md:72
 msgid "commit"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:66
+#: docs/user-guide/reference/keyboard-and-mouse.md:73
 msgid "keep the old name"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:67
+#: docs/user-guide/reference/keyboard-and-mouse.md:74
 msgid "click elsewhere"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:67
+#: docs/user-guide/reference/keyboard-and-mouse.md:74
 msgid "commit what was typed"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:69
+#: docs/user-guide/reference/keyboard-and-mouse.md:76
 msgid "Sheets"
 msgstr ""
 
-#: docs/user-guide/reference/keyboard-and-mouse.md:71
+#: docs/user-guide/reference/keyboard-and-mouse.md:78
 msgid "Return submits, Esc cancels; Cancel is left of the primary button."
 msgstr ""
 
@@ -4605,102 +4661,218 @@ msgid "Every node has a place. A node you did not place — one made in the Code
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:86
-msgid "Gestures"
+msgid "Selecting"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:88
+msgid "The canvas selects the way desktop CAD tools do."
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:92
-msgid "Home, or ⌘0"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:92
-msgid "frame the whole design"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:93
 msgid "click a node"
 msgstr ""
 
+#: docs/user-guide/studio/canvas.md:92
+msgid "select it alone (the inspector follows); clicking a node that is already part of a selection keeps the selection and makes it the active one"
+msgstr ""
+
 #: docs/user-guide/studio/canvas.md:93
-msgid "select it (the inspector follows)"
+msgid "click empty canvas"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:93
+msgid "clear the selection"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:94
-msgid "add to / remove from a multi-selection"
+msgid "⌘-click (Ctrl-click on Windows and Linux)"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:94
+msgid "add a node to the selection, or remove one that is in it"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:95
+msgid "select the chain of connections from the active node to this one — when there is exactly one; otherwise the node is added on its own"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:96
-msgid "drag a node body"
+msgid "drag on empty canvas from **left to right**"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:96
-msgid "move it; released, the position is saved (not a design change)"
+msgid "a **window**: every node wholly inside the rectangle is selected (solid outline)"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:97
-msgid "drag from an output socket to an input socket"
+msgid "drag on empty canvas from **right to left**"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:97
-msgid "make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor"
+msgid "a **crossing**: every node inside _or touched_ by the rectangle is selected (dashed outline); up or down makes no difference"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:98
-msgid "drag from a connected input socket away, release on empty canvas"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:99
-msgid "drop a dragged link on empty canvas"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:99
-msgid "nothing (no node is created)"
+msgid "add the rectangle's nodes to the selection / remove them from it (a `+` or `−` beside the pointer); the nodes show what will happen before you let go"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:100
-msgid "delete the selection; a concept in use is refused with a banner naming its users"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:101
-msgid "double-click a concept or relationship node"
-msgstr ""
-
-#: docs/user-guide/studio/canvas.md:101
-msgid "rename in place (an output is renamed in the inspector; an instance opens its source)"
+msgid "cancel what is in progress — a rectangle, a move, a link; with nothing in progress, clear the selection"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:102
-msgid "the context menu (below)"
+msgid "The selected nodes are outlined in the accent colour; when several are selected the _active_ one — the one you clicked last, the one the inspector shows first — wears a second ring around it. The Project sidebar selects the same way: a click for one row, ⌘-click to add or remove, ⇧-click for every row between the active one and it."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:103
-msgid "drag a row from the Library tab onto the canvas"
+#: docs/user-guide/studio/canvas.md:108
+msgid "Moving and looking around"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:103
-msgid "insert that concept at the drop point; its name opens for editing"
+#: docs/user-guide/studio/canvas.md:112
+msgid "drag a selected node"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:107
-msgid "The context menu"
+#: docs/user-guide/studio/canvas.md:112
+msgid "the whole selection moves together, keeping its spacing; released, the positions are saved (not a design change)"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:109
-msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**."
+#: docs/user-guide/studio/canvas.md:113
+msgid "drag an unselected node"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:113
+msgid "it becomes the selection and moves"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:114
+msgid "drag a behavior's title band"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:114
+msgid "its relationships move"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:115
+msgid "← → ↑ ↓"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:115
+msgid "nudge the selection one grid step; with ⇧, one point"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:116
-msgid "On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**, **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a behavior, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
+msgid "middle-button drag, Space + drag, two fingers on a trackpad"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:121
-msgid "What the canvas never shows"
+#: docs/user-guide/studio/canvas.md:117
+msgid "scroll wheel, pinch, ⌘ + two fingers"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:123
-msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its reference links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
+#: docs/user-guide/studio/canvas.md:118
+msgid "Home, or ⌘0"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:118
+msgid "frame the whole design"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:120
+msgid "Connecting"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:124
+msgid "drag from an output socket to an input socket"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:124
+msgid "make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:125
+msgid "drag a **concept**'s output socket onto an **output** that accepts it"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:125
+msgid "connect the relationship that provides the concept as the output's driver (below)"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:126
+msgid "drag from a connected input socket away, release on empty canvas"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:127
+msgid "drop a dragged link on empty canvas"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:127
+msgid "nothing (no node is created)"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:128
+msgid "delete the selection — several objects at once; if one of them is still used by something outside the selection, nothing is deleted and a banner says what"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:129
+msgid "double-click a concept or relationship node"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:129
+msgid "rename in place (an output is renamed in the inspector; an instance opens its source)"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:130
+msgid "right-click, or Control-click"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:130
+msgid "the context menu (below)"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:131
+msgid "drag a row from the Library tab onto the canvas"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:131
+msgid "insert that concept at the drop point; its name opens for editing"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:133
+msgid "**Driving an output from its concept.** An output is driven by a relationship — a value or a Source that produces exactly what the output accepts, in the output's timing domain — and never by a concept itself. You do not have to find that relationship first: drag the concept's output socket onto the output. When one relationship can drive it, it is connected at once. When several can, a small menu names them (_Drive with brightness_, _Drive with dimmer_) and you choose; nothing is chosen for you. When none can, the menu says so — _Servo accepts ServoPosition, but no current relationship can drive it_ — and offers the output in the inspector. An output that is already driven is offered a replacement (_Replace lifted with rest_): the old driver lets go, then the new one connects, and the output never has two drivers in between. The edge on the canvas still runs from the driving relationship — that is what drives the output — and the output's context menu names it (_Show Driver: brightness_)."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:149
+msgid "The context menu"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:151
+msgid "The menu is about what you right-clicked, and only that. While it is open the canvas waits: nothing behind the menu moves, scrolls or lights up; the first click outside closes it and does nothing else; a right-click somewhere else moves it there. Use ↑ ↓ ⏎ and Esc as in any menu."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:156
+msgid "On **empty canvas**: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:163
+msgid "On a **relationship**: **Edit Definition** (not for a Source — the environment provides its value), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:171
+msgid "On a **concept**: **Rename**, **Reveal in Code**, **Fix ▸**, **Delete _name_**. On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**: **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding** for a binding between components). On an **instance**: **Edit Source**, **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**: **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:180
+msgid "On one of **several selected nodes**: the menu is about all of them — **Group as Behavior (_n_ relationships)** and **Delete _n_ objects**."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:183
+msgid "What the canvas never shows"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:185
+msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its reference links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:192
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr ""
 
@@ -5816,7 +5988,7 @@ msgid "click a binding link, then ⌫"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:59
-msgid "⇧-drag a box around relationships → **Group as Behavior** (inspector or right-click)"
+msgid "drag a box around relationships → **Group as Behavior** (inspector or right-click)"
 msgstr ""
 
 #: docs/user-guide/studio/system-projects.md:59
@@ -8113,7 +8285,7 @@ msgid "**Needs** a project with a few relationships — the lamp of [Your first 
 msgstr ""
 
 #: docs/user-guide/workflows/grouping-behavior.md:14
-msgid "**Select the members.** ⇧-drag a box around `dimByTilt` and `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2 relationships as Behavior**, with a note that they read each other."
+msgid "**Select the members.** Drag a box, left to right, around `dimByTilt` and `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2 relationships as Behavior**, with a note that they read each other."
 msgstr ""
 
 #: docs/user-guide/workflows/grouping-behavior.md:17
