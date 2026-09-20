@@ -54,10 +54,15 @@ use bdl_hardware::{
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
 use bdl_model::{
-    DeclId, DeviceId, OutputId, OutputProfileId, RelationshipRole, Revision, SemanticId,
+    DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId, RelationshipRole, Revision,
+    SemanticId,
+};
+use bdl_output::provision::{
+    self, check_provider, ProvisionCheck, ProvisionFitFault, ProvisionStatus,
 };
 use bdl_output::realization::{
-    self, check_binding, FitFault, OutputProfile, RealizationCheck, RealizationStatus,
+    self, check_binding, Catalogue, FitFault, InputEntry, OutputProfile, RealizationCheck,
+    RealizationStatus,
 };
 use bdl_output::{check_outputs, OutputAnalysis};
 use bdl_reactive::{
@@ -492,6 +497,39 @@ impl DeviceRealization {
     }
 }
 
+/// One Source's provision, judged (docs/architecture/embedded-adapter.md
+/// § The input half).  Admissible = the transducer is well formed ∧ the
+/// representation fits ∧ the hardware places ∧ the backend reads — four
+/// judgments a reader can inspect one by one.  The first two are the
+/// semantic contract (`InputContract`, target-independent, in `check`);
+/// `hardware_placed` is the placement's; `backend_supported` is the
+/// chosen board's target entry's — a fact about firmware, never about
+/// the design or the placement.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SourceProvision {
+    pub source: DeclId,
+    /// The device that provides it; `None` is an incomplete deployment.
+    pub device: Option<DeviceId>,
+    pub profile: Option<InputProfileId>,
+    pub check: ProvisionCheck,
+    /// Every requirement of the providing device is placed by `assignment`.
+    pub hardware_placed: bool,
+    /// The board's target entry has a reader for the chosen profile.
+    /// `true` while no profile is chosen (nothing to read yet); `false`
+    /// for a board with no target entry at all.
+    pub backend_supported: bool,
+    /// Every catalogue input profile, with whether its transducer fits the
+    /// Source's concept (`None` when the concept has no representation).
+    pub candidates: Vec<(InputEntry, Option<bool>)>,
+}
+
+impl SourceProvision {
+    /// `Admissible`: contract ∧ placed ∧ read.
+    pub fn admissible(&self) -> bool {
+        self.check.is_valid() && self.hardware_placed && self.backend_supported
+    }
+}
+
 /// Target-relative result.  Independent of the semantic analysis: it reads
 /// only the device bindings, so it is meaningful for a design that is still
 /// open — and equally meaningless as a statement about the design's
@@ -515,6 +553,12 @@ pub struct DeploymentAnalysis {
     /// The realization judgment of every device, in `DeviceId` order.
     #[serde(default)]
     pub realizations: BTreeMap<DeviceId, DeviceRealization>,
+    /// The provision judgment of every Source, in `DeclId` order.
+    #[serde(default)]
+    pub provisions: BTreeMap<DeclId, SourceProvision>,
+    /// Sources no device provides: an incomplete deployment.
+    #[serde(default)]
+    pub unprovided_sources: BTreeSet<DeclId>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
@@ -523,6 +567,16 @@ impl DeploymentAnalysis {
     /// until it is fixed, whatever the board says.
     pub fn realization_blocked(&self) -> bool {
         self.realizations.values().any(|r| r.check.is_blocking())
+    }
+
+    /// A chosen provider that is not valid, or one Source claimed by two
+    /// devices: the artefact is refused until it is fixed.
+    pub fn provision_blocked(&self) -> bool {
+        self.provisions.values().any(|p| p.check.is_blocking())
+            || self
+                .diagnostics
+                .iter()
+                .any(|d| d.code.as_str() == "deploy.source_contested")
     }
 }
 
@@ -579,6 +633,204 @@ fn judge_realizations(
             )
         })
         .collect()
+}
+
+/// The Sources of a design, in `DeclId` order: unit domain, no definition.
+fn sources_of(design: &bdl_model::surface::Design) -> Vec<DeclId> {
+    design
+        .mappings
+        .values()
+        .filter(|m| m.role() == RelationshipRole::Source)
+        .map(|m| m.id)
+        .collect()
+}
+
+/// Which device provides each Source: the lowest device id that names it;
+/// every further one is a contest, reported.
+fn providers_of(
+    design: &bdl_model::surface::Design,
+) -> (BTreeMap<DeclId, DeviceId>, Vec<Diagnostic>) {
+    let mut by_source: BTreeMap<DeclId, DeviceId> = BTreeMap::new();
+    let mut diagnostics = Vec::new();
+    for d in design.devices.values() {
+        let Some(s) = d.source else { continue };
+        if design
+            .mappings
+            .get(&s)
+            .is_none_or(|m| m.role() != RelationshipRole::Source)
+        {
+            continue;
+        }
+        if let Some(first) = by_source.get(&s) {
+            let name = design
+                .mappings
+                .get(&s)
+                .map(|m| m.name.clone())
+                .unwrap_or_default();
+            let first_name = design
+                .devices
+                .get(first)
+                .map(|d| d.name.clone())
+                .unwrap_or_default();
+            diagnostics.push(
+                Diagnostic::error(
+                    "deploy.source_contested",
+                    Entity::Project,
+                    format!("{} and {} both provide {name}.", first_name, d.name),
+                )
+                .explain("A Source is provided by exactly one device; disconnect one of them on the Deploy page.")
+                .technical(format!("source {s} provided by devices {first} and {}", d.id)),
+            );
+            continue;
+        }
+        by_source.insert(s, d.id);
+    }
+    (by_source, diagnostics)
+}
+
+/// Judge every Source's provision against the design, with no board in
+/// sight except for the placement and the target entry's readers.
+fn judge_provisions(
+    design: &bdl_model::surface::Design,
+    target: &Hardware,
+    requirements: &[Requirement],
+    assignment: Option<&Assignment>,
+    providers: &BTreeMap<DeclId, DeviceId>,
+) -> BTreeMap<DeclId, SourceProvision> {
+    let theta = |s: SemanticId| representation_ty(design, s);
+    let catalogue = Catalogue::builtin();
+    let entry = bdl_codegen_rust::targets::Entry::for_board(&target.family, &target.name);
+    sources_of(design)
+        .into_iter()
+        .map(|s| {
+            let produces = design.mappings.get(&s).map(|m| m.signature.output);
+            let device = providers.get(&s).and_then(|d| design.devices.get(d));
+            let check = match device {
+                Some(d) => check_provider(&catalogue, d, produces, theta),
+                None => ProvisionCheck {
+                    profile: None,
+                    status: ProvisionStatus::NotChosen,
+                },
+            };
+            let candidates = catalogue
+                .inputs
+                .iter()
+                .map(|e| {
+                    let fit = produces.and_then(|c| {
+                        theta(c).map(|_| provision::fits(c, theta, &e.profile.transducer).is_ok())
+                    });
+                    (e.clone(), fit)
+                })
+                .collect();
+            let hardware_placed = device.is_some_and(|d| {
+                assignment.is_some_and(|a| {
+                    requirements
+                        .iter()
+                        .filter(|r| r.id.device == d.id)
+                        .all(|r| a.contains_key(&r.id))
+                })
+            });
+            let backend_supported = match (&check.profile, &entry) {
+                (None, _) => true,
+                (Some(_), None) => false,
+                (Some(p), Some(e)) => target::source_kind(&p.id).is_some_and(|k| e.reads(k)),
+            };
+            (
+                s,
+                SourceProvision {
+                    source: s,
+                    device: device.map(|d| d.id),
+                    profile: device.and_then(|d| d.provider.clone()),
+                    check,
+                    hardware_placed,
+                    backend_supported,
+                    candidates,
+                },
+            )
+        })
+        .collect()
+}
+
+/// Product-language rendering of a provision judgment that is not valid.
+fn provision_diagnostic(
+    design: &bdl_model::surface::Design,
+    target: &Hardware,
+    p: &SourceProvision,
+) -> Option<Diagnostic> {
+    let source = design
+        .mappings
+        .get(&p.source)
+        .map(|m| m.name.clone())
+        .unwrap_or_else(|| p.source.to_string());
+    let device = p
+        .device
+        .and_then(|d| design.devices.get(&d))
+        .map(|d| d.name.clone())
+        .unwrap_or_default();
+    let profile = p.profile.as_ref().map(|p| p.0.clone()).unwrap_or_default();
+    let d = match &p.check.status {
+        ProvisionStatus::Valid if !p.backend_supported => Diagnostic::warning(
+            "deploy.provider_unsupported",
+            Entity::Project,
+            format!("{device} provides {source} as `{profile}`, which {} cannot read yet.", target.display()),
+        )
+        .explain("The design and the placement are fine; this board's firmware has no reader for the profile. Choose a board that reads it, or wait for the adapter that does.")
+        .technical(format!("source {} profile {profile}: no reader in target entry for `{}`", p.source, target.name)),
+        ProvisionStatus::Valid => return None,
+        ProvisionStatus::NotChosen if p.device.is_none() => Diagnostic::info(
+            "deploy.source_unprovided",
+            Entity::Project,
+            format!("{source} has no device on {}.", target.display()),
+        )
+        .explain("A Source is a value the environment supplies. Until a device provides it on the board, the design simulates with values you give it and cannot run on this board.")
+        .technical(format!("source {} provided by no device", p.source)),
+        ProvisionStatus::NotChosen => Diagnostic::info(
+            "deploy.provider_unspecified",
+            Entity::Project,
+            format!("{device} has no provider chosen for {source}."),
+        )
+        .explain("The device places on the board by its kind, but nothing is read for the Source until a provider profile is chosen on the Deploy page.")
+        .technical(format!("source {} device provider = none", p.source)),
+        ProvisionStatus::UnknownProfile => Diagnostic::error(
+            "deploy.provider_unknown_profile",
+            Entity::Project,
+            format!("{device} refers to a provider profile this version does not know."),
+        )
+        .explain(format!("The project chose `{profile}` for {source}, which is not in this version's catalogue. Choose an available profile on the Deploy page; the design itself is unchanged."))
+        .technical(format!("source {} provider = {profile}: not in catalogue", p.source)),
+        ProvisionStatus::KindMismatch { profile_kind } => Diagnostic::error(
+            "deploy.provider_kind_mismatch",
+            Entity::Project,
+            format!("{device} is not the kind of device its provider needs."),
+        )
+        .explain(format!("The profile `{profile}` needs {}; choose the profile again so the device kind follows it.", bdl_hardware::devices::device_kind_label(*profile_kind)))
+        .technical(format!("source {} device kind ≠ profile kind {profile_kind:?}", p.source)),
+        ProvisionStatus::Incompatible(fault) => {
+            let why = match fault {
+                ProvisionFitFault::NoRepresentation { .. } => "the concept it produces has no representation yet".to_string(),
+                ProvisionFitFault::Representation { carried, produced } => format!(
+                    "the Source carries {} but the profile reads {}",
+                    pretty::kernel(carried),
+                    pretty::kernel(produced)
+                ),
+            };
+            Diagnostic::error(
+                "deploy.provider_incompatible",
+                Entity::Project,
+                format!("{device} cannot provide {source} with `{profile}`: {why}."),
+            )
+            .explain("A provider profile reads one representation. Choose a profile that fits what the Source carries, or change the Source's concept on the Design page.")
+            .technical(format!("source {} Fits fails: {fault:?}", p.source))
+        }
+        ProvisionStatus::TransducerInvalid(fault) => Diagnostic::error(
+            "deploy.provider_transducer_invalid",
+            Entity::Project,
+            format!("The provider profile `{profile}` chosen for {device} is defective."),
+        )
+        .explain("Its transducer is not a typed pure function from the raw reading to the representation. This is a defect of the catalogue, not of the design; choose another profile and report it.")
+        .technical(format!("source {} Channel.WF fails for `{profile}`: {fault:?}", p.source)),
+    };
+    Some(d)
 }
 
 /// Product-language rendering of a realization judgment that is not valid.
@@ -670,11 +922,25 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
             .unwrap_or_else(|| device_name(id.device))
     };
 
+    let (providers, contested) = providers_of(design);
+    diagnostics.extend(contested);
+    let provides = |d: &bdl_model::surface::DeviceBinding| {
+        d.source.is_some_and(|s| {
+            design
+                .mappings
+                .get(&s)
+                .is_some_and(|m| m.role() == RelationshipRole::Source)
+        })
+    };
     let unbound_devices: BTreeSet<_> = design
         .devices
         .values()
-        .filter(|d| d.output.is_none_or(|o| !design.outputs.contains_key(&o)))
+        .filter(|d| d.output.is_none_or(|o| !design.outputs.contains_key(&o)) && !provides(d))
         .map(|d| d.id)
+        .collect();
+    let unprovided_sources: BTreeSet<DeclId> = sources_of(design)
+        .into_iter()
+        .filter(|s| !providers.contains_key(s))
         .collect();
     let realised: BTreeSet<OutputId> = design.devices.values().filter_map(|d| d.output).collect();
     let unrealised_outputs: BTreeSet<OutputId> = design
@@ -688,10 +954,10 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
             Diagnostic::info(
                 "deploy.device_unbound",
                 Entity::Project,
-                format!("{} is not connected to any output.", device_name(*d)),
+                format!("{} is not connected to any output or Source.", device_name(*d)),
             )
             .explain(
-                "A device realises exactly one output on the board; choose which one this is for.",
+                "A device realises exactly one output or provides exactly one Source on the board; choose which one this is for.",
             )
             .technical(format!("device {d} output = none")),
         );
@@ -718,10 +984,23 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
     for r in realizations.values() {
         diagnostics.extend(realization_diagnostic(design, r));
     }
+    let provisions = judge_provisions(
+        design,
+        target,
+        &requirements,
+        assignment.as_ref(),
+        &providers,
+    );
+    for p in provisions.values() {
+        diagnostics.extend(provision_diagnostic(design, target, p));
+    }
     let (status, dead_end) = match &assignment {
         Some(a) => {
             debug_assert!(validate(target, &requirements, a).is_empty());
-            if unbound_devices.is_empty() && unrealised_outputs.is_empty() {
+            if unbound_devices.is_empty()
+                && unrealised_outputs.is_empty()
+                && unprovided_sources.is_empty()
+            {
                 (DeploymentStatus::Feasible, None)
             } else {
                 (DeploymentStatus::Incomplete, None)
@@ -746,6 +1025,8 @@ pub fn analyze_deployment(snapshot: &ProjectSnapshot, target: &Hardware) -> Depl
         unbound_devices,
         unrealised_outputs,
         realizations,
+        provisions,
+        unprovided_sources,
         diagnostics,
     }
 }

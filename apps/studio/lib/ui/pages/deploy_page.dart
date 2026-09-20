@@ -6,11 +6,14 @@
 /// incomplete or not feasible *on that board*, never "design invalid";
 /// (2) the placement, device → requirement → pin; (3) what stopped a
 /// placement (one dead end, as the solver found it — not a minimal core);
-/// (4) what is not bound yet (a device without an output, an output without
-/// a device); (5) the devices themselves, editable.  Boards come from bdld;
-/// nothing here allocates a pin.
+/// (4) what is not bound yet (a device without an output or a Source, an
+/// output without a device, a Source without a device); (5) the devices
+/// themselves, editable — each *for* one output it realises or one Source
+/// it provides, never both.  Boards come from bdld; nothing here allocates
+/// a pin, judges a profile or reads a transducer.
 library;
 
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
@@ -26,6 +29,7 @@ import '../mac/widgets.dart';
 String deviceKindLabel(AppLocalizations l10n, pb.DeviceKind k) => switch (k) {
   pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL => l10n.pwmChannel,
   pb.DeviceKind.DEVICE_KIND_DIGITAL_OUTPUT => l10n.digitalOutput,
+  pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT => l10n.digitalInput,
   pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL => l10n.hBridgeChannel,
   pb.DeviceKind.DEVICE_KIND_I2C_SENSOR => l10n.iCSensor,
   pb.DeviceKind.DEVICE_KIND_QUADRATURE_ENCODER => l10n.quadratureEncoder,
@@ -36,6 +40,7 @@ String deviceKindLabel(AppLocalizations l10n, pb.DeviceKind k) => switch (k) {
 const List<pb.DeviceKind> deviceKinds = [
   pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL,
   pb.DeviceKind.DEVICE_KIND_DIGITAL_OUTPUT,
+  pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT,
   pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL,
   pb.DeviceKind.DEVICE_KIND_I2C_SENSOR,
   pb.DeviceKind.DEVICE_KIND_QUADRATURE_ENCODER,
@@ -220,6 +225,9 @@ class _Devices extends StatelessWidget {
             device: dv,
             project: project,
             realization: analysis?.realizations.where((r) => r.deviceId == dv.id).firstOrNull,
+            provision: dv.hasSourceId()
+                ? analysis?.provisions.where((p) => p.sourceId == dv.sourceId).firstOrNull
+                : null,
             dispatch: dispatch,
           ),
       ],
@@ -235,11 +243,21 @@ class _Devices extends StatelessWidget {
   }
 }
 
+/// What a device is for: one output it realises or one Source it provides.
+/// Encoded for the dropdown as `o<id>` / `s<id>`; the empty string is
+/// "not connected".
+String _targetOf(pb.DeviceView d) => d.hasOutputId()
+    ? 'o${d.outputId}'
+    : d.hasSourceId()
+    ? 's${d.sourceId}'
+    : '';
+
 class _DeviceCard extends StatelessWidget {
   const _DeviceCard({
     required this.device,
     required this.project,
     required this.realization,
+    required this.provision,
     required this.dispatch,
   });
   final pb.DeviceView device;
@@ -247,6 +265,9 @@ class _DeviceCard extends StatelessWidget {
 
   /// This device's realization judgment from the current analysis.
   final pb.RealizationView? realization;
+
+  /// The provision judgment of the Source this device provides.
+  final pb.ProvisionView? provision;
   final void Function(AppAction) dispatch;
 
   @override
@@ -286,20 +307,48 @@ class _DeviceCard extends StatelessWidget {
               ),
               SizedBox(
                 width: 170,
-                child: MacDropdown<int>(
-                  value: device.hasOutputId() ? device.outputId.toInt() : -1,
-                  items: [-1, for (final o in project.outputs) o.id.toInt()],
-                  labelOf: (o) => o < 0
-                      ? context.l10n.noOutput
-                      : project.outputs.firstWhere((x) => x.id.toInt() == o).name,
-                  onChanged: (o) =>
-                      dispatch(SetDeviceOutputRequested(id: id, outputId: o < 0 ? null : o)),
+                child: MacDropdown<String>(
+                  value: _targetOf(device),
+                  items: [
+                    '',
+                    for (final o in project.outputs) 'o${o.id}',
+                    for (final m in project.mappings)
+                      if (relationshipRole(m) == RelationshipRole.source) 's${m.id}',
+                  ],
+                  labelOf: (v) {
+                    if (v.isEmpty) return context.l10n.notConnected;
+                    final n = Int64.parseInt(v.substring(1));
+                    return v.startsWith('o')
+                        ? project.outputs.firstWhere((x) => x.id == n).name
+                        : context.l10n.sourceItem(
+                            project.mappings.firstWhere((x) => x.id == n).name,
+                          );
+                  },
+                  onChanged: (v) {
+                    if (v.isEmpty) {
+                      dispatch(
+                        device.hasSourceId()
+                            ? SetDeviceSourceRequested(id: id, sourceId: null)
+                            : SetDeviceOutputRequested(id: id, outputId: null),
+                      );
+                      return;
+                    }
+                    final n = int.parse(v.substring(1));
+                    dispatch(
+                      v.startsWith('o')
+                          ? SetDeviceOutputRequested(id: id, outputId: n)
+                          : SetDeviceSourceRequested(id: id, sourceId: n),
+                    );
+                  },
                 ),
               ),
               MacLink(label: context.l10n.remove, onTap: () => dispatch(DeleteDeviceRequested(id))),
             ],
           ),
-          _RealizationRow(device: device, realization: realization, dispatch: dispatch),
+          if (device.hasSourceId())
+            _ProvisionRow(device: device, provision: provision, dispatch: dispatch)
+          else
+            _RealizationRow(device: device, realization: realization, dispatch: dispatch),
           if (device.requirements.isNotEmpty)
             MacTable(
               columns: const [MacColumn(width: 160), MacColumn(width: 120), MacColumn()],
@@ -423,7 +472,97 @@ class _RealizationRow extends StatelessWidget {
   }
 }
 
-/// One of the three judgments, holding or not.
+/// How the device provides its Source: the profile (chosen from the
+/// catalogue, compatible ones first), the judgments behind admissibility —
+/// transducer well formed, representation fits, hardware placed, readable
+/// by this board's firmware — and the analysis's word when one fails.
+/// The mirror of [_RealizationRow]; nothing here judges anything.
+class _ProvisionRow extends StatelessWidget {
+  const _ProvisionRow({required this.device, required this.provision, required this.dispatch});
+  final pb.DeviceView device;
+  final pb.ProvisionView? provision;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    final p = provision;
+    if (p == null) {
+      return Text(l10n.chooseABoardToSeeProviders, style: small);
+    }
+    final id = device.id.toInt();
+    final chosen = device.hasProvider() ? device.provider : '';
+    final known = p.candidates.any((c) => c.id == chosen);
+    final candidates = [...p.candidates]
+      ..sort((a, b) => a.compatible == b.compatible ? 0 : (a.compatible ? -1 : 1));
+    final items = ['', for (final c in candidates) c.id, if (chosen.isNotEmpty && !known) chosen];
+    final current = candidates.where((c) => c.id == chosen).firstOrNull;
+    final valid = p.status == pb.ProvisionStatus.PROVISION_STATUS_VALID;
+    final ok = valid && p.backendSupported;
+    final notChosen =
+        p.status == pb.ProvisionStatus.PROVISION_STATUS_NOT_CHOSEN ||
+        p.status == pb.ProvisionStatus.PROVISION_STATUS_NO_DEVICE;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 4,
+      children: [
+        Wrap(
+          spacing: MacMetrics.gap,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(l10n.providerProfile, style: small),
+            SizedBox(
+              width: 260,
+              child: MacDropdown<String>(
+                value: chosen,
+                items: items,
+                labelOf: (x) {
+                  if (x.isEmpty) return l10n.noProvider;
+                  final c = candidates.where((y) => y.id == x).firstOrNull;
+                  if (c == null) return x;
+                  return c.compatible ? c.displayName : '${c.displayName} — ${l10n.doesNotFit}';
+                },
+                onChanged: (x) {
+                  final c = candidates.where((y) => y.id == x).firstOrNull;
+                  dispatch(
+                    SetDeviceProviderRequested(
+                      id: id,
+                      profileId: x.isEmpty ? null : x,
+                      kind: c?.kind ?? device.kind,
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (current != null) Text(l10n.rawReading(current.rawType), style: small),
+            if (current != null && current.origin != 'builtin')
+              Text(l10n.fromPackage(current.origin), style: small),
+            if (!notChosen) ...[
+              _Judgment(label: l10n.transducerWellFormed, holds: p.transducerWellFormed),
+              _Judgment(label: l10n.representationFits, holds: p.representationFits),
+              _Judgment(label: l10n.hardwarePlaced, holds: p.hardwarePlaced),
+              _Judgment(label: l10n.backendReadable, holds: p.backendSupported),
+            ],
+          ],
+        ),
+        if (current != null && ok) Text(current.description, style: small),
+        if (!ok && p.message.isNotEmpty)
+          Text(
+            p.explanation.isEmpty ? p.message : '${p.message} ${p.explanation}',
+            style: TextStyle(
+              fontSize: MacType.secondary,
+              color: notChosen || valid ? t.textSecondary : t.error,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One of the judgments, holding or not.
 class _Judgment extends StatelessWidget {
   const _Judgment({required this.label, required this.holds});
   final String label;

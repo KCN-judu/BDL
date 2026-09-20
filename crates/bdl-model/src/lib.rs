@@ -33,8 +33,8 @@ pub use dim::Dim;
 pub use edit::{apply_edit, Applied, EditError, EditKind, EditOp, EditOutcome, Invalidation};
 pub use ids::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
 pub use surface::{
-    Concept, Definition, Design, MappingBlock, OutputProfileId, ProjectSnapshot, RelationshipRole,
-    Representation, Signature,
+    Concept, Definition, Design, InputProfileId, MappingBlock, OutputProfileId, ProjectSnapshot,
+    RelationshipRole, Representation, Signature,
 };
 
 /// Version of the legacy JSON design schema (`design/*.json`), read only

@@ -2133,6 +2133,12 @@ abstract class AppLocalizations {
   /// **'Digital output'**
   String get digitalOutput;
 
+  /// Studio UI text (deploy_page.dart): the device kind of one digital input line.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital input'**
+  String get digitalInput;
+
   /// Studio UI text (deploy_page.dart).
   ///
   /// In en, this message translates to:
@@ -2252,6 +2258,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no output'**
   String get noOutput;
+
+  /// Deploy page: the device-target dropdown item for a device bound to nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'not connected'**
+  String get notConnected;
+
+  /// Deploy page: a Source in the device-target dropdown, marked as one.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — Source'**
+  String sourceItem(String name);
+
+  /// Deploy page: label of the provider profile dropdown on a device bound to a Source.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get providerProfile;
+
+  /// Deploy page: the provider dropdown item that leaves the device without a profile.
+  ///
+  /// In en, this message translates to:
+  /// **'None — place by kind'**
+  String get noProvider;
+
+  /// Deploy page: shown on a device card bound to a Source while no deployment analysis is available.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a board to see which providers fit this Source.'**
+  String get chooseABoardToSeeProviders;
+
+  /// Deploy page: the provision judgment that the transducer is a typed pure function.
+  ///
+  /// In en, this message translates to:
+  /// **'transducer'**
+  String get transducerWellFormed;
+
+  /// Deploy page: the provision judgment that the chosen board's firmware can read the profile.
+  ///
+  /// In en, this message translates to:
+  /// **'readable'**
+  String get backendReadable;
+
+  /// Deploy page: the raw reading type of the chosen provider profile.
+  ///
+  /// In en, this message translates to:
+  /// **'raw reading {ty}'**
+  String rawReading(String ty);
+
+  /// Deploy page: where a provider profile comes from when it is not builtin.
+  ///
+  /// In en, this message translates to:
+  /// **'from {origin}'**
+  String fromPackage(String origin);
 
   /// Deploy dead-end explanation; placements is a comma-joined list of "device → resource".
   ///
@@ -3350,6 +3410,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Provided by the environment; no device is bound yet.'**
   String get realizationEnvironment;
+
+  /// Inspector realization value for a Source no device provides on the chosen board.
+  ///
+  /// In en, this message translates to:
+  /// **'Provided by the environment; no device on {board} yet.'**
+  String realizationNoDeviceOn(String board);
+
+  /// Inspector realization value for a Source a device provides on the chosen board.
+  ///
+  /// In en, this message translates to:
+  /// **'Provided by {device} on {board}.'**
+  String realizationProvidedBy(String device, String board);
+
+  /// Inspector realization value for a Source a device provides through a chosen profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Provided by {device} as {profile} on {board}.'**
+  String realizationProvidedByAs(String device, String profile, String board);
 
   /// Inspector explanation under a Source's Role row.
   ///

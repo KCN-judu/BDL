@@ -292,6 +292,7 @@ fn host_operations_on_the_nano_crate_correspond_to_the_commands() {
                 .map(|_| TickRequest {
                     active: vec![0],
                     inputs: vec![],
+                    readings: vec![],
                 })
                 .collect(),
         })

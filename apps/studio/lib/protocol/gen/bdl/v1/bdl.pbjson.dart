@@ -26,6 +26,7 @@ const DeviceKind$json = {
     {'1': 'DEVICE_KIND_I2C_SENSOR', '2': 4},
     {'1': 'DEVICE_KIND_QUADRATURE_ENCODER', '2': 5},
     {'1': 'DEVICE_KIND_UART', '2': 6},
+    {'1': 'DEVICE_KIND_DIGITAL_INPUT', '2': 7},
   ],
 };
 
@@ -34,7 +35,8 @@ final $typed_data.Uint8List deviceKindDescriptor = $convert
     .base64Decode('CgpEZXZpY2VLaW5kEhsKF0RFVklDRV9LSU5EX1VOU1BFQ0lGSUVEEAASGwoXREVWSUNFX0tJTk'
         'RfUFdNX0NIQU5ORUwQARIeChpERVZJQ0VfS0lORF9ESUdJVEFMX09VVFBVVBACEiAKHERFVklD'
         'RV9LSU5EX0hfQlJJREdFX0NIQU5ORUwQAxIaChZERVZJQ0VfS0lORF9JMkNfU0VOU09SEAQSIg'
-        'oeREVWSUNFX0tJTkRfUVVBRFJBVFVSRV9FTkNPREVSEAUSFAoQREVWSUNFX0tJTkRfVUFSVBAG');
+        'oeREVWSUNFX0tJTkRfUVVBRFJBVFVSRV9FTkNPREVSEAUSFAoQREVWSUNFX0tJTkRfVUFSVBAG'
+        'Eh0KGURFVklDRV9LSU5EX0RJR0lUQUxfSU5QVVQQBw==');
 
 @$core.Deprecated('Use editKindDescriptor instead')
 const EditKind$json = {
@@ -239,6 +241,30 @@ final $typed_data.Uint8List deploymentStatusDescriptor = $convert
         'oaREVQTE9ZTUVOVF9TVEFUVVNfRkVBU0lCTEUQARIgChxERVBMT1lNRU5UX1NUQVRVU19JTkZF'
         'QVNJQkxFEAISIAocREVQTE9ZTUVOVF9TVEFUVVNfSU5DT01QTEVURRAD');
 
+@$core.Deprecated('Use provisionStatusDescriptor instead')
+const ProvisionStatus$json = {
+  '1': 'ProvisionStatus',
+  '2': [
+    {'1': 'PROVISION_STATUS_UNSPECIFIED', '2': 0},
+    {'1': 'PROVISION_STATUS_NO_DEVICE', '2': 1},
+    {'1': 'PROVISION_STATUS_NOT_CHOSEN', '2': 2},
+    {'1': 'PROVISION_STATUS_UNKNOWN_PROFILE', '2': 3},
+    {'1': 'PROVISION_STATUS_INCOMPATIBLE', '2': 4},
+    {'1': 'PROVISION_STATUS_TRANSDUCER_INVALID', '2': 5},
+    {'1': 'PROVISION_STATUS_KIND_MISMATCH', '2': 6},
+    {'1': 'PROVISION_STATUS_VALID', '2': 7},
+  ],
+};
+
+/// Descriptor for `ProvisionStatus`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List provisionStatusDescriptor = $convert
+    .base64Decode('Cg9Qcm92aXNpb25TdGF0dXMSIAocUFJPVklTSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGl'
+        'BST1ZJU0lPTl9TVEFUVVNfTk9fREVWSUNFEAESHwobUFJPVklTSU9OX1NUQVRVU19OT1RfQ0hP'
+        'U0VOEAISJAogUFJPVklTSU9OX1NUQVRVU19VTktOT1dOX1BST0ZJTEUQAxIhCh1QUk9WSVNJT0'
+        '5fU1RBVFVTX0lOQ09NUEFUSUJMRRAEEicKI1BST1ZJU0lPTl9TVEFUVVNfVFJBTlNEVUNFUl9J'
+        'TlZBTElEEAUSIgoeUFJPVklTSU9OX1NUQVRVU19LSU5EX01JU01BVENIEAYSGgoWUFJPVklTSU'
+        '9OX1NUQVRVU19WQUxJRBAH');
+
 @$core.Deprecated('Use realizationStatusDescriptor instead')
 const RealizationStatus$json = {
   '1': 'RealizationStatus',
@@ -276,6 +302,8 @@ const MissingKind$json = {
     {'1': 'MISSING_KIND_OUTPUT_NO_DEVICE', '2': 7},
     {'1': 'MISSING_KIND_DEVICE_NO_OUTPUT', '2': 8},
     {'1': 'MISSING_KIND_REALIZATION_INVALID', '2': 9},
+    {'1': 'MISSING_KIND_SOURCE_NO_DEVICE', '2': 10},
+    {'1': 'MISSING_KIND_PROVIDER_INVALID', '2': 11},
   ],
 };
 
@@ -287,7 +315,9 @@ final $typed_data.Uint8List missingKindDescriptor = $convert
         '9LSU5EX09VVFBVVF9OT19ET01BSU4QBBIhCh1NSVNTSU5HX0tJTkRfT1VUUFVUX05PX0RSSVZF'
         'UhAFEioKJk1JU1NJTkdfS0lORF9PVVRQVVRfQ09OTkVDVElPTl9JTlZBTElEEAYSIQodTUlTU0'
         'lOR19LSU5EX09VVFBVVF9OT19ERVZJQ0UQBxIhCh1NSVNTSU5HX0tJTkRfREVWSUNFX05PX09V'
-        'VFBVVBAIEiQKIE1JU1NJTkdfS0lORF9SRUFMSVpBVElPTl9JTlZBTElEEAk=');
+        'VFBVVBAIEiQKIE1JU1NJTkdfS0lORF9SRUFMSVpBVElPTl9JTlZBTElEEAkSIQodTUlTU0lOR1'
+        '9LSU5EX1NPVVJDRV9OT19ERVZJQ0UQChIhCh1NSVNTSU5HX0tJTkRfUFJPVklERVJfSU5WQUxJ'
+        'RBAL');
 
 @$core.Deprecated('Use portKindDescriptor instead')
 const PortKind$json = {
@@ -1737,6 +1767,24 @@ const EditOp$json = {
       '9': 0,
       '10': 'setDeviceRealization'
     },
+    {
+      '1': 'set_device_source',
+      '3': 32,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SetDeviceSource',
+      '9': 0,
+      '10': 'setDeviceSource'
+    },
+    {
+      '1': 'set_device_provider',
+      '3': 33,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.SetDeviceProvider',
+      '9': 0,
+      '10': 'setDeviceProvider'
+    },
   ],
   '8': [
     {'1': 'op'},
@@ -1784,8 +1832,10 @@ final $typed_data.Uint8List editOpDescriptor = $convert
         'DWRlbGV0ZV9kZXZpY2UYHSABKAsyFC5iZGwudjEuRGVsZXRlRGV2aWNlSABSDGRlbGV0ZURldm'
         'ljZRJLChNzZXRfY29uY2VwdF9vcmRlcmVkGB4gASgLMhkuYmRsLnYxLlNldENvbmNlcHRPcmRl'
         'cmVkSABSEXNldENvbmNlcHRPcmRlcmVkElQKFnNldF9kZXZpY2VfcmVhbGl6YXRpb24YHyABKA'
-        'syHC5iZGwudjEuU2V0RGV2aWNlUmVhbGl6YXRpb25IAFIUc2V0RGV2aWNlUmVhbGl6YXRpb25C'
-        'BAoCb3A=');
+        'syHC5iZGwudjEuU2V0RGV2aWNlUmVhbGl6YXRpb25IAFIUc2V0RGV2aWNlUmVhbGl6YXRpb24S'
+        'RQoRc2V0X2RldmljZV9zb3VyY2UYICABKAsyFy5iZGwudjEuU2V0RGV2aWNlU291cmNlSABSD3'
+        'NldERldmljZVNvdXJjZRJLChNzZXRfZGV2aWNlX3Byb3ZpZGVyGCEgASgLMhkuYmRsLnYxLlNl'
+        'dERldmljZVByb3ZpZGVySABSEXNldERldmljZVByb3ZpZGVyQgQKAm9w');
 
 @$core.Deprecated('Use createConceptDescriptor instead')
 const CreateConcept$json = {
@@ -2295,6 +2345,42 @@ final $typed_data.Uint8List setDeviceRealizationDescriptor = $convert
         'EoCUgAUglwcm9maWxlSWSIAQESJgoEa2luZBgDIAEoDjISLmJkbC52MS5EZXZpY2VLaW5kUgRr'
         'aW5kQg0KC19wcm9maWxlX2lk');
 
+@$core.Deprecated('Use setDeviceSourceDescriptor instead')
+const SetDeviceSource$json = {
+  '1': 'SetDeviceSource',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'source_id', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'sourceId', '17': true},
+  ],
+  '8': [
+    {'1': '_source_id'},
+  ],
+};
+
+/// Descriptor for `SetDeviceSource`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List setDeviceSourceDescriptor = $convert
+    .base64Decode('Cg9TZXREZXZpY2VTb3VyY2USDgoCaWQYASABKARSAmlkEiAKCXNvdXJjZV9pZBgCIAEoBEgAUg'
+        'hzb3VyY2VJZIgBAUIMCgpfc291cmNlX2lk');
+
+@$core.Deprecated('Use setDeviceProviderDescriptor instead')
+const SetDeviceProvider$json = {
+  '1': 'SetDeviceProvider',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
+    {'1': 'profile_id', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'profileId', '17': true},
+    {'1': 'kind', '3': 3, '4': 1, '5': 14, '6': '.bdl.v1.DeviceKind', '10': 'kind'},
+  ],
+  '8': [
+    {'1': '_profile_id'},
+  ],
+};
+
+/// Descriptor for `SetDeviceProvider`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List setDeviceProviderDescriptor = $convert
+    .base64Decode('ChFTZXREZXZpY2VQcm92aWRlchIOCgJpZBgBIAEoBFICaWQSIgoKcHJvZmlsZV9pZBgCIAEoCU'
+        'gAUglwcm9maWxlSWSIAQESJgoEa2luZBgDIAEoDjISLmJkbC52MS5EZXZpY2VLaW5kUgRraW5k'
+        'Qg0KC19wcm9maWxlX2lk');
+
 @$core.Deprecated('Use editOutcomeDescriptor instead')
 const EditOutcome$json = {
   '1': 'EditOutcome',
@@ -2415,10 +2501,14 @@ const DeviceView$json = {
       '10': 'requirements'
     },
     {'1': 'realization', '3': 7, '4': 1, '5': 9, '9': 1, '10': 'realization', '17': true},
+    {'1': 'source_id', '3': 8, '4': 1, '5': 4, '9': 2, '10': 'sourceId', '17': true},
+    {'1': 'provider', '3': 9, '4': 1, '5': 9, '9': 3, '10': 'provider', '17': true},
   ],
   '8': [
     {'1': '_output_id'},
     {'1': '_realization'},
+    {'1': '_source_id'},
+    {'1': '_provider'},
   ],
 };
 
@@ -2428,8 +2518,10 @@ final $typed_data.Uint8List deviceViewDescriptor = $convert
         'QYAyABKA4yEi5iZGwudjEuRGV2aWNlS2luZFIEa2luZBIgCglvdXRwdXRfaWQYBCABKARIAFII'
         'b3V0cHV0SWSIAQESMAoKZml4ZWRfcGlucxgFIAMoCzIRLmJkbC52MS5EZXZpY2VQaW5SCWZpeG'
         'VkUGlucxI8CgxyZXF1aXJlbWVudHMYBiADKAsyGC5iZGwudjEuUmVxdWlyZW1lbnRMYWJlbFIM'
-        'cmVxdWlyZW1lbnRzEiUKC3JlYWxpemF0aW9uGAcgASgJSAFSC3JlYWxpemF0aW9uiAEBQgwKCl'
-        '9vdXRwdXRfaWRCDgoMX3JlYWxpemF0aW9u');
+        'cmVxdWlyZW1lbnRzEiUKC3JlYWxpemF0aW9uGAcgASgJSAFSC3JlYWxpemF0aW9uiAEBEiAKCX'
+        'NvdXJjZV9pZBgIIAEoBEgCUghzb3VyY2VJZIgBARIfCghwcm92aWRlchgJIAEoCUgDUghwcm92'
+        'aWRlcogBAUIMCgpfb3V0cHV0X2lkQg4KDF9yZWFsaXphdGlvbkIMCgpfc291cmNlX2lkQgsKCV'
+        '9wcm92aWRlcg==');
 
 @$core.Deprecated('Use devicePinDescriptor instead')
 const DevicePin$json = {
@@ -4776,6 +4868,7 @@ const DeploymentAnalysis$json = {
       '6': '.bdl.v1.RealizationView',
       '10': 'realizations'
     },
+    {'1': 'provisions', '3': 17, '4': 3, '5': 11, '6': '.bdl.v1.ProvisionView', '10': 'provisions'},
   ],
   '8': [
     {'1': '_dead_end'},
@@ -4798,7 +4891,77 @@ final $typed_data.Uint8List deploymentAnalysisDescriptor = $convert
         'KAsyEy5iZGwudjEuTWlzc2luZ0l0ZW1SB21pc3NpbmcSKQoEcm93cxgOIAMoCzIVLmJkbC52MS'
         '5Bc3NpZ25tZW50Um93UgRyb3dzEi4KB2Jsb2NrZXIYDyABKAsyDy5iZGwudjEuQmxvY2tlckgB'
         'UgdibG9ja2VyiAEBEjsKDHJlYWxpemF0aW9ucxgQIAMoCzIXLmJkbC52MS5SZWFsaXphdGlvbl'
-        'ZpZXdSDHJlYWxpemF0aW9uc0ILCglfZGVhZF9lbmRCCgoIX2Jsb2NrZXI=');
+        'ZpZXdSDHJlYWxpemF0aW9ucxI1Cgpwcm92aXNpb25zGBEgAygLMhUuYmRsLnYxLlByb3Zpc2lv'
+        'blZpZXdSCnByb3Zpc2lvbnNCCwoJX2RlYWRfZW5kQgoKCF9ibG9ja2Vy');
+
+@$core.Deprecated('Use provisionViewDescriptor instead')
+const ProvisionView$json = {
+  '1': 'ProvisionView',
+  '2': [
+    {'1': 'source_id', '3': 1, '4': 1, '5': 4, '10': 'sourceId'},
+    {'1': 'source_name', '3': 2, '4': 1, '5': 9, '10': 'sourceName'},
+    {'1': 'device_id', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'deviceId', '17': true},
+    {'1': 'device_name', '3': 4, '4': 1, '5': 9, '10': 'deviceName'},
+    {'1': 'profile_id', '3': 5, '4': 1, '5': 9, '9': 1, '10': 'profileId', '17': true},
+    {'1': 'status', '3': 6, '4': 1, '5': 14, '6': '.bdl.v1.ProvisionStatus', '10': 'status'},
+    {'1': 'profile_known', '3': 7, '4': 1, '5': 8, '10': 'profileKnown'},
+    {'1': 'transducer_well_formed', '3': 8, '4': 1, '5': 8, '10': 'transducerWellFormed'},
+    {'1': 'representation_fits', '3': 9, '4': 1, '5': 8, '10': 'representationFits'},
+    {'1': 'hardware_placed', '3': 10, '4': 1, '5': 8, '10': 'hardwarePlaced'},
+    {'1': 'backend_supported', '3': 11, '4': 1, '5': 8, '10': 'backendSupported'},
+    {'1': 'message', '3': 12, '4': 1, '5': 9, '10': 'message'},
+    {'1': 'explanation', '3': 13, '4': 1, '5': 9, '10': 'explanation'},
+    {
+      '1': 'candidates',
+      '3': 14,
+      '4': 3,
+      '5': 11,
+      '6': '.bdl.v1.InputProfileView',
+      '10': 'candidates'
+    },
+  ],
+  '8': [
+    {'1': '_device_id'},
+    {'1': '_profile_id'},
+  ],
+};
+
+/// Descriptor for `ProvisionView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List provisionViewDescriptor = $convert
+    .base64Decode('Cg1Qcm92aXNpb25WaWV3EhsKCXNvdXJjZV9pZBgBIAEoBFIIc291cmNlSWQSHwoLc291cmNlX2'
+        '5hbWUYAiABKAlSCnNvdXJjZU5hbWUSIAoJZGV2aWNlX2lkGAMgASgESABSCGRldmljZUlkiAEB'
+        'Eh8KC2RldmljZV9uYW1lGAQgASgJUgpkZXZpY2VOYW1lEiIKCnByb2ZpbGVfaWQYBSABKAlIAV'
+        'IJcHJvZmlsZUlkiAEBEi8KBnN0YXR1cxgGIAEoDjIXLmJkbC52MS5Qcm92aXNpb25TdGF0dXNS'
+        'BnN0YXR1cxIjCg1wcm9maWxlX2tub3duGAcgASgIUgxwcm9maWxlS25vd24SNAoWdHJhbnNkdW'
+        'Nlcl93ZWxsX2Zvcm1lZBgIIAEoCFIUdHJhbnNkdWNlcldlbGxGb3JtZWQSLwoTcmVwcmVzZW50'
+        'YXRpb25fZml0cxgJIAEoCFIScmVwcmVzZW50YXRpb25GaXRzEicKD2hhcmR3YXJlX3BsYWNlZB'
+        'gKIAEoCFIOaGFyZHdhcmVQbGFjZWQSKwoRYmFja2VuZF9zdXBwb3J0ZWQYCyABKAhSEGJhY2tl'
+        'bmRTdXBwb3J0ZWQSGAoHbWVzc2FnZRgMIAEoCVIHbWVzc2FnZRIgCgtleHBsYW5hdGlvbhgNIA'
+        'EoCVILZXhwbGFuYXRpb24SOAoKY2FuZGlkYXRlcxgOIAMoCzIYLmJkbC52MS5JbnB1dFByb2Zp'
+        'bGVWaWV3UgpjYW5kaWRhdGVzQgwKCl9kZXZpY2VfaWRCDQoLX3Byb2ZpbGVfaWQ=');
+
+@$core.Deprecated('Use inputProfileViewDescriptor instead')
+const InputProfileView$json = {
+  '1': 'InputProfileView',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'display_name', '3': 2, '4': 1, '5': 9, '10': 'displayName'},
+    {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'kind', '3': 4, '4': 1, '5': 14, '6': '.bdl.v1.DeviceKind', '10': 'kind'},
+    {'1': 'raw_type', '3': 5, '4': 1, '5': 9, '10': 'rawType'},
+    {'1': 'representation', '3': 6, '4': 1, '5': 9, '10': 'representation'},
+    {'1': 'compatible', '3': 7, '4': 1, '5': 8, '10': 'compatible'},
+    {'1': 'origin', '3': 8, '4': 1, '5': 9, '10': 'origin'},
+  ],
+};
+
+/// Descriptor for `InputProfileView`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List inputProfileViewDescriptor = $convert
+    .base64Decode('ChBJbnB1dFByb2ZpbGVWaWV3Eg4KAmlkGAEgASgJUgJpZBIhCgxkaXNwbGF5X25hbWUYAiABKA'
+        'lSC2Rpc3BsYXlOYW1lEiAKC2Rlc2NyaXB0aW9uGAMgASgJUgtkZXNjcmlwdGlvbhImCgRraW5k'
+        'GAQgASgOMhIuYmRsLnYxLkRldmljZUtpbmRSBGtpbmQSGQoIcmF3X3R5cGUYBSABKAlSB3Jhd1'
+        'R5cGUSJgoOcmVwcmVzZW50YXRpb24YBiABKAlSDnJlcHJlc2VudGF0aW9uEh4KCmNvbXBhdGli'
+        'bGUYByABKAhSCmNvbXBhdGlibGUSFgoGb3JpZ2luGAggASgJUgZvcmlnaW4=');
 
 @$core.Deprecated('Use realizationViewDescriptor instead')
 const RealizationView$json = {

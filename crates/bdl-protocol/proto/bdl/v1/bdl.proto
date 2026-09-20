@@ -261,6 +261,8 @@ message EditOp {
     DeleteDevice delete_device = 29;
     SetConceptOrdered set_concept_ordered = 30;
     SetDeviceRealization set_device_realization = 31;
+    SetDeviceSource set_device_source = 32;
+    SetDeviceProvider set_device_provider = 33;
   }
 }
 
@@ -408,6 +410,22 @@ message SetDeviceRealization {
   optional string profile_id = 2;
   DeviceKind kind = 3;
 }
+// Bind the device to the Source it provides (0.25), by the relationship's
+// stable id, or release it.  A deployment assignment: the Source keeps its
+// declaration and its meaning.  The device's output is released with it —
+// a device consumes or provides, never both.
+message SetDeviceSource {
+  uint64 id = 1;
+  optional uint64 source_id = 2;
+}
+// Choose how the device provides its Source (0.25): a provider profile
+// from the catalogue, or none.  Like SetDeviceRealization, the profile's
+// requirement template becomes the device kind in the same edit.
+message SetDeviceProvider {
+  uint64 id = 1;
+  optional string profile_id = 2;
+  DeviceKind kind = 3;
+}
 
 // What a device binding needs from the board is derived from its kind
 // (docs/spec/hardware-model.md); the kind is the whole of what the surface says.
@@ -419,6 +437,8 @@ enum DeviceKind {
   DEVICE_KIND_I2C_SENSOR = 4;
   DEVICE_KIND_QUADRATURE_ENCODER = 5;
   DEVICE_KIND_UART = 6;
+  // One digital input line (0.25).
+  DEVICE_KIND_DIGITAL_INPUT = 7;
 }
 
 enum EditKind {
@@ -506,6 +526,11 @@ message DeviceView {
   // The realization profile chosen for the output (0.24); absent when the
   // device only places by kind and no raw command is lowered.
   optional string realization = 7;
+  // The Source this device provides (0.25), by relationship id; exclusive
+  // with output_id.
+  optional uint64 source_id = 8;
+  // The provider profile chosen for the Source (0.25).
+  optional string provider = 9;
 }
 
 message DevicePin {
@@ -1663,6 +1688,72 @@ message DeploymentAnalysis {
   // One per device bound to an output (0.24): the realization judgment,
   // target-independent, plus the profiles the output could use.
   repeated RealizationView realizations = 16;
+  // One per Source of the design (0.25): the provision judgment — which
+  // device provides it, whether the provider fits — plus the profiles the
+  // Source could use.  A Source with no row here does not exist; a Source
+  // with no device is an incomplete deployment.
+  repeated ProvisionView provisions = 17;
+}
+
+// How a Source's provision stands (0.25).  The same shape as
+// RealizationStatus, on the input side: the semantic half is the
+// transducer's, hardware feasibility is the deployment's `status`, and
+// whether the chosen target's adapter can read the profile is the
+// backend's.
+enum ProvisionStatus {
+  PROVISION_STATUS_UNSPECIFIED = 0;
+  // No device provides this Source: the deployment is incomplete.
+  PROVISION_STATUS_NO_DEVICE = 1;
+  // A device is bound but no profile is chosen.
+  PROVISION_STATUS_NOT_CHOSEN = 2;
+  // The persisted profile id is not in this daemon's catalogue.
+  PROVISION_STATUS_UNKNOWN_PROFILE = 3;
+  // The profile's transducer produces a different representation than the
+  // Source's concept carries.
+  PROVISION_STATUS_INCOMPATIBLE = 4;
+  // The transducer is ill typed or not pure (a catalogue defect).
+  PROVISION_STATUS_TRANSDUCER_INVALID = 5;
+  // The profile's requirement template differs from the device's kind.
+  PROVISION_STATUS_KIND_MISMATCH = 6;
+  // Transducer well typed and the representation fits.
+  PROVISION_STATUS_VALID = 7;
+}
+
+message ProvisionView {
+  uint64 source_id = 1;
+  string source_name = 2;
+  optional uint64 device_id = 3;
+  string device_name = 4;
+  optional string profile_id = 5;
+  ProvisionStatus status = 6;
+  // The inspectable judgments behind admissibility.
+  bool profile_known = 7;
+  bool transducer_well_formed = 8;
+  bool representation_fits = 9;
+  // Every requirement of the providing device is placed in `assignment`.
+  bool hardware_placed = 10;
+  // The chosen target's adapter can read this profile; false with a
+  // reason in `message` when the target has no reader for it.
+  bool backend_supported = 11;
+  string message = 12;
+  string explanation = 13;
+  // Every catalogue input profile, with whether it fits this Source.
+  repeated InputProfileView candidates = 14;
+}
+
+message InputProfileView {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  DeviceKind kind = 4;
+  // The raw reading type, printed.
+  string raw_type = 5;
+  // The transducer's representation, printed.
+  string representation = 6;
+  bool compatible = 7;
+  // Where the profile comes from: "builtin" or "package <id>".  Display
+  // data only; no judgment reads it.
+  string origin = 8;
 }
 
 // How a device's realization of its output stands.  Hardware feasibility is
@@ -1731,6 +1822,10 @@ enum MissingKind {
   MISSING_KIND_DEVICE_NO_OUTPUT = 8;
   // The device's chosen realization is unknown, does not fit or is defective (0.24).
   MISSING_KIND_REALIZATION_INVALID = 9;
+  // No device provides this Source (0.25).
+  MISSING_KIND_SOURCE_NO_DEVICE = 10;
+  // The device's chosen provider is unknown, does not fit or is defective (0.25).
+  MISSING_KIND_PROVIDER_INVALID = 11;
 }
 
 message MissingItem {

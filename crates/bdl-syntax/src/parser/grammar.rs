@@ -393,7 +393,9 @@ fn drive_decl(p: &mut Parser<'_>, scope: Scope) {
     m.complete(p, DriveDecl);
 }
 
-/// `DeviceDecl ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?`
+/// `DeviceDecl ::= "device" Name ":" Ident ("for" NameRef)? DeviceBody?` —
+/// the name after `for` is an output the device realises or a Source it
+/// provides; the builder resolves which.
 fn device_decl(p: &mut Parser<'_>, scope: Scope) {
     let m = p.start();
     p.bump(); // device
@@ -420,7 +422,7 @@ fn device_decl(p: &mut Parser<'_>, scope: Scope) {
             name_ref(p);
         } else {
             p.error_expecting(
-                "expected the output this device realises, after `for`",
+                "expected the output this device realises or the Source it provides, after `for`",
                 &[Ident],
             );
         }
@@ -432,14 +434,30 @@ fn device_decl(p: &mut Parser<'_>, scope: Scope) {
     m.complete(p, DeviceDecl);
 }
 
-/// `DeviceBody ::= "{" ( (PinFix | RealizationFix) ","? )* "}"`,
-/// `PinFix ::= "pin" Number "=" Ident`, `RealizationFix ::= "realization" Ident`
+/// `DeviceBody ::= "{" ( (PinFix | RealizationFix | ProviderFix) ","? )* "}"`,
+/// `PinFix ::= "pin" Number "=" Ident`, `RealizationFix ::= "realization" Ident`,
+/// `ProviderFix ::= "provider" Ident`
 fn device_body(p: &mut Parser<'_>) {
     let m = p.start();
     p.bump(); // {
     loop {
         if p.at(RBrace) || p.at_eof() {
             break;
+        }
+        if p.at(Ident) && p.current_text() == "provider" {
+            let fix = p.start();
+            p.bump(); // provider
+            if p.at(Ident) {
+                name_ref(p);
+            } else {
+                p.error_expecting(
+                    "expected the provider profile's id after `provider`",
+                    &[Ident],
+                );
+            }
+            fix.complete(p, ProviderFix);
+            p.eat(Comma);
+            continue;
         }
         if p.at(Ident) && p.current_text() == "realization" {
             let fix = p.start();
@@ -481,7 +499,7 @@ fn device_body(p: &mut Parser<'_>) {
         }
         p.error_and_bump(
             SyntaxErrorCode::Expected,
-            "expected `pin <index> = <name>`, `realization <profile>` or `}` here",
+            "expected `pin <index> = <name>`, `realization <profile>`, `provider <profile>` or `}` here",
         );
     }
     p.expect(RBrace, "expected `}` to close the device");

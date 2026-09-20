@@ -32,6 +32,10 @@ class DeviceKind extends $pb.ProtobufEnum {
   static const DeviceKind DEVICE_KIND_UART =
       DeviceKind._(6, _omitEnumNames ? '' : 'DEVICE_KIND_UART');
 
+  /// One digital input line (0.25).
+  static const DeviceKind DEVICE_KIND_DIGITAL_INPUT =
+      DeviceKind._(7, _omitEnumNames ? '' : 'DEVICE_KIND_DIGITAL_INPUT');
+
   static const $core.List<DeviceKind> values = <DeviceKind>[
     DEVICE_KIND_UNSPECIFIED,
     DEVICE_KIND_PWM_CHANNEL,
@@ -40,9 +44,10 @@ class DeviceKind extends $pb.ProtobufEnum {
     DEVICE_KIND_I2C_SENSOR,
     DEVICE_KIND_QUADRATURE_ENCODER,
     DEVICE_KIND_UART,
+    DEVICE_KIND_DIGITAL_INPUT,
   ];
 
-  static final $core.List<DeviceKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 6);
+  static final $core.List<DeviceKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 7);
   static DeviceKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
@@ -386,6 +391,63 @@ class DeploymentStatus extends $pb.ProtobufEnum {
   const DeploymentStatus._(super.value, super.name);
 }
 
+/// How a Source's provision stands (0.25).  The same shape as
+/// RealizationStatus, on the input side: the semantic half is the
+/// transducer's, hardware feasibility is the deployment's `status`, and
+/// whether the chosen target's adapter can read the profile is the
+/// backend's.
+class ProvisionStatus extends $pb.ProtobufEnum {
+  static const ProvisionStatus PROVISION_STATUS_UNSPECIFIED =
+      ProvisionStatus._(0, _omitEnumNames ? '' : 'PROVISION_STATUS_UNSPECIFIED');
+
+  /// No device provides this Source: the deployment is incomplete.
+  static const ProvisionStatus PROVISION_STATUS_NO_DEVICE =
+      ProvisionStatus._(1, _omitEnumNames ? '' : 'PROVISION_STATUS_NO_DEVICE');
+
+  /// A device is bound but no profile is chosen.
+  static const ProvisionStatus PROVISION_STATUS_NOT_CHOSEN =
+      ProvisionStatus._(2, _omitEnumNames ? '' : 'PROVISION_STATUS_NOT_CHOSEN');
+
+  /// The persisted profile id is not in this daemon's catalogue.
+  static const ProvisionStatus PROVISION_STATUS_UNKNOWN_PROFILE =
+      ProvisionStatus._(3, _omitEnumNames ? '' : 'PROVISION_STATUS_UNKNOWN_PROFILE');
+
+  /// The profile's transducer produces a different representation than the
+  /// Source's concept carries.
+  static const ProvisionStatus PROVISION_STATUS_INCOMPATIBLE =
+      ProvisionStatus._(4, _omitEnumNames ? '' : 'PROVISION_STATUS_INCOMPATIBLE');
+
+  /// The transducer is ill typed or not pure (a catalogue defect).
+  static const ProvisionStatus PROVISION_STATUS_TRANSDUCER_INVALID =
+      ProvisionStatus._(5, _omitEnumNames ? '' : 'PROVISION_STATUS_TRANSDUCER_INVALID');
+
+  /// The profile's requirement template differs from the device's kind.
+  static const ProvisionStatus PROVISION_STATUS_KIND_MISMATCH =
+      ProvisionStatus._(6, _omitEnumNames ? '' : 'PROVISION_STATUS_KIND_MISMATCH');
+
+  /// Transducer well typed and the representation fits.
+  static const ProvisionStatus PROVISION_STATUS_VALID =
+      ProvisionStatus._(7, _omitEnumNames ? '' : 'PROVISION_STATUS_VALID');
+
+  static const $core.List<ProvisionStatus> values = <ProvisionStatus>[
+    PROVISION_STATUS_UNSPECIFIED,
+    PROVISION_STATUS_NO_DEVICE,
+    PROVISION_STATUS_NOT_CHOSEN,
+    PROVISION_STATUS_UNKNOWN_PROFILE,
+    PROVISION_STATUS_INCOMPATIBLE,
+    PROVISION_STATUS_TRANSDUCER_INVALID,
+    PROVISION_STATUS_KIND_MISMATCH,
+    PROVISION_STATUS_VALID,
+  ];
+
+  static final $core.List<ProvisionStatus?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 7);
+  static ProvisionStatus? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const ProvisionStatus._(super.value, super.name);
+}
+
 /// How a device's realization of its output stands.  Hardware feasibility is
 /// the deployment's `status`; this is the semantic half (encoder well typed,
 /// representation fits) — admissible means both halves hold.
@@ -465,6 +527,14 @@ class MissingKind extends $pb.ProtobufEnum {
   static const MissingKind MISSING_KIND_REALIZATION_INVALID =
       MissingKind._(9, _omitEnumNames ? '' : 'MISSING_KIND_REALIZATION_INVALID');
 
+  /// No device provides this Source (0.25).
+  static const MissingKind MISSING_KIND_SOURCE_NO_DEVICE =
+      MissingKind._(10, _omitEnumNames ? '' : 'MISSING_KIND_SOURCE_NO_DEVICE');
+
+  /// The device's chosen provider is unknown, does not fit or is defective (0.25).
+  static const MissingKind MISSING_KIND_PROVIDER_INVALID =
+      MissingKind._(11, _omitEnumNames ? '' : 'MISSING_KIND_PROVIDER_INVALID');
+
   static const $core.List<MissingKind> values = <MissingKind>[
     MISSING_KIND_UNSPECIFIED,
     MISSING_KIND_RELATIONSHIP_NOT_CHECKING,
@@ -476,9 +546,11 @@ class MissingKind extends $pb.ProtobufEnum {
     MISSING_KIND_OUTPUT_NO_DEVICE,
     MISSING_KIND_DEVICE_NO_OUTPUT,
     MISSING_KIND_REALIZATION_INVALID,
+    MISSING_KIND_SOURCE_NO_DEVICE,
+    MISSING_KIND_PROVIDER_INVALID,
   ];
 
-  static final $core.List<MissingKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 9);
+  static final $core.List<MissingKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 11);
   static MissingKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

@@ -346,11 +346,25 @@ fn smart_lamp_is_authored_from_the_surface_and_does_everything_the_compiler_know
         .collect();
     assert_eq!(b, vec![0.0, 0.5, 1.0, 0.5]);
 
-    // deployment: one PWM line, placed on the Nano
+    // deployment: one PWM line, placed on the Nano; the two Sources have
+    // no device yet, so the deployment is incomplete and says which
     let nano = bdl_hardware::boards::by_name("arduino_nano").unwrap();
     let d = analyze_deployment(&snapshot, &nano);
-    assert_eq!(d.status, DeploymentStatus::Feasible, "{:?}", d.diagnostics);
+    assert_eq!(
+        d.status,
+        DeploymentStatus::Incomplete,
+        "{:?}",
+        d.diagnostics
+    );
     assert_eq!(d.assignment.as_ref().unwrap().len(), 1);
+    assert_eq!(d.unprovided_sources.len(), 2);
+    assert_eq!(
+        d.diagnostics
+            .iter()
+            .filter(|x| x.code.as_str() == "deploy.source_unprovided")
+            .count(),
+        2
+    );
 
     // the checked-in example is exactly this project in the unified
     // layout (ADR-0023): the legacy form just written is migrated in

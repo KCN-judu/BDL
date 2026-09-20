@@ -1041,6 +1041,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get digitalOutput => '数字输出';
 
   @override
+  String get digitalInput => '数字输入';
+
+  @override
   String get hBridgeChannel => 'H 桥通道';
 
   @override
@@ -1101,6 +1104,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noOutput => '无输出';
+
+  @override
+  String get notConnected => '未连接';
+
+  @override
+  String sourceItem(String name) {
+    return '$name — 来源';
+  }
+
+  @override
+  String get providerProfile => '提供方式';
+
+  @override
+  String get noProvider => '无 — 按种类放置';
+
+  @override
+  String get chooseABoardToSeeProviders => '选择一块开发板，查看哪些提供方式适合这个来源。';
+
+  @override
+  String get transducerWellFormed => '转换器';
+
+  @override
+  String get backendReadable => '可读取';
+
+  @override
+  String rawReading(String ty) {
+    return '原始读数 $ty';
+  }
+
+  @override
+  String fromPackage(String origin) {
+    return '来自 $origin';
+  }
 
   @override
   String placedBeforeTheDeadEnd(Object placements) {
@@ -1885,6 +1921,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get realizationEnvironment => '由环境提供；尚未绑定设备。';
+
+  @override
+  String realizationNoDeviceOn(String board) {
+    return '由环境提供；$board 上尚无设备。';
+  }
+
+  @override
+  String realizationProvidedBy(String device, String board) {
+    return '由 $device 在 $board 上提供。';
+  }
+
+  @override
+  String realizationProvidedByAs(String device, String profile, String board) {
+    return '由 $device 以 $profile 在 $board 上提供。';
+  }
 
   @override
   String get sourceExplanation => '由环境进入行为模型的值，每次激活观测一次。这里没有任何缺失：只有当你想改为在模型内部计算它时，才添加定义。';

@@ -1047,6 +1047,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get digitalOutput => 'デジタル出力';
 
   @override
+  String get digitalInput => 'デジタル入力';
+
+  @override
   String get hBridgeChannel => 'H ブリッジチャネル';
 
   @override
@@ -1108,6 +1111,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noOutput => '出力なし';
+
+  @override
+  String get notConnected => '未接続';
+
+  @override
+  String sourceItem(String name) {
+    return '$name — 入力元';
+  }
+
+  @override
+  String get providerProfile => '提供方式';
+
+  @override
+  String get noProvider => 'なし — 種類で配置';
+
+  @override
+  String get chooseABoardToSeeProviders => 'ボードを選ぶと、この入力元に適合する提供方式を確認できます。';
+
+  @override
+  String get transducerWellFormed => '変換器';
+
+  @override
+  String get backendReadable => '読み取り可';
+
+  @override
+  String rawReading(String ty) {
+    return '生の読み値 $ty';
+  }
+
+  @override
+  String fromPackage(String origin) {
+    return '$origin 由来';
+  }
 
   @override
   String placedBeforeTheDeadEnd(Object placements) {
@@ -1897,6 +1933,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get realizationEnvironment => '環境から与えられます。デバイスはまだ割り当てられていません。';
+
+  @override
+  String realizationNoDeviceOn(String board) {
+    return '環境から与えられます。$board にはまだデバイスがありません。';
+  }
+
+  @override
+  String realizationProvidedBy(String device, String board) {
+    return '$board 上の $device から与えられます。';
+  }
+
+  @override
+  String realizationProvidedByAs(String device, String profile, String board) {
+    return '$board 上の $device から $profile として与えられます。';
+  }
 
   @override
   String get sourceExplanation =>

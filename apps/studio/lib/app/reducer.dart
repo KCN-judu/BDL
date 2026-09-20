@@ -299,6 +299,21 @@ Transition reduce(AppState s, AppAction action) {
         ),
       ),
     ),
+    SetDeviceSourceRequested(:final id, :final sourceId) => _edit(
+      s,
+      pb.EditOp(
+        setDeviceSource: pb.SetDeviceSource(
+          id: Int64(id),
+          sourceId: sourceId == null ? null : Int64(sourceId),
+        ),
+      ),
+    ),
+    SetDeviceProviderRequested(:final id, :final profileId, :final kind) => _edit(
+      s,
+      pb.EditOp(
+        setDeviceProvider: pb.SetDeviceProvider(id: Int64(id), profileId: profileId, kind: kind),
+      ),
+    ),
     SetDeviceRealizationRequested(:final id, :final profileId, :final kind) => _edit(
       s,
       pb.EditOp(

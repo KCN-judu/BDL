@@ -1507,7 +1507,11 @@ pub fn run_request(case: &Case, art: &CompileArtifact) -> RunRequest {
                         .map(dyn_of)
                 })
                 .collect();
-            TickRequest { active, inputs }
+            TickRequest {
+                active,
+                inputs,
+                readings: vec![],
+            }
         })
         .collect();
     RunRequest { ticks }

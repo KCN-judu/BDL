@@ -34,11 +34,12 @@ use crate::{analyze, analyze_design_ir, MappingStatus, ProjectAnalysis};
 use bdl_codegen_rust::{CodegenOptions, GeneratedCrate};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::ExecIr;
-use bdl_ir::{DesignIr, Ty};
-use bdl_lower::{Realization, Realizations};
+use bdl_ir::{DesignIr, Expr, Ty};
+use bdl_lower::{Provision, Provisions, Realization, Realizations};
 use bdl_model::surface::{Design, ProjectSnapshot};
-use bdl_model::SemanticId;
-use bdl_output::realization::{check_binding, encoder_body};
+use bdl_model::{RelationshipRole, SemanticId};
+use bdl_output::provision::{check_provider, provision_body};
+use bdl_output::realization::{check_binding, encoder_body, Catalogue};
 use bdl_reactive::Schedule;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
@@ -152,8 +153,18 @@ pub fn readiness(a: &ProjectAnalysis, require_complete: bool) -> Vec<Diagnostic>
 pub fn compile(snapshot: &ProjectSnapshot, options: &CompileOptions) -> CompileArtifact {
     let analysis = analyze(snapshot);
     let name = snapshot.design.name.clone();
-    let (realizations, refusals) = realizations_of(&snapshot.design, &analysis);
-    compile_analysis(analysis, &name, options, realizations, refusals, None)
+    let (realizations, mut refusals) = realizations_of(&snapshot.design, &analysis);
+    let (provisions, more) = provisions_of(&snapshot.design, &analysis);
+    refusals.extend(more);
+    compile_analysis(
+        analysis,
+        &name,
+        options,
+        realizations,
+        provisions,
+        refusals,
+        None,
+    )
 }
 
 /// [`compile`] with the platform adapter for one solved deployment
@@ -170,12 +181,15 @@ pub(crate) fn compile_with_target(
 ) -> CompileArtifact {
     let analysis = analyze(snapshot);
     let name = snapshot.design.name.clone();
-    let (realizations, refusals) = realizations_of(&snapshot.design, &analysis);
+    let (realizations, mut refusals) = realizations_of(&snapshot.design, &analysis);
+    let (provisions, more) = provisions_of(&snapshot.design, &analysis);
+    refusals.extend(more);
     compile_analysis(
         analysis,
         &name,
         options,
         realizations,
+        provisions,
         refusals,
         Some((deployment, target, target_options)),
     )
@@ -190,9 +204,70 @@ pub fn compile_design_ir(ir: DesignIr, name: &str, options: &CompileOptions) -> 
         name,
         options,
         Realizations::new(),
+        Provisions::new(),
         Vec::new(),
         None,
     )
+}
+
+/// The providers to lower — one per Source whose providing device has a
+/// valid profile — and the refusals for chosen profiles that are not
+/// valid.  A Source without a device, or a device without a profile,
+/// lowers nothing: the Source stays a plain input (the simulation
+/// supplies it; a board refuses it in `adapter_plan`).  The judgment is
+/// the deployment analysis's (`check_provider`), repeated here on the
+/// design alone so the core can be generated with providers and no board.
+fn provisions_of(design: &Design, analysis: &ProjectAnalysis) -> (Provisions, Vec<Diagnostic>) {
+    let ir = &analysis.ir;
+    let theta = |s: SemanticId| ir.representation_of(s).cloned();
+    let catalogue = Catalogue::builtin();
+    let mut provisions = Provisions::new();
+    let mut refusals = Vec::new();
+    for d in design.devices.values() {
+        let (Some(source), Some(_)) = (d.source, &d.provider) else {
+            continue;
+        };
+        let Some(m) = design.mappings.get(&source) else {
+            continue;
+        };
+        if m.role() != RelationshipRole::Source {
+            continue;
+        }
+        if provisions.contains_key(&source) {
+            // contested: the deployment analysis reports it; the first
+            // device in id order provides
+            continue;
+        }
+        let check = check_provider(&catalogue, d, Some(m.signature.output), theta);
+        if check.is_blocking() {
+            let profile = d.provider.as_ref().map(|p| p.0.clone()).unwrap_or_default();
+            refusals.push(
+                Diagnostic::error(
+                    "backend.provider_invalid",
+                    Entity::Project,
+                    format!("{} cannot provide {} with `{profile}`.", d.name, m.name),
+                )
+                .explain("The provider chosen for this device is unknown, does not fit what the Source carries, or is defective. The Deploy page names which; the design's behavior is unaffected.")
+                .technical(format!("device {} provider {profile}: {:?}", d.id, check.status)),
+            );
+            continue;
+        }
+        let Some(profile) = check.profile else {
+            continue;
+        };
+        provisions.insert(
+            source,
+            Provision {
+                source,
+                device: d.id,
+                device_name: d.name.clone(),
+                profile: profile.id.clone(),
+                raw: profile.transducer.raw.clone(),
+                body: provision_body(m.signature.output, &profile.transducer, Expr::var(0)),
+            },
+        );
+    }
+    (provisions, refusals)
 }
 
 /// The machine sinks to lower — one per device binding whose chosen
@@ -267,6 +342,7 @@ fn compile_analysis(
     name: &str,
     options: &CompileOptions,
     realizations: Realizations,
+    provisions: Provisions,
     refusals: Vec<Diagnostic>,
     target: Option<Target<'_>>,
 ) -> CompileArtifact {
@@ -282,11 +358,12 @@ fn compile_analysis(
             diagnostics,
         };
     }
-    let exec_ir = match bdl_lower::lower(
+    let exec_ir = match bdl_lower::lower_with_provisions(
         &analysis.ir,
         name,
         &analysis.outputs.valid_bindings,
         &realizations,
+        &provisions,
     ) {
         Ok(e) => e,
         Err(ds) => {

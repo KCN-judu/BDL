@@ -25,6 +25,10 @@ pub fn output(o: OutputId) -> String {
 pub fn command(d: DeviceId) -> String {
     format!("command_{}", d.raw())
 }
+/// The raw reading of a provider, named by its device binding.
+pub fn reading(d: DeviceId) -> String {
+    format!("reading_{}", d.raw())
+}
 pub fn clock(c: ClockSlot) -> String {
     format!("CLOCK_{}", c.0)
 }

@@ -352,7 +352,7 @@ pub fn firmware_module(
         value: Expr::call("design::init", []),
     });
     stmts.push(Stmt::Comment(
-        "no device provides a value yet (ISS-0016): a due input would fault the tick".into(),
+        "this family has no reader yet: a design with a Source is refused for it (`adapter.provider_unsupported`)".into(),
     ));
     stmts.push(Stmt::Let {
         name: "inputs".into(),

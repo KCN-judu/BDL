@@ -1090,6 +1090,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digitalOutput => 'Digital output';
 
   @override
+  String get digitalInput => 'Digital input';
+
+  @override
   String get hBridgeChannel => 'H-bridge channel';
 
   @override
@@ -1152,6 +1155,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noOutput => 'no output';
+
+  @override
+  String get notConnected => 'not connected';
+
+  @override
+  String sourceItem(String name) {
+    return '$name — Source';
+  }
+
+  @override
+  String get providerProfile => 'Provider';
+
+  @override
+  String get noProvider => 'None — place by kind';
+
+  @override
+  String get chooseABoardToSeeProviders => 'Choose a board to see which providers fit this Source.';
+
+  @override
+  String get transducerWellFormed => 'transducer';
+
+  @override
+  String get backendReadable => 'readable';
+
+  @override
+  String rawReading(String ty) {
+    return 'raw reading $ty';
+  }
+
+  @override
+  String fromPackage(String origin) {
+    return 'from $origin';
+  }
 
   @override
   String placedBeforeTheDeadEnd(Object placements) {
@@ -2020,6 +2056,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get realizationEnvironment => 'Provided by the environment; no device is bound yet.';
+
+  @override
+  String realizationNoDeviceOn(String board) {
+    return 'Provided by the environment; no device on $board yet.';
+  }
+
+  @override
+  String realizationProvidedBy(String device, String board) {
+    return 'Provided by $device on $board.';
+  }
+
+  @override
+  String realizationProvidedByAs(String device, String profile, String board) {
+    return 'Provided by $device as $profile on $board.';
+  }
 
   @override
   String get sourceExplanation =>

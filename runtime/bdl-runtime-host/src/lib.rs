@@ -143,6 +143,33 @@ pub struct TickRequest {
     pub active: Vec<u16>,
     /// One entry per input slot.
     pub inputs: Vec<Option<DynValue>>,
+    /// One raw reading per provider, in provider order (the generated
+    /// `adapter::provide`'s parameters): the input half of the adapter on
+    /// the host.  A provided Source's value is made from its reading and
+    /// overrides `inputs` for that slot; empty for a core without providers,
+    /// or to supply every input directly.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub readings: Vec<Option<DynValue>>,
+}
+
+/// Why a reading could not become an input: the value's shape, or the
+/// provider's term failing (`?` on both in generated bridges).
+#[derive(Clone, Debug, PartialEq)]
+pub enum ReadingError {
+    Bridge(BridgeError),
+    Runtime(RuntimeError),
+}
+
+impl From<BridgeError> for ReadingError {
+    fn from(e: BridgeError) -> Self {
+        ReadingError::Bridge(e)
+    }
+}
+
+impl From<RuntimeError> for ReadingError {
+    fn from(e: RuntimeError) -> Self {
+        ReadingError::Runtime(e)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
@@ -309,6 +336,12 @@ pub trait HostProgram {
         inputs: &Self::Inputs,
     ) -> Result<Self::Tick, RuntimeError>;
     fn inputs_from_dyn(slots: &[Option<DynValue>]) -> Result<Self::Inputs, BridgeError>;
+    /// The provided Sources' inputs from the request's raw readings, over
+    /// `inputs`; a no-op for a core without providers.
+    fn inputs_from_readings(
+        readings: &[Option<DynValue>],
+        inputs: &mut Self::Inputs,
+    ) -> Result<(), ReadingError>;
     fn values_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
     fn outputs_to_dyn(tick: &Self::Tick) -> Vec<Option<DynValue>>;
     /// The raw commands of the realised outputs; empty when none.
@@ -337,7 +370,7 @@ pub fn run<P: HostProgram>(req: &RunRequest) -> RunTrace {
     };
     for (t, tr) in req.ticks.iter().enumerate() {
         let tick = t as u64;
-        let inputs = match P::inputs_from_dyn(&tr.inputs) {
+        let mut inputs = match P::inputs_from_dyn(&tr.inputs) {
             Ok(i) => i,
             Err(e) => {
                 trace.error = Some(TraceError {
@@ -350,6 +383,28 @@ pub fn run<P: HostProgram>(req: &RunRequest) -> RunTrace {
                 break;
             }
         };
+        if !tr.readings.is_empty() {
+            match P::inputs_from_readings(&tr.readings, &mut inputs) {
+                Ok(()) => {}
+                Err(ReadingError::Bridge(e)) => {
+                    trace.error = Some(TraceError {
+                        tick,
+                        error: DynError::Bridge {
+                            slot: e.slot,
+                            expected: e.expected,
+                        },
+                    });
+                    break;
+                }
+                Err(ReadingError::Runtime(e)) => {
+                    trace.error = Some(TraceError {
+                        tick,
+                        error: e.into(),
+                    });
+                    break;
+                }
+            }
+        }
         let active = active_domains(&tr.active);
         let started = std::time::Instant::now();
         let r = P::step(&mut state, active, &inputs);
@@ -419,6 +474,12 @@ mod tests {
             let y = bdl_runtime_core::num::mul(x, 2.0, 1)?;
             Ok((Some(x), Some(y)))
         }
+        fn inputs_from_readings(
+            _: &[Option<DynValue>],
+            _: &mut Option<f64>,
+        ) -> Result<(), ReadingError> {
+            Ok(())
+        }
         fn inputs_from_dyn(slots: &[Option<DynValue>]) -> Result<Option<f64>, BridgeError> {
             Ok(match slots.first() {
                 Some(Some(v)) => Some(v.quantity(0)?),
@@ -452,18 +513,22 @@ mod tests {
                 TickRequest {
                     active: vec![0],
                     inputs: vec![Some(DynValue::Quantity { value: 1.5 })],
+                    readings: vec![],
                 },
                 TickRequest {
                     active: vec![],
                     inputs: vec![None],
+                    readings: vec![],
                 },
                 TickRequest {
                     active: vec![0],
                     inputs: vec![None],
+                    readings: vec![],
                 },
                 TickRequest {
                     active: vec![0],
                     inputs: vec![Some(DynValue::Quantity { value: 9.0 })],
+                    readings: vec![],
                 },
             ],
         };
@@ -489,6 +554,7 @@ mod tests {
             ticks: vec![TickRequest {
                 active: vec![0],
                 inputs: vec![Some(DynValue::Bool { value: true })],
+                readings: vec![],
             }],
         };
         assert!(matches!(

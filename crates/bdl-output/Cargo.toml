@@ -12,6 +12,7 @@ bdl-model = { workspace = true }
 bdl-ir = { workspace = true }
 bdl-diagnostics = { workspace = true }
 bdl-check = { workspace = true }
+bdl-catalogue = { workspace = true }
 bdl-reactive = { workspace = true }
 serde = { workspace = true }
 

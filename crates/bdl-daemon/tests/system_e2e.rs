@@ -576,7 +576,9 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
         ba.rendered
     );
 
-    // deployment sees no devices yet: incomplete, not infeasible
+    // deployment sees no devices yet, and the flattened system's Sources
+    // have no provider: incomplete, not infeasible, one provision row per
+    // Source saying so
     let Resp::Deployment(d) = c.call(Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
         target_id: "arduino_nano".into(),
         revision: Some(c.last_revision),
@@ -584,8 +586,17 @@ fn a_system_project_composes_analyses_simulates_deploys_and_reopens() {
         panic!()
     };
     let d = d.deployment.unwrap();
-    assert_eq!(d.status(), pb::DeploymentStatus::Feasible);
+    assert_eq!(d.status(), pb::DeploymentStatus::Incomplete);
     assert!(d.design_ready);
+    assert!(!d.provisions.is_empty());
+    assert!(d
+        .provisions
+        .iter()
+        .all(|p| p.status() == pb::ProvisionStatus::NoDevice));
+    assert!(d
+        .missing
+        .iter()
+        .all(|m| m.kind() == pb::MissingKind::SourceNoDevice));
 
     // undo the last binding: lampB's port is open again; redo restores it
     // (a system project answers with the system alongside)

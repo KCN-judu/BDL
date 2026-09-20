@@ -26,32 +26,14 @@
 //! is the term a lowering adds *below* the behavior IR, and behavior does
 //! not see it (`behavior_unchanged`, `lower_transparent`).
 
+pub use bdl_catalogue::{
+    Catalogue, Encoder, InputEntry, InputProfile, Origin, OutputEntry, OutputProfile, Transducer,
+};
 use bdl_check::{infer, Grant};
-use bdl_ir::{DesignIr, Expr, Prim, Scalar, Ty};
+use bdl_ir::{DesignIr, Expr, Ty};
 use bdl_model::surface::{DeviceBinding, DeviceKind};
-use bdl_model::{DeclId, Dim, OutputProfileId, SemanticId};
+use bdl_model::{DeclId, OutputProfileId, SemanticId};
 use serde::{Deserialize, Serialize};
-
-/// `Encoder`: a closed term from a representation to a raw command type.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Encoder {
-    pub rep: Ty,
-    pub raw: Ty,
-    pub encode: Expr,
-}
-
-/// `DeviceOutputProfile`: an encoder plus the hardware it needs.  A profile
-/// is not a device kind — one output may be realised by several profiles,
-/// and several profiles may share a requirement template.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OutputProfile {
-    pub id: OutputProfileId,
-    pub display_name: String,
-    pub description: String,
-    pub encoder: Encoder,
-    /// The hardware requirement template (`bdl-hardware::devices::needs`).
-    pub kind: DeviceKind,
-}
 
 /// Why an encoder is not pure: it reaches outside its argument.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -146,6 +128,16 @@ impl RealizationCheck {
     }
 }
 
+/// The builtin output profiles (`bdl_catalogue::builtin_outputs`).
+pub fn profiles() -> Vec<OutputProfile> {
+    bdl_catalogue::builtin_outputs()
+}
+
+/// One builtin profile by id.
+pub fn profile(id: &OutputProfileId) -> Option<OutputProfile> {
+    profiles().into_iter().find(|p| &p.id == id)
+}
+
 // ---------------------------------------------------------------------------
 // Judgments
 
@@ -235,13 +227,24 @@ pub fn check_binding(
     accepts: Option<&Ty>,
     representation_of: impl Fn(SemanticId) -> Option<Ty>,
 ) -> RealizationCheck {
+    check_binding_in(&Catalogue::builtin(), binding, accepts, representation_of)
+}
+
+/// [`check_binding`] against a given catalogue: the judgment takes the
+/// entry's *profile* and never its origin.
+pub fn check_binding_in(
+    catalogue: &Catalogue,
+    binding: &DeviceBinding,
+    accepts: Option<&Ty>,
+    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+) -> RealizationCheck {
     let Some(id) = &binding.realization else {
         return RealizationCheck {
             profile: None,
             status: RealizationStatus::NotChosen,
         };
     };
-    let Some(profile) = profile(id) else {
+    let Some(profile) = catalogue.output(id).map(|e| e.profile.clone()) else {
         return RealizationCheck {
             profile: None,
             status: RealizationStatus::UnknownProfile,
@@ -268,182 +271,11 @@ pub fn check_binding(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Registry
-
-/// The first witnesses.  Raw command types are drawn from the existing
-/// data types only (a level, a truth value, a pair); no raw type exists
-/// for its own sake.  Ids are stable and persisted in project files.
-pub fn profiles() -> Vec<OutputProfile> {
-    let level = Ty::q(Dim::ZERO);
-    vec![
-        OutputProfile {
-            id: OutputProfileId("pwm_duty8".into()),
-            display_name: "PWM, 8-bit duty".into(),
-            description: "A level 0–100 becomes a duty 0–255 on one PWM line.".into(),
-            encoder: Encoder {
-                rep: level.clone(),
-                raw: level.clone(),
-                encode: lam_level(scale(var0(), 255.0, 100.0)),
-            },
-            kind: DeviceKind::PwmChannel,
-        },
-        OutputProfile {
-            id: OutputProfileId("pwm_duty4".into()),
-            display_name: "PWM, 4 levels".into(),
-            description: "A level 0–100 becomes one of four duties (0, 85, 170, 255) on one PWM line; nearby levels share a duty.".into(),
-            encoder: Encoder {
-                rep: level.clone(),
-                raw: level.clone(),
-                encode: lam_level(quantize4(var0())),
-            },
-            kind: DeviceKind::PwmChannel,
-        },
-        OutputProfile {
-            id: OutputProfileId("i2c_level8".into()),
-            display_name: "I2C register, 8-bit".into(),
-            description: "A level 0–100 becomes the pair (register 42, value 0–255) written over I2C.".into(),
-            encoder: Encoder {
-                rep: level.clone(),
-                raw: Ty::prod(level.clone(), level.clone()),
-                encode: lam_level(Expr::apps(
-                    Expr::prim(Prim::Pair {
-                        fst: level.clone(),
-                        snd: level.clone(),
-                    }),
-                    [lit(42.0), scale(var0(), 255.0, 100.0)],
-                )),
-            },
-            kind: DeviceKind::I2cSensor,
-        },
-        OutputProfile {
-            id: OutputProfileId("gpio_level".into()),
-            display_name: "GPIO, on/off".into(),
-            description: "A truth value drives one digital line as written.".into(),
-            encoder: Encoder {
-                rep: Ty::Bool,
-                raw: Ty::Bool,
-                encode: Expr::Lam {
-                    dom: Ty::Bool,
-                    body: Box::new(var0()),
-                },
-            },
-            kind: DeviceKind::DigitalOutput,
-        },
-        OutputProfile {
-            id: OutputProfileId("hbridge_signed".into()),
-            display_name: "H-bridge, signed level".into(),
-            description: "A signed level −100–100 becomes (forward?, duty 0–255) on an H-bridge channel.".into(),
-            encoder: Encoder {
-                rep: level.clone(),
-                raw: Ty::prod(Ty::Bool, level.clone()),
-                encode: lam_level(Expr::apps(
-                    Expr::prim(Prim::Pair {
-                        fst: Ty::Bool,
-                        snd: level.clone(),
-                    }),
-                    [
-                        // forward := ¬ (n < 0)
-                        Expr::app(
-                            Expr::prim(Prim::Not),
-                            Expr::apps(Expr::prim(Prim::Lt { dim: Dim::ZERO }), [var0(), lit(0.0)]),
-                        ),
-                        // duty := (if n < 0 then 0 − n else n) · 255 / 100
-                        scale(
-                            Expr::apps(
-                                Expr::prim(Prim::Ite { ty: level.clone() }),
-                                [
-                                    Expr::apps(
-                                        Expr::prim(Prim::Lt { dim: Dim::ZERO }),
-                                        [var0(), lit(0.0)],
-                                    ),
-                                    Expr::apps(
-                                        Expr::prim(Prim::Sub { dim: Dim::ZERO }),
-                                        [lit(0.0), var0()],
-                                    ),
-                                    var0(),
-                                ],
-                            ),
-                            255.0,
-                            100.0,
-                        ),
-                    ],
-                )),
-            },
-            kind: DeviceKind::HBridgeChannel,
-        },
-    ]
-}
-
-/// One profile by id.
-pub fn profile(id: &OutputProfileId) -> Option<OutputProfile> {
-    profiles().into_iter().find(|p| &p.id == id)
-}
-
-fn var0() -> Expr {
-    Expr::Var { index: 0 }
-}
-
-fn lit(value: f64) -> Expr {
-    Expr::prim(Prim::Lit {
-        dim: Dim::ZERO,
-        value: Scalar(value),
-    })
-}
-
-fn lam_level(body: Expr) -> Expr {
-    Expr::Lam {
-        dom: Ty::q(Dim::ZERO),
-        body: Box::new(body),
-    }
-}
-
-/// `n · num / den` on dimensionless levels.
-fn scale(n: Expr, num: f64, den: f64) -> Expr {
-    Expr::apps(
-        Expr::prim(Prim::Div {
-            d1: Dim::ZERO,
-            d2: Dim::ZERO,
-        }),
-        [
-            Expr::apps(
-                Expr::prim(Prim::Mul {
-                    d1: Dim::ZERO,
-                    d2: Dim::ZERO,
-                }),
-                [n, lit(num)],
-            ),
-            lit(den),
-        ],
-    )
-}
-
-/// Four duties by thresholds at 25, 50 and 75: many levels, one duty.
-fn quantize4(n: Expr) -> Expr {
-    let below = |k: f64| Expr::apps(Expr::prim(Prim::Lt { dim: Dim::ZERO }), [n.clone(), lit(k)]);
-    let ite = |c: Expr, t: Expr, e: Expr| {
-        Expr::apps(
-            Expr::prim(Prim::Ite {
-                ty: Ty::q(Dim::ZERO),
-            }),
-            [c, t, e],
-        )
-    };
-    ite(
-        below(25.0),
-        lit(0.0),
-        ite(
-            below(50.0),
-            lit(85.0),
-            ite(below(75.0), lit(170.0), lit(255.0)),
-        ),
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bdl_model::{ClockId, DeviceId, OutputId};
+    use bdl_catalogue::{lam_level, lit, var0};
+    use bdl_model::{ClockId, DeviceId, Dim, OutputId};
     use std::collections::BTreeMap;
 
     fn level() -> Ty {
@@ -462,6 +294,8 @@ mod tests {
             kind,
             output: Some(OutputId::from_raw(4)),
             realization: Some(OutputProfileId(profile.into())),
+            source: None,
+            provider: None,
             fixed_pins: BTreeMap::new(),
         }
     }

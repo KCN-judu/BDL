@@ -1383,6 +1383,10 @@
   "@digitalOutput": {
     "description": "Studio UI text (deploy_page.dart)."
   },
+  "digitalInput": "Digital input",
+  "@digitalInput": {
+    "description": "Studio UI text (deploy_page.dart): the device kind of one digital input line."
+  },
   "hBridgeChannel": "H-bridge channel",
   "@hBridgeChannel": {
     "description": "Studio UI text (deploy_page.dart)."
@@ -1467,6 +1471,57 @@
   "noOutput": "no output",
   "@noOutput": {
     "description": "Studio UI text (deploy_page.dart)."
+  },
+  "notConnected": "not connected",
+  "@notConnected": {
+    "description": "Deploy page: the device-target dropdown item for a device bound to nothing."
+  },
+  "sourceItem": "{name} — Source",
+  "@sourceItem": {
+    "description": "Deploy page: a Source in the device-target dropdown, marked as one.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "providerProfile": "Provider",
+  "@providerProfile": {
+    "description": "Deploy page: label of the provider profile dropdown on a device bound to a Source."
+  },
+  "noProvider": "None — place by kind",
+  "@noProvider": {
+    "description": "Deploy page: the provider dropdown item that leaves the device without a profile."
+  },
+  "chooseABoardToSeeProviders": "Choose a board to see which providers fit this Source.",
+  "@chooseABoardToSeeProviders": {
+    "description": "Deploy page: shown on a device card bound to a Source while no deployment analysis is available."
+  },
+  "transducerWellFormed": "transducer",
+  "@transducerWellFormed": {
+    "description": "Deploy page: the provision judgment that the transducer is a typed pure function."
+  },
+  "backendReadable": "readable",
+  "@backendReadable": {
+    "description": "Deploy page: the provision judgment that the chosen board's firmware can read the profile."
+  },
+  "rawReading": "raw reading {ty}",
+  "@rawReading": {
+    "description": "Deploy page: the raw reading type of the chosen provider profile.",
+    "placeholders": {
+      "ty": {
+        "type": "String"
+      }
+    }
+  },
+  "fromPackage": "from {origin}",
+  "@fromPackage": {
+    "description": "Deploy page: where a provider profile comes from when it is not builtin.",
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
   },
   "placedBeforeTheDeadEnd": "Placed before the dead end: {placements}. This is one conflict under the solver’s order, not necessarily the only one.",
   "@placedBeforeTheDeadEnd": {
@@ -2742,6 +2797,42 @@
   "realizationEnvironment": "Provided by the environment; no device is bound yet.",
   "@realizationEnvironment": {
     "description": "Inspector realization value for a Source with no deployment realization."
+  },
+  "realizationNoDeviceOn": "Provided by the environment; no device on {board} yet.",
+  "@realizationNoDeviceOn": {
+    "description": "Inspector realization value for a Source no device provides on the chosen board.",
+    "placeholders": {
+      "board": {
+        "type": "String"
+      }
+    }
+  },
+  "realizationProvidedBy": "Provided by {device} on {board}.",
+  "@realizationProvidedBy": {
+    "description": "Inspector realization value for a Source a device provides on the chosen board.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "board": {
+        "type": "String"
+      }
+    }
+  },
+  "realizationProvidedByAs": "Provided by {device} as {profile} on {board}.",
+  "@realizationProvidedByAs": {
+    "description": "Inspector realization value for a Source a device provides through a chosen profile.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "profile": {
+        "type": "String"
+      },
+      "board": {
+        "type": "String"
+      }
+    }
   },
   "sourceExplanation": "A value that enters the behavior model from the environment, observed once per activation. Nothing is missing: add a definition only to compute it inside the model instead.",
   "@sourceExplanation": {

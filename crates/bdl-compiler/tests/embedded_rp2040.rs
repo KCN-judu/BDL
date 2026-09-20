@@ -315,6 +315,7 @@ fn host_adapter_operations_correspond_to_the_commands() {
             .map(|_| TickRequest {
                 active: vec![0],
                 inputs: vec![],
+                readings: vec![],
             })
             .collect(),
     };
@@ -385,6 +386,7 @@ fn host_adapter_operations_correspond_to_the_commands() {
             ticks: vec![TickRequest {
                 active: vec![],
                 inputs: vec![],
+                readings: vec![],
             }],
         })
         .unwrap();
@@ -434,6 +436,7 @@ fn the_quantized_profile_binds_and_applies_like_the_eight_bit_one() {
                 .map(|_| TickRequest {
                     active: vec![0],
                     inputs: vec![],
+                    readings: vec![],
                 })
                 .collect(),
         })
@@ -602,7 +605,7 @@ fn a_placement_the_solver_refuses_never_reaches_the_adapter() {
 }
 
 #[test]
-fn a_design_with_a_source_cannot_run_on_a_board_yet() {
+fn a_source_without_a_device_is_refused_by_name() {
     let mut d = Surface::new("pico_source");
     let brightness = d.concept("Brightness", Representation::Quantity { dim: Dim::ZERO });
     let main = d.clock("main");
@@ -611,7 +614,7 @@ fn a_design_with_a_source_cannot_run_on_a_board_yet() {
     d.device("lamp", "pwm_duty8", DeviceKind::PwmChannel, light);
     let art = compile_for_target(&d.s, &pico(), &TargetOptions::default(), &options());
     assert!(!art.succeeded());
-    assert_eq!(codes(&art.diagnostics), ["adapter.inputs_unbound"]);
+    assert_eq!(codes(&art.diagnostics), ["adapter.source_unprovided"]);
     assert!(art.diagnostics[0].message.contains("level"));
 }
 

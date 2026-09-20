@@ -15,6 +15,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod provision;
 pub mod realization;
 
 use bdl_check::pretty;

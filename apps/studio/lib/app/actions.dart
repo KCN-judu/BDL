@@ -796,6 +796,24 @@ class SetDeviceOutputRequested extends UserAction {
   final int? outputId;
 }
 
+/// Bind a device to the Source it provides (null releases it), by the
+/// relationship's id.  A deployment assignment: the Source keeps its
+/// declaration; the device's output is released with it.
+class SetDeviceSourceRequested extends UserAction {
+  const SetDeviceSourceRequested({required this.id, required this.sourceId});
+  final int id;
+  final int? sourceId;
+}
+
+/// Choose the provider profile of a device (null releases it), with the
+/// device kind the profile prescribes — one deployment decision.
+class SetDeviceProviderRequested extends UserAction {
+  const SetDeviceProviderRequested({required this.id, required this.profileId, required this.kind});
+  final int id;
+  final String? profileId;
+  final pb.DeviceKind kind;
+}
+
 /// Choose the realization profile of a device (null releases it), with the
 /// device kind the profile prescribes — one deployment decision.
 class SetDeviceRealizationRequested extends UserAction {

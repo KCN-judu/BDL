@@ -13,19 +13,33 @@
 //! and placement in `analyze_deployment`, the machine sinks in the
 //! lowering.  This pass only *reads* the assignment and refuses what it
 //! cannot bind — a sink without a placed resource, a resource without the
-//! capability, a profile the adapter has no sink for, an input no device
-//! provides (ISS-0016), a collection the design does not bound — with
-//! `adapter.*` diagnostics.  It never chooses a pin.
+//! capability, a profile the adapter has no sink or reader for, a Source
+//! no device provides or whose provider is not admissible, a collection
+//! the design does not bound — with `adapter.*` diagnostics.  It never
+//! chooses a pin.
 
 use crate::backend::{compile_with_target, CompileArtifact, CompileOptions};
 use crate::collections::{CollectionsReadiness, CollectionsReport};
 use crate::{analyze_deployment, DeploymentAnalysis, DeploymentStatus};
-use bdl_codegen_rust::adapter::{AdapterPlan, SinkBinding, SinkKind};
+use bdl_codegen_rust::adapter::{AdapterPlan, ProviderBinding, SinkBinding, SinkKind, SourceKind};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::ExecIr;
 use bdl_hardware::{Capability, Hardware};
 use bdl_model::surface::ProjectSnapshot;
+use bdl_model::InputProfileId;
 use bdl_reactive::Schedule;
+
+/// The reader a provider profile's raw reading is taken through, with
+/// the peripheral configuration the profile prescribes.  Profile-level
+/// knowledge, not a family's; a family says whether it *reads* the kind
+/// (`Entry::reads`).
+pub fn source_kind(profile: &InputProfileId) -> Option<SourceKind> {
+    match profile.as_str() {
+        "gpio_level_in" => Some(SourceKind::LevelPullDown),
+        "gpio_level_in_low" => Some(SourceKind::LevelPullUp),
+        _ => None,
+    }
+}
 
 /// What compiling for a target adds to [`CompileOptions`].
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -80,7 +94,11 @@ pub fn adapter_plan(
             format!("no target entry for family `{}`, board `{}`", target.family, target.name),
         ));
     }
-    if deployment.status != DeploymentStatus::Feasible {
+    // An incomplete deployment whose only gap is an unprovided Source is
+    // named by the Source below, not by the placement.
+    let placement_incomplete = deployment.status == DeploymentStatus::Incomplete
+        && (!deployment.unbound_devices.is_empty() || !deployment.unrealised_outputs.is_empty());
+    if deployment.status == DeploymentStatus::Infeasible || placement_incomplete {
         diagnostics.push(refuse(
             "adapter.deployment_not_feasible",
             format!(
@@ -99,26 +117,122 @@ pub fn adapter_plan(
             "DeploymentAnalysis::realization_blocked".into(),
         ));
     }
+    if deployment.provision_blocked() {
+        diagnostics.push(refuse(
+            "adapter.provider_invalid",
+            "A device's provider cannot be used.".into(),
+            "Choose a provider profile the Deploy page accepts for every Source before generating firmware.",
+            "DeploymentAnalysis::provision_blocked".into(),
+        ));
+    }
+    // Every input slot of the core is a Source; each needs an admissible
+    // provider on this board, or the firmware could not take a reading.
+    // Whether a provider exists and whether this family reads it need no
+    // placement; the resource it reads from does.
+    let entry_ref = entry.as_ref();
+    let mut provided = Vec::new();
+    for i in &exec.inputs {
+        let Some(decl) = exec.decl(i.decl) else {
+            continue;
+        };
+        let Some(p) = exec.providers.iter().find(|p| p.slot == i.slot) else {
+            let unprovided = deployment
+                .provisions
+                .get(&decl.id)
+                .is_none_or(|p| p.device.is_none());
+            if unprovided {
+                diagnostics.push(refuse(
+                    "adapter.source_unprovided",
+                    format!("No device provides {} on {}.", decl.name, target.display()),
+                    "A Source is a value the environment supplies; on a board a device must provide it. Connect a device to it on the Deploy page.",
+                    format!("input slot {:?} has no provider", i.slot),
+                ));
+            } else {
+                diagnostics.push(refuse(
+                    "adapter.provider_unspecified",
+                    format!("The device for {} has no provider chosen.", decl.name),
+                    "Choose a provider profile for the device on the Deploy page.",
+                    format!("input slot {:?}: device bound, no profile", i.slot),
+                ));
+            }
+            continue;
+        };
+        let Some(kind) = source_kind(&p.profile).filter(|k| entry_ref.is_some_and(|e| e.reads(*k)))
+        else {
+            diagnostics.push(refuse(
+                "adapter.provider_unsupported",
+                format!(
+                    "{} provides {} as `{}`, which {} cannot read yet.",
+                    p.device_name,
+                    decl.name,
+                    p.profile,
+                    target.display()
+                ),
+                "This board's firmware has no reader for the profile; choose a board that reads it, or wait for the adapter that does.",
+                format!("input slot {:?} profile {}: no reader in the target entry", i.slot, p.profile),
+            ));
+            continue;
+        };
+        provided.push((i.slot, p, decl, kind));
+    }
     if !diagnostics.is_empty() {
         // Without a placement there is nothing to bind; the sinks would
         // only repeat the refusal.
+        sort_diagnostics(&mut diagnostics);
         return Err(diagnostics);
     }
-    if !exec.inputs.is_empty() {
-        let names: Vec<String> = exec
-            .inputs
+
+    let mut providers = Vec::new();
+    for (slot, p, _decl, kind) in provided {
+        let i_slot = slot;
+        let capability = Capability::DigitalIn;
+        let requirement = deployment
+            .requirements
             .iter()
-            .filter_map(|i| exec.decl(i.decl).map(|d| d.name.clone()))
-            .collect();
-        diagnostics.push(refuse(
-            "adapter.inputs_unbound",
-            format!(
-                "No device provides {} on the board yet.",
-                names.join(", ")
-            ),
-            "A Source is a value the environment supplies; binding one to a sensor or a line is not available yet (ISS-0016), so a design with Sources cannot run on a board.",
-            format!("{} input slot(s)", exec.inputs.len()),
-        ));
+            .find(|r| r.id.device == p.device && r.capability == capability);
+        let resource = requirement.and_then(|r| {
+            deployment
+                .assignment
+                .as_ref()
+                .and_then(|a| a.get(&r.id))
+                .cloned()
+        });
+        let Some(resource) = resource else {
+            diagnostics.push(refuse(
+                "adapter.source_unbound",
+                format!(
+                    "{} has no {} line on {}.",
+                    p.device_name,
+                    capability.label(),
+                    target.display()
+                ),
+                "Every provided Source needs the board resource its profile reads; the placement did not give this device one.",
+                format!("input slot {:?}: no assigned requirement with {:?}", i_slot, capability),
+            ));
+            continue;
+        };
+        if !target.supports(&resource, capability) {
+            diagnostics.push(refuse(
+                "adapter.resource_incompatible",
+                format!(
+                    "{} was placed on {}, which cannot carry {} on {}.",
+                    p.device_name,
+                    resource.0,
+                    capability.label(),
+                    target.display()
+                ),
+                "The placement and the profile disagree about this line; this is a compiler inconsistency, and no other pin is substituted.",
+                format!("{} lacks {:?}", resource.0, capability),
+            ));
+            continue;
+        }
+        providers.push(ProviderBinding {
+            slot: i_slot,
+            device: p.device,
+            profile: p.profile.clone(),
+            kind,
+            resource: resource.0.clone(),
+        });
     }
     let supports_collections = entry.as_ref().is_some_and(|e| e.supports_collections());
     let arena_bytes = match collections.readiness {
@@ -248,6 +362,7 @@ pub fn adapter_plan(
             tick_micros: target_options.tick_micros,
             periods,
             sinks,
+            providers,
             arena_bytes,
         })
     } else {

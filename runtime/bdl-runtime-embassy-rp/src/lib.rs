@@ -13,8 +13,8 @@
 // the heap (`arena::init`), the discharge of which is written beside it.
 #![deny(unsafe_code)]
 
-use bdl_runtime_adapter::{Level, PwmDuty8};
-use embassy_rp::gpio::Output;
+use bdl_runtime_adapter::{Level, LevelSource, PwmDuty8};
+use embassy_rp::gpio::{Input, Output, Pull};
 use embassy_rp::pwm::{ChannelAPin, ChannelBPin, Config, Pwm, Slice};
 use embassy_rp::Peri;
 
@@ -111,6 +111,33 @@ impl Level for Line<'_> {
         } else {
             embassy_rp::gpio::Level::Low
         });
+    }
+}
+
+/// One digital input line with its pull configured at construction: the
+/// pull is peripheral configuration a raw reading never carries (a button
+/// to ground reads through a pull-up; its polarity is the provider
+/// profile's transducer, not this line's).
+pub struct Sense<'d> {
+    inp: Input<'d>,
+}
+
+impl<'d> Sense<'d> {
+    pub fn pull_down(pin: Peri<'d, impl embassy_rp::gpio::Pin>) -> Self {
+        Sense {
+            inp: Input::new(pin, Pull::Down),
+        }
+    }
+    pub fn pull_up(pin: Peri<'d, impl embassy_rp::gpio::Pin>) -> Self {
+        Sense {
+            inp: Input::new(pin, Pull::Up),
+        }
+    }
+}
+
+impl LevelSource for Sense<'_> {
+    fn level(&mut self) -> bool {
+        self.inp.is_high()
     }
 }
 

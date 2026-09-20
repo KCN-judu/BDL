@@ -93,6 +93,22 @@ pub trait Level {
     fn set_level(&mut self, high: bool);
 }
 
+/// One digital line read: `true` is high.  The input half of the adapter
+/// (docs/architecture/embedded-adapter.md § The input half): the firmware
+/// observes every source once per tick, before the core steps, and the
+/// generated `adapter::provide` turns the readings into the core's
+/// `Inputs` through each provider's transducer.  A polarity (active low)
+/// is the transducer's, never the reader's; a pull is the peripheral's
+/// configuration, never a value.
+pub trait LevelSource {
+    fn level(&mut self) -> bool;
+}
+
+/// Read one line; nothing can be refused.
+pub fn read_level<S: LevelSource + ?Sized>(source: &mut S) -> bool {
+    source.level()
+}
+
 /// Apply one raw duty command: converted by [`duty8`], written when
 /// accepted, held when refused.  Returns what was written.
 pub fn apply_duty8<S: PwmDuty8 + ?Sized>(sink: &mut S, raw: f64) -> Result<u8, CommandFault> {
@@ -122,6 +138,21 @@ pub struct SinkBinding {
     pub resource: &'static str,
     /// The capability the resource carries for this sink (`pwm`,
     /// `digital_out`).
+    pub capability: &'static str,
+}
+
+/// What a generated `adapter` module records about one provider, the
+/// counterpart of [`SinkBinding`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SourceBinding {
+    /// `DeviceId` of the device binding (the `reading_<id>` parameter).
+    pub device_id: u64,
+    pub symbol: &'static str,
+    /// The input provider profile id.
+    pub profile: &'static str,
+    /// The board resource the solver assigned, as the board names it.
+    pub resource: &'static str,
+    /// The capability the resource carries for this source (`digital_in`).
     pub capability: &'static str,
 }
 

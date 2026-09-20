@@ -67,6 +67,24 @@ pub struct AdapterEntry {
     pub arena_bytes: Option<u64>,
     /// One per machine sink, in sink order.
     pub bindings: Vec<AdapterBindingEntry>,
+    /// One per provider, in input-slot order (the input half).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sources: Vec<AdapterSourceEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdapterSourceEntry {
+    pub slot: u32,
+    pub device_id: u64,
+    pub symbol: String,
+    pub profile: String,
+    /// The reader / source trait: `level`.
+    pub kind: String,
+    /// The board resource the placement assigned, as the board names it.
+    pub resource: String,
+    pub capability: String,
+    /// The target's peripheral for it, in the target's words.
+    pub peripheral: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -259,6 +277,23 @@ pub fn manifest(
                     peripheral: peripheral.describe,
                 });
             }
+            let mut sources = Vec::new();
+            for b in &plan.providers {
+                let peripheral = entry.source_peripheral(b)?;
+                sources.push(AdapterSourceEntry {
+                    slot: b.slot.0,
+                    device_id: b.device.raw(),
+                    symbol: names::reading(b.device),
+                    profile: b.profile.0.clone(),
+                    kind: match b.kind {
+                        crate::adapter::SourceKind::LevelPullDown
+                        | crate::adapter::SourceKind::LevelPullUp => "level".into(),
+                    },
+                    resource: b.resource.clone(),
+                    capability: b.kind.capability().into(),
+                    peripheral: peripheral.describe,
+                });
+            }
             Some(AdapterEntry {
                 board: plan.board.clone(),
                 family: plan.family.clone(),
@@ -270,6 +305,7 @@ pub fn manifest(
                 periods: plan.periods.clone(),
                 arena_bytes: plan.arena_bytes,
                 bindings,
+                sources,
             })
         }
         _ => None,

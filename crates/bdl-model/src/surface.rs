@@ -142,6 +142,8 @@ pub enum DeviceKind {
     PwmChannel,
     /// One digital output line (a relay, a switched load).
     DigitalOutput,
+    /// One digital input line (a button, a limit switch).
+    DigitalInput,
     /// An H-bridge motor channel: one PWM line and one direction line.
     HBridgeChannel,
     /// A sensor on the I2C bus: SDA and SCL on the same peripheral unit.
@@ -175,20 +177,45 @@ impl std::fmt::Display for OutputProfileId {
     }
 }
 
+/// The stable identity of an input profile — how a device's raw reading
+/// becomes a Source's representation (`gpio_level_in`).  An identifier the
+/// deployment names; what it denotes — a typed pure transducer
+/// `raw -> rep(C)` and a hardware requirement template — is the
+/// catalogue's (`bdl-catalogue`), never the design's.  Deployment data:
+/// nothing in the behaviour design depends on it (FV Phase 16,
+/// FVD-0146).
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct InputProfileId(pub String);
+
+impl InputProfileId {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for InputProfileId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// Deployment-layer binding of hardware to the design: which device kind
-/// realises a logical output (or feeds the product, for sensors), which
-/// realization profile encodes the output's value into the device's
-/// command, and any pins the designer fixed by hand.  Fixed pins are named
-/// board-relatively and resolved against the target at deployment.
+/// realises a logical output or provides a Source, which profile encodes
+/// the output's value into the device's command or transduces the device's
+/// reading into the Source's value, and any pins the designer fixed by
+/// hand.  Fixed pins are named board-relatively and resolved against the
+/// target at deployment.  A device consumes or provides, never both
+/// (`output` and `source` are exclusive; `apply_edit` keeps them so).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeviceBinding {
     pub id: DeviceId,
     pub name: String,
     /// The hardware requirement template (what the board must carry).  With
-    /// a `realization`, the profile's own kind.
+    /// a `realization` or a `provider`, the profile's own kind.
     pub kind: DeviceKind,
-    /// The logical output this device realises; `None` for sensors and
-    /// other devices that feed the design.
+    /// The logical output this device realises; `None` for a provider or
+    /// a device bound to nothing yet.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output: Option<OutputId>,
     /// The realization profile: the typed pure encoder from the output's
@@ -198,6 +225,18 @@ pub struct DeviceBinding {
     /// board by its kind, and no command is lowered for it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub realization: Option<OutputProfileId>,
+    /// The Source this device provides, by the declaration's stable id
+    /// (FV Phase 16, `assignSource`).  `None` for a consumer or a device
+    /// bound to nothing yet.  A Source with no provider is an incomplete
+    /// deployment, never a changed design.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<DeclId>,
+    /// The provider profile: the typed pure transducer from the device's
+    /// raw reading to the Source's representation, and the requirements.
+    /// `None` when not yet chosen: the device still places by its kind and
+    /// the Source stays unprovided.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<InputProfileId>,
     /// Manual pin choices, by the device's local requirement index.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub fixed_pins: BTreeMap<u16, String>,

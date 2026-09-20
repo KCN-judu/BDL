@@ -111,6 +111,72 @@ pb.RealizationView driveRealization({
   ],
 );
 
+/// A project with a Source `tilt` and a digital input `sensor` bound to it.
+pb.ProjectProjection sensed({int revision = 1, String? provider}) => rover(revision: revision)
+  ..concepts.add(pb.ConceptView(id: Int64(1), name: 'Tilted'))
+  ..mappings.add(
+    pb.MappingView(
+      id: Int64(3),
+      name: 'tilt',
+      signature: pb.Signature(output: Int64(1)),
+      role: pb.RelationshipRole.RELATIONSHIP_ROLE_SOURCE,
+    ),
+  )
+  ..devices.add(
+    pb.DeviceView(
+      id: Int64(1),
+      name: 'sensor',
+      kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT,
+      sourceId: Int64(3),
+      provider: provider,
+      requirements: [
+        pb.RequirementLabel(index: 0, capability: 'digital_in', label: 'sensor digital in'),
+      ],
+    ),
+  );
+
+/// The provision judgment bdld gives for `tilt`.
+pb.ProvisionView tiltProvision({
+  pb.ProvisionStatus status = pb.ProvisionStatus.PROVISION_STATUS_NOT_CHOSEN,
+  String? profile,
+  bool backendSupported = true,
+  String message = 'sensor has no provider chosen for tilt.',
+}) => pb.ProvisionView(
+  sourceId: Int64(3),
+  sourceName: 'tilt',
+  deviceId: Int64(1),
+  deviceName: 'sensor',
+  profileId: profile,
+  status: status,
+  profileKnown: profile != null,
+  transducerWellFormed: status == pb.ProvisionStatus.PROVISION_STATUS_VALID,
+  representationFits: status == pb.ProvisionStatus.PROVISION_STATUS_VALID,
+  hardwarePlaced: true,
+  backendSupported: backendSupported,
+  message: message,
+  candidates: [
+    pb.InputProfileView(
+      id: 'gpio_level_in',
+      displayName: 'GPIO input, active high',
+      description: 'A digital line read as a truth value: high is true.',
+      kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT,
+      rawType: 'bool',
+      representation: 'bool',
+      compatible: true,
+      origin: 'builtin',
+    ),
+    pb.InputProfileView(
+      id: 'gpio_level_in_low',
+      displayName: 'GPIO input, active low',
+      kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT,
+      rawType: 'bool',
+      representation: 'bool',
+      compatible: true,
+      origin: 'builtin',
+    ),
+  ],
+);
+
 pb.DeploymentAnalysis infeasible({int revision = 1}) => pb.DeploymentAnalysis(
   revision: Int64(revision),
   target: 'Arduino Nano',
@@ -316,6 +382,73 @@ void main() {
       expect(find.text('A signed level becomes (forward?, duty).'), findsOneWidget);
     });
 
+    testWidgets('a device is for an output or a Source; a provider is chosen like a realization', (
+      t,
+    ) async {
+      final dispatched = <AppAction>[];
+      var s = reduce(connected(sensed()), TargetsReceived(targets)).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      // the sensor's target dropdown names the Source as one
+      expect(find.text('tilt — Source'), findsOneWidget);
+      expect(find.text('Digital input'), findsOneWidget);
+      expect(find.text('Choose a board to see which providers fit this Source.'), findsOneWidget);
+      // rebinding the drive to the Source is a deployment edit
+      await t.tap(find.text('motor'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('tilt — Source').last);
+      await t.pumpAndSettle();
+      final bind = dispatched.whereType<SetDeviceSourceRequested>().single;
+      expect((bind.id, bind.sourceId), (0, 3));
+
+      s = reduce(s, const TargetSelected('arduino_nano')).state;
+      s = reduce(
+        s,
+        DeploymentReceived(
+          generation: s.editor.deploy.generation,
+          analysis: feasible()..provisions.add(tiltProvision()),
+        ),
+      ).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      expect(find.text('sensor has no provider chosen for tilt.'), findsOneWidget);
+      await t.tap(find.text('None — place by kind').last);
+      await t.pumpAndSettle();
+      await t.tap(find.text('GPIO input, active low'));
+      await t.pumpAndSettle();
+      final req = dispatched.whereType<SetDeviceProviderRequested>().single;
+      expect(
+        (req.id, req.profileId, req.kind),
+        (1, 'gpio_level_in_low', pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT),
+      );
+
+      // valid, placed, but this board's firmware cannot read it: the four
+      // judgments show it, the message is the analysis's, not red
+      s = reduce(connected(sensed(provider: 'gpio_level_in')), TargetsReceived(targets)).state;
+      s = reduce(s, const TargetSelected('arduino_nano')).state;
+      s = reduce(
+        s,
+        DeploymentReceived(
+          generation: s.editor.deploy.generation,
+          analysis: feasible()
+            ..provisions.add(
+              tiltProvision(
+                status: pb.ProvisionStatus.PROVISION_STATUS_VALID,
+                profile: 'gpio_level_in',
+                backendSupported: false,
+                message:
+                    'sensor provides tilt as `gpio_level_in`, which Arduino Nano cannot read yet.',
+              ),
+            ),
+        ),
+      ).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      expect(find.text('GPIO input, active high'), findsOneWidget);
+      expect(find.text('raw reading bool'), findsOneWidget);
+      expect(find.text('transducer'), findsOneWidget);
+      expect(find.text('readable'), findsOneWidget);
+      final msg = t.widget<Text>(find.textContaining('cannot read yet'));
+      expect(msg.style!.color, MacTokens.of(t.element(find.text('readable'))).textSecondary);
+    });
+
     testWidgets('devices are edited in place; the board list is the service\'s', (t) async {
       final dispatched = <AppAction>[];
       var s = reduce(connected(rover()), TargetsReceived(targets)).state;
@@ -448,6 +581,69 @@ void main() {
         expect(s.analysis!.revision, greaterThan(semanticBefore.revision));
         expect(s.analysis!.diagnostics, semanticBefore.diagnostics);
         expect(s.analysis!.mappings, semanticBefore.mappings);
+
+        // a Source: unprovided, the deployment is incomplete and says so;
+        // a device bound to it with a provider makes it valid on the Pico
+        store.dispatch(
+          CreateConceptRequested(
+            name: 'Tilted',
+            representation: pb.Representation(boolean: pb.Unit()),
+          ),
+        );
+        s = await settled();
+        final tilted = s.project!.concepts.firstWhere((c) => c.name == 'Tilted').id.toInt();
+        store.dispatch(CreateMappingRequested(name: 'tilt', inputs: const [], output: tilted));
+        s = await settled();
+        final tilt = s.project!.mappings.firstWhere((m) => m.name == 'tilt').id.toInt();
+        store.dispatch(SetMappingClockRequested(mappingId: tilt, clockId: main_));
+        s = await settled();
+        store.dispatch(const TargetSelected('rp2040_pico'));
+        s = await store.until(
+          (s) =>
+              s.editor.deploy.analysis?.target == 'rp2040_pico' &&
+              s.editor.deploy.analysis!.revision.toInt() == s.revision,
+        );
+        a = s.editor.deploy.analysis!;
+        expect(a.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_INCOMPLETE);
+        var pv = a.provisions.single;
+        expect(pv.status, pb.ProvisionStatus.PROVISION_STATUS_NO_DEVICE);
+        expect(
+          a.missing.map((m) => m.kind),
+          contains(pb.MissingKind.MISSING_KIND_SOURCE_NO_DEVICE),
+        );
+        store.dispatch(
+          CreateDeviceRequested(name: 'sensor', kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT),
+        );
+        s = await settled();
+        final sensor = s.project!.devices.firstWhere((d) => d.name == 'sensor').id.toInt();
+        store.dispatch(SetDeviceSourceRequested(id: sensor, sourceId: tilt));
+        s = await settled();
+        store.dispatch(
+          SetDeviceProviderRequested(
+            id: sensor,
+            profileId: 'gpio_level_in',
+            kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_INPUT,
+          ),
+        );
+        s = await store.until(
+          (s) =>
+              s.project!.devices.any((d) => d.provider == 'gpio_level_in') &&
+              s.editor.deploy.analysis != null &&
+              s.editor.deploy.analysis!.revision.toInt() == s.revision,
+        );
+        a = s.editor.deploy.analysis!;
+        expect(a.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE);
+        pv = a.provisions.single;
+        expect(pv.status, pb.ProvisionStatus.PROVISION_STATUS_VALID);
+        expect(pv.deviceId.toInt(), sensor);
+        expect(
+          pv.transducerWellFormed &&
+              pv.representationFits &&
+              pv.hardwarePlaced &&
+              pv.backendSupported,
+          isTrue,
+        );
+        expect(pv.candidates.map((c) => c.origin).toSet(), {'builtin'});
       } finally {
         await store.dispose();
         await dir.delete(recursive: true);

@@ -17,7 +17,7 @@
 pub mod arduino;
 pub mod rp2040;
 
-use crate::adapter::{AdapterPlan, SinkBinding};
+use crate::adapter::{AdapterPlan, ProviderBinding, SinkBinding, SourceKind};
 use crate::ast::{Expr, Module};
 use crate::emit::EmitError;
 use crate::CodegenOptions;
@@ -72,6 +72,32 @@ impl Entry {
         match self {
             Entry::Rp2040 => None,
             Entry::Arduino(_) => Some(arduino::TOOLCHAIN),
+        }
+    }
+
+    /// Whether the family's firmware has a reader for a source kind: the
+    /// backend-support judgment of a provision, a fact about this entry
+    /// and never about the design, the profile or the placement.
+    pub fn reads(&self, kind: SourceKind) -> bool {
+        match (self, kind) {
+            (Entry::Rp2040, SourceKind::LevelPullDown | SourceKind::LevelPullUp) => true,
+            (Entry::Arduino(_), _) => false,
+        }
+    }
+
+    /// The peripheral a provider reads from.
+    pub fn source_peripheral(&self, b: &ProviderBinding) -> Result<Peripheral, EmitError> {
+        match self {
+            Entry::Rp2040 => rp2040::source_peripheral(b).map(|p| Peripheral {
+                construct: p.construct(),
+                describe: p.describe(),
+            }),
+            Entry::Arduino(board) => Err(EmitError(format!(
+                "{}: no reader for `{}` on {} yet",
+                arduino::FAMILY,
+                b.profile,
+                board.id
+            ))),
         }
     }
 

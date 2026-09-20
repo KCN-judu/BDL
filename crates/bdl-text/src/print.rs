@@ -179,10 +179,16 @@ pub fn device(design: &Design, d: &DeviceBinding) -> String {
     if let Some(o) = d.output {
         s.push_str(" for ");
         s.push_str(&output_name(design, o));
+    } else if let Some(src) = d.source.and_then(|m| design.mappings.get(&m)) {
+        s.push_str(" for ");
+        s.push_str(&ident(&src.name));
     }
     let mut body: Vec<String> = Vec::new();
     if let Some(profile) = &d.realization {
         body.push(format!("realization {profile}"));
+    }
+    if let Some(profile) = &d.provider {
+        body.push(format!("provider {profile}"));
     }
     body.extend(d.fixed_pins.iter().map(|(i, p)| format!("pin {i} = {p}")));
     if !body.is_empty() {

@@ -27,6 +27,11 @@ fn needs(kind: DeviceKind) -> Vec<Need> {
             label: "digital out",
             group: None,
         }],
+        DeviceKind::DigitalInput => vec![Need {
+            cap: DigitalIn,
+            label: "digital in",
+            group: None,
+        }],
         DeviceKind::HBridgeChannel => vec![
             Need {
                 cap: Pwm,
@@ -125,6 +130,7 @@ pub fn device_kind_label(kind: DeviceKind) -> &'static str {
     match kind {
         DeviceKind::PwmChannel => "PWM channel",
         DeviceKind::DigitalOutput => "digital output",
+        DeviceKind::DigitalInput => "digital input",
         DeviceKind::HBridgeChannel => "H-bridge channel",
         DeviceKind::I2cSensor => "I²C sensor",
         DeviceKind::QuadratureEncoder => "quadrature encoder",

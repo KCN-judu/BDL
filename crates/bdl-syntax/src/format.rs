@@ -47,6 +47,7 @@ const ANCHOR_NODES: &[K] = &[
     K::DeviceDecl,
     K::PinFix,
     K::RealizationFix,
+    K::ProviderFix,
     K::ComponentDecl,
     K::UseDecl,
     K::ParamClockDecl,

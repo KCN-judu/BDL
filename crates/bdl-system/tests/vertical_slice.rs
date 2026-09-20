@@ -564,7 +564,10 @@ fn private_devices_multiply_hardware_requirements() {
     let nano = bdl_hardware::boards::arduino_nano();
     let d = bdl_compiler::analyze_deployment(&f.snapshot, &nano);
     assert_eq!(d.requirements.len(), 2);
-    assert_eq!(d.status, bdl_compiler::DeploymentStatus::Feasible);
+    // placed; incomplete only because the flattened Sources have no
+    // device providing them yet
+    assert_eq!(d.status, bdl_compiler::DeploymentStatus::Incomplete);
+    assert!(d.assignment.is_some() && !d.unprovided_sources.is_empty());
     let pins: Vec<_> = d
         .assignment
         .as_ref()
@@ -578,7 +581,11 @@ fn private_devices_multiply_hardware_requirements() {
     let report = bdl_compiler::deployment_report(&f.snapshot, &a, &d, &nano);
     let names: Vec<_> = report.rows.iter().map(|r| r.device_name.clone()).collect();
     assert_eq!(names, ["lampA.led", "lampB.led"]);
-    assert!(report.deployable);
+    assert!(report.design_ready && !report.deployable);
+    assert!(report
+        .missing
+        .iter()
+        .all(|m| m.kind == bdl_compiler::MissingKind::SourceNoDevice));
 }
 
 #[test]
@@ -978,6 +985,7 @@ fn generated_programs_of_system_and_flat_agree_on_the_host() {
                             ))
                         })
                         .collect(),
+                    readings: vec![],
                 })
                 .collect(),
         };

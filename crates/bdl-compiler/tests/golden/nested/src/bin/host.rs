@@ -10,6 +10,7 @@ use bdl_runtime_host::AdapterOp;
 use bdl_runtime_host::BridgeError;
 use bdl_runtime_host::DynValue;
 use bdl_runtime_host::HostProgram;
+use bdl_runtime_host::ReadingError;
 
 pub struct Bridge {}
 
@@ -30,6 +31,10 @@ impl HostProgram for Bridge {
 
     fn inputs_from_dyn(slots: &[Option<DynValue>]) -> Result<design::Inputs, BridgeError> {
         Ok(design::Inputs { decl_0: match slots.get(0_usize) { Some(Some(v)) => Some(bdl_runtime_core::list::from_ordered(v.list(0_usize)?.iter().map(|v| -> Result<(f64, f64), BridgeError> { Ok({ let (a, b) = v.pair(0_usize)?; ({ let v = a; v.quantity(0_usize)? }, { let v = b; v.quantity(0_usize)? }) }) }).collect::<Result<Vec<_>, BridgeError>>()?)), _ => None } })
+    }
+
+    fn inputs_from_readings(readings: &[Option<DynValue>], inputs: &mut design::Inputs) -> Result<(), ReadingError> {
+        Ok(())
     }
 
     fn values_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {

@@ -181,6 +181,23 @@ pub enum EditOp {
         profile: Option<crate::surface::OutputProfileId>,
         kind: DeviceKind,
     },
+    /// Bind the device to a Source it provides (or release it), by the
+    /// declaration's stable id.  A deployment assignment (FV Phase 16,
+    /// `assignSource`): the Source keeps its declaration and its meaning;
+    /// only what fills it at run time is named.  Releases the device's
+    /// output, since a device consumes or provides, never both.
+    SetDeviceSource {
+        id: DeviceId,
+        source: Option<DeclId>,
+    },
+    /// Choose the provider profile of a device (or release it), and with
+    /// it the hardware requirement template the profile prescribes: one
+    /// deployment decision, applied whole.
+    SetDeviceProvider {
+        id: DeviceId,
+        profile: Option<crate::surface::InputProfileId>,
+        kind: DeviceKind,
+    },
     /// Pin one of the device's requirements to a named board resource, or
     /// release it.  A deployment constraint, never a design change.
     SetDevicePin {
@@ -315,6 +332,8 @@ pub enum EditError {
     DuplicateDeviceName { name: String },
     #[error("unknown device {id}")]
     UnknownDevice { id: DeviceId },
+    #[error("relationship {id} is not a Source: only a Source is provided by a device")]
+    NotASource { id: DeclId },
 }
 
 /// Apply one edit to a snapshot, producing the next revision.
@@ -514,6 +533,12 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
         EditOp::DeleteMapping { id } => {
             mapping_mut(&mut design, *id)?;
             design.mappings.remove(id);
+            // a device that provided the deleted Source now provides nothing
+            for d in design.devices.values_mut() {
+                if d.source == Some(*id) {
+                    d.source = None;
+                }
+            }
             EditOutcome::edit([
                 Invalidation::Interface,
                 Invalidation::Realization,
@@ -719,6 +744,8 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     kind: *kind,
                     output: *output,
                     realization: None,
+                    source: None,
+                    provider: None,
                     fixed_pins: BTreeMap::new(),
                 },
             );
@@ -744,8 +771,9 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
             d.kind = *kind;
             d.fixed_pins.clear();
             // a kind chosen by hand is no longer the profile's: the
-            // realization is released with it
+            // realization or provider is released with it
             d.realization = None;
+            d.provider = None;
             EditOutcome::edit([Invalidation::Deployment])
         }
         EditOp::SetDeviceRealization { id, profile, kind } => {
@@ -764,7 +792,39 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     .get(o)
                     .ok_or(EditError::UnknownOutput { id: *o })?;
             }
-            device_mut(&mut design, *id)?.output = *output;
+            let d = device_mut(&mut design, *id)?;
+            d.output = *output;
+            if output.is_some() {
+                d.source = None;
+                d.provider = None;
+            }
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::SetDeviceSource { id, source } => {
+            if let Some(s) = source {
+                let m = design
+                    .mappings
+                    .get(s)
+                    .ok_or(EditError::UnknownMapping { id: *s })?;
+                if m.role() != crate::surface::RelationshipRole::Source {
+                    return Err(EditError::NotASource { id: *s });
+                }
+            }
+            let d = device_mut(&mut design, *id)?;
+            d.source = *source;
+            if source.is_some() {
+                d.output = None;
+                d.realization = None;
+            }
+            EditOutcome::edit([Invalidation::Deployment])
+        }
+        EditOp::SetDeviceProvider { id, profile, kind } => {
+            let d = device_mut(&mut design, *id)?;
+            if d.kind != *kind {
+                d.fixed_pins.clear();
+            }
+            d.kind = *kind;
+            d.provider = profile.clone();
             EditOutcome::edit([Invalidation::Deployment])
         }
         EditOp::SetDevicePin {

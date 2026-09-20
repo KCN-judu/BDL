@@ -291,6 +291,8 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                             kind: d.kind,
                             output: d.output.and_then(|o| ren.output(o)),
                             realization: d.realization.clone(),
+                            source: d.source.and_then(|s| ren.decl(s)),
+                            provider: d.provider.clone(),
                             fixed_pins: d.fixed_pins.clone(),
                         },
                     );

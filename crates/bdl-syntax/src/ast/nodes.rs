@@ -172,6 +172,11 @@ ast_node!(
     RealizationFix
 );
 ast_node!(
+    /// `provider Ident`
+    ProviderFix,
+    ProviderFix
+);
+ast_node!(
     /// `component Name { ComponentItem* }`
     ComponentDecl,
     ComponentDecl
@@ -301,10 +306,12 @@ impl DeviceDecl {
     pub fn name(&self) -> Option<Name> {
         child(&self.0)
     }
-    /// The kind after `:`, then the output after `for`.
+    /// The kind after `:`, then the output or Source after `for`.
     pub fn kind(&self) -> Option<NameRef> {
         nth_child(&self.0, 0)
     }
+    /// What the device is `for`: an output it realises or a Source it
+    /// provides — one name, resolved by the builder.
     pub fn output(&self) -> Option<NameRef> {
         nth_child(&self.0, 1)
     }
@@ -317,9 +324,19 @@ impl DeviceDecl {
     pub fn realization(&self) -> Option<RealizationFix> {
         child::<DeviceBody>(&self.0).and_then(|b| children::<RealizationFix>(b.syntax()).last())
     }
+    /// The last `provider <profile>` written in the body, if any.
+    pub fn provider(&self) -> Option<ProviderFix> {
+        child::<DeviceBody>(&self.0).and_then(|b| children::<ProviderFix>(b.syntax()).last())
+    }
 }
 
 impl RealizationFix {
+    pub fn profile(&self) -> Option<NameRef> {
+        child(&self.0)
+    }
+}
+
+impl ProviderFix {
     pub fn profile(&self) -> Option<NameRef> {
         child(&self.0)
     }

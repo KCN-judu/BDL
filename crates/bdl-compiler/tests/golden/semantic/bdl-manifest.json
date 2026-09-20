@@ -3,7 +3,7 @@
   "generator": "bdl-codegen-rust 0.1.0",
   "design": "semantic",
   "package": "bdl_design_semantic",
-  "exec_ir_version": 3,
+  "exec_ir_version": 4,
   "has_domains": true,
   "requires_allocator": false,
   "clocks": [

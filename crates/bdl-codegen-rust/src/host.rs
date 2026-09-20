@@ -37,6 +37,7 @@ pub fn host_module(
     items.push(Item::Use("bdl_runtime_host::BridgeError".into()));
     items.push(Item::Use("bdl_runtime_host::DynValue".into()));
     items.push(Item::Use("bdl_runtime_host::HostProgram".into()));
+    items.push(Item::Use("bdl_runtime_host::ReadingError".into()));
     items.push(Item::Struct {
         doc: vec![],
         derives: vec![],
@@ -205,6 +206,7 @@ pub fn host_module(
                 )),
             }),
             ImplItem::Fn(inputs_fn),
+            ImplItem::Fn(crate::adapter::host_inputs_from_readings(ir, plan)?),
             ImplItem::Fn(values_fn),
             ImplItem::Fn(outputs_fn),
             ImplItem::Fn(commands_fn),

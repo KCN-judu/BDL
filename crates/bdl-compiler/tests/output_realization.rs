@@ -369,15 +369,24 @@ fn nano() -> bdl_hardware::Hardware {
     bdl_hardware::boards::arduino_nano()
 }
 
+/// The realization diagnostics: `level` is a Source with no device, which
+/// the analysis also says (`deploy.source_unprovided`, Phase 16) and which
+/// is not what these tests are about.
 fn codes(d: &bdl_compiler::DeploymentAnalysis) -> Vec<&str> {
-    d.diagnostics.iter().map(|x| x.code.as_str()).collect()
+    d.diagnostics
+        .iter()
+        .map(|x| x.code.as_str())
+        .filter(|c| *c != "deploy.source_unprovided")
+        .collect()
 }
 
 #[test]
 fn a_binding_without_a_profile_places_by_kind_and_is_told_so() {
     let l = lamp();
     let d = analyze_deployment(&l.d.s, &nano());
-    assert_eq!(d.status, bdl_compiler::DeploymentStatus::Feasible);
+    // incomplete only because the Source `level` has no device yet
+    assert_eq!(d.status, bdl_compiler::DeploymentStatus::Incomplete);
+    assert_eq!(d.unprovided_sources.len(), 1);
     assert_eq!(codes(&d), ["deploy.realization_unspecified"]);
     assert!(d.diagnostics.iter().all(|x| !x.is_error()));
     let r = &d.realizations[&l.lamp];
@@ -388,7 +397,8 @@ fn a_binding_without_a_profile_places_by_kind_and_is_told_so() {
     assert!(r.hardware_placed && !r.admissible());
     assert!(!d.realization_blocked());
     let report = deployment_report(&l.d.s, &bdl_compiler::analyze(&l.d.s), &d, &nano());
-    assert!(report.deployable);
+    assert!(!report.deployable, "the Source is unprovided");
+    assert!(report.design_ready);
     // ... and the artefact is the one there always was.
     assert!(compiled(&l.d.s).sinks.is_empty());
 }
@@ -403,10 +413,10 @@ fn an_unknown_profile_is_named_and_refuses_the_artefact() {
     assert!(d.diagnostics[0].message.contains("lamp"));
     let report = deployment_report(&l.d.s, &bdl_compiler::analyze(&l.d.s), &d, &nano());
     assert!(!report.deployable);
-    assert_eq!(
-        report.missing[0].kind,
-        bdl_compiler::MissingKind::RealizationInvalid
-    );
+    assert!(report
+        .missing
+        .iter()
+        .any(|m| m.kind == bdl_compiler::MissingKind::RealizationInvalid));
     let art = compile(&l.d.s, &support::options());
     assert!(!art.succeeded());
     assert_eq!(
@@ -521,6 +531,7 @@ fn generated_raw_commands_agree_with_the_interpreter() {
                     l.brightness.raw(),
                     DynValue::Quantity { value: *v },
                 ))],
+                readings: vec![],
             })
             .collect(),
     };

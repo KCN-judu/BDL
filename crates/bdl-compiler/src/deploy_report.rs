@@ -77,6 +77,11 @@ pub enum MissingKind {
     /// A device's chosen realization is unknown, does not fit its output
     /// or is defective (docs/architecture/output-realization.md).
     RealizationInvalid,
+    /// No device provides a Source on this target.
+    SourceNoDevice,
+    /// A device's chosen provider is unknown, does not fit its Source or
+    /// is defective, or two devices provide one Source.
+    ProviderInvalid,
 }
 
 impl MissingKind {
@@ -88,6 +93,8 @@ impl MissingKind {
             MissingKind::OutputNoDevice
                 | MissingKind::DeviceNoOutput
                 | MissingKind::RealizationInvalid
+                | MissingKind::SourceNoDevice
+                | MissingKind::ProviderInvalid
         )
     }
 }
@@ -356,10 +363,66 @@ pub fn deployment_report(
             device_name: Some(name.clone()),
             mapping: None,
             mapping_name: None,
-            message: format!("{name} is not connected to any output."),
+            message: format!("{name} is not connected to any output or Source."),
             explanation:
-                "A device realises exactly one output on the board; choose which one this is for."
+                "A device realises exactly one output or provides exactly one Source on the board; choose which one this is for."
                     .into(),
+        });
+    }
+    for s in &deployment.unprovided_sources {
+        let name = mapping_name(*s);
+        missing.push(MissingItem {
+            kind: MissingKind::SourceNoDevice,
+            output: None,
+            output_name: None,
+            device: None,
+            device_name: None,
+            mapping: Some(*s),
+            mapping_name: Some(name.clone()),
+            message: format!("{name} has no device on {}.", target.display()),
+            explanation: "A Source is a value the environment supplies; add the device that provides it on the board.".into(),
+        });
+    }
+    for p in deployment.provisions.values() {
+        if !p.check.is_blocking() {
+            continue;
+        }
+        let name = mapping_name(p.source);
+        let d = deployment.diagnostics.iter().find(|d| {
+            d.code.as_str().starts_with("deploy.provider_")
+                && d.severity == bdl_diagnostics::Severity::Error
+                && d.technical.contains(&format!("source {} ", p.source))
+        });
+        missing.push(MissingItem {
+            kind: MissingKind::ProviderInvalid,
+            output: None,
+            output_name: None,
+            device: p.device,
+            device_name: p.device.map(device_name),
+            mapping: Some(p.source),
+            mapping_name: Some(name.clone()),
+            message: d
+                .map(|d| d.message.clone())
+                .unwrap_or_else(|| format!("{name} has a provider that cannot be used.")),
+            explanation: d
+                .map(|d| d.explanation.clone())
+                .unwrap_or_else(|| "Choose another provider profile on the Deploy page.".into()),
+        });
+    }
+    for d in &deployment.diagnostics {
+        if d.code.as_str() != "deploy.source_contested" {
+            continue;
+        }
+        missing.push(MissingItem {
+            kind: MissingKind::ProviderInvalid,
+            output: None,
+            output_name: None,
+            device: None,
+            device_name: None,
+            mapping: None,
+            mapping_name: None,
+            message: d.message.clone(),
+            explanation: d.explanation.clone(),
         });
     }
     for r in deployment.realizations.values() {
@@ -482,7 +545,8 @@ pub fn deployment_report(
 
     let deployable = design_ready
         && deployment.status == DeploymentStatus::Feasible
-        && !deployment.realization_blocked();
+        && !deployment.realization_blocked()
+        && !deployment.provision_blocked();
     DeploymentReport {
         revision: deployment.revision,
         target: describe(target),

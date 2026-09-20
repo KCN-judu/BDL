@@ -9,7 +9,7 @@
 //! plan binds to a capability the target cannot serve on that pad, is an
 //! error, never a substitute pin.
 
-use crate::adapter::{AdapterPlan, SinkBinding, SinkKind};
+use crate::adapter::{AdapterPlan, ProviderBinding, SinkBinding, SinkKind, SourceKind};
 use crate::ast::*;
 use crate::emit::EmitError;
 use crate::names;
@@ -38,6 +38,11 @@ pub enum Peripheral {
     Gpio {
         pin: u32,
     },
+    /// A digital input with its pull.
+    Sense {
+        pin: u32,
+        pull_up: bool,
+    },
 }
 
 impl Peripheral {
@@ -64,6 +69,14 @@ impl Peripheral {
                 "Line::new",
                 [Expr::field(Expr::path("p"), format!("PIN_{pin}"))],
             ),
+            Peripheral::Sense { pin, pull_up } => Expr::call(
+                if *pull_up {
+                    "Sense::pull_up"
+                } else {
+                    "Sense::pull_down"
+                },
+                [Expr::field(Expr::path("p"), format!("PIN_{pin}"))],
+            ),
         }
     }
     /// The manifest's word for it.
@@ -81,6 +94,10 @@ impl Peripheral {
                 }
             ),
             Peripheral::Gpio { pin } => format!("PIN_{pin} as a digital output"),
+            Peripheral::Sense { pin, pull_up } => format!(
+                "PIN_{pin} as a digital input, pulled {}",
+                if *pull_up { "up" } else { "down" }
+            ),
         }
     }
 }
@@ -122,6 +139,19 @@ pub fn peripheral(b: &SinkBinding) -> Result<Peripheral, EmitError> {
     })
 }
 
+/// The peripheral for one provider: the pad as an input with the pull
+/// the profile prescribes.
+pub fn source_peripheral(b: &ProviderBinding) -> Result<Peripheral, EmitError> {
+    let pin = pin_number(&b.resource)?;
+    Ok(match b.kind {
+        SourceKind::LevelPullDown => Peripheral::Sense {
+            pin,
+            pull_up: false,
+        },
+        SourceKind::LevelPullUp => Peripheral::Sense { pin, pull_up: true },
+    })
+}
+
 /// `src/bin/rp2040.rs`.
 pub fn firmware_module(
     ir: &ExecIr,
@@ -142,6 +172,7 @@ pub fn firmware_module(
         Item::Use("bdl_runtime_embassy_rp::Line".into()),
         Item::Use("bdl_runtime_embassy_rp::PwmA".into()),
         Item::Use("bdl_runtime_embassy_rp::PwmB".into()),
+        Item::Use("bdl_runtime_embassy_rp::Sense".into()),
         Item::Use("bdl_runtime_embassy_rp::DEFAULT_PWM_DIVIDER".into()),
         Item::Use("embassy_executor::Spawner".into()),
         Item::Use("embassy_time::Duration".into()),
@@ -253,20 +284,47 @@ pub fn firmware_module(
             e: Box::new(Expr::path(sym)),
         });
     }
+    stmts.push(Stmt::Comment(
+        "the sources, on the resources the placement assigned; each is read once per tick".into(),
+    ));
+    let mut read_args = Vec::new();
+    for b in &plan.providers {
+        let per = source_peripheral(b)?;
+        let sym = names::reading(b.device);
+        let provider = ir
+            .providers
+            .iter()
+            .find(|x| x.device == b.device)
+            .map(|x| {
+                format!(
+                    "{} provides {} as `{}`",
+                    x.device_name,
+                    ir.decl(x.decl).map(|d| d.name.clone()).unwrap_or_default(),
+                    x.profile
+                )
+            })
+            .unwrap_or_default();
+        stmts.push(Stmt::Comment(format!(
+            "{provider} on {}: {}",
+            b.resource,
+            per.describe()
+        )));
+        stmts.push(Stmt::Let {
+            name: sym.clone(),
+            mutable: true,
+            ty: None,
+            value: per.construct(),
+        });
+        read_args.push(Expr::Ref {
+            mutable: true,
+            e: Box::new(Expr::path(sym)),
+        });
+    }
     stmts.push(Stmt::Let {
         name: "state".into(),
         mutable: true,
         ty: None,
         value: Expr::call("design::init", []),
-    });
-    stmts.push(Stmt::Comment(
-        "no device provides a value yet (ISS-0016): a due input would fault the tick".into(),
-    ));
-    stmts.push(Stmt::Let {
-        name: "inputs".into(),
-        mutable: false,
-        ty: None,
-        value: Expr::call("design::Inputs::default", []),
     });
     stmts.push(Stmt::Let {
         name: "ticker".into(),
@@ -309,9 +367,21 @@ pub fn firmware_module(
                 ),
             },
             Stmt::Comment(
-                "step, then apply the commands in sink order; a failed tick latches the fault"
+                "read the sources in input-slot order, step, then apply the commands in sink order; a failed tick latches the fault"
                     .into(),
             ),
+            Stmt::Let {
+                name: "inputs".into(),
+                mutable: false,
+                ty: None,
+                value: Expr::Match {
+                    scrutinee: Box::new(Expr::call("design::adapter::read", read_args)),
+                    arms: vec![
+                        ("Ok(i)".into(), Expr::path("i")),
+                        ("Err(_)".into(), Expr::call("halt", [])),
+                    ],
+                },
+            },
             Stmt::Expr(Expr::Match {
                 scrutinee: Box::new(Expr::call(
                     "design::step",

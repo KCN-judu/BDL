@@ -13,8 +13,8 @@
 use crate::identity::{FoundKey, IdentityTable, KeyKind, Reconciliation, SourceKey};
 use bdl_diagnostics::Span;
 use bdl_model::surface::{
-    ClockDomain, Concept, Definition, Design, DeviceBinding, DeviceKind, MappingBlock,
-    PhysicalOutput, Representation, Signature,
+    ClockDomain, Concept, Definition, Design, DeviceBinding, DeviceKind, InputProfileId,
+    MappingBlock, PhysicalOutput, Representation, Signature,
 };
 use bdl_model::{ClockId, DeclId, DeviceId, OutputId, OutputProfileId, SemanticId};
 use bdl_syntax::lower::{
@@ -93,7 +93,7 @@ pub struct LoadFault {
     /// `text.unknown_instance`, `text.unknown_port`, `text.unknown_kind`,
     /// `text.duplicate_item`, `text.unsupported_item`, `text.bad_parameter`,
     /// `text.bad_argument`, `text.bad_binding`, `text.port_definition`,
-    /// `text.ambiguous_identity`, `text.second_driver`.
+    /// `text.ambiguous_identity`, `text.second_driver`, `text.not_a_source`.
     pub code: String,
     pub message: String,
     pub open: bool,
@@ -540,31 +540,57 @@ impl<'a> Builder<'a> {
                     let Some(kind) = self.device_kind(file, d.kind.span, &d.kind.name) else {
                         continue;
                     };
-                    let output = match &d.output {
-                        Some(o) => match self.base.outputs.get(&o.name).copied() {
-                            Some(id) => {
+                    // `for` names an output the device realises or a Source
+                    // it provides: an output first, then a relationship.
+                    let (output, source) = match &d.output {
+                        Some(o) => match (
+                            self.base.outputs.get(&o.name).copied(),
+                            self.base.mappings.get(&o.name).copied(),
+                        ) {
+                            (Some(id), _) => {
                                 self.anchor(
                                     file,
                                     o.span,
                                     TextEntity::Output(id),
                                     AnchorRole::Reference,
                                 );
-                                Some(id)
+                                (Some(id), None)
                             }
-                            None => {
+                            (None, Some(decl)) => {
+                                if !self.is_source(&self.system.base, decl) {
+                                    self.fault(
+                                        file,
+                                        o.span,
+                                        "text.not_a_source",
+                                        format!(
+                                            "`{}` is not a Source: a device is for an output it realises or a Source it provides.",
+                                            o.name
+                                        ),
+                                    );
+                                    continue;
+                                }
+                                self.anchor(
+                                    file,
+                                    o.span,
+                                    TextEntity::Mapping(decl),
+                                    AnchorRole::Reference,
+                                );
+                                (None, Some(decl))
+                            }
+                            (None, None) => {
                                 self.fault(
                                     file,
                                     o.span,
                                     "text.unknown_output",
                                     format!(
-                                        "`{}` is not a physical output of this project.",
+                                        "`{}` is not a physical output or a Source of this project.",
                                         o.name
                                     ),
                                 );
                                 continue;
                             }
                         },
-                        None => None,
+                        None => (None, None),
                     };
                     let fixed_pins = d.pins.iter().map(|(i, p)| (*i, p.name.clone())).collect();
                     self.system.base.devices.insert(
@@ -578,6 +604,8 @@ impl<'a> Builder<'a> {
                                 .realization
                                 .as_ref()
                                 .map(|r| OutputProfileId(r.name.clone())),
+                            source,
+                            provider: d.provider.as_ref().map(|r| InputProfileId(r.name.clone())),
                             fixed_pins,
                         },
                     );
@@ -815,6 +843,16 @@ impl<'a> Builder<'a> {
             "text.unknown_relationship",
             format!("`{name}` is not a relationship of this project."),
         );
+    }
+
+    /// Whether a relationship is a Source *as authored*: unit domain and no
+    /// definition (`RelationshipRole::Source`).  A device may only be for
+    /// a Source; a Value or a Rule is not provided by hardware.
+    fn is_source(&self, design: &Design, decl: DeclId) -> bool {
+        design
+            .mappings
+            .get(&decl)
+            .is_some_and(|m| m.role() == bdl_model::RelationshipRole::Source)
     }
 
     fn device_kind(&mut self, file: usize, span: Span, name: &str) -> Option<DeviceKind> {
@@ -1492,23 +1530,50 @@ impl<'a> Builder<'a> {
                     let Some(kind) = self.device_kind(file, d.kind.span, &d.kind.name) else {
                         continue;
                     };
-                    let output = match &d.output {
+                    let (output, source) = match &d.output {
                         Some(o) => {
                             let names = self.component_names.get(&cid).expect("registered");
-                            match names.outputs.get(&o.name).copied() {
-                                Some(id) => Some(id),
-                                None => {
+                            match (
+                                names.outputs.get(&o.name).copied(),
+                                names.mappings.get(&o.name).copied(),
+                            ) {
+                                (Some(id), _) => (Some(id), None),
+                                (None, Some(decl)) => {
+                                    let body = &self
+                                        .system
+                                        .components
+                                        .get(&cid)
+                                        .expect("component exists")
+                                        .body;
+                                    if !self.is_source(body, decl) {
+                                        self.fault(
+                                            file,
+                                            o.span,
+                                            "text.not_a_source",
+                                            format!(
+                                                "`{}` is not a Source: a device is for an output it realises or a Source it provides.",
+                                                o.name
+                                            ),
+                                        );
+                                        continue;
+                                    }
+                                    (None, Some(decl))
+                                }
+                                (None, None) => {
                                     self.fault(
                                         file,
                                         o.span,
                                         "text.unknown_output",
-                                        format!("`{}` is not an output of this component.", o.name),
+                                        format!(
+                                            "`{}` is not an output or a Source of this component.",
+                                            o.name
+                                        ),
                                     );
                                     continue;
                                 }
                             }
                         }
-                        None => None,
+                        None => (None, None),
                     };
                     let comp = self
                         .system
@@ -1526,6 +1591,8 @@ impl<'a> Builder<'a> {
                                 .realization
                                 .as_ref()
                                 .map(|r| OutputProfileId(r.name.clone())),
+                            source,
+                            provider: d.provider.as_ref().map(|r| InputProfileId(r.name.clone())),
                             fixed_pins: d.pins.iter().map(|(i, p)| (*i, p.name.clone())).collect(),
                         },
                     );
@@ -2119,6 +2186,7 @@ pub fn device_kind_named(name: &str) -> Option<DeviceKind> {
     Some(match name {
         "pwm_channel" => DeviceKind::PwmChannel,
         "digital_output" => DeviceKind::DigitalOutput,
+        "digital_input" => DeviceKind::DigitalInput,
         "h_bridge_channel" => DeviceKind::HBridgeChannel,
         "i2c_sensor" => DeviceKind::I2cSensor,
         "quadrature_encoder" => DeviceKind::QuadratureEncoder,
@@ -2132,6 +2200,7 @@ pub fn device_kind_name(kind: DeviceKind) -> &'static str {
     match kind {
         DeviceKind::PwmChannel => "pwm_channel",
         DeviceKind::DigitalOutput => "digital_output",
+        DeviceKind::DigitalInput => "digital_input",
         DeviceKind::HBridgeChannel => "h_bridge_channel",
         DeviceKind::I2cSensor => "i2c_sensor",
         DeviceKind::QuadratureEncoder => "quadrature_encoder",

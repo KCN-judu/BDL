@@ -35,6 +35,40 @@ pub struct TickResult {
     pub commands: Vec<Option<Value>>,
 }
 
+/// The input half of the adapter, in the interpreter: every provider's
+/// value from its raw reading, in input-slot order, ready for [`step`]'s
+/// `inputs`.  `raw` is indexed like `ir.providers`; a slot whose reading
+/// was not taken stays `None`.  Pure: the provider's term reads its raw
+/// local and nothing else (`ProviderPlan`), so no state, tick or
+/// declaration is consulted — which is what lets a host and a board give
+/// the same value for the same reading.
+pub fn provide(ir: &ExecIr, raw: &[Option<Value>]) -> Result<Vec<Option<Value>>, RuntimeError> {
+    let mut inputs: Vec<Option<Value>> = vec![None; ir.inputs.len()];
+    let empty = CellState { cells: Vec::new() };
+    for (i, p) in ir.providers.iter().enumerate() {
+        let Some(reading) = raw.get(i).cloned().flatten() else {
+            continue;
+        };
+        let owner = ir
+            .decl(p.decl)
+            .map(|d| d.id)
+            .ok_or_else(|| RuntimeError::Internal(format!("provider decl {:?} missing", p.decl)))?;
+        let mut cx = Cx {
+            owner,
+            tick: 0,
+            prev: &empty,
+            values: &[],
+            locals: BTreeMap::from([(p.local, reading)]),
+        };
+        let v = cx.eval(&p.provide)?;
+        let slot = inputs
+            .get_mut(p.slot.0 as usize)
+            .ok_or_else(|| RuntimeError::Internal(format!("provider slot {:?} missing", p.slot)))?;
+        *slot = Some(v);
+    }
+    Ok(inputs)
+}
+
 /// One global tick.  `inputs` is indexed by input slot.
 pub fn step(
     ir: &ExecIr,

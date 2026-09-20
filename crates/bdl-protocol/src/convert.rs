@@ -8,7 +8,9 @@ use crate::pb;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::layout::{Layout, Point};
 use bdl_model::surface::{Definition, DeviceKind, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{
+    ClockId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId, SemanticId,
+};
 use bdl_output::OutputState;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -307,6 +309,19 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
                     .map(|p| OutputProfileId(p.clone())),
                 kind: device_kind_from_pb(m.kind())?,
             },
+            Op::SetDeviceSource(m) => EditOp::SetDeviceSource {
+                id: device(m.id),
+                source: m.source_id.map(DeclId::from_raw),
+            },
+            Op::SetDeviceProvider(m) => EditOp::SetDeviceProvider {
+                id: device(m.id),
+                profile: m
+                    .profile_id
+                    .as_ref()
+                    .filter(|p| !p.is_empty())
+                    .map(|p| InputProfileId(p.clone())),
+                kind: device_kind_from_pb(m.kind())?,
+            },
         },
     )
 }
@@ -467,6 +482,17 @@ pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
                 kind: device_kind_to_pb(*kind).into(),
             })
         }
+        EditOp::SetDeviceSource { id, source } => Op::SetDeviceSource(pb::SetDeviceSource {
+            id: id.raw(),
+            source_id: source.map(|s| s.raw()),
+        }),
+        EditOp::SetDeviceProvider { id, profile, kind } => {
+            Op::SetDeviceProvider(pb::SetDeviceProvider {
+                id: id.raw(),
+                profile_id: profile.as_ref().map(|p| p.0.clone()),
+                kind: device_kind_to_pb(*kind).into(),
+            })
+        }
     };
     pb::EditOp { op: Some(o) }
 }
@@ -475,6 +501,7 @@ pub fn device_kind_to_pb(k: DeviceKind) -> pb::DeviceKind {
     match k {
         DeviceKind::PwmChannel => pb::DeviceKind::PwmChannel,
         DeviceKind::DigitalOutput => pb::DeviceKind::DigitalOutput,
+        DeviceKind::DigitalInput => pb::DeviceKind::DigitalInput,
         DeviceKind::HBridgeChannel => pb::DeviceKind::HBridgeChannel,
         DeviceKind::I2cSensor => pb::DeviceKind::I2cSensor,
         DeviceKind::QuadratureEncoder => pb::DeviceKind::QuadratureEncoder,
@@ -486,6 +513,7 @@ pub fn device_kind_from_pb(k: pb::DeviceKind) -> Result<DeviceKind, ConvertError
     Ok(match k {
         pb::DeviceKind::PwmChannel => DeviceKind::PwmChannel,
         pb::DeviceKind::DigitalOutput => DeviceKind::DigitalOutput,
+        pb::DeviceKind::DigitalInput => DeviceKind::DigitalInput,
         pb::DeviceKind::HBridgeChannel => DeviceKind::HBridgeChannel,
         pb::DeviceKind::I2cSensor => DeviceKind::I2cSensor,
         pb::DeviceKind::QuadratureEncoder => DeviceKind::QuadratureEncoder,
@@ -548,6 +576,7 @@ pub fn edit_error_to_pb(e: &EditError) -> pb::Error {
         EditError::OutputInUse { .. } => "edit.output_in_use",
         EditError::DuplicateDeviceName { .. } => "edit.duplicate_device_name",
         EditError::UnknownDevice { .. } => "edit.unknown_device",
+        EditError::NotASource { .. } => "edit.not_a_source",
     };
     pb::Error {
         code: code.to_owned(),
@@ -792,6 +821,8 @@ pub fn design_projection(design: &bdl_model::surface::Design) -> pb::ProjectProj
                 kind: device_kind_to_pb(d.kind).into(),
                 output_id: d.output.map(|o| o.raw()),
                 realization: d.realization.as_ref().map(|p| p.0.clone()),
+                source_id: d.source.map(|s| s.raw()),
+                provider: d.provider.as_ref().map(|p| p.0.clone()),
                 fixed_pins: d
                     .fixed_pins
                     .iter()
@@ -1129,6 +1160,8 @@ pub fn report_to_pb(r: &bdl_compiler::DeploymentReport) -> pb::DeploymentAnalysi
                 MissingKind::OutputNoDevice => pb::MissingKind::OutputNoDevice,
                 MissingKind::DeviceNoOutput => pb::MissingKind::DeviceNoOutput,
                 MissingKind::RealizationInvalid => pb::MissingKind::RealizationInvalid,
+                MissingKind::SourceNoDevice => pb::MissingKind::SourceNoDevice,
+                MissingKind::ProviderInvalid => pb::MissingKind::ProviderInvalid,
             });
             item
         })
@@ -1216,6 +1249,7 @@ pub fn deployment_with_report_to_pb(
     m.rows = report.rows;
     m.blocker = report.blocker;
     m.realizations = realization_views(d, design);
+    m.provisions = provision_views(d, design);
     m
 }
 
@@ -1275,6 +1309,72 @@ pub fn realization_views(
                         raw_type: pretty::kernel(&p.encoder.raw),
                         representation: pretty::kernel(&p.encoder.rep),
                         compatible: fit.unwrap_or(false),
+                    })
+                    .collect(),
+            }
+        })
+        .collect()
+}
+
+pub fn provision_views(
+    d: &bdl_compiler::DeploymentAnalysis,
+    design: &bdl_model::surface::Design,
+) -> Vec<pb::ProvisionView> {
+    use bdl_check::pretty;
+    use bdl_output::provision::ProvisionStatus as S;
+    d.provisions
+        .values()
+        .map(|p| {
+            let status = match (&p.check.status, p.device) {
+                (S::NotChosen, None) => pb::ProvisionStatus::NoDevice,
+                (S::NotChosen, Some(_)) => pb::ProvisionStatus::NotChosen,
+                (S::UnknownProfile, _) => pb::ProvisionStatus::UnknownProfile,
+                (S::KindMismatch { .. }, _) => pb::ProvisionStatus::KindMismatch,
+                (S::TransducerInvalid(_), _) => pb::ProvisionStatus::TransducerInvalid,
+                (S::Incompatible(_), _) => pb::ProvisionStatus::Incompatible,
+                (S::Valid, _) => pb::ProvisionStatus::Valid,
+            };
+            let diagnostic = d.diagnostics.iter().find(|x| {
+                (x.code.as_str().starts_with("deploy.provider_")
+                    || x.code.as_str() == "deploy.source_unprovided")
+                    && x.technical.contains(&format!("source {} ", p.source))
+            });
+            pb::ProvisionView {
+                source_id: p.source.raw(),
+                source_name: design
+                    .mappings
+                    .get(&p.source)
+                    .map(|m| m.name.clone())
+                    .unwrap_or_default(),
+                device_id: p.device.map(|x| x.raw()),
+                device_name: p
+                    .device
+                    .and_then(|x| design.devices.get(&x))
+                    .map(|x| x.name.clone())
+                    .unwrap_or_default(),
+                profile_id: p.profile.as_ref().map(|x| x.0.clone()),
+                status: status.into(),
+                profile_known: p.check.profile_known(),
+                transducer_well_formed: p.check.transducer_well_formed(),
+                representation_fits: p.check.representation_fits(),
+                hardware_placed: p.hardware_placed,
+                backend_supported: p.backend_supported,
+                message: diagnostic.map(|x| x.message.clone()).unwrap_or_default(),
+                explanation: diagnostic
+                    .map(|x| x.explanation.clone())
+                    .unwrap_or_default(),
+                candidates: p
+                    .candidates
+                    .iter()
+                    .map(|(e, fit)| pb::InputProfileView {
+                        id: e.profile.id.0.clone(),
+                        display_name: e.profile.display_name.clone(),
+                        description: e.profile.description.clone(),
+                        kind: device_kind_to_pb(e.profile.kind).into(),
+                        raw_type: pretty::kernel(&e.profile.transducer.raw),
+                        representation: pretty::kernel(&e.profile.transducer.rep),
+                        compatible: fit.unwrap_or(false),
+                        origin: e.origin.label(),
                     })
                     .collect(),
             }
@@ -2350,6 +2450,19 @@ mod tests {
                 id: device(7),
                 profile: None,
                 kind: DeviceKind::DigitalOutput,
+            },
+            EditOp::SetDeviceSource {
+                id: device(7),
+                source: Some(DeclId::from_raw(3)),
+            },
+            EditOp::SetDeviceSource {
+                id: device(7),
+                source: None,
+            },
+            EditOp::SetDeviceProvider {
+                id: device(7),
+                profile: Some(InputProfileId("gpio_level_in".into())),
+                kind: DeviceKind::DigitalInput,
             },
             EditOp::DeleteDevice { id: device(7) },
         ];

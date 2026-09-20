@@ -53,10 +53,10 @@ use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity};
 use bdl_exec_ir::{
     Activation, CellPlan, ClockPlan, ClockSlot, ConceptPlan, DeclIndex, DeclKind, DeclPlan,
     ExecExpr, ExecIr, FunctionPlan, InputPlan, InputSlot, LocalId, OutputPlan, OutputSlot, PrimOp,
-    SinkPlan, SinkSlot, StateSlot, EXEC_IR_VERSION,
+    ProviderPlan, SinkPlan, SinkSlot, StateSlot, EXEC_IR_VERSION,
 };
 use bdl_ir::{DesignIr, Expr, Prim, Ty};
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{ClockId, DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId, SemanticId};
 use bdl_reactive::StateCellId;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -80,6 +80,23 @@ pub struct Realization {
 
 pub type Realizations = BTreeMap<DeviceId, Realization>;
 
+/// One admissible provision to lower into a provider: the Source, the
+/// profile chosen for it, its raw reading type and the provision body —
+/// `mk c (transduce r)` with `r` the raw reading as de Bruijn variable 0,
+/// built by `bdl_output::provision::provision_body` over `Expr::var(0)`.
+/// Keyed by the Source.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Provision {
+    pub source: DeclId,
+    pub device: DeviceId,
+    pub device_name: String,
+    pub profile: InputProfileId,
+    pub raw: Ty,
+    pub body: Expr,
+}
+
+pub type Provisions = BTreeMap<DeclId, Provision>;
+
 /// Lower a checked design.  On failure every diagnostic is returned (in
 /// the documented order); nothing partial is produced.
 pub fn lower(
@@ -88,7 +105,19 @@ pub fn lower(
     bindings: &ValidBindings,
     realizations: &Realizations,
 ) -> Result<ExecIr, Vec<Diagnostic>> {
-    let mut lw = Lowerer::new(ir, name, bindings, realizations);
+    lower_with_provisions(ir, name, bindings, realizations, &Provisions::new())
+}
+
+/// [`lower`] with the Sources' providers as well (the input half of the
+/// adapter).  A Source without a provision stays a plain input slot.
+pub fn lower_with_provisions(
+    ir: &DesignIr,
+    name: &str,
+    bindings: &ValidBindings,
+    realizations: &Realizations,
+    provisions: &Provisions,
+) -> Result<ExecIr, Vec<Diagnostic>> {
+    let mut lw = Lowerer::new(ir, name, bindings, realizations, provisions);
     match lw.run() {
         Ok(exec) if lw.diagnostics.is_empty() => Ok(exec),
         _ => {
@@ -111,6 +140,7 @@ struct Lowerer<'a> {
     name: String,
     bindings: &'a ValidBindings,
     realizations: &'a Realizations,
+    provisions: &'a Provisions,
     diagnostics: Vec<Diagnostic>,
     clocks: BTreeMap<ClockId, ClockSlot>,
     cells: BTreeMap<StateCellId, StateSlot>,
@@ -155,12 +185,14 @@ impl<'a> Lowerer<'a> {
         name: &str,
         bindings: &'a ValidBindings,
         realizations: &'a Realizations,
+        provisions: &'a Provisions,
     ) -> Self {
         Lowerer {
             ir,
             name: name.to_owned(),
             bindings,
             realizations,
+            provisions,
             diagnostics: Vec::new(),
             clocks: BTreeMap::new(),
             cells: BTreeMap::new(),
@@ -415,6 +447,69 @@ impl<'a> Lowerer<'a> {
             });
         }
 
+        // Providers: one per admissible provision, in input-slot order.
+        // The body is lowered in the Source's own context under its own
+        // grant — it constructs exactly the Source's concept — with the raw
+        // reading bound to a fresh local and nothing else in scope.
+        let mut providers = Vec::new();
+        for p in self.provisions.values() {
+            let Some(slot) = input_slot.get(&p.source).copied() else {
+                self.internal(
+                    Some(p.source),
+                    format!("provision of {} which is not an input", p.source),
+                );
+                continue;
+            };
+            let Some(source) = ir.decls.get(&p.source) else {
+                self.internal(None, format!("provided Source {} missing", p.source));
+                continue;
+            };
+            let grant = Grant::of(&source.interface.expected_type);
+            match infer(ir, &grant, std::slice::from_ref(&p.raw), &p.body) {
+                Ok(t) if t == source.interface.expected_type => {}
+                Ok(t) => {
+                    self.internal(
+                        Some(p.source),
+                        format!(
+                            "provision of {} has type {} but the Source expects {}",
+                            p.source,
+                            bdl_check::pretty::kernel(&t),
+                            bdl_check::pretty::kernel(&source.interface.expected_type)
+                        ),
+                    );
+                    continue;
+                }
+                Err(e) => {
+                    self.internal(
+                        Some(p.source),
+                        format!("provision of {} does not type: {:?}", p.source, e.kind),
+                    );
+                    continue;
+                }
+            }
+            let local = self.fresh_local();
+            let mut cx = ExprCx {
+                owner: p.source,
+                grant,
+                env: vec![Bind::Val(local)],
+            };
+            let mut path = ExprPath::new();
+            let Some(provide) = self.expr(&mut cx, &p.body, &mut path) else {
+                continue;
+            };
+            providers.push(ProviderPlan {
+                slot,
+                decl: self.index[&p.source],
+                device: p.device,
+                device_name: p.device_name.clone(),
+                profile: p.profile.clone(),
+                raw: p.raw.clone(),
+                local,
+                provide,
+            });
+        }
+        providers.sort_by_key(|p| p.slot);
+
         if !self.diagnostics.is_empty() {
             return Err(());
         }
@@ -483,6 +578,7 @@ impl<'a> Lowerer<'a> {
             outputs,
             functions,
             sinks,
+            providers,
         })
     }
 

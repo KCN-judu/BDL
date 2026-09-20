@@ -101,6 +101,14 @@ class Inspector extends StatelessWidget {
             for (final r in state.referrersOf(id))
               ?project.mappings.where((m) => m.id.toInt() == r).firstOrNull,
           ],
+          // The Source's provision on the chosen board, when the Deploy
+          // page has asked for one at this revision.
+          provision: state.editor.deploy.analysis?.revision.toInt() == project.revision.toInt()
+              ? state.editor.deploy.analysis?.provisions
+                    .where((p) => p.sourceId.toInt() == id)
+                    .firstOrNull
+              : null,
+          board: state.editor.deploy.target?.name,
         ),
         OutputSelected(:final id) => _OutputInspector(
           key: ValueKey('o$id'),
@@ -648,9 +656,17 @@ class _MappingInspector extends StatelessWidget {
     this.group,
     this.dependsOn = const [],
     this.namedIn = const [],
+    this.provision,
+    this.board,
   });
   final pb.MappingView mapping;
   final List<pb.ConceptView> concepts;
+
+  /// For a Source: its provision on the Deploy page's board at this
+  /// revision, and that board's name — the deployment's projection,
+  /// never a judgment made here.  Absent until a board is chosen.
+  final pb.ProvisionView? provision;
+  final String? board;
 
   /// The definition's semantic tokens, and the component whose body the
   /// relationship belongs to (the scope of a formula request).
@@ -705,6 +721,21 @@ class _MappingInspector extends StatelessWidget {
 
   pb.ConceptView? _concept(int id) => concepts.where((c) => c.id.toInt() == id).firstOrNull;
   String _name(int id) => _concept(id)?.name ?? '?';
+
+  /// The Source's realization row: what the deployment says on the chosen
+  /// board, or the environment when no board is chosen.
+  String _sourceRealization(BuildContext context) {
+    final l10n = context.l10n;
+    final p = provision;
+    final b = board;
+    if (p == null || b == null) return l10n.realizationEnvironment;
+    if (!p.hasDeviceId()) return l10n.realizationNoDeviceOn(b);
+    if (!p.hasProfileId() || p.profileId.isEmpty) {
+      return l10n.realizationProvidedBy(p.deviceName, b);
+    }
+    final profile = p.candidates.where((c) => c.id == p.profileId).firstOrNull;
+    return l10n.realizationProvidedByAs(p.deviceName, profile?.displayName ?? p.profileId, b);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -869,12 +900,13 @@ class _MappingInspector extends StatelessWidget {
               ? Text('declared', style: small)
               : null,
           children: [
-            // What realizes a Source is deployment's: until a device is
-            // bound the environment provides it, and the graph is complete.
+            // What realizes a Source is deployment's: the environment
+            // provides it, and on a chosen board a device may — the Deploy
+            // page's provision, projected; the graph is complete either way.
             if (source) ...[
               FormRow(
                 label: context.l10n.realization,
-                child: Text(context.l10n.realizationEnvironment, style: small),
+                child: Text(_sourceRealization(context), style: small),
               ),
               const SizedBox(height: 6),
             ],

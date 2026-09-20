@@ -107,13 +107,20 @@ void main() {
       expect(brightnessAt(0), 'Brightness(0.5)', reason: '45° in a dim room');
       expect(brightnessAt(1), 'Brightness(0.25)', reason: 'the same tilt in a bright room');
 
-      // Deploy: the PWM light placed on the Nano
+      // Deploy: the PWM light placed on the Nano; the two Sources (tilt,
+      // ambient) have no device providing them, so the deployment is
+      // incomplete and names them
       store.dispatch(const PageSelected(StudioPage.deploy));
       await store.until((s) => s.editor.deploy.targetsLoaded);
       store.dispatch(const TargetSelected('arduino_nano'));
       s = await store.until((s) => s.editor.deploy.analysis != null);
       final d = s.editor.deploy.analysis!;
-      expect(d.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_FEASIBLE);
+      expect(d.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_INCOMPLETE);
+      expect(
+        d.provisions.map((p) => p.status).toSet(),
+        {pb.ProvisionStatus.PROVISION_STATUS_NO_DEVICE},
+      );
+      expect(d.provisions.map((p) => p.sourceName).toSet(), {'tilt', 'ambient'});
       expect(d.assignment.single.deviceId.toInt(), s.project!.devices.single.id.toInt());
       expect(d.assignment.single.resource, isNotEmpty);
       expect(s.project!.dirty, isFalse, reason: 'nothing here edits the example');

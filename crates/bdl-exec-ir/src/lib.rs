@@ -37,12 +37,14 @@ pub mod bounds;
 pub mod interp;
 
 use bdl_ir::{Scalar, Ty};
-use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{
+    ClockId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId, SemanticId,
+};
 use bdl_reactive::StateCellId;
 use serde::{Deserialize, Serialize};
 
 /// Bumped on any change to this representation.
-pub const EXEC_IR_VERSION: u32 = 3;
+pub const EXEC_IR_VERSION: u32 = 4;
 
 macro_rules! slot {
     ($(#[$m:meta])* $name:ident($t:ty)) => {
@@ -180,6 +182,29 @@ pub struct SinkPlan {
     pub command: ExecExpr,
 }
 
+/// A provider: the value one device binding makes of its raw reading for
+/// a Source (`Provision.one`, docs/architecture/embedded-adapter.md § The
+/// input half).  `provide` reads the raw local and nothing else — no
+/// declaration, no memory, no other domain — and constructs exactly the
+/// Source's concept; the interpreter evaluates it before the tick and
+/// hands the result to the Source's input slot.  A raw reading the
+/// adapter did not take leaves the slot empty, and the Source's domain
+/// must not be due then.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProviderPlan {
+    pub slot: InputSlot,
+    /// The Source this provides.
+    pub decl: DeclIndex,
+    pub device: DeviceId,
+    pub device_name: String,
+    pub profile: InputProfileId,
+    /// The raw reading type — sem-free data.
+    pub raw: Ty,
+    /// The local `provide` reads the raw reading from.
+    pub local: LocalId,
+    pub provide: ExecExpr,
+}
+
 /// A declaration lowered away entirely (a function inlined at its uses).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FunctionPlan {
@@ -212,6 +237,11 @@ pub struct ExecIr {
     /// In `DeviceId` order; empty when no output has a realization.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sinks: Vec<SinkPlan>,
+    /// In input-slot order; empty when no Source has a provider.  A slot
+    /// without a provider is still supplied by the caller (a simulation
+    /// input); one with a provider is supplied by [`interp::provide`].
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub providers: Vec<ProviderPlan>,
 }
 
 impl ExecIr {

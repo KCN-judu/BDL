@@ -422,6 +422,8 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
             kind: bdl_model::surface::DeviceKind::PwmChannel,
             output: Some(light),
             realization: Some(bdl_model::OutputProfileId("pwm_duty8".into())),
+            source: None,
+            provider: None,
             fixed_pins: [(0u16, "D3".to_owned())].into_iter().collect(),
         },
     );
@@ -851,4 +853,76 @@ fn the_two_drive_spellings_build_the_same_system_across_files() {
     assert_eq!(sa.analysis.ir, sb.analysis.ir);
     assert_eq!(sa.analysis.outputs, sb.analysis.outputs);
     assert!(sa.analysis.output_complete);
+}
+
+/// A device is `for` an output it realises or a Source it provides; the
+/// body carries the provider profile the way it carries a realization.
+/// A device for a Value or a Rule is a fault; an unknown name too.
+#[test]
+fn a_device_for_a_source_carries_its_provider_and_round_trips() {
+    let src = "concept Pressed : Bool\nconcept Lit : Bool\nclock main\n\
+               mapping pressed : () -> Pressed @main\n\
+               mapping lit : () -> Lit @main\nlit() = !pressed\n\
+               output lamp : Lit @main\ndrive lamp by lit\n\
+               device coil : digital_output for lamp { realization gpio_level }\n\
+               device button : digital_input for pressed { provider gpio_level_in, pin 0 = D2 }\n\
+               device bare : digital_input for pressed\n";
+    let a = load_workspace(
+        "button",
+        &files(&[("src/main.bdl", src)]),
+        &IdentityTable::default(),
+    );
+    assert!(!a.has_errors(), "{:#?}", a.faults);
+    let base = &a.system.base;
+    let pressed = base
+        .mappings
+        .values()
+        .find(|m| m.name == "pressed")
+        .unwrap();
+    let button = base.devices.values().find(|d| d.name == "button").unwrap();
+    assert_eq!(button.kind, bdl_model::surface::DeviceKind::DigitalInput);
+    assert_eq!(button.source, Some(pressed.id));
+    assert_eq!(button.output, None);
+    assert_eq!(
+        button.provider.as_ref().map(|p| p.as_str()),
+        Some("gpio_level_in")
+    );
+    assert_eq!(button.fixed_pins.get(&0).map(String::as_str), Some("D2"));
+    let bare = base.devices.values().find(|d| d.name == "bare").unwrap();
+    assert_eq!(
+        (bare.source, bare.provider.clone()),
+        (Some(pressed.id), None)
+    );
+    assert_eq!(
+        bdl_text::print::device(base, button),
+        "device button : digital_input for pressed { provider gpio_level_in, pin 0 = D2 }"
+    );
+    assert_eq!(
+        bdl_text::print::device(base, bare),
+        "device bare : digital_input for pressed"
+    );
+    // the design's behaviour does not know the device
+    let sa = analyze_system(&SystemSnapshot::new(a.system.clone()));
+    assert!(sa.analysis.output_complete);
+    let without = load_workspace(
+        "button",
+        &files(&[("src/main.bdl", &src[..src.find("device button").unwrap()])]),
+        &IdentityTable::default(),
+    );
+    let sb = analyze_system(&SystemSnapshot::new(without.system.clone()));
+    assert_eq!(sa.analysis.ir, sb.analysis.ir);
+
+    // a device for a Value, and for an unknown name
+    let bad = load_workspace(
+        "button",
+        &files(&[(
+            "src/main.bdl",
+            &format!(
+                "{src}device x : digital_input for lit\ndevice y : digital_input for nothing\n"
+            ),
+        )]),
+        &IdentityTable::default(),
+    );
+    let codes: Vec<String> = bad.faults.iter().map(|f| f.code().to_string()).collect();
+    assert_eq!(codes, ["text.not_a_source", "text.unknown_output"]);
 }

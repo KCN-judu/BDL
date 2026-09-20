@@ -340,7 +340,7 @@ fn compile_for_a_board_writes_the_adapter_from_the_placement() {
     let r = root2.to_string_lossy().into_owned();
     let (code, out, _) = bdld(&["compile", &r, "--out", o, "--target", "rp2040_pico"]);
     assert_eq!(code, 1, "{out}");
-    assert!(out.contains("adapter.inputs_unbound"), "{out}");
+    assert!(out.contains("adapter.source_unprovided"), "{out}");
     assert!(out.contains("No device provides tilt"), "{out}");
     // and without a device at all the placement is not finished
     let root3 = dir.path().join("lamp3");

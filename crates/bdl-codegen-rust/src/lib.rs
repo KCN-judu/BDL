@@ -131,7 +131,7 @@ pub fn generate_with_adapter(
             attrs: vec!["cfg(feature = \"adapter\")".into()],
             name: "adapter".into(),
         });
-        let glue = adapter::adapter_module(ir, plan, &generator);
+        let glue = adapter::adapter_module(ir, plan, &generator)?;
         files.insert("src/adapter.rs".to_string(), print::module(&glue));
         let firmware = entry.firmware_module(ir, &package, plan, &generator)?;
         files.insert(

@@ -2928,6 +2928,8 @@ enum EditOp_Op {
   deleteDevice,
   setConceptOrdered,
   setDeviceRealization,
+  setDeviceSource,
+  setDeviceProvider,
   notSet
 }
 
@@ -2964,6 +2966,8 @@ class EditOp extends $pb.GeneratedMessage {
     DeleteDevice? deleteDevice,
     SetConceptOrdered? setConceptOrdered,
     SetDeviceRealization? setDeviceRealization,
+    SetDeviceSource? setDeviceSource,
+    SetDeviceProvider? setDeviceProvider,
   }) {
     final result = EditOp._();
     if (createConcept != null) result.createConcept = createConcept;
@@ -2998,6 +3002,8 @@ class EditOp extends $pb.GeneratedMessage {
     if (deleteDevice != null) result.deleteDevice = deleteDevice;
     if (setConceptOrdered != null) result.setConceptOrdered = setConceptOrdered;
     if (setDeviceRealization != null) result.setDeviceRealization = setDeviceRealization;
+    if (setDeviceSource != null) result.setDeviceSource = setDeviceSource;
+    if (setDeviceProvider != null) result.setDeviceProvider = setDeviceProvider;
     return result;
   }
 
@@ -3042,6 +3048,8 @@ class EditOp extends $pb.GeneratedMessage {
     29: EditOp_Op.deleteDevice,
     30: EditOp_Op.setConceptOrdered,
     31: EditOp_Op.setDeviceRealization,
+    32: EditOp_Op.setDeviceSource,
+    33: EditOp_Op.setDeviceProvider,
     0: EditOp_Op.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'EditOp',
@@ -3078,7 +3086,9 @@ class EditOp extends $pb.GeneratedMessage {
       28,
       29,
       30,
-      31
+      31,
+      32,
+      33
     ])
     ..aOM<CreateConcept>(1, _omitFieldNames ? '' : 'createConcept',
         subBuilder: CreateConcept.$_createMessage)
@@ -3142,6 +3152,10 @@ class EditOp extends $pb.GeneratedMessage {
         subBuilder: SetConceptOrdered.$_createMessage)
     ..aOM<SetDeviceRealization>(31, _omitFieldNames ? '' : 'setDeviceRealization',
         subBuilder: SetDeviceRealization.$_createMessage)
+    ..aOM<SetDeviceSource>(32, _omitFieldNames ? '' : 'setDeviceSource',
+        subBuilder: SetDeviceSource.$_createMessage)
+    ..aOM<SetDeviceProvider>(33, _omitFieldNames ? '' : 'setDeviceProvider',
+        subBuilder: SetDeviceProvider.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3195,6 +3209,8 @@ class EditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(29)
   @$pb.TagNumber(30)
   @$pb.TagNumber(31)
+  @$pb.TagNumber(32)
+  @$pb.TagNumber(33)
   EditOp_Op whichOp() => _EditOp_OpByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
   @$pb.TagNumber(2)
@@ -3227,6 +3243,8 @@ class EditOp extends $pb.GeneratedMessage {
   @$pb.TagNumber(29)
   @$pb.TagNumber(30)
   @$pb.TagNumber(31)
+  @$pb.TagNumber(32)
+  @$pb.TagNumber(33)
   void clearOp() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -3569,6 +3587,28 @@ class EditOp extends $pb.GeneratedMessage {
   void clearSetDeviceRealization() => $_clearField(31);
   @$pb.TagNumber(31)
   SetDeviceRealization ensureSetDeviceRealization() => $_ensure(30);
+
+  @$pb.TagNumber(32)
+  SetDeviceSource get setDeviceSource => $_getN(31);
+  @$pb.TagNumber(32)
+  set setDeviceSource(SetDeviceSource value) => $_setField(32, value);
+  @$pb.TagNumber(32)
+  $core.bool hasSetDeviceSource() => $_has(31);
+  @$pb.TagNumber(32)
+  void clearSetDeviceSource() => $_clearField(32);
+  @$pb.TagNumber(32)
+  SetDeviceSource ensureSetDeviceSource() => $_ensure(31);
+
+  @$pb.TagNumber(33)
+  SetDeviceProvider get setDeviceProvider => $_getN(32);
+  @$pb.TagNumber(33)
+  set setDeviceProvider(SetDeviceProvider value) => $_setField(33, value);
+  @$pb.TagNumber(33)
+  $core.bool hasSetDeviceProvider() => $_has(32);
+  @$pb.TagNumber(33)
+  void clearSetDeviceProvider() => $_clearField(33);
+  @$pb.TagNumber(33)
+  SetDeviceProvider ensureSetDeviceProvider() => $_ensure(32);
 }
 
 class CreateConcept extends $pb.GeneratedMessage {
@@ -5733,6 +5773,160 @@ class SetDeviceRealization extends $pb.GeneratedMessage {
   void clearKind() => $_clearField(3);
 }
 
+/// Bind the device to the Source it provides (0.25), by the relationship's
+/// stable id, or release it.  A deployment assignment: the Source keeps its
+/// declaration and its meaning.  The device's output is released with it —
+/// a device consumes or provides, never both.
+class SetDeviceSource extends $pb.GeneratedMessage {
+  factory SetDeviceSource({
+    $fixnum.Int64? id,
+    $fixnum.Int64? sourceId,
+  }) {
+    final result = SetDeviceSource._();
+    if (id != null) result.id = id;
+    if (sourceId != null) result.sourceId = sourceId;
+    return result;
+  }
+
+  SetDeviceSource._();
+
+  factory SetDeviceSource.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetDeviceSource()..mergeFromBuffer(data, registry);
+  factory SetDeviceSource.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetDeviceSource()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SetDeviceSource',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SetDeviceSource.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'sourceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetDeviceSource clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetDeviceSource copyWith(void Function(SetDeviceSource) updates) =>
+      super.copyWith((message) => updates(message as SetDeviceSource)) as SetDeviceSource;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SetDeviceSource() / SetDeviceSource.new instead')
+  static SetDeviceSource create() => SetDeviceSource._();
+  static $pb.GeneratedMessage $_createMessage() => SetDeviceSource._();
+  @$core.override
+  SetDeviceSource createEmptyInstance() => SetDeviceSource._();
+  @$core.pragma('dart2js:noInline')
+  static SetDeviceSource getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SetDeviceSource>(SetDeviceSource.$_createMessage);
+  static SetDeviceSource? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get sourceId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set sourceId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSourceId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSourceId() => $_clearField(2);
+}
+
+/// Choose how the device provides its Source (0.25): a provider profile
+/// from the catalogue, or none.  Like SetDeviceRealization, the profile's
+/// requirement template becomes the device kind in the same edit.
+class SetDeviceProvider extends $pb.GeneratedMessage {
+  factory SetDeviceProvider({
+    $fixnum.Int64? id,
+    $core.String? profileId,
+    DeviceKind? kind,
+  }) {
+    final result = SetDeviceProvider._();
+    if (id != null) result.id = id;
+    if (profileId != null) result.profileId = profileId;
+    if (kind != null) result.kind = kind;
+    return result;
+  }
+
+  SetDeviceProvider._();
+
+  factory SetDeviceProvider.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetDeviceProvider()..mergeFromBuffer(data, registry);
+  factory SetDeviceProvider.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      SetDeviceProvider()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SetDeviceProvider',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: SetDeviceProvider.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'id', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'profileId')
+    ..aE<DeviceKind>(3, _omitFieldNames ? '' : 'kind', enumValues: DeviceKind.values)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetDeviceProvider clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SetDeviceProvider copyWith(void Function(SetDeviceProvider) updates) =>
+      super.copyWith((message) => updates(message as SetDeviceProvider)) as SetDeviceProvider;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use SetDeviceProvider() / SetDeviceProvider.new instead')
+  static SetDeviceProvider create() => SetDeviceProvider._();
+  static $pb.GeneratedMessage $_createMessage() => SetDeviceProvider._();
+  @$core.override
+  SetDeviceProvider createEmptyInstance() => SetDeviceProvider._();
+  @$core.pragma('dart2js:noInline')
+  static SetDeviceProvider getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SetDeviceProvider>(SetDeviceProvider.$_createMessage);
+  static SetDeviceProvider? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get id => $_getI64(0);
+  @$pb.TagNumber(1)
+  set id($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get profileId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set profileId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasProfileId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearProfileId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  DeviceKind get kind => $_getN(2);
+  @$pb.TagNumber(3)
+  set kind(DeviceKind value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasKind() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearKind() => $_clearField(3);
+}
+
 class EditOutcome extends $pb.GeneratedMessage {
   factory EditOutcome({
     EditKind? kind,
@@ -6235,6 +6429,8 @@ class DeviceView extends $pb.GeneratedMessage {
     $core.Iterable<DevicePin>? fixedPins,
     $core.Iterable<RequirementLabel>? requirements,
     $core.String? realization,
+    $fixnum.Int64? sourceId,
+    $core.String? provider,
   }) {
     final result = DeviceView._();
     if (id != null) result.id = id;
@@ -6244,6 +6440,8 @@ class DeviceView extends $pb.GeneratedMessage {
     if (fixedPins != null) result.fixedPins.addAll(fixedPins);
     if (requirements != null) result.requirements.addAll(requirements);
     if (realization != null) result.realization = realization;
+    if (sourceId != null) result.sourceId = sourceId;
+    if (provider != null) result.provider = provider;
     return result;
   }
 
@@ -6269,6 +6467,9 @@ class DeviceView extends $pb.GeneratedMessage {
     ..pPM<RequirementLabel>(6, _omitFieldNames ? '' : 'requirements',
         subBuilder: RequirementLabel.$_createMessage)
     ..aOS(7, _omitFieldNames ? '' : 'realization')
+    ..a<$fixnum.Int64>(8, _omitFieldNames ? '' : 'sourceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(9, _omitFieldNames ? '' : 'provider')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6345,6 +6546,27 @@ class DeviceView extends $pb.GeneratedMessage {
   $core.bool hasRealization() => $_has(6);
   @$pb.TagNumber(7)
   void clearRealization() => $_clearField(7);
+
+  /// The Source this device provides (0.25), by relationship id; exclusive
+  /// with output_id.
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get sourceId => $_getI64(7);
+  @$pb.TagNumber(8)
+  set sourceId($fixnum.Int64 value) => $_setInt64(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasSourceId() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearSourceId() => $_clearField(8);
+
+  /// The provider profile chosen for the Source (0.25).
+  @$pb.TagNumber(9)
+  $core.String get provider => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set provider($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasProvider() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearProvider() => $_clearField(9);
 }
 
 class DevicePin extends $pb.GeneratedMessage {
@@ -15964,6 +16186,7 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     $core.Iterable<AssignmentRow>? rows,
     Blocker? blocker,
     $core.Iterable<RealizationView>? realizations,
+    $core.Iterable<ProvisionView>? provisions,
   }) {
     final result = DeploymentAnalysis._();
     if (revision != null) result.revision = revision;
@@ -15982,6 +16205,7 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     if (rows != null) result.rows.addAll(rows);
     if (blocker != null) result.blocker = blocker;
     if (realizations != null) result.realizations.addAll(realizations);
+    if (provisions != null) result.provisions.addAll(provisions);
     return result;
   }
 
@@ -16019,6 +16243,8 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
     ..aOM<Blocker>(15, _omitFieldNames ? '' : 'blocker', subBuilder: Blocker.$_createMessage)
     ..pPM<RealizationView>(16, _omitFieldNames ? '' : 'realizations',
         subBuilder: RealizationView.$_createMessage)
+    ..pPM<ProvisionView>(17, _omitFieldNames ? '' : 'provisions',
+        subBuilder: ProvisionView.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -16155,6 +16381,367 @@ class DeploymentAnalysis extends $pb.GeneratedMessage {
   /// target-independent, plus the profiles the output could use.
   @$pb.TagNumber(16)
   $pb.PbList<RealizationView> get realizations => $_getList(15);
+
+  /// One per Source of the design (0.25): the provision judgment — which
+  /// device provides it, whether the provider fits — plus the profiles the
+  /// Source could use.  A Source with no row here does not exist; a Source
+  /// with no device is an incomplete deployment.
+  @$pb.TagNumber(17)
+  $pb.PbList<ProvisionView> get provisions => $_getList(16);
+}
+
+class ProvisionView extends $pb.GeneratedMessage {
+  factory ProvisionView({
+    $fixnum.Int64? sourceId,
+    $core.String? sourceName,
+    $fixnum.Int64? deviceId,
+    $core.String? deviceName,
+    $core.String? profileId,
+    ProvisionStatus? status,
+    $core.bool? profileKnown,
+    $core.bool? transducerWellFormed,
+    $core.bool? representationFits,
+    $core.bool? hardwarePlaced,
+    $core.bool? backendSupported,
+    $core.String? message,
+    $core.String? explanation,
+    $core.Iterable<InputProfileView>? candidates,
+  }) {
+    final result = ProvisionView._();
+    if (sourceId != null) result.sourceId = sourceId;
+    if (sourceName != null) result.sourceName = sourceName;
+    if (deviceId != null) result.deviceId = deviceId;
+    if (deviceName != null) result.deviceName = deviceName;
+    if (profileId != null) result.profileId = profileId;
+    if (status != null) result.status = status;
+    if (profileKnown != null) result.profileKnown = profileKnown;
+    if (transducerWellFormed != null) result.transducerWellFormed = transducerWellFormed;
+    if (representationFits != null) result.representationFits = representationFits;
+    if (hardwarePlaced != null) result.hardwarePlaced = hardwarePlaced;
+    if (backendSupported != null) result.backendSupported = backendSupported;
+    if (message != null) result.message = message;
+    if (explanation != null) result.explanation = explanation;
+    if (candidates != null) result.candidates.addAll(candidates);
+    return result;
+  }
+
+  ProvisionView._();
+
+  factory ProvisionView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ProvisionView()..mergeFromBuffer(data, registry);
+  factory ProvisionView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ProvisionView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ProvisionView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ProvisionView.$_createMessage)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'sourceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(2, _omitFieldNames ? '' : 'sourceName')
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'deviceId', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(4, _omitFieldNames ? '' : 'deviceName')
+    ..aOS(5, _omitFieldNames ? '' : 'profileId')
+    ..aE<ProvisionStatus>(6, _omitFieldNames ? '' : 'status', enumValues: ProvisionStatus.values)
+    ..aOB(7, _omitFieldNames ? '' : 'profileKnown')
+    ..aOB(8, _omitFieldNames ? '' : 'transducerWellFormed')
+    ..aOB(9, _omitFieldNames ? '' : 'representationFits')
+    ..aOB(10, _omitFieldNames ? '' : 'hardwarePlaced')
+    ..aOB(11, _omitFieldNames ? '' : 'backendSupported')
+    ..aOS(12, _omitFieldNames ? '' : 'message')
+    ..aOS(13, _omitFieldNames ? '' : 'explanation')
+    ..pPM<InputProfileView>(14, _omitFieldNames ? '' : 'candidates',
+        subBuilder: InputProfileView.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProvisionView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProvisionView copyWith(void Function(ProvisionView) updates) =>
+      super.copyWith((message) => updates(message as ProvisionView)) as ProvisionView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ProvisionView() / ProvisionView.new instead')
+  static ProvisionView create() => ProvisionView._();
+  static $pb.GeneratedMessage $_createMessage() => ProvisionView._();
+  @$core.override
+  ProvisionView createEmptyInstance() => ProvisionView._();
+  @$core.pragma('dart2js:noInline')
+  static ProvisionView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProvisionView>(ProvisionView.$_createMessage);
+  static ProvisionView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get sourceId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set sourceId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSourceId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSourceId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get sourceName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set sourceName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasSourceName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearSourceName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get deviceId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set deviceId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDeviceId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDeviceId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get deviceName => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set deviceName($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDeviceName() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDeviceName() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get profileId => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set profileId($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasProfileId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearProfileId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  ProvisionStatus get status => $_getN(5);
+  @$pb.TagNumber(6)
+  set status(ProvisionStatus value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasStatus() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearStatus() => $_clearField(6);
+
+  /// The inspectable judgments behind admissibility.
+  @$pb.TagNumber(7)
+  $core.bool get profileKnown => $_getBF(6);
+  @$pb.TagNumber(7)
+  set profileKnown($core.bool value) => $_setBool(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasProfileKnown() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearProfileKnown() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.bool get transducerWellFormed => $_getBF(7);
+  @$pb.TagNumber(8)
+  set transducerWellFormed($core.bool value) => $_setBool(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasTransducerWellFormed() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearTransducerWellFormed() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.bool get representationFits => $_getBF(8);
+  @$pb.TagNumber(9)
+  set representationFits($core.bool value) => $_setBool(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasRepresentationFits() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearRepresentationFits() => $_clearField(9);
+
+  /// Every requirement of the providing device is placed in `assignment`.
+  @$pb.TagNumber(10)
+  $core.bool get hardwarePlaced => $_getBF(9);
+  @$pb.TagNumber(10)
+  set hardwarePlaced($core.bool value) => $_setBool(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasHardwarePlaced() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearHardwarePlaced() => $_clearField(10);
+
+  /// The chosen target's adapter can read this profile; false with a
+  /// reason in `message` when the target has no reader for it.
+  @$pb.TagNumber(11)
+  $core.bool get backendSupported => $_getBF(10);
+  @$pb.TagNumber(11)
+  set backendSupported($core.bool value) => $_setBool(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasBackendSupported() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearBackendSupported() => $_clearField(11);
+
+  @$pb.TagNumber(12)
+  $core.String get message => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set message($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasMessage() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearMessage() => $_clearField(12);
+
+  @$pb.TagNumber(13)
+  $core.String get explanation => $_getSZ(12);
+  @$pb.TagNumber(13)
+  set explanation($core.String value) => $_setString(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasExplanation() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearExplanation() => $_clearField(13);
+
+  /// Every catalogue input profile, with whether it fits this Source.
+  @$pb.TagNumber(14)
+  $pb.PbList<InputProfileView> get candidates => $_getList(13);
+}
+
+class InputProfileView extends $pb.GeneratedMessage {
+  factory InputProfileView({
+    $core.String? id,
+    $core.String? displayName,
+    $core.String? description,
+    DeviceKind? kind,
+    $core.String? rawType,
+    $core.String? representation,
+    $core.bool? compatible,
+    $core.String? origin,
+  }) {
+    final result = InputProfileView._();
+    if (id != null) result.id = id;
+    if (displayName != null) result.displayName = displayName;
+    if (description != null) result.description = description;
+    if (kind != null) result.kind = kind;
+    if (rawType != null) result.rawType = rawType;
+    if (representation != null) result.representation = representation;
+    if (compatible != null) result.compatible = compatible;
+    if (origin != null) result.origin = origin;
+    return result;
+  }
+
+  InputProfileView._();
+
+  factory InputProfileView.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InputProfileView()..mergeFromBuffer(data, registry);
+  factory InputProfileView.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      InputProfileView()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'InputProfileView',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: InputProfileView.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'displayName')
+    ..aOS(3, _omitFieldNames ? '' : 'description')
+    ..aE<DeviceKind>(4, _omitFieldNames ? '' : 'kind', enumValues: DeviceKind.values)
+    ..aOS(5, _omitFieldNames ? '' : 'rawType')
+    ..aOS(6, _omitFieldNames ? '' : 'representation')
+    ..aOB(7, _omitFieldNames ? '' : 'compatible')
+    ..aOS(8, _omitFieldNames ? '' : 'origin')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InputProfileView clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  InputProfileView copyWith(void Function(InputProfileView) updates) =>
+      super.copyWith((message) => updates(message as InputProfileView)) as InputProfileView;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use InputProfileView() / InputProfileView.new instead')
+  static InputProfileView create() => InputProfileView._();
+  static $pb.GeneratedMessage $_createMessage() => InputProfileView._();
+  @$core.override
+  InputProfileView createEmptyInstance() => InputProfileView._();
+  @$core.pragma('dart2js:noInline')
+  static InputProfileView getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<InputProfileView>(InputProfileView.$_createMessage);
+  static InputProfileView? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get displayName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set displayName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDisplayName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDisplayName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get description => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set description($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDescription() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDescription() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  DeviceKind get kind => $_getN(3);
+  @$pb.TagNumber(4)
+  set kind(DeviceKind value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasKind() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearKind() => $_clearField(4);
+
+  /// The raw reading type, printed.
+  @$pb.TagNumber(5)
+  $core.String get rawType => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set rawType($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasRawType() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearRawType() => $_clearField(5);
+
+  /// The transducer's representation, printed.
+  @$pb.TagNumber(6)
+  $core.String get representation => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set representation($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasRepresentation() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearRepresentation() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.bool get compatible => $_getBF(6);
+  @$pb.TagNumber(7)
+  set compatible($core.bool value) => $_setBool(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasCompatible() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearCompatible() => $_clearField(7);
+
+  /// Where the profile comes from: "builtin" or "package <id>".  Display
+  /// data only; no judgment reads it.
+  @$pb.TagNumber(8)
+  $core.String get origin => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set origin($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasOrigin() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearOrigin() => $_clearField(8);
 }
 
 class RealizationView extends $pb.GeneratedMessage {

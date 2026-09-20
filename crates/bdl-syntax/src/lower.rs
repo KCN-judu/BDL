@@ -340,14 +340,19 @@ pub struct DriveItem {
     pub span: Span,
 }
 
-/// `device Name : kind for output { realization profile, pin i = name }`
+/// `device Name : kind for output { realization profile, pin i = name }` or
+/// `device Name : kind for source { provider profile, pin i = name }`
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeviceItem {
     pub name: Ident,
     pub kind: Ident,
+    /// The name after `for`: an output the device realises or a Source it
+    /// provides.  The builder resolves which by the design.
     pub output: Option<Ident>,
     /// The realization profile chosen for the output, as written.
     pub realization: Option<Ident>,
+    /// The provider profile chosen for the Source, as written.
+    pub provider: Option<Ident>,
     /// `(requirement index, pin name)` as written.
     pub pins: Vec<(u16, Ident)>,
     pub span: Span,
@@ -808,6 +813,10 @@ fn device(d: &ast::DeviceDecl, errors: &mut Vec<SyntaxError>) -> Option<DeviceIt
         Some(r) => Some(ident_ref(&r.profile()?)?),
         None => None,
     };
+    let provider = match d.provider() {
+        Some(r) => Some(ident_ref(&r.profile()?)?),
+        None => None,
+    };
     let mut pins = Vec::new();
     for pin in d.pins() {
         let index_tok = pin.index()?;
@@ -830,6 +839,7 @@ fn device(d: &ast::DeviceDecl, errors: &mut Vec<SyntaxError>) -> Option<DeviceIt
         kind,
         output,
         realization,
+        provider,
         pins,
         span: d.span(),
     })
