@@ -8,9 +8,9 @@
 
 部署页（⌘3）回答 _这个设计能放进这块板子吗_。这是一次布置检查：对每个物理输出的设备，它会使用板子的哪些资源——或者无法布置的第一个原因。页面是一列：**目标板**弹出菜单、**结论**、**设备**，以及板子回答之后的**布置**。它还不会构建固件或烧录板子；见 [尚未实现的](#尚未实现的)。
 
-![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../../../../docs/user-guide/assets/studio/deploy-page.png)
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../../../../docs/user-guide/assets/studio/deploy-page.png)
 
-_部署页：选中 Arduino Nano，light 上有一个 PWM 设备，以及结论和布置。_
+_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._
 
 ## 目标板
 

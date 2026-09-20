@@ -1883,6 +1883,7 @@ msgid "**About `tilt`.** A [Source](../concepts/relationships.md) is a value the
 msgstr ""
 
 #: docs/user-guide/getting-started/first-deployment.md:61
+#: docs/user-guide/studio/deploy.md:12
 msgid "_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._"
 msgstr ""
 
@@ -5063,10 +5064,6 @@ msgstr "部署"
 #: docs/user-guide/studio/deploy.md:3
 msgid "The Deploy page (⌘3) answers _does this design fit this board_. It is a placement check: for each physical output's device, which board resources it would use — or the first reason it cannot be placed. The page is one column: the **Target** pop-up, the **verdict**, the **Devices** and, once a board has answered, the **Placement**. It does not build firmware or flash a board yet; see [What is not there](#what-is-not-there)."
 msgstr "部署页（⌘3）回答 _这个设计能放进这块板子吗_。这是一次布置检查：对每个物理输出的设备，它会使用板子的哪些资源——或者无法布置的第一个原因。页面是一列：**目标板**弹出菜单、**结论**、**设备**，以及板子回答之后的**布置**。它还不会构建固件或烧录板子；见 [尚未实现的](#尚未实现的)。"
-
-#: docs/user-guide/studio/deploy.md:12
-msgid "_The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and the placement._"
-msgstr "_部署页：选中 Arduino Nano，light 上有一个 PWM 设备，以及结论和布置。_"
 
 #: docs/user-guide/studio/deploy.md:17
 msgid "The boards the compiler service knows. Today: **Arduino Nano**, **Big board (mock)**, a test target with more PWM pins, and **Raspberry Pi Pico (RP2040)**. Firmware can be generated for the Pico and the Nano (`bdld compile --target rp2040_pico` / `--target arduino_nano`, [CLI](../reference/cli.md); flashing is not in Studio yet). The board choice is a **session preference**: it is not saved with the project, and changing it never changes the design."

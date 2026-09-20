@@ -1882,6 +1882,7 @@ msgid "**About `tilt`.** A [Source](../concepts/relationships.md) is a value the
 msgstr ""
 
 #: docs/user-guide/getting-started/first-deployment.md:61
+#: docs/user-guide/studio/deploy.md:12
 msgid "_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide._"
 msgstr ""
 
@@ -5061,10 +5062,6 @@ msgstr ""
 
 #: docs/user-guide/studio/deploy.md:3
 msgid "The Deploy page (⌘3) answers _does this design fit this board_. It is a placement check: for each physical output's device, which board resources it would use — or the first reason it cannot be placed. The page is one column: the **Target** pop-up, the **verdict**, the **Devices** and, once a board has answered, the **Placement**. It does not build firmware or flash a board yet; see [What is not there](#what-is-not-there)."
-msgstr ""
-
-#: docs/user-guide/studio/deploy.md:12
-msgid "_The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and the placement._"
 msgstr ""
 
 #: docs/user-guide/studio/deploy.md:17
