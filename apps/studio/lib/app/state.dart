@@ -1296,11 +1296,49 @@ enum SidebarTab { project, library }
 @immutable
 class PendingInsert {
   const PendingInsert({required this.templateId, this.position});
+
+  /// The library item, or [kSourceInsert] for a Source created through the
+  /// Source sheet (the created objects are placed the same way).
   final String templateId;
 
   /// Scene position of the drop / right-click; `null` for a keyboard or
   /// panel insertion (auto-placed).
   final Offset? position;
+
+  /// The [templateId] of a Source created over a chosen concept.
+  static const String kSourceInsert = 'source';
+}
+
+/// The Source sheet, open over the design: a Source is created over a
+/// concept the designer chooses — an existing one of the design in view,
+/// or a new one created in the same transaction — so nothing is committed
+/// until the choice is complete, and cancelling changes nothing
+/// (docs/spec/concept-library.md).  [candidates] is the daemon's ranked
+/// answer for the design at [revision]; `null` while it is on its way.
+@immutable
+class SourceSheetState {
+  const SourceSheetState({
+    required this.presetId,
+    required this.revision,
+    this.position,
+    this.candidates,
+  });
+
+  /// The Source item whose preset prefills the sheet; empty for the
+  /// generic *New Source…*.
+  final String presetId;
+
+  /// The revision the candidates were asked for.
+  final int revision;
+
+  /// Where the objects land (scene coordinates); `null` auto-places.
+  final Offset? position;
+  final pb.SourceCandidatesResponse? candidates;
+
+  bool get ready => candidates != null;
+
+  SourceSheetState withCandidates(pb.SourceCandidatesResponse c) =>
+      SourceSheetState(presetId: presetId, revision: revision, position: position, candidates: c);
 }
 
 /// The Simulate page: Studio's input trace and schedule (UI state), and the
@@ -1402,6 +1440,7 @@ class EditorState {
     this.librarySearch = '',
     this.recentTemplates = const [],
     this.pendingInsert,
+    this.sourceSheet,
     this.renaming,
     this.context = const SystemContext(),
     this.layouts = const CanvasLayout(),
@@ -1558,6 +1597,9 @@ class EditorState {
   /// A template insertion awaiting the daemon's answer.
   final PendingInsert? pendingInsert;
 
+  /// The Source sheet, while open (`null` otherwise).
+  final SourceSheetState? sourceSheet;
+
   /// The node whose name is being edited inline on the canvas.
   final NodeRef? renaming;
 
@@ -1590,6 +1632,8 @@ class EditorState {
     List<String>? recentTemplates,
     PendingInsert? pendingInsert,
     bool clearPendingInsert = false,
+    SourceSheetState? sourceSheet,
+    bool clearSourceSheet = false,
     NodeRef? renaming,
     bool clearRenaming = false,
     DesignContext? context,
@@ -1644,6 +1688,7 @@ class EditorState {
       librarySearch: librarySearch ?? this.librarySearch,
       recentTemplates: recentTemplates ?? this.recentTemplates,
       pendingInsert: clearPendingInsert ? null : (pendingInsert ?? this.pendingInsert),
+      sourceSheet: clearSourceSheet ? null : (sourceSheet ?? this.sourceSheet),
       renaming: clearRenaming ? null : (renaming ?? this.renaming),
       context: context ?? this.context,
       layouts: layouts ?? this.layouts,

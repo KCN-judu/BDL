@@ -17,9 +17,10 @@ import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/canvas/concept_glyphs.dart';
 import 'package:bdl_studio/ui/library_panel.dart';
-import 'package:bdl_studio/ui/dialogs.dart';
 import 'package:bdl_studio/ui/inspector.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
+import 'package:bdl_studio/ui/source_sheet.dart';
+import 'package:bdl_studio/ui/units.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -111,20 +112,21 @@ class HarnessState extends State<Harness> {
   );
 }
 
-/// The Temperature Sensor Source item as the daemon serves it: what it
-/// creates, in the canonical English; Studio localizes by id.
+/// The Temperature Input Source item as the daemon serves it: a preset
+/// (what it suggests) beside what the legacy request would create, in the
+/// canonical English; Studio localizes by id.
 pb.LibraryItemView sourceItem() => pb.LibraryItemView(
   id: 'std.source.temperature',
   category: 'source',
-  displayName: 'Temperature Sensor',
-  description: 'The temperature of a room, as the environment provides it.',
+  displayName: 'Temperature Input',
+  description: 'A temperature the environment provides.',
   group: 'environment',
-  keywords: ['temp', 'source'],
+  keywords: ['temp', 'input', 'source'],
   creates: [
     pb.LibraryObjectView(
       kind: 'concept',
       key: 'value',
-      name: 'RoomTemp',
+      name: 'Temperature',
       typeName: 'Temperature',
       representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
       unit: 'K',
@@ -132,10 +134,17 @@ pb.LibraryItemView sourceItem() => pb.LibraryItemView(
     pb.LibraryObjectView(
       kind: 'mapping',
       key: 'source',
-      name: 'TempSensor',
-      signature: '() -> RoomTemp',
+      name: 'temperatureInput',
+      signature: '() -> Temperature',
     ),
   ],
+  preset: pb.SourcePresetView(
+    conceptName: 'Temperature',
+    representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+    typeName: 'Temperature',
+    unit: 'K',
+    sourceName: 'temperatureInput',
+  ),
 );
 
 pb.LibraryItemView conceptItem() => pb.LibraryItemView(
@@ -411,15 +420,17 @@ void main() {
       final t = sourceItem();
       expect(t.category, 'source');
       expect(conceptItem().category, 'concept');
-      expect(itemName(kEnglish, t), 'Temperature Sensor');
-      expect(itemName(zh, t), '温度传感器');
-      expect(itemName(ja, t), '温度センサー');
+      expect(itemName(kEnglish, t), 'Temperature Input');
+      expect(itemName(zh, t), '温度输入');
+      expect(itemName(ja, t), '温度入力');
       expect(itemDescription(ja, t), isNot(t.description));
       for (final l in [kEnglish, zh, ja]) {
-        expect(t.creates.first.name, 'RoomTemp');
-        expect(t.creates.last.name, 'TempSensor');
-        expect(itemWord(l, t), '() -> RoomTemp');
-        expect(itemPreview(l, t).join(' '), contains('RoomTemp (Temperature)'));
+        // the preset's suggestions are identifiers in every locale; the
+        // row says the value form, never a signature
+        expect(t.preset.conceptName, 'Temperature');
+        expect(t.preset.sourceName, 'temperatureInput');
+        expect(itemWord(l, t), 'K');
+        expect(itemPreview(l, t), isEmpty);
       }
       // an item the catalog does not know keeps the daemon's English
       final foreign = pb.LibraryItemView(id: 'team.x', category: 'source', displayName: 'X Sensor');
@@ -434,7 +445,7 @@ void main() {
       expect(ids('传感器', zh), ['std.source.temperature']);
       expect(ids('温度', ja), ['std.source.temperature']);
       expect(ids('センサー', ja), ['std.source.temperature']);
-      expect(ids('TempSensor', kEnglish), ['std.source.temperature']);
+      expect(ids('temperatureInput', kEnglish), ['std.source.temperature']);
       expect(ids('Sources', kEnglish), ['std.source.temperature']);
       expect(ids('来源', zh), ['std.source.temperature']);
       expect(ids('humid', kEnglish), ['std.environment.humidity']);
@@ -464,7 +475,7 @@ void main() {
         editor: const EditorState(
           pendingRequests: 1,
           pendingInsert: PendingInsert(
-            templateId: 'std.source.temperature',
+            templateId: PendingInsert.kSourceInsert,
             position: Offset(300, 100),
           ),
         ),
@@ -484,41 +495,160 @@ void main() {
       expect(t.state.editor.renaming, const NodeRef.concept(10));
       expect(relationshipRole(of(next, 11)), RelationshipRole.source);
     });
-  });
 
-  group('new source sheet', () {
-    testWidgets('no Reads row; Provides is chosen; the result has no inputs', (t) async {
-      late BuildContext ctx;
-      await t.pumpWidget(
-        MaterialApp(
-          theme: macTheme(Brightness.light),
-          home: Builder(
-            builder: (c) {
-              ctx = c;
-              return const Scaffold();
-            },
+    test('a Source over an existing concept lands where pointed, selected, not renamed', () {
+      final s = connected(design()).copyWith(
+        editor: const EditorState(
+          pendingRequests: 1,
+          pendingInsert: PendingInsert(
+            templateId: PendingInsert.kSourceInsert,
+            position: Offset(300, 100),
           ),
         ),
       );
-      final result = showNewSourceSheet(ctx, design().concepts);
+      final next = design(revision: 2)..mappings.add(mapping(11, 'tiltInput', const [], tilt));
+      final t = reduce(
+        s,
+        ProjectReceived(next, outcome: pb.EditOutcome(createdMapping: Int64(11))),
+      );
+      expect(t.state.editor.layout[const NodeRef.mapping(11)], const Offset(300, 100));
+      expect(t.state.editor.selection, const MappingSelected(11));
+      expect(t.state.editor.renaming, isNull);
+      expect(t.state.editor.pendingInsert, isNull);
+      expect(next.concepts.length, design().concepts.length, reason: 'no new concept');
+    });
+  });
+
+  group('source sheet', () {
+    /// The sheet over `design()`: the daemon ranked tiltSensor's concept
+    /// and pulse's; suggestions from the Temperature preset.
+    SourceSheetState sheetState({String presetId = ''}) => SourceSheetState(
+      presetId: presetId,
+      revision: 1,
+      candidates: pb.SourceCandidatesResponse(
+        revision: Int64(1),
+        candidates: [
+          pb.SourceCandidateView(conceptId: Int64(tilt), preferred: presetId.isNotEmpty),
+          pb.SourceCandidateView(conceptId: Int64(level)),
+        ],
+        preset: presetId.isEmpty
+            ? null
+            : pb.SourcePresetView(
+                conceptName: 'Temperature',
+                representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+                typeName: 'Temperature',
+                unit: 'K',
+                sourceName: 'temperatureInput',
+              ),
+        suggestedConceptName: presetId.isEmpty ? '' : 'Temperature',
+        suggestedSourceName: presetId.isEmpty ? '' : 'temperatureInput',
+      ),
+    );
+
+    Future<List<CreateSourceRequested>> pumpSheet(
+      WidgetTester t,
+      SourceSheetState sheet, {
+      void Function()? onCancel,
+    }) async {
+      final created = <CreateSourceRequested>[];
+      await t.pumpWidget(
+        Harness(
+          initial: connected(design()),
+          child: (s, d) => SingleChildScrollView(
+            child: SourceSheetForm(
+              sheet: sheet,
+              concepts: design().concepts,
+              taken: [
+                for (final c in design().concepts) c.name,
+                for (final m in design().mappings) m.name,
+              ],
+              unitPresets: builtinUnitPresets(kEnglish),
+              onCreate: created.add,
+              onCancel: onCancel ?? () {},
+            ),
+          ),
+        ),
+      );
       await t.pumpAndSettle();
-      expect(find.text('New source'), findsOneWidget);
-      expect(find.text('Reads'), findsNothing);
-      expect(find.text('Provides'), findsOneWidget);
-      expect(find.text(kEnglish.chooseWhatItProvidesTheOutputSocket), findsOneWidget);
-      await t.enterText(find.byType(EditableText).first, 'AmbientLight');
-      await t.tap(find.text('choose'));
+      return created;
+    }
+
+    testWidgets('existing concept: only the Source is described, named after the concept', (
+      t,
+    ) async {
+      final created = await pumpSheet(t, sheetState());
+      // the first ranked concept is chosen; the name follows it
+      expect(find.text('Existing concept'), findsOneWidget);
+      expect(find.text('Tilt'), findsWidgets);
+      expect(find.byKey(const ValueKey('source-preview-0')), findsOneWidget);
+      expect(find.text('mapping tiltInput : () -> Tilt'), findsOneWidget);
+      expect(find.byKey(const ValueKey('source-preview-1')), findsNothing, reason: 'one object');
+      expect(find.text(kEnglish.sourceOverExistingConceptCaption), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('source-create')));
       await t.pumpAndSettle();
-      await t.tap(find.text('Brightness').last);
+      expect(created.single.existingConcept, tilt);
+      expect(created.single.newConceptName, isNull);
+      expect(created.single.sourceName, 'tiltInput');
+    });
+
+    testWidgets('an explicit name is sent as typed; a suggestion never replaces it', (t) async {
+      final created = await pumpSheet(t, sheetState());
+      await t.enterText(find.byKey(const ValueKey('source-name')), 'tiltSensor');
       await t.pumpAndSettle();
-      expect(find.text(kEnglish.sheetSourceShape('Brightness')), findsOneWidget);
-      await t.tap(find.text('Create'));
+      // the name of the design's own Source, typed on purpose: kept; the
+      // daemon's refusal is the ordinary one
+      expect(find.text('mapping tiltSensor : () -> Tilt'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('source-create')));
       await t.pumpAndSettle();
-      final r = await result;
-      expect(r, isNotNull);
-      expect(r!.name, 'AmbientLight');
-      expect(r.inputs, isEmpty);
-      expect(r.output, level);
+      expect(created.single.sourceName, 'tiltSensor');
+    });
+
+    testWidgets('new concept: the preset prefills, the preview lists both objects', (t) async {
+      final created = await pumpSheet(t, sheetState(presetId: 'std.source.temperature'));
+      await t.tap(find.text('New concept'));
+      await t.pumpAndSettle();
+      expect(find.text('concept Temperature : Temperature'), findsOneWidget);
+      expect(find.text('mapping temperatureInput : () -> Temperature'), findsOneWidget);
+      expect(find.text(kEnglish.sourceWithNewConceptCaption), findsOneWidget);
+      // a new concept name: the Source name follows while untouched
+      await t.enterText(find.byKey(const ValueKey('source-concept-name')), 'OvenTemperature');
+      await t.pumpAndSettle();
+      expect(find.text('mapping ovenTemperatureInput : () -> OvenTemperature'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('source-create')));
+      await t.pumpAndSettle();
+      final r = created.single;
+      expect(r.newConceptName, 'OvenTemperature');
+      expect(r.newConceptRepresentation, pb.Representation(quantity: pb.Dim(temperature: 1)));
+      expect(r.sourceName, 'ovenTemperatureInput');
+      expect(r.existingConcept, isNull);
+    });
+
+    testWidgets('a preset never forces a new concept: the existing ones stay a choice', (t) async {
+      final created = await pumpSheet(t, sheetState(presetId: 'std.source.temperature'));
+      // opens on the existing concepts the daemon ranked
+      expect(find.text('mapping temperatureInput : () -> Tilt'), findsNothing);
+      expect(find.text('mapping tiltInput : () -> Tilt'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('source-create')));
+      await t.pumpAndSettle();
+      expect(created.single.existingConcept, tilt);
+    });
+
+    testWidgets('cancel creates nothing', (t) async {
+      var cancelled = false;
+      final created = await pumpSheet(t, sheetState(), onCancel: () => cancelled = true);
+      await t.tap(find.text('Cancel'));
+      await t.pumpAndSettle();
+      expect(cancelled, isTrue);
+      expect(created, isEmpty);
+    });
+
+    test('a suggested name is made free; the design\'s names are never touched', () {
+      expect(suggestedSourceName('RoomTemperature', const []), 'roomTemperatureInput');
+      expect(
+        suggestedSourceName('RoomTemperature', const ['roomTemperatureInput']),
+        'roomTemperatureInput2',
+      );
+      expect(suggestedSourceName('', const []), 'input');
     });
   });
 }

@@ -164,6 +164,41 @@ class InstantiateLibraryItem extends Effect {
   final int? component;
 }
 
+/// The concepts a Source may be created over, ranked for a preset
+/// (`ListSourceCandidates`); answered with [SourceCandidatesReceived].
+class ListSourceCandidates extends Effect {
+  const ListSourceCandidates({
+    required this.revision,
+    required this.itemId,
+    required this.generation,
+    this.component,
+  });
+  final int revision;
+  final String itemId;
+  final int generation;
+  final int? component;
+}
+
+/// Create a Source over a chosen concept (`CreateSource`): one edit for an
+/// existing concept, one transaction for a new concept and its Source.
+/// Answered like an edit.
+class CreateSource extends Effect {
+  const CreateSource({
+    required this.baseRevision,
+    required this.sourceName,
+    required this.description,
+    this.existingConcept,
+    this.newConcept,
+    this.component,
+  });
+  final int baseRevision;
+  final String sourceName;
+  final String description;
+  final int? existingConcept;
+  final pb.NewConcept? newConcept;
+  final int? component;
+}
+
 class RunAnalysis extends Effect {
   const RunAnalysis();
 }

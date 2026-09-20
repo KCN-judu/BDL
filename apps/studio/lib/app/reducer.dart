@@ -573,6 +573,93 @@ Transition reduce(AppState s, AppAction action) {
         ],
       );
     }),
+    // ---- Source creation: choose the concept, then one transaction ------
+    NewSourceRequested(:final presetId, :final position) => _whenProject(s, () {
+      if (s.editor.pendingInsert != null) return Transition(s);
+      // The sheet opens once the daemon has ranked the design's concepts
+      // (by the preset's value form); until then nothing is on screen and
+      // nothing is committed.
+      final generation = s.editor.toolingGeneration + 1;
+      return Transition(
+        s.copyWith(
+          editor: s.editor.copyWith(
+            sourceSheet: SourceSheetState(
+              presetId: presetId,
+              revision: s.revision,
+              position: position,
+            ),
+            toolingGeneration: generation,
+            recentTemplates: presetId.isEmpty
+                ? s.editor.recentTemplates
+                : rememberTemplate(s.editor.recentTemplates, presetId),
+          ),
+        ),
+        [
+          ListSourceCandidates(
+            revision: s.revision,
+            itemId: presetId,
+            generation: generation,
+            component: s.editor.componentScope,
+          ),
+        ],
+      );
+    }),
+    SourceCandidatesReceived(:final generation, :final response) => () {
+      final sheet = s.editor.sourceSheet;
+      // A stale answer — the sheet was closed, or the project moved on —
+      // opens nothing.
+      if (sheet == null ||
+          generation != s.editor.toolingGeneration ||
+          response.revision.toInt() != s.revision) {
+        return Transition(s);
+      }
+      return Transition(
+        s.copyWith(editor: s.editor.copyWith(sourceSheet: sheet.withCandidates(response))),
+      );
+    }(),
+    SourceSheetDismissed() => Transition(
+      s.copyWith(editor: s.editor.copyWith(clearSourceSheet: true)),
+    ),
+    CreateSourceRequested(
+      :final sourceName,
+      :final description,
+      :final existingConcept,
+      :final newConceptName,
+      :final newConceptDescription,
+      :final newConceptRepresentation,
+    ) =>
+      _whenProject(s, () {
+        if (s.editor.pendingInsert != null) return Transition(s);
+        final busy = pending(s);
+        return Transition(
+          busy.copyWith(
+            editor: busy.editor.copyWith(
+              pendingInsert: PendingInsert(
+                templateId: PendingInsert.kSourceInsert,
+                position: s.editor.sourceSheet?.position,
+              ),
+              clearSourceSheet: true,
+              clearRenaming: true,
+            ),
+          ),
+          [
+            CreateSource(
+              baseRevision: s.revision,
+              sourceName: sourceName,
+              description: description,
+              existingConcept: existingConcept,
+              newConcept: newConceptName == null
+                  ? null
+                  : pb.NewConcept(
+                      name: newConceptName,
+                      description: newConceptDescription,
+                      representation: newConceptRepresentation,
+                    ),
+              component: s.editor.componentScope,
+            ),
+          ],
+        );
+      }),
     SidebarTabSelected(:final tab) => Transition(
       s.copyWith(editor: s.editor.copyWith(sidebar: tab)),
     ),
@@ -971,17 +1058,25 @@ Transition projectReceived(
   final created =
       fromRequest && sameProject && insert != null && outcome != null && outcome.hasCreatedConcept()
       ? NodeRef.concept(outcome.createdConcept.toInt())
+      : fromRequest &&
+            sameProject &&
+            insert != null &&
+            outcome != null &&
+            outcome.hasCreatedMapping()
+      // A Source over an existing concept created only the relationship:
+      // it lands where the designer pointed and is selected.
+      ? NodeRef.mapping(outcome.createdMapping.toInt())
       : null;
   final dropped = created == null ? null : insert?.position;
   final placed = dropped != null;
   var layoutsOut = layouts;
   if (created != null && dropped != null) {
     layout = {...layout, created: dropped};
-    // A Source item also created the relationship that provides the
-    // concept: it lands to the concept's left, where its one socket faces
-    // the concept — environment → Source → behavior — a node width and a
-    // gap away.
-    if (outcome != null && outcome.hasCreatedMapping()) {
+    // A new concept and its Source together: the concept lands where the
+    // designer pointed and the relationship that provides it to its left,
+    // where its one socket faces the concept — environment → Source →
+    // behavior — a node width and a gap away.
+    if (created.kind == NodeKind.concept && outcome != null && outcome.hasCreatedMapping()) {
       layout = {
         ...layout,
         NodeRef.mapping(outcome.createdMapping.toInt()): dropped - const Offset(240, 0),
@@ -996,13 +1091,19 @@ Transition projectReceived(
     clearSystem: system == null,
   );
   final selection = created != null
-      ? ConceptSelected(created.id)
+      ? (created.kind == NodeKind.concept
+            ? ConceptSelected(created.id) as Selection
+            : MappingSelected(created.id))
       : selectionStillValid(next, s.editor.selection)
       ? s.editor.selection
       : const NoSelection();
   // An inline rename survives pushed projections (the daemon echoes every
   // commit) as long as its node still exists.
-  final renaming = created ?? s.editor.renaming;
+  // Create-then-rename opens the name of a created concept; a Source over
+  // an existing concept keeps the name the sheet gave it.
+  final renaming = created != null && created.kind == NodeKind.concept
+      ? created
+      : s.editor.renaming;
   final renamingValid = renaming != null && nodeExists(next, renaming);
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;

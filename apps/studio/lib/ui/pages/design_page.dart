@@ -14,6 +14,7 @@ import '../mac/tokens.dart';
 import '../mac/widgets.dart';
 import 'code_pane.dart';
 import '../system_inspector.dart' show portKindWord;
+import '../source_sheet.dart';
 import '../system_sheets.dart';
 
 /// Design page: library · node canvas · inspector (Fusion-page arrangement).
@@ -129,6 +130,11 @@ class DesignPage extends StatelessWidget {
                 PendingBindSheet(state: state, bind: b, dispatch: dispatch),
               if (state.editor.extraction case final x?)
                 ExtractionSheet(state: state, extraction: x, dispatch: dispatch),
+              // The Source sheet: open once the daemon has ranked the
+              // design's concepts for it; nothing is committed before the
+              // concept is chosen there.
+              if (state.editor.sourceSheet case final s? when s.ready)
+                SourceSheet(state: state, sheet: s, dispatch: dispatch),
             ],
           ),
         ),

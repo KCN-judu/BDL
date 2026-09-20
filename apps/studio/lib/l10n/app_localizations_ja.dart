@@ -2034,6 +2034,38 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get conceptLabel => 'コンセプト';
+
+  @override
+  String get existingConcept => '既存のコンセプト';
+
+  @override
+  String get sourceName => '入力元の名前';
+
+  @override
+  String get createSource => '入力元を作成';
+
+  @override
+  String get noConceptsYetCreateOne => 'この設計にはまだコンセプトがありません。「新しいコンセプト」を選んでください。';
+
+  @override
+  String get sourceOverExistingConceptCaption => '作成されるのは入力元だけで、コンセプトはそのままです。取り消し一回で入力元が消えます。';
+
+  @override
+  String get sourceWithNewConceptCaption => 'コンセプトと入力元は一つの操作でまとめて作成されます。取り消し一回で両方が消えます。';
+
+  @override
+  String get inputForAConcept => '選んだコンセプトへの入力';
+
+  @override
+  String inputForConceptOfKind(String kind) {
+    return '選んだ$kindコンセプト（既存または新規）への入力';
+  }
+
+  @override
+  String get chooseConcept => 'コンセプトを選ぶ';
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override
@@ -2359,81 +2391,80 @@ class AppLocalizationsJa extends AppLocalizations {
   String get libItem_std_audio_pitch_tags => 'ピッチ 周波数 音程 ブザー';
 
   @override
-  String get libItem_std_source_temperature_name => '温度センサー';
+  String get libItem_std_source_temperature_name => '温度入力';
 
   @override
-  String get libItem_std_source_temperature_description => '製品が測る温度（部屋、筐体、モーター）を、振る舞いが読む値として。';
+  String get libItem_std_source_temperature_description => '環境が与える温度（部屋、表面、空気）を、活性化ごとに一度読む。';
 
   @override
-  String get libItem_std_source_temperature_tags => '温度 センサー 熱 サーミスタ';
+  String get libItem_std_source_temperature_tags => '温度 入力 センサー 熱 サーミスタ';
 
   @override
-  String get libItem_std_source_tilt_name => '傾きセンサー';
+  String get libItem_std_source_tilt_name => '傾き入力';
 
   @override
   String get libItem_std_source_tilt_description =>
-      '製品が水平からどれだけ傾いているかを、振る舞いが読む値として。ランプヘッド、ハンドヘルド、車体。';
+      '製品が水平からどれだけ傾いているかを、環境が与える値として。ランプヘッド、ハンドヘルド、車体。';
 
   @override
-  String get libItem_std_source_tilt_tags => '傾き センサー 傾斜 加速度センサー 水平';
+  String get libItem_std_source_tilt_tags => '傾き 入力 センサー 傾斜 加速度センサー 水平';
 
   @override
-  String get libItem_std_source_distance_name => '距離センサー';
+  String get libItem_std_source_distance_name => '距離入力';
 
   @override
   String get libItem_std_source_distance_description =>
-      '何かがどれだけ離れているかを、振る舞いが読む値として。障害物、手、液面。どのセンサーで測るかはデプロイ時の選択。';
+      'いちばん近いものがどれだけ離れているかを、環境が与える値として。障害物、手、液面。どのセンサーで測るかはデプロイ時の選択。';
 
   @override
-  String get libItem_std_source_distance_tags => '距離 センサー 測距 近接 超音波 レーザー';
+  String get libItem_std_source_distance_tags => '距離 入力 センサー 測距 近接 超音波 レーザー';
 
   @override
-  String get libItem_std_source_ambient_light_name => '環境光センサー';
+  String get libItem_std_source_ambient_light_name => '環境光入力';
 
   @override
   String get libItem_std_source_ambient_light_description =>
-      '周囲から製品に当たる光の量を、振る舞いが読む値として。調光、画面の起動、日光の検出に。';
+      '製品に当たる光の量を、環境が与える値として。調光、画面の起動、日光の検出に。';
 
   @override
-  String get libItem_std_source_ambient_light_tags => '環境光 センサー 照度 光 日光 明るさ';
+  String get libItem_std_source_ambient_light_tags => '環境光 入力 センサー 照度 光 日光 明るさ';
 
   @override
-  String get libItem_std_source_button_name => 'ボタン状態';
+  String get libItem_std_source_button_name => 'ボタン入力';
 
   @override
   String get libItem_std_source_button_description =>
-      'いまボタンが押されているかを、振る舞いが活性化ごとに読む値として。イベントではなく安定した状態。';
+      'いまボタンが押されているか、スイッチが入っているかを、環境が活性化ごとに与える値として。イベントではなく安定した状態。';
 
   @override
-  String get libItem_std_source_button_tags => 'ボタン 状態 押下 キー 入力';
+  String get libItem_std_source_button_tags => 'ボタン 入力 スイッチ 状態 押下 キー';
 
   @override
-  String get libItem_std_source_encoder_name => 'エンコーダー位置';
+  String get libItem_std_source_encoder_name => 'エンコーダー入力';
 
   @override
-  String get libItem_std_source_encoder_description =>
-      'ロータリーエンコーダーが報告する角度位置を、振る舞いが読む値として。つまみ、軸、ホイール。パルスを数えるのはデプロイの仕事。';
+  String get libItem_std_source_encoder_description => '軸やつまみが回った角度を、環境が与える値として。パルスを数えるのはデプロイの仕事。';
 
   @override
-  String get libItem_std_source_encoder_tags => 'エンコーダー 位置 つまみ 軸 角度 入力';
+  String get libItem_std_source_encoder_tags => 'エンコーダー 入力 位置 つまみ 軸 角度';
 
   @override
   String get libItem_std_source_analog_name => 'アナログ入力';
 
   @override
   String get libItem_std_source_analog_description =>
-      '振る舞いが解釈する汎用のアナログ読み値。値の種類はあなたに委ねる。入力が何を測るか分かったら、コンセプトに量を選ぶ。';
+      '振る舞いが解釈する汎用のアナログ読み値。値の形はあなたに委ねる。入力が何を測るか分かったら、コンセプトに選ぶ。';
 
   @override
   String get libItem_std_source_analog_tags => 'アナログ 入力 ADC 電圧 読み値 汎用';
 
   @override
-  String get libItem_std_source_external_name => '外部値';
+  String get libItem_std_source_external_name => '外部入力';
 
   @override
   String get libItem_std_source_external_description =>
-      '製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力元はセンサーとは限らない。';
+      '製品の外から与えられる値（ホスト、ネットワーク、シミュレーション）を、振る舞いが読む値として。入力はセンサーとは限らない。';
 
   @override
-  String get libItem_std_source_external_tags => '外部 入力元 ホスト ネットワーク シミュレーション 入力';
+  String get libItem_std_source_external_tags => '外部 入力 入力元 ホスト ネットワーク シミュレーション';
 }

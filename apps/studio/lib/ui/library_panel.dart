@@ -7,16 +7,19 @@
 /// A row is an *item*, not a project object: a Concept item's glyph is grey
 /// because the identity (hue) is the compiler's to allocate on insertion,
 /// filled when the item chooses a representation and hollow when it leaves
-/// it to be decided; a Source item shows what it creates — the value and
-/// the `() -> Value` relationship — so the two objects are no surprise.
-/// Names and descriptions are localized by item id ([libraryItemStrings]);
-/// what gets created — identifiers, source text — never changes with the
-/// locale.
+/// it to be decided.  A Source item is a **preset** for the Source sheet:
+/// its row says it creates an input for a concept the designer chooses —
+/// existing, or new — and names the value form it suggests; it shows no
+/// signature, because the concept is not decided here and the item owns
+/// no identity.  Names and descriptions are localized by item id
+/// ([libraryItemStrings]); what gets created — identifiers, source text —
+/// never changes with the locale.
 ///
 /// Insertion from here — a drag onto the canvas, a double-click, or Return
-/// on a focused row — dispatches exactly what the right-click menu does
-/// ([InsertLibraryItemRequested]); there is one creation path, and the
-/// daemon applies a multi-object item in one transaction.
+/// on a focused row — dispatches exactly what the right-click menu does:
+/// [InsertLibraryItemRequested] for a Concept item (one creation path, one
+/// transaction) and [NewSourceRequested] for a Source item (the sheet,
+/// prefilled by the preset).
 library;
 
 import 'package:flutter/material.dart';
@@ -77,28 +80,57 @@ String representationWord(AppLocalizations l10n, pb.ConceptTemplateView t) {
 }
 
 /// The right-hand word of a row: the concept's value form for a Concept
-/// item, the relationship's signature for a Source item.
+/// item; for a Source item the value form its preset suggests for a new
+/// concept — never a signature, since the concept is chosen on the sheet.
 String itemWord(AppLocalizations l10n, pb.LibraryItemView item) {
   if (item.hasConcept()) return representationWord(l10n, item.concept);
-  final m = item.creates.where((o) => o.kind == 'mapping').firstOrNull;
-  return m?.signature ?? '';
+  if (item.hasPreset()) {
+    final p = item.preset;
+    return representationWord(
+      l10n,
+      pb.ConceptTemplateView(
+        representation: p.hasRepresentation() ? p.representation : null,
+        unit: p.unit,
+      ),
+    );
+  }
+  return l10n.chooseConcept;
 }
 
-/// The preview of what an item creates, one line per object: *value:
-/// RoomTemp (Temperature)*, *source: TempSensor*, *type: () -> RoomTemp*.
-/// Identifiers and types are the daemon's, never localized; a concept
-/// whose value form is left open says so in the sheet's words (*decide
-/// later*), never a presumed scalar.
+/// The hover of a Source item: what the preset does — an input for a
+/// concept the designer chooses, existing or new — and the value form it
+/// suggests (`Temperature`, *on / off*), in the sheet's words.  Never a
+/// signature over a concept nobody has chosen.
+String sourceItemHover(AppLocalizations l10n, pb.LibraryItemView item) {
+  if (!item.hasPreset()) return l10n.inputForAConcept;
+  final p = item.preset;
+  final kind = p.typeName.isNotEmpty
+      ? p.typeName
+      : switch (p.hasRepresentation() ? p.representation.whichKind() : null) {
+          pb.Representation_Kind.boolean => l10n.onOff,
+          pb.Representation_Kind.count => l10n.count,
+          _ => '',
+        };
+  return kind.isEmpty ? l10n.inputForAConcept : l10n.inputForConceptOfKind(kind);
+}
+
+/// The preview of what a Concept item creates, one line per object:
+/// *value: Temperature (Temperature)*.  Identifiers and types are the
+/// daemon's, never localized; a concept whose value form is left open says
+/// so in the sheet's words (*decide later*), never a presumed scalar.  A
+/// Source item previews nothing here: the objects depend on the choice
+/// made on the sheet, which previews them exactly.
 List<String> itemPreview(AppLocalizations l10n, pb.LibraryItemView item) => [
-  for (final o in item.creates)
-    if (o.kind == 'concept')
-      l10n.libraryValueOf(
-        '${o.name} (${o.typeName.isNotEmpty ? o.typeName : l10n.decideLaterLower})',
-      )
-    else ...[
-      l10n.librarySourceOf(o.name),
-      l10n.libraryTypeOf(o.signature),
-    ],
+  if (item.category != 'source')
+    for (final o in item.creates)
+      if (o.kind == 'concept')
+        l10n.libraryValueOf(
+          '${o.name} (${o.typeName.isNotEmpty ? o.typeName : l10n.decideLaterLower})',
+        )
+      else ...[
+        l10n.librarySourceOf(o.name),
+        l10n.libraryTypeOf(o.signature),
+      ],
 ];
 
 /// The items matching [query], in library order.  Matches the localized
@@ -157,8 +189,12 @@ List<pb.ConceptTemplateView> searchTemplates(
 /// The drag payload from a library row: the item id.  Dropped on the
 /// canvas, it becomes one [InsertLibraryItemRequested] at the drop point.
 class LibraryItemDrag {
-  const LibraryItemDrag(this.itemId);
+  const LibraryItemDrag(this.itemId, {this.source = false});
   final String itemId;
+
+  /// A Source item: the drop opens the Source sheet at the drop point
+  /// instead of inserting (the concept is chosen there).
+  final bool source;
 }
 
 class LibraryPanel extends StatefulWidget {
@@ -247,8 +283,11 @@ class _LibraryPanelState extends State<LibraryPanel> {
                                 key: ValueKey('library-item-${item.id}'),
                                 item: item,
                                 enabled: canInsert,
-                                onInsert: () =>
-                                    widget.dispatch(InsertLibraryItemRequested(item.id)),
+                                onInsert: () => widget.dispatch(
+                                  item.category == 'source'
+                                      ? NewSourceRequested(presetId: item.id)
+                                      : InsertLibraryItemRequested(item.id),
+                                ),
                               ),
                         ],
                       ],
@@ -323,9 +362,9 @@ class _ItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final l10n = context.l10n;
-    // A Source item inserts a concept *and* the Source that provides it:
-    // its row wears the Source silhouette (the canvas's glyph, ADR-0032);
-    // a Concept item's row wears the socket-to-be.
+    // A Source item opens the Source sheet, prefilled: its row wears the
+    // Source silhouette (the canvas's glyph, ADR-0032); a Concept item's
+    // row wears the socket-to-be.
     final row = SizedBox(
       height: MacMetrics.rowHeight,
       child: Row(
@@ -347,14 +386,12 @@ class _ItemRow extends StatelessWidget {
         ],
       ),
     );
-    // the tooltip: the description, then what the item creates — so a
-    // Source's two objects are no surprise
-    final preview = itemPreview(l10n, item);
+    // the tooltip: the description, then — for a Source preset — what it
+    // does: an input for a concept the designer chooses on the sheet
     final message = [
       itemDescription(l10n, item),
-      if (item.creates.length > 1) '',
-      if (item.creates.length > 1) '${l10n.libraryCreates}:',
-      if (item.creates.length > 1) ...preview.map((p) => '  $p'),
+      if (item.category == 'source') '',
+      if (item.category == 'source') sourceItemHover(l10n, item),
     ].join('\n');
     final interactive = Tooltip(
       message: message,
@@ -388,7 +425,7 @@ class _ItemRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Draggable<LibraryItemDrag>(
-        data: LibraryItemDrag(item.id),
+        data: LibraryItemDrag(item.id, source: item.category == 'source'),
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: ItemDragFeedback(item: item),
         child: interactive,

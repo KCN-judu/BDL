@@ -2162,6 +2162,40 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get conceptLabel => 'Concept';
+
+  @override
+  String get existingConcept => 'Existing concept';
+
+  @override
+  String get sourceName => 'Source name';
+
+  @override
+  String get createSource => 'Create Source';
+
+  @override
+  String get noConceptsYetCreateOne => 'No concepts in this design yet — choose New concept.';
+
+  @override
+  String get sourceOverExistingConceptCaption =>
+      'Only the Source is created; the concept stays as it is. One Undo removes the Source.';
+
+  @override
+  String get sourceWithNewConceptCaption =>
+      'The concept and its Source are created together, in one step. One Undo removes both.';
+
+  @override
+  String get inputForAConcept => 'An input for a concept you choose';
+
+  @override
+  String inputForConceptOfKind(String kind) {
+    return 'An input for a $kind concept you choose — existing, or new';
+  }
+
+  @override
+  String get chooseConcept => 'choose a concept';
+
+  @override
   String get libItem_std_environment_temperature_name => 'Temperature';
 
   @override
@@ -2512,18 +2546,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libItem_std_audio_pitch_tags => 'tone note frequency buzzer beep Hz';
 
   @override
-  String get libItem_std_source_temperature_name => 'Temperature Sensor';
+  String get libItem_std_source_temperature_name => 'Temperature Input';
 
   @override
   String get libItem_std_source_temperature_description =>
-      'The temperature of a room, a surface or the air, as the environment provides it.';
+      'A temperature the environment provides — a room, a surface, the air — read once per activation.';
 
   @override
   String get libItem_std_source_temperature_tags =>
-      'temp thermal thermometer thermistor K °C celsius sensor source';
+      'temp thermal thermometer thermistor K °C celsius sensor input source';
 
   @override
-  String get libItem_std_source_tilt_name => 'Tilt Sensor';
+  String get libItem_std_source_tilt_name => 'Tilt Input';
 
   @override
   String get libItem_std_source_tilt_description =>
@@ -2531,10 +2565,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libItem_std_source_tilt_tags =>
-      'tilt lean incline pitch roll accelerometer imu level sensor source';
+      'tilt lean incline pitch roll accelerometer imu level sensor input source';
 
   @override
-  String get libItem_std_source_distance_name => 'Distance Sensor';
+  String get libItem_std_source_distance_name => 'Distance Input';
 
   @override
   String get libItem_std_source_distance_description =>
@@ -2542,10 +2576,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libItem_std_source_distance_tags =>
-      'range proximity far near obstacle ultrasonic lidar tof sensor source';
+      'range proximity far near obstacle ultrasonic lidar tof sensor input source';
 
   @override
-  String get libItem_std_source_ambient_light_name => 'Ambient Light Sensor';
+  String get libItem_std_source_ambient_light_name => 'Ambient Light Input';
 
   @override
   String get libItem_std_source_ambient_light_description =>
@@ -2553,10 +2587,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libItem_std_source_ambient_light_tags =>
-      'light lux daylight dark photocell photodiode sensor source';
+      'light lux daylight dark photocell photodiode sensor input source';
 
   @override
-  String get libItem_std_source_button_name => 'Button State';
+  String get libItem_std_source_button_name => 'Button Input';
 
   @override
   String get libItem_std_source_button_description =>
@@ -2566,7 +2600,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libItem_std_source_button_tags => 'button switch press push key held input source';
 
   @override
-  String get libItem_std_source_encoder_name => 'Encoder Position';
+  String get libItem_std_source_encoder_name => 'Encoder Input';
 
   @override
   String get libItem_std_source_encoder_description =>
@@ -2581,17 +2615,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libItem_std_source_analog_description =>
-      'A generic analog reading the behavior interprets. The value\'s kind is left to you: choose a quantity for the concept once you know what the input measures.';
+      'A generic analog reading the behavior interprets. The value\'s kind is left to you: choose a value form for the concept once you know what the input measures.';
 
   @override
   String get libItem_std_source_analog_tags => 'analog adc voltage reading generic input source';
 
   @override
-  String get libItem_std_source_external_name => 'External Value';
+  String get libItem_std_source_external_name => 'External Input';
 
   @override
   String get libItem_std_source_external_description =>
-      'A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. A source is not always a sensor.';
+      'A value provided from outside the product — by a host, over a network, by a simulation — as the behavior reads it. An input is not always a sensor.';
 
   @override
   String get libItem_std_source_external_tags =>

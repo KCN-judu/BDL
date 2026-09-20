@@ -105,15 +105,15 @@ void main() {
     }
   }, skip: bdld == null ? 'bdld is not built' : false);
 
-  test('a Source item is one transaction: a concept and its () -> relationship, as text', () async {
+  test('a Source is created over a chosen concept: existing, or new in one transaction', () async {
     final store = TestStore(spawn: DaemonClient.spawn, executable: bdld!);
     final dir = await Directory.systemTemp.createTemp('bdl-studio-sources');
     try {
       store.dispatch(const AppStarted());
       await store.until((s) => s.library != null || s.connection is ConnectionFailed);
       expect(store.state.connection, isA<Connected>(), reason: '${store.state.connection}');
-      // the library serves eight Sources, each creating a concept and its
-      // `() -> Value` relationship; the concept templates hold none of it
+      // the library serves eight Source presets — an input for a concept
+      // the designer chooses — with the concept templates holding none
       final sources = store.state.libraryItems.where((i) => i.category == 'source').toList();
       expect(sources.map((i) => i.id), [
         'std.source.temperature',
@@ -126,71 +126,156 @@ void main() {
         'std.source.external',
       ]);
       for (final i in sources) {
-        expect(i.creates.length, 2, reason: i.id);
-        expect(i.creates.last.signature, startsWith('() -> '), reason: i.id);
+        expect(i.hasPreset(), isTrue, reason: i.id);
+        expect(i.preset.sourceName, endsWith('Input'), reason: i.id);
+        expect(itemName(kEnglish, i), endsWith('Input'), reason: i.id);
       }
       expect(store.state.templates.any((t) => t.id.startsWith('std.source.')), isFalse);
       final temp = store.state.libraryItem('std.source.temperature')!;
-      expect(temp.creates.last.name, 'TempSensor');
-      expect(itemName(kEnglish, temp), 'Temperature Sensor');
-      expect(itemName(lookupAppLocalizations(const Locale('zh')), temp), '温度传感器');
-      expect(itemName(lookupAppLocalizations(const Locale('ja')), temp), '温度センサー');
-      // Analog Input and External Value leave the value form to the designer
+      expect(temp.preset.conceptName, 'Temperature');
+      expect(temp.preset.unit, 'K');
+      expect(itemName(kEnglish, temp), 'Temperature Input');
+      expect(itemName(lookupAppLocalizations(const Locale('zh')), temp), '温度输入');
+      expect(itemName(lookupAppLocalizations(const Locale('ja')), temp), '温度入力');
+      // Analog Input and External Input leave the value form to the designer
       for (final id in ['std.source.analog', 'std.source.external']) {
-        expect(store.state.libraryItem(id)!.creates.first.hasRepresentation(), isFalse, reason: id);
+        expect(store.state.libraryItem(id)!.preset.hasRepresentation(), isFalse, reason: id);
       }
 
       final root = p.join(dir.path, 'lamp');
       store.dispatch(NewProjectRequested(rootPath: root, name: 'lamp'));
       await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
-      final before = store.state.revision;
+      // two temperatures of one value form: two identities, two choices
+      Future<int> concept(String name) async {
+        store.dispatch(
+          CreateConceptRequested(
+            name: name,
+            representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+          ),
+        );
+        await store.until((s) => s.editor.pendingRequests == 0);
+        return store.state.project!.concepts.firstWhere((c) => c.name == name).id.toInt();
+      }
+
+      final room = await concept('RoomTemperature');
+      final motor = await concept('MotorTemperature');
+      final base = store.state.revision;
+
+      // the preset opens the sheet with both ranked first; cancelling
+      // changes nothing
       store.dispatch(
-        const InsertLibraryItemRequested('std.source.temperature', position: Offset(400, 40)),
+        const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(400, 40)),
       );
-      var s = await store.until(
-        (x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty,
+      var s = await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+      expect(
+        s.editor.sourceSheet!.candidates!.candidates.map((c) => (c.conceptId.toInt(), c.preferred)),
+        [(room, true), (motor, true)],
       );
-      final concept = s.project!.concepts.single;
+      expect(s.editor.sourceSheet!.candidates!.suggestedSourceName, 'temperatureInput');
+      expect(s.revision, base);
+      store.dispatch(const SourceSheetDismissed());
+      expect(store.state.revision, base);
+      expect(store.state.project!.mappings, isEmpty);
+
+      // an existing concept: only the Source, at the drop point, selected
+      store.dispatch(
+        const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(400, 40)),
+      );
+      await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+      store.dispatch(
+        CreateSourceRequested(sourceName: 'roomTemperatureInput', existingConcept: room),
+      );
+      s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty);
+      expect(s.revision, base + 1);
+      expect(s.project!.concepts, hasLength(2), reason: 'no new concept');
       final source = s.project!.mappings.single;
-      expect(concept.name, 'RoomTemp');
-      expect(source.name, 'TempSensor');
+      expect(source.name, 'roomTemperatureInput');
       expect(source.signature.inputs, isEmpty);
-      expect(source.signature.output, concept.id);
+      expect(source.signature.output.toInt(), room, reason: 'the chosen identity');
       expect(source.hasDefinition(), isFalse);
       expect(relationshipRole(source), RelationshipRole.source);
-      expect(s.editor.renaming, NodeRef.concept(concept.id.toInt()));
-      expect(s.editor.layout[NodeRef.mapping(source.id.toInt())], const Offset(160, 40));
+      expect(s.editor.layout[NodeRef.mapping(source.id.toInt())], const Offset(400, 40));
+      expect(s.editor.selection, MappingSelected(source.id.toInt()));
       final scene = buildScene(s.project!, s.editor.layout);
       final node = scene.nodes.firstWhere((n) => n.ref == NodeRef.mapping(source.id.toInt()));
       expect(node.source, isTrue);
       expect(node.sockets.where((x) => x.ref.side == SocketSide.input), isEmpty);
       expect(simulationInputs(s.project!).map((m) => m.id), [source.id]);
-
-      // one history entry: undo removes both, redo restores both
+      // one undo removes the Source and nothing else
       store.dispatch(const UndoRequested());
-      s = await store.until((x) => x.editor.pendingRequests == 0 && x.revision != before + 1);
-      expect(s.project!.concepts, isEmpty);
-      expect(s.project!.mappings, isEmpty);
+      s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.mappings.isEmpty);
+      expect(s.project!.concepts, hasLength(2));
       store.dispatch(const RedoRequested());
       s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty);
-      expect(s.project!.mappings.single.name, 'TempSensor');
+      expect(s.project!.mappings.single.id, source.id);
 
-      // the text is the preferred spelling — never the shorthand
+      // a new concept and its Source: one revision, both placed, one undo
+      final before = store.state.revision;
+      store.dispatch(const NewSourceRequested(position: Offset(400, 200)));
+      await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+      expect(store.state.editor.sourceSheet!.candidates!.preset.hasConceptName(), isFalse);
+      store.dispatch(
+        CreateSourceRequested(
+          sourceName: 'humidityInput',
+          newConceptName: 'Humidity',
+          newConceptRepresentation: pb.Representation(quantity: pb.Dim()),
+        ),
+      );
+      s = await store.until(
+        (x) => x.editor.pendingRequests == 0 && x.project!.concepts.length == 3,
+      );
+      expect(s.revision, before + 1, reason: 'one transaction, one revision');
+      final humidity = s.project!.concepts.firstWhere((c) => c.name == 'Humidity');
+      final input = s.project!.mappings.firstWhere((m) => m.name == 'humidityInput');
+      expect(input.signature.output, humidity.id);
+      expect(relationshipRole(input), RelationshipRole.source);
+      expect(s.editor.layout[NodeRef.concept(humidity.id.toInt())], const Offset(400, 200));
+      expect(s.editor.layout[NodeRef.mapping(input.id.toInt())], const Offset(160, 200));
+      expect(s.editor.renaming, NodeRef.concept(humidity.id.toInt()));
+      store.dispatch(const UndoRequested());
+      s = await store.until(
+        (x) => x.editor.pendingRequests == 0 && x.project!.concepts.length == 2,
+      );
+      expect(s.project!.mappings.any((m) => m.name == 'humidityInput'), isFalse);
+      store.dispatch(const RedoRequested());
+      s = await store.until(
+        (x) => x.editor.pendingRequests == 0 && x.project!.concepts.length == 3,
+      );
+
+      // a taken name is the ordinary refusal: nothing created, no identity
+      // consumed, the revision unmoved
+      final rev = store.state.revision;
+      store.dispatch(const NewSourceRequested());
+      await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+      store.dispatch(
+        const CreateSourceRequested(sourceName: 'roomTemperatureInput', newConceptName: 'Pressure'),
+      );
+      s = await store.until((x) => x.editor.pendingRequests == 0);
+      expect(s.revision, rev);
+      expect(s.project!.concepts.any((c) => c.name == 'Pressure'), isFalse);
+      expect(s.editor.lastError?.code, startsWith('edit.duplicate_'));
+
+      // the text: ordinary declarations, the preferred spelling, no `?`
       store.dispatch(const DesignViewChanged(DesignView.code));
       s = await store.until((x) => x.editor.sources.revision == x.revision);
-      expect(s.editor.sources.text, contains('mapping TempSensor : () -> RoomTemp'));
-      expect(s.editor.sources.text, isNot(contains('mapping TempSensor : RoomTemp\n')));
+      expect(
+        s.editor.sources.text,
+        contains('mapping roomTemperatureInput : () -> RoomTemperature'),
+      );
+      expect(s.editor.sources.text, contains('mapping humidityInput : () -> Humidity'));
+      expect(s.editor.sources.text, isNot(contains('?')));
 
       // saved and reopened: the same shape, the role re-derived from it
       store.dispatch(const SaveRequested());
       await store.until((x) => x.editor.pendingRequests == 0 && !x.project!.dirty);
       final sidecar = File(p.join(root, '.bdl', 'authoring.json')).readAsStringSync();
       expect(sidecar.toLowerCase(), isNot(contains('source')));
+      expect(sidecar, isNot(contains('preset')));
       store.dispatch(const CloseProjectRequested());
       await store.until((x) => x.project == null);
       store.dispatch(OpenProjectRequested(root));
       s = await store.until((x) => x.project != null && x.editor.pendingRequests == 0);
-      final reopened = s.project!.mappings.single;
+      final reopened = s.project!.mappings.firstWhere((m) => m.name == 'roomTemperatureInput');
       expect(reopened.id, source.id);
       expect(relationshipRole(reopened), RelationshipRole.source);
     } finally {

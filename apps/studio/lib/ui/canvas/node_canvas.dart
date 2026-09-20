@@ -16,7 +16,6 @@ import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../../l10n/library_strings.dart';
 import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
-import '../dialogs.dart' show showNewSourceSheet;
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
 
@@ -201,6 +200,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
     widget.dispatch(InsertLibraryItemRequested(templateId, position: nodeOriginFor(scenePoint)));
   }
 
+  /// A Source item is a preset for the Source sheet: nothing is created
+  /// until the concept is chosen there (docs/spec/concept-library.md).
+  void _newSourceAt(String presetId, Offset scenePoint) {
+    widget.dispatch(NewSourceRequested(presetId: presetId, position: nodeOriginFor(scenePoint)));
+  }
+
   void _onSecondaryTapDown(TapDownDetails d) {
     _focus.requestFocus();
     final p = _toScene(d.localPosition);
@@ -261,7 +266,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     );
     List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
     MenuItemButton sourceItem(pb.LibraryItemView s) => MenuItemButton(
-      onPressed: widget.canInsert ? () => _insert(s.id, _menuScene) : null,
+      onPressed: widget.canInsert ? () => _newSourceAt(s.id, _menuScene) : null,
       child: Text(itemName(l10n, s)),
     );
     final sourceById = {for (final s in widget.sources) s.id: s};
@@ -439,25 +444,20 @@ class _NodeCanvasState extends State<NodeCanvas> {
         child: Text(context.l10n.addConcept),
       ),
       // A Source is an ordinary relationship the environment provides
-      // (ADR-0032): the standard ones, or one over a concept already here.
+      // (ADR-0032), created over a concept the designer chooses on the
+      // Source sheet: the generic entry, then the presets that prefill it.
       SubmenuButton(
         menuChildren: [
-          ...sources,
-          if (sources.isNotEmpty) const Divider(height: 8),
           MenuItemButton(
-            onPressed: widget.canInsert && widget.project.concepts.isNotEmpty ? _newSource : null,
+            onPressed: widget.canInsert ? () => _newSourceAt('', _menuScene) : null,
             child: Text(context.l10n.newSourceEllipsis),
           ),
+          if (sources.isNotEmpty) const Divider(height: 8),
+          ...sources,
         ],
         child: Text(context.l10n.addSource),
       ),
     ];
-  }
-
-  Future<void> _newSource() async {
-    final r = await showNewSourceSheet(context, widget.project.concepts);
-    if (r == null || r.name.isEmpty) return;
-    widget.dispatch(CreateMappingRequested(name: r.name, inputs: const [], output: r.output));
   }
 
   /// `Behavior`, `Behavior 2`: a default name the designer renames inline.
@@ -978,7 +978,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
             onAcceptWithDetails: (d) {
               final box = context.findRenderObject() as RenderBox?;
               if (box == null) return;
-              _insert(d.data.itemId, _toScene(box.globalToLocal(d.offset)));
+              final scene = _toScene(box.globalToLocal(d.offset));
+              if (d.data.source) {
+                _newSourceAt(d.data.itemId, scene);
+              } else {
+                _insert(d.data.itemId, scene);
+              }
             },
             builder: (context, candidates, _) => MenuAnchor(
               controller: _chooserMenu,

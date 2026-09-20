@@ -269,6 +269,46 @@ class EffectExecutor {
           ),
           _onEditApplied,
         );
+      case ListSourceCandidates(
+        :final revision,
+        :final itemId,
+        :final generation,
+        :final component,
+      ):
+        await _call(
+          pb.ClientMessage(
+            listSourceCandidates: pb.ListSourceCandidatesRequest(
+              revision: Int64(revision),
+              itemId: itemId,
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          (r) => _dispatch(
+            SourceCandidatesReceived(generation: generation, response: r.sourceCandidates),
+          ),
+          counted: false,
+        );
+      case CreateSource(
+        :final baseRevision,
+        :final sourceName,
+        :final description,
+        :final existingConcept,
+        :final newConcept,
+        :final component,
+      ):
+        await _call(
+          pb.ClientMessage(
+            createSource: pb.CreateSourceRequest(
+              baseRevision: Int64(baseRevision),
+              sourceName: sourceName,
+              sourceDescription: description,
+              existingConcept: existingConcept == null ? null : Int64(existingConcept),
+              newConcept: newConcept,
+              component: component == null ? null : Int64(component),
+            ),
+          ),
+          _onEditApplied,
+        );
       case RunAnalysis():
         await _call(
           pb.ClientMessage(runAnalysis: pb.RunAnalysisRequest()),

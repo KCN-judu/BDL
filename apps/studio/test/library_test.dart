@@ -100,20 +100,21 @@ pb.LibraryItemView conceptItem(pb.ConceptTemplateView t) => pb.LibraryItemView(
   concept: t,
 );
 
-/// The Temperature Sensor Source item: a value and its `() -> Value`
-/// relationship.
-final temperatureSensor = pb.LibraryItemView(
+/// The Temperature Input Source item as the daemon serves it: a preset —
+/// the names, value form and unit it suggests — beside what the legacy
+/// request would create.
+final temperatureInput = pb.LibraryItemView(
   id: 'std.source.temperature',
   category: 'source',
-  displayName: 'Temperature Sensor',
-  description: 'A temperature the product measures.',
+  displayName: 'Temperature Input',
+  description: 'A temperature the environment provides.',
   group: 'environment',
-  keywords: ['temp', 'thermal', 'sensor'],
+  keywords: ['temp', 'thermal', 'sensor', 'input'],
   creates: [
     pb.LibraryObjectView(
       kind: 'concept',
       key: 'value',
-      name: 'RoomTemp',
+      name: 'Temperature',
       typeName: 'Temperature',
       representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
       unit: 'K',
@@ -121,29 +122,37 @@ final temperatureSensor = pb.LibraryItemView(
     pb.LibraryObjectView(
       kind: 'mapping',
       key: 'source',
-      name: 'TempSensor',
-      signature: '() -> RoomTemp',
+      name: 'temperatureInput',
+      signature: '() -> Temperature',
     ),
   ],
+  preset: pb.SourcePresetView(
+    conceptName: 'Temperature',
+    representation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+    typeName: 'Temperature',
+    unit: 'K',
+    sourceName: 'temperatureInput',
+  ),
 );
 
-/// The External Value Source item: a value whose form is left open.
-final externalValue = pb.LibraryItemView(
+/// The External Input Source item: a preset whose value form is left open.
+final externalInput = pb.LibraryItemView(
   id: 'std.source.external',
   category: 'source',
-  displayName: 'External Value',
+  displayName: 'External Input',
   description: 'A value provided from outside the product.',
   group: 'external',
-  keywords: ['host', 'network', 'external', 'source'],
+  keywords: ['host', 'network', 'external', 'input', 'source'],
   creates: [
     pb.LibraryObjectView(kind: 'concept', key: 'value', name: 'ExternalValue'),
     pb.LibraryObjectView(
       kind: 'mapping',
       key: 'source',
-      name: 'ExternalSource',
+      name: 'externalInput',
       signature: '() -> ExternalValue',
     ),
   ],
+  preset: pb.SourcePresetView(conceptName: 'ExternalValue', sourceName: 'externalInput'),
 );
 
 pb.LibraryItemsResponse library() => pb.LibraryItemsResponse(
@@ -154,10 +163,10 @@ pb.LibraryItemsResponse library() => pb.LibraryItemsResponse(
       schemaVersion: 2,
       version: '0.2',
       items: [
-        externalValue,
+        externalInput,
 
         for (final t in [temperature, light, motorSpeed, motorAngle, pressed, open]) conceptItem(t),
-        temperatureSensor,
+        temperatureInput,
       ],
     ),
   ],
@@ -169,9 +178,10 @@ pb.ProjectProjection project({int revision = 1, List<pb.ConceptView> concepts = 
 
 /// A connected store holding an empty project at revision 1, whose daemon
 /// answers the library and instantiations.
-Future<(TestStore, FakeDaemon)> connected() async {
+Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const []}) async {
   var nextId = 10;
   var revision = 1;
+  concepts = List.of(concepts);
   final daemon = FakeDaemon((m) async {
     if (m.hasHandshake()) return okHandshake();
     if (m.hasListLibraryItems()) return pb.Response(libraryItems: library());
@@ -203,6 +213,51 @@ Future<(TestStore, FakeDaemon)> connected() async {
         ),
       );
     }
+    if (m.hasListSourceCandidates()) {
+      // ranked by the daemon: the design's concepts, the preset's value
+      // form first (here: every concept, in id order)
+      final r = m.listSourceCandidates;
+      final item = r.itemId.isEmpty
+          ? null
+          : library().libraries.single.items.firstWhere((i) => i.id == r.itemId);
+      return pb.Response(
+        sourceCandidates: pb.SourceCandidatesResponse(
+          revision: r.revision,
+          candidates: [
+            for (final c in concepts)
+              pb.SourceCandidateView(conceptId: c.id, preferred: item != null),
+          ],
+          preset: item?.preset,
+          suggestedConceptName: item?.preset.conceptName ?? '',
+          suggestedSourceName: item?.preset.sourceName ?? '',
+        ),
+      );
+    }
+    if (m.hasCreateSource()) {
+      final r = m.createSource;
+      revision += 1;
+      final conceptId = r.hasNewConcept() ? nextId++ : r.existingConcept.toInt();
+      if (r.hasNewConcept()) {
+        concepts.add(pb.ConceptView(id: Int64(conceptId), name: r.newConcept.name));
+      }
+      final mappingId = nextId++;
+      return pb.Response(
+        editApplied: pb.EditApplied(
+          project: project(revision: revision, concepts: concepts)
+            ..mappings.add(
+              mappingView(
+                id: Int64(mappingId),
+                name: r.sourceName,
+                signature: pb.Signature(inputs: const [], output: Int64(conceptId)),
+              ),
+            ),
+          outcome: pb.EditOutcome(
+            createdConcept: r.hasNewConcept() ? Int64(conceptId) : null,
+            createdMapping: Int64(mappingId),
+          ),
+        ),
+      );
+    }
     if (m.hasSetLayout() || m.hasSubscribeProject()) return pb.Response(ack: pb.Ack());
     if (m.hasRunAnalysis()) {
       return pb.Response(
@@ -220,7 +275,7 @@ Future<(TestStore, FakeDaemon)> connected() async {
   final store = TestStore(spawn: (_) async => daemon);
   store.dispatch(const AppStarted());
   await store.until((s) => s.connection is Connected && s.library != null);
-  store.dispatch(ProjectReceived(project()));
+  store.dispatch(ProjectReceived(project(concepts: concepts)));
   await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
   daemon.requests.clear();
   return (store, daemon);
@@ -369,7 +424,7 @@ void main() {
     expect(ids('Actuation'), ['std.actuator.motor_speed', 'std.actuator.motor_angle']);
     expect(ids('heat'), ['std.environment.temperature']);
     expect(ids('sensor'), ['std.source.temperature']);
-    expect(ids('TempSensor'), ['std.source.temperature']);
+    expect(ids('temperatureInput'), ['std.source.temperature']);
     expect(ids(''), hasLength(all.length));
     expect(ids('zzz'), isEmpty);
     final concepts = library().libraries.single.items
@@ -390,7 +445,7 @@ void main() {
     expect(ids(zh, '传感器'), ['std.source.temperature']);
     expect(ids(ja, 'センサー'), ['std.source.temperature']);
     // the canonical English still matches in every locale
-    expect(ids(zh, 'Temperature Sensor'), ['std.source.temperature']);
+    expect(ids(zh, 'Temperature Input'), ['std.source.temperature']);
     expect(ids(ja, 'lux'), ['std.environment.ambient_light']);
     // the required cases, per locale: a name, a keyword, a tag
     expect(ids(kEnglish, 'temperature'), contains('std.source.temperature'));
@@ -399,53 +454,108 @@ void main() {
     expect(ids(zh, '外部'), ['std.source.external']);
     expect(ids(ja, '外部'), ['std.source.external']);
     expect(ids(ja, 'センサー'), isNot(contains('std.source.external')));
-    // an open value form is said in the sheet's words, never a presumed scalar
-    expect(itemPreview(kEnglish, externalValue).first, 'value: ExternalValue (decide later)');
-    expect(
-      itemPreview(zh, externalValue).first,
-      contains('ExternalValue (${zh.decideLaterLower})'),
-    );
-    expect(itemWord(kEnglish, externalValue), '() -> ExternalValue');
+    expect(ids(zh, '输入'), containsAll(['std.source.temperature', 'std.source.external']));
+    expect(ids(ja, '入力'), containsAll(['std.source.temperature', 'std.source.external']));
+    // a Source item is a preset: its row says the value form it suggests
+    // — never a signature over a concept nobody has chosen — and an open
+    // one says so in the sheet's words
+    expect(itemWord(kEnglish, temperatureInput), 'K');
+    expect(itemWord(kEnglish, externalInput), 'decide later');
+    expect(itemPreview(kEnglish, externalInput), isEmpty);
+    expect(sourceItemHover(kEnglish, temperatureInput), contains('Temperature'));
+    expect(sourceItemHover(kEnglish, temperatureInput), isNot(contains('() ->')));
+    expect(sourceItemHover(kEnglish, externalInput), kEnglish.inputForAConcept);
     // names and descriptions in each locale; the section titles
-    expect(itemName(kEnglish, temperatureSensor), 'Temperature Sensor');
-    expect(itemName(zh, temperatureSensor), '温度传感器');
-    expect(itemName(ja, temperatureSensor), '温度センサー');
-    expect(itemDescription(zh, temperatureSensor), isNot(temperatureSensor.description));
-    expect(itemDescription(ja, temperatureSensor), isNotEmpty);
+    expect(itemName(kEnglish, temperatureInput), 'Temperature Input');
+    expect(itemName(zh, temperatureInput), '温度输入');
+    expect(itemName(ja, temperatureInput), '温度入力');
+    expect(itemDescription(zh, temperatureInput), isNot(temperatureInput.description));
+    expect(itemDescription(ja, temperatureInput), isNotEmpty);
     expect(categoryTitle(kEnglish, 'source'), 'Sources');
     expect(categoryTitle(zh, 'source'), '来源');
     expect(categoryTitle(ja, 'source'), '入力元');
     expect(categoryTitle(kEnglish, 'concept'), 'Concepts');
-    // what an item creates is the daemon's: identifiers and types alike
+    // what a preset suggests is the daemon's: identifiers and units alike
     for (final l in [kEnglish, zh, ja]) {
-      expect(itemPreview(l, temperatureSensor).join(' '), contains('RoomTemp (Temperature)'));
-      expect(itemPreview(l, temperatureSensor).join(' '), contains('TempSensor'));
-      expect(itemPreview(l, temperatureSensor).join(' '), contains('() -> RoomTemp'));
-      expect(itemWord(l, temperatureSensor), '() -> RoomTemp');
+      expect(temperatureInput.preset.conceptName, 'Temperature');
+      expect(temperatureInput.preset.sourceName, 'temperatureInput');
+      expect(itemWord(l, temperatureInput), 'K');
     }
     // an item the catalog does not know keeps its canonical English
     final foreign = pb.LibraryItemView(id: 'team.x', category: 'concept', displayName: 'X Thing');
     expect(itemName(ja, foreign), 'X Thing');
   });
 
-  test('a Source item places its concept where dropped and its relationship to its left', () async {
-    final (store, daemon) = await connected();
-    store.dispatch(
-      const InsertLibraryItemRequested('std.source.temperature', position: Offset(120, 64)),
+  test('a Source item opens the sheet, prefilled; nothing is created before the choice', () async {
+    final (store, daemon) = await connected(
+      concepts: [
+        pb.ConceptView(id: Int64(1), name: 'RoomTemperature'),
+        pb.ConceptView(id: Int64(2), name: 'MotorTemperature'),
+      ],
     );
-    final s = await store.until((x) => x.editor.pendingRequests == 0);
-    final concept = s.project!.concepts.single.id.toInt();
-    final mapping = s.project!.mappings.single.id.toInt();
-    expect(s.project!.concepts.single.name, 'RoomTemp');
-    expect(s.project!.mappings.single.name, 'TempSensor');
-    expect(s.editor.layout[NodeRef.concept(concept)], const Offset(120, 64));
-    // the Source lands to the concept's left: environment → Source → behavior
-    expect(s.editor.layout[NodeRef.mapping(mapping)], const Offset(120, 64) - const Offset(240, 0));
+    final before = store.state.revision;
+    store.dispatch(
+      const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(120, 64)),
+    );
+    var s = await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+    expect(s.revision, before, reason: 'nothing committed');
+    expect(daemon.requests.where((r) => r.hasCreateSource()), isEmpty);
+    expect(daemon.requests.where((r) => r.hasInstantiateLibraryItem()), isEmpty);
+    final sheet = s.editor.sourceSheet!;
+    expect(sheet.presetId, 'std.source.temperature');
+    expect(sheet.candidates!.candidates.map((c) => c.conceptId.toInt()), [1, 2]);
+    expect(sheet.candidates!.suggestedSourceName, 'temperatureInput');
+    expect(s.editor.recentTemplates, ['std.source.temperature']);
+    // cancelling leaves the project as it was
+    store.dispatch(const SourceSheetDismissed());
+    expect(store.state.editor.sourceSheet, isNull);
+    expect(store.state.revision, before);
+    expect(store.state.project!.mappings, isEmpty);
+
+    // an existing concept: only the Source is created, placed where the
+    // designer pointed, selected — not opened for renaming
+    store.dispatch(const NewSourceRequested(position: Offset(120, 64)));
+    await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+    store.dispatch(
+      const CreateSourceRequested(sourceName: 'roomTemperatureInput', existingConcept: 1),
+    );
+    s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.mappings.isNotEmpty);
+    expect(s.editor.sourceSheet, isNull);
+    expect(s.project!.concepts, hasLength(2), reason: 'no new concept');
+    final source = s.project!.mappings.single;
+    expect(source.name, 'roomTemperatureInput');
+    expect(source.signature.output.toInt(), 1);
+    expect(s.editor.layout[NodeRef.mapping(source.id.toInt())], const Offset(120, 64));
+    expect(s.editor.selection, MappingSelected(source.id.toInt()));
+    expect(s.editor.renaming, isNull);
+    final create = daemon.requests.firstWhere((r) => r.hasCreateSource()).createSource;
+    expect(create.existingConcept.toInt(), 1);
+    expect(create.hasNewConcept(), isFalse);
+
+    // a new concept: both created in one answer; the concept lands where
+    // pointed and opens for naming, the Source to its left
+    store.dispatch(
+      const NewSourceRequested(presetId: 'std.source.temperature', position: Offset(300, 100)),
+    );
+    await store.until((x) => x.editor.sourceSheet?.ready ?? false);
+    store.dispatch(
+      CreateSourceRequested(
+        sourceName: 'temperatureInput',
+        newConceptName: 'Temperature',
+        newConceptRepresentation: pb.Representation(quantity: pb.Dim(temperature: 1)),
+      ),
+    );
+    s = await store.until((x) => x.editor.pendingRequests == 0 && x.project!.concepts.length == 3);
+    final concept = s.project!.concepts.last.id.toInt();
+    final mapping = s.project!.mappings.last.id.toInt();
+    expect(s.project!.concepts.last.name, 'Temperature');
+    expect(s.editor.layout[NodeRef.concept(concept)], const Offset(300, 100));
+    expect(
+      s.editor.layout[NodeRef.mapping(mapping)],
+      const Offset(300, 100) - const Offset(240, 0),
+    );
     expect((s.editor.selection as ConceptSelected).id, concept);
     expect(s.editor.renaming, NodeRef.concept(concept));
-    expect(s.editor.recentTemplates, ['std.source.temperature']);
-    final e = daemon.requests.firstWhere((r) => r.hasInstantiateLibraryItem());
-    expect(e.instantiateLibraryItem.itemId, 'std.source.temperature');
     await store.dispose();
   });
 
@@ -456,9 +566,9 @@ void main() {
       library: library(),
     );
     for (final (locale, concepts, sources, sensor) in [
-      (const Locale('en'), 'CONCEPTS', 'SOURCES', 'Temperature Sensor'),
-      (const Locale('zh'), '概念', '来源', '温度传感器'),
-      (const Locale('ja'), 'コンセプト', '入力元', '温度センサー'),
+      (const Locale('en'), 'CONCEPTS', 'SOURCES', 'Temperature Input'),
+      (const Locale('zh'), '概念', '来源', '温度输入'),
+      (const Locale('ja'), 'コンセプト', '入力元', '温度入力'),
     ]) {
       await t.pumpWidget(
         MaterialApp(
@@ -479,7 +589,10 @@ void main() {
       expect(find.text(concepts.toUpperCase()), findsOneWidget);
       expect(find.text(sources.toUpperCase()), findsOneWidget);
       expect(find.text(sensor), findsOneWidget);
-      expect(find.text('() -> RoomTemp'), findsOneWidget);
+      // the row names the value form the preset suggests, never a
+      // signature over a concept nobody has chosen
+      expect(find.text('K'), findsWidgets);
+      expect(find.textContaining('() ->'), findsNothing);
       expect(find.byKey(const ValueKey('library-item-std.source.temperature')), findsOneWidget);
     }
   });

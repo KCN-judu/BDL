@@ -13,25 +13,42 @@
 import '../l10n/l10n.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
-/// One selectable preset: the quantity kind, its unit symbol, its dimension.
-typedef UnitPreset = ({String name, String symbol, pb.Dim dim});
+/// One selectable preset: the quantity kind (the designer's word), its
+/// unit symbol, its dimension, and its textual type name — what the Code
+/// view writes (`Temperature`), never localized.
+typedef UnitPreset = ({String name, String symbol, pb.Dim dim, String typeName});
 
 UnitPreset noUnit([AppLocalizations? l10n]) =>
-    (name: (l10n ?? kEnglish).noUnit, symbol: 'dimensionless', dim: pb.Dim());
+    (name: (l10n ?? kEnglish).noUnit, symbol: 'dimensionless', dim: pb.Dim(), typeName: 'Scalar');
 
 /// Fallback presets: no unit, the seven SI base dimensions plus angle.
 List<UnitPreset> builtinUnitPresets([AppLocalizations? l10n]) {
   l10n ??= kEnglish;
   return [
     noUnit(l10n),
-    (name: quantityWord('Angle', l10n), symbol: 'rad', dim: pb.Dim(angle: 1)),
-    (name: quantityWord('Length', l10n), symbol: 'm', dim: pb.Dim(length: 1)),
-    (name: quantityWord('Time', l10n), symbol: 's', dim: pb.Dim(time: 1)),
-    (name: quantityWord('Mass', l10n), symbol: 'kg', dim: pb.Dim(mass: 1)),
-    (name: quantityWord('Temperature', l10n), symbol: 'K', dim: pb.Dim(temperature: 1)),
-    (name: quantityWord('Current', l10n), symbol: 'A', dim: pb.Dim(current: 1)),
-    (name: quantityWord('Luminous', l10n), symbol: 'cd', dim: pb.Dim(luminous: 1)),
-    (name: quantityWord('Amount', l10n), symbol: 'mol', dim: pb.Dim(amount: 1)),
+    (name: quantityWord('Angle', l10n), symbol: 'rad', dim: pb.Dim(angle: 1), typeName: 'Angle'),
+    (name: quantityWord('Length', l10n), symbol: 'm', dim: pb.Dim(length: 1), typeName: 'Length'),
+    (name: quantityWord('Time', l10n), symbol: 's', dim: pb.Dim(time: 1), typeName: 'Time'),
+    (name: quantityWord('Mass', l10n), symbol: 'kg', dim: pb.Dim(mass: 1), typeName: 'Mass'),
+    (
+      name: quantityWord('Temperature', l10n),
+      symbol: 'K',
+      dim: pb.Dim(temperature: 1),
+      typeName: 'Temperature',
+    ),
+    (
+      name: quantityWord('Current', l10n),
+      symbol: 'A',
+      dim: pb.Dim(current: 1),
+      typeName: 'Current',
+    ),
+    (
+      name: quantityWord('Luminous', l10n),
+      symbol: 'cd',
+      dim: pb.Dim(luminous: 1),
+      typeName: 'Luminous',
+    ),
+    (name: quantityWord('Amount', l10n), symbol: 'mol', dim: pb.Dim(amount: 1), typeName: 'Amount'),
   ];
 }
 
@@ -43,7 +60,8 @@ List<UnitPreset> unitPresetsFrom(Iterable<pb.QuantityView> quantities, [AppLocal
   l10n ??= kEnglish;
   final served = [
     for (final q in quantities)
-      if (q.dim != pb.Dim()) (name: quantityWord(q.typeName, l10n), symbol: q.unit, dim: q.dim),
+      if (q.dim != pb.Dim())
+        (name: quantityWord(q.typeName, l10n), symbol: q.unit, dim: q.dim, typeName: q.typeName),
   ];
   return served.isEmpty ? builtinUnitPresets(l10n) : [noUnit(l10n), ...served];
 }

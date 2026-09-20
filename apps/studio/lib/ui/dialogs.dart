@@ -300,25 +300,9 @@ Future<NewMappingResult?> showNewMappingSheet(BuildContext context, List<pb.Conc
   );
 }
 
-/// A Source: `name : () -> concept` with no definition — the same form
-/// without the *Reads* row, because the environment provides the value
-/// (ADR-0032).  What comes back is an ordinary [NewMappingResult] with no
-/// inputs; there is one creation path.
-Future<NewMappingResult?> showNewSourceSheet(BuildContext context, List<pb.ConceptView> concepts) {
-  return showMacSheet<NewMappingResult>(
-    context,
-    title: context.l10n.newSource,
-    subtitle: context.l10n.aSourceAValueTheEnvironmentProvides,
-    content: _NewMappingForm(concepts: concepts, source: true),
-    actions: const [],
-    width: 520,
-  );
-}
-
 class _NewMappingForm extends StatefulWidget {
-  const _NewMappingForm({required this.concepts, this.source = false});
+  const _NewMappingForm({required this.concepts});
   final List<pb.ConceptView> concepts;
-  final bool source;
 
   @override
   State<_NewMappingForm> createState() => _NewMappingFormState();
@@ -385,26 +369,25 @@ class _NewMappingFormState extends State<_NewMappingForm> {
             onSubmitted: (_) => _submit(),
           ),
         ),
-        if (!widget.source)
-          FormRow(
-            label: context.l10n.reads,
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final c in widget.concepts)
-                  _ConceptToggle(
-                    concept: c,
-                    selected: _inputs.contains(c.id.toInt()),
-                    onChanged: (on) => setState(() {
-                      on ? _inputs.add(c.id.toInt()) : _inputs.remove(c.id.toInt());
-                    }),
-                  ),
-              ],
-            ),
-          ),
         FormRow(
-          label: widget.source ? context.l10n.provides : context.l10n.produces,
+          label: context.l10n.reads,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final c in widget.concepts)
+                _ConceptToggle(
+                  concept: c,
+                  selected: _inputs.contains(c.id.toInt()),
+                  onChanged: (on) => setState(() {
+                    on ? _inputs.add(c.id.toInt()) : _inputs.remove(c.id.toInt());
+                  }),
+                ),
+            ],
+          ),
+        ),
+        FormRow(
+          label: context.l10n.produces,
           child: MacDropdown<int>(
             value: _output,
             hint: 'choose',
@@ -431,9 +414,7 @@ class _NewMappingFormState extends State<_NewMappingForm> {
         // The preview derives the role the way the canvas does.
         Text(
           _output == null
-              ? widget.source
-                    ? context.l10n.chooseWhatItProvidesTheOutputSocket
-                    : context.l10n.chooseWhatItProducesTheOutputSocket
+              ? context.l10n.chooseWhatItProducesTheOutputSocket
               : _inputs.isEmpty
               ? context.l10n.sheetSourceShape(_conceptName(_output!))
               : context.l10n.sheetRuleShape(

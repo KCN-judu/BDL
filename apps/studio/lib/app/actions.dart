@@ -114,6 +114,44 @@ class InsertLibraryItemRequested extends UserAction {
   final Offset? position;
 }
 
+/// Open the Source sheet: a Source is created over a concept the designer
+/// chooses there.  [presetId] names a Source item of the library whose
+/// preset prefills the sheet (names, a value form, a unit) and ranks the
+/// existing concepts; empty for the generic *New Source…*.  [position] is
+/// where the objects will land.  Nothing is committed by this action.
+class NewSourceRequested extends UserAction {
+  const NewSourceRequested({this.presetId = '', this.position});
+  final String presetId;
+  final Offset? position;
+}
+
+/// The Source sheet was closed without creating anything: the project is
+/// untouched.
+class SourceSheetDismissed extends UserAction {
+  const SourceSheetDismissed();
+}
+
+/// Create the Source the sheet described, over the chosen concept: an
+/// existing one by identity ([existingConcept]), or a new one
+/// ([newConceptName] with its value form) created in the same transaction.
+/// One revision, one undo, all or nothing — the daemon's `CreateSource`.
+class CreateSourceRequested extends UserAction {
+  const CreateSourceRequested({
+    required this.sourceName,
+    this.description = '',
+    this.existingConcept,
+    this.newConceptName,
+    this.newConceptDescription = '',
+    this.newConceptRepresentation,
+  }) : assert((existingConcept == null) != (newConceptName == null));
+  final String sourceName;
+  final String description;
+  final int? existingConcept;
+  final String? newConceptName;
+  final String newConceptDescription;
+  final pb.Representation? newConceptRepresentation;
+}
+
 class SidebarTabSelected extends UserAction {
   const SidebarTabSelected(this.tab);
   final SidebarTab tab;
@@ -1217,6 +1255,14 @@ class DeploymentFailed extends ResponseAction {
 class LibraryItemsReceived extends ResponseAction {
   const LibraryItemsReceived(this.library);
   final pb.LibraryItemsResponse library;
+}
+
+/// The daemon's ranked concepts for the Source sheet ([generation] ties
+/// the answer to the request that opened the sheet).
+class SourceCandidatesReceived extends ResponseAction {
+  const SourceCandidatesReceived({required this.generation, required this.response});
+  final int generation;
+  final pb.SourceCandidatesResponse response;
 }
 
 /// The user chose a display language in Preferences.  An application
