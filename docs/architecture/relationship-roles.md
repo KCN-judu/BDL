@@ -132,10 +132,28 @@ targets (ADR-0034).
 
 ## Phase 13
 
-FV Phase 13 (provision) realizes an abstract Source by a device profile's raw
-input and a checked transducer. In this model a provisioned Source is a Value:
-it gains a realization, so the same rule gives the same answer, and no
-`ProvisionedSource` role exists or is needed. Ownership, when it is built
+Two independent choices make a Source useful, and the architecture keeps them
+apart:
+
+```text
+AUTHORING  (today)             choose an existing concept C, or create C        semantic identity
+                                        ↓
+                               source : () -> C                                  the abstract Source (a Source, ADR-0032)
+
+DEPLOYMENT (future, PRP-0001)  choose a DeviceProfile                            physical realization
+                                        ↓
+                               raw : () -> R,  tr : R -> Rep(C)
+                                        ↓
+                               source realized                                   a Value, by the same rule
+```
+
+The first choice is the Source sheet's (`docs/spec/concept-library.md` §
+Creating a Source): a Source is never created without a concrete `C`, and the
+Standard Library's Source items are presets that suggest and rank but own no
+identity. FV Phase 13 (provision) realizes an abstract Source by a device
+profile's raw input and a checked transducer. In this model a provisioned Source
+is a Value: it gains a realization, so the same rule gives the same answer, and
+no `ProvisionedSource` role exists or is needed. Ownership, when it is built
 (PRP-0001, not implemented): the device profile and raw type in the device
 catalogue (`hardware/`, never the Standard Library — an authoring catalogue of
 fragments); the transducer a checked BDL formula; _Fits_ in deployment analysis;

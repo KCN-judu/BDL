@@ -166,7 +166,8 @@ into the three ARB catalogs and the id lookup
 `just studio-l10n`; preflight's `l10n` check fails when the generated files are
 behind. The library, the compiler service and the protocol carry English only
 (ADR-0031, ADR-0032 amendment): an item is localized by id in Studio, and what
-it creates — `RoomTemp`, `TempSensor` — is an identifier in every locale.
+it suggests — `Temperature`, `temperatureInput` — is an identifier in every
+locale.
 
 ## Review
 

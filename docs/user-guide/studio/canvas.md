@@ -107,10 +107,11 @@ placed moves; drag it where you like ([Design, Code and Split](code-view.md)).
 ## The context menu
 
 On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most
-common categories, _More…_ (which opens the Library tab); **Add Source ▸** — the
-standard Sources (_Temperature Sensor_, _Tilt Sensor_, …) and _New source…_ for
-a Source over a concept already in the design; **Add Instance ▸** _component_
-and **New Behavior Group**.
+common categories, _More…_ (which opens the Library tab); **Add Source ▸** —
+_New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each
+opening the [Source sheet](library.md#sources), where you choose the concept the
+Source provides — an existing one, or a new one made with it; **Add Instance ▸**
+_component_ and **New Behavior Group**.
 
 On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**,
 **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a

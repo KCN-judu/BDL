@@ -119,9 +119,9 @@ value the environment provides is a **Source**: a relationship that **reads
 nothing**, produces the concept, and has **no formula**.
 
 1. **+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**.
-   Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the
-   same thing; the Library's _Sources_ section makes a concept and its Source
-   together.)
+   Create. (Right-click the canvas → **Add Source ▸** → _New Source…_ makes the
+   same thing over the concept you choose there — Tilt — and can make a new
+   concept with it.)
 
 The node says _Source_ in its header, with a bar down its left edge and no input
 socket. It is not dashed: nothing is missing. In the simulator you will type its

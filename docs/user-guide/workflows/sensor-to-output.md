@@ -19,7 +19,8 @@ Source (in a domain)  →  rule(s)  →  value (defined, in the domain)  →  ph
    template gives the same.)
 2. **The Source.** _Mappings_ **+**: `ambient`, reads nothing, produces
    AmbientLight — a Source; leave it without a formula. **Timing › Updates in**:
-   _interaction_. (The Library's _Ambient Light Sensor_ makes steps 1 and 2 at
+   _interaction_. (The Library's _Ambient Light Input_ opens the Source sheet
+   with steps 1 and 2 prefilled: choose _New concept_ and both are made at
    once.)
 3. **The rule.** _Mappings_ **+**: `adaptBrightness`, reads **Brightness** and
    **AmbientLight**, produces **Brightness**. Formula:

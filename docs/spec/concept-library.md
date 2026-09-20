@@ -45,10 +45,16 @@ Two **categories** exist today (`ItemCategory`): a **Concept** item is a
 fragment of exactly one concept; a **Source** item is a fragment of one concept
 (`value`) and one relationship without inputs over it (`source`, written
 `() -> Value`), with no definition — an environment-provided value entering the
-behavior model. The category is a browsing section (_Concepts_, _Sources_) and a
-shape constraint the loader checks; it is not a flag anything downstream reads.
-The _Sources_ section is not _Sensors_: a button state, an analog level and a
-value a host provides are Sources and not sensors.
+behavior model. A Source item is read as a **preset** (`LibraryItem::preset`,
+`SourcePreset`): what the Source creation flow prefills — a suggested concept
+name, value form and unit, a suggested Source name — and ranks existing concepts
+by. It decides no identity: the concept a Source provides is the designer's
+choice, an existing concept of the design or a new one created in the same
+transaction (§ Creating a Source). The category is a browsing section
+(_Concepts_, _Sources_) and a shape constraint the loader checks; it is not a
+flag anything downstream reads. The _Sources_ section is not _Sensors_: a button
+state, an analog level and a value a host provides are inputs and not sensors,
+which is why the presets are named _… Input_.
 
 `group` (`environment`, `motion`, `human`, `external`, …) orders rows inside a
 section and the quick-insert menu; `role_hint` (`input | output | either`, on a
@@ -63,9 +69,10 @@ the defaults:
 
 - instantiating `std.environment.temperature` twice yields two concepts
   (`Temperature`, `Temperature2`) with distinct identities — rename them
-  `RoomTemperature` and `MotorTemperature` and they stay two; instantiating
-  `std.source.temperature` twice yields `RoomTemp`/`TempSensor` and
-  `RoomTemp2`/`TempSensor2`;
+  `RoomTemperature` and `MotorTemperature` and they stay two; two Sources
+  created from the Temperature preset with new concepts are
+  `Temperature`/`temperatureInput` and `Temperature2`/`temperatureInput2`, and
+  one created over an existing `RoomTemperature` adds no concept at all;
 - every field is editable afterwards: name, description, representation, the
   relationship's definition;
 - the project never records which item an object came from, and it loads without
@@ -99,32 +106,35 @@ unit = "lx"                     # a symbol from the shared unit table; the defau
 keywords = ["light", "lux", "brightness", "daylight", "dark", "photocell"]
 icon = "light"                  # presentation hint; never semantic
 
-[[source]]                      # a Source item
+[[source]]                      # a Source item: a preset for the Source sheet
 id = "std.source.temperature"
-display_name = "Temperature Sensor"
-description = "The temperature of a room, a surface or the air, as the environment provides it."
+display_name = "Temperature Input"
+description = "A temperature the environment provides — a room, a surface, the air — read once per activation."
 category = "environment"        # the group
-keywords = ["temp", "thermal", "thermometer", "sensor", "source"]
+keywords = ["temp", "thermal", "thermometer", "sensor", "input", "source"]
 icon = "temperature"
-[source.value]                  # the concept (fragment key `value`)
-default_name = "RoomTemp"
-description = "The measured temperature."
-representation = { quantity = "temperature" }
+[source.value]                  # the new concept it suggests (fragment key `value`)
+default_name = "Temperature"
+description = "How warm something is."
+representation = { quantity = "temperature" }   # ranks existing concepts of this form first
 unit = "K"
-[source.relationship]           # `mapping TempSensor : () -> RoomTemp` (key `source`)
-default_name = "TempSensor"
-description = "Supplies the measured temperature, one reading per activation."
+[source.relationship]           # the Source it suggests: `temperatureInput : () -> <chosen>` (key `source`)
+default_name = "temperatureInput"
+description = "Provides the temperature, one reading per activation."
 ```
 
 Schema 1 files (`[[template]]` only) still load; `[[source]]` needs schema 2.
-Loading validates every item: the quantity must exist in the shared vocabulary,
-the unit must exist in the shared unit table and measure that quantity, every
-default name must be an identifier and the names inside one fragment distinct, a
-mapping's `inputs`/`output` keys must name concepts of the same fragment, ids
-must be unique and prefixed by the library id; an unsupported `schema_version`
-is refused with the reason. The standard library is embedded in `bdl-library` at
-build time (`Library::standard()`); the same loader reads any file
-(`Library::from_toml`).
+The schema did not change for the Source sheet: a `[[source]]` entry is read
+both as a preset (`LibraryItem::preset`) and, on the legacy path, as the
+fragment it always was — no parameterized fragment language was added for one
+dialog. Loading validates every item: the quantity must exist in the shared
+vocabulary, the unit must exist in the shared unit table and measure that
+quantity, every default name must be an identifier and the names inside one
+fragment distinct, a mapping's `inputs`/`output` keys must name concepts of the
+same fragment, ids must be unique and prefixed by the library id; an unsupported
+`schema_version` is refused with the reason. The standard library is embedded in
+`bdl-library` at build time (`Library::standard()`); the same loader reads any
+file (`Library::from_toml`).
 
 **Text is canonical English.** The file, the crate and the protocol carry
 `display_name` and `description` in English only; a locale is presentation
@@ -133,29 +143,32 @@ build time (`Library::standard()`); the same loader reads any file
 
 ## Items (44)
 
-| section  | group       | items                                                                                                 |
-| -------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| Concepts | environment | Temperature, Ambient Light, Humidity, Air Pressure, Sound Level                                       |
-|          | human       | Button Pressed, Touch, Switch State, Dial Position, Slider Position                                   |
-|          | motion      | Distance, Position, Angle, Tilt, Speed, Acceleration, Angular Velocity, Orientation                   |
-|          | mechanical  | Force, Pressure, Torque                                                                               |
-|          | electrical  | Voltage, Current, Battery Level                                                                       |
-|          | visual      | Brightness, Color, Display Value                                                                      |
-|          | actuation   | Motor Speed, Motor Angle, Servo Position, Vibration Intensity, Heater Power, Fan Speed, Valve Opening |
-|          | audio       | Volume, Pitch                                                                                         |
-| Sources  | environment | Temperature Sensor (`RoomTemp` / `TempSensor`), Ambient Light Sensor (`AmbientLight` / `LightSensor`) |
-|          | motion      | Tilt Sensor (`Tilt` / `TiltSensor`), Distance Sensor (`Distance` / `DistanceSensor`)                  |
-|          | human       | Button State (`ButtonHeld` / `ButtonInput`), Encoder Position (`ShaftAngle` / `EncoderPosition`)      |
-|          | electrical  | Analog Input (`AnalogValue` / `AnalogInput`)                                                          |
-|          | external    | External Value (`ExternalValue` / `ExternalSource`)                                                   |
+| section  | group       | items                                                                                                              |
+| -------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Concepts | environment | Temperature, Ambient Light, Humidity, Air Pressure, Sound Level                                                    |
+|          | human       | Button Pressed, Touch, Switch State, Dial Position, Slider Position                                                |
+|          | motion      | Distance, Position, Angle, Tilt, Speed, Acceleration, Angular Velocity, Orientation                                |
+|          | mechanical  | Force, Pressure, Torque                                                                                            |
+|          | electrical  | Voltage, Current, Battery Level                                                                                    |
+|          | visual      | Brightness, Color, Display Value                                                                                   |
+|          | actuation   | Motor Speed, Motor Angle, Servo Position, Vibration Intensity, Heater Power, Fan Speed, Valve Opening              |
+|          | audio       | Volume, Pitch                                                                                                      |
+| Sources  | environment | Temperature Input (`Temperature` / `temperatureInput`), Ambient Light Input (`AmbientLight` / `ambientLightInput`) |
+|          | motion      | Tilt Input (`Tilt` / `tiltInput`), Distance Input (`Distance` / `distanceInput`)                                   |
+|          | human       | Button Input (`ButtonHeld` / `buttonInput`), Encoder Input (`ShaftAngle` / `encoderInput`)                         |
+|          | electrical  | Analog Input (`AnalogValue` / `analogInput`)                                                                       |
+|          | external    | External Input (`ExternalValue` / `externalInput`)                                                                 |
 
-Deliberately small: nothing is added to inflate the count. The eight Sources are
-the environment-provided values a first product needs, named for what a designer
-looks for. _Analog Input_ and _External Value_ leave the concept's
-representation **open** (_decide later_): the library does not know what an
-analog reading or a host-provided value measures, and the designer chooses the
-quantity once they do — no `Scalar` or voltage is presumed. _External Value_ is
-there so the section says what it means: a Source is a boundary, not a sensor.
+Deliberately small: nothing is added to inflate the count. The eight Source
+presets are the environment-provided values a first product needs, named for
+what a designer looks for; the names in parentheses are what each _suggests_
+(the new concept, the Source), never what it owns. _Analog Input_ and _External
+Input_ leave the concept's representation **open** (_decide later_): the library
+does not know what an analog reading or a host-provided value measures, and the
+designer chooses the quantity once they do — no `Scalar` or voltage is presumed.
+_External Input_ is there so the section says what it means: a Source is a
+boundary, not a sensor. The presets were called _… Sensor_ until 2026-09-20; the
+ids did not change.
 
 ## Instantiation is one transaction
 
@@ -163,9 +176,9 @@ there so the section says what it means: a Source is a boundary, not a sensor.
 `PlannedStep`s against the target design: a `Concept` step carries its
 `CreateConcept` edit, a `Mapping` step its name, description and the
 `inputs`/`output` **keys**. A default name is made free among the design's
-concepts _and_ mappings and the steps before it (`free_name`: `RoomTemp`, then
-`RoomTemp2`); a name the caller chooses by key is used exactly as given — a
-taken or unspellable name is refused by the edit it becomes, never silently
+concepts _and_ mappings and the steps before it (`free_name`: `Temperature`,
+then `Temperature2`); a name the caller chooses by key is used exactly as given
+— a taken or unspellable name is refused by the edit it becomes, never silently
 renamed — and a key the item does not create is refused before anything is
 planned (`library.invalid_plan`). Planning is pure and deterministic; the loader
 has already refused a fragment whose mapping names a concept the fragment does
@@ -187,12 +200,62 @@ plan never leaves the daemon; fragment keys are never a project fact. Inside a
 component body the keys resolve to the body's own identities: a body mapping
 never binds to a system concept that shares its local number.
 
-A Source item's result is two ordinary objects; the canvas shows the
+Instantiating a Source item this way (`InstantiateLibraryItem`) is the **legacy
+path**: it creates both objects from the item's data — the concept named as the
+item suggests, and the Source over it — and stays supported for third-party
+schema-2 libraries and older clients. Studio no longer takes it for a Source: it
+opens the Source sheet, where the concept is the designer's choice (§ Creating a
+Source). Either way the result is ordinary objects; the canvas shows the
 relationship as a Source because it reads nothing, has no definition and backs
-no port (ADR-0032), and a third-party library's `[[source]]` gets the same
-treatment. `mapping TempSensor : () -> RoomTemp` is the preferred spelling of
-the Unit-domain relationship (ADR-0029), written by whoever generates it; no
-item privileges a Source.
+no port (ADR-0032). `mapping temperatureInput : () -> Temperature` is the
+preferred spelling of the Unit-domain relationship (ADR-0029), written by
+whoever generates it; no item privileges a Source.
+
+## Creating a Source
+
+A Source is `name : () -> C` with no definition: a value entering the behavior
+model from the environment, observed once per activation. **`C` is a concept the
+designer chooses**, and a committed Source always has one — a concrete
+`SemanticId` in `Signature.output`. There is no `() -> ?` in the project model,
+in a source file or on the wire; the unmade choice exists only on the creation
+sheet, and cancelling it leaves the project untouched. Three decisions are kept
+apart: which concept the Source provides (semantic identity), the abstract
+Source over it (this section), and what realizes it at deployment (FV Phase 13,
+PRP-0001: a device's raw input and a checked transducer, which make the Source a
+Value — `docs/architecture/relationship-roles.md` § Phase 13). Authoring makes
+the first two; nothing here touches the third.
+
+A Source is created in one of two ways, and no other (`CreateSource`, protocol
+0.23):
+
+- **over an existing concept**, by identity —
+  `roomTemperatureInput : () -> RoomTemperature` — one ordinary `CreateMapping`
+  edit: one revision, one history entry, no new concept; one Undo removes the
+  Source alone. Identity is nominal: `RoomTemperature : Temperature` and
+  `MotorTemperature : Temperature` are two choices, and a choice is never
+  inferred from a name, a value form, a dimension or a unit. An open value form
+  (_decide later_) is a legal choice: a Source is about identity, not about
+  closing the representation.
+- **with a new concept**, created in the same transaction — `CreateConcept` then
+  `CreateMapping` over it, the same two planned steps a Source item runs through
+  `Session::apply_library_item`: one revision, one history entry, all or
+  nothing. When either edit is refused (a taken or unspellable name, a stale
+  revision) nothing is applied and no identity is consumed. The representation
+  may be left open, as `CreateConcept` allows.
+
+Names are the designer's: the sheet suggests one (`<concept>Input` in
+lowerCamel, made free in the design; the preset's, made free by the daemon) and
+sends what was typed as typed — a taken name is the ordinary edit refusal, never
+a silent rename. Inside a component body the concept is one of the body's, by
+the body's identities; a system concept that shares the local number is not a
+candidate (`edit.unknown_concept`).
+
+The daemon lists the candidates (`ListSourceCandidates`): every concept of the
+design in scope, in id order, with the ones whose value form is the preset's
+first (`preferred`) when a Source item is named — an authoring convenience the
+library computes (`bdl_library::rank_concepts`), not a rule, and never a filter:
+nothing is hidden, Studio infers nothing from dimensions or names. The same
+answer carries the preset and its names made free in the design.
 
 ## Presentation-owned localization
 
@@ -208,9 +271,9 @@ which `flutter gen-l10n` then compiles like every other string. The panel shows
 the localized name and description for a standard item and the daemon's English
 for an item the catalogue does not know; **search** matches the localized name
 and tags, the English name and keywords, the default names, the group and
-section words and the unit — `温度` and `传感器` find the Temperature Sensor in
-zh-Hans, `温度` and `センサー` in ja, `lux` finds Ambient Light and Ambient
-Light Sensor. Changing the locale changes what the rows say and never what an
+section words and the unit — `温度` and `输入` find the Temperature Input in
+zh-Hans, `温度` and `入力` in ja, `lux` finds Ambient Light and Ambient Light
+Input. Changing the locale changes what the rows say and never what an
 instantiation creates. `just studio-l10n-check` (preflight `l10n`) fails when
 the generated files are behind the catalogue.
 
@@ -245,19 +308,34 @@ Add Concept ▸
     Environment ▸ · Geometry & motion ▸ · Human interaction ▸
     More…                       (opens the Library tab)
 Add Source ▸
-    Temperature Sensor · Tilt Sensor · … · External Value   (the Source items)
-    New source…                 (a `() -> C` over a concept already in the design)
+    New Source…                 (the generic path: choose or create the concept)
+    Temperature Input · Tilt Input · … · External Input   (the presets: the same sheet, prefilled)
 ```
 
-**Create-then-rename**: choosing an item instantiates it through `bdld`
+**Create-then-rename**: choosing a Concept item instantiates it through `bdld`
 (`InstantiateLibraryItem`); when the projection with the new objects arrives,
 the concept is placed where the pointer was (layout only, never a revision),
 selected, and its name opens for editing on the canvas with the default name
 selected — Return commits a rename edit, Esc keeps the default, leaving the
 field commits what was typed. Add Temperature → type `MotorTemperature` → keep
-designing. For a Source item the answer carries `created_concept` and
-`created_mapping`: the Source lands a node width to the concept's left (the
-environment side), and one Undo removes both.
+designing.
+
+**The Source sheet** (`ui/source_sheet.dart`): every Source entry point — _New
+Source…_, a preset in the menu, a Source row's double-click or Return, a drag of
+a Source row onto the canvas — dispatches
+`NewSourceRequested(presetId?, position?)`; the daemon ranks the concepts
+(`ListSourceCandidates`) and the sheet opens over the design with one choice at
+its centre — **Existing concept** (a pop-up of the design's concepts, the
+preset's value form first, each with its value form beside it so two of one form
+stay two) or **New concept** (name, value form, unit, meaning — prefilled by the
+preset) — then the **Source name** and its meaning, a preview node, and the
+exact objects that will be committed (`concept RoomTemperature : Temperature` /
+`mapping roomTemperatureInput : () -> RoomTemperature`). _Create Source_ is
+enabled once the choice is complete and dispatches `CreateSourceRequested`;
+cancel dispatches nothing but `SourceSheetDismissed`. When the answer arrives, a
+new concept lands where the pointer was and opens for renaming with its Source a
+node width to the left; a Source over an existing concept lands where the
+pointer was and is selected.
 
 **Library tab** (left sidebar, beside _Project_) — browsing and discovery: a
 search field (above), two sections — _Concepts_, then _Sources_ — each with its
@@ -265,16 +343,17 @@ groups, rows with a grey socket glyph (filled = representation chosen, hollow =
 decide later; grey because the hue is the identity the compiler will allocate)
 or, in _Sources_, the Source silhouette (`MappingGlyph(source:)`), the name, and
 what the value is measured as in the contract's words (`K`, `lx`, `no unit`,
-`on–off`, `count`, `decide later`); the description on hover, and for a Source
-what the item creates (`RoomTemp`, `TempSensor : () -> RoomTemp`). **Drag** a
-row onto the canvas to insert at the drop point; double-click or Return inserts
-auto-placed.
+`on–off`, `count`, `decide later`) — for a Source preset the value form it
+_suggests_, never a signature over a concept nobody has chosen; the description
+on hover, and for a preset what it does (_an input for a Temperature concept you
+choose — existing, or new_). **Drag** a row onto the canvas to insert at the
+drop point; double-click or Return inserts auto-placed — for a Source row, both
+open the sheet.
 
-Every entry point dispatches the same `InsertLibraryItemRequested` and the
-daemon performs the one instantiation; the results differ only in `SemanticId`,
-layout position and whatever the designer renames. _New source…_ is not a
-library path: it is the New relationship sheet without its _Reads_ row, an
-ordinary `CreateMappingRequested` with no inputs.
+Every Concept entry point dispatches the same `InsertLibraryItemRequested` and
+the daemon performs the one instantiation; every Source entry point dispatches
+the same `NewSourceRequested` and the sheet performs the one choice. The results
+differ only in `SemanticId`, layout position and whatever the designer renames.
 
 The **unit picker** (New Concept sheet, inspector) lists the served quantity
 vocabulary, with a built-in fallback for the base dimensions until the daemon
@@ -288,26 +367,32 @@ or keyword matches; a name already taken in the project ranks lower), as
 `CompletionKind::Template` carrying the item id. Accepting one writes ordinary
 syntax — no metadata, no marker; the source stays plain BDL. A Source item is
 not a concept completion: its relationship is ordinary syntax too, written in
-the preferred spelling — `mapping tempSensor : () -> Temperature` — by whoever
-generates it (Studio's write-back, the migration, an example). The LSP adapter
-renders a completion as a class item labelled with the library id; the test
-asserts that every Concept item of the embedded library is offered from the same
-data, never from a second list.
+the preferred spelling — `mapping temperatureInput : () -> Temperature` — by
+whoever generates it (Studio's write-back, the migration, an example). The LSP
+adapter renders a completion as a class item labelled with the library id; the
+test asserts that every Concept item of the embedded library is offered from the
+same data, never from a second list.
 
 ## Protocol
 
-| request                                                                                   | response                                                                                                            | notes                                                                                                                                                                                                                                                                                                                                                  |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ListLibraryItems` (0.17)                                                                 | `LibraryItemsResponse { libraries[] { id, name, schema_version, version, items[] LibraryItemView }, quantities[] }` | every item of every served library, `creates[] LibraryObjectView { kind, key, name, type_name, signature, description, representation?, unit }` in creation order with the default names, `concept?` the `ConceptTemplateView` of a Concept item; independent of any project; Studio asks once per connection                                          |
-| `InstantiateLibraryItem { base_revision, item_id, names{key → name}, component? }` (0.17) | `SystemEditApplied`                                                                                                 | the daemon plans the fragment (free names, or `names` by key) and applies every step in one transaction — one revision, one history entry, the outcome with every `created_*`; nothing is applied when any step is refused; `edit.stale_revision`, `library.unknown_item`, `library.invalid_plan` (a key no earlier step created), `edit.invalid_name` |
-| `ListConceptTemplates` (0.5)                                                              | `ConceptTemplatesResponse { libraries[] { …, templates[] }, quantities[] }`                                         | the Concept items as `ConceptTemplateView`s — the legacy projection; a Source item is not listed                                                                                                                                                                                                                                                       |
-| `InstantiateConceptTemplate { base_revision, template_id, name?, component? }` (0.5)      | `SystemEditApplied`                                                                                                 | the same transaction with `names = { concept: name }`; `library.unknown_template`                                                                                                                                                                                                                                                                      |
+| request                                                                                                                                                      | response                                                                                                                                | notes                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ListLibraryItems` (0.17)                                                                                                                                    | `LibraryItemsResponse { libraries[] { id, name, schema_version, version, items[] LibraryItemView }, quantities[] }`                     | every item of every served library, `creates[] LibraryObjectView { kind, key, name, type_name, signature, description, representation?, unit }` in creation order with the default names, `concept?` the `ConceptTemplateView` of a Concept item; independent of any project; Studio asks once per connection                                                |
+| `InstantiateLibraryItem { base_revision, item_id, names{key → name}, component? }` (0.17)                                                                    | `SystemEditApplied`                                                                                                                     | the daemon plans the fragment (free names, or `names` by key) and applies every step in one transaction — one revision, one history entry, the outcome with every `created_*`; nothing is applied when any step is refused; `edit.stale_revision`, `library.unknown_item`, `library.invalid_plan` (a key no earlier step created), `edit.invalid_name`       |
+| `ListConceptTemplates` (0.5)                                                                                                                                 | `ConceptTemplatesResponse { libraries[] { …, templates[] }, quantities[] }`                                                             | the Concept items as `ConceptTemplateView`s — the legacy projection; a Source item is not listed                                                                                                                                                                                                                                                             |
+| `InstantiateConceptTemplate { base_revision, template_id, name?, component? }` (0.5)                                                                         | `SystemEditApplied`                                                                                                                     | the same transaction with `names = { concept: name }`; `library.unknown_template`                                                                                                                                                                                                                                                                            |
+| `CreateSource { base_revision, component?, source_name, source_description, existing_concept \| new_concept { name, description, representation? } }` (0.23) | `SystemEditApplied`                                                                                                                     | a Source over the chosen concept: one `CreateMapping` for an existing concept (by identity, `edit.unknown_concept` when not in the design in scope); `CreateConcept` then `CreateMapping` in one transaction for a new one — one revision, one history entry, nothing when either is refused; `edit.duplicate_*`, `edit.invalid_name`, `edit.stale_revision` |
+| `ListSourceCandidates { revision, component?, item_id }` (0.23)                                                                                              | `SourceCandidatesResponse { revision, candidates[] { concept_id, preferred }, preset?, suggested_concept_name, suggested_source_name }` | the concepts of the design in scope a Source may be created over, the preset's value form first when `item_id` names a Source item, every concept in id order otherwise; the preset (`SourcePresetView`) and its names made free; `draft.stale_revision`, `library.unknown_item`                                                                             |
 
+`LibraryItemView.preset` (0.23, a `SourcePresetView`: the suggested concept name
+and description, its representation and type name, the unit, the suggested
+Source name and description) is the preset view of a Source item, beside
+`creates` (what the legacy path would make).
 `ConceptTemplateView.source_default_name`, `display_names`, `descriptions` and
 `InstantiateConceptTemplateRequest.source_name` (0.16) are **deprecated since
 0.17** and never set: a Source is an item, not a template field, and text is
 localized by the client. Protocol 0.5 for the template surface; 0.16 for the
-deprecated fields; 0.17 for items.
+deprecated fields; 0.17 for items; 0.23 for the Source sheet.
 
 ## Future custom libraries
 
@@ -335,16 +420,19 @@ the concept library.
 
 ## Tests
 
-| scenario                                                                                                                                                                                                                                                                                                                      | where                                                                                                                       |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| the embedded library loads, is 30–50 items, every quantity/unit resolves; `Brightness` is a level, not luminance; schema 1 still loads; the registry shape (44 items: 36 Concept, 8 Source; keys `concept` / `value`, `source`)                                                                                               | `bdl-library` unit tests                                                                                                    |
-| a Source item plans a concept and a `() -> value` mapping; names free across concepts and mappings; chosen names by key; the template projection                                                                                                                                                                              | `bdl-library` unit tests                                                                                                    |
-| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                                                                                                                                                                                                                         | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                 |
-| a project persists and reloads without the library; a changed item default does not reach an existing object                                                                                                                                                                                                                  | `bdl-library`                                                                                                               |
-| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema, a key no concept of the fragment has)                                                                                                                                                                                   | `bdl-library`                                                                                                               |
-| every Concept item is a textual completion, from the same data                                                                                                                                                                                                                                                                | `bdl-ide/tests/acceptance.rs`                                                                                               |
-| the daemon serves the embedded library item for item, the legacy surface lists Concept items only with the 0.16 fields empty                                                                                                                                                                                                  | `bdld/tests/stdio_e2e.rs`, `bdld/tests/text_e2e.rs`                                                                         |
-| a Source item is one transaction: exactly one revision and one history entry; a refused step leaves no object, layout, history entry, dirtiness or consumed identity; a taken chosen name and an unknown key are refused whole; keys resolve inside a component body; the role is Source only while unresolved; the text view | `bdld/tests/stdio_e2e.rs` (`library_items_over_stdio`, `a_library_transaction_is_all_or_nothing`), `bdld/tests/text_e2e.rs` |
-| right-click and drag are one creation path; create-then-rename; recents; inline rename; localized search; refused insertion; the Source placed left                                                                                                                                                                           | `apps/studio/test/library_test.dart`, `apps/studio/test/source_role_test.dart`                                              |
-| Studio against the real `bdld`: insert twice, rename, save, reopen; a Source item in zh-Hans                                                                                                                                                                                                                                  | `apps/studio/test/library_e2e_test.dart`                                                                                    |
-| the generated presentation strings follow the catalogue; an item without translations, an orphan entry or an empty field is refused; `--check` is read-only                                                                                                                                                                   | `scripts/gen_library_l10n.py --check`, `scripts/test_gen_library_l10n.py` (preflight `l10n`)                                |
+| scenario                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | where                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| the embedded library loads, is 30–50 items, every quantity/unit resolves; `Brightness` is a level, not luminance; schema 1 still loads; the registry shape (44 items: 36 Concept, 8 Source; keys `concept` / `value`, `source`)                                                                                                                                                                                                                                                                                                                                                         | `bdl-library` unit tests                                                                                                    |
+| a Source item plans a concept and a `() -> value` mapping; names free across concepts and mappings; chosen names by key; the template projection                                                                                                                                                                                                                                                                                                                                                                                                                                        | `bdl-library` unit tests                                                                                                    |
+| a Source item is a preset: names, value form and unit suggested, the design's concepts ranked with the preset's value form first, two of one form two candidates, an open one listed, nothing hidden; the item owns no identity; every preset is named _… Input_                                                                                                                                                                                                                                                                                                                        | `bdl-library` unit tests                                                                                                    |
+| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                 |
+| a project persists and reloads without the library; a changed item default does not reach an existing object                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `bdl-library`                                                                                                               |
+| invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema, a key no concept of the fragment has)                                                                                                                                                                                                                                                                                                                                                                                                                                             | `bdl-library`                                                                                                               |
+| every Concept item is a textual completion, from the same data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `bdl-ide/tests/acceptance.rs`                                                                                               |
+| the daemon serves the embedded library item for item, the legacy surface lists Concept items only with the 0.16 fields empty                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `bdld/tests/stdio_e2e.rs`, `bdld/tests/text_e2e.rs`                                                                         |
+| (legacy path) a Source item is one transaction: exactly one revision and one history entry; a refused step leaves no object, layout, history entry, dirtiness or consumed identity; a taken chosen name and an unknown key are refused whole; keys resolve inside a component body; the role is Source only while unresolved; the text view                                                                                                                                                                                                                                             | `bdld/tests/stdio_e2e.rs` (`library_items_over_stdio`, `a_library_transaction_is_all_or_nothing`), `bdld/tests/text_e2e.rs` |
+| a Source is created over a chosen concept: existing — one edit, no new concept, the chosen identity never its twin, one Undo removes the Source alone; an open value form accepted; an unknown concept refused; new — one revision, both created, one Undo removes both, a taken name refuses the pair with no identity consumed; the candidates ranked and the suggestions free; the Source drives a sink (`DriveWF`) and is a simulation input; in a component body the body's concept, never the system's with the same number; saved as ordinary text, no `?`, reopened as a Source | `bdld/tests/system_e2e.rs` (`a_source_is_created_over_a_chosen_concept`)                                                    |
+| right-click and drag are one creation path; create-then-rename; recents; inline rename; localized search; refused insertion; the Source placed left                                                                                                                                                                                                                                                                                                                                                                                                                                     | `apps/studio/test/library_test.dart`, `apps/studio/test/source_role_test.dart`                                              |
+| the Source sheet: an existing concept describes one object and names the Source after it; an explicit name is sent as typed; the preset prefills the new concept and the preview lists both objects exactly; the preset never forces a new concept; cancel creates nothing; a suggested name is made free; a preset opens the sheet without a request to create; a Source over an existing concept lands where pointed, selected, not renamed                                                                                                                                           | `apps/studio/test/source_role_test.dart`, `apps/studio/test/library_test.dart`                                              |
+| Studio against the real `bdld`: insert twice, rename, save, reopen; a Source over an existing concept and one with a new concept, cancel, undo/redo, a taken name refused, the text, save and reopen                                                                                                                                                                                                                                                                                                                                                                                    | `apps/studio/test/library_e2e_test.dart`                                                                                    |
+| the generated presentation strings follow the catalogue; an item without translations, an orphan entry or an empty field is refused; `--check` is read-only                                                                                                                                                                                                                                                                                                                                                                                                                             | `scripts/gen_library_l10n.py --check`, `scripts/test_gen_library_l10n.py` (preflight `l10n`)                                |

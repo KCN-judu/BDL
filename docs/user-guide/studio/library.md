@@ -32,7 +32,7 @@ _Visual & display_, _Actuation_, _Audio_; the Sources add _External_). A Concept
 row carries a grey socket glyph — filled when the item comes with a value form,
 hollow when it leaves the value to you — the unit or kind in the right column,
 and the description on hover. Item names and descriptions follow the language
-you chose, and so does search — `温度` finds the Temperature Sensor in 简体中文,
+you chose, and so does search — `温度` finds the Temperature Input in 简体中文,
 `センサー` in 日本語; the names of what they create do not change.
 
 To use one: **drag the row onto the canvas**, or double-click it. The concept is
@@ -48,22 +48,40 @@ change its unit, delete it.
 
 ### Sources
 
-The **Sources** section — _Temperature Sensor_, _Tilt Sensor_, _Distance
-Sensor_, _Ambient Light Sensor_, _Button State_, _Encoder Position_, _Analog
-Input_, _External Value_ — is for values the environment provides. Its rows wear
-the Source glyph instead of the socket, the hover says what the item creates,
-and each one inserts **two** things at once: the concept (_RoomTemp_, a
-temperature) and a [Source](canvas.md) that provides it (_TempSensor_), placed
-to the concept's left with a link between them. The concept opens for renaming
-as usual; rename the Source in its inspector. The two arrive together and one
-Undo removes both.
+A Source is a value entering the behavior model from the environment — a
+relationship that reads nothing, produces a concept, and has no formula. The
+**Sources** section — _Temperature Input_, _Tilt Input_, _Distance Input_,
+_Ambient Light Input_, _Button Input_, _Encoder Input_, _Analog Input_,
+_External Input_ — holds **presets** for making one. Its rows wear the Source
+glyph instead of the socket; the right column names the value form a preset
+suggests, and the hover says what a preset does: _an input for a Temperature
+concept you choose — existing, or new_.
 
-Not every Source is a sensor — a button's state, an analog level and a value a
+Double-click a row, press Return on it, or drag it onto the canvas, and the
+**Source sheet** opens. Its one decision is the concept the Source provides:
+
+- **Existing concept** — pick one of the design's concepts. Two concepts of the
+  same kind — _RoomTemperature_ and _MotorTemperature_, both temperatures — are
+  two rows, and you choose the one you mean; the preset lists the concepts of
+  its kind first. Only the Source is created; the concept stays as it is. One
+  Undo removes the Source.
+- **New concept** — a name, a value form, a unit and a meaning, prefilled by the
+  preset (_Temperature_, Quantity, K). The concept and its Source are created
+  together, in one step; one Undo removes both.
+
+Then the **Source name** — suggested from the concept (_roomTemperatureInput_)
+and yours to change — and its meaning. The sheet shows the exact objects it will
+create, as the Code view will write them; _Create Source_ is enabled once the
+choice is complete, and Cancel leaves the project untouched. A new concept lands
+where you dropped or right-clicked and opens for renaming, with its Source to
+the left; a Source over an existing concept lands there and is selected.
+
+Not every input is a sensor — a button's state, an analog level and a value a
 host or a network provides are Sources too — and no Source says which part will
 provide it: that belongs to [deployment](deploy.md). _Analog Input_ and
-_External Value_ leave the value form to you: choose the quantity once you know
-what the input measures. The same two items can be made by hand: a concept, then
-_New source…_ from the canvas's **Add Source ▸** menu.
+_External Input_ leave the value form to you: choose it once you know what the
+input measures. _New Source…_ on the canvas's **Add Source ▸** menu is the same
+sheet without a preset.
 
 The items and the list of quantity kinds come from the compiler service, so the
 Library, the unit picker and the textual syntax agree on names.

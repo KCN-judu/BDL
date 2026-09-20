@@ -348,12 +348,12 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:40
 #: docs/user-guide/reference/formula-language.md:87
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:127
+#: docs/user-guide/studio/canvas.md:128
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:86
 #: docs/user-guide/studio/formula-editor.md:193
 #: docs/user-guide/studio/inspector.md:78
-#: docs/user-guide/studio/library.md:71
+#: docs/user-guide/studio/library.md:89
 #: docs/user-guide/studio/simulate.md:141
 #: docs/user-guide/studio/system-projects.md:130
 #: docs/user-guide/studio/workspace.md:94
@@ -368,7 +368,7 @@ msgstr ""
 #: docs/user-guide/workflows/component-versioning.md:59
 #: docs/user-guide/workflows/cross-domain-transport.md:78
 #: docs/user-guide/workflows/multi-output-behavior.md:54
-#: docs/user-guide/workflows/sensor-to-output.md:87
+#: docs/user-guide/workflows/sensor-to-output.md:88
 msgid "Related"
 msgstr ""
 
@@ -1584,7 +1584,7 @@ msgid "`dimByTilt` is a rule, not a value: it needs a tilt to work on. Where doe
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:121
-msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New source…_ makes the same thing; the Library's _Sources_ section makes a concept and its Source together.)"
+msgid "**+** next to _Mappings_: Name `tilt`, read nothing, produce **Tilt**. Create. (Right-click the canvas → **Add Source ▸** → _New Source…_ makes the same thing over the concept you choose there — Tilt — and can make a new concept with it.)"
 msgstr ""
 
 #: docs/user-guide/getting-started/first-behavior.md:126
@@ -4657,22 +4657,22 @@ msgid "The context menu"
 msgstr ""
 
 #: docs/user-guide/studio/canvas.md:109
-msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — the standard Sources (_Temperature Sensor_, _Tilt Sensor_, …) and _New source…_ for a Source over a concept already in the design; **Add Instance ▸** _component_ and **New Behavior Group**."
+msgid "On empty canvas: **Add Concept ▸** — _Recent_, _Input_, _Output_, the three most common categories, _More…_ (which opens the Library tab); **Add Source ▸** — _New Source…_ and the presets (_Temperature Input_, _Tilt Input_, …), each opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:115
+#: docs/user-guide/studio/canvas.md:116
 msgid "On a node: **Rename**, **Delete**; on a relationship also **Group as Behavior**, **Add to Group ▸**, **Remove from …**; on an instance, **Edit Source**; on a behavior, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:120
+#: docs/user-guide/studio/canvas.md:121
 msgid "What the canvas never shows"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:122
+#: docs/user-guide/studio/canvas.md:123
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its reference links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:129
+#: docs/user-guide/studio/canvas.md:130
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr ""
 
@@ -5476,7 +5476,7 @@ msgid "Library tab"
 msgstr ""
 
 #: docs/user-guide/studio/library.md:28
-msgid "The **Standard Library**: ready-made items in two sections, **Concepts** and **Sources**, with a search field above. Each section is grouped (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_; the Sources add _External_). A Concept row carries a grey socket glyph — filled when the item comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover. Item names and descriptions follow the language you chose, and so does search — `温度` finds the Temperature Sensor in 简体中文, `センサー` in 日本語; the names of what they create do not change."
+msgid "The **Standard Library**: ready-made items in two sections, **Concepts** and **Sources**, with a search field above. Each section is grouped (_Environment_, _Human interaction_, _Geometry & motion_, _Mechanical_, _Electrical & system_, _Visual & display_, _Actuation_, _Audio_; the Sources add _External_). A Concept row carries a grey socket glyph — filled when the item comes with a value form, hollow when it leaves the value to you — the unit or kind in the right column, and the description on hover. Item names and descriptions follow the language you chose, and so does search — `温度` finds the Temperature Input in 简体中文, `センサー` in 日本語; the names of what they create do not change."
 msgstr ""
 
 #: docs/user-guide/studio/library.md:38
@@ -5492,18 +5492,34 @@ msgid "Sources"
 msgstr ""
 
 #: docs/user-guide/studio/library.md:51
-msgid "The **Sources** section — _Temperature Sensor_, _Tilt Sensor_, _Distance Sensor_, _Ambient Light Sensor_, _Button State_, _Encoder Position_, _Analog Input_, _External Value_ — is for values the environment provides. Its rows wear the Source glyph instead of the socket, the hover says what the item creates, and each one inserts **two** things at once: the concept (_RoomTemp_, a temperature) and a [Source](canvas.md) that provides it (_TempSensor_), placed to the concept's left with a link between them. The concept opens for renaming as usual; rename the Source in its inspector. The two arrive together and one Undo removes both."
+msgid "A Source is a value entering the behavior model from the environment — a relationship that reads nothing, produces a concept, and has no formula. The **Sources** section — _Temperature Input_, _Tilt Input_, _Distance Input_, _Ambient Light Input_, _Button Input_, _Encoder Input_, _Analog Input_, _External Input_ — holds **presets** for making one. Its rows wear the Source glyph instead of the socket; the right column names the value form a preset suggests, and the hover says what a preset does: _an input for a Temperature concept you choose — existing, or new_."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:61
-msgid "Not every Source is a sensor — a button's state, an analog level and a value a host or a network provides are Sources too — and no Source says which part will provide it: that belongs to [deployment](deploy.md). _Analog Input_ and _External Value_ leave the value form to you: choose the quantity once you know what the input measures. The same two items can be made by hand: a concept, then _New source…_ from the canvas's **Add Source ▸** menu."
+#: docs/user-guide/studio/library.md:60
+msgid "Double-click a row, press Return on it, or drag it onto the canvas, and the **Source sheet** opens. Its one decision is the concept the Source provides:"
+msgstr ""
+
+#: docs/user-guide/studio/library.md:63
+msgid "**Existing concept** — pick one of the design's concepts. Two concepts of the same kind — _RoomTemperature_ and _MotorTemperature_, both temperatures — are two rows, and you choose the one you mean; the preset lists the concepts of its kind first. Only the Source is created; the concept stays as it is. One Undo removes the Source."
 msgstr ""
 
 #: docs/user-guide/studio/library.md:68
+msgid "**New concept** — a name, a value form, a unit and a meaning, prefilled by the preset (_Temperature_, Quantity, K). The concept and its Source are created together, in one step; one Undo removes both."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:72
+msgid "Then the **Source name** — suggested from the concept (_roomTemperatureInput_) and yours to change — and its meaning. The sheet shows the exact objects it will create, as the Code view will write them; _Create Source_ is enabled once the choice is complete, and Cancel leaves the project untouched. A new concept lands where you dropped or right-clicked and opens for renaming, with its Source to the left; a Source over an existing concept lands there and is selected."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:79
+msgid "Not every input is a sensor — a button's state, an analog level and a value a host or a network provides are Sources too — and no Source says which part will provide it: that belongs to [deployment](deploy.md). _Analog Input_ and _External Input_ leave the value form to you: choose it once you know what the input measures. _New Source…_ on the canvas's **Add Source ▸** menu is the same sheet without a preset."
+msgstr ""
+
+#: docs/user-guide/studio/library.md:86
 msgid "The items and the list of quantity kinds come from the compiler service, so the Library, the unit picker and the textual syntax agree on names."
 msgstr ""
 
-#: docs/user-guide/studio/library.md:73
+#: docs/user-guide/studio/library.md:91
 msgid "[Concepts](../concepts/concepts.md) · [Canvas](canvas.md) · [Inspector](inspector.md)"
 msgstr ""
 
@@ -7761,7 +7777,7 @@ msgstr ""
 #: docs/user-guide/workflows/grouping-behavior.md:51
 #: docs/user-guide/workflows/multi-output-behavior.md:30
 #: docs/user-guide/workflows/package-as-component.md:45
-#: docs/user-guide/workflows/sensor-to-output.md:51
+#: docs/user-guide/workflows/sensor-to-output.md:52
 msgid "What BDL means by this"
 msgstr ""
 
@@ -7780,7 +7796,7 @@ msgstr ""
 #: docs/user-guide/workflows/grouping-behavior.md:62
 #: docs/user-guide/workflows/multi-output-behavior.md:45
 #: docs/user-guide/workflows/package-as-component.md:61
-#: docs/user-guide/workflows/sensor-to-output.md:76
+#: docs/user-guide/workflows/sensor-to-output.md:77
 msgid "If it does not work"
 msgstr ""
 
@@ -8273,73 +8289,73 @@ msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientL
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:20
-msgid "**The Source.** _Mappings_ **+**: `ambient`, reads nothing, produces AmbientLight — a Source; leave it without a formula. **Timing › Updates in**: _interaction_. (The Library's _Ambient Light Sensor_ makes steps 1 and 2 at once.)"
+msgid "**The Source.** _Mappings_ **+**: `ambient`, reads nothing, produces AmbientLight — a Source; leave it without a formula. **Timing › Updates in**: _interaction_. (The Library's _Ambient Light Input_ opens the Source sheet with steps 1 and 2 prefilled: choose _New concept_ and both are made at once.)"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:24
+#: docs/user-guide/workflows/sensor-to-output.md:25
 msgid "**The rule.** _Mappings_ **+**: `adaptBrightness`, reads **Brightness** and **AmbientLight**, produces **Brightness**. Formula:"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:31
+#: docs/user-guide/workflows/sensor-to-output.md:32
 msgid "Type it in the **Text** view, or assemble it in the **Formula** view: **Choose** on the empty slot gives `if ? then ? else ?`, and each slot offers what fits — AmbientLight, **>**, the number with `lx`, then Brightness, **÷**, `2`, and Brightness again. _Add definition._ A rule may read and produce the same concept: this one takes a brightness and returns an adjusted brightness."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:38
+#: docs/user-guide/workflows/sensor-to-output.md:39
 msgid "**Rewire the value.** Select `brightness` and change its formula to"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:44
+#: docs/user-guide/workflows/sensor-to-output.md:45
 msgid "_Save definition._ The output is still driven by `brightness`; nothing else changes."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:47
+#: docs/user-guide/workflows/sensor-to-output.md:48
 msgid "**Simulate.** ⌘2. Two inputs now: `tilt` and `ambient`. Set tilt `1.5708`, ambient `100`, **Step**: `Brightness(1)`. Set ambient `500`, **Step**: `Brightness(0.5)`."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:53
+#: docs/user-guide/workflows/sensor-to-output.md:54
 msgid "`ambient` and `tilt` are the design's **Sources**: values the environment provides, in the _interaction_ domain. What supplies them is outside the design."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:56
+#: docs/user-guide/workflows/sensor-to-output.md:57
 msgid "`dimByTilt` and `adaptBrightness` are **rules** with no domain of their own; they run when `brightness` runs."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:58
+#: docs/user-guide/workflows/sensor-to-output.md:59
 msgid "`brightness` is the **one value** the light shows, and the **only driver** of _light_. Everything the lamp does is legible from this one formula."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:60
+#: docs/user-guide/workflows/sensor-to-output.md:61
 msgid "The comparison `AmbientLight > 300 lx` is checked for dimension like any arithmetic: comparing an illuminance with `300` (no unit) would be refused."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:63
+#: docs/user-guide/workflows/sensor-to-output.md:64
 msgid "Variations"
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:65
+#: docs/user-guide/workflows/sensor-to-output.md:66
 msgid "**A switch instead of a sensor.** A concept _Held_ with value form **On / off** (◇), an input `held`, a rule `chooseBrightness` reading Held and Tilt with the formula `if Held then dimByTilt(Tilt) else 0`, and the value `brightness = chooseBrightness(held, tilt)`. Inside a rule you name the concepts it reads; inside a value you name the design's values and apply its rules."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:71
+#: docs/user-guide/workflows/sensor-to-output.md:72
 msgid "**A count.** A concept _Presses_ with value form **Count** (□); counts compare and add like numbers but carry no unit, and cannot be matched against number patterns."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:74
+#: docs/user-guide/workflows/sensor-to-output.md:75
 msgid "**Memory.** `acc = delay(0, acc + x)` — see [Timing](../concepts/timing.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:78
+#: docs/user-guide/workflows/sensor-to-output.md:79
 msgid "A red line under the formula naming two dimensions that do not fit — a unit is missing on a number (`300` instead of `300 lx`), or the two sides of a comparison measure different things. [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:82
+#: docs/user-guide/workflows/sensor-to-output.md:83
 msgid "Simulation refuses with _ambient needs a value_ — a new input has no value yet; type one."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:84
+#: docs/user-guide/workflows/sensor-to-output.md:85
 msgid "The light's cell in the trace is empty — `brightness` lost its domain, or the output's domain differs. [Timing](../troubleshooting/timing-errors.md)."
 msgstr ""
 
-#: docs/user-guide/workflows/sensor-to-output.md:89
+#: docs/user-guide/workflows/sensor-to-output.md:90
 msgid "[A second output](multi-output-behavior.md) · [Formula language](../reference/formula-language.md)"
 msgstr ""

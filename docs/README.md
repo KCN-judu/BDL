@@ -145,11 +145,13 @@ each of its questions was answered is in the
   modifiers, `zip`'s cost in the core, a device binding for a Source.
 - **Active work:** the first embedded platform adapter is priority 1; nothing
   else is in progress in this repository.
-- **Recently changed:** the Code view as an IDE surface (protocol 0.22:
-  completion at the caret, a hover card at the name, definition across files, a
-  references list and _Format_ as one edit, all from `bdl-ide` over the text as
-  typed — `bdl_ide::navigation` is the one answer to what is at a position for
-  Studio and the language server alike;
+- **Recently changed:** the Source sheet (protocol 0.23: a Source is created
+  over a concept the designer chooses — existing, or new in one transaction —
+  and the Standard Library's Source items are presets named _… Input_); the Code
+  view as an IDE surface (protocol 0.22: completion at the caret, a hover card
+  at the name, definition across files, a references list and _Format_ as one
+  edit, all from `bdl-ide` over the text as typed — `bdl_ide::navigation` is the
+  one answer to what is at a position for Studio and the language server alike;
   `docs/changes/unreleased/2026-09-code-view-ide.md`); semantic highlighting
   (ADR-0035, protocol 0.21: one classifier in `bdl-ide` on the LSP token
   vocabulary plus `unit` and `slot`, the language server and the daemon serving
