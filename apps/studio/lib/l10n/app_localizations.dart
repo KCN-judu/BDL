@@ -309,7 +309,7 @@ abstract class AppLocalizations {
   /// **'Waiting for the compiler. The status line shows the connection.'**
   String get waitingForTheCompilerTheStatusLine;
 
-  /// Welcome page: recently opened projects; canvas menu: recently used templates.
+  /// Welcome page: recently opened projects; canvas menu: recently used library items.
   ///
   /// In en, this message translates to:
   /// **'Recent'**
@@ -615,7 +615,7 @@ abstract class AppLocalizations {
   /// **'Project'**
   String get project;
 
-  /// Sidebar tab: the concept Library (templates).
+  /// Sidebar tab: the Standard Library (Concept items and Source presets).
   ///
   /// In en, this message translates to:
   /// **'Library'**
@@ -687,7 +687,7 @@ abstract class AppLocalizations {
   /// **'Behaviors'**
   String get behaviors;
 
-  /// Button: add a template to the project.
+  /// Button: add a library item to the project.
   ///
   /// In en, this message translates to:
   /// **'Add'**

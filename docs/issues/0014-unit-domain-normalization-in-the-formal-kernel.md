@@ -52,14 +52,14 @@ evaluation and clocks unchanged — in the style of Phase 11's `Natural.lean`.
 
 ## Resolution
 
-Resolved by FV Phase 12 (`BDL/Surface/UnitDomain.lean`, `UNIT_DOMAIN_NOTE.md`,
-`dd44a84`): the canonical type lives in an interface layer `CTy` above the
-kernel, unit elimination is a total function `elim` with
-`elim_canonical : elim (canonical s) = some (encode s)`, the encodings are
-inverse over concept signatures (`encode_decode`, `decode_encode`,
-`encode_injective`, `canonical_injective`), a declaration without inputs has no
-binder (`zero_input_obligation`, `lams_typed`) and holds memory
-(`zero_input_memory`), and `f`, `f()`, `f(())` are one reference
+Resolved by FV Phase 12 (`BDL/Surface/UnitDomain.lean`,
+`docs/notes/unit-domain-normalization.md`, `dd44a84`): the canonical type lives
+in an interface layer `CTy` above the kernel, unit elimination is a total
+function `elim` with `elim_canonical : elim (canonical s) = some (encode s)`,
+the encodings are inverse over concept signatures (`encode_decode`,
+`decode_encode`, `encode_injective`, `canonical_injective`), a declaration
+without inputs has no binder (`zero_input_obligation`, `lams_typed`) and holds
+memory (`zero_input_memory`), and `f`, `f()`, `f(())` are one reference
 (`refForms_agree`). The kernel gains no unit type. Recorded in
 `docs/project/formal-correspondence.md`; ADR-0032 builds the Source role on the
 same phase.

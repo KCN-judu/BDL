@@ -11,11 +11,11 @@ superseded-by: []
 
 > **Revision of 2026-09-20.** The first draft's claims were tested in the formal
 > development (BDL_FV Phase 13, `af25567`, `BDL/Surface/Provision.lean`,
-> `PROVISION_NOTE.md`). The construction exists and is a construction over
-> designs; four of the seven claims were too strong or wrongly worded and are
-> restated below as proved. Nothing in production implements this proposal.
-> Status stays _draft_ for human review; what remains is a design decision, not
-> a formal question.
+> `docs/notes/source-provision-by-device-transducers.md`). The construction
+> exists and is a construction over designs; four of the seven claims were too
+> strong or wrongly worded and are restated below as proved. Nothing in
+> production implements this proposal. Status stays _draft_ for human review;
+> what remains is a design decision, not a formal question.
 
 ## Problem
 
@@ -62,10 +62,10 @@ Goals:
 Non-goals:
 
 - A `source` kind, an effect type, or any change to `Ty`, `HasType`, `Grant`,
-  causality or clocks (D-118, ADR-0006). Provision is a construction _over_
+  causality or clocks (FVD-0118, ADR-0006). Provision is a construction _over_
   designs, like instantiation (Phase 8), not a new typing rule. **Confirmed:**
   nothing entered `Core`; `provision` is a function on environments built from
-  `DesignDecl`, `declRef`, `app`, `mk` and the clock environment (D-121).
+  `DesignDecl`, `declRef`, `app`, `mk` and the clock environment (FVD-0121).
 - The output side is stated for symmetry but not designed here (see the last
   section). The formal audit found no shared abstraction that makes it free.
 - Sampling rates, bus scheduling, interrupt latency: the raw declaration has the
@@ -241,10 +241,11 @@ A sink `o` with `accepts = C` and a device channel `⟨rep, tr_out, raw_out⟩` 
 `w := app tr_out (rep (declRef d))` where `d` drives `o`, and a sink `o'` with
 `accepts = raw_out` driven by `w`; `DriveWF`, `SingleDriver`, `CompleteOutputs`
 and `PhysicalOutput` through `tr_out`. This is the "explicit `rep`-typed
-declaration in between" of `REPORT.md` §6.5, made by deployment rather than by
-hand. It is listed as the duality note; the input-side proofs did not make it
-free (the drive edge's type equality needs the new declaration; only `simulate`
-would be reused), and it is not part of this proposal.
+declaration in between" of `docs/reports/` (one page per phase) §6.5, made by
+deployment rather than by hand. It is listed as the duality note; the input-side
+proofs did not make it free (the drive edge's type equality needs the new
+declaration; only `simulate` would be reused), and it is not part of this
+proposal.
 
 ## Compatibility and migration
 
@@ -270,22 +271,24 @@ provisioned deployment_: the slot for `s` is replaced by a slot for `r` at
   gives the library nothing to reuse. Provision is this construction done by
   deployment from a catalog, with the proof that the designer could not have
   told the difference.
-- **A `Sensor` kind or an effect type.** Rejected by D-118, D-121 and ADR-0032
-  on the same evidence: every `() -> A` unresolved is environment provision
-  "whatever its type"; provision needs no new kind, only a construction.
+- **A `Sensor` kind or an effect type.** Rejected by FVD-0118, FVD-0121 and
+  ADR-0032 on the same evidence: every `() -> A` unresolved is environment
+  provision "whatever its type"; provision needs no new kind, only a
+  construction.
 - **Put `raw` on the concept** (`concept RoomTemp : Temperature from Voltage`).
   Rejected: the raw type belongs to the device, not the meaning; two products
-  with different sensors would need two concepts (D-124).
+  with different sensors would need two concepts (FVD-0124).
 - **The singleton as the primitive**, generalized later. Rejected: the IMU case
   and the joint-section finding are invisible in the singleton; the shared-raw
-  form is primitive and the singleton its case (D-125).
+  form is primitive and the singleton its case (FVD-0125).
 - **"Closed and well-typed" as the profile condition.** Rejected: `exD` — a
-  typed term with memory is not a function of the raw reading (D-122).
+  typed term with memory is not a function of the raw reading (FVD-0122).
 
 ## Implementation and evidence
 
 Formal (done, BDL_FV Phase 13, `af25567`): `BDL/Surface/Provision.lean`,
-`BDL/Experiments/ProvisionExamples.lean`, `PROVISION_NOTE.md`, D-121..D-130; 92
+`BDL/Experiments/ProvisionExamples.lean`,
+`docs/notes/source-provision-by-device-transducers.md`, FVD-0121 … FVD-0130; 92
 theorems on `propext`/`Quot.sound`. `docs/project/formal-correspondence.md`
 carries the row (**formally proved** (model) · **not implemented**).
 
@@ -315,10 +318,10 @@ designed here):
 ## Open questions
 
 - **Memory in a transducer.** Debouncing and filtering want `delay` inside `tr`.
-  Phase 12 permits memory in a zero-input realization (D-116), so `s := tr(r)`
-  may hold it — but then the channel is not a function and transparency and
-  exactness need restating over streams. This version requires purity; the
-  extension is recorded (REPORT open items).
+  Phase 12 permits memory in a zero-input realization (FVD-0116), so
+  `s := tr(r)` may hold it — but then the channel is not a function and
+  transparency and exactness need restating over streams. This version requires
+  purity; the extension is recorded (REPORT open items).
 - **Whose clock is the raw declaration's.** `Κ r = Κ s` is the least commitment
   and what is proved; a device with its own rate is a `sync` at deployment,
   which Phase 5/8 already cover but which the Deploy page would have to offer,

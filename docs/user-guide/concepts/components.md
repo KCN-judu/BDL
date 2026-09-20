@@ -45,7 +45,7 @@ _Brightness_, distinct from every other instance's and from the system's. A
 component can instead declare a concept **shared** — _this is the system's
 Brightness_ — so that its ports carry the same concept as the rest of the
 design. Sharing is a decision you make; it is never inferred from names, units
-or library templates.
+or library items.
 
 ## Where components come from
 

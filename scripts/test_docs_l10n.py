@@ -28,6 +28,10 @@ class Segmentation(unittest.TestCase):
         src = "---\nkind: x\n---\n\n```bdl\nconcept A\n```\n\n![alt text](a.png)\n\n<!-- note -->\n\nText.\n"
         self.assertEqual(self.texts(src), ["Text."])
 
+    def test_a_wrapped_image_line_is_not_a_message(self) -> None:
+        src = "![A long alt text that\nwraps over two lines](a.png)\n\nText.\n"
+        self.assertEqual(self.texts(src), ["Text."])
+
     def test_bdl_syntax_inside_fences_is_never_a_message(self) -> None:
         src = "```text\nmapping m: () -> B\n```\n"
         self.assertEqual(self.texts(src), [])

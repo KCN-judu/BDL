@@ -1,8 +1,6 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/first-simulation.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/first-simulation.md) · [简体中文](../../zh_Hans/getting-started/first-simulation.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 最初のシミュレーション
 

@@ -9,9 +9,9 @@ status: current
 What a design's collections need of a target with finite memory, how the
 toolchain computes it, and what it refuses. The list semantics of
 [equation-library.md](equation-library.md) §1 is untouched by everything here: a
-list is unbounded data (FV Phase 9a, D-83), a deployment is finite, and the gap
-between the two is a **validation obligation** — decided on the lowered plan and
-the deployment schedule, never in typing and never by a silent policy of the
+list is unbounded data (FV Phase 9a, FVD-0083), a deployment is finite, and the
+gap between the two is a **validation obligation** — decided on the lowered plan
+and the deployment schedule, never in typing and never by a silent policy of the
 generated code (ADR-0024, ADR-0027).
 
 Implemented in `crates/bdl-exec-ir/src/bounds.rs` (the static bounds),

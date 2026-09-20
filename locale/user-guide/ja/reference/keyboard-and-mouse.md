@@ -1,8 +1,6 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/reference/keyboard-and-mouse.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/reference/keyboard-and-mouse.md) · [简体中文](../../zh_Hans/reference/keyboard-and-mouse.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # キーボードとマウス
 
@@ -50,16 +48,16 @@
 | ⌃Space | 補完 |
 | ↑ / ↓ · Return / Tab | 補完リスト内を移動 · 確定 |
 
-## Code view
+## コードビュー
 
 | キー | 動作 |
 | --- | --- |
-| ⌃Space | completion at the caret |
-| ↑ / ↓ · Return / Tab · Esc | move in the completion list · accept · close it |
-| rest the pointer on a name | its card; typing or moving away hides it |
-| ⌘-click a name · F12 | go to where it is declared (another file opens) |
-| ⇧F12 | list every place that names it; Esc or × closes the list |
-| ⌥⇧F · _Format_ | lay the file out the canonical way, as one edit |
+| ⌃Space | キャレット位置で補完 |
+| ↑ / ↓ · Return / Tab · Esc | 補完リスト内を移動 · 確定 · 閉じる |
+| 名前の上にポインタを置く | そのカード。入力するか離れると隠れる |
+| 名前を ⌘-クリック · F12 | 宣言されている場所へ移動（別のファイルが開く） |
+| ⇧F12 | それを名指しするすべての場所を列挙。Esc か × でリストを閉じる |
+| ⌥⇧F · _フォーマット_ | ファイルを正規のレイアウトに整える、1 つの編集として |
 
 ## インライン名前変更（キャンバス、ライブラリの行）
 

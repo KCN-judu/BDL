@@ -13,9 +13,9 @@ production boundary of the equation language: the data core, the equations
 (their names, shapes and what their values must be able to do), how a use is
 resolved, the ordering policy, and the diagnostics. It is the production
 counterpart of BDL_FV Phases 9a, 9b and 9c (`fad79d9`, `ee2862e`, `6a8ee96`;
-`POLYMORPHIC_EQUATION_LANGUAGE_NOTE.md`), consumed as written: nothing here is
-richer than the formal development, and the formal minimality findings are
-recommendations, not theorems about this implementation
+`docs/notes/polymorphic-equation-language.md`), consumed as written: nothing
+here is richer than the formal development, and the formal minimality findings
+are recommendations, not theorems about this implementation
 (`docs/project/formal-correspondence.md`).
 
 ```text
@@ -183,15 +183,15 @@ the relationship, and the equation is not offered.
 
 ## 4. Sets, intervals, records, quantifiers, enums
 
-Following FV D-95/D-96: a finite set is membership in a collection literal
-(`x in [a, b, c]`; duplicates change nothing); an interval is a grouped value
-`(low, high)` with `inInterval`, or the surface range `x in lo .. hi` that is
-`inRange(x, lo, hi)` and never a value; a record would be a right-nested grouped
-value (no record syntax exists); finite quantification is `all`/`any` over a
-collection, written as a call or as the binder form `all x in xs: body` (no
-unbounded `forall`/`exists` — FV Phase 11 D-111..D-114 remove the general
-quantifier, comprehension and interval type; ISS-0001 and ISS-0010 list the
-surface forms still open); user enums are unchanged (ISS-0005; the formal
+Following FVD-0095 / FVD-0096: a finite set is membership in a collection
+literal (`x in [a, b, c]`; duplicates change nothing); an interval is a grouped
+value `(low, high)` with `inInterval`, or the surface range `x in lo .. hi` that
+is `inRange(x, lo, hi)` and never a value; a record would be a right-nested
+grouped value (no record syntax exists); finite quantification is `all`/`any`
+over a collection, written as a call or as the binder form `all x in xs: body`
+(no unbounded `forall`/`exists` — FV Phase 11, FVD-0111 … FVD-0114 remove the
+general quantifier, comprehension and interval type; ISS-0001 and ISS-0010 list
+the surface forms still open); user enums are unchanged (ISS-0005; the formal
 recommendation is a tag paired with an optional payload). No `Set`, interval,
 record or sum type exists in the kernel.
 
@@ -253,4 +253,5 @@ principal-type inference; user-defined type classes, `class`/`instance`/`trait`,
 dictionaries; GADTs, dependent, row and existential types; general recursion,
 fixpoints, loops; `Set`, interval and record types; general logical quantifiers;
 new temporal primitives. Each is either derivable from the basis above or was
-rejected in the formal development (`POLYMORPHIC_EQUATION_LANGUAGE_NOTE.md` §6).
+rejected in the formal development
+(`docs/notes/polymorphic-equation-language.md` §6).

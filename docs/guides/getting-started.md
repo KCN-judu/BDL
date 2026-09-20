@@ -93,7 +93,7 @@ crates/
   bdl-codegen-rust/     ExecIr → owned Rust AST → no_std core crate + host bridge + manifest (docs/architecture/codegen-rust.md)
   bdl-compiler/         analyze(snapshot) → ProjectAnalysis; compile(snapshot, options) → CompileArtifact
   bdl-system/           behaviour systems: components, instances, bindings → flatten → the flat design (docs/evidence/behavior-systems-correspondence.md)
-  bdl-library/          concept libraries: templates → ordinary concepts (docs/spec/concept-library.md)
+  bdl-library/          the Standard Library: items and Source presets → ordinary objects (docs/spec/concept-library.md)
   bdl-ide-db/           IDE ground state: host, overlays, entity refs, projections, snapshots (docs/architecture/ide-service.md)
   bdl-ide/              semantic IDE queries: diagnostics, hover, completion, references, rename, actions
   bdl-lsp/              the LSP adapter (bdl-lsp binary over stdio)
@@ -139,7 +139,7 @@ persistence edges.
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | use Studio as a designer or prototyper | `docs/user-guide/README.md` — tutorials, concepts, the interface, troubleshooting                                                                                          |
 | understand the system                  | `docs/README.md` (the front door), `docs/architecture/overview.md`, then `docs/decisions/` (short, numbered)                                                               |
-| understand the language                | `docs/background/paper-digest.md` (Chinese), `docs/spec/kernel.md` (exact kernel contract), then the paper                                                                 |
+| understand the language                | `docs/background/paper-digest.md`, `docs/spec/kernel.md` (exact kernel contract), then the paper                                                                           |
 | add a compiler pass                    | `docs/architecture/compiler-pipeline.md`, `docs/architecture/ir.md`, `crates/bdl-ir`, then the pass crate it belongs to                                                    |
 | touch the editor                       | `docs/architecture/studio-ui.md` (design system + interaction standard), `apps/studio/lib/app/reducer.dart`                                                                |
 | change the wire format                 | `docs/spec/protocol.md`, `crates/bdl-protocol/proto/bdl/v1/bdl.proto`, then `just proto`                                                                                   |

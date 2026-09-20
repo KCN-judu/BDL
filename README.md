@@ -32,7 +32,7 @@ for what exists, the [roadmap](docs/project/roadmap.md) for what is next, and
 apps/studio/        Flutter BDL Studio (presentation; semantic truth comes from bdld)
 crates/             the Rust workspace — model, IR, syntax, elaboration, checking, reactive
                     semantics, outputs, hardware, executable IR, lowering, Rust codegen,
-                    compiler driver, concept libraries, IDE service, LSP, protocol, bdld
+                    compiler driver, the Standard Library, IDE service, LSP, protocol, bdld
                     (docs/architecture/overview.md lists each crate and its boundary)
 runtime/            bdl-runtime-core (no_std vocabulary of generated cores), bdl-runtime-host
 hardware/boards/    board descriptions as data (arduino_nano, big_board)

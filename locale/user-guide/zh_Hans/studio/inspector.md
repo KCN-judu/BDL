@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/inspector.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/inspector.md) · 简体中文 · [日本語](../../ja/studio/inspector.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 检查器
 
@@ -28,7 +26,7 @@
 | **生成** | 带图形符号的弹出菜单——对于来源，标题为**提供** | 一次编辑 |
 | **关系** | 公式字段及其判定行；_添加定义_ / _保存定义_ / _还原_ / _分离定义_；字段下方的发现；对于来源，字段上方有 _实现：由环境提供；尚未绑定设备。_；_依赖于_（公式提到的关系）和 _被提及于_（其公式提到本关系的关系），以名字链接呈现 | 见[公式编辑器](formula-editor.md)；这两行就是画布上的引用连线 |
 | **时序** | _更新于_——一个域，或 _任意时序域_；时序发现项 | 见 [时序](../../../../docs/user-guide/concepts/timing.md) |
-| **驱动** | for a value: the output it drives, or none; for a rule: _A rule cannot drive an output — connect the value that applies this rule._ and, when one value applies it, its name with _Show_; connection findings | only a value — a relationship without inputs — is offered the pop-up |
+| **驱动** | 对于值：它驱动的输出，或无；对于规则：_规则不能驱动输出——请连接应用这条规则的值。_，当有一个值应用它时，显示该值的名字和 _显示_；连接发现项 | 只有值——没有输入的关系——才会提供弹出菜单 |
 | **修复** | 工具针对该关系的发现项提供的操作：就绪时是按钮，需要选择时是弹出菜单，受阻时显示原因 | 作为普通的、可撤销的编辑应用 |
 | **删除 …** |  |  |
 
@@ -42,7 +40,7 @@
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | **含义** | 名称、含义 |  |
 | **输出** | _接受_、_更新于_、_必需_ |  |
-| **驱动方** | the state (_Driven by brightness._, _Undriven — the design is incomplete without a driver._, …); claimants with _disconnect_; a _Connect_ pop-up of the design's values of the accepted concept, or one sentence when there is none | 见 [物理输出](../../../../docs/user-guide/concepts/physical-outputs.md) |
+| **驱动方** | 状态（_由 brightness 驱动。_、_未驱动——没有驱动方设计不完整。_，…）；带 _断开_ 的争夺者；一个列出设计中生成所接受概念的各个值的 _连接_ 弹出菜单，没有时则是一句说明 | 见 [物理输出](../../../../docs/user-guide/concepts/physical-outputs.md) |
 | **修复** | _把 … 从 … 分离_、_创建上游组合映射_、_为 … 连接驱动方_ |  |
 | **删除 …** |  |  |
 

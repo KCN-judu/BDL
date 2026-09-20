@@ -62,7 +62,7 @@ HEADING = re.compile(r"^(#{1,6}\s+)(.*?)(\s+#+)?\s*$")
 LIST_ITEM = re.compile(r"^(\s*(?:[-*+]|\d+[.)])\s+)(.*)$")
 TABLE_DELIM = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
 QUOTE = re.compile(r"^(\s*>\s?)(.*)$")
-IMAGE_ONLY = re.compile(r"^\s*!\[[^\]]*\]\([^)]*\)\s*$")
+IMAGE_ONLY = re.compile(r"^\s*!\[.*\]\([^)\s]*\)\s*$")
 HTML = re.compile(r"^\s*<")
 LINK = re.compile(r"(!?\[[^\]]*\]\()([^)\s]+)(\)|\s)")
 
@@ -183,7 +183,12 @@ def segment(lines: list[str]) -> list[Block]:
                 break
             text.append(nxt.strip())
             i += 1
-        blocks.append(Block(text=" ".join(text), line=start + 1))
+        joined = " ".join(text)
+        # An image whose alt text wraps over several lines is still an image.
+        if IMAGE_ONLY.match(joined):
+            blocks.append(Block(literal=lines[start:i]))
+        else:
+            blocks.append(Block(text=joined, line=start + 1))
     return blocks
 
 

@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-simulation.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-simulation.md) · 简体中文 · [日本語](../../ja/getting-started/first-simulation.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一次仿真
 

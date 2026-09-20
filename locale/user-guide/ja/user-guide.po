@@ -18,142 +18,142 @@ msgid "Behavior Designer is a desktop tool for designing **how a product behaves
 msgstr "Behavior Designer は、**製品がどう振る舞うか**——何を感知し、何を判断し、何を表示・駆動するか——をファームウェアを書く前に設計するためのデスクトップツールです。振る舞いを、名前の付いた値とそれらの間の関係として記述します。ツールは構築中の設計を検査し、ティックごとにシミュレートし、特定のボードに収まるかどうかを教えてくれます。"
 
 #: docs/user-guide/README.md:9
-msgid "The language behind the tool is called **BDL**. You do not need to know the language to use the tool: the canvas, the inspector and the formula field _are_ the language. A text form of BDL exists for people who prefer an editor; see [Textual BDL](textual/overview.md)."
-msgstr "ツールの背後にある言語は **BDL** と呼ばれます。ツールを使うのに言語を知る必要はありません。キャンバス、インスペクター、数式フィールドが言語_そのもの_です。エディタを好む人向けに BDL のテキスト形式もあります。[テキスト形式の BDL](textual/overview.md) を参照してください。"
+msgid "The language behind the tool is called **BDL**. The canvas, the inspector and the formula field are one way of writing it; the text form is another, for people who prefer an editor — see [Textual BDL](textual/overview.md). Either way you are describing behavior in a language; what the tool keeps out of your way is the machine: which pin, which protocol, which HAL call are decided later, at deployment."
+msgstr "ツールの背後にある言語は **BDL** と呼ばれます。キャンバス、インスペクター、数式フィールドはそれを書く一つの方法で、テキスト形式はエディタを好む人のためのもう一つの方法です——[テキスト形式の BDL](textual/overview.md) を参照してください。どちらでも、あなたは言語で振る舞いを記述しています。ツールが遠ざけてくれるのは機械の側です。どのピン、どのプロトコル、どの HAL 呼び出しかは、後でデプロイ時に決めます。"
 
-#: docs/user-guide/README.md:14
+#: docs/user-guide/README.md:16
 msgid "What problem it solves"
 msgstr "解決する問題"
 
-#: docs/user-guide/README.md:16
+#: docs/user-guide/README.md:18
 msgid "A product's behavior is usually decided in sketches and spreadsheets and then rediscovered in code, where the meaning of each number is lost. In Behavior Designer a value has a **meaning** (a _Brightness_ is not an _Opacity_, even if both are numbers between 0 and 1), a relationship between values is checked for units and dimensions, timing is explicit, and a physical output can only be driven by one relationship. Unfinished designs are normal: you can name a relationship before you know its formula, and the tool tells you what is still open rather than refusing to work."
 msgstr "製品の振る舞いはたいていスケッチや表計算で決められ、その後コードの中で再発見されます。そこでは各数値の意味が失われています。Behavior Designer では値に**意味**があり（_明るさ_ は _不透明度_ ではありません。どちらも 0 から 1 の数であっても）、値の間の関係は単位と次元が検査され、タイミングは明示的で、物理出力は 1 つの関係からしか駆動できません。未完成の設計は普通のことです。数式が分かる前に関係に名前を付けられ、ツールは動作を拒むのではなく、何がまだ決まっていないかを教えてくれます。"
 
-#: docs/user-guide/README.md:25
+#: docs/user-guide/README.md:27
 msgid "What you can do here"
 msgstr "ここでできること"
 
-#: docs/user-guide/README.md:29
+#: docs/user-guide/README.md:31
 #: docs/user-guide/studio/code-view.md:8
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "**Design**"
 msgstr "**設計**"
 
-#: docs/user-guide/README.md:29
+#: docs/user-guide/README.md:31
 msgid "name the concepts of your product, relate them with formulas, decide their timing, and connect the results to physical outputs"
 msgstr "製品のコンセプトに名前を付け、数式で関係づけ、タイミングを決め、結果を物理出力につなぐ"
 
-#: docs/user-guide/README.md:30
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/README.md:32
+#: docs/user-guide/studio/workspace.md:44
 msgid "**Simulate**"
 msgstr "**シミュレート**"
 
-#: docs/user-guide/README.md:30
+#: docs/user-guide/README.md:32
 msgid "feed values in, step the design tick by tick, and watch every value — with the same evaluator that defines the language"
 msgstr "値を与え、設計をティックごとに進め、すべての値を観察する——言語を定義するのと同じ評価器で"
 
-#: docs/user-guide/README.md:31
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/README.md:33
+#: docs/user-guide/studio/workspace.md:45
 msgid "**Deploy**"
 msgstr "**デプロイ**"
 
-#: docs/user-guide/README.md:31
+#: docs/user-guide/README.md:33
 msgid "choose a board and see whether the design's outputs can be placed on its pins, and why not if they cannot"
 msgstr "ボードを選び、設計の出力をそのピンに配置できるか、できないならなぜかを確認する"
 
-#: docs/user-guide/README.md:32
+#: docs/user-guide/README.md:34
 msgid "**Organize and reuse**"
 msgstr "**整理と再利用**"
 
-#: docs/user-guide/README.md:32
+#: docs/user-guide/README.md:34
 msgid "group related relationships into a behavior, package a behavior as a reusable component, and compose instances of components into a larger system"
 msgstr "関連する関係を振る舞いにまとめ、振る舞いを再利用可能なコンポーネントとしてパッケージ化し、コンポーネントのインスタンスをより大きなシステムに組み合わせる"
 
-#: docs/user-guide/README.md:34
+#: docs/user-guide/README.md:36
 msgid "Not yet in the tool: flashing a board, live values from a running device, and importing components from other projects. The guide says so where it matters."
 msgstr "まだツールにないもの：ボードへの書き込み、動作中のデバイスからのライブ値、他のプロジェクトからのコンポーネントのインポート。ガイドは必要な箇所でそう明記しています。"
 
-#: docs/user-guide/README.md:37
+#: docs/user-guide/README.md:39
 msgid "Where to start"
 msgstr "どこから始めるか"
 
-#: docs/user-guide/README.md:39
+#: docs/user-guide/README.md:41
 msgid "If you are…"
 msgstr "あなたが…"
 
-#: docs/user-guide/README.md:39
+#: docs/user-guide/README.md:41
 msgid "Start here"
 msgstr "ここから"
 
-#: docs/user-guide/README.md:41
+#: docs/user-guide/README.md:43
 msgid "a product or industrial designer who wants to describe a behavior and try it"
 msgstr "振る舞いを記述して試したいプロダクトデザイナーや工業デザイナーなら"
 
-#: docs/user-guide/README.md:41
+#: docs/user-guide/README.md:43
 msgid "[What is BDL?](getting-started/what-is-bdl.md) → [Your first behavior](getting-started/first-behavior.md)"
 msgstr "[BDL とは？](getting-started/what-is-bdl.md) → [最初の振る舞い](getting-started/first-behavior.md)"
 
-#: docs/user-guide/README.md:42
+#: docs/user-guide/README.md:44
 msgid "an embedded prototyper who knows sensors and actuators"
 msgstr "センサーとアクチュエータに詳しい組み込みプロトタイパーなら"
 
-#: docs/user-guide/README.md:42
+#: docs/user-guide/README.md:44
 msgid "[Your first behavior](getting-started/first-behavior.md), then [From sensor to output](workflows/sensor-to-output.md) and [Deploy](studio/deploy.md)"
 msgstr "[最初の振る舞い](getting-started/first-behavior.md)、続いて [センサーから出力へ](workflows/sensor-to-output.md) と [デプロイ](studio/deploy.md)"
 
-#: docs/user-guide/README.md:43
+#: docs/user-guide/README.md:45
 msgid "a code-oriented user who would rather type BDL"
 msgstr "BDL を直接書きたいコード志向のユーザーなら"
 
-#: docs/user-guide/README.md:43
+#: docs/user-guide/README.md:45
 msgid "[Textual BDL — overview](textual/overview.md), which says exactly what works today"
 msgstr "[テキスト形式の BDL — 概要](textual/overview.md)。今日何が動くかを正確に述べています"
 
-#: docs/user-guide/README.md:44
+#: docs/user-guide/README.md:46
 msgid "a researcher or language person who wants the semantics"
 msgstr "意味論を知りたい研究者や言語の人なら"
 
-#: docs/user-guide/README.md:44
+#: docs/user-guide/README.md:46
 msgid "the _Going deeper_ section at the end of each concept page, and [Terminology](reference/terminology.md) → the technical docs in `docs/`"
 msgstr "各コンセプトページ末尾の _さらに深く_ の節、および [用語集](reference/terminology.md) → `docs/` の技術文書"
 
-#: docs/user-guide/README.md:46
+#: docs/user-guide/README.md:48
 msgid "Contents"
 msgstr "目次"
 
-#: docs/user-guide/README.md:48
+#: docs/user-guide/README.md:50
 msgid "**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md)"
 msgstr "**はじめに** [BDL とは？](getting-started/what-is-bdl.md) · [インストールと起動](getting-started/install-and-launch.md) · [最初の振る舞い](getting-started/first-behavior.md) · [最初のシミュレーション](getting-started/first-simulation.md) · [最初のデプロイ確認](getting-started/first-deployment.md)"
 
-#: docs/user-guide/README.md:54
+#: docs/user-guide/README.md:56
 msgid "**Concepts** — the ideas, one page each [Concepts](concepts/concepts.md) · [Relationships](concepts/relationships.md) · [Incomplete designs](concepts/incomplete-designs.md) · [Timing](concepts/timing.md) · [Physical outputs](concepts/physical-outputs.md) · [Behavior groups](concepts/behavior-groups.md) · [Components](concepts/components.md) · [Behavior systems](concepts/behavior-systems.md)"
 msgstr "**コンセプト** — 考え方を 1 ページずつ [コンセプト](concepts/concepts.md) · [関係](concepts/relationships.md) · [未完成の設計](concepts/incomplete-designs.md) · [タイミング](concepts/timing.md) · [物理出力](concepts/physical-outputs.md) · [振る舞いグループ](concepts/behavior-groups.md) · [コンポーネント](concepts/components.md) · [振る舞いシステム](concepts/behavior-systems.md)"
 
-#: docs/user-guide/README.md:62
+#: docs/user-guide/README.md:64
 msgid "**Studio** — the interface, one panel or page each [Workspace](studio/workspace.md) · [Canvas](studio/canvas.md) · [Library](studio/library.md) · [Inspector](studio/inspector.md) · [Formula editor](studio/formula-editor.md) · [Simulate](studio/simulate.md) · [Deploy](studio/deploy.md) · [System projects](studio/system-projects.md) · [Design, Code and Split](studio/code-view.md)"
 msgstr "**Studio** — インターフェースをパネルやページごとに [ワークスペース](studio/workspace.md) · [キャンバス](studio/canvas.md) · [ライブラリ](studio/library.md) · [インスペクター](studio/inspector.md) · [数式エディタ](studio/formula-editor.md) · [シミュレート](studio/simulate.md) · [デプロイ](studio/deploy.md) · [システムプロジェクト](studio/system-projects.md) · [設計・コード・分割](studio/code-view.md)"
 
-#: docs/user-guide/README.md:69
+#: docs/user-guide/README.md:71
 msgid "**Workflows** — one goal each, on the same lamp [From sensor to output](workflows/sensor-to-output.md) · [A second output](workflows/multi-output-behavior.md) · [Grouping a behavior](workflows/grouping-behavior.md) · [Packaging a behavior as a component](workflows/package-as-component.md) · [Composing components](workflows/composing-components.md) · [Carrying a value across timing domains](workflows/cross-domain-transport.md) · [Versioning a component](workflows/component-versioning.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr "**ワークフロー** — 同じランプで目標を 1 つずつ [センサーから出力へ](workflows/sensor-to-output.md) · [2 つ目の出力](workflows/multi-output-behavior.md) · [振る舞いをグループ化する](workflows/grouping-behavior.md) · [振る舞いをコンポーネントとしてパッケージ化する](workflows/package-as-component.md) · [コンポーネントを組み合わせる](workflows/composing-components.md) · [タイミングドメインをまたいで値を運ぶ](workflows/cross-domain-transport.md) · [コンポーネントのバージョン管理](workflows/component-versioning.md) · [プロジェクトをテキストで書く](workflows/authoring-as-text.md)"
 
-#: docs/user-guide/README.md:79
+#: docs/user-guide/README.md:81
 msgid "**Textual BDL** [Overview and current status](textual/overview.md) · [Syntax basics](textual/syntax-basics.md) · [Editor and language server](textual/editor-and-lsp.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr "**テキスト形式の BDL** [概要と現状](textual/overview.md) · [構文の基本](textual/syntax-basics.md) · [エディタと言語サーバー](textual/editor-and-lsp.md) · [プロジェクトをテキストで書く](workflows/authoring-as-text.md)"
 
-#: docs/user-guide/README.md:84
+#: docs/user-guide/README.md:86
 msgid "**Troubleshooting** [Start here](troubleshooting/README.md) · [Incomplete design](troubleshooting/incomplete-design.md) · [Types, units and concepts](troubleshooting/type-and-concept-errors.md) · [Timing](troubleshooting/timing-errors.md) · [Connections](troubleshooting/connection-errors.md) · [Deployment](troubleshooting/deployment-errors.md) · [Source files](troubleshooting/text-project-errors.md)"
 msgstr "**トラブルシューティング** [ここから](troubleshooting/README.md) · [未完成の設計](troubleshooting/incomplete-design.md) · [型・単位・コンセプト](troubleshooting/type-and-concept-errors.md) · [タイミング](troubleshooting/timing-errors.md) · [接続](troubleshooting/connection-errors.md) · [デプロイ](troubleshooting/deployment-errors.md) · [ソースファイル](troubleshooting/text-project-errors.md)"
 
-#: docs/user-guide/README.md:92
+#: docs/user-guide/README.md:94
 msgid "**Reference** [Terminology](reference/terminology.md) · [Keyboard and mouse](reference/keyboard-and-mouse.md) · [Status meanings](reference/status-meanings.md) · [Formula language](reference/formula-language.md) · [Project files](reference/project-files.md) · [Command line](reference/cli.md)"
 msgstr "**リファレンス** [用語集](reference/terminology.md) · [キーボードとマウス](reference/keyboard-and-mouse.md) · [状態の意味](reference/status-meanings.md) · [数式言語](reference/formula-language.md) · [プロジェクトファイル](reference/project-files.md) · [コマンドライン](reference/cli.md)"
 
-#: docs/user-guide/README.md:98
+#: docs/user-guide/README.md:100
 msgid "**About this guide** [Style guide](STYLE_GUIDE.md) · [Verification matrix](VERIFICATION.md) · [Screenshot plan](SCREENSHOT_PLAN.md) · [Documentation research](DOCUMENTATION_RESEARCH.md)"
 msgstr "**このガイドについて** [スタイルガイド](STYLE_GUIDE.md) · [検証マトリクス](VERIFICATION.md) · [スクリーンショット計画](SCREENSHOT_PLAN.md) · [ドキュメント調査](DOCUMENTATION_RESEARCH.md)"
 
-#: docs/user-guide/README.md:102
+#: docs/user-guide/README.md:104
 msgid "The technical documentation for people building the tool itself lives one level up in `docs/` (architecture, compiler pipeline, protocol, formal notes). This guide links to it from _Going deeper_ sections and does not repeat it."
 msgstr "ツール自体を作る人のための技術文書は、1 つ上の `docs/`（アーキテクチャ、コンパイラパイプライン、プロトコル、形式的な注記）にあります。このガイドは _さらに深く_ の節からそこへリンクし、内容を繰り返しません。"
 
@@ -341,7 +341,7 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-groups.md:86
 #: docs/user-guide/concepts/behavior-systems.md:115
 #: docs/user-guide/concepts/components.md:99
-#: docs/user-guide/concepts/concepts.md:82
+#: docs/user-guide/concepts/concepts.md:81
 #: docs/user-guide/concepts/incomplete-designs.md:83
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
@@ -357,7 +357,7 @@ msgstr ""
 #: docs/user-guide/studio/library.md:89
 #: docs/user-guide/studio/simulate.md:141
 #: docs/user-guide/studio/system-projects.md:130
-#: docs/user-guide/studio/workspace.md:94
+#: docs/user-guide/studio/workspace.md:95
 #: docs/user-guide/textual/editor-and-lsp.md:83
 #: docs/user-guide/textual/syntax-basics.md:196
 #: docs/user-guide/troubleshooting/connection-errors.md:136
@@ -587,7 +587,7 @@ msgid "Shared and private"
 msgstr ""
 
 #: docs/user-guide/concepts/components.md:43
-msgid "Inside the source a concept is normally **private**: each instance gets its own _Brightness_, distinct from every other instance's and from the system's. A component can instead declare a concept **shared** — _this is the system's Brightness_ — so that its ports carry the same concept as the rest of the design. Sharing is a decision you make; it is never inferred from names, units or library templates."
+msgid "Inside the source a concept is normally **private**: each instance gets its own _Brightness_, distinct from every other instance's and from the system's. A component can instead declare a concept **shared** — _this is the system's Brightness_ — so that its ports carry the same concept as the rest of the design. Sharing is a decision you make; it is never inferred from names, units or library items."
 msgstr ""
 
 #: docs/user-guide/concepts/components.md:50
@@ -757,7 +757,7 @@ msgid "**The _New concept_ sheet** (sidebar → _Project_ → **+** by _Concepts
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:57
-msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use the canvas's right-click **Add Concept** menu. The result is an ordinary concept with a suggested name and value form; two insertions of the same template are two concepts. See [Library](../studio/library.md)."
+msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use the canvas's right-click **Add Concept** menu. The result is an ordinary concept with a suggested name and value form; two insertions of the same item are two concepts. See [Library](../studio/library.md)."
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:63
@@ -782,10 +782,10 @@ msgid "**Delete** — disabled while a relationship uses the concept, with the u
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:74
-msgid "_For language implementers._ A concept is a nominal semantic type; its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library template is not an identity."
+msgid "_For language implementers._ A concept is a nominal semantic type; its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library item is not an identity."
 msgstr ""
 
-#: docs/user-guide/concepts/concepts.md:84
+#: docs/user-guide/concepts/concepts.md:83
 msgid "[Relationships](relationships.md) · [Incomplete designs](incomplete-designs.md) · [Library](../studio/library.md) · [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)"
 msgstr ""
 
@@ -1524,7 +1524,7 @@ msgstr "入力ソケット 1 つ（左の Tilt）と出力ソケット 1 つ（�
 
 #: docs/user-guide/getting-started/first-behavior.md:64
 msgid "_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._"
-msgstr ""
+msgstr "_宣言済みの関係：破線の輪郭と、ヘッダーの「宣言済み」。出力ソケットは中空です。値が規則を適用するまで、規則からは何も出てきません。_"
 
 #: docs/user-guide/getting-started/first-behavior.md:68
 msgid "4. Write the formula"
@@ -1996,11 +1996,6 @@ msgstr "フィールドを `1.5708`（90°）に変えて**ステップ**：お�
 #: docs/user-guide/getting-started/first-simulation.md:49
 msgid "**What happened.** Each tick, every value in the _interaction_ domain was recomputed from the inputs you supplied. The evaluator that produced these numbers is the one that defines what a BDL design means; the generated code for a device is held to it."
 msgstr "**何が起きたか。** 各ティックで、_interaction_ ドメインのすべての値があなたの与えた入力から再計算されました。これらの数値を生み出した評価器は、BDL の設計の意味を定義するものです。デバイス用に生成されるコードはそれに従わなければなりません。"
-
-#: docs/user-guide/getting-started/first-simulation.md:54
-#: docs/user-guide/studio/simulate.md:9
-msgid "![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)"
-msgstr ""
 
 #: docs/user-guide/getting-started/first-simulation.md:56
 #: docs/user-guide/studio/simulate.md:11
@@ -3016,51 +3011,51 @@ msgstr "補完リスト内を移動 · 確定"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:50
 msgid "Code view"
-msgstr ""
+msgstr "コードビュー"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:54
 msgid "completion at the caret"
-msgstr ""
+msgstr "キャレット位置で補完"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "↑ / ↓ · Return / Tab · Esc"
-msgstr ""
+msgstr "↑ / ↓ · Return / Tab · Esc"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:55
 msgid "move in the completion list · accept · close it"
-msgstr ""
+msgstr "補完リスト内を移動 · 確定 · 閉じる"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:56
 msgid "rest the pointer on a name"
-msgstr ""
+msgstr "名前の上にポインタを置く"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:56
 msgid "its card; typing or moving away hides it"
-msgstr ""
+msgstr "そのカード。入力するか離れると隠れる"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:57
 msgid "⌘-click a name · F12"
-msgstr ""
+msgstr "名前を ⌘-クリック · F12"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:57
 msgid "go to where it is declared (another file opens)"
-msgstr ""
+msgstr "宣言されている場所へ移動（別のファイルが開く）"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:58
 msgid "⇧F12"
-msgstr ""
+msgstr "⇧F12"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:58
 msgid "list every place that names it; Esc or × closes the list"
-msgstr ""
+msgstr "それを名指しするすべての場所を列挙。Esc か × でリストを閉じる"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:59
 msgid "⌥⇧F · _Format_"
-msgstr ""
+msgstr "⌥⇧F · _フォーマット_"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:59
 msgid "lay the file out the canonical way, as one edit"
-msgstr ""
+msgstr "ファイルを正規のレイアウトに整える、1 つの編集として"
 
 #: docs/user-guide/reference/keyboard-and-mouse.md:61
 msgid "Inline rename (canvas, library rows)"
@@ -4417,11 +4412,11 @@ msgid "semantic action, edit plan"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "**template**"
+msgid "**item**"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "a ready-made concept in the Library"
+msgid "a ready-made Concept, or a Source preset, in the Library"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
@@ -4430,7 +4425,7 @@ msgid "Library"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "`TemplateId` — never an identity"
+msgid "`LibraryItem` id — never an identity"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:60
@@ -4747,19 +4742,19 @@ msgstr "テキストはプロジェクトのファイルそのもので、キャ
 
 #: docs/user-guide/studio/code-view.md:29
 msgid "What the colours mean"
-msgstr ""
+msgstr "色の意味"
 
 #: docs/user-guide/studio/code-view.md:33
 msgid "_The Code view of the component system: the file as the project holds it, coloured by what each word is._"
-msgstr ""
+msgstr "_コンポーネントシステムのコードビュー：プロジェクトが保持するとおりのファイルが、各語が何であるかで色付けされている。_"
 
 #: docs/user-guide/studio/code-view.md:36
 msgid "The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere."
-msgstr ""
+msgstr "テキストは各語がプロジェクトにとって_何であるか_で色付けされます——綴りではなく。色はキャンバスのものです。**コンセプト**名はコンセプトノードの青灰色、**関係**は関係ノードの青、**入力元**は入力元ノードの緑、**出力**や**デバイス**は出力ノードの暖色、**インスタンス**はインスタンスノードの青緑です。キーワード、演算子、単位は灰色、コメントはより薄い灰色です。名前は _宣言_ された場所では使われる場所より太く、数式の中だけに存在する名前——規則のパラメータ、束縛子の変数——はイタリック、数式に残された `?` はオレンジで、他の場所と同じ _まだ決めていない_ の色です。"
 
 #: docs/user-guide/studio/code-view.md:46
 msgid "Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting."
-msgstr ""
+msgstr "色はプロジェクトから来るので、綴りでは分からないことを教えてくれます。`90` の後の `deg` は単位で、規則のパラメータとしての `deg` は違う。`all x in xs: …` の先頭の `all` はキーワードで、`all` という名前の値は値。`clamp` はライブラリのもの。関係は定義を与えられた瞬間に入力元の緑から関係の青に変わります。まだビルドできないファイルもキーワード、数、コメント、単位の色と、最後にビルドできたバージョンがまだ知っている名前の色を保ちます。色は外観（ライトかダーク）に従い、設定はありません。"
 
 #: docs/user-guide/studio/code-view.md:55
 msgid "Typing"
@@ -4799,43 +4794,43 @@ msgstr "**⌘S** はファイルをエディタに表示されているとおり
 
 #: docs/user-guide/studio/code-view.md:96
 msgid "What the editor knows"
-msgstr ""
+msgstr "エディタが知っていること"
 
 #: docs/user-guide/studio/code-view.md:98
 msgid "The editor asks Studio's compiler service the same questions a code editor with the [language server](../textual/editor-and-lsp.md) asks, about the text exactly as you have typed it."
-msgstr ""
+msgstr "エディタは、[言語サーバー](../textual/editor-and-lsp.md) 付きのコードエディタが尋ねるのと同じ質問を、入力したとおりのテキストについて Studio のコンパイラサービスに尋ねます。"
 
 #: docs/user-guide/studio/code-view.md:102
 msgid "**Completion.** Press **⌃Space** and a list opens at the cursor with what can go here, best first: after a `:` the concepts, after an `@` the timing domains, at the start of a line the items allowed there, and inside a formula the inputs, the other relationships — a rule offered as a call, a Source or a value as its name — the names bound in the formula itself, the equations of the library, and after a number the units. ↑ and ↓ move, **Return** or **Tab** accept, **Esc** closes; the list narrows as you type. What is inserted is the service's text, never a guess."
-msgstr ""
+msgstr "**補完。** **⌃Space** を押すと、カーソル位置にここに入れられるものが最適なものから順に並んだリストが開きます。`:` の後はコンセプト、`@` の後はタイミングドメイン、行頭ではそこに許される項目、数式の中では入力、他の関係——規則は呼び出しとして、入力元や値はその名前で——数式自身が束縛する名前、ライブラリの方程式、数の後は単位です。↑ と ↓ で移動、**Return** か **Tab** で確定、**Esc** で閉じます。リストは入力に合わせて絞り込まれます。挿入されるのはサービスのテキストで、推測ではありません。"
 
 #: docs/user-guide/studio/code-view.md:113
 msgid "_The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first._"
-msgstr ""
+msgstr "_コンポーネント本体の中、`dimByTilt(` の後の補完ポップアップ：ここに入れられるものが、コンパイラサービスから最適なもの順に。_"
 
 #: docs/user-guide/studio/code-view.md:116
 msgid "**Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it."
-msgstr ""
+msgstr "**ホバー。** 名前の上にポインタを置くと、カードがそれが何かを述べます。宣言、生成するもの、状態、役割（_入力元_、_規則_、_値_）、あなたが書いた説明です。ライブラリの方程式——`clamp`、`min`、`any`——ではカードはその形と働きを示します。キーワード、数、単位の上にカードはありません。入力するか離れると隠れます。"
 
 #: docs/user-guide/studio/code-view.md:124
 msgid "_The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state._"
-msgstr ""
+msgstr "_コンポーネント本体が dimByTilt を適用する場所でのホバーカード：その宣言、役割、状態。_"
 
 #: docs/user-guide/studio/code-view.md:127
 msgid "**Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy."
-msgstr ""
+msgstr "**定義へ移動。** 名前を **⌘-クリック**するか、カーソルを置いて **F12** を押すと、エディタは宣言されている場所を選択します——このファイル内か、開かれる別のファイル内です。コンポーネントのソース内では、ポートの名前はポートの行へ導き、インスタンスのコピーへは決して導きません。"
 
 #: docs/user-guide/studio/code-view.md:132
 msgid "**References.** **⇧F12** on a name lists, under the editor, every place that names it, across all files, with the file and line; a row takes you there. Esc or the × closes the list. Two concepts with the same value form never share a list: the search is by identity, not by spelling."
-msgstr ""
+msgstr "**参照。** 名前の上で **⇧F12** を押すと、エディタの下にすべてのファイルでそれを名指しする場所がファイルと行付きで列挙され、行をクリックするとそこへ移動します。Esc か × でリストを閉じます。値の形式が同じ 2 つのコンセプトがリストを共有することはありません。検索は綴りではなく同一性によるものです。"
 
 #: docs/user-guide/studio/code-view.md:137
 msgid "**Format.** **⌥⇧F**, or _Format_ at the right of the file bar, lays the file out the canonical way — spacing, indentation, one blank line between items — and applies it as one edit, with the cursor kept on its line. A file that does not parse yet is left exactly as it is; fix it first."
-msgstr ""
+msgstr "**フォーマット。** **⌥⇧F**、またはファイルバー右端の _フォーマット_ は、ファイルを正規のレイアウト——空白、インデント、項目間の空行 1 つ——に整え、1 つの編集として適用します。カーソルは元の行に保たれます。まだ解析できないファイルはそのまま残されます。先に直してください。"
 
 #: docs/user-guide/studio/code-view.md:142
 msgid "Everything here works on the text as it stands, whether or not it builds: what the last version that built still knows is answered, and what nothing resolves gets no card and no destination, never a guess by spelling."
-msgstr ""
+msgstr "ここにあるすべては、ビルドできるかどうかにかかわらず、現状のテキストに対して働きます。最後にビルドできたバージョンがまだ知っているものには答え、何も解決できないものにはカードも移動先もなく、綴りによる推測は決してしません。"
 
 #: docs/user-guide/studio/code-view.md:146
 msgid "Not built yet"
@@ -4843,7 +4838,7 @@ msgstr "未実装"
 
 #: docs/user-guide/studio/code-view.md:148
 msgid "Findings underlined in the text (the list and the cursor jump stand in); rename from the editor (rename on the canvas, and the text follows); creating a second source file from Studio (make it in a code editor; it appears on reload)."
-msgstr ""
+msgstr "テキスト中の検出項目の下線（リストとカーソルジャンプが代わりです）。エディタからの名前変更（キャンバスで名前を変えると、テキストが追従します）。Studio から 2 つ目のソースファイルを作ること（コードエディタで作ると、再読み込みで現れます）。"
 
 #: docs/user-guide/studio/code-view.md:154
 msgid "[Canvas](canvas.md) · [Textual BDL](../textual/overview.md) · [Authoring a project as text](../workflows/authoring-as-text.md) · [Source files](../troubleshooting/text-project-errors.md)"
@@ -4999,15 +4994,15 @@ msgstr "**方程式。** _方程式_ の下に折りたたまれています。�
 
 #: docs/user-guide/studio/formula-editor.md:40
 msgid "**A truth value.** Where the slot expects true or false — the side of an `and`, a condition, a concept with the On / off value form — there is no number to type: two buttons, **true** and **false**, stand in its place, and _References_ lists the values that are true or false, the concepts this relationship reads first."
-msgstr ""
+msgstr "**真偽値。** スロットが真か偽を期待する場所——`and` の片側、条件、オン/オフの値の形式を持つコンセプト——では入力する数はありません。代わりに **true** と **false** の 2 つのボタンがあり、_参照_ には真か偽である値が、この関係が読み取るコンセプトを先頭に並びます。"
 
 #: docs/user-guide/studio/formula-editor.md:45
 msgid "**A form.** **Choose** opens a choice in the slot, `if ? then ? else ?`; on a slot that expects true or false, **not** opens a negation, `not ?`."
-msgstr ""
+msgstr "**形。** **選択**はスロットに選択 `if ? then ? else ?` を開きます。真か偽を期待するスロットでは、**not** が否定 `not ?` を開きます。"
 
 #: docs/user-guide/studio/formula-editor.md:48
 msgid "Click a part that is already there and the compiler says what it is. Above it, the actions on that part: **+ − × ÷** put that operator after it with a new slot for the other side, **and** / **or** likewise for a part that is (or may be) true or false, **not** negates that part in place (no new slot), **Compare** puts `<`, `==` and the rest after it, **Function** wraps it in an equation (`clamp(…, ?, ?)`), **Each element** reads a collection element by element (`all reading in readings: ?` — the editor picks a readable name for the element, `reading` for `readings`, `item` otherwise), **Range** asks whether the value lies between two ends (`… in ? .. ?`), **Choose** makes the part one outcome of a choice (`if ? then … else ?`, the condition selected next), and **Remove** turns it back into a slot — removing the slot next to an operator removes the operator with it, and an empty `not ?` goes with its slot. Parentheses are added where the operators need them: a sum divided by something becomes `(a + b) / ?`, an `or` under an `and` becomes `(a or b) and ?`, and a choice under anything is `(if … then … else …)`."
-msgstr ""
+msgstr "すでにある部品をクリックすると、コンパイラはそれが何かを述べます。その上に、その部品への操作があります。**+ − × ÷** はその演算子を後ろに置き、反対側に新しいスロットを作ります。真か偽である（かもしれない）部品では **and** / **or** も同様です。**not** はその部品をその場で否定します（新しいスロットなし）。**比較**は `<`、`==` などを後ろに置きます。**関数**は方程式で包みます（`clamp(…, ?, ?)`）。**各要素**はコレクションを要素ごとに読みます（`all reading in readings: ?`——エディタは要素に読みやすい名前を選びます。`readings` なら `reading`、それ以外は `item`）。**範囲**は値が両端の間にあるかを問います（`… in ? .. ?`）。**選択**はその部品を選択の一方の結果にします（`if ? then … else ?`、次に条件が選択されます）。**削除**はスロットに戻します——演算子の隣のスロットを削除すると演算子も一緒に消え、空の `not ?` はそのスロットとともに消えます。括弧は演算子が必要とする場所に追加されます。和を何かで割ると `(a + b) / ?`、`and` の下の `or` は `(a or b) and ?`、何かの下の選択は `(if … then … else …)` になります。"
 
 #: docs/user-guide/studio/formula-editor.md:64
 msgid "The line under the field — _Expected: an angle, because an angle ÷ an angle = a dimensionless quantity._ — is the compiler's reasoning in plain words. It works out what a slot must be from what is around it: the result the relationship must produce, and the other side of the operator. `? / 1 s` for a speed expects a length; `Force * ?` for a torque expects a length. When nothing around a slot is known yet — a product of two slots — it says so and offers no unit; fill the other side first. **Explain** shows the same in the compiler's notation."
@@ -5019,7 +5014,7 @@ msgstr "**単位付きの数**は 2 つのフィールド、数とその単位�
 
 #: docs/user-guide/studio/formula-editor.md:78
 msgid "A choice is drawn the way it reads: `if` and its condition on one line, `then` and `else` with their outcomes indented under it. Each part is an ordinary component: the condition expects true or false, and both outcomes expect what the choice must give — the relationship's result at the top, or, inside a larger formula, whatever the other outcome already is. The logical operators are shown as the words **and**, **or** and **not** (`&&`, `||` and `!` in the text), in the weight of the language's own words."
-msgstr ""
+msgstr "選択は読むとおりに描かれます。`if` とその条件が 1 行、`then` と `else` がそれぞれの結果とともにその下にインデントされます。各部分は普通の部品です。条件は真か偽を期待し、両方の結果は選択が与えなければならないもの——最上位では関係の結果、より大きな数式の中では他方の結果がすでにそうであるもの——を期待します。論理演算子は **and**、**or**、**not** という語で（テキストでは `&&`、`||`、`!`）、言語自身のキーワードと同じ太さで表示されます。"
 
 #: docs/user-guide/studio/formula-editor.md:86
 msgid "A formula over a collection is drawn the way it reads: `all reading in readings:` on one line and the condition indented under it. The element's name is in italics wherever it appears — it belongs to this formula, not to the design, so renaming a concept never touches it — and selecting it says what one element is. A range is its two ends around `..`; each end expects the same kind as the value before `in`, so its unit pop-up lists that kind's units."
@@ -5027,7 +5022,7 @@ msgstr "コレクションに対する数式は読むとおりに描かれます
 
 #: docs/user-guide/studio/formula-editor.md:94
 msgid "The formula is ordinary text underneath: `clamp(Tilt / 90 deg, 0, 1)` reads exactly so in the **Text** view, and a formula typed as text appears in the **Formula** view — with `?` wherever text left a slot; `all reading in readings: reading < limit` and `if RoomTemp > 299.15 K && ButtonHeld then true else false` typed as text come back as the same words, every part selectable. Some forms — `match`, a block with `let`, a rule `x => …`, a collection or grouped literal, `delay` / `sync` — are shown as text in the Formula view and edited in the Text view. Text that cannot be read as a formula keeps exactly what you typed; the Formula view shows no parts for it, says _The text cannot be read as a formula._ and offers **Edit as text**. After any change the Formula view waits for the compiler's reading of the new text — _Waiting for the compiler to read the formula…_, the parts dimmed — before it offers the next action, so nothing you click ever acts on text that has already changed."
-msgstr ""
+msgstr "数式の下層は普通のテキストです。`clamp(Tilt / 90 deg, 0, 1)` は**テキスト**ビューでそのとおりに読め、テキストで入力した数式は**数式**ビューに現れます——テキストがスロットを残した場所には `?` が付きます。テキストで入力した `all reading in readings: reading < limit` と `if RoomTemp > 299.15 K && ButtonHeld then true else false` は同じ語で戻ってきて、すべての部品を選択できます。いくつかの形——`match`、`let` を含むブロック、規則 `x => …`、コレクションや組のリテラル、`delay` / `sync`——は数式ビューではテキストとして表示され、テキストビューで編集します。数式として読めないテキストは入力したままを保ちます。数式ビューはその部品を表示せず、_テキストを数式として読み取れません。_ と述べて**テキストとして編集**を提示します。変更のたびに数式ビューはコンパイラが新しいテキストを読むのを待ちます——_コンパイラが数式を読み取るのを待っています…_、部品は薄く表示——それから次の操作を提示するので、クリックしたものがすでに変わったテキストに作用することはありません。"
 
 #: docs/user-guide/studio/formula-editor.md:109
 msgid "The text field and its verdict"
@@ -5115,35 +5110,35 @@ msgstr "数式ビューで次の部品へ移動"
 
 #: docs/user-guide/studio/formula-editor.md:162
 msgid "**+ − \\* /**, **< >**"
-msgstr ""
+msgstr "**+ − \\* /**、**< >**"
 
 #: docs/user-guide/studio/formula-editor.md:162
 msgid "on a selected part in the Formula view: put that operator after it, with a slot for the other side"
-msgstr ""
+msgstr "数式ビューで選択中の部品に対して：その演算子を後ろに置き、反対側にスロットを作る"
 
 #: docs/user-guide/studio/formula-editor.md:163
 msgid "**=**, **&**, **\\|**"
-msgstr ""
+msgstr "**=**、**&**、**\\|**"
 
 #: docs/user-guide/studio/formula-editor.md:163
 msgid "likewise `==`, `&&` (and), `\\|\\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up"
-msgstr ""
+msgstr "同様に `==`、`&&`（and）、`\\|\\|`（or）。`<=`、`>=`、`!=` は**比較**ポップアップにある"
 
 #: docs/user-guide/studio/formula-editor.md:164
 msgid "**!**"
-msgstr ""
+msgstr "**!**"
 
 #: docs/user-guide/studio/formula-editor.md:164
 msgid "negate the selected part in place (`not …`)"
-msgstr ""
+msgstr "選択中の部品をその場で否定する（`not …`）"
 
 #: docs/user-guide/studio/formula-editor.md:165
 msgid "**⌫**"
-msgstr ""
+msgstr "**⌫**"
 
 #: docs/user-guide/studio/formula-editor.md:165
 msgid "remove the selected part (an empty slot takes its operator with it)"
-msgstr ""
+msgstr "選択中の部品を削除する（空のスロットはその演算子も一緒に消す）"
 
 #: docs/user-guide/studio/formula-editor.md:166
 msgid "**⌘S**"
@@ -5309,11 +5304,11 @@ msgstr "**駆動先**"
 
 #: docs/user-guide/studio/inspector.md:30
 msgid "for a value: the output it drives, or none; for a rule: _A rule cannot drive an output — connect the value that applies this rule._ and, when one value applies it, its name with _Show_; connection findings"
-msgstr ""
+msgstr "値なら：駆動する出力、またはなし。規則なら：_規則は出力を駆動できません — この規則を適用する値を接続してください。_ と、ある値がそれを適用しているときはその名前と _表示_。接続の検出項目"
 
 #: docs/user-guide/studio/inspector.md:30
 msgid "only a value — a relationship without inputs — is offered the pop-up"
-msgstr ""
+msgstr "ポップアップが提示されるのは値——入力のない関係——だけ"
 
 #: docs/user-guide/studio/inspector.md:31
 #: docs/user-guide/studio/inspector.md:55
@@ -5354,7 +5349,7 @@ msgstr "**駆動元**"
 
 #: docs/user-guide/studio/inspector.md:54
 msgid "the state (_Driven by brightness._, _Undriven — the design is incomplete without a driver._, …); claimants with _disconnect_; a _Connect_ pop-up of the design's values of the accepted concept, or one sentence when there is none"
-msgstr ""
+msgstr "状態（_brightness が駆動しています。_、_未駆動 — 駆動元がないと設計は未完了です。_ など）。_切断_ 付きの主張者。受け入れるコンセプトを生成する設計の値を並べた _接続_ ポップアップ、なければ一文"
 
 #: docs/user-guide/studio/inspector.md:54
 msgid "see [Physical outputs](../concepts/physical-outputs.md)"
@@ -5538,11 +5533,11 @@ msgstr "入力元（左）"
 
 #: docs/user-guide/studio/simulate.md:16
 msgid "One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), an **off | on** control for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design."
-msgstr ""
+msgstr "すべての [入力元](canvas.md)——何も読み取らず数式を持たないすべての関係——に 1 つずつのコントロール。環境が提供し、シミュレーションがあなたに求める値です。コントロールはコンセプトの値の形式に従い、名前には従いません。量なら横に単位の付いた数（基本単位で：ラジアン、メートル、秒、ケルビン…）、オン/オフなら **off | on** コントロール、個数なら整数です。行はコンセプトのグリフと色を持ち、クリックするとそのオブジェクトが——このページでも設計でも——選択されます。"
 
 #: docs/user-guide/studio/simulate.md:24
 msgid "A Source you have not given a value yet says so: a number field shows the hint _no value yet_, and the on / off control is drawn empty with a dashed outline and the words _no value yet_ beside it — the same dashes that mark a declared relationship, for the same reason: nothing has been decided. It is not _off_. One click on **off** or **on** gives exactly that value; the simulator never fills one in for you, because a missing Source is an error at run time, not a default."
-msgstr ""
+msgstr "まだ値を与えていない入力元はそう述べます。数値フィールドはヒント _値がまだありません_ を示し、オン/オフのコントロールは破線の輪郭で空に描かれ、横に _値がまだありません_ とあります——宣言済みの関係を示すのと同じ破線で、理由も同じです。何も決まっていない。それは _off_ ではありません。**off** か **on** を 1 回クリックするとちょうどその値になります。シミュレータは決して代わりに埋めません。欠けた入力元は既定値ではなく実行時のエラーだからです。"
 
 #: docs/user-guide/studio/simulate.md:32
 msgid "Under the Sources, **Timing domains**: a period per domain — _every N_ ticks — the schedule the evaluator activates by. A period, never a rate. Changing a period starts the run over."
@@ -5582,15 +5577,15 @@ msgstr "いずれかが列挙されている間、**ステップ**は無効で�
 
 #: docs/user-guide/studio/simulate.md:54
 msgid "Below the blockers, with a hollow dot instead of a filled one, the page lists what does **not** stop a step but explains what the trace will not show: a **rule nothing applies**. A rule — a relationship with inputs — is a function, so it has no value per tick and no column; only a value that calls it does. The note names the rule and the value that would put it to work:"
-msgstr ""
+msgstr "妨げの下に、塗りつぶしではなく中空の点で、ページはステップを止め**ない**がトレースが示さないものを説明する事項を列挙します。**何も適用しない規則**です。規則——入力のある関係——は関数なので、ティックごとの値も列もなく、それを呼ぶ値だけがそれを持ちます。この注記は規則と、それを働かせる値を名指しします："
 
 #: docs/user-guide/studio/simulate.md:60
 msgid "_AirConditionerCtrl is a rule nothing applies yet._ — _A rule has no value of its own; a value that applies it — `AirConditionerCtrl(TempSensor, ButtonInput)` — is what the simulator and an output can read._"
-msgstr ""
+msgstr "_AirConditionerCtrl はまだ何も適用していない規則です。_——_規則は自身の値を持ちません。それを適用する値——`AirConditionerCtrl(TempSensor, ButtonInput)`——がシミュレータと出力が読めるものです。_"
 
 #: docs/user-guide/studio/simulate.md:65
 msgid "Under it, the fix **Add a value that applies AirConditionerCtrl** and a _Show_ link. The fix creates `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)` in one click when each concept the rule reads has exactly one value producing it; when one has several, the button becomes a pop-up of the calls to choose from; when one has none, the button says why (_Not possible yet: no value produces `RoomTemp` yet; add a Source or a computed value that produces it first_). The tool never guesses. A rule that has no definition yet is a blocker first (_has no definition_) and is not repeated here."
-msgstr ""
+msgstr "その下に修正 **AirConditionerCtrl を適用する値を追加** と _表示_ リンクがあります。規則が読み取る各コンセプトを生成する値がちょうど 1 つずつあるとき、この修正は 1 クリックで `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)` を作ります。複数あるときはボタンが呼び出しを選ぶポップアップになり、1 つもないときはボタンが理由を述べます（_まだできません：`RoomTemp` を生成する値がまだありません。先にそれを生成する入力元か計算値を追加してください_）。ツールは決して推測しません。まだ定義のない規則はまず妨げ（_定義がありません_）であり、ここでは繰り返されません。"
 
 #: docs/user-guide/studio/simulate.md:77
 msgid "_A blocker with its Show link: the Source tilt has no value yet, so Step is disabled._"
@@ -5614,7 +5609,7 @@ msgstr "トレース（中央）"
 
 #: docs/user-guide/studio/simulate.md:94
 msgid "Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value — `dimByTilt` never appears, the value `brightness = dimByTilt(tilt)` does. If a rule seems ignored by the simulation, the readiness area says so and offers the value that applies it. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself."
-msgstr ""
+msgstr "行はティック。列は設計の**値**——入力のない関係——と**駆動される出力**です。規則（入力のある関係）には列がありません。関数であって値ではないからです——`dimByTilt` は決して現れず、値 `brightness = dimByTilt(tilt)` が現れます。規則がシミュレーションに無視されているように見えるなら、準備状態の領域がそう述べ、それを適用する値を提示します。_起動_ 列はティックしたドメインを示します。セルは評価器自身の描画で、常にコンセプト付き、値の形式の言葉で書かれます：`Brightness(0.5)`、`Tilt(0.785398 [rad])`、`Held(on)`——真偽値は _on_ / _off_、数は有効数字 6 桁で表示されます。Studio が自分で値を描画することはありません。"
 
 #: docs/user-guide/studio/simulate.md:105
 msgid "An empty cell means the value's domain did not activate at that tick. A Source's cell is the value you fed, echoed by the evaluator at the ticks its domain activated. Column order is by identity, not by time; click a column header to select that relationship."
@@ -5630,7 +5625,7 @@ msgstr "プローブ（右）"
 
 #: docs/user-guide/studio/simulate.md:117
 msgid "The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. A concept is shown as what **carries** it — _Carried by_, then each value and Source that produces it with its latest sample; when none does, _Nothing carries Brightness yet: no value or Source produces it._ and, for each rule that produces it, _dimByTilt is a rule; a value whose formula applies it would carry Brightness._ A rule has no value to show: _A rule: it has no value of its own. A value whose formula applies it is what the simulator samples._, then, under _Applied in_, links to the values whose formula applies it — or _No value applies it yet._ with the same fix the readiness area offers. **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text."
-msgstr ""
+msgstr "選択中のオブジェクトの**現在**と**実行全体**の値を、トレースと同じ書き方で、そのグリフとともに。出力なら、その駆動元も。コンセプトはそれを**運ぶ**ものとして示されます——_運搬元_、次にそれを生成する各値と入力元がその最新サンプルとともに。何もなければ _まだ何も Brightness を運んでいません：それを生成する値も入力元もありません。_ と、それを生成する各規則について _dimByTilt は規則です。その数式がそれを適用する値が Brightness を運びます。_ 規則には示す値がありません：_規則：自身の値を持ちません。その数式がそれを適用する値が、シミュレータがサンプルするものです。_、次に _適用先_ の下に、数式がそれを適用する値へのリンク——または _まだどの値もそれを適用していません。_ と準備状態の領域が提示するのと同じ修正。その下の**説明**は識別番号、実行のリビジョン、失敗ならコードと技術的なテキストを保持します。"
 
 #: docs/user-guide/studio/simulate.md:129
 msgid "What a new revision does"
@@ -5650,7 +5645,7 @@ msgstr "キャンバス上の値（トレースとプローブが唯一のビュ
 
 #: docs/user-guide/studio/simulate.md:143
 msgid "[Your first simulation](../getting-started/first-simulation.md) · [Relationships](../concepts/relationships.md) · [Timing](../concepts/timing.md) · [Troubleshooting: incomplete design](../troubleshooting/incomplete-design.md)"
-msgstr ""
+msgstr "[最初のシミュレーション](../getting-started/first-simulation.md) · [関係](../concepts/relationships.md) · [タイミング](../concepts/timing.md) · [トラブルシューティング：未完成の設計](../troubleshooting/incomplete-design.md)"
 
 #: docs/user-guide/studio/system-projects.md:1
 msgid "System projects"
@@ -5925,126 +5920,126 @@ msgid "**Toolbar** — the project's name (followed by _Edited_ while there are 
 msgstr "**ツールバー**——プロジェクト名（未保存の変更がある間は _編集済み_ が続く）、取り消しとやり直し、保存（編集中のみ有効）、閉じる。"
 
 #: docs/user-guide/studio/workspace.md:17
-msgid "**Sidebar** (left) — on the Design page, two tabs: **Project**, the project's objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_, _Components_, _Instances_, _Behaviors_), each with a **+** to create one — the heading _Contexts_ stays empty (contexts are not part of the tool yet); and **Library**, the ready-made concept templates. See [Library](library.md). The Simulate and Deploy pages put their own controls here."
-msgstr "**サイドバー**（左）——設計ページでは 2 つのタブ。**プロジェクト**はプロジェクトのオブジェクトを種類別に（_コンセプト_、_マッピング_、_タイミングドメイン_、_出力_、_コンポーネント_、_インスタンス_、_振る舞い_）、それぞれ作成用の **+** 付きで並べます——_コンテキスト_ の見出しは空のままです（コンテキストはまだツールの一部ではありません）。**ライブラリ**は既製のコンセプトテンプレートです。[ライブラリ](library.md) を参照。シミュレートページとデプロイページは独自のコントロールをここに置きます。"
+msgid "**Sidebar** (left) — on the Design page, two tabs: **Project**, the project's objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_, _Components_, _Instances_, _Behaviors_), each with a **+** to create one — the heading _Contexts_ stays empty (contexts are not part of the tool yet); and **Library**, the Standard Library's Concept items and Source presets. See [Library](library.md). The Simulate and Deploy pages put their own controls here."
+msgstr "**サイドバー**（左）——設計ページでは 2 つのタブ。**プロジェクト**はプロジェクトのオブジェクトを種類別に（_コンセプト_、_マッピング_、_タイミングドメイン_、_出力_、_コンポーネント_、_インスタンス_、_振る舞い_）、それぞれ作成用の **+** 付きで並べます——_コンテキスト_ の見出しは空のままです（コンテキストはまだツールの一部ではありません）。**ライブラリ**は標準ライブラリのコンセプト項目と入力元プリセットです。[ライブラリ](library.md) を参照。シミュレートページとデプロイページは独自のコントロールをここに置きます。"
 
-#: docs/user-guide/studio/workspace.md:24
+#: docs/user-guide/studio/workspace.md:25
 msgid "**Page content** (centre) — the canvas on Design, the trace on Simulate, the verdict on Deploy."
 msgstr "**ページ内容**（中央）——設計ではキャンバス、シミュレートではトレース、デプロイでは判定。"
 
-#: docs/user-guide/studio/workspace.md:27
+#: docs/user-guide/studio/workspace.md:28
 msgid "**Inspector** (right) — the selected object: what it means, what you can change, what a change affects. See [Inspector](inspector.md)."
 msgstr "**インスペクター**（右）——選択中のオブジェクト：その意味、変更できること、変更が影響するもの。[インスペクター](inspector.md) を参照。"
 
-#: docs/user-guide/studio/workspace.md:30
+#: docs/user-guide/studio/workspace.md:31
 msgid "**Status line** — the document state (_Saved_ / _Edited_), then counts (_2 concepts_, _3 mappings_, and _1 source_ when the design has a relationship the environment provides), then what is still open (_1 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_, _N definitions not added_), then the compiler connection. A Source is complete as it is, so it is counted, never listed as open. Errors from a refused action appear as a **banner** above the page content with a _Dismiss_ link — never as a dialog."
 msgstr "**ステータス行**——文書の状態（_保存済み_ / _編集済み_）、次に件数（_コンセプト 2 件_、_マッピング 3 件_、そして環境が提供する関係が設計にあるときは _入力元 1 件_）、次にまだ決まっていないもの（_未定義 1 件_、_出力が未完了_、_瞬時サイクルあり_、_ドメインをまたぐ読み取り_、_未追加の定義 N 件_）、次にコンパイラ接続。入力元はそのままで完全なので、数えられはしますが、未決のものとして並ぶことはありません。拒否された操作のエラーはページ内容の上に _閉じる_ リンク付きの**バナー**として現れます——ダイアログにはなりません。"
 
-#: docs/user-guide/studio/workspace.md:38
+#: docs/user-guide/studio/workspace.md:39
 msgid "**Page bar** — the pages, in the order you use them:"
 msgstr "**ページバー**——使う順に並んだページ："
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Page"
 msgstr "ページ"
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Answers"
 msgstr "答える問い"
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Shortcut"
 msgstr "ショートカット"
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "what does the product do"
 msgstr "製品は何をするか"
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "⌘1"
 msgstr "⌘1"
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:44
 msgid "what does it do over time"
 msgstr "時間とともに何をするか"
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:44
 msgid "⌘2"
 msgstr "⌘2"
 
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/studio/workspace.md:45
 msgid "does it fit this board"
 msgstr "このボードに収まるか"
 
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/studio/workspace.md:45
 msgid "⌘3"
 msgstr "⌘3"
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "**Monitor**"
 msgstr "**モニター**"
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "what is it doing right now — _not built yet_; the page says live values arrive with telemetry"
 msgstr "今何をしているか——_未実装_。ページにはライブ値はテレメトリとともに提供されるとある"
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "⌘4"
 msgstr "⌘4"
 
-#: docs/user-guide/studio/workspace.md:47
+#: docs/user-guide/studio/workspace.md:48
 msgid "The button at the left of the page bar (⊞) closes the project and returns to the project manager. The gear at the right opens **Preferences…**: the language Studio speaks (System Default, English, 简体中文, 日本語), which changes only what Studio shows — never the BDL source, the project files or the compiler. The same link is on the project manager."
 msgstr "ページバー左端のボタン（⊞）はプロジェクトを閉じてプロジェクトマネージャーに戻ります。右端の歯車は**環境設定…**を開きます。Studio の表示言語（システムのデフォルト、English、简体中文、日本語）で、Studio の表示だけを変え、BDL のソース、プロジェクトファイル、コンパイラは決して変えません。同じリンクはプロジェクトマネージャーにもあります。"
 
-#: docs/user-guide/studio/workspace.md:53
+#: docs/user-guide/studio/workspace.md:54
 msgid "Saving, undo, revisions"
 msgstr "保存、取り消し、リビジョン"
 
-#: docs/user-guide/studio/workspace.md:55
+#: docs/user-guide/studio/workspace.md:56
 msgid "**⌘S** or **Save** writes the whole project to its folder — the design, the layout, and every unfinished edit: a formula typed and not added, text in the Code view that does not build yet. A design change is recorded as a new _revision_ of the project; **⌘Z** / **⇧⌘Z** step through them. Moving nodes, resizing panels and collapsing groups are not design changes: they are saved but make no revision. A typed formula that has not been added is a _draft_ — it is kept when you switch selection or pages, saved with the project, and the status line counts it as _definition not added_ until you add or revert it."
 msgstr "**⌘S** または**保存**はプロジェクト全体をそのフォルダに書き込みます——設計、レイアウト、そして未完了の編集すべて：入力したが追加していない数式、まだビルドできないコードビューのテキスト。設計の変更はプロジェクトの新しい _リビジョン_ として記録され、**⌘Z** / **⇧⌘Z** でそれらを行き来します。ノードの移動、パネルのサイズ変更、グループの折りたたみは設計の変更ではありません。保存はされますがリビジョンは作りません。入力したが追加していない数式は _下書き_ です——選択やページを切り替えても保持され、プロジェクトとともに保存され、追加するか元に戻すまでステータス行は _未追加の定義_ として数えます。"
 
-#: docs/user-guide/studio/workspace.md:64
+#: docs/user-guide/studio/workspace.md:65
 msgid "Closing a project"
 msgstr "プロジェクトを閉じる"
 
-#: docs/user-guide/studio/workspace.md:66
+#: docs/user-guide/studio/workspace.md:67
 msgid "**Close**, the project manager button (⊞), **⌘W**, **⌘Q**, the menu's Quit, the window's close button, and opening or creating another project all ask the same question when the project differs from what is saved:"
 msgstr "**閉じる**、プロジェクトマネージャーボタン（⊞）、**⌘W**、**⌘Q**、メニューの終了、ウィンドウの閉じるボタン、別のプロジェクトを開く・作成する、これらはすべて、プロジェクトが保存済みの内容と異なるとき同じ質問をします："
 
-#: docs/user-guide/studio/workspace.md:70
+#: docs/user-guide/studio/workspace.md:71
 msgid "Save changes to “lamp”? **Don't Save** · **Cancel** · **Save**"
 msgstr "「lamp」への変更を保存しますか？ **保存しない** · **キャンセル** · **保存**"
 
-#: docs/user-guide/studio/workspace.md:72
+#: docs/user-guide/studio/workspace.md:73
 msgid "**Save** saves everything as it is now and then closes; if the save is refused (a file changed on disk — see the banner), the project stays open. **Don't Save** closes; the next open returns to what was last saved. **Cancel** (Esc) changes nothing. A project that is _Saved_ closes at once. Nothing asks twice, and nothing closes while the question is open."
 msgstr "**保存**は今の状態をすべて保存してから閉じます。保存が拒否された場合（ファイルがディスク上で変更された——バナーを参照）、プロジェクトは開いたままです。**保存しない**は閉じます。次に開くと最後に保存した状態に戻ります。**キャンセル**（Esc）は何も変えません。_保存済み_ のプロジェクトはすぐに閉じます。二度は尋ねず、質問が開いている間は何も閉じません。"
 
-#: docs/user-guide/studio/workspace.md:78
+#: docs/user-guide/studio/workspace.md:79
 msgid "The three levels of information"
 msgstr "情報の 3 つのレベル"
 
-#: docs/user-guide/studio/workspace.md:80
+#: docs/user-guide/studio/workspace.md:81
 msgid "Studio shows a design at three levels, and keeps them apart:"
 msgstr "Studio は設計を 3 つのレベルで示し、それらを分けて保ちます："
 
-#: docs/user-guide/studio/workspace.md:82
+#: docs/user-guide/studio/workspace.md:83
 msgid "**Canvas** — structure you can see: shape, colour, links, dashed outlines, a red mark. No type names, no identifiers."
 msgstr "**キャンバス**——目に見える構造：形、色、リンク、破線の輪郭、赤い印。型名も識別子もありません。"
 
-#: docs/user-guide/studio/workspace.md:84
+#: docs/user-guide/studio/workspace.md:85
 msgid "**Inspector** — designer vocabulary: _Meaning_, _Value_, _Reads_, _Produces_, _Updates in_, _Drives_; findings in product language beside the field they concern."
 msgstr "**インスペクター**——設計者の語彙：_意味_、_値_、_読み取り_、_生成_、_更新ドメイン_、_駆動先_。検出項目は製品の言葉で、関係するフィールドの横に。"
 
-#: docs/user-guide/studio/workspace.md:87
+#: docs/user-guide/studio/workspace.md:88
 msgid "**Explain** — a collapsed disclosure at the end of every inspector: the identity numbers, the formal interface and terms, diagnostic codes, the revision. Nothing in the first two levels depends on it."
 msgstr "**説明**——すべてのインスペクターの末尾にある折りたたまれた開示部：識別番号、形式的なインターフェースと項、診断コード、リビジョン。最初の 2 つのレベルの何もこれに依存しません。"
 
-#: docs/user-guide/studio/workspace.md:91
+#: docs/user-guide/studio/workspace.md:92
 msgid "This guide follows the same order: it explains the canvas and the inspector, and points to _Explain_ and the technical documentation for the rest."
 msgstr "このガイドも同じ順序に従います。キャンバスとインスペクターを説明し、残りは _説明_ と技術文書を指し示します。"
 
-#: docs/user-guide/studio/workspace.md:96
+#: docs/user-guide/studio/workspace.md:97
 msgid "[Canvas](canvas.md) · [Library](library.md) · [Inspector](inspector.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[キャンバス](canvas.md) · [ライブラリ](library.md) · [インスペクター](inspector.md) · [キーボードとマウス](../reference/keyboard-and-mouse.md)"
 
@@ -8286,7 +8281,7 @@ msgid "The pattern is the one every sensor-driven behavior follows:"
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:17
-msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientLight`, Quantity, unit **illuminance** (`lx`). (The Library tab's _Ambient Light_ template gives the same.)"
+msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientLight`, Quantity, unit **illuminance** (`lx`). (The Library tab's _Ambient Light_ item gives the same.)"
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:20

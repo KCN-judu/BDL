@@ -17,142 +17,142 @@ msgid "Behavior Designer is a desktop tool for designing **how a product behaves
 msgstr ""
 
 #: docs/user-guide/README.md:9
-msgid "The language behind the tool is called **BDL**. You do not need to know the language to use the tool: the canvas, the inspector and the formula field _are_ the language. A text form of BDL exists for people who prefer an editor; see [Textual BDL](textual/overview.md)."
-msgstr ""
-
-#: docs/user-guide/README.md:14
-msgid "What problem it solves"
+msgid "The language behind the tool is called **BDL**. The canvas, the inspector and the formula field are one way of writing it; the text form is another, for people who prefer an editor — see [Textual BDL](textual/overview.md). Either way you are describing behavior in a language; what the tool keeps out of your way is the machine: which pin, which protocol, which HAL call are decided later, at deployment."
 msgstr ""
 
 #: docs/user-guide/README.md:16
+msgid "What problem it solves"
+msgstr ""
+
+#: docs/user-guide/README.md:18
 msgid "A product's behavior is usually decided in sketches and spreadsheets and then rediscovered in code, where the meaning of each number is lost. In Behavior Designer a value has a **meaning** (a _Brightness_ is not an _Opacity_, even if both are numbers between 0 and 1), a relationship between values is checked for units and dimensions, timing is explicit, and a physical output can only be driven by one relationship. Unfinished designs are normal: you can name a relationship before you know its formula, and the tool tells you what is still open rather than refusing to work."
 msgstr ""
 
-#: docs/user-guide/README.md:25
+#: docs/user-guide/README.md:27
 msgid "What you can do here"
 msgstr ""
 
-#: docs/user-guide/README.md:29
+#: docs/user-guide/README.md:31
 #: docs/user-guide/studio/code-view.md:8
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "**Design**"
 msgstr ""
 
-#: docs/user-guide/README.md:29
+#: docs/user-guide/README.md:31
 msgid "name the concepts of your product, relate them with formulas, decide their timing, and connect the results to physical outputs"
 msgstr ""
 
-#: docs/user-guide/README.md:30
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/README.md:32
+#: docs/user-guide/studio/workspace.md:44
 msgid "**Simulate**"
 msgstr ""
 
-#: docs/user-guide/README.md:30
+#: docs/user-guide/README.md:32
 msgid "feed values in, step the design tick by tick, and watch every value — with the same evaluator that defines the language"
 msgstr ""
 
-#: docs/user-guide/README.md:31
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/README.md:33
+#: docs/user-guide/studio/workspace.md:45
 msgid "**Deploy**"
 msgstr ""
 
-#: docs/user-guide/README.md:31
+#: docs/user-guide/README.md:33
 msgid "choose a board and see whether the design's outputs can be placed on its pins, and why not if they cannot"
 msgstr ""
 
-#: docs/user-guide/README.md:32
+#: docs/user-guide/README.md:34
 msgid "**Organize and reuse**"
 msgstr ""
 
-#: docs/user-guide/README.md:32
+#: docs/user-guide/README.md:34
 msgid "group related relationships into a behavior, package a behavior as a reusable component, and compose instances of components into a larger system"
 msgstr ""
 
-#: docs/user-guide/README.md:34
+#: docs/user-guide/README.md:36
 msgid "Not yet in the tool: flashing a board, live values from a running device, and importing components from other projects. The guide says so where it matters."
 msgstr ""
 
-#: docs/user-guide/README.md:37
+#: docs/user-guide/README.md:39
 msgid "Where to start"
 msgstr ""
 
-#: docs/user-guide/README.md:39
+#: docs/user-guide/README.md:41
 msgid "If you are…"
 msgstr ""
 
-#: docs/user-guide/README.md:39
+#: docs/user-guide/README.md:41
 msgid "Start here"
 msgstr ""
 
-#: docs/user-guide/README.md:41
+#: docs/user-guide/README.md:43
 msgid "a product or industrial designer who wants to describe a behavior and try it"
 msgstr ""
 
-#: docs/user-guide/README.md:41
+#: docs/user-guide/README.md:43
 msgid "[What is BDL?](getting-started/what-is-bdl.md) → [Your first behavior](getting-started/first-behavior.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:42
+#: docs/user-guide/README.md:44
 msgid "an embedded prototyper who knows sensors and actuators"
 msgstr ""
 
-#: docs/user-guide/README.md:42
+#: docs/user-guide/README.md:44
 msgid "[Your first behavior](getting-started/first-behavior.md), then [From sensor to output](workflows/sensor-to-output.md) and [Deploy](studio/deploy.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:43
+#: docs/user-guide/README.md:45
 msgid "a code-oriented user who would rather type BDL"
 msgstr ""
 
-#: docs/user-guide/README.md:43
+#: docs/user-guide/README.md:45
 msgid "[Textual BDL — overview](textual/overview.md), which says exactly what works today"
 msgstr ""
 
-#: docs/user-guide/README.md:44
+#: docs/user-guide/README.md:46
 msgid "a researcher or language person who wants the semantics"
 msgstr ""
 
-#: docs/user-guide/README.md:44
+#: docs/user-guide/README.md:46
 msgid "the _Going deeper_ section at the end of each concept page, and [Terminology](reference/terminology.md) → the technical docs in `docs/`"
 msgstr ""
 
-#: docs/user-guide/README.md:46
+#: docs/user-guide/README.md:48
 msgid "Contents"
 msgstr ""
 
-#: docs/user-guide/README.md:48
+#: docs/user-guide/README.md:50
 msgid "**Getting started** [What is BDL?](getting-started/what-is-bdl.md) · [Install and launch](getting-started/install-and-launch.md) · [Your first behavior](getting-started/first-behavior.md) · [Your first simulation](getting-started/first-simulation.md) · [Your first deployment check](getting-started/first-deployment.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:54
+#: docs/user-guide/README.md:56
 msgid "**Concepts** — the ideas, one page each [Concepts](concepts/concepts.md) · [Relationships](concepts/relationships.md) · [Incomplete designs](concepts/incomplete-designs.md) · [Timing](concepts/timing.md) · [Physical outputs](concepts/physical-outputs.md) · [Behavior groups](concepts/behavior-groups.md) · [Components](concepts/components.md) · [Behavior systems](concepts/behavior-systems.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:62
+#: docs/user-guide/README.md:64
 msgid "**Studio** — the interface, one panel or page each [Workspace](studio/workspace.md) · [Canvas](studio/canvas.md) · [Library](studio/library.md) · [Inspector](studio/inspector.md) · [Formula editor](studio/formula-editor.md) · [Simulate](studio/simulate.md) · [Deploy](studio/deploy.md) · [System projects](studio/system-projects.md) · [Design, Code and Split](studio/code-view.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:69
+#: docs/user-guide/README.md:71
 msgid "**Workflows** — one goal each, on the same lamp [From sensor to output](workflows/sensor-to-output.md) · [A second output](workflows/multi-output-behavior.md) · [Grouping a behavior](workflows/grouping-behavior.md) · [Packaging a behavior as a component](workflows/package-as-component.md) · [Composing components](workflows/composing-components.md) · [Carrying a value across timing domains](workflows/cross-domain-transport.md) · [Versioning a component](workflows/component-versioning.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:79
+#: docs/user-guide/README.md:81
 msgid "**Textual BDL** [Overview and current status](textual/overview.md) · [Syntax basics](textual/syntax-basics.md) · [Editor and language server](textual/editor-and-lsp.md) · [Authoring a project as text](workflows/authoring-as-text.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:84
+#: docs/user-guide/README.md:86
 msgid "**Troubleshooting** [Start here](troubleshooting/README.md) · [Incomplete design](troubleshooting/incomplete-design.md) · [Types, units and concepts](troubleshooting/type-and-concept-errors.md) · [Timing](troubleshooting/timing-errors.md) · [Connections](troubleshooting/connection-errors.md) · [Deployment](troubleshooting/deployment-errors.md) · [Source files](troubleshooting/text-project-errors.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:92
+#: docs/user-guide/README.md:94
 msgid "**Reference** [Terminology](reference/terminology.md) · [Keyboard and mouse](reference/keyboard-and-mouse.md) · [Status meanings](reference/status-meanings.md) · [Formula language](reference/formula-language.md) · [Project files](reference/project-files.md) · [Command line](reference/cli.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:98
+#: docs/user-guide/README.md:100
 msgid "**About this guide** [Style guide](STYLE_GUIDE.md) · [Verification matrix](VERIFICATION.md) · [Screenshot plan](SCREENSHOT_PLAN.md) · [Documentation research](DOCUMENTATION_RESEARCH.md)"
 msgstr ""
 
-#: docs/user-guide/README.md:102
+#: docs/user-guide/README.md:104
 msgid "The technical documentation for people building the tool itself lives one level up in `docs/` (architecture, compiler pipeline, protocol, formal notes). This guide links to it from _Going deeper_ sections and does not repeat it."
 msgstr ""
 
@@ -340,7 +340,7 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-groups.md:86
 #: docs/user-guide/concepts/behavior-systems.md:115
 #: docs/user-guide/concepts/components.md:99
-#: docs/user-guide/concepts/concepts.md:82
+#: docs/user-guide/concepts/concepts.md:81
 #: docs/user-guide/concepts/incomplete-designs.md:83
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
@@ -356,7 +356,7 @@ msgstr ""
 #: docs/user-guide/studio/library.md:89
 #: docs/user-guide/studio/simulate.md:141
 #: docs/user-guide/studio/system-projects.md:130
-#: docs/user-guide/studio/workspace.md:94
+#: docs/user-guide/studio/workspace.md:95
 #: docs/user-guide/textual/editor-and-lsp.md:83
 #: docs/user-guide/textual/syntax-basics.md:196
 #: docs/user-guide/troubleshooting/connection-errors.md:136
@@ -586,7 +586,7 @@ msgid "Shared and private"
 msgstr ""
 
 #: docs/user-guide/concepts/components.md:43
-msgid "Inside the source a concept is normally **private**: each instance gets its own _Brightness_, distinct from every other instance's and from the system's. A component can instead declare a concept **shared** — _this is the system's Brightness_ — so that its ports carry the same concept as the rest of the design. Sharing is a decision you make; it is never inferred from names, units or library templates."
+msgid "Inside the source a concept is normally **private**: each instance gets its own _Brightness_, distinct from every other instance's and from the system's. A component can instead declare a concept **shared** — _this is the system's Brightness_ — so that its ports carry the same concept as the rest of the design. Sharing is a decision you make; it is never inferred from names, units or library items."
 msgstr ""
 
 #: docs/user-guide/concepts/components.md:50
@@ -756,7 +756,7 @@ msgid "**The _New concept_ sheet** (sidebar → _Project_ → **+** by _Concepts
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:57
-msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use the canvas's right-click **Add Concept** menu. The result is an ordinary concept with a suggested name and value form; two insertions of the same template are two concepts. See [Library](../studio/library.md)."
+msgid "**The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use the canvas's right-click **Add Concept** menu. The result is an ordinary concept with a suggested name and value form; two insertions of the same item are two concepts. See [Library](../studio/library.md)."
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:63
@@ -781,10 +781,10 @@ msgid "**Delete** — disabled while a relationship uses the concept, with the u
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:74
-msgid "_For language implementers._ A concept is a nominal semantic type; its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library template is not an identity."
+msgid "_For language implementers._ A concept is a nominal semantic type; its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library item is not an identity."
 msgstr ""
 
-#: docs/user-guide/concepts/concepts.md:84
+#: docs/user-guide/concepts/concepts.md:83
 msgid "[Relationships](relationships.md) · [Incomplete designs](incomplete-designs.md) · [Library](../studio/library.md) · [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)"
 msgstr ""
 
@@ -1994,11 +1994,6 @@ msgstr ""
 
 #: docs/user-guide/getting-started/first-simulation.md:49
 msgid "**What happened.** Each tick, every value in the _interaction_ domain was recomputed from the inputs you supplied. The evaluator that produced these numbers is the one that defines what a BDL design means; the generated code for a device is held to it."
-msgstr ""
-
-#: docs/user-guide/getting-started/first-simulation.md:54
-#: docs/user-guide/studio/simulate.md:9
-msgid "![The Simulate page: on the left, under Sources, a control for tilt showing 0.785398 rad and the interaction domain's period of every 1 ticks; in the middle the Step, Step ×10 and Reset buttons, tick 3, and a trace with three rows whose tilt, brightness and light columns read Tilt(0.785398 [rad]), Brightness(0.5) and Brightness(0.5); on the right the probe for brightness with Brightness(0.5) now and at each tick over the run.](../assets/studio/simulate-page.png)"
 msgstr ""
 
 #: docs/user-guide/getting-started/first-simulation.md:56
@@ -4416,11 +4411,11 @@ msgid "semantic action, edit plan"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "**template**"
+msgid "**item**"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "a ready-made concept in the Library"
+msgid "a ready-made Concept, or a Source preset, in the Library"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
@@ -4429,7 +4424,7 @@ msgid "Library"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:58
-msgid "`TemplateId` — never an identity"
+msgid "`LibraryItem` id — never an identity"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:60
@@ -5924,126 +5919,126 @@ msgid "**Toolbar** — the project's name (followed by _Edited_ while there are 
 msgstr ""
 
 #: docs/user-guide/studio/workspace.md:17
-msgid "**Sidebar** (left) — on the Design page, two tabs: **Project**, the project's objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_, _Components_, _Instances_, _Behaviors_), each with a **+** to create one — the heading _Contexts_ stays empty (contexts are not part of the tool yet); and **Library**, the ready-made concept templates. See [Library](library.md). The Simulate and Deploy pages put their own controls here."
+msgid "**Sidebar** (left) — on the Design page, two tabs: **Project**, the project's objects by kind (_Concepts_, _Mappings_, _Timing domains_, _Outputs_, _Components_, _Instances_, _Behaviors_), each with a **+** to create one — the heading _Contexts_ stays empty (contexts are not part of the tool yet); and **Library**, the Standard Library's Concept items and Source presets. See [Library](library.md). The Simulate and Deploy pages put their own controls here."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:24
+#: docs/user-guide/studio/workspace.md:25
 msgid "**Page content** (centre) — the canvas on Design, the trace on Simulate, the verdict on Deploy."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:27
+#: docs/user-guide/studio/workspace.md:28
 msgid "**Inspector** (right) — the selected object: what it means, what you can change, what a change affects. See [Inspector](inspector.md)."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:30
+#: docs/user-guide/studio/workspace.md:31
 msgid "**Status line** — the document state (_Saved_ / _Edited_), then counts (_2 concepts_, _3 mappings_, and _1 source_ when the design has a relationship the environment provides), then what is still open (_1 not yet defined_, _outputs incomplete_, _not causal_, _reads across domains_, _N definitions not added_), then the compiler connection. A Source is complete as it is, so it is counted, never listed as open. Errors from a refused action appear as a **banner** above the page content with a _Dismiss_ link — never as a dialog."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:38
+#: docs/user-guide/studio/workspace.md:39
 msgid "**Page bar** — the pages, in the order you use them:"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Page"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Answers"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:40
+#: docs/user-guide/studio/workspace.md:41
 msgid "Shortcut"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "what does the product do"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:42
+#: docs/user-guide/studio/workspace.md:43
 msgid "⌘1"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:44
 msgid "what does it do over time"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:43
+#: docs/user-guide/studio/workspace.md:44
 msgid "⌘2"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/studio/workspace.md:45
 msgid "does it fit this board"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:44
+#: docs/user-guide/studio/workspace.md:45
 msgid "⌘3"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "**Monitor**"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "what is it doing right now — _not built yet_; the page says live values arrive with telemetry"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:45
+#: docs/user-guide/studio/workspace.md:46
 msgid "⌘4"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:47
+#: docs/user-guide/studio/workspace.md:48
 msgid "The button at the left of the page bar (⊞) closes the project and returns to the project manager. The gear at the right opens **Preferences…**: the language Studio speaks (System Default, English, 简体中文, 日本語), which changes only what Studio shows — never the BDL source, the project files or the compiler. The same link is on the project manager."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:53
+#: docs/user-guide/studio/workspace.md:54
 msgid "Saving, undo, revisions"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:55
+#: docs/user-guide/studio/workspace.md:56
 msgid "**⌘S** or **Save** writes the whole project to its folder — the design, the layout, and every unfinished edit: a formula typed and not added, text in the Code view that does not build yet. A design change is recorded as a new _revision_ of the project; **⌘Z** / **⇧⌘Z** step through them. Moving nodes, resizing panels and collapsing groups are not design changes: they are saved but make no revision. A typed formula that has not been added is a _draft_ — it is kept when you switch selection or pages, saved with the project, and the status line counts it as _definition not added_ until you add or revert it."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:64
+#: docs/user-guide/studio/workspace.md:65
 msgid "Closing a project"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:66
+#: docs/user-guide/studio/workspace.md:67
 msgid "**Close**, the project manager button (⊞), **⌘W**, **⌘Q**, the menu's Quit, the window's close button, and opening or creating another project all ask the same question when the project differs from what is saved:"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:70
+#: docs/user-guide/studio/workspace.md:71
 msgid "Save changes to “lamp”? **Don't Save** · **Cancel** · **Save**"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:72
+#: docs/user-guide/studio/workspace.md:73
 msgid "**Save** saves everything as it is now and then closes; if the save is refused (a file changed on disk — see the banner), the project stays open. **Don't Save** closes; the next open returns to what was last saved. **Cancel** (Esc) changes nothing. A project that is _Saved_ closes at once. Nothing asks twice, and nothing closes while the question is open."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:78
+#: docs/user-guide/studio/workspace.md:79
 msgid "The three levels of information"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:80
+#: docs/user-guide/studio/workspace.md:81
 msgid "Studio shows a design at three levels, and keeps them apart:"
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:82
+#: docs/user-guide/studio/workspace.md:83
 msgid "**Canvas** — structure you can see: shape, colour, links, dashed outlines, a red mark. No type names, no identifiers."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:84
+#: docs/user-guide/studio/workspace.md:85
 msgid "**Inspector** — designer vocabulary: _Meaning_, _Value_, _Reads_, _Produces_, _Updates in_, _Drives_; findings in product language beside the field they concern."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:87
+#: docs/user-guide/studio/workspace.md:88
 msgid "**Explain** — a collapsed disclosure at the end of every inspector: the identity numbers, the formal interface and terms, diagnostic codes, the revision. Nothing in the first two levels depends on it."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:91
+#: docs/user-guide/studio/workspace.md:92
 msgid "This guide follows the same order: it explains the canvas and the inspector, and points to _Explain_ and the technical documentation for the rest."
 msgstr ""
 
-#: docs/user-guide/studio/workspace.md:96
+#: docs/user-guide/studio/workspace.md:97
 msgid "[Canvas](canvas.md) · [Library](library.md) · [Inspector](inspector.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr ""
 
@@ -8285,7 +8280,7 @@ msgid "The pattern is the one every sensor-driven behavior follows:"
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:17
-msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientLight`, Quantity, unit **illuminance** (`lx`). (The Library tab's _Ambient Light_ template gives the same.)"
+msgid "**A concept for the new sensor.** Sidebar → _Concepts_ **+**: `AmbientLight`, Quantity, unit **illuminance** (`lx`). (The Library tab's _Ambient Light_ item gives the same.)"
 msgstr ""
 
 #: docs/user-guide/workflows/sensor-to-output.md:20

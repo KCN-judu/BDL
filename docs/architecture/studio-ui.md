@@ -94,7 +94,7 @@ contexts → outputs → domains → board → observe):
 | **Design**   | the project as **Design** (node canvas), **Code** (its source files) or **Split** (both) — §12                                                                                                  | sidebar: _Project_ tab (concepts, mappings, timing domains, outputs; _Contexts_ and _Components_ are empty headings) and _Library_ tab (concept templates, §2) | inspector of the selection                                  | what the product does      |
 | **Simulate** | readiness blockers with _Show_ links, Step / Step ×10 / Reset, the trace as a table (tick, active domains, one column per relationship without inputs and per driven output); value plots later | inputs as controls by value form; a period per timing domain                                                                                                   | probe of the selection: value now and over the run, Explain | what it does over time     |
 | **Deploy**   | one verdict _for this board_, the placement device → requirement → pin, the dead end in the solver's terms; a board picture later                                                               | boards from bdld; devices, edited in place                                                                                                                     | —                                                           | whether it fits            |
-| **Monitor**  | _spec_: the same canvas with live values; today a placeholder page (`placeholder_page.dart`) until telemetry exists (ROADMAP step S)                                                            | telemetry sessions                                                                                                                                             | probe inspector                                             | what it is doing right now |
+| **Monitor**  | _spec_: the same canvas with live values; a placeholder page (`placeholder_page.dart`) until telemetry exists (roadmap priority 4)                                                              | telemetry sessions                                                                                                                                             | probe inspector                                             | what it is doing right now |
 
 Resolve's page bar can hide labels (icons only) and hide pages; we keep labels
 by default and allow ⌘1–⌘4. The page bar's left button is the project manager
@@ -242,7 +242,7 @@ header word precedence is `Source` › `declared` › port word › sink state �
 | double-click node header                                  | rename inline                                                                                                                                                                     | —                  |
 | H                                                         | collapse selected nodes                                                                                                                                                           | H                  |
 | right-click                                               | context menu: Rename · Delete over a node; **Add Concept ▸** Recent / Input / Output / Environment / Geometry & motion / Human interaction / More… (docs/spec/concept-library.md) | RMB                |
-| drop a Library row                                        | insert that concept template at the drop point                                                                                                                                    | —                  |
+| drop a Library row                                        | a Concept item: insert the concept at the drop point; a Source preset: open the Source sheet                                                                                      | —                  |
 
 Dragging a node over a link does **not** auto-insert it (Blender's auto attach);
 BDL links are typed by concept, and silent insertion would be a semantic edit.
@@ -801,11 +801,11 @@ _As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
   object's glyph; an output shows its final target. A rule has no value per
   tick: the probe says so (_A rule: it has no value of its own. A value whose
   formula applies it is what the simulator samples._) and links, under _Applied
-  in_, the values whose definition references it — the inverse of
-  `MappingAnalysis.references`, the compiler's dependency edges, never a text
-  search — or says _No value applies it yet._ and offers the same fix. Explain
-  holds `DeclId`, the run's revision, the rendered value and an error's code and
-  technical text.
+  in_, the values whose definition references it — `MappingAnalysis.applied_by`,
+  the compiler's direct reverse dependency edges (0.20), never inverted or
+  searched in Studio — or says _No value applies it yet._ and offers the same
+  fix. Explain holds `DeclId`, the run's revision, the rendered value and an
+  error's code and technical text.
 - **Errors** that stop a tick are the controls' line, about the object (_bad
   divided by zero._), never the global banner.
 - **Stale results**: a new revision drops the samples, keeps the fed values for
@@ -1032,7 +1032,8 @@ source was open — is a per-user note in the recent list (`recent.json`),
 restored on the next open of that project; never project data.
 
 **Not built.** Inline squiggles on the fault's range (the list and the caret
-jump stand in); completion and hover in the Code pane (the language server has
-them; the pane does not yet ask); a _Format_ command (`bdl-ide::format` exists);
-creating a second source file from Studio (a file made by an external editor
-appears on reload).
+jump stand in); rename from the editor (rename on the canvas, and the text
+follows); the unit-domain hint (`text.legacy_unit_domain`) in the pane's list
+(the language server raises it; `GetSources` carries load faults only); creating
+a second source file from Studio (a file made by an external editor appears on
+reload).

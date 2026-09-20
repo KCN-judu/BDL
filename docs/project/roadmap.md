@@ -36,36 +36,41 @@ formal result arrives.
   edition may remove the shorthand with `bdld migrate-unit-domain` applied
   automatically — after a versioning policy for the language exists.
 - The equation language's remaining edges: `zip`'s cost in the generated core
-  (ISS-0013); hover on an equation's name (completion carries its meaning
-  today); record syntax lowering to nested grouped values — only if a case asks
-  (the binder, range and `??` forms landed in P11; FV Phase 11 removes the
-  general quantifier and comprehension).
-- The Formula Composer's next slices: `if` / `match` / blocks / rules as
-  structured components (opaque text today); a preferred display unit per
-  concept and per simulation input (presentation only, FV Phase 10 §9); hover
-  cards on components; affine units (°C, °F) once the formal point/difference
-  follow-up lands (ISS-0004); drag-and-drop from the palette.
+  (ISS-0013); record syntax lowering to nested grouped values — only if a case
+  asks (FV Phase 11 removes the general quantifier and comprehension, FVD-0113).
+- The Formula Composer's next slices: `match`, blocks (`let`), rules (`x => …`),
+  collection and grouped literals and `delay` / `sync` as structured components
+  (the Composer shows them as text, `NodeKind::Opaque`); a preferred display
+  unit per concept and per simulation input (presentation only, FV Phase 10 §9);
+  hover cards on components; affine units (°C, °F) once the formal
+  point/difference follow-up lands (ISS-0004); drag-and-drop from the palette.
 - Studio: the collections report (readiness, byte bounds, window requirements)
   on the Deploy page, and the schedule as deployment data there — today
   `bdld compile --period` only.
 - User-defined enums — ISS-0005; affine units — ISS-0004; temporal modifiers and
   contexts — ISS-0010: each starts as a proposal.
 - Studio gaps listed in `docs/architecture/studio-compiler-integration.md` §3
-  (_What remains_): the Deploy page on the 0.5 read model, an Explain request,
-  domain regions and cycle emphasis on the canvas, entity hover and fixes inside
-  a component's source.
+  (_What remains_): the Deploy page on the 0.5 read model (`rows` / `missing` /
+  `blocker`), an Explain request over the protocol (hover cards exist; Explain
+  is the compiler's formal detail and is a different answer), domain regions and
+  cycle emphasis on the canvas, entity hover and fixes inside a component's
+  source (a body-scoped `EntityRef` for `HoverEntity` / `ListSemanticActions`).
 
 - Cross-surface actions applying model operations from text editors; workspace
   symbols in the LSP.
-- The Code view's remaining slice (ADR-0023): inline fault ranges, completion
-  and hover in Studio's Code pane through the IDE service; a _Format_ command;
-  whole-graph relayout on request; a persisted edit history that makes text-only
-  changes undoable (ISS-0009).
+- The Code view's remaining slice (ADR-0023): inline fault ranges (the list and
+  the caret jump stand in); rename from the editor; a second source file created
+  from Studio; the unit-domain hint shown in the pane; whole-graph relayout on
+  request; a persisted edit history that makes text-only changes undoable
+  (ISS-0009).
 
 - Projection deltas and a persisted edit history — ISS-0009.
-- Team / project / package concept libraries (LIB-2); a separate device library
-  that provides concepts and generates requirements (LIB-3) —
-  `docs/spec/concept-library.md`.
+- Team / project / package libraries of items (LIB-2); a device library that
+  provides values and generates requirements (LIB-3, with ISS-0016 and PRP-0001)
+  — `docs/spec/concept-library.md`. Output-side realization (a device encoder
+  from a concept's representation to a raw command, chosen at deployment) is
+  formally investigated (FV Phase 14) and has no production record: it starts as
+  a proposal, if at all.
 - Native menu bar (`PlatformMenuBar` on macOS, in-window on Windows).
 - An incremental query engine for the IDE service — only if profiling on real
   projects asks for it (baseline: ~2 ms per full analysis at 400 mappings).

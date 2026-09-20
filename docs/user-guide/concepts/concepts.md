@@ -57,8 +57,8 @@ an edit, and the inspector names the relationships that will be checked again.
 - **The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button
   Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use
   the canvas's right-click **Add Concept** menu. The result is an ordinary
-  concept with a suggested name and value form; two insertions of the same
-  template are two concepts. See [Library](../studio/library.md).
+  concept with a suggested name and value form; two insertions of the same item
+  are two concepts. See [Library](../studio/library.md).
 
 ## What the inspector shows
 
@@ -76,8 +76,7 @@ form is its _representation_, chosen once (a write-once binding). A formula
 reads a concept through `rep` and produces one through `mk`, and the dimension
 check is the representation's dimension algebra. `docs/spec/kernel.md` and
 `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference;
-`docs/spec/concept-library.md` explains why a library template is not an
-identity.
+`docs/spec/concept-library.md` explains why a library item is not an identity.
 
 ## Related
 

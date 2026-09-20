@@ -139,7 +139,7 @@
   },
   "recent": "Recent",
   "@recent": {
-    "description": "Welcome page: recently opened projects; canvas menu: recently used templates."
+    "description": "Welcome page: recently opened projects; canvas menu: recently used library items."
   },
   "projectsYouOpenWillAppearHere": "Projects you open will appear here.",
   "@projectsYouOpenWillAppearHere": {
@@ -343,7 +343,7 @@
   },
   "library": "Library",
   "@library": {
-    "description": "Sidebar tab: the concept Library (templates)."
+    "description": "Sidebar tab: the Standard Library (Concept items and Source presets)."
   },
   "concepts": "Concepts",
   "@concepts": {
@@ -391,7 +391,7 @@
   },
   "add": "Add",
   "@add": {
-    "description": "Button: add a template to the project."
+    "description": "Button: add a library item to the project."
   },
   "stillInUse": "Still in use",
   "@stillInUse": {

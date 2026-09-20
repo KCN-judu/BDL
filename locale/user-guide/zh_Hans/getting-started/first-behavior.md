@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-behavior.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · 简体中文 · [日本語](../../ja/getting-started/first-behavior.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一个行为
 
@@ -44,7 +42,7 @@
 
 ![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
 
-_A declared relationship: dashed outline and the word declared in its header. Its output socket is hollow: no value comes out of a rule until a value applies it._
+_一个已声明的关系：虚线轮廓，标题中写着“已声明”。它的输出插口是空心的：在有值应用这条规则之前，规则不产生任何值。_
 
 ## 4. 写公式
 

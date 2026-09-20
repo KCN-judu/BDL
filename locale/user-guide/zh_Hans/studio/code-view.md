@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/code-view.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/code-view.md) · 简体中文 · [日本語](../../ja/studio/code-view.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 设计、代码与分栏
 
@@ -22,15 +20,15 @@
 
 文本就是项目的文件，你在画布上做的一切都写在里面：在画布上重命名概念，文本会在它被使用的每个地方显示新名字，你的注释和空行保持不变。在画布上添加关系，它会出现在 `src/main.bdl` 的末尾（没有 `main.bdl` 时是第一个文件的末尾），或者它所属组件主体的末尾。
 
-## What the colours mean
+## 颜色的含义
 
 ![The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.](../../../../docs/user-guide/assets/studio/code-view.png)
 
-_The Code view of the component system: the file as the project holds it, coloured by what each word is._
+_组件系统的代码视图：文件按项目保存的样子显示，按每个词是什么着色。_
 
-The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere.
+文本按每个词对项目而言_是什么_着色——而不是按它的拼写。颜色就是画布的颜色：**概念**名是概念节点的蓝灰色，**关系**是关系节点的蓝色，**来源**是来源节点的绿色，**输出**或**设备**是输出节点的暖色，**实例**是实例节点的青色。关键字、运算符和单位是灰色；注释是更浅的灰色。名字在其 _声明_ 处比在使用处更粗；只存在于公式内部的名字——规则的参数、绑定器的变量——是斜体；公式中留下的 `?` 是橙色，与别处 _尚待决定_ 的颜色相同。
 
-Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting.
+因为颜色来自项目，它们能告诉你拼写无法告诉你的事：`90` 后面的 `deg` 是单位，作为规则参数的 `deg` 不是；`all x in xs: …` 开头的 `all` 是关键字，名为 `all` 的值是值；`clamp` 是库的；一个关系在获得定义的那一刻从来源的绿色变为关系的蓝色。尚不能构建的文件仍保留关键字、数字、注释和单位的颜色，以及最后一个能构建的版本仍认识的名字。颜色跟随外观（浅色或深色）；没有设置项。
 
 ## 输入
 
@@ -51,33 +49,33 @@ Because the colours come from the project, they tell you things spelling cannot:
 
 **⌘S** 按编辑器显示的原样写入文件——包括尚不能构建的文件——然后是布局和辅助文件（[项目文件](../reference/project-files.md)）。重新打开项目显示同样的文本、同样的横幅，设计则是最后一个能构建的版本。
 
-## What the editor knows
+## 编辑器知道什么
 
-The editor asks Studio's compiler service the same questions a code editor with the [language server](../../../../docs/user-guide/textual/editor-and-lsp.md) asks, about the text exactly as you have typed it.
+编辑器向 Studio 的编译器服务提出的问题，与带 [语言服务器](../../../../docs/user-guide/textual/editor-and-lsp.md) 的代码编辑器提出的相同，针对的是你输入的原样文本。
 
-**Completion.** Press **⌃Space** and a list opens at the cursor with what can go here, best first: after a `:` the concepts, after an `@` the timing domains, at the start of a line the items allowed there, and inside a formula the inputs, the other relationships — a rule offered as a call, a Source or a value as its name — the names bound in the formula itself, the equations of the library, and after a number the units. ↑ and ↓ move, **Return** or **Tab** accept, **Esc** closes; the list narrows as you type. What is inserted is the service's text, never a guess.
+**补全。** 按 **⌃Space**，光标处打开一个列表，列出这里可以放什么，最合适的在前：`:` 之后是概念，`@` 之后是时序域，行首是允许出现的条目，公式内部是输入、其他关系——规则以调用形式提供，来源或值以名字提供——公式自身绑定的名字、库的方程，数字之后是单位。↑ 和 ↓ 移动，**Return** 或 **Tab** 接受，**Esc** 关闭；列表随输入收窄。插入的是服务给出的文本，从不猜测。
 
 ![A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.](../../../../docs/user-guide/assets/studio/code-completion.png)
 
-_The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first._
+_组件主体内、`dimByTilt(` 之后的补全弹出列表：这里可以放什么，来自编译器服务，最合适的在前。_
 
-**Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it.
+**悬停。** 把指针停在名字上，一张卡片会说明它是什么：它的声明、它生成什么、它的状态、它的角色（_来源_、_规则_ 或 _值_）、你写的描述。在库的方程上——`clamp`、`min`、`any`——卡片给出它的形状和作用。在关键字、数字或单位上没有卡片。输入或移开就会隐藏它。
 
 ![A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.](../../../../docs/user-guide/assets/studio/code-hover.png)
 
-_The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state._
+_在组件主体应用 dimByTilt 之处悬停显示的卡片：它的声明、角色、状态。_
 
-**Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy.
+**跳到定义。** **⌘-点击**一个名字，或把光标放在它上面按 **F12**，编辑器会选中它声明的位置——在本文件或另一个文件中，后者会自动打开。在组件的来源中，端口名指向端口所在的行，绝不会指向某个实例的副本。
 
-**References.** **⇧F12** on a name lists, under the editor, every place that names it, across all files, with the file and line; a row takes you there. Esc or the × closes the list. Two concepts with the same value form never share a list: the search is by identity, not by spelling.
+**引用。** 在名字上按 **⇧F12**，编辑器下方会列出所有文件中提到它的每一处，附有文件和行号；点击一行就跳过去。Esc 或 × 关闭列表。值形式相同的两个概念绝不会共用一个列表：搜索按身份进行，而不是按拼写。
 
-**Format.** **⌥⇧F**, or _Format_ at the right of the file bar, lays the file out the canonical way — spacing, indentation, one blank line between items — and applies it as one edit, with the cursor kept on its line. A file that does not parse yet is left exactly as it is; fix it first.
+**格式化。** **⌥⇧F**，或文件栏右侧的 _格式化_，把文件排成规范布局——空格、缩进、条目之间一个空行——并作为一次编辑应用，光标保持在原来的行。尚不能解析的文件保持原样；先修好它。
 
-Everything here works on the text as it stands, whether or not it builds: what the last version that built still knows is answered, and what nothing resolves gets no card and no destination, never a guess by spelling.
+这里的一切都作用于文本的当前状态，无论它能否构建：最后一个能构建的版本仍认识的东西会得到回答，而任何东西都无法解析的名字没有卡片也没有目的地，绝不会按拼写猜测。
 
 ## 尚未实现
 
-Findings underlined in the text (the list and the cursor jump stand in); rename from the editor (rename on the canvas, and the text follows); creating a second source file from Studio (make it in a code editor; it appears on reload).
+在文本中用下划线标出发现项（目前由列表和光标跳转代替）；从编辑器中重命名（在画布上重命名，文本随之变化）；从 Studio 创建第二个源文件（在代码编辑器中创建；重新加载后出现）。
 
 ## 相关
 

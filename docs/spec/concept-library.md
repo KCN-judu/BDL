@@ -76,8 +76,8 @@ the defaults:
 - every field is editable afterwards: name, description, representation, the
   relationship's definition;
 - the project never records which item an object came from, and it loads without
-  the library present — name, identity, representation and dimension all live in
-  `design/project.bdl.json`; the fragment keys reach nothing;
+  the library present — name, representation and dimension are in the `.bdl`
+  sources, identity in `.bdl/identities.json`; the fragment keys reach nothing;
 - a later library version cannot reinterpret an existing object; the tests
   change an item's default and check the project does not move.
 

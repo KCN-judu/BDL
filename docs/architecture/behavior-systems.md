@@ -9,9 +9,9 @@ status: current
 How reusable behaviour components, instances and bindings enter production BDL
 without a second language, a second checker, or a change to the kernel. The
 formal reference is Phase 8a of `BDL_FV` (`BDL/Behavior/`,
-`BEHAVIOR_SYSTEM_REQUIREMENTS.md`, D-64..D-73); the correspondence table is
-`docs/evidence/behavior-systems-correspondence.md`. Written before the code; the
-code follows it.
+`docs/notes/behavior-system-requirements.md`, FVD-0064 … FVD-0073); the
+correspondence table is `docs/evidence/behavior-systems-correspondence.md`.
+Written before the code; the code follows it.
 
 ```text
 BehaviorSystem  (authored truth of a system project)
@@ -79,7 +79,7 @@ consumes. For a system project it is **derived** by `flatten` on every commit
 and never edited or persisted; for a flat project it is the authored truth.
 `bdl_compiler::analyze`, simulation, deployment, lowering, codegen, `IdeHost`
 and the LSP take it unchanged. There is no system type checker, evaluator, clock
-judgment or code generator (D-64).
+judgment or code generator (FVD-0064).
 
 ## 3. Component-local identities
 
@@ -297,7 +297,7 @@ design with the advertised shape (required ⇒ unresolved, provided ⇒ present,
 parameter ⇒ unresolved and nullary), and returns a component whose body is the
 flattened design and whose private/shared partition is inherited (base concepts
 of the inner system become the package's shared concepts if they came from a
-system concept). Hierarchy is instantiating a package (D-72); no recursive
+system concept). Hierarchy is instantiating a package (FVD-0072); no recursive
 system type.
 
 ## 12. Behaviour groups, boundaries, extraction (Phase 8b; ADR-0019)
@@ -371,21 +371,21 @@ lives on the system, beside the components.
 
 **Component-local "Package as component": deferred (option A).** The production
 model has no nested system: a `BehaviorComponent.body` is a flat `Design`, and
-hierarchy is packaging a flattened system into a component (D-72). Extracting a
-group _inside_ a body would have to produce a component _and an instance inside
-the parent's body_; the parent's body cannot hold an instance, so option B would
-lower the instance immediately by re-flattening it into the parent's flat body
-(the Phase-8a `toComponent` strategy). That works, but the result is two truths
-of one behaviour — the new component and the flattened copy inside the parent —
-with no authored link between them: editing the component would not reach the
-parent, and the parent's body would carry generated `ScopedFormula`s and
-`Reference`s as if authored. That is exactly the "second semantic truth" this
-architecture refuses (§9, §10). Until a hierarchical authoring layer exists (a
-body that is itself a system, flattened recursively, with provenance through
-both levels), a group inside a component is organisation only, and
-`preview_extraction` refuses it with `extract.not_a_base_group`. Grouping itself
-is not blocked by this: every group operation, boundary and canvas behaviour
-works in both scopes.
+hierarchy is packaging a flattened system into a component (FVD-0072).
+Extracting a group _inside_ a body would have to produce a component _and an
+instance inside the parent's body_; the parent's body cannot hold an instance,
+so option B would lower the instance immediately by re-flattening it into the
+parent's flat body (the Phase-8a `toComponent` strategy). That works, but the
+result is two truths of one behaviour — the new component and the flattened copy
+inside the parent — with no authored link between them: editing the component
+would not reach the parent, and the parent's body would carry generated
+`ScopedFormula`s and `Reference`s as if authored. That is exactly the "second
+semantic truth" this architecture refuses (§9, §10). Until a hierarchical
+authoring layer exists (a body that is itself a system, flattened recursively,
+with provenance through both levels), a group inside a component is organisation
+only, and `preview_extraction` refuses it with `extract.not_a_base_group`.
+Grouping itself is not blocked by this: every group operation, boundary and
+canvas behaviour works in both scopes.
 
 **One history.** `SystemState.undo/redo: Vec<HistoryEntry>` interleaves
 `Semantic(Box<BehaviorSystem>)` and `Authoring(groups)` entries in the order

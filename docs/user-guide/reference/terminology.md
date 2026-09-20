@@ -55,7 +55,7 @@ last column is the formal or internal name, which appears only in
 | **draft** | a typed but not yet added formula | *unsaved* | `MappingDefinitionDraft` overlay |
 | **finding** | what the compiler reports about an object | (under the field it concerns) | diagnostic, code |
 | **fix** | an action the tool offers for a finding | Fixes | semantic action, edit plan |
-| **template** | a ready-made concept in the Library | Library | `TemplateId` — never an identity |
+| **item** | a ready-made Concept, or a Source preset, in the Library | Library | `LibraryItem` id — never an identity |
 
 Words this guide does not use for designer-facing text: *mapping* (except
 to name the Studio label), *signal*, *event*, *handler*, *flatten*,

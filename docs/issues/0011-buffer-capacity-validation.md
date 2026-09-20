@@ -20,7 +20,7 @@ cross-domain window — fit a target.
 
 Without a capacity check a list-carrying design generates a core that allocates
 without bound; the only overflow policy that preserves the kernel's semantics is
-to refuse the deployment (FV D-86), and today nothing refuses.
+to refuse the deployment (FVD-0086), and today nothing refuses.
 
 ## Current evidence
 

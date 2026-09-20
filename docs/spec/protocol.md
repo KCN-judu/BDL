@@ -212,17 +212,41 @@ applied when any step is refused (no object, layout, history, dirtiness or
 identity); `library.unknown_item`, `library.invalid_plan` (a key the item does
 not create), `edit.stale_revision`, `edit.invalid_name`,
 `edit.duplicate_concept_name` / `edit.duplicate_mapping_name`; 0.17 | |
-ListConceptTemplates | ConceptTemplatesResponse { libraries[] { id, name,
-schema_version, version, templates[] { id, display_name, default_name,
-description, category, role_hint, representation?, type_name, unit, keywords[],
-icon } }, quantities[] } | the Concept items as templates — the 0.5 surface; a
-Source item is not a template. `source_default_name`, `display_names`,
-`descriptions` (0.16) are deprecated since 0.17 and never set: a Source is an
-item, and text is localized by the client | | InstantiateConceptTemplate {
-base_revision, template_id, name?, component? } | SystemEditApplied | the same
-transaction with `names = { concept: name }`; `source_name` (0.16) is deprecated
-since 0.17 and ignored; `library.unknown_template`, `edit.stale_revision` | |
-Shutdown | Ack | |
+CreateSource { base_revision, component?, source_name, source_description,
+concept: existing_concept (id) \| new_concept { name, description,
+representation? } } | SystemEditApplied | a Source `<source_name> : () -> C`
+with no definition over a concept the designer chose (0.23,
+docs/spec/concept-library.md § Creating a Source): an existing concept of the
+design in scope, by identity — one `CreateMapping`, one revision, no new concept
+— or a new concept created in the same transaction — `CreateConcept` then
+`CreateMapping`, one revision, one history entry, all or nothing, no identity
+consumed on a refusal; the outcome carries `created_mapping` and, for a new
+concept, `created_concept`; the result is ordinary objects and nothing records
+how they were made; `edit.stale_revision`, `edit.unknown_concept` (not a concept
+of the scope), `edit.duplicate_*`, `edit.invalid_name`,
+`edit.invalid_representation` | | ListSourceCandidates { revision, component?,
+item_id } | SourceCandidatesResponse { revision, candidates[] { concept_id,
+preferred }, preset? SourcePresetView { concept_name, concept_description,
+representation?, type_name, unit, source_name, source_description },
+suggested_concept_name, suggested_source_name } | the concepts a Source may be
+created over: every concept of the design in scope, in id order, `preferred`
+marking the ones whose value form is the preset's when `item_id` names a Source
+item (`bdl_library::rank_concepts` — authoring convenience, never a filter or a
+rule; identity is nominal, two concepts of one value form are two choices, an
+open value form is a choice); with the preset and its names made free in the
+design; an empty `item_id` is a generic New Source; 0.23.
+`LibraryItemView.preset` (0.23) carries the same `SourcePresetView` on a Source
+item of `ListLibraryItems` | | ListConceptTemplates | ConceptTemplatesResponse {
+libraries[] { id, name, schema_version, version, templates[] { id, display_name,
+default_name, description, category, role_hint, representation?, type_name,
+unit, keywords[], icon } }, quantities[] } | the Concept items as templates —
+the 0.5 surface; a Source item is not a template. `source_default_name`,
+`display_names`, `descriptions` (0.16) are deprecated since 0.17 and never set:
+a Source is an item, and text is localized by the client | |
+InstantiateConceptTemplate { base_revision, template_id, name?, component? } |
+SystemEditApplied | the same transaction with `names = { concept: name }`;
+`source_name` (0.16) is deprecated since 0.17 and ignored;
+`library.unknown_template`, `edit.stale_revision` | | Shutdown | Ack | |
 
 `EntityRef` is
 `project | concept_id | mapping_id | clock_id | output_id | device_id` — the

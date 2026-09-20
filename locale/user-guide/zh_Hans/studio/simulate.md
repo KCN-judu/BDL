@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/simulate.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/simulate.md) · 简体中文 · [日本語](../../ja/studio/simulate.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 仿真
 
@@ -14,9 +12,9 @@ _倾角为 45° 时步进三次后的仿真页：左侧是来源，中间是轨�
 
 ## 来源（左侧）
 
-One control for every [Source](canvas.md) — every relationship that reads nothing and has no formula: the values the environment provides, which the simulation asks you for. The control follows the concept's value form, never its name: a number with the unit beside it for a quantity (in the base unit: radians, metres, seconds, kelvin…), an **off | on** control for on / off, a whole number for a count. The row carries the concept's glyph and colour, and clicking it selects the object — on this page and on Design.
+每个 [来源](canvas.md) 一个控件——每个不读取任何东西且没有公式的关系：由环境提供、仿真向你索取的值。控件跟随概念的值形式，而不是它的名字：量是旁边带单位的数（用基本单位：弧度、米、秒、开尔文…），开/关是一个 **off | on** 控件，计数是整数。这一行带有概念的图形符号和颜色，点击它会选中该对象——在本页和设计页上都是。
 
-A Source you have not given a value yet says so: a number field shows the hint _no value yet_, and the on / off control is drawn empty with a dashed outline and the words _no value yet_ beside it — the same dashes that mark a declared relationship, for the same reason: nothing has been decided. It is not _off_. One click on **off** or **on** gives exactly that value; the simulator never fills one in for you, because a missing Source is an error at run time, not a default.
+你还没有赋值的来源会说明这一点：数字栏显示提示 _还没有值_，开/关控件画成空的虚线轮廓，旁边写着 _还没有值_——与标记已声明关系的虚线相同，原因也相同：什么都还没决定。它不是 _off_。点一下 **off** 或 **on** 就给出恰好那个值；仿真器从不替你填入，因为缺失的来源在运行时是错误，而不是默认值。
 
 来源下方是**时序域**：每个域一个周期——_每 N_ 拍——求值器按此调度激活。是周期，从不是速率。更改周期会重新开始运行。
 
@@ -33,11 +31,11 @@ A Source you have not given a value yet says so: a number field shows the hint _
 
 只要列出了任何一条，**步进**就被禁用且不做任何事。当前设计的分析尚未到达时，列表显示 _正在检查设计…_，这并不表示有错。打开页面永远不会开始运行。
 
-Below the blockers, with a hollow dot instead of a filled one, the page lists what does **not** stop a step but explains what the trace will not show: a **rule nothing applies**. A rule — a relationship with inputs — is a function, so it has no value per tick and no column; only a value that calls it does. The note names the rule and the value that would put it to work:
+在阻碍项下方，页面用空心点（而不是实心点）列出**不会**阻止步进、但解释了轨迹不会显示什么的事项：一条**没有任何值应用的规则**。规则——有输入的关系——是函数，所以它没有每拍的值也没有列；只有调用它的值才有。这条说明指出规则以及能让它发挥作用的值：
 
-- _AirConditionerCtrl is a rule nothing applies yet._ — _A rule has no value of its own; a value that applies it — `AirConditionerCtrl(TempSensor, ButtonInput)` — is what the simulator and an output can read._
+- _AirConditionerCtrl 是一条尚未被任何值应用的规则。_——_规则没有自己的值；应用它的值——`AirConditionerCtrl(TempSensor, ButtonInput)`——才是仿真器和输出能读取的。_
 
-Under it, the fix **Add a value that applies AirConditionerCtrl** and a _Show_ link. The fix creates `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)` in one click when each concept the rule reads has exactly one value producing it; when one has several, the button becomes a pop-up of the calls to choose from; when one has none, the button says why (_Not possible yet: no value produces `RoomTemp` yet; add a Source or a computed value that produces it first_). The tool never guesses. A rule that has no definition yet is a blocker first (_has no definition_) and is not repeated here.
+其下是修复 **添加一个应用 AirConditionerCtrl 的值** 和一个 _显示_ 链接。当规则读取的每个概念恰好有一个生成它的值时，这个修复一键创建 `airConditionerCtrl : () -> SwitchState = AirConditionerCtrl(TempSensor, ButtonInput)`；当某个概念有多个时，按钮变成一个可选调用的弹出菜单；当某个概念一个都没有时，按钮说明原因（_暂时无法完成：还没有值生成 `RoomTemp`；请先添加一个生成它的来源或计算值_）。工具从不猜测。还没有定义的规则首先是一个阻碍项（_没有定义_），这里不再重复。
 
 ![Above the trace, an orange-dotted line saying tilt needs a value before simulation can step, with a Show link under it; the Step, Step ×10 and Reset buttons above it are disabled and the counter reads tick 0.](../../../../docs/user-guide/assets/studio/simulate-readiness.png)
 
@@ -51,7 +49,7 @@ _一个阻碍项及其显示链接：来源 tilt 还没有值，所以步进被�
 
 ## 轨迹（中间）
 
-Rows are ticks. Columns are the design's **values** — relationships without inputs — and its **driven outputs**; a rule (a relationship with inputs) has no column, because it is a function, not a value — `dimByTilt` never appears, the value `brightness = dimByTilt(tilt)` does. If a rule seems ignored by the simulation, the readiness area says so and offers the value that applies it. The _active_ column names the domains that ticked. A cell is the evaluator's own rendering, always with the concept and in the value form's words: `Brightness(0.5)`, `Tilt(0.785398 [rad])`, `Held(on)` — a truth value reads _on_ / _off_, a number shows six significant digits. Studio never renders a value itself.
+行是拍。列是设计的**值**——没有输入的关系——和它的**被驱动的输出**；规则（有输入的关系）没有列，因为它是函数而不是值——`dimByTilt` 永远不会出现，值 `brightness = dimByTilt(tilt)` 会。如果某条规则看起来被仿真忽略了，就绪区会说明并提供应用它的值。_活动_ 列指出走了一拍的域。单元格是求值器自己的渲染，总是带着概念，并用值形式的词语：`Brightness(0.5)`、`Tilt(0.785398 [rad])`、`Held(on)`——真值显示为 _on_ / _off_，数字显示六位有效数字。Studio 自己从不渲染值。
 
 空单元格表示该值的域在那一拍没有激活。来源的单元格是你喂入的值，由求值器在其域激活的拍回显。列的顺序按身份，不按时间；点击列标题选中该关系。
 
@@ -59,7 +57,7 @@ Rows are ticks. Columns are the design's **values** — relationships without in
 
 ## 探针（右侧）
 
-The selected object's value **now** and **over the run**, written as in the trace, with its glyph; for an output, its driver. A concept is shown as what **carries** it — _Carried by_, then each value and Source that produces it with its latest sample; when none does, _Nothing carries Brightness yet: no value or Source produces it._ and, for each rule that produces it, _dimByTilt is a rule; a value whose formula applies it would carry Brightness._ A rule has no value to show: _A rule: it has no value of its own. A value whose formula applies it is what the simulator samples._, then, under _Applied in_, links to the values whose formula applies it — or _No value applies it yet._ with the same fix the readiness area offers. **Explain** under it holds the identity number, the run's revision and, for a failure, the code and technical text.
+选中对象**现在**和**整个运行中**的值，写法与轨迹中相同，带有它的图形符号；对于输出，还有它的驱动方。概念显示为**承载**它的东西——_承载者_，然后是生成它的每个值和来源及其最新采样；没有时显示 _还没有东西承载 Brightness：没有值或来源生成它。_，并对每条生成它的规则显示 _dimByTilt 是规则；公式应用它的值才会承载 Brightness。_ 规则没有值可显示：_规则：它没有自己的值。公式应用它的值才是仿真器采样的对象。_，然后在 _应用于_ 之下链接到公式应用它的各个值——或者 _还没有值应用它。_ 并附上就绪区提供的同一个修复。其下的**解释**保存标识号、运行的修订号，以及失败时的代码和技术文本。
 
 ## 新修订会做什么
 
@@ -71,4 +69,4 @@ The selected object's value **now** and **over the run**, written as in the trac
 
 ## 相关
 
-[Your first simulation](../getting-started/first-simulation.md) · [Relationships](../../../../docs/user-guide/concepts/relationships.md) · [Timing](../../../../docs/user-guide/concepts/timing.md) · [Troubleshooting: incomplete design](../../../../docs/user-guide/troubleshooting/incomplete-design.md)
+[你的第一次仿真](../getting-started/first-simulation.md) · [关系](../../../../docs/user-guide/concepts/relationships.md) · [时序](../../../../docs/user-guide/concepts/timing.md) · [故障排除：未完成的设计](../../../../docs/user-guide/troubleshooting/incomplete-design.md)

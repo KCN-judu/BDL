@@ -1,8 +1,6 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/inspector.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/inspector.md) · [简体中文](../../zh_Hans/studio/inspector.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # インスペクター
 
@@ -28,7 +26,7 @@
 | **生成** | グリフ付きのポップアップ——入力元では見出しが**提供** | 編集 |
 | **関係** | 数式フィールドとその判定行。_定義を追加_ / _定義を保存_ / _元に戻す_ / _定義を外す_。フィールドの下に所見。入力元ではフィールドの上に _実現：環境から与えられます。デバイスはまだ割り当てられていません。_。_依存先_（数式が名指すもの）と _参照元_（その数式がこれを名指すもの）を名前のリンクで | [数式エディター](formula-editor.md)を参照。この二つの行はキャンバスの参照リンクそのもの |
 | **タイミング** | _更新ドメイン_——ドメイン、または _任意のタイミングドメイン_。タイミングの検出項目 | [タイミング](../../../../docs/user-guide/concepts/timing.md) を参照 |
-| **駆動先** | for a value: the output it drives, or none; for a rule: _A rule cannot drive an output — connect the value that applies this rule._ and, when one value applies it, its name with _Show_; connection findings | only a value — a relationship without inputs — is offered the pop-up |
+| **駆動先** | 値なら：駆動する出力、またはなし。規則なら：_規則は出力を駆動できません — この規則を適用する値を接続してください。_ と、ある値がそれを適用しているときはその名前と _表示_。接続の検出項目 | ポップアップが提示されるのは値——入力のない関係——だけ |
 | **修正** | この関係の検出項目に対してツールが提供する操作。準備できていればボタン、選択が必要ならポップアップ、阻まれていればその理由 | 通常の、取り消し可能な編集として適用される |
 | **削除 …** |  |  |
 
@@ -42,7 +40,7 @@
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | **意味** | 名前、意味 |  |
 | **出力** | _受け取る_、_更新ドメイン_、_必須_ |  |
-| **駆動元** | the state (_Driven by brightness._, _Undriven — the design is incomplete without a driver._, …); claimants with _disconnect_; a _Connect_ pop-up of the design's values of the accepted concept, or one sentence when there is none | [物理出力](../../../../docs/user-guide/concepts/physical-outputs.md) を参照 |
+| **駆動元** | 状態（_brightness が駆動しています。_、_未駆動 — 駆動元がないと設計は未完了です。_ など）。_切断_ 付きの主張者。受け入れるコンセプトを生成する設計の値を並べた _接続_ ポップアップ、なければ一文 | [物理出力](../../../../docs/user-guide/concepts/physical-outputs.md) を参照 |
 | **修正** | _… を … から外す_、_上流の結合マッピングを作成_、_… に駆動元を接続_ |  |
 | **削除 …** |  |  |
 

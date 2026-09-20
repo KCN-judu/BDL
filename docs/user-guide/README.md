@@ -6,10 +6,12 @@ firmware is written. You describe the behavior as named values and the
 relationships between them; the tool checks the design as you build it, lets you
 simulate it tick by tick, and tells you whether it fits a particular board.
 
-The language behind the tool is called **BDL**. You do not need to know the
-language to use the tool: the canvas, the inspector and the formula field _are_
-the language. A text form of BDL exists for people who prefer an editor; see
-[Textual BDL](textual/overview.md).
+The language behind the tool is called **BDL**. The canvas, the inspector and
+the formula field are one way of writing it; the text form is another, for
+people who prefer an editor — see [Textual BDL](textual/overview.md). Either way
+you are describing behavior in a language; what the tool keeps out of your way
+is the machine: which pin, which protocol, which HAL call are decided later, at
+deployment.
 
 ## What problem it solves
 

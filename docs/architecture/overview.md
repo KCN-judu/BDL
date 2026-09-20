@@ -75,10 +75,9 @@ crates/
   bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · legacy system JSON reader (→ model, compiler)
   bdl-text         the project's persistence: source discovery · identity sidecar and reconciliation · load_workspace → BehaviorSystem · item-level write-back · legacy JSON migration · names are identifiers (→ model, system, syntax)
   bdl-layout       the layout service: deterministic, incremental placement of entities without a position; never semantics (→ model, system)
-  bdl-library      concept libraries: data-driven templates (library/std/concepts.toml) that instantiate ordinary concepts via CreateConcept; search; multi-library set (→ model, elab)
+  bdl-library      the Standard Library: items (Concept items, Source presets) from library/std/concepts.toml · plan (a fragment as ordered edits) · rank (candidate concepts for a preset) · search · multi-library set; schema 1–2 (→ model, elab)
   bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
-  bdl-ide          semantic IDE queries over a snapshot: diagnostics · hover/explain · completion (incl. library templates) · references · rename · actions · edit plans · invalidation preview · symbols · tokens · draft verdict (→ ide-db, library)
-  bdl-text         text projects: src/**/*.bdl loader · source-identity sidecar · item-level write-back (→ syntax, system)
+  bdl-ide          semantic IDE queries over a snapshot: diagnostics · navigation (one answer to what is at a position: hover, definition, references, an equation's words) · explain · completion (incl. library items) · rename · actions · edit plans · invalidation preview · symbols · semantic tokens (one classifier) · formula projection/slot/compose · draft verdict · format (→ ide-db, library)
   bdl-lsp          LSP adapter only: lsp-server transport · position encoding · lsp-types rendering (→ ide, text)
   bdl-protocol     protobuf schema · framing · conversions                       (→ model, compiler, library)
   bdl-daemon       bdld: session (owns the project's IdeHost, its sources and text drafts), coordinator, transport, analysis push, the layout service on open and commit; `bdld check|compile|simulate` as the headless front end over the same session (→ protocol, compiler, ide, text, layout)
@@ -230,6 +229,45 @@ never touches `Ty`, `Grant`, causality, clocks or the evaluator (ADR-0015). The
 same `OutputId` bound to a PWM channel on one board and a digital output on
 another has identical semantic analysis and different deployment analyses — and
 that is a test.
+
+## Behaviour semantics stop at the output; realization is deployment's
+
+BDL is a programming language for expressing product behaviour while keeping the
+behaviour model apart from the machine that will realize it. The behaviour layer
+is concepts, rules, values, `delay`, `sync`, clock domains and outputs as
+semantic obligations; it is reactive and stateful, not purely functional, and
+the goal is that its meaning stays compositional and explicit
+(`docs/spec/kernel.md`). Everything about the machine — which peripheral, which
+protocol, which pin, which HAL call, which side effect — belongs to realization,
+deployment and the backend, and is deferred to them.
+
+What that means in the code today:
+
+- A physical output is `PhysicalOutput { accepts: SemanticId, clock, required }`
+  (`bdl-model`), a _logical_ output at a concept. Its driver is one relationship
+  `d` with `β(d) = o`, and `DriveWF` (`bdl-output`) checks **exact**
+  compatibility — the driver's type equals the accepted concept, the driver's
+  clock equals the output's — not a conversion, not a monomorphization. The
+  value that reaches the adapter is the concept's representation.
+- Which device kind (PWM channel, digital output, H-bridge, …) realizes an
+  output is a `DeviceBinding` — project data that only deployment analysis reads
+  (`bdl-hardware` turns the kind into requirements, ADR-0015); no concept
+  implies a protocol, and `OutputSpec` names none. The generated core produces
+  the driver's value at the output slot; the platform adapter, not the design,
+  turns it into an effect (`docs/spec/runtime-semantics.md`).
+- A Source is `s : () -> C` with no realization, a value entering the model from
+  its environment (ADR-0032); what provides it at deployment — a device, a host,
+  a network — is a separate, later choice (ISS-0016, PRP-0001), and the Standard
+  Library's _… Input_ presets are authoring intent, not a device catalogue.
+- Not implemented, formally investigated: a device transducer that realizes a
+  Source (FV Phase 13, PRP-0001) and a device encoder from a concept's
+  representation to a raw output command (FV Phase 14) —
+  `docs/project/formal-correspondence.md`. Nothing in `bdl-model`, `bdl-lower`
+  or the runtime carries either.
+
+This is an architectural position, not a usability result: whether the
+separation makes behaviour easier to design is an open research question, not a
+claim these pages make.
 
 ## Platform notes
 

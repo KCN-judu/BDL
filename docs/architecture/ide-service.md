@@ -6,12 +6,11 @@ status: current
 
 # IDE service architecture
 
-BDL is one semantic language with two first-class authoring surfaces: visual,
-low-code authoring in BDL Studio and textual, high-code authoring in ordinary
-editors. Both consume **one** language service. This document describes that
-service — its crates, its state model, its query model, and how each surface
-plugs in — and the rules that keep the two surfaces from growing separate
-semantics.
+BDL is one semantic language with two first-class authoring surfaces: visual
+authoring in BDL Studio and textual authoring in ordinary editors. Both consume
+**one** language service. This document describes that service — its crates, its
+state model, its query model, and how each surface plugs in — and the rules that
+keep the two surfaces from growing separate semantics.
 
 ```text
                     Project / Sources
@@ -553,7 +552,7 @@ project as Markdown, the kernel Core of the design, and the generated Rust core
 `bdl/virtualDocument`. Generated text is never a source of truth and is never
 edited.
 
-## Low-code operations
+## Semantic and presentation operations
 
 Semantic (source) operations and presentation (layout) operations are kept
 apart, as before (ADR-0003):

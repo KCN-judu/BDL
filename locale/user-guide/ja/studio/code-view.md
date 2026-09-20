@@ -1,8 +1,6 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/code-view.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/code-view.md) · [简体中文](../../zh_Hans/studio/code-view.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 設計・コード・分割
 
@@ -22,15 +20,15 @@
 
 テキストはプロジェクトのファイルそのもので、キャンバスで行ったことがすべて書き込まれています。キャンバスでコンセプトの名前を変えると、テキストは使われているすべての場所で新しい名前を示し、コメントと空行はそのままです。キャンバスで関係を追加すると、`src/main.bdl` の末尾（`main.bdl` がないときは最初のファイルの末尾）、または属するコンポーネント本体の末尾に現れます。
 
-## What the colours mean
+## 色の意味
 
 ![The editor filling the Design page, showing src/main.bdl of the component system. Keywords such as concept, component, mapping and bind are in a quiet grey; concept names like Tilt and Brightness in a blue-grey ink; relationship names in blue; the Source raw in green; the output light in a warm brown; the instances adaptiveLamp and second in teal; comments in a light grey; the number 90 plain with its unit deg in grey. Declared names are in a heavier weight than their uses.](../../../../docs/user-guide/assets/studio/code-view.png)
 
-_The Code view of the component system: the file as the project holds it, coloured by what each word is._
+_コンポーネントシステムのコードビュー：プロジェクトが保持するとおりのファイルが、各語が何であるかで色付けされている。_
 
-The text is coloured by what each word _is_ to the project — not by how it is spelled. The colours are the canvas's: a **concept** name has the concept nodes' blue-grey, a **relationship** the relationship nodes' blue, a **Source** the green of a Source node, an **output** or a **device** the warm tone of an output node, an **instance** the teal of an instance node. Keywords, operators and units are grey; comments lighter grey. A name where it is _declared_ is heavier than where it is used; a name that exists only inside a formula — a rule's parameter, a binder's variable — is italic; a `?` left in a formula is orange, the same _still to decide_ colour as elsewhere.
+テキストは各語がプロジェクトにとって_何であるか_で色付けされます——綴りではなく。色はキャンバスのものです。**コンセプト**名はコンセプトノードの青灰色、**関係**は関係ノードの青、**入力元**は入力元ノードの緑、**出力**や**デバイス**は出力ノードの暖色、**インスタンス**はインスタンスノードの青緑です。キーワード、演算子、単位は灰色、コメントはより薄い灰色です。名前は _宣言_ された場所では使われる場所より太く、数式の中だけに存在する名前——規則のパラメータ、束縛子の変数——はイタリック、数式に残された `?` はオレンジで、他の場所と同じ _まだ決めていない_ の色です。
 
-Because the colours come from the project, they tell you things spelling cannot: `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the head of `all x in xs: …` is a keyword, a value named `all` is a value; `clamp` is the library's; a relationship turns from Source green to relationship blue the moment it is given a definition. A file that does not build yet keeps its keywords, numbers, comments and units coloured, and the names the last version that built still knows. The colours follow the appearance (light or dark); there is no setting.
+色はプロジェクトから来るので、綴りでは分からないことを教えてくれます。`90` の後の `deg` は単位で、規則のパラメータとしての `deg` は違う。`all x in xs: …` の先頭の `all` はキーワードで、`all` という名前の値は値。`clamp` はライブラリのもの。関係は定義を与えられた瞬間に入力元の緑から関係の青に変わります。まだビルドできないファイルもキーワード、数、コメント、単位の色と、最後にビルドできたバージョンがまだ知っている名前の色を保ちます。色は外観（ライトかダーク）に従い、設定はありません。
 
 ## 入力
 
@@ -51,33 +49,33 @@ Because the colours come from the project, they tell you things spelling cannot:
 
 **⌘S** はファイルをエディタに表示されているとおりに書き込み——まだビルドできないファイルも含めて——次にレイアウトとサイドカーを書き込みます（[プロジェクトファイル](../reference/project-files.md)）。プロジェクトを再び開くと、同じテキストが同じバナーとともに、設計は最後にビルドできたバージョンとして表示されます。
 
-## What the editor knows
+## エディタが知っていること
 
-The editor asks Studio's compiler service the same questions a code editor with the [language server](../../../../docs/user-guide/textual/editor-and-lsp.md) asks, about the text exactly as you have typed it.
+エディタは、[言語サーバー](../../../../docs/user-guide/textual/editor-and-lsp.md) 付きのコードエディタが尋ねるのと同じ質問を、入力したとおりのテキストについて Studio のコンパイラサービスに尋ねます。
 
-**Completion.** Press **⌃Space** and a list opens at the cursor with what can go here, best first: after a `:` the concepts, after an `@` the timing domains, at the start of a line the items allowed there, and inside a formula the inputs, the other relationships — a rule offered as a call, a Source or a value as its name — the names bound in the formula itself, the equations of the library, and after a number the units. ↑ and ↓ move, **Return** or **Tab** accept, **Esc** closes; the list narrows as you type. What is inserted is the service's text, never a guess.
+**補完。** **⌃Space** を押すと、カーソル位置にここに入れられるものが最適なものから順に並んだリストが開きます。`:` の後はコンセプト、`@` の後はタイミングドメイン、行頭ではそこに許される項目、数式の中では入力、他の関係——規則は呼び出しとして、入力元や値はその名前で——数式自身が束縛する名前、ライブラリの方程式、数の後は単位です。↑ と ↓ で移動、**Return** か **Tab** で確定、**Esc** で閉じます。リストは入力に合わせて絞り込まれます。挿入されるのはサービスのテキストで、推測ではありません。
 
 ![A pop-up under the caret after brightness() = dimByTilt( in the component body, listing candidates one per row: tiltValue and gain as the body's own values, dimByTilt(Tilt) as a call, then the units and the equations of the library, each with its kind word and the kind of value it gives.](../../../../docs/user-guide/assets/studio/code-completion.png)
 
-_The completion pop-up inside the component's body, after dimByTilt(: what can go here, from the compiler service, best first._
+_コンポーネント本体の中、`dimByTilt(` の後の補完ポップアップ：ここに入れられるものが、コンパイラサービスから最適なもの順に。_
 
-**Hover.** Rest the pointer on a name and a card says what it is: its declaration, what it produces, its state, its role (_Source_, _Rule_ or _Value_), the description you wrote. On an equation of the library — `clamp`, `min`, `any` — the card gives its shape and what it does. Over a keyword, a number or a unit there is no card. Typing or moving away hides it.
+**ホバー。** 名前の上にポインタを置くと、カードがそれが何かを述べます。宣言、生成するもの、状態、役割（_入力元_、_規則_、_値_）、あなたが書いた説明です。ライブラリの方程式——`clamp`、`min`、`any`——ではカードはその形と働きを示します。キーワード、数、単位の上にカードはありません。入力するか離れると隠れます。
 
 ![A card beside the word dimByTilt in the component body showing the name in bold, the signature mapping dimByTilt : Tilt -> Brightness in monospace, the words type-valid, and a row role: Rule.](../../../../docs/user-guide/assets/studio/code-hover.png)
 
-_The hover card over dimByTilt where the component's body applies it: its declaration, its role, its state._
+_コンポーネント本体が dimByTilt を適用する場所でのホバーカード：その宣言、役割、状態。_
 
-**Go to definition.** **⌘-click** a name, or put the cursor on it and press **F12**, and the editor selects where it is declared — in this file or in another, which opens. Inside a component's source a port's name leads to the port's line, never to an instance's copy.
+**定義へ移動。** 名前を **⌘-クリック**するか、カーソルを置いて **F12** を押すと、エディタは宣言されている場所を選択します——このファイル内か、開かれる別のファイル内です。コンポーネントのソース内では、ポートの名前はポートの行へ導き、インスタンスのコピーへは決して導きません。
 
-**References.** **⇧F12** on a name lists, under the editor, every place that names it, across all files, with the file and line; a row takes you there. Esc or the × closes the list. Two concepts with the same value form never share a list: the search is by identity, not by spelling.
+**参照。** 名前の上で **⇧F12** を押すと、エディタの下にすべてのファイルでそれを名指しする場所がファイルと行付きで列挙され、行をクリックするとそこへ移動します。Esc か × でリストを閉じます。値の形式が同じ 2 つのコンセプトがリストを共有することはありません。検索は綴りではなく同一性によるものです。
 
-**Format.** **⌥⇧F**, or _Format_ at the right of the file bar, lays the file out the canonical way — spacing, indentation, one blank line between items — and applies it as one edit, with the cursor kept on its line. A file that does not parse yet is left exactly as it is; fix it first.
+**フォーマット。** **⌥⇧F**、またはファイルバー右端の _フォーマット_ は、ファイルを正規のレイアウト——空白、インデント、項目間の空行 1 つ——に整え、1 つの編集として適用します。カーソルは元の行に保たれます。まだ解析できないファイルはそのまま残されます。先に直してください。
 
-Everything here works on the text as it stands, whether or not it builds: what the last version that built still knows is answered, and what nothing resolves gets no card and no destination, never a guess by spelling.
+ここにあるすべては、ビルドできるかどうかにかかわらず、現状のテキストに対して働きます。最後にビルドできたバージョンがまだ知っているものには答え、何も解決できないものにはカードも移動先もなく、綴りによる推測は決してしません。
 
 ## 未実装
 
-Findings underlined in the text (the list and the cursor jump stand in); rename from the editor (rename on the canvas, and the text follows); creating a second source file from Studio (make it in a code editor; it appears on reload).
+テキスト中の検出項目の下線（リストとカーソルジャンプが代わりです）。エディタからの名前変更（キャンバスで名前を変えると、テキストが追従します）。Studio から 2 つ目のソースファイルを作ること（コードエディタで作ると、再読み込みで現れます）。
 
 ## 関連
 
