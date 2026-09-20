@@ -73,6 +73,44 @@ pb.DeploymentAnalysis feasible({int revision = 1, String target = 'Arduino Nano'
       ],
     );
 
+/// The realization judgment bdld gives for `drive`: no profile chosen, two
+/// candidates of which one fits `Speed`.
+pb.RealizationView driveRealization({
+  pb.RealizationStatus status = pb.RealizationStatus.REALIZATION_STATUS_NOT_CHOSEN,
+  String? profile,
+  String message = 'drive has no realization chosen for motor.',
+}) => pb.RealizationView(
+  deviceId: Int64(0),
+  deviceName: 'drive',
+  outputId: Int64(0),
+  outputName: 'motor',
+  profileId: profile,
+  status: status,
+  encoderWellFormed: status == pb.RealizationStatus.REALIZATION_STATUS_ENCODING_VALID,
+  representationFits: status == pb.RealizationStatus.REALIZATION_STATUS_ENCODING_VALID,
+  hardwarePlaced: true,
+  message: message,
+  candidates: [
+    pb.OutputProfileView(
+      id: 'gpio_level',
+      displayName: 'GPIO, on/off',
+      kind: pb.DeviceKind.DEVICE_KIND_DIGITAL_OUTPUT,
+      rawType: 'bool',
+      representation: 'bool',
+      compatible: false,
+    ),
+    pb.OutputProfileView(
+      id: 'hbridge_signed',
+      displayName: 'H-bridge, signed level',
+      description: 'A signed level becomes (forward?, duty).',
+      kind: pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL,
+      rawType: 'bool × q[1]',
+      representation: 'q[1]',
+      compatible: true,
+    ),
+  ],
+);
+
 pb.DeploymentAnalysis infeasible({int revision = 1}) => pb.DeploymentAnalysis(
   revision: Int64(revision),
   target: 'Arduino Nano',
@@ -214,6 +252,70 @@ void main() {
       expect(find.textContaining('minimal'), findsNothing);
     });
 
+    testWidgets('a realization is chosen from the profiles that fit; behavior is not touched', (
+      t,
+    ) async {
+      final dispatched = <AppAction>[];
+      var s = reduce(connected(rover()), TargetsReceived(targets)).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      // No analysis yet: nothing to choose from, and it says so.
+      expect(
+        find.text('Choose a board to see which realizations fit this output.'),
+        findsOneWidget,
+      );
+      s = reduce(s, const TargetSelected('arduino_nano')).state;
+      s = reduce(
+        s,
+        DeploymentReceived(
+          generation: s.editor.deploy.generation,
+          analysis: feasible()..realizations.add(driveRealization()),
+        ),
+      ).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      expect(find.text('None — place by kind'), findsOneWidget);
+      expect(find.text('drive has no realization chosen for motor.'), findsOneWidget);
+      await t.tap(find.text('None — place by kind'));
+      await t.pumpAndSettle();
+      // compatible first; the one that does not fit says so
+      expect(find.text('H-bridge, signed level'), findsOneWidget);
+      expect(find.text('GPIO, on/off — does not fit'), findsOneWidget);
+      await t.tap(find.text('H-bridge, signed level'));
+      await t.pumpAndSettle();
+      final req = dispatched.whereType<SetDeviceRealizationRequested>().single;
+      expect(req.id, 0);
+      expect(req.profileId, 'hbridge_signed');
+      expect(req.kind, pb.DeviceKind.DEVICE_KIND_H_BRIDGE_CHANNEL);
+      // Neither a design edit nor a semantic action was dispatched.
+      expect(dispatched.whereType<SetDeviceKindRequested>(), isEmpty);
+
+      // With the profile chosen and valid: the three judgments and the raw
+      // command type are on the card.
+      final project = rover()..devices.first.realization = 'hbridge_signed';
+      s = reduce(connected(project), TargetsReceived(targets)).state;
+      s = reduce(s, const TargetSelected('arduino_nano')).state;
+      s = reduce(
+        s,
+        DeploymentReceived(
+          generation: s.editor.deploy.generation,
+          analysis: feasible()
+            ..realizations.add(
+              driveRealization(
+                status: pb.RealizationStatus.REALIZATION_STATUS_ENCODING_VALID,
+                profile: 'hbridge_signed',
+                message: '',
+              ),
+            ),
+        ),
+      ).state;
+      await t.pumpWidget(page(s, dispatched.add));
+      expect(find.text('H-bridge, signed level'), findsOneWidget);
+      expect(find.text('raw command bool × q[1]'), findsOneWidget);
+      expect(find.text('encoder'), findsOneWidget);
+      expect(find.text('fits'), findsOneWidget);
+      expect(find.text('placed'), findsOneWidget);
+      expect(find.text('A signed level becomes (forward?, duty).'), findsOneWidget);
+    });
+
     testWidgets('devices are edited in place; the board list is the service\'s', (t) async {
       final dispatched = <AppAction>[];
       var s = reduce(connected(rover()), TargetsReceived(targets)).state;
@@ -311,6 +413,41 @@ void main() {
         store.dispatch(const TargetSelected('big_board'));
         s = await store.until((s) => s.editor.deploy.analysis?.target == 'big_board');
         expect(s.editor.deploy.analysis!.revision.toInt(), s.revision);
+
+        // the realization judgment comes with the analysis: not chosen yet,
+        // with the profiles that fit `Speed`; choosing one is a deployment
+        // edit that the projection and the next analysis both reflect
+        var r = s.editor.deploy.analysis!.realizations.single;
+        expect(r.status, pb.RealizationStatus.REALIZATION_STATUS_NOT_CHOSEN);
+        expect(r.candidates.where((c) => c.compatible).map((c) => c.id), contains('pwm_duty8'));
+        expect(r.candidates.where((c) => !c.compatible).map((c) => c.id), contains('gpio_level'));
+        final semanticBefore = s.analysis!;
+        final rev = s.revision;
+        store.dispatch(
+          SetDeviceRealizationRequested(
+            id: device,
+            profileId: 'pwm_duty8',
+            kind: pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL,
+          ),
+        );
+        s = await store.until(
+          (s) =>
+              s.revision > rev &&
+              s.editor.deploy.analysis != null &&
+              s.editor.deploy.analysis!.revision.toInt() == s.revision &&
+              s.analysis != null &&
+              s.analysis!.revision == s.flat!.revision,
+        );
+        expect(s.project!.devices.single.realization, 'pwm_duty8');
+        expect(s.project!.devices.single.kind, pb.DeviceKind.DEVICE_KIND_PWM_CHANNEL);
+        r = s.editor.deploy.analysis!.realizations.single;
+        expect(r.status, pb.RealizationStatus.REALIZATION_STATUS_ENCODING_VALID);
+        expect(r.encoderWellFormed && r.representationFits && r.hardwarePlaced, isTrue);
+        // the semantic analysis of the new revision says exactly what the
+        // old one said: a realization is not a design change
+        expect(s.analysis!.revision, greaterThan(semanticBefore.revision));
+        expect(s.analysis!.diagnostics, semanticBefore.diagnostics);
+        expect(s.analysis!.mappings, semanticBefore.mappings);
       } finally {
         await store.dispose();
         await dir.delete(recursive: true);

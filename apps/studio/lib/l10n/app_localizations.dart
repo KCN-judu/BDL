@@ -2199,6 +2199,54 @@ abstract class AppLocalizations {
   /// **'No device yet. A device realises one output on the board; its kind says what it needs from the board.'**
   String get noDeviceYetADeviceRealisesOne;
 
+  /// Deploy page: label of the realization profile dropdown on a device card.
+  ///
+  /// In en, this message translates to:
+  /// **'Realization'**
+  String get realizationProfile;
+
+  /// Deploy page: the realization dropdown item that leaves the device without a profile.
+  ///
+  /// In en, this message translates to:
+  /// **'None — place by kind'**
+  String get noRealization;
+
+  /// Deploy page: suffix on a realization profile whose encoder does not fit the output's concept.
+  ///
+  /// In en, this message translates to:
+  /// **'does not fit'**
+  String get doesNotFit;
+
+  /// Deploy page: shown on a device card while no deployment analysis is available.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a board to see which realizations fit this output.'**
+  String get chooseABoardToSeeRealizations;
+
+  /// Deploy page: the first of the three realization judgments (the encoder is a typed pure function).
+  ///
+  /// In en, this message translates to:
+  /// **'encoder'**
+  String get encoderWellFormed;
+
+  /// Deploy page: the second realization judgment (the encoder's representation is the output's).
+  ///
+  /// In en, this message translates to:
+  /// **'fits'**
+  String get representationFits;
+
+  /// Deploy page: the third realization judgment (every requirement is placed on the board).
+  ///
+  /// In en, this message translates to:
+  /// **'placed'**
+  String get hardwarePlaced;
+
+  /// Deploy page: the raw command type of the chosen realization profile.
+  ///
+  /// In en, this message translates to:
+  /// **'raw command {ty}'**
+  String rawCommand(String ty);
+
   /// Studio UI text (deploy_page.dart).
   ///
   /// In en, this message translates to:

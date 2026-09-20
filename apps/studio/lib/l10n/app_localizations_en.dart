@@ -1124,6 +1124,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'No device yet. A device realises one output on the board; its kind says what it needs from the board.';
 
   @override
+  String get realizationProfile => 'Realization';
+
+  @override
+  String get noRealization => 'None — place by kind';
+
+  @override
+  String get doesNotFit => 'does not fit';
+
+  @override
+  String get chooseABoardToSeeRealizations =>
+      'Choose a board to see which realizations fit this output.';
+
+  @override
+  String get encoderWellFormed => 'encoder';
+
+  @override
+  String get representationFits => 'fits';
+
+  @override
+  String get hardwarePlaced => 'placed';
+
+  @override
+  String rawCommand(String ty) {
+    return 'raw command $ty';
+  }
+
+  @override
   String get noOutput => 'no output';
 
   @override

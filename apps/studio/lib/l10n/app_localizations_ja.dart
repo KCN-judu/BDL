@@ -1081,6 +1081,32 @@ class AppLocalizationsJa extends AppLocalizations {
       'デバイスはまだありません。デバイスはボード上で 1 つの出力を実現します。その種類が、ボードに必要とするものを決めます。';
 
   @override
+  String get realizationProfile => '実現方式';
+
+  @override
+  String get noRealization => 'なし — 種類で配置';
+
+  @override
+  String get doesNotFit => '適合しません';
+
+  @override
+  String get chooseABoardToSeeRealizations => 'ボードを選ぶと、この出力に適合する実現方式を確認できます。';
+
+  @override
+  String get encoderWellFormed => 'エンコーダ';
+
+  @override
+  String get representationFits => '適合';
+
+  @override
+  String get hardwarePlaced => '配置済み';
+
+  @override
+  String rawCommand(String ty) {
+    return '生コマンド $ty';
+  }
+
+  @override
   String get noOutput => '出力なし';
 
   @override

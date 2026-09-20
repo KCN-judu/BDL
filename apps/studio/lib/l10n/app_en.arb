@@ -1427,6 +1427,43 @@
   "@noDeviceYetADeviceRealisesOne": {
     "description": "Studio UI text (deploy_page.dart)."
   },
+  "realizationProfile": "Realization",
+  "@realizationProfile": {
+    "description": "Deploy page: label of the realization profile dropdown on a device card."
+  },
+  "noRealization": "None — place by kind",
+  "@noRealization": {
+    "description": "Deploy page: the realization dropdown item that leaves the device without a profile."
+  },
+  "doesNotFit": "does not fit",
+  "@doesNotFit": {
+    "description": "Deploy page: suffix on a realization profile whose encoder does not fit the output's concept."
+  },
+  "chooseABoardToSeeRealizations": "Choose a board to see which realizations fit this output.",
+  "@chooseABoardToSeeRealizations": {
+    "description": "Deploy page: shown on a device card while no deployment analysis is available."
+  },
+  "encoderWellFormed": "encoder",
+  "@encoderWellFormed": {
+    "description": "Deploy page: the first of the three realization judgments (the encoder is a typed pure function)."
+  },
+  "representationFits": "fits",
+  "@representationFits": {
+    "description": "Deploy page: the second realization judgment (the encoder's representation is the output's)."
+  },
+  "hardwarePlaced": "placed",
+  "@hardwarePlaced": {
+    "description": "Deploy page: the third realization judgment (every requirement is placed on the board)."
+  },
+  "rawCommand": "raw command {ty}",
+  "@rawCommand": {
+    "description": "Deploy page: the raw command type of the chosen realization profile.",
+    "placeholders": {
+      "ty": {
+        "type": "String"
+      }
+    }
+  },
   "noOutput": "no output",
   "@noOutput": {
     "description": "Studio UI text (deploy_page.dart)."

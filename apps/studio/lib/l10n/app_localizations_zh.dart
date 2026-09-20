@@ -1074,6 +1074,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noDeviceYetADeviceRealisesOne => '尚无设备。一个设备在开发板上实现一个输出；它的种类决定它需要开发板提供什么。';
 
   @override
+  String get realizationProfile => '实现方式';
+
+  @override
+  String get noRealization => '无 — 按种类放置';
+
+  @override
+  String get doesNotFit => '不匹配';
+
+  @override
+  String get chooseABoardToSeeRealizations => '选择一块开发板，查看哪些实现方式适合这个输出。';
+
+  @override
+  String get encoderWellFormed => '编码器';
+
+  @override
+  String get representationFits => '匹配';
+
+  @override
+  String get hardwarePlaced => '已放置';
+
+  @override
+  String rawCommand(String ty) {
+    return '原始命令 $ty';
+  }
+
+  @override
   String get noOutput => '无输出';
 
   @override

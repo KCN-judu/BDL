@@ -59,6 +59,8 @@ class DeployPage extends StatelessWidget {
       );
     }
     final d = state.editor.deploy;
+    final current = d.analysis;
+    final analysis = current != null && current.revision.toInt() == state.revision ? current : null;
     return Container(
       color: t.canvas,
       child: SingleChildScrollView(
@@ -71,9 +73,8 @@ class DeployPage extends StatelessWidget {
             children: [
               _TargetRow(deploy: d, dispatch: dispatch),
               _Verdict(deploy: d, project: p),
-              _Devices(project: p, dispatch: dispatch),
-              if (d.analysis case final a? when a.revision.toInt() == state.revision)
-                _Result(analysis: a, project: p, dispatch: dispatch),
+              _Devices(project: p, analysis: analysis, dispatch: dispatch),
+              if (analysis != null) _Result(analysis: analysis, project: p, dispatch: dispatch),
             ],
           ),
         ),
@@ -177,10 +178,16 @@ class _Verdict extends StatelessWidget {
 
 /// The devices: what carries each output on the board.  Kind decides the
 /// requirements (the pin table is the kind's, from the projection); a pin
-/// may be fixed by hand — a constraint the placement must honour.
+/// may be fixed by hand — a constraint the placement must honour.  The
+/// realization profile — how the output's value becomes a raw command —
+/// is chosen here too, from the profiles the analysis says fit; it never
+/// changes the design's behavior (docs/architecture/output-realization.md).
 class _Devices extends StatelessWidget {
-  const _Devices({required this.project, required this.dispatch});
+  const _Devices({required this.project, required this.analysis, required this.dispatch});
   final pb.ProjectProjection project;
+
+  /// The deployment analysis for the current revision, when one exists.
+  final pb.DeploymentAnalysis? analysis;
   final void Function(AppAction) dispatch;
 
   @override
@@ -209,7 +216,12 @@ class _Devices extends StatelessWidget {
         ),
         if (project.devices.isEmpty) Text(context.l10n.noDeviceYetADeviceRealisesOne, style: small),
         for (final dv in project.devices)
-          _DeviceCard(device: dv, project: project, dispatch: dispatch),
+          _DeviceCard(
+            device: dv,
+            project: project,
+            realization: analysis?.realizations.where((r) => r.deviceId == dv.id).firstOrNull,
+            dispatch: dispatch,
+          ),
       ],
     );
   }
@@ -224,9 +236,17 @@ class _Devices extends StatelessWidget {
 }
 
 class _DeviceCard extends StatelessWidget {
-  const _DeviceCard({required this.device, required this.project, required this.dispatch});
+  const _DeviceCard({
+    required this.device,
+    required this.project,
+    required this.realization,
+    required this.dispatch,
+  });
   final pb.DeviceView device;
   final pb.ProjectProjection project;
+
+  /// This device's realization judgment from the current analysis.
+  final pb.RealizationView? realization;
   final void Function(AppAction) dispatch;
 
   @override
@@ -279,6 +299,7 @@ class _DeviceCard extends StatelessWidget {
               MacLink(label: context.l10n.remove, onTap: () => dispatch(DeleteDeviceRequested(id))),
             ],
           ),
+          _RealizationRow(device: device, realization: realization, dispatch: dispatch),
           if (device.requirements.isNotEmpty)
             MacTable(
               columns: const [MacColumn(width: 160), MacColumn(width: 120), MacColumn()],
@@ -312,6 +333,105 @@ class _DeviceCard extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// How the device realises its output: the profile (chosen from the
+/// registry, compatible ones first), the three judgments behind
+/// admissibility — encoder well formed, representation fits, hardware
+/// placed — and the analysis's word when one of them fails.
+class _RealizationRow extends StatelessWidget {
+  const _RealizationRow({required this.device, required this.realization, required this.dispatch});
+  final pb.DeviceView device;
+  final pb.RealizationView? realization;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final r = realization;
+    if (r == null) {
+      return Text(l10n.chooseABoardToSeeRealizations, style: small);
+    }
+    final id = device.id.toInt();
+    final chosen = device.hasRealization() ? device.realization : '';
+    final known = r.candidates.any((c) => c.id == chosen);
+    final candidates = [...r.candidates]
+      ..sort((a, b) => a.compatible == b.compatible ? 0 : (a.compatible ? -1 : 1));
+    final items = ['', for (final c in candidates) c.id, if (chosen.isNotEmpty && !known) chosen];
+    final current = candidates.where((c) => c.id == chosen).firstOrNull;
+    final ok = r.status == pb.RealizationStatus.REALIZATION_STATUS_ENCODING_VALID;
+    final notChosen = r.status == pb.RealizationStatus.REALIZATION_STATUS_NOT_CHOSEN;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 4,
+      children: [
+        Wrap(
+          spacing: MacMetrics.gap,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(l10n.realizationProfile, style: small),
+            SizedBox(
+              width: 260,
+              child: MacDropdown<String>(
+                value: chosen,
+                items: items,
+                labelOf: (p) {
+                  if (p.isEmpty) return l10n.noRealization;
+                  final c = candidates.where((x) => x.id == p).firstOrNull;
+                  if (c == null) return p;
+                  return c.compatible ? c.displayName : '${c.displayName} — ${l10n.doesNotFit}';
+                },
+                onChanged: (p) {
+                  final c = candidates.where((x) => x.id == p).firstOrNull;
+                  dispatch(
+                    SetDeviceRealizationRequested(
+                      id: id,
+                      profileId: p.isEmpty ? null : p,
+                      kind: c?.kind ?? device.kind,
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (current != null) Text(l10n.rawCommand(current.rawType), style: small),
+            if (!notChosen) ...[
+              _Judgment(label: l10n.encoderWellFormed, holds: r.encoderWellFormed),
+              _Judgment(label: l10n.representationFits, holds: r.representationFits),
+              _Judgment(label: l10n.hardwarePlaced, holds: r.hardwarePlaced),
+            ],
+          ],
+        ),
+        if (current != null && ok) Text(current.description, style: small),
+        if (!ok && r.message.isNotEmpty)
+          Text(
+            r.explanation.isEmpty ? r.message : '${r.message} ${r.explanation}',
+            style: TextStyle(fontSize: 11, color: notChosen ? t.textSecondary : t.error),
+          ),
+      ],
+    );
+  }
+}
+
+/// One of the three judgments, holding or not.
+class _Judgment extends StatelessWidget {
+  const _Judgment({required this.label, required this.holds});
+  final String label;
+  final bool holds;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Row(
+      spacing: 2,
+      children: [
+        Icon(holds ? Icons.check : Icons.close, size: 12, color: holds ? t.settled : t.error),
+        Text(label, style: TextStyle(fontSize: 11, color: t.textSecondary)),
+      ],
     );
   }
 }

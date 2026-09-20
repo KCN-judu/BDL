@@ -796,6 +796,19 @@ class SetDeviceOutputRequested extends UserAction {
   final int? outputId;
 }
 
+/// Choose the realization profile of a device (null releases it), with the
+/// device kind the profile prescribes — one deployment decision.
+class SetDeviceRealizationRequested extends UserAction {
+  const SetDeviceRealizationRequested({
+    required this.id,
+    required this.profileId,
+    required this.kind,
+  });
+  final int id;
+  final String? profileId;
+  final pb.DeviceKind kind;
+}
+
 class SetDevicePinRequested extends UserAction {
   const SetDevicePinRequested({required this.id, required this.index, required this.resource});
   final int id;

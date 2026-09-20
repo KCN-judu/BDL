@@ -298,6 +298,16 @@ Transition reduce(AppState s, AppAction action) {
         ),
       ),
     ),
+    SetDeviceRealizationRequested(:final id, :final profileId, :final kind) => _edit(
+      s,
+      pb.EditOp(
+        setDeviceRealization: pb.SetDeviceRealization(
+          id: Int64(id),
+          profileId: profileId,
+          kind: kind,
+        ),
+      ),
+    ),
     SetDevicePinRequested(:final id, :final index, :final resource) => _edit(
       s,
       pb.EditOp(
