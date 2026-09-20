@@ -36,6 +36,21 @@ pub enum Item {
         target: Type,
         items: Vec<ImplItem>,
     },
+    /// `#[attr] pub mod name;` — a module in its own file (the generated
+    /// adapter glue beside the core).
+    Mod {
+        attrs: Vec<String>,
+        name: String,
+    },
+    /// `#[attr] static NAME: T = value;` — firmware only (an arena, a
+    /// global allocator); never in the core.
+    Static {
+        doc: Vec<String>,
+        attrs: Vec<String>,
+        name: String,
+        ty: Type,
+        value: Expr,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +63,8 @@ pub enum Fields {
 pub struct Function {
     pub doc: Vec<String>,
     pub attrs: Vec<String>,
+    /// `async fn` — the firmware's executor entry only.
+    pub is_async: bool,
     pub public: bool,
     pub name: String,
     pub params: Vec<(String, Type)>,
@@ -204,6 +221,12 @@ pub enum Expr {
     },
     /// `vec![…]` — host bridge only, never in the core.
     VecMacro(Vec<Expr>),
+    /// `[e₁, e₂, …]`
+    Array(Vec<Expr>),
+    /// `loop { … }` — the firmware's tick loop.
+    Loop(Block),
+    /// `expr.await`
+    Await(Box<Expr>),
     /// A closure: `|p₁, p₂| body`, optionally `|p| -> T { body }`.
     Closure {
         params: Vec<String>,

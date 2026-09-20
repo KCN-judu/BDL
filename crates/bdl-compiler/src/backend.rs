@@ -153,14 +153,46 @@ pub fn compile(snapshot: &ProjectSnapshot, options: &CompileOptions) -> CompileA
     let analysis = analyze(snapshot);
     let name = snapshot.design.name.clone();
     let (realizations, refusals) = realizations_of(&snapshot.design, &analysis);
-    compile_analysis(analysis, &name, options, realizations, refusals)
+    compile_analysis(analysis, &name, options, realizations, refusals, None)
+}
+
+/// [`compile`] with the platform adapter for one solved deployment
+/// (`crate::target::compile_for_target` is the entry; this is its body).
+/// The adapter plan is built after lowering, from the machine sinks and
+/// the placement; a plan that cannot be built refuses the artefact with
+/// `adapter.*` diagnostics and leaves the exec IR in place.
+pub(crate) fn compile_with_target(
+    snapshot: &ProjectSnapshot,
+    options: &CompileOptions,
+    deployment: &crate::DeploymentAnalysis,
+    target: &bdl_hardware::Hardware,
+    target_options: &crate::target::TargetOptions,
+) -> CompileArtifact {
+    let analysis = analyze(snapshot);
+    let name = snapshot.design.name.clone();
+    let (realizations, refusals) = realizations_of(&snapshot.design, &analysis);
+    compile_analysis(
+        analysis,
+        &name,
+        options,
+        realizations,
+        refusals,
+        Some((deployment, target, target_options)),
+    )
 }
 
 /// [`compile`] for a Design IR built directly (see [`analyze_design_ir`]).
 /// A Design IR carries no device bindings, so no sink is lowered.
 pub fn compile_design_ir(ir: DesignIr, name: &str, options: &CompileOptions) -> CompileArtifact {
     let analysis = analyze_design_ir(ir);
-    compile_analysis(analysis, name, options, Realizations::new(), Vec::new())
+    compile_analysis(
+        analysis,
+        name,
+        options,
+        Realizations::new(),
+        Vec::new(),
+        None,
+    )
 }
 
 /// The machine sinks to lower — one per device binding whose chosen
@@ -224,12 +256,19 @@ fn realizations_of(design: &Design, analysis: &ProjectAnalysis) -> (Realizations
     (realizations, refusals)
 }
 
+type Target<'a> = (
+    &'a crate::DeploymentAnalysis,
+    &'a bdl_hardware::Hardware,
+    &'a crate::target::TargetOptions,
+);
+
 fn compile_analysis(
     analysis: ProjectAnalysis,
     name: &str,
     options: &CompileOptions,
     realizations: Realizations,
     refusals: Vec<Diagnostic>,
+    target: Option<Target<'_>>,
 ) -> CompileArtifact {
     let mut diagnostics = readiness(&analysis, options.require_complete);
     diagnostics.extend(refusals);
@@ -274,7 +313,37 @@ fn compile_analysis(
             diagnostics,
         };
     }
-    let generated = match bdl_codegen_rust::generate(&exec_ir, &options.codegen) {
+    let plan = match target {
+        None => None,
+        Some((deployment, hw, target_options)) => {
+            match crate::target::adapter_plan(
+                &exec_ir,
+                hw,
+                deployment,
+                &collections,
+                options.schedule.as_ref(),
+                target_options,
+            ) {
+                Ok(plan) => Some(plan),
+                Err(ds) => {
+                    diagnostics.extend(ds);
+                    sort_diagnostics(&mut diagnostics);
+                    return CompileArtifact {
+                        analysis,
+                        exec_ir: Some(exec_ir),
+                        generated: None,
+                        collections: Some(collections),
+                        diagnostics,
+                    };
+                }
+            }
+        }
+    };
+    let generated = match bdl_codegen_rust::generate_with_adapter(
+        &exec_ir,
+        &options.codegen,
+        plan.as_ref(),
+    ) {
         Ok(g) => Some(g),
         Err(e) => {
             diagnostics.push(

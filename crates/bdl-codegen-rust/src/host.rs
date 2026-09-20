@@ -18,7 +18,12 @@ fn representation(reps: &Reps, id: SemanticId) -> Result<&Ty, EmitError> {
         .ok_or_else(|| EmitError(format!("concept {id} is not in the plan")))
 }
 
-pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module, EmitError> {
+pub fn host_module(
+    ir: &ExecIr,
+    package: &str,
+    generator: &str,
+    plan: Option<&crate::adapter::AdapterPlan>,
+) -> Result<Module, EmitError> {
     let reps: Reps = ir
         .concepts
         .iter()
@@ -28,6 +33,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     items.push(Item::Use(format!("{package} as design")));
     items.push(Item::Use("bdl_runtime_core::ActiveDomains".into()));
     items.push(Item::Use("bdl_runtime_core::RuntimeError".into()));
+    items.push(Item::Use("bdl_runtime_host::AdapterOp".into()));
     items.push(Item::Use("bdl_runtime_host::BridgeError".into()));
     items.push(Item::Use("bdl_runtime_host::DynValue".into()));
     items.push(Item::Use("bdl_runtime_host::HostProgram".into()));
@@ -64,6 +70,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let inputs_fn = Function {
         doc: vec![],
         attrs: vec![],
+        is_async: false,
         public: false,
         name: "inputs_from_dyn".into(),
         params: vec![("slots".into(), Type::path("&[Option<DynValue>]"))],
@@ -93,6 +100,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let values_fn = Function {
         doc: vec![],
         attrs: vec![],
+        is_async: false,
         public: false,
         name: "values_to_dyn".into(),
         params: vec![("tick".into(), Type::path("&design::Tick"))],
@@ -121,6 +129,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let outputs_fn = Function {
         doc: vec![],
         attrs: vec![],
+        is_async: false,
         public: false,
         name: "outputs_to_dyn".into(),
         params: vec![("tick".into(), Type::path("&design::Tick"))],
@@ -149,6 +158,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     let commands_fn = Function {
         doc: vec![],
         attrs: vec![],
+        is_async: false,
         public: false,
         name: "commands_to_dyn".into(),
         params: vec![("tick".into(), Type::path("&design::Tick"))],
@@ -166,6 +176,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
             ImplItem::Fn(Function {
                 doc: vec![],
                 attrs: vec![],
+                is_async: false,
                 public: false,
                 name: "init".into(),
                 params: vec![],
@@ -175,6 +186,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
             ImplItem::Fn(Function {
                 doc: vec![],
                 attrs: vec![],
+                is_async: false,
                 public: false,
                 name: "step".into(),
                 params: vec![
@@ -196,9 +208,11 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
             ImplItem::Fn(values_fn),
             ImplItem::Fn(outputs_fn),
             ImplItem::Fn(commands_fn),
+            ImplItem::Fn(crate::adapter::host_adapter_ops(plan)),
             ImplItem::Fn(Function {
                 doc: vec![],
                 attrs: vec![],
+                is_async: false,
                 public: false,
                 name: "state_bytes".into(),
                 params: vec![],
@@ -210,6 +224,7 @@ pub fn host_module(ir: &ExecIr, package: &str, generator: &str) -> Result<Module
     items.push(Item::Fn(Function {
         doc: vec![],
         attrs: vec![],
+        is_async: false,
         public: false,
         name: "main".into(),
         params: vec![],

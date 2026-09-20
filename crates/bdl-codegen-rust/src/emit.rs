@@ -219,6 +219,7 @@ pub fn core_module(ir: &ExecIr, generator: &str) -> Result<Module, EmitError> {
     items.push(Item::Fn(Function {
         doc: vec!["The initial state: no cell has been written.".into()],
         attrs: vec![],
+        is_async: false,
         public: true,
         name: "init".into(),
         params: vec![],
@@ -414,6 +415,7 @@ fn step_fn(ir: &ExecIr) -> Result<Function, EmitError> {
             "On `Err` the state is unchanged.".into(),
         ],
         attrs: vec![],
+        is_async: false,
         public: true,
         name: "step".into(),
         params: vec![

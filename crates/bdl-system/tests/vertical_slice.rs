@@ -944,6 +944,7 @@ fn generated_programs_of_system_and_flat_agree_on_the_host() {
         codegen: bdl_codegen_rust::CodegenOptions {
             runtime_core_path: root.join("runtime/bdl-runtime-core").display().to_string(),
             runtime_host_path: root.join("runtime/bdl-runtime-host").display().to_string(),
+            ..Default::default()
         },
         ..Default::default()
     };

@@ -113,6 +113,29 @@ impl Printer {
                 }
             }
             Item::Fn(f) => self.function(f, false),
+            Item::Mod { attrs, name } => {
+                for a in attrs {
+                    self.line(&format!("#[{a}]"));
+                }
+                self.line(&format!("pub mod {name};"));
+            }
+            Item::Static {
+                doc,
+                attrs,
+                name,
+                ty,
+                value,
+            } => {
+                self.docs(doc);
+                for a in attrs {
+                    self.line(&format!("#[{a}]"));
+                }
+                self.line(&format!(
+                    "static {name}: {} = {};",
+                    ty_str(ty),
+                    expr_str(value)
+                ));
+            }
             Item::Impl {
                 trait_,
                 target,
@@ -149,6 +172,7 @@ impl Printer {
             self.line(&format!("#[{a}]"));
         }
         let vis = if f.public && !in_impl { "pub " } else { "" };
+        let asyncness = if f.is_async { "async " } else { "" };
         let params: Vec<String> = f
             .params
             .iter()
@@ -159,7 +183,7 @@ impl Printer {
             None => String::new(),
         };
         self.line(&format!(
-            "{vis}fn {}({}){ret} {{",
+            "{vis}{asyncness}fn {}({}){ret} {{",
             f.name,
             params.join(", ")
         ));
@@ -186,9 +210,28 @@ impl Printer {
                     };
                     self.line(&format!("let {m}{name}{t} = {};", expr_str(value)));
                 }
+                Stmt::Expr(Expr::Match { scrutinee, arms }) => {
+                    self.line(&format!("match {} {{", expr_str(scrutinee)));
+                    self.indent += 1;
+                    for (p, e) in arms {
+                        self.line(&format!("{p} => {},", expr_str(e)));
+                    }
+                    self.indent -= 1;
+                    self.line("}");
+                }
+                Stmt::Expr(Expr::Loop(b)) => {
+                    self.line("loop {");
+                    self.indent += 1;
+                    self.block_body(b);
+                    self.indent -= 1;
+                    self.line("}");
+                }
                 Stmt::Expr(e) => {
                     let s = expr_str(e);
-                    if matches!(e, Expr::If { .. } | Expr::Match { .. } | Expr::Block(_)) {
+                    if matches!(
+                        e,
+                        Expr::If { .. } | Expr::Match { .. } | Expr::Block(_) | Expr::Loop(_)
+                    ) {
                         self.line(&s);
                     } else {
                         self.line(&format!("{s};"));
@@ -287,6 +330,9 @@ pub fn expr_str(e: &Expr) -> String {
         Expr::Assign { target, value } => format!("{} = {}", expr_str(target), expr_str(value)),
         Expr::Cast { e, ty } => format!("({} as {})", expr_str(e), ty_str(ty)),
         Expr::VecMacro(es) => format!("vec![{}]", args_str(es)),
+        Expr::Array(es) => format!("[{}]", args_str(es)),
+        Expr::Loop(b) => format!("loop {}", block_str(b)),
+        Expr::Await(e) => format!("{}.await", paren(e)),
         Expr::Closure { params, ret, body } => match ret {
             None => format!("|{}| {}", params.join(", "), expr_str(body)),
             Some(t) => format!(
@@ -404,6 +450,7 @@ mod tests {
                 Item::Fn(Function {
                     doc: vec![],
                     attrs: vec![],
+                    is_async: false,
                     public: true,
                     name: "f".into(),
                     params: vec![("s".into(), Type::reference(Type::path("S"), true))],

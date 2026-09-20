@@ -32,6 +32,7 @@
 pub mod backend;
 pub mod collections;
 pub mod deploy_report;
+pub mod target;
 pub use backend::{compile, compile_design_ir, readiness, CompileArtifact, CompileOptions};
 pub use collections::{
     collections_diagnostics, collections_report, CollectionsReadiness, CollectionsReport,
@@ -41,6 +42,7 @@ pub use deploy_report::{
     deployment_report, AssignmentRow, Blocker, BlockerKind, DeploymentReport, MissingItem,
     MissingKind,
 };
+pub use target::{adapter_plan, compile_for_target, TargetOptions};
 
 use bdl_check::{check_realization, pretty, TypeErrorKind};
 use bdl_diagnostics::{sort_diagnostics, Diagnostic, Entity, Severity};

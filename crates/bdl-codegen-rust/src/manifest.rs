@@ -40,6 +40,42 @@ pub struct Manifest {
     /// binding receives (docs/architecture/output-realization.md).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sinks: Vec<SinkEntry>,
+    /// The platform adapter generated beside the core, when a target was
+    /// given (docs/architecture/embedded-adapter.md).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub adapter: Option<AdapterEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdapterEntry {
+    /// The board id and its family (the target entry).
+    pub board: String,
+    pub family: String,
+    /// The Rust target triple the firmware is built for.
+    pub triple: String,
+    pub tick_micros: u64,
+    /// Activation period in ticks per clock slot, in slot order.
+    pub periods: Vec<u64>,
+    /// The collection arena in bytes, when the core carries lists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arena_bytes: Option<u64>,
+    /// One per machine sink, in sink order.
+    pub bindings: Vec<AdapterBindingEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdapterBindingEntry {
+    pub slot: u32,
+    pub device_id: u64,
+    pub symbol: String,
+    pub profile: String,
+    /// The numeric policy / sink trait: `pwm_duty8` or `level`.
+    pub kind: String,
+    /// The board resource the placement assigned, as the board names it.
+    pub resource: String,
+    pub capability: String,
+    /// The target's peripheral for it, in the target's words.
+    pub peripheral: String,
 }
 
 /// The static bounds of the lists a program carries: per state cell the
@@ -191,8 +227,44 @@ pub struct FunctionEntry {
     pub ty: String,
 }
 
-pub fn manifest(ir: &ExecIr, package: &str, generator: &str) -> Manifest {
-    Manifest {
+pub fn manifest(
+    ir: &ExecIr,
+    package: &str,
+    generator: &str,
+    plan: Option<&crate::adapter::AdapterPlan>,
+) -> Result<Manifest, crate::emit::EmitError> {
+    let adapter = match plan {
+        None => None,
+        Some(plan) => {
+            let mut bindings = Vec::new();
+            for b in &plan.sinks {
+                let peripheral = crate::targets::rp2040::peripheral(b)?;
+                bindings.push(AdapterBindingEntry {
+                    slot: b.slot.0,
+                    device_id: b.device.raw(),
+                    symbol: names::command(b.device),
+                    profile: b.profile.0.clone(),
+                    kind: match b.kind {
+                        crate::adapter::SinkKind::PwmDuty8 => "pwm_duty8".into(),
+                        crate::adapter::SinkKind::Level => "level".into(),
+                    },
+                    resource: b.resource.clone(),
+                    capability: b.kind.capability().into(),
+                    peripheral: peripheral.describe(),
+                });
+            }
+            Some(AdapterEntry {
+                board: plan.board.clone(),
+                family: plan.family.clone(),
+                triple: crate::targets::rp2040::TRIPLE.into(),
+                tick_micros: plan.tick_micros,
+                periods: plan.periods.clone(),
+                arena_bytes: plan.arena_bytes,
+                bindings,
+            })
+        }
+    };
+    Ok(Manifest {
         manifest_version: MANIFEST_VERSION,
         generator: generator.into(),
         design: ir.name.clone(),
@@ -303,5 +375,6 @@ pub fn manifest(ir: &ExecIr, package: &str, generator: &str) -> Manifest {
                 ty: pretty::kernel(&s.raw),
             })
             .collect(),
-    }
+        adapter,
+    })
 }

@@ -6,6 +6,7 @@
 use bdl_design_bounded_buffer as design;
 use bdl_runtime_core::ActiveDomains;
 use bdl_runtime_core::RuntimeError;
+use bdl_runtime_host::AdapterOp;
 use bdl_runtime_host::BridgeError;
 use bdl_runtime_host::DynValue;
 use bdl_runtime_host::HostProgram;
@@ -40,6 +41,10 @@ impl HostProgram for Bridge {
     }
 
     fn commands_to_dyn(tick: &design::Tick) -> Vec<Option<DynValue>> {
+        vec![]
+    }
+
+    fn adapter_ops(tick: &design::Tick) -> Vec<AdapterOp> {
         vec![]
     }
 
