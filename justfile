@@ -21,9 +21,9 @@ markdownlint  := "npx --yes markdownlint-cli2@0.23.2"
 # Format every tracked Markdown file: Prettier for layout, bare fences
 # labelled `text`, then markdownlint's own fixes.
 docs-fmt:
-    git ls-files -z '*.md' | xargs -0 {{prettier}} --log-level warn --write
-    git ls-files -z '*.md' | xargs -0 python3 scripts/md_normalize.py
-    git ls-files -z '*.md' | xargs -0 {{markdownlint}} --fix
+    git ls-files -zco --exclude-standard '*.md' | xargs -0 {{prettier}} --log-level warn --write
+    git ls-files -zco --exclude-standard '*.md' | xargs -0 python3 scripts/md_normalize.py
+    git ls-files -zco --exclude-standard '*.md' | xargs -0 {{markdownlint}} --fix
 
 # Report Markdown that `just docs-fmt` would change or that breaks a rule.
 # (The checks are scripts/preflight.py's: one list, shared with CI.)
