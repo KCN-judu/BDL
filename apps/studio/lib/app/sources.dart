@@ -12,7 +12,8 @@ library;
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'effects.dart';
 import 'lifecycle.dart' show afterSourceEditSettled;
-import 'reducer.dart' show Transition, decPending, pending, projectReceived;
+import 'actions.dart' show SelectionChanged;
+import 'reducer.dart' show Transition, decPending, pending, projectReceived, reduce;
 import 'state.dart';
 
 /// Design, Code or Split.  Showing text fetches it when the sources are
@@ -89,7 +90,13 @@ Transition sourcesReceived(AppState s, pb.SourcesView view) {
     next = next.copyWith(sent: held.retry, clearRetry: true);
     state = pending(state);
   }
-  return Transition(state.copyWith(editor: state.editor.copyWith(sources: next)), effects);
+  state = state.copyWith(editor: state.editor.copyWith(sources: next));
+  // A reveal that waited for these sources.
+  if (state.editor.pendingReveal case final node? when next.revision == state.revision) {
+    final r = _revealNow(state, node);
+    return Transition(r.state, [...effects, ...r.effects]);
+  }
+  return Transition(state, effects);
 }
 
 /// ApplySourceEdit answered.  Accepted: the projection is a new revision
@@ -134,6 +141,52 @@ Transition sourceEditApplied(AppState s, pb.SourceEditApplied applied) {
   // nothing left to send: a save or an unload that waited for this edit
   final settled = afterSourceEditSettled(state);
   return Transition(settled.state, [...effects, ...settled.effects]);
+}
+
+/// *Reveal in Code* for a canvas node: the node is selected, the Split view
+/// is shown when the canvas alone was, and the file declaring the node is
+/// opened at its declaration — through the Code view's own reveal (the one
+/// definition navigation uses).  Before the sources of this revision are on
+/// hand the reveal waits for them ([EditorState.pendingReveal]).
+Transition revealInCode(AppState s, NodeRef node) {
+  var t = reduce(s, SelectionChanged(singleSelection(node)));
+  if (t.state.editor.view == DesignView.design) {
+    final v = viewChanged(t.state, DesignView.split);
+    t = Transition(v.state, [...t.effects, ...v.effects]);
+  }
+  final state = t.state;
+  if (state.editor.sources.revision != state.revision) {
+    return Transition(
+      state.copyWith(editor: state.editor.copyWith(pendingReveal: node)),
+      t.effects,
+    );
+  }
+  final r = _revealNow(state, node);
+  return Transition(r.state, [...t.effects, ...r.effects]);
+}
+
+Transition _revealNow(AppState s, NodeRef node) {
+  final sel = singleSelection(node);
+  for (final file in s.editor.sources.files) {
+    final a = anchorOf(s, sel, file);
+    if (a == null) continue;
+    final generation = s.editor.toolingGeneration + 1;
+    var editor = s.editor.copyWith(
+      toolingGeneration: generation,
+      clearPendingReveal: true,
+      reveal: SourceReveal(
+        generation: generation,
+        location: SourceLocation(path: file.path, start: a.start, end: a.end),
+      ),
+    );
+    if (file.path != editor.sources.openPath) {
+      editor = editor.copyWith(
+        sources: editor.sources.copyWith(openPath: file.path, clearBuffer: true),
+      );
+    }
+    return Transition(s.copyWith(editor: editor));
+  }
+  return Transition(s.copyWith(editor: s.editor.copyWith(clearPendingReveal: true)));
 }
 
 /// The anchor of the canvas selection in the open file, for the Split

@@ -124,6 +124,8 @@ class DesignPage extends StatelessWidget {
                 components: state.system?.components ?? const [],
                 groups: state.groupsInView,
                 viewport: state.editor.contextLayout.viewport,
+                actions: state.editor.actions,
+                hasSources: true,
                 groupsEnabled: state.isSystem,
               ),
               if (state.editor.pendingBind case final b?)
@@ -157,7 +159,7 @@ class _OutOfSync extends StatelessWidget {
           Expanded(
             child: Text(
               context.l10n.showingTheLastVersionThatBuiltThe,
-              style: TextStyle(fontSize: 12, color: t.textPrimary),
+              style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
             ),
           ),
         ],
@@ -236,13 +238,17 @@ class _ContextBar extends StatelessWidget {
           if (comp == null) ...[
             Text(
               context.l10n.system,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+              style: TextStyle(
+                fontSize: MacType.body,
+                fontWeight: FontWeight.w600,
+                color: t.textPrimary,
+              ),
             ),
             const SizedBox(width: 8),
             Text(
               '${context.l10n.instancesCount(state.system?.instances.length ?? 0)} · '
               '${context.l10n.componentsCount(state.system?.components.length ?? 0)}',
-              style: TextStyle(fontSize: 11, color: t.textTertiary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
             ),
           ] else ...[
             MacButton(
@@ -252,12 +258,16 @@ class _ContextBar extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               context.l10n.editingComponent(comp.name),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t.textPrimary),
+              style: TextStyle(
+                fontSize: MacType.body,
+                fontWeight: FontWeight.w600,
+                color: t.textPrimary,
+              ),
             ),
             const SizedBox(width: 8),
             Text(
               used == 0 ? context.l10n.notPlacedYet : context.l10n.usedByInstances(used),
-              style: TextStyle(fontSize: 11, color: t.textTertiary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
             ),
             const SizedBox(width: 8),
             // The one sentence that may give way when the bar is narrow.
@@ -265,7 +275,7 @@ class _ContextBar extends StatelessWidget {
               child: Text(
                 context.l10n.itsPromiseIsWhatInstancesSeeEdits,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: t.textTertiary),
+                style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
               ),
             ),
           ],

@@ -103,8 +103,11 @@ class CanvasPointer {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   }
 
+  /// A right-click: the menu's context is set on the press, the menu opens
+  /// in the frame after (its items are built from the context first).
   Future<void> rightClick(Offset scene) async {
     await tester.tapAt(toGlobal(scene), buttons: kSecondaryButton);
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
 

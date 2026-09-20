@@ -1237,8 +1237,10 @@ CanvasHit hitTest(CanvasScene scene, Offset point) {
   for (final n in scene.nodes.reversed) {
     if (n.rect.contains(point)) return HitNode(n, header: n.header.contains(point));
   }
+  // Signature and binding edges have a hit area (a contextual menu, a
+  // binding's selection); reference edges have none (ADR-0034).
   for (final l in scene.links) {
-    if (l.binding != null && _nearPath(l.path, point, 6)) return HitLink(l);
+    if (!l.reference && _nearPath(l.path, point, 6)) return HitLink(l);
   }
   for (final g in scene.groups.reversed) {
     if (g.titleBand.contains(point)) return HitGroup(g);
@@ -1288,19 +1290,62 @@ bool canLink(SocketRef from, SocketRef to) {
 }
 
 /// The socket a dragged link may legally be dropped on.  Typing by identity,
-/// made visible.
+/// made visible.  An *authoring* target (a concept's value socket over a
+/// sink that accepts the concept) counts: the drop then resolves to the
+/// relationship that drives the sink, never to the concept
+/// (docs/architecture/studio-ui.md §2, "Concept → Output").
 SocketShape? dropTarget(CanvasScene scene, SocketRef from, Offset point) {
   final hit = hitTest(scene, point);
   if (hit is! HitSocket) return null;
-  return canLink(from, hit.socket.ref) ? hit.socket : null;
+  return canLink(from, hit.socket.ref) || isAuthoringTarget(from, hit.socket.ref)
+      ? hit.socket
+      : null;
+}
+
+/// The Concept → Output authoring gesture: dragging a concept's value socket
+/// onto a sink accepting that concept.  Not a link the model has — a sink
+/// is driven by a relationship — but the gesture the designer reaches for;
+/// the canvas resolves it against the relationships that produce the
+/// concept and could drive the sink (`driveCandidates`).
+bool isAuthoringTarget(SocketRef from, SocketRef to) {
+  final (out, inp) = from.side == SocketSide.output ? (from, to) : (to, from);
+  return out.node.kind == NodeKind.concept &&
+      out.side == SocketSide.output &&
+      out.role == SocketRole.concept &&
+      inp.node.kind == NodeKind.output &&
+      inp.side == SocketSide.input &&
+      inp.concept == out.concept;
 }
 
 /// Every socket a link from [from] could land on — shown with a halo while
-/// dragging so the rule is seen before the drop.
+/// dragging so the rule is seen before the drop.  Authoring targets are
+/// included: an eligible sink lights up under a dragged concept.
 Set<SocketRef> compatibleSockets(CanvasScene scene, SocketRef from) => {
   for (final n in scene.nodes)
     for (final s in n.sockets)
-      if (canLink(from, s.ref)) s.ref,
+      if (canLink(from, s.ref) || isAuthoringTarget(from, s.ref)) s.ref,
+};
+
+/// Rectangle selection, the CAD convention (docs/architecture/studio-ui.md
+/// §2): dragged left → right it is a **window** — only nodes wholly inside
+/// are taken; dragged right → left it is **crossing** — nodes inside or
+/// touched are taken.  The vertical direction means nothing.
+enum MarqueeMode { window, crossing }
+
+/// The mode of a marquee from where it started and where the pointer is.
+MarqueeMode marqueeMode(Offset anchor, Offset current) =>
+    current.dx >= anchor.dx ? MarqueeMode.window : MarqueeMode.crossing;
+
+/// The nodes a marquee takes: the scene's visible nodes only — a collapsed
+/// group is its box, hidden members are not in the scene; links and expanded
+/// regions are never taken by a rectangle.
+Set<NodeRef> marqueeNodes(CanvasScene scene, Rect box, MarqueeMode mode) => {
+  for (final n in scene.nodes)
+    if (switch (mode) {
+      MarqueeMode.window => box.contains(n.rect.topLeft) && box.contains(n.rect.bottomRight),
+      MarqueeMode.crossing => box.overlaps(n.rect),
+    })
+      n.ref,
 };
 
 String stateWord(pb.AcceptanceState s) => switch (s) {
@@ -1358,4 +1403,47 @@ String dimLabel(pb.Dim d) {
   add('cd', d.luminous);
   add('rad', d.angle);
   return parts.isEmpty ? '1' : parts.join('·');
+}
+
+/// ⇧-click range selection on the graph: the nodes of the one shortest
+/// path over *signature* edges (concept ↔ relationship ↔ sink, bindings)
+/// from [from] to [to], inclusive — when exactly one shortest path exists.
+/// Reference edges are dependency, not the displayed signature, and never
+/// take part.  Two or more shortest paths (a branched graph) make the range
+/// ambiguous: `null`, and the caller selects nothing it did not click.
+Set<NodeRef>? uniqueSignatureChain(CanvasScene scene, NodeRef from, NodeRef to) {
+  if (from == to) return {from};
+  final adjacent = <NodeRef, Set<NodeRef>>{};
+  for (final l in scene.links) {
+    if (l.reference) continue;
+    adjacent.putIfAbsent(l.from.node, () => {}).add(l.to.node);
+    adjacent.putIfAbsent(l.to.node, () => {}).add(l.from.node);
+  }
+  // Breadth-first: the distance of every node and how many shortest paths
+  // reach it; a single predecessor along a single count is the chain.
+  final distance = <NodeRef, int>{from: 0};
+  final ways = <NodeRef, int>{from: 1};
+  final parent = <NodeRef, NodeRef>{};
+  final queue = <NodeRef>[from];
+  for (var i = 0; i < queue.length; i++) {
+    final n = queue[i];
+    for (final m in adjacent[n] ?? const <NodeRef>{}) {
+      if (!distance.containsKey(m)) {
+        distance[m] = distance[n]! + 1;
+        ways[m] = ways[n]!;
+        parent[m] = n;
+        queue.add(m);
+      } else if (distance[m] == distance[n]! + 1) {
+        ways[m] = ways[m]! + ways[n]!;
+      }
+    }
+  }
+  if (!distance.containsKey(to) || ways[to] != 1) return null;
+  final chain = <NodeRef>{to};
+  var cur = to;
+  while (cur != from) {
+    cur = parent[cur]!;
+    chain.add(cur);
+  }
+  return chain;
 }

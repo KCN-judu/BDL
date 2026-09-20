@@ -179,7 +179,8 @@ Transition reduce(AppState s, AppAction action) {
     DraftAnalysisFailed(:final mappingId, :final generation, :final code, :final message) =>
       draftAnalysisFailed(s, mappingId, generation, code, message),
     DeleteSelectionRequested() => switch (s.editor.selection) {
-      NoSelection() || PortSelected() || MultiSelected() => Transition(s),
+      NoSelection() || PortSelected() => Transition(s),
+      MultiSelected(:final nodes) => _deleteNodes(s, nodes),
       ConceptSelected(:final id) => reduce(s, DeleteConceptRequested(id)),
       MappingSelected(:final id) => reduce(s, DeleteMappingRequested(id)),
       OutputSelected(:final id) => reduce(s, DeleteOutputRequested(id)),
@@ -715,6 +716,26 @@ Transition reduce(AppState s, AppAction action) {
         [SetLayout(layoutToPb(layouts))],
       );
     }),
+    NodesMoved(:final positions) => _whenProject(s, () => _nodesMoved(s, positions)),
+    RevealInCodeRequested(:final node) => _whenProject(s, () => revealInCode(s, node)),
+    ReplaceDriverRequested(:final outputId, :final from, :final to) => _whenProject(
+      s,
+      () => _plan(s, [
+        pb.EditOp(setMappingDrive: pb.SetMappingDrive(id: Int64(from))),
+        pb.EditOp(
+          setMappingDrive: pb.SetMappingDrive(id: Int64(to), outputId: Int64(outputId)),
+        ),
+      ]),
+    ),
+    EditDefinitionRequested(:final mappingId) => _whenProject(s, () {
+      final t = reduce(s, SelectionChanged(MappingSelected(mappingId)));
+      return Transition(
+        t.state.copyWith(
+          editor: t.state.editor.copyWith(definitionFocus: t.state.editor.definitionFocus + 1),
+        ),
+        t.effects,
+      );
+    }),
     ErrorDismissed() => Transition(s.copyWith(editor: s.editor.copyWith(clearError: true))),
 
     // ---- responses ---------------------------------------------------------
@@ -881,6 +902,202 @@ List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p
 
 /// After a selection (or a new revision under one): ask the service which
 /// fixes it offers for the selected object.
+/// One gesture moved several nodes: one layout, one write.  Collapsed group
+/// boxes are layout of their own kind (`GroupBoxChanged`); their hidden
+/// members travel with the box, as for a single box move.
+Transition _nodesMoved(AppState s, Map<NodeRef, Offset> positions) {
+  final ctx = s.editor.context;
+  var layouts = s.editor.layouts;
+  final nodes = {...layouts.of(ctx).nodes};
+  final groups = {...layouts.of(ctx).groups};
+  for (final e in positions.entries) {
+    if (e.key.kind == NodeKind.group) {
+      final box = groups[e.key.id] ?? const GroupBox(rect: Rect.zero);
+      final rect = Rect.fromLTWH(e.value.dx, e.value.dy, box.rect.width, box.rect.height);
+      if (box.collapsed && box.rect != Rect.zero) {
+        final delta = rect.topLeft - box.rect.topLeft;
+        for (final m in s.group(e.key.id)?.members ?? const <Int64>[]) {
+          final ref = NodeRef.mapping(m.toInt());
+          if (nodes[ref] case final p?) nodes[ref] = p + delta;
+        }
+      }
+      groups[e.key.id] = box.copyWith(rect: rect);
+    } else {
+      nodes[e.key] = e.value;
+    }
+  }
+  layouts = layouts.withNodes(ctx, nodes);
+  for (final g in groups.entries) {
+    layouts = layouts.withGroup(ctx, g.key, g.value);
+  }
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(layout: layouts.of(ctx).nodes, layouts: layouts),
+    ),
+    [SetLayout(layoutToPb(layouts))],
+  );
+}
+
+/// Several flat edits as one plan: the first is sent, the rest wait for
+/// each confirming revision in the queue the project's kind drains (the
+/// flat queue, or the system queue with each edit wrapped for the design in
+/// view), so no two steps race against one revision.  A refused step ends
+/// the plan, as every queued plan does.
+Transition _plan(AppState s, List<pb.EditOp> edits) {
+  if (edits.isEmpty) return Transition(s);
+  if (!s.isSystem) {
+    final t = _edit(s, edits.first);
+    if (t.effects.isEmpty) return t;
+    return Transition(
+      t.state.copyWith(
+        editor: t.state.editor.copyWith(
+          queuedEdits: [...t.state.editor.queuedEdits, ...edits.skip(1)],
+        ),
+      ),
+      t.effects,
+    );
+  }
+  pb.SystemEditOp wrap(pb.EditOp op) => switch (s.editor.context) {
+    SystemContext() => pb.SystemEditOp(base: op),
+    ComponentContext(:final id) => pb.SystemEditOp(
+      editComponentBody: pb.EditComponentBody(component: Int64(id), op: op),
+    ),
+  };
+  final t = sendSystemEdit(s, wrap(edits.first));
+  if (t.effects.isEmpty) return t;
+  return Transition(
+    t.state.copyWith(
+      editor: t.state.editor.copyWith(
+        queuedSystemEdits: [...t.state.editor.queuedSystemEdits, ...edits.skip(1).map(wrap)],
+      ),
+    ),
+    t.effects,
+  );
+}
+
+/// Deleting a selected set: one plan of the model's own single deletes, in
+/// an order the model accepts — relationships first (they use concepts and
+/// drive sinks), then sinks, then concepts, then instances; a group in the
+/// set is ungrouped (its relationships are the designer's, not the group's).
+/// The plan is checked before its first edit is sent: a concept still used
+/// by a relationship outside the set, or a sink still driven from outside it
+/// or realised by a device, would be refused by the model mid-way and leave a
+/// half-deleted design — so nothing is sent and the refusal names the object
+/// and its users.  Each step is one revision (one undo each); the plan stops
+/// at the first refusal, as every queued plan does.
+Transition _deleteNodes(AppState s, Set<NodeRef> nodes) {
+  final p = s.project;
+  if (p == null) return Transition(s);
+  final mappingIds = {
+    for (final n in nodes)
+      if (n.kind == NodeKind.mapping) n.id,
+  };
+  final conceptIds = {
+    for (final n in nodes)
+      if (n.kind == NodeKind.concept) n.id,
+  };
+  final outputIds = {
+    for (final n in nodes)
+      if (n.kind == NodeKind.output) n.id,
+  };
+  final instanceIds = {
+    for (final n in nodes)
+      if (n.kind == NodeKind.instance) n.id,
+  };
+  final groupIds = {
+    for (final n in nodes)
+      if (n.kind == NodeKind.group) n.id,
+  };
+  final blockers = <String>[];
+  for (final c in p.concepts.where((c) => conceptIds.contains(c.id.toInt()))) {
+    final users = [
+      for (final m in p.mappings)
+        if (!mappingIds.contains(m.id.toInt()) &&
+            (m.signature.output == c.id || m.signature.inputs.contains(c.id)))
+          m.name,
+    ];
+    if (users.isNotEmpty) blockers.add('${c.name} is used by ${users.join(', ')}');
+  }
+  for (final o in p.outputs.where((o) => outputIds.contains(o.id.toInt()))) {
+    final drivers = [
+      for (final m in p.mappings)
+        if (!mappingIds.contains(m.id.toInt()) && m.hasDrivesOutputId() && m.drivesOutputId == o.id)
+          m.name,
+    ];
+    final devices = [
+      for (final d in p.devices)
+        if (d.hasOutputId() && d.outputId == o.id) d.name,
+    ];
+    if (drivers.isNotEmpty) blockers.add('${o.name} is still driven by ${drivers.join(', ')}');
+    if (devices.isNotEmpty) blockers.add('${o.name} is realised by ${devices.join(', ')}');
+  }
+  if (blockers.isNotEmpty) {
+    return Transition(
+      s.copyWith(
+        editor: s.editor.copyWith(
+          lastError: UserFacingError(
+            code: 'studio.delete_blocked',
+            message: 'Nothing was deleted: ${blockers.join('; ')}.',
+            details: 'Select those too, or disconnect them first.',
+          ),
+        ),
+      ),
+    );
+  }
+  final plan = <pb.EditOp>[
+    for (final id in mappingIds) pb.EditOp(deleteMapping: pb.DeleteMapping(id: Int64(id))),
+    for (final id in outputIds) pb.EditOp(deleteOutput: pb.DeleteOutput(id: Int64(id))),
+    for (final id in conceptIds) pb.EditOp(deleteConcept: pb.DeleteConcept(id: Int64(id))),
+  ];
+  // A group among other objects stays: deleting a lone group ungroups it
+  // (the single-selection rule); among others its relationships are what
+  // the designer selected, and they go through the plan above.
+  if (plan.isEmpty && instanceIds.isEmpty) {
+    var t = Transition(s);
+    for (final id in groupIds) {
+      final next = reduce(t.state, UngroupRequested(id));
+      t = Transition(next.state, [...t.effects, ...next.effects]);
+    }
+    return t;
+  }
+  if (!s.isSystem) {
+    // A flat project: one queue of flat edits.
+    if (plan.isEmpty) return Transition(s);
+    final t = _edit(s, plan.first);
+    if (t.effects.isEmpty) return t;
+    return Transition(
+      t.state.copyWith(
+        editor: t.state.editor.copyWith(
+          queuedEdits: [...t.state.editor.queuedEdits, ...plan.skip(1)],
+        ),
+      ),
+      t.effects,
+    );
+  }
+  // A system project: every step is a system edit, in one queue, so two
+  // steps never race against one revision.
+  pb.SystemEditOp wrap(pb.EditOp op) => switch (s.editor.context) {
+    SystemContext() => pb.SystemEditOp(base: op),
+    ComponentContext(:final id) => pb.SystemEditOp(
+      editComponentBody: pb.EditComponentBody(component: Int64(id), op: op),
+    ),
+  };
+  final steps = <pb.SystemEditOp>[
+    ...plan.map(wrap),
+    for (final id in instanceIds) pb.SystemEditOp(deleteInstance: pb.DeleteInstance(id: Int64(id))),
+  ];
+  final t = sendSystemEdit(s, steps.first);
+  if (t.effects.isEmpty) return t;
+  return Transition(
+    t.state.copyWith(
+      editor: t.state.editor.copyWith(
+        queuedSystemEdits: [...t.state.editor.queuedSystemEdits, ...steps.skip(1)],
+      ),
+    ),
+    t.effects,
+  );
+}
+
 Transition _selected(AppState s) {
   final entity = s.selectedEntity;
   if (entity == null) {
@@ -1104,9 +1321,7 @@ Transition projectReceived(
       ? (created.kind == NodeKind.concept
             ? ConceptSelected(created.id) as Selection
             : MappingSelected(created.id))
-      : selectionStillValid(next, s.editor.selection)
-      ? s.editor.selection
-      : const NoSelection();
+      : surviving(next, s.editor.selection);
   // An inline rename survives pushed projections (the daemon echoes every
   // commit) as long as its node still exists.
   // Create-then-rename opens the name of a created concept; a Source over

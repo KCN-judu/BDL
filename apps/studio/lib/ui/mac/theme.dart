@@ -153,6 +153,44 @@ ThemeData macTheme(Brightness brightness) {
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       overlayColor: states.overlay(),
     ),
+    // Menus (MenuAnchor, SubmenuButton, MenuItemButton): the same surface
+    // and rows as ui/mac/menus.dart, so a menu built without the
+    // primitives still wears the look (see MacMenuAnchor for the rest).
+    menuTheme: MenuThemeData(
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(t.content),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        shadowColor: const WidgetStatePropertyAll(Color(0x40000000)),
+        elevation: const WidgetStatePropertyAll(8),
+        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 4)),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(MacMetrics.radius),
+            side: BorderSide(color: t.hairline),
+          ),
+        ),
+      ),
+    ),
+    menuButtonTheme: MenuButtonThemeData(
+      style: ButtonStyle(
+        minimumSize: const WidgetStatePropertyAll(Size(160, MacMetrics.rowHeight)),
+        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+        textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: body)),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.disabled)
+              ? t.textPrimary.withValues(alpha: MacStates.disabledOpacity)
+              : t.textPrimary,
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.focused) ? t.selection : null,
+        ),
+        overlayColor: states.overlay(),
+        iconColor: WidgetStatePropertyAll(t.textSecondary),
+        iconSize: const WidgetStatePropertyAll(14),
+        shape: const WidgetStatePropertyAll(RoundedRectangleBorder()),
+        animationDuration: MacStates.duration,
+      ),
+    ),
     popupMenuTheme: PopupMenuThemeData(
       color: t.content,
       surfaceTintColor: Colors.transparent,

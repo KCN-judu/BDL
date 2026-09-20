@@ -157,7 +157,7 @@ void main() {
         final revision = s.revision;
 
         // 1. box select raw, dimByTilt, brightness (⇧-drag on empty canvas)
-        await canvas.shiftDrag(const Offset(380, 20), const Offset(920, 290));
+        await canvas.drag(const Offset(380, 20), const Offset(920, 290));
         await tester.pump();
         s = store.state;
         expect(s.editor.selection, isA<MultiSelected>());
@@ -397,7 +397,7 @@ void main() {
         await mapping(tester, 'follower', 'consumerA', tilt, at: const Offset(800, 700));
         await mapping(tester, 'openTilt', null, tilt, at: const Offset(800, 860));
         s = await analysed(tester);
-        await canvas.shiftDrag(const Offset(380, 680), const Offset(640, 910));
+        await canvas.drag(const Offset(380, 680), const Offset(640, 910));
         await tester.pump();
         s = store.state;
         expect((s.editor.selection as MultiSelected).mappings.toSet(), {
@@ -488,7 +488,7 @@ void main() {
         final r1 = scene.node(NodeRef.mapping(bodyDim)).rect;
         final r2 = scene.node(NodeRef.mapping(bodyBright)).rect;
         final union = r1.expandToInclude(r2).inflate(20);
-        await canvas.shiftDrag(union.topLeft, union.bottomRight);
+        await canvas.drag(union.topLeft, union.bottomRight);
         await tester.pump();
         s = store.state;
         expect(

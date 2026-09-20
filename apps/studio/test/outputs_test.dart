@@ -652,14 +652,17 @@ void main() {
       await t.tap(find.text('a value…'));
       await t.pumpAndSettle();
       expect(find.text('cruise'), findsOneWidget);
-      expect(find.text('boost'), findsOneWidget);
+      // boost updates in no domain and the sink in main: the pass would
+      // refuse the edge (DriveWF), so it is not offered — the same rule the
+      // canvas applies when a concept is dropped on the sink
+      expect(find.text('boost'), findsNothing, reason: 'not in the domain of the sink');
       expect(find.text('scale'), findsNothing, reason: 'a rule is never offered');
       expect(find.text('bearing'), findsNothing, reason: 'a value of another concept is not');
       expect(find.text('has inputs'), findsNothing);
-      await t.tap(find.text('boost'));
+      await t.tap(find.text('cruise'));
       await t.pumpAndSettle();
       final op = key.currentState!.effects.whereType<ApplyEdit>().single.op;
-      expect(op.setMappingDrive.id.toInt(), boost);
+      expect(op.setMappingDrive.id.toInt(), cruise);
       expect(op.setMappingDrive.outputId.toInt(), motor);
 
       // No value of Speed at all: one sentence, no pop-up listing rules.

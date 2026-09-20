@@ -76,6 +76,7 @@ class Inspector extends StatelessWidget {
           projection: composerProjection(state, id),
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
+          definitionFocus: state.editor.definitionFocus,
           clocks: project.clocks,
           outputs: project.outputs,
           appliedBy: valuesApplying(state, id),
@@ -138,10 +139,11 @@ class Inspector extends StatelessWidget {
           id: id,
           dispatch: dispatch,
         ),
-        MultiSelected(:final nodes) => MultiInspector(
+        MultiSelected(:final nodes, :final active) => MultiInspector(
           key: ValueKey('multi${nodes.length}'),
           state: state,
           nodes: nodes,
+          active: active,
           dispatch: dispatch,
         ),
       };
@@ -182,7 +184,7 @@ class _ChangeNote extends StatelessWidget {
     final affected = [
       for (final d in outcome.originDecls) ...project.mappings.where((m) => m.id == d),
     ];
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final Widget sentence;
     if (outcome.kind == pb.EditKind.EDIT_KIND_REFINEMENT) {
       sentence = Text(context.l10n.nothingElseNeedsRechecking, style: small);
@@ -279,7 +281,10 @@ class _NameLinks extends StatelessWidget {
     if (mappings.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Text(empty, style: TextStyle(fontSize: 13, color: t.textTertiary)),
+        child: Text(
+          empty,
+          style: TextStyle(fontSize: MacType.body, color: t.textTertiary),
+        ),
       );
     }
     return Wrap(
@@ -386,7 +391,7 @@ class _ConceptInspector extends StatelessWidget {
                           concept.ordered
                               ? context.l10n.valuesAreMagnitudesSmallestLargestClampIn
                               : context.l10n.valuesAreComparedForEqualityOnly,
-                          style: TextStyle(fontSize: 11, color: t.textSecondary),
+                          style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
                         ),
                       ),
                     ],
@@ -400,7 +405,7 @@ class _ConceptInspector extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   context.l10n.changingThisRechecks(_names(users)),
-                  style: TextStyle(fontSize: 11, color: t.textSecondary),
+                  style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
                 ),
               ),
           ],
@@ -441,7 +446,7 @@ class _ConceptInspector extends StatelessWidget {
               if (users.isNotEmpty)
                 Text(
                   context.l10n.stillUsedBy(_names(users)),
-                  style: TextStyle(fontSize: 11, color: t.textSecondary),
+                  style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
                 ),
             ],
           ),
@@ -629,6 +634,7 @@ class _MappingInspector extends StatelessWidget {
     this.component,
     required this.revision,
     required this.outcome,
+    this.definitionFocus = 0,
     required this.clocks,
     required this.outputs,
     this.appliedBy = const [],
@@ -690,6 +696,9 @@ class _MappingInspector extends StatelessWidget {
   final pb.FormulaProjection? projection;
   final int revision;
 
+  /// *Edit Definition* bumps this: the definition editor takes focus.
+  final int definitionFocus;
+
   /// The last change, for its formal classification in Explain.
   final pb.EditOutcome? outcome;
   final void Function(AppAction) dispatch;
@@ -705,7 +714,7 @@ class _MappingInspector extends StatelessWidget {
     final output = mapping.signature.output.toInt();
     final committed = mapping.hasDefinition() ? mapping.definition.formula : null;
     final a = analysis;
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     // The role is the daemon's (ADR-0032, `MappingView.role`); a bound
     // base relationship arrives as a Value, a port-backed Source of an
     // open component wears its port's word.  *Declared* — the one hole a
@@ -774,7 +783,7 @@ class _MappingInspector extends StatelessWidget {
                       RelationshipRole.rule => context.l10n.roleRule,
                       RelationshipRole.value => context.l10n.roleValue,
                     },
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             if (portWord == null)
@@ -880,7 +889,7 @@ class _MappingInspector extends StatelessWidget {
                         b.transportInit,
                       )
                     : context.l10n.takesItsValueFrom(boundLabel?.call(b) ?? '?'),
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
               const SizedBox(height: 6),
               Row(
@@ -916,6 +925,7 @@ class _MappingInspector extends StatelessWidget {
                 composer: composer,
                 projection: projection,
                 concepts: {for (final c in concepts) c.id.toInt(): c},
+                focusGeneration: definitionFocus,
                 dispatch: dispatch,
               ),
             // What the formula references and who references this: the
@@ -1129,7 +1139,7 @@ class _OutputInspector extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.project!;
     final id = output.id.toInt();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final a = state.outputAnalysis(id);
     final clockId = output.hasClockId() ? output.clockId.toInt() : null;
     pb.ConceptView? concept(int c) => p.concepts.where((x) => x.id.toInt() == c).firstOrNull;
@@ -1141,17 +1151,10 @@ class _OutputInspector extends StatelessWidget {
         if (m.hasDrivesOutputId() && m.drivesOutputId.toInt() == id) m,
     ];
     final driver = a != null && a.hasDriver() ? a.driver.toInt() : null;
-    // What can drive the sink is the output pass's rule (DriveWF): a
-    // relationship whose type is the output's — a Source or a value, never
-    // a rule (its type is an arrow) — in the output's domain; the pass
-    // reports the domain, the type is decided here by the concept.
-    final candidates = [
-      for (final m in p.mappings)
-        if (relationshipRole(m) != RelationshipRole.rule &&
-            m.signature.output == output.accepts &&
-            !claimants.contains(m))
-          m,
-    ];
+    // What can drive the sink is the output pass's rule (DriveWF), read off
+    // the projection by `driveCandidates` — the same list the canvas offers
+    // when a concept is dropped on the sink.
+    final candidates = driveCandidates(p, output);
     // Faults of the drive edges are reported on the drivers; they belong
     // here too, where the sink is looked at.
     final driveIssues = [
@@ -1255,7 +1258,7 @@ class _OutputInspector extends StatelessWidget {
                   child: Text(
                     stateText,
                     key: const ValueKey('output-state'),
-                    style: TextStyle(fontSize: 11, color: stateColor),
+                    style: TextStyle(fontSize: MacType.secondary, color: stateColor),
                   ),
                 ),
               ],

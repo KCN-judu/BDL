@@ -2223,6 +2223,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseConcept => 'choose a concept';
 
   @override
+  String get fixMenu => 'Fix';
+
+  @override
+  String get revealInCode => 'Reveal in Code';
+
+  @override
+  String get editDefinition => 'Edit Definition';
+
+  @override
+  String deleteObjects(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count objects',
+      one: 'Delete 1 object',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String showDriver(String name) {
+    return 'Show Driver: $name';
+  }
+
+  @override
+  String showEnd(String name) {
+    return 'Show $name';
+  }
+
+  @override
+  String replaceDriver(String current, String candidate) {
+    return 'Replace $current with $candidate';
+  }
+
+  @override
+  String driveWith(String name) {
+    return 'Drive with $name';
+  }
+
+  @override
+  String noDriverForConcept(String output, String concept) {
+    return '$output accepts $concept, but no current relationship can drive it.';
+  }
+
+  @override
+  String showInInspector(String name) {
+    return 'Show $name in the Inspector';
+  }
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get frameAll => 'Frame All';
+
+  @override
+  String get windowSelection => 'Window selection';
+
+  @override
+  String get crossingSelection => 'Crossing selection';
+
+  @override
+  String get activeObject => 'Active';
+
+  @override
+  String get deleteBlockedDetails => 'Select those too, or disconnect them first.';
+
+  @override
+  String nothingWasDeleted(String reasons) {
+    return 'Nothing was deleted: $reasons.';
+  }
+
+  @override
+  String outputsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count outputs',
+      one: '1 output',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String othersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count others',
+      one: '1 other',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => 'Temperature';
 
   @override

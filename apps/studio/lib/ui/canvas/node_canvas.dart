@@ -1,8 +1,19 @@
-/// The node canvas: Blender-style interaction on top of [buildScene].
+/// The node canvas: one interaction state machine over [buildScene]
+/// (docs/architecture/studio-ui.md §2, "Interaction").
 ///
-/// High-frequency state (pan, zoom, an in-progress drag) lives here as
+/// Every pointer sequence has exactly one owner.  A primary press is a
+/// *candidate* until it moves past the drag threshold; then it becomes one
+/// of: a marquee (on empty canvas — a window when dragged left → right,
+/// a crossing when dragged right → left, the CAD convention), a node move
+/// (the selected set moves as one), a group move, a link drag (from a
+/// socket), or a pan (middle button, Space held, or a trackpad).  A click
+/// that never moved selects.  An open menu is a modal input state: the
+/// canvas takes no pointer, hover or wheel until it is dismissed, and the
+/// pointer that dismisses it edits nothing.
+///
+/// High-frequency state (pan, zoom, an in-progress gesture) lives here as
 /// widget state and never reaches the reducer.  Only *results* are
-/// dispatched: a node's final position, a link made, a selection.
+/// dispatched: positions on release, a link made, a selection.
 library;
 
 import 'package:flutter/gestures.dart';
@@ -13,9 +24,11 @@ import 'package:flutter/services.dart';
 import '../../l10n/l10n.dart';
 import '../../app/actions.dart';
 import '../../app/state.dart';
+import '../../platform/desktop.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../../l10n/library_strings.dart';
 import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
+import '../mac/menus.dart';
 import '../mac/tokens.dart';
 import 'canvas_geometry.dart';
 
@@ -41,6 +54,8 @@ class NodeCanvas extends StatefulWidget {
     this.groups = const [],
     this.viewport,
     this.groupsEnabled = false,
+    this.actions,
+    this.hasSources = false,
   });
 
   final pb.ProjectProjection project;
@@ -96,12 +111,155 @@ class NodeCanvas extends StatefulWidget {
   /// False while an insertion is awaiting the daemon.
   final bool canInsert;
 
+  /// The IDE service's actions for the selected object (the reducer asks on
+  /// every selection change): the contextual menu's *Fix* section.
+  final SemanticActionsState? actions;
+
+  /// Whether the project's source text is authored (a text project): the
+  /// menu then offers *Reveal in Code*.
+  final bool hasSources;
+
   @override
   State<NodeCanvas> createState() => _NodeCanvasState();
 }
 
-class _LinkDrag {
-  _LinkDrag(this.from, this.start, {required this.fromConnectedInput}) : current = start;
+/// Movement past this many logical pixels makes a press a drag; below it
+/// a press is a click.  One threshold for marquee, move and pan.
+const double kDragThreshold = 4;
+
+/// Two primary clicks on the same spot within this interval are a
+/// double-click (rename / enter a component).
+const Duration kDoubleClickInterval = Duration(milliseconds: 350);
+
+/// Below this zoom every group reads as its summary box (semantic zoom);
+/// the authored collapse state is untouched.
+const double kSummarizeBelowZoom = 0.5;
+
+// ---------------------------------------------------------------------------
+// Menu contexts
+// ---------------------------------------------------------------------------
+
+/// What a contextual menu is about — one explicit thing, never inferred
+/// from a nullable node and a stale selection.
+sealed class MenuContext {
+  const MenuContext();
+}
+
+/// Empty canvas: creation and canvas commands only.
+class CanvasMenuContext extends MenuContext {
+  const CanvasMenuContext(this.scene);
+  final Offset scene;
+}
+
+/// One node (a concept, a relationship, a sink, an instance, a collapsed
+/// group box): the object's own commands.
+class NodeMenuContext extends MenuContext {
+  const NodeMenuContext(this.node);
+  final NodeRef node;
+}
+
+/// An expanded group's title band.
+class GroupMenuContext extends MenuContext {
+  const GroupMenuContext(this.group);
+  final int group;
+}
+
+/// A signature or binding link: its ends and its disconnection.
+class LinkMenuContext extends MenuContext {
+  const LinkMenuContext(this.link);
+  final LinkShape link;
+}
+
+/// Several selected nodes, the right-click on one of them: commands about
+/// the set.
+class SelectionMenuContext extends MenuContext {
+  const SelectionMenuContext(this.nodes, {this.active});
+  final Set<NodeRef> nodes;
+  final NodeRef? active;
+}
+
+// ---------------------------------------------------------------------------
+// Gesture states
+// ---------------------------------------------------------------------------
+
+/// The one owner of the pointer.  Transitions happen in the pointer
+/// handlers only; every state knows how to cancel itself (Esc).
+sealed class _Gesture {
+  const _Gesture();
+}
+
+class _Idle extends _Gesture {
+  const _Idle();
+}
+
+/// A button went down; nothing is decided until the pointer moves past
+/// [kDragThreshold] or comes up.
+class _PressCandidate extends _Gesture {
+  const _PressCandidate({
+    required this.downLocal,
+    required this.downScene,
+    required this.hit,
+    required this.buttons,
+    required this.pan,
+  });
+  final Offset downLocal;
+  final Offset downScene;
+  final CanvasHit hit;
+  final int buttons;
+
+  /// Space was held, or the middle button: a drag will pan.
+  final bool pan;
+}
+
+/// A rectangle selection.  [mode] follows the horizontal direction of the
+/// drag on every update.  [add] (⌘/Ctrl) unions the result into the
+/// selection, [subtract] (⇧) removes it; otherwise it replaces.
+class _Marquee extends _Gesture {
+  const _Marquee({
+    required this.anchor,
+    required this.current,
+    required this.add,
+    required this.subtract,
+    required this.base,
+  });
+  final Offset anchor;
+  final Offset current;
+  final bool add;
+  final bool subtract;
+
+  /// The selection when the drag started (what add / subtract act on).
+  final Set<NodeRef> base;
+
+  Rect get rect => Rect.fromPoints(anchor, current);
+  MarqueeMode get mode => marqueeMode(anchor, current);
+}
+
+class _Pan extends _Gesture {
+  const _Pan();
+}
+
+/// The selected movable nodes travel together with the one under the
+/// pointer; their positions at the press are the base.
+class _DragNodes extends _Gesture {
+  const _DragNodes({required this.grabbed, required this.base, required this.delta});
+  final NodeRef grabbed;
+  final Map<NodeRef, Offset> base;
+  final Offset delta;
+  _DragNodes moved(Offset d) => _DragNodes(grabbed: grabbed, base: base, delta: d);
+}
+
+/// An expanded group's title band dragged: every member moves.
+class _DragGroup extends _Gesture {
+  const _DragGroup({required this.group, required this.base, required this.delta});
+  final int group;
+  final Map<NodeRef, Offset> base;
+  final Offset delta;
+  _DragGroup moved(Offset d) => _DragGroup(group: group, base: base, delta: d);
+}
+
+/// A link being drawn from a socket.
+class _DragLink extends _Gesture {
+  _DragLink(this.from, this.start, {required this.fromConnectedInput}) : current = start;
   final SocketRef from;
   final Offset start;
   Offset current;
@@ -115,19 +273,41 @@ class _LinkDrag {
   final bool fromConnectedInput;
 }
 
-/// Below this zoom every group reads as its summary box (semantic zoom);
-/// the authored collapse state is untouched.
-const double kSummarizeBelowZoom = 0.5;
+/// The pointer that dismissed a menu: nothing else happens until it is up.
+class _ConsumedByMenu extends _Gesture {
+  const _ConsumedByMenu();
+}
+
+/// Which overlay menu owns the pointer, if any.
+enum _MenuKind { context, chooser }
 
 class _NodeCanvasState extends State<NodeCanvas> {
   late Offset _pan = widget.viewport?.pan ?? Offset.zero;
   late double _zoom = widget.viewport?.zoom ?? 1;
 
-  /// Box selection in progress (⇧-drag on empty canvas), scene coordinates.
-  Rect? _marquee;
+  _Gesture _gesture = const _Idle();
+
+  /// The menu on show, its context, and where it opened (local).  The
+  /// context is set with the menu and cleared with it; the menu's items
+  /// are built from it on every rebuild.
+  _MenuKind? _menuOpen;
+  MenuContext? _menuContext;
+  List<Widget> _chooser = const [];
+  final MenuController _menu = MenuController();
+  final MenuController _chooserMenu = MenuController();
 
   /// The expanded group the dragged relationship would join on release.
   int? _dragOverGroup;
+
+  NodeRef? _hoverNode;
+  SocketRef? _hoverSocket;
+  bool _spaceHeld = false;
+  final FocusNode _focus = FocusNode(debugLabel: 'canvas');
+
+  /// The last primary click, for double-click detection.
+  Duration? _lastClickAt;
+  Offset? _lastClickLocal;
+  final Stopwatch _clock = Stopwatch()..start();
 
   @override
   void didUpdateWidget(NodeCanvas old) {
@@ -137,24 +317,33 @@ class _NodeCanvasState extends State<NodeCanvas> {
       _pan = widget.viewport?.pan ?? Offset.zero;
       _zoom = widget.viewport?.zoom ?? 1;
     }
+    // A menu about something that is gone (a deleted node, another
+    // canvas) closes: its commands would act on nothing.
+    final ctx = _menuContext;
+    if (ctx != null && !_contextStillValid(ctx)) _closeMenus();
   }
 
-  void _viewportMoved() {
-    widget.dispatch(ViewportChanged(pan: _pan, zoom: _zoom));
+  bool _contextStillValid(MenuContext ctx) {
+    final scene = _scene(widget.layout);
+    return switch (ctx) {
+      CanvasMenuContext() => true,
+      NodeMenuContext(:final node) => scene.nodes.any((n) => n.ref == node),
+      GroupMenuContext(:final group) => scene.groups.any((g) => g.id == group),
+      LinkMenuContext(:final link) => scene.links.any(
+        (l) => l.from == link.from && l.to == link.to,
+      ),
+      SelectionMenuContext(:final nodes) => nodes.every((n) => scene.nodes.any((s) => s.ref == n)),
+    };
   }
-
-  NodeRef? _draggingNode;
-  Offset _dragDelta = Offset.zero;
-  _LinkDrag? _linkDrag;
-  bool _panning = false;
-  NodeRef? _hoverNode;
-  SocketRef? _hoverSocket;
-  final FocusNode _focus = FocusNode(debugLabel: 'canvas');
 
   @override
   void dispose() {
     _focus.dispose();
     super.dispose();
+  }
+
+  void _viewportMoved() {
+    widget.dispatch(ViewportChanged(pan: _pan, zoom: _zoom));
   }
 
   SystemSceneInput get _sceneInput => _zoom < kSummarizeBelowZoom
@@ -182,15 +371,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
   bool get _isSystemCanvas => widget.system.system != null && widget.context is SystemContext;
   bool get _groupsEnabled => widget.groupsEnabled;
 
-  /// Dragging a group's title band moves every member together.
-  int? _draggingGroup;
-
-  final MenuController _menu = MenuController();
-
-  /// Where the context menu was opened, in scene coordinates, so an
-  /// insertion from it lands there.
-  Offset _menuScene = Offset.zero;
-  NodeRef? _menuNode;
+  Offset _toScene(Offset local) => (local - _pan) / _zoom;
+  Offset _toLocal(Offset scene) => scene * _zoom + _pan;
 
   /// Top-left of a new concept node centred on a scene point.
   static Offset nodeOriginFor(Offset scenePoint) =>
@@ -206,42 +388,317 @@ class _NodeCanvasState extends State<NodeCanvas> {
     widget.dispatch(NewSourceRequested(presetId: presetId, position: nodeOriginFor(scenePoint)));
   }
 
-  void _onSecondaryTapDown(TapDownDetails d) {
-    _focus.requestFocus();
-    final p = _toScene(d.localPosition);
-    final node = switch (hitTest(_scene(widget.layout), p)) {
-      HitNode(:final node) => node.ref,
-      HitSocket(:final node) => node.ref,
-      HitGroup(:final group) => NodeRef.group(group.id),
-      HitLink(:final link) => () {
-        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
-        return null;
-      }(),
-      HitNothing() => null,
-    };
-    // A right-click on one of several selected nodes keeps the selection:
-    // the menu is about all of them.
-    final sel = widget.selection;
-    final inMulti = node != null && sel is MultiSelected && sel.nodes.contains(node);
-    if (node != null && !inMulti) widget.dispatch(SelectionChanged(_select(node)));
-    setState(() {
-      _menuScene = p;
-      _menuNode = node;
-    });
-    _menu.open(position: d.localPosition);
+  // ---- selection algebra ---------------------------------------------------
+
+  Set<NodeRef> get _selectedSet => selectedNodes(widget.selection);
+  NodeRef? get _active => activeNode(widget.selection);
+
+  void _setSelection(Set<NodeRef> nodes, {NodeRef? active}) {
+    final next = selectionOfNodes(nodes, active: active);
+    if (next != widget.selection) widget.dispatch(SelectionChanged(next));
   }
 
-  void _onDoubleTapDown(TapDownDetails d) {
-    switch (hitTest(_scene(widget.layout), _toScene(d.localPosition))) {
+  /// ⌘/Ctrl-click: toggle one node; the toggled-in node becomes active.
+  void _toggle(NodeRef ref) {
+    final next = {..._selectedSet};
+    if (next.remove(ref)) {
+      _setSelection(next, active: _active == ref ? null : _active);
+    } else {
+      _setSelection(next..add(ref), active: ref);
+    }
+  }
+
+  /// A plain click on a node: it alone, unless it is already in the set
+  /// (then the set stays and it becomes the active object).
+  void _clickNode(NodeRef ref) {
+    final current = _selectedSet;
+    if (current.contains(ref)) {
+      if (_active != ref) _setSelection(current, active: ref);
+      return;
+    }
+    _setSelection({ref}, active: ref);
+  }
+
+  /// The nodes a marquee would produce, previewed and committed alike.
+  Set<NodeRef> _marqueeResult(_Marquee m) {
+    final taken = marqueeNodes(_scene(widget.layout), m.rect, m.mode);
+    if (m.subtract) return m.base.difference(taken);
+    if (m.add) return m.base.union(taken);
+    return taken;
+  }
+
+  /// Everything a marquee or ⌘A may take: the scene's visible nodes.
+  Set<NodeRef> get _eligibleNodes => {for (final n in _scene(widget.layout).nodes) n.ref};
+
+  // ---- pointer ---------------------------------------------------------------
+
+  bool get _menuIsOpen => _menuOpen != null;
+
+  /// ⌘ on macOS, Ctrl elsewhere.
+  bool get _primaryModifier => primaryModifierIsControl
+      ? HardwareKeyboard.instance.isControlPressed
+      : HardwareKeyboard.instance.isMetaPressed;
+
+  /// The secondary button; on macOS also Control + the primary button
+  /// (Control is free there — ⌘ is the selection modifier).
+  bool _isContextButton(PointerDownEvent e) =>
+      e.buttons & kSecondaryButton != 0 ||
+      (!primaryModifierIsControl &&
+          e.buttons & kPrimaryButton != 0 &&
+          HardwareKeyboard.instance.isControlPressed);
+
+  void _onPointerDown(PointerDownEvent e) {
+    if (_menuIsOpen) {
+      // A context press elsewhere retargets the menu: the old one closes,
+      // the new one opens for what is under the pointer.  Any other
+      // outside pointer dismisses the menu and does nothing else; the
+      // menu's own surface is in the overlay and never reaches this
+      // listener.
+      if (_isContextButton(e)) {
+        _openContextMenuAt(e.localPosition);
+        return;
+      }
+      _closeMenus();
+      setState(() => _gesture = const _ConsumedByMenu());
+      return;
+    }
+    if (_gesture is! _Idle) return;
+    _focus.requestFocus();
+    if (_isContextButton(e)) {
+      _openContextMenuAt(e.localPosition);
+      return;
+    }
+    final middle = e.buttons & kMiddleMouseButton != 0;
+    if (e.buttons & kPrimaryButton == 0 && !middle) return;
+    final scene = _scene(widget.layout);
+    final p = _toScene(e.localPosition);
+    setState(() {
+      _gesture = _PressCandidate(
+        downLocal: e.localPosition,
+        downScene: p,
+        hit: hitTest(scene, p),
+        buttons: e.buttons,
+        pan: middle || _spaceHeld,
+      );
+    });
+  }
+
+  void _onPointerMove(PointerMoveEvent e) {
+    switch (_gesture) {
+      case _PressCandidate(:final downLocal)
+          when (e.localPosition - downLocal).distance >= kDragThreshold:
+        _beginDrag(_gesture as _PressCandidate, e);
+      case _PressCandidate() || _Idle() || _ConsumedByMenu():
+        break;
+      case _Marquee():
+        final m = _gesture as _Marquee;
+        setState(() {
+          _gesture = _Marquee(
+            anchor: m.anchor,
+            current: _toScene(e.localPosition),
+            add: m.add,
+            subtract: m.subtract,
+            base: m.base,
+          );
+        });
+      case _Pan():
+        setState(() => _pan += e.delta);
+      case _DragNodes():
+        final d = _gesture as _DragNodes;
+        setState(() {
+          _gesture = d.moved(d.delta + e.delta / _zoom);
+          _updateDragOverGroup(d.grabbed);
+        });
+      case _DragGroup():
+        final d = _gesture as _DragGroup;
+        setState(() => _gesture = d.moved(d.delta + e.delta / _zoom));
+      case _DragLink():
+        final l = _gesture as _DragLink;
+        final p = _toScene(e.localPosition);
+        setState(() {
+          l.current = p;
+          // Hover is not reported while a button is down; track the socket
+          // under the dragged link end so the cursor can refuse an illegal one.
+          final hit = hitTest(_scene(widget.layout), p);
+          _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
+        });
+    }
+  }
+
+  /// The press moved past the threshold: decide what it is, once.
+  void _beginDrag(_PressCandidate c, PointerMoveEvent e) {
+    if (c.pan) {
+      setState(() => _gesture = const _Pan());
+      return;
+    }
+    final scene = _scene(widget.layout);
+    switch (c.hit) {
+      case HitSocket(:final socket):
+        // An aggregate socket is a proxy: the drag starts from the one
+        // concrete socket it stands for (several: the drop asks).
+        final targets = scene.resolve(socket.ref);
+        final from = targets.length == 1 && targets.single.socket != null
+            ? targets.single.socket!
+            : targets.isNotEmpty && targets.every((t) => t.socket != null)
+            ? targets.first.socket!
+            : socket.ref;
+        final connected = from.side == SocketSide.input && scene.links.any((l) => l.to == from);
+        setState(() {
+          _gesture = _DragLink(from, socket.center, fromConnectedInput: connected)
+            ..current = _toScene(e.localPosition)
+            ..proxyChoices = targets.length > 1 ? targets : null;
+        });
+      case HitNode(:final node):
+        // Dragging a selected node moves the selected set; an unselected
+        // one becomes the selection first (⌘/Ctrl adds it instead).
+        var set = _selectedSet;
+        if (!set.contains(node.ref)) {
+          set = _primaryModifier ? {...set, node.ref} : {node.ref};
+          _setSelection(set, active: node.ref);
+        }
+        final base = <NodeRef, Offset>{
+          for (final n in scene.nodes)
+            if (set.contains(n.ref)) n.ref: n.rect.topLeft,
+        };
+        setState(() {
+          _gesture = _DragNodes(grabbed: node.ref, base: base, delta: e.delta / _zoom);
+        });
+      case HitGroup(:final group):
+        widget.dispatch(SelectionChanged(GroupSelected(group.id)));
+        final base = <NodeRef, Offset>{
+          for (final n in scene.nodes)
+            if (group.members.contains(n.ref.id) && n.ref.kind == NodeKind.mapping)
+              n.ref: n.rect.topLeft,
+        };
+        setState(() {
+          _gesture = _DragGroup(group: group.id, base: base, delta: e.delta / _zoom);
+        });
+      case HitLink():
+        // A link is not draggable; the press was a click that moved.
+        setState(() => _gesture = const _Idle());
+      case HitNothing():
+        setState(() {
+          _gesture = _Marquee(
+            anchor: c.downScene,
+            current: _toScene(e.localPosition),
+            add: _primaryModifier,
+            subtract: HardwareKeyboard.instance.isShiftPressed,
+            base: _selectedSet,
+          );
+        });
+    }
+  }
+
+  void _onPointerUp(PointerUpEvent e) {
+    final g = _gesture;
+    switch (g) {
+      case _Idle():
+        return;
+      case _ConsumedByMenu():
+        setState(() => _gesture = const _Idle());
+        return;
+      case _PressCandidate():
+        setState(() => _gesture = const _Idle());
+        if (g.pan || g.buttons & kPrimaryButton == 0) return;
+        _click(g, e);
+      case _Marquee():
+        final result = _marqueeResult(g);
+        final active = g.subtract
+            ? (_active != null && result.contains(_active!) ? _active : null)
+            : g.add
+            ? _active
+            : null;
+        setState(() => _gesture = const _Idle());
+        _setSelection(result, active: active);
+      case _Pan():
+        setState(() => _gesture = const _Idle());
+        _viewportMoved();
+      case _DragNodes():
+        setState(() {
+          _gesture = const _Idle();
+          _dragOverGroup = null;
+        });
+        if (g.delta != Offset.zero) _commitNodeDrag(g);
+      case _DragGroup():
+        setState(() => _gesture = const _Idle());
+        if (g.delta != Offset.zero) {
+          widget.dispatch(NodesMoved({for (final b in g.base.entries) b.key: b.value + g.delta}));
+        }
+      case _DragLink():
+        setState(() {
+          _gesture = const _Idle();
+          _hoverSocket = null;
+        });
+        _dropLink(_scene(widget.layout), g);
+    }
+  }
+
+  /// A primary press that never moved: a click, or the second of a
+  /// double-click.
+  void _click(_PressCandidate c, PointerUpEvent e) {
+    final now = _clock.elapsed;
+    final isDouble =
+        _lastClickAt != null &&
+        now - _lastClickAt! < kDoubleClickInterval &&
+        _lastClickLocal != null &&
+        (_lastClickLocal! - c.downLocal).distance < kDragThreshold;
+    _lastClickAt = isDouble ? null : now;
+    _lastClickLocal = c.downLocal;
+    if (isDouble) {
+      _doubleClick(c.hit);
+      return;
+    }
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    switch (c.hit) {
+      case HitNode(:final node):
+        if (_primaryModifier) {
+          _toggle(node.ref);
+        } else if (shift) {
+          _chainSelect(node.ref);
+        } else {
+          _clickNode(node.ref);
+        }
+      case HitSocket(:final node):
+        _primaryModifier ? _toggle(node.ref) : _clickNode(node.ref);
+      case HitGroup(:final group):
+        final ref = NodeRef.group(group.id);
+        _primaryModifier
+            ? _toggle(ref)
+            : widget.dispatch(SelectionChanged(GroupSelected(group.id)));
+      case HitLink(:final link):
+        // A binding is a selectable object; a signature edge is the
+        // interface of its ends and has no selection of its own.
+        if (link.binding case final b?) widget.dispatch(SelectionChanged(BindingSelected(b)));
+      case HitNothing():
+        if (!_primaryModifier && !shift) _setSelection(const {});
+    }
+  }
+
+  /// ⇧-click on a node: the displayed signature chain from the active
+  /// object to it — taken only when there is exactly one such path over
+  /// signature edges (concept ↔ relationship ↔ sink); a branched graph
+  /// offers no chain and the click adds the node alone, never a guess.
+  void _chainSelect(NodeRef target) {
+    final anchor = _active;
+    if (anchor == null || anchor == target) {
+      _toggleOn(target);
+      return;
+    }
+    final chain = uniqueSignatureChain(_scene(widget.layout), anchor, target);
+    if (chain == null) {
+      _toggleOn(target);
+      return;
+    }
+    _setSelection({..._selectedSet, ...chain}, active: anchor);
+  }
+
+  void _toggleOn(NodeRef ref) => _setSelection({..._selectedSet, ref}, active: _active ?? ref);
+
+  void _doubleClick(CanvasHit hit) {
+    switch (hit) {
       case HitNode(:final node):
         if (node.ref.kind == NodeKind.instance) {
-          // Into the component's source.
-          final inst = widget.system.system?.instances
-              .where((i) => i.id.toInt() == node.ref.id)
-              .firstOrNull;
-          if (inst != null) {
-            widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
-          }
+          _editSource(node.ref.id);
         } else if (node.ref.kind != NodeKind.output) {
           widget.dispatch(InlineRenameStarted(node.ref));
         }
@@ -252,211 +709,615 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
-  /// The contextual menu (docs/architecture/studio-ui.md §2): what can be done here,
-  /// and the compact quick-insert tree — Recent, by role, the three most
-  /// common categories, then the Library tab for the rest.
-  List<Widget> _menuItems(BuildContext context) {
-    final node = _menuNode;
+  /// Into the component's source.
+  void _editSource(int instanceId) {
+    final inst = widget.system.system?.instances
+        .where((i) => i.id.toInt() == instanceId)
+        .firstOrNull;
+    if (inst != null) widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
+  }
+
+  void _onPointerCancel(PointerCancelEvent e) {
+    if (_gesture is _Idle) return;
+    setState(() {
+      _gesture = const _Idle();
+      _dragOverGroup = null;
+    });
+  }
+
+  /// Esc: the innermost thing first — a menu, then a gesture, then the
+  /// selection.  (A submenu's own Esc is the menu system's.)
+  bool _escape() {
+    if (_menuIsOpen) {
+      _closeMenus();
+      return true;
+    }
+    if (_gesture is! _Idle) {
+      setState(() {
+        _gesture = const _Idle();
+        _dragOverGroup = null;
+        _hoverSocket = null;
+      });
+      return true;
+    }
+    if (widget.selection is! NoSelection) {
+      widget.dispatch(const SelectionChanged(NoSelection()));
+      return true;
+    }
+    return false;
+  }
+
+  Map<NodeRef, Offset> get _effectiveLayout {
+    switch (_gesture) {
+      case _DragNodes(:final base, :final delta):
+        return {...widget.layout, for (final b in base.entries) b.key: b.value + delta};
+      case _DragGroup(:final base, :final delta):
+        return {...widget.layout, for (final b in base.entries) b.key: b.value + delta};
+      default:
+        return widget.layout;
+    }
+  }
+
+  void _updateDragOverGroup(NodeRef node) {
+    // Insertion affordance: the expanded group under the dragged
+    // relationship (its own group's region measured without it).  Only for
+    // a single relationship — a moved set keeps its memberships.
+    if (!_groupsEnabled || node.kind != NodeKind.mapping) return;
+    final g = _gesture;
+    if (g is! _DragNodes || g.base.length != 1) return;
+    final layout = _effectiveLayout;
+    final shape = _scene(layout).nodes.where((n) => n.ref == node).firstOrNull;
+    final without = buildScene(widget.project, {...layout}..remove(node), system: _sceneInput);
+    final over = shape == null ? null : groupAt(without, shape.rect.center);
+    _dragOverGroup = over == null || (over.members.length == 1 && over.members.first == node.id)
+        ? null
+        : over.id;
+  }
+
+  void _commitNodeDrag(_DragNodes g) {
+    final positions = {for (final b in g.base.entries) b.key: b.value + g.delta};
+    if (positions.length == 1) {
+      final e = positions.entries.single;
+      widget.dispatch(NodeMoved(e.key, e.value));
+      // Into or out of a group region: membership follows the drop.  Only
+      // the membership changes — a group is authoring metadata.
+      if (_groupsEnabled && e.key.kind == NodeKind.mapping) {
+        _membershipAfterDrop(e.key, {...widget.layout, e.key: e.value});
+      }
+    } else {
+      widget.dispatch(NodesMoved(positions));
+    }
+  }
+
+  void _onPointerSignal(PointerSignalEvent e) {
+    if (_menuIsOpen) return;
+    if (e is PointerScrollEvent) {
+      // A mouse wheel zooms about the pointer; a trackpad's two-finger
+      // scroll pans, and zooms with ⌘/Ctrl held.
+      final zoomIt =
+          e.kind != PointerDeviceKind.trackpad ||
+          HardwareKeyboard.instance.isMetaPressed ||
+          HardwareKeyboard.instance.isControlPressed;
+      if (zoomIt) {
+        _zoomAbout(e.localPosition, e.scrollDelta.dy > 0 ? 0.9 : 1.1);
+      } else {
+        setState(() => _pan -= e.scrollDelta);
+        _viewportMoved();
+      }
+    } else if (e is PointerScaleEvent) {
+      _zoomAbout(e.localPosition, e.scale);
+    }
+  }
+
+  void _onPanZoomUpdate(PointerPanZoomUpdateEvent e) {
+    if (_menuIsOpen) return;
+    // A trackpad gesture: pinch zooms about the fingers, the pan part pans.
+    if (e.scale != 1) {
+      _zoomAbout(e.localPosition, e.scale / (_lastScale ?? 1));
+      _lastScale = e.scale;
+    }
+    if (e.panDelta != Offset.zero) setState(() => _pan += e.panDelta);
+  }
+
+  double? _lastScale;
+  void _onPanZoomEnd(PointerPanZoomEndEvent e) {
+    _lastScale = null;
+    _viewportMoved();
+  }
+
+  void _zoomAbout(Offset local, double factor) {
+    final before = _toScene(local);
+    setState(() {
+      _zoom = (_zoom * factor).clamp(0.25, 3.0);
+      _pan = local - before * _zoom;
+    });
+    _viewportMoved();
+  }
+
+  void _onHover(PointerHoverEvent e) {
+    // A menu owns the pointer: the nodes under it do not react.
+    if (_menuIsOpen) return;
+    final scene = _scene(_effectiveLayout);
+    final hit = hitTest(scene, _toScene(e.localPosition));
+    final (NodeRef? node, SocketRef? socket) = switch (hit) {
+      HitSocket(:final socket, :final node) => (node.ref, socket.ref),
+      HitNode(:final node) => (node.ref, null),
+      HitGroup(:final group) => (NodeRef.group(group.id), null),
+      HitLink() || HitNothing() => (null, null),
+    };
+    if (node != _hoverNode || socket != _hoverSocket) {
+      setState(() {
+        _hoverNode = node;
+        _hoverSocket = socket;
+      });
+    }
+  }
+
+  // ---- menus -----------------------------------------------------------------
+
+  /// Open the contextual menu for what is under [local].  A right-click on
+  /// one of several selected nodes keeps the selection (the menu is about
+  /// all of them); on an unselected object it selects that object first.
+  /// An open menu is closed and the new one opens after the rebuild that
+  /// carries its context, so the items are never those of the last target.
+  void _openContextMenuAt(Offset local) {
+    final p = _toScene(local);
+    final scene = _scene(widget.layout);
+    final hit = hitTest(scene, p);
+    final MenuContext ctx;
+    switch (hit) {
+      case HitNode(:final node) || HitSocket(:final node):
+        final set = _selectedSet;
+        if (set.length > 1 && set.contains(node.ref)) {
+          ctx = SelectionMenuContext(set, active: _active);
+        } else {
+          if (!set.contains(node.ref)) _setSelection({node.ref}, active: node.ref);
+          ctx = NodeMenuContext(node.ref);
+        }
+      case HitGroup(:final group):
+        widget.dispatch(SelectionChanged(GroupSelected(group.id)));
+        ctx = GroupMenuContext(group.id);
+      case HitLink(:final link):
+        if (link.binding case final b?) widget.dispatch(SelectionChanged(BindingSelected(b)));
+        ctx = LinkMenuContext(link);
+      case HitNothing():
+        // Blank canvas keeps the selection on show (nothing was clicked
+        // away); the menu is about the canvas alone.
+        ctx = CanvasMenuContext(p);
+    }
+    _openMenu(_MenuKind.context, ctx, local);
+  }
+
+  void _openMenu(_MenuKind kind, MenuContext? ctx, Offset local, {List<Widget>? chooser}) {
+    // One overlay at a time: the other closes first.
+    if (_menu.isOpen) _menu.close();
+    if (_chooserMenu.isOpen) _chooserMenu.close();
+    setState(() {
+      _menuOpen = kind;
+      _menuContext = ctx;
+      _chooser = chooser ?? const [];
+      _gesture = const _Idle();
+      _hoverNode = null;
+      _hoverSocket = null;
+    });
+    // The items are built from the context in the next frame; open then.
+    // Until then the old overlay's own close (it closes itself on the
+    // outside press that retargeted it) must not clear the new context.
+    _reopenPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _reopenPending = false;
+      if (!mounted || _menuOpen != kind) return;
+      switch (kind) {
+        case _MenuKind.context:
+          _menu.open(position: local);
+        case _MenuKind.chooser:
+          _chooserMenu.open(position: local);
+      }
+    });
+  }
+
+  bool _reopenPending = false;
+
+  void _closeMenus() {
+    if (_menu.isOpen) _menu.close();
+    if (_chooserMenu.isOpen) _chooserMenu.close();
+    if (_menuOpen != null || _menuContext != null) {
+      setState(() {
+        _menuOpen = null;
+        _menuContext = null;
+        _chooser = const [];
+      });
+    }
+  }
+
+  /// The menu system closed itself (a command ran, Esc, a submenu's
+  /// dismissal): the state follows.
+  void _menuClosed(_MenuKind kind) {
+    if (_reopenPending || _menuOpen != kind) return;
+    setState(() {
+      _menuOpen = null;
+      if (kind == _MenuKind.context) _menuContext = null;
+      if (kind == _MenuKind.chooser) _chooser = const [];
+    });
+  }
+
+  // ---- menu contents -----------------------------------------------------------
+
+  /// The contextual menu for [ctx] (docs/architecture/studio-ui.md §2,
+  /// "Contextual menus"): stable groups — the object's primary command,
+  /// IDE navigation, the service's fixes, structure, then the destructive
+  /// command — each item present only when its command exists for that
+  /// object.  Insertion lives on the empty-canvas menu alone.
+  List<Widget> _menuItems(BuildContext context, MenuContext ctx) {
+    final l10n = context.l10n;
+    switch (ctx) {
+      case CanvasMenuContext(:final scene):
+        return _canvasMenu(context, scene);
+      case NodeMenuContext(:final node):
+        return _nodeMenu(context, node);
+      case GroupMenuContext(:final group):
+        return _groupMenu(context, group);
+      case LinkMenuContext(:final link):
+        return _linkMenu(context, link);
+      case SelectionMenuContext(:final nodes):
+        return _selectionMenu(context, nodes, l10n);
+    }
+  }
+
+  pb.MappingView? _mapping(int id) =>
+      widget.project.mappings.where((m) => m.id.toInt() == id).firstOrNull;
+  String _conceptName(int id) =>
+      widget.project.concepts.where((c) => c.id.toInt() == id).map((c) => c.name).firstOrNull ??
+      '?';
+  String _nodeName(NodeRef ref) =>
+      _scene(widget.layout).nodes.where((n) => n.ref == ref).map((n) => n.title).firstOrNull ?? '?';
+
+  /// The service's actions for the object the menu is about — only when
+  /// they are about it, at this revision (stale ones are not offered).
+  List<pb.SemanticActionView> _fixesFor(NodeRef node) {
+    final a = widget.actions;
+    if (a == null || a.pending || a.revision != widget.project.revision.toInt()) return const [];
+    final about = switch (node.kind) {
+      NodeKind.concept => a.entity.hasConceptId() && a.entity.conceptId.toInt() == node.id,
+      NodeKind.mapping => a.entity.hasMappingId() && a.entity.mappingId.toInt() == node.id,
+      NodeKind.output => a.entity.hasOutputId() && a.entity.outputId.toInt() == node.id,
+      _ => false,
+    };
+    return about ? a.actions : const [];
+  }
+
+  /// The *Fix* section: a ready action is a command; one that needs a
+  /// choice is a submenu of the service's options; a blocked one is shown
+  /// disabled with its reason, never clickable.
+  List<Widget> _fixItems(BuildContext context, List<pb.SemanticActionView> fixes) {
+    if (fixes.isEmpty) return const [];
+    return [
+      const MacMenuDivider(),
+      MacSubmenu(
+        label: context.l10n.fixMenu,
+        children: [
+          for (final x in fixes)
+            switch (x.applicability) {
+              pb.ActionApplicability.ACTION_APPLICABILITY_READY => MacMenuItem(
+                label: x.title,
+                onPressed: () => widget.dispatch(SemanticActionApplied(actionId: x.id)),
+              ),
+              pb.ActionApplicability.ACTION_APPLICABILITY_NEEDS_CHOICE => MacSubmenu(
+                label: x.title,
+                children: [
+                  for (var i = 0; i < x.options.length; i++)
+                    MacMenuItem(
+                      label: x.options[i].label,
+                      onPressed: () =>
+                          widget.dispatch(SemanticActionApplied(actionId: x.id, option: i)),
+                    ),
+                ],
+              ),
+              _ => MacMenuItem(label: x.title, detail: x.reason, onPressed: null),
+            },
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _navigationItems(BuildContext context, NodeRef node) => [
+    if (widget.hasSources && node.kind != NodeKind.group)
+      MacMenuItem(
+        label: context.l10n.revealInCode,
+        onPressed: () => widget.dispatch(RevealInCodeRequested(node)),
+      ),
+  ];
+
+  List<Widget> _nodeMenu(BuildContext context, NodeRef node) {
+    final l10n = context.l10n;
+    final fixes = _fixItems(context, _fixesFor(node));
+    switch (node.kind) {
+      case NodeKind.mapping:
+        final m = _mapping(node.id);
+        final role = m == null ? RelationshipRole.value : relationshipRole(m);
+        final groupOf = widget.groups
+            .where((g) => g.members.any((x) => x.toInt() == node.id))
+            .firstOrNull;
+        final ported = widget.system.portWords.containsKey(node.id);
+        return [
+          // Primary: a rule or a value has a definition to edit; a Source
+          // is provided by the environment and has none to open.
+          if (role != RelationshipRole.source)
+            MacMenuItem(
+              label: l10n.editDefinition,
+              onPressed: () => widget.dispatch(EditDefinitionRequested(node.id)),
+            ),
+          MacMenuItem(
+            label: l10n.rename,
+            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
+          ),
+          ..._navigationItems(context, node),
+          ...fixes,
+          if (_groupsEnabled) ...[
+            const MacMenuDivider(),
+            if (groupOf == null) ...[
+              MacMenuItem(
+                label: l10n.groupAsBehavior,
+                onPressed: () => widget.dispatch(
+                  CreateGroupRequested(name: l10n.behavior, members: [node.id], renameAfter: true),
+                ),
+              ),
+              if (widget.groups.isNotEmpty)
+                MacSubmenu(
+                  label: l10n.addToGroup,
+                  children: [
+                    for (final g in widget.groups)
+                      MacMenuItem(
+                        label: g.name,
+                        onPressed: () => widget.dispatch(
+                          AddGroupMemberRequested(group: g.id.toInt(), decl: node.id),
+                        ),
+                      ),
+                  ],
+                ),
+            ] else
+              MacMenuItem(
+                label: l10n.removeFromGroup(groupOf.name),
+                onPressed: () => widget.dispatch(
+                  RemoveGroupMemberRequested(group: groupOf.id.toInt(), decl: node.id),
+                ),
+              ),
+          ],
+          const MacMenuDivider(),
+          // A port-backed relationship of an open component is the port's:
+          // it goes with the port, not with a delete here.
+          if (!ported)
+            MacMenuItem(
+              label: l10n.deleteNamed(_nodeName(node)),
+              destructive: true,
+              onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+            ),
+        ];
+      case NodeKind.concept:
+        return [
+          MacMenuItem(
+            label: l10n.rename,
+            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
+          ),
+          ..._navigationItems(context, node),
+          ...fixes,
+          const MacMenuDivider(),
+          MacMenuItem(
+            label: l10n.deleteNamed(_nodeName(node)),
+            destructive: true,
+            onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+          ),
+        ];
+      case NodeKind.output:
+        final driver = widget.project.mappings
+            .where((m) => m.hasDrivesOutputId() && m.drivesOutputId.toInt() == node.id)
+            .toList();
+        return [
+          // The sink's driver is its one fact worth a jump: show it.
+          for (final m in driver)
+            MacMenuItem(
+              label: l10n.showDriver(m.name),
+              onPressed: () => _setSelection({NodeRef.mapping(m.id.toInt())}),
+            ),
+          MacMenuItem(
+            label: l10n.rename,
+            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
+          ),
+          ..._navigationItems(context, node),
+          ...fixes,
+          const MacMenuDivider(),
+          MacMenuItem(
+            label: l10n.deleteNamed(_nodeName(node)),
+            destructive: true,
+            onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+          ),
+        ];
+      case NodeKind.instance:
+        return [
+          MacMenuItem(label: l10n.editSource, onPressed: () => _editSource(node.id)),
+          MacMenuItem(
+            label: l10n.rename,
+            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
+          ),
+          ..._navigationItems(context, node),
+          const MacMenuDivider(),
+          MacMenuItem(
+            label: l10n.deleteNamed(_nodeName(node)),
+            destructive: true,
+            onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+          ),
+        ];
+      case NodeKind.group:
+        // A collapsed box: the group's own commands.
+        return _groupMenu(context, node.id);
+    }
+  }
+
+  List<Widget> _groupMenu(BuildContext context, int group) {
+    final l10n = context.l10n;
+    final collapsed = widget.system.groupBoxes[group]?.collapsed ?? false;
+    return [
+      MacMenuItem(
+        label: l10n.rename,
+        onPressed: () => widget.dispatch(InlineRenameStarted(NodeRef.group(group))),
+      ),
+      MacMenuItem(
+        label: collapsed ? l10n.expand : l10n.collapse,
+        onPressed: () {
+          // Collapsing: the box starts where the region was.
+          if (!collapsed) {
+            final region = _scene(widget.layout).groups.where((g) => g.id == group).firstOrNull;
+            if (region != null) widget.dispatch(GroupBoxChanged(id: group, rect: region.rect));
+          }
+          widget.dispatch(GroupCollapsedChanged(id: group, collapsed: !collapsed));
+        },
+      ),
+      if (_isSystemCanvas)
+        MacMenuItem(
+          label: l10n.packageAsReusableComponent,
+          onPressed: () => widget.dispatch(ExtractionSheetOpened(group)),
+        ),
+      const MacMenuDivider(),
+      // Ungrouping keeps the relationships; the destructive delete is a
+      // named action in the group's inspector.
+      MacMenuItem(label: l10n.ungroup, onPressed: () => widget.dispatch(UngroupRequested(group))),
+    ];
+  }
+
+  List<Widget> _linkMenu(BuildContext context, LinkShape link) {
+    final l10n = context.l10n;
+    final from = link.from.node;
+    final to = link.to.node;
+    return [
+      if (link.binding case final b?)
+        MacMenuItem(
+          label: l10n.showBinding,
+          onPressed: () => widget.dispatch(SelectionChanged(BindingSelected(b))),
+        ),
+      MacMenuItem(
+        label: l10n.showEnd(_nodeName(from)),
+        onPressed: () => _setSelection({from}, active: from),
+      ),
+      MacMenuItem(
+        label: l10n.showEnd(_nodeName(to)),
+        onPressed: () => _setSelection({to}, active: to),
+      ),
+      const MacMenuDivider(),
+      MacMenuItem(
+        label: l10n.disconnect,
+        destructive: true,
+        onPressed: () => _unlink(_scene(widget.layout), link.to, link: link),
+      ),
+    ];
+  }
+
+  List<Widget> _selectionMenu(BuildContext context, Set<NodeRef> nodes, AppLocalizations l10n) {
+    final groupable = nodes
+        .where((n) => n.kind == NodeKind.mapping)
+        .where((n) => widget.groups.every((g) => g.members.every((x) => x.toInt() != n.id)))
+        .length;
+    return [
+      if (_groupsEnabled && groupable > 0)
+        MacMenuItem(
+          label: l10n.groupAsBehaviorCount(groupable),
+          onPressed: () => widget.dispatch(const GroupSelectionRequested()),
+        ),
+      if (_groupsEnabled && groupable > 0) const MacMenuDivider(),
+      MacMenuItem(
+        label: l10n.deleteObjects(nodes.length),
+        destructive: true,
+        onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+      ),
+    ];
+  }
+
+  /// Empty canvas: creation, then the canvas itself.  The quick-insert
+  /// tree is the library's — Recent, by role, the three most common
+  /// categories, then the Library tab for the rest.
+  List<Widget> _canvasMenu(BuildContext context, Offset at) {
+    final l10n = context.l10n;
     final all = widget.templates;
     final byId = {for (final t in all) t.id: t};
-    final l10n = context.l10n;
-    MenuItemButton item(pb.ConceptTemplateView t) => MenuItemButton(
-      onPressed: widget.canInsert ? () => _insert(t.id, _menuScene) : null,
-      child: Text(libraryItemStrings(l10n, t.id)?.name ?? t.displayName),
+    Widget item(pb.ConceptTemplateView t) => MacMenuItem(
+      label: libraryItemStrings(l10n, t.id)?.name ?? t.displayName,
+      onPressed: widget.canInsert ? () => _insert(t.id, at) : null,
     );
     List<Widget> group(Iterable<pb.ConceptTemplateView> ts) => [for (final t in ts) item(t)];
-    MenuItemButton sourceItem(pb.LibraryItemView s) => MenuItemButton(
-      onPressed: widget.canInsert ? () => _newSourceAt(s.id, _menuScene) : null,
-      child: Text(itemName(l10n, s)),
+    Widget sourceItem(pb.LibraryItemView s) => MacMenuItem(
+      label: itemName(l10n, s),
+      onPressed: widget.canInsert ? () => _newSourceAt(s.id, at) : null,
     );
     final sourceById = {for (final s in widget.sources) s.id: s};
     final recent = [
       for (final id in widget.recentTemplates)
         if (byId[id] case final t?) item(t) else if (sourceById[id] case final s?) sourceItem(s),
     ];
-    final sources = widget.sources.map(sourceItem);
     final environment = all.where((t) => t.category == 'environment');
     final motion = all.where((t) => t.category == 'motion');
     final human = all.where((t) => t.category == 'human');
     final inputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_OUTPUT);
     final outputs = all.where((t) => t.roleHint != pb.RoleHint.ROLE_HINT_INPUT);
-    final groupOf = node == null || node.kind != NodeKind.mapping
-        ? null
-        : widget.groups.where((g) => g.members.any((m) => m.toInt() == node.id)).firstOrNull;
-    final multi = widget.selection;
-    final groupable = multi is MultiSelected
-        ? multi.mappings
-              .where((m) => widget.groups.every((g) => g.members.every((x) => x.toInt() != m)))
-              .length
-        : 0;
     return [
-      if (_groupsEnabled && multi is MultiSelected && groupable > 0) ...[
-        MenuItemButton(
-          onPressed: () => widget.dispatch(const GroupSelectionRequested()),
-          child: Text(context.l10n.groupAsBehaviorCount(groupable)),
-        ),
-        const Divider(height: 8),
-      ],
-      if (node != null && multi is! MultiSelected) ...[
-        if (node.kind != NodeKind.output)
-          MenuItemButton(
-            onPressed: () => widget.dispatch(InlineRenameStarted(node)),
-            child: Text(context.l10n.rename),
-          ),
-        if (node.kind == NodeKind.instance)
-          MenuItemButton(
-            onPressed: () {
-              final inst = widget.system.system?.instances
-                  .where((i) => i.id.toInt() == node.id)
-                  .firstOrNull;
-              if (inst != null) {
-                widget.dispatch(ContextChanged(ComponentContext(inst.component.toInt())));
-              }
-            },
-            child: Text(context.l10n.editSource),
-          ),
-        if (node.kind == NodeKind.group) ...[
-          MenuItemButton(
-            onPressed: () {
-              final collapsed = widget.system.groupBoxes[node.id]?.collapsed ?? false;
-              // Collapsing: the box starts where the region was.
-              if (!collapsed) {
-                final region = _scene(widget.layout).groups
-                    .where((g) => g.id == node.id)
-                    .firstOrNull;
-                if (region != null) {
-                  widget.dispatch(GroupBoxChanged(id: node.id, rect: region.rect));
-                }
-              }
-              widget.dispatch(GroupCollapsedChanged(id: node.id, collapsed: !collapsed));
-            },
-            child: Text(
-              (widget.system.groupBoxes[node.id]?.collapsed ?? false)
-                  ? context.l10n.expand
-                  : context.l10n.collapse,
-            ),
-          ),
-          if (_isSystemCanvas)
-            MenuItemButton(
-              onPressed: () => widget.dispatch(ExtractionSheetOpened(node.id)),
-              child: Text(context.l10n.packageAsReusableComponent),
-            ),
-          MenuItemButton(
-            onPressed: () => widget.dispatch(UngroupRequested(node.id)),
-            child: Text(context.l10n.ungroup),
-          ),
-        ],
-        if (_groupsEnabled && node.kind == NodeKind.mapping) ...[
-          if (groupOf == null) ...[
-            MenuItemButton(
-              onPressed: () => widget.dispatch(
-                CreateGroupRequested(
-                  name: context.l10n.behavior,
-                  members: [node.id],
-                  renameAfter: true,
-                ),
-              ),
-              child: Text(context.l10n.groupAsBehavior),
-            ),
-            if (widget.groups.isNotEmpty)
-              SubmenuButton(
-                menuChildren: [
-                  for (final g in widget.groups)
-                    MenuItemButton(
-                      onPressed: () => widget.dispatch(
-                        AddGroupMemberRequested(group: g.id.toInt(), decl: node.id),
-                      ),
-                      child: Text(g.name),
-                    ),
-                ],
-                child: Text(context.l10n.addToGroup),
-              ),
-          ] else
-            MenuItemButton(
-              onPressed: () => widget.dispatch(
-                RemoveGroupMemberRequested(group: groupOf.id.toInt(), decl: node.id),
-              ),
-              child: Text(context.l10n.removeFromGroup(groupOf.name)),
-            ),
-        ],
-        if (node.kind != NodeKind.group)
-          MenuItemButton(
-            onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
-            child: Text(context.l10n.delete),
-          ),
-        const Divider(height: 8),
-      ],
-      if (_isSystemCanvas && node == null) ...[
-        if (widget.components.isNotEmpty)
-          SubmenuButton(
-            menuChildren: [
-              for (final c in widget.components)
-                MenuItemButton(
-                  onPressed: () => widget.dispatch(
-                    CreateInstanceRequested(
-                      component: c.id.toInt(),
-                      name: _freshInstanceName(c),
-                      position: _menuScene,
-                    ),
-                  ),
-                  child: Text(c.name),
-                ),
-            ],
-            child: Text(context.l10n.addInstance),
-          ),
-        const Divider(height: 8),
-      ],
-      if (_groupsEnabled && node == null) ...[
-        MenuItemButton(
-          onPressed: () =>
-              widget.dispatch(CreateGroupRequested(name: _freshGroupName(), renameAfter: true)),
-          child: Text(context.l10n.newBehaviorGroup),
-        ),
-        const Divider(height: 8),
-      ],
-      SubmenuButton(
-        menuChildren: [
+      MacSubmenu(
+        label: l10n.addConcept,
+        children: [
           if (recent.isNotEmpty) ...[
-            SubmenuButton(menuChildren: recent, child: Text(context.l10n.recent)),
-            const Divider(height: 8),
+            MacSubmenu(label: l10n.recent, children: recent),
+            const MacMenuDivider(),
           ],
-          SubmenuButton(menuChildren: group(inputs), child: Text(context.l10n.input)),
-          SubmenuButton(menuChildren: group(outputs), child: Text(context.l10n.output)),
-          const Divider(height: 8),
-          SubmenuButton(
-            menuChildren: group(environment),
-            child: Text(categoryLabel(context.l10n, 'environment')),
-          ),
-          SubmenuButton(
-            menuChildren: group(motion),
-            child: Text(categoryLabel(context.l10n, 'motion')),
-          ),
-          SubmenuButton(
-            menuChildren: group(human),
-            child: Text(categoryLabel(context.l10n, 'human')),
-          ),
-          const Divider(height: 8),
-          MenuItemButton(
+          MacSubmenu(label: l10n.input, children: group(inputs)),
+          MacSubmenu(label: l10n.output, children: group(outputs)),
+          const MacMenuDivider(),
+          MacSubmenu(label: categoryLabel(l10n, 'environment'), children: group(environment)),
+          MacSubmenu(label: categoryLabel(l10n, 'motion'), children: group(motion)),
+          MacSubmenu(label: categoryLabel(l10n, 'human'), children: group(human)),
+          const MacMenuDivider(),
+          MacMenuItem(
+            label: l10n.more,
             onPressed: () => widget.dispatch(const SidebarTabSelected(SidebarTab.library)),
-            child: Text(context.l10n.more),
           ),
         ],
-        child: Text(context.l10n.addConcept),
       ),
       // A Source is an ordinary relationship the environment provides
       // (ADR-0032), created over a concept the designer chooses on the
       // Source sheet: the generic entry, then the presets that prefill it.
-      SubmenuButton(
-        menuChildren: [
-          MenuItemButton(
-            onPressed: widget.canInsert ? () => _newSourceAt('', _menuScene) : null,
-            child: Text(context.l10n.newSourceEllipsis),
+      MacSubmenu(
+        label: l10n.addSource,
+        children: [
+          MacMenuItem(
+            label: l10n.newSourceEllipsis,
+            onPressed: widget.canInsert ? () => _newSourceAt('', at) : null,
           ),
-          if (sources.isNotEmpty) const Divider(height: 8),
-          ...sources,
+          if (widget.sources.isNotEmpty) const MacMenuDivider(),
+          ...widget.sources.map(sourceItem),
         ],
-        child: Text(context.l10n.addSource),
       ),
+      if (_isSystemCanvas && widget.components.isNotEmpty)
+        MacSubmenu(
+          label: l10n.addInstance,
+          children: [
+            for (final c in widget.components)
+              MacMenuItem(
+                label: c.name,
+                onPressed: () => widget.dispatch(
+                  CreateInstanceRequested(
+                    component: c.id.toInt(),
+                    name: _freshInstanceName(c),
+                    position: at,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      if (_groupsEnabled)
+        MacMenuItem(
+          label: l10n.newBehaviorGroup,
+          onPressed: () =>
+              widget.dispatch(CreateGroupRequested(name: _freshGroupName(), renameAfter: true)),
+        ),
+      const MacMenuDivider(),
+      MacMenuItem(label: l10n.selectAll, shortcut: shortcut('A'), onPressed: () => _selectAll()),
+      MacMenuItem(label: l10n.frameAll, shortcut: shortcut('0'), onPressed: () => _frameAllNow()),
     ];
   }
 
@@ -482,254 +1343,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
     return '$base$i';
   }
 
-  Map<NodeRef, Offset> get _effectiveLayout {
-    if (_draggingGroup != null) {
-      final scene = _scene(widget.layout);
-      final g = scene.groups.where((g) => g.id == _draggingGroup).firstOrNull;
-      if (g == null) return widget.layout;
-      final moved = {...widget.layout};
-      for (final m in g.members) {
-        final ref = NodeRef.mapping(m);
-        final base =
-            widget.layout[ref] ?? scene.nodes.where((n) => n.ref == ref).firstOrNull?.rect.topLeft;
-        if (base != null) moved[ref] = base + _dragDelta;
-      }
-      return moved;
-    }
-    if (_draggingNode == null) return widget.layout;
-    final scene = _scene(widget.layout);
-    final base =
-        widget.layout[_draggingNode!] ??
-        scene.nodes.firstWhere((n) => n.ref == _draggingNode).rect.topLeft;
-    return {...widget.layout, _draggingNode!: base + _dragDelta};
-  }
-
-  Offset _toScene(Offset local) => (local - _pan) / _zoom;
-
-  void _onPointerSignal(PointerSignalEvent e) {
-    if (e is PointerScrollEvent) {
-      final factor = e.scrollDelta.dy > 0 ? 0.9 : 1.1;
-      final before = _toScene(e.localPosition);
-      setState(() {
-        _zoom = (_zoom * factor).clamp(0.25, 3.0);
-        _pan = e.localPosition - before * _zoom;
-      });
-      _viewportMoved();
-    }
-  }
-
-  void _onHover(PointerHoverEvent e) {
-    final scene = _scene(_effectiveLayout);
-    final hit = hitTest(scene, _toScene(e.localPosition));
-    final (NodeRef? node, SocketRef? socket) = switch (hit) {
-      HitSocket(:final socket, :final node) => (node.ref, socket.ref),
-      HitNode(:final node) => (node.ref, null),
-      HitGroup(:final group) => (NodeRef.group(group.id), null),
-      HitLink() || HitNothing() => (null, null),
-    };
-    if (node != _hoverNode || socket != _hoverSocket) {
-      setState(() {
-        _hoverNode = node;
-        _hoverSocket = socket;
-      });
-    }
-  }
-
-  /// Where the button went down: a drag is about what was *pressed*, not
-  /// where the pointer had got to when the drag was recognised.
-  Offset? _downLocal;
-
-  void _onPanDown(DragDownDetails d) {
-    _downLocal = d.localPosition;
-  }
-
-  /// A click (no drag): select what is under it; ⇧ extends the selection.
-  void _onTapUp(TapUpDetails d) {
-    _focus.requestFocus();
-    final scene = _scene(widget.layout);
-    final p = _toScene(d.localPosition);
-    final shift = HardwareKeyboard.instance.isShiftPressed;
-    switch (hitTest(scene, p)) {
-      case HitNode(:final node):
-        widget.dispatch(SelectionChanged(shift ? _extend(node.ref) : _select(node.ref)));
-      case HitSocket(:final node):
-        widget.dispatch(SelectionChanged(shift ? _extend(node.ref) : _select(node.ref)));
-      case HitGroup(:final group):
-        final ref = NodeRef.group(group.id);
-        widget.dispatch(SelectionChanged(shift ? _extend(ref) : GroupSelected(group.id)));
-      case HitLink(:final link):
-        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
-      case HitNothing():
-        if (!shift) widget.dispatch(const SelectionChanged(NoSelection()));
-    }
-  }
-
-  void _onPanStart(DragStartDetails d) {
-    _focus.requestFocus();
-    final scene = _scene(widget.layout);
-    final p = _toScene(_downLocal ?? d.localPosition);
-    final shift = HardwareKeyboard.instance.isShiftPressed;
-    switch (hitTest(scene, p)) {
-      case HitSocket(:final socket):
-        // An aggregate socket is a proxy: the drag starts from the one
-        // concrete socket it stands for (several: the drop asks).
-        final targets = scene.resolve(socket.ref);
-        final from = targets.length == 1 && targets.single.socket != null
-            ? targets.single.socket!
-            : targets.isNotEmpty && targets.every((t) => t.socket != null)
-            ? targets.first.socket!
-            : socket.ref;
-        final connected = from.side == SocketSide.input && scene.links.any((l) => l.to == from);
-        setState(() {
-          _linkDrag = _LinkDrag(from, socket.center, fromConnectedInput: connected)
-            ..current = p
-            ..proxyChoices = targets.length > 1 ? targets : null;
-        });
-      case HitNode(:final node):
-        if (shift) {
-          widget.dispatch(SelectionChanged(_extend(node.ref)));
-          setState(() => _panning = true);
-          return;
-        }
-        // Dragging a node that is part of the multi-selection keeps it.
-        final sel = widget.selection;
-        if (sel is! MultiSelected || !sel.nodes.contains(node.ref)) {
-          widget.dispatch(SelectionChanged(_select(node.ref)));
-        }
-        setState(() {
-          _draggingNode = node.ref;
-          _dragDelta = Offset.zero;
-        });
-      case HitGroup(:final group):
-        widget.dispatch(SelectionChanged(GroupSelected(group.id)));
-        setState(() {
-          _draggingGroup = group.id;
-          _dragDelta = Offset.zero;
-        });
-      case HitLink(:final link):
-        widget.dispatch(SelectionChanged(BindingSelected(link.binding!)));
-        setState(() => _panning = true);
-      case HitNothing():
-        if (shift) {
-          setState(() => _marquee = Rect.fromPoints(p, p));
-          return;
-        }
-        widget.dispatch(const SelectionChanged(NoSelection()));
-        setState(() => _panning = true);
-    }
-  }
-
-  /// ⇧-click: toggle a node in the multi-selection.
-  Selection _extend(NodeRef ref) {
-    final sel = widget.selection;
-    final current = switch (sel) {
-      MultiSelected(:final nodes) => nodes,
-      ConceptSelected(:final id) => {NodeRef.concept(id)},
-      MappingSelected(:final id) => {NodeRef.mapping(id)},
-      OutputSelected(:final id) => {NodeRef.output(id)},
-      InstanceSelected(:final id) => {NodeRef.instance(id)},
-      GroupSelected(:final id) => {NodeRef.group(id)},
-      _ => <NodeRef>{},
-    };
-    final next = {...current};
-    if (!next.remove(ref)) next.add(ref);
-    if (next.isEmpty) return const NoSelection();
-    if (next.length == 1) return _select(next.single);
-    return MultiSelected(next);
-  }
-
-  void _onPanUpdate(DragUpdateDetails d) {
-    setState(() {
-      if (_linkDrag != null) {
-        final p = _toScene(d.localPosition);
-        _linkDrag!.current = p;
-        // Hover is not reported while a button is down; track the socket
-        // under the dragged link end so the cursor can refuse an illegal one.
-        final hit = hitTest(_scene(widget.layout), p);
-        _hoverSocket = hit is HitSocket ? hit.socket.ref : null;
-      } else if (_marquee != null) {
-        _marquee = Rect.fromPoints(_marquee!.topLeft, _toScene(d.localPosition));
-      } else if (_draggingNode != null || _draggingGroup != null) {
-        _dragDelta += d.delta / _zoom;
-        // Insertion affordance: the expanded group under the dragged
-        // relationship (its own group's region measured without it).
-        final node = _draggingNode;
-        if (_groupsEnabled && node != null && node.kind == NodeKind.mapping) {
-          final layout = _effectiveLayout;
-          final shape = _scene(layout).nodes.where((n) => n.ref == node).firstOrNull;
-          final without = buildScene(
-            widget.project,
-            {...layout}..remove(node),
-            system: _sceneInput,
-          );
-          final over = shape == null ? null : groupAt(without, shape.rect.center);
-          _dragOverGroup =
-              over == null || (over.members.length == 1 && over.members.first == node.id)
-              ? null
-              : over.id;
-        }
-      } else if (_panning) {
-        _pan += d.delta;
-      }
-    });
-  }
-
-  void _onPanEnd(DragEndDetails d) {
-    final link = _linkDrag;
-    if (link != null) {
-      final scene = _scene(widget.layout);
-      _dropLink(scene, link);
-    }
-    if (_marquee case final box?) {
-      final scene = _scene(widget.layout);
-      final inside = {
-        for (final n in scene.nodes)
-          if (box.overlaps(n.rect) && box.contains(n.rect.center)) n.ref,
-      };
-      widget.dispatch(
-        SelectionChanged(
-          inside.isEmpty
-              ? const NoSelection()
-              : inside.length == 1
-              ? _select(inside.single)
-              : MultiSelected(inside),
-        ),
-      );
-    }
-    if (_panning) _viewportMoved();
-    final node = _draggingNode;
-    if (node != null && _dragDelta != Offset.zero) {
-      final layout = _effectiveLayout;
-      widget.dispatch(NodeMoved(node, layout[node]!));
-      // Into or out of a group region: membership follows the drop.  Only
-      // the membership changes — a group is authoring metadata.
-      if (_groupsEnabled && node.kind == NodeKind.mapping) _membershipAfterDrop(node, layout);
-    }
-    final group = _draggingGroup;
-    if (group != null && _dragDelta != Offset.zero) {
-      final layout = _effectiveLayout;
-      final g = _scene(widget.layout).groups.where((g) => g.id == group).firstOrNull;
-      for (final m in g?.members ?? const <int>[]) {
-        final ref = NodeRef.mapping(m);
-        if (layout[ref] case final p?) widget.dispatch(NodeMoved(ref, p));
-      }
-    }
-    setState(() {
-      _linkDrag = null;
-      _draggingNode = null;
-      _draggingGroup = null;
-      _dragDelta = Offset.zero;
-      _panning = false;
-      _marquee = null;
-      _dragOverGroup = null;
-    });
-  }
+  // ---- links ---------------------------------------------------------------------
 
   /// The drop.  A hit on an aggregate socket resolves to the concrete
   /// endpoints it stands for: one → the link is made to it; several → a
   /// chooser names them (the member and its socket), and the choice makes
-  /// the link.  Nothing is ever bound to the group.
-  void _dropLink(CanvasScene scene, _LinkDrag link) {
+  /// the link.  Nothing is ever bound to the group.  A concept dropped on
+  /// a sink is the authoring gesture: it resolves to the relationship that
+  /// can drive the sink.
+  void _dropLink(CanvasScene scene, _DragLink link) {
     final hit = hitTest(scene, link.current);
     if (hit is HitSocket && hit.socket.ref.role == SocketRole.aggregate) {
       final candidates = [
@@ -745,6 +1367,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
         return;
       }
       _offerTargets(link.from, candidates, link.current);
+      return;
+    }
+    if (hit is HitSocket && isAuthoringTarget(link.from, hit.socket.ref)) {
+      final (out, inp) = link.from.side == SocketSide.output
+          ? (link.from, hit.socket.ref)
+          : (hit.socket.ref, link.from);
+      _driveFromConcept(out.concept, inp.node.id, link.current);
       return;
     }
     final target = dropTarget(scene, link.from, link.current);
@@ -769,6 +1398,65 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
+  /// Concept → Output: the designer's gesture is about the concept; the
+  /// edit is about a driver.  One eligible driver connects; several are
+  /// offered by name (never chosen for the designer); none is explained
+  /// where the pointer is.  A driven sink is offered a replacement, never
+  /// a second driver (docs/architecture/studio-ui.md §2, "Concept → Output").
+  void _driveFromConcept(int conceptId, int outputId, Offset at) {
+    final output = widget.project.outputs.where((o) => o.id.toInt() == outputId).firstOrNull;
+    if (output == null) return;
+    final l10n = context.l10n;
+    final current = currentDriver(widget.project, output);
+    final candidates = driveCandidates(widget.project, output);
+    void drive(pb.MappingView m) {
+      if (current != null && current.id != m.id) {
+        // One plan: the current driver lets go, then the chosen one connects.
+        widget.dispatch(
+          ReplaceDriverRequested(outputId: outputId, from: current.id.toInt(), to: m.id.toInt()),
+        );
+        return;
+      }
+      widget.dispatch(SetMappingDriveRequested(mappingId: m.id.toInt(), outputId: outputId));
+    }
+
+    String label(pb.MappingView m) => current != null && current.id != m.id
+        ? l10n.replaceDriver(current.name, m.name)
+        : l10n.driveWith(m.name);
+    if (candidates.isEmpty) {
+      _openMenu(
+        _MenuKind.chooser,
+        null,
+        _toLocal(at),
+        chooser: [
+          MacMenuItem(
+            label: l10n.noDriverForConcept(output.name, _conceptName(conceptId)),
+            onPressed: null,
+          ),
+          MacMenuItem(
+            label: l10n.showInInspector(output.name),
+            onPressed: () => _setSelection({NodeRef.output(outputId)}),
+          ),
+        ],
+      );
+      return;
+    }
+    if (candidates.length == 1 && current == null) {
+      drive(candidates.single);
+      return;
+    }
+    _openMenu(
+      _MenuKind.chooser,
+      null,
+      _toLocal(at),
+      chooser: [
+        for (final m in candidates)
+          if (current == null || current.id != m.id)
+            MacMenuItem(label: label(m), onPressed: () => drive(m)),
+      ],
+    );
+  }
+
   /// A concept dragged onto a member without a socket for it: the member
   /// would read the concept (an explicit, concrete edit).
   bool _canLinkToNode(SocketRef from, NodeRef node) =>
@@ -784,36 +1472,39 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
-  List<Widget> _chooser = const [];
-  final MenuController _chooserMenu = MenuController();
-
   void _offerTargets(SocketRef from, List<ProxyTarget> targets, Offset at) {
     final concept = widget.project.concepts.where((c) => c.id.toInt() == from.concept).firstOrNull;
-    String describe(ProxyTarget t) => t.socket == null
-        ? '${t.label} — read ${concept?.name ?? ''}'
-        : '${t.label} · ${_socketWord(t.socket!)}';
-    setState(() {
-      _chooser = [
+    _openMenu(
+      _MenuKind.chooser,
+      null,
+      _toLocal(at),
+      chooser: [
         for (final t in targets)
-          MenuItemButton(onPressed: () => _linkToTarget(from, t), child: Text(describe(t))),
-      ];
-    });
-    _chooserMenu.open(position: at * _zoom + _pan);
+          MacMenuItem(
+            label: t.label,
+            detail: t.socket == null
+                ? context.l10n.readsSocket(concept?.name ?? '')
+                : _socketWord(t.socket!),
+            onPressed: () => _linkToTarget(from, t),
+          ),
+      ],
+    );
   }
 
   void _offerSources(List<ProxyTarget> sources, SocketRef to, Offset at) {
-    setState(() {
-      _chooser = [
+    _openMenu(
+      _MenuKind.chooser,
+      null,
+      _toLocal(at),
+      chooser: [
         for (final t in sources)
-          MenuItemButton(onPressed: () => _makeLink(t.socket!, to), child: Text(t.label)),
-      ];
-    });
-    _chooserMenu.open(position: at * _zoom + _pan);
+          MacMenuItem(label: t.label, onPressed: () => _makeLink(t.socket!, to)),
+      ],
+    );
   }
 
   String _socketWord(SocketRef s) {
-    final concept = widget.project.concepts.where((c) => c.id.toInt() == s.concept).firstOrNull;
-    final name = concept?.name ?? '';
+    final name = _conceptName(s.concept);
     return switch (s.role) {
       SocketRole.realise => 'definition',
       _ =>
@@ -885,12 +1576,13 @@ class _NodeCanvasState extends State<NodeCanvas> {
   }
 
   /// Dragging a connected input away into empty space disconnects it: a
-  /// mapping's read, or a sink's driver (the mapping stops driving).
-  void _unlink(CanvasScene scene, SocketRef input) {
+  /// mapping's read, or a sink's driver (the mapping stops driving).  From
+  /// a link's menu, [link] names the one edge to undo.
+  void _unlink(CanvasScene scene, SocketRef input, {LinkShape? link}) {
     // A bound port or realised relationship: the binding goes.
     if (input.role == SocketRole.port || input.role == SocketRole.realise) {
       for (final l in scene.links.where((l) => l.to == input && l.binding != null)) {
-        widget.dispatch(UnbindRequested(l.binding!));
+        if (link == null || l.binding == link.binding) widget.dispatch(UnbindRequested(l.binding!));
       }
       return;
     }
@@ -899,24 +1591,29 @@ class _NodeCanvasState extends State<NodeCanvas> {
         widget.dispatch(UnlinkMappingInput(mappingId: input.node.id, conceptId: input.concept));
       case NodeKind.output:
         for (final l in scene.links.where((l) => l.to == input)) {
-          widget.dispatch(SetMappingDriveRequested(mappingId: l.from.node.id, outputId: null));
+          if (link == null || l.from == link.from) {
+            widget.dispatch(SetMappingDriveRequested(mappingId: l.from.node.id, outputId: null));
+          }
         }
       case NodeKind.concept:
+        // A relationship → concept edge is the relationship's output: its
+        // signature keeps an output, so the edge cannot be removed alone.
+        break;
       case NodeKind.instance:
       case NodeKind.group:
         break;
     }
   }
 
-  Selection _select(NodeRef ref) => switch (ref.kind) {
-    NodeKind.concept => ConceptSelected(ref.id),
-    NodeKind.mapping => MappingSelected(ref.id),
-    NodeKind.output => OutputSelected(ref.id),
-    NodeKind.instance => InstanceSelected(ref.id),
-    NodeKind.group => GroupSelected(ref.id),
-  };
+  // ---- keyboard ------------------------------------------------------------------
+
+  void _selectAll() => _setSelection(_eligibleNodes, active: _active);
+
+  Size _viewportSize = Size.zero;
+  void _frameAllNow() => _frameAll(_viewportSize);
 
   void _frameAll(Size viewport) {
+    if (viewport.isEmpty) return;
     final scene = _scene(widget.layout);
     final b = scene.bounds.inflate(40);
     final zoom = (viewport.width / b.width).clamp(0.25, 1.0).clamp(0.0, viewport.height / b.height);
@@ -927,52 +1624,116 @@ class _NodeCanvasState extends State<NodeCanvas> {
         (viewport.height - b.height * _zoom) / 2 - b.top * _zoom,
       );
     });
+    _viewportMoved();
+  }
+
+  /// Arrow keys nudge the selected set by the grid (⇧: one point).
+  void _nudge(Offset by) {
+    final set = _selectedSet;
+    if (set.isEmpty) return;
+    final scene = _scene(widget.layout);
+    final positions = {
+      for (final n in scene.nodes)
+        if (set.contains(n.ref)) n.ref: n.rect.topLeft + by,
+    };
+    if (positions.isEmpty) return;
+    if (positions.length == 1) {
+      final e = positions.entries.single;
+      widget.dispatch(NodeMoved(e.key, e.value));
+    } else {
+      widget.dispatch(NodesMoved(positions));
+    }
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    // Only the canvas itself: a field inside it (the inline rename) owns
+    // its own keys, and a shortcut never fires through a text field.
+    if (!_focus.hasPrimaryFocus) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.space) {
+      // Held: the next primary drag pans.
+      final held = event is! KeyUpEvent;
+      if (held != _spaceHeld) setState(() => _spaceHeld = held);
+      return KeyEventResult.handled;
+    }
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (key == LogicalKeyboardKey.escape) {
+      return _escape() ? KeyEventResult.handled : KeyEventResult.ignored;
+    }
+    if (_menuIsOpen) return KeyEventResult.ignored;
+    if (key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.delete) {
+      widget.dispatch(const DeleteSelectionRequested());
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.home || (key == LogicalKeyboardKey.digit0 && _primaryModifier)) {
+      _frameAllNow();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyA && _primaryModifier) {
+      _selectAll();
+      return KeyEventResult.handled;
+    }
+    final step = HardwareKeyboard.instance.isShiftPressed ? 1.0 : MacTokens.gridStep;
+    final nudge = switch (key) {
+      LogicalKeyboardKey.arrowLeft => Offset(-step, 0),
+      LogicalKeyboardKey.arrowRight => Offset(step, 0),
+      LogicalKeyboardKey.arrowUp => Offset(0, -step),
+      LogicalKeyboardKey.arrowDown => Offset(0, step),
+      _ => null,
+    };
+    if (nudge != null) {
+      _nudge(nudge);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  MouseCursor get _cursor {
+    if (_menuIsOpen) return SystemMouseCursors.basic;
+    switch (_gesture) {
+      case _Pan():
+        return SystemMouseCursors.grabbing;
+      case _DragNodes() || _DragGroup():
+        return SystemMouseCursors.move;
+      case _DragLink(:final from):
+        // Over a socket the link cannot reach, the pointer says so before
+        // the drop: the typing rule is refused, not diagnosed.
+        final s = _hoverSocket;
+        if (s == null) return SystemMouseCursors.precise;
+        return canLink(from, s) || isAuthoringTarget(from, s)
+            ? SystemMouseCursors.precise
+            : SystemMouseCursors.forbidden;
+      case _Marquee():
+        return SystemMouseCursors.precise;
+      default:
+        if (_spaceHeld) return SystemMouseCursors.grab;
+        if (_hoverSocket != null) return SystemMouseCursors.precise;
+        return SystemMouseCursors.basic;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final scene = _scene(_effectiveLayout);
-    final selected = switch (widget.selection) {
-      ConceptSelected(:final id) => NodeRef.concept(id),
-      MappingSelected(:final id) => NodeRef.mapping(id),
-      OutputSelected(:final id) => NodeRef.output(id),
-      InstanceSelected(:final id) => NodeRef.instance(id),
-      GroupSelected(:final id) => NodeRef.group(id),
-      _ => null,
-    };
-    final selectedSet = switch (widget.selection) {
-      MultiSelected(:final nodes) => nodes,
-      _ => const <NodeRef>{},
-    };
+    final selectedSet = _selectedSet;
+    final active = _active;
     final selectedBinding = switch (widget.selection) {
       BindingSelected(:final id) => id,
       _ => null,
     };
+    final g = _gesture;
+    final marquee = g is _Marquee ? g : null;
+    final preview = marquee == null ? null : _marqueeResult(marquee);
+    final linkDrag = g is _DragLink ? g : null;
+    final menuItems = _menuContext == null ? const <Widget>[] : _menuItems(context, _menuContext!);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.biggest;
+        _viewportSize = constraints.biggest;
         return Focus(
           focusNode: _focus,
-          onKeyEvent: (node, event) {
-            if (event is! KeyDownEvent) return KeyEventResult.ignored;
-            final key = event.logicalKey;
-            if (key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.delete) {
-              widget.dispatch(const DeleteSelectionRequested());
-              return KeyEventResult.handled;
-            }
-            if (key == LogicalKeyboardKey.home ||
-                (key == LogicalKeyboardKey.digit0 && HardwareKeyboard.instance.isMetaPressed)) {
-              _frameAll(size);
-              return KeyEventResult.handled;
-            }
-            if (key == LogicalKeyboardKey.escape) {
-              widget.dispatch(const SelectionChanged(NoSelection()));
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
+          onKeyEvent: _onKey,
           child: DragTarget<LibraryItemDrag>(
             onWillAcceptWithDetails: (_) => widget.canInsert,
             onAcceptWithDetails: (d) {
@@ -985,110 +1746,101 @@ class _NodeCanvasState extends State<NodeCanvas> {
                 _insert(d.data.itemId, scene);
               }
             },
-            builder: (context, candidates, _) => MenuAnchor(
+            builder: (context, candidates, _) => MacMenuAnchor(
               controller: _chooserMenu,
-              consumeOutsideTap: true,
-              menuChildren: _chooser,
-              child: MenuAnchor(
+              items: _chooser,
+              onClose: () => _menuClosed(_MenuKind.chooser),
+              child: MacMenuAnchor(
                 controller: _menu,
-                consumeOutsideTap: true,
-                menuChildren: _menuItems(context),
+                items: menuItems,
+                onClose: () => _menuClosed(_MenuKind.context),
                 child: Listener(
+                  behavior: HitTestBehavior.opaque,
+                  onPointerDown: _onPointerDown,
+                  onPointerMove: _onPointerMove,
+                  onPointerUp: _onPointerUp,
+                  onPointerCancel: _onPointerCancel,
                   onPointerSignal: _onPointerSignal,
                   onPointerHover: _onHover,
+                  onPointerPanZoomUpdate: _onPanZoomUpdate,
+                  onPointerPanZoomEnd: _onPanZoomEnd,
                   child: MouseRegion(
-                    // Over a socket the link cannot reach, the pointer says so
-                    // before the drop: the typing rule is refused, not diagnosed.
-                    cursor: _linkDrag != null && _hoverSocket != null
-                        ? (canLink(_linkDrag!.from, _hoverSocket!)
-                              ? SystemMouseCursors.precise
-                              : SystemMouseCursors.forbidden)
-                        : _hoverSocket != null
-                        ? SystemMouseCursors.precise
-                        : _hoverNode != null
-                        ? SystemMouseCursors.grab
-                        : SystemMouseCursors.basic,
+                    cursor: _cursor,
                     onExit: (_) => setState(() {
                       _hoverNode = null;
-                      _hoverSocket = null;
+                      if (g is! _DragLink) _hoverSocket = null;
                     }),
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapUp: _onTapUp,
-                      onPanDown: _onPanDown,
-                      onPanStart: _onPanStart,
-                      onPanUpdate: _onPanUpdate,
-                      onPanEnd: _onPanEnd,
-                      onSecondaryTapDown: _onSecondaryTapDown,
-                      onDoubleTapDown: _onDoubleTapDown,
-                      child: ClipRect(
-                        child: Stack(
-                          children: [
-                            CustomPaint(
-                              painter: _CanvasPainter(
-                                scene: scene,
-                                tokens: t,
-                                l10n: context.l10n,
-                                pan: _pan,
-                                zoom: _zoom,
-                                selected: selected,
-                                selectedSet: selectedSet,
-                                selectedBinding: selectedBinding,
-                                marquee: _marquee,
-                                dragOverGroup: _dragOverGroup,
-                                hovered: _hoverNode,
-                                hoveredSocket: _hoverSocket,
-                                linkDrag: _linkDrag,
-                                dropOk: _linkDrag == null
-                                    ? null
-                                    : dropTarget(scene, _linkDrag!.from, _linkDrag!.current)?.ref,
-                              ),
-                              size: Size.infinite,
+                    child: ClipRect(
+                      child: Stack(
+                        children: [
+                          CustomPaint(
+                            painter: _CanvasPainter(
+                              scene: scene,
+                              tokens: t,
+                              l10n: context.l10n,
+                              pan: _pan,
+                              zoom: _zoom,
+                              selectedSet: selectedSet,
+                              active: active,
+                              selectedBinding: selectedBinding,
+                              marquee: marquee?.rect,
+                              marqueeMode: marquee?.mode,
+                              marqueeAdd: marquee?.add ?? false,
+                              marqueeSubtract: marquee?.subtract ?? false,
+                              preview: preview,
+                              dragOverGroup: _dragOverGroup,
+                              hovered: _hoverNode,
+                              hoveredSocket: _hoverSocket,
+                              linkDrag: linkDrag,
+                              dropOk: linkDrag == null
+                                  ? null
+                                  : dropTarget(scene, linkDrag.from, linkDrag.current)?.ref,
                             ),
-                            if (candidates.isNotEmpty)
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: t.accent, width: 2),
-                                    ),
+                            size: Size.infinite,
+                          ),
+                          if (candidates.isNotEmpty)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: t.accent, width: 2),
                                   ),
                                 ),
                               ),
-                            if (widget.renaming case final node?) ...[
-                              for (final shape in scene.nodes.where((n) => n.ref == node))
-                                _InlineRename(
-                                  key: ValueKey(node),
-                                  rect: Rect.fromLTWH(
-                                    shape.rect.left * _zoom + _pan.dx,
-                                    shape.rect.top * _zoom + _pan.dy,
-                                    shape.rect.width * _zoom,
-                                    NodeMetrics.headerHeight * _zoom,
-                                  ),
-                                  zoom: _zoom,
-                                  initial: shape.title,
-                                  onDone: (name) =>
-                                      widget.dispatch(InlineRenameFinished(node, name: name)),
+                            ),
+                          if (widget.renaming case final node?) ...[
+                            for (final shape in scene.nodes.where((n) => n.ref == node))
+                              _InlineRename(
+                                key: ValueKey(node),
+                                rect: Rect.fromLTWH(
+                                  shape.rect.left * _zoom + _pan.dx,
+                                  shape.rect.top * _zoom + _pan.dy,
+                                  shape.rect.width * _zoom,
+                                  NodeMetrics.headerHeight * _zoom,
                                 ),
-                              for (final g in scene.groups.where(
-                                (g) => NodeRef.group(g.id) == node,
-                              ))
-                                _InlineRename(
-                                  key: ValueKey(node),
-                                  rect: Rect.fromLTWH(
-                                    g.rect.left * _zoom + _pan.dx,
-                                    g.rect.top * _zoom + _pan.dy,
-                                    (g.rect.width / 2).clamp(120, 320) * _zoom,
-                                    NodeMetrics.regionTitle * _zoom,
-                                  ),
-                                  zoom: _zoom,
-                                  initial: g.title,
-                                  onDone: (name) =>
-                                      widget.dispatch(InlineRenameFinished(node, name: name)),
+                                zoom: _zoom,
+                                initial: shape.title,
+                                onDone: (name) =>
+                                    widget.dispatch(InlineRenameFinished(node, name: name)),
+                              ),
+                            for (final gr in scene.groups.where(
+                              (gr) => NodeRef.group(gr.id) == node,
+                            ))
+                              _InlineRename(
+                                key: ValueKey(node),
+                                rect: Rect.fromLTWH(
+                                  gr.rect.left * _zoom + _pan.dx,
+                                  gr.rect.top * _zoom + _pan.dy,
+                                  (gr.rect.width / 2).clamp(120, 320) * _zoom,
+                                  NodeMetrics.regionTitle * _zoom,
                                 ),
-                            ],
+                                zoom: _zoom,
+                                initial: gr.title,
+                                onDone: (name) =>
+                                    widget.dispatch(InlineRenameFinished(node, name: name)),
+                              ),
                           ],
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -1169,7 +1921,7 @@ class _InlineRenameState extends State<_InlineRename> {
           focusNode: _focus,
           autofocus: true,
           style: TextStyle(
-            fontSize: 12.5 * widget.zoom,
+            fontSize: MacType.nodeTitle * widget.zoom,
             fontWeight: FontWeight.w600,
             color: t.textPrimary,
           ),
@@ -1201,14 +1953,18 @@ class _CanvasPainter extends CustomPainter {
     required this.l10n,
     required this.pan,
     required this.zoom,
-    required this.selected,
     required this.selectedSet,
+    required this.active,
     required this.selectedBinding,
     required this.hovered,
     required this.hoveredSocket,
     required this.linkDrag,
     required this.dropOk,
     this.marquee,
+    this.marqueeMode,
+    this.marqueeAdd = false,
+    this.marqueeSubtract = false,
+    this.preview,
     this.dragOverGroup,
   });
 
@@ -1217,14 +1973,25 @@ class _CanvasPainter extends CustomPainter {
   final AppLocalizations l10n;
   final Offset pan;
   final double zoom;
-  final NodeRef? selected;
+
+  /// The selected set and, among it, the active object.
   final Set<NodeRef> selectedSet;
+  final NodeRef? active;
   final int? selectedBinding;
+
+  /// A marquee in progress: its rectangle, its mode (window: solid;
+  /// crossing: dashed), whether it adds to or subtracts from the
+  /// selection, and the selection it would produce ([preview]) — shown
+  /// before the pointer comes up, so the gesture means what it shows.
   final Rect? marquee;
+  final MarqueeMode? marqueeMode;
+  final bool marqueeAdd;
+  final bool marqueeSubtract;
+  final Set<NodeRef>? preview;
   final int? dragOverGroup;
   final NodeRef? hovered;
   final SocketRef? hoveredSocket;
-  final _LinkDrag? linkDrag;
+  final _DragLink? linkDrag;
   final SocketRef? dropOk;
 
   @override
@@ -1248,7 +2015,7 @@ class _CanvasPainter extends CustomPainter {
       painter.region(
         canvas,
         g,
-        selected: selected == NodeRef.group(g.id) || selectedSet.contains(NodeRef.group(g.id)),
+        selected: selectedSet.contains(NodeRef.group(g.id)),
         hovered: hovered == NodeRef.group(g.id),
         receiving: dragOverGroup == g.id,
       );
@@ -1294,23 +2061,54 @@ class _CanvasPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
+    // While a marquee is drawn, a node's outline says what the release
+    // would do to it: taken (accent), let go (secondary), or unchanged.
+    final p = preview;
     for (final n in scene.nodes) {
+      final isSelected = selectedSet.contains(n.ref);
+      final MarqueePreview? pv = p == null
+          ? null
+          : p.contains(n.ref) && !isSelected
+          ? MarqueePreview.take
+          : !p.contains(n.ref) && isSelected
+          ? MarqueePreview.release
+          : null;
       painter.node(
         canvas,
         n,
-        selected: n.ref == selected || selectedSet.contains(n.ref),
+        selected: isSelected,
+        active: n.ref == active && selectedSet.length > 1,
         hovered: n.ref == hovered,
+        preview: pv,
       );
     }
     if (marquee case final m?) {
-      canvas.drawRect(m, Paint()..color = tokens.accent.withValues(alpha: 0.08));
-      canvas.drawRect(
-        m,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1 / zoom
-          ..color = tokens.accent,
-      );
+      // Window: a solid outline and a restrained fill.  Crossing: a dashed
+      // outline and a fainter fill — told apart by the line, not the hue.
+      final crossing = marqueeMode == MarqueeMode.crossing;
+      canvas.drawRect(m, Paint()..color = tokens.accent.withValues(alpha: crossing ? 0.05 : 0.1));
+      final stroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1 / zoom
+        ..color = tokens.accent;
+      if (crossing) {
+        painter._dashedRect(canvas, m, stroke, dash: 6 / zoom);
+      } else {
+        canvas.drawRect(m, stroke);
+      }
+      // Adding to or subtracting from the selection: the sign at the
+      // marquee's moving corner, beside the pointer.
+      if (marqueeAdd || marqueeSubtract) {
+        final corner = m.bottomRight + Offset(6 / zoom, 2 / zoom);
+        painter._text(
+          canvas,
+          marqueeSubtract ? '−' : '+',
+          corner,
+          FontWeight.w600,
+          MacType.body / zoom,
+          tokens.accent,
+        );
+      }
     }
     canvas.restore();
 
@@ -1321,7 +2119,7 @@ class _CanvasPainter extends CustomPainter {
           text: l10n.addAConceptFromTheLibraryTo,
           style: TextStyle(
             fontFamily: '.AppleSystemUIFont',
-            fontSize: 13,
+            fontSize: MacType.body,
             color: tokens.textTertiary,
           ),
         ),
@@ -1353,7 +2151,7 @@ class _CanvasPainter extends CustomPainter {
           properties: SemanticsProperties(
             label: _describe(n),
             textDirection: TextDirection.ltr,
-            selected: n.ref == selected,
+            selected: selectedSet.contains(n.ref),
             button: true,
           ),
         ),
@@ -1470,6 +2268,9 @@ class _CanvasPainter extends CustomPainter {
 /// undecided), dashed outline = declared-not-defined, a red mark at the
 /// definition line = the definition does not check.  No other state is
 /// written on the node.
+/// What a marquee in progress would do to a node on release.
+enum MarqueePreview { take, release }
+
 class NodePainter {
   NodePainter(
     this.tokens, {
@@ -1498,7 +2299,18 @@ class NodePainter {
   /// identity the compiler allocates.
   final Color Function(int) conceptColor;
 
-  void node(Canvas canvas, NodeShape n, {bool selected = false, bool hovered = false}) {
+  /// [active]: the active object of a multi-selection wears a second,
+  /// outer accent ring (the platform's focus-ring idiom) — a shape, not a
+  /// hue, so it reads beside the others' single outline.  [preview]: what
+  /// a marquee in progress would do to the node.
+  void node(
+    Canvas canvas,
+    NodeShape n, {
+    bool selected = false,
+    bool active = false,
+    bool hovered = false,
+    MarqueePreview? preview,
+  }) {
     final rrect = RRect.fromRectAndRadius(n.rect, const Radius.circular(NodeMetrics.cornerRadius));
     canvas.drawRRect(
       rrect.shift(const Offset(0, 1)),
@@ -1550,6 +2362,28 @@ class NodePainter {
       _dashedRRect(canvas, rrect, outline..color = selected ? tokens.accent : tokens.textTertiary);
     } else {
       canvas.drawRRect(rrect, outline);
+    }
+    if (active) {
+      canvas.drawRRect(
+        rrect.inflate(3),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = tokens.accent,
+      );
+    }
+    if (preview != null) {
+      final ring = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = preview == MarqueePreview.take
+            ? tokens.accent.withValues(alpha: 0.6)
+            : tokens.textSecondary;
+      if (preview == MarqueePreview.release) {
+        _dashedRRect(canvas, rrect.inflate(2), ring);
+      } else {
+        canvas.drawRRect(rrect.inflate(2), ring);
+      }
     }
     // The environment boundary: a solid bar on a Source's left edge — to the
     // left of it is the environment, which provides the value; nothing in
@@ -1888,6 +2722,19 @@ class NodePainter {
     canvas.drawLine(Offset(at.dx + 5, y + 4), Offset(at.dx + 9, y), paint);
     // the boundary tick the arrow crosses
     canvas.drawLine(Offset(at.dx + 11.5, y - 5), Offset(at.dx + 11.5, y + 5), paint);
+  }
+
+  /// A dashed rectangle (the crossing marquee), with the dash length given
+  /// in scene units so it reads the same at every zoom.
+  void _dashedRect(Canvas canvas, Rect r, Paint paint, {double dash = 6}) {
+    final path = Path()..addRect(r);
+    for (final metric in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < metric.length) {
+        canvas.drawPath(metric.extractPath(d, d + dash), paint);
+        d += dash * 2;
+      }
+    }
   }
 
   void _dashedRRect(Canvas canvas, RRect r, Paint paint) {

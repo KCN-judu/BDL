@@ -900,11 +900,46 @@ class DeleteSelectionRequested extends UserAction {
   const DeleteSelectionRequested();
 }
 
+/// Show the authored text of a canvas object: the Split view opens (when the
+/// canvas alone is on show), the file that declares the object is opened,
+/// and its declaration is revealed — through the same reveal the Code
+/// view's definition navigation uses.
+class RevealInCodeRequested extends UserAction {
+  const RevealInCodeRequested(this.node);
+  final NodeRef node;
+}
+
+/// Replace a sink's driver: the current driver lets go, then the new one
+/// connects — one plan of two edits, the second sent against the revision
+/// the first makes, so the sink never has two drivers in between.
+class ReplaceDriverRequested extends UserAction {
+  const ReplaceDriverRequested({required this.outputId, required this.from, required this.to});
+  final int outputId;
+  final int from;
+  final int to;
+}
+
+/// Open a relationship's definition for editing: the relationship is
+/// selected and the inspector's definition editor takes focus.
+class EditDefinitionRequested extends UserAction {
+  const EditDefinitionRequested(this.mappingId);
+  final int mappingId;
+}
+
 /// A node finished being dragged; commit its position (layout, not semantics).
 class NodeMoved extends UserAction {
   const NodeMoved(this.node, this.position);
   final NodeRef node;
   final Offset position;
+}
+
+/// Several nodes finished being dragged together (the selected set moved as
+/// one): every position, committed as one layout operation — one write,
+/// never one per node.  Collapsed group boxes move their hidden members with
+/// them, like a single group move does.
+class NodesMoved extends UserAction {
+  const NodesMoved(this.positions);
+  final Map<NodeRef, Offset> positions;
 }
 
 /// A link was drawn from a concept's value socket into a mapping's inputs.

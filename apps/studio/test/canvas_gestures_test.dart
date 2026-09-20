@@ -260,41 +260,42 @@ void main() {
       },
     );
 
-    testWidgets('⇧-drag box-selects; ⇧-click extends; Group as Behavior is offered', (
-      tester,
-    ) async {
+    testWidgets('a window marquee selects; ⌘-click toggles; Group as Behavior is offered for '
+        'the free ones', (tester) async {
       tester.view.physicalSize = const Size(1600, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       final actions = <AppAction>[];
       await tester.pumpWidget(Harness(actions: actions));
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-      await drag(tester, const Offset(280, 5), const Offset(820, 240));
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      // left → right: a window over tiltValue, A and B (whole), and the
+      // Readers region (a region is never taken by a rectangle)
+      await drag(tester, const Offset(280, 5), const Offset(820, 260));
       final sel = actions.whereType<SelectionChanged>().last.selection;
       expect(sel, isA<MultiSelected>());
       expect((sel as MultiSelected).mappings.toSet(), {tiltValue, a, b});
-      // ⇧-click follower: added; ⇧-click A: removed
+      // ⌘-click follower: added and active; ⌘-click A: removed
       final origin = tester.getTopLeft(find.byType(NodeCanvas));
       final scene = sceneOf(layout);
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
       await tester.tapAt(origin + scene.node(const NodeRef.mapping(follower)).header.center);
       await tester.pump(const Duration(milliseconds: 400));
       await tester.tapAt(origin + scene.node(const NodeRef.mapping(a)).header.center);
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
       final sel2 = actions.whereType<SelectionChanged>().last.selection as MultiSelected;
       expect(sel2.mappings.toSet(), {tiltValue, b, follower});
-      // the contextual menu on one of them offers grouping the free ones
+      expect(sel2.active, const NodeRef.mapping(follower));
+      // the contextual menu on one of them is about the set: grouping the
+      // free ones (tiltValue and follower; B is already in Readers)
       await tester.tapAt(
         origin + scene.node(const NodeRef.mapping(follower)).header.center,
         buttons: kSecondaryButton,
       );
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.textContaining('Group as Behavior'), findsOneWidget);
-      // tiltValue and follower are free; B is already in Readers
       expect(find.text('Group as Behavior (2 relationships)'), findsOneWidget);
+      expect(find.text('Delete 3 objects'), findsOneWidget);
       await tester.tap(find.text('Group as Behavior (2 relationships)'));
       await tester.pump();
       expect(actions.whereType<GroupSelectionRequested>(), hasLength(1));

@@ -50,6 +50,30 @@ enum RelationshipRole {
   value,
 }
 
+/// The relationship that drives [output] today, if one does (the model
+/// keeps `drives` on the relationship; a second claimant is a conflict the
+/// output pass reports).
+pb.MappingView? currentDriver(pb.ProjectProjection p, pb.OutputView output) =>
+    p.mappings.where((m) => m.hasDrivesOutputId() && m.drivesOutputId == output.id).firstOrNull;
+
+/// The relationships that could drive [output] under the output pass's own
+/// rule (DriveWF): a value or a Source — never a rule, whose type is an
+/// arrow — producing exactly the concept the sink accepts (nominal
+/// identity, the same `SemanticId`), updating in the sink's domain when the
+/// sink has one, and not the final target of another sink.  The current
+/// driver is left out: it is the sink's state, not a candidate.  Read off
+/// the projection the daemon sent (role, signature, domain, drives); the
+/// pass keeps the last word on a text-authored edge.
+List<pb.MappingView> driveCandidates(pb.ProjectProjection p, pb.OutputView output) => [
+  for (final m in p.mappings)
+    if (relationshipRole(m) != RelationshipRole.rule &&
+        m.signature.output == output.accepts &&
+        (!output.hasClockId() || (m.hasClockId() && m.clockId == output.clockId)) &&
+        !(m.hasDrivesOutputId() && m.drivesOutputId != output.id) &&
+        !(m.hasDrivesOutputId() && m.drivesOutputId == output.id))
+      m,
+];
+
 /// The role of [m], as the daemon stated it.  Every projection carries it;
 /// a view without one is not a projection of this daemon.
 RelationshipRole relationshipRole(pb.MappingView m) => switch (m.role) {
@@ -780,17 +804,62 @@ class GroupSelected extends Selection {
   int get hashCode => Object.hash(GroupSelected, id);
 }
 
-/// Several canvas nodes at once (box select, ⇧-click): the inspector offers
-/// what applies to all of them — grouping the relationships among them.
+/// Several canvas nodes at once (a marquee, ⌘-click): the *selected set*,
+/// and among them the *active* object — the one the last plain or ⌘-click
+/// named, the anchor of a range or chain selection, the object a keyboard
+/// action starts from (docs/architecture/studio-ui.md §2, selection).  The
+/// inspector offers what applies to all of them.  A single selection is its
+/// own active object; the active one is never inferred from set order.
 class MultiSelected extends Selection {
-  const MultiSelected(this.nodes);
+  const MultiSelected(this.nodes, {this.active});
   final Set<NodeRef> nodes;
+
+  /// The active object of the set, if one was named; always a member.
+  final NodeRef? active;
   Iterable<int> get mappings => nodes.where((n) => n.kind == NodeKind.mapping).map((n) => n.id);
   @override
-  bool operator ==(Object other) => other is MultiSelected && setEquals(other.nodes, nodes);
+  bool operator ==(Object other) =>
+      other is MultiSelected && setEquals(other.nodes, nodes) && other.active == active;
   @override
-  int get hashCode => Object.hash(MultiSelected, nodes.length);
+  int get hashCode => Object.hash(MultiSelected, nodes.length, active);
 }
+
+/// The canvas nodes a selection stands for (a component, a port or a
+/// binding is not a canvas node: an empty set).
+Set<NodeRef> selectedNodes(Selection sel) => switch (sel) {
+  MultiSelected(:final nodes) => nodes,
+  ConceptSelected(:final id) => {NodeRef.concept(id)},
+  MappingSelected(:final id) => {NodeRef.mapping(id)},
+  OutputSelected(:final id) => {NodeRef.output(id)},
+  InstanceSelected(:final id) => {NodeRef.instance(id)},
+  GroupSelected(:final id) => {NodeRef.group(id)},
+  _ => const <NodeRef>{},
+};
+
+/// The active object of a selection: a single selection is its own; a set's
+/// is the one it names; a component, port or binding has none on the canvas.
+NodeRef? activeNode(Selection sel) => switch (sel) {
+  MultiSelected(:final active) => active,
+  _ => selectedNodes(sel).firstOrNull,
+};
+
+/// The selection that stands for [nodes] with [active] named: none, one
+/// (its own active object) or several.  [active] must be a member; when
+/// it is not (it left the set), the set has no active object.
+Selection selectionOfNodes(Set<NodeRef> nodes, {NodeRef? active}) {
+  if (nodes.isEmpty) return const NoSelection();
+  if (nodes.length == 1) return singleSelection(nodes.single);
+  return MultiSelected(nodes, active: active != null && nodes.contains(active) ? active : null);
+}
+
+/// The single selection of one canvas node.
+Selection singleSelection(NodeRef ref) => switch (ref.kind) {
+  NodeKind.concept => ConceptSelected(ref.id),
+  NodeKind.mapping => MappingSelected(ref.id),
+  NodeKind.output => OutputSelected(ref.id),
+  NodeKind.instance => InstanceSelected(ref.id),
+  NodeKind.group => GroupSelected(ref.id),
+};
 
 /// A link drawn between two sockets that cannot be made silently: the
 /// destination is already bound (a required port takes one source), or
@@ -1432,6 +1501,8 @@ class EditorState {
     this.completion,
     this.hover,
     this.toolingGeneration = 0,
+    this.pendingReveal,
+    this.definitionFocus = 0,
     this.actions,
     this.queuedEdits = const [],
     this.deploy = const DeployState(),
@@ -1469,6 +1540,14 @@ class EditorState {
   /// The Code view's pending navigation and its references list
   /// (`app/code_tooling.dart`).
   final SourceReveal? reveal;
+
+  /// *Reveal in Code* asked for a node before its sources were on hand:
+  /// revealed when they arrive.
+  final NodeRef? pendingReveal;
+
+  /// *Edit Definition*: bumped so the inspector's definition editor takes
+  /// focus once, for the selected relationship.
+  final int definitionFocus;
   final SourceReferencesState? references;
 
   /// The semantic tokens of the texts on screen, by document key (a source
@@ -1664,6 +1743,9 @@ class EditorState {
     bool? draftsSeeded,
     Map<String, HighlightState>? highlights,
     SourceReveal? reveal,
+    NodeRef? pendingReveal,
+    bool clearPendingReveal = false,
+    int? definitionFocus,
     SourceReferencesState? references,
     bool clearReferences = false,
   }) {
@@ -1709,6 +1791,8 @@ class EditorState {
       draftsSeeded: draftsSeeded ?? this.draftsSeeded,
       highlights: highlights ?? this.highlights,
       reveal: reveal ?? this.reveal,
+      pendingReveal: clearPendingReveal ? null : (pendingReveal ?? this.pendingReveal),
+      definitionFocus: definitionFocus ?? this.definitionFocus,
       references: clearReferences ? null : (references ?? this.references),
     );
   }

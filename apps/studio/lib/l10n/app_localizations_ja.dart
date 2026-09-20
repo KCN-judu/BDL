@@ -2092,6 +2092,86 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chooseConcept => 'コンセプトを選ぶ';
 
   @override
+  String get fixMenu => '修正';
+
+  @override
+  String get revealInCode => 'コードで表示';
+
+  @override
+  String get editDefinition => '定義を編集';
+
+  @override
+  String deleteObjects(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 個のオブジェクトを削除');
+    return '$_temp0';
+  }
+
+  @override
+  String showDriver(String name) {
+    return '駆動元を表示：$name';
+  }
+
+  @override
+  String showEnd(String name) {
+    return '$name を表示';
+  }
+
+  @override
+  String replaceDriver(String current, String candidate) {
+    return '$current を $candidate に置き換え';
+  }
+
+  @override
+  String driveWith(String name) {
+    return '$name で駆動';
+  }
+
+  @override
+  String noDriverForConcept(String output, String concept) {
+    return '$output は $concept を受け付けますが、それを駆動できる関係が今はありません。';
+  }
+
+  @override
+  String showInInspector(String name) {
+    return 'インスペクタで $name を表示';
+  }
+
+  @override
+  String get selectAll => 'すべて選択';
+
+  @override
+  String get frameAll => '全体を表示';
+
+  @override
+  String get windowSelection => 'ウィンドウ選択';
+
+  @override
+  String get crossingSelection => '交差選択';
+
+  @override
+  String get activeObject => 'アクティブ';
+
+  @override
+  String get deleteBlockedDetails => 'それらも選択するか、先に接続を外してください。';
+
+  @override
+  String nothingWasDeleted(String reasons) {
+    return '何も削除されませんでした：$reasons。';
+  }
+
+  @override
+  String outputsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '出力 $count');
+    return '$_temp0';
+  }
+
+  @override
+  String othersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'その他 $count');
+    return '$_temp0';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override

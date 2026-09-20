@@ -3,6 +3,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HardwareKeyboard;
+
+import '../platform/desktop.dart' show primaryModifierIsControl;
 
 import '../l10n/l10n.dart';
 import '../app/actions.dart';
@@ -61,11 +64,63 @@ class _ProjectObjects extends StatelessWidget {
   final AppState state;
   final void Function(AppAction) dispatch;
 
+  /// The canvas nodes the list shows, in list order: the range a ⇧-click
+  /// selects is contiguous in this order.
+  List<NodeRef> _order() {
+    final p = state.project!;
+    return [
+      for (final c in p.concepts) NodeRef.concept(c.id.toInt()),
+      for (final m in p.mappings) NodeRef.mapping(m.id.toInt()),
+      for (final o in p.outputs) NodeRef.output(o.id.toInt()),
+      if (state.isSystem && state.editor.context is SystemContext)
+        for (final i in state.system!.instances) NodeRef.instance(i.id.toInt()),
+      if (state.isSystem)
+        for (final g in state.groupsInView) NodeRef.group(g.id.toInt()),
+    ];
+  }
+
+  /// Desktop list selection: a plain click selects the row alone; the
+  /// primary modifier (⌘ / Ctrl) toggles it; ⇧ selects the contiguous range
+  /// from the active object (the anchor) to it.  The anchor is the object
+  /// the last plain or modifier click named, never the set's order.
+  void _rowTap(NodeRef ref) {
+    final sel = state.editor.selection;
+    final current = selectedNodes(sel);
+    final anchor = activeNode(sel);
+    final primary = primaryModifierIsControl
+        ? HardwareKeyboard.instance.isControlPressed
+        : HardwareKeyboard.instance.isMetaPressed;
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    if (shift && anchor != null) {
+      final order = _order();
+      final a = order.indexOf(anchor);
+      final b = order.indexOf(ref);
+      if (a >= 0 && b >= 0) {
+        final range = order.sublist(a < b ? a : b, (a < b ? b : a) + 1).toSet();
+        final next = primary ? current.union(range) : range;
+        dispatch(SelectionChanged(selectionOfNodes(next, active: anchor)));
+        return;
+      }
+    }
+    if (primary) {
+      final next = {...current};
+      if (next.remove(ref)) {
+        dispatch(SelectionChanged(selectionOfNodes(next, active: anchor == ref ? null : anchor)));
+      } else {
+        dispatch(SelectionChanged(selectionOfNodes(next..add(ref), active: ref)));
+      }
+      return;
+    }
+    dispatch(SelectionChanged(singleSelection(ref)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final p = state.project;
     final sel = state.editor.selection;
+    final selectedSet = selectedNodes(sel);
+    final active = activeNode(sel);
     return Container(
       color: t.sidebar,
       child: p == null
@@ -95,8 +150,9 @@ class _ProjectObjects extends StatelessWidget {
                   _Row(
                     glyph: SocketGlyph.of(c, t),
                     title: c.name,
-                    selected: sel is ConceptSelected && sel.id == c.id.toInt(),
-                    onTap: () => dispatch(SelectionChanged(ConceptSelected(c.id.toInt()))),
+                    selected: selectedSet.contains(NodeRef.concept(c.id.toInt())),
+                    active: active == NodeRef.concept(c.id.toInt()) && selectedSet.length > 1,
+                    onTap: () => _rowTap(NodeRef.concept(c.id.toInt())),
                   ),
                 _Section(
                   title: context.l10n.mappings,
@@ -125,8 +181,9 @@ class _ProjectObjects extends StatelessWidget {
                       source: state.isSource(m),
                     ),
                     title: m.name,
-                    selected: sel is MappingSelected && sel.id == m.id.toInt(),
-                    onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
+                    selected: selectedSet.contains(NodeRef.mapping(m.id.toInt())),
+                    active: active == NodeRef.mapping(m.id.toInt()) && selectedSet.length > 1,
+                    onTap: () => _rowTap(NodeRef.mapping(m.id.toInt())),
                   ),
                 _Section(
                   title: context.l10n.timingDomains,
@@ -168,8 +225,9 @@ class _ProjectObjects extends StatelessWidget {
                       open: !o.hasClockId(),
                     ),
                     title: o.name,
-                    selected: sel is OutputSelected && sel.id == o.id.toInt(),
-                    onTap: () => dispatch(SelectionChanged(OutputSelected(o.id.toInt()))),
+                    selected: selectedSet.contains(NodeRef.output(o.id.toInt())),
+                    active: active == NodeRef.output(o.id.toInt()) && selectedSet.length > 1,
+                    onTap: () => _rowTap(NodeRef.output(o.id.toInt())),
                   ),
                 _Section(title: context.l10n.contexts),
                 if (state.isSystem) ...[
@@ -209,8 +267,9 @@ class _ProjectObjects extends StatelessWidget {
                       _Row(
                         glyph: _InstanceGlyph(),
                         title: i.name,
-                        selected: sel is InstanceSelected && sel.id == i.id.toInt(),
-                        onTap: () => dispatch(SelectionChanged(InstanceSelected(i.id.toInt()))),
+                        selected: selectedSet.contains(NodeRef.instance(i.id.toInt())),
+                        active: active == NodeRef.instance(i.id.toInt()) && selectedSet.length > 1,
+                        onTap: () => _rowTap(NodeRef.instance(i.id.toInt())),
                       ),
                   ],
                   // Behaviours of the design on screen: the system's own,
@@ -228,8 +287,9 @@ class _ProjectObjects extends StatelessWidget {
                             state.editor.contextLayout.groups[g.id.toInt()]?.collapsed ?? false,
                       ),
                       title: g.name,
-                      selected: sel is GroupSelected && sel.id == g.id.toInt(),
-                      onTap: () => dispatch(SelectionChanged(GroupSelected(g.id.toInt()))),
+                      selected: selectedSet.contains(NodeRef.group(g.id.toInt())),
+                      active: active == NodeRef.group(g.id.toInt()) && selectedSet.length > 1,
+                      onTap: () => _rowTap(NodeRef.group(g.id.toInt())),
                     ),
                 ] else
                   _Section(title: context.l10n.components),
@@ -272,10 +332,15 @@ class _Row extends StatelessWidget {
     required this.title,
     required this.selected,
     required this.onTap,
+    this.active = false,
   });
   final Widget glyph;
   final String title;
   final bool selected;
+
+  /// The active object of a multi-selection: semibold, the same tint —
+  /// weight ranks, colour does not.
+  final bool active;
   final VoidCallback onTap;
 
   @override
@@ -292,7 +357,13 @@ class _Row extends StatelessWidget {
             spacing: MacMetrics.gap,
             children: [
               SizedBox(width: 14, child: Center(child: glyph)),
-              Expanded(child: Text(title, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  style: active ? const TextStyle(fontWeight: FontWeight.w600) : null,
+                ),
+              ),
             ],
           ),
         ),
@@ -318,7 +389,10 @@ class _ClockRow extends StatelessWidget {
       child: Row(
         spacing: MacMetrics.gapTight,
         children: [
-          Text('↻', style: TextStyle(fontSize: 12, color: t.textSecondary)),
+          Text(
+            '↻',
+            style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+          ),
           Expanded(
             child: CommitTextField(
               value: clock.name,

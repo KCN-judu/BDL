@@ -2074,6 +2074,86 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseConcept => '选择一个概念';
 
   @override
+  String get fixMenu => '修正';
+
+  @override
+  String get revealInCode => '在代码中显示';
+
+  @override
+  String get editDefinition => '编辑定义';
+
+  @override
+  String deleteObjects(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '删除 $count 个对象');
+    return '$_temp0';
+  }
+
+  @override
+  String showDriver(String name) {
+    return '显示驱动方：$name';
+  }
+
+  @override
+  String showEnd(String name) {
+    return '显示 $name';
+  }
+
+  @override
+  String replaceDriver(String current, String candidate) {
+    return '用 $candidate 替换 $current';
+  }
+
+  @override
+  String driveWith(String name) {
+    return '由 $name 驱动';
+  }
+
+  @override
+  String noDriverForConcept(String output, String concept) {
+    return '$output 接受 $concept，但当前没有任何关系可以驱动它。';
+  }
+
+  @override
+  String showInInspector(String name) {
+    return '在检查器中显示 $name';
+  }
+
+  @override
+  String get selectAll => '全选';
+
+  @override
+  String get frameAll => '显示全部';
+
+  @override
+  String get windowSelection => '窗口选择';
+
+  @override
+  String get crossingSelection => '交叉选择';
+
+  @override
+  String get activeObject => '当前对象';
+
+  @override
+  String get deleteBlockedDetails => '把它们也选上，或先断开连接。';
+
+  @override
+  String nothingWasDeleted(String reasons) {
+    return '没有删除任何内容：$reasons。';
+  }
+
+  @override
+  String outputsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 个输出');
+    return '$_temp0';
+  }
+
+  @override
+  String othersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 个其他');
+    return '$_temp0';
+  }
+
+  @override
   String get libItem_std_environment_temperature_name => '温度';
 
   @override

@@ -87,6 +87,9 @@ class MacTokens extends ThemeExtension<MacTokens> {
   static MacTokens of(BuildContext context) =>
       Theme.of(context).extension<MacTokens>() ?? MacTokens.light;
 
+  /// One step of the canvas grid: an arrow key nudges a node by it.
+  static const double gridStep = 8;
+
   /// Stable hue per semantic identity: socket and link colour *is* the
   /// nominal type (docs/architecture/studio-ui.md §2).  Golden-angle spacing keeps
   /// neighbouring ids visually distinct.
@@ -119,6 +122,30 @@ class MacTokens extends ThemeExtension<MacTokens> {
   @override
   MacTokens lerp(ThemeExtension<MacTokens>? other, double t) =>
       t < 0.5 ? this : (other as MacTokens);
+}
+
+/// The type scale (docs/architecture/studio-ui.md §3; the HIG macOS table,
+/// trimmed): every text in Studio is one of these roles.  Widgets take the
+/// theme's text styles (`bodyMedium`, `bodySmall`, `titleSmall`, …); the
+/// painters and the few styles built by hand take these numbers.  A fifth
+/// size is a design change, not a local preference.
+abstract final class MacType {
+  /// Fields, rows, buttons, menu rows, values: 13 regular, primary colour.
+  static const double body = 13;
+
+  /// Labels, captions, section titles, socket labels, shortcuts: 11,
+  /// secondary colour (semibold for a section title).
+  static const double secondary = 11;
+
+  /// A state word on a node, a page-bar label, a register mark: 10 medium.
+  static const double caption = 10;
+
+  /// A node's title in the painter: 12.5 semibold (the one optical
+  /// adjustment of the body size, so a header reads as a title at 1×).
+  static const double nodeTitle = 12.5;
+
+  /// Formulas and source text: 13, monospace.
+  static const double code = 13;
 }
 
 /// Sizes shared by chrome and canvas.

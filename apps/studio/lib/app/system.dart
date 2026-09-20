@@ -12,6 +12,7 @@ library;
 import 'dart:ui' show Offset, Rect;
 
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'actions.dart';
@@ -696,9 +697,7 @@ Transition systemReceived(AppState s, pb.SystemView system, {required bool fromR
       );
     }
   }
-  var selection = selectionStillValid(next, next.editor.selection)
-      ? next.editor.selection
-      : const NoSelection();
+  var selection = surviving(next, next.editor.selection);
   // Boxes of groups that no longer exist go with them, and the canvas of
   // a component that is gone (layout only).
   var layouts = next.editor.layouts;
@@ -889,6 +888,21 @@ Transition extractionPreviewFailed(AppState s, int generation, String message) {
 // ---------------------------------------------------------------------------
 // Validity of selections and nodes across pushes
 // ---------------------------------------------------------------------------
+
+/// The selection after a new projection: what still exists.  A selected set
+/// keeps its surviving members (a multi-selection is not lost because one
+/// member was deleted or an analysis arrived); a single selection whose
+/// object is gone clears.
+Selection surviving(AppState s, Selection sel) {
+  if (sel is MultiSelected) {
+    final kept = {
+      for (final n in sel.nodes)
+        if (nodeExists(s, n)) n,
+    };
+    return setEquals(kept, sel.nodes) ? sel : selectionOfNodes(kept, active: sel.active);
+  }
+  return selectionStillValid(s, sel) ? sel : const NoSelection();
+}
 
 bool selectionStillValid(AppState s, Selection sel) {
   final p = s.project;

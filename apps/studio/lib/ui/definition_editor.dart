@@ -218,9 +218,13 @@ class DefinitionEditor extends StatefulWidget {
     this.composer = const ComposerState(),
     this.projection,
     this.concepts = const {},
+    this.focusGeneration = 0,
   });
 
   final int mappingId;
+
+  /// Bumped by *Edit Definition*: the field takes focus once per bump.
+  final int focusGeneration;
 
   /// The IDE service's tokens over the text on screen, and the component
   /// whose body this relationship belongs to (the request's scope).
@@ -270,6 +274,13 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
     _syncText();
     _needProjection();
     if (old.mappingId != widget.mappingId || old.component != widget.component) _needHighlight();
+    if (widget.focusGeneration != old.focusGeneration) _takeFocus();
+  }
+
+  void _takeFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focus.requestFocus();
+    });
   }
 
   /// The text on screen wants its spans: when the field first shows a
@@ -556,7 +567,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
                     m.statusText,
                     key: const ValueKey('definition-status'),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: MacType.secondary,
                       color: m.tone == VerdictTone.none ? t.textSecondary : toneColor,
                     ),
                   ),
@@ -592,7 +603,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
           if (m.committed == null)
             Text(
               context.l10n.addingADefinitionIsARefinementNothing,
-              style: TextStyle(fontSize: 11, color: t.textSecondary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
             )
           else ...[
             Align(
@@ -607,7 +618,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
             const SizedBox(height: MacMetrics.gapTight),
             Text(
               context.l10n.replacingOrDetachingIsAnEditThis,
-              style: TextStyle(fontSize: 11, color: t.textSecondary),
+              style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
             ),
           ],
         ],
@@ -648,7 +659,7 @@ class _ConflictNotice extends StatelessWidget {
               child: Text(
                 context.l10n.thisRelationshipSDefinitionChangedWhileYou,
                 key: const ValueKey('definition-status'),
-                style: TextStyle(fontSize: 11, color: t.open),
+                style: TextStyle(fontSize: MacType.secondary, color: t.open),
               ),
             ),
           ],

@@ -17,6 +17,7 @@ import 'canvas/canvas_geometry.dart' show socketKind;
 import 'canvas/concept_glyphs.dart';
 import 'dialogs.dart';
 import 'mac/controls.dart';
+import 'mac/interactive.dart';
 import 'mac/tokens.dart';
 import 'mac/widgets.dart';
 
@@ -110,7 +111,7 @@ class InstanceInspector extends StatelessWidget {
     final inst = state.instance(id);
     final comp = inst == null ? null : state.component(inst.component.toInt());
     if (inst == null || comp == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final sys = state.system!;
     final others = sys.components.where((c) => c.id != comp.id).toList();
     final realizes = state.systemAnalysis?.components
@@ -137,7 +138,10 @@ class InstanceInspector extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(comp.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                    child: Text(
+                      comp.name,
+                      style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+                    ),
                   ),
                   MacButton(
                     label: context.l10n.editSource,
@@ -152,7 +156,7 @@ class InstanceInspector extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   context.l10n.promiseBrokenOpenSource(comp.name),
-                  style: TextStyle(fontSize: 11, color: t.error),
+                  style: TextStyle(fontSize: MacType.secondary, color: t.error),
                 ),
               ),
             if (others.isNotEmpty)
@@ -279,12 +283,15 @@ class _PortRow extends StatelessWidget {
             Expanded(
               child: Text(
                 '${port.name} · ${portKindWord(port.kind)}',
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             Text(
               status,
-              style: TextStyle(fontSize: 11, color: open ? t.textTertiary : t.textSecondary),
+              style: TextStyle(
+                fontSize: MacType.secondary,
+                color: open ? t.textTertiary : t.textSecondary,
+              ),
             ),
           ],
         ),
@@ -317,7 +324,7 @@ class PortInspector extends StatelessWidget {
     final comp = inst == null ? null : state.component(inst.component.toInt());
     final p = state.port(instance, port);
     if (inst == null || comp == null || p == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final status = portStatusWord(context.l10n, state, instance, port);
     final binding = state.system!.bindings
         .where(
@@ -340,18 +347,21 @@ class PortInspector extends StatelessWidget {
               label: context.l10n.name,
               child: Text(
                 '${inst.name}.${p.name}',
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             FormRow(
               label: context.l10n.promise,
-              child: Text(contractText(p), style: TextStyle(fontSize: 12, color: t.textPrimary)),
+              child: Text(
+                contractText(p),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+              ),
             ),
             FormRow(
               label: context.l10n.timing,
               child: Text(
                 contractTiming(context.l10n, p),
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             FormRow(
@@ -361,7 +371,10 @@ class PortInspector extends StatelessWidget {
                   Expanded(
                     child: Text(
                       impl?.name ?? context.l10n.nothingThePromiseHasNoBacking,
-                      style: TextStyle(fontSize: 12, color: impl == null ? t.error : t.textPrimary),
+                      style: TextStyle(
+                        fontSize: MacType.body,
+                        color: impl == null ? t.error : t.textPrimary,
+                      ),
                     ),
                   ),
                   MacButton(
@@ -413,7 +426,7 @@ class PortInspector extends StatelessWidget {
                           binding.transportInit,
                         )
                       : context.l10n.boundTo(endLabel(state, binding.source)),
-                  style: TextStyle(fontSize: 12, color: t.textPrimary),
+                  style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -459,7 +472,7 @@ class BindingInspector extends StatelessWidget {
     final t = MacTokens.of(context);
     final b = state.binding(id);
     if (b == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final issues = [
       for (final d in state.systemAnalysis?.composition ?? const <pb.Diagnostic>[])
         if (d.technical.contains('binding bind#$id')) d,
@@ -474,14 +487,14 @@ class BindingInspector extends StatelessWidget {
               label: context.l10n.from,
               child: Text(
                 endLabel(state, b.source),
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             FormRow(
               label: context.l10n.to,
               child: Text(
                 endLabel(state, b.destination),
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             FormRow(
@@ -490,7 +503,7 @@ class BindingInspector extends StatelessWidget {
                 b.hasTransportInit()
                     ? context.l10n.carriedAcrossTimingDomains(b.transportInit)
                     : context.l10n.directTheDestinationReadsTheValueAs,
-                style: TextStyle(fontSize: 12, color: t.textPrimary),
+                style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
               ),
             ),
             Text(context.l10n.aBindingConvertsNothingBothEndsCarry, style: small),
@@ -532,7 +545,7 @@ class ComponentInspector extends StatelessWidget {
     final comp = state.component(id);
     final sys = state.system;
     if (comp == null || sys == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final instances = sys.instances.where((i) => i.component == comp.id).toList();
     final realizes = state.systemAnalysis?.components
         .where((c) => c.id == comp.id)
@@ -553,7 +566,10 @@ class ComponentInspector extends StatelessWidget {
               ? null
               : Text(
                   realizes ? context.l10n.keepsItsPromise : context.l10n.promiseBroken,
-                  style: TextStyle(fontSize: 11, color: realizes ? t.textSecondary : t.error),
+                  style: TextStyle(
+                    fontSize: MacType.secondary,
+                    color: realizes ? t.textSecondary : t.error,
+                  ),
                 ),
           children: [
             FormRow(
@@ -722,7 +738,10 @@ class ComponentInspector extends StatelessWidget {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(m.name, style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                          child: Text(
+                            m.name,
+                            style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+                          ),
                         ),
                         MacDropdown<pb.PortKind>(
                           value: null,
@@ -817,7 +836,7 @@ class _ContractEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final id = component.id.toInt();
     final body = component.body;
     final impl = body.mappings.where((m) => m.id == port.decl).firstOrNull;
@@ -852,7 +871,7 @@ class _ContractEditor extends StatelessWidget {
                     : Text(
                         port.name,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: MacType.body,
                           fontWeight: FontWeight.w600,
                           color: t.textPrimary,
                         ),
@@ -864,7 +883,10 @@ class _ContractEditor extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 18, top: 2),
-            child: Text(contractText(port), style: TextStyle(fontSize: 12, color: t.textPrimary)),
+            child: Text(
+              contractText(port),
+              style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+            ),
           ),
           if (!editing)
             Padding(
@@ -949,7 +971,7 @@ class GroupInspector extends StatelessWidget {
     final g = state.group(id);
     final p = state.project;
     if (g == null || p == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final b = state.boundary(id);
     String name(int d) => p.mappings.where((m) => m.id.toInt() == d).firstOrNull?.name ?? '?';
     Widget names(Iterable<int> ids, {String empty = 'none'}) => ids.isEmpty
@@ -961,7 +983,10 @@ class GroupInspector extends StatelessWidget {
               for (final d in ids)
                 InkWell(
                   onTap: () => dispatch(SelectionChanged(MappingSelected(d))),
-                  child: Text(name(d), style: TextStyle(fontSize: 12, color: t.accent)),
+                  child: Text(
+                    name(d),
+                    style: TextStyle(fontSize: MacType.body, color: t.accent),
+                  ),
                 ),
             ],
           );
@@ -1044,7 +1069,10 @@ class GroupInspector extends StatelessWidget {
                     Expanded(
                       child: InkWell(
                         onTap: () => dispatch(SelectionChanged(MappingSelected(m))),
-                        child: Text(name(m), style: TextStyle(fontSize: 12, color: t.textPrimary)),
+                        child: Text(
+                          name(m),
+                          style: TextStyle(fontSize: MacType.body, color: t.textPrimary),
+                        ),
                       ),
                     ),
                     IconButton(
@@ -1151,9 +1179,13 @@ class MultiInspector extends StatelessWidget {
     required this.state,
     required this.nodes,
     required this.dispatch,
+    this.active,
   });
   final AppState state;
   final Set<NodeRef> nodes;
+
+  /// The active object of the set: named first, semibold.
+  final NodeRef? active;
   final void Function(AppAction) dispatch;
 
   @override
@@ -1161,7 +1193,7 @@ class MultiInspector extends StatelessWidget {
     final t = MacTokens.of(context);
     final p = state.project;
     if (p == null) return const SizedBox.shrink();
-    final small = TextStyle(fontSize: 11, color: t.textSecondary);
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
     final mappings = [
       for (final n in nodes)
         if (n.kind == NodeKind.mapping) ?p.mappings.where((m) => m.id.toInt() == n.id).firstOrNull,
@@ -1176,6 +1208,28 @@ class MultiInspector extends StatelessWidget {
     final sameDomain =
         free.length > 1 && domains.length == 1 && mappings.every((m) => m.hasClockId());
     final suggest = free.length > 1 && (related || sameDomain);
+    // What the set is made of: the counts by kind, mixed or not — never a
+    // property of one member shown as if it were everyone's.
+    final concepts = nodes.where((n) => n.kind == NodeKind.concept).length;
+    final outputs = nodes.where((n) => n.kind == NodeKind.output).length;
+    final rest = nodes.length - concepts - mappings.length - outputs;
+    String nameOf(NodeRef n) => switch (n.kind) {
+      NodeKind.concept =>
+        p.concepts.where((c) => c.id.toInt() == n.id).map((c) => c.name).firstOrNull ?? '?',
+      NodeKind.mapping =>
+        p.mappings.where((m) => m.id.toInt() == n.id).map((m) => m.name).firstOrNull ?? '?',
+      NodeKind.output =>
+        p.outputs.where((o) => o.id.toInt() == n.id).map((o) => o.name).firstOrNull ?? '?',
+      NodeKind.instance => state.instance(n.id)?.name ?? '?',
+      NodeKind.group => state.group(n.id)?.name ?? '?',
+    };
+    // The active object first, then the rest in a stable order.
+    final ordered = [
+      if (active != null && nodes.contains(active)) active!,
+      for (final n in nodes)
+        if (n != active) n,
+    ];
+    final _ = others;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1183,20 +1237,33 @@ class MultiInspector extends StatelessWidget {
           title: context.l10n.selectedCount(nodes.length),
           children: [
             Text(
-              context.l10n.selectionSummary(
-                context.l10n.relationshipsCount(mappings.length),
-                others,
-              ),
-              style: TextStyle(fontSize: 12, color: t.textPrimary),
+              [
+                if (concepts > 0) context.l10n.conceptsCount(concepts),
+                if (mappings.isNotEmpty) context.l10n.relationshipsCount(mappings.length),
+                if (outputs > 0) context.l10n.outputsCount(outputs),
+                if (rest > 0) context.l10n.othersCount(rest),
+              ].join(', '),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            for (final m in mappings)
-              Padding(
-                padding: const EdgeInsets.only(top: 3),
-                child: InkWell(
-                  onTap: () => dispatch(SelectionChanged(MappingSelected(m.id.toInt()))),
-                  child: Text(m.name, style: TextStyle(fontSize: 12, color: t.accent)),
-                ),
+            const SizedBox(height: MacMetrics.gapTight),
+            for (final n in ordered)
+              Row(
+                spacing: MacMetrics.gap,
+                children: [
+                  Expanded(
+                    child: MacLink(
+                      label: nameOf(n),
+                      onTap: () => dispatch(SelectionChanged(singleSelection(n))),
+                    ),
+                  ),
+                  if (n == active) Text(context.l10n.activeObject, style: small),
+                ],
               ),
+            const SizedBox(height: MacMetrics.gap),
+            MacButton(
+              label: context.l10n.deleteObjects(nodes.length),
+              onPressed: () => dispatch(const DeleteSelectionRequested()),
+            ),
           ],
         ),
         if (state.isSystem && free.isNotEmpty)
