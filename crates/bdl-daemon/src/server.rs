@@ -1291,7 +1291,11 @@ fn analyze_deployment(session: &Session, r: &pb::AnalyzeDeploymentRequest) -> Re
     let d = bdl_compiler::analyze_deployment(&snapshot, &target);
     let report = bdl_compiler::deployment_report(&snapshot, &analysis, &d, &target);
     Resp::Deployment(pb::DeploymentResponse {
-        deployment: Some(convert::deployment_with_report_to_pb(&d, &report)),
+        deployment: Some(convert::deployment_with_report_to_pb(
+            &d,
+            &report,
+            &snapshot.design,
+        )),
     })
 }
 

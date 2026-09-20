@@ -260,6 +260,7 @@ message EditOp {
     SetDevicePin set_device_pin = 28;
     DeleteDevice delete_device = 29;
     SetConceptOrdered set_concept_ordered = 30;
+    SetDeviceRealization set_device_realization = 31;
   }
 }
 
@@ -397,6 +398,16 @@ message SetDevicePin {
 message DeleteDevice {
   uint64 id = 1;
 }
+// Choose how the device realises its output (0.24): a realization profile
+// from the registry (docs/architecture/output-realization.md), or none.
+// The profile's hardware requirement template becomes the device kind in
+// the same edit, so the two never disagree; manual pin choices are kept
+// when the kind stays the same.
+message SetDeviceRealization {
+  uint64 id = 1;
+  optional string profile_id = 2;
+  DeviceKind kind = 3;
+}
 
 // What a device binding needs from the board is derived from its kind
 // (docs/spec/hardware-model.md); the kind is the whole of what the surface says.
@@ -492,6 +503,9 @@ message DeviceView {
   repeated DevicePin fixed_pins = 5;
   // The requirements this kind implies, for the editor's pin table.
   repeated RequirementLabel requirements = 6;
+  // The realization profile chosen for the output (0.24); absent when the
+  // device only places by kind and no raw command is lowered.
+  optional string realization = 7;
 }
 
 message DevicePin {
@@ -1646,6 +1660,61 @@ message DeploymentAnalysis {
   repeated AssignmentRow rows = 14;
   // When infeasible: the first dead end, named.  Not a minimal core.
   optional Blocker blocker = 15;
+  // One per device bound to an output (0.24): the realization judgment,
+  // target-independent, plus the profiles the output could use.
+  repeated RealizationView realizations = 16;
+}
+
+// How a device's realization of its output stands.  Hardware feasibility is
+// the deployment's `status`; this is the semantic half (encoder well typed,
+// representation fits) — admissible means both halves hold.
+enum RealizationStatus {
+  REALIZATION_STATUS_UNSPECIFIED = 0;
+  // No profile chosen: the device places by kind, no raw command is lowered.
+  REALIZATION_STATUS_NOT_CHOSEN = 1;
+  // The persisted profile id is not in this daemon's registry.
+  REALIZATION_STATUS_UNKNOWN_PROFILE = 2;
+  // The profile's encoder expects a different representation than the
+  // output's concept carries.
+  REALIZATION_STATUS_INCOMPATIBLE = 3;
+  // The encoder is ill typed or not pure (a registry defect; never a
+  // designer's fault).
+  REALIZATION_STATUS_ENCODER_INVALID = 4;
+  // The profile's requirement template differs from the device's kind.
+  REALIZATION_STATUS_KIND_MISMATCH = 5;
+  // Encoder well typed and the representation fits.
+  REALIZATION_STATUS_ENCODING_VALID = 6;
+}
+
+message RealizationView {
+  uint64 device_id = 1;
+  string device_name = 2;
+  optional uint64 output_id = 3;
+  string output_name = 4;
+  optional string profile_id = 5;
+  RealizationStatus status = 6;
+  // The three inspectable judgments behind admissibility.
+  bool encoder_well_formed = 7;
+  bool representation_fits = 8;
+  // Every requirement of this device is placed in `assignment`.
+  bool hardware_placed = 9;
+  string message = 10;
+  string explanation = 11;
+  // Every registry profile, with whether it fits this output's concept.
+  repeated OutputProfileView candidates = 12;
+}
+
+message OutputProfileView {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  // The hardware requirement template the profile needs.
+  DeviceKind kind = 4;
+  // The raw command type, printed.
+  string raw_type = 5;
+  // The encoder's representation, printed.
+  string representation = 6;
+  bool compatible = 7;
 }
 
 enum MissingKind {
@@ -1660,6 +1729,8 @@ enum MissingKind {
   // Deployment configuration (about devices on this target).
   MISSING_KIND_OUTPUT_NO_DEVICE = 7;
   MISSING_KIND_DEVICE_NO_OUTPUT = 8;
+  // The device's chosen realization is unknown, does not fit or is defective (0.24).
+  MISSING_KIND_REALIZATION_INVALID = 9;
 }
 
 message MissingItem {

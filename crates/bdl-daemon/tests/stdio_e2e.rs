@@ -762,7 +762,83 @@ fn outputs_and_deployment_over_stdio() {
     assert_eq!(d.revision, c.last_revision);
     assert_eq!(d.assignment.len(), 2);
     assert_eq!(d.assignment[0].resource, "D3");
-    assert!(d.diagnostics.is_empty());
+    // no realization chosen yet: placed by kind, told so, not blocked
+    let codes: Vec<&str> = d.diagnostics.iter().map(|x| x.code.as_str()).collect();
+    assert_eq!(codes, ["deploy.realization_unspecified"]);
+    assert!(d.deployable);
+    let r = &d.realizations[0];
+    assert_eq!(r.status(), pb::RealizationStatus::NotChosen);
+    assert_eq!(
+        (r.device_name.as_str(), r.output_name.as_str()),
+        ("driver", "motor")
+    );
+    assert!(r.hardware_placed && !r.encoder_well_formed);
+    let fits: Vec<(&str, bool)> = r
+        .candidates
+        .iter()
+        .map(|p| (p.id.as_str(), p.compatible))
+        .collect();
+    assert!(fits.contains(&("hbridge_signed", true)) && fits.contains(&("gpio_level", false)));
+
+    // choosing a realization is one deployment edit: the profile and the
+    // kind it needs land together, the view says the encoding is valid,
+    // and the semantic analysis is what it was
+    let before = match c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) {
+        Resp::Analysis(a) => a.analysis.unwrap(),
+        other => panic!("{other:?}"),
+    };
+    let applied = apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetDeviceRealization(pb::SetDeviceRealization {
+            id: device,
+            profile_id: Some("hbridge_signed".into()),
+            kind: pb::DeviceKind::HBridgeChannel.into(),
+        }),
+    );
+    let dv = &applied.project.unwrap().devices[0];
+    assert_eq!(dv.realization.as_deref(), Some("hbridge_signed"));
+    assert_eq!(dv.kind(), pb::DeviceKind::HBridgeChannel);
+    let d = deploy(&mut c, &mut events, "arduino_nano");
+    assert!(d.diagnostics.is_empty(), "{:?}", d.diagnostics);
+    let r = &d.realizations[0];
+    assert_eq!(r.status(), pb::RealizationStatus::EncodingValid);
+    assert!(r.encoder_well_formed && r.representation_fits && r.hardware_placed);
+    let after = match c.call(Req::RunAnalysis(pb::RunAnalysisRequest {}), &mut events) {
+        Resp::Analysis(a) => a.analysis.unwrap(),
+        other => panic!("{other:?}"),
+    };
+    assert_eq!(after.diagnostics, before.diagnostics);
+    assert_eq!(after.mappings, before.mappings);
+    assert_eq!(after.outputs, before.outputs);
+    // a profile that does not fit is refused as such, and blocks deployment
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetDeviceRealization(pb::SetDeviceRealization {
+            id: device,
+            profile_id: Some("gpio_level".into()),
+            kind: pb::DeviceKind::DigitalOutput.into(),
+        }),
+    );
+    let d = deploy(&mut c, &mut events, "arduino_nano");
+    assert_eq!(
+        d.realizations[0].status(),
+        pb::RealizationStatus::Incompatible
+    );
+    assert!(!d.deployable);
+    assert_eq!(d.missing[0].kind(), pb::MissingKind::RealizationInvalid);
+    assert_eq!(d.diagnostics[0].code, "deploy.realization_incompatible");
+    // back to the H-bridge kind, no profile: as at the start
+    apply(
+        &mut c,
+        &mut events,
+        pb::edit_op::Op::SetDeviceRealization(pb::SetDeviceRealization {
+            id: device,
+            profile_id: None,
+            kind: pb::DeviceKind::HBridgeChannel.into(),
+        }),
+    );
     let Resp::Error(e) = c.call(
         Req::AnalyzeDeployment(pb::AnalyzeDeploymentRequest {
             target_id: "toaster".into(),

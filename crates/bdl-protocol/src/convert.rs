@@ -8,7 +8,7 @@ use crate::pb;
 use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::layout::{Layout, Point};
 use bdl_model::surface::{Definition, DeviceKind, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
 use bdl_output::OutputState;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -298,6 +298,15 @@ pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
                 resource: m.resource.clone(),
             },
             Op::DeleteDevice(m) => EditOp::DeleteDevice { id: device(m.id) },
+            Op::SetDeviceRealization(m) => EditOp::SetDeviceRealization {
+                id: device(m.id),
+                profile: m
+                    .profile_id
+                    .as_ref()
+                    .filter(|p| !p.is_empty())
+                    .map(|p| OutputProfileId(p.clone())),
+                kind: device_kind_from_pb(m.kind())?,
+            },
         },
     )
 }
@@ -451,6 +460,13 @@ pub fn edit_op_to_pb(op: &EditOp) -> pb::EditOp {
             resource: resource.clone(),
         }),
         EditOp::DeleteDevice { id } => Op::DeleteDevice(pb::DeleteDevice { id: id.raw() }),
+        EditOp::SetDeviceRealization { id, profile, kind } => {
+            Op::SetDeviceRealization(pb::SetDeviceRealization {
+                id: id.raw(),
+                profile_id: profile.as_ref().map(|p| p.0.clone()),
+                kind: device_kind_to_pb(*kind).into(),
+            })
+        }
     };
     pb::EditOp { op: Some(o) }
 }
@@ -775,6 +791,7 @@ pub fn design_projection(design: &bdl_model::surface::Design) -> pb::ProjectProj
                 name: d.name.clone(),
                 kind: device_kind_to_pb(d.kind).into(),
                 output_id: d.output.map(|o| o.raw()),
+                realization: d.realization.as_ref().map(|p| p.0.clone()),
                 fixed_pins: d
                     .fixed_pins
                     .iter()
@@ -1111,6 +1128,7 @@ pub fn report_to_pb(r: &bdl_compiler::DeploymentReport) -> pb::DeploymentAnalysi
                 MissingKind::OutputConnectionInvalid => pb::MissingKind::OutputConnectionInvalid,
                 MissingKind::OutputNoDevice => pb::MissingKind::OutputNoDevice,
                 MissingKind::DeviceNoOutput => pb::MissingKind::DeviceNoOutput,
+                MissingKind::RealizationInvalid => pb::MissingKind::RealizationInvalid,
             });
             item
         })
@@ -1182,10 +1200,12 @@ fn deployment_status_to_pb(s: bdl_compiler::DeploymentStatus) -> pb::DeploymentS
     }
 }
 
-/// Both layers: the analysis as computed plus the composed read model.
+/// Both layers: the analysis as computed plus the composed read model,
+/// and the realization judgments named after the design's entities.
 pub fn deployment_with_report_to_pb(
     d: &bdl_compiler::DeploymentAnalysis,
     r: &bdl_compiler::DeploymentReport,
+    design: &bdl_model::surface::Design,
 ) -> pb::DeploymentAnalysis {
     let mut m = deployment_to_pb(d);
     let report = report_to_pb(r);
@@ -1195,7 +1215,71 @@ pub fn deployment_with_report_to_pb(
     m.missing = report.missing;
     m.rows = report.rows;
     m.blocker = report.blocker;
+    m.realizations = realization_views(d, design);
     m
+}
+
+/// One view per device binding: the three judgments, the message the
+/// deployment analysis gave (if any), and every profile with its fit.
+pub fn realization_views(
+    d: &bdl_compiler::DeploymentAnalysis,
+    design: &bdl_model::surface::Design,
+) -> Vec<pb::RealizationView> {
+    use bdl_check::pretty;
+    use bdl_output::realization::RealizationStatus as S;
+    d.realizations
+        .values()
+        .map(|r| {
+            let status = match &r.check.status {
+                S::NotChosen => pb::RealizationStatus::NotChosen,
+                S::UnknownProfile => pb::RealizationStatus::UnknownProfile,
+                S::KindMismatch { .. } => pb::RealizationStatus::KindMismatch,
+                S::EncoderInvalid(_) => pb::RealizationStatus::EncoderInvalid,
+                S::Incompatible(_) => pb::RealizationStatus::Incompatible,
+                S::Valid => pb::RealizationStatus::EncodingValid,
+            };
+            let diagnostic = d.diagnostics.iter().find(|x| {
+                x.code.as_str().starts_with("deploy.realization_")
+                    && x.technical.contains(&format!("device {}", r.device))
+            });
+            pb::RealizationView {
+                device_id: r.device.raw(),
+                device_name: design
+                    .devices
+                    .get(&r.device)
+                    .map(|x| x.name.clone())
+                    .unwrap_or_default(),
+                output_id: r.output.map(|o| o.raw()),
+                output_name: r
+                    .output
+                    .and_then(|o| design.outputs.get(&o))
+                    .map(|o| o.name.clone())
+                    .unwrap_or_default(),
+                profile_id: r.profile.as_ref().map(|p| p.0.clone()),
+                status: status.into(),
+                encoder_well_formed: r.check.encoder_well_formed(),
+                representation_fits: r.check.representation_fits(),
+                hardware_placed: r.hardware_placed,
+                message: diagnostic.map(|x| x.message.clone()).unwrap_or_default(),
+                explanation: diagnostic
+                    .map(|x| x.explanation.clone())
+                    .unwrap_or_default(),
+                candidates: r
+                    .candidates
+                    .iter()
+                    .map(|(p, fit)| pb::OutputProfileView {
+                        id: p.id.0.clone(),
+                        display_name: p.display_name.clone(),
+                        description: p.description.clone(),
+                        kind: device_kind_to_pb(p.kind).into(),
+                        raw_type: pretty::kernel(&p.encoder.raw),
+                        representation: pretty::kernel(&p.encoder.rep),
+                        compatible: fit.unwrap_or(false),
+                    })
+                    .collect(),
+            }
+        })
+        .collect()
 }
 
 fn placement(id: bdl_hardware::RequirementId, r: &bdl_hardware::ResourceId) -> pb::Placement {
@@ -2257,6 +2341,16 @@ mod tests {
                 index: 1,
                 resource: Some("D3".into()),
             },
+            EditOp::SetDeviceRealization {
+                id: device(7),
+                profile: Some(OutputProfileId("pwm_duty8".into())),
+                kind: DeviceKind::PwmChannel,
+            },
+            EditOp::SetDeviceRealization {
+                id: device(7),
+                profile: None,
+                kind: DeviceKind::DigitalOutput,
+            },
             EditOp::DeleteDevice { id: device(7) },
         ];
         for op in ops {
@@ -2610,6 +2704,7 @@ mod tests {
             MissingKind::OutputConnectionInvalid,
             MissingKind::OutputNoDevice,
             MissingKind::DeviceNoOutput,
+            MissingKind::RealizationInvalid,
         ];
         let mut report = DeploymentReport {
             revision: bdl_model::Revision::default(),
@@ -2672,6 +2767,7 @@ mod tests {
                 pb::MissingKind::OutputConnectionInvalid,
                 pb::MissingKind::OutputNoDevice,
                 pb::MissingKind::DeviceNoOutput,
+                pb::MissingKind::RealizationInvalid,
             ]
         );
         assert!(wire_kinds

@@ -386,6 +386,57 @@ class DeploymentStatus extends $pb.ProtobufEnum {
   const DeploymentStatus._(super.value, super.name);
 }
 
+/// How a device's realization of its output stands.  Hardware feasibility is
+/// the deployment's `status`; this is the semantic half (encoder well typed,
+/// representation fits) — admissible means both halves hold.
+class RealizationStatus extends $pb.ProtobufEnum {
+  static const RealizationStatus REALIZATION_STATUS_UNSPECIFIED =
+      RealizationStatus._(0, _omitEnumNames ? '' : 'REALIZATION_STATUS_UNSPECIFIED');
+
+  /// No profile chosen: the device places by kind, no raw command is lowered.
+  static const RealizationStatus REALIZATION_STATUS_NOT_CHOSEN =
+      RealizationStatus._(1, _omitEnumNames ? '' : 'REALIZATION_STATUS_NOT_CHOSEN');
+
+  /// The persisted profile id is not in this daemon's registry.
+  static const RealizationStatus REALIZATION_STATUS_UNKNOWN_PROFILE =
+      RealizationStatus._(2, _omitEnumNames ? '' : 'REALIZATION_STATUS_UNKNOWN_PROFILE');
+
+  /// The profile's encoder expects a different representation than the
+  /// output's concept carries.
+  static const RealizationStatus REALIZATION_STATUS_INCOMPATIBLE =
+      RealizationStatus._(3, _omitEnumNames ? '' : 'REALIZATION_STATUS_INCOMPATIBLE');
+
+  /// The encoder is ill typed or not pure (a registry defect; never a
+  /// designer's fault).
+  static const RealizationStatus REALIZATION_STATUS_ENCODER_INVALID =
+      RealizationStatus._(4, _omitEnumNames ? '' : 'REALIZATION_STATUS_ENCODER_INVALID');
+
+  /// The profile's requirement template differs from the device's kind.
+  static const RealizationStatus REALIZATION_STATUS_KIND_MISMATCH =
+      RealizationStatus._(5, _omitEnumNames ? '' : 'REALIZATION_STATUS_KIND_MISMATCH');
+
+  /// Encoder well typed and the representation fits.
+  static const RealizationStatus REALIZATION_STATUS_ENCODING_VALID =
+      RealizationStatus._(6, _omitEnumNames ? '' : 'REALIZATION_STATUS_ENCODING_VALID');
+
+  static const $core.List<RealizationStatus> values = <RealizationStatus>[
+    REALIZATION_STATUS_UNSPECIFIED,
+    REALIZATION_STATUS_NOT_CHOSEN,
+    REALIZATION_STATUS_UNKNOWN_PROFILE,
+    REALIZATION_STATUS_INCOMPATIBLE,
+    REALIZATION_STATUS_ENCODER_INVALID,
+    REALIZATION_STATUS_KIND_MISMATCH,
+    REALIZATION_STATUS_ENCODING_VALID,
+  ];
+
+  static final $core.List<RealizationStatus?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 6);
+  static RealizationStatus? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const RealizationStatus._(super.value, super.name);
+}
+
 class MissingKind extends $pb.ProtobufEnum {
   static const MissingKind MISSING_KIND_UNSPECIFIED =
       MissingKind._(0, _omitEnumNames ? '' : 'MISSING_KIND_UNSPECIFIED');
@@ -410,6 +461,10 @@ class MissingKind extends $pb.ProtobufEnum {
   static const MissingKind MISSING_KIND_DEVICE_NO_OUTPUT =
       MissingKind._(8, _omitEnumNames ? '' : 'MISSING_KIND_DEVICE_NO_OUTPUT');
 
+  /// The device's chosen realization is unknown, does not fit or is defective (0.24).
+  static const MissingKind MISSING_KIND_REALIZATION_INVALID =
+      MissingKind._(9, _omitEnumNames ? '' : 'MISSING_KIND_REALIZATION_INVALID');
+
   static const $core.List<MissingKind> values = <MissingKind>[
     MISSING_KIND_UNSPECIFIED,
     MISSING_KIND_RELATIONSHIP_NOT_CHECKING,
@@ -420,9 +475,10 @@ class MissingKind extends $pb.ProtobufEnum {
     MISSING_KIND_OUTPUT_CONNECTION_INVALID,
     MISSING_KIND_OUTPUT_NO_DEVICE,
     MISSING_KIND_DEVICE_NO_OUTPUT,
+    MISSING_KIND_REALIZATION_INVALID,
   ];
 
-  static final $core.List<MissingKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 8);
+  static final $core.List<MissingKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 9);
   static MissingKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
