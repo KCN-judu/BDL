@@ -37,19 +37,29 @@ motor.
 2. Name it `pwmLight`. In its kind pop-up choose **PWM channel**. In its output
    pop-up choose **light**.
 
-The verdict changes to **Feasible on Arduino Nano.** and a _Placement on
-arduino_nano_ table shows the one line the lamp needs: `pwmLight`, its _PWM_
-requirement, and the pin it was given, such as `D3`.
+The line about `light` disappears and a _Placement on arduino_nano_ table shows
+the one line the lamp needs: `pwmLight`, its _PWM_ requirement, and the pin it
+was given, such as `D3`. The verdict stays **Fits Arduino Nano so far — the
+binding is not finished.**, and one line remains under it: _tilt has no device
+on Arduino Nano._ The lamp's output is placed; its Source is not.
 
 **What you made.** A deployment configuration for one board. It lives in the
 project with the design, but it is a separate layer: the Design page's verdicts
 did not change when you added the device, and they will not change if you pick
 another board.
 
-![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.](../assets/studio/deploy-page.png)
+**About `tilt`.** A [Source](../concepts/relationships.md) is a value the
+environment provides, and on a board a device has to provide it — the same kind
+of binding as for an output, chosen in the device's pop-up (_tilt — Source_)
+with a **Provider** instead of a Realization. The providers this build has read
+a digital line as on/off; `tilt` is an angle, so nothing fits it yet, and the
+deployment honestly stays _not finished_. That is a state, not an error: the
+design simulates, and the placement of `light` is real.
 
-_The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and
-the placement._
+![The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.](../assets/studio/deploy-page.png)
+
+_The Deploy page: Arduino Nano chosen, one PWM device on light, the placement,
+and the Source still to provide._
 
 ## 4. Make it fail on purpose
 
@@ -61,8 +71,8 @@ type `D4` — a pin that cannot do PWM on the Nano.
 > D4 cannot carry pwmLight PWM on arduino_nano. The pin chosen by hand, D4,
 > cannot carry pwmLight PWM here.
 
-Clear the field: feasible again. Now switch **Target** to **Big board (mock)**:
-feasible there too, on a different pin. Switch back.
+Clear the field: it fits again. Now switch **Target** to **Big board (mock)**:
+it fits there too, on a different pin. Switch back.
 
 **What happened.** Feasibility is a fact about _this design on this board_. The
 board choice is a session preference — it is not saved with the project — and
@@ -86,7 +96,10 @@ hit, which is _a_ conflict, not necessarily the only one.
   Deploy verdict is only about the board; the design itself is not ready. Fix it
   on the Design page first. See
   [Deployment](../troubleshooting/deployment-errors.md).
-- **Not connected to an output: …** — a device with no output chosen.
+- **Not connected to an output or Source: …** — a device with nothing chosen in
+  its pop-up.
+- **… has no device on Arduino Nano.** — a Source no device provides; the
+  deployment stays _not finished_ until one does.
 - **Nothing on Arduino Nano can carry …** — the board has no free pin with that
   capability; try another kind of device, another board, or fewer devices.
 

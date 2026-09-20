@@ -368,10 +368,11 @@
       ],
       "expect": {
         "texts": [
-          "Feasible on Arduino Nano."
+          "Fits Arduino Nano so far — the binding is not finished."
         ],
         "textsContaining": [
-          "pwmLight"
+          "pwmLight",
+          "tilt has no device"
         ]
       },
       "crop": {
@@ -379,9 +380,9 @@
         "maxHeight": 480
       },
       "output": "studio/deploy-page.png",
-      "caption": "The Deploy page: Arduino Nano chosen, one PWM device on light, the verdict and the placement.",
-      "alt": "The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the green verdict Feasible on Arduino Nano; the Devices section with a card named pwmLight of kind PWM channel realising light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3.",
-      "purpose": "A feasible placement, as the page reports it."
+      "caption": "The Deploy page: Arduino Nano chosen, one PWM device on light, the placement, and the Source still to provide.",
+      "alt": "The Deploy page as one column: the Target pop-up showing Arduino Nano with 22 resources; the orange verdict Fits Arduino Nano so far — the binding is not finished; the Devices section with a card named pwmLight of kind PWM channel for light, its Realization pop-up at None — place by kind with the note that no raw command is generated until a profile is chosen, its PWM requirement and an empty pin field; then Placement on arduino_nano with one row: pwmLight, pwmLight PWM, arrow D3; and the information line tilt has no device on Arduino Nano.",
+      "purpose": "A placed output and an unprovided Source, as the page reports them."
     },
     {
       "id": "deploy-dead-end",

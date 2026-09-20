@@ -13,13 +13,67 @@ board.
 channel for a dimmable light, a digital output for a switched load) and choose
 the output in the row. Code: `deploy.output_unrealised` (information).
 
-## _… so far …_ with _Not connected to an output: pwmLight._
+## _… so far …_ with _Not connected to an output or Source: pwmLight._
 
-**What it means.** A device has no output.
+**What it means.** A device is for nothing.
 
-**What to do.** Choose one in the device row, or _Remove_ the device. A sensor
-that feeds the design rather than realising an output may stay unconnected.
-Code: `deploy.device_unbound` (information).
+**What to do.** Choose an output or a Source in the device row's pop-up, or
+_Remove_ the device. Code: `deploy.device_unbound` (information).
+
+## _… so far …_ with _tilt has no device on Arduino Nano._
+
+**What it means.** A Source — a value the environment provides — has no device
+providing it on this board. The design simulates as before; it cannot run on the
+board until one does.
+
+**What to do.** _Add device_, choose _Digital input_ if the Source is on/off,
+choose the Source (_tilt — Source_) in the pop-up and a **Provider**. A Source
+that carries something no provider reads yet (an angle, a temperature) stays
+here; the deployment is _not finished_, not wrong. Code:
+`deploy.source_unprovided` (information).
+
+## _sensor has no provider chosen for tilt._
+
+**What it means.** The device is for the Source but no provider profile is
+chosen: it places on the board by its kind and reads nothing.
+
+**What to do.** Choose a profile in the **Provider** pop-up. Code:
+`deploy.provider_unspecified` (information).
+
+## _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._
+
+**What it means.** The chosen provider produces a different value form than the
+Source carries. This blocks deployment.
+
+**What to do.** Choose a provider marked as fitting, or change the Source's
+concept on the Design page. Code: `deploy.provider_incompatible`.
+
+## _sensor refers to a provider profile this version does not know._
+
+**What it means.** The project names a provider id this build's catalogue does
+not have. The design is unchanged.
+
+**What to do.** Choose an available provider. Code:
+`deploy.provider_unknown_profile`. The same for a realization:
+`deploy.realization_unknown_profile`.
+
+## _sensor provides tilt as `gpio_level_in`, which Arduino Nano cannot read yet._
+
+**What it means.** The provider fits and the line is placed, but this board's
+firmware has no reader for the profile (only the Raspberry Pi Pico reads the
+GPIO input profiles today). The verdict is unaffected; firmware for this board
+is refused.
+
+**What to do.** Choose a board that reads it, or wait. Code:
+`deploy.provider_unsupported` (warning); the firmware's refusal is
+`adapter.provider_unsupported`.
+
+## _sensor and sensor2 both provide tilt._
+
+**What it means.** Two devices are for the same Source; a Source is provided by
+exactly one.
+
+**What to do.** Change one device's pop-up. Code: `deploy.source_contested`.
 
 ## _Not feasible on Arduino Nano._ — _Could not place pwmLight PWM of pwmLight._ — _Nothing on arduino_nano can carry pwmLight PWM._
 

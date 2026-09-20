@@ -20,11 +20,11 @@ _デプロイページ：Arduino Nano を選択、light に PWM デバイス 1 �
 
 ## デバイス
 
-**デバイス**はボード上で 1 つの物理出力を実現します。**デバイスを追加**で行が作られ、そこで次を設定します
+A **device** realises one physical output on the board, or provides one [Source](../../../../docs/user-guide/concepts/relationships.md) to it — one or the other, never both. **Add device** creates a row; in it you set
 
 - **名前**、
-- **種類**——_PWM チャネル_（調光ライト、サーボ信号）、_デジタル出力_（リレー、スイッチ負荷）、_H ブリッジチャネル_（モーター：PWM 線 1 本と方向線 1 本）、_I²C センサー_、_直交エンコーダー_、_UART_、
-- それが実現する**出力**（またはなし）、
+- a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _Digital input_ (a button, a switch), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;
+- what it is **for**: an output it realises, or a Source it provides — the pop-up lists the outputs by name and the Sources as _tilt — Source_ (or _not connected_);
 - その種類の**要件ごとに 1 つのピンフィールド**——空のままにして配置に選ばせるか、ボードのピン名（`D3`、`A4`）を入力して手動で固定します、
 - **削除**。
 
@@ -40,14 +40,22 @@ A realization is deployment data like the kind and the pins: choosing, changing 
 
 デバイスはプロジェクトとともに保存されます。デプロイのデータであって設計のデータではありません。追加、変更、削除しても設計ページの判定は何も変わりません。
 
-[入力元](canvas.md)——環境から与えられる値——にはまだデバイスの割り当てがありません。このページのどの種類も設計に値を与えることはなく、インスペクタの _実現_ 行もそう述べます（_環境から与えられます。デバイスはまだ割り当てられていません。_）。センサー、ボタン、アナログ線を入力元に割り当てるのは配備の仕事で、最初の組み込みプラットフォームとともに来ます。そのとき設計は変わりません。
+### Provider
+
+A device that is for a Source shows a **Provider** pop-up instead: how the device's reading becomes the value the Source carries. The choices are the catalogue's input profiles, the ones that fit the Source first, the others marked _— does not fit_, and _None — place by kind_. Today there are two, both reading a digital line as on/off: _GPIO input, active high_ (the line high is _on_) and _GPIO input, active low_ (the line low is _on_; a button to ground). Choosing one also sets the device's kind to what the profile needs.
+
+Beside the pop-up: the raw reading type (_raw reading bool_), and four checks — **transducer** (the profile's conversion is a well-typed pure function), **fits** (it produces exactly what this Source carries), **placed** (the board has the line), **readable** (this board's firmware can read the profile) — with the sentence that says which fails: _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._ A failing provider blocks deployment until changed; a missing one does not. _Readable_ failing is different: the design and the placement are fine, but this board's firmware has no reader for the profile yet (the Arduino Nano reads none; the Raspberry Pi Pico reads both) — the placement stands and the firmware is refused by name.
+
+A Source no device provides keeps the verdict at _so far_ with the line _tilt has no device on Arduino Nano._ — a state, like an output without a device. Every project written before providers existed reads this way until a device is bound; nothing in the design changes when one is.
+
+The inspector's _Realization_ row for a Source shows the same fact for the board chosen here: _Provided by the environment; no device on Raspberry Pi Pico yet._, _Provided by sensor on Raspberry Pi Pico._, or _Provided by sensor as GPIO input, active low on Raspberry Pi Pico._; with no board chosen it says _Provided by the environment; no device is bound yet._
 
 ## 判定
 
 | 判定 | 意味 |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Arduino Nano に配置可能です。** | すべてのデバイスの要件が、適切な能力を持つ互いに異なるピンに配置された。_… 上の配置_ 表がデバイス · 要件 · → ピンを列挙する |
-| **今のところ Arduino Nano に収まります — バインディングは未完了です。** | バインド済みの部分は収まるが、デバイスのない出力（_… 上に対応するデバイスがありません：…_）か出力のないデバイス（_出力に接続されていません：…_）がある |
+| **今のところ Arduino Nano に収まります — バインディングは未完了です。** | what is bound fits, but an output has no device (_No device on … for: …_), a Source has no device (_… has no device on Arduino Nano._) or a device nothing (_Not connected to an output or Source: …_) |
 | **Arduino Nano には配置できません。** | ある要件が配置できなかった。赤い箱がそれと理由を示す——_arduino_nano 上に pwmLight の PWM を担えるものがありません。_（能力を持つピンがない）、_arduino_nano 上で D4 は pwmLight の PWM を担えません。_ と _手動で選んだピン D4 は、ここでは … を担えません。_（手動で固定したピン）、あるいはそれを阻むピンとそれぞれを占めているもの。_行き止まりの前に配置済み：_ は配置されたものを列挙する |
 
 判定はボードについてだけです。**設計**自体の準備——すべての関係が検査を通り、瞬時サイクルがなく、すべての必須出力が駆動されている——は設計ページの仕事で、ここでは繰り返しません。数式が間違った設計でも _配置可能_ にはなりえ、このページにいる間も下部のステータス行は _瞬時サイクルあり_ や _出力が未完了_ を表示し続けます。何かが動くには両方が成り立つ必要があります。

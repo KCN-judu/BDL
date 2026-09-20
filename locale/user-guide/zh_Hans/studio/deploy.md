@@ -20,11 +20,11 @@ _部署页：选中 Arduino Nano，light 上有一个 PWM 设备，以及结论�
 
 ## 设备
 
-**设备**在板子上实现一个物理输出。**添加设备**创建一行；在其中你设置
+A **device** realises one physical output on the board, or provides one [Source](../../../../docs/user-guide/concepts/relationships.md) to it — one or the other, never both. **Add device** creates a row; in it you set
 
 - 一个**名称**；
-- 一个**种类**——_PWM 通道_（可调光灯、舵机信号）、_数字输出_（继电器、开关负载）、_H 桥通道_（电机：一条 PWM 线加一条方向线）、_I²C 传感器_、_正交编码器_、_UART_；
-- 它实现的**输出**（或者无）；
+- a **kind** — _PWM channel_ (a dimmable light, a servo signal), _Digital output_ (a relay, a switched load), _Digital input_ (a button, a switch), _H-bridge channel_ (a motor: one PWM line plus one direction line), _I²C sensor_, _Quadrature encoder_, _UART_;
+- what it is **for**: an output it realises, or a Source it provides — the pop-up lists the outputs by name and the Sources as _tilt — Source_ (or _not connected_);
 - 该种类的每个需求一个**引脚栏**——留空让布置自行选择，或输入板子引脚名（`D3`、`A4`）手动固定；
 - **移除**。
 
@@ -40,14 +40,22 @@ A realization is deployment data like the kind and the pins: choosing, changing 
 
 设备随项目保存。它们是部署数据，不是设计数据：添加、更改或移除设备不会改变设计页的任何结论。
 
-[来源](canvas.md)——由环境提供的值——还没有设备绑定：本页上没有任何种类会向设计供值，检查器的 _实现_ 一行也这样说明（_由环境提供；尚未绑定设备。_）。把传感器、按钮或模拟线路绑定到来源是部署工作，会随第一个嵌入式平台到来；到那时设计也不会改变。
+### Provider
+
+A device that is for a Source shows a **Provider** pop-up instead: how the device's reading becomes the value the Source carries. The choices are the catalogue's input profiles, the ones that fit the Source first, the others marked _— does not fit_, and _None — place by kind_. Today there are two, both reading a digital line as on/off: _GPIO input, active high_ (the line high is _on_) and _GPIO input, active low_ (the line low is _on_; a button to ground). Choosing one also sets the device's kind to what the profile needs.
+
+Beside the pop-up: the raw reading type (_raw reading bool_), and four checks — **transducer** (the profile's conversion is a well-typed pure function), **fits** (it produces exactly what this Source carries), **placed** (the board has the line), **readable** (this board's firmware can read the profile) — with the sentence that says which fails: _sensor cannot provide tilt with `gpio_level_in`: the Source carries q[1] but the profile reads bool._ A failing provider blocks deployment until changed; a missing one does not. _Readable_ failing is different: the design and the placement are fine, but this board's firmware has no reader for the profile yet (the Arduino Nano reads none; the Raspberry Pi Pico reads both) — the placement stands and the firmware is refused by name.
+
+A Source no device provides keeps the verdict at _so far_ with the line _tilt has no device on Arduino Nano._ — a state, like an output without a device. Every project written before providers existed reads this way until a device is bound; nothing in the design changes when one is.
+
+The inspector's _Realization_ row for a Source shows the same fact for the board chosen here: _Provided by the environment; no device on Raspberry Pi Pico yet._, _Provided by sensor on Raspberry Pi Pico._, or _Provided by sensor as GPIO input, active low on Raspberry Pi Pico._; with no board chosen it says _Provided by the environment; no device is bound yet._
 
 ## 结论
 
 | 结论 | 含义 |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **可部署到 Arduino Nano。** | 每个设备的需求都被放到了具备相应能力的、互不相同的引脚上；_… 上的布置_ 表格列出设备 · 需求 · → 引脚 |
-| **目前能放进 Arduino Nano——绑定尚未完成。** | 已绑定的部分能放下，但某个输出没有设备（_… 上没有对应的设备：…_）或某个设备没有输出（_未连接到输出：…_） |
+| **目前能放进 Arduino Nano——绑定尚未完成。** | what is bound fits, but an output has no device (_No device on … for: …_), a Source has no device (_… has no device on Arduino Nano._) or a device nothing (_Not connected to an output or Source: …_) |
 | **无法部署到 Arduino Nano。** | 某个需求无法布置；红框指出它和原因——_arduino_nano 上没有东西能承载 pwmLight 的 PWM。_（没有引脚具备该能力）、_在 arduino_nano 上 D4 无法承载 pwmLight 的 PWM。_ 加上 _手动选择的引脚 D4 在这里无法承载 …_（手动固定的引脚），或者阻塞它的引脚及各自被占用的原因；_死路之前已布置：_ 列出已布置的内容 |
 
 结论只关乎板子。**设计**本身是否就绪——每个关系通过检查、没有瞬时环路、每个必需输出都被驱动——是设计页的事，这里不再重述：公式错误的设计仍然可以 _可部署_，而你在本页时底部状态行仍会显示 _存在瞬时环路_ 或 _输出未完成_。两者都成立，才谈得上运行。
