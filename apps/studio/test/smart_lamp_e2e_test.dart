@@ -116,10 +116,9 @@ void main() {
       s = await store.until((s) => s.editor.deploy.analysis != null);
       final d = s.editor.deploy.analysis!;
       expect(d.status, pb.DeploymentStatus.DEPLOYMENT_STATUS_INCOMPLETE);
-      expect(
-        d.provisions.map((p) => p.status).toSet(),
-        {pb.ProvisionStatus.PROVISION_STATUS_NO_DEVICE},
-      );
+      expect(d.provisions.map((p) => p.status).toSet(), {
+        pb.ProvisionStatus.PROVISION_STATUS_NO_DEVICE,
+      });
       expect(d.provisions.map((p) => p.sourceName).toSet(), {'tilt', 'ambient'});
       expect(d.assignment.single.deviceId.toInt(), s.project!.devices.single.id.toInt());
       expect(d.assignment.single.resource, isNotEmpty);
