@@ -212,10 +212,16 @@ header word precedence is `Source` › `declared` › port word › sink state �
   meaning). Never red. A relationship with no reads and no definition is a
   Source (above), not declared.
 - **Links** are cubic Béziers from an output socket (right edge) to an input
-  socket (left edge), tangents horizontal, colour of the concept, 2 px, selected
-  links thicker. Data flows left → right. These are the **signature edges**:
-  concept → a relationship that reads it, relationship → the concept it
-  produces, value → the sink it drives — the interface, and what dragging edits.
+  socket (left edge), tangents horizontal, colour of the concept, 2 px. Hovered:
+  a soft halo of the same colour under the same stroke and the hand cursor —
+  interactive, nothing more. Selected: the accent, 3 px, and a ring at each end
+  (a shape, not only a hue); a binding's selection has looked like this all
+  along. Data flows left → right. These are the **signature edges**: concept → a
+  relationship that reads it, relationship → the concept it produces, value →
+  the sink it drives — the interface, and what dragging edits. The hit area is
+  eight screen pixels from the stroke at every zoom (`linkTolerance`: `8 / zoom`
+  scene units, never under 6 nor over 32), the nearest edge within it wins
+  (`nearestLink`), and the stroke itself never widens for it.
 - **Reference edges** (ADR-0034) are the kernel's `dependsOn`: from the output
   socket of every relationship a definition names into the **formula line** of
   the relationship naming it — the left end of its definition region, not a
@@ -272,22 +278,28 @@ rectangle, and used ⇧ where every other desktop tool uses ⌘.
 | mouse wheel · pinch · ⌘ + trackpad scroll                       | zoom about the pointer (0.25–3×)                                                                                                                                                                        |
 | drag from output socket to input socket                         | make link (adds the concept to the mapping's reads, sets the mapping's output, drives the sink); every socket the link could land on wears a halo, an incompatible one the forbidden cursor             |
 | drag a **concept**'s value socket onto a **sink** accepting it  | Concept → Output (below): the relationship that can drive the sink connects                                                                                                                             |
-| drag from a connected input socket away, release on empty space | disconnect                                                                                                                                                                                              |
+| drag from a connected input socket away, release on empty space | disconnect — the one `DisconnectLinkRequested` path (below)                                                                                                                                             |
+| hover an edge                                                   | the hand cursor and a halo; no icon, no selection change                                                                                                                                                |
+| click an edge                                                   | select it (`LinkSelected`, by its ends; a binding: `BindingSelected`); the inspector says what it joins; the selection persists like a node's                                                           |
+| hover the selected edge / node / group                          | its contextual affordance appears beside it (below); it stays while the pointer crosses to an icon                                                                                                      |
+| ⌫ / Delete on a selected edge                                   | disconnect it, when the model can (a read, a drive, a binding); otherwise nothing                                                                                                                       |
+| menu key · ⇧F10                                                 | the contextual menu of the selection, where the affordance's menu icon would open it                                                                                                                    |
 | drop a new link on empty space                                  | discard (no auto-create)                                                                                                                                                                                |
 | ⌫ / Delete                                                      | delete the selection — a set as one checked plan (below); a concept in use → banner: "_Tilt_ is used by _dimByTilt_"                                                                                    |
 | ⌘A                                                              | select every visible node of the canvas on screen (a collapsed group is its box; hidden members, links and reference edges are not nodes)                                                               |
 | Esc                                                             | the innermost thing first: a submenu, a menu, a gesture in progress (nothing is committed), then the selection                                                                                          |
 | ← → ↑ ↓                                                         | nudge the selected set one grid step (8 pt); ⇧: one point                                                                                                                                               |
-| Home / ⌘0                                                       | frame all                                                                                                                                                                                               |
+| Home / ⌘0                                                       | frame all (the canvas also frames once, by itself, after an arrangement — never on the designer's own moves)                                                                                            |
 | double-click node header                                        | rename inline (an instance: open its source)                                                                                                                                                            |
 | right-click · Control-click (macOS)                             | the contextual menu for what is under the pointer (below)                                                                                                                                               |
 | drop a Library row                                              | a Concept item: insert the concept at the drop point; a Source preset: open the Source sheet                                                                                                            |
 
 Cursors: precise over a socket and during a marquee; forbidden over a socket the
 link cannot reach; move while nodes are dragged; grab while Space is held,
-grabbing while panning; the arrow otherwise. Shortcuts fire only while the
-canvas itself has the keyboard: a text field inside it (the inline rename) or
-beside it (the Code view, the formula editor, a sheet) keeps every key.
+grabbing while panning; the hand over an edge; the arrow otherwise. Shortcuts
+fire only while the canvas itself has the keyboard: a text field inside it (the
+inline rename) or beside it (the Code view, the formula editor, a sheet) keeps
+every key.
 
 **Selected and active.** A selection is a _set_ of canvas nodes and, among them,
 the _active_ object (`MultiSelected.nodes`, `.active`; a single selection is its
@@ -342,6 +354,68 @@ true; routing the drive through the concept would say the concept drives, which
 is false. Its inspector, its contextual menu (_Show Driver: brightness_) and the
 socket's halo make the driver legible from the concept's side.
 
+### Edges as objects and the contextual affordance
+
+The interaction hierarchy of every canvas object is one ladder, and an edge
+climbs it like a node: **hover** reveals that a thing is interactive (a cursor,
+a subtle highlight — never an icon, never a change of selection); **click**
+selects it, and the selection persists and is told by shape as well as colour;
+**selected + hover** shows the object's **contextual affordance**;
+**right-click** opens the contextual menu directly, selecting the object first
+as a click would; the **keyboard** reaches everything the icons do (⌫ / Delete,
+the menu key, ⇧F10). Nothing depends on hover: every command is in the menu, the
+inspector or on a key.
+
+The affordance (`ui/canvas/canvas_affordance.dart`,
+`CanvasAffordance {owner, actions, anchor, alignment}`) is one widget for edges,
+nodes and groups: a compact row of 22 pt icon buttons on a content-coloured
+card, fixed in pixels whatever the zoom (it is chrome, not a thing on the
+canvas), at a deterministic anchor — an edge's midpoint, centred above it; a
+node's or a group's top-right corner, ending at it. Its actions are, in this
+order, the object's **menu icon** (`more_horiz`, _Connection menu_ / _Node menu_
+/ _Group menu_ — it opens the very same `MenuContext` the right-click builds,
+under the row) and then the object's own quick actions, only those its menu
+already has:
+
+| Owner                                              | Icons                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| a read or a drive edge                             | menu · **× Disconnect**                                                                                    |
+| a binding                                          | menu · **× Disconnect** (`UnbindRequested`)                                                                |
+| a produce edge; a collapsed group's aggregate edge | menu only — no × (ISS-0020, below)                                                                         |
+| a node (one selected)                              | menu · **× Delete _name_** (`DeleteSelectionRequested`; not on a port-backed relationship, as in its menu) |
+| a group (band or box)                              | menu · **Collapse / Expand**                                                                               |
+| a selected set; an instance's port; a socket       | none — the strongest cases only; a set's commands are in its menu, a port's in its inspector               |
+
+It shows only while its owner is selected **and** hovered (or the pointer is on
+the row itself: the owner's hit area and the row, inflated by 12 pt, are one
+hover region, so the pointer crosses from the stroke to the icon without losing
+it), and never while a menu is open, a gesture is under way or a name is being
+edited; it goes when the pointer leaves both, when the selection changes, when
+the owner disappears. Every icon carries its name as tooltip and accessibility
+label (`Tooltip`, `Semantics(button, label)`); a destructive icon is drawn in
+the secondary text colour and takes the error tone only while hovered — a
+warning at the moment of choice, never the dominant thing on the canvas. The
+canvas ignores a press inside the row (`_affordanceRect`), so an icon's tap is
+never also a click on what lies under it.
+
+**One disconnect.** `DisconnectLinkRequested(LinkId)` is the single semantic
+path behind the link menu's _Disconnect_, the ×, the inspector's button, ⌫ /
+Delete on a selected edge and the drag-away: a relationship's read becomes
+`UnlinkMappingInput`, a sink's driver `SetMappingDrive` to none, and the
+selection goes with the edge. `LinkId.disconnectable` says which edges the model
+can take away alone; the reducer refuses the rest, the menu offers no item for
+them (nothing greyed, nothing implied) and the affordance no ×.
+
+**Frozen while ISS-0020 is open.** Whether a concept has one producer or several
+is under formal audit. Until it concludes the Concept ↔ Mapping topology and the
+Mapping → Output drive projection stay exactly as drawn today, every producer's
+edge is drawn (`lit → Lit` beside `lit → lamp`; never `lit → Lit → lamp`), no
+producer marker, sequencing or count is shown, and no edge into a concept gets a
+destructive action. `LinkSelected` names an edge by its ends
+(`LinkId {from, to, concept, index}`), which is stable across revisions and
+needs no edge identity from the model; when the edge is no longer drawn (an edit
+made elsewhere), the canvas clears the selection.
+
 ### Contextual menus
 
 A contextual menu is a **modal input state** of the canvas: while one is open,
@@ -366,17 +440,17 @@ stable groups in a fixed order — the object's primary command, IDE navigation,
 the service's fixes, structure, the destructive command — and each item is
 present only when its command exists for that object today:
 
-| Context                          | Items                                                                                                                                                                                                                                                     |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| empty canvas                     | Add Concept ▸ (Recent, the four value forms, Quantities ▸, a third-party library's groups, More…) · Add Source ▸ (New Source…, a third-party library's presets) · Add Instance ▸ (system canvas) · New Behavior Group — then Select All ⌘A · Frame All ⌘0 |
-| relationship — a rule or a value | Edit Definition · Show Formula / Hide Formula (when defined) · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                       |
-| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port)                                          |
-| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                                                           |
-| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                                                               |
-| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                                                                     |
-| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                                                                 |
-| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect                                                                                                                                                                                           |
-| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                                                            |
+| Context                          | Items                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| empty canvas                     | Add Concept ▸ (Recent, the four value forms, Quantities ▸, a third-party library's groups, More…) · Add Source ▸ (New Source…, a third-party library's presets) · Add Instance ▸ (system canvas) · New Behavior Group — Select All ⌘A · Frame All ⌘0 — Arrange Automatically · Undo Arrange (enabled while a layout from before the last arrangement is kept) |
+| relationship — a rule or a value | Edit Definition · Show Formula / Hide Formula (when defined) · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                                                                                                                           |
+| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port)                                                                                                                                              |
+| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                                                                                                                                                               |
+| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                                                                                                                                                                   |
+| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                                                                                                                                                                         |
+| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                                                                                                                                                                     |
+| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect (a binding, a read, a drive; a produce edge and a collapsed group's edge have no item — ISS-0020). A right-click selects the edge first, as it selects a node                                                                                                                                 |
+| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                                                                                                                                                                |
 
 **Fix ▸** is the IDE service's own list for the object — the one the reducer
 asks for on every selection (`ListSemanticActions`, `EditorState.actions`) and
@@ -410,8 +484,17 @@ Muting nodes (M) has no BDL meaning and is not offered. Deferred, recorded in
 `docs/changes/unreleased/2026-09-studio-interaction.md`: align and distribute, a
 snap policy, auto-pan at the viewport's edge during a long drag, zoom to
 selection, duplicate and copy/paste, a lasso, keyboard navigation between nodes,
-a whole-graph relayout, selection filters, Find References, a multi-delete
-transaction.
+selection filters, Find References, a multi-delete transaction. The whole-graph
+relayout is built: _Arrange Automatically_ (`AutoLayoutRequested` →
+`ArrangeLayout` → the daemon's `ArrangeLayout` request, protocol 0.29 →
+`ArrangedLayoutReceived`: one `SetLayout`, the layout from before kept in
+`EditorState.layoutBefore` for _Undo Arrange_, `frameRequest` bumped so the
+canvas frames the whole design once; the designer's viewports untouched; no
+revision). The arrangement itself is `bdl-layout::arrange_with` (ADR-0023 §7):
+ranks by longest path over signature, drive, binding and reference edges, orders
+each column by barycentre, one column per rank, no overlap — the same routine
+the daemon runs on a first open with no positions anywhere; a partial layout
+gets `place_missing` only, a complete one is preserved.
 
 ### What the canvas never means
 

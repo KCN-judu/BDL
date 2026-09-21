@@ -89,33 +89,50 @@ A project that composes components also shows **instance nodes** (one row per
 port, the component's name in the body) and **behavior regions** or collapsed
 **behavior boxes**; see [System projects](system-projects.md).
 
-Every node has a place. A node you did not place — one made in the Code view, in
-a code editor, or by an older project's first open — is placed for you: in the
-column of its kind (concepts left, relationships in the middle, outputs right),
-beside what it reads or produces, below anything already there. Nothing you
-placed moves; drag it where you like ([Design, Code and Split](code-view.md)).
+Every node has a place. A project that has never been laid out — a hand-written
+one, a template, a demo — opens **arranged**: what reads comes after what it
+reads, left to right, in columns, nothing overlapping; the arrangement is saved
+as the project's layout. A node you did not place in a project that has a layout
+— one made in the Code view, in a code editor — is placed for you in the column
+of its kind, beside what it reads or produces, below anything already there.
+Nothing you placed moves; drag it where you like
+([Design, Code and Split](code-view.md)). To lay the whole design out again,
+choose **Arrange Automatically** from the canvas menu; **Undo Arrange** puts it
+back the way it was, until your next move. Arranging changes the layout only —
+never the design.
 
 ## Selecting
 
 The canvas selects the way desktop CAD tools do.
 
-| Do                                          | Result                                                                                                                                                |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| click a node                                | select it alone (the inspector follows); clicking a node that is already part of a selection keeps the selection and makes it the active one          |
-| click empty canvas                          | clear the selection                                                                                                                                   |
-| ⌘-click (Ctrl-click on Windows and Linux)   | add a node to the selection, or remove one that is in it                                                                                              |
-| ⇧-click                                     | select the chain of connections from the active node to this one — when there is exactly one; otherwise the node is added on its own                  |
-| drag on empty canvas from **left to right** | a **window**: every node wholly inside the rectangle is selected (solid outline)                                                                      |
-| drag on empty canvas from **right to left** | a **crossing**: every node inside _or touched_ by the rectangle is selected (dashed outline); up or down makes no difference                          |
-| ⌘-drag / ⇧-drag a rectangle                 | add the rectangle's nodes to the selection / remove them from it (a `+` or `−` beside the pointer); the nodes show what will happen before you let go |
-| ⌘A                                          | select every node in view                                                                                                                             |
-| Esc                                         | cancel what is in progress — a rectangle, a move, a link; with nothing in progress, clear the selection                                               |
+| Do                                          | Result                                                                                                                                                      |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| click a node                                | select it alone (the inspector follows); clicking a node that is already part of a selection keeps the selection and makes it the active one                |
+| click a link                                | select it: the inspector names its two ends and what the link means (_brightness drives light_, _dimByTilt reads Tilt_); a binding is selected the same way |
+| click empty canvas                          | clear the selection                                                                                                                                         |
+| ⌘-click (Ctrl-click on Windows and Linux)   | add a node to the selection, or remove one that is in it                                                                                                    |
+| ⇧-click                                     | select the chain of connections from the active node to this one — when there is exactly one; otherwise the node is added on its own                        |
+| drag on empty canvas from **left to right** | a **window**: every node wholly inside the rectangle is selected (solid outline)                                                                            |
+| drag on empty canvas from **right to left** | a **crossing**: every node inside _or touched_ by the rectangle is selected (dashed outline); up or down makes no difference                                |
+| ⌘-drag / ⇧-drag a rectangle                 | add the rectangle's nodes to the selection / remove them from it (a `+` or `−` beside the pointer); the nodes show what will happen before you let go       |
+| ⌘A                                          | select every node in view                                                                                                                                   |
+| Esc                                         | cancel what is in progress — a rectangle, a move, a link; with nothing in progress, clear the selection                                                     |
 
 The selected nodes are outlined in the accent colour; when several are selected
 the _active_ one — the one you clicked last, the one the inspector shows first —
-wears a second ring around it. The Project sidebar selects the same way: a click
-for one row, ⌘-click to add or remove, ⇧-click for every row between the active
-one and it.
+wears a second ring around it. A link under the pointer shows a soft glow and
+the hand cursor; a selected link is drawn in the accent colour with a ring at
+each end. The Project sidebar selects the same way: a click for one row, ⌘-click
+to add or remove, ⇧-click for every row between the active one and it.
+
+**The quick actions.** Point at the selected object — a link, a node, a behavior
+— and a small row of icons appears beside it: **⋯** opens the same menu a
+right-click does, and beside it the object's own action — **× Disconnect** on a
+link that can be disconnected, **× Delete** on a node, **Collapse** / **Expand**
+on a behavior. Hover over an icon for its name. The row stays while you move
+from the object to the icons and goes when you leave them, change the selection
+or open a menu. Nothing needs the mouse: ⌫ / Delete disconnects a selected link,
+and the menu key (or ⇧F10) opens the selected object's menu.
 
 ## Moving and looking around
 
@@ -135,7 +152,7 @@ one and it.
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | drag from an output socket to an input socket                         | make a link; while dragging, every socket that can accept it shows a halo, an incompatible socket the forbidden cursor                                     |
 | drag a **concept**'s output socket onto an **output** that accepts it | connect the relationship that provides the concept as the output's driver (below)                                                                          |
-| drag from a connected input socket away, release on empty canvas      | disconnect                                                                                                                                                 |
+| drag from a connected input socket away, release on empty canvas      | disconnect — the same as **×**, **Disconnect** in the link's menu, the inspector's button, or ⌫ on the selected link                                       |
 | drop a dragged link on empty canvas                                   | nothing (no node is created)                                                                                                                               |
 | ⌫ / Delete                                                            | delete the selection — several objects at once; if one of them is still used by something outside the selection, nothing is deleted and a banner says what |
 | double-click a concept or relationship node                           | rename in place (an output is renamed in the inspector; an instance opens its source)                                                                      |
@@ -172,7 +189,8 @@ On **empty canvas**: **Add Concept ▸** — _Recent_, the four kinds of value (
 Source ▸** — _New source…_, opening the [Source sheet](library.md#sources),
 where you choose the concept the Source provides — an existing one, or a new one
 made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then
-**Select All** and **Frame All**.
+**Select All** and **Frame All**; then **Arrange Automatically** and **Undo
+Arrange** (see [The nodes](#the-nodes)).
 
 On a **relationship**: **Edit Definition** (not for a Source — the environment
 provides its value), **Show Formula** / **Hide Formula** (when it has one),
@@ -186,7 +204,11 @@ On a **concept**: **Rename**, **Reveal in Code**, **Fix ▸**, **Delete _name_**
 On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix
 ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**:
 **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding**
-for a binding between components). On an **instance**: **Edit Source**,
+for a binding between components). A right-click selects the link first, as it
+selects a node. **Disconnect** is offered where the design can lose that one
+link: a relationship's read, an output's driver, a binding. The link from a
+relationship to the concept it produces has none — it is the relationship's
+output, and the inspector says so. On an **instance**: **Edit Source**,
 **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**:
 **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**,
 **Ungroup**.

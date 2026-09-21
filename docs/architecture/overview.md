@@ -75,7 +75,7 @@ crates/
   bdl-compiler     analyze(snapshot) → ProjectAnalysis; analyze_deployment(snapshot, target) → DeploymentAnalysis; compile(snapshot, options) → CompileArtifact; compile_for_target(snapshot, target, …) adds the adapter plan (→ elab, check, reactive, output, hardware, lower, codegen)
   bdl-system       behaviour systems: components · instances · bindings · freshening · flatten → ProjectSnapshot + origins · analyze_system = flatten + analyze · packaging · legacy system JSON reader (→ model, compiler)
   bdl-text         the project's persistence: source discovery · identity sidecar and reconciliation · load_workspace → BehaviorSystem · item-level write-back · legacy JSON migration · names are identifiers (→ model, system, syntax)
-  bdl-layout       the layout service: deterministic, incremental placement of entities without a position; never semantics (→ model, system)
+  bdl-layout       the layout service: deterministic placement of entities without a position (place_missing) and the whole-graph arrangement (arrange_with); never semantics (→ model, system)
   bdl-library      the Standard Library: items (Concept items, Source presets) from library/std/concepts.toml · plan (a fragment as ordered edits) · rank (candidate concepts for a preset) · search · multi-library set; schema 1–2 (→ model, elab)
   bdl-ide-db       IDE ground state: IdeHost · overlays · EntityRef/EntityRole · projections (text, visual) · index · immutable stamped AnalysisSnapshot · cancellation (→ compiler, syntax, elab)
   bdl-ide          semantic IDE queries over a snapshot: diagnostics · navigation (one answer to what is at a position: hover, definition, references, an equation's words) · explain · completion (incl. library items) · rename · actions · edit plans · invalidation preview · symbols · semantic tokens (one classifier) · formula projection/slot/compose · draft verdict · format (→ ide-db, library)
@@ -140,9 +140,14 @@ open project:
   the committed project stays and the draft is held with the loader's faults
   (ADR-0023 §5) — malformed text never erases the graph;
 - layout never enters the model: moving a node changes the layout file and no
-  revision; the layout service (`bdl-layout`) places exactly the entities that
-  have no position, on open (persisted) and on every commit, deterministically
-  and without moving anything placed. Studio arranges nothing at render time.
+  revision; the layout service (`bdl-layout`) runs on open and on every commit,
+  deterministically — a project with no position anywhere is arranged as a whole
+  (`arrange_with`: ranks over signature, drive, binding and reference edges,
+  columns by rank, no overlap) and the arrangement saved; one with some
+  positions gets only its gaps filled (`place_missing`) and nothing placed
+  moves; a complete layout is preserved. A whole-graph rearrangement is answered
+  on request (`ArrangeLayout`, protocol 0.29) and applied by Studio as one
+  layout write. Studio arranges nothing at render time.
 
 ## The generated core is an implementation of the reference evaluator
 

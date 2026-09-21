@@ -156,7 +156,9 @@ each of its questions was answered is in the
   modifiers, `zip`'s cost in the core, the compiler's diagnostic sentences in
   one language, output realization beyond a pure encoder (ISS-0017), the input
   half beyond one line read once per tick (ISS-0018), a concept's display unit
-  (ISS-0019); one proposal (PRP-0001, Source provision by device profile —
+  (ISS-0019), a concept's producers and what an edge into it may do — the
+  canvas's edge projection is frozen until the formal audit concludes
+  (ISS-0020); one proposal (PRP-0001, Source provision by device profile —
   consumed by ADR-0038). Realization on both sides — how a logical output
   reaches PWM, GPIO, I²C or an H-bridge, and how a Source is provided by a line,
   without the behaviour model knowing — is ADR-0036 / ADR-0038,
@@ -170,43 +172,47 @@ each of its questions was answered is in the
   [evidence/pico-smoke-test.md](evidence/pico-smoke-test.md)), is priority 1;
   the platform adapter beyond one line and one duty (ISS-0018, ISS-0017) is
   second; nothing else is in progress in this repository.
-- **Recently changed:** the authoring UX slice (ADR-0041, ADR-0042, protocol
-  0.28 — the Standard Library as 22 value categories with the concept sheet
-  naming a concept before it exists and the compiler's units shown as a fact;
-  the Formula view as typed structure over the compiler's tree — a caret, keys
-  as text edits or compiler actions, completion while typing, fractions and
-  branch diagrams, every form structure; a saved formula unfolded on its node;
-  `ComposeAction.apply`, positional completion ranking, `BDL_LIBRARIES`),
-  composite units and the Formula view's structure (ADR-0040, protocol 0.27 —
-  `180 deg per s`, `9.81 m per s^2`, `1 N * m` as a derived surface over the
-  registered atoms with the dimension and scale the algebra gives; the
-  compiler-owned value categories and unit candidates; roles, locals, structured
-  forms, structural carets, keyboard insertion, completion at a caret, signature
-  help and the saved-formula render in the IDE service), the first hardware demo
-  end to end (ADR-0039, protocol 0.26 — the daemon builds the firmware stage by
-  stage and flashes the Pico over its own bootloader; an image's identity is the
-  content it was built from and a stale one is never flashed; the Deploy page
-  ends in Build · Flash · Observe with one action per state; the Button → Lamp
-  demo as two templates on the Welcome page; `bdld build` / `flash` /
-  `init --template`), the Source half of the platform adapter (ADR-0038,
-  protocol 0.25 — a device is for an output or a Source; a provider profile from
-  `bdl-catalogue` turns the line's reading into the Source's value; the Pico
-  firmware reads the line before each tick; an unprovided Source is an
-  incomplete deployment with the reason), the first embedded platform adapter
-  (ADR-0037 — `bdld compile --target rp2040_pico` generates the Embassy firmware
-  beside the core; raw PWM and GPIO commands reach the solver-assigned pads
-  through an explicit numeric policy; cross-compiled in CI), output realization
-  (ADR-0036, protocol 0.24 — a device binding chooses a realization profile on
-  the Deploy page; the profile's pure encoder lowers the output's value to a raw
-  command below the behavior plan; admissibility is three judgments), the Source
-  sheet (protocol 0.23 — a Source is created over a concept the designer
-  chooses, existing or new in one transaction; the Standard Library's Source
-  items are presets named _… Input_), the Code view as an IDE surface (protocol
-  0.22 — completion, hover, definition, references and _Format_ from `bdl-ide`
-  over the text as typed), semantic highlighting (ADR-0035, protocol 0.21), one
-  derived relationship role stated by the daemon (protocol 0.20, ADR-0032
-  amended), reference edges (ADR-0034, protocol 0.18). The full list, oldest
-  last, is [changes/unreleased/](changes/unreleased/); the protocol's history is
+- **Recently changed:** edges as canvas objects with a contextual affordance,
+  one disconnect path, the first-open arrangement and _Arrange Automatically_
+  (protocol 0.29, ISS-0020 —
+  `docs/changes/unreleased/2026-09-canvas-affordances.md`); the authoring UX
+  slice (ADR-0041, ADR-0042, protocol 0.28 — the Standard Library as 22 value
+  categories with the concept sheet naming a concept before it exists and the
+  compiler's units shown as a fact; the Formula view as typed structure over the
+  compiler's tree — a caret, keys as text edits or compiler actions, completion
+  while typing, fractions and branch diagrams, every form structure; a saved
+  formula unfolded on its node; `ComposeAction.apply`, positional completion
+  ranking, `BDL_LIBRARIES`), composite units and the Formula view's structure
+  (ADR-0040, protocol 0.27 — `180 deg per s`, `9.81 m per s^2`, `1 N * m` as a
+  derived surface over the registered atoms with the dimension and scale the
+  algebra gives; the compiler-owned value categories and unit candidates; roles,
+  locals, structured forms, structural carets, keyboard insertion, completion at
+  a caret, signature help and the saved-formula render in the IDE service), the
+  first hardware demo end to end (ADR-0039, protocol 0.26 — the daemon builds
+  the firmware stage by stage and flashes the Pico over its own bootloader; an
+  image's identity is the content it was built from and a stale one is never
+  flashed; the Deploy page ends in Build · Flash · Observe with one action per
+  state; the Button → Lamp demo as two templates on the Welcome page;
+  `bdld build` / `flash` / `init --template`), the Source half of the platform
+  adapter (ADR-0038, protocol 0.25 — a device is for an output or a Source; a
+  provider profile from `bdl-catalogue` turns the line's reading into the
+  Source's value; the Pico firmware reads the line before each tick; an
+  unprovided Source is an incomplete deployment with the reason), the first
+  embedded platform adapter (ADR-0037 — `bdld compile --target rp2040_pico`
+  generates the Embassy firmware beside the core; raw PWM and GPIO commands
+  reach the solver-assigned pads through an explicit numeric policy;
+  cross-compiled in CI), output realization (ADR-0036, protocol 0.24 — a device
+  binding chooses a realization profile on the Deploy page; the profile's pure
+  encoder lowers the output's value to a raw command below the behavior plan;
+  admissibility is three judgments), the Source sheet (protocol 0.23 — a Source
+  is created over a concept the designer chooses, existing or new in one
+  transaction; the Standard Library's Source items are presets named _… Input_),
+  the Code view as an IDE surface (protocol 0.22 — completion, hover,
+  definition, references and _Format_ from `bdl-ide` over the text as typed),
+  semantic highlighting (ADR-0035, protocol 0.21), one derived relationship role
+  stated by the daemon (protocol 0.20, ADR-0032 amended), reference edges
+  (ADR-0034, protocol 0.18). The full list, oldest last, is
+  [changes/unreleased/](changes/unreleased/); the protocol's history is
   [changes/history/protocol-versions.md](changes/history/protocol-versions.md).
 
 ## Rules in one paragraph
