@@ -273,6 +273,14 @@ class AnalyzeDraft extends Effect {
   final int? component;
 }
 
+/// A check of this draft still debounced is sent now: a key the Formula
+/// view keeps until the compiler's reading arrives should not wait the
+/// debounce out.  Nothing when no check is pending.
+class FlushDraftCheck extends Effect {
+  const FlushDraftCheck(this.mappingId);
+  final int mappingId;
+}
+
 /// The draft is gone (revert, reload, detach, or the text returned to the
 /// committed definition): tell the daemon so the overlay goes with it and
 /// every later query, on every surface, sees the committed definition.

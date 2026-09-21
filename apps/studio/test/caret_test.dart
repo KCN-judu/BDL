@@ -209,8 +209,15 @@ void main() {
       expect((before.action.nodeId, before.action.operator.before), ('r.2', true));
       // inside a name: the whole name
       expect((characterAt(p, at('r.0.0@2'), '-') as Structural).action.nodeId, 'r.0.0');
-      // in a slot: the slot, with a slot on the other side
-      expect((characterAt(p, at('r.1:in'), '<') as Structural).action.operator.op, '<');
+      // in a slot: the text's rule — the slot splits around the operator,
+      // the caret in the second; `-` and `!` are a sign
+      final split = characterAt(p, at('r.1:in'), '<') as EditText;
+      expect(
+        (split.edit.start, split.edit.end, split.edit.text, split.edit.caretAfter),
+        (23, 24, '? < ?', 27),
+      );
+      final sign = characterAt(p, at('r.1:in'), '-') as EditText;
+      expect((sign.edit.text, sign.edit.caretAfter), ('-?', 24));
       // the two-character operators by their first key
       expect((characterAt(p, at('r.2:after'), '=') as Structural).action.operator.op, '==');
       expect((characterAt(p, at('r.2:after'), '&') as Structural).action.operator.op, '&&');
@@ -232,16 +239,18 @@ void main() {
       expect((mid.edit.start, mid.edit.end, mid.edit.text), (7, 8, ''));
       final end = backspaceAt(p, stops, at('r.0.0:after')) as EditText;
       expect((end.edit.start, end.edit.end), (9, 10));
-      // the last character of a one-character number: the part becomes a
-      // slot — the compiler's remove, which also removes an operator whose
-      // operand it was
-      final one = backspaceAt(p, stops, at('r.2:after')) as Structural;
-      expect((one.action.nodeId, one.action.hasRemove()), ('r.2', true));
-      // after a structure: the structure
+      // the last character of a one-character number: a slot in its place
+      // (the text stays readable)
+      final one = backspaceAt(p, stops, at('r.2:after')) as EditText;
+      expect((one.edit.start, one.edit.end, one.edit.text), (26, 27, '?'));
+      // after a structure: the structure, the compiler's remove
       final whole = backspaceAt(p, stops, at('r.0:after')) as Structural;
       expect(whole.action.nodeId, 'r.0');
-      // in a slot: the slot (its operator goes with it, the compiler's rule)
+      // in a slot that is an argument: the compiler's remove (the argument
+      // goes); a slot an operator opened goes with the operator, as text
       expect((backspaceAt(p, stops, at('r.1:in')) as Structural).action.nodeId, 'r.1');
+      final opened = textBackspaceAt('Tilt / ?', 7) as EditText;
+      expect((opened.edit.start, opened.edit.end, opened.edit.caretAfter), (4, 8, 4));
       // before a part or just inside a parenthesis: only a move back
       expect((backspaceAt(p, stops, at('r.2:before')) as MoveTo).stop.id, 'r.1:in');
       expect((backspaceAt(p, stops, at('r.0.1:open')) as MoveTo).stop.id, 'r.0.1:before');
@@ -249,7 +258,106 @@ void main() {
       final del = deleteAt(p, stops, at('r.0.0:before')) as EditText;
       expect((del.edit.start, del.edit.end), (6, 7));
       expect((deleteAt(p, stops, at('r.0.0:after')) as MoveTo).stop.id, 'r.0.1:before');
-      expect((deleteAt(p, stops, at('r.2:before')) as Structural).action.nodeId, 'r.2');
+      final delOne = deleteAt(p, stops, at('r.2:before')) as EditText;
+      expect((delOne.edit.start, delOne.edit.end, delOne.edit.text), (26, 27, '?'));
+    });
+  });
+
+  group('the sequence, as text', () {
+    (int, int, String, int) edit(KeyPlan k) {
+      final e = (k as EditText).edit;
+      return (e.start, e.end, e.text, e.caretAfter);
+    }
+
+    test('a character replaces the slot it touches, extends the word it touches, begins a '
+        'value where one may begin, and is refused after a complete part', () {
+      expect(edit(textCharacterAt('Tilt / ?', 7, '9')), (7, 8, '9', 8));
+      expect(edit(textCharacterAt('Tilt / ?', 8, '9')), (7, 8, '9', 8), reason: 'after the ?');
+      expect(edit(textCharacterAt('Tilt / 9', 8, '0')), (8, 8, '0', 9));
+      expect(edit(textCharacterAt('Tilt / 9', 7, '4')), (7, 7, '4', 8));
+      expect(edit(textCharacterAt('Tilt / 90', 8, '.')), (8, 8, '.', 9), reason: 'inside');
+      expect(edit(textCharacterAt('clamp(Tilt, ?)', 6, 'x')), (6, 6, 'x', 7), reason: 'after (');
+      expect(edit(textCharacterAt('if ? then 1 else 0', 3, 'a')), (3, 4, 'a', 4));
+      expect(edit(textCharacterAt('', 0, 'a')), (0, 0, 'a', 1));
+      final refused = textCharacterAt('Tilt / (90 deg)', 15, 'x') as Refused;
+      expect(refused.reason, Refused.needsOperator);
+      expect(
+        textCharacterAt('Tilt / 90', 5, 'x'),
+        isA<Refused>(),
+        reason: 'after the operator, before the blank',
+      );
+    });
+
+    test('a space starts a unit after a number and nothing elsewhere', () {
+      expect(edit(textCharacterAt('Tilt / 90', 9, ' ')), (9, 9, ' ', 10));
+      expect(edit(textCharacterAt('Tilt / 90 ', 10, 'd')), (10, 10, 'd', 11));
+      expect(textCharacterAt('Tilt / 90 ', 10, ' '), isA<Refused>());
+      expect(textCharacterAt('Tilt', 4, ' '), isA<Refused>());
+      expect(textCharacterAt('Tilt / ?', 7, ' '), isA<Refused>());
+    });
+
+    test('an operator in a slot is a sign or a split; `<` then `=` is one operator; '
+        'elsewhere it needs the tree', () {
+      expect(edit(textOperatorAt('Tilt / ?', 7, '-')), (7, 8, '-?', 8));
+      expect(edit(textCharacterAt('Tilt / -?', 8, '5')), (8, 9, '5', 9), reason: 'then the number');
+      expect(edit(textOperatorAt('if ? then 1 else 0', 3, '!')), (3, 4, '!?', 4));
+      expect(edit(textOperatorAt('Tilt / ?', 7, '+')), (7, 8, '? + ?', 11));
+      expect(edit(textOperatorAt('a < ?', 4, '=')), (2, 3, '<=', 5));
+      expect(edit(textOperatorAt('a > ?', 4, '=')), (2, 3, '>=', 5));
+      expect(textOperatorAt('Tilt', 4, '/'), isA<NeedsStructure>());
+      expect(textOperatorAt('Tilt / 90', 9, '+'), isA<NeedsStructure>());
+      expect(
+        textOperatorAt('Tilt / 90', 2, '+'),
+        isA<NeedsStructure>(),
+        reason: 'inside a word: the word',
+      );
+      expect(edit(textOperatorAt('Tilt /', 6, '+', plain: true)), (6, 6, '+', 7));
+    });
+
+    test('`(` groups a slot, opens a group where a value may begin, and after a name needs the '
+        'tree; `)` steps past the parenthesis before it', () {
+      expect(edit(textCharacterAt('Tilt / ?', 7, '(')), (7, 8, '(?)', 8));
+      expect(edit(textCharacterAt('Tilt / ', 7, '(')), (7, 7, '(?)', 8));
+      expect(textCharacterAt('clamp', 5, '('), isA<NeedsStructure>());
+      expect(textCharacterAt('Tilt / 90', 9, '('), isA<Refused>());
+      expect(edit(textCharacterAt('(Tilt)', 5, ')')), (5, 5, '', 6));
+      expect(textCharacterAt('Tilt', 4, ')'), isA<NeedsStructure>());
+    });
+
+    test('Backspace: a character; the last of a value leaves a slot; a slot goes with the '
+        'operator that opened it; before a part it steps back over the separators', () {
+      expect(edit(textBackspaceAt('Tilt / 90', 9)), (8, 9, '', 8));
+      expect(edit(textBackspaceAt('Tilt / 9', 8)), (7, 8, '?', 7));
+      expect(edit(textBackspaceAt('Tilt / ?', 7)), (4, 8, '', 4));
+      expect(edit(textBackspaceAt('Tilt / ?', 8)), (4, 8, '', 4));
+      expect(edit(textBackspaceAt('Tilt / -?', 8)), (7, 8, '', 7));
+      expect(edit(textBackspaceAt('a + b', 4)), (4, 4, '', 1));
+      expect(edit(textBackspaceAt('clamp(?, 1)', 9)), (9, 9, '', 7));
+      expect(textBackspaceAt('Tilt', 0), isA<Refused>());
+      expect(edit(textBackspaceAt('Tilt /', 6, plain: true)), (5, 6, '', 5));
+      // a multi-byte character is one character
+      expect(edit(textBackspaceAt('90 °', 5)), (3, 5, '', 3));
+    });
+
+    test('Delete is the mirror', () {
+      expect(edit(textDeleteAt('Tilt / 90', 7)), (7, 8, '', 7));
+      expect(edit(textDeleteAt('Tilt / 9', 7)), (7, 8, '?', 7));
+      expect(edit(textDeleteAt('? + b', 0)), (0, 4, '', 0));
+      expect(edit(textDeleteAt('a + b', 1)), (1, 1, '', 4));
+      expect(textDeleteAt('Tilt', 4), isA<Refused>());
+    });
+
+    test('the stops of a reading move with the text typed since', () {
+      final p = clampOf();
+      final stops = caretStops(p);
+      // `Tilt` became `Tilts`: everything after byte 10 is one byte later
+      final r = changedRegion(p.source, 'clamp(Tilts / (90 deg), ?, 1)')!;
+      final shifted = shiftedStops(stops, (start: 6, end: 10, newLength: 5));
+      expect(r.start, 10);
+      expect(shifted.firstWhere((s) => s.id == 'r.1:in').offset, 24);
+      expect(shifted.firstWhere((s) => s.id == 'r.0.0:before').offset, 6);
+      expect(shifted.firstWhere((s) => s.id == 'r.0.0:after').offset, 11);
+      expect(shifted.any((s) => s.id == 'r.0.0@2'), isFalse, reason: 'the edited text\'s own');
     });
   });
 

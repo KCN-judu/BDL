@@ -1603,7 +1603,7 @@ void main() {
     });
 
     testWidgets('typed structure: keys type at the caret, structure is the compiler\'s, the '
-        'part being typed shows as text until read, a structural key waits', (t) async {
+        'part being typed shows as text until read, a structural key waits its turn', (t) async {
       var s = connected(lamp());
       s = reduce(s, const DefinitionDraftChanged(mappingId: dim, source: 'Tilt / ?')).state;
       s = reduce(
@@ -1630,10 +1630,17 @@ void main() {
       expect(find.text('9'), findsOneWidget);
       expect(find.byKey(const ValueKey('node-r.0')), findsOneWidget);
       expect(find.byKey(const ValueKey('composer-out-of-sync')), findsNothing);
-      // a structural key while the compiler reads: nothing is sent
+      // a structural key while the compiler reads: nothing is sent yet and
+      // nothing is lost — the key waits for the reading, which is asked
+      // for now rather than after the debounce; a letter typed behind it
+      // waits its turn too
       await t.sendKeyEvent(LogicalKeyboardKey.slash, character: '/');
       await t.pump();
       expect(h.effects.whereType<ComposeFormula>(), isEmpty);
+      expect(h.actions.whereType<DefinitionDraftFlushRequested>(), isNotEmpty);
+      expect(h.state.draft(dim)!.source, 'Tilt / 9');
+      await t.sendKeyEvent(LogicalKeyboardKey.keyX, character: 'x');
+      await t.pump();
       expect(h.state.draft(dim)!.source, 'Tilt / 9');
       // the compiler's reading arrives: the number is a part now
       final nine = tiltOverSlot()
@@ -1655,6 +1662,45 @@ void main() {
       );
       await t.pump();
       expect(find.byKey(const ValueKey('node-r.1')), findsOneWidget);
+      // the waiting `/` is the compiler's action on the number; the `x`
+      // behind it waits for the answer
+      await t.pump();
+      final slash = h.effects.whereType<ComposeFormula>().single;
+      expect((slash.action.nodeId, slash.action.operator.op), ('r.1', '/'));
+      expect(h.state.draft(dim)!.source, 'Tilt / 9');
+      // the answer lands (scripted flat here; the compiler parenthesises
+      // where the place needs it): the `x` types into the slot it opened
+      h.answer(
+        ComposeReceived(
+          generation: slash.generation,
+          result: pb.ComposeFormulaResponse(
+            revision: Int64(1),
+            mappingId: Int64(dim),
+            source: 'Tilt / 9 / ?',
+            edits: [pb.DraftTextEdit(start: 7, end: 8, newText: '9 / ?')],
+            select: 'r.2',
+          ),
+        ),
+      );
+      await t.pump();
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'Tilt / 9 / x');
+      expect(h.state.editor.composer.caret?.offset, 12);
+      // ⌫ ⌫: the letter (a slot in its place), then the slot with its
+      // operator — text rules, no round trip, readable at every step
+      await t.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'Tilt / 9 / ?');
+      await t.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await t.pump();
+      expect(h.state.draft(dim)!.source, 'Tilt / 9');
+      expect(h.state.editor.composer.caret?.offset, 8);
+      h.answer(
+        DraftAnalysisReceived(
+          verdict(generation: h.state.draft(dim)!.generation, projection: nine),
+        ),
+      );
+      await t.pump();
       // another digit extends the number at the caret
       await t.sendKeyEvent(LogicalKeyboardKey.digit0, character: '0');
       await t.pump();
@@ -1706,7 +1752,7 @@ void main() {
       expect(h.state.editor.composer.caret?.id, 'r.0:after');
       await t.sendKeyEvent(LogicalKeyboardKey.equal, character: '+');
       await t.pump();
-      final c = h.effects.whereType<ComposeFormula>().single;
+      final c = h.effects.whereType<ComposeFormula>().last;
       expect((c.action.nodeId, c.action.operator.op), ('r.0', '+'));
       // the answer lands as a draft change; the caret goes into the slot
       // the edit wrote, by its byte and the name the projection will give it

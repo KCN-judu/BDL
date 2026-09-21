@@ -8,15 +8,23 @@
 ///
 /// Studio draws what the compiler projected (`FormulaProjection`), asks
 /// it for every candidate (`GetFormulaSlot`, `CompleteDefinitionDraft`)
-/// and sends it every structured action (`ComposeFormula`); a typed
-/// character is a text edit of the draft at the caret's byte offset,
-/// which the compiler reads like any typing in the Text view.  Nothing in
+/// and sends it the structured actions (`ComposeFormula`) the text
+/// cannot decide alone.  A key acts on **the editor's own state** — the
+/// text and the caret as of the last key, kept here ahead of the rebuild
+/// a dispatch schedules, the way a formula editor keeps its sequence and
+/// cursor (GeoGebra's `EditorState`) — and never on what the compiler
+/// last read: a character is a text edit of the draft at the caret's
+/// byte, which the compiler reads like any typing in the Text view.  A
+/// key that needs the compiler's tree while the tree is not current
+/// waits in a queue, in order, until the reading arrives (the debounced
+/// check is flushed for it); nothing typed is ever dropped.  Nothing in
 /// this file parses, types, converts a unit or decides what fits.
 ///
 /// Keys (the primary path; the palette is the pointer's):
 ///
 ///   ← →            the previous / next caret stop — out of a
 ///                  denominator, past a parenthesis, into the next part;
+///                  one character at a time inside a name or a number;
 ///   ↑ ↓            the nearest stop on the row above / below (a
 ///                  numerator from its denominator, a branch from the
 ///                  next);
@@ -25,22 +33,25 @@
 ///   Tab / ⇧Tab     the next / previous empty slot;
 ///   letters digits type into a slot or extend the name or number the
 ///                  caret touches; a space after a number starts its unit;
-///   + − * / < > = & | !   the operator on the part the caret touches,
-///                  with a slot for the other side; `!` negates;
+///   + − * / < > = & |   the operator where the caret is, with a slot for
+///                  the operand not yet written (`-` in a slot is a sign);
+///   !              negates the part the caret touches;
 ///   (              applies the name before the caret (`clamp` →
 ///                  `clamp(?, ?, ?)`), or groups a slot;
 ///   )  ,           leave the enclosing parentheses / move to the next
 ///                  argument;
-///   ⌫ ⌦            a character, or a whole part (a slot's operator goes
-///                  with it);
+///   ⌫ ⌦            a character; the last character of a value leaves a
+///                  slot; a slot goes with its operator; a whole
+///                  structure after the caret goes as a whole;
 ///   ⌃Space         completion at the caret; ↑ ↓ ⏎ Tab in the list;
 ///   Esc            close completion, then clear the caret and selection.
 ///
-/// While the text differs from what the compiler last read — a character
+/// While the text differs from what the compiler last read — characters
 /// just typed — the part being typed into shows as text in place
-/// (`PendingText`) and the rest keeps its structure; when the compiler's
-/// reading arrives the picture follows.  A structured action is refused
-/// until then (the stale-projection policy, `app/composer.dart`).
+/// (`PendingText`), the caret inside it, and the rest keeps its
+/// structure; when the compiler's reading arrives the picture follows
+/// and the part under the caret is selected.  Text the compiler could
+/// not read is shown as text and edited as text, so it can be mended.
 library;
 
 import 'dart:convert' show utf8;
@@ -74,6 +85,8 @@ class FormulaComposer extends StatefulWidget {
     this.completion,
     this.outOfSync = false,
     this.onEditAsText,
+    this.large = false,
+    this.palette = true,
   });
 
   final int mappingId;
@@ -97,14 +110,34 @@ class FormulaComposer extends StatefulWidget {
   final bool outOfSync;
   final VoidCallback? onEditAsText;
 
+  /// The formula sheet's field: the display scale, room around the
+  /// expression.
+  final bool large;
+
+  /// Draw the slot panel under the field (the inspector); the sheet
+  /// places it in its own column (`FormulaComposer.slotPanel`).
+  final bool palette;
+
   @override
   State<FormulaComposer> createState() => _FormulaComposerState();
 }
+
+/// A key the composer holds until the compiler's reading of the text
+/// arrives: what was pressed, as it was pressed.
+class _QueuedKey {
+  const _QueuedKey(this.key, this.character, {required this.shift});
+  final LogicalKeyboardKey key;
+  final String? character;
+  final bool shift;
+}
+
+enum _Handled { yes, no, deferred }
 
 class _FormulaComposerState extends State<FormulaComposer> {
   final FocusNode _focus = FocusNode(debugLabel: 'composer');
   final FormulaGeometry _geometry = FormulaGeometry();
   final GlobalKey _fieldKey = GlobalKey(debugLabel: 'composer-field');
+  final GlobalKey _rawKey = GlobalKey(debugLabel: 'composer-raw');
 
   /// The last projection of this mapping that parsed: what the picture
   /// is drawn from while the compiler reads a newer text.
@@ -117,12 +150,27 @@ class _FormulaComposerState extends State<FormulaComposer> {
   /// A transient word under the field: why a key did nothing.
   String? _hint;
 
-  /// The text the composer's own last edit produced (a typed character, a
-  /// structured action's answer): while the compiler reads exactly this
-  /// text the picture stays live with the edited part as text.  Text that
-  /// changed any other way (the Text view, a reload) waits for its
-  /// reading as before.
-  String? _typedSource;
+  // ---- the editor's own state --------------------------------------------
+  //
+  // The text and the caret as of the last key.  A dispatch changes the
+  // store at once but the widget only at the next frame; two keys in one
+  // frame would otherwise both act on the first's text.  Both follow the
+  // widget at every rebuild and lead it between rebuilds.
+
+  late String _source = widget.source;
+  late CaretState? _caret = widget.composer.caret;
+
+  /// The text on screen is the composer's own typing (or a structured
+  /// action's answer): the picture stays live with the edited part as
+  /// text while the compiler reads.  Text that changed any other way (the
+  /// Text view, a reload) is shown as text until read.
+  bool _ownEdit = false;
+
+  /// A structured action sent and not yet answered, as of the last key.
+  bool _composing = false;
+
+  /// The keys that wait for the compiler's reading, in order.
+  final List<_QueuedKey> _queue = [];
 
   @override
   void initState() {
@@ -135,17 +183,34 @@ class _FormulaComposerState extends State<FormulaComposer> {
     super.didUpdateWidget(old);
     if (old.mappingId != widget.mappingId) {
       _lastGood = null;
-      _typedSource = null;
+      _ownEdit = false;
+      _queue.clear();
     }
-    // a structured action's answer landed: the composer's own edit
-    if (old.composer.pendingCompose &&
-        !widget.composer.pendingCompose &&
-        old.source != widget.source) {
-      _typedSource = widget.source;
-    }
+    // a structured action's answer landed (sent by this composer, and the
+    // store no longer holds it — the answer may have come within the
+    // frame the request went out in): the composer's own edit.  Text
+    // that changed any other way is another hand's.
+    final answered = (_composing || old.composer.pendingCompose) && !widget.composer.pendingCompose;
+    if (widget.source != _source) _ownEdit = answered;
+    _source = widget.source;
+    _caret = widget.composer.caret;
+    if (!widget.composer.pendingCompose) _composing = false;
+    final wasInSync = _inSyncOf(old.projection, old.source);
     _remember(widget.projection);
     if (old.composer.caret != widget.composer.caret || old.source != widget.source) {
       _hint = null;
+    }
+    final inSync = _inSync;
+    if (_queue.isNotEmpty && !_composing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _drain());
+    } else if (!wasInSync && inSync && _caret != null && _selected == null && _focus.hasFocus) {
+      // the reading arrived: the part under the caret is what the palette
+      // is about, as after a click
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _selected != null || _caret == null) return;
+        final stop = resolveStop(_stopsOf(_picture), _caret);
+        if (stop != null) _select(stop.node);
+      });
     }
   }
 
@@ -161,11 +226,13 @@ class _FormulaComposerState extends State<FormulaComposer> {
 
   // ---- what is on screen ---------------------------------------------------
 
-  bool get _inSync {
-    final p = widget.projection;
-    if (widget.source.trim().isEmpty) return true;
-    return p != null && p.source == widget.source && p.parseOk;
+  bool _inSyncOf(pb.FormulaProjection? p, String source) {
+    if (source.trim().isEmpty) return true;
+    return p != null && p.source == source && p.parseOk;
   }
+
+  /// The compiler read exactly the text the editor holds.
+  bool get _inSync => _inSyncOf(widget.projection, _source);
 
   /// The projection the picture is drawn from, and the part shown as the
   /// text being typed into it when the text has moved on from it.
@@ -173,33 +240,71 @@ class _FormulaComposerState extends State<FormulaComposer> {
   /// Three states, one policy (app/composer.dart `composerInSync`): the
   /// compiler read this text (in sync: the picture is current); it has not
   /// read it yet (awaiting: the last picture with the edited part as text,
-  /// live — keys keep working on it); it read it and could not (stale:
-  /// the last picture dimmed, the notice, *Edit as text*).
-  ({pb.FormulaProjection? projection, PendingText? pending, bool stale}) get _picture {
+  /// live — keys keep working on it, by character in the edited part); it
+  /// read it and could not, or the text came from another hand (stale:
+  /// the text, editable as text, with the notice).
+  ({
+    pb.FormulaProjection? projection,
+    PendingText? pending,
+    ({int start, int end, int newLength})? region,
+    bool stale,
+  })
+  get _picture {
     final p = widget.projection;
-    if (_inSync) return (projection: p, pending: null, stale: false);
-    final refused = p != null && p.source == widget.source && !p.parseOk;
+    if (_inSync) return (projection: p, pending: null, region: null, stale: false);
+    final refused = p != null && p.source == _source && !p.parseOk;
     final good = _lastGood;
-    // refused, or changed by another hand: no tree is invented — the
-    // notice says which (the field shows the text)
-    if (refused || widget.source != _typedSource) {
-      return (projection: null, pending: null, stale: true);
-    }
+    if (refused || !_ownEdit) return (projection: null, pending: null, region: null, stale: true);
     // the composer's own first characters into an empty formula: text,
     // live, until read
-    if (good == null || !good.hasRoot()) return (projection: null, pending: null, stale: false);
-    final region = changedRegion(good.source, widget.source);
-    if (region == null) return (projection: good, pending: null, stale: false);
+    if (good == null || !good.hasRoot()) {
+      return (projection: null, pending: null, region: null, stale: false);
+    }
+    final region = changedRegion(good.source, _source);
+    if (region == null) return (projection: good, pending: null, region: null, stale: false);
     final node = nodeContaining(good.root, region.start, region.end);
-    if (node == null) return (projection: null, pending: null, stale: true);
+    if (node == null) return (projection: null, pending: null, region: null, stale: true);
     final delta = region.newLength - (region.end - region.start);
-    final text = excerptOf(widget.source, node.range.start, node.range.end + delta);
-    return (projection: good, pending: PendingText(nodeId: node.id, text: text), stale: false);
+    final text = excerptOf(_source, node.range.start, node.range.end + delta);
+    return (
+      projection: good,
+      pending: PendingText(nodeId: node.id, text: text),
+      // the whole part is text now: its range in the text on screen
+      region: (start: node.range.start, end: node.range.end, newLength: text.length),
+      stale: false,
+    );
   }
 
-  List<CaretStop> get _stops => caretStops(_picture.projection);
+  /// The stops of the picture, at the bytes of the text on screen.
+  List<CaretStop> _stopsOf(
+    ({
+      pb.FormulaProjection? projection,
+      PendingText? pending,
+      ({int start, int end, int newLength})? region,
+      bool stale,
+    })
+    picture,
+  ) {
+    final stops = caretStops(picture.projection);
+    final region = picture.region;
+    return region == null ? stops : shiftedStops(stops, region);
+  }
 
-  CaretStop? get _stop => resolveStop(_stops, widget.composer.caret);
+  /// The byte range of the part being typed into, in the text on screen;
+  /// `null` when the picture is current.
+  ({int start, int end})? _pendingRange(
+    ({
+      pb.FormulaProjection? projection,
+      PendingText? pending,
+      ({int start, int end, int newLength})? region,
+      bool stale,
+    })
+    picture,
+  ) {
+    final r = picture.region;
+    if (r == null) return null;
+    return (start: r.start, end: r.start + utf8.encode(picture.pending!.text).length);
+  }
 
   String? get _selected => widget.composer.selectedNode;
 
@@ -208,55 +313,63 @@ class _FormulaComposerState extends State<FormulaComposer> {
   void _select(String? id) =>
       widget.dispatch(FormulaNodeSelected(mappingId: widget.mappingId, nodeId: id));
 
+  void _setCaret(CaretState? caret) {
+    _caret = caret;
+    widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: caret));
+  }
+
   /// The caret lands at a stop; the selection follows it to the part the
   /// stop belongs to, so the palette is about the same part the keys are.
   void _moveTo(CaretStop stop) {
-    widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: stateOf(stop)));
+    _setCaret(stateOf(stop));
     if (_selected != stop.node) _select(stop.node);
     _focus.requestFocus();
   }
 
+  /// The caret lands at a byte of the text (inside the part being typed).
+  void _moveToByte(int offset) {
+    _setCaret(CaretState(offset));
+    _focus.requestFocus();
+  }
+
   void _clear() {
-    widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: null));
+    _queue.clear();
+    _setCaret(null);
     _select(null);
   }
 
-  void _compose(pb.ComposeAction a) =>
-      widget.dispatch(ComposeRequested(mappingId: widget.mappingId, action: a));
+  void _compose(pb.ComposeAction a) {
+    _composing = true;
+    widget.dispatch(ComposeRequested(mappingId: widget.mappingId, action: a));
+    // refused without a word (the reducer's policy) nothing rebuilds: the
+    // keys behind it must not wait for an answer that never comes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_composing || widget.composer.pendingCompose) return;
+      _composing = false;
+      _drain();
+    });
+  }
 
   /// A text edit of the draft at byte offsets: the same path the Text
-  /// view's typing takes.  The caret lands after the inserted text; a
-  /// word character asks for completion there.
+  /// view's typing takes.  The caret lands where the plan says; a word
+  /// character asks for completion there.
   void _applyEdit(TextEditPlan e, {bool complete = false}) {
-    final source = widget.source;
+    final source = _source;
     final r = codeUnitRange(source, e.start, e.end);
     final next = source.replaceRange(r.start, r.end, e.text);
-    final caretBytes = e.start + utf8.encode(e.text).length;
-    _typedSource = next;
-    widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: next));
-    widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: CaretState(caretBytes)));
+    final caretBytes = e.caretAfter;
+    if (next != source) {
+      _source = next;
+      _ownEdit = true;
+      widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: next));
+    }
+    _setCaret(CaretState(caretBytes));
     if (complete) {
       widget.dispatch(
         CompletionRequested(mappingId: widget.mappingId, source: next, offset: caretBytes),
       );
     } else if (widget.completion != null) {
       widget.dispatch(const CompletionDismissed());
-    }
-  }
-
-  void _run(KeyPlan plan, {bool complete = false}) {
-    switch (plan) {
-      case EditText(:final edit):
-        _applyEdit(edit, complete: complete);
-      case Structural(:final action):
-        if (widget.completion != null) widget.dispatch(const CompletionDismissed());
-        _compose(action);
-      case MoveTo(:final stop):
-        _moveTo(stop);
-      case Refused(:final reason):
-        if (reason == Refused.needsOperator) {
-          setState(() => _hint = context.l10n.typeAnOperatorFirst);
-        }
     }
   }
 
@@ -268,7 +381,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
     final c = widget.completion;
     if (c == null || c.items.isEmpty) return false;
     final item = c.items[c.selected.clamp(0, c.items.length - 1)];
-    final source = widget.source;
+    final source = _source;
     if (c.source != source) return false;
     final r = codeUnitRange(source, item.replaceStart, item.replaceEnd);
     final next = source.replaceRange(r.start, r.end, item.insert);
@@ -282,23 +395,40 @@ class _FormulaComposerState extends State<FormulaComposer> {
         (slot >= 0
             ? utf8.encode(item.insert.substring(0, slot)).length
             : utf8.encode(item.insert).length);
-    _typedSource = next;
+    _source = next;
+    _ownEdit = true;
     widget.dispatch(const CompletionDismissed());
     widget.dispatch(DefinitionDraftChanged(mappingId: widget.mappingId, source: next));
-    widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: CaretState(caretBytes)));
+    _setCaret(CaretState(caretBytes));
     return true;
   }
 
   void _requestCompletion() {
-    final stop = _stop;
-    final offset = stop?.offset ?? widget.composer.caret?.offset;
+    final offset = _caret?.offset;
     if (offset == null) return;
     widget.dispatch(
-      CompletionRequested(mappingId: widget.mappingId, source: widget.source, offset: offset),
+      CompletionRequested(mappingId: widget.mappingId, source: _source, offset: offset),
     );
   }
 
   // ---- keys ----------------------------------------------------------------
+
+  static final Set<LogicalKeyboardKey> _navigationKeys = {
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+    LogicalKeyboardKey.home,
+    LogicalKeyboardKey.end,
+    LogicalKeyboardKey.tab,
+    LogicalKeyboardKey.backspace,
+    LogicalKeyboardKey.delete,
+  };
+
+  /// The keys the composer acts on; the rest (⌘↩, ⌘Z, …) pass through.
+  static bool _isComposerKey(LogicalKeyboardKey k, String? c) =>
+      (c != null && c.isNotEmpty && !HardwareKeyboard.instance.isMetaPressed) ||
+      _navigationKeys.contains(k);
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
     if (e is! KeyDownEvent && e is! KeyRepeatEvent) return KeyEventResult.ignored;
@@ -322,13 +452,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
         final changed = _acceptCompletion();
         // Tab on a candidate already written moves on to the next slot
         if (k == LogicalKeyboardKey.tab && !changed) {
-          final stops = caretStops(_picture.projection);
-          final next = nextSlot(
-            stops,
-            resolveStop(stops, widget.composer.caret),
-            backwards: HardwareKeyboard.instance.isShiftPressed,
-          );
-          if (next != null) _moveTo(next);
+          _handle(_QueuedKey(k, null, shift: HardwareKeyboard.instance.isShiftPressed));
         }
         return KeyEventResult.handled;
       }
@@ -341,75 +465,127 @@ class _FormulaComposerState extends State<FormulaComposer> {
       _requestCompletion();
       return KeyEventResult.handled;
     }
-    final picture = _picture;
-    final p = picture.projection;
-    final stops = caretStops(p);
-    final stop = resolveStop(stops, widget.composer.caret);
-    final selected = _selected;
-    final pending = widget.composer.pendingCompose;
-
     if (k == LogicalKeyboardKey.escape) {
       // the innermost thing first: a caret or selection; then the editor's
       // own Esc (revert) sees it
-      if (stop == null && selected == null) return KeyEventResult.ignored;
+      if (_caret == null && _selected == null && _queue.isEmpty) return KeyEventResult.ignored;
       _clear();
       return KeyEventResult.handled;
     }
-    // no tree yet: an empty formula (one slot of Studio's: typing writes
-    // it), or the composer's own first characters the compiler has not
-    // read — plain text at the caret until it has
-    if (p == null || !p.hasRoot()) {
-      if (picture.stale || e.character == null) return KeyEventResult.ignored;
-      final c = e.character!;
-      final bytes = utf8.encode(widget.source).length;
-      if (widget.source.trim().isEmpty) {
-        if (RegExp(r'^[A-Za-z0-9_(]$').hasMatch(c)) {
-          _applyEdit(
-            TextEditPlan(0, bytes, c == '(' ? '(?)' : c),
-            complete: RegExp(r'^[A-Za-z_]$').hasMatch(c),
-          );
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      }
-      final at = (widget.composer.caret?.offset ?? bytes).clamp(0, bytes);
-      if (k == LogicalKeyboardKey.backspace) {
-        if (at > 0) _applyEdit(TextEditPlan(at - 1, at, ''));
-        return KeyEventResult.handled;
-      }
-      if (RegExp(r'^[A-Za-z0-9_. ]$').hasMatch(c)) {
-        _applyEdit(TextEditPlan(at, at, c), complete: RegExp(r'^[A-Za-z_]$').hasMatch(c));
-        return KeyEventResult.handled;
-      }
-      final op = operatorFor(c);
-      if (op != null && at == bytes) {
-        // an operator at the end of unread text: the text it would make,
-        // the caret in the slot it opens
-        final text = op == '!' ? '' : ' $op ?';
-        if (text.isEmpty) return KeyEventResult.handled;
-        _applyEdit(TextEditPlan(at, at, text));
-        widget.dispatch(
-          FormulaCaretMoved(
-            mappingId: widget.mappingId,
-            caret: CaretState(at + utf8.encode(text).length - 1),
-          ),
-        );
-        return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
-    }
-    // Tab: the next slot, from the caret or the selection
-    if (k == LogicalKeyboardKey.tab) {
-      final from = stop ?? stops.where((s) => s.node == selected).firstOrNull;
-      final next = nextSlot(stops, from, backwards: HardwareKeyboard.instance.isShiftPressed);
-      if (next != null) _moveTo(next);
+    final c = e.character;
+    if (!_isComposerKey(k, c)) return KeyEventResult.ignored;
+    final key = _QueuedKey(k, c, shift: HardwareKeyboard.instance.isShiftPressed);
+    // a structured action in flight, or keys already waiting: this one
+    // waits its turn
+    if (_composing || _queue.isNotEmpty) {
+      _queue.add(key);
       return KeyEventResult.handled;
     }
-    if (stop == null) {
+    return switch (_handle(key)) {
+      _Handled.yes => KeyEventResult.handled,
+      _Handled.no => KeyEventResult.ignored,
+      _Handled.deferred => _defer(key),
+    };
+  }
+
+  KeyEventResult _defer(_QueuedKey key) {
+    _queue.add(key);
+    widget.dispatch(DefinitionDraftFlushRequested(widget.mappingId));
+    return KeyEventResult.handled;
+  }
+
+  /// The reading arrived (or the action was answered): the waiting keys
+  /// act, in order, until one needs a reading that is not there yet.
+  void _drain() {
+    while (mounted && _queue.isNotEmpty && !_composing) {
+      final head = _queue.first;
+      final r = _handle(head);
+      if (r == _Handled.deferred) {
+        widget.dispatch(DefinitionDraftFlushRequested(widget.mappingId));
+        return;
+      }
+      _queue.removeAt(0);
+    }
+  }
+
+  /// One key over the editor's state.
+  _Handled _handle(_QueuedKey key) {
+    final k = key.key;
+    final c = key.character;
+    final source = _source;
+    final picture = _picture;
+    final p = picture.projection;
+    final root = p != null && p.hasRoot() ? p.root : null;
+    final stops = _stopsOf(picture);
+    final caret = _caret;
+    final stop = resolveStop(stops, caret);
+    final selected = _selected;
+    final bytes = utf8.encode(source).length;
+    final wordChar = c != null && RegExp(r'^[A-Za-z_]$').hasMatch(c);
+    final pending = _pendingRange(picture);
+    final shift = key.shift;
+
+    // Tab: the next slot — the next `?` of the text, from the caret or
+    // the selected part; no reading needed
+    if (k == LogicalKeyboardKey.tab) {
+      final from = caret?.offset ?? stops.where((s) => s.node == selected).firstOrNull?.offset;
+      final at = _nextSlotByte(source, from, backwards: shift);
+      if (at != null) {
+        final s = stops.where((s) => s.offset == at && s.side == StopSide.inSlot).firstOrNull;
+        if (s != null) {
+          _moveTo(s);
+        } else {
+          _moveToByte(at);
+        }
+      }
+      return _Handled.yes;
+    }
+
+    // no tree drawn: text — an empty formula (one slot of Studio's: typing
+    // writes it), the composer's own first characters, or text the
+    // compiler could not read (mended as text)
+    if (root == null) {
+      final plain = picture.stale && source.trim().isNotEmpty;
+      if (source.trim().isEmpty) {
+        if (c == null || !RegExp(r'^[A-Za-z0-9_(!-]$').hasMatch(c)) return _Handled.no;
+        final plan = textCharacterAt('?', 0, c);
+        if (plan is! EditText) return _Handled.no;
+        _source = '?';
+        _caret = const CaretState(0);
+        _applyEdit(plan.edit, complete: wordChar);
+        return _Handled.yes;
+      }
+      final at = (caret?.offset ?? bytes).clamp(0, bytes);
+      if (k == LogicalKeyboardKey.arrowLeft || k == LogicalKeyboardKey.arrowRight) {
+        final to = k == LogicalKeyboardKey.arrowLeft
+            ? previousCharStart(source, at)
+            : nextCharEnd(source, at);
+        if (to != null) _moveToByte(to);
+        return _Handled.yes;
+      }
+      if (k == LogicalKeyboardKey.home || k == LogicalKeyboardKey.end) {
+        _moveToByte(k == LogicalKeyboardKey.home ? 0 : bytes);
+        return _Handled.yes;
+      }
+      if (k == LogicalKeyboardKey.arrowUp || k == LogicalKeyboardKey.arrowDown) {
+        return _Handled.yes;
+      }
+      if (k == LogicalKeyboardKey.backspace) {
+        return _run(textBackspaceAt(source, at, plain: plain));
+      }
+      if (k == LogicalKeyboardKey.delete) {
+        return _run(textDeleteAt(source, at, plain: plain));
+      }
+      if (c == null || c.isEmpty) return _Handled.no;
+      return _run(textCharacterAt(source, at, c, plain: plain), complete: wordChar);
+    }
+
+    if (stop == null && caret == null) {
       // keys on a selected part, without a caret: the operators and ⌫
       // as the palette does them
-      if (selected == null || pending || picture.stale) return KeyEventResult.ignored;
-      final op = e.character == null ? null : operatorFor(e.character!);
+      if (selected == null || picture.stale) return _Handled.no;
+      if (pending != null) return _Handled.deferred;
+      final op = c == null ? null : operatorFor(c);
       if (op != null) {
         _compose(
           pb.ComposeAction(
@@ -417,74 +593,148 @@ class _FormulaComposerState extends State<FormulaComposer> {
             operator: pb.ComposeOperator(op: op, before: false),
           ),
         );
-        return KeyEventResult.handled;
+        return _Handled.yes;
       }
       if (k == LogicalKeyboardKey.backspace || k == LogicalKeyboardKey.delete) {
         _compose(pb.ComposeAction(nodeId: selected, remove: pb.Unit()));
-        return KeyEventResult.handled;
+        return _Handled.yes;
       }
       if (k == LogicalKeyboardKey.arrowRight || k == LogicalKeyboardKey.arrowLeft) {
         final own = stops.where((s) => s.node == selected).toList();
         if (own.isNotEmpty) _moveTo(k == LogicalKeyboardKey.arrowRight ? own.last : own.first);
-        return KeyEventResult.handled;
+        return _Handled.yes;
       }
-      return KeyEventResult.ignored;
+      return _Handled.no;
     }
-    // moves: always allowed, also while the compiler reads
-    if (k == LogicalKeyboardKey.arrowRight) {
-      final n = nextStop(stops, stop);
-      if (n != null) _moveTo(n);
-      return KeyEventResult.handled;
+    final at = (caret?.offset ?? stop!.offset).clamp(0, bytes);
+    // inside the part being typed: by character, as the text is
+    final inPending = pending != null && at >= pending.start && at <= pending.end;
+
+    // moves: always, also while the compiler reads
+    if (k == LogicalKeyboardKey.arrowRight || k == LogicalKeyboardKey.arrowLeft) {
+      final left = k == LogicalKeyboardKey.arrowLeft;
+      if (inPending) {
+        final to = left ? previousCharStart(source, at) : nextCharEnd(source, at);
+        if (to != null && to >= pending.start && to <= pending.end) {
+          _moveToByte(to);
+          return _Handled.yes;
+        }
+        // out of the part: the nearest stop beyond it
+        final beyond = left
+            ? stops.lastWhere((s) => s.offset < pending.start, orElse: () => stops.first)
+            : stops.firstWhere((s) => s.offset > pending.end, orElse: () => stops.last);
+        if (beyond.offset != at) _moveTo(beyond);
+        return _Handled.yes;
+      }
+      if (stop == null) return _Handled.yes;
+      final n = left ? previousStop(stops, stop) : nextStop(stops, stop);
+      if (n == null) return _Handled.yes;
+      // a stop inside the part being typed is a byte of it
+      if (pending != null && n.offset > pending.start && n.offset < pending.end) {
+        _moveToByte(left ? pending.end : pending.start);
+      } else {
+        _moveTo(n);
+      }
+      return _Handled.yes;
     }
-    if (k == LogicalKeyboardKey.arrowLeft) {
-      final n = previousStop(stops, stop);
-      if (n != null) _moveTo(n);
-      return KeyEventResult.handled;
-    }
+    if (stop == null) return _Handled.no;
     if (k == LogicalKeyboardKey.arrowUp || k == LogicalKeyboardKey.arrowDown) {
       final n = _verticalNeighbour(stops, stop, up: k == LogicalKeyboardKey.arrowUp);
       if (n != null) _moveTo(n);
-      return KeyEventResult.handled;
+      return _Handled.yes;
     }
     if (k == LogicalKeyboardKey.home) {
       _moveTo(homeStop(stops, stop));
-      return KeyEventResult.handled;
+      return _Handled.yes;
     }
     if (k == LogicalKeyboardKey.end) {
       _moveTo(endStop(stops, stop));
-      return KeyEventResult.handled;
+      return _Handled.yes;
     }
-    if (e.character == ')') {
-      _moveTo(exitGroup(stops, p.root, stop));
-      return KeyEventResult.handled;
+    // `)` and `,` leave a group / move to the next argument: over the
+    // tree when it is current; while the compiler reads, the text tells
+    // when the parenthesis or the next slot is right there, else the key
+    // waits for the reading
+    if (c == ')') {
+      if (textCharacterAt(source, at, ')') case EditText(:final edit)) return _run(EditText(edit));
+      if (!_inSync) return _Handled.deferred;
+      _moveTo(exitGroup(stops, root, stop));
+      return _Handled.yes;
     }
-    if (e.character == ',') {
-      final n = nextArgument(stops, p.root, stop);
-      if (n != null) _moveTo(n);
-      return KeyEventResult.handled;
-    }
-    // edits: only over a picture the compiler has read
-    if (picture.stale || pending) return KeyEventResult.ignored;
-    final at = widget.composer.caret?.offset;
-    if (k == LogicalKeyboardKey.backspace) {
-      _run(backspaceAt(p, stops, stop, at: at));
-      return KeyEventResult.handled;
-    }
-    if (k == LogicalKeyboardKey.delete) {
-      _run(deleteAt(p, stops, stop));
-      return KeyEventResult.handled;
-    }
-    final c = e.character;
-    if (c != null && c.isNotEmpty && !HardwareKeyboard.instance.isMetaPressed) {
-      if (picture.pending != null && operatorFor(c) != null) {
-        // an operator while the compiler reads the part being typed: wait
-        return KeyEventResult.handled;
+    if (c == ',') {
+      final tail = source.substring(codeUnitRange(source, at, at).start);
+      final m = RegExp(r'^,\s*\?').firstMatch(tail);
+      if (m != null) {
+        _moveToByte(at + m.end - 1);
+        return _Handled.yes;
       }
-      final plan = characterAt(p, stop, c, at: at);
-      _run(plan, complete: RegExp(r'^[A-Za-z_]$').hasMatch(c) || c == ' ');
-      return KeyEventResult.handled;
+      if (!_inSync) return _Handled.deferred;
+      final n = nextArgument(stops, root, stop);
+      if (n != null) _moveTo(n);
+      return _Handled.yes;
     }
-    return KeyEventResult.ignored;
+    // edits: the text rule at the caret's byte; a structural rule only
+    // over a picture the compiler has read
+    if (inPending) {
+      if (k == LogicalKeyboardKey.backspace) return _run(textBackspaceAt(source, at));
+      if (k == LogicalKeyboardKey.delete) return _run(textDeleteAt(source, at));
+      if (c == null || c.isEmpty) return _Handled.no;
+      return _run(textCharacterAt(source, at, c), complete: wordChar || c == ' ');
+    }
+    if (picture.stale) return _Handled.no;
+    final KeyPlan plan;
+    if (k == LogicalKeyboardKey.backspace) {
+      plan = backspaceAt(p!, stops, stop, at: at, source: source);
+    } else if (k == LogicalKeyboardKey.delete) {
+      plan = deleteAt(p!, stops, stop, at: at, source: source);
+    } else if (c != null && c.isNotEmpty) {
+      plan = characterAt(p!, stop, c, at: at, source: source);
+    } else {
+      return _Handled.no;
+    }
+    // a structured action is the compiler's, over the text it read
+    if (plan is Structural && !_inSync) return _Handled.deferred;
+    return _run(plan, complete: wordChar || c == ' ');
+  }
+
+  /// The `?` after / before byte [from] in the text, wrapping; `null`
+  /// when the text has none.
+  int? _nextSlotByte(String source, int? from, {required bool backwards}) {
+    final slots = <int>[];
+    var bytes = 0;
+    for (final rune in source.runes) {
+      if (rune == 0x3F) slots.add(bytes);
+      bytes += utf8.encode(String.fromCharCode(rune)).length;
+    }
+    if (slots.isEmpty) return null;
+    if (from == null) return backwards ? slots.last : slots.first;
+    if (backwards) {
+      // the slot the caret stands in (`?` at from) is not the previous one
+      return slots.lastWhere((s) => s < from, orElse: () => slots.last);
+    }
+    return slots.firstWhere((s) => s > from, orElse: () => slots.first);
+  }
+
+  _Handled _run(KeyPlan plan, {bool complete = false}) {
+    switch (plan) {
+      case EditText(:final edit):
+        _applyEdit(edit, complete: complete);
+        return _Handled.yes;
+      case Structural(:final action):
+        if (widget.completion != null) widget.dispatch(const CompletionDismissed());
+        _compose(action);
+        return _Handled.yes;
+      case MoveTo(:final stop):
+        _moveTo(stop);
+        return _Handled.yes;
+      case NeedsStructure():
+        return _Handled.deferred;
+      case Refused(:final reason):
+        if (reason == Refused.needsOperator) {
+          setState(() => _hint = context.l10n.typeAnOperatorFirst);
+        }
+        return _Handled.yes;
+    }
   }
 
   // ---- geometry ------------------------------------------------------------
@@ -524,6 +774,20 @@ class _FormulaComposerState extends State<FormulaComposer> {
     }
   }
 
+  /// Where a byte of the part being typed stands: its text measured up
+  /// to the byte with the style it is drawn in.
+  Rect? _pendingRect(int at) {
+    final picture = _picture;
+    final pending = picture.pending;
+    final range = _pendingRange(picture);
+    final box = _fieldBox;
+    if (pending == null || range == null || box == null) return null;
+    final n = _geometry.rectOf('${pending.nodeId}/text', box);
+    if (n == null) return null;
+    final head = excerptOf(_source, range.start, at.clamp(range.start, range.end));
+    return Rect.fromLTWH(n.left + _textWidth(head, pending.nodeId), n.top, 0, n.height);
+  }
+
   double _textWidth(String text, String nodeId) {
     final style = _geometry.textStyles[nodeId] ?? TextStyle(fontSize: MacType.body);
     final painter = TextPainter(
@@ -533,25 +797,49 @@ class _FormulaComposerState extends State<FormulaComposer> {
     return painter.width;
   }
 
-  /// The stop nearest a point in the field: the same row first.
-  CaretStop? _stopNear(Offset local, List<CaretStop> stops) {
+  /// The place nearest a point in the field — a stop, or a byte of the
+  /// part being typed — the same row first.
+  ({CaretStop? stop, int? byte}) _placeNear(Offset local, List<CaretStop> stops) {
     CaretStop? best;
+    int? bestByte;
     var bestScore = double.infinity;
-    for (final s in stops) {
-      final r = _stopRect(s);
-      if (r == null) continue;
+    double score(Rect r) {
       final dy = local.dy < r.top
           ? r.top - local.dy
           : local.dy > r.bottom
           ? local.dy - r.bottom
           : 0.0;
-      final score = (local.dx - r.left).abs() + dy * 4;
-      if (score < bestScore) {
-        bestScore = score;
+      return (local.dx - r.left).abs() + dy * 4;
+    }
+
+    for (final s in stops) {
+      final r = _stopRect(s);
+      if (r == null) continue;
+      final sc = score(r);
+      if (sc < bestScore) {
+        bestScore = sc;
         best = s;
       }
     }
-    return best;
+    final range = _pendingRange(_picture);
+    if (range != null) {
+      var at = range.start;
+      while (at <= range.end) {
+        final r = _pendingRect(at);
+        if (r != null) {
+          final sc = score(r);
+          if (sc < bestScore) {
+            bestScore = sc;
+            best = null;
+            bestByte = at;
+          }
+        }
+        final next = nextCharEnd(_source, at);
+        if (next == null || next > range.end) break;
+        at = next;
+      }
+    }
+    return (stop: best, byte: bestByte);
   }
 
   CaretStop? _verticalNeighbour(List<CaretStop> stops, CaretStop from, {required bool up}) {
@@ -576,6 +864,17 @@ class _FormulaComposerState extends State<FormulaComposer> {
     return best;
   }
 
+  void _goNear(Offset local, List<CaretStop> stops) {
+    final near = _placeNear(local, stops);
+    if (near.stop != null) {
+      _moveTo(near.stop!);
+    } else if (near.byte != null) {
+      _moveToByte(near.byte!);
+    } else {
+      _focus.requestFocus();
+    }
+  }
+
   /// A tap on a part: the caret goes where the tap was — between two
   /// characters of a name or number, before or after any other part, in
   /// a slot — and the part is selected.
@@ -583,48 +882,77 @@ class _FormulaComposerState extends State<FormulaComposer> {
     final box = _fieldBox;
     if (box == null) return;
     final local = box.globalToLocal(global);
-    final stops = _stops;
+    final stops = _stopsOf(_picture);
     final own = stops.where((s) => s.node == n.id).toList();
-    if (own.isEmpty) {
+    if (own.isEmpty && _picture.pending?.nodeId != n.id) {
       _select(n.id);
       _focus.requestFocus();
       return;
     }
-    final near = _stopNear(local, own);
-    if (near != null) _moveTo(near);
+    _goNear(local, own);
   }
 
   void _tapField(TapUpDetails d) {
     final box = _fieldBox;
     if (box == null) return;
-    final near = _stopNear(box.globalToLocal(d.globalPosition), _stops);
-    if (near != null) {
-      _moveTo(near);
-    } else {
-      _focus.requestFocus();
+    final local = box.globalToLocal(d.globalPosition);
+    if (_picture.projection == null && _source.trim().isNotEmpty) {
+      // raw text: the caret between its characters
+      _moveToByte(_rawByteNear(local) ?? utf8.encode(_source).length);
+      return;
     }
+    _goNear(local, _stopsOf(_picture));
   }
 
-  final GlobalKey _rawKey = GlobalKey(debugLabel: 'composer-raw');
-
-  void _placeCaret() {
-    final stop = _stop;
-    var rect = stop == null ? null : _stopRect(stop);
-    // raw text (not read yet): the caret between its characters
-    final caret = widget.composer.caret;
+  /// The byte of the raw text nearest a point.
+  int? _rawByteNear(Offset local) {
     final box = _fieldBox;
     final raw = _rawKey.currentContext?.findRenderObject() as RenderBox?;
-    if (rect == null && caret != null && box != null && raw != null && raw.hasSize) {
-      final origin = raw.localToGlobal(Offset.zero, ancestor: box);
-      final r = codeUnitRange(widget.source, 0, caret.offset);
-      final painter = TextPainter(
-        text: TextSpan(
-          text: widget.source.substring(0, r.end),
-          style: const TextStyle(fontSize: MacType.code, fontFamily: 'Menlo'),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      rect = Rect.fromLTWH(origin.dx + painter.width, origin.dy, 0, raw.size.height);
+    if (box == null || raw == null || !raw.hasSize) return null;
+    final origin = raw.localToGlobal(Offset.zero, ancestor: box);
+    final painter = TextPainter(
+      text: TextSpan(text: _source, style: _rawStyle(MacTokens.of(context))),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final pos = painter.getPositionForOffset(local - origin);
+    return byteOffsetOf(_source, pos.offset);
+  }
+
+  TextStyle _rawStyle(MacTokens t) => TextStyle(
+    fontSize: widget.large ? MacType.display : MacType.code,
+    fontFamily: 'Menlo',
+    color: t.textPrimary,
+  );
+
+  void _placeCaret() {
+    final picture = _picture;
+    final caret = _caret;
+    Rect? rect;
+    if (caret != null) {
+      final range = _pendingRange(picture);
+      if (range != null && caret.offset >= range.start && caret.offset <= range.end) {
+        rect = _pendingRect(caret.offset);
+      }
+      if (rect == null) {
+        final stop = resolveStop(_stopsOf(picture), caret);
+        if (stop != null) rect = _stopRect(stop);
+      }
+      // raw text (not read yet, or unreadable): the caret between its
+      // characters
+      final box = _fieldBox;
+      final raw = _rawKey.currentContext?.findRenderObject() as RenderBox?;
+      if (rect == null && box != null && raw != null && raw.hasSize) {
+        final origin = raw.localToGlobal(Offset.zero, ancestor: box);
+        final r = codeUnitRange(_source, 0, caret.offset);
+        final painter = TextPainter(
+          text: TextSpan(
+            text: _source.substring(0, r.end),
+            style: _rawStyle(MacTokens.of(context)),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        rect = Rect.fromLTWH(origin.dx + painter.width, origin.dy, 0, raw.size.height);
+      }
     }
     if (rect != _caretRect && mounted) setState(() => _caretRect = rect);
   }
@@ -641,26 +969,20 @@ class _FormulaComposerState extends State<FormulaComposer> {
     final selected = _selected;
     final selectedNode = selected == null ? null : findNode(root, selected);
     final pending = widget.composer.pendingCompose;
-    final stale = picture.stale && widget.source.trim().isNotEmpty;
-    final enabled = !stale && !pending;
-    final stop = _stop;
+    final stale = picture.stale && _source.trim().isNotEmpty;
+    final enabled = !pending;
+    final stop = _caret == null ? null : resolveStop(_stopsOf(picture), _caret);
+    final large = widget.large;
     WidgetsBinding.instance.addPostFrameCallback((_) => _placeCaret());
 
     final Widget content;
     if (root == null) {
-      content = stale
-          // nothing readable to show: the notice below says why
-          ? Text(
-              widget.source,
-              style: TextStyle(fontSize: MacType.code, fontFamily: 'Menlo', color: t.textSecondary),
-            )
-          : widget.source.trim().isEmpty
+      content = _source.trim().isEmpty
           ? _EmptySlot(
-              selected: selected == 'r' || widget.composer.caret != null,
+              selected: selected == 'r' || _caret != null,
+              large: large,
               onTap: () {
-                widget.dispatch(
-                  FormulaCaretMoved(mappingId: widget.mappingId, caret: const CaretState(0)),
-                );
+                _setCaret(const CaretState(0));
                 _select('r');
                 _focus.requestFocus();
               },
@@ -668,11 +990,12 @@ class _FormulaComposerState extends State<FormulaComposer> {
                   ? l10n.producesDescription(widget.projection!.result.description)
                   : l10n.typeToWrite,
             )
-          // text just typed into an empty formula: shown as text until read
+          // text just typed (not read yet) or text the compiler could not
+          // read: shown and edited as text
           : Text(
-              widget.source,
+              _source,
               key: _rawKey,
-              style: TextStyle(fontSize: MacType.code, fontFamily: 'Menlo', color: t.textPrimary),
+              style: _rawStyle(t).copyWith(color: stale ? t.textSecondary : t.textPrimary),
             );
     } else {
       content = FormulaRender(
@@ -681,6 +1004,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
         geometry: _geometry,
         selected: selected,
         pending: picture.pending,
+        large: large,
         onTapNode: enabled ? _tapNode : null,
         units: widget.composer.slot?.units ?? const [],
         onUnit: enabled
@@ -695,6 +1019,9 @@ class _FormulaComposerState extends State<FormulaComposer> {
     }
 
     final caret = _caretRect;
+    final padding = large
+        ? const EdgeInsets.symmetric(horizontal: MacMetrics.gapGroup, vertical: MacMetrics.gap)
+        : const EdgeInsets.symmetric(horizontal: 6, vertical: 5);
     final field = Focus(
       focusNode: _focus,
       onKeyEvent: _onKey,
@@ -705,20 +1032,21 @@ class _FormulaComposerState extends State<FormulaComposer> {
           cursor: SystemMouseCursors.text,
           child: Container(
             key: _fieldKey,
-            constraints: const BoxConstraints(minHeight: 34),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            constraints: BoxConstraints(minHeight: large ? 96 : 34),
+            padding: padding,
+            alignment: large ? Alignment.centerLeft : null,
             decoration: BoxDecoration(
               color: t.control,
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(large ? 8 : 5),
               border: Border.all(color: _focus.hasFocus ? t.accent : t.hairline),
             ),
             child: Stack(
               children: [
-                Opacity(opacity: stale ? 0.5 : 1, child: content),
+                content,
                 if (caret != null && _focus.hasFocus)
                   Positioned(
-                    left: caret.left - 6 - 1,
-                    top: caret.top - 5,
+                    left: caret.left - padding.left - 1,
+                    top: caret.top - padding.top,
                     child: Semantics(
                       label: stop == null ? null : _caretReading(stop, root, l10n),
                       liveRegion: true,
@@ -738,6 +1066,19 @@ class _FormulaComposerState extends State<FormulaComposer> {
     );
 
     final completion = widget.completion;
+    final slotPanel = selected != null && !stale
+        ? _SlotPanel(
+            key: ValueKey('slot-panel-$selected'),
+            mappingId: widget.mappingId,
+            nodeId: selected,
+            node: selectedNode,
+            slot: widget.composer.slot,
+            pending: pending,
+            truthValued: _truthValued(selectedNode),
+            onCompose: _compose,
+            onDeselect: _clear,
+          )
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -774,7 +1115,7 @@ class _FormulaComposerState extends State<FormulaComposer> {
                   child: Text(
                     // three stale states, one policy: no answer yet, an
                     // answer for older text, text the compiler cannot read
-                    widget.projection == null || widget.projection!.source != widget.source
+                    widget.projection == null || widget.projection!.source != _source
                         ? l10n.waitingForTheCompilerToReadThe
                         : l10n.theTextCannotBeReadAsA,
                     key: const ValueKey('composer-out-of-sync'),
@@ -786,20 +1127,10 @@ class _FormulaComposerState extends State<FormulaComposer> {
               ],
             ),
           ),
-        if (selected != null && !stale)
+        if (slotPanel != null && widget.palette)
           Padding(
             padding: const EdgeInsets.only(top: MacMetrics.gap),
-            child: _SlotPanel(
-              key: ValueKey('slot-panel-$selected'),
-              mappingId: widget.mappingId,
-              nodeId: selected,
-              node: selectedNode,
-              slot: widget.composer.slot,
-              pending: pending,
-              truthValued: _truthValued(selectedNode),
-              onCompose: _compose,
-              onDeselect: _clear,
-            ),
+            child: slotPanel,
           ),
       ],
     );
@@ -841,10 +1172,16 @@ class _FormulaComposerState extends State<FormulaComposer> {
 
 /// The empty formula: one slot, and what it must produce.
 class _EmptySlot extends StatelessWidget {
-  const _EmptySlot({required this.selected, required this.onTap, required this.hint});
+  const _EmptySlot({
+    required this.selected,
+    required this.onTap,
+    required this.hint,
+    this.large = false,
+  });
   final bool selected;
   final VoidCallback? onTap;
   final String hint;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
@@ -867,7 +1204,10 @@ class _EmptySlot extends StatelessWidget {
                 painter: _DashedBorder(t.textTertiary),
                 child: Text(
                   '?',
-                  style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+                  style: TextStyle(
+                    fontSize: large ? MacType.body : MacType.secondary,
+                    color: t.textSecondary,
+                  ),
                 ),
               ),
             ),
@@ -876,7 +1216,10 @@ class _EmptySlot extends StatelessWidget {
         Expanded(
           child: Text(
             hint,
-            style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+            style: TextStyle(
+              fontSize: large ? MacType.body : MacType.secondary,
+              color: t.textTertiary,
+            ),
           ),
         ),
       ],

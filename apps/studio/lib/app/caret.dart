@@ -17,14 +17,26 @@
 /// Where a stop stands on screen is the widget's layout; what it means is
 /// here.
 ///
-/// What a key does at a stop is one [KeyPlan]: a text edit of the draft
-/// at the stop's byte offset (letters, digits, a unit after a number — the
-/// compiler reads the result), a structured action the compiler answers
-/// with text (an operator, `(` on a name, deleting a whole part), or a
-/// move.  Nothing here parses, types or decides what fits: a text edit
-/// that does not parse is shown as text until it does (the composer's
-/// pending region), and a structured action is the compiler's.
+/// What a key does is one [KeyPlan].  The principle is a formula editor's
+/// (GeoGebra's `EditorState` / `InputController`: the keys mutate the
+/// editor's own sequence at its own cursor, synchronously; the parser
+/// reads the result afterwards and never moves the cursor): **a key acts
+/// on the text Studio holds, at the caret's byte, now** — a letter, a
+/// digit, an operator with its slot, a parenthesis, a deletion are text
+/// edits of the draft ([textCharacterAt], [textBackspaceAt],
+/// [textDeleteAt]), computed without the compiler and never waiting for
+/// it.  The compiler's tree, when it is current, adds what text cannot
+/// know: where a whole part begins and ends (⌫ after a fraction removes
+/// the fraction), what a name applies to (`(` after `clamp` is the
+/// compiler's arity), what a part negated is; those are structured
+/// actions the compiler answers with text, and a key that needs them
+/// while the tree is not current is [NeedsStructure] — the composer keeps
+/// it, in order, until the reading arrives.  Nothing typed is ever
+/// dropped, and nothing here parses, types or decides what fits: text
+/// that does not parse is shown as text until it does.
 library;
+
+import 'dart:convert' show utf8;
 
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'state.dart' show CaretState;
@@ -306,18 +318,23 @@ CaretStop? nextArgument(List<CaretStop> stops, pb.FormulaNode root, CaretStop cu
 
 // ---- what a key does ----------------------------------------------------------
 
-/// A text edit of the draft: the bytes [start, end) become [text].
+/// A text edit of the draft: the bytes [start, end) become [text].  The
+/// caret lands at [caret] (a byte into the new text), else after the
+/// inserted text.
 class TextEditPlan {
-  const TextEditPlan(this.start, this.end, this.text);
+  const TextEditPlan(this.start, this.end, this.text, {this.caret});
   final int start;
   final int end;
   final String text;
 
-  /// Where the caret lands: after the inserted text.
-  int get caretAfter => start + text.length;
+  /// Where the caret lands when not after the inserted text.
+  final int? caret;
+
+  /// Where the caret lands.
+  int get caretAfter => caret ?? start + utf8.encode(text).length;
 }
 
-/// What one key does at one stop.
+/// What one key does at one place.
 sealed class KeyPlan {
   const KeyPlan();
 }
@@ -335,6 +352,13 @@ class Structural extends KeyPlan {
 class MoveTo extends KeyPlan {
   const MoveTo(this.stop);
   final CaretStop stop;
+}
+
+/// The key acts on structure the text alone does not tell (what a name
+/// applies to, where a whole part ends) and the compiler's reading of the
+/// text is not current: the composer keeps the key until it is.
+class NeedsStructure extends KeyPlan {
+  const NeedsStructure();
 }
 
 /// The key does nothing here; [reason] says why when it is worth saying
@@ -363,6 +387,273 @@ String? operatorFor(String char) => switch (char) {
 
 bool _isWordChar(String c) => RegExp(r'^[A-Za-z0-9_.]$').hasMatch(c);
 
+// ---- the sequence, as text ------------------------------------------------------
+//
+// GeoGebra edits a sequence of characters at a cursor offset; a BDL
+// formula's sequence is its text and the cursor a byte into it.  These
+// functions are that editor: every case is a byte-range edit decided from
+// the characters around the caret — a `?` is a slot (typing next to it
+// replaces it, as typing over a placeholder does), ` op ` an operator —
+// and none needs the compiler.
+
+/// Byte offset → code unit in [source] (clamped, never inside a character).
+int _cu(String source, int byte) {
+  var bytes = 0;
+  var units = 0;
+  for (final rune in source.runes) {
+    if (bytes >= byte) return units;
+    bytes += rune < 0x80
+        ? 1
+        : rune < 0x800
+        ? 2
+        : rune < 0x10000
+        ? 3
+        : 4;
+    units += rune > 0xFFFF ? 2 : 1;
+  }
+  return units;
+}
+
+/// Code unit → byte offset in [source].
+int _by(String source, int cu) =>
+    utf8.encode(source.substring(0, cu.clamp(0, source.length))).length;
+
+/// The byte where the character before byte [at] starts; `null` at 0.
+int? previousCharStart(String source, int at) {
+  final cu = _cu(source, at);
+  if (cu == 0) return null;
+  var back = 1;
+  // a surrogate pair is one character
+  if (cu >= 2 && _isLowSurrogate(source.codeUnitAt(cu - 1))) back = 2;
+  return _by(source, cu - back);
+}
+
+/// The byte after the character at byte [at]; `null` at the end.
+int? nextCharEnd(String source, int at) {
+  final cu = _cu(source, at);
+  if (cu >= source.length) return null;
+  var forward = 1;
+  if (cu + 1 < source.length && _isHighSurrogate(source.codeUnitAt(cu))) forward = 2;
+  return _by(source, cu + forward);
+}
+
+bool _isHighSurrogate(int u) => u >= 0xD800 && u <= 0xDBFF;
+bool _isLowSurrogate(int u) => u >= 0xDC00 && u <= 0xDFFF;
+
+/// The character right before / at byte [at] ('' at an edge).
+String _before(String source, int at) {
+  final cu = _cu(source, at);
+  return cu == 0 ? '' : source[cu - 1];
+}
+
+String _at(String source, int at) {
+  final cu = _cu(source, at);
+  return cu >= source.length ? '' : source[cu];
+}
+
+/// The text up to byte [at].
+String _head(String source, int at) => source.substring(0, _cu(source, at));
+
+/// The slot the caret touches: the byte of a `?` right at or right before
+/// the caret, else `null`.
+int? _slotAt(String source, int at) {
+  if (_at(source, at) == '?') return at;
+  if (_before(source, at) == '?') return at - 1;
+  return null;
+}
+
+/// Where a value may begin at byte [at]: the start of the text, or after
+/// `(`, `[`, `,`, an operator or a keyword — the previous non-blank
+/// character read backwards.
+bool _valueMayStart(String source, int at) {
+  final head = _head(source, at).trimRight();
+  if (head.isEmpty) return true;
+  final last = head[head.length - 1];
+  if ('([,+-*/<>=&|!'.contains(last)) return true;
+  final word = RegExp(r'([A-Za-z_][A-Za-z0-9_]*)$').firstMatch(head)?.group(1);
+  return word != null && _keywords.contains(word);
+}
+
+const Set<String> _keywords = {
+  'if',
+  'then',
+  'else',
+  'in',
+  'match',
+  'with',
+  'let',
+  'and',
+  'or',
+  'not',
+};
+
+/// The number the caret is right after, blank included (`90 |`): a unit
+/// may follow.
+bool _afterNumber(String source, int at) =>
+    RegExp(r'[0-9.](\s[A-Za-z_][A-Za-z0-9_/^]*)?\s?$').hasMatch(_head(source, at)) &&
+    !_head(source, at).endsWith('  ');
+
+/// A character typed at byte [at] of [source], as text: a word character
+/// replaces the slot it touches, extends the word it touches, or begins a
+/// value where one may begin; a space is only meaningful after a number
+/// (its unit follows); an operator is [textOperatorAt]; `(` groups a slot
+/// or opens a group where a value may begin, and after a name needs the
+/// compiler (what the name applies to, its arity); `)` steps past the
+/// parenthesis it stands before; `,` needs the compiler (the next
+/// argument).  Elsewhere a value cannot begin without an operator first.
+///
+/// With [plain], the field is text the compiler could not read: every
+/// character is inserted where the caret is, so what was typed can be
+/// mended.
+KeyPlan textCharacterAt(String source, int at, String char, {bool plain = false}) {
+  if (plain) return EditText(TextEditPlan(at, at, char));
+  final op = operatorFor(char);
+  if (op != null) return textOperatorAt(source, at, char, plain: plain);
+  final slot = _slotAt(source, at);
+  if (char == '(') {
+    if (slot != null) return EditText(TextEditPlan(slot, slot + 1, '(?)', caret: slot + 1));
+    if (_isWordChar(_before(source, at)) && !RegExp(r'[0-9.]').hasMatch(_before(source, at))) {
+      return const NeedsStructure();
+    }
+    if (_valueMayStart(source, at)) return EditText(TextEditPlan(at, at, '(?)', caret: at + 1));
+    return const Refused(Refused.needsOperator);
+  }
+  if (char == ')') {
+    return _at(source, at) == ')'
+        ? EditText(TextEditPlan(at, at, '', caret: at + 1))
+        : const NeedsStructure();
+  }
+  if (char == ',') return const NeedsStructure();
+  if (char == ' ') {
+    if (slot == null && _afterNumber(source, at) && _before(source, at) != ' ') {
+      return EditText(TextEditPlan(at, at, ' '));
+    }
+    return const Refused();
+  }
+  if (!_isWordChar(char)) return const Refused();
+  if (slot != null) return EditText(TextEditPlan(slot, slot + 1, char));
+  final before = _before(source, at);
+  final after = _at(source, at);
+  if (_isWordChar(before) || _isWordChar(after)) return EditText(TextEditPlan(at, at, char));
+  if (before == ' ' && _afterNumber(source, at)) return EditText(TextEditPlan(at, at, char));
+  if (_valueMayStart(source, at)) return EditText(TextEditPlan(at, at, char));
+  return const Refused(Refused.needsOperator);
+}
+
+/// An operator typed at byte [at], as text — what the text alone can
+/// decide: in a slot, `-` and `!` are a sign (`-?`: a negative number is
+/// typed as one) and the others split it (`? + ?`, the caret in the
+/// second); `=` after `<` or `>` makes `<=`, `>=`; with [plain] the
+/// character is inserted.  Anywhere else an operator applies to a part
+/// — the value before the caret, kept whole, parenthesised where the
+/// operator binds looser than the part's place (a `+` in a denominator
+/// stays in the denominator) — which only the compiler's tree tells:
+/// [NeedsStructure].
+KeyPlan textOperatorAt(String source, int at, String char, {bool plain = false}) {
+  if (plain) return EditText(TextEditPlan(at, at, char));
+  final op = operatorFor(char)!;
+  final slot = _slotAt(source, at);
+  final prefix = op == '-' || op == '!';
+  // `<` then `=`: one operator
+  if (char == '=') {
+    final head = _head(source, slot ?? at);
+    final m = RegExp(r' ([<>]) $').firstMatch(head);
+    if (m != null) {
+      final opAt = _by(source, m.start + 1);
+      return EditText(TextEditPlan(opAt, opAt + 1, '${m.group(1)}=', caret: (slot ?? at) + 1));
+    }
+  }
+  if (slot != null) {
+    if (prefix) return EditText(TextEditPlan(slot, slot + 1, '$op?', caret: slot + op.length));
+    final text = '? $op ?';
+    return EditText(TextEditPlan(slot, slot + 1, text, caret: slot + text.length - 1));
+  }
+  return const NeedsStructure();
+}
+
+/// Backspace at byte [at], as text: a slot with the operator that opened
+/// it goes together (`a + ?` → `a`); the last character of a word leaves
+/// a slot in its place (`a + b` → `a + ?`), so the text stays readable;
+/// otherwise the character before the caret goes.  With [plain] (text
+/// the compiler could not read) always the character.
+KeyPlan textBackspaceAt(String source, int at, {bool plain = false}) {
+  final prev = previousCharStart(source, at);
+  if (prev == null) return const Refused();
+  if (plain) return EditText(TextEditPlan(prev, at, ''));
+  final slot = _slotAt(source, at);
+  if (slot != null) {
+    final head = _head(source, slot);
+    // `a + ?`: the operator and its blank go with the slot
+    final m = RegExp(r' (\+|-|\*|/|<=|>=|==|!=|<|>|&&|\|\|) $').firstMatch(head);
+    if (m != null) {
+      final start = _by(source, m.start);
+      return EditText(TextEditPlan(start, slot + 1, '', caret: start));
+    }
+    // `-?` / `!?`: the prefix
+    final p = RegExp(r'[-!]$').firstMatch(head);
+    if (p != null) {
+      final start = _by(source, p.start);
+      return EditText(TextEditPlan(start, slot, '', caret: start));
+    }
+    // `? + b`, `(?)`: the slot stays, the caret steps back
+    return slot < at ? EditText(TextEditPlan(at, at, '', caret: slot)) : const Refused();
+  }
+  final before = _before(source, at);
+  final after = _at(source, at);
+  if (_isSeparator(before) && (_isWordChar(after) || after == '?' || after == '(')) {
+    // before a part (`a + |b`, `(?, |1)`): the caret steps back over the
+    // separators to the part before — an operator is removed with the
+    // operand it opened, never on its own, so the text stays readable
+    var to = prev;
+    while (to > 0 && _isSeparator(_before(source, to))) {
+      to = previousCharStart(source, to) ?? 0;
+    }
+    return EditText(TextEditPlan(at, at, '', caret: to));
+  }
+  if (_isWordChar(before) && !_isWordChar(_before(source, prev)) && !_isWordChar(_at(source, at))) {
+    // the only character of a value: a slot in its place
+    return EditText(TextEditPlan(prev, at, '?', caret: prev));
+  }
+  return EditText(TextEditPlan(prev, at, '', caret: prev));
+}
+
+/// The characters between parts: blanks, commas, the operators and the
+/// parentheses.
+bool _isSeparator(String c) => c.isNotEmpty && ' ,+-*/<>=&|!()[]'.contains(c);
+
+/// Delete (forward) at byte [at], as text: the mirror of
+/// [textBackspaceAt].
+KeyPlan textDeleteAt(String source, int at, {bool plain = false}) {
+  final next = nextCharEnd(source, at);
+  if (next == null) return const Refused();
+  if (plain) return EditText(TextEditPlan(at, next, '', caret: at));
+  final slot = _slotAt(source, at);
+  if (slot != null && slot == at) {
+    final tail = source.substring(_cu(source, slot + 1));
+    // `? + b`: the slot and the operator after it
+    final m = RegExp(r'^ (\+|-|\*|/|<=|>=|==|!=|<|>|&&|\|\|) ').firstMatch(tail);
+    if (m != null) return EditText(TextEditPlan(slot, slot + 1 + m.end, '', caret: slot));
+    return const Refused();
+  }
+  final c = _at(source, at);
+  final before = _before(source, at);
+  if (_isSeparator(c) && (_isWordChar(before) || before == '?' || before == ')')) {
+    // after a part: the caret steps forward over the separators
+    var to = next;
+    final end = utf8.encode(source).length;
+    while (to < end && _isSeparator(_at(source, to))) {
+      to = nextCharEnd(source, to) ?? end;
+    }
+    return EditText(TextEditPlan(at, at, '', caret: to));
+  }
+  if (_isWordChar(c) && !_isWordChar(before) && !_isWordChar(_at(source, next))) {
+    return EditText(TextEditPlan(at, next, '?', caret: at));
+  }
+  return EditText(TextEditPlan(at, next, '', caret: at));
+}
+
+// ---- the keys over the compiler's tree ------------------------------------------
+
 /// The leaf the stop touches — the leaf itself for `inside`, or the leaf
 /// the stop is right after / before — else `null`.
 pb.FormulaNode? _touchedLeaf(pb.FormulaNode root, CaretStop stop) {
@@ -373,52 +664,46 @@ pb.FormulaNode? _touchedLeaf(pb.FormulaNode root, CaretStop stop) {
   return null;
 }
 
-/// A character typed at a stop.  In a slot it replaces the `?`; next to
-/// a text leaf it extends the leaf (the compiler reads the result);
-/// elsewhere a value cannot start without an operator between it and the
-/// part before it, so it is refused with the reason.  A space is only
-/// meaningful after a number (a unit follows).
+/// A character typed at byte [at] of [p]'s source, the caret at [stop]:
+/// the text edit [textCharacterAt] decides, with the tree adding what the
+/// text does not tell — an operator applies to the part the caret
+/// touches ([operatorAt]), `(` after a name applies the name (the
+/// compiler's arity).
 ///
-/// [at] is the caret's own byte when it stands past the stop — in the
-/// whitespace a space just typed after a number opened (`90 |`): the
-/// unit's letters go there, not back against the number.
-KeyPlan characterAt(pb.FormulaProjection p, CaretStop stop, String char, {int? at}) {
-  final root = p.root;
-  final op = operatorFor(char);
-  if (op != null) return operatorAt(p, stop, op);
-  if (char == '(') return openParenAt(p, stop);
-  final past = at != null && at > stop.offset && stop.side == StopSide.after;
-  if (char == ' ') {
-    final leaf = _touchedLeaf(root, stop);
-    if (leaf != null && leaf.kind == 'number' && stop.side == StopSide.after && !past) {
-      return EditText(TextEditPlan(stop.offset, stop.offset, ' '));
+/// [source] is the text on screen — the projection's own unless
+/// characters were typed since — and [at] the caret's byte into it.
+KeyPlan characterAt(
+  pb.FormulaProjection p,
+  CaretStop stop,
+  String char, {
+  int? at,
+  String? source,
+}) {
+  final text = source ?? p.source;
+  final offset = at ?? stop.offset;
+  final plan = textCharacterAt(text, offset, char);
+  if (plan is! NeedsStructure) return plan;
+  if (operatorFor(char) != null) return operatorAt(p, stop, char, at: offset, source: text);
+  if (char == '(') {
+    final leaf = _touchedLeaf(p.root, stop);
+    if (leaf != null && leaf.kind == 'reference' && stop.side != StopSide.before) {
+      return Structural(pb.ComposeAction(nodeId: leaf.id, apply: pb.Unit()));
     }
-    return const Refused();
+    return const Refused(Refused.needsOperator);
   }
-  if (!_isWordChar(char)) return const Refused();
-  if (stop.side == StopSide.inSlot) {
-    final slot = findNode(root, stop.node);
-    if (slot == null) return const Refused();
-    return EditText(TextEditPlan(slot.range.start, slot.range.end, char));
-  }
-  final leaf = _touchedLeaf(root, stop);
-  if (leaf != null) {
-    final offset = past && leaf.kind == 'number' ? at : stop.offset;
-    return EditText(TextEditPlan(offset, offset, char));
-  }
-  // just inside an empty pair of parentheses, or right after `(`: a
-  // value may start (the parser reads `(x`… once complete)
-  if (stop.side == StopSide.open) {
-    return EditText(TextEditPlan(stop.offset, stop.offset, char));
-  }
-  return const Refused(Refused.needsOperator);
+  return plan;
 }
 
-/// An operator typed at a stop: the compiler puts it after (or before)
-/// the part the stop belongs to, with a slot for the other side.  Inside
-/// a leaf the operator applies to the whole leaf; `open` puts the
-/// operator before the part; `!` negates the part in place.
-KeyPlan operatorAt(pb.FormulaProjection p, CaretStop stop, String op) {
+/// An operator at a stop over the tree: the compiler puts it after (or
+/// before) the part the stop belongs to, with a slot for the other side,
+/// parenthesising where the part's place needs it.  Inside a leaf the
+/// operator applies to the whole leaf; `open` puts the operator before
+/// the part; `!` negates the part in place.  A slot's own cases are the
+/// text's ([textOperatorAt]).
+KeyPlan operatorAt(pb.FormulaProjection p, CaretStop stop, String char, {int? at, String? source}) {
+  final text = textOperatorAt(source ?? p.source, at ?? stop.offset, char);
+  if (text is! NeedsStructure) return text;
+  final op = operatorFor(char)!;
   final before = stop.side == StopSide.before || stop.side == StopSide.open;
   if (op == '!' && before) {
     return Structural(
@@ -441,117 +726,134 @@ KeyPlan operatorAt(pb.FormulaProjection p, CaretStop stop, String op) {
 
 /// `(` typed at a stop: after a name it applies the name (a call with one
 /// slot per argument, the compiler's arity); in a slot it groups the slot
-/// (`(?)`); elsewhere nothing.
-KeyPlan openParenAt(pb.FormulaProjection p, CaretStop stop) {
-  final n = findNode(p.root, stop.node);
-  if (n == null) return const Refused();
-  if (n.kind == 'reference' && stop.side != StopSide.before) {
-    return Structural(pb.ComposeAction(nodeId: n.id, apply: pb.Unit()));
-  }
-  if (stop.side == StopSide.inSlot) {
-    return EditText(TextEditPlan(n.range.start, n.range.end, '(?)'));
-  }
-  return const Refused();
-}
+/// (`(?)`); elsewhere as text.
+KeyPlan openParenAt(pb.FormulaProjection p, CaretStop stop) => characterAt(p, stop, '(');
 
-/// Backspace at a stop: the character before the caret inside or right
-/// after a text leaf (the last character of a one-character leaf removes
-/// the leaf: it becomes a slot, the compiler's `remove`); a whole
-/// structural part right after the caret is removed the same way; in a
-/// slot, its operator goes with it (the compiler's rule); before a part
-/// or just inside a parenthesis the caret only moves back.
-KeyPlan backspaceAt(pb.FormulaProjection p, List<CaretStop> stops, CaretStop stop, {int? at}) {
+/// Backspace at a stop over the tree: right after a whole structure (a
+/// fraction, a call, a choice) the structure is removed — the compiler's
+/// `remove`, which takes an operator whose operand it was; just inside a
+/// closing parenthesis the caret steps back to the last part; elsewhere
+/// the text rule ([textBackspaceAt]) at the caret's own byte.
+KeyPlan backspaceAt(
+  pb.FormulaProjection p,
+  List<CaretStop> stops,
+  CaretStop stop, {
+  int? at,
+  String? source,
+}) {
   final root = p.root;
+  final text = source ?? p.source;
   final n = findNode(root, stop.node);
   if (n == null) return const Refused();
-  // past the stop, in whitespace a space opened: that character goes
-  if (at != null && at > stop.offset && stop.side == StopSide.after) {
-    return EditText(TextEditPlan(at - 1, at, ''));
-  }
-  switch (stop.side) {
-    case StopSide.inside:
-      final paren = wrappedInParens(n);
-      final start = n.range.start + (paren ? 1 : 0);
-      if (stop.offset - 1 == start && n.range.end - (paren ? 1 : 0) - start == 1) {
-        return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-      }
-      return EditText(TextEditPlan(stop.offset - 1, stop.offset, ''));
-    case StopSide.after:
-      if (isTextLeaf(n)) {
-        final paren = wrappedInParens(n);
-        final start = n.range.start + (paren ? 1 : 0);
-        final end = n.range.end - (paren ? 1 : 0);
-        if (end - start <= 1) {
+  final offset = at ?? stop.offset;
+  if (offset == stop.offset) {
+    switch (stop.side) {
+      case StopSide.after:
+        if (!isTextLeaf(n) && n.kind != 'slot') {
           return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
         }
-        return EditText(TextEditPlan(end - 1, end, ''));
-      }
-      return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-    case StopSide.inSlot:
-      return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-    case StopSide.close:
-      // the last part inside the parentheses, if any, is what precedes
-      final last = n.children.isEmpty ? null : n.children.last;
-      if (last == null) return const Refused();
-      final after = stops.where((s) => s.node == last.id && s.side == StopSide.after).firstOrNull;
-      return after == null ? const Refused() : MoveTo(after);
-    case StopSide.before:
-    case StopSide.open:
-      final prev = previousStop(stops, stop);
-      return prev == null ? const Refused() : MoveTo(prev);
+      case StopSide.close:
+        final last = n.children.isEmpty ? null : n.children.last;
+        if (last == null) return const Refused();
+        final after = stops.where((s) => s.node == last.id && s.side == StopSide.after).firstOrNull;
+        return after == null ? const Refused() : MoveTo(after);
+      case StopSide.inSlot:
+        // the slot's own removal is the compiler's when it stands alone in
+        // a structure (`clamp(?, 1)`: the argument goes); with an
+        // operator, the text rule takes both
+        final plan = textBackspaceAt(text, offset);
+        if (plan is EditText) return plan;
+        return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
+      case StopSide.before:
+      case StopSide.open:
+        // only a move back: an operator goes with the operand it opened
+        final prev = previousStop(stops, stop);
+        return prev == null ? const Refused() : MoveTo(prev);
+      case StopSide.inside:
+        break;
+    }
   }
+  return textBackspaceAt(text, offset);
 }
 
 /// Delete (forward) at a stop: the mirror of backspace.
-KeyPlan deleteAt(pb.FormulaProjection p, List<CaretStop> stops, CaretStop stop) {
+KeyPlan deleteAt(
+  pb.FormulaProjection p,
+  List<CaretStop> stops,
+  CaretStop stop, {
+  int? at,
+  String? source,
+}) {
   final root = p.root;
+  final text = source ?? p.source;
   final n = findNode(root, stop.node);
   if (n == null) return const Refused();
-  switch (stop.side) {
-    case StopSide.inside:
-      final paren = wrappedInParens(n);
-      final start = n.range.start + (paren ? 1 : 0);
-      final end = n.range.end - (paren ? 1 : 0);
-      if (end - start == 1) {
-        return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-      }
-      return EditText(TextEditPlan(stop.offset, stop.offset + 1, ''));
-    case StopSide.before:
-      if (isTextLeaf(n)) {
-        final paren = wrappedInParens(n);
-        final start = n.range.start + (paren ? 1 : 0);
-        final end = n.range.end - (paren ? 1 : 0);
-        if (end - start <= 1) {
+  final offset = at ?? stop.offset;
+  if (offset == stop.offset) {
+    switch (stop.side) {
+      case StopSide.before:
+        if (!isTextLeaf(n) && n.kind != 'slot') {
           return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
         }
-        return EditText(TextEditPlan(start, start + 1, ''));
-      }
-      return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-    case StopSide.inSlot:
-      return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
-    case StopSide.after:
-    case StopSide.close:
-    case StopSide.open:
-      final next = nextStop(stops, stop);
-      return next == null ? const Refused() : MoveTo(next);
+      case StopSide.inSlot:
+        final plan = textDeleteAt(text, offset);
+        if (plan is EditText) return plan;
+        return Structural(pb.ComposeAction(nodeId: n.id, remove: pb.Unit()));
+      case StopSide.open:
+        final first = n.children.isEmpty ? null : n.children.first;
+        if (first == null) return const Refused();
+        final before = stops
+            .where((s) => s.node == first.id && s.side == StopSide.before)
+            .firstOrNull;
+        return before == null ? const Refused() : MoveTo(before);
+      case StopSide.after:
+      case StopSide.close:
+        final next = nextStop(stops, stop);
+        return next == null ? const Refused() : MoveTo(next);
+      case StopSide.inside:
+        break;
+    }
   }
+  return textDeleteAt(text, offset);
 }
 
 /// The region of [current] that differs from [old], as a byte range into
-/// [old] and the replacement's length: `null` when the texts are equal.
+/// [old] and the replacement's byte length: `null` when the texts are
+/// equal.  (Bytes, as the compiler's ranges are.)
 ({int start, int end, int newLength})? changedRegion(String old, String current) {
   if (old == current) return null;
+  final a = utf8.encode(old);
+  final b = utf8.encode(current);
   var prefix = 0;
-  final max = old.length < current.length ? old.length : current.length;
-  while (prefix < max && old.codeUnitAt(prefix) == current.codeUnitAt(prefix)) {
+  final max = a.length < b.length ? a.length : b.length;
+  while (prefix < max && a[prefix] == b[prefix]) {
     prefix++;
   }
   var suffix = 0;
-  while (suffix < max - prefix &&
-      old.codeUnitAt(old.length - 1 - suffix) == current.codeUnitAt(current.length - 1 - suffix)) {
+  while (suffix < max - prefix && a[a.length - 1 - suffix] == b[b.length - 1 - suffix]) {
     suffix++;
   }
-  return (start: prefix, end: old.length - suffix, newLength: current.length - prefix - suffix);
+  return (start: prefix, end: a.length - suffix, newLength: b.length - prefix - suffix);
+}
+
+/// The stops of a reading, moved to the text as it is now: a text edit
+/// of [region] bytes (into the reading's source) that made the text
+/// [delta] bytes longer shifts every stop past it; the character stops
+/// strictly inside the edited region belong to text that no longer exists
+/// and go.  What the caret walks while the compiler reads.
+List<CaretStop> shiftedStops(List<CaretStop> stops, ({int start, int end, int newLength}) region) {
+  final delta = region.newLength - (region.end - region.start);
+  final out = <CaretStop>[];
+  for (final s in stops) {
+    if (s.offset <= region.start) {
+      out.add(s);
+    } else if (s.offset >= region.end) {
+      out.add(
+        CaretStop(id: s.id, offset: s.offset + delta, node: s.node, side: s.side, parent: s.parent),
+      );
+    }
+  }
+  return out;
 }
 
 /// The innermost node of [root] whose range contains the byte range

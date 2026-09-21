@@ -276,6 +276,9 @@ Transition reduce(AppState s, AppAction action) {
         t.effects,
       );
     }),
+    DefinitionDraftFlushRequested(:final mappingId) => Transition(s, [
+      if (s.draft(mappingId) != null) FlushDraftCheck(mappingId),
+    ]),
     DefinitionDraftReverted(:final mappingId) ||
     DefinitionDraftReloaded(:final mappingId) => draftDropped(s, mappingId),
     DefinitionDraftKept(:final mappingId) => draftKept(s, mappingId),

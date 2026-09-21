@@ -744,6 +744,13 @@ class EffectExecutor {
           (r) => _dispatch(TemplatesReceived(r.templates.templates)),
           counted: false,
         );
+      case FlushDraftCheck(:final mappingId):
+        final timer = _draftTimers.remove(mappingId);
+        if (timer != null) {
+          timer.cancel();
+          final send = _pendingDrafts.remove(mappingId);
+          if (send != null) await send();
+        }
       case DiscardDraft(:final mappingId, :final component):
         // A check still debounced for this draft would resurrect the overlay.
         _draftTimers.remove(mappingId)?.cancel();

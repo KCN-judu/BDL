@@ -602,6 +602,13 @@ class DefinitionDraftChanged extends UserAction {
   final String source;
 }
 
+/// The Formula view holds a key that needs the compiler's reading of the
+/// draft: the debounced check is sent now.
+class DefinitionDraftFlushRequested extends UserAction {
+  const DefinitionDraftFlushRequested(this.mappingId);
+  final int mappingId;
+}
+
 /// Discard the draft; the editor shows the committed definition again.
 class DefinitionDraftReverted extends UserAction {
   const DefinitionDraftReverted(this.mappingId);

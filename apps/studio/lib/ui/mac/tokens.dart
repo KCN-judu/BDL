@@ -146,6 +146,11 @@ abstract final class MacType {
 
   /// Formulas and source text: 13, monospace.
   static const double code = 13;
+
+  /// The expression in the formula sheet: 20 regular — the one display
+  /// size, for the one surface whose subject is a single expression read
+  /// at arm's length (docs/architecture/studio-ui.md §4b).
+  static const double display = 20;
 }
 
 /// Sizes shared by chrome and canvas.

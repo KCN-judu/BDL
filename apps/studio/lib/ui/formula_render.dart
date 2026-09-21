@@ -149,6 +149,7 @@ class FormulaRender extends StatelessWidget {
     this.pending,
     this.onTapNode,
     this.dense = false,
+    this.large = false,
     this.resultDescription,
     this.units = const [],
     this.onUnit,
@@ -172,6 +173,9 @@ class FormulaRender extends StatelessWidget {
   /// A smaller, tighter picture (the canvas node).
   final bool dense;
 
+  /// The formula sheet's picture: the display size.
+  final bool large;
+
   /// What the whole formula gives, for the result rows of choices at the
   /// root (`projection.result`'s description when absent).
   final String? resultDescription;
@@ -188,6 +192,7 @@ class FormulaRender extends StatelessWidget {
         pending: pending,
         onTapNode: onTapNode,
         dense: dense,
+        large: large,
         l10n: context.l10n,
         units: units,
         onUnit: onUnit,
@@ -208,6 +213,7 @@ class _RenderContext {
     required this.dense,
     required this.l10n,
     required this.result,
+    this.large = false,
     this.units = const [],
     this.onUnit,
   });
@@ -217,13 +223,22 @@ class _RenderContext {
   final PendingText? pending;
   final void Function(pb.FormulaNode node, Offset at)? onTapNode;
   final bool dense;
+  final bool large;
   final AppLocalizations l10n;
   final String? result;
   final List<pb.UnitCandidate> units;
   final void Function(String nodeId, String unitId)? onUnit;
 
-  double get body => dense ? MacType.secondary : MacType.body;
-  double get small => dense ? MacType.caption : MacType.secondary;
+  double get body => dense
+      ? MacType.secondary
+      : large
+      ? MacType.display
+      : MacType.body;
+  double get small => dense
+      ? MacType.caption
+      : large
+      ? MacType.body
+      : MacType.secondary;
 }
 
 /// One node, dispatched by kind; parentheses in its text draw as a group
