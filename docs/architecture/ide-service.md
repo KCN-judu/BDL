@@ -517,6 +517,22 @@ literal) and `^` opens a power. What cannot stand at the caret is refused with
 the reason (`insert an operator first`). The Formula view and the text field
 edit one draft; neither side has a grammar of its own.
 
+**The canvas's read edges as text edits** (ADR-0044): a mapping block's read
+edges are its references to Sem blocks, and the canvas edits them through two
+actions on the definition, never through the signature.
+`ComposeOp::Unreference { decl }` makes every reference to the Sem block `decl`
+a slot (`litRule(pressed)` → `litRule(?)`; several occurrences go at once, last
+first so the earlier ranges stay valid; the first new slot is selected) —
+Disconnect on a read edge; refused when the formula does not name the Sem block.
+`ComposeOp::Read { decl }` fills the definition's first slot with the Sem
+block's name (`litRule(?)` → `litRule(pressedB)`; an empty definition is one
+slot) — a Sem block dropped on a mapping block; refused when there is no slot,
+so nothing is appended by guesswork. A rule the definition applies is named by
+its call and is no edge; a Sem block's signature never changes by either action
+(a Sem block has no inputs). Tests: `crates/bdl-ide/tests/sem_blocks.rs`, which
+also states the read edges as the analysis's `dependsOn` (FV
+`reads_iff_dependsOn`).
+
 **Completion at a caret**
 (`CompletionContext::FormulaCaret { mapping, node, side, prefix }`) runs the
 formula completion at the caret's offset with the projection's expectation for
