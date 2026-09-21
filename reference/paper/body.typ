@@ -2920,22 +2920,22 @@ the designer is least able to make the decision.
 <one-transport-primitive>
 Cross-domain reading is the second and last temporal form:
 
-$ upright("sync") thick c thick italic(i n i t) thick e\, $
+$ upright("sync") thick kappa thick italic(i n i t) thick e\, $
 
-the value of $e$, evaluated in domain $c$, at the last activation of $c$
-strictly before the current tick, and $italic(i n i t)$ if there has
-been none. The multi-domain evaluation relation
-$upright("MEv") thick S thick Delta thick I thick c thick t thick rho thick e thick v$
+the value of $e$, evaluated in domain $kappa$, at the last activation of
+$kappa$ strictly before the current tick, and $italic(i n i t)$ if there
+has been none. The multi-domain evaluation relation
+$upright("MEv") thick S thick Delta thick I thick kappa thick t thick rho thick e thick v$
 indexes evaluation by the domain in which it takes place, and its two
 transport rules are
 
-$ frac(upright("prevAct") thick S thick c' thick t = upright("none") quad upright("MEv") thick S thick Delta thick I thick c thick t thick rho thick italic(i n i t) thick v, upright("MEv") thick S thick Delta thick I thick c thick t thick rho thick\(upright("sync") thick c' thick italic(i n i t) thick e\)thick v) $
+$ frac(upright("prevAct") thick S thick kappa' thick t = upright("none") quad upright("MEv") thick S thick Delta thick I thick kappa thick t thick rho thick italic(i n i t) thick v, upright("MEv") thick S thick Delta thick I thick kappa thick t thick rho thick\(upright("sync") thick kappa' thick italic(i n i t) thick e\)thick v) $
 
-$ frac(upright("prevAct") thick S thick c' thick t = upright("some") thick t' quad upright("MEv") thick S thick Delta thick I thick c' thick t' thick rho thick e thick v, upright("MEv") thick S thick Delta thick I thick c thick t thick rho thick\(upright("sync") thick c' thick italic(i n i t) thick e\)thick v) . $
+$ frac(upright("prevAct") thick S thick kappa' thick t = upright("some") thick t' quad upright("MEv") thick S thick Delta thick I thick kappa' thick t' thick rho thick e thick v, upright("MEv") thick S thick Delta thick I thick kappa thick t thick rho thick\(upright("sync") thick kappa' thick italic(i n i t) thick e\)thick v) . $
 
 $upright("delay")$ is $upright("sync")$ at the expression's own domain:
-$upright("delay") thick italic(i n i t) thick e equiv upright("sync") thick c thick italic(i n i t) thick e$
-in domain $c$, as an equivalence of the two relations. The kernel
+$upright("delay") thick italic(i n i t) thick e equiv upright("sync") thick kappa thick italic(i n i t) thick e$
+in domain $kappa$, as an equivalence of the two relations. The kernel
 therefore has one temporal primitive --- read a domain at its previous
 activation --- and the single-domain semantics of the previous section
 is its diagonal. Under the always-active schedule, $upright("MEv")$
@@ -2945,9 +2945,9 @@ are the one-domain special case rather than a replaced machine. A
 in a fast one reads one, with the same syntax.
 
 A #strong[domain judgment]
-$upright("Clocked") thick upright(K) thick c thick e$ rejects every
+$upright("Clocked") thick upright(K) thick kappa thick e$ rejects every
 other cross-domain reference: a reference stays in its domain or is
-agnostic, a delay needs a domain, and $upright("sync") thick c'$
+agnostic, a delay needs a domain, and $upright("sync") thick kappa'$
 switches the domain of its operand. Typing is unchanged and is blind to
 domains; the direct wire between two domains at the same value type is
 well typed and rejected only by the domain judgment. Placing the domain
@@ -3864,7 +3864,7 @@ introduced, and a device with its own rate is a later `sync`.
 #strong[Transparency.] For every schedule, domain, tick, term that does
 not mention `r`, and local environment whose closures avoid `r`,
 
-$ upright(M E v) med S med Delta med I med c med t med rho med e med v med arrow.l.r.double med upright(M E v) med S med\(upright(p r o v i s i o n) thin Delta thin P\)med I' med c med t med rho med e med v\,#h(2em) I = upright(i n d u c e d)\(Delta\,P\,I'\)\, $
+$ upright(M E v) med S med Delta med I med kappa med t med rho med e med v med arrow.l.r.double med upright(M E v) med S med\(upright(p r o v i s i o n) thin Delta thin P\)med I' med kappa med t med rho med e med v\,#h(2em) I = upright(i n d u c e d)\(Delta\,P\,I'\)\, $
 
 where the induced input gives each target the wrapped transfer of the
 raw reading and leaves every other identity as `I'` gives it
@@ -4276,7 +4276,7 @@ crossing; Phase 15 builds the explicit one (`Surface/DeviceClock.lean`):
 the encoder declaration lives in a device domain `dc` and reads the
 driver's representation through Phase 5's transport,
 
-$ e := upright(e n c o d e) thin\(upright(s y n c) med c med italic(i n i t R e p) med\(upright(r e p) med d\)\)\,#h(2em) e\,p upright(" in ") d c\, $
+$ e := upright(e n c o d e) thin\(upright(s y n c) med kappa med italic(i n i t R e p) med\(upright(r e p) med d\)\)\,#h(2em) e\,p upright(" in ") d c\, $
 
 with `c` the output's clock and `initRep` a pure closed representation
 value for the ticks before `c`'s first activation. What must be explicit

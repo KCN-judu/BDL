@@ -6,7 +6,7 @@
 # `just paper-mirror-check <path-to-BDL_FV>`.
 source = "KCN-judu/BDL_FV"
 directory = "paper/monograph/"
-commit = "f07a5e03a4b433f2b5482b3024a6fa6fde0fc13a"
+commit = "84250158efa4e3b4149e658be6c05dc574ccef0c"
 mirrored = "2026-09-21"
 # What the monograph describes production as of (its own `snapshot`).
 production-snapshot = "aa6e7f4ee249556ca7561c854b43607f45f229fe"

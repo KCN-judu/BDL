@@ -1003,22 +1003,22 @@ Rate and identity are distinct. A clone of a domain with the identical schedule 
 Cross-domain reading is the second and last temporal form:
 
 $$
-\text{sync}\;c\;\mathit{init}\;e ,
+\text{sync}\;\kappa\;\mathit{init}\;e ,
 $$
 
-the value of $e$, evaluated in domain $c$, at the last activation of $c$ strictly before the current tick, and $\mathit{init}$ if there has been none. The multi-domain evaluation relation $\text{MEv}\;S\;\Delta\;I\;c\;t\;\rho\;e\;v$ indexes evaluation by the domain in which it takes place, and its two transport rules are
+the value of $e$, evaluated in domain $\kappa$, at the last activation of $\kappa$ strictly before the current tick, and $\mathit{init}$ if there has been none. The multi-domain evaluation relation $\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;e\;v$ indexes evaluation by the domain in which it takes place, and its two transport rules are
 
 $$
-\frac{\text{prevAct}\;S\;c'\;t = \text{none} \quad \text{MEv}\;S\;\Delta\;I\;c\;t\;\rho\;\mathit{init}\;v}{\text{MEv}\;S\;\Delta\;I\;c\;t\;\rho\;(\text{sync}\;c'\;\mathit{init}\;e)\;v}
+\frac{\text{prevAct}\;S\;\kappa'\;t = \text{none} \quad \text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;\mathit{init}\;v}{\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\text{sync}\;\kappa'\;\mathit{init}\;e)\;v}
 $$
 
 $$
-\frac{\text{prevAct}\;S\;c'\;t = \text{some}\;t' \quad \text{MEv}\;S\;\Delta\;I\;c'\;t'\;\rho\;e\;v}{\text{MEv}\;S\;\Delta\;I\;c\;t\;\rho\;(\text{sync}\;c'\;\mathit{init}\;e)\;v}.
+\frac{\text{prevAct}\;S\;\kappa'\;t = \text{some}\;t' \quad \text{MEv}\;S\;\Delta\;I\;\kappa'\;t'\;\rho\;e\;v}{\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\text{sync}\;\kappa'\;\mathit{init}\;e)\;v}.
 $$
 
-$\text{delay}$ is $\text{sync}$ at the expression's own domain: $\text{delay}\;\mathit{init}\;e \equiv \text{sync}\;c\;\mathit{init}\;e$ in domain $c$, as an equivalence of the two relations. The kernel therefore has one temporal primitive — read a domain at its previous activation — and the single-domain semantics of the previous section is its diagonal. Under the always-active schedule, $\text{MEv}$ coincides with $\text{Ev}$ in every domain, so the earlier results are the one-domain special case rather than a replaced machine. A `delay` in a slow domain reads three global ticks back where a `delay` in a fast one reads one, with the same syntax.
+$\text{delay}$ is $\text{sync}$ at the expression's own domain: $\text{delay}\;\mathit{init}\;e \equiv \text{sync}\;\kappa\;\mathit{init}\;e$ in domain $\kappa$, as an equivalence of the two relations. The kernel therefore has one temporal primitive — read a domain at its previous activation — and the single-domain semantics of the previous section is its diagonal. Under the always-active schedule, $\text{MEv}$ coincides with $\text{Ev}$ in every domain, so the earlier results are the one-domain special case rather than a replaced machine. A `delay` in a slow domain reads three global ticks back where a `delay` in a fast one reads one, with the same syntax.
 
-A **domain judgment** $\text{Clocked}\;\mathrm{K}\;c\;e$ rejects every other cross-domain reference: a reference stays in its domain or is agnostic, a delay needs a domain, and $\text{sync}\;c'$ switches the domain of its operand. Typing is unchanged and is blind to domains; the direct wire between two domains at the same value type is well typed and rejected only by the domain judgment. Placing the domain in the type instead was tried and set aside. Every pure mapping would need clock polymorphism, and nothing the type rejects is missed by the judgment.
+A **domain judgment** $\text{Clocked}\;\mathrm{K}\;\kappa\;e$ rejects every other cross-domain reference: a reference stays in its domain or is agnostic, a delay needs a domain, and $\text{sync}\;\kappa'$ switches the domain of its operand. Typing is unchanged and is blind to domains; the direct wire between two domains at the same value type is well typed and rejected only by the domain judgment. Placing the domain in the type instead was tried and set aside. Every pure mapping would need clock polymorphism, and nothing the type rejects is missed by the judgment.
 
 #### Strictly before
 
@@ -1253,7 +1253,7 @@ with `tr (declRef r)` alone at a representation-typed Source; the raw declaratio
 **Transparency.** For every schedule, domain, tick, term that does not mention `r`, and local environment whose closures avoid `r`,
 
 $$
-\mathrm{MEv}\ S\ \Delta\ I\ c\ t\ \rho\ e\ v\ \iff\ \mathrm{MEv}\ S\ (\mathrm{provision}\,\Delta\,P)\ I'\ c\ t\ \rho\ e\ v,\qquad I = \mathrm{induced}(\Delta, P, I'),
+\mathrm{MEv}\ S\ \Delta\ I\ \kappa\ t\ \rho\ e\ v\ \iff\ \mathrm{MEv}\ S\ (\mathrm{provision}\,\Delta\,P)\ I'\ \kappa\ t\ \rho\ e\ v,\qquad I = \mathrm{induced}(\Delta, P, I'),
 $$
 
 where the induced input gives each target the wrapped transfer of the raw reading and leaves every other identity as `I'` gives it (`provision_transparent`). The hypotheses the proposal lacked are stated: the raw input is typed at `r` and closure-free, and the abstract design mentions no `r` — true of every globally well-typed design (`NoMention.of_globalWF`). The observation boundary has two equivalent forms: syntactic (`r ∉ e.refs`) and by typing (a term typed in the abstract design cannot name `r`, `provision_transparent_typed`). The proof is one simulation lemma over `MEv` with the closure invariant "no closure body mentions `r`", instantiated in both directions and once more for input congruence; the provisioned target's value comes from the pure term's canonical evaluation transported to any design, input, domain and tick (`Transduces.mev`, `MEv.of_ev_pure`) — at top level, where a realization is evaluated, which is what avoids a closure-equivalence theorem. Physical outputs are unchanged (`provision_physicalOutput`).
@@ -1334,7 +1334,7 @@ Phase 14 stops at the raw command; production's first embedded adapter (ADR-0037
 **The explicit device clock.** Phase 14 refused an implicit crossing; Phase 15 builds the explicit one (`Surface/DeviceClock.lean`): the encoder declaration lives in a device domain `dc` and reads the driver's representation through Phase 5's transport,
 
 $$
-e := \mathrm{encode}\,(\mathrm{sync}\ c\ \mathit{initRep}\ (\mathrm{rep}\ d)),\qquad e, p \text{ in } dc,
+e := \mathrm{encode}\,(\mathrm{sync}\ \kappa\ \mathit{initRep}\ (\mathrm{rep}\ d)),\qquad e, p \text{ in } dc,
 $$
 
 with `c` the output's clock and `initRep` a pure closed representation value for the ticks before `c`'s first activation. What must be explicit in the lowering is exactly `dc` and `initRep`; both are deployment's choices, and the design still says nothing about a device; the carrier frequency stays configuration (FVD-0141). Every preservation theorem survives — the behavior is literally unchanged off `e`, the lowering is a refinement, well formed, well clocked with the transported operand in the output's clock, single-driver — and causality survives with *no new instantaneous edge at all*, because the transport is never instantaneous (`lowerSync_causal`). The correspondence samples strictly before: at a device tick `t` the sink carries `transfer` of the command the output specified at the last activation of `c` before `t`, or of `initRep` if there was none (`lowerSync_correspondence`). Executed: the device domain on odd ticks and the output's clock on even, the sink carrying 102 at tick 1 and 107 at tick 3 with `prevAct` naming 0 and 2; the initial representation before the first activation (`exD_*`).
