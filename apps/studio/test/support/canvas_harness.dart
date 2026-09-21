@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/state.dart';
+import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/canvas/node_canvas.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
@@ -72,6 +73,15 @@ class CanvasPointer {
   CanvasScene scene(AppState s, {SystemSceneInput? input}) => buildScene(
     s.project!,
     s.editor.layout,
+    // the read edges and the open positions, as the Design page passes them
+    refs: {
+      for (final m in s.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+        m.id.toInt(): [for (final d in m.references) d.toInt()],
+    },
+    slots: {
+      for (final m in s.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
+        if (m.slots.isNotEmpty) m.id.toInt(): m.slots,
+    },
     system:
         input ??
         SystemSceneInput(

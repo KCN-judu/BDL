@@ -488,17 +488,11 @@ void main() {
       expect(defined.sockets.any((x) => x.ref.role == SocketRole.realise), isFalse);
       // typing at the pointer: same identity, binding ends only
       final realise = open.sockets.firstWhere((x) => x.ref.role == SocketRole.realise).ref;
-      final levelConceptOut = scene.nodes
-          .firstWhere((n) => n.ref == const NodeRef.concept(level))
-          .sockets
-          .firstWhere((x) => x.ref.side == SocketSide.output)
-          .ref;
       expect(
         canLink(bProv.ref, realise),
         isFalse,
         reason: 'lampB\'s private Brightness is not Brightness',
       );
-      expect(canLink(levelConceptOut, realise), isFalse, reason: 'a concept is not a binding end');
       final tiltOut = defined.sockets.firstWhere((x) => x.ref.side == SocketSide.output).ref;
       expect(canLink(tiltOut, b.sockets.firstWhere((x) => x.ref.index == reqPort).ref), isTrue);
       expect(realise.bindingEnd!.baseDecl.toInt(), brightness);
@@ -523,8 +517,12 @@ void main() {
         system: SystemSceneInput(system: s.system),
       );
       final m = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(mirror));
-      expect(m.definition, '= lampA.brightness');
-      expect(m.declared, isFalse);
+      // the realisation a binding makes: a filled realisation socket with
+      // the binding's edge into it (ADR-0044: the Sem block has no
+      // definition line of its own; the inspector names the source)
+      final realise = m.sockets.firstWhere((s) => s.ref.role == SocketRole.realise);
+      expect(realise.open, isFalse);
+      expect(scene.links.any((l) => l.to == realise.ref && l.binding != null), isTrue);
       expect(scene.links.firstWhere((l) => l.binding == 5).transport, '0');
     });
   });

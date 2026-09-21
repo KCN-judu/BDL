@@ -189,52 +189,95 @@ void main() {
       expect(reduce(busy, const NewConceptRequested()).state.editor.conceptSheet, isNotNull);
     });
 
-    test('Create is one ordinary edit; the concept lands where asked, selected, named', () {
-      final s = reduce(
-        connected(),
-        const NewConceptRequested(presetId: 'std.quantity.angle', position: Offset(120, 40)),
-      ).state;
+    test(
+      'Create from the canvas is one transaction: the concept, and a block of it at the point',
+      () {
+        final s = reduce(
+          connected(),
+          const NewConceptRequested(presetId: 'std.quantity.angle', position: Offset(120, 40)),
+        ).state;
+        final t = reduce(
+          s,
+          CreateConceptRequested(
+            name: 'LidAngle',
+            description: 'How far the lid is open.',
+            representation: pb.Representation(quantity: pb.Dim(angle: 1)),
+            position: const Offset(120, 40),
+            presetId: 'std.quantity.angle',
+          ),
+        );
+        // the concept is the template (ADR-0043); the Sem block of it is what
+        // lands where the sheet was asked for — the Source path's one
+        // transaction, the block named after the concept
+        expect(t.effects, hasLength(1));
+        final create = t.effects.single as CreateSource;
+        expect(create.newConcept!.name, 'LidAngle');
+        expect(create.newConcept!.description, 'How far the lid is open.');
+        expect(create.newConcept!.representation.quantity, pb.Dim(angle: 1));
+        expect(create.sourceName, 'lidAngle');
+        expect(t.state.editor.conceptSheet, isNull);
+        expect(t.state.editor.pendingInsert!.position, const Offset(120, 40));
+        expect(t.state.editor.pendingInsert!.named, isTrue);
+        expect(t.state.editor.recentTemplates, ['std.quantity.angle']);
+        // the answer: the block placed and selected, not opened for renaming
+        final answered = reduce(
+          t.state,
+          ProjectReceived(
+            project()
+              ..revision = Int64(2)
+              ..concepts.add(
+                pb.ConceptView(
+                  id: Int64(9),
+                  name: 'LidAngle',
+                  representation: pb.Representation(quantity: pb.Dim(angle: 1)),
+                ),
+              )
+              ..mappings.add(
+                pb.MappingView(
+                  id: Int64(4),
+                  name: 'lidAngle',
+                  signature: pb.Signature(output: Int64(9)),
+                  role: pb.RelationshipRole.RELATIONSHIP_ROLE_SOURCE,
+                ),
+              ),
+            fromRequest: true,
+            outcome: pb.EditOutcome(createdConcept: Int64(9), createdMapping: Int64(4)),
+          ),
+        ).state;
+        expect(answered.editor.selection, const MappingSelected(4));
+        expect(answered.editor.layout[const NodeRef.mapping(4)], const Offset(120, 40));
+        expect(answered.editor.layout[const NodeRef.concept(9)], isNull);
+        expect(answered.editor.renaming, isNull);
+        expect(answered.editor.pendingInsert, isNull);
+      },
+    );
+
+    test('Create from the Library (no point) is the template alone: one ordinary edit', () {
       final t = reduce(
-        s,
+        connected(),
         CreateConceptRequested(
           name: 'LidAngle',
-          description: 'How far the lid is open.',
+          description: '',
           representation: pb.Representation(quantity: pb.Dim(angle: 1)),
-          position: const Offset(120, 40),
-          presetId: 'std.quantity.angle',
         ),
       );
       expect(t.effects, hasLength(1));
       final edit = (t.effects.single as ApplyEdit).op.createConcept;
       expect(edit.name, 'LidAngle');
-      expect(edit.description, 'How far the lid is open.');
-      expect(edit.representation.quantity, pb.Dim(angle: 1));
-      expect(t.state.editor.conceptSheet, isNull);
-      expect(t.state.editor.pendingInsert!.position, const Offset(120, 40));
-      expect(t.state.editor.pendingInsert!.named, isTrue);
-      expect(t.state.editor.recentTemplates, ['std.quantity.angle']);
-      // the answer: placed, selected, and — named on the sheet — not
-      // opened for renaming
+      expect(t.state.editor.pendingInsert!.position, isNull);
       final answered = reduce(
         t.state,
         ProjectReceived(
           project()
             ..revision = Int64(2)
-            ..concepts.add(
-              pb.ConceptView(
-                id: Int64(9),
-                name: 'LidAngle',
-                representation: pb.Representation(quantity: pb.Dim(angle: 1)),
-              ),
-            ),
+            ..concepts.add(pb.ConceptView(id: Int64(9), name: 'LidAngle')),
           fromRequest: true,
           outcome: pb.EditOutcome(createdConcept: Int64(9)),
         ),
-      ).state;
-      expect(answered.editor.selection, const ConceptSelected(9));
-      expect(answered.editor.layout[const NodeRef.concept(9)], const Offset(120, 40));
-      expect(answered.editor.renaming, isNull);
-      expect(answered.editor.pendingInsert, isNull);
+      );
+      expect(answered.effects.whereType<CreateSource>(), isEmpty, reason: 'no point, no block');
+      expect(answered.state.editor.pendingInsert, isNull);
+      expect(answered.state.editor.layout, isEmpty);
     });
   });
 

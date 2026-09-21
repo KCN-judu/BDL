@@ -17,6 +17,8 @@ import 'drafts.dart' show draftChanged;
 import 'effects.dart';
 import 'reducer.dart' show Transition;
 import 'state.dart';
+import 'wiring.dart' show wireAfterProjection;
+import 'drafts.dart' show commitText;
 
 /// The source the Composer is looking at: the draft's, else the committed.
 String composerSource(AppState s, int mappingId) =>
@@ -91,13 +93,13 @@ Transition formulaProjectionReceived(AppState s, int generation, pb.FormulaProje
       r.revision.toInt() != s.revision) {
     return Transition(s);
   }
-  return Transition(
-    s.copyWith(
-      editor: s.editor.copyWith(
-        composer: c.copyWith(projection: r.hasProjection() ? r.projection : null),
-      ),
+  final next = s.copyWith(
+    editor: s.editor.copyWith(
+      composer: c.copyWith(projection: r.hasProjection() ? r.projection : null),
     ),
   );
+  // a canvas wire waited for this projection: fill now
+  return wireAfterProjection(next, r.mappingId.toInt());
 }
 
 /// Select a node: the service is asked what the position expects and what
@@ -209,6 +211,14 @@ Transition composeReceived(AppState s, int generation, pb.ComposeFormulaResponse
         ),
       ),
     );
+  }
+  // a canvas wire (ADR-0043): the filled text is committed as one edit,
+  // never a draft the designer is typing
+  if (c.commitOnCompose) {
+    final settled = s.copyWith(
+      editor: s.editor.copyWith(composer: c.copyWith(clearCompose: true, clearSelection: true)),
+    );
+    return commitText(settled, mappingId, r.source);
   }
   // the answer is a draft change like any typing; then select what the
   // service says comes next (the new slot, else the edited node), and put

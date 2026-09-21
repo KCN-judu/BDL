@@ -718,33 +718,22 @@ class _Probe extends StatelessWidget {
         );
       case ConceptSelected(:final id):
         final c = p.concepts.firstWhere((c) => c.id.toInt() == id);
-        // *Produces* is the signature (any relationship whose output is
-        // this concept — the canvas's input socket); a value of the concept
-        // per tick exists only where a value or a Source produces it: the
-        // concept is *carried by* those (ADR-0034).  A rule producing it
-        // gives it no value until a value's formula applies the rule.
-        final carriers = [
+        // A concept is a template (ADR-0043): the probe is per Sem block,
+        // one value per tick each — every block of this concept, by name.
+        // A rule over the concept has no value of its own.
+        final blocks = [
           for (final m in p.mappings)
-            if (relationshipRole(m) != RelationshipRole.rule && m.signature.output.toInt() == id) m,
-        ];
-        final rules = [
-          for (final m in p.mappings)
-            if (relationshipRole(m) == RelationshipRole.rule && m.signature.output.toInt() == id) m,
+            if (m.signature.inputs.isEmpty && m.signature.output.toInt() == id) m,
         ];
         body = InspectorSection(
           title: c.name,
           trailing: SocketGlyph.of(c, t),
           children: [
-            if (carriers.isEmpty) ...[
-              Text(context.l10n.noValueCarries(c.name), style: small),
-              for (final r in rules)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(context.l10n.ruleProducesNoValue(r.name, c.name), style: small),
-                ),
-            ] else ...[
-              Text(context.l10n.carriedBy, style: small),
-              for (final m in carriers)
+            if (blocks.isEmpty)
+              Text(context.l10n.noBlockOfConcept(c.name), style: small)
+            else ...[
+              Text(context.l10n.blocksOfConcept, style: small),
+              for (final m in blocks)
                 FormRow(
                   label: m.name,
                   child: Text(_latest(sim, m.id.toInt()) ?? '—', style: value),

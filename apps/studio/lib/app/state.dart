@@ -500,11 +500,20 @@ class HighlightState {
   );
 }
 
-/// Canvas node kinds.  [instance] is a component instance of a system
-/// (rendered from its ports' contracts, never its body); [group] is a
-/// collapsed behaviour group (a picture of its members, never a node the
-/// compiler knows).
-enum NodeKind { concept, mapping, output, instance, group }
+/// Canvas node kinds — the concept ladder's (ADR-0043, ADR-0044).
+/// [mapping] is a declaration: on the canvas a **Sem block** (a
+/// unit-domain declaration, one value per tick; a Source when nothing
+/// defines it), in the Project list any relationship, a rule too.
+/// [definition] is a Sem block's **mapping block** — its definition drawn
+/// as a node of its own, keyed by the Sem block's id (one declaration, two
+/// nodes, two positions).  [concept] is a template and never a canvas
+/// node: the kind names a Project-list row and the concept sheet's
+/// preview.  A rule is a template too, named in a mapping block's header,
+/// never a node.  [instance] is a component instance of a system (rendered
+/// from its ports' contracts, never its body); [group] is a collapsed
+/// behaviour group (a picture of its members, never a node the compiler
+/// knows).
+enum NodeKind { concept, mapping, definition, output, instance, group }
 
 /// A node on the canvas, identified by kind + stable id.
 @immutable
@@ -512,6 +521,7 @@ class NodeRef {
   const NodeRef(this.kind, this.id);
   const NodeRef.concept(int id) : this(NodeKind.concept, id);
   const NodeRef.mapping(int id) : this(NodeKind.mapping, id);
+  const NodeRef.definition(int id) : this(NodeKind.definition, id);
   const NodeRef.output(int id) : this(NodeKind.output, id);
   const NodeRef.instance(int id) : this(NodeKind.instance, id);
   const NodeRef.group(int id) : this(NodeKind.group, id);
@@ -804,10 +814,16 @@ class BindingSelected extends Selection {
   int get hashCode => Object.hash(BindingSelected, id);
 }
 
-/// One signature or drive edge of the canvas, by the ends it joins:
+/// What an edge of the canvas is (ADR-0044): a Sem block **read** by a
+/// mapping block (a name in its definition — `Reads`), a mapping block
+/// **producing** its Sem block (the definition itself — `ProducedBy`), a
+/// Sem block **driving** a sink (the drive edge), or a picture (a
+/// collapsed group's aggregate edge).
+enum LinkKind { read, produce, drive, picture }
+
+/// One read, produce or drive edge of the canvas, by the ends it joins:
 /// stable across revisions (the ids are), gone when either end or the
-/// edge itself goes.  A binding is its own selection ([BindingSelected]);
-/// reference edges are never selected (ADR-0034).
+/// edge itself goes.  A binding is its own selection ([BindingSelected]).
 @immutable
 class LinkId {
   const LinkId({required this.from, required this.to, required this.concept, this.index = 0});
@@ -821,17 +837,21 @@ class LinkId {
   final int concept;
   final int index;
 
-  /// Whether the edge can be taken away on its own by a semantic edit
-  /// the model has today: a concept read by a relationship
-  /// (`UnlinkMappingInput`), a relationship driving a sink
-  /// (`SetMappingDrive` to none).  A relationship's produce edge is its
-  /// signature's output and cannot go alone — and whether a concept has
-  /// one producer or several is under formal audit; until it concludes
-  /// no edge into a concept gets a destructive action.  A collapsed
-  /// group's aggregate edges stand for members and are a picture.
-  bool get disconnectable =>
-      from.kind == NodeKind.mapping && to.kind == NodeKind.output ||
-      from.kind == NodeKind.concept && to.kind == NodeKind.mapping;
+  LinkKind get kind {
+    if (from.kind == NodeKind.mapping && to.kind == NodeKind.definition) return LinkKind.read;
+    if (from.kind == NodeKind.definition && to.kind == NodeKind.mapping) return LinkKind.produce;
+    if (from.kind == NodeKind.mapping && to.kind == NodeKind.output) return LinkKind.drive;
+    return LinkKind.picture;
+  }
+
+  /// Whether the edge can be taken away on its own (ADR-0044): a drive
+  /// edge by `SetMappingDrive` to none; a read edge by a text edit of the
+  /// definition the compiler makes (`ComposeAction.unreference`: every
+  /// occurrence of the name becomes a slot).  A produce edge is the
+  /// definition itself, write-once — it goes with the definition (the
+  /// inspector's *Detach definition*), never alone; a collapsed group's
+  /// aggregate edges stand for members and are a picture.
+  bool get disconnectable => kind == LinkKind.drive || kind == LinkKind.read;
 
   @override
   bool operator ==(Object other) =>
@@ -907,15 +927,30 @@ NodeRef? activeNode(Selection sel) => switch (sel) {
 /// (its own active object) or several.  [active] must be a member; when
 /// it is not (it left the set), the set has no active object.
 Selection selectionOfNodes(Set<NodeRef> nodes, {NodeRef? active}) {
+  // a mapping block stands for its Sem block: the declaration is selected
+  nodes = {for (final n in nodes) asDeclaration(n)};
+  active = active == null ? null : asDeclaration(active);
   if (nodes.isEmpty) return const NoSelection();
   if (nodes.length == 1) return singleSelection(nodes.single);
   return MultiSelected(nodes, active: active != null && nodes.contains(active) ? active : null);
 }
 
+/// The node a selection names: a mapping block's is its Sem block (one
+/// declaration, two nodes — ADR-0044); every other node is its own.
+NodeRef asDeclaration(NodeRef n) => n.kind == NodeKind.definition ? NodeRef.mapping(n.id) : n;
+
+/// Where a mapping block sits beside its Sem block when nothing has placed
+/// it yet: directly to the left, as the layout service attaches it
+/// (`bdl_layout::metrics`: the block's width and two gaps).  The canvas
+/// draws an unplaced block there; a Sem block moved to a point takes its
+/// block along at this offset.
+Offset attachedBlockPosition(Offset sem) => Offset(sem.dx - 200 - 2 * 16, sem.dy);
+
 /// The single selection of one canvas node.
 Selection singleSelection(NodeRef ref) => switch (ref.kind) {
   NodeKind.concept => ConceptSelected(ref.id),
-  NodeKind.mapping => MappingSelected(ref.id),
+  // a mapping block and its Sem block are one declaration: one selection
+  NodeKind.mapping || NodeKind.definition => MappingSelected(ref.id),
   NodeKind.output => OutputSelected(ref.id),
   NodeKind.instance => InstanceSelected(ref.id),
   NodeKind.group => GroupSelected(ref.id),
@@ -1208,7 +1243,12 @@ class ComposerState {
     this.composeGeneration,
     this.composeSource,
     this.caret,
+    this.commitOnCompose = false,
   });
+
+  /// The compose answer awaited is a canvas wire (ADR-0044): commit the
+  /// draft it makes as one edit, instead of leaving it to the designer.
+  final bool commitOnCompose;
 
   /// Formula (structured) or Text — a preference of the editor, not of
   /// any mapping.
@@ -1261,6 +1301,7 @@ class ComposerState {
     bool clearCompose = false,
     CaretState? caret,
     bool clearCaret = false,
+    bool? commitOnCompose,
   }) => ComposerState(
     formulaMode: formulaMode ?? this.formulaMode,
     mappingId: clearMapping ? null : (mappingId ?? this.mappingId),
@@ -1277,7 +1318,18 @@ class ComposerState {
     composeGeneration: clearCompose ? null : (composeGeneration ?? this.composeGeneration),
     composeSource: clearCompose ? null : (composeSource ?? this.composeSource),
     caret: clearCaret ? null : (caret ?? this.caret),
+    commitOnCompose: clearCompose ? false : (commitOnCompose ?? this.commitOnCompose),
   );
+}
+
+/// A canvas wire waiting for the projection of the definition it edits
+/// (ADR-0044): which block, and the compiler action — a fill of a slot
+/// with a Sem block's name, or an unreference of one.
+@immutable
+class PendingWire {
+  const PendingWire({required this.mappingId, required this.action});
+  final int mappingId;
+  final pb.ComposeAction action;
 }
 
 /// The structural caret of the Formula view: a byte [offset] into the
@@ -1752,6 +1804,7 @@ class EditorState {
     this.librarySearch = '',
     this.recentTemplates = const [],
     this.pendingInsert,
+    this.pendingWire,
     this.sourceSheet,
     this.conceptSheet,
     this.expandedFormulas = const {},
@@ -1931,6 +1984,9 @@ class EditorState {
   /// A template insertion awaiting the daemon's answer.
   final PendingInsert? pendingInsert;
 
+  /// A canvas wire awaiting the projection it fills.
+  final PendingWire? pendingWire;
+
   /// The Source sheet, while open (`null` otherwise).
   final SourceSheetState? sourceSheet;
 
@@ -1990,6 +2046,8 @@ class EditorState {
     List<String>? recentTemplates,
     PendingInsert? pendingInsert,
     bool clearPendingInsert = false,
+    PendingWire? pendingWire,
+    bool clearPendingWire = false,
     SourceSheetState? sourceSheet,
     bool clearSourceSheet = false,
     ConceptSheetState? conceptSheet,
@@ -2056,6 +2114,7 @@ class EditorState {
       librarySearch: librarySearch ?? this.librarySearch,
       recentTemplates: recentTemplates ?? this.recentTemplates,
       pendingInsert: clearPendingInsert ? null : (pendingInsert ?? this.pendingInsert),
+      pendingWire: clearPendingWire ? null : (pendingWire ?? this.pendingWire),
       sourceSheet: clearSourceSheet ? null : (sourceSheet ?? this.sourceSheet),
       conceptSheet: clearConceptSheet ? null : (conceptSheet ?? this.conceptSheet),
       expandedFormulas: expandedFormulas ?? this.expandedFormulas,

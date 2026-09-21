@@ -52,10 +52,19 @@ class Inspector extends StatelessWidget {
         ConceptSelected(:final id) => _ConceptInspector(
           key: ValueKey('c$id'),
           concept: project.concepts.firstWhere((c) => c.id.toInt() == id),
-          readers: project.mappings
-              .where((m) => m.signature.inputs.any((i) => i.toInt() == id))
+          // the template's instances: the Sem blocks typed by it; and the
+          // rule templates whose signature mentions it (ADR-0043)
+          blocks: project.mappings
+              .where((m) => m.signature.inputs.isEmpty && m.signature.output.toInt() == id)
               .toList(),
-          producers: project.mappings.where((m) => m.signature.output.toInt() == id).toList(),
+          rules: project.mappings
+              .where(
+                (m) =>
+                    m.signature.inputs.isNotEmpty &&
+                    (m.signature.output.toInt() == id ||
+                        m.signature.inputs.any((i) => i.toInt() == id)),
+              )
+              .toList(),
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
           presets: unitPresetsFrom(state.library?.quantities ?? const [], context.l10n),
@@ -319,22 +328,23 @@ class _NameLinks extends StatelessWidget {
 // Concept
 // ---------------------------------------------------------------------------
 
-/// A concept is a product meaning: what it means, what form its value
-/// takes, who reads it, who produces it.
+/// A concept is a product meaning and the template Sem blocks are created
+/// from (ADR-0043): what it means, what form its value takes, which
+/// blocks are of it, which rules are over it.
 class _ConceptInspector extends StatelessWidget {
   const _ConceptInspector({
     super.key,
     required this.concept,
-    required this.readers,
-    required this.producers,
+    required this.blocks,
+    required this.rules,
     required this.revision,
     required this.outcome,
     required this.presets,
     required this.dispatch,
   });
   final pb.ConceptView concept;
-  final List<pb.MappingView> readers;
-  final List<pb.MappingView> producers;
+  final List<pb.MappingView> blocks;
+  final List<pb.MappingView> rules;
   final int revision;
 
   /// The unit picker's quantities (the daemon's shared vocabulary).
@@ -348,7 +358,7 @@ class _ConceptInspector extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final id = concept.id.toInt();
-    final users = [...producers, ...readers];
+    final users = [...blocks, ...rules];
     final bound = concept.hasRepresentation();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -428,17 +438,22 @@ class _ConceptInspector extends StatelessWidget {
           title: context.l10n.relationships,
           children: [
             FormRow(
-              label: context.l10n.producedBy,
+              label: context.l10n.blocksOfConcept,
               child: _NameLinks(
-                mappings: producers,
+                mappings: blocks,
                 dispatch: dispatch,
                 empty: context.l10n.nothingYet,
               ),
             ),
+            if (blocks.isEmpty)
+              Text(
+                context.l10n.noBlockOfConcept(concept.name),
+                style: TextStyle(fontSize: MacType.secondary, color: t.textSecondary),
+              ),
             FormRow(
-              label: context.l10n.usedBy,
+              label: context.l10n.rulesOverConcept,
               child: _NameLinks(
-                mappings: readers,
+                mappings: rules,
                 dispatch: dispatch,
                 empty: context.l10n.nothingYet,
               ),
@@ -831,36 +846,41 @@ class _MappingInspector extends StatelessWidget {
               }, style: small),
           ],
         ),
-        InspectorSection(
-          title: context.l10n.reads,
-          children: [
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final c in inputs)
-                  if (_concept(c) case final concept?)
-                    ConceptChip(
-                      concept: concept,
-                      onRemove: () => dispatch(UnlinkMappingInput(mappingId: id, conceptId: c)),
-                    ),
-                MacDropdown<int>(
-                  value: null,
-                  hint: '+',
-                  compact: true,
-                  items: [
-                    for (final c in concepts)
-                      if (!inputs.contains(c.id.toInt())) c.id.toInt(),
-                  ],
-                  labelOf: _name,
-                  leadingOf: (c) => SocketGlyph.of(_concept(c)!, t, size: 11),
-                  onChanged: (c) =>
-                      dispatch(LinkConceptToMappingInput(conceptId: c, mappingId: id)),
-                ),
-              ],
-            ),
-          ],
-        ),
+        // The rule template's parameters, over concepts (ADR-0013): the one
+        // place a signature's inputs are edited (ADR-0043 — the canvas
+        // wires Sem blocks into formulas, never into signatures).  A Sem
+        // block has no inputs and no such section.
+        if (role == RelationshipRole.rule)
+          InspectorSection(
+            title: context.l10n.reads,
+            children: [
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (final c in inputs)
+                    if (_concept(c) case final concept?)
+                      ConceptChip(
+                        concept: concept,
+                        onRemove: () => dispatch(UnlinkMappingInput(mappingId: id, conceptId: c)),
+                      ),
+                  MacDropdown<int>(
+                    value: null,
+                    hint: '+',
+                    compact: true,
+                    items: [
+                      for (final c in concepts)
+                        if (!inputs.contains(c.id.toInt())) c.id.toInt(),
+                    ],
+                    labelOf: _name,
+                    leadingOf: (c) => SocketGlyph.of(_concept(c)!, t, size: 11),
+                    onChanged: (c) =>
+                        dispatch(LinkConceptToMappingInput(conceptId: c, mappingId: id)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         InspectorSection(
           // A Source *provides* its concept to the model; a relationship
           // *produces* it from what it reads.
@@ -966,21 +986,44 @@ class _MappingInspector extends StatelessWidget {
                 focusGeneration: definitionFocus,
                 dispatch: dispatch,
               ),
-            // What the formula references and who references this: the
-            // reference edges of the canvas, as rows — the detail behind
-            // the neutral link into the formula line.
-            if (mapping.hasDefinition() && boundTo == null)
+            // What the definition names, as rows (ADR-0043): for a Sem
+            // block, the Sem blocks its mapping block reads — the read
+            // edges of the canvas — and the rules it applies; for a rule,
+            // what it depends on.  Then who names this one: the blocks
+            // that read a Sem block; the formulas a rule is named in.
+            if (mapping.hasDefinition() && boundTo == null) ...[
               FormRow(
-                label: context.l10n.dependsOn,
+                label: role == RelationshipRole.rule
+                    ? context.l10n.dependsOn
+                    : context.l10n.readsLabel,
                 child: _NameLinks(
-                  mappings: dependsOn,
+                  mappings: role == RelationshipRole.rule
+                      ? dependsOn
+                      : [
+                          for (final d in dependsOn)
+                            if (d.signature.inputs.isEmpty) d,
+                        ],
                   dispatch: dispatch,
                   empty: context.l10n.nothingYet,
                 ),
               ),
-            if (!source && boundTo == null)
+              if (role != RelationshipRole.rule &&
+                  dependsOn.any((d) => d.signature.inputs.isNotEmpty))
+                FormRow(
+                  label: context.l10n.appliesRules,
+                  child: _NameLinks(
+                    mappings: [
+                      for (final d in dependsOn)
+                        if (d.signature.inputs.isNotEmpty) d,
+                    ],
+                    dispatch: dispatch,
+                    empty: context.l10n.nothingYet,
+                  ),
+                ),
+            ],
+            if (!source && boundTo == null || source && namedIn.isNotEmpty)
               FormRow(
-                label: context.l10n.namedIn,
+                label: role == RelationshipRole.rule ? context.l10n.namedIn : context.l10n.readBy,
                 child: _NameLinks(
                   mappings: namedIn,
                   dispatch: dispatch,

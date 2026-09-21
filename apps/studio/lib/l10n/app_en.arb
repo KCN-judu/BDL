@@ -1330,14 +1330,6 @@
   "@noValueYet": {
     "description": "Simulate inputs: a Source not yet given a value — beside the dashed on/off control and as the hint of an empty number field. Not off, not zero: a value is still to be given."
   },
-  "stateNotApplied": "not applied",
-  "@stateNotApplied": {
-    "description": "Canvas node header word: a defined rule that no value applies (its output socket is hollow)."
-  },
-  "appliedByNothing": "applied by nothing",
-  "@appliedByNothing": {
-    "description": "Canvas node accessibility label fragment: a rule no value applies."
-  },
   "notPossibleYet": "Not possible yet: {reason}",
   "@notPossibleYet": {
     "description": "A blocked fix: the service's reason follows.",
@@ -1572,29 +1564,9 @@
   "@valueNotDecided": {
     "description": "Studio UI text (concept_glyphs.dart)."
   },
-  "aQuantity": "a quantity",
-  "@aQuantity": {
-    "description": "Studio UI text (node_canvas.dart)."
-  },
   "onOrOff": "on or off",
   "@onOrOff": {
     "description": "Studio UI text (concept_glyphs.dart)."
-  },
-  "aCount": "a count",
-  "@aCount": {
-    "description": "Studio UI text (node_canvas.dart)."
-  },
-  "aCollection": "a collection",
-  "@aCollection": {
-    "description": "Studio UI text (node_canvas.dart)."
-  },
-  "aGroupedValue": "a grouped value",
-  "@aGroupedValue": {
-    "description": "Studio UI text (node_canvas.dart)."
-  },
-  "anOptionalValue": "an optional value",
-  "@anOptionalValue": {
-    "description": "Studio UI text (node_canvas.dart)."
   },
   "declaredNotYetDefined": "declared, not yet defined",
   "@declaredNotYetDefined": {
@@ -1760,10 +1732,6 @@
   "stateOptional": "optional",
   "@stateOptional": {
     "description": "Physical output state: may stay undriven."
-  },
-  "stateDeclared": "declared",
-  "@stateDeclared": {
-    "description": "Relationship header word on the canvas: declared, not yet defined."
   },
   "stateContested": "contested",
   "@stateContested": {
@@ -2931,10 +2899,6 @@
   "@libraryGroupExternal": {
     "description": "Studio UI text (library_panel.dart)."
   },
-  "ruleWord": "rule",
-  "@ruleWord": {
-    "description": "Canvas header word for a relationship that reads something (glossary: rule): a function applied by a value's formula, with no value of its own. Shown only when no state word takes the slot."
-  },
   "roleRule": "Rule",
   "@roleRule": {
     "description": "Inspector Role row and Simulate probe: a relationship that reads something (glossary: rule)."
@@ -2959,18 +2923,18 @@
   "@namedIn": {
     "description": "Inspector row label: the relationships whose formulas reference this one."
   },
-  "ruleNodeSemantics": "rule, reads {reads}",
-  "@ruleNodeSemantics": {
-    "description": "Accessibility fragment of a rule node on the canvas; reads is the list of concept names.",
-    "placeholders": {
-      "reads": {
-        "type": "String"
-      }
-    }
-  },
   "valueNodeSemantics": "value",
   "@valueNodeSemantics": {
     "description": "Accessibility fragment of a computed-value node on the canvas."
+  },
+  "mappingBlockSemantics": "mapping block of {name}: its definition",
+  "@mappingBlockSemantics": {
+    "description": "Accessibility label of a mapping block (a Sem block's definition drawn as its own node).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "dependsOnList": "depends on {names}",
   "@dependsOnList": {
@@ -3009,31 +2973,6 @@
   "noValueAppliesItYet": "No value applies it yet.",
   "@noValueAppliesItYet": {
     "description": "Simulate probe: nothing references the selected rule."
-  },
-  "noValueCarries": "Nothing carries {concept} yet: no value or Source produces it.",
-  "@noValueCarries": {
-    "description": "Simulate probe: no unit-domain relationship produces this concept, so it has no value per tick.",
-    "placeholders": {
-      "concept": {
-        "type": "String"
-      }
-    }
-  },
-  "ruleProducesNoValue": "{rule} is a rule; a value whose formula applies it would carry {concept}.",
-  "@ruleProducesNoValue": {
-    "description": "Simulate probe: a rule produces the concept by signature, but only a value gives it a value per tick.",
-    "placeholders": {
-      "rule": {
-        "type": "String"
-      },
-      "concept": {
-        "type": "String"
-      }
-    }
-  },
-  "carriedBy": "Carried by",
-  "@carriedBy": {
-    "description": "Simulate probe caption: the values and Sources that give this concept a value per tick."
   },
   "format": "Format",
   "@format": {
@@ -3660,30 +3599,6 @@
   "@undoArrange": {
     "description": "Canvas context menu: put the layout back as it was before the arrangement."
   },
-  "connectionReads": "{to} reads {concept}",
-  "@connectionReads": {
-    "description": "Inspector: what a concept → relationship edge means.",
-    "placeholders": {
-      "to": {
-        "type": "String"
-      },
-      "concept": {
-        "type": "String"
-      }
-    }
-  },
-  "connectionProduces": "{from} produces {concept}",
-  "@connectionProduces": {
-    "description": "Inspector: what a relationship → concept edge means.",
-    "placeholders": {
-      "from": {
-        "type": "String"
-      },
-      "concept": {
-        "type": "String"
-      }
-    }
-  },
   "connectionDrives": "{from} drives {to}",
   "@connectionDrives": {
     "description": "Inspector: what a relationship → output edge means.",
@@ -3705,9 +3620,80 @@
       }
     }
   },
-  "produceEdgeCannotGoAlone": "A relationship's produce edge is its signature's output: change the relationship, not the edge.",
-  "@produceEdgeCannotGoAlone": {
-    "description": "Inspector: why a produce edge has no Disconnect."
+  "addBlock": "Add Block",
+  "@addBlock": {
+    "description": "Canvas menu: a Sem block of a concept at the pointer."
+  },
+  "blockOf": "of {concept}",
+  "@blockOf": {
+    "description": "Canvas menu, under Add Block: a Sem block of this concept.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "newConceptSubmenu": "New Concept",
+  "@newConceptSubmenu": {
+    "description": "Canvas menu, under Add Block: the concept sheet, then a block of the new concept."
+  },
+  "appliesList": "applies {names}",
+  "@appliesList": {
+    "description": "Accessibility fragment of a Sem block: the rules its definition applies.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "connectionReadEdge": "{to} reads {from}",
+  "@connectionReadEdge": {
+    "description": "Inspector: what a read edge means (a Sem block named by a mapping block's definition).",
+    "placeholders": {
+      "to": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "readEdgeIsAName": "A read is a name in the block's formula: edit the formula to change it.",
+  "@readEdgeIsAName": {
+    "description": "Inspector: why a read edge has no Disconnect."
+  },
+  "producedByEnvironment": "the environment (a Source)",
+  "@producedByEnvironment": {
+    "description": "Inspector: the producer of a Sem block with no definition."
+  },
+  "appliesRules": "Applies",
+  "@appliesRules": {
+    "description": "Inspector label: the rules a block's definition applies."
+  },
+  "blocksOfConcept": "Blocks",
+  "@blocksOfConcept": {
+    "description": "Inspector label on a concept: the Sem blocks of it."
+  },
+  "noBlockOfConcept": "No block of {name} yet: add one from the canvas menu (Add Block ▸ of {name}).",
+  "@noBlockOfConcept": {
+    "description": "Inspector on a concept: none instantiated.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rulesOverConcept": "Rules",
+  "@rulesOverConcept": {
+    "description": "Inspector label on a concept: the rules whose signature mentions it."
+  },
+  "readsLabel": "Reads",
+  "@readsLabel": {
+    "description": "Inspector label on a Sem block: the Sem blocks its definition names."
+  },
+  "readBy": "Read by",
+  "@readBy": {
+    "description": "Inspector label on a Sem block: the blocks whose definitions name it."
   },
   "libItem_std_value_boolean_name": "On / off",
   "@libItem_std_value_boolean_name": {

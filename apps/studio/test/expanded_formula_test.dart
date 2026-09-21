@@ -48,7 +48,8 @@ pb.ProjectProjection lamp({int revision = 1, String? definition}) =>
         mappingView(
           id: Int64(dim),
           name: 'dimByTilt',
-          signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(brightness)),
+          // a Sem block (ADR-0043): the formula is on its mapping block
+          signature: pb.Signature(output: Int64(brightness)),
           definition: definition == null ? null : pb.Definition(formula: definition),
         ),
       );
@@ -324,10 +325,14 @@ void main() {
       'the geometry: an expanded mapping node grows by the picture; the disclosure is a hit',
       () {
         final p = lamp(definition: 'Tilt / 90 deg');
-        final folded = buildScene(p, {const NodeRef.mapping(dim): Offset.zero});
-        final open = buildScene(p, {const NodeRef.mapping(dim): Offset.zero}, expanded: {dim: 80});
-        final a = folded.node(const NodeRef.mapping(dim));
-        final b = open.node(const NodeRef.mapping(dim));
+        // the definition is the mapping block's (ADR-0044): it grows, the
+        // Sem block does not
+        const block = NodeRef.definition(dim);
+        final at = {const NodeRef.mapping(dim): const Offset(400, 0), block: Offset.zero};
+        final folded = buildScene(p, at);
+        final open = buildScene(p, at, expanded: {dim: 80});
+        final a = folded.node(block);
+        final b = open.node(block);
         expect(a.expanded, isFalse);
         expect(b.expanded, isTrue);
         expect(b.rect.height, a.rect.height + 80);
@@ -335,12 +340,10 @@ void main() {
         expect(b.definitionRegion.top, a.definitionRegion.top, reason: 'the summary line stays');
         expect(hitTest(open, b.disclosure.center), isA<HitDisclosure>());
         expect(hitTest(open, b.formulaRegion.center), isA<HitNode>());
-        // a mapping without a definition has no disclosure and never grows
-        final declared = buildScene(
-          lamp(),
-          {const NodeRef.mapping(dim): Offset.zero},
-          expanded: {dim: 80},
-        );
+        expect(open.node(const NodeRef.mapping(dim)).expanded, isFalse);
+        // a Sem block without a definition has no mapping block and never grows
+        final declared = buildScene(lamp(), at, expanded: {dim: 80});
+        expect(declared.nodes.any((n) => n.ref == block), isFalse);
         final d = declared.node(const NodeRef.mapping(dim));
         expect(d.expanded, isFalse);
         expect(hitTest(declared, d.disclosure.center), isA<HitNode>());

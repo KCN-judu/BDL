@@ -426,21 +426,11 @@ void main() {
       expect(find.text('Fixes'), findsNothing, reason: 'one home: beside its finding');
     });
 
-    test('the canvas draws an unapplied rule with a hollow output socket and the word', () {
-      final scene = buildScene(ac(), const {}, unapplied: const {ctrl});
-      final node = scene.nodes.firstWhere((n) => n.title == 'AirConditionerCtrl');
-      expect(node.unapplied, isTrue);
-      expect(node.declared, isFalse);
-      final out = node.sockets.singleWhere((s) => s.ref.side == SocketSide.output);
-      expect(out.open, isTrue, reason: 'no value comes out of it');
-      expect(out.kind, SocketKind.onOff, reason: 'the value form is known');
-      for (final s in node.sockets.where((s) => s.ref.side == SocketSide.input)) {
-        expect(s.open, isFalse);
-      }
+    test('the canvas draws no rule (a template, ADR-0043): the finding lives in the inspector', () {
+      final scene = buildScene(ac(), const {});
+      expect(scene.nodes.where((n) => n.title == 'AirConditionerCtrl'), isEmpty);
       final applied = buildScene(ac(applied: true), const {});
-      final same = applied.nodes.firstWhere((n) => n.title == 'AirConditionerCtrl');
-      expect(same.unapplied, isFalse);
-      expect(same.sockets.singleWhere((s) => s.ref.side == SocketSide.output).open, isFalse);
+      expect(applied.nodes.where((n) => n.title == 'AirConditionerCtrl'), isEmpty);
     });
   });
 

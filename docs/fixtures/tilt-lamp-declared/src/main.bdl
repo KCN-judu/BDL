@@ -4,5 +4,8 @@ concept Tilt : Angle
 /// The lamp's output level, 0 (off) to 1 (full).
 concept Brightness : Scalar
 
-/// Upright is off, flat is full: brightness grows with the tilt.
-mapping dimByTilt : Tilt -> Brightness
+/// The tilt sensor: a value per activation, from outside.
+mapping tilt : Tilt
+
+/// What the lamp shows — not yet said how.
+mapping brightness : Brightness

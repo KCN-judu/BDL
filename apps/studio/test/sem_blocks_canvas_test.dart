@@ -1,10 +1,11 @@
-/// Reference edges and the three shapes (ADR-0034): the canvas draws what a
-/// definition references — from the analysis's `references`, never from the
-/// formula text — into the formula line of the relationship naming it; a
-/// rule is told from a value by its input sockets and the word *rule*; the
-/// inspector, the Simulate probe and the creation sheet say which shape a
-/// relationship is with one vocabulary — *produces* is the signature,
-/// *carried by* is a value per tick.
+/// The Sem-block canvas (ADR-0043; BDL_FV Phase 21): the design's value
+/// graph is Sem blocks — `TempSensor`, `ButtonInput` (Sources) and `acOn`
+/// (a Sem block whose mapping block applies the rule
+/// `AirConditionerCtrl` to both) — joined by read edges the analysis
+/// reports (`references`, never the formula text) into the reading block's
+/// sockets; the rule is a template named on the block and in the
+/// inspector, not a node; the concept is a template with instances; the
+/// Simulate probe is per Sem block.
 library;
 
 import 'package:bdl_studio/app/actions.dart';
@@ -98,13 +99,10 @@ Map<int, List<int>> refsOf(pb.ProjectAnalysis a) => {
 };
 
 final layout = <NodeRef, Offset>{
-  const NodeRef.concept(roomTemp): const Offset(48, 48),
-  const NodeRef.concept(buttonHeld): const Offset(48, 96),
-  const NodeRef.concept(switchState): const Offset(48, 144),
-  const NodeRef.mapping(tempSensor): const Offset(300, 48),
-  const NodeRef.mapping(buttonInput): const Offset(300, 148),
-  const NodeRef.mapping(ctrl): const Offset(600, 48),
-  const NodeRef.mapping(acOn): const Offset(900, 48),
+  const NodeRef.mapping(tempSensor): const Offset(48, 48),
+  const NodeRef.mapping(buttonInput): const Offset(48, 148),
+  const NodeRef.mapping(acOn): const Offset(640, 48),
+  const NodeRef.definition(acOn): const Offset(360, 48),
 };
 
 AppState connected(
@@ -155,43 +153,66 @@ class HarnessState extends State<Harness> {
 
 void main() {
   group('canvas geometry', () {
-    test('the value is joined to the rule and both Sources by reference edges', () {
+    test('the value graph: three Sem blocks and one mapping block; no concept, no rule', () {
       final scene = buildScene(design(), layout, refs: refsOf(analysis()));
-      final refs = scene.links.where((l) => l.reference).toList();
-      expect(refs.map((l) => l.from.node.id).toSet(), {tempSensor, buttonInput, ctrl});
-      expect(refs.every((l) => l.to.node == const NodeRef.mapping(acOn)), isTrue);
-      // From the referenced relationship's output socket …
-      for (final l in refs) {
-        expect(l.from.side, SocketSide.output);
-        final from = scene.nodes.firstWhere((n) => n.ref == l.from.node);
-        final socket = from.sockets.firstWhere((s) => s.ref == l.from);
-        expect(l.path.getBounds().left, closeTo(socket.center.dx, 0.01));
-      }
-      // … into the formula line of the one naming it, never a socket.
+      expect(scene.nodes.map((n) => n.ref).toSet(), {
+        const NodeRef.mapping(tempSensor),
+        const NodeRef.mapping(buttonInput),
+        const NodeRef.mapping(acOn),
+        const NodeRef.definition(acOn),
+      });
       final value = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(acOn));
-      for (final l in refs) {
-        final end = l.path.computeMetrics().first.let((m) => m.getTangentForOffset(m.length));
-        expect(end!.position.dx, closeTo(value.formulaEntry.dx, 0.01));
-        expect(end.position.dy, closeTo(value.formulaEntry.dy, 0.01));
+      expect(value.applies, ['AirConditionerCtrl']);
+      expect(value.sockets.map((s) => s.ref.role), [SocketRole.produce, SocketRole.concept]);
+      final block = scene.nodes.firstWhere((n) => n.ref == const NodeRef.definition(acOn));
+      expect(block.dependsOn, ['TempSensor', 'ButtonInput']);
+      expect(block.applies, ['AirConditionerCtrl']);
+      expect(block.title, 'AirConditionerCtrl', reason: 'the header names the rule applied');
+      expect(block.definition, 'AirConditionerCtrl(TempSensor, ButtonInput)');
+      final reads = block.sockets.where((s) => s.ref.role == SocketRole.read).toList();
+      expect(reads.map((s) => block.socketLabels[s.ref]), ['TempSensor', 'ButtonInput']);
+      expect(reads.map((s) => s.ref.concept), [roomTemp, buttonHeld]);
+      for (final src in [tempSensor, buttonInput]) {
+        final n = scene.nodes.firstWhere((n) => n.ref == NodeRef.mapping(src));
+        expect(n.source, isTrue);
+        expect(n.sockets.length, 1, reason: 'a Source has its output socket only');
+        expect(
+          scene.nodes.any((n) => n.ref == NodeRef.definition(src)),
+          isFalse,
+          reason: 'a Source has no mapping block',
+        );
       }
-      expect(value.sockets.where((s) => s.ref.side == SocketSide.input), isEmpty);
-      expect(value.dependsOn, ['TempSensor', 'ButtonInput', 'AirConditionerCtrl']);
     });
 
-    test('signature edges are unchanged: reference edges are added, not substituted', () {
-      final without = buildScene(design(), layout);
-      final with_ = buildScene(design(), layout, refs: refsOf(analysis()));
-      expect(without.links.where((l) => l.reference), isEmpty);
+    test('one read edge per Sem block the definition names, into its own socket', () {
+      final scene = buildScene(design(), layout, refs: refsOf(analysis()));
+      final reads = scene.links.where((l) => l.id.kind == LinkKind.read).toList();
+      expect(reads.length, 2, reason: 'the rule makes no edge');
+      final byFrom = {for (final l in reads) l.from.node: l};
+      expect(byFrom.keys.toSet(), {
+        const NodeRef.mapping(tempSensor),
+        const NodeRef.mapping(buttonInput),
+      });
+      for (final l in reads) {
+        expect(l.to.node, const NodeRef.definition(acOn));
+        expect(l.to.role, SocketRole.read);
+        expect(l.binding, isNull);
+      }
+      expect(byFrom[const NodeRef.mapping(tempSensor)]!.to.index, tempSensor);
       expect(
-        with_.links.where((l) => !l.reference).length,
-        without.links.length,
-        reason: 'concept → rule input ×2, relationship → concept ×4',
+        byFrom[const NodeRef.mapping(buttonInput)]!.to.index,
+        buttonHeld == 1 ? buttonInput : 0,
       );
-      expect(without.links.length, 6);
+      expect(byFrom[const NodeRef.mapping(tempSensor)]!.concept, roomTemp);
+      // the definition itself: one produce edge into the Sem block
+      final produce = scene.links.where((l) => l.id.kind == LinkKind.produce).single;
+      expect(produce.from.node, const NodeRef.definition(acOn));
+      expect(produce.to.node, const NodeRef.mapping(acOn));
+      expect(produce.concept, switchState);
     });
 
-    test('nothing is drawn without an analysis, for a self-reference, or for an unknown id', () {
-      expect(buildScene(design(), layout).links.where((l) => l.reference), isEmpty);
+    test('no read edge without an analysis, for a self-reference, or for an unknown id', () {
+      expect(buildScene(design(), layout).links.map((l) => l.id.kind), [LinkKind.produce]);
       final scene = buildScene(
         design(),
         layout,
@@ -199,43 +220,40 @@ void main() {
           acOn: [acOn, 999],
         },
       );
-      expect(scene.links.where((l) => l.reference), isEmpty);
-      final value = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(acOn));
-      expect(value.dependsOn, isEmpty);
+      expect(scene.links.map((l) => l.id.kind), [LinkKind.produce]);
+      final block = scene.nodes.firstWhere((n) => n.ref == const NodeRef.definition(acOn));
+      expect(block.sockets.where((s) => s.ref.role == SocketRole.read), isEmpty);
     });
 
-    test('a rule is told from a value by its input sockets and the rule flag', () {
-      final scene = buildScene(design(), layout, refs: refsOf(analysis()));
-      final rule = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(ctrl));
-      final value = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(acOn));
-      final source = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(tempSensor));
-      expect(rule.rule, isTrue);
-      expect(rule.sockets.where((s) => s.ref.side == SocketSide.input).length, 2);
-      expect(value.rule, isFalse);
-      expect(source.rule, isFalse);
-      expect(source.source, isTrue);
-      // A declared rule keeps the flag: the state word wins the header slot,
-      // the sockets still say rule.
-      final declared = buildScene(
-        pb.ProjectProjection(name: 'd')
-          ..concepts.addAll(design().concepts)
-          ..mappings.add(mapping(ctrl, 'AirConditionerCtrl', const [roomTemp], switchState)),
-        const {},
-      );
-      final d = declared.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(ctrl));
-      expect(d.rule && d.declared, isTrue);
-    });
-
-    test('a reference edge is not a drop target and not selectable', () {
-      final scene = buildScene(design(), layout, refs: refsOf(analysis()));
-      final ref = scene.links.firstWhere((l) => l.reference);
-      expect(hitTest(scene, ref.midpoint), isNot(isA<HitLink>()));
-      final value = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(acOn));
-      // The formula entry is on the node: a drop there is a drop on the node,
-      // never on a socket.
-      expect(hitTest(scene, value.formulaEntry + const Offset(1, 0)), isA<HitNode>());
-      expect(compatibleSockets(scene, ref.from).any((s) => s.node == value.ref), isFalse);
-    });
+    test(
+      'a read edge is an object: hit, selectable, disconnectable by the compiler; no drop on it',
+      () {
+        final scene = buildScene(design(), layout, refs: refsOf(analysis()));
+        final l = scene.links.firstWhere((l) => l.id.kind == LinkKind.read);
+        expect(hitTest(scene, l.midpoint), isA<HitLink>());
+        expect(l.id.disconnectable, isTrue, reason: 'ComposeAction.unreference');
+        final produce = scene.links.firstWhere((l) => l.id.kind == LinkKind.produce);
+        expect(produce.id.disconnectable, isFalse, reason: 'the definition is not cut alone');
+        final out = scene.nodes
+            .firstWhere((n) => n.ref == const NodeRef.mapping(buttonInput))
+            .sockets
+            .single;
+        expect(
+          dropTarget(
+            scene,
+            out.ref,
+            l.to.let(
+              (r) => scene.nodes
+                  .firstWhere((n) => n.ref == r.node)
+                  .sockets
+                  .firstWhere((s) => s.ref == r)
+                  .center,
+            ),
+          ),
+          isNull,
+        );
+      },
+    );
   });
 
   group('inspector', () {
@@ -258,7 +276,7 @@ void main() {
       expect(find.text('Source'), findsNothing);
     });
 
-    testWidgets('a value: Role Value, Depends on the rule and both Sources', (t) async {
+    testWidgets('a Sem block: Role Value, Reads both Sources, Applies the rule', (t) async {
       await t.pumpWidget(
         Harness(
           initial: connected(
@@ -271,14 +289,16 @@ void main() {
       );
       expect(find.text('Value'), findsOneWidget);
       expect(find.text(kEnglish.valueExplanation), findsOneWidget);
-      expect(find.text('Depends on'), findsOneWidget);
+      expect(find.text('Reads'), findsOneWidget);
+      expect(find.text('Applies'), findsOneWidget);
+      expect(find.text('Depends on'), findsNothing);
       for (final name in ['TempSensor', 'ButtonInput', 'AirConditionerCtrl']) {
         expect(find.text(name), findsOneWidget);
       }
       expect(find.text('Rule'), findsNothing);
     });
 
-    testWidgets('a Source keeps its own role and no Depends on row', (t) async {
+    testWidgets('a Source keeps its own role, no Reads row, and is Read by the value', (t) async {
       await t.pumpWidget(
         Harness(
           initial: connected(
@@ -290,9 +310,29 @@ void main() {
         ),
       );
       expect(find.text('Source'), findsWidgets);
-      expect(find.text('Depends on'), findsNothing);
+      expect(find.text('Reads'), findsNothing);
+      expect(find.text('Read by'), findsOneWidget);
+      expect(find.text('acOn'), findsOneWidget);
       expect(find.text('Rule'), findsNothing);
       expect(find.text('Value'), findsNothing);
+    });
+
+    testWidgets('a concept: its blocks (the instances) and the rules over it', (t) async {
+      await t.pumpWidget(
+        Harness(
+          initial: connected(
+            design(),
+            selection: const ConceptSelected(switchState),
+            analysis: analysis(),
+          ),
+          child: (s, d) => Inspector(state: s, dispatch: d),
+        ),
+      );
+      expect(find.text('Blocks'), findsOneWidget);
+      expect(find.text('acOn'), findsOneWidget);
+      expect(find.text('Rules'), findsOneWidget);
+      expect(find.text('AirConditionerCtrl'), findsOneWidget);
+      expect(find.text('Produced by'), findsNothing);
     });
   });
 
@@ -303,7 +343,7 @@ void main() {
       addTearDown(t.view.reset);
     }
 
-    testWidgets('a concept is carried by its values and Sources, never by a rule', (t) async {
+    testWidgets('a concept lists its Sem blocks, one value per tick each; never a rule', (t) async {
       wide(t);
       await t.pumpWidget(
         Harness(
@@ -316,12 +356,12 @@ void main() {
           child: (s, d) => SimulatePage(state: s, dispatch: d),
         ),
       );
-      expect(find.text(kEnglish.carriedBy), findsOneWidget);
+      expect(find.text(kEnglish.blocksOfConcept), findsOneWidget);
       expect(find.text('acOn'), findsWidgets);
-      expect(find.textContaining('No value declaration'), findsNothing);
+      expect(find.text('AirConditionerCtrl'), findsNothing);
     });
 
-    testWidgets('without the value: nothing carries the concept; the rule is named', (t) async {
+    testWidgets('without a block of the concept: the sentence that says how to add one', (t) async {
       wide(t);
       await t.pumpWidget(
         Harness(
@@ -333,11 +373,7 @@ void main() {
           child: (s, d) => SimulatePage(state: s, dispatch: d),
         ),
       );
-      expect(find.text(kEnglish.noValueCarries('SwitchState')), findsOneWidget);
-      expect(
-        find.text(kEnglish.ruleProducesNoValue('AirConditionerCtrl', 'SwitchState')),
-        findsOneWidget,
-      );
+      expect(find.text(kEnglish.noBlockOfConcept('SwitchState')), findsOneWidget);
     });
 
     testWidgets('a rule: no value of its own; applied in the value, or in nothing yet', (t) async {

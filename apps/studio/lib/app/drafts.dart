@@ -95,6 +95,26 @@ Transition commitDefinition(AppState s, int id) {
   );
 }
 
+/// Commit [source] as the definition of [id] in one edit — attach when
+/// there is none, replace when there is — without a draft: the canvas's
+/// wire (ADR-0043), whose text is the compiler's answer, not something
+/// the designer is still typing.  Refused while a draft exists.
+Transition commitText(AppState s, int id, String source) {
+  final m = s.mapping(id);
+  if (m == null || s.draft(id) != null) return Transition(s);
+  final text = source.trim();
+  if (text.isEmpty || text == s.committedDefinition(id)) return Transition(s);
+  final definition = pb.Definition(formula: text);
+  final op = m.hasDefinition()
+      ? pb.EditOp(
+          replaceDefinition: pb.ReplaceDefinition(id: Int64(id), definition: definition),
+        )
+      : pb.EditOp(
+          attachDefinition: pb.AttachDefinition(id: Int64(id), definition: definition),
+        );
+  return sendEdit(s, op);
+}
+
 /// Detach the committed definition.  An explicit act on the definition, so
 /// any draft for the mapping goes with it.
 Transition detachDefinition(AppState s, int id) {

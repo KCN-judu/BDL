@@ -36,6 +36,11 @@ pb.ConceptView concept(int id, String name) => pb.ConceptView(
 /// Tilt, Brightness; tiltSensor : () -> Tilt (a Source), dimByTilt : Tilt ->
 /// Brightness (a rule), brightness : () -> Brightness (a value); light, a
 /// sink accepting Brightness.
+/// The lamp as Sem blocks (ADR-0043): `tiltSensor : Tilt` a Source,
+/// `dimByTilt : Brightness = tiltSensor / 90 deg` and
+/// `brightness : Brightness = dimByTilt` two Sem blocks with mapping
+/// blocks, `light` the sink `brightness` drives.  (`rule` keeps its name
+/// from the days it was one; every relationship here is a value.)
 pb.ProjectProjection design() => pb.ProjectProjection(
   revision: Int64(1),
   name: 'lamp',
@@ -49,34 +54,45 @@ pb.ProjectProjection design() => pb.ProjectProjection(
     mappingView(
       id: Int64(rule),
       name: 'dimByTilt',
-      signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(level)),
-      definition: pb.Definition(formula: 'Tilt / 90 deg'),
+      signature: pb.Signature(output: Int64(level)),
+      definition: pb.Definition(formula: 'tiltSensor / 90 deg'),
     ),
     mappingView(
       id: Int64(value),
       name: 'brightness',
       signature: pb.Signature(output: Int64(level)),
-      definition: pb.Definition(formula: 'dimByTilt(tiltSensor)'),
+      definition: pb.Definition(formula: 'dimByTilt'),
       drivesOutputId: Int64(light),
     ),
   ],
   outputs: [pb.OutputView(id: Int64(light), name: 'light', accepts: Int64(level))],
 );
 
+/// The analysis's read edges of [design]: dimByTilt reads tiltSensor,
+/// brightness reads dimByTilt.
+const refs = <int, List<int>>{
+  rule: [source],
+  value: [rule],
+};
+
 const c0 = NodeRef.concept(tilt);
 const c1 = NodeRef.concept(level);
 const m0 = NodeRef.mapping(source);
 const m1 = NodeRef.mapping(rule);
 const m2 = NodeRef.mapping(value);
+const d1 = NodeRef.definition(rule);
+const d2 = NodeRef.definition(value);
 const o0 = NodeRef.output(light);
 
-/// Concepts top-left, relationships in a row, the sink right.
+/// The Sem blocks in a row, the sink right, each mapping block away from
+/// the marquees the tests draw (a concept is a template and takes no
+/// place).
 final layout = <NodeRef, Offset>{
-  c0: const Offset(40, 40),
-  c1: const Offset(40, 100),
   m0: const Offset(300, 40),
   m1: const Offset(300, 200),
+  d1: const Offset(40, 200),
   m2: const Offset(600, 40),
+  d2: const Offset(600, 300),
   o0: const Offset(900, 40),
 };
 
@@ -108,6 +124,7 @@ class HarnessState extends State<Harness> {
               project: project,
               layout: nodes,
               selection: selection,
+              refs: refs,
               renaming: renaming,
               dispatch: (a) {
                 widget.actions.add(a);
@@ -127,7 +144,7 @@ class HarnessState extends State<Harness> {
   );
 }
 
-CanvasScene sceneOf(Map<NodeRef, Offset> nodes) => buildScene(design(), nodes);
+CanvasScene sceneOf(Map<NodeRef, Offset> nodes) => buildScene(design(), nodes, refs: refs);
 
 Offset origin(WidgetTester t) => t.getTopLeft(find.byType(NodeCanvas));
 
@@ -331,7 +348,8 @@ void main() {
       final before1 = scene.node(m1).rect.topLeft;
       await drag(t, header(m0), header(m0) + const Offset(80, 60));
       final moved = actions.whereType<NodesMoved>().single;
-      expect(moved.positions.keys.toSet(), {m0, m1});
+      expect(moved.positions.keys.toSet(), {m0, m1, d1}, reason: 'a block takes its mapping block');
+      expect(moved.positions[d1]! - layout[d1]!, moved.positions[m1]! - before1);
       expect(moved.positions[m0]! - before0, moved.positions[m1]! - before1);
       expect(actions.whereType<NodeMoved>(), isEmpty, reason: 'one layout operation');
       expect(h.selection, MultiSelected({m0, m1}, active: m0), reason: 'the set stays');
@@ -342,9 +360,9 @@ void main() {
       await pumpCanvas(t, actions, selection: MultiSelected({m0, m1}, active: m0));
       await drag(t, header(m2), header(m2) + const Offset(0, 80));
       expect(lastSelection(actions), const MappingSelected(value));
-      final moved = actions.whereType<NodeMoved>().single;
-      expect(moved.node, m2);
-      expect(actions.whereType<NodesMoved>(), isEmpty);
+      final moved = actions.whereType<NodesMoved>().single;
+      expect(moved.positions.keys.toSet(), {m2, d2}, reason: 'one declaration, two nodes');
+      expect(actions.whereType<NodeMoved>(), isEmpty);
     });
 
     testWidgets('a press on a node that does not move keeps the selection as it was', (t) async {
@@ -386,7 +404,7 @@ void main() {
         await t.sendKeyEvent(LogicalKeyboardKey.keyA);
       });
       await t.pump();
-      expect(lastSet(actions), {c0, c1, m0, m1, m2, o0});
+      expect(lastSet(actions), {m0, m1, m2, o0});
       await t.sendKeyEvent(LogicalKeyboardKey.escape);
       await t.pump();
       expect(lastSelection(actions), const NoSelection());
@@ -479,32 +497,35 @@ void main() {
   });
 
   group('chain', () {
-    test('⇧-click takes the one shortest signature chain, never a branch', () {
-      // tiltSensor → Tilt → dimByTilt → Brightness → brightness → light:
-      // one chain, over signature edges only
-      expect(uniqueSignatureChain(scene, m0, o0), {m0, c0, m1, c1, m2, o0});
-      expect(uniqueSignatureChain(scene, c1, o0), {c1, m2, o0});
+    test('⇧-click takes the one shortest chain over read and drive edges, never a branch', () {
+      // tiltSensor → dimByTilt → brightness → light: one chain
+      expect(uniqueSignatureChain(scene, m0, o0), {m0, m1, m2, o0});
+      expect(uniqueSignatureChain(scene, m1, o0), {m1, m2, o0});
       expect(uniqueSignatureChain(scene, m1, m1), {m1});
-      // a second rule Tilt -> Brightness: two shortest paths from Tilt to
-      // Brightness — ambiguous, so no chain
+      // a second block also reading tiltSensor and read by brightness: two
+      // shortest paths from tiltSensor to brightness — ambiguous, no chain
       final branched = design()
         ..mappings.add(
           mappingView(
             id: Int64(9),
             name: 'dimByTilt2',
-            signature: pb.Signature(inputs: [Int64(tilt)], output: Int64(level)),
-            definition: pb.Definition(formula: 'Tilt / 45 deg'),
+            signature: pb.Signature(output: Int64(level)),
+            definition: pb.Definition(formula: 'tiltSensor / 45 deg'),
           ),
         );
-      final s2 = buildScene(branched, {
-        ...layout,
-        const NodeRef.mapping(9): const Offset(300, 320),
-      });
-      expect(uniqueSignatureChain(s2, c0, c1), isNull);
-      expect(uniqueSignatureChain(s2, c0, m1), {c0, m1}, reason: 'the direct edge is unique');
-      // disconnected: no chain
-      final apart = design()..mappings.removeWhere((m) => m.id.toInt() == rule);
-      expect(uniqueSignatureChain(buildScene(apart, layout), c0, c1), isNull);
+      final s2 = buildScene(
+        branched,
+        {...layout, const NodeRef.mapping(9): const Offset(300, 320)},
+        refs: {
+          rule: [source],
+          9: [source],
+          value: [rule, 9],
+        },
+      );
+      expect(uniqueSignatureChain(s2, m0, m2), isNull);
+      expect(uniqueSignatureChain(s2, m0, m1), {m0, m1}, reason: 'the direct edge is unique');
+      // without an analysis there are no read edges: no chain
+      expect(uniqueSignatureChain(buildScene(design(), layout), m0, m1), isNull);
     });
   });
 }

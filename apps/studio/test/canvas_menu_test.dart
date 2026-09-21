@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'canvas_selection_test.dart' show design, layout, c1, m0, m1, m2, o0, source, rule, value;
+import 'canvas_selection_test.dart' show design, layout, m0, m1, m2, o0, source, rule, value;
 import 'support/canvas_harness.dart' show SceneLookup;
 
 class Harness extends StatefulWidget {
@@ -159,7 +159,7 @@ void main() {
       await pumpCanvas(t, actions, selection: const MappingSelected(rule));
       await rightClick(t, const Offset(700, 450));
       final labels = openMenuLabels(t).toList();
-      expect(labels, containsAll(['Add Concept', 'Add Source', 'Select All', 'Frame All']));
+      expect(labels, containsAll(['Add Block', 'Add Source', 'Select All', 'Frame All']));
       expect(labels, isNot(contains('Rename')));
       expect(labels, isNot(contains('Delete dimByTilt')));
       // the selection was not touched by the blank right-click
@@ -176,7 +176,7 @@ void main() {
         labels,
         containsAll(['Edit Definition', 'Rename', 'Reveal in Code', 'Delete dimByTilt']),
       );
-      expect(labels, isNot(contains('Add Concept')));
+      expect(labels, isNot(contains('Add Block')));
       // the primary command comes first
       expect(labels.first, 'Edit Definition');
       await t.tap(menuItem('Edit Definition'));
@@ -208,7 +208,7 @@ void main() {
       await rightClick(t, drive.midpoint);
       final labels = openMenuLabels(t).toList();
       expect(labels, containsAll(['Show brightness', 'Show light', 'Disconnect']));
-      expect(labels, isNot(contains('Add Concept')));
+      expect(labels, isNot(contains('Add Block')));
       // the right-click selected the edge, as it selects a node
       expect(actions.whereType<SelectionChanged>().single.selection, LinkSelected(drive.id));
       await t.tap(menuItem('Disconnect'));
@@ -374,56 +374,20 @@ void main() {
   });
 
   group('chooser', () {
-    /// A second value producing Brightness: the concept dropped on the sink
-    /// has two candidates.
-    pb.ProjectProjection twoCandidates() => design()
-      ..mappings.removeWhere((m) => m.hasDrivesOutputId())
-      ..mappings.add(
-        pb.MappingView(
-          id: Int64(2),
-          name: 'brightness',
-          signature: pb.Signature(output: Int64(1)),
-          definition: pb.Definition(formula: '0.5'),
-          role: pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE,
-        ),
-      )
-      ..mappings.add(
-        pb.MappingView(
-          id: Int64(7),
-          name: 'dimmer',
-          signature: pb.Signature(output: Int64(1)),
-          definition: pb.Definition(formula: '0.2'),
-          role: pb.RelationshipRole.RELATIONSHIP_ROLE_VALUE,
-        ),
-      );
-
-    testWidgets('L: the chooser and the menu are never both open', (t) async {
+    testWidgets('L: a drop while the menu is open only dismisses the menu', (t) async {
       final actions = <AppAction>[];
-      final h = await pumpCanvas(t, actions);
-      h.project = twoCandidates();
-      h.nodes = {...layout, const NodeRef.mapping(7): const Offset(600, 200)};
-      // ignore: invalid_use_of_protected_member
-      h.setState(() {});
-      await t.pump();
-      final s = buildScene(h.project, h.nodes);
-      final conceptOut = s.socket(c1, side: SocketSide.output).center;
-      final sinkIn = s.socket(o0, side: SocketSide.input).center;
-      await drag(t, conceptOut, sinkIn);
-      await t.pump(const Duration(milliseconds: 100));
-      expect(openMenuLabels(t), containsAll(['Drive with brightness', 'Drive with dimmer']));
-      // a right-click now: the chooser goes, the menu comes
+      await pumpCanvas(t, actions);
+      final valueOut = scene.socket(m2, side: SocketSide.output).center;
+      final sinkIn = scene.socket(o0, side: SocketSide.input).center;
       await rightClick(t, header(m1));
-      final labels = openMenuLabels(t).toList();
-      expect(labels, contains('Delete dimByTilt'));
-      expect(labels, isNot(contains('Drive with brightness')));
-      // and the other way: a drop while the menu is open first dismisses it
-      await t.sendKeyEvent(LogicalKeyboardKey.escape);
-      await t.pump(const Duration(milliseconds: 100));
-      await rightClick(t, header(m1));
-      await drag(t, conceptOut, sinkIn);
+      expect(openMenuLabels(t), contains('Delete dimByTilt'));
+      await drag(t, valueOut, sinkIn);
       await t.pump(const Duration(milliseconds: 100));
       expect(openMenuLabels(t), isEmpty, reason: 'the drag only dismissed the menu');
       expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
+      // with no menu open the same drag is the drive
+      await drag(t, valueOut, sinkIn);
+      expect(actions.whereType<SetMappingDriveRequested>().single.mappingId, value);
     });
   });
 

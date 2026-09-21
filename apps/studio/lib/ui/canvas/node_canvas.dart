@@ -44,7 +44,7 @@ class NodeCanvas extends StatefulWidget {
     this.statuses = const {},
     this.outputStates = const {},
     this.refs = const {},
-    this.unapplied = const {},
+    this.slots = const {},
     this.templates = const [],
     this.sources = const [],
     this.recentTemplates = const [],
@@ -86,9 +86,10 @@ class NodeCanvas extends StatefulWidget {
   final Selection selection;
   final void Function(AppAction) dispatch;
 
-  /// The rules the compiler notes as applied by nothing
-  /// (`reactive.rule_unapplied`): drawn with a hollow output socket.
-  final Set<int> unapplied;
+  /// Per mapping id, the open positions of its definition
+  /// (`MappingAnalysis.slots`, the same analysis): the mapping block's
+  /// slot sockets, where a dropped Sem block goes.
+  final Map<int, List<String>> slots;
 
   /// A system project's instances, bindings, groups and their verdicts;
   /// empty for a flat project and inside a component's source.
@@ -361,7 +362,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     // went with an edit made elsewhere) is no selection: the reducer only
     // knows the ends; the canvas knows the edges.
     if (widget.selection case LinkSelected(:final link)) {
-      if (!_scene(widget.layout).links.any((l) => !l.reference && l.id == link)) {
+      if (!_scene(widget.layout).links.any((l) => l.id == link)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && widget.selection == LinkSelected(link)) {
             widget.dispatch(const SelectionChanged(NoSelection()));
@@ -406,13 +407,31 @@ class _NodeCanvasState extends State<NodeCanvas> {
         )
       : widget.system;
 
+  /// The scene's system input with [decl] taken out of every group: the
+  /// regions measured without the relationship being dragged (and without
+  /// its mapping block), so dragging out of a group is possible.
+  SystemSceneInput _sceneInputWithout(int decl) {
+    final s = _sceneInput;
+    return SystemSceneInput(
+      system: s.system,
+      analysis: s.analysis,
+      groups: [
+        for (final g in s.groups) g.deepCopy()..members.removeWhere((m) => m.toInt() == decl),
+      ],
+      boundaries: s.boundaries,
+      groupBoxes: s.groupBoxes,
+      portWords: s.portWords,
+      summarize: s.summarize,
+    );
+  }
+
   CanvasScene _scene(Map<NodeRef, Offset> layout) => buildScene(
     widget.project,
     layout,
     statuses: widget.statuses,
     outputStates: widget.outputStates,
     refs: widget.refs,
-    unapplied: widget.unapplied,
+    slots: widget.slots,
     system: _sceneInput,
     expanded: widget.expanded,
   );
@@ -423,9 +442,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
   Offset _toScene(Offset local) => (local - _pan) / _zoom;
   Offset _toLocal(Offset scene) => scene * _zoom + _pan;
 
-  /// Top-left of a new concept node centred on a scene point.
+  /// Top-left of a new Sem block centred on a scene point.
   static Offset nodeOriginFor(Offset scenePoint) =>
-      scenePoint - const Offset(NodeMetrics.conceptWidth / 2, NodeMetrics.headerHeight / 2);
+      scenePoint - const Offset(NodeMetrics.semWidth / 2, NodeMetrics.headerHeight / 2);
 
   /// A value category opens the concept sheet at the point: the concept
   /// is named before it is created (ADR-0041), and lands here.
@@ -443,6 +462,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   Set<NodeRef> get _selectedSet => selectedNodes(widget.selection);
   NodeRef? get _active => activeNode(widget.selection);
+
+  /// The nodes the selection is drawn on: a selected Sem block's mapping
+  /// block wears the outline too — one declaration, two nodes (ADR-0044).
+  Set<NodeRef> get _selectedShapes => {
+    for (final r in _selectedSet) ...[r, if (r.kind == NodeKind.mapping) NodeRef.definition(r.id)],
+  };
 
   void _setSelection(Set<NodeRef> nodes, {NodeRef? active}) {
     final next = selectionOfNodes(nodes, active: active);
@@ -604,15 +629,26 @@ class _NodeCanvasState extends State<NodeCanvas> {
         });
       case HitNode(:final node) || HitDisclosure(:final node):
         // Dragging a selected node moves the selected set; an unselected
-        // one becomes the selection first (⌘/Ctrl adds it instead).
+        // one becomes the selection first (⌘/Ctrl adds it instead).  A
+        // Sem block takes its mapping block along; a mapping block grabbed
+        // by itself moves alone (its own position, ADR-0044).
+        final decl = asDeclaration(node.ref);
         var set = _selectedSet;
-        if (!set.contains(node.ref)) {
-          set = _primaryModifier ? {...set, node.ref} : {node.ref};
-          _setSelection(set, active: node.ref);
+        if (!set.contains(decl)) {
+          set = _primaryModifier ? {...set, decl} : {decl};
+          _setSelection(set, active: decl);
         }
+        final moving = node.ref.kind == NodeKind.definition
+            ? {node.ref}
+            : {
+                for (final r in set) ...[
+                  r,
+                  if (r.kind == NodeKind.mapping) NodeRef.definition(r.id),
+                ],
+              };
         final base = <NodeRef, Offset>{
           for (final n in scene.nodes)
-            if (set.contains(n.ref)) n.ref: n.rect.topLeft,
+            if (moving.contains(n.ref)) n.ref: n.rect.topLeft,
         };
         setState(() {
           _gesture = _DragNodes(grabbed: node.ref, base: base, delta: e.delta / _zoom);
@@ -621,7 +657,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
         widget.dispatch(SelectionChanged(GroupSelected(group.id)));
         final base = <NodeRef, Offset>{
           for (final n in scene.nodes)
-            if (group.members.contains(n.ref.id) && n.ref.kind == NodeKind.mapping)
+            if (group.members.contains(n.ref.id) &&
+                (n.ref.kind == NodeKind.mapping || n.ref.kind == NodeKind.definition))
               n.ref: n.rect.topLeft,
         };
         setState(() {
@@ -768,7 +805,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
         if (node.ref.kind == NodeKind.instance) {
           _editSource(node.ref.id);
         } else if (node.ref.kind != NodeKind.output) {
-          widget.dispatch(InlineRenameStarted(node.ref));
+          // a mapping block is renamed through its Sem block: one name
+          widget.dispatch(InlineRenameStarted(asDeclaration(node.ref)));
         }
       case HitGroup(:final group):
         widget.dispatch(InlineRenameStarted(NodeRef.group(group.id)));
@@ -829,13 +867,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _updateDragOverGroup(NodeRef node) {
     // Insertion affordance: the expanded group under the dragged
     // relationship (its own group's region measured without it).  Only for
-    // a single relationship — a moved set keeps its memberships.
+    // a single relationship — a Sem block with its mapping block is one —
+    // a moved set keeps its memberships.
     if (!_groupsEnabled || node.kind != NodeKind.mapping) return;
     final g = _gesture;
-    if (g is! _DragNodes || g.base.length != 1) return;
+    if (g is! _DragNodes || _oneDeclaration(g.base.keys) != node) return;
     final layout = _effectiveLayout;
     final shape = _scene(layout).nodes.where((n) => n.ref == node).firstOrNull;
-    final without = buildScene(widget.project, {...layout}..remove(node), system: _sceneInput);
+    final without = buildScene(widget.project, layout, system: _sceneInputWithout(node.id));
     final over = shape == null ? null : groupAt(without, shape.rect.center);
     _dragOverGroup = over == null || (over.members.length == 1 && over.members.first == node.id)
         ? null
@@ -847,14 +886,26 @@ class _NodeCanvasState extends State<NodeCanvas> {
     if (positions.length == 1) {
       final e = positions.entries.single;
       widget.dispatch(NodeMoved(e.key, e.value));
-      // Into or out of a group region: membership follows the drop.  Only
-      // the membership changes — a group is authoring metadata.
-      if (_groupsEnabled && e.key.kind == NodeKind.mapping) {
-        _membershipAfterDrop(e.key, {...widget.layout, e.key: e.value});
-      }
     } else {
       widget.dispatch(NodesMoved(positions));
     }
+    // Into or out of a group region: membership follows the drop of one
+    // relationship (a Sem block, with or without its mapping block).  Only
+    // the membership changes — a group is authoring metadata.
+    final one = _oneDeclaration(positions.keys);
+    if (_groupsEnabled &&
+        one != null &&
+        one.kind == NodeKind.mapping &&
+        positions.containsKey(one)) {
+      _membershipAfterDrop(one, {...widget.layout, ...positions});
+    }
+  }
+
+  /// The one declaration a set of moved nodes is, when it is one: a Sem
+  /// block alone or with its mapping block (ADR-0044); else none.
+  static NodeRef? _oneDeclaration(Iterable<NodeRef> nodes) {
+    final decls = {for (final n in nodes) asDeclaration(n)};
+    return decls.length == 1 ? decls.single : null;
   }
 
   void _onPointerSignal(PointerSignalEvent e) {
@@ -943,12 +994,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final MenuContext ctx;
     switch (hit) {
       case HitNode(:final node) || HitSocket(:final node) || HitDisclosure(:final node):
+        // a mapping block's menu is its Sem block's: one declaration
+        final decl = asDeclaration(node.ref);
         final set = _selectedSet;
-        if (set.length > 1 && set.contains(node.ref)) {
+        if (set.length > 1 && set.contains(decl)) {
           ctx = SelectionMenuContext(set, active: _active);
         } else {
-          if (!set.contains(node.ref)) _setSelection({node.ref}, active: node.ref);
-          ctx = NodeMenuContext(node.ref);
+          if (!set.contains(decl)) _setSelection({decl}, active: decl);
+          ctx = NodeMenuContext(decl);
         }
       case HitGroup(:final group):
         widget.dispatch(SelectionChanged(GroupSelected(group.id)));
@@ -1049,8 +1102,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
   String _conceptName(int id) =>
       widget.project.concepts.where((c) => c.id.toInt() == id).map((c) => c.name).firstOrNull ??
       '?';
+
+  /// A node's name for a menu: a mapping block's is its Sem block's.
   String _nodeName(NodeRef ref) =>
-      _scene(widget.layout).nodes.where((n) => n.ref == ref).map((n) => n.title).firstOrNull ?? '?';
+      _scene(widget.layout).nodes
+          .where((n) => n.ref == asDeclaration(ref))
+          .map((n) => n.title)
+          .firstOrNull ??
+      '?';
 
   /// The service's actions for the object the menu is about — only when
   /// they are about it, at this revision (stale ones are not offered).
@@ -1059,7 +1118,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
     if (a == null || a.pending || a.revision != widget.project.revision.toInt()) return const [];
     final about = switch (node.kind) {
       NodeKind.concept => a.entity.hasConceptId() && a.entity.conceptId.toInt() == node.id,
-      NodeKind.mapping => a.entity.hasMappingId() && a.entity.mappingId.toInt() == node.id,
+      NodeKind.mapping ||
+      NodeKind.definition => a.entity.hasMappingId() && a.entity.mappingId.toInt() == node.id,
       NodeKind.output => a.entity.hasOutputId() && a.entity.outputId.toInt() == node.id,
       _ => false,
     };
@@ -1112,7 +1172,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final l10n = context.l10n;
     final fixes = _fixItems(context, _fixesFor(node));
     switch (node.kind) {
-      case NodeKind.mapping:
+      // a mapping block's menu is its Sem block's: one declaration
+      case NodeKind.mapping || NodeKind.definition:
         final m = _mapping(node.id);
         final role = m == null ? RelationshipRole.value : relationshipRole(m);
         final groupOf = widget.groups
@@ -1347,26 +1408,46 @@ class _NodeCanvasState extends State<NodeCanvas> {
         otherGroups.add(t.category);
       }
     }
+    // The design's concepts, the templates a Sem block is created from
+    // (ADR-0043): one block each per click, as many times as the product
+    // has them.
+    final conceptsOfDesign = [...widget.project.concepts]
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return [
       MacSubmenu(
-        label: l10n.addConcept,
+        label: l10n.addBlock,
         children: [
-          if (recent.isNotEmpty) ...[
-            MacSubmenu(label: l10n.recent, children: recent),
-            const MacMenuDivider(),
-          ],
-          ...group(forms),
-          if (quantities.isNotEmpty)
-            MacSubmenu(label: l10n.libraryQuantities, children: group(quantities)),
-          for (final g in otherGroups)
-            MacSubmenu(
-              label: categoryLabel(l10n, g),
-              children: group(all.where((t) => t.category == g)),
+          for (final c in conceptsOfDesign)
+            MacMenuItem(
+              label: l10n.blockOf(c.name),
+              onPressed: widget.canInsert
+                  ? () => widget.dispatch(AddBlockRequested(conceptId: c.id.toInt(), position: at))
+                  : null,
             ),
-          const MacMenuDivider(),
-          MacMenuItem(
-            label: l10n.more,
-            onPressed: () => widget.dispatch(const SidebarTabSelected(SidebarTab.library)),
+          if (conceptsOfDesign.isNotEmpty) const MacMenuDivider(),
+          // A new concept: the sheet names the template, and a block of it
+          // lands where the pointer is.
+          MacSubmenu(
+            label: l10n.newConceptSubmenu,
+            children: [
+              if (recent.isNotEmpty) ...[
+                MacSubmenu(label: l10n.recent, children: recent),
+                const MacMenuDivider(),
+              ],
+              ...group(forms),
+              if (quantities.isNotEmpty)
+                MacSubmenu(label: l10n.libraryQuantities, children: group(quantities)),
+              for (final g in otherGroups)
+                MacSubmenu(
+                  label: categoryLabel(l10n, g),
+                  children: group(all.where((t) => t.category == g)),
+                ),
+              const MacMenuDivider(),
+              MacMenuItem(
+                label: l10n.more,
+                onPressed: () => widget.dispatch(const SidebarTabSelected(SidebarTab.library)),
+              ),
+            ],
           ),
         ],
       ),
@@ -1462,10 +1543,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     if (hit is HitSocket && hit.socket.ref.role == SocketRole.aggregate) {
       final candidates = [
         for (final t in scene.resolve(hit.socket.ref))
-          if (t.socket != null && canLink(link.from, t.socket!))
-            t
-          else if (t.socket == null && _canLinkToNode(link.from, t.node))
-            t,
+          if (t.socket != null && canLink(link.from, t.socket!)) t,
       ];
       if (candidates.isEmpty) return;
       if (candidates.length == 1) {
@@ -1475,11 +1553,11 @@ class _NodeCanvasState extends State<NodeCanvas> {
       _offerTargets(link.from, candidates, link.current);
       return;
     }
-    if (hit is HitSocket && isAuthoringTarget(link.from, hit.socket.ref)) {
-      final (out, inp) = link.from.side == SocketSide.output
-          ? (link.from, hit.socket.ref)
-          : (hit.socket.ref, link.from);
-      _driveFromConcept(out.concept, inp.node.id, link.current);
+    // A Sem block dropped on a block as a whole: a Source gets it as its
+    // definition; a mapping block with an open position gets it there.  A
+    // text edit of the definition (ADR-0028), never a signature edit.
+    if (blockDropTarget(scene, link.from, link.current) case final block?) {
+      widget.dispatch(WireSemBlockRequested(mappingId: block.ref.id, semId: link.from.node.id));
       return;
     }
     final target = dropTarget(scene, link.from, link.current);
@@ -1504,95 +1582,23 @@ class _NodeCanvasState extends State<NodeCanvas> {
     }
   }
 
-  /// Concept → Output: the designer's gesture is about the concept; the
-  /// edit is about a driver.  One eligible driver connects; several are
-  /// offered by name (never chosen for the designer); none is explained
-  /// where the pointer is.  A driven sink is offered a replacement, never
-  /// a second driver (docs/architecture/studio-ui.md §2, "Concept → Output").
-  void _driveFromConcept(int conceptId, int outputId, Offset at) {
-    final output = widget.project.outputs.where((o) => o.id.toInt() == outputId).firstOrNull;
-    if (output == null) return;
-    final l10n = context.l10n;
-    final current = currentDriver(widget.project, output);
-    final candidates = driveCandidates(widget.project, output);
-    void drive(pb.MappingView m) {
-      if (current != null && current.id != m.id) {
-        // One plan: the current driver lets go, then the chosen one connects.
-        widget.dispatch(
-          ReplaceDriverRequested(outputId: outputId, from: current.id.toInt(), to: m.id.toInt()),
-        );
-        return;
-      }
-      widget.dispatch(SetMappingDriveRequested(mappingId: m.id.toInt(), outputId: outputId));
-    }
-
-    String label(pb.MappingView m) => current != null && current.id != m.id
-        ? l10n.replaceDriver(current.name, m.name)
-        : l10n.driveWith(m.name);
-    if (candidates.isEmpty) {
-      _openMenu(
-        _MenuKind.chooser,
-        null,
-        _toLocal(at),
-        chooser: [
-          MacMenuItem(
-            label: l10n.noDriverForConcept(output.name, _conceptName(conceptId)),
-            onPressed: null,
-          ),
-          MacMenuItem(
-            label: l10n.showInInspector(output.name),
-            onPressed: () => _setSelection({NodeRef.output(outputId)}),
-          ),
-        ],
-      );
-      return;
-    }
-    if (candidates.length == 1 && current == null) {
-      drive(candidates.single);
-      return;
-    }
-    _openMenu(
-      _MenuKind.chooser,
-      null,
-      _toLocal(at),
-      chooser: [
-        for (final m in candidates)
-          if (current == null || current.id != m.id)
-            MacMenuItem(label: label(m), onPressed: () => drive(m)),
-      ],
-    );
-  }
-
-  /// A concept dragged onto a member without a socket for it: the member
-  /// would read the concept (an explicit, concrete edit).
-  bool _canLinkToNode(SocketRef from, NodeRef node) =>
-      from.node.kind == NodeKind.concept &&
-      from.side == SocketSide.output &&
-      node.kind == NodeKind.mapping;
-
   void _linkToTarget(SocketRef from, ProxyTarget t) {
-    if (t.socket case final to?) {
-      _makeLink(from, to);
-    } else if (_canLinkToNode(from, t.node)) {
-      widget.dispatch(LinkConceptToMappingInput(conceptId: from.concept, mappingId: t.node.id));
-    }
+    if (t.socket case final to?) _makeLink(from, to);
   }
 
   void _offerTargets(SocketRef from, List<ProxyTarget> targets, Offset at) {
-    final concept = widget.project.concepts.where((c) => c.id.toInt() == from.concept).firstOrNull;
     _openMenu(
       _MenuKind.chooser,
       null,
       _toLocal(at),
       chooser: [
         for (final t in targets)
-          MacMenuItem(
-            label: t.label,
-            detail: t.socket == null
-                ? context.l10n.readsSocket(concept?.name ?? '')
-                : _socketWord(t.socket!),
-            onPressed: () => _linkToTarget(from, t),
-          ),
+          if (t.socket case final socket?)
+            MacMenuItem(
+              label: t.label,
+              detail: _socketWord(socket),
+              onPressed: () => _linkToTarget(from, t),
+            ),
       ],
     );
   }
@@ -1613,6 +1619,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final name = _conceptName(s.concept);
     return switch (s.role) {
       SocketRole.realise => 'definition',
+      SocketRole.slot => '?',
       _ =>
         s.side == SocketSide.input
             ? context.l10n.readsSocket(name)
@@ -1627,9 +1634,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final current = widget.groups
         .where((g) => g.members.any((m) => m.toInt() == node.id))
         .firstOrNull;
-    // The region of the node's own group is measured without the node, so
-    // dragging out is possible.
-    final sceneWithout = buildScene(widget.project, {...layout}..remove(node), system: _sceneInput);
+    // The region of the node's own group is measured without the node (and
+    // its mapping block), so dragging out is possible.
+    final sceneWithout = buildScene(widget.project, layout, system: _sceneInputWithout(node.id));
     final target = sceneWithout.groups
         .where(
           (g) =>
@@ -1672,11 +1679,15 @@ class _NodeCanvasState extends State<NodeCanvas> {
       }
       return;
     }
-    if (out.node.kind == NodeKind.concept && inp.node.kind == NodeKind.mapping) {
-      widget.dispatch(LinkConceptToMappingInput(conceptId: out.concept, mappingId: inp.node.id));
-    } else if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.concept) {
-      widget.dispatch(LinkMappingOutputToConcept(mappingId: out.node.id, conceptId: inp.concept));
-    } else if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.output) {
+    // A Sem block into an open position of a mapping block: the text edit
+    // that fills it (ADR-0043).
+    if (inp.role == SocketRole.slot && out.node.kind == NodeKind.mapping) {
+      widget.dispatch(
+        WireSemBlockRequested(mappingId: inp.node.id, semId: out.node.id, slot: inp.index),
+      );
+      return;
+    }
+    if (out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.output) {
       widget.dispatch(SetMappingDriveRequested(mappingId: out.node.id, outputId: inp.node.id));
     }
   }
@@ -1693,9 +1704,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
       return;
     }
     // Every other edge goes through the one disconnect (the reducer
-    // refuses what the model cannot take away alone: a produce edge, a
-    // collapsed group's aggregate edge).
-    for (final l in scene.links.where((l) => l.to == input && !l.reference)) {
+    // refuses what the model cannot take away alone: a read edge, which is
+    // a name in a formula; a collapsed group's aggregate edge).
+    for (final l in scene.links.where((l) => l.to == input)) {
       if (link == null || l.from == link.from) widget.dispatch(DisconnectLinkRequested(l.id));
     }
   }
@@ -1747,7 +1758,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
     final l10n = context.l10n;
     switch (widget.selection) {
       case LinkSelected(:final link):
-        final shape = scene.links.where((l) => !l.reference && l.id == link).firstOrNull;
+        final shape = scene.links.where((l) => l.id == link).firstOrNull;
         if (shape == null || !(_hoverLink == link || _overAffordance)) return null;
         return CanvasAffordance(
           key: ValueKey(link),
@@ -1820,7 +1831,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
       default:
         final ref = _selectedSet.singleOrNull;
         if (ref == null || ref.kind == NodeKind.group) return null;
-        if (!(_hoverNode == ref || _overAffordance)) return null;
+        // the affordance shows over the Sem block while either of its
+        // nodes is hovered
+        final block = ref.kind == NodeKind.mapping ? NodeRef.definition(ref.id) : null;
+        if (!(_hoverNode == ref || _hoverNode == block || _overAffordance)) return null;
         final shape = scene.nodes.where((n) => n.ref == ref).firstOrNull;
         if (shape == null) return null;
         // A ported relationship is part of the component's promise: its
@@ -1890,7 +1904,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   /// Arrow keys nudge the selected set by the grid (⇧: one point).
   void _nudge(Offset by) {
-    final set = _selectedSet;
+    final set = _selectedShapes;
     if (set.isEmpty) return;
     final scene = _scene(widget.layout);
     final positions = {
@@ -1965,9 +1979,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
         // the drop: the typing rule is refused, not diagnosed.
         final s = _hoverSocket;
         if (s == null) return SystemMouseCursors.precise;
-        return canLink(from, s) || isAuthoringTarget(from, s)
-            ? SystemMouseCursors.precise
-            : SystemMouseCursors.forbidden;
+        return canLink(from, s) ? SystemMouseCursors.precise : SystemMouseCursors.forbidden;
       case _Marquee():
         return SystemMouseCursors.precise;
       default:
@@ -1984,7 +1996,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final scene = _scene(_effectiveLayout);
-    final selectedSet = _selectedSet;
+    final selectedSet = _selectedShapes;
     final active = _active;
     final selectedBinding = switch (widget.selection) {
       BindingSelected(:final id) => id,
@@ -2057,7 +2069,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                               pan: _pan,
                               zoom: _zoom,
                               selectedSet: selectedSet,
-                              active: active,
+                              active: _selectedSet.length > 1 ? active : null,
                               selectedBinding: selectedBinding,
                               selectedLink: selectedLink,
                               hoveredLink: _hoverLink,
@@ -2090,7 +2102,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
                           // on the node, read only (a deliberate action edits
                           // it in the inspector).
                           for (final shape in scene.nodes)
-                            if (shape.expanded && shape.ref.kind == NodeKind.mapping)
+                            if (shape.expanded && shape.ref.kind == NodeKind.definition)
                               ExpandedFormula(
                                 key: ValueKey('expanded-${shape.ref.id}'),
                                 mappingId: shape.ref.id,
@@ -2281,7 +2293,8 @@ class _CanvasPainter extends CustomPainter {
   final Offset pan;
   final double zoom;
 
-  /// The selected set and, among it, the active object.
+  /// The nodes the selection is drawn on and, among several selected
+  /// declarations, the active one (none while one alone is selected).
   final Set<NodeRef> selectedSet;
   final NodeRef? active;
   final int? selectedBinding;
@@ -2332,21 +2345,9 @@ class _CanvasPainter extends CustomPainter {
       );
     }
 
-    // Reference edges first, under the signature edges: neutral (no
-    // concept flows through a port here — the formula names a
-    // relationship, rule or value alike), thinner, ending at the formula
-    // line rather than a socket (ADR-0034).
-    for (final l in scene.links.where((l) => l.reference)) {
-      canvas.drawPath(
-        l.path,
-        Paint()
-          ..color = tokens.textSecondary
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-    for (final l in scene.links.where((l) => !l.reference)) {
+    // Every edge in the hue of the concept it carries (ADR-0043: a read
+    // edge carries the read Sem block's; a drive edge the driver's).
+    for (final l in scene.links) {
       final isSelected =
           (l.binding != null && l.binding == selectedBinding) ||
           (l.binding == null && selectedLink != null && l.id == selectedLink);
@@ -2409,18 +2410,19 @@ class _CanvasPainter extends CustomPainter {
     final p = preview;
     for (final n in scene.nodes) {
       final isSelected = selectedSet.contains(n.ref);
+      final taken = p != null && (p.contains(n.ref) || p.contains(asDeclaration(n.ref)));
       final MarqueePreview? pv = p == null
           ? null
-          : p.contains(n.ref) && !isSelected
+          : taken && !isSelected
           ? MarqueePreview.take
-          : !p.contains(n.ref) && isSelected
+          : !taken && isSelected
           ? MarqueePreview.release
           : null;
       painter.node(
         canvas,
         n,
         selected: isSelected,
-        active: n.ref == active && selectedSet.length > 1,
+        active: n.ref == active,
         hovered: n.ref == hovered,
         preview: pv,
       );
@@ -2504,22 +2506,9 @@ class _CanvasPainter extends CustomPainter {
   String _describe(NodeShape n) {
     switch (n.ref.kind) {
       case NodeKind.concept:
-        final kind = n.sockets.first.kind;
-        final form = switch (kind) {
-          SocketKind.open => l10n.valueNotDecided,
-          SocketKind.quantity => l10n.aQuantity,
-          SocketKind.onOff => l10n.onOrOff,
-          SocketKind.count => l10n.aCount,
-          SocketKind.collection => l10n.aCollection,
-          SocketKind.grouped => l10n.aGroupedValue,
-          SocketKind.optional => l10n.anOptionalValue,
-        };
-        return '${n.title}, concept, $form';
+        // not drawn (ADR-0043: a concept is a template, not a node)
+        return '${n.title}, concept';
       case NodeKind.mapping:
-        final reads = n.sockets
-            .where((s) => s.ref.side == SocketSide.input)
-            .map((s) => n.socketLabels[s.ref] ?? '')
-            .join(', ');
         final produces = n.sockets
             .where((s) => s.ref.side == SocketSide.output)
             .map((s) => n.socketLabels[s.ref] ?? '')
@@ -2527,25 +2516,26 @@ class _CanvasPainter extends CustomPainter {
         // A Source is named as what it is, not as a relationship missing
         // its reads: the environment provides what it produces.
         if (n.source) return l10n.sourceNodeSemantics(n.title, produces);
-        final state = n.declared
-            ? l10n.declaredNotYetDefined
-            : n.wrong
-            ? l10n.definitionDoesNotCheck
-            : l10n.stateDefined;
-        // A rule is named as what it is; what a definition depends on is
-        // the reference edges, said here since they end at no socket.  A
-        // port-backed relationship of an open component is named by its
-        // port, the word the header wears.
-        final shape = n.rule
-            ? l10n.ruleNodeSemantics(reads)
-            : n.headerWord.isNotEmpty
-            ? n.headerWord
-            : l10n.valueNodeSemantics;
+        final state = n.wrong ? l10n.definitionDoesNotCheck : l10n.stateDefined;
+        // A Sem block with its mapping block: what the block reads is its
+        // read sockets, what it applies is a word.  A port-backed
+        // relationship of an open component is named by its port, the
+        // word the header wears.
+        final shape = n.headerWord.isNotEmpty ? n.headerWord : l10n.valueNodeSemantics;
         final depends = n.dependsOn.isEmpty
             ? ''
             : ', ${l10n.dependsOnList(n.dependsOn.join(', '))}';
-        final applied = n.unapplied ? ', ${l10n.appliedByNothing}' : '';
-        return '${n.title}, $shape, produces $produces$depends, $state$applied';
+        final applies = n.applies.isEmpty ? '' : ', ${l10n.appliesList(n.applies.join(', '))}';
+        return '${n.title}, $shape, produces $produces$depends$applies, $state';
+      case NodeKind.definition:
+        // the mapping block: the definition of its Sem block, what it
+        // reads and applies, and whether it checks
+        final state = n.wrong ? l10n.definitionDoesNotCheck : l10n.stateDefined;
+        final depends = n.dependsOn.isEmpty
+            ? ''
+            : ', ${l10n.dependsOnList(n.dependsOn.join(', '))}';
+        final applies = n.applies.isEmpty ? '' : ', ${l10n.appliesList(n.applies.join(', '))}';
+        return '${l10n.mappingBlockSemantics(n.subtitle)}$depends$applies, $state';
       case NodeKind.output:
         final accepts = n.socketLabels.values.join(', ');
         final state = switch (n.sink) {
@@ -2682,6 +2672,9 @@ class NodePainter {
       NodeKind.mapping when n.source =>
         tokens.isDark ? const Color(0xFF2F5A4A) : const Color(0xFFD2ECDD),
       NodeKind.mapping => tokens.isDark ? const Color(0xFF2E4A6B) : const Color(0xFFCFE0F5),
+      // A mapping block: the definition's strip, a shade quieter than the
+      // Sem block's it joins — the same family, the dependent object.
+      NodeKind.definition => tokens.isDark ? const Color(0xFF2A3D55) : const Color(0xFFDDE8F7),
       NodeKind.output => tokens.isDark ? const Color(0xFF4A4030) : const Color(0xFFEFE3CF),
       // A component instance: a teal-grey strip — a reusable behaviour,
       // seen from outside.
@@ -2704,12 +2697,9 @@ class NodePainter {
           ? tokens.accent
           : hovered
           ? tokens.textSecondary
-          : n.declared
-          ? tokens.textTertiary
           : tokens.hairline;
-    // An undriven or open sink is incomplete, not wrong: dashed like a
-    // declared mapping.
-    final dashed = n.declared || n.sink == SinkState.open || n.sink == SinkState.undriven;
+    // An undriven or open sink is incomplete, not wrong: dashed.
+    final dashed = n.sink == SinkState.open || n.sink == SinkState.undriven;
     if (dashed) {
       _dashedRRect(canvas, rrect, outline..color = selected ? tokens.accent : tokens.textTertiary);
     } else {
@@ -2767,14 +2757,17 @@ class NodePainter {
       );
     }
 
+    // A mapping block's header names the rules it applies; one applying
+    // none is a formula of its own and says so, quietly.
+    final plainFormula = n.ref.kind == NodeKind.definition && n.title.isEmpty;
     _text(
       canvas,
-      n.title,
+      plainFormula ? l10n.formula : n.title,
       n.header.topLeft + Offset(n.source ? 26 : 12, 6),
-      FontWeight.w600,
+      plainFormula ? FontWeight.w400 : FontWeight.w600,
       12.5,
-      tokens.textPrimary,
-      maxWidth: n.rect.width - (n.declared || n.source || n.rule ? 78 : 24) - (n.source ? 14 : 0),
+      plainFormula ? tokens.textSecondary : tokens.textPrimary,
+      maxWidth: n.rect.width - (n.source ? 78 : 24) - (n.source ? 14 : 0),
     );
     // The header's right word is object state in words only where the
     // geometry cannot carry it: a declared mapping, an open or contested
@@ -2788,22 +2781,13 @@ class NodePainter {
     // says no value comes out of it.
     final headerWord = n.source
         ? l10n.roleSource
-        : n.declared
-        ? l10n.stateDeclared
         : n.headerWord.isNotEmpty
         ? n.headerWord
-        : n.unapplied
-        ? l10n.stateNotApplied
         : switch (n.sink) {
             SinkState.open => l10n.noDomain,
             SinkState.contested => l10n.stateContested,
             SinkState.illFormed => l10n.stateIllFormed,
-            _ =>
-              n.required
-                  ? l10n.stateRequired
-                  : n.rule
-                  ? l10n.ruleWord
-                  : '',
+            _ => n.required ? l10n.stateRequired : '',
           };
     if (headerWord.isNotEmpty) {
       _text(
@@ -2820,9 +2804,19 @@ class NodePainter {
     }
     // The timing domain, quietly, at the body's right edge — left of the
     // disclosure when the definition line carries one.
-    if (n.timing.isNotEmpty) {
-      final at = n.ref.kind == NodeKind.mapping
+    // A Sem block's domain is the declaration's: at the left of its
+    // concept row, unless a realisation's word is there already.
+    final semRowFree =
+        n.ref.kind == NodeKind.mapping &&
+        n.sockets.every(
+          (s) => s.ref.side == SocketSide.output || !n.socketLabels.containsKey(s.ref),
+        );
+    if (n.timing.isNotEmpty && (n.ref.kind != NodeKind.mapping || semRowFree)) {
+      final sem = n.ref.kind == NodeKind.mapping;
+      final at = n.ref.kind == NodeKind.definition
           ? n.definitionRegion.topRight + Offset(n.definition != null ? -28 : -10, 5)
+          : sem
+          ? n.rect.bottomLeft + const Offset(12, -NodeMetrics.rowHeight + 5)
           : n.rect.bottomRight + const Offset(-12, -NodeMetrics.rowHeight + 5);
       _text(
         canvas,
@@ -2831,7 +2825,7 @@ class NodePainter {
         FontWeight.w400,
         10,
         tokens.textTertiary,
-        alignRight: true,
+        alignRight: !sem,
       );
     }
 
@@ -2890,10 +2884,10 @@ class NodePainter {
       );
     }
 
-    // Definition region: the summary line, or nothing while declared.  A
+    // Definition region of a mapping block: the summary line.  A
     // definition that does not check gets the red mark here — where the
     // problem lives — and nowhere else on the node.
-    if (n.ref.kind == NodeKind.mapping) {
+    if (n.ref.kind == NodeKind.definition) {
       final region = n.definitionRegion;
       canvas.drawLine(
         region.topLeft + const Offset(1, 0),

@@ -4,12 +4,12 @@
 /// (a cursor, a halo, no icons); a click selects and the selection
 /// persists; the affordance appears only on the selected, hovered object
 /// and stays while the pointer crosses to its icons; × is the one
-/// semantic disconnect and is absent where the model has none (a
-/// relationship's produce edge — the producer question is under formal
-/// audit); the menu icon opens the right-click menu; Delete and the
-/// drag-away go the same way; a selected edge that disappears is no
-/// selection; nodes get the same pattern; and the hit test takes an edge
-/// at every zoom and the nearest of two.
+/// semantic disconnect and is absent where the model has none (a read
+/// edge is a name in the reading block's formula, ADR-0043); the menu icon
+/// opens the right-click menu; Delete and the drag-away go the same way; a
+/// selected edge that disappears is no selection; nodes get the same
+/// pattern; and the hit test takes an edge at every zoom and the nearest
+/// of two.
 library;
 
 import 'package:bdl_studio/app/actions.dart';
@@ -25,7 +25,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'canvas_menu_test.dart' show menuItem, openMenuLabels;
-import 'canvas_selection_test.dart' show design, layout, c0, m0, m1, m2, o0, rule, value, tilt;
+import 'canvas_selection_test.dart' show design, layout, refs, m0, m1, m2, d1, d2, o0, rule, value;
 import 'support/canvas_harness.dart' show SceneLookup;
 
 class Harness extends StatefulWidget {
@@ -61,6 +61,7 @@ class HarnessState extends State<Harness> {
         project: project,
         layout: nodes,
         selection: selection,
+        refs: refs,
         hasSources: true,
         viewport: widget.zoom == null ? null : CanvasViewport(pan: Offset.zero, zoom: widget.zoom!),
         dispatch: (a) {
@@ -76,18 +77,23 @@ class HarnessState extends State<Harness> {
   );
 }
 
-final scene = buildScene(design(), layout);
+final scene = buildScene(design(), layout, refs: refs);
 LinkShape link(NodeRef from, NodeRef to) =>
     scene.links.firstWhere((l) => l.from.node == from && l.to.node == to);
 
 /// brightness → light: a sink's driver, disconnectable.
 final drive = link(m2, o0);
 
-/// Tilt → dimByTilt: a relationship's read, disconnectable.
-final read = link(c0, m1);
+/// tiltSensor → dimByTilt's mapping block: a read edge — a name in
+/// dimByTilt's formula, taken away by the compiler's unreference.
+final read = link(m0, d1);
 
-/// tiltSensor → Tilt: a produce edge, not disconnectable alone.
-final produce = link(m0, c0);
+/// dimByTilt → brightness's mapping block: the other read edge.
+final read2 = link(m1, d2);
+
+/// dimByTilt's mapping block → dimByTilt: the definition itself, never
+/// cut alone.
+final produce = link(d1, m1);
 
 Offset origin(WidgetTester t) => t.getTopLeft(find.byType(NodeCanvas));
 Offset header(NodeRef ref) => scene.node(ref).header.center;
@@ -262,7 +268,21 @@ void main() {
       await pumpCanvas(t, actions);
       await rightClick(t, read.midpoint);
       expect(actions.whereType<SelectionChanged>().single.selection, LinkSelected(read.id));
-      expect(openMenuLabels(t), containsAll(['Show Tilt', 'Show dimByTilt', 'Disconnect']));
+      expect(openMenuLabels(t), containsAll(['Show tiltSensor', 'Show dimByTilt']));
+    });
+
+    testWidgets('a read edge gets the menu icon and a ×: the compiler unreferences the name', (
+      t,
+    ) async {
+      final actions = <AppAction>[];
+      await pumpCanvas(t, actions, selection: LinkSelected(read.id));
+      expect(read.id.disconnectable, isTrue, reason: 'ComposeAction.unreference');
+      await hover(t, read.midpoint);
+      expect(affordance, findsOneWidget);
+      expect(icon('Connection menu'), findsOneWidget);
+      expect(icon('Disconnect'), findsOneWidget);
+      await rightClick(t, read.midpoint);
+      expect(openMenuLabels(t), containsAll(['Show tiltSensor', 'Show dimByTilt', 'Disconnect']));
     });
 
     testWidgets('a produce edge gets the menu icon and no ×, and its menu has no Disconnect', (
@@ -270,13 +290,12 @@ void main() {
     ) async {
       final actions = <AppAction>[];
       await pumpCanvas(t, actions, selection: LinkSelected(produce.id));
-      expect(produce.id.disconnectable, isFalse);
+      expect(produce.id.disconnectable, isFalse, reason: 'the definition goes with its editor');
       await hover(t, produce.midpoint);
       expect(affordance, findsOneWidget);
       expect(icon('Connection menu'), findsOneWidget);
       expect(icon('Disconnect'), findsNothing);
       await rightClick(t, produce.midpoint);
-      expect(openMenuLabels(t), containsAll(['Show tiltSensor', 'Show Tilt']));
       expect(openMenuLabels(t), isNot(contains('Disconnect')));
     });
 
@@ -313,16 +332,20 @@ void main() {
   });
 
   group('drag-away', () {
-    testWidgets('dragging a connected input into empty space is the same disconnect', (t) async {
+    testWidgets('dragging a driven sink\'s input into empty space is the same disconnect; a read '
+        'socket dragged away asks it too', (t) async {
       final actions = <AppAction>[];
       await pumpCanvas(t, actions);
-      final input = scene
-          .node(m1)
-          .sockets
-          .firstWhere((s) => s.ref.side == SocketSide.input && s.ref.concept == tilt);
-      await drag(t, input.center, const Offset(500, 600));
-      expect(actions.whereType<DisconnectLinkRequested>().single.link, read.id);
-      expect(actions.whereType<UnlinkMappingInput>(), isEmpty);
+      final sink = scene.node(o0).sockets.single;
+      await drag(t, sink.center, const Offset(500, 600));
+      expect(actions.whereType<DisconnectLinkRequested>().single.link, drive.id);
+      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty, reason: 'the reducer decides');
+      final readSocket = scene.node(d1).sockets.firstWhere((s) => s.ref.role == SocketRole.read);
+      await drag(t, readSocket.center, const Offset(500, 600));
+      // the canvas asks the same way; the reducer makes it the compiler's
+      // unreference of the name (a text edit of the formula)
+      expect(actions.whereType<DisconnectLinkRequested>().length, 2);
+      expect(actions.whereType<DisconnectLinkRequested>().last.link, read.id);
     });
   });
 
@@ -401,10 +424,9 @@ void main() {
     });
 
     test('of two edges in reach, the nearer one, deterministically', () {
-      // dimByTilt → Brightness and brightness → Brightness both end at the
-      // same socket; well before it they run apart.
-      final a = link(m1, NodeRef.concept(1));
-      final b = link(m2, NodeRef.concept(1));
+      // the two read edges: apart at their midpoints
+      final a = read;
+      final b = read2;
       final nearA = nearestLink(scene, a.midpoint, 100);
       final nearB = nearestLink(scene, b.midpoint, 100);
       expect(nearA!.id, a.id);

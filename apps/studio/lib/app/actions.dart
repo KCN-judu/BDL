@@ -1077,6 +1077,26 @@ class UnlinkMappingInput extends UserAction {
   final int conceptId;
 }
 
+/// A Sem block dropped on a mapping block (ADR-0043): the block's name
+/// becomes the definition of a Source, or fills the open position
+/// [slot] (the first when none is named) of a defined block — a text edit
+/// of the definition, committed as one edit.  Never a signature edit.
+class WireSemBlockRequested extends UserAction {
+  const WireSemBlockRequested({required this.mappingId, required this.semId, this.slot});
+  final int mappingId;
+  final int semId;
+  final int? slot;
+}
+
+/// A Sem block of an existing concept, at a canvas point: a unit-domain
+/// relationship the environment provides until it is given a definition
+/// (a Source, ADR-0032) — the instantiation of the concept template.
+class AddBlockRequested extends UserAction {
+  const AddBlockRequested({required this.conceptId, required this.position});
+  final int conceptId;
+  final Offset position;
+}
+
 /// Disconnect one edge: the one semantic path behind the link menu's
 /// _Disconnect_, the ×, Delete on a selected edge and the drag-away.  An
 /// edge that is not [LinkId.disconnectable] is left alone.

@@ -1052,12 +1052,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noValueYet => 'no value yet';
 
   @override
-  String get stateNotApplied => 'not applied';
-
-  @override
-  String get appliedByNothing => 'applied by nothing';
-
-  @override
   String notPossibleYet(String reason) {
     return 'Not possible yet: $reason';
   }
@@ -1225,22 +1219,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get valueNotDecided => 'value not decided';
 
   @override
-  String get aQuantity => 'a quantity';
-
-  @override
   String get onOrOff => 'on or off';
-
-  @override
-  String get aCount => 'a count';
-
-  @override
-  String get aCollection => 'a collection';
-
-  @override
-  String get aGroupedValue => 'a grouped value';
-
-  @override
-  String get anOptionalValue => 'an optional value';
 
   @override
   String get declaredNotYetDefined => 'declared, not yet defined';
@@ -1352,9 +1331,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stateOptional => 'optional';
-
-  @override
-  String get stateDeclared => 'declared';
 
   @override
   String get stateContested => 'contested';
@@ -2152,9 +2128,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryGroupExternal => 'External';
 
   @override
-  String get ruleWord => 'rule';
-
-  @override
   String get roleRule => 'Rule';
 
   @override
@@ -2175,12 +2148,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get namedIn => 'Named in';
 
   @override
-  String ruleNodeSemantics(String reads) {
-    return 'rule, reads $reads';
-  }
+  String get valueNodeSemantics => 'value';
 
   @override
-  String get valueNodeSemantics => 'value';
+  String mappingBlockSemantics(String name) {
+    return 'mapping block of $name: its definition';
+  }
 
   @override
   String dependsOnList(String names) {
@@ -2203,19 +2176,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noValueAppliesItYet => 'No value applies it yet.';
-
-  @override
-  String noValueCarries(String concept) {
-    return 'Nothing carries $concept yet: no value or Source produces it.';
-  }
-
-  @override
-  String ruleProducesNoValue(String rule, String concept) {
-    return '$rule is a rule; a value whose formula applies it would carry $concept.';
-  }
-
-  @override
-  String get carriedBy => 'Carried by';
 
   @override
   String get format => 'Format';
@@ -2649,16 +2609,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undoArrange => 'Undo Arrange';
 
   @override
-  String connectionReads(String to, String concept) {
-    return '$to reads $concept';
-  }
-
-  @override
-  String connectionProduces(String from, String concept) {
-    return '$from produces $concept';
-  }
-
-  @override
   String connectionDrives(String from, String to) {
     return '$from drives $to';
   }
@@ -2669,8 +2619,52 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get produceEdgeCannotGoAlone =>
-      'A relationship\'s produce edge is its signature\'s output: change the relationship, not the edge.';
+  String get addBlock => 'Add Block';
+
+  @override
+  String blockOf(String concept) {
+    return 'of $concept';
+  }
+
+  @override
+  String get newConceptSubmenu => 'New Concept';
+
+  @override
+  String appliesList(String names) {
+    return 'applies $names';
+  }
+
+  @override
+  String connectionReadEdge(String to, String from) {
+    return '$to reads $from';
+  }
+
+  @override
+  String get readEdgeIsAName =>
+      'A read is a name in the block\'s formula: edit the formula to change it.';
+
+  @override
+  String get producedByEnvironment => 'the environment (a Source)';
+
+  @override
+  String get appliesRules => 'Applies';
+
+  @override
+  String get blocksOfConcept => 'Blocks';
+
+  @override
+  String noBlockOfConcept(String name) {
+    return 'No block of $name yet: add one from the canvas menu (Add Block ▸ of $name).';
+  }
+
+  @override
+  String get rulesOverConcept => 'Rules';
+
+  @override
+  String get readsLabel => 'Reads';
+
+  @override
+  String get readBy => 'Read by';
 
   @override
   String get libItem_std_value_boolean_name => 'On / off';

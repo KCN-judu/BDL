@@ -2,27 +2,32 @@
 /// and what is under a point.  No widgets, no state — a function of the
 /// projection and the layout, so it is unit-testable and deterministic.
 ///
-/// Node anatomy follows Blender (docs/architecture/studio-ui.md §2).  A concept is a
-/// single-row object: its name, an input socket (what produces it) on the
-/// left and an output socket (what reads it) on the right.  A mapping has a
-/// header with title and state word, one input socket per read concept, the
-/// output socket on the right, and a definition region below.  Data flows
-/// left → right.
+/// Node anatomy follows Blender (docs/architecture/studio-ui.md §2) over
+/// the concept ladder (ADR-0043, ADR-0044).  A **Sem block** — a
+/// unit-domain declaration, one value per tick — is a two-row object: its
+/// name in the header (a Source when nothing defines it), its concept's
+/// name at the output socket on the right, and on the left the socket its
+/// definition arrives at.  A **mapping block** is that definition drawn as
+/// a node of its own, beside the Sem block: a header naming the rules it
+/// applies, one read socket per Sem block its definition names, one hollow
+/// slot socket per open position, the output socket on the right, and the
+/// definition region below.  A concept is a template — the hue, the socket
+/// shape, the row's word — and never a node; a rule is a template and
+/// never a node.  Data flows left → right.
 ///
 /// Semantics are carried by the geometry, not by words (docs/architecture/studio-ui.md §7):
 /// socket hue is identity, socket *shape* is the concept's value form, a
-/// hollow ring means the form is not chosen yet, a dashed outline means
-/// declared-not-defined, and a red mark at the definition line means the
-/// definition does not check.
+/// hollow ring means the form is not chosen yet, and a red mark at the
+/// definition line means the definition does not check.
 ///
-/// Two kinds of edge (ADR-0034).  A *signature edge* runs socket to socket
-/// in the concept's hue: concept → a relationship that reads it, a
-/// relationship → the concept it produces, a value → the sink it drives;
-/// it is what the designer edits by dragging.  A *reference edge* runs from
-/// a relationship's output socket into the formula line of a relationship
-/// whose definition names it — the kernel's `dependsOn`, read off the
-/// analysis (`MappingAnalysis.references`), never off the formula text — and is
-/// drawn neutral and thin: it is not a typed port and cannot be dragged.
+/// Three kinds of edge, all socket to socket in the concept's hue.  A
+/// *read edge* runs from a Sem block to the mapping block whose definition
+/// names it — the kernel's `dependsOn`, read off the analysis
+/// (`MappingAnalysis.references`), never off the formula text; taking it
+/// away is a text edit.  A *produce edge* runs from a mapping block to its
+/// Sem block — the definition itself, one per Sem block, write-once; it is
+/// never rerouted.  A *drive edge* runs from a Sem block to the sink it
+/// drives.
 ///
 /// A system canvas (docs/architecture/studio-ui.md §11) adds component-instance nodes
 /// drawn from their ports' *contracts* (never their bodies), binding links
@@ -42,8 +47,10 @@ import '../../app/state.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 
 abstract final class NodeMetrics {
-  static const double conceptWidth = 168;
-  static const double conceptHeight = 26;
+  /// A Sem block: the header and its concept row; a sink has the same
+  /// width.  The same numbers as `bdl_layout::metrics`, which places them.
+  static const double semWidth = 168;
+  static const double semHeight = headerHeight + rowHeight;
   static const double mappingWidth = 200;
   static const double headerHeight = 26;
   static const double rowHeight = 22;
@@ -74,12 +81,17 @@ abstract final class NodeMetrics {
 
 enum SocketSide { input, output }
 
-/// What a socket stands for beyond its concept: a mapping's read or
-/// produce ([concept]); a port of an instance ([port], [index] = port id);
-/// the realisation of an open base relationship ([realise]: where a
-/// provided port may bind); an aggregate socket of a collapsed group
-/// ([aggregate], [index] = the declaration it stands for — a view).
-enum SocketRole { concept, port, realise, aggregate }
+/// What a socket stands for beyond its concept: a Sem block's output, a
+/// mapping block's output, or a sink's input ([concept]); the socket a Sem
+/// block takes its mapping block's produce edge at ([produce]); a mapping
+/// block's read of a Sem block ([read], [index] = the read block's
+/// declaration id, [concept] = its concept); an open position of a mapping
+/// block's definition ([slot], [index] = the ordinal among its slots —
+/// where a dropped Sem block goes); a port of an instance ([port], [index]
+/// = port id); the realisation of an open base relationship ([realise]:
+/// where a provided port may bind); an aggregate socket of a collapsed
+/// group ([aggregate], [index] = the declaration it stands for — a view).
+enum SocketRole { concept, produce, read, slot, port, realise, aggregate }
 
 /// The realisation socket's index (a mapping has no input at −1).
 const int realiseIndex = -1;
@@ -187,7 +199,6 @@ class NodeShape {
     required this.title,
     required this.sockets,
     this.definition,
-    this.declared = false,
     this.wrong = false,
     this.socketLabels = const {},
     this.timing = '',
@@ -197,9 +208,8 @@ class NodeShape {
     this.headerWord = '',
     this.unrealized = false,
     this.source = false,
-    this.rule = false,
     this.dependsOn = const [],
-    this.unapplied = false,
+    this.applies = const [],
     this.formulaHeight = 0,
   });
   final NodeRef ref;
@@ -215,19 +225,19 @@ class NodeShape {
 
   bool get expanded => formulaHeight > 0;
 
-  /// A rule (ADR-0034): a relationship that reads something — a function
-  /// from its inputs to its output, applied by other formulas; it has no
-  /// value of its own.  The word *rule* in the header when no state word
-  /// takes the slot; the input sockets are the shape.
-  final bool rule;
-
-  /// The names of the relationships this one's definition references, in
-  /// the analysis's order — what the reference edges into its formula line
-  /// stand for, said to assistive technology.
+  /// The names of the Sem blocks this block's definition reads, in the
+  /// analysis's order — what the read edges into its sockets stand for,
+  /// said to assistive technology.
   final List<String> dependsOn;
 
+  /// The names of the rules this mapping block's definition applies
+  /// (ADR-0044: a rule is a template, not a node; the block's header names
+  /// it).
+  final List<String> applies;
+
   /// An instance node: the component's name, in the body row.  A collapsed
-  /// group: how many relationships it holds.
+  /// group: how many relationships it holds.  A mapping block: the name of
+  /// the Sem block it defines.
   final String subtitle;
 
   /// A word the geometry cannot carry, at the header's right: a port-backed
@@ -244,12 +254,6 @@ class NodeShape {
   /// boundary drawn on its left edge.  Not *declared*: nothing is missing.
   final bool source;
 
-  /// A rule nothing applies (the compiler's `reactive.rule_unapplied`):
-  /// its output socket is hollow — the value form is known, no value comes
-  /// out of it until a value applies the rule — and, once defined, the
-  /// header word *not applied*.  A legal state, never an error.
-  final bool unapplied;
-
   /// The timing domain the node updates in ('' when agnostic or open): a
   /// quiet word at the right of the body, never a badge.
   final String timing;
@@ -263,10 +267,6 @@ class NodeShape {
   /// One-line summary of a mapping's definition; `null` when there is none
   /// (the definition region stays empty) and for concepts.
   final String? definition;
-
-  /// Declared, not yet defined: dashed outline, the word *declared*.  A
-  /// legal state, never an error.
-  final bool declared;
 
   /// The definition does not check: a red mark at the definition line.
   final bool wrong;
@@ -299,9 +299,14 @@ class NodeShape {
     NodeMetrics.bodyHeight - 8,
   );
 
-  /// Where a reference edge enters a mapping: the left end of its formula
-  /// line.  Not a socket — nothing can be dropped there.
-  Offset get formulaEntry => Offset(rect.left, definitionRegion.center.dy);
+  /// Whether a Sem block dropped on this node has somewhere to go: a
+  /// Source (no definition yet — the drop makes one) or a mapping block
+  /// with an open position (the drop fills the first).
+  bool get acceptsBlock => switch (ref.kind) {
+    NodeKind.mapping => source,
+    NodeKind.definition => sockets.any((s) => s.ref.role == SocketRole.slot),
+    _ => false,
+  };
 }
 
 class LinkShape {
@@ -312,21 +317,16 @@ class LinkShape {
     required this.path,
     this.binding,
     this.transport,
-    this.reference = false,
   });
   final SocketRef from;
 
-  /// The socket the link ends at.  A reference edge has none: [to] is the
-  /// referencing relationship's output socket ref standing for the node,
-  /// and the path ends at its [NodeShape.formulaEntry].
+  /// The socket the link ends at: a mapping block's read socket (a read
+  /// edge, ADR-0044), a sink's input (a drive edge), a port or a
+  /// realisation socket (a binding), or a collapsed group's aggregate
+  /// socket.
   final SocketRef to;
   final int concept;
   final Path path;
-
-  /// A reference edge (ADR-0034): [to]'s node names [from]'s node in its
-  /// definition.  Drawn neutral and thin into the formula line; never a
-  /// drop target, never selectable.
-  final bool reference;
 
   /// The binding this link is, on a system canvas.
   final int? binding;
@@ -341,8 +341,7 @@ class LinkShape {
   }
 
   /// The edge as the selection names it: by its ends.  A binding's edge
-  /// keeps its own selection ([BindingSelected]); a reference edge has no
-  /// identity to select (ADR-0034).
+  /// keeps its own selection ([BindingSelected]).
   LinkId get id => LinkId(from: from.node, to: to.node, concept: concept, index: to.index);
 }
 
@@ -483,9 +482,21 @@ class SystemSceneInput {
   bool isCollapsed(int group) => summarize || (groupBoxes[group]?.collapsed ?? false);
 }
 
-/// [refs]: per mapping id, the mappings its definition references
-/// (`MappingAnalysis.references`, when an analysis of this revision exists) —
-/// the reference edges.  [statuses] and [outputStates] are the same
+/// The canvas is the value graph (ADR-0044; BDL_FV Phase 21): a **Sem
+/// block** per unit-domain relationship — a declaration of a concept
+/// holding one value per tick, a Source when it has no definition — and,
+/// for each Sem block with a definition, its **mapping block**: the
+/// definition drawn as a node of its own ([NodeKind.definition], keyed by
+/// the Sem block's id, placed by the layout service beside it) with one
+/// read socket per Sem block the definition names, one slot socket per
+/// open position, the formula on the definition line, and a produce edge
+/// into the Sem block.  A concept is the template a Sem block is created
+/// from and a rule the template a mapping block applies: neither is a
+/// node.  [refs]: per mapping id, the relationships
+/// its definition references (`MappingAnalysis.references`, when an
+/// analysis of this revision exists) — the read edges.  [slots]: per
+/// mapping id, the open positions of its definition
+/// (`MappingAnalysis.slots`).  [statuses] and [outputStates] are the same
 /// analysis's verdicts.
 CanvasScene buildScene(
   pb.ProjectProjection p,
@@ -493,7 +504,7 @@ CanvasScene buildScene(
   Map<int, pb.MappingStatus> statuses = const {},
   Map<int, pb.OutputState> outputStates = const {},
   Map<int, List<int>> refs = const {},
-  Set<int> unapplied = const {},
+  Map<int, List<String>> slots = const {},
   SystemSceneInput system = const SystemSceneInput(),
   Map<int, double> expanded = const {},
 }) {
@@ -531,32 +542,122 @@ CanvasScene buildScene(
   final nodes = <NodeShape>[];
   final socketByRef = <SocketRef, SocketShape>{};
 
-  for (final c in concepts) {
-    final ref = NodeRef.concept(c.id.toInt());
+  // The value graph's nodes (ADR-0044).  A rule (a relationship with
+  // inputs) is a template applied inside a mapping block and is not a node
+  // of the value graph; the Project list and the inspector hold it.
+  pb.MappingView? mappingById(int d) => mappings.where((x) => x.id.toInt() == d).firstOrNull;
+  bool isSem(int d) => mappingById(d)?.signature.inputs.isEmpty ?? false;
+  // Per Sem block: the Sem blocks its definition reads, in the analysis's
+  // order (the rules it applies are words, not sockets).
+  List<int> readsOf(int id) => [
+    for (final d in refs[id] ?? const <int>[])
+      if (d != id && isSem(d)) d,
+  ];
+  List<String> rulesOf(int id) => [
+    for (final d in refs[id] ?? const <int>[])
+      if (d != id && !isSem(d))
+        if (mappingById(d) case final x?) x.name,
+  ];
+
+  // The Sem blocks: a two-row node — the name, then the concept at the
+  // output socket.  On the left, the socket its definition arrives at: the
+  // produce edge of its mapping block, or — on a system canvas — the
+  // realisation a binding makes.
+  for (final m in mappings) {
+    final id = m.id.toInt();
+    final ref = NodeRef.mapping(id);
     final pos = layout[ref] ?? NodeMetrics.origin;
-    final rect = Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.conceptWidth, NodeMetrics.conceptHeight);
-    final y = rect.center.dy;
-    final id = c.id.toInt();
-    final inRef = SocketRef(node: ref, side: SocketSide.input, concept: id);
-    final outRef = SocketRef(node: ref, side: SocketSide.output, concept: id);
-    final sockets = [
-      SocketShape._(Offset(rect.left, y), inRef, kindOf(id)),
-      SocketShape._(Offset(rect.right, y), outRef, kindOf(id)),
-    ];
-    for (final s in sockets) {
-      socketByRef[s.ref] = s;
+    if (hiddenMembers.containsKey(id)) continue;
+    if (m.signature.inputs.isNotEmpty) continue;
+    final rect = Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.semWidth, NodeMetrics.semHeight);
+    final rowY = rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2;
+    final outId = m.signature.output.toInt();
+    final sockets = <SocketShape>[];
+    final labels = <SocketRef, String>{};
+    final realised = realisedBy[id];
+    // An open base relationship of a system can be realised by a provided
+    // port or by another base relationship of the same concept: a hollow
+    // socket until bound.  Only while something could bind to it — an
+    // instance, or another Sem block of the concept; otherwise a Source
+    // keeps its left edge clear (ADR-0032: no input sockets).
+    final realisable =
+        sys != null &&
+        (sys.instances.isNotEmpty ||
+            mappings.any(
+              (x) =>
+                  x.id != m.id &&
+                  x.signature.inputs.isEmpty &&
+                  x.signature.output == m.signature.output,
+            ));
+    if (m.hasDefinition() && realised == null) {
+      final r = SocketRef(
+        node: ref,
+        side: SocketSide.input,
+        concept: outId,
+        role: SocketRole.produce,
+      );
+      final sock = SocketShape._(Offset(rect.left, rowY), r, kindOf(outId));
+      sockets.add(sock);
+      socketByRef[r] = sock;
+    } else if (realised != null || (realisable && !m.hasDefinition())) {
+      final r = SocketRef(
+        node: ref,
+        side: SocketSide.input,
+        concept: outId,
+        index: realiseIndex,
+        role: SocketRole.realise,
+      );
+      // a base relationship a binding realises: the socket is filled and
+      // the binding's edge says by what (the inspector names it)
+      final sock = SocketShape._(Offset(rect.left, rowY), r, kindOf(outId), open: realised == null);
+      sockets.add(sock);
+      socketByRef[r] = sock;
     }
-    nodes.add(NodeShape(ref: ref, rect: rect, title: c.name, sockets: sockets));
+    final outRef = SocketRef(node: ref, side: SocketSide.output, concept: outId);
+    final out = SocketShape._(Offset(rect.right, rowY), outRef, kindOf(outId));
+    sockets.add(out);
+    socketByRef[outRef] = out;
+    // the row names the concept: the block's type
+    labels[outRef] = _conceptName(p, outId);
+    // The role is the daemon's (ADR-0032, `MappingView.role`): a Source is
+    // drawn as one where the designer is — inside an open component a
+    // port-backed Source wears its port's word instead; the system view
+    // already states a bound base relationship as a Value.
+    final role = relationshipRole(m);
+    final portWord = system.portWords[id];
+    final source = role == RelationshipRole.source && portWord == null;
+    nodes.add(
+      NodeShape(
+        ref: ref,
+        rect: rect,
+        title: m.name,
+        source: source,
+        dependsOn: [for (final d in readsOf(id)) mappingById(d)!.name],
+        applies: rulesOf(id),
+        wrong: statuses[id] == pb.MappingStatus.MAPPING_STATUS_INVALID,
+        sockets: sockets,
+        socketLabels: labels,
+        timing: m.hasClockId() ? clockName(m.clockId) : '',
+        headerWord: portWord ?? '',
+      ),
+    );
   }
 
+  // The mapping blocks: one per Sem block with a definition of its own (a
+  // realisation the system made is drawn on the Sem block).  Sockets: one
+  // per Sem block the definition reads, typed by that block's concept and
+  // named after it; then one hollow socket per open position of the
+  // definition; the output socket on the right joins the Sem block.
   for (final m in mappings) {
-    final ref = NodeRef.mapping(m.id.toInt());
-    final pos = layout[ref] ?? NodeMetrics.origin;
-    if (hiddenMembers.containsKey(m.id.toInt())) continue;
-    final inputs = m.signature.inputs.map((i) => i.toInt()).toList();
-    final rows = inputs.isEmpty ? 1 : inputs.length;
-    // the expanded formula region: only a mapping with a definition has one
-    final formulaHeight = m.hasDefinition() ? (expanded[m.id.toInt()] ?? 0) : 0.0;
+    final id = m.id.toInt();
+    if (m.signature.inputs.isNotEmpty || !m.hasDefinition()) continue;
+    if (hiddenMembers.containsKey(id) || realisedBy.containsKey(id)) continue;
+    final ref = NodeRef.definition(id);
+    final pos = layout[ref] ?? attachedTo(layout[NodeRef.mapping(id)]);
+    final reads = readsOf(id);
+    final open = slots[id] ?? const <String>[];
+    final rows = reads.length + open.length == 0 ? 1 : reads.length + open.length;
+    final formulaHeight = expanded[id] ?? 0.0;
     final rect = Rect.fromLTWH(
       pos.dx,
       pos.dy,
@@ -568,92 +669,62 @@ CanvasScene buildScene(
     );
     final sockets = <SocketShape>[];
     final labels = <SocketRef, String>{};
-    // An open base relationship of a system can be realised by a provided
-    // port or by another base relationship of the same concept: a socket at
-    // its definition row, hollow until bound.  Only while something could
-    // bind to it — an instance, or another relationship producing the
-    // concept; otherwise a Source keeps its left edge clear (ADR-0032: no
-    // input sockets).
-    final realisable =
-        sys != null &&
-        (sys.instances.isNotEmpty ||
-            mappings.any((x) => x.id != m.id && x.signature.output == m.signature.output));
-    if (realisable && !m.hasDefinition()) {
-      final outId = m.signature.output.toInt();
+    for (var i = 0; i < reads.length; i++) {
+      final y = rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight * (i + 0.5);
+      final read = mappingById(reads[i])!;
+      final c = read.signature.output.toInt();
       final r = SocketRef(
         node: ref,
         side: SocketSide.input,
-        concept: outId,
-        index: realiseIndex,
-        role: SocketRole.realise,
+        concept: c,
+        index: reads[i],
+        role: SocketRole.read,
       );
-      final sock = SocketShape._(
-        Offset(rect.left, rect.bottom - NodeMetrics.bodyHeight / 2),
-        r,
-        kindOf(outId),
-        open: !realisedBy.containsKey(m.id.toInt()),
-      );
+      final sock = SocketShape._(Offset(rect.left, y), r, kindOf(c));
       sockets.add(sock);
       socketByRef[r] = sock;
+      labels[r] = read.name;
     }
-    for (var i = 0; i < inputs.length; i++) {
-      final y = rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight * (i + 0.5);
-      final r = SocketRef(node: ref, side: SocketSide.input, concept: inputs[i], index: i);
-      final s = SocketShape._(Offset(rect.left, y), r, kindOf(inputs[i]));
-      sockets.add(s);
-      socketByRef[r] = s;
-      labels[r] = _conceptName(p, inputs[i]);
+    for (var i = 0; i < open.length; i++) {
+      final y =
+          rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight * (reads.length + i + 0.5);
+      final r = SocketRef(
+        node: ref,
+        side: SocketSide.input,
+        concept: -1,
+        index: i,
+        role: SocketRole.slot,
+      );
+      final sock = SocketShape._(Offset(rect.left, y), r, SocketKind.open, open: true);
+      sockets.add(sock);
+      socketByRef[r] = sock;
+      labels[r] = '?';
     }
     final outId = m.signature.output.toInt();
     final outRef = SocketRef(node: ref, side: SocketSide.output, concept: outId);
-    // A rule nothing applies produces nothing yet: the socket is hollow.
-    final isUnapplied = unapplied.contains(m.id.toInt());
     final out = SocketShape._(
       Offset(rect.right, rect.top + NodeMetrics.headerHeight + NodeMetrics.rowHeight / 2),
       outRef,
       kindOf(outId),
-      open: isUnapplied,
     );
     sockets.add(out);
     socketByRef[outRef] = out;
-    labels[outRef] = _conceptName(p, outId);
-    final realised = realisedBy[m.id.toInt()];
-    // The role is the daemon's (ADR-0032, `MappingView.role`): a Source is
-    // drawn as one where the designer is — inside an open component a
-    // port-backed Source wears its port's word instead; the system view
-    // already states a bound base relationship as a Value.
-    final role = relationshipRole(m);
-    final portWord = system.portWords[m.id.toInt()];
-    final source = role == RelationshipRole.source && portWord == null;
+    final rules = rulesOf(id);
     nodes.add(
       NodeShape(
         ref: ref,
         rect: rect,
-        title: m.name,
-        definition: m.hasDefinition()
-            ? definitionSummary(m.definition)
-            : realised == null
-            ? null
-            : '= $realised',
-        // Declared — dashed — is the one hole a designer fills: a rule
-        // with no formula.  A Source is complete; a value has its
-        // realization.
-        declared: role == RelationshipRole.rule && !m.hasDefinition(),
-        source: source,
-        // A rule reads something: the input sockets are the shape, the
-        // word says the consequence (it is applied; it has no value).
-        rule: role == RelationshipRole.rule,
-        dependsOn: [
-          for (final d in refs[m.id.toInt()] ?? const <int>[])
-            if (d != m.id.toInt())
-              if (mappings.where((x) => x.id.toInt() == d).firstOrNull case final x?) x.name,
-        ],
-        unapplied: isUnapplied,
-        wrong: statuses[m.id.toInt()] == pb.MappingStatus.MAPPING_STATUS_INVALID,
+        // the header names the rules the block applies; a block applying
+        // none is a formula of its own (the painter says so)
+        title: rules.join(', '),
+        subtitle: m.name,
+        definition: definitionSummary(m.definition),
+        dependsOn: [for (final d in reads) mappingById(d)!.name],
+        applies: rules,
+        wrong: statuses[id] == pb.MappingStatus.MAPPING_STATUS_INVALID,
         sockets: sockets,
         socketLabels: labels,
-        timing: m.hasClockId() ? clockName(m.clockId) : '',
-        headerWord: system.portWords[m.id.toInt()] ?? '',
+        // the domain is the declaration's: on the Sem block, not here
         formulaHeight: formulaHeight,
       ),
     );
@@ -740,7 +811,7 @@ CanvasScene buildScene(
     final rect = Rect.fromLTWH(
       pos.dx,
       pos.dy,
-      NodeMetrics.conceptWidth,
+      NodeMetrics.semWidth,
       NodeMetrics.headerHeight + NodeMetrics.rowHeight,
     );
     final accepts = o.accepts.toInt();
@@ -790,21 +861,35 @@ CanvasScene buildScene(
       final box = system.groupBoxes[id];
       final boundary = system.boundaries.where((b) => b.id == g.id).firstOrNull;
       if (system.isCollapsed(id)) {
-        final ins = <int>[...?boundary?.externalInputs.map((d) => d.toInt())];
+        // A rule is a template, not a socket of the boundary.
+        final ins = <int>[
+          for (final d in boundary?.externalInputs ?? const <Int64>[])
+            if (isSem(d.toInt())) d.toInt(),
+        ];
         final outs = <int>[
-          ...?boundary?.externalOutputs.map((d) => d.toInt()),
+          for (final d in boundary?.externalOutputs ?? const <Int64>[])
+            if (isSem(d.toInt())) d.toInt(),
           for (final d in boundary?.drivenMembers ?? const <Int64>[])
-            if (!(boundary?.externalOutputs.contains(d) ?? false)) d.toInt(),
+            if (!(boundary?.externalOutputs.contains(d) ?? false) && isSem(d.toInt())) d.toInt(),
         ];
         final rows = ins.length > outs.length ? ins.length : outs.length;
         final ref = NodeRef.group(id);
         // A box without a stored place stands where its members are (a
         // transient summary at low zoom, or a group collapsed before any
         // layout was stored) — never at the origin.
+        Rect? blockRect(int m) {
+          // its mapping block, where it is drawn (attached when unplaced)
+          if (!(mappingById(m)?.hasDefinition() ?? false)) return null;
+          final pos = layout[NodeRef.definition(m)] ?? attachedTo(layout[NodeRef.mapping(m)]);
+          return Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.mappingWidth, NodeMetrics.headerHeight);
+        }
+
         final memberRects = [
-          for (final m in members)
+          for (final m in members) ...[
             if (layout[NodeRef.mapping(m)] case final pos?)
-              Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.mappingWidth, NodeMetrics.headerHeight),
+              Rect.fromLTWH(pos.dx, pos.dy, NodeMetrics.semWidth, NodeMetrics.headerHeight),
+            ?blockRect(m),
+          ],
         ];
         final origin = box != null && box.rect != Rect.zero && (box.collapsed || !system.summarize)
             ? box.rect.topLeft
@@ -848,9 +933,8 @@ CanvasScene buildScene(
           labels[r] = nameOfDecl(ins[i]);
           // What the socket stands for, concretely.  An open member: its
           // own realisation socket (a provided port may realise it).  A
-          // crossing-in declaration: the members that read it — each as
-          // its input socket of that concept when its signature has one,
-          // else the member itself.  Never the group.
+          // crossing-in Sem block: the members' mapping blocks that read
+          // it — each as its read socket for it.  Never the group.
           if (open) {
             proxies[r] = [
               ProxyTarget(
@@ -872,23 +956,19 @@ CanvasScene buildScene(
             ];
             proxies[r] = [
               for (final m in readers)
-                () {
-                  final mv = mappingOf(m);
-                  final inputs = mv?.signature.inputs.map((x) => x.toInt()).toList() ?? const [];
-                  final at = inputs.indexOf(c);
-                  return ProxyTarget(
-                    label: nameOfDecl(m),
-                    node: NodeRef.mapping(m),
-                    socket: at < 0
-                        ? null
-                        : SocketRef(
-                            node: NodeRef.mapping(m),
-                            side: SocketSide.input,
-                            concept: c,
-                            index: at,
-                          ),
-                  );
-                }(),
+                ProxyTarget(
+                  label: nameOfDecl(m),
+                  node: NodeRef.definition(m),
+                  socket: readsOf(m).contains(ins[i])
+                      ? SocketRef(
+                          node: NodeRef.definition(m),
+                          side: SocketSide.input,
+                          concept: c,
+                          index: ins[i],
+                          role: SocketRole.read,
+                        )
+                      : null,
+                ),
             ];
           }
         }
@@ -934,7 +1014,8 @@ CanvasScene buildScene(
       } else {
         final rects = [
           for (final m in members)
-            if (byId[NodeRef.mapping(m)] case final n?) n.rect,
+            for (final ref in [NodeRef.mapping(m), NodeRef.definition(m)])
+              if (byId[ref] case final n?) n.rect,
         ];
         final rect = rects.isEmpty
             ? Rect.fromLTWH(
@@ -957,104 +1038,87 @@ CanvasScene buildScene(
     }
   }
 
-  // Links: concept.out → mapping.in (per signature input); mapping.out → concept.in.
+  // Links (ADR-0044).  Read edges: from each Sem block a mapping block's
+  // definition names — its output socket, or its group's aggregate output
+  // socket when it is hidden — into the mapping block's read socket that
+  // stands for it.  Produce edges: from a mapping block's output socket
+  // into its Sem block's produce socket — the definition itself.  Drive
+  // edges: from a Sem block's output socket into the sink it drives, as
+  // authored; whether the drive is well formed is the output pass's
+  // verdict, shown on the sink.  A hidden member's drive edge leaves from
+  // its group's aggregate socket; its reads are the crossing-in edges
+  // drawn below.
   final links = <LinkShape>[];
-  // A hidden member's produce and drive edges leave from its group's
-  // aggregate output socket; what crosses in is drawn below, from the
-  // crossing-in relationship to the aggregate input socket.
   SocketShape? groupOut(int member) {
     final g = hiddenMembers[member];
     final r = g == null ? null : groupSockets[g]?.outs[member];
     return r == null ? null : socketByRef[r];
   }
 
+  SocketShape? outSocketOf(int decl) {
+    if (hiddenMembers.containsKey(decl)) return groupOut(decl);
+    final m = mappingById(decl);
+    if (m == null) return null;
+    return socketByRef[SocketRef(
+      node: NodeRef.mapping(decl),
+      side: SocketSide.output,
+      concept: m.signature.output.toInt(),
+    )];
+  }
+
   for (final m in mappings) {
-    final ref = NodeRef.mapping(m.id.toInt());
-    final hidden = hiddenMembers.containsKey(m.id.toInt());
-    if (hidden) {
-      // The member's produce and drive edges leave from the group's socket.
-      final outId = m.signature.output.toInt();
-      final from = groupOut(m.id.toInt());
-      final to =
+    final id = m.id.toInt();
+    if (!isSem(id)) continue;
+    final hidden = hiddenMembers.containsKey(id);
+    final outId = m.signature.output.toInt();
+    if (!hidden) {
+      for (final d in readsOf(id)) {
+        final from = outSocketOf(d);
+        final read = mappingById(d);
+        final to =
+            socketByRef[SocketRef(
+              node: NodeRef.definition(id),
+              side: SocketSide.input,
+              concept: read?.signature.output.toInt() ?? -1,
+              index: d,
+              role: SocketRole.read,
+            )];
+        if (from == null || to == null || read == null) continue;
+        links.add(
+          LinkShape(
+            from: from.ref,
+            to: to.ref,
+            concept: read.signature.output.toInt(),
+            path: linkPath(from.center, to.center),
+          ),
+        );
+      }
+      final produce =
           socketByRef[SocketRef(
-            node: NodeRef.concept(outId),
+            node: NodeRef.definition(id),
+            side: SocketSide.output,
+            concept: outId,
+          )];
+      final at =
+          socketByRef[SocketRef(
+            node: NodeRef.mapping(id),
             side: SocketSide.input,
             concept: outId,
+            role: SocketRole.produce,
           )];
-      if (from != null && to != null) {
+      if (produce != null && at != null) {
         links.add(
           LinkShape(
-            from: from.ref,
-            to: to.ref,
+            from: produce.ref,
+            to: at.ref,
             concept: outId,
-            path: linkPath(from.center, to.center),
-          ),
-        );
-      }
-      if (m.hasDrivesOutputId()) {
-        final sink = outputs.where((o) => o.id == m.drivesOutputId).firstOrNull;
-        final toSink = sink == null
-            ? null
-            : socketByRef[SocketRef(
-                node: NodeRef.output(sink.id.toInt()),
-                side: SocketSide.input,
-                concept: sink.accepts.toInt(),
-              )];
-        if (from != null && toSink != null) {
-          links.add(
-            LinkShape(
-              from: from.ref,
-              to: toSink.ref,
-              concept: outId,
-              path: linkPath(from.center, toSink.center),
-            ),
-          );
-        }
-      }
-      continue;
-    }
-    final inputs = m.signature.inputs.map((i) => i.toInt()).toList();
-    for (var i = 0; i < inputs.length; i++) {
-      final from =
-          socketByRef[SocketRef(
-            node: NodeRef.concept(inputs[i]),
-            side: SocketSide.output,
-            concept: inputs[i],
-          )];
-      final to =
-          socketByRef[SocketRef(node: ref, side: SocketSide.input, concept: inputs[i], index: i)];
-      if (from != null && to != null) {
-        links.add(
-          LinkShape(
-            from: from.ref,
-            to: to.ref,
-            concept: inputs[i],
-            path: linkPath(from.center, to.center),
+            path: linkPath(produce.center, at.center),
           ),
         );
       }
     }
-    final outId = m.signature.output.toInt();
-    final from = socketByRef[SocketRef(node: ref, side: SocketSide.output, concept: outId)];
-    final to =
-        socketByRef[SocketRef(
-          node: NodeRef.concept(outId),
-          side: SocketSide.input,
-          concept: outId,
-        )];
-    if (from != null && to != null) {
-      links.add(
-        LinkShape(
-          from: from.ref,
-          to: to.ref,
-          concept: outId,
-          path: linkPath(from.center, to.center),
-        ),
-      );
-    }
-    // The drive edge, as authored: mapping.out → sink.  Whether it is well
-    // formed is the output pass's verdict, shown on the sink.
     if (m.hasDrivesOutputId()) {
+      final from = outSocketOf(id);
       final sink = outputs.where((o) => o.id == m.drivesOutputId).firstOrNull;
       final to = sink == null
           ? null
@@ -1082,8 +1146,8 @@ CanvasScene buildScene(
   for (final entry in groupSockets.entries) {
     for (final e in entry.value.ins.entries) {
       final decl = e.key;
-      final m = mappings.where((m) => m.id.toInt() == decl).firstOrNull;
-      if (m == null || hiddenMembers.containsKey(decl)) continue;
+      final m = mappingById(decl);
+      if (m == null || hiddenMembers.containsKey(decl) || !isSem(decl)) continue;
       final outId = m.signature.output.toInt();
       final from =
           socketByRef[SocketRef(
@@ -1099,49 +1163,6 @@ CanvasScene buildScene(
             to: to.ref,
             concept: outId,
             path: linkPath(from.center, to.center),
-          ),
-        );
-      }
-    }
-  }
-
-  // Reference edges (ADR-0034): from each relationship a definition names
-  // to the formula line of the relationship naming it — the kernel's
-  // `dependsOn`, as the analysis reports it.  A hidden referencing member
-  // adds nothing (its group's crossing-in edges stand for it above); a
-  // hidden referenced member's edge leaves from its group's aggregate
-  // socket; a reference to itself (memory through `delay`) and one to a
-  // declaration the projection does not show (an instance's private
-  // relationship, or one already deleted) draw nothing.
-  {
-    final byId = {for (final n in nodes) n.ref: n};
-    for (final m in mappings) {
-      final id = m.id.toInt();
-      if (hiddenMembers.containsKey(id)) continue;
-      final node = byId[NodeRef.mapping(id)];
-      if (node == null) continue;
-      final outId = m.signature.output.toInt();
-      final self = SocketRef(node: node.ref, side: SocketSide.output, concept: outId);
-      for (final d in refs[id] ?? const <int>[]) {
-        if (d == id) continue;
-        final target = mappings.where((x) => x.id.toInt() == d).firstOrNull;
-        if (target == null) continue;
-        final targetOut = target.signature.output.toInt();
-        final from = hiddenMembers.containsKey(d)
-            ? groupOut(d)
-            : socketByRef[SocketRef(
-                node: NodeRef.mapping(d),
-                side: SocketSide.output,
-                concept: targetOut,
-              )];
-        if (from == null) continue;
-        links.add(
-          LinkShape(
-            from: from.ref,
-            to: self,
-            concept: targetOut,
-            path: linkPath(from.center, node.formulaEntry),
-            reference: true,
           ),
         );
       }
@@ -1175,6 +1196,12 @@ CanvasScene buildScene(
 extension<T> on T {
   R let<R>(R Function(T) f) => f(this);
 }
+
+/// Where a mapping block without a stored position is drawn: beside its
+/// Sem block, as the layout service attaches it (`bdl_layout`: directly to
+/// the left, its rows centred on the block's row) — reached only between a
+/// commit and the daemon's placement.
+Offset attachedTo(Offset? sem) => sem == null ? NodeMetrics.origin : attachedBlockPosition(sem);
 
 int _portKey(int instance, int port) => instance * 1000003 + port;
 
@@ -1293,14 +1320,13 @@ CanvasHit hitTest(CanvasScene scene, Offset point, {double linkHitTolerance = 6}
   }
   for (final n in scene.nodes.reversed) {
     if (n.rect.contains(point)) {
-      if (n.ref.kind == NodeKind.mapping && n.definition != null && n.disclosure.contains(point)) {
+      if (n.ref.kind == NodeKind.definition && n.disclosure.contains(point)) {
         return HitDisclosure(n);
       }
       return HitNode(n, header: n.header.contains(point));
     }
   }
-  // Signature and binding edges have a hit area (a contextual menu, a
-  // binding's selection); reference edges have none (ADR-0034).
+  // Every edge has a hit area: a read, a drive, a binding, an aggregate.
   if (nearestLink(scene, point, linkHitTolerance) case final l?) return HitLink(l);
   for (final g in scene.groups.reversed) {
     if (g.titleBand.contains(point)) return HitGroup(g);
@@ -1313,7 +1339,6 @@ LinkShape? nearestLink(CanvasScene scene, Offset point, double tolerance) {
   LinkShape? best;
   var bestDistance = double.infinity;
   for (final l in scene.links) {
-    if (l.reference) continue;
     final d = _distanceToPath(l.path, point, tolerance);
     if (d != null && d < bestDistance) {
       best = l;
@@ -1348,65 +1373,79 @@ double? _distanceToPath(Path path, Offset p, double tolerance) {
 GroupShape? groupAt(CanvasScene scene, Offset point) =>
     scene.groups.where((g) => g.rect.contains(point)).lastOrNull;
 
-/// Whether a link may run between two sockets: same concept, opposite
-/// side, different node.  The nominal typing rule, as a gesture constraint.
-/// A sink takes only a mapping's output: a concept cannot drive the world
-/// by itself, and nothing reads from a sink.
+/// Whether a link may run between two sockets (ADR-0044).  A Sem block's
+/// output into a mapping block's open position (a [SocketRole.slot]): the
+/// drop is a text edit of the definition and the compiler types it — the
+/// gesture refuses nothing by concept there.  A Sem block's output into a
+/// sink accepting its concept: the drive edge.  A port or a realisation
+/// socket: a binding.  A read socket is a name in a formula and takes no
+/// link; a produce socket is the joint of a Sem block and its definition
+/// and takes none; a mapping block's output socket starts none (the
+/// definition produces its own Sem block and nothing else); an aggregate
+/// socket is a picture of a group's boundary; nothing reads from a sink.
 bool canLink(SocketRef from, SocketRef to) {
-  if (to.node == from.node || to.side == from.side || to.concept != from.concept) return false;
-  // Aggregate sockets are a picture of a group's boundary: nothing binds
-  // to them (an edge attaches to a declaration, never to the group).
+  if (to.node == from.node || to.side == from.side) return false;
   if (from.role == SocketRole.aggregate || to.role == SocketRole.aggregate) return false;
   final (out, inp) = from.side == SocketSide.output ? (from, to) : (to, from);
-  // A binding end is a port or a base relationship (its output, or its
-  // realisation socket): a concept node is neither.
+  if (inp.role == SocketRole.read ||
+      inp.role == SocketRole.produce ||
+      out.node.kind == NodeKind.definition ||
+      out.role != SocketRole.concept && out.role != SocketRole.port) {
+    return false;
+  }
+  if (inp.role == SocketRole.slot) {
+    // any Sem block of the design; a port's value is bound, not named
+    return out.node.kind == NodeKind.mapping && out.role == SocketRole.concept;
+  }
+  if (to.concept != from.concept) return false;
   final isBinding =
       out.role == SocketRole.port || inp.role == SocketRole.port || inp.role == SocketRole.realise;
   if (isBinding) {
-    if (out.node.kind == NodeKind.concept || inp.node.kind == NodeKind.concept) return false;
     if (out.node.kind == NodeKind.output || inp.node.kind == NodeKind.output) return false;
     return inp.role == SocketRole.port || inp.role == SocketRole.realise;
   }
-  final kinds = {from.node.kind, to.node.kind};
-  if (kinds.contains(NodeKind.output)) return kinds.contains(NodeKind.mapping);
-  return true;
+  return out.node.kind == NodeKind.mapping && inp.node.kind == NodeKind.output;
 }
 
-/// The socket a dragged link may legally be dropped on.  Typing by identity,
-/// made visible.  An *authoring* target (a concept's value socket over a
-/// sink that accepts the concept) counts: the drop then resolves to the
-/// relationship that drives the sink, never to the concept
-/// (docs/architecture/studio-ui.md §2, "Concept → Output").
+/// The socket a dragged link may legally be dropped on.  Typing by
+/// identity, made visible.
 SocketShape? dropTarget(CanvasScene scene, SocketRef from, Offset point) {
   final hit = hitTest(scene, point);
   if (hit is! HitSocket) return null;
-  return canLink(from, hit.socket.ref) || isAuthoringTarget(from, hit.socket.ref)
-      ? hit.socket
-      : null;
+  return canLink(from, hit.socket.ref) ? hit.socket : null;
 }
 
-/// The Concept → Output authoring gesture: dragging a concept's value socket
-/// onto a sink accepting that concept.  Not a link the model has — a sink
-/// is driven by a relationship — but the gesture the designer reaches for;
-/// the canvas resolves it against the relationships that produce the
-/// concept and could drive the sink (`driveCandidates`).
-bool isAuthoringTarget(SocketRef from, SocketRef to) {
-  final (out, inp) = from.side == SocketSide.output ? (from, to) : (to, from);
-  return out.node.kind == NodeKind.concept &&
-      out.side == SocketSide.output &&
-      out.role == SocketRole.concept &&
-      inp.node.kind == NodeKind.output &&
-      inp.side == SocketSide.input &&
-      inp.concept == out.concept;
+/// The node a dragged link from a Sem block's output may be dropped on as
+/// a whole (its body, not a socket): a Source, which the drop gives a
+/// definition; a mapping block with an open position, which the drop
+/// fills; or a Sem block whose mapping block has one — the drop goes
+/// there.  A text edit either way (ADR-0028).
+NodeShape? blockDropTarget(CanvasScene scene, SocketRef from, Offset point) {
+  if (from.side != SocketSide.output ||
+      from.role != SocketRole.concept ||
+      from.node.kind != NodeKind.mapping) {
+    return null;
+  }
+  final hit = hitTest(scene, point);
+  var node = switch (hit) {
+    HitNode(:final node) || HitDisclosure(:final node) => node,
+    _ => null,
+  };
+  if (node == null || node.ref.id == from.node.id) return null;
+  if (node.ref.kind == NodeKind.mapping && !node.source) {
+    final block = NodeRef.definition(node.ref.id);
+    node = scene.nodes.where((n) => n.ref == block).firstOrNull;
+  }
+  if (node == null || !node.acceptsBlock) return null;
+  return node;
 }
 
 /// Every socket a link from [from] could land on — shown with a halo while
-/// dragging so the rule is seen before the drop.  Authoring targets are
-/// included: an eligible sink lights up under a dragged concept.
+/// dragging so the rule is seen before the drop.
 Set<SocketRef> compatibleSockets(CanvasScene scene, SocketRef from) => {
   for (final n in scene.nodes)
     for (final s in n.sockets)
-      if (canLink(from, s.ref) || isAuthoringTarget(from, s.ref)) s.ref,
+      if (canLink(from, s.ref)) s.ref,
 };
 
 /// Rectangle selection, the CAD convention (docs/architecture/studio-ui.md
@@ -1489,16 +1528,14 @@ String dimLabel(pb.Dim d) {
 }
 
 /// ⇧-click range selection on the graph: the nodes of the one shortest
-/// path over *signature* edges (concept ↔ relationship ↔ sink, bindings)
-/// from [from] to [to], inclusive — when exactly one shortest path exists.
-/// Reference edges are dependency, not the displayed signature, and never
-/// take part.  Two or more shortest paths (a branched graph) make the range
-/// ambiguous: `null`, and the caller selects nothing it did not click.
+/// path over the drawn edges (read, produce, drive, bindings) from [from]
+/// to [to], inclusive — when exactly one shortest path exists.  Two or
+/// more shortest paths (a branched graph) make the range ambiguous:
+/// `null`, and the caller selects nothing it did not click.
 Set<NodeRef>? uniqueSignatureChain(CanvasScene scene, NodeRef from, NodeRef to) {
   if (from == to) return {from};
   final adjacent = <NodeRef, Set<NodeRef>>{};
   for (final l in scene.links) {
-    if (l.reference) continue;
     adjacent.putIfAbsent(l.from.node, () => {}).add(l.to.node);
     adjacent.putIfAbsent(l.to.node, () => {}).add(l.from.node);
   }
@@ -1528,5 +1565,6 @@ Set<NodeRef>? uniqueSignatureChain(CanvasScene scene, NodeRef from, NodeRef to) 
     cur = parent[cur]!;
     chain.add(cur);
   }
-  return chain;
+  // a mapping block on the way is its Sem block: the chain is declarations
+  return {for (final n in chain) asDeclaration(n)};
 }

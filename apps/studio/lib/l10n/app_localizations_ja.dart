@@ -1009,12 +1009,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noValueYet => '値はまだありません';
 
   @override
-  String get stateNotApplied => '未適用';
-
-  @override
-  String get appliedByNothing => '何も適用していない';
-
-  @override
   String notPossibleYet(String reason) {
     return 'まだできません：$reason';
   }
@@ -1181,22 +1175,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get valueNotDecided => '値の形式は未決定';
 
   @override
-  String get aQuantity => '量';
-
-  @override
   String get onOrOff => 'オンまたはオフ';
-
-  @override
-  String get aCount => '個数';
-
-  @override
-  String get aCollection => 'コレクション';
-
-  @override
-  String get aGroupedValue => '組の値';
-
-  @override
-  String get anOptionalValue => '省略可能な値';
 
   @override
   String get declaredNotYetDefined => '宣言済み、未定義';
@@ -1303,9 +1282,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get stateOptional => '省略可';
-
-  @override
-  String get stateDeclared => '宣言済み';
 
   @override
   String get stateContested => '競合';
@@ -2027,9 +2003,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get libraryGroupExternal => '外部';
 
   @override
-  String get ruleWord => 'ルール';
-
-  @override
   String get roleRule => 'ルール';
 
   @override
@@ -2048,12 +2021,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get namedIn => '参照元';
 
   @override
-  String ruleNodeSemantics(String reads) {
-    return 'ルール、$reads を読み取る';
-  }
+  String get valueNodeSemantics => '値';
 
   @override
-  String get valueNodeSemantics => '値';
+  String mappingBlockSemantics(String name) {
+    return '$name のマッピングブロック：その定義';
+  }
 
   @override
   String dependsOnList(String names) {
@@ -2075,19 +2048,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noValueAppliesItYet => 'まだどの値にも適用されていません。';
-
-  @override
-  String noValueCarries(String concept) {
-    return 'まだ何も $concept を運んでいません。これを生成する値も入力元もありません。';
-  }
-
-  @override
-  String ruleProducesNoValue(String rule, String concept) {
-    return '$rule はルールです。これを適用する値が $concept を運びます。';
-  }
-
-  @override
-  String get carriedBy => '運び手';
 
   @override
   String get format => '整形';
@@ -2499,16 +2459,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get undoArrange => '自動配置を元に戻す';
 
   @override
-  String connectionReads(String to, String concept) {
-    return '$to が $concept を読み取る';
-  }
-
-  @override
-  String connectionProduces(String from, String concept) {
-    return '$from が $concept を生成する';
-  }
-
-  @override
   String connectionDrives(String from, String to) {
     return '$from が $to を駆動する';
   }
@@ -2519,7 +2469,51 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get produceEdgeCannotGoAlone => '関係の生成エッジはそのシグネチャの出力です。エッジではなく関係を変更してください。';
+  String get addBlock => 'ブロックを追加';
+
+  @override
+  String blockOf(String concept) {
+    return '$concept のブロック';
+  }
+
+  @override
+  String get newConceptSubmenu => '新しいコンセプト';
+
+  @override
+  String appliesList(String names) {
+    return '$names を適用';
+  }
+
+  @override
+  String connectionReadEdge(String to, String from) {
+    return '$to が $from を読み取る';
+  }
+
+  @override
+  String get readEdgeIsAName => '読み取りはブロックの式の中の名前です。変更するには式を編集してください。';
+
+  @override
+  String get producedByEnvironment => '環境（入力元）';
+
+  @override
+  String get appliesRules => '適用する規則';
+
+  @override
+  String get blocksOfConcept => 'ブロック';
+
+  @override
+  String noBlockOfConcept(String name) {
+    return '$name のブロックはまだありません。キャンバスのメニュー（ブロックを追加 ▸ $name のブロック）から追加してください。';
+  }
+
+  @override
+  String get rulesOverConcept => '規則';
+
+  @override
+  String get readsLabel => '読み取り';
+
+  @override
+  String get readBy => '読み取り元';
 
   @override
   String get libItem_std_value_boolean_name => 'オン / オフ';

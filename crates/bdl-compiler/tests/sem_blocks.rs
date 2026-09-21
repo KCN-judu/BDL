@@ -11,10 +11,10 @@
 use bdl_compiler::{analyze, MappingStatus};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use std::collections::BTreeSet;
 
-fn concept(s: &ProjectSnapshot, name: &str, rep: Representation) -> (ProjectSnapshot, SemanticId) {
+fn concept(s: &ProjectSnapshot, name: &str, rep: Representation) -> (ProjectSnapshot, ConceptId) {
     let a = apply_edit(
         s,
         &EditOp::CreateConcept {
@@ -31,8 +31,8 @@ fn concept(s: &ProjectSnapshot, name: &str, rep: Representation) -> (ProjectSnap
 fn mapping(
     s: &ProjectSnapshot,
     name: &str,
-    inputs: Vec<SemanticId>,
-    output: SemanticId,
+    inputs: Vec<ConceptId>,
+    output: ConceptId,
     formula: Option<&str>,
 ) -> (ProjectSnapshot, DeclId) {
     let a = apply_edit(

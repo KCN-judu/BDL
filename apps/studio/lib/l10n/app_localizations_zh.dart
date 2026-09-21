@@ -1003,12 +1003,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noValueYet => '尚无值';
 
   @override
-  String get stateNotApplied => '未应用';
-
-  @override
-  String get appliedByNothing => '无任何值应用';
-
-  @override
   String notPossibleYet(String reason) {
     return '暂不可行：$reason';
   }
@@ -1174,22 +1168,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get valueNotDecided => '值形式未决定';
 
   @override
-  String get aQuantity => '一个量';
-
-  @override
   String get onOrOff => '开或关';
-
-  @override
-  String get aCount => '一个计数';
-
-  @override
-  String get aCollection => '一个集合';
-
-  @override
-  String get aGroupedValue => '一个组合值';
-
-  @override
-  String get anOptionalValue => '一个可选值';
 
   @override
   String get declaredNotYetDefined => '已声明，尚未定义';
@@ -1295,9 +1274,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get stateOptional => '可选';
-
-  @override
-  String get stateDeclared => '已声明';
 
   @override
   String get stateContested => '争用';
@@ -2013,9 +1989,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryGroupExternal => '外部';
 
   @override
-  String get ruleWord => '规则';
-
-  @override
   String get roleRule => '规则';
 
   @override
@@ -2034,12 +2007,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get namedIn => '被提及于';
 
   @override
-  String ruleNodeSemantics(String reads) {
-    return '规则，读取 $reads';
-  }
+  String get valueNodeSemantics => '值';
 
   @override
-  String get valueNodeSemantics => '值';
+  String mappingBlockSemantics(String name) {
+    return '$name 的映射块：其定义';
+  }
 
   @override
   String dependsOnList(String names) {
@@ -2061,19 +2034,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noValueAppliesItYet => '尚无值应用它。';
-
-  @override
-  String noValueCarries(String concept) {
-    return '尚无任何东西承载 $concept：没有值或来源产出它。';
-  }
-
-  @override
-  String ruleProducesNoValue(String rule, String concept) {
-    return '$rule 是一条规则；应用它的值才会承载 $concept。';
-  }
-
-  @override
-  String get carriedBy => '承载于';
 
   @override
   String get format => '格式化';
@@ -2477,16 +2437,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get undoArrange => '撤销自动排列';
 
   @override
-  String connectionReads(String to, String concept) {
-    return '$to 读取 $concept';
-  }
-
-  @override
-  String connectionProduces(String from, String concept) {
-    return '$from 生成 $concept';
-  }
-
-  @override
   String connectionDrives(String from, String to) {
     return '$from 驱动 $to';
   }
@@ -2497,7 +2447,51 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get produceEdgeCannotGoAlone => '关系的生成连线就是它签名的输出：请修改关系，而不是这条连线。';
+  String get addBlock => '添加块';
+
+  @override
+  String blockOf(String concept) {
+    return '$concept 的块';
+  }
+
+  @override
+  String get newConceptSubmenu => '新概念';
+
+  @override
+  String appliesList(String names) {
+    return '应用 $names';
+  }
+
+  @override
+  String connectionReadEdge(String to, String from) {
+    return '$to 读取 $from';
+  }
+
+  @override
+  String get readEdgeIsAName => '读取就是块公式中的一个名字：要更改它，请编辑公式。';
+
+  @override
+  String get producedByEnvironment => '环境（来源）';
+
+  @override
+  String get appliesRules => '应用的规则';
+
+  @override
+  String get blocksOfConcept => '块';
+
+  @override
+  String noBlockOfConcept(String name) {
+    return '尚无 $name 的块：从画布菜单添加一个（添加块 ▸ $name 的块）。';
+  }
+
+  @override
+  String get rulesOverConcept => '规则';
+
+  @override
+  String get readsLabel => '读取';
+
+  @override
+  String get readBy => '被读取于';
 
   @override
   String get libItem_std_value_boolean_name => '开 / 关';

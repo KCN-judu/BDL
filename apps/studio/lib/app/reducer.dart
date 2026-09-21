@@ -23,6 +23,7 @@ import 'simulation.dart';
 import 'state.dart';
 import 'system.dart';
 import 'tooling.dart';
+import 'wiring.dart';
 
 @immutable
 class Transition {
@@ -88,6 +89,42 @@ Transition reduce(AppState s, AppAction action) {
     ) =>
       _whenProject(s, () {
         if (s.editor.pendingInsert != null) return Transition(s);
+        // From the canvas (a point): the concept is the template and a Sem
+        // block of it is what lands at the point — one daemon transaction,
+        // the Source path's (ADR-0043).  From the Library (no point): the
+        // template alone.
+        if (position != null) {
+          final busy = pending(s);
+          return Transition(
+            busy.copyWith(
+              editor: busy.editor.copyWith(
+                clearConceptSheet: true,
+                clearRenaming: true,
+                recentTemplates: presetId.isEmpty
+                    ? s.editor.recentTemplates
+                    : rememberTemplate(s.editor.recentTemplates, presetId),
+                pendingInsert: PendingInsert(
+                  templateId: PendingInsert.kSourceInsert,
+                  position: position,
+                  named: true,
+                ),
+              ),
+            ),
+            [
+              CreateSource(
+                baseRevision: s.revision,
+                sourceName: freshBlockName(s, name),
+                description: '',
+                newConcept: pb.NewConcept(
+                  name: name,
+                  description: description,
+                  representation: representation,
+                ),
+                component: s.editor.componentScope,
+              ),
+            ],
+          );
+        }
         // one ordinary edit; the concept lands where the sheet was asked
         // for, selected, named as typed — nothing opens for renaming
         final t = _edit(
@@ -268,6 +305,37 @@ Transition reduce(AppState s, AppAction action) {
       GroupSelected(:final id) => reduce(s, UngroupRequested(id)),
     },
     DisconnectLinkRequested(:final link) => _whenProject(s, () => _disconnectLink(s, link)),
+    WireSemBlockRequested(:final mappingId, :final semId, :final slot) => _whenProject(
+      s,
+      () => wireSemBlockRequested(s, mappingId, semId, slot),
+    ),
+    AddBlockRequested(:final conceptId, :final position) => _whenProject(s, () {
+      if (s.editor.pendingInsert != null) return Transition(s);
+      final concept = s.project!.concepts.where((c) => c.id.toInt() == conceptId).firstOrNull;
+      if (concept == null) return Transition(s);
+      final busy = pending(s);
+      return Transition(
+        busy.copyWith(
+          editor: busy.editor.copyWith(
+            pendingInsert: PendingInsert(
+              templateId: PendingInsert.kSourceInsert,
+              position: position,
+              named: true,
+            ),
+            clearRenaming: true,
+          ),
+        ),
+        [
+          CreateSource(
+            baseRevision: s.revision,
+            sourceName: freshBlockName(s, concept.name),
+            description: '',
+            existingConcept: conceptId,
+            component: s.editor.componentScope,
+          ),
+        ],
+      );
+    }),
     AutoLayoutRequested() => _whenProject(s, () => Transition(s, const [ArrangeLayout()])),
     ArrangedLayoutReceived(:final layout) => _whenProject(s, () => _arrangedLayout(s, layout)),
     RestoreLayoutRequested() => _whenProject(s, () => _restoreLayout(s)),
@@ -803,7 +871,7 @@ Transition reduce(AppState s, AppAction action) {
           editor: s.editor.copyWith(
             selection: switch (node.kind) {
               NodeKind.concept => ConceptSelected(node.id),
-              NodeKind.mapping => MappingSelected(node.id),
+              NodeKind.mapping || NodeKind.definition => MappingSelected(node.id),
               NodeKind.output => OutputSelected(node.id),
               NodeKind.instance => InstanceSelected(node.id),
               NodeKind.group => GroupSelected(node.id),
@@ -1034,17 +1102,35 @@ List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p
 /// One gesture moved several nodes: one layout, one write.  Collapsed group
 /// boxes are layout of their own kind (`GroupBoxChanged`); their hidden
 /// members travel with the box, as for a single box move.
+/// `roomTemperature`, `roomTemperature2`: the name of a new Sem block of a
+/// concept — the concept's name in lower camel case, kept unique among the
+/// design's relationships.
+String freshBlockName(AppState s, String conceptName) {
+  final base = conceptName.isEmpty
+      ? 'block'
+      : conceptName[0].toLowerCase() + conceptName.substring(1);
+  final taken = {for (final m in s.project?.mappings ?? const <pb.MappingView>[]) m.name};
+  if (!taken.contains(base)) return base;
+  var i = 2;
+  while (taken.contains('$base$i')) {
+    i++;
+  }
+  return '$base$i';
+}
+
 /// The one semantic disconnect of an edge, by what it joins.  Nothing here
-/// decides more than the model already can: a concept read by a
-/// relationship stops being read; a relationship driving a sink stops
-/// driving it; anything else is left as it is (the produce edge is the
-/// signature's output; a concept's producers are under formal audit).
+/// decides more than the model or the compiler already can: a Sem block
+/// driving a sink stops driving it; a read edge — a name in the reading
+/// block's formula — becomes a slot by the compiler's own text edit
+/// (`ComposeAction.unreference`, ADR-0044); anything else is left as it
+/// is — a produce edge goes with its definition, a collapsed group's edge
+/// is a picture.
 Transition _disconnectLink(AppState s, LinkId link) {
   if (!link.disconnectable) return Transition(s);
-  final next = link.to.kind == NodeKind.output
-      ? SetMappingDriveRequested(mappingId: link.from.id, outputId: null)
-      : UnlinkMappingInput(mappingId: link.to.id, conceptId: link.concept);
-  final t = reduce(s, next);
+  final t = switch (link.kind) {
+    LinkKind.read => unreferenceRequested(s, link.to.id, link.from.id),
+    _ => reduce(s, SetMappingDriveRequested(mappingId: link.from.id, outputId: null)),
+  };
   // The edge is gone with the edit; so is its selection.
   final sel = t.state.editor.selection;
   return sel == LinkSelected(link)
@@ -1328,7 +1414,7 @@ Transition _inlineRenameFinished(AppState s, NodeRef node, String? name) {
   if (wanted == null || wanted.isEmpty) return Transition(cleared);
   final current = switch (node.kind) {
     NodeKind.concept => s.project?.concepts.where((c) => c.id.toInt() == node.id).firstOrNull?.name,
-    NodeKind.mapping => s.mapping(node.id)?.name,
+    NodeKind.mapping || NodeKind.definition => s.mapping(node.id)?.name,
     NodeKind.output => s.project?.outputs.where((o) => o.id.toInt() == node.id).firstOrNull?.name,
     NodeKind.instance => s.instance(node.id)?.name,
     NodeKind.group => s.group(node.id)?.name,
@@ -1343,7 +1429,7 @@ Transition _inlineRenameFinished(AppState s, NodeRef node, String? name) {
         renameConcept: pb.RenameConcept(id: Int64(node.id), name: wanted),
       ),
     ),
-    NodeKind.mapping => sendEdit(
+    NodeKind.mapping || NodeKind.definition => sendEdit(
       cleared,
       pb.EditOp(
         renameMapping: pb.RenameMapping(id: Int64(node.id), name: wanted),
@@ -1478,35 +1564,39 @@ Transition projectReceived(
   // Create-then-rename: the concept a template insertion created lands
   // where the designer pointed, is selected, and opens for naming.
   final insert = s.editor.pendingInsert;
+  // What lands where the designer pointed (ADR-0043): the Sem block a
+  // canvas insertion created — over a new concept or an existing one —
+  // selected.  A concept created alone at a point (a library item's
+  // fragment, an older path) is a template and not a node: a Sem block of
+  // it follows as a second edit, and lands there instead.
   final created =
-      fromRequest && sameProject && insert != null && outcome != null && outcome.hasCreatedConcept()
-      ? NodeRef.concept(outcome.createdConcept.toInt())
-      : fromRequest &&
-            sameProject &&
-            insert != null &&
-            outcome != null &&
-            outcome.hasCreatedMapping()
-      // A Source over an existing concept created only the relationship:
-      // it lands where the designer pointed and is selected.
+      fromRequest && sameProject && insert != null && outcome != null && outcome.hasCreatedMapping()
       ? NodeRef.mapping(outcome.createdMapping.toInt())
       : null;
+  final followUp =
+      created == null &&
+      fromRequest &&
+      sameProject &&
+      insert != null &&
+      insert.position != null &&
+      outcome != null &&
+      outcome.hasCreatedConcept();
   final dropped = created == null ? null : insert?.position;
   final placed = dropped != null;
   var layoutsOut = layouts;
   if (created != null && dropped != null) {
-    layout = {...layout, created: dropped};
-    // A new concept and its Source together: the concept lands where the
-    // designer pointed and the relationship that provides it to its left,
-    // where its one socket faces the concept — environment → Source →
-    // behavior — a node width and a gap away.
-    if (created.kind == NodeKind.concept && outcome != null && outcome.hasCreatedMapping()) {
-      layout = {
-        ...layout,
-        NodeRef.mapping(outcome.createdMapping.toInt()): dropped - const Offset(240, 0),
-      };
-    }
+    // its mapping block, when the daemon placed one, goes along beside it
+    final block = NodeRef.definition(created.id);
+    layout = {
+      ...layout,
+      created: dropped,
+      if (layout.containsKey(block)) block: attachedBlockPosition(dropped),
+    };
     layoutsOut = layouts.withNodes(context, layout);
   }
+  final followUpConcept = followUp
+      ? view.concepts.where((c) => c.id == outcome.createdConcept).firstOrNull
+      : null;
   final next = s.copyWith(
     project: view,
     flat: incoming,
@@ -1514,18 +1604,29 @@ Transition projectReceived(
     clearSystem: system == null,
   );
   final selection = created != null
-      ? (created.kind == NodeKind.concept
-            ? ConceptSelected(created.id) as Selection
-            : MappingSelected(created.id))
+      ? MappingSelected(created.id) as Selection
+      : fromRequest &&
+            sameProject &&
+            insert != null &&
+            outcome != null &&
+            outcome.hasCreatedConcept()
+      ? ConceptSelected(outcome.createdConcept.toInt())
+      // A system project's view is empty until its system arrives: the
+      // selection is judged then (`systemReceived`), not against nothing.
+      : needsSystem
+      ? s.editor.selection
       : surviving(next, s.editor.selection);
   // An inline rename survives pushed projections (the daemon echoes every
   // commit) as long as its node still exists.
-  // Create-then-rename opens the name of a created concept (the legacy
-  // item path); a concept named on the concept sheet and a Source over an
-  // existing concept keep the name the sheet gave them.
-  final renaming = created != null && created.kind == NodeKind.concept && !(insert?.named ?? false)
-      ? created
-      : s.editor.renaming;
+  // Create-then-rename opens the name of the block a library item's
+  // insertion made (the legacy item path); a block named on a sheet keeps
+  // the name the sheet gave it.
+  final legacyItem =
+      insert != null &&
+      !insert.named &&
+      insert.templateId != PendingInsert.kSourceInsert &&
+      insert.templateId != PendingInsert.kConceptInsert;
+  final renaming = created != null && legacyItem ? created : s.editor.renaming;
   final renamingValid = renaming != null && nodeExists(next, renaming);
   final recent = sameProject ? s.recent : _remember(s.recent, incoming);
   final analysisStillValid = s.analysis != null && s.analysis!.revision == incoming.revision;
@@ -1553,7 +1654,8 @@ Transition projectReceived(
               clearAnalysis: !analysisStillValid,
               editor: editor.copyWith(
                 // the system is part of the project: its fetch is pending too
-                pendingRequests: pendingCount + (needsSystem ? 1 : 0),
+                pendingRequests:
+                    pendingCount + (needsSystem ? 1 : 0) + (followUpConcept != null ? 1 : 0),
                 selection: selection,
                 layout: layout,
                 layouts: layoutsOut,
@@ -1567,7 +1669,7 @@ Transition projectReceived(
                 view: keptView,
                 page: keptPage,
                 sources: sameProject ? null : SourcesState(openPath: workspace?.openSource),
-                clearPendingInsert: fromRequest,
+                clearPendingInsert: fromRequest && !followUp,
                 renaming: renamingValid ? renaming : null,
                 clearRenaming: !renamingValid,
                 clearExtraction: !sameProject,
@@ -1593,6 +1695,16 @@ Transition projectReceived(
                   (!sameProject || incoming.revision.toInt() != s.editor.sources.revision))
                 const GetSources(),
               if (placed) SetLayout(layoutToPb(layoutsOut)),
+              // the concept is the template; the block of it is what the
+              // designer pointed at — one more edit, the Source path's
+              if (followUpConcept != null)
+                CreateSource(
+                  baseRevision: incoming.revision.toInt(),
+                  sourceName: freshBlockName(next, followUpConcept.name),
+                  description: '',
+                  existingConcept: followUpConcept.id.toInt(),
+                  component: s.editor.componentScope,
+                ),
               ...drafts.effects,
             ],
           )

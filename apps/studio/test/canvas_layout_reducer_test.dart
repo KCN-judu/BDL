@@ -34,9 +34,8 @@ AppState connected({Selection selection = const NoSelection(), CanvasLayout? lay
 
 pb.EditOp opOf(Transition t) => t.effects.whereType<ApplyEdit>().single.op;
 
-const readEdge = LinkId(from: c0, to: m1, concept: tilt);
+const readEdge = LinkId(from: m0, to: m1, concept: tilt);
 const driveEdge = LinkId(from: m2, to: o0, concept: level);
-const produceEdge = LinkId(from: m0, to: c0, concept: tilt);
 const aggregateEdge = LinkId(from: NodeRef.group(7), to: o0, concept: level);
 
 final authored = CanvasLayout(
@@ -54,23 +53,19 @@ pb.Layout arranged() => pb.Layout(
 
 void main() {
   group('disconnect', () {
-    test('a read edge is the input unlink; a drive edge is the drive set to none', () {
-      final read = reduce(connected(), const DisconnectLinkRequested(readEdge));
-      // the read goes out of the signature; the output stays
-      final sig = opOf(read).setMappingSignature;
-      expect(sig.id.toInt(), rule);
-      expect(sig.signature.inputs, isEmpty);
-      expect(sig.signature.output.toInt(), level);
+    test('a drive edge is the drive set to none; a read edge is a formula and is refused', () {
       final drive = reduce(connected(), const DisconnectLinkRequested(driveEdge));
       final d = opOf(drive).setMappingDrive;
       expect(d.id.toInt(), value);
       expect(d.hasOutputId(), isFalse);
+      // a read edge is a name in the reading block's formula (ADR-0043):
+      // no signature edit, no edit at all
+      expect(readEdge.disconnectable, isFalse);
+      expect(reduce(connected(), const DisconnectLinkRequested(readEdge)).effects, isEmpty);
     });
 
-    test('a produce edge and a collapsed group\'s edge are refused: no edit, nothing implied', () {
-      expect(produceEdge.disconnectable, isFalse);
+    test('a collapsed group\'s edge is refused: no edit, nothing implied', () {
       expect(aggregateEdge.disconnectable, isFalse);
-      expect(reduce(connected(), const DisconnectLinkRequested(produceEdge)).effects, isEmpty);
       expect(reduce(connected(), const DisconnectLinkRequested(aggregateEdge)).effects, isEmpty);
     });
 
@@ -81,11 +76,11 @@ void main() {
       expect(t.state.editor.selection, const NoSelection());
       // a refused one leaves the selection alone
       final kept = reduce(
-        connected(selection: const LinkSelected(produceEdge)),
+        connected(selection: const LinkSelected(readEdge)),
         const DeleteSelectionRequested(),
       );
       expect(kept.effects, isEmpty);
-      expect(kept.state.editor.selection, const LinkSelected(produceEdge));
+      expect(kept.state.editor.selection, const LinkSelected(readEdge));
     });
   });
 
@@ -160,15 +155,15 @@ void main() {
       expect(op.setMappingDrive.id.toInt(), value);
     });
 
-    testWidgets('a produce edge: the sentence that says why there is no Disconnect', (t) async {
+    testWidgets('a read edge: the sentence that says why there is no Disconnect', (t) async {
       await t.pumpWidget(
         Harness(
-          initial: connected(selection: const LinkSelected(produceEdge)),
+          initial: connected(selection: const LinkSelected(readEdge)),
           child: (s, d) => Inspector(state: s, dispatch: d),
         ),
       );
-      expect(find.text('tiltSensor produces Tilt'), findsOneWidget);
-      expect(find.textContaining('signature\'s output'), findsOneWidget);
+      expect(find.text('dimByTilt reads tiltSensor'), findsOneWidget);
+      expect(find.textContaining('edit the formula'), findsOneWidget);
       expect(find.text('Disconnect'), findsNothing);
     });
   });

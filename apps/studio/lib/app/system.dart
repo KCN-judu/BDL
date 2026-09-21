@@ -935,7 +935,7 @@ String nodeName(AppState s, NodeRef n) {
   return switch (n.kind) {
     NodeKind.concept =>
       p.concepts.where((c) => c.id.toInt() == n.id).map((c) => c.name).firstOrNull ?? '?',
-    NodeKind.mapping =>
+    NodeKind.mapping || NodeKind.definition =>
       p.mappings.where((m) => m.id.toInt() == n.id).map((m) => m.name).firstOrNull ?? '?',
     NodeKind.output =>
       p.outputs.where((o) => o.id.toInt() == n.id).map((o) => o.name).firstOrNull ?? '?',
@@ -950,6 +950,7 @@ bool nodeExists(AppState s, NodeRef node) {
   return switch (node.kind) {
     NodeKind.concept => p.concepts.any((c) => c.id.toInt() == node.id),
     NodeKind.mapping => p.mappings.any((m) => m.id.toInt() == node.id),
+    NodeKind.definition => p.mappings.any((m) => m.id.toInt() == node.id && m.hasDefinition()),
     NodeKind.output => p.outputs.any((o) => o.id.toInt() == node.id),
     NodeKind.instance => s.instance(node.id) != null,
     NodeKind.group => s.group(node.id) != null,
@@ -965,6 +966,7 @@ CanvasLayout layoutFromPb(pb.Layout l) {
     nodes: {
       for (final n in l.concepts) NodeRef.concept(n.id.toInt()): Offset(n.x, n.y),
       for (final n in l.mappings) NodeRef.mapping(n.id.toInt()): Offset(n.x, n.y),
+      for (final n in l.definitions) NodeRef.definition(n.id.toInt()): Offset(n.x, n.y),
       for (final n in l.outputs) NodeRef.output(n.id.toInt()): Offset(n.x, n.y),
       for (final n in l.instances) NodeRef.instance(n.id.toInt()): Offset(n.x, n.y),
     },
@@ -999,6 +1001,10 @@ pb.Layout layoutToPb(CanvasLayout layouts) {
       mappings: [
         for (final e in entries)
           if (e.key.kind == NodeKind.mapping) pos(e),
+      ],
+      definitions: [
+        for (final e in entries)
+          if (e.key.kind == NodeKind.definition) pos(e),
       ],
       outputs: [
         for (final e in entries)

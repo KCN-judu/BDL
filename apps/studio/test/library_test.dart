@@ -244,6 +244,7 @@ pb.ProjectProjection project({int revision = 1, List<pb.ConceptView> concepts = 
 /// A connected store holding an empty project at revision 1, whose daemon
 /// answers the library and instantiations.
 Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const []}) async {
+  concepts = [...concepts];
   var nextId = 10;
   var revision = 1;
   concepts = List.of(concepts);
@@ -259,10 +260,10 @@ Future<(TestStore, FakeDaemon)> connected({List<pb.ConceptView> concepts = const
       final mapping = item.creates.where((o) => o.kind == 'mapping').firstOrNull;
       final mappingId = mapping == null ? null : nextId++;
       final value = item.creates.first;
+      concepts.add(pb.ConceptView(id: Int64(id), name: value.name));
       return pb.Response(
         editApplied: pb.EditApplied(
-          project: project(revision: revision)
-            ..concepts.add(pb.ConceptView(id: Int64(id), name: value.name))
+          project: project(revision: revision, concepts: concepts)
             ..mappings.addAll([
               if (mappingId != null)
                 mappingView(
@@ -394,39 +395,45 @@ void main() {
     );
   });
 
-  test('create-then-rename: the answer places, selects and opens the name', () async {
+  test('create-then-rename: the item makes the template, a block of it follows, placed, '
+      'selected and open for naming', () async {
     final (store, daemon) = await connected();
     store.dispatch(
       const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(120, 64)),
     );
-    final s = await store.until((x) => x.editor.pendingRequests == 0);
-    final id = s.project!.concepts.single.id.toInt();
+    final s = await store.until(
+      (x) => x.editor.pendingRequests == 0 && x.project!.mappings.length == 1,
+    );
+    final concept = s.project!.concepts.single.id.toInt();
+    final id = s.project!.mappings.single.id.toInt();
     expect(s.project!.concepts.single.name, 'Temperature');
-    expect((s.editor.selection as ConceptSelected).id, id);
-    expect(s.editor.renaming, NodeRef.concept(id));
-    expect(s.editor.layout[NodeRef.concept(id)], const Offset(120, 64));
+    expect(s.project!.mappings.single.name, 'temperature');
+    expect((s.editor.selection as MappingSelected).id, id);
+    expect(s.editor.renaming, NodeRef.mapping(id));
+    expect(s.editor.layout[NodeRef.mapping(id)], const Offset(120, 64));
+    expect(s.editor.layout[NodeRef.concept(concept)], isNull, reason: 'a template has no place');
     expect(s.editor.pendingInsert, isNull);
     // The position went to the daemon as layout (never a revision).
     await store.until((_) => daemon.requests.any((r) => r.hasSetLayout()));
     final layout = daemon.requests.firstWhere((r) => r.hasSetLayout()).setLayout.layout;
-    expect(layout.concepts.single.id.toInt(), id);
-    expect(layout.concepts.single.x, 120);
+    expect(layout.mappings.single.id.toInt(), id);
+    expect(layout.mappings.single.x, 120);
 
     // Typing the product's name commits one ordinary rename edit.
     daemon.requests.clear();
-    store.dispatch(InlineRenameFinished(NodeRef.concept(id), name: 'MotorTemperature'));
+    store.dispatch(InlineRenameFinished(NodeRef.mapping(id), name: 'motorTemperature'));
     expect(store.state.editor.renaming, isNull);
     await store.until((x) => x.editor.pendingRequests == 0);
-    final rename = daemon.requests.single.applyEdit.op.renameConcept;
+    final rename = daemon.requests.single.applyEdit.op.renameMapping;
     expect(rename.id.toInt(), id);
-    expect(rename.name, 'MotorTemperature');
+    expect(rename.name, 'motorTemperature');
 
     // Esc, an empty name, or the same name change nothing.
-    for (final name in [null, '', '  ', 'Temperature']) {
-      store.dispatch(InlineRenameStarted(NodeRef.concept(id)));
-      expect(store.state.editor.renaming, NodeRef.concept(id));
+    for (final name in [null, '', '  ', 'temperature']) {
+      store.dispatch(InlineRenameStarted(NodeRef.mapping(id)));
+      expect(store.state.editor.renaming, NodeRef.mapping(id));
       daemon.requests.clear();
-      store.dispatch(InlineRenameFinished(NodeRef.concept(id), name: name));
+      store.dispatch(InlineRenameFinished(NodeRef.mapping(id), name: name));
       expect(store.state.editor.renaming, isNull);
       expect(daemon.requests, isEmpty, reason: 'name=$name');
     }
@@ -434,14 +441,15 @@ void main() {
   });
 
   test(
-    'an insertion the panel started auto-places: no layout, still selected and renaming',
+    'an insertion the panel started is the template alone: no block, no layout, selected',
     () async {
       final (store, daemon) = await connected();
       store.dispatch(const InsertLibraryItemRequested('std.value.boolean'));
       final s = await store.until((x) => x.editor.pendingRequests == 0);
       final id = s.project!.concepts.single.id.toInt();
       expect((s.editor.selection as ConceptSelected).id, id);
-      expect(s.editor.renaming, NodeRef.concept(id));
+      expect(s.project!.mappings, isEmpty, reason: 'no point, no block');
+      expect(s.editor.renaming, isNull, reason: 'a template is not on the canvas');
       expect(s.editor.layout, isEmpty);
       expect(daemon.requests.where((r) => r.hasSetLayout()), isEmpty);
       await store.dispose();
@@ -637,12 +645,11 @@ void main() {
     final concept = s.project!.concepts.last.id.toInt();
     final mapping = s.project!.mappings.last.id.toInt();
     expect(s.project!.concepts.last.name, 'Temperature');
-    expect(s.editor.layout[NodeRef.concept(concept)], const Offset(300, 100));
-    expect(
-      s.editor.layout[NodeRef.mapping(mapping)],
-      const Offset(300, 100) - const Offset(240, 0),
-    );
-    expect((s.editor.selection as ConceptSelected).id, concept);
+    // the Sem block lands where the designer pointed and is selected; the
+    // concept is its template and takes no place (ADR-0043)
+    expect(s.editor.layout[NodeRef.mapping(mapping)], const Offset(300, 100));
+    expect(s.editor.layout[NodeRef.concept(concept)], isNull);
+    expect((s.editor.selection as MappingSelected).id, mapping);
     // named on the sheet: not opened for renaming
     expect(s.editor.renaming, isNull);
     await store.dispose();

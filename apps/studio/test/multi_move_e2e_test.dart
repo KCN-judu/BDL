@@ -2,9 +2,9 @@
 /// (docs/architecture/studio-ui.md §2, "Interaction"): a window marquee
 /// selects three nodes; the contextual menu on one of them is about all of
 /// them; dragging one moves all three, spacing kept, as one layout write;
-/// a save, a close and a reopen bring the positions back.  Then the
-/// concept-oriented drive: the visible concept dragged onto the sink
-/// connects the one value that can drive it, and the output pass agrees.
+/// a save, a close and a reopen bring the positions back.  Then the drive:
+/// a Sem block dragged onto the sink is the drive edge, and the output
+/// pass agrees; a second one is a conflict the pass reports (ADR-0043).
 @Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
@@ -100,7 +100,6 @@ void main() {
       ),
     );
     await act(const CreateClockDomainRequested('main'));
-    await act(NodeMoved(NodeRef.concept(conceptId('ServoPosition')), const Offset(40, 40)));
     final pos = conceptId('ServoPosition');
     await value('rest', '0 deg', pos, at: const Offset(400, 40));
     await value('lifted', '45 deg', pos, at: const Offset(400, 200));
@@ -185,27 +184,17 @@ void main() {
         }
         expect(s.editor.selection, const NoSelection(), reason: 'selection is editor state');
 
-        // the concept → the sink: three values can drive it, so the choice
-        // is offered; choosing one is the drive, and the pass agrees
+        // a Sem block → the sink is the drive edge (ADR-0043): at once,
+        // and the pass agrees; a second block dropped on the driven sink is
+        // a second drive, which the output pass reports as a conflict
         s = await analysed();
         final servo = s.project!.outputs.single.id.toInt();
         final scene = canvas.scene(s);
-        final conceptOut = scene
-            .socket(NodeRef.concept(conceptId('ServoPosition')), side: SocketSide.output)
+        final liftedOut = scene
+            .socket(NodeRef.mapping(mappingId('lifted')), side: SocketSide.output)
             .center;
         final sinkIn = scene.socket(NodeRef.output(servo), side: SocketSide.input).center;
-        await canvas.drag(conceptOut, sinkIn);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        expect(find.text('Drive with rest'), findsOneWidget);
-        expect(find.text('Drive with lifted'), findsOneWidget);
-        expect(find.text('Drive with parked'), findsOneWidget);
-        expect(
-          s.project!.mappings.any((m) => m.hasDrivesOutputId()),
-          isFalse,
-          reason: 'nothing yet',
-        );
-        await tester.tap(find.text('Drive with lifted'));
+        await canvas.drag(liftedOut, sinkIn);
         s = await canvas.settle(
           store,
           (s) =>
@@ -218,23 +207,19 @@ void main() {
         s = await analysed();
         expect(s.outputAnalysis(servo)!.state, pb.OutputState.OUTPUT_STATE_DRIVEN);
         expect(s.outputAnalysis(servo)!.driver.toInt(), mappingId('lifted'));
-        // a second drop offers replacements only — never a second driver
-        await canvas.drag(conceptOut, sinkIn);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        expect(find.text('Replace lifted with rest'), findsOneWidget);
-        expect(find.text('Drive with rest'), findsNothing);
-        await tester.tap(find.text('Replace lifted with rest'));
+        final restOut = canvas
+            .scene(s)
+            .socket(NodeRef.mapping(mappingId('rest')), side: SocketSide.output)
+            .center;
+        await canvas.drag(restOut, sinkIn);
         s = await canvas.settle(
           store,
           (s) =>
               s.editor.pendingRequests == 0 &&
-              s.project!.mappings.where((m) => m.hasDrivesOutputId()).length == 1 &&
-              s.project!.mappings.singleWhere((m) => m.hasDrivesOutputId()).name == 'rest',
+              s.project!.mappings.where((m) => m.hasDrivesOutputId()).length == 2,
         );
         s = await analysed();
-        expect(s.outputAnalysis(servo)!.state, pb.OutputState.OUTPUT_STATE_DRIVEN);
-        expect(s.outputAnalysis(servo)!.driver.toInt(), mappingId('rest'));
+        expect(s.outputAnalysis(servo)!.state, pb.OutputState.OUTPUT_STATE_CONFLICT);
       } catch (e, st) {
         // ignore: avoid_print
         print('DBG FAIL $e');

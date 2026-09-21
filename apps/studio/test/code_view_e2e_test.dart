@@ -128,8 +128,7 @@ void main() {
         expect(conceptId('Tilt'), tilt, reason: 'identity survives a text edit');
         expect(s.editor.sources.buffer, isNull, reason: 'the typed text is the daemon\'s now');
         expect(s.editor.sources.text, typed);
-        // a rule is a template, not a node of the value graph (ADR-0044):
-        // the layout service places nothing for it
+        // a rule is a template and takes no place (ADR-0044)
         expect(s.editor.layout[NodeRef.mapping(dim.id.toInt())], isNull, reason: 'not a node');
         expect(s.flat!.dirty, isTrue);
 

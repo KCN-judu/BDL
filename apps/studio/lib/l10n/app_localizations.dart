@@ -2061,18 +2061,6 @@ abstract class AppLocalizations {
   /// **'no value yet'**
   String get noValueYet;
 
-  /// Canvas node header word: a defined rule that no value applies (its output socket is hollow).
-  ///
-  /// In en, this message translates to:
-  /// **'not applied'**
-  String get stateNotApplied;
-
-  /// Canvas node accessibility label fragment: a rule no value applies.
-  ///
-  /// In en, this message translates to:
-  /// **'applied by nothing'**
-  String get appliedByNothing;
-
   /// A blocked fix: the service's reason follows.
   ///
   /// In en, this message translates to:
@@ -2379,41 +2367,11 @@ abstract class AppLocalizations {
   /// **'value not decided'**
   String get valueNotDecided;
 
-  /// Studio UI text (node_canvas.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'a quantity'**
-  String get aQuantity;
-
   /// Studio UI text (concept_glyphs.dart).
   ///
   /// In en, this message translates to:
   /// **'on or off'**
   String get onOrOff;
-
-  /// Studio UI text (node_canvas.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'a count'**
-  String get aCount;
-
-  /// Studio UI text (node_canvas.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'a collection'**
-  String get aCollection;
-
-  /// Studio UI text (node_canvas.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'a grouped value'**
-  String get aGroupedValue;
-
-  /// Studio UI text (node_canvas.dart).
-  ///
-  /// In en, this message translates to:
-  /// **'an optional value'**
-  String get anOptionalValue;
 
   /// Studio UI text (concept_glyphs.dart).
   ///
@@ -2564,12 +2522,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'optional'**
   String get stateOptional;
-
-  /// Relationship header word on the canvas: declared, not yet defined.
-  ///
-  /// In en, this message translates to:
-  /// **'declared'**
-  String get stateDeclared;
 
   /// Physical output header word: several relationships claim to drive it.
   ///
@@ -3555,12 +3507,6 @@ abstract class AppLocalizations {
   /// **'External'**
   String get libraryGroupExternal;
 
-  /// Canvas header word for a relationship that reads something (glossary: rule): a function applied by a value's formula, with no value of its own. Shown only when no state word takes the slot.
-  ///
-  /// In en, this message translates to:
-  /// **'rule'**
-  String get ruleWord;
-
   /// Inspector Role row and Simulate probe: a relationship that reads something (glossary: rule).
   ///
   /// In en, this message translates to:
@@ -3597,17 +3543,17 @@ abstract class AppLocalizations {
   /// **'Named in'**
   String get namedIn;
 
-  /// Accessibility fragment of a rule node on the canvas; reads is the list of concept names.
-  ///
-  /// In en, this message translates to:
-  /// **'rule, reads {reads}'**
-  String ruleNodeSemantics(String reads);
-
   /// Accessibility fragment of a computed-value node on the canvas.
   ///
   /// In en, this message translates to:
   /// **'value'**
   String get valueNodeSemantics;
+
+  /// Accessibility label of a mapping block (a Sem block's definition drawn as its own node).
+  ///
+  /// In en, this message translates to:
+  /// **'mapping block of {name}: its definition'**
+  String mappingBlockSemantics(String name);
 
   /// Accessibility fragment of a relationship node: the relationships its formula references.
   ///
@@ -3638,24 +3584,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No value applies it yet.'**
   String get noValueAppliesItYet;
-
-  /// Simulate probe: no unit-domain relationship produces this concept, so it has no value per tick.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing carries {concept} yet: no value or Source produces it.'**
-  String noValueCarries(String concept);
-
-  /// Simulate probe: a rule produces the concept by signature, but only a value gives it a value per tick.
-  ///
-  /// In en, this message translates to:
-  /// **'{rule} is a rule; a value whose formula applies it would carry {concept}.'**
-  String ruleProducesNoValue(String rule, String concept);
-
-  /// Simulate probe caption: the values and Sources that give this concept a value per tick.
-  ///
-  /// In en, this message translates to:
-  /// **'Carried by'**
-  String get carriedBy;
 
   /// Studio UI text (code_pane.dart): the file-bar button asking the daemon for the canonical layout.
   ///
@@ -4329,18 +4257,6 @@ abstract class AppLocalizations {
   /// **'Undo Arrange'**
   String get undoArrange;
 
-  /// Inspector: what a concept → relationship edge means.
-  ///
-  /// In en, this message translates to:
-  /// **'{to} reads {concept}'**
-  String connectionReads(String to, String concept);
-
-  /// Inspector: what a relationship → concept edge means.
-  ///
-  /// In en, this message translates to:
-  /// **'{from} produces {concept}'**
-  String connectionProduces(String from, String concept);
-
   /// Inspector: what a relationship → output edge means.
   ///
   /// In en, this message translates to:
@@ -4353,11 +4269,83 @@ abstract class AppLocalizations {
   /// **'An edge of the collapsed group {group}: it stands for a member\'s connection.'**
   String connectionAggregate(String group);
 
-  /// Inspector: why a produce edge has no Disconnect.
+  /// Canvas menu: a Sem block of a concept at the pointer.
   ///
   /// In en, this message translates to:
-  /// **'A relationship\'s produce edge is its signature\'s output: change the relationship, not the edge.'**
-  String get produceEdgeCannotGoAlone;
+  /// **'Add Block'**
+  String get addBlock;
+
+  /// Canvas menu, under Add Block: a Sem block of this concept.
+  ///
+  /// In en, this message translates to:
+  /// **'of {concept}'**
+  String blockOf(String concept);
+
+  /// Canvas menu, under Add Block: the concept sheet, then a block of the new concept.
+  ///
+  /// In en, this message translates to:
+  /// **'New Concept'**
+  String get newConceptSubmenu;
+
+  /// Accessibility fragment of a Sem block: the rules its definition applies.
+  ///
+  /// In en, this message translates to:
+  /// **'applies {names}'**
+  String appliesList(String names);
+
+  /// Inspector: what a read edge means (a Sem block named by a mapping block's definition).
+  ///
+  /// In en, this message translates to:
+  /// **'{to} reads {from}'**
+  String connectionReadEdge(String to, String from);
+
+  /// Inspector: why a read edge has no Disconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'A read is a name in the block\'s formula: edit the formula to change it.'**
+  String get readEdgeIsAName;
+
+  /// Inspector: the producer of a Sem block with no definition.
+  ///
+  /// In en, this message translates to:
+  /// **'the environment (a Source)'**
+  String get producedByEnvironment;
+
+  /// Inspector label: the rules a block's definition applies.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies'**
+  String get appliesRules;
+
+  /// Inspector label on a concept: the Sem blocks of it.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocks'**
+  String get blocksOfConcept;
+
+  /// Inspector on a concept: none instantiated.
+  ///
+  /// In en, this message translates to:
+  /// **'No block of {name} yet: add one from the canvas menu (Add Block ▸ of {name}).'**
+  String noBlockOfConcept(String name);
+
+  /// Inspector label on a concept: the rules whose signature mentions it.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get rulesOverConcept;
+
+  /// Inspector label on a Sem block: the Sem blocks its definition names.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads'**
+  String get readsLabel;
+
+  /// Inspector label on a Sem block: the blocks whose definitions name it.
+  ///
+  /// In en, this message translates to:
+  /// **'Read by'**
+  String get readBy;
 
   /// Standard Library item (library/std/concepts.toml); generated by scripts/gen_library_l10n.py.
   ///

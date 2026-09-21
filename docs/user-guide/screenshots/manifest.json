@@ -51,10 +51,7 @@
       ],
       "expect": {
         "nodes": [
-          "Tilt",
-          "Brightness",
           "tilt",
-          "dimByTilt",
           "brightness",
           "light"
         ],
@@ -117,16 +114,14 @@
       "steps": [],
       "expect": {
         "nodes": [
-          "Tilt",
-          "Brightness",
-          "dimByTilt"
+          "tilt",
+          "brightness"
         ]
       },
       "crop": {
         "nodes": [
-          "Tilt",
-          "dimByTilt",
-          "Brightness"
+          "tilt",
+          "brightness"
         ],
         "pad": 32
       },
@@ -253,10 +248,7 @@
       "steps": [],
       "expect": {
         "nodes": [
-          "Tilt",
-          "Brightness",
           "tilt",
-          "dimByTilt",
           "brightness",
           "light"
         ],
@@ -264,10 +256,7 @@
       },
       "crop": {
         "nodes": [
-          "Tilt",
-          "Brightness",
           "tilt",
-          "dimByTilt",
           "brightness",
           "light"
         ],
@@ -288,26 +277,20 @@
       "steps": [
         {
           "select": {
-            "mapping": "dimByTilt"
+            "mapping": "brightness"
           }
         }
       ],
       "expect": {
         "nodes": [
-          "Tilt",
-          "Brightness",
           "tilt",
-          "dimByTilt",
           "brightness",
           "light"
         ]
       },
       "crop": {
         "nodes": [
-          "Tilt",
-          "Brightness",
           "tilt",
-          "dimByTilt",
           "brightness",
           "light"
         ],
@@ -328,13 +311,13 @@
       "steps": [
         {
           "expand": {
-            "mapping": "dimByTilt"
+            "mapping": "brightness"
           }
         }
       ],
       "expect": {
         "nodes": [
-          "dimByTilt"
+          "brightness"
         ],
         "texts": [
           "Edit formula"
@@ -342,7 +325,7 @@
       },
       "crop": {
         "nodes": [
-          "dimByTilt"
+          "brightness"
         ],
         "pad": 40
       },
@@ -505,8 +488,6 @@
       "steps": [],
       "expect": {
         "nodes": [
-          "Pressed",
-          "Lit",
           "pressed",
           "lit",
           "lamp"
@@ -515,8 +496,6 @@
       },
       "crop": {
         "nodes": [
-          "Pressed",
-          "Lit",
           "pressed",
           "lit",
           "lamp"
@@ -662,7 +641,6 @@
       "expect": {
         "nodes": [
           "tiltValue",
-          "dimByTilt",
           "brightness"
         ],
         "textsContaining": [
@@ -676,10 +654,7 @@
           },
           {
             "nodes": [
-              "Tilt",
-              "Brightness",
               "tiltValue",
-              "dimByTilt",
               "brightness"
             ],
             "pad": 32
@@ -800,7 +775,6 @@
       "expect": {
         "nodes": [
           "tiltValue",
-          "dimByTilt",
           "brightness",
           "indicator",
           "light"

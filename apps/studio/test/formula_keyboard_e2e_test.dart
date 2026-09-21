@@ -3,7 +3,7 @@
 /// UX tasks of the authoring brief, driven by the keys and the pointer as
 /// a designer would, with the counts a UX comparison reads.
 ///
-///   C. `Brightness = clamp(Tilt / 90 deg, 0, 1)` by keyboard only;
+///   C. `Brightness = clamp(tilt / 90 deg, 0, 1)` by keyboard only;
 ///   E. the same by keyboard and pointer mixed;
 ///   F. a conditional, read back as a branch;
 ///   G. an existing mapping reopened and its formula inspected on the
@@ -125,12 +125,11 @@ void main() {
         representation: pb.Representation(quantity: pb.Dim()),
       ),
     );
+    // Sem blocks (ADR-0043): `tilt : Tilt` a Source, and `dimByTilt :
+    // Brightness` whose mapping block names it.
+    await act(CreateMappingRequested(name: 'tilt', inputs: const [], output: conceptId('Tilt')));
     await act(
-      CreateMappingRequested(
-        name: 'dimByTilt',
-        inputs: [conceptId('Tilt')],
-        output: conceptId('Brightness'),
-      ),
+      CreateMappingRequested(name: 'dimByTilt', inputs: const [], output: conceptId('Brightness')),
     );
     await act(SelectionChanged(MappingSelected(mappingId('dimByTilt'))), (s) => s.analysis != null);
     await tester.pump(const Duration(milliseconds: 100));
@@ -190,7 +189,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('C. Brightness = clamp(Tilt / 90 deg, 0, 1) by keyboard only', (tester) async {
+  testWidgets('C. Brightness = clamp(tilt / 90 deg, 0, 1) by keyboard only', (tester) async {
     if (bdld == null) return;
     await project(tester);
     try {
@@ -215,23 +214,23 @@ void main() {
       await type(tester, id, t, '(');
       expect(store.state.draft(id)!.source, 'clamp(?, ?, ?)');
       expect(store.state.editor.composer.selectedNode, 'r.0');
-      await type(tester, id, t, 'Tilt');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt, ?, ?)');
+      await type(tester, id, t, 'tilt');
+      expect(store.state.draft(id)!.source, 'clamp(tilt, ?, ?)');
       // `/` is structure: the compiler puts the quotient with its slot
       await type(tester, id, t, '/');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / ?, ?, ?)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / ?, ?, ?)');
       await type(tester, id, t, '90');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / 90, ?, ?)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / 90, ?, ?)');
       // a space after a number starts its unit; the unit is typed, the
       // compiler reads `90 deg` as a quantity
       await type(tester, id, t, ' deg');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / 90 deg, ?, ?)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / 90 deg, ?, ?)');
       final quotient = store.state.draft(id)!.projection!.root.children[0];
       expect(quotient.children[1].kind, 'quantity');
       expect(quotient.children[1].unitId, 'angle.deg');
       // `,` moves to the next argument, out of the fraction
       await type(tester, id, t, ',0,1');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / 90 deg, 0, 1)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / 90 deg, 0, 1)');
       final d = store.state.draft(id)!;
       expect(d.analysis!.status, isNot(pb.MappingStatus.MAPPING_STATUS_INVALID));
       expect(d.projection!.complete, isTrue);
@@ -241,7 +240,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
       await settle(tester, (s) => s.mapping(id)!.hasDefinition());
-      expect(store.state.mapping(id)!.definition.formula, 'clamp(Tilt / 90 deg, 0, 1)');
+      expect(store.state.mapping(id)!.definition.formula, 'clamp(tilt / 90 deg, 0, 1)');
       expect(t.modeSwitches, 0);
       expect(t.corrections, 0);
       expect(t.wrongUnit, 0);
@@ -260,8 +259,8 @@ void main() {
       final t = Tally();
       await focusComposer(tester, t);
       // the quotient by keys
-      await type(tester, id, t, 'Tilt/90 deg');
-      expect(store.state.draft(id)!.source, 'Tilt / 90 deg');
+      await type(tester, id, t, 'tilt/90 deg');
+      expect(store.state.draft(id)!.source, 'tilt / 90 deg');
       // the palette wraps it in clamp: select the fraction by its rule,
       // then Function ▸ clamp
       t.pointer++;
@@ -273,20 +272,20 @@ void main() {
       t.pointer++;
       await tester.tap(find.textContaining('clamp(').last);
       await tester.pump();
-      await settle(tester, (s) => s.draft(id)!.source != 'Tilt / 90 deg');
+      await settle(tester, (s) => s.draft(id)!.source != 'tilt / 90 deg');
       await settle(tester, (s) => !s.editor.composer.pendingCompose);
       await read(tester, id);
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / 90 deg, ?, ?)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / 90 deg, ?, ?)');
       // the compiler selected the first new slot and put the caret in it:
       // the keys continue from there
       expect(store.state.editor.composer.selectedNode, 'r.1');
       await type(tester, id, t, '0,1');
-      expect(store.state.draft(id)!.source, 'clamp(Tilt / 90 deg, 0, 1)');
+      expect(store.state.draft(id)!.source, 'clamp(tilt / 90 deg, 0, 1)');
       // Text view shows the same draft, byte for byte
       t.modeSwitches++;
       await tester.tap(find.text('Text'));
       await tester.pump();
-      expect(find.text('clamp(Tilt / 90 deg, 0, 1)'), findsOneWidget);
+      expect(find.text('clamp(tilt / 90 deg, 0, 1)'), findsOneWidget);
       t.modeSwitches++;
       await tester.tap(find.text('Formula'));
       await tester.pump();
@@ -301,7 +300,7 @@ void main() {
       );
       expect(store.state.draft(id), isNull);
       await act(const RedoRequested(), (s) => s.mapping(id)!.hasDefinition());
-      expect(store.state.mapping(id)!.definition.formula, 'clamp(Tilt / 90 deg, 0, 1)');
+      expect(store.state.mapping(id)!.definition.formula, 'clamp(tilt / 90 deg, 0, 1)');
       // ignore: avoid_print
       print('task E (mixed): $t');
     } finally {
@@ -332,14 +331,14 @@ void main() {
       // the condition: Tilt > 45 deg, by keys, from the caret the compiler
       // put in the condition slot
       expect(store.state.editor.composer.selectedNode, 'r.0');
-      await type(tester, id, t, 'Tilt>45 deg');
-      expect(store.state.draft(id)!.source, 'if Tilt > 45 deg then ? else ?');
+      await type(tester, id, t, 'tilt>45 deg');
+      expect(store.state.draft(id)!.source, 'if tilt > 45 deg then ? else ?');
       // Tab to the next slot: the `then` outcome; then the `else`
       await key(tester, id, t, LogicalKeyboardKey.tab);
       await type(tester, id, t, '1');
       await key(tester, id, t, LogicalKeyboardKey.tab);
       await type(tester, id, t, '0');
-      expect(store.state.draft(id)!.source, 'if Tilt > 45 deg then 1 else 0');
+      expect(store.state.draft(id)!.source, 'if tilt > 45 deg then 1 else 0');
       await act(CommitDefinitionRequested(id), (s) => s.mapping(id)!.hasDefinition());
       // ignore: avoid_print
       print('task F (conditional): $t');
@@ -355,9 +354,10 @@ void main() {
       final reopened = mappingId('dimByTilt');
       expect(store.state.editor.expandedFormulas, isEmpty);
       final scene = canvas.scene(store.state);
-      final node = scene.node(NodeRef.mapping(reopened));
+      // the definition is the mapping block's (ADR-0044)
+      final node = scene.node(NodeRef.definition(reopened));
       expect(node.expanded, isFalse);
-      expect(node.definition, 'if Tilt > 45 deg then 1 else 0', reason: 'the collapsed summary');
+      expect(node.definition, 'if tilt > 45 deg then 1 else 0', reason: 'the collapsed summary');
       // the disclosure at the definition line's right end: one click
       await tester.tapAt(canvas.toGlobal(node.disclosure.center));
       final expanded = await settle(
@@ -378,7 +378,7 @@ void main() {
         store.state.project!,
         store.state.editor.layout,
         expanded: store.state.editor.expandedFormulas,
-      ).node(NodeRef.mapping(reopened));
+      ).node(NodeRef.definition(reopened));
       expect(grown.formulaHeight, greaterThan(NodeMetrics.bodyHeight));
       expect(grown.formulaHeight, lessThanOrEqualTo(NodeMetrics.formulaMaxHeight));
       // the picture stays while the designer navigates: select a concept

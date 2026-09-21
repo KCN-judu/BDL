@@ -1,12 +1,11 @@
-/// Concept → Output as an authoring gesture (docs/architecture/studio-ui.md
-/// §2, "Concept → Output"): the designer drags the visible concept onto the
-/// sink that accepts it; the edit is the driver's.  One eligible driver
-/// connects; several are offered by name, never chosen; none is explained
-/// at the pointer; a driven sink is offered a replacement, never a second
-/// driver.  Candidates come from the projection the daemon sent — role,
-/// exact concept, domain, drives — and the direct Mapping → Output drag is
-/// what it was.  Nothing here touches the kernel: every dispatch is the
-/// existing `SetMappingDrive`.
+/// Driving a sink (ADR-0043): the driver is a Sem block, and the gesture is
+/// the Sem block's output socket dropped on the sink accepting its concept
+/// — the drive edge, `SetMappingDrive`.  The sink's inspector still offers
+/// the eligible drivers by name (`driveCandidates`: a value or Source
+/// producing exactly the concept, in the sink's domain, not driving another
+/// sink), read off the projection the daemon sent.  With the concept node
+/// gone (a concept is a template), the former Concept → Output authoring
+/// gesture has no socket to start from; nothing here touches the kernel.
 library;
 
 import 'package:bdl_studio/app/actions.dart';
@@ -99,15 +98,10 @@ pb.ProjectProjection design({List<pb.MappingView>? mappings, int? servoDriver}) 
       ],
     );
 
-const cServo = NodeRef.concept(servoPosition);
-const cOther = NodeRef.concept(otherPosition);
 const oServo = NodeRef.output(servo);
 const oLamp = NodeRef.output(lamp);
 
 final layout = <NodeRef, Offset>{
-  cServo: const Offset(40, 40),
-  cOther: const Offset(40, 100),
-  const NodeRef.concept(brightness): const Offset(40, 160),
   const NodeRef.mapping(servoValue): const Offset(320, 40),
   const NodeRef.mapping(altServo): const Offset(320, 160),
   const NodeRef.mapping(posRule): const Offset(320, 280),
@@ -212,28 +206,20 @@ void main() {
   });
 
   group('geometry', () {
-    test('A/E/F: the concept\'s value socket targets the sink accepting it, and no other', () {
+    test('a Sem block\'s output targets the sink accepting its concept, and no other', () {
       final scene = buildScene(design(), layout);
-      final servoOut = scene.socket(cServo, side: SocketSide.output).ref;
-      final otherOut = scene.socket(cOther, side: SocketSide.output).ref;
+      final servoOut = scene.socket(const NodeRef.mapping(servoValue), side: SocketSide.output).ref;
+      final otherOut = scene.socket(const NodeRef.mapping(otherValue), side: SocketSide.output).ref;
       final servoIn = scene.socket(oServo, side: SocketSide.input).ref;
       final lampIn = scene.socket(oLamp, side: SocketSide.input).ref;
-      expect(isAuthoringTarget(servoOut, servoIn), isTrue);
-      expect(isAuthoringTarget(otherOut, servoIn), isFalse, reason: 'another identity');
-      expect(isAuthoringTarget(servoOut, lampIn), isFalse, reason: 'another concept');
-      // K: the model's own link rule is untouched — a concept never links a sink
-      expect(canLink(servoOut, servoIn), isFalse);
-      // the eligible sink lights up while the concept is dragged
+      expect(canLink(servoOut, servoIn), isTrue);
+      expect(canLink(otherOut, servoIn), isFalse, reason: 'another identity');
+      expect(canLink(servoOut, lampIn), isFalse, reason: 'another concept');
       expect(compatibleSockets(scene, servoOut), contains(servoIn));
       expect(compatibleSockets(scene, servoOut), isNot(contains(lampIn)));
-      expect(
-        dropTarget(scene, servoOut, scene.socket(oServo, side: SocketSide.input).center)?.ref,
-        servoIn,
-      );
-      expect(
-        dropTarget(scene, servoOut, scene.socket(oLamp, side: SocketSide.input).center),
-        isNull,
-      );
+      // no concept node, no rule node: a template is not on the canvas
+      expect(scene.nodes.where((n) => n.ref.kind == NodeKind.concept), isEmpty);
+      expect(scene.nodes.where((n) => n.ref == const NodeRef.mapping(posRule)), isEmpty);
     });
   });
 
@@ -241,79 +227,7 @@ void main() {
     Offset socketAt(pb.ProjectProjection p, NodeRef n, SocketSide side) =>
         buildScene(p, layout).socket(n, side: side).center;
 
-    testWidgets('B: one eligible producer resolves to that driver, at once', (t) async {
-      final p = design(mappings: [valueOf(servoValue, 'servoValue', servoPosition, clock: main_)]);
-      final actions = await pumpCanvas(t, p);
-      await drag(t, socketAt(p, cServo, SocketSide.output), socketAt(p, oServo, SocketSide.input));
-      final drive = actions.whereType<SetMappingDriveRequested>().single;
-      expect(drive.mappingId, servoValue);
-      expect(drive.outputId, servo);
-      expect(menuLabels(t), isEmpty, reason: 'nothing to choose');
-    });
-
-    testWidgets('C: several producers open the chooser by name; nothing is chosen for the '
-        'designer; the choice is the drive', (t) async {
-      final p = design();
-      final actions = await pumpCanvas(t, p);
-      await drag(t, socketAt(p, cServo, SocketSide.output), socketAt(p, oServo, SocketSide.input));
-      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
-      final labels = menuLabels(t).toList();
-      expect(labels, ['Drive with servoValue', 'Drive with altServo']);
-      expect(labels.join(), isNot(contains('offDomain')), reason: 'G: another domain');
-      expect(labels.join(), isNot(contains('posRule')), reason: 'a rule is not a value');
-      await t.tap(menuItem('Drive with altServo'));
-      await t.pump();
-      final drive = actions.whereType<SetMappingDriveRequested>().single;
-      expect(drive.mappingId, altServo);
-      expect(drive.outputId, servo);
-    });
-
-    testWidgets('D: no producer: the notice names the sink and the concept, nothing is made', (
-      t,
-    ) async {
-      final p = design(mappings: [valueOf(otherValue, 'otherValue', otherPosition, clock: main_)]);
-      final actions = await pumpCanvas(t, p);
-      await drag(t, socketAt(p, cServo, SocketSide.output), socketAt(p, oServo, SocketSide.input));
-      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
-      expect(
-        menuLabels(t),
-        contains('Servo accepts ServoPosition, but no current relationship can drive it.'),
-      );
-      // the way on: the sink in the inspector
-      await t.tap(menuItem('Show Servo in the Inspector'));
-      await t.pump();
-      expect(actions.whereType<SelectionChanged>().last.selection, const OutputSelected(servo));
-    });
-
-    testWidgets('E/F: a concept the sink does not accept is refused at the pointer', (t) async {
-      final p = design();
-      final actions = await pumpCanvas(t, p);
-      await drag(t, socketAt(p, cOther, SocketSide.output), socketAt(p, oServo, SocketSide.input));
-      await drag(t, socketAt(p, cServo, SocketSide.output), socketAt(p, oLamp, SocketSide.input));
-      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
-      expect(menuLabels(t), isEmpty);
-    });
-
-    testWidgets('H/I: a driven sink is offered a replacement, never a second driver', (t) async {
-      final p = design(servoDriver: servo);
-      final actions = await pumpCanvas(t, p);
-      await drag(t, socketAt(p, cServo, SocketSide.output), socketAt(p, oServo, SocketSide.input));
-      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
-      expect(menuLabels(t).toList(), ['Replace servoValue with altServo']);
-      await t.tap(menuItem('Replace servoValue with altServo'));
-      await t.pump();
-      expect(
-        actions.whereType<SetMappingDriveRequested>(),
-        isEmpty,
-        reason: 'never a second driver',
-      );
-      final replace = actions.whereType<ReplaceDriverRequested>().single;
-      expect(replace.from, servoValue, reason: 'the old driver lets go first');
-      expect(replace.to, altServo);
-      expect(replace.outputId, servo);
-    });
-
-    testWidgets('J: the direct Mapping → Output drag is what it was', (t) async {
+    testWidgets('the Sem block → Output drag is the drive edge, at once', (t) async {
       final p = design();
       final actions = await pumpCanvas(t, p);
       await drag(
@@ -324,6 +238,18 @@ void main() {
       final drive = actions.whereType<SetMappingDriveRequested>().single;
       expect(drive.mappingId, altServo);
       expect(drive.outputId, servo);
+      expect(menuLabels(t), isEmpty);
+    });
+
+    testWidgets('a Sem block of another concept is refused at the sink', (t) async {
+      final p = design();
+      final actions = await pumpCanvas(t, p);
+      await drag(
+        t,
+        socketAt(p, const NodeRef.mapping(otherValue), SocketSide.output),
+        socketAt(p, oServo, SocketSide.input),
+      );
+      expect(actions.whereType<SetMappingDriveRequested>(), isEmpty);
       expect(menuLabels(t), isEmpty);
     });
   });

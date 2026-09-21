@@ -299,24 +299,25 @@ void main() {
   });
 
   group('canvas', () {
-    test('a Source node: no input sockets, one output socket, the source cue, not declared', () {
-      final scene = buildScene(design(), const {});
-      final src = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(tiltSensor));
-      expect(src.source, isTrue);
-      expect(src.declared, isFalse, reason: 'nothing is missing');
-      expect(src.sockets.where((s) => s.ref.side == SocketSide.input), isEmpty);
-      expect(src.sockets.where((s) => s.ref.side == SocketSide.output), hasLength(1));
-      // the unit is never a port: nothing is labelled "()"
-      expect(src.socketLabels.values, isNot(contains('()')));
-      expect(src.definition, isNull);
+    test(
+      'a Source node: no input sockets, one output socket, the source cue; a rule is no node',
+      () {
+        final scene = buildScene(design(), const {});
+        final src = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(tiltSensor));
+        expect(src.source, isTrue);
+        expect(src.sockets.where((s) => s.ref.side == SocketSide.input), isEmpty);
+        expect(src.sockets.where((s) => s.ref.side == SocketSide.output), hasLength(1));
+        // the unit is never a port: nothing is labelled "()"
+        expect(src.socketLabels.values, isNot(contains('()')));
+        expect(src.definition, isNull);
 
-      final resolved = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(pulse));
-      expect(resolved.source, isFalse);
-      expect(resolved.declared, isFalse);
-      final declared = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(dimByTilt));
-      expect(declared.source, isFalse);
-      expect(declared.declared, isTrue);
-    });
+        final resolved = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(pulse));
+        expect(resolved.source, isFalse);
+        // a rule is a template (ADR-0043): the Project list and the inspector
+        // hold it, the value graph does not draw it
+        expect(scene.nodes.where((n) => n.ref == const NodeRef.mapping(dimByTilt)), isEmpty);
+      },
+    );
 
     test('inside a component a port-backed () -> A keeps its port role on the canvas', () {
       final scene = buildScene(
@@ -376,7 +377,9 @@ void main() {
       final scene = buildScene(base, const {}, system: SystemSceneInput(system: sys));
       final n = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(tiltSensor));
       expect(n.source, isFalse);
-      expect(n.definition, '= pulse');
+      final realise = n.sockets.firstWhere((s) => s.ref.role == SocketRole.realise);
+      expect(realise.open, isFalse, reason: 'realised: the socket is filled');
+      expect(scene.links.any((l) => l.to == realise.ref && l.binding != null), isTrue);
     });
   });
 
@@ -518,11 +521,13 @@ void main() {
           outcome: pb.EditOutcome(createdConcept: Int64(10), createdMapping: Int64(11)),
         ),
       );
-      expect(t.state.editor.layout[const NodeRef.concept(10)], const Offset(300, 100));
-      expect(t.state.editor.layout[const NodeRef.mapping(11)], const Offset(60, 100));
+      // the block lands where the designer pointed (ADR-0043); the concept
+      // is its template and takes no place
+      expect(t.state.editor.layout[const NodeRef.mapping(11)], const Offset(300, 100));
+      expect(t.state.editor.layout[const NodeRef.concept(10)], isNull);
       // named on the sheet: selected, not opened for renaming
       expect(t.state.editor.renaming, isNull);
-      expect(t.state.editor.selection, const ConceptSelected(10));
+      expect(t.state.editor.selection, const MappingSelected(11));
       expect(relationshipRole(of(next, 11)), RelationshipRole.source);
     });
 

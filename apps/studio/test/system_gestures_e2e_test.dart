@@ -83,7 +83,13 @@ void main() {
       );
       await act(CommitDefinitionRequested(id), (s) => s.committedDefinition(id) == formula);
     }
-    await act(NodeMoved(NodeRef.mapping(id), at));
+    // the Sem block, with its mapping block beside it (ADR-0044)
+    await act(
+      NodesMoved({
+        NodeRef.mapping(id): at,
+        if (formula != null) NodeRef.definition(id): attachedBlockPosition(at),
+      }),
+    );
   }
 
   Future<void> project(WidgetTester tester) async {
@@ -120,21 +126,14 @@ void main() {
     );
     await act(const CreateClockDomainRequested('main'));
     await act(const CreateClockDomainRequested('aux'));
-    await act(NodeMoved(NodeRef.concept(conceptId('Tilt')), const Offset(40, 40)));
-    await act(NodeMoved(NodeRef.concept(conceptId('Brightness')), const Offset(40, 140)));
     final tilt = conceptId('Tilt');
     final level = conceptId('Brightness');
     await mapping(tester, 'raw', null, tilt, at: const Offset(400, 40));
     await mapping(tester, 'tiltValue', 'raw', tilt, at: const Offset(400, 400));
-    await mapping(
-      tester,
-      'dimByTilt',
-      'Tilt / 90 deg',
-      level,
-      inputs: [tilt],
-      at: const Offset(700, 40),
-    );
-    await mapping(tester, 'brightness', 'dimByTilt(tiltValue)', level, at: const Offset(700, 200));
+    // Sem blocks (ADR-0043): dimByTilt reads tiltValue by name; brightness
+    // reads dimByTilt.  A rule template would not be a node to box-select.
+    await mapping(tester, 'dimByTilt', 'tiltValue / 90 deg', level, at: const Offset(700, 40));
+    await mapping(tester, 'brightness', 'dimByTilt', level, at: const Offset(700, 200));
     await mapping(tester, 'indicator', 'brightness', level, at: const Offset(1000, 40));
     await mapping(tester, 'extra', 'brightness', level, at: const Offset(1000, 300));
     await mapping(tester, 'mirror', null, level, at: const Offset(1300, 40));
@@ -442,24 +441,31 @@ void main() {
         );
         expect(viaProxy.source.hasBaseDecl(), isTrue);
         expect(viaProxy.source.baseDecl.toInt(), mappingId('consumerA'));
-        // input proxy: Tilt dragged onto the box resolves to the one reader of tiltValue
+        // input proxy: the aggregate input stands for consumerA's read of
+        // tiltValue — a name in its formula (ADR-0043): a Sem block dropped
+        // on it reaches no socket that takes a link, and nothing changes
+        final aBefore = s.project!.mappings
+            .firstWhere((m) => m.name == 'consumerA')
+            .writeToBuffer();
         final bBefore = s.project!.mappings
             .firstWhere((m) => m.name == 'consumerB')
             .writeToBuffer();
-        final tiltOut = canvas.scene(s).socket(NodeRef.concept(tilt), side: SocketSide.output);
+        final rawOut = canvas
+            .scene(s)
+            .socket(NodeRef.mapping(mappingId('raw')), side: SocketSide.output);
         final aggInNow = canvas
             .scene(s)
             .node(NodeRef.group(readers.id.toInt()))
             .sockets
             .firstWhere((x) => x.ref.side == SocketSide.input);
-        await canvas.drag(tiltOut.center, aggInNow.center);
-        s = await canvas.settle(
-          store,
-          (s) =>
-              s.editor.pendingRequests == 0 &&
-              s.mapping(mappingId('consumerA'))!.signature.inputs.isNotEmpty,
+        await canvas.drag(rawOut.center, aggInNow.center);
+        await tester.pump(const Duration(milliseconds: 100));
+        s = store.state;
+        expect(s.editor.pendingRequests, 0);
+        expect(
+          s.project!.mappings.firstWhere((m) => m.name == 'consumerA').writeToBuffer(),
+          aBefore,
         );
-        expect(s.mapping(mappingId('consumerA'))!.signature.inputs.map((i) => i.toInt()), [tilt]);
         expect(
           s.project!.mappings.firstWhere((m) => m.name == 'consumerB').writeToBuffer(),
           bBefore,

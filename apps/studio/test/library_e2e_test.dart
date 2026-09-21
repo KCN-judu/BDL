@@ -81,37 +81,66 @@ void main() {
           presetId: 'std.quantity.temperature',
         ),
       );
-      await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 1);
+      await store.until(
+        (s) =>
+            s.editor.pendingRequests == 0 &&
+            s.project!.concepts.length == 1 &&
+            s.project!.mappings.length == 1,
+      );
       final first = store.state.project!.concepts.single;
       expect(first.name, 'RoomTemperature');
-      expect(store.state.revision, fresh + 1, reason: 'one ordinary edit');
+      // from the canvas: the concept and a Sem block of it, one transaction
+      // (ADR-0043); the block lands at the point, selected, named after it
+      final firstBlock = store.state.project!.mappings.single;
+      expect(firstBlock.name, 'roomTemperature');
+      expect(firstBlock.signature.output, first.id);
+      expect(store.state.revision, fresh + 1, reason: 'one transaction, one revision');
       expect(store.state.editor.conceptSheet, isNull);
       expect(store.state.editor.renaming, isNull, reason: 'named on the sheet');
-      expect(store.state.editor.selection, ConceptSelected(first.id.toInt()));
-      expect(store.state.editor.layout[NodeRef.concept(first.id.toInt())], const Offset(40, 40));
+      expect(store.state.editor.selection, MappingSelected(firstBlock.id.toInt()));
+      expect(
+        store.state.editor.layout[NodeRef.mapping(firstBlock.id.toInt())],
+        const Offset(40, 40),
+      );
       expect(store.state.editor.recentTemplates, ['std.quantity.temperature']);
       // the legacy item path (an older client, a third-party library):
       // the category's default name, then create-then-rename
       store.dispatch(
         const InsertLibraryItemRequested('std.quantity.temperature', position: Offset(40, 200)),
       );
-      await store.until((s) => s.editor.pendingRequests == 0 && s.project!.concepts.length == 2);
+      await store.until(
+        (s) =>
+            s.editor.pendingRequests == 0 &&
+            s.project!.concepts.length == 2 &&
+            s.project!.mappings.length == 2,
+      );
       final second = store.state.project!.concepts.firstWhere((c) => c.id != first.id);
       expect(second.name, 'Temperature', reason: 'the category\'s default name');
-      expect(store.state.editor.renaming, NodeRef.concept(second.id.toInt()));
+      // the item made the template; a block of it followed and lands at
+      // the point, open for naming (the template keeps the category's name)
+      final secondBlock = store.state.project!.mappings.firstWhere((m) => m.id != firstBlock.id);
+      expect(secondBlock.signature.output, second.id);
+      expect(store.state.editor.renaming, NodeRef.mapping(secondBlock.id.toInt()));
       store.dispatch(
-        InlineRenameFinished(NodeRef.concept(second.id.toInt()), name: 'MotorTemperature'),
+        InlineRenameFinished(NodeRef.mapping(secondBlock.id.toInt()), name: 'motorTemperature'),
       );
       await store.until((s) => s.editor.pendingRequests == 0);
 
       final concepts = store.state.project!.concepts;
-      expect(concepts.map((c) => c.name), containsAll(['RoomTemperature', 'MotorTemperature']));
+      expect(concepts.map((c) => c.name), containsAll(['RoomTemperature', 'Temperature']));
       expect(concepts[0].id, isNot(concepts[1].id));
       for (final c in concepts) {
         expect(c.representation.quantity, pb.Dim(temperature: 1));
       }
       expect(second.description, temperature.description);
-      expect(store.state.editor.layout[NodeRef.concept(second.id.toInt())], const Offset(40, 200));
+      expect(
+        store.state.project!.mappings.map((m) => m.name),
+        containsAll(['roomTemperature', 'motorTemperature']),
+      );
+      expect(
+        store.state.editor.layout[NodeRef.mapping(secondBlock.id.toInt())],
+        const Offset(40, 200),
+      );
 
       // Saved and reopened without any library lookup: names, identities,
       // representations all come from the project.
@@ -123,7 +152,7 @@ void main() {
       await store.until((s) => s.project != null && s.editor.pendingRequests == 0);
       final reopened = store.state.project!.concepts;
       expect(reopened.map((c) => c.id), containsAll(concepts.map((c) => c.id)));
-      expect(reopened.map((c) => c.name), containsAll(['RoomTemperature', 'MotorTemperature']));
+      expect(reopened.map((c) => c.name), containsAll(['RoomTemperature', 'Temperature']));
       for (final c in reopened) {
         expect(c.representation.quantity, pb.Dim(temperature: 1));
       }
@@ -228,9 +257,8 @@ void main() {
       final input = s.project!.mappings.firstWhere((m) => m.name == 'humidityInput');
       expect(input.signature.output, humidity.id);
       expect(relationshipRole(input), RelationshipRole.source);
-      expect(s.editor.layout[NodeRef.concept(humidity.id.toInt())], const Offset(400, 200));
-      expect(s.editor.layout[NodeRef.mapping(input.id.toInt())], const Offset(160, 200));
-      expect((s.editor.selection as ConceptSelected).id, humidity.id.toInt());
+      expect(s.editor.layout[NodeRef.mapping(input.id.toInt())], const Offset(400, 200));
+      expect((s.editor.selection as MappingSelected).id, input.id.toInt());
       expect(s.editor.renaming, isNull, reason: 'named on the sheet');
       store.dispatch(const UndoRequested());
       s = await store.until(

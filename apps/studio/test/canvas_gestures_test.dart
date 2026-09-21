@@ -73,8 +73,6 @@ pb.BehaviorGroupBoundaryView boundary() => pb.BehaviorGroupBoundaryView(
 );
 
 final layout = <NodeRef, Offset>{
-  const NodeRef.concept(tilt): const Offset(20, 20),
-  const NodeRef.concept(level): const Offset(20, 100),
   const NodeRef.mapping(tiltValue): const Offset(300, 20),
   const NodeRef.mapping(a): const Offset(600, 20),
   const NodeRef.mapping(b): const Offset(600, 160),
@@ -244,7 +242,12 @@ void main() {
         actions.clear();
         final bHeader = scene.node(const NodeRef.mapping(b)).header.center;
         await drag(tester, bHeader, bHeader + const Offset(0, 500));
-        expect(actions.whereType<NodeMoved>(), hasLength(1));
+        // B and its mapping block move as one declaration (ADR-0044)
+        final moved = actions.whereType<NodesMoved>().single;
+        expect(moved.positions.keys.toSet(), {
+          const NodeRef.mapping(b),
+          const NodeRef.definition(b),
+        });
         final removed = actions.whereType<RemoveGroupMemberRequested>().single;
         expect(removed.group, groupId);
         expect(removed.decl, b);
@@ -329,22 +332,22 @@ void main() {
         final link = actions.whereType<LinkEndsRequested>().single;
         expect(link.source.hasBaseDecl(), isTrue);
         expect(link.source.baseDecl.toInt(), a, reason: 'the concrete member, not the group');
-        // in: the Tilt concept dropped on the box reaches A (the one reader), never B
+        // in: the aggregate input stands for A's read of tiltValue — a name
+        // in A's formula (ADR-0043): a Sem block dropped on it reaches no
+        // socket that takes a link, and nothing is made
         actions.clear();
-        final tiltOut = scene
-            .node(const NodeRef.concept(tilt))
+        final bOut = scene
+            .node(const NodeRef.mapping(follower))
             .sockets
             .firstWhere((s) => s.ref.side == SocketSide.output);
-        await drag(tester, tiltOut.center, aggIn.center);
-        final read = actions.whereType<LinkConceptToMappingInput>().single;
-        expect(read.mappingId, a);
-        expect(read.conceptId, tilt);
-        expect(actions.where((x) => x is LinkConceptToMappingInput && x.mappingId == b), isEmpty);
-        // and the reverse: dragging a link *from* the aggregate input toward
-        // the concept makes nothing (an input socket is not a source)
+        await drag(tester, bOut.center, aggIn.center);
+        expect(actions.whereType<WireSemBlockRequested>(), isEmpty);
+        expect(actions.whereType<LinkEndsRequested>(), isEmpty);
+        // and the reverse: dragging a link *from* the aggregate input
+        // toward a block makes nothing (an input socket is not a source)
         actions.clear();
-        await drag(tester, aggIn.center, tiltOut.center);
-        expect(actions.whereType<LinkConceptToMappingInput>(), isEmpty);
+        await drag(tester, aggIn.center, bOut.center);
+        expect(actions.whereType<WireSemBlockRequested>(), isEmpty);
         expect(actions.whereType<LinkEndsRequested>(), isEmpty);
       },
     );

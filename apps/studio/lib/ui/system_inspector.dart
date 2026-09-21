@@ -530,9 +530,9 @@ class BindingInspector extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 /// What one edge means, in the designer's words, and the one thing that
-/// can be done to it on its own.  Says nothing the model does not: a
-/// produce edge and a collapsed group's edges get a sentence, not a
-/// button (the producer question is under formal audit).
+/// can be done to it on its own (ADR-0043).  A drive edge can be taken
+/// away; a read edge is a name in the reading block's formula and gets a
+/// sentence, not a button; a collapsed group's edges are a picture.
 class LinkInspector extends StatelessWidget {
   const LinkInspector({super.key, required this.state, required this.link, required this.dispatch});
   final AppState state;
@@ -547,16 +547,13 @@ class LinkInspector extends StatelessWidget {
     final body = TextStyle(fontSize: MacType.body, color: t.textPrimary);
     final from = nodeName(state, link.from);
     final to = nodeName(state, link.to);
-    final concept = nodeName(state, NodeRef(NodeKind.concept, link.concept));
     final aggregate = link.from.kind == NodeKind.group || link.to.kind == NodeKind.group;
-    final produce = link.from.kind == NodeKind.mapping && link.to.kind == NodeKind.concept;
+    final read = !aggregate && link.to.kind == NodeKind.mapping;
     final meaning = aggregate
         ? l10n.connectionAggregate(link.from.kind == NodeKind.group ? from : to)
         : link.to.kind == NodeKind.output
         ? l10n.connectionDrives(from, to)
-        : produce
-        ? l10n.connectionProduces(from, concept)
-        : l10n.connectionReads(to, concept);
+        : l10n.connectionReadEdge(to, from);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -572,7 +569,7 @@ class LinkInspector extends StatelessWidget {
               child: Text(to, style: body),
             ),
             Text(meaning, style: small),
-            if (produce) Text(l10n.produceEdgeCannotGoAlone, style: small),
+            if (read) Text(l10n.readEdgeIsAName, style: small),
             if (link.disconnectable) ...[
               const SizedBox(height: 8),
               MacButton(

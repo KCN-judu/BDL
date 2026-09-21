@@ -9,15 +9,20 @@
       "id": 0,
       "file": "src/main.bdl"
     },
-    "mapping:dimByTilt": {
-      "id": 0,
+    "mapping:brightness": {
+      "id": 2,
       "file": "src/main.bdl",
-      "shape": "1"
+      "shape": "0"
+    },
+    "mapping:tilt": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "0"
     }
   },
   "base_ids": {
     "next_semantic": 2,
-    "next_decl": 1,
+    "next_decl": 3,
     "next_clock": 0,
     "next_output": 0,
     "next_device": 0
