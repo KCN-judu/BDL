@@ -1869,6 +1869,11 @@ pub enum ComposeOp {
     /// definition, never a signature edit.  Refused when the formula does
     /// not name the declaration.
     Unreference { decl: DeclId },
+    /// The first slot becomes a reference to the Sem block `decl`: the
+    /// canvas's drop of a Sem block onto a mapping block (ADR-0044) — a
+    /// text edit of the definition.  Refused when the formula has no slot
+    /// to fill.
+    Read { decl: DeclId },
     /// A literal's coordinate: the same unit, another quantity.
     SetCoordinate { node: String, text: String },
     /// The node becomes a slot again; a slot that is an operand of `+ - *
@@ -2084,6 +2089,29 @@ pub fn compose(
     if let ComposeOp::Unreference { decl } = op {
         return unreference(&root, design, ir, block, source, &base, empty, *decl);
     }
+    // a read fills the first slot with the Sem block's name
+    let read_fill;
+    let op = if let ComposeOp::Read { decl } = op {
+        let Some(sem) = design.mappings.get(decl) else {
+            return Err(QueryError::UnknownEntity {
+                entity: EntityRef::Mapping(*decl),
+            });
+        };
+        let mut slots = Vec::new();
+        root.slots(&mut slots);
+        let Some(first) = slots.first() else {
+            return Err(QueryError::NotApplicable {
+                reason: "the definition has no slot to fill; edit it as text".into(),
+            });
+        };
+        read_fill = ComposeOp::Fill {
+            node: first.clone(),
+            text: sem.name.clone(),
+        };
+        &read_fill
+    } else {
+        op
+    };
     let node_id = match op {
         ComposeOp::Fill { node, .. }
         | ComposeOp::Operator { node, .. }
@@ -2096,7 +2124,9 @@ pub fn compose(
         | ComposeOp::Insert { node, .. }
         | ComposeOp::Choose { node }
         | ComposeOp::Apply { node } => node.as_str(),
-        ComposeOp::Unreference { .. } => unreachable!("handled above"),
+        ComposeOp::Unreference { .. } | ComposeOp::Read { .. } => {
+            unreachable!("handled above")
+        }
     };
     let Some(node) = root.find(node_id) else {
         return Err(QueryError::NotApplicable {
@@ -2138,7 +2168,9 @@ pub fn compose(
         }
     };
     let (range, new_text): (TextRange, String) = match op {
-        ComposeOp::Unreference { .. } => unreachable!("handled above"),
+        ComposeOp::Unreference { .. } | ComposeOp::Read { .. } => {
+            unreachable!("handled above")
+        }
         ComposeOp::Fill { text, .. } => {
             let text = text.trim();
             (

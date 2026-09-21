@@ -151,6 +151,37 @@ fn a_read_edge_is_taken_away_by_a_text_edit_that_leaves_a_slot() {
     );
 }
 
+/// A Sem block dropped on a mapping block fills the definition's first
+/// slot with its name; a definition without a slot refuses the drop.
+#[test]
+fn a_sem_block_dropped_on_a_mapping_block_fills_its_first_slot() {
+    let p = picture();
+    let mut host = IdeHost::new(p.snapshot.clone());
+    let r = compose(
+        &host.snapshot(),
+        p.lit,
+        "litRule(?)",
+        &ComposeOp::Read { decl: p.pressed_b },
+    )
+    .expect("compose");
+    assert_eq!(r.source, "litRule(pressedB)");
+    let r = compose(
+        &host.snapshot(),
+        p.lit,
+        "",
+        &ComposeOp::Read { decl: p.pressed },
+    )
+    .expect("compose");
+    assert_eq!(r.source, "pressed");
+    assert!(compose(
+        &host.snapshot(),
+        p.lit,
+        "litRule(pressed)",
+        &ComposeOp::Read { decl: p.pressed_b },
+    )
+    .is_err());
+}
+
 /// A new Sem block of a concept already carried by others changes no
 /// verdict (FV `new_sem_transparent`).
 #[test]

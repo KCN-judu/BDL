@@ -270,6 +270,9 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
         Action::Unreference(decl) => ComposeOp::Unreference {
             decl: bdl_model::DeclId::from_raw(*decl),
         },
+        Action::Read(decl) => ComposeOp::Read {
+            decl: bdl_model::DeclId::from_raw(*decl),
+        },
     })
 }
 

@@ -1384,6 +1384,11 @@ message ComposeAction {
     // edit of the definition.  `node_id` is ignored.  Refused when the
     // formula does not name the declaration.
     uint64 unreference = 13;
+    // Read (0.30, ADR-0044): the definition's first slot becomes a
+    // reference to the Sem block — the canvas's drop of a Sem block onto
+    // a mapping block, a text edit of the definition.  `node_id` is
+    // ignored.  Refused when the formula has no slot.
+    uint64 read = 14;
   }
 }
 

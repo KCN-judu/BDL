@@ -13485,6 +13485,7 @@ enum ComposeAction_Action {
   insert,
   apply,
   unreference,
+  read,
   notSet
 }
 
@@ -13503,6 +13504,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     ComposeInsert? insert,
     Unit? apply,
     $fixnum.Int64? unreference,
+    $fixnum.Int64? read,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -13518,6 +13520,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (insert != null) result.insert = insert;
     if (apply != null) result.apply = apply;
     if (unreference != null) result.unreference = unreference;
+    if (read != null) result.read = read;
     return result;
   }
 
@@ -13543,12 +13546,13 @@ class ComposeAction extends $pb.GeneratedMessage {
     11: ComposeAction_Action.insert,
     12: ComposeAction_Action.apply,
     13: ComposeAction_Action.unreference,
+    14: ComposeAction_Action.read,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -13566,6 +13570,8 @@ class ComposeAction extends $pb.GeneratedMessage {
         subBuilder: ComposeInsert.$_createMessage)
     ..aOM<Unit>(12, _omitFieldNames ? '' : 'apply', subBuilder: Unit.$_createMessage)
     ..a<$fixnum.Int64>(13, _omitFieldNames ? '' : 'unreference', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(14, _omitFieldNames ? '' : 'read', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
@@ -13601,6 +13607,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -13614,6 +13621,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
   @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -13772,6 +13780,19 @@ class ComposeAction extends $pb.GeneratedMessage {
   $core.bool hasUnreference() => $_has(12);
   @$pb.TagNumber(13)
   void clearUnreference() => $_clearField(13);
+
+  /// Read (0.30, ADR-0044): the definition's first slot becomes a
+  /// reference to the Sem block — the canvas's drop of a Sem block onto
+  /// a mapping block, a text edit of the definition.  `node_id` is
+  /// ignored.  Refused when the formula has no slot.
+  @$pb.TagNumber(14)
+  $fixnum.Int64 get read => $_getI64(13);
+  @$pb.TagNumber(14)
+  set read($fixnum.Int64 value) => $_setInt64(13, value);
+  @$pb.TagNumber(14)
+  $core.bool hasRead() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearRead() => $_clearField(14);
 }
 
 class ComposeBinder extends $pb.GeneratedMessage {

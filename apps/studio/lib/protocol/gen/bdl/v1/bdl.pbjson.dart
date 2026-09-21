@@ -4341,6 +4341,7 @@ const ComposeAction$json = {
     {'1': 'insert', '3': 11, '4': 1, '5': 11, '6': '.bdl.v1.ComposeInsert', '9': 0, '10': 'insert'},
     {'1': 'apply', '3': 12, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'apply'},
     {'1': 'unreference', '3': 13, '4': 1, '5': 4, '9': 0, '10': 'unreference'},
+    {'1': 'read', '3': 14, '4': 1, '5': 4, '9': 0, '10': 'read'},
   ],
   '8': [
     {'1': 'action'},
@@ -4358,7 +4359,8 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlEiYKBmNob2'
         '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZRIvCgZpbnNlcnQYCyABKAsyFS5iZGwu'
         'djEuQ29tcG9zZUluc2VydEgAUgZpbnNlcnQSJAoFYXBwbHkYDCABKAsyDC5iZGwudjEuVW5pdE'
-        'gAUgVhcHBseRIiCgt1bnJlZmVyZW5jZRgNIAEoBEgAUgt1bnJlZmVyZW5jZUIICgZhY3Rpb24=');
+        'gAUgVhcHBseRIiCgt1bnJlZmVyZW5jZRgNIAEoBEgAUgt1bnJlZmVyZW5jZRIUCgRyZWFkGA4g'
+        'ASgESABSBHJlYWRCCAoGYWN0aW9u');
 
 @$core.Deprecated('Use composeBinderDescriptor instead')
 const ComposeBinder$json = {
