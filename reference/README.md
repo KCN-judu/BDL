@@ -7,13 +7,13 @@ Documents this repository carries for its readers but does not own.
 The **BDL Design and Formalization Monograph** is the authoritative narrative
 design record of BDL: for every construct, why it is there, what was tried
 instead, which theorem or counterexample decided it, how production implements
-it, and what remains open. Its canonical source is the `paper/` directory of
+it, and what remains open. Its canonical source is the `paper/monograph/` directory of
 [KCN-judu/BDL_FV](https://github.com/KCN-judu/BDL_FV); `paper.md` is the only
 file whose prose is edited, and `body.typ` and
 `BDL_behavior_design_language.pdf` are generated from it by that repository's
 pipeline (`build.sh`: pandoc → Typst).
 
-`reference/paper/` is a **mirror**: a byte-for-byte copy of `BDL_FV/paper/` at
+`reference/paper/` is a **mirror**: a byte-for-byte copy of `BDL_FV/paper/monograph/` at
 the commit recorded in [`paper-mirror.toml`](paper-mirror.toml) — the Markdown
 source, the Typst files, the bibliography, the assets, the archived
 conference-era manuscript (`paper/archive/`), the generated `body.typ` and the

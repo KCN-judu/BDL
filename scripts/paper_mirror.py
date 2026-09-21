@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The production mirror of the BDL Design and Formalization Monograph.
 
-`reference/paper/` is a byte-for-byte copy of `paper/` in KCN-judu/BDL_FV at
+`reference/paper/` is a byte-for-byte copy of `paper/monograph/` in KCN-judu/BDL_FV at
 the commit recorded in `reference/paper-mirror.toml` (reference/README.md).
 This script keeps it that way from a local BDL_FV checkout; it is optional
 reference tooling — nothing in the build, the tests or CI runs it, and this
@@ -26,6 +26,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MIRROR = ROOT / "reference" / "paper"
 PROVENANCE = ROOT / "reference" / "paper-mirror.toml"
+# The monograph's directory in BDL_FV (it moved from `paper/` to `paper/monograph/`
+# when the core-calculus paper joined it).
+SOURCE_DIR = "paper/monograph"
 
 
 def recorded_commit() -> str:
@@ -36,10 +39,10 @@ def recorded_commit() -> str:
 
 
 def canonical_tree(fv: Path, commit: str) -> dict[str, bytes]:
-    """`paper/` at `commit`, path → bytes, straight from the object store."""
+    """`paper/monograph/` at `commit`, path → bytes, straight from the object store."""
     try:
         data = subprocess.run(
-            ["git", "-C", str(fv), "archive", "--format=tar", commit, "paper"],
+            ["git", "-C", str(fv), "archive", "--format=tar", commit, SOURCE_DIR],
             check=True,
             capture_output=True,
         ).stdout
@@ -51,7 +54,7 @@ def canonical_tree(fv: Path, commit: str) -> dict[str, bytes]:
             if member.isfile():
                 f = tar.extractfile(member)
                 assert f is not None
-                files[member.name.removeprefix("paper/")] = f.read()
+                files[member.name.removeprefix(SOURCE_DIR + "/")] = f.read()
     return files
 
 
@@ -85,7 +88,7 @@ def check(fv: Path) -> int:
     if problems:
         print(f"paper-mirror: {problems} difference(s) from BDL_FV {commit[:7]}")
         return 1
-    print(f"paper-mirror: {len(want)} files identical to BDL_FV {commit[:7]} paper/")
+    print(f"paper-mirror: {len(want)} files identical to BDL_FV {commit[:7]} {SOURCE_DIR}/")
     return 0
 
 
@@ -105,7 +108,7 @@ def refresh(fv: Path, commit: str | None) -> int:
     text = re.sub(r'^commit = "[0-9a-f]{40}"', f'commit = "{full}"', text, flags=re.M)
     text = re.sub(r'^mirrored = "[^"]*"', f'mirrored = "{date.today().isoformat()}"', text, flags=re.M)
     PROVENANCE.write_text(text)
-    print(f"paper-mirror: {len(files)} files mirrored from BDL_FV {full[:7]} paper/")
+    print(f"paper-mirror: {len(files)} files mirrored from BDL_FV {full[:7]} {SOURCE_DIR}/")
     return check(fv)
 
 
