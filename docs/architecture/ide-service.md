@@ -142,7 +142,7 @@ Faults are results, not panics: a draft for a mapping that does not exist is an
 ## Entity references and roles
 
 ```rust
-enum EntityRef { Project, Concept(SemanticId), Mapping(DeclId), Clock(ClockId),
+enum EntityRef { Project, Concept(ConceptId), Mapping(DeclId), Clock(ClockId),
                  Output(OutputId), Device(DeviceId), Requirement { device, index } }
 
 enum EntityRole { Declaration, Name, Reference, Input { index }, Output, Signature,

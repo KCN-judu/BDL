@@ -87,12 +87,12 @@ and provenance hold).
 
 ## Identity, in production terms
 
-| Layer                | Identity                                                  | Meaning                                                                                  |
-| -------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| authoring vocabulary | a library item id (Standard Library)                      | how a concept was _made_; two concepts from one item are two concepts                    |
-| project semantics    | `SemanticId`, `DeclId`, `ClockId`, `OutputId`, `DeviceId` | the flat design's nominal identities — the system's own, or an instance's freshened ones |
-| reusable behaviour   | `ComponentId`, `PortId`                                   | a definition and its public boundary                                                     |
-| occurrence           | `ComponentInstanceId`, `BindingId`, `ExportId`            | one use of a definition, and how it is wired                                             |
+| Layer                | Identity                                                 | Meaning                                                                                  |
+| -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| authoring vocabulary | a library item id (Standard Library)                     | how a concept was _made_; two concepts from one item are two concepts                    |
+| project semantics    | `ConceptId`, `DeclId`, `ClockId`, `OutputId`, `DeviceId` | the flat design's nominal identities — the system's own, or an instance's freshened ones |
+| reusable behaviour   | `ComponentId`, `PortId`                                  | a definition and its public boundary                                                     |
+| occurrence           | `ComponentInstanceId`, `BindingId`, `ExportId`           | one use of a definition, and how it is wired                                             |
 
 Sharing is never inferred from names or templates: a component says which of its
 concepts stand for a system concept (`ShareConcept`); everything else is private

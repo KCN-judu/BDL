@@ -75,9 +75,9 @@ client may map to a glyph, never identity. A third-party library may still use
 product groups (`environment`, `motion`, …) and `input` / `output` hints; they
 order its own section and nothing else — input/output is not in the kernel.
 
-## Item vs semantic identity
+## Item vs concept identity
 
-A fragment is a recipe for edits. Instantiating it allocates fresh `SemanticId`s
+A fragment is a recipe for edits. Instantiating it allocates fresh `ConceptId`s
 like any other creation, and from then on the objects are independent copies of
 the defaults:
 
@@ -98,7 +98,7 @@ the defaults:
 
 Item ids (`std.environment.temperature`, `std.source.temperature`) are
 **library** identities: stable for menus, recents and completion; never a
-`SemanticId`, never a `DeclId`, never a key the model uses.
+`ConceptId`, never a `DeclId`, never a key the model uses.
 
 ## Schema (`schema_version = 2`)
 
@@ -198,7 +198,7 @@ not create before it.
 The daemon (`Session::apply_library_item`) applies the steps in one
 **transaction**: each step's edit goes through the ordinary `SystemEditOp` path
 (name check, rename expansion, `apply_system_edit`) on a working copy, a mapping
-step resolves its keys to the `SemanticId`s the earlier steps allocated, and the
+step resolves its keys to the `ConceptId`s the earlier steps allocated, and the
 working copy becomes the new revision only when every step succeeded — **exactly
 one revision** (`base + 1`, however many edits the fragment was), one history
 entry (one Undo removes the whole fragment, a Redo recreates it with the same
@@ -255,11 +255,11 @@ display unit is ISS-0019.
 A Source is `name : () -> C` with no definition: a value entering the behavior
 model from the environment, observed once per activation. **`C` is a concept the
 designer chooses**, and a committed Source always has one — a concrete
-`SemanticId` in `Signature.output`. There is no `() -> ?` in the project model,
+`ConceptId` in `Signature.output`. There is no `() -> ?` in the project model,
 in a source file or on the wire; the unmade choice exists only on the creation
 sheet, and cancelling it leaves the project untouched. Three decisions are kept
-apart: which concept the Source provides (semantic identity), the abstract
-Source over it (this section), and what realizes it at deployment (FV Phase 13,
+apart: which concept the Source provides (concept identity), the abstract Source
+over it (this section), and what realizes it at deployment (FV Phase 13,
 PRP-0001: a device's raw input and a checked transducer, which make the Source a
 Value — `docs/architecture/relationship-roles.md` § Phase 13). Authoring makes
 the first two; nothing here touches the third.
@@ -407,7 +407,7 @@ for an auto-placed concept.
 Every Concept entry point dispatches the same `NewConceptRequested` and the
 sheet performs the one creation; every Source entry point dispatches the same
 `NewSourceRequested` and the Source sheet performs the one choice. The results
-differ only in `SemanticId`, layout position and the name the designer gave.
+differ only in `ConceptId`, layout position and the name the designer gave.
 
 ## Textual surface and LSP
 
@@ -483,7 +483,7 @@ the concept library.
 | the embedded library loads: 22 items — the four forms, then one per named quantity in the vocabulary's order, ids `std.value.*` / `std.quantity.*`, groups `form` / `quantity`, no Source item; every quantity/unit resolves; search by synonym and unit (`lux`, `deg`, `rotation`, `brightness`, `button`); schema 1 still loads; a file from `BDL_LIBRARIES` is served beside it                                                                                                                                                                                                      | `bdl-library` unit tests                                                                                                    |
 | (fixture library) a Source item plans a concept and a `() -> value` mapping; names free across concepts and mappings; chosen names by key; the template projection                                                                                                                                                                                                                                                                                                                                                                                                                      | `bdl-library` unit tests                                                                                                    |
 | (fixture library) a Source item is a preset: names, value form and unit suggested, the design's concepts ranked with the preset's value form first, two of one form two candidates, an open one listed, nothing hidden; the item owns no identity                                                                                                                                                                                                                                                                                                                                       | `bdl-library` unit tests                                                                                                    |
-| two instantiations → two `SemanticId`s, free names, independent defaults after renaming and rebinding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                 |
+| two instantiations → two `ConceptId`s, free names, independent defaults after renaming and rebinding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `bdl-library`, `bdld` stdio e2e, Studio e2e                                                                                 |
 | a project persists and reloads without the library; a changed item default does not reach an existing object                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `bdl-library`                                                                                                               |
 | invalid libraries are refused with the reason (unit of the wrong dimension, unknown quantity, schema, a key no concept of the fragment has)                                                                                                                                                                                                                                                                                                                                                                                                                                             | `bdl-library`                                                                                                               |
 | every Concept item is a textual completion, from the same data (`concept Ang…` → `Angle : Angle`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `bdl-ide/tests/acceptance.rs`                                                                                               |

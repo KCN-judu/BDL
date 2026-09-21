@@ -42,10 +42,10 @@ Every value a design carries is one of:
 | collection     | `list τ` | `List<R>`                             | `[a, b, c]`, `[]`                     |
 | grouped value  | `τ × σ`  | `Pair<R₁, R₂>`                        | `(a, b)`; `(a, b, c)` = `(a, (b, c))` |
 
-A concept's value form (`R`) is semantic-free data: the forms above minus
-concept values. Every kind above is _data_: it may be remembered (`delay`),
-transported (`sync`) and compared for equality. A rule (`x => …`) is not data
-and not a value: it is given to an equation and inlined there.
+A concept's value form (`R`) is concept-free data: the forms above minus concept
+values. Every kind above is _data_: it may be remembered (`delay`), transported
+(`sync`) and compared for equality. A rule (`x => …`) is not data and not a
+value: it is given to an equation and inlined there.
 
 The kernel's collection operators (`bdl-ir::Prim`): `nil`, `cons`, `length`,
 `take`, `drop`, `reverse`, `head`, `toList`; the grouped-value operators `pair`,
@@ -69,8 +69,8 @@ made unwritable by a proof field.
   quantities of one dimension (exact `f64` equality), counts, optional values,
   collections (same length, same elements in order), grouped values, and concept
   values **of the same concept**. `Brightness == Opacity` is refused —
-  `semantic.concept_mismatch` — whatever the representations; a concept's
-  identity is never exchanged for another's. Rules cannot be compared
+  `concept.mismatch` — whatever the representations; a concept's identity is
+  never exchanged for another's. Rules cannot be compared
   (`type.equality_not_data`).
 - **Order** is a property of _magnitudes_, not of data. `<`, `<=`, `>`, `>=`,
   `min`, `max`, `clamp`, `inRange`, `inInterval` are defined for
@@ -82,10 +82,10 @@ made unwritable by a proof field.
 
   Nothing else has an order: `Mode < Mode` (a numeric encoding is not a
   magnitude), `Pair < Pair`, `List < List`, `None < Some(x)`, `Bool < Bool` are
-  refused with `semantic.no_order`, whose message says what has no order and
-  what to do instead (declare the concept ordered when its values are
-  magnitudes; compare a part; compare the length; take the optional value apart;
-  choose with a rule). Declaring order is never inferred from the value form;
+  refused with `concept.no_order`, whose message says what has no order and what
+  to do instead (declare the concept ordered when its values are magnitudes;
+  compare a part; compare the length; take the optional value apart; choose with
+  a rule). Declaring order is never inferred from the value form;
   `Concept::ordered` is stored in the project (`docs/spec/project-format.md`)
   and is an _edit_, not a refinement: it reopens every relationship that
   mentions the concept. **The order invariant**: a concept is ordered only while
@@ -102,8 +102,8 @@ made unwritable by a proof field.
   `minBy_recovers_min`: the comparator form loses nothing).
 
 - **Concept values beside plain values.** Two concept values compare _as
-  concepts_ (same concept, or `semantic.concept_mismatch`). A concept value
-  beside a plain value of its own representation — `tilt < 10 deg`,
+  concepts_ (same concept, or `concept.mismatch`). A concept value beside a
+  plain value of its own representation — `tilt < 10 deg`,
   `min(brightness, 0.5)`, `mode in [1, 2]` — is observed (`rep`) and compared as
   that representation, as arithmetic has always done (ADR-0013). A concept whose
   value form is a collection or a grouped value is observed deeply where an
@@ -118,12 +118,12 @@ The rule in three clauses, tested as a matrix over Brightness (ordered),
 Opacity, Temperature and Mode
 (`mixed_comparisons_over_overlapping_representations`):
 
-| Operands                                                   | `==`                        | `<` `min` `max` `clamp` `inRange`                                   | `minBy` `maxBy`             |
-| ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------- | --------------------------- |
-| two values of one concept                                  | yes                         | only while the concept is declared ordered                          | yes                         |
-| two values of different concepts (any representations)     | `semantic.concept_mismatch` | `semantic.concept_mismatch`                                         | `semantic.concept_mismatch` |
-| a concept value beside a plain value of its representation | yes, as the representation  | yes, as the representation (the order declaration is not consulted) | yes                         |
-| a concept value beside a plain value of another dimension  | `dimension.mismatch`        | `dimension.mismatch`                                                | —                           |
+| Operands                                                   | `==`                       | `<` `min` `max` `clamp` `inRange`                                   | `minBy` `maxBy`    |
+| ---------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------- | ------------------ |
+| two values of one concept                                  | yes                        | only while the concept is declared ordered                          | yes                |
+| two values of different concepts (any representations)     | `concept.mismatch`         | `concept.mismatch`                                                  | `concept.mismatch` |
+| a concept value beside a plain value of its representation | yes, as the representation | yes, as the representation (the order declaration is not consulted) | yes                |
+| a concept value beside a plain value of another dimension  | `dimension.mismatch`       | `dimension.mismatch`                                                | —                  |
 
 The order declaration answers one question — may two values of _this concept_ be
 put in order — and nothing else. A plain value beside a concept is the
@@ -209,9 +209,9 @@ evaluation and clocks are the equation's.
 | -------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `formula.equation.arity`                     | wrong number of arguments                                          | _min takes 2 values (a, b), but 3 are given here._ fix: _Write min(a, b)._  |
 | `formula.equation.argument`                  | an argument does not fit the shape the earlier ones fixed          | _any expects a collection for `collection`, but this is a quantity._        |
-| `semantic.concept_mismatch`                  | two concepts where one kind is needed, or `==`/`<` across concepts | _Brightness and Opacity are different concepts._                            |
+| `concept.mismatch`                           | two concepts where one kind is needed, or `==`/`<` across concepts | _Brightness and Opacity are different concepts._                            |
 | `dimension.mismatch`                         | two dimensions where one is needed                                 | _min mixes values with different physical dimensions: a length and a time._ |
-| `semantic.no_order`                          | order asked of something without one                               | _Mode values can be compared for equality, but they have no default order._ |
+| `concept.no_order`                           | order asked of something without one                               | _Mode values can be compared for equality, but they have no default order._ |
 | `type.equality_not_data`                     | equality on rules                                                  | _Rules cannot be compared for equality._                                    |
 | `formula.rule.expected` / `.unexpected`      | a rule missing where needed, or given where a value is read        | _any needs a rule for `condition` here, written `x => …`._                  |
 | `formula.rule.arity` / `.undetermined`       | wrong parameter count; the rule's inputs' kinds cannot be told yet | _The kind of `x` cannot be told here._                                      |

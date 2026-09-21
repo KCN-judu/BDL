@@ -438,7 +438,11 @@ Not in the protocol yet: telemetry (roadmap; the Monitor page).
 `Error { code, message, details_json }`. `code` is stable and machine-readable
 (`edit.duplicate_concept_name`, `session.no_project`, `protocol.invalid_edit`,
 …); `message` is designer-readable; `details_json` carries the typed Rust error
-for the expert view.
+for the expert view. A diagnostic's `code` is stable in the same way; a code
+that is renamed keeps its old spelling decodable through
+`bdl_diagnostics::CODE_ALIASES` (`docs/architecture/compiler-pipeline.md`,
+_Diagnostic codes_) — the `semantic.*` codes of the concept level are
+`concept.*` since ADR-0043, with no protocol change.
 
 ## Projection
 

@@ -15,7 +15,7 @@ decision is ADR-0036; the deployment layer it extends is ADR-0015 and
 ## The eight principles
 
 1. **An output is logical intent.**
-   `PhysicalOutput { accepts: SemanticId, clock, required }` says what the
+   `PhysicalOutput { accepts: ConceptId, clock, required }` says what the
    product finally drives — a concept in a domain — and nothing about wires.
    `DriveWF` (exact type, exact domain), `SingleDriver` and `CompleteOutputs`
    are unchanged (FVD-0131).

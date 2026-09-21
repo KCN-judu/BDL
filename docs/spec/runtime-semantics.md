@@ -15,7 +15,7 @@ for tick.
 
 ## The reference evaluator (implemented)
 
-- **Values** keep semantic identity and dimension: `Bool`, `Nat`,
+- **Values** keep concept identity and dimension: `Bool`, `Nat`,
   `Quantity { dim, value }`, `Semantic { id, repr }`, `None`/`Some`, `Closure`,
   partial `Prim`. A `Tilt` and a `MotorAngle` of equal magnitude are different
   values.

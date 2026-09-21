@@ -172,9 +172,12 @@ each of its questions was answered is in the
   [evidence/pico-smoke-test.md](evidence/pico-smoke-test.md)), is priority 1;
   the platform adapter beyond one line and one duty (ISS-0018, ISS-0017) is
   second; nothing else is in progress in this repository.
-- **Recently changed:** edges as canvas objects with a contextual affordance,
-  one disconnect path, the first-open arrangement and _Arrange Automatically_
-  (protocol 0.29, ISS-0020 —
+- **Recently changed:** the concept ladder's vocabulary (ADR-0043 — a concept is
+  a type named by `ConceptId`, a Sem block its instance; `SemanticId` is gone,
+  the `concept.*` diagnostic codes with an alias table; no semantics, no bytes
+  changed — `docs/changes/unreleased/2026-09-concept-ladder.md`); edges as
+  canvas objects with a contextual affordance, one disconnect path, the
+  first-open arrangement and _Arrange Automatically_ (protocol 0.29, ISS-0020 —
   `docs/changes/unreleased/2026-09-canvas-affordances.md`); the authoring UX
   slice (ADR-0041, ADR-0042, protocol 0.28 — the Standard Library as 22 value
   categories with the concept sheet naming a concept before it exists and the

@@ -35,13 +35,26 @@ Three **mutually independent** nominal identities, plus the declaration
 identity:
 
 ```text
-SemanticId  = { n : Nat }   -- a concept (it is a type)
+ConceptId   = { n : Nat }   -- a concept (it is a type)
 ClockId     = { n : Nat }   -- a clock domain (not a rate)
 OutputId    = { n : Nat }   -- a physical sink (it is a resource)
 DeclId      = { n : Nat }   -- a declaration (it is a value)
 ```
 
 Display names are not in the kernel.
+
+**The concept ladder** (FVD-0163, FVD-0164): representation (`Θ C = R`) →
+**concept** (`ConceptId`, the nominal type `sem C` — a _template_) → **Sem
+block** (a declaration of type `sem C` — an _instance_, one value per tick,
+whose write-once realization is its **mapping block** and one producer, absent
+for a Source) → **value** (`Value.sem C v`). In parallel, a rule (arrow-typed
+declaration) is a template and a mapping block its instance. Read `sem C` as "a
+Sem of `C`". Several Sem blocks of one concept are ordinary; nothing counts
+them; every reference is `declRef` to a Sem block, and no term names a concept.
+Theorem names keep their historical spelling: "semantic identity" in a name
+reads "concept identity". In production, `bdl_model::ConceptId` is this
+identity, `bdl_ir::Ty::Sem` the type, `bdl_reactive::Value::Semantic` the value
+(ADR-0043).
 
 Dimensions: an exponent vector over three base dimensions (not an SI catalogue;
 the implementation may extend it):
@@ -54,7 +67,7 @@ Dim.zero, Dim.add, Dim.sub, Dim.Length, Dim.Time, Dim.Angle
 Types:
 
 ```text
-Ty ::= bool | nat | arr Ty Ty | sem SemanticId | q Dim | opt Ty
+Ty ::= bool | nat | arr Ty Ty | sem ConceptId | q Dim | opt Ty
      | list Ty            -- Phase 9a: finite sequence data
      | prod Ty Ty         -- Phase 9b: a value-level product (a pair), never an interface or an output bundle
 ```
@@ -138,7 +151,7 @@ The structural lifecycle order:
 Concept environment:
 
 ```text
-ConceptEnv Θ = SemanticId → Option Ty
+ConceptEnv Θ = ConceptId → Option Ty
 ConceptEnv.WF Θ  ⇔ ∀ s R, Θ s = some R → R.SemFree ∧ R.Data
 ConceptRefines Θ₁ Θ₂ ⇔ ∀ s R, Θ₁ s = some R → Θ₂ s = some R   -- only added, never changed
 ```
@@ -146,8 +159,8 @@ ConceptRefines Θ₁ Θ₂ ⇔ ∀ s R, Θ₁ s = some R → Θ₂ s = some R   
 Grant:
 
 ```text
-Grant = SemanticId → Prop
-Ty.grant : Ty → List SemanticId     -- the concepts in result position of a signature
+Grant = ConceptId → Prop
+Ty.grant : Ty → List ConceptId     -- the concepts in result position of a signature
   grant (sem s)   = [s]
   grant (arr _ b) = grant b
   grant _         = []                -- note: opt (sem s) does not grant s

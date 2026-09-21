@@ -56,7 +56,7 @@ BehaviorComponent {
     body:       Design                        an ORDINARY flat design over the component's
                                               own local ids and its own IdAllocator
     interface:  BehaviorInterface { required, provided, params: Vec<Port>, clock_params: Vec<ClockId> }
-    shared_concepts:  BTreeMap<SemanticId(local), SemanticId(base)>   the concepts the body
+    shared_concepts:  BTreeMap<ConceptId(local), ConceptId(base)>   the concepts the body
                                               takes from the system instead of owning
     external_outputs: BTreeMap<OutputId(local), OutputId(base)>      sinks the body drives
                                               that belong to the system
@@ -83,8 +83,8 @@ judgment or code generator (FVD-0064).
 
 ## 3. Component-local identities
 
-Inside a component body the ordinary id sorts (`DeclId`, `SemanticId`,
-`ClockId`, `OutputId`, `DeviceId`) are **local**: they come from the body's own
+Inside a component body the ordinary id sorts (`DeclId`, `ConceptId`, `ClockId`,
+`OutputId`, `DeviceId`) are **local**: they come from the body's own
 `IdAllocator` and mean nothing outside the component — the production analogue
 of FV's "identities below `width`". Two components may both have local
 `DeclId 0`. A body entity is _private_ unless it is listed in `shared_concepts`
@@ -106,8 +106,8 @@ Export   { id: ExportId, port: PortRef, name }
 
 `ComponentId`, `ComponentInstanceId`, `PortId`, `BindingId`, `ExportId` are new
 `u64` newtypes allocated from `SystemIdAllocator`, persisted, never reused. They
-never overload `DeclId`/`SemanticId`/`ClockId`/ `OutputId`. Renaming an
-instance, a port or a component changes a string and nothing else.
+never overload `DeclId`/`ConceptId`/`ClockId`/ `OutputId`. Renaming an instance,
+a port or a component changes a string and nothing else.
 
 ## 5. Fresh flattened ids
 
@@ -117,7 +117,7 @@ brief). The **freshening table**
 
 ```text
 FlatIds: BTreeMap<(ComponentInstanceId, LocalEntity), u64>
-LocalEntity = Decl(DeclId) | Sem(SemanticId) | Clock(ClockId) | Output(OutputId) | Device(DeviceId)
+LocalEntity = Decl(DeclId) | Sem(ConceptId) | Clock(ClockId) | Output(OutputId) | Device(DeviceId)
 ```
 
 is part of the authored system and is extended by the **edit model**, not by

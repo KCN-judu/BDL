@@ -136,7 +136,7 @@ Two independent choices make a Source useful, and the architecture keeps them
 apart:
 
 ```text
-AUTHORING  (today)             choose an existing concept C, or create C        semantic identity
+AUTHORING  (today)             choose an existing concept C, or create C        concept identity
                                         ↓
                                source : () -> C                                  the abstract Source (a Source, ADR-0032)
 

@@ -34,7 +34,7 @@ Designer-level forms; may be incomplete; may contain constructs the kernel does
 not have. Today: `Concept { representation? }`,
 `MappingBlock { signature, definition?, clock?, drives? }`,
 `Definition::Formula`, `ClockDomain`,
-`PhysicalOutput { accepts: SemanticId, clock?, required }`,
+`PhysicalOutput { accepts: ConceptId, clock?, required }`,
 `DeviceBinding { kind: DeviceKind, output?, fixed_pins }`. Temporal forms and
 units are not separate surface objects: `delay`/`sync` are written inside
 `Definition::Formula` and units are `Representation::Quantity { dim }` plus

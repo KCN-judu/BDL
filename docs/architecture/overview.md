@@ -44,12 +44,12 @@ and redefine the language.
 
 ## Four trust layers
 
-| Layer                               | Owns                                                                                                                                                            | Never does                                                                                                                  |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Flutter Studio**                  | presentation, interaction, layout, ephemeral render state                                                                                                       | compute type validity, semantic identity, dimensions, causality, clocks, output ownership, hardware feasibility, simulation |
-| **Rust compiler (`bdld` + crates)** | the canonical project model, every semantic judgment, diagnostics, simulation, allocation, code generation, the placement of entities that have no position yet | render, decide where a placed node goes                                                                                     |
-| **Generated Rust core**             | deterministic executable behaviour: domain step functions, state, output values                                                                                 | touch hardware, know about tasks or executors                                                                               |
-| **Platform adapter**                | physical I/O, clock activation sources, telemetry transport                                                                                                     | interpret BDL semantics                                                                                                     |
+| Layer                               | Owns                                                                                                                                                            | Never does                                                                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Flutter Studio**                  | presentation, interaction, layout, ephemeral render state                                                                                                       | compute type validity, concept identity, dimensions, causality, clocks, output ownership, hardware feasibility, simulation |
+| **Rust compiler (`bdld` + crates)** | the canonical project model, every semantic judgment, diagnostics, simulation, allocation, code generation, the placement of entities that have no position yet | render, decide where a placed node goes                                                                                    |
+| **Generated Rust core**             | deterministic executable behaviour: domain step functions, state, output values                                                                                 | touch hardware, know about tasks or executors                                                                              |
+| **Platform adapter**                | physical I/O, clock activation sources, telemetry transport                                                                                                     | interpret BDL semantics                                                                                                    |
 
 Flutter may render an edit optimistically, but the truth comes back from the
 compiler as a _projection_. Studio never holds a second copy of the language.
@@ -253,7 +253,7 @@ deployment and the backend, and is deferred to them.
 
 What that means in the code today:
 
-- A physical output is `PhysicalOutput { accepts: SemanticId, clock, required }`
+- A physical output is `PhysicalOutput { accepts: ConceptId, clock, required }`
   (`bdl-model`), a _logical_ output at a concept. Its driver is one relationship
   `d` with `β(d) = o`, and `DriveWF` (`bdl-output`) checks **exact**
   compatibility — the driver's type equals the accepted concept, the driver's

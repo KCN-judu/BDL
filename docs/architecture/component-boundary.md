@@ -32,7 +32,7 @@ declarations, not functions — the kernel's top-level `delay` restriction).
 GPIO or PWM handles, `OutputId` writers, embedded-hal devices, or any BDL output
 capability. Physical effect still goes
 `BDL value → one final OutputId driver → platform adapter → hardware`. Otherwise
-supplied code would bypass `SingleDriver`, semantic identity, clock discipline
+supplied code would bypass `SingleDriver`, concept identity, clock discipline
 and hardware allocation.
 
 ## Trust classification (v0.1)
