@@ -71,10 +71,13 @@ an edit, and the inspector names the relationships that will be checked again.
 
 ## Going deeper
 
-_For language implementers._ A concept is a nominal semantic type; its value
-form is its _representation_, chosen once (a write-once binding). A formula
-reads a concept through `rep` and produces one through `mk`, and the dimension
-check is the representation's dimension algebra. `docs/spec/kernel.md` and
+_For language implementers._ A concept is a nominal type — `sem C`, read "a Sem
+of _C_" — and so a template: each Source or value of that concept in a design is
+a _Sem block_, an instance holding one value per tick, and its formula is its
+_mapping block_; a rule is a template in the same way. Its value form is its
+_representation_, chosen once (a write-once binding). A formula reads a concept
+through `rep` and produces one through `mk`, and the dimension check is the
+representation's dimension algebra. `docs/spec/kernel.md` and
 `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference;
 `docs/spec/concept-library.md` explains why a library item is not an identity.
 

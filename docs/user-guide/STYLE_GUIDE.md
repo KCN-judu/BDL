@@ -35,7 +35,7 @@ output_, _behavior_ (group), _component_, _instance_, _binding_, _finding_,
 _fix_. Where Studio's label differs (_Mappings_, _New mapping_), say so once on
 the page and use the guide's word after.
 
-Never use in designer-facing text: `DeclId`, `SemanticId`, elaboration, IR,
+Never use in designer-facing text: `DeclId`, `ConceptId`, elaboration, IR,
 judgment, flatten, freshen, realization, `Grant`, `Clocked`, or any code
 identifier. If one must appear, explain the user-facing idea first and put the
 term in a _Going deeper_ tail or an _Explain_ description.

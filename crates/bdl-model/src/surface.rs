@@ -242,10 +242,16 @@ pub struct DeviceBinding {
     pub fixed_pins: BTreeMap<u16, String>,
 }
 
-/// A semantic property: `Tilt`, `Brightness`, `Held`.  Identity is the
-/// `ConceptId`; the name is mutable documentation.  The representation is a
-/// write-once binding (the kernel's `Θ s = some R`); a concept without one is
-/// a legal, still-open declaration of intent.
+/// A concept: `Tilt`, `Brightness`, `Held` — a *type*, the nominal `sem C`
+/// ("a Sem of `C`"), and so a template.  The concept ladder (FVD-0164,
+/// ADR-0043): representation → concept (`ConceptId`; a template) → Sem block
+/// (a unit-domain [`MappingBlock`] of type `sem C`; an instance, one value per
+/// tick; its definition is its mapping block and one producer; none = Source)
+/// → value (`sem C v`).  Several Sem blocks of one concept are ordinary.
+///
+/// Identity is the `ConceptId`; the name is mutable documentation.  The
+/// representation is a write-once binding (the kernel's `Θ s = some R`); a
+/// concept without one is a legal, still-open declaration of intent.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Concept {
     pub id: ConceptId,
@@ -338,9 +344,14 @@ impl Representation {
     }
 }
 
-/// A mapping block: a declaration with a signature over concepts and an
-/// optional definition.  `definition == None` is the paper's "hole" — an
-/// unresolved declaration, distinguished by nothing else.
+/// A declaration with a signature over concepts and an optional definition.
+/// On the concept ladder (FVD-0164, ADR-0043) it is one of two things by its
+/// signature: with the unit domain it is a **Sem block** — an instance of its
+/// concept, one value per tick, whose `definition` is its *mapping block* (the
+/// node a designer draws) and, absent, makes it a Source; with inputs it is a
+/// **rule** — an arrow-typed template, as a concept is.  `definition == None`
+/// is the paper's "hole" — an unresolved declaration, distinguished by nothing
+/// else.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MappingBlock {
     pub id: DeclId,
@@ -374,7 +385,9 @@ impl MappingBlock {
 
     /// The relationship's derived role: what it is to a designer, read off
     /// the authored shape and realization state and never stored
-    /// (ADR-0032).
+    /// (ADR-0032).  In the ladder's words: `Source` is a Sem block with no
+    /// producer, `Value` a Sem block with its mapping block, `Rule` a
+    /// template.
     pub fn role(&self) -> RelationshipRole {
         if !self.signature.is_unit_domain() {
             RelationshipRole::Rule
@@ -402,17 +415,18 @@ impl MappingBlock {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RelationshipRole {
-    /// Unit domain, no realization: a value the environment of this design
-    /// provides, observed once per activation.  Inside a component body the
-    /// environment is the instance that binds its port.
+    /// A Sem block with no producer — unit domain, no realization: a value
+    /// the environment of this design provides, observed once per
+    /// activation.  Inside a component body the environment is the instance
+    /// that binds its port.
     Source,
-    /// A domain with inputs: a function from what it reads to what it
-    /// produces, with or without a definition.  It has no value of its own;
-    /// a value's formula applies it.
+    /// A template — a domain with inputs: a function from what it reads to
+    /// what it produces, with or without a definition.  It has no value of
+    /// its own; a value's formula applies it.
     Rule,
-    /// Unit domain with a realization — a formula, a binding's reference,
-    /// memory (`delay`), a constant: a value of the design at every
-    /// activation of its domain.
+    /// A Sem block with its mapping block — unit domain with a realization: a
+    /// formula, a binding's reference, memory (`delay`), a constant: a value
+    /// of the design at every activation of its domain.
     Value,
 }
 

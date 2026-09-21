@@ -47,7 +47,7 @@ transliterated or re-spelled:
 | port kinds             | `requires`, `provides`, `parameter`                                                   |
 | type notation          | `() -> B`, `Quantity(angle)`, `List<Reading>`, unit symbols `m`, `s`, `°C`, `rad`     |
 | the empty product      | `()` — prose may say _empty product_ / 空积 / 空積, the notation stays `()`           |
-| formal identities      | `SemanticId`, `DeclId`, Θ / Κ / β / Ω, kernel terms in the Explain panel              |
+| formal identities      | `ConceptId`, `DeclId`, Θ / Κ / β / Ω, kernel terms in the Explain panel               |
 | protocol identities    | message and field names, enum values, `PROTOCOL_VERSION`                              |
 | diagnostic codes       | `output.missing_driver`, `studio.not_connected` — identity, shown beside any sentence |
 | names the user gave    | concepts, relationships, domains, outputs, components, files, boards, pins            |

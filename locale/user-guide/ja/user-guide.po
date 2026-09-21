@@ -343,7 +343,7 @@ msgstr ""
 #: docs/user-guide/concepts/behavior-groups.md:86
 #: docs/user-guide/concepts/behavior-systems.md:115
 #: docs/user-guide/concepts/components.md:99
-#: docs/user-guide/concepts/concepts.md:81
+#: docs/user-guide/concepts/concepts.md:84
 #: docs/user-guide/concepts/incomplete-designs.md:83
 #: docs/user-guide/concepts/physical-outputs.md:84
 #: docs/user-guide/concepts/relationships.md:131
@@ -497,7 +497,7 @@ msgid "Nested systems (a component whose source contains instances), packages sh
 msgstr ""
 
 #: docs/user-guide/concepts/behavior-systems.md:102
-msgid "_For language implementers._ The authored system is flattened — instantiate, freshen identities, substitute clocks, realise parameters, union with the base, realise bindings as `declRef` / `sync` references — into an ordinary flat design, and every judgment is a judgment of that flat design (ADR-0021 \"behaviour systems flatten into the flat design\"). Identities: `ComponentId` (a definition), `ComponentInstanceId` (one use), `PortId`, `BindingId`, and the flat `SemanticId` / `DeclId` / `ClockId` / `OutputId` per instance — five different kinds of identity that the tool never collapses. `docs/evidence/behavior-systems-correspondence.md` states which formal theorems each production step follows and which are restricted (the modular-equals-flat result is proved for a single-domain fragment; the production claims a differential test, not the theorem)."
+msgid "_For language implementers._ The authored system is flattened — instantiate, freshen identities, substitute clocks, realise parameters, union with the base, realise bindings as `declRef` / `sync` references — into an ordinary flat design, and every judgment is a judgment of that flat design (ADR-0021 \"behaviour systems flatten into the flat design\"). Identities: `ComponentId` (a definition), `ComponentInstanceId` (one use), `PortId`, `BindingId`, and the flat `ConceptId` / `DeclId` / `ClockId` / `OutputId` per instance — five different kinds of identity that the tool never collapses. `docs/evidence/behavior-systems-correspondence.md` states which formal theorems each production step follows and which are restricted (the modular-equals-flat result is proved for a single-domain fragment; the production claims a differential test, not the theorem)."
 msgstr ""
 
 #: docs/user-guide/concepts/behavior-systems.md:117
@@ -784,10 +784,10 @@ msgid "**Delete** — disabled while a relationship uses the concept, with the u
 msgstr ""
 
 #: docs/user-guide/concepts/concepts.md:74
-msgid "_For language implementers._ A concept is a nominal semantic type; its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library item is not an identity."
+msgid "_For language implementers._ A concept is a nominal type — `sem C`, read \"a Sem of _C_\" — and so a template: each Source or value of that concept in a design is a _Sem block_, an instance holding one value per tick, and its formula is its _mapping block_; a rule is a template in the same way. Its value form is its _representation_, chosen once (a write-once binding). A formula reads a concept through `rep` and produces one through `mk`, and the dimension check is the representation's dimension algebra. `docs/spec/kernel.md` and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference; `docs/spec/concept-library.md` explains why a library item is not an identity."
 msgstr ""
 
-#: docs/user-guide/concepts/concepts.md:83
+#: docs/user-guide/concepts/concepts.md:86
 msgid "[Relationships](relationships.md) · [Incomplete designs](incomplete-designs.md) · [Library](../studio/library.md) · [Types, units and concepts](../troubleshooting/type-and-concept-errors.md)"
 msgstr ""
 
@@ -829,7 +829,7 @@ msgid "Stops you?"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:16
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "**declared**"
 msgstr ""
 
@@ -847,7 +847,7 @@ msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:17
 #: docs/user-guide/concepts/relationships.md:30
-#: docs/user-guide/reference/terminology.md:20
+#: docs/user-guide/reference/terminology.md:22
 msgid "**Source**"
 msgstr ""
 
@@ -865,7 +865,7 @@ msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:18
 #: docs/user-guide/concepts/physical-outputs.md:27
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "**open**"
 msgstr ""
 
@@ -882,7 +882,7 @@ msgid "no — it is waiting, not wrong"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:19
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "**invalid**"
 msgstr ""
 
@@ -899,7 +899,7 @@ msgid "simulation, and anything that depends on it"
 msgstr ""
 
 #: docs/user-guide/concepts/incomplete-designs.md:20
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "**valid**"
 msgstr ""
 
@@ -1115,7 +1115,7 @@ msgid "the connection was recorded, and it is wrong"
 msgstr ""
 
 #: docs/user-guide/concepts/physical-outputs.md:31
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "**contested**"
 msgstr ""
 
@@ -4066,7 +4066,7 @@ msgid "the analysis is running"
 msgstr ""
 
 #: docs/user-guide/reference/status-meanings.md:87
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "*Feasible on …*"
 msgstr ""
 
@@ -4123,7 +4123,7 @@ msgid "**concept**"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:10
-msgid "a value with a meaning: *Tilt*, *Brightness*"
+msgid "a kind of value with a meaning: *Tilt*, *Brightness* — a type, a template that its Sem blocks instantiate"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:10
@@ -4132,744 +4132,773 @@ msgid "Concept"
 msgstr "コンセプト"
 
 #: docs/user-guide/reference/terminology.md:10
-msgid "semantic type, `SemanticId`"
+msgid "the nominal type `sem C` (\"a Sem of *C*\"), `ConceptId`"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:11
-msgid "**value form**"
+msgid "**Sem block**"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:11
-msgid "what kind of value a concept carries: quantity (with a unit), on / off, count, or *decide later*"
+msgid "one value of a concept in a design, one per tick: a Source when nothing defines it, a value when its mapping block does; several Sem blocks of one concept are ordinary"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:11
-msgid "Value"
+msgid "*Source* / *Value* (Role)"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:11
-msgid "representation `Θ`: `q dim`, `bool`, `nat`, or none"
+msgid "unit-domain declaration of type `sem C`; an instance"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:12
-msgid "**dimension**"
+msgid "**mapping block**"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:12
-msgid "the physical kind of a quantity (angle, length, time…), what formulas are checked against"
+msgid "what defines a Sem block: its formula, drawn as the node"
 msgstr ""
 
 #: docs/user-guide/reference/terminology.md:12
-msgid "Unit (chosen by quantity kind)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:12
-msgid "`Dim`"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:13
-msgid "**relationship**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:13
-msgid "a named rule from concepts to a concept, with a signature and an optional formula"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:13
-msgid "Mapping (sidebar, sheet), Relationship (inspector)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:13
-msgid "declaration, `DeclId`, `MappingBlock`"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:14
-msgid "**reads** / **produces**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:14
-msgid "a relationship's signature"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:14
-msgid "Reads, Produces"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:14
-msgid "interface, `Signature { inputs, output }`"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:15
-msgid "**rule**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:15
-msgid "a relationship with inputs: a function a value's formula applies; it has no value of its own"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:15
-msgid "*rule* (canvas header), *Rule* (Role)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:15
-msgid "arrow-typed declaration"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:16
-msgid "**value**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:16
-msgid "a relationship without inputs; with a formula, a computed value"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:16
-msgid "*Value* (Role)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:16
-msgid "nullary declaration"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:17
-msgid "**produces**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:17
-msgid "the concept a relationship's signature ends in, rule or value alike"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:17
-msgid "Produces, Produced by, the concept's input socket"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:17
-msgid "`Signature.output`, `Ty.grant`"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:18
-msgid "**carried by**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:18
-msgid "the values and Sources that give a concept a value at each tick"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:18
-msgid "*Carried by* (Simulate probe)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:18
-msgid "unit-domain declarations producing the concept"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:19
-msgid "**reference link**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:19
-msgid "the thin grey link into a formula line: that formula names this relationship"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:19
-#: docs/user-guide/reference/terminology.md:27
-#: docs/user-guide/reference/terminology.md:30
-#: docs/user-guide/reference/terminology.md:49
-msgid "—"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:19
-msgid "`dependsOn`, `MappingAnalysis.references`"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:20
-msgid "a value with no formula: the environment provides it, once per activation (zh-Hans 来源, ja 入力元; never *sensor*, *signal* or *source code*)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:20
-msgid "*Source* (canvas header, Role, the Library's *Sources*, the Simulate page's *Sources*)"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:20
-msgid "unresolved nullary declaration at the environment boundary; `Source Δ d`, `I d t`; a derived role, stored nowhere"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:21
-msgid "**formula**"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:21
-msgid "the text that defines a relationship"
-msgstr ""
-
-#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/reference/terminology.md:23
 msgid "Relationship (section)"
 msgstr ""
 
+#: docs/user-guide/reference/terminology.md:12
+msgid "the Sem block's definition, one producer"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:13
+msgid "**value form**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:13
+msgid "what kind of value a concept carries: quantity (with a unit), on / off, count, or *decide later*"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:13
+msgid "Value"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:13
+msgid "representation `Θ`: `q dim`, `bool`, `nat`, or none"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:14
+msgid "**dimension**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:14
+msgid "the physical kind of a quantity (angle, length, time…), what formulas are checked against"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:14
+msgid "Unit (chosen by quantity kind)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:14
+msgid "`Dim`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:15
+msgid "**relationship**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:15
+msgid "a named rule from concepts to a concept, with a signature and an optional formula"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:15
+msgid "Mapping (sidebar, sheet), Relationship (inspector)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:15
+msgid "declaration, `DeclId`, `MappingBlock`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:16
+msgid "**reads** / **produces**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:16
+msgid "a relationship's signature"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:16
+msgid "Reads, Produces"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:16
+msgid "interface, `Signature { inputs, output }`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:17
+msgid "**rule**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:17
+msgid "a relationship with inputs: a function a value's formula applies; it has no value of its own — a template, as a concept is"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:17
+msgid "*rule* (canvas header), *Rule* (Role)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:17
+msgid "arrow-typed declaration"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:18
+msgid "**value**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:18
+msgid "a relationship without inputs; with a formula, a computed value"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:18
+msgid "*Value* (Role)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:18
+msgid "nullary declaration"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:19
+msgid "**produces**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:19
+msgid "the concept a relationship's signature ends in, rule or value alike"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:19
+msgid "Produces, Produced by, the concept's input socket"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:19
+msgid "`Signature.output`, `Ty.grant`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "**carried by**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "the values and Sources that give a concept a value at each tick"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "*Carried by* (Simulate probe)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:20
+msgid "unit-domain declarations producing the concept"
+msgstr ""
+
 #: docs/user-guide/reference/terminology.md:21
+msgid "**reference link**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "the thin grey link into a formula line: that formula names this relationship"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:51
+msgid "—"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:21
+msgid "`dependsOn`, `MappingAnalysis.references`"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:22
+msgid "a value with no formula: the environment provides it, once per activation (zh-Hans 来源, ja 入力元; never *sensor*, *signal* or *source code*)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:22
+msgid "*Source* (canvas header, Role, the Library's *Sources*, the Simulate page's *Sources*)"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:22
+msgid "unresolved nullary declaration at the environment boundary; `Source Δ d`, `I d t`; a derived role, stored nowhere"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:23
+msgid "**formula**"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:23
+msgid "the text that defines a relationship"
+msgstr ""
+
+#: docs/user-guide/reference/terminology.md:23
 msgid "definition, realization, Core term"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "a relationship that reads something and has no formula"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "*declared*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:22
+#: docs/user-guide/reference/terminology.md:24
 msgid "`realization = none` with inputs"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "**role**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "what a relationship is where you are: *Source*, *Relationship*, or the port it backs"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "Role (inspector)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:23
+#: docs/user-guide/reference/terminology.md:25
 msgid "`relationship_role`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "**environment**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "what is outside the behavior model and provides a Source's value"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "*Provided by the environment*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:24
+#: docs/user-guide/reference/terminology.md:26
 msgid "the simulation's input `I`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "a relationship whose formula waits on a concept's value form"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
+#: docs/user-guide/reference/terminology.md:27
 msgid "*Checked once … is decided.*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:25
-msgid "`MappingStatus::Open`, `semantic.unbound_representation`"
+#: docs/user-guide/reference/terminology.md:27
+msgid "`MappingStatus::Open`, `concept.unbound_representation`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "a formula that does not check"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "red mark"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:26
+#: docs/user-guide/reference/terminology.md:28
 msgid "`MappingStatus::Invalid`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "checks, has a value at every activation, timing consistent"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:27
+#: docs/user-guide/reference/terminology.md:29
 msgid "`TypeValid` → `TemporallyValid` → `ClockConsistent`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "**executable**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "every needed relationship valid and every required output driven once"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "status line shows nothing open"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:28
+#: docs/user-guide/reference/terminology.md:30
 msgid "`output_complete ∧ executable`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "**timing domain**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "a named rhythm; the values that tick together"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "Timing domain; *Updates in*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:29
+#: docs/user-guide/reference/terminology.md:31
 msgid "clock, `ClockId`, `Κ`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "**memory**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "last tick's value, written `delay(init, e)`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:30
+#: docs/user-guide/reference/terminology.md:32
 msgid "`delay` state cell"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "**carrying across domains**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "reading another domain's last value, written `sync(domain, init, e)` or chosen in the *Starts at* sheet"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "Carry across timing domains; Starts at"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:31
+#: docs/user-guide/reference/terminology.md:33
 msgid "`sync`, transport"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "**instantaneous cycle**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "values needing each other in one tick"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "*depend on each other in the same instant*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:32
+#: docs/user-guide/reference/terminology.md:34
 msgid "not `Causal`, `reactive.instantaneous_cycle`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "**physical output**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "where a value leaves the design: a light, a motor"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "Output"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:33
+#: docs/user-guide/reference/terminology.md:35
 msgid "`OutputId`, `Ω`, `OutputSpec`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "**driver** / **drives**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "the one value connected to an output"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "Driver, Drives"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:34
+#: docs/user-guide/reference/terminology.md:36
 msgid "drive edge `β`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "an output with more than one driver"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "*contested*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:35
+#: docs/user-guide/reference/terminology.md:37
 msgid "`SingleDriver` violated"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "**device**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "the hardware that realises one output on a board"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "Device (Deploy)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:36
+#: docs/user-guide/reference/terminology.md:38
 msgid "`DeviceBinding`, `DeviceKind`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "**board** / **target**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "the hardware the placement is checked against"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 #: docs/user-guide/studio/deploy.md:16
 msgid "Target"
 msgstr "ターゲット"
 
-#: docs/user-guide/reference/terminology.md:37
+#: docs/user-guide/reference/terminology.md:39
 msgid "`Hardware`, `TargetDescriptor`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "**placement**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "which board pin each device requirement uses"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "Placement"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:38
+#: docs/user-guide/reference/terminology.md:40
 msgid "`Assignment`; `Requirement`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "**feasible**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "every requirement placed"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:39
+#: docs/user-guide/reference/terminology.md:41
 msgid "`DeploymentStatus::Feasible`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "**behavior** (group)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "a named set of relationships; organisation only"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "Behavior, Group as Behavior"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:40
+#: docs/user-guide/reference/terminology.md:42
 msgid "`BehaviorGroup`, authoring metadata"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "**boundary**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "what a behavior's members read from and give to the outside"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "Boundary: Inputs, Outputs, Open, Physical outputs, Internal"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:41
+#: docs/user-guide/reference/terminology.md:43
 msgid "crossing-in, crossing-out"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "**component**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "a reusable behavior with a source and a promise"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "Component"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:42
+#: docs/user-guide/reference/terminology.md:44
 msgid "`BehaviorComponent`, `ComponentId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "**source** (of a component)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "a component's own design — a different word from *Source* above"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "Edit Source"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:43
+#: docs/user-guide/reference/terminology.md:45
 msgid "body"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "**promise** / **port**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "what a component requires, provides, or takes as a parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "Ports: Requires, Provides, Parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:44
+#: docs/user-guide/reference/terminology.md:46
 msgid "`BehaviorInterface`, `Port`, `PortContract`, `PortId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "**timing parameter**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "a component's domain that each instance maps to a system domain"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "Timing parameters"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:45
+#: docs/user-guide/reference/terminology.md:47
 msgid "clock parameter"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "**shared concept**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "a concept of a source that stands for a system concept"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "Shared concepts"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:46
+#: docs/user-guide/reference/terminology.md:48
 msgid "`shared_concepts`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "**instance**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "one use of a component"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "Instance"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:47
+#: docs/user-guide/reference/terminology.md:49
 msgid "`ComponentInstance`, `ComponentInstanceId`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "**binding**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "a connection from a provided port or value to a required port or open relationship"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "Connection, Binding"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:48
+#: docs/user-guide/reference/terminology.md:50
 msgid "`Binding`, `BindingId`, `Definition::Reference`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "**fan-out**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "one value read by several required ports"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:49
+#: docs/user-guide/reference/terminology.md:51
 msgid "several bindings from one source"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "**version**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "a copy of a component with the same promise"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "Duplicate as Version"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:50
+#: docs/user-guide/reference/terminology.md:52
 msgid "`DuplicateComponent`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "**system**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "a design with instances; what every project holds"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "System (context bar)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:51
+#: docs/user-guide/reference/terminology.md:53
 msgid "`BehaviorSystem`; flattened design"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "**Design view / Code view / Split**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "the project as a graph, as its `.bdl` files, or both side by side"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "Design · Code · Split (Design page)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:52
+#: docs/user-guide/reference/terminology.md:54
 msgid "`DesignView`; `GetSources`, `ApplySourceEdit`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "**does not build yet**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "the text in the Code view is not a design yet; the graph shows the last version that was"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "*This file does not build yet …*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:53
+#: docs/user-guide/reference/terminology.md:55
 msgid "a draft the loader refused; last-known-good revision"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:54
+#: docs/user-guide/reference/terminology.md:56
 msgid "**revision**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:54
+#: docs/user-guide/reference/terminology.md:56
 msgid "one version of the design; every edit makes a new one"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:54
+#: docs/user-guide/reference/terminology.md:56
 #: docs/user-guide/studio/inspector.md:71
 msgid "Explain"
 msgstr "説明"
 
-#: docs/user-guide/reference/terminology.md:54
+#: docs/user-guide/reference/terminology.md:56
 msgid "`Revision`"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:55
+#: docs/user-guide/reference/terminology.md:57
 msgid "**draft**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:55
+#: docs/user-guide/reference/terminology.md:57
 msgid "a typed but not yet added formula"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:55
+#: docs/user-guide/reference/terminology.md:57
 msgid "*unsaved*"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:55
+#: docs/user-guide/reference/terminology.md:57
 msgid "`MappingDefinitionDraft` overlay"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:56
+#: docs/user-guide/reference/terminology.md:58
 msgid "**finding**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:56
+#: docs/user-guide/reference/terminology.md:58
 msgid "what the compiler reports about an object"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:56
+#: docs/user-guide/reference/terminology.md:58
 msgid "(under the field it concerns)"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:56
+#: docs/user-guide/reference/terminology.md:58
 msgid "diagnostic, code"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:57
+#: docs/user-guide/reference/terminology.md:59
 msgid "**fix**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:57
+#: docs/user-guide/reference/terminology.md:59
 msgid "an action the tool offers for a finding"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:57
+#: docs/user-guide/reference/terminology.md:59
 msgid "Fixes"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:57
+#: docs/user-guide/reference/terminology.md:59
 msgid "semantic action, edit plan"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:58
+#: docs/user-guide/reference/terminology.md:60
 msgid "**item**"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:58
+#: docs/user-guide/reference/terminology.md:60
 msgid "a ready-made Concept, or a Source preset, in the Library"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:58
+#: docs/user-guide/reference/terminology.md:60
 #: docs/user-guide/studio/library.md:1
 msgid "Library"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:58
+#: docs/user-guide/reference/terminology.md:60
 msgid "`LibraryItem` id — never an identity"
 msgstr ""
 
-#: docs/user-guide/reference/terminology.md:60
+#: docs/user-guide/reference/terminology.md:62
 msgid "Words this guide does not use for designer-facing text: *mapping* (except to name the Studio label), *signal*, *event*, *handler*, *flatten*, *elaborate*, *judgment*, and any identifier such as `DeclId`."
 msgstr ""
 
@@ -8234,7 +8263,7 @@ msgid "**What it is.** The formula reads a concept whose value form is not chose
 msgstr ""
 
 #: docs/user-guide/troubleshooting/incomplete-design.md:41
-msgid "**What to do.** Decide the concept's value form. The formula is checked at once; nothing needs retyping. Code: `semantic.unbound_representation` (information)."
+msgid "**What to do.** Decide the concept's value form. The formula is checked at once; nothing needs retyping. Code: `concept.unbound_representation` (information)."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/incomplete-design.md:44

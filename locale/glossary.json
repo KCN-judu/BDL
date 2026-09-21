@@ -53,6 +53,6 @@
     {"id": "kw-provides", "en": "provides", "context": "Port kind keyword.", "zh-Hans": "provides", "ja": "provides", "note": "Syntax.", "translatable": false},
     {"id": "unit-type", "en": "()", "context": "The empty product type as written.", "zh-Hans": "()", "ja": "()", "note": "Notation.", "translatable": false},
     {"id": "diagnostic-code", "en": "diagnostic code (e.g. output.missing_driver)", "context": "The stable identity of a diagnostic.", "zh-Hans": "(unchanged)", "ja": "(unchanged)", "note": "Identity; localized presentation lives beside it, never instead of it.", "translatable": false},
-    {"id": "semantic-id", "en": "SemanticId / DeclId / Θ / Κ / β / Ω", "context": "Formal identities and the kernel's symbols in the Explain panel.", "zh-Hans": "(unchanged)", "ja": "(unchanged)", "note": "Formal notation.", "translatable": false}
+    {"id": "concept-id", "en": "ConceptId / DeclId / Θ / Κ / β / Ω", "context": "Formal identities and the kernel's symbols in the Explain panel.", "zh-Hans": "(unchanged)", "ja": "(unchanged)", "note": "Formal notation.", "translatable": false}
   ]
 }

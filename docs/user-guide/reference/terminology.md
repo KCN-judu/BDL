@@ -7,12 +7,14 @@ last column is the formal or internal name, which appears only in
 
 | Guide word | Meaning | Studio label | Formal / internal |
 | --- | --- | --- | --- |
-| **concept** | a value with a meaning: *Tilt*, *Brightness* | Concept | semantic type, `SemanticId` |
+| **concept** | a kind of value with a meaning: *Tilt*, *Brightness* — a type, a template that its Sem blocks instantiate | Concept | the nominal type `sem C` ("a Sem of *C*"), `ConceptId` |
+| **Sem block** | one value of a concept in a design, one per tick: a Source when nothing defines it, a value when its mapping block does; several Sem blocks of one concept are ordinary | *Source* / *Value* (Role) | unit-domain declaration of type `sem C`; an instance |
+| **mapping block** | what defines a Sem block: its formula, drawn as the node | Relationship (section) | the Sem block's definition, one producer |
 | **value form** | what kind of value a concept carries: quantity (with a unit), on / off, count, or *decide later* | Value | representation `Θ`: `q dim`, `bool`, `nat`, or none |
 | **dimension** | the physical kind of a quantity (angle, length, time…), what formulas are checked against | Unit (chosen by quantity kind) | `Dim` |
 | **relationship** | a named rule from concepts to a concept, with a signature and an optional formula | Mapping (sidebar, sheet), Relationship (inspector) | declaration, `DeclId`, `MappingBlock` |
 | **reads** / **produces** | a relationship's signature | Reads, Produces | interface, `Signature { inputs, output }` |
-| **rule** | a relationship with inputs: a function a value's formula applies; it has no value of its own | *rule* (canvas header), *Rule* (Role) | arrow-typed declaration |
+| **rule** | a relationship with inputs: a function a value's formula applies; it has no value of its own — a template, as a concept is | *rule* (canvas header), *Rule* (Role) | arrow-typed declaration |
 | **value** | a relationship without inputs; with a formula, a computed value | *Value* (Role) | nullary declaration |
 | **produces** | the concept a relationship's signature ends in, rule or value alike | Produces, Produced by, the concept's input socket | `Signature.output`, `Ty.grant` |
 | **carried by** | the values and Sources that give a concept a value at each tick | *Carried by* (Simulate probe) | unit-domain declarations producing the concept |
@@ -22,7 +24,7 @@ last column is the formal or internal name, which appears only in
 | **declared** | a relationship that reads something and has no formula | *declared* | `realization = none` with inputs |
 | **role** | what a relationship is where you are: *Source*, *Relationship*, or the port it backs | Role (inspector) | `relationship_role` |
 | **environment** | what is outside the behavior model and provides a Source's value | *Provided by the environment* | the simulation's input `I` |
-| **open** | a relationship whose formula waits on a concept's value form | *Checked once … is decided.* | `MappingStatus::Open`, `semantic.unbound_representation` |
+| **open** | a relationship whose formula waits on a concept's value form | *Checked once … is decided.* | `MappingStatus::Open`, `concept.unbound_representation` |
 | **invalid** | a formula that does not check | red mark | `MappingStatus::Invalid` |
 | **valid** | checks, has a value at every activation, timing consistent | — | `TypeValid` → `TemporallyValid` → `ClockConsistent` |
 | **executable** | every needed relationship valid and every required output driven once | status line shows nothing open | `output_complete ∧ executable` |

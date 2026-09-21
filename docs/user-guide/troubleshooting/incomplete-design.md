@@ -39,7 +39,7 @@ relationship is _open_: not wrong, waiting. Its node is solid with a hollow
 socket.
 
 **What to do.** Decide the concept's value form. The formula is checked at once;
-nothing needs retyping. Code: `semantic.unbound_representation` (information).
+nothing needs retyping. Code: `concept.unbound_representation` (information).
 
 ## _dimByTilt has no definition. A relationship that reads something needs one before the design can run._ (Simulate)
 
