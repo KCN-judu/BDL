@@ -150,13 +150,16 @@ async fn coordinate(
                 // the IDE host so `RunAnalysis` shares it.  Cheap for now;
                 // moves to a worker task when it is not.
                 let analysis = match session.ide() {
-                    Ok(host) => host.committed_analysis(),
-                    Err(_) => std::sync::Arc::new(bdl_compiler::analyze(&c.snapshot)),
+                    Ok(host) => {
+                        let a = convert::analysis_to_pb(&host.committed_analysis());
+                        with_slots(host, a)
+                    }
+                    Err(_) => convert::analysis_to_pb(&bdl_compiler::analyze(&c.snapshot)),
                 };
                 let ready = pb::ServerMessage {
                     payload: Some(pb::server_message::Payload::Event(pb::Event {
                         payload: Some(pb::event::Payload::AnalysisReady(pb::AnalysisReady {
-                            analysis: Some(convert::analysis_to_pb(&analysis)),
+                            analysis: Some(analysis),
                         })),
                     })),
                 };
@@ -433,10 +436,10 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
                 // The committed snapshot's analysis, cached by the IDE host
                 // per revision and tagged with it; the client discards
                 // stale ones.
-                let analysis = host.committed_analysis();
+                let analysis = convert::analysis_to_pb(&host.committed_analysis());
                 (
                     Resp::Analysis(pb::AnalysisResponse {
-                        analysis: Some(convert::analysis_to_pb(&analysis)),
+                        analysis: Some(with_slots(host, analysis)),
                     }),
                     None,
                 )
@@ -1955,4 +1958,32 @@ fn payload_name(p: &Req) -> &'static str {
         Req::ListSourceCandidates(_) => "list_source_candidates",
         Req::Shutdown(_) => "shutdown",
     }
+}
+
+/// `MappingAnalysis.slots` (protocol 0.30): the open positions of every
+/// committed definition, from the IDE service's projection of it — the
+/// canvas's open input sockets on a mapping block, and where a dropped Sem
+/// block goes.  Read off the committed snapshot, never a draft.
+fn with_slots(host: &mut bdl_ide_db::IdeHost, mut a: pb::ProjectAnalysis) -> pb::ProjectAnalysis {
+    let snapshot = host.committed_snapshot();
+    for m in &mut a.mappings {
+        let id = bdl_model::DeclId::from_raw(m.id);
+        let has_formula = snapshot
+            .effective()
+            .design
+            .mappings
+            .get(&id)
+            .and_then(|b| b.definition.as_ref())
+            .and_then(|d| d.formula_source())
+            .is_some();
+        if !has_formula {
+            continue;
+        }
+        if let Ok(p) = bdl_ide::formula_projection(&snapshot, id) {
+            if p.parse_ok {
+                m.slots = p.slots;
+            }
+        }
+    }
+    a
 }

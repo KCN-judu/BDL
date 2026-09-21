@@ -10340,6 +10340,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     $core.Iterable<$fixnum.Int64>? references,
     $core.Iterable<$fixnum.Int64>? appliedBy,
     RelationshipRole? role,
+    $core.Iterable<$core.String>? slots,
   }) {
     final result = MappingAnalysis._();
     if (id != null) result.id = id;
@@ -10351,6 +10352,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     if (references != null) result.references.addAll(references);
     if (appliedBy != null) result.appliedBy.addAll(appliedBy);
     if (role != null) result.role = role;
+    if (slots != null) result.slots.addAll(slots);
     return result;
   }
 
@@ -10377,6 +10379,7 @@ class MappingAnalysis extends $pb.GeneratedMessage {
     ..p<$fixnum.Int64>(7, _omitFieldNames ? '' : 'references', $pb.PbFieldType.KU6)
     ..p<$fixnum.Int64>(8, _omitFieldNames ? '' : 'appliedBy', $pb.PbFieldType.KU6)
     ..aE<RelationshipRole>(9, _omitFieldNames ? '' : 'role', enumValues: RelationshipRole.values)
+    ..pPS(10, _omitFieldNames ? '' : 'slots')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -10476,6 +10479,15 @@ class MappingAnalysis extends $pb.GeneratedMessage {
   $core.bool hasRole() => $_has(8);
   @$pb.TagNumber(9)
   void clearRole() => $_clearField(9);
+
+  /// The open positions (`?`) of the committed definition, in source
+  /// order, as the node ids its projection names them by
+  /// (`FormulaProjection.slots`; protocol 0.30): where a Sem block dropped
+  /// on the mapping block goes (`ComposeAction.fill` on the first) —
+  /// stated so a client never parses the formula.  Empty without a
+  /// formula, when it does not parse, and when it has no slot.
+  @$pb.TagNumber(10)
+  $pb.PbList<$core.String> get slots => $_getList(9);
 }
 
 class SourceSpan extends $pb.GeneratedMessage {

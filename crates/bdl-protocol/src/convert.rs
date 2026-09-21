@@ -924,6 +924,7 @@ pub fn mapping_analysis_to_pb(m: &bdl_compiler::MappingAnalysis) -> pb::MappingA
         core_expr: m.realization.as_ref().map(pretty::expr).unwrap_or_default(),
         diagnostics: m.diagnostics.iter().map(diagnostic_to_pb).collect(),
         references: Vec::new(),
+        slots: Vec::new(),
     }
 }
 

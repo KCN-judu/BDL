@@ -968,6 +968,13 @@ message MappingAnalysis {
   // The derived role at this revision, the same answer as
   // `MappingView.role` (protocol 0.20).
   RelationshipRole role = 9;
+  // The open positions (`?`) of the committed definition, in source
+  // order, as the node ids its projection names them by
+  // (`FormulaProjection.slots`; protocol 0.30): where a Sem block dropped
+  // on the mapping block goes (`ComposeAction.fill` on the first) —
+  // stated so a client never parses the formula.  Empty without a
+  // formula, when it does not parse, and when it has no slot.
+  repeated string slots = 10;
 }
 
 enum DiagnosticSeverity {
