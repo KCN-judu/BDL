@@ -571,7 +571,7 @@ This is the only rule that reads $\Delta$. A client of $d$ is therefore typed ag
 
 #### Satisfaction, well-formedness, and refinement
 
-A realization $e$ **satisfies** an interface $S$ when it has the expected type under the grant of that type and discharges every commitment:
+A realization $e$ **satisfies** an interface $\mathcal{P}$ when it has the expected type under the grant of that type and discharges every commitment:
 
 $$
 \begin{aligned}
@@ -581,9 +581,9 @@ $$
 \end{aligned}
 $$
 
-where $S.\mathit{ty}$ abbreviates the expected type. Here $\mathit{ev} : \text{DeclEnv} \to \text{Expr} \to \text{PropertyId} \to \text{Prop}$ is an abstract **evidence** relation supplied by the validation layer. It takes the environment as an argument because compositional discharge needs it: “$A$ is monotone because $B$ is committed to be monotone” consults $B$'s interface. A design is **globally well formed** when every stored declaration sits under its own identity and its realization, if any, satisfies its interface in that design.
+where $\mathcal{P}.\mathit{ty}$ abbreviates the expected type. Here $\mathit{ev} : \text{DeclEnv} \to \text{Expr} \to \text{PropertyId} \to \text{Prop}$ is an abstract **evidence** relation supplied by the validation layer. It takes the environment as an argument because compositional discharge needs it: “$A$ is monotone because $B$ is committed to be monotone” consults $B$'s interface. A design is **globally well formed** when every stored declaration sits under its own identity and its realization, if any, satisfies its interface in that design.
 
-Interfaces are ordered by monotone refinement: $S \sqsubseteq S'$ when the expected type is unchanged and the commitments of $S$ are contained in those of $S'$. A declaration takes a refinement step in one of three ways. An unresolved declaration may have its interface refined; an unresolved declaration may be realized with a satisfying body; and a realized declaration may have its interface strengthened, provided the body is re-verified against the new interface. The reflexive-transitive closure of these steps is exactly the structural order together with well-formedness of the target, where the structural order $\text{DeclLeq}$ requires the same identity, interface refinement, and a write-once realization, and $\text{EnvRefines}\;\Delta_1\;\Delta_2$ lifts it pointwise while permitting new declarations.
+Interfaces are ordered by monotone refinement: $\mathcal{P} \sqsubseteq \mathcal{P}'$ when the expected type is unchanged and the commitments of $\mathcal{P}$ are contained in those of $\mathcal{P}'$. A declaration takes a refinement step in one of three ways. An unresolved declaration may have its interface refined; an unresolved declaration may be realized with a satisfying body; and a realized declaration may have its interface strengthened, provided the body is re-verified against the new interface. The reflexive-transitive closure of these steps is exactly the structural order together with well-formedness of the target, where the structural order $\text{DeclLeq}$ requires the same identity, interface refinement, and a write-once realization, and $\text{EnvRefines}\;\Delta_1\;\Delta_2$ lifts it pointwise while permitting new declarations.
 
 #### Client stability
 
@@ -636,7 +636,7 @@ Suppose concepts were represented only by their representation types, so that `T
 The one that survived is a single nominal type constructor over an internal identity:
 
 $$
-\text{ConceptId},\qquad \text{Ty} \ni \text{sem}\;s .
+\text{ConceptId},\qquad \text{Ty} \ni \text{sem}\;C .
 $$
 
 Two distinct identities are distinct types regardless of representation, so the invalid wire is rejected by the ordinary rules of the simply typed calculus with no additional judgment. An explicit relationship between concepts, `tiltToMotor : Tilt -> MotorAngle`, is an ordinary declaration of arrow type — a design relationship that is itself signature-first and may remain unresolved — and it appears in the term wherever a crossing occurs. It is not a cast, coercion, or conversion; the kernel has no such mechanism.
@@ -649,21 +649,21 @@ Erasing all concept identities is sound — a well-typed semantic term is well t
 
 Nominal identity alone leaves Sem values opaque. Without a way to observe a representation and construct a value, no mapping can be realized by a formula; under nominal typing alone a Sem value can only originate from a declaration of concept type. That is the right state before representation is added. The question is how to add it without destroying what identity just bought.
 
-The obvious form — global $\text{rep}_s : \text{sem}\;s \to R$ and $\text{mk}_s : R \to \text{sem}\;s$ available to every term — destroys it immediately. $\lambda x.\;\text{mk}_{\text{Motor}}(\text{rep}_{\text{Tilt}}\;x)$ is a well-typed `Tilt -> MotorAngle` in the empty environment, with no declaration and no mapping; a motor angle can be manufactured from a literal; and the crossing can hide inside a body whose signature mentions no motor. Observation alone, with no construction, is safe but cannot realize a mapping. The surviving model separates the two:
+The obvious form — global $\text{rep}_C : \text{sem}\;C \to R$ and $\text{mk}_C : R \to \text{sem}\;C$ available to every term — destroys it immediately. $\lambda x.\;\text{mk}_{\text{Motor}}(\text{rep}_{\text{Tilt}}\;x)$ is a well-typed `Tilt -> MotorAngle` in the empty environment, with no declaration and no mapping; a motor angle can be manufactured from a literal; and the crossing can hide inside a body whose signature mentions no motor. Observation alone, with no construction, is safe but cannot realize a mapping. The surviving model separates the two:
 
 - a **concept environment** $\Theta : \text{ConceptId} \to \text{Option}\;\text{Ty}$ binds each concept, write-once, to a representation that mentions no concept type and contains no function type;
-- $\text{rep}\;e$ is typed at $R$ whenever $e : \text{sem}\;s$ and $\Theta\;s = \text{some}\;R$, everywhere;
-- $\text{mk}\;s\;e$ is typed at $\text{sem}\;s$ whenever $e : R$, $\Theta\;s = \text{some}\;R$, *and the grant permits $s$*.
+- $\text{rep}\;e$ is typed at $R$ whenever $e : \text{sem}\;C$ and $\Theta\;C = \text{some}\;R$, everywhere;
+- $\text{mk}\;C\;e$ is typed at $\text{sem}\;C$ whenever $e : R$, $\Theta\;C = \text{some}\;R$, *and the grant permits $C$*.
 
 $$
-\frac{\Theta\;s = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : \text{sem}\;s}{\Theta;\Delta;G;\Gamma \vdash \text{rep}\;e : R}
+\frac{\Theta\;C = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : \text{sem}\;C}{\Theta;\Delta;G;\Gamma \vdash \text{rep}\;e : R}
 $$
 
 $$
-\frac{G\;s \quad \Theta\;s = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : R}{\Theta;\Delta;G;\Gamma \vdash \text{mk}\;s\;e : \text{sem}\;s}
+\frac{G\;C \quad \Theta\;C = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : R}{\Theta;\Delta;G;\Gamma \vdash \text{mk}\;C\;e : \text{sem}\;C}
 $$
 
-The grant $G$ is a predicate on concepts. Client code is typed under the empty grant. The realization of a declaration is typed under $\text{Grant.of}(\tau)$, the concepts in result position of its own signature $\tau$. A value of `MotorAngle` can therefore be constructed only inside a declaration that announces `MotorAngle` in its signature, which is exactly where a reader of the design would look for it. A well-typed term constructs $s$ only where granted $s$; the hidden crossing above is rejected under the grant of an unrelated declaration and becomes legal, and visible, once `tiltToMotor` is declared; binding an unbound concept is monotone for typing, satisfaction, and global well-formedness; and rebinding a concept to a different representation is an edit that breaks existing realizations.
+The grant $G$ is a predicate on concepts. Client code is typed under the empty grant. The realization of a declaration is typed under $\text{Grant.of}(\tau)$, the concepts in result position of its own signature $\tau$. A value of `MotorAngle` can therefore be constructed only inside a declaration that announces `MotorAngle` in its signature, which is exactly where a reader of the design would look for it. A well-typed term constructs $C$ only where granted $C$; the hidden crossing above is rejected under the grant of an unrelated declaration and becomes legal, and visible, once `tiltToMotor` is declared; binding an unbound concept is monotone for typing, satisfaction, and global well-formedness; and rebinding a concept to a different representation is an edit that breaks existing realizations.
 
 Two constraints on the representation were not anticipated. Representation types must be free of concept types, because if `Tilt` may be represented *by* `MotorAngle` then `rep` itself is a hidden mapping under every policy, including observation-only. And they must be data types, a requirement that arrived later from the reactive semantics: a Sem value may be delayed, and a function-typed representation would carry a closure across ticks.
 
@@ -683,7 +683,7 @@ $$
 
 and an application is checked by ordinary function application. Erasing every dimension to the zero vector is sound and accepts `length + time`, so the untyped numeric baseline is the erasure of dimensional typing in the same sense that the representation baseline is the erasure of nominal typing. Dimensions might instead have been validation metadata; the argument against is that multiplication and division *produce* dimensions, so any checker recomputes the same inference, but that family was argued against rather than excluded.
 
-Dimension and concept identity are orthogonal. `Tilt` and `MotorAngle` both bound to `q Angle` remain distinct types. A mapping realized by the dimensioned formula `λx. mk bright (rep x · gain)` with `gain : q (0 − Angle)` is typed; a dimension error inside the formula is caught by the same typing; and the formula cannot manufacture a `MotorAngle` despite the shared dimension. The association between a concept and its dimension lives in $\Theta$, not in the identity and not in the type constructor. The earlier draft's two-index $\text{Sem}[n,d]$ becomes $\text{sem}\;s$ together with $\Theta\;s = \text{some}\;(\text{q}\;d)$.
+Dimension and concept identity are orthogonal. `Tilt` and `MotorAngle` both bound to `q Angle` remain distinct types. A mapping realized by the dimensioned formula `λx. mk bright (rep x · gain)` with `gain : q (0 − Angle)` is typed; a dimension error inside the formula is caught by the same typing; and the formula cannot manufacture a `MotorAngle` despite the shared dimension. The association between a concept and its dimension lives in $\Theta$, not in the identity and not in the type constructor. The earlier draft's two-index $\text{Sem}[n,d]$ becomes $\text{sem}\;C$ together with $\Theta\;C = \text{some}\;(\text{q}\;d)$.
 
 Units are surface (§IV.4 in full). A literal `n u` elaborates to a dimensioned literal scaled by the unit's factor; changing the unit changes the value, never the type, and mixed-unit addition works after elaboration. Expressing a quantity in a unit — its *coordinate* — and building a quantity from a coordinate are the same arithmetic against a unit constant: `inUnit(q, u)` is `q` divided by the unit's scale and has dimension zero, `withUnit(x, u)` is `x` times the scale and has the unit's dimension, and a conversion between two units is their composition; each is elaborated, none is a kernel construct, and a unit choice never reaches a type (`1 m` and `100 cm` are equal values of one type). The unit laws — round trips, derived conversion, dimension safety — are proved over an abstract scalar domain and instantiated by a symbolic group in which `π` is a generator, so that a degree is exactly `π/180` radian; the executable kernel truncates to naturals and production approximates in floating point. A preferred display unit is presentation: it changes the number shown and no judgment of the design. Affine scales such as degrees Celsius are not linear (`0 °C` is `273.15 K`), yet their literals and coordinates elaborate exactly by adding an offset. Unit coordinates erase chart identity while preserving affine coordinate change: the conversion between two charts is an affine map, conversions compose and invert — compatible charts are isomorphic coordinate systems — and differences inherit the linear part of that transformation, so a difference of ten degrees Celsius is eighteen degrees Fahrenheit from any base point, while a conversion with a non-zero offset is not an additive homomorphism. The same abstraction covers sensor calibration and encoder offsets. These laws are proved over an abstract field and instantiated exactly at rationals; production floating point is held to a toleranced version of them. Whether a sum of two absolute temperatures should be permitted is a separate, optional validation question that the dimension does not decide and conversion does not need.
 
@@ -1143,7 +1143,7 @@ A relationship declared with no inputs — `mapping TempSensor : RoomTemp`, `map
 Phase 12 (`Surface/UnitDomain.lean`) answers without adding a unit to the kernel. The canonical types live in an *interface layer* above it — `CTy` is the kernel's `Ty` plus `unit`, interface arrows and domain products — and the kernel interface type is the value of a normalization function on them (**formally proved**):
 
 $$
-\mathrm{elim}(\mathrm{canonical}(s)) = \mathrm{encode}(s),\qquad
+\mathrm{elim}(\mathrm{canonical}(\sigma)) = \mathrm{encode}(\sigma),\qquad
 \mathrm{encode}(\langle [\,],B\rangle) = B,\quad
 \mathrm{encode}(\langle A_1,\dots,A_n; B\rangle) = A_1 \to \cdots \to A_n \to B,
 $$
@@ -1241,7 +1241,7 @@ The design file keeps `mapping TempSensor : () -> RoomTemp`; the deployment supp
 **The construction.** A *channel* is a representation type `rep`, a term `tr`, its transfer function `transfer` on values, and the coherence `computes` (the term computes the function on every raw-typed value); the term is **pure** — no `declRef`, `delay` or `sync`. A *device profile* is a raw type (sem-free data) and its channels; it mentions no concept. A *provision* is one fresh raw declaration `r` with its clock and an assignment of channels to target Sources — several targets may share one raw reading (an IMU image feeding pitch, roll and acceleration), and one target is the singleton case. Then
 
 $$
-\mathrm{provision}(\Delta, P)\ =\ \Delta\,[\,r \mapsto \langle \mathit{raw}, [\,]\rangle\ \text{unresolved}\,]\,[\,s \mapsto \mathrm{mk}_c\,(\mathrm{tr}\ (\mathrm{declRef}\ r))\ \text{for each target } s : \mathrm{sem}\ c\,],
+\mathrm{provision}(\Delta, P)\ =\ \Delta\,[\,r \mapsto \langle \mathit{raw}, [\,]\rangle\ \text{unresolved}\,]\,[\,\delta \mapsto \mathrm{mk}_C\,(\mathrm{tr}\ (\mathrm{declRef}\ r))\ \text{for each target } \delta : \mathrm{sem}\ C\,],
 $$
 
 with `tr (declRef r)` alone at a representation-typed Source; the raw declaration's kernel type is `raw` and its canonical type `() -> raw` (above). Fitting is decidable: at `sem c` the concept's representation is the channel's; at a representation type the types coincide. Nothing enters the kernel: `provision` is a function on environments built from `DesignDecl`, `declRef`, `app` and `mk`.
@@ -1585,7 +1585,7 @@ The surface editor and kernel are connected by an elaboration function from surf
 
 **Hardware validation.** Generate requirements from device kinds, run the solver against the selected target, and attach the assignment or the explanation to the bindings.
 
-**Normalization and erasure.** After checking is complete, concept identities, dimensions, and domains carry no computational content and may be erased; erasure is proved sound for identities and for dimensions. Nominal wrappers introduced by elaboration cancel, $\text{rep}(\text{mk}_s\;e) \rightsquigarrow e$, and the flattened program is checked under the universal grant because every construction was authorized at its declaration. Unfolding all realizations into a closed term preserves typing on the delay-free fragment and agrees with tick-by-tick evaluation on first-order designs; the higher-order case holds up to closure equivalence and was not formalized. Erasure is applied selectively at boundaries the checker cannot see through — supplied blocks, device bindings, the public interface of generated code — where wrappers are retained so that the host compiler continues to check what BDL cannot.
+**Normalization and erasure.** After checking is complete, concept identities, dimensions, and domains carry no computational content and may be erased; erasure is proved sound for identities and for dimensions. Nominal wrappers introduced by elaboration cancel, $\text{rep}(\text{mk}_C\;e) \rightsquigarrow e$, and the flattened program is checked under the universal grant because every construction was authorized at its declaration. Unfolding all realizations into a closed term preserves typing on the delay-free fragment and agrees with tick-by-tick evaluation on first-order designs; the higher-order case holds up to closure equivalence and was not formalized. Erasure is applied selectively at boundaries the checker cannot see through — supplied blocks, device bindings, the public interface of generated code — where wrappers are retained so that the host compiler continues to check what BDL cannot.
 
 The kernel never depends on normalization to decide type equality; it is not dependently typed, and normalization is an analysis and code-generation instrument. Floating-point arithmetic is not associative, so any symbolic normalization over the reals must record the resulting numerical deviation as an obligation rather than silently altering the property being checked.
 
@@ -2277,7 +2277,7 @@ The notation is the Lean development's, kept uniform across Part IV; where an ea
 | `DeclInterface` | `⟨expectedType, commitments⟩` | the frozen expected type and the monotone public commitment list |
 | $\Delta^{\mathrm{ty}}$ | `DeclEnv.tyView` | the type view: the expected type of each declared identity |
 | $\Theta$ | `ConceptEnv : ConceptId → Option Ty` | the write-once representation binding of concepts |
-| $s$, `ConceptId` | `ConceptId` | a concept's identity; `sem s` its nominal type |
+| $C$, `ConceptId` | `ConceptId` | a concept's identity; `sem s` its nominal type |
 | `q d` | `Ty.q Dim` | a physical quantity of dimension `d` (an exponent vector) |
 | `Ty` | `bool | nat | arr | sem | q | opt | list | prod` | the kernel types |
 | $G$, `Grant` | `Grant`, `Grant.of τ` | the construction grant: the concepts in result position of a signature |

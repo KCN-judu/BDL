@@ -1638,15 +1638,15 @@ judgment.
 
 ==== Satisfaction, well-formedness, and refinement
 <satisfaction-well-formedness-and-refinement>
-A realization $e$ #strong[satisfies] an interface $S$ when it has the
-expected type under the grant of that type and discharges every
+A realization $e$ #strong[satisfies] an interface $cal(P)$ when it has
+the expected type under the grant of that type and discharges every
 commitment:
 
 $  & upright("Satisfies") thick italic(e v) thick Theta thick Delta thick Gamma thick e thick S thick :=\
  & quad Theta\;Delta\;upright("Grant.of")\(S . italic(t y)\)\;Gamma tack.r e : S . italic(t y)\
  & quad and thick forall p in S . italic(c o m m i t m e n t s) . thick italic(e v) thick Delta thick e thick p\, $
 
-where $S . italic(t y)$ abbreviates the expected type. Here
+where $cal(P) . italic(t y)$ abbreviates the expected type. Here
 $italic(e v) : upright("DeclEnv") arrow.r upright("Expr") arrow.r upright("PropertyId") arrow.r upright("Prop")$
 is an abstract #strong[evidence] relation supplied by the validation
 layer. It takes the environment as an argument because compositional
@@ -1655,17 +1655,17 @@ monotone” consults $B$'s interface. A design is #strong[globally well
 formed] when every stored declaration sits under its own identity and
 its realization, if any, satisfies its interface in that design.
 
-Interfaces are ordered by monotone refinement: $S subset.eq.sq S'$ when
-the expected type is unchanged and the commitments of $S$ are contained
-in those of $S'$. A declaration takes a refinement step in one of three
-ways. An unresolved declaration may have its interface refined; an
-unresolved declaration may be realized with a satisfying body; and a
-realized declaration may have its interface strengthened, provided the
-body is re-verified against the new interface. The reflexive-transitive
-closure of these steps is exactly the structural order together with
-well-formedness of the target, where the structural order
-$upright("DeclLeq")$ requires the same identity, interface refinement,
-and a write-once realization, and
+Interfaces are ordered by monotone refinement:
+$cal(P) subset.eq.sq cal(P)'$ when the expected type is unchanged and
+the commitments of $cal(P)$ are contained in those of $cal(P)'$. A
+declaration takes a refinement step in one of three ways. An unresolved
+declaration may have its interface refined; an unresolved declaration
+may be realized with a satisfying body; and a realized declaration may
+have its interface strengthened, provided the body is re-verified
+against the new interface. The reflexive-transitive closure of these
+steps is exactly the structural order together with well-formedness of
+the target, where the structural order $upright("DeclLeq")$ requires the
+same identity, interface refinement, and a write-once realization, and
 $upright("EnvRefines") thick Delta_1 thick Delta_2$ lifts it pointwise
 while permitting new declarations.
 
@@ -1786,7 +1786,7 @@ the distinction were then tried against it.
 The one that survived is a single nominal type constructor over an
 internal identity:
 
-$ upright("ConceptId")\,#h(2em) upright("Ty") in.rev upright("sem") thick s . $
+$ upright("ConceptId")\,#h(2em) upright("Ty") in.rev upright("sem") thick C . $
 
 Two distinct identities are distinct types regardless of representation,
 so the invalid wire is rejected by the ordinary rules of the simply
@@ -1828,8 +1828,8 @@ before representation is added. The question is how to add it without
 destroying what identity just bought.
 
 The obvious form --- global
-$upright("rep")_s : upright("sem") thick s arrow.r R$ and
-$upright("mk")_s : R arrow.r upright("sem") thick s$ available to every
+$upright("rep")_C : upright("sem") thick C arrow.r R$ and
+$upright("mk")_C : R arrow.r upright("sem") thick C$ available to every
 term --- destroys it immediately.
 $lambda x . thick upright("mk")_(upright("Motor"))\(upright("rep")_(upright("Tilt")) thick x\)$
 is a well-typed `Tilt -> MotorAngle` in the empty environment, with no
@@ -1843,15 +1843,15 @@ cannot realize a mapping. The surviving model separates the two:
   binds each concept, write-once, to a representation that mentions no
   concept type and contains no function type;
 - $upright("rep") thick e$ is typed at $R$ whenever
-  $e : upright("sem") thick s$ and
-  $Theta thick s = upright("some") thick R$, everywhere;
-- $upright("mk") thick s thick e$ is typed at $upright("sem") thick s$
-  whenever $e : R$, $Theta thick s = upright("some") thick R$, #emph[and
-  the grant permits $s$].
+  $e : upright("sem") thick C$ and
+  $Theta thick C = upright("some") thick R$, everywhere;
+- $upright("mk") thick C thick e$ is typed at $upright("sem") thick C$
+  whenever $e : R$, $Theta thick C = upright("some") thick R$, #emph[and
+  the grant permits $C$].
 
-$ frac(Theta thick s = upright("some") thick R quad Theta\;Delta\;G\;Gamma tack.r e : upright("sem") thick s, Theta\;Delta\;G\;Gamma tack.r upright("rep") thick e : R) $
+$ frac(Theta thick C = upright("some") thick R quad Theta\;Delta\;G\;Gamma tack.r e : upright("sem") thick C, Theta\;Delta\;G\;Gamma tack.r upright("rep") thick e : R) $
 
-$ frac(G thick s quad Theta thick s = upright("some") thick R quad Theta\;Delta\;G\;Gamma tack.r e : R, Theta\;Delta\;G\;Gamma tack.r upright("mk") thick s thick e : upright("sem") thick s) $
+$ frac(G thick C quad Theta thick C = upright("some") thick R quad Theta\;Delta\;G\;Gamma tack.r e : R, Theta\;Delta\;G\;Gamma tack.r upright("mk") thick C thick e : upright("sem") thick C) $
 
 The grant $G$ is a predicate on concepts. Client code is typed under the
 empty grant. The realization of a declaration is typed under
@@ -1859,7 +1859,7 @@ $upright("Grant.of")\(tau\)$, the concepts in result position of its own
 signature $tau$. A value of `MotorAngle` can therefore be constructed
 only inside a declaration that announces `MotorAngle` in its signature,
 which is exactly where a reader of the design would look for it. A
-well-typed term constructs $s$ only where granted $s$\; the hidden
+well-typed term constructs $C$ only where granted $C$\; the hidden
 crossing above is rejected under the grant of an unrelated declaration
 and becomes legal, and visible, once `tiltToMotor` is declared; binding
 an unbound concept is monotone for typing, satisfaction, and global
@@ -1914,8 +1914,8 @@ caught by the same typing; and the formula cannot manufacture a
 `MotorAngle` despite the shared dimension. The association between a
 concept and its dimension lives in $Theta$, not in the identity and not
 in the type constructor. The earlier draft's two-index
-$upright("Sem")\[n\,d\]$ becomes $upright("sem") thick s$ together with
-$Theta thick s = upright("some") thick\(upright("q") thick d\)$.
+$upright("Sem")\[n\,d\]$ becomes $upright("sem") thick C$ together with
+$Theta thick C = upright("some") thick\(upright("q") thick d\)$.
 
 Units are surface (§IV.4 in full). A literal `n u` elaborates to a
 dimensioned literal scaled by the unit's factor; changing the unit
@@ -3473,7 +3473,7 @@ it --- `CTy` is the kernel's `Ty` plus `unit`, interface arrows and
 domain products --- and the kernel interface type is the value of a
 normalization function on them (#strong[formally proved]):
 
-$ upright(e l i m)\(upright(c a n o n i c a l)\(s\)\)= upright(e n c o d e)\(s\)\,#h(2em) upright(e n c o d e)\(chevron.l\[thin\]\,B chevron.r\)= B\,quad upright(e n c o d e)\(chevron.l A_1\,dots.h\,A_n\;B chevron.r\)= A_1 arrow.r dots.h.c arrow.r A_n arrow.r B\, $
+$ upright(e l i m)\(upright(c a n o n i c a l)\(sigma\)\)= upright(e n c o d e)\(sigma\)\,#h(2em) upright(e n c o d e)\(chevron.l\[thin\]\,B chevron.r\)= B\,quad upright(e n c o d e)\(chevron.l A_1\,dots.h\,A_n\;B chevron.r\)= A_1 arrow.r dots.h.c arrow.r A_n arrow.r B\, $
 
 where `elim` performs unit elimination (`() -> B ↦ B`) and currying
 (`(A × B) -> C ↦ A -> (B -> C)`), is total by a weight both steps
@@ -3821,7 +3821,7 @@ with its clock and an assignment of channels to target Sources ---
 several targets may share one raw reading (an IMU image feeding pitch,
 roll and acceleration), and one target is the singleton case. Then
 
-$ upright(p r o v i s i o n)\(Delta\,P\)med = med Delta thin\[thin r mapsto chevron.l italic(r a w)\,\[thin\]chevron.r med upright("unresolved") thin\]thin\[thin s mapsto upright(m k)_c thin\(upright(t r) med\(upright(d e c l R e f) med r\)\)med upright("for each target ") s : upright(s e m) med c thin\]\, $
+$ upright(p r o v i s i o n)\(Delta\,P\)med = med Delta thin\[thin r mapsto chevron.l italic(r a w)\,\[thin\]chevron.r med upright("unresolved") thin\]thin\[thin delta mapsto upright(m k)_C thin\(upright(t r) med\(upright(d e c l R e f) med r\)\)med upright("for each target ") delta : upright(s e m) med C thin\]\, $
 
 with `tr (declRef r)` alone at a representation-typed Source; the raw
 declaration's kernel type is `raw` and its canonical type `() -> raw`
@@ -5315,7 +5315,7 @@ the explanation to the bindings.
 identities, dimensions, and domains carry no computational content and
 may be erased; erasure is proved sound for identities and for
 dimensions. Nominal wrappers introduced by elaboration cancel,
-$upright("rep")\(upright("mk")_s thick e\)arrow.r.squiggly e$, and the
+$upright("rep")\(upright("mk")_C thick e\)arrow.r.squiggly e$, and the
 flattened program is checked under the universal grant because every
 construction was authorized at its declaration. Unfolding all
 realizations into a closed term preserves typing on the delay-free
@@ -8186,7 +8186,7 @@ throughout and the old one is mentioned only in Appendix G.
     expected type of each declared identity],
     [$Theta$], [`ConceptEnv : ConceptId → Option Ty`], [the write-once
     representation binding of concepts],
-    [$s$, `ConceptId`], [`ConceptId`], [a concept's identity; `sem s`
+    [$C$, `ConceptId`], [`ConceptId`], [a concept's identity; `sem s`
     its nominal type],
     [`q d`], [`Ty.q Dim`], [a physical quantity of dimension `d` (an
     exponent vector)],
