@@ -2,7 +2,7 @@
 //!
 //! The elaborator types the surface expression at two levels.  A value is
 //! either *semantic* — an input (`sem A`), a relationship without inputs,
-//! or a relationship applied to semantic values — or a *representation*: a
+//! or a relationship applied to Sem values — or a *representation*: a
 //! quantity of some dimension, a truth value, a count, or an option of one
 //! of those.  Arithmetic, comparisons, `if` conditions and literal patterns
 //! work on representations; the kernel's primitives are dimension-indexed,
@@ -18,7 +18,7 @@
 //!
 //! | surface | Core |
 //! |---|---|
-//! | `f(a, b)` | `app (app (declRef f) a) b` — `a`, `b` semantic values |
+//! | `f(a, b)` | `app (app (declRef f) a) b` — `a`, `b` Sem values |
 //! | `level` (relationship without inputs) | `declRef level` |
 //! | `{ let x = v; e }` | `app (λx:τ. e) v` |
 //! | `if c then a else b` | `ite c a b` (strict, DI-26) |
@@ -48,7 +48,7 @@ use bdl_diagnostics::{Diagnostic, Entity, Severity, Span};
 use bdl_equations::{self as equations, Cap, Entry, Instance, MatchError, Ordered, PDim, PTy};
 use bdl_ir::{DesignIr, Expr, Prim, Scalar, Ty};
 use bdl_model::surface::{Design, MappingBlock};
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 use bdl_syntax::lower::Ident;
 use bdl_syntax::lower::{SurfaceArm, SurfaceLet};
 use bdl_syntax::{BinaryOp, ExprKind, PatternKind, SurfaceExpr, SurfacePattern, UnaryOp};
@@ -98,13 +98,13 @@ enum STy {
     Q(Dim),
     Bool,
     Nat,
-    /// A semantic value: an input, or a relationship's result.
-    Sem(SemanticId),
+    /// A Sem value: an input, or a relationship's result.
+    Sem(ConceptId),
     /// An optional representation value.
     Opt(Box<STy>),
-    /// A collection (`list τ`); elements may be semantic values.
+    /// A collection (`list τ`); elements may be Sem values.
     List(Box<STy>),
-    /// A grouped value (`τ × σ`); parts may be semantic values.
+    /// A grouped value (`τ × σ`); parts may be Sem values.
     Pair(Box<STy>, Box<STy>),
     /// The payload of a bare `None` (or the elements of `[]`) before
     /// context fixes it.
@@ -414,7 +414,7 @@ fn run(
 /// How a pattern variable or test reaches its value from the scrutinee.
 #[derive(Clone, Debug)]
 enum Step {
-    /// Observe a semantic value's representation.
+    /// Observe a Sem value's representation.
     Rep,
     /// `getD v default` into an option's payload of this type.
     Unwrap(STy),
@@ -481,7 +481,7 @@ impl<'a> Elab<'a> {
         }
     }
 
-    fn concept_name(&self, id: SemanticId) -> String {
+    fn concept_name(&self, id: ConceptId) -> String {
         self.design
             .concepts
             .get(&id)
@@ -537,10 +537,10 @@ impl<'a> Elab<'a> {
         }
     }
 
-    fn unbound(&self, concept: SemanticId, span: Span, role: &str) -> Diagnostic {
+    fn unbound(&self, concept: ConceptId, span: Span, role: &str) -> Diagnostic {
         let name = self.concept_name(concept);
         Diagnostic::info(
-            "semantic.unbound_representation",
+            "concept.unbound_representation",
             self.entity(),
             format!("{name} has no representation yet, so this formula cannot be checked."),
         )
@@ -594,7 +594,7 @@ impl<'a> Elab<'a> {
                 [self.default_of(a), self.default_of(b)],
             ),
             // Options carry representations only (`some` observes its
-            // operand), so no default of a semantic type is ever needed.
+            // operand), so no default of a Sem type is ever needed.
             STy::Sem(_) | STy::Unknown | STy::Error => self.lit(Dim::ZERO, 0.0),
         }
     }
@@ -720,7 +720,7 @@ impl<'a> Elab<'a> {
         }
     }
 
-    /// Observe a semantic value where a representation is needed.
+    /// Observe a Sem value where a representation is needed.
     fn observe(&mut self, e: Expr, ty: STy, path: &ExprPath, span: Span) -> (Expr, STy) {
         let STy::Sem(s) = ty else {
             return (e, ty);
@@ -1212,7 +1212,7 @@ impl<'a> Elab<'a> {
         let Some(m) = self.design.mappings.get(&id) else {
             return self.placeholder();
         };
-        let params: Vec<SemanticId> = m.signature.inputs.clone();
+        let params: Vec<ConceptId> = m.signature.inputs.clone();
         let output = m.signature.output;
         let mname = m.name.clone();
         if m.signature.is_unit_domain() {
@@ -2185,7 +2185,7 @@ impl<'a> Elab<'a> {
                     } => {
                         let name = self.concept_name(*id);
                         self.error(
-                            "semantic.concept_mismatch",
+                            "concept.mismatch",
                             span,
                             format!("Both ends of the range must be comparable with {subject}: a {name}."),
                         )
@@ -2206,7 +2206,7 @@ impl<'a> Elab<'a> {
                 match (bound, found) {
                     (Ty::Sem { id: a }, Ty::Sem { id: b }) => self
                         .error(
-                            "semantic.concept_mismatch",
+                            "concept.mismatch",
                             span,
                             format!(
                                 "{} and {} are different concepts.",
@@ -2293,7 +2293,7 @@ impl<'a> Elab<'a> {
                 let name = self.concept_name(*id);
                 let numeric = matches!(self.ir.representation_of(*id), Some(Ty::Q { .. }));
                 let d = self.error(
-                    "semantic.no_order",
+                    "concept.no_order",
                     span,
                     format!("{name} values can be compared for equality, but they have no default order."),
                 );
@@ -2313,36 +2313,36 @@ impl<'a> Elab<'a> {
             }
             Ty::Prod { .. } => self
                 .error(
-                    "semantic.no_order",
+                    "concept.no_order",
                     span,
                     "A grouped value has no order — compare its parts.",
                 )
                 .fix(format!("Apply {what} to one part: first(…) or second(…).")),
             Ty::List { .. } => self
                 .error(
-                    "semantic.no_order",
+                    "concept.no_order",
                     span,
                     "A collection has no order — compare its elements or its length.",
                 )
                 .fix("Use length(…), or any/all over the elements."),
             Ty::Opt { .. } => self
                 .error(
-                    "semantic.no_order",
+                    "concept.no_order",
                     span,
                     "An optional value has no order — take it apart with `match` first.",
                 )
                 .fix("Write `match o { Some(x) => …, None => … }`."),
-            Ty::Bool => self.error("semantic.no_order", span, "true and false have no order."),
+            Ty::Bool => self.error("concept.no_order", span, "true and false have no order."),
             Ty::Nat => self
                 .error(
-                    "semantic.no_order",
+                    "concept.no_order",
                     span,
                     "Counts are not ordered magnitudes here.",
                 )
                 .fix("Compare quantities instead."),
-            Ty::Arr { .. } => self.error("semantic.no_order", span, "Rules have no order."),
+            Ty::Arr { .. } => self.error("concept.no_order", span, "Rules have no order."),
             Ty::Q { .. } | Ty::Unit => {
-                self.error("semantic.no_order", span, "This value has no order.")
+                self.error("concept.no_order", span, "This value has no order.")
             }
         };
         self.push(d);
@@ -3036,12 +3036,12 @@ impl<'a> Elab<'a> {
         }
     }
 
-    /// A literal or constructor pattern on a semantic value matches its
+    /// A literal or constructor pattern on a Sem value matches its
     /// representation.
     fn through_rep(
         &mut self,
         p: &SurfacePattern,
-        s: SemanticId,
+        s: ConceptId,
         access: Access,
         out: &mut Compiled,
     ) {
@@ -3183,7 +3183,7 @@ impl<'a> Elab<'a> {
                 let (an, bn) = (self.concept_name(*a), self.concept_name(*b));
                 let d = self
                     .error(
-                        "semantic.concept_mismatch",
+                        "concept.mismatch",
                         span,
                         format!("{an} and {bn} are different concepts."),
                     )
@@ -3461,7 +3461,7 @@ fn some_payloads<'a>(pats: &[&'a SurfacePattern]) -> Vec<&'a SurfacePattern> {
 }
 
 /// Conservative exhaustiveness: catch-all; `true` and `false`; `None` and
-/// an exhaustive `Some(…)`; a semantic value through its representation.
+/// an exhaustive `Some(…)`; a Sem value through its representation.
 fn covers(ty: &STy, pats: &[&SurfacePattern], ir: &DesignIr) -> bool {
     if pats.iter().any(|p| is_catch_all(p)) {
         return true;

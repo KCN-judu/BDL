@@ -5,7 +5,7 @@
 
 use bdl_model::edit::EditOp;
 use bdl_model::surface::{Definition, Design, DeviceKind, Representation, Signature};
-use bdl_model::{ClockId, DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim, OutputId};
 use bdl_system::*;
 
 /// A builder over the system edit model that keeps the ids it created.
@@ -38,7 +38,7 @@ impl Sys {
     pub fn base(&mut self, op: EditOp) -> SystemEditOutcome {
         self.apply(SystemEditOp::Base { op })
     }
-    pub fn base_concept(&mut self, name: &str, rep: Representation) -> SemanticId {
+    pub fn base_concept(&mut self, name: &str, rep: Representation) -> ConceptId {
         self.base(EditOp::CreateConcept {
             name: name.into(),
             description: String::new(),
@@ -56,7 +56,7 @@ impl Sys {
             .created_clock
             .unwrap()
     }
-    pub fn base_output(&mut self, name: &str, accepts: SemanticId, clock: ClockId) -> OutputId {
+    pub fn base_output(&mut self, name: &str, accepts: ConceptId, clock: ClockId) -> OutputId {
         self.base(EditOp::CreateOutput {
             name: name.into(),
             description: String::new(),
@@ -87,7 +87,7 @@ impl Sys {
         c: ComponentId,
         name: &str,
         rep: Option<Representation>,
-    ) -> SemanticId {
+    ) -> ConceptId {
         self.body(
             c,
             EditOp::CreateConcept {
@@ -112,8 +112,8 @@ impl Sys {
         &mut self,
         c: ComponentId,
         name: &str,
-        inputs: &[SemanticId],
-        output: SemanticId,
+        inputs: &[ConceptId],
+        output: ConceptId,
     ) -> DeclId {
         self.body(
             c,
@@ -157,7 +157,7 @@ impl Sys {
         &mut self,
         c: ComponentId,
         name: &str,
-        accepts: SemanticId,
+        accepts: ConceptId,
         clock: ClockId,
     ) -> OutputId {
         self.body(
@@ -193,7 +193,7 @@ impl Sys {
             },
         );
     }
-    pub fn share(&mut self, c: ComponentId, local: SemanticId, system: SemanticId) {
+    pub fn share(&mut self, c: ComponentId, local: ConceptId, system: ConceptId) {
         self.apply(SystemEditOp::ShareConcept {
             component: c,
             local,
@@ -266,12 +266,7 @@ impl Sys {
 
     // ---- base relationships (the top level, groupable) ----------------------
 
-    pub fn base_mapping(
-        &mut self,
-        name: &str,
-        inputs: &[SemanticId],
-        output: SemanticId,
-    ) -> DeclId {
+    pub fn base_mapping(&mut self, name: &str, inputs: &[ConceptId], output: ConceptId) -> DeclId {
         self.base(EditOp::CreateMapping {
             name: name.into(),
             description: String::new(),
@@ -354,8 +349,8 @@ impl Sys {
                 .unwrap(),
         )
     }
-    pub fn flat_sem(&self, i: ComponentInstanceId, local: SemanticId) -> SemanticId {
-        SemanticId::from_raw(
+    pub fn flat_sem(&self, i: ComponentInstanceId, local: ConceptId) -> ConceptId {
+        ConceptId::from_raw(
             self.system()
                 .flat_ids
                 .get(i, LocalEntity::Sem(local))
@@ -374,7 +369,7 @@ pub const LEVEL: Representation = Representation::Quantity { dim: Dim::ZERO };
 /// Every id the vertical slice creates.
 pub struct Slice {
     pub sys: Sys,
-    pub tilt: SemanticId,
+    pub tilt: ConceptId,
     pub main: ClockId,
     // TiltSource
     pub source: ComponentId,
@@ -384,8 +379,8 @@ pub struct Slice {
     pub source_port: PortId,
     // AdaptiveLamp
     pub lamp: ComponentId,
-    pub lamp_tilt: SemanticId,
-    pub lamp_brightness_concept: SemanticId,
+    pub lamp_tilt: ConceptId,
+    pub lamp_brightness_concept: ConceptId,
     pub lamp_tick: ClockId,
     pub lamp_tilt_value: DeclId,
     pub lamp_dim: DeclId,
@@ -532,7 +527,7 @@ pub fn hand_written_flat() -> Flat {
         |s: &mut ProjectSnapshot,
          ap: &mut dyn FnMut(&mut ProjectSnapshot, EditOp) -> bdl_model::edit::EditOutcome,
          name: &str,
-         inputs: Vec<SemanticId>,
+         inputs: Vec<ConceptId>,
          output,
          formula: Option<&str>,
          clock: Option<ClockId>| {

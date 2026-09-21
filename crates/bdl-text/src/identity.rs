@@ -186,7 +186,7 @@ impl IdentityTable {
                 };
                 let (raw, next) = match key.kind {
                     KeyKind::Concept => {
-                        let (id, a) = alloc.fresh_semantic();
+                        let (id, a) = alloc.fresh_concept();
                         (id.raw(), a)
                     }
                     KeyKind::Mapping => {

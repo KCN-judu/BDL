@@ -26,7 +26,7 @@ use crate::ids::{BehaviorGroupId, ComponentId, ComponentInstanceId, PortId};
 use crate::model::*;
 use bdl_diagnostics::{Diagnostic, Entity};
 use bdl_model::surface::Design;
-use bdl_model::{ClockId, DeclId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -56,7 +56,7 @@ pub struct PreviewPort {
     pub name: String,
     pub kind: PortKind,
     /// The concept the port carries (system identity).
-    pub concept: SemanticId,
+    pub concept: ConceptId,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -214,7 +214,7 @@ pub fn preview_extraction(
             .mappings
             .get(&d)
             .map(|m| m.signature.output)
-            .unwrap_or(SemanticId::from_raw(0)),
+            .unwrap_or(ConceptId::from_raw(0)),
     };
     let mut required: Vec<PreviewPort> = boundary
         .crossing_in
@@ -319,7 +319,7 @@ pub fn extract_group(
     // --- the body: a restriction of the base (FV `restrict`) ---
     let mut body = Design::empty(preview.name.clone());
     let base = s.base.clone();
-    let mut concepts: BTreeSet<SemanticId> = BTreeSet::new();
+    let mut concepts: BTreeSet<ConceptId> = BTreeSet::new();
     for d in b.members.iter().chain(b.crossing_in.iter()) {
         if let Some(m) = base.mappings.get(d) {
             concepts.extend(m.signature.inputs.iter().copied());

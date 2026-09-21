@@ -1,16 +1,16 @@
 //! The typing judgment `Θ; Δ; G; Γ ⊢ e : τ` as an inference function.
 
 use bdl_ir::{DesignIr, Expr, Ty};
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use std::collections::BTreeSet;
 
-/// Which semantic concepts a term may *construct* with `mk`.
+/// Which concepts a term may *construct* with `mk`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Grant {
     /// Client code: nothing may be constructed.
     None,
     /// The concepts in result position of a signature (`Ty::grant`).
-    Of(BTreeSet<SemanticId>),
+    Of(BTreeSet<ConceptId>),
     /// The inlined executable program, after every construction was
     /// authorised at its own declaration.
     All,
@@ -20,7 +20,7 @@ impl Grant {
     pub fn of(ty: &Ty) -> Grant {
         Grant::Of(ty.grant().into_iter().collect())
     }
-    pub fn permits(&self, s: SemanticId) -> bool {
+    pub fn permits(&self, s: ConceptId) -> bool {
         match self {
             Grant::None => false,
             Grant::Of(set) => set.contains(&s),
@@ -55,18 +55,18 @@ pub enum TypeErrorKind {
         expected: Ty,
         found: Ty,
     },
-    RepOfNonSemantic {
+    RepOfNonConcept {
         found: Ty,
     },
     /// `Θ s = none`: the concept has no representation yet.
     UnboundRepresentation {
-        concept: SemanticId,
+        concept: ConceptId,
     },
     ConstructionNotGranted {
-        concept: SemanticId,
+        concept: ConceptId,
     },
     ConstructionMismatch {
-        concept: SemanticId,
+        concept: ConceptId,
         expected: Ty,
         found: Ty,
     },
@@ -178,7 +178,7 @@ fn infer_at(
         Expr::Rep { e } => {
             let te = child(ir, grant, ctx, e, path, 0)?;
             let Ty::Sem { id } = te else {
-                return Err(err(TypeErrorKind::RepOfNonSemantic { found: te }, path));
+                return Err(err(TypeErrorKind::RepOfNonConcept { found: te }, path));
             };
             ir.representation_of(id)
                 .cloned()
@@ -295,8 +295,8 @@ mod tests {
     use bdl_ir::{ConceptBinding, Declaration, Interface, Prim, Scalar};
     use bdl_model::Dim;
 
-    fn sem(n: u64) -> SemanticId {
-        SemanticId::from_raw(n)
+    fn sem(n: u64) -> ConceptId {
+        ConceptId::from_raw(n)
     }
     fn decl(n: u64) -> DeclId {
         DeclId::from_raw(n)
@@ -632,7 +632,7 @@ mod tests {
         }
 
         #[test]
-        fn mk_yields_the_requested_semantic_type(v in -1e6f64..1e6) {
+        fn mk_yields_the_requested_concept_type(v in -1e6f64..1e6) {
             let e = Expr::mk(sem(1), lit(Dim::ZERO, v));
             proptest::prop_assert_eq!(infer(&ir(), &Grant::All, &[], &e).unwrap(), Ty::sem(sem(1)));
         }

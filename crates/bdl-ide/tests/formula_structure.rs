@@ -9,7 +9,7 @@ mod support;
 
 use bdl_ide::*;
 use bdl_model::surface::{ProjectSnapshot, Representation};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use support::*;
 
 const ANGULAR: Dim = Dim {
@@ -24,8 +24,8 @@ struct Motor {
     rate: DeclId,
     /// `spin : Angle -> MotorSpeed`.
     spin: DeclId,
-    readings: SemanticId,
-    speed: SemanticId,
+    readings: ConceptId,
+    speed: ConceptId,
 }
 
 /// `Angle`, `MotorSpeed` (an angular velocity), `Readings` (a collection
@@ -46,7 +46,7 @@ fn motor() -> Motor {
             element: Box::new(Representation::Quantity { dim: Dim::ANGLE }),
         },
     );
-    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<SemanticId>, out: SemanticId| {
+    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<ConceptId>, out: ConceptId| {
         let a = bdl_model::edit::apply_edit(s, &mapping(name, inputs, out)).expect("mapping");
         (a.snapshot, a.outcome.created_mapping.expect("id"))
     };

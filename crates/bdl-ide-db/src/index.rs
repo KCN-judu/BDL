@@ -11,7 +11,7 @@ use crate::entity::{EntityKind, EntityRef, EntityRole};
 use crate::text::TextRange;
 use bdl_elab::names::{InputEnv, Lookup};
 use bdl_model::surface::{Definition, Design};
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use bdl_syntax::ast::{self, AstNode};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -39,7 +39,7 @@ pub struct EntityIndex {
     outgoing: BTreeMap<EntityRef, Vec<SemanticReference>>,
     /// Concept-name resolution inside each formula body: body-relative
     /// range → concept, for hover/navigation inside formulas.
-    formula_names: BTreeMap<DeclId, Vec<(TextRange, SemanticId)>>,
+    formula_names: BTreeMap<DeclId, Vec<(TextRange, ConceptId)>>,
 }
 
 impl EntityIndex {
@@ -189,7 +189,7 @@ impl EntityIndex {
     }
 
     /// The concept named at a body-relative offset of a mapping's formula.
-    pub fn formula_name_at(&self, mapping: DeclId, offset: u32) -> Option<(TextRange, SemanticId)> {
+    pub fn formula_name_at(&self, mapping: DeclId, offset: u32) -> Option<(TextRange, ConceptId)> {
         self.formula_names
             .get(&mapping)?
             .iter()
@@ -197,7 +197,7 @@ impl EntityIndex {
             .copied()
     }
 
-    pub fn formula_names(&self, mapping: DeclId) -> &[(TextRange, SemanticId)] {
+    pub fn formula_names(&self, mapping: DeclId) -> &[(TextRange, ConceptId)] {
         self.formula_names.get(&mapping).map_or(&[], Vec::as_slice)
     }
 }
@@ -210,7 +210,7 @@ impl EntityIndex {
 /// concept's own name — a rename of the concept must leave it alone.
 pub fn formula_input_names(
     design: &Design,
-    inputs: &[SemanticId],
+    inputs: &[ConceptId],
     parameters: &[String],
     source: &str,
 ) -> Vec<FormulaInputName> {
@@ -244,7 +244,7 @@ pub fn formula_input_names(
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FormulaInputName {
     pub range: TextRange,
-    pub concept: SemanticId,
+    pub concept: ConceptId,
     pub by_parameter: bool,
 }
 
@@ -254,10 +254,10 @@ mod tests {
     use bdl_model::surface::{Concept, MappingBlock, Signature};
     use bdl_model::Dim;
 
-    fn lamp() -> (Design, SemanticId, SemanticId, DeclId) {
+    fn lamp() -> (Design, ConceptId, ConceptId, DeclId) {
         let mut d = Design::empty("lamp");
-        let (tilt, ids) = d.ids.fresh_semantic();
-        let (bright, ids) = ids.fresh_semantic();
+        let (tilt, ids) = d.ids.fresh_concept();
+        let (bright, ids) = ids.fresh_concept();
         let (dim, ids) = ids.fresh_decl();
         d.ids = ids;
         for (id, name) in [(tilt, "Tilt"), (bright, "Brightness")] {

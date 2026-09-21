@@ -281,7 +281,7 @@ fn lift_all(snapshot: &AnalysisSnapshot) -> Vec<SemanticDiagnostic> {
                     }
                 }
                 SemanticAnchor::new(entity, EntityRole::Definition).at(formula_span(m))
-            } else if code == "semantic.unbound_representation" {
+            } else if code == "concept.unbound_representation" {
                 if let Some(block) = design.mappings.get(&m) {
                     let mut concepts = block.signature.inputs.clone();
                     concepts.push(block.signature.output);
@@ -306,7 +306,7 @@ fn lift_all(snapshot: &AnalysisSnapshot) -> Vec<SemanticDiagnostic> {
                 }
                 SemanticAnchor::new(entity, EntityRole::Definition).at(formula_span(m))
             } else {
-                // formula.*, dimension.*, realization.*, type.*, semantic.*
+                // formula.*, dimension.*, realization.*, type.*, concept.*
                 SemanticAnchor::new(entity, EntityRole::Definition).at(formula_span(m))
             }
         } else if let Some(c) = entity.as_concept() {

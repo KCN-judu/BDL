@@ -16,7 +16,7 @@ use bdl_model::surface::{
     ClockDomain, Concept, Definition, Design, DeviceBinding, DeviceKind, InputProfileId,
     MappingBlock, PhysicalOutput, Representation, Signature,
 };
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, OutputId, OutputProfileId};
 use bdl_syntax::lower::{
     BindEndItem, ComponentBodyItem, ComponentItem, MappingDefinition, PatternKind, PortWord,
     SurfaceItem, SurfaceModule, SurfaceType, TypeKind,
@@ -36,13 +36,13 @@ use std::collections::BTreeMap;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TextEntity {
-    Concept(SemanticId),
+    Concept(ConceptId),
     Mapping(DeclId),
     Clock(ClockId),
     Output(OutputId),
     Device(DeviceId),
     Component(ComponentId),
-    BodyConcept(ComponentId, SemanticId),
+    BodyConcept(ComponentId, ConceptId),
     BodyMapping(ComponentId, DeclId),
     BodyClock(ComponentId, ClockId),
     BodyOutput(ComponentId, OutputId),
@@ -213,7 +213,7 @@ pub fn build_system(
 /// Names of one design (the top level or a body), for resolution.
 #[derive(Default)]
 struct Names {
-    concepts: BTreeMap<String, SemanticId>,
+    concepts: BTreeMap<String, ConceptId>,
     clocks: BTreeMap<String, ClockId>,
     outputs: BTreeMap<String, OutputId>,
     mappings: BTreeMap<String, DeclId>,
@@ -359,7 +359,7 @@ impl<'a> Builder<'a> {
                     if !self.claim(&key, file, c.name.span, c.span) {
                         continue;
                     }
-                    let id = SemanticId::from_raw(self.id(&key));
+                    let id = ConceptId::from_raw(self.id(&key));
                     let repr = self.representation(file, c.representation.as_ref());
                     let ordered =
                         self.ordered(file, c.span, &c.name.name, c.ordered, repr.as_ref());
@@ -805,7 +805,7 @@ impl<'a> Builder<'a> {
         false
     }
 
-    fn top_concept(&mut self, file: usize, t: &SurfaceType) -> Option<SemanticId> {
+    fn top_concept(&mut self, file: usize, t: &SurfaceType) -> Option<ConceptId> {
         let name = single_name(t);
         match name.and_then(|n| self.base.concepts.get(n).copied()) {
             Some(id) => Some(id),
@@ -1016,7 +1016,7 @@ impl<'a> Builder<'a> {
         })
     }
 
-    fn concept_in(&self, component: Option<ComponentId>, t: &SurfaceType) -> Option<SemanticId> {
+    fn concept_in(&self, component: Option<ComponentId>, t: &SurfaceType) -> Option<ConceptId> {
         let name = single_name(t)?;
         match component {
             Some(c) => self.component_names.get(&c)?.concepts.get(name).copied(),
@@ -1055,7 +1055,7 @@ impl<'a> Builder<'a> {
                     if !self.claim(&key, file, x.name.span, x.span) {
                         continue;
                     }
-                    let id = SemanticId::from_raw(self.id(&key));
+                    let id = ConceptId::from_raw(self.id(&key));
                     let repr = self.representation(file, x.representation.as_ref());
                     let ordered =
                         self.ordered(file, x.span, &x.name.name, x.ordered, repr.as_ref());
@@ -1097,7 +1097,7 @@ impl<'a> Builder<'a> {
                         );
                         continue;
                     };
-                    let id = SemanticId::from_raw(self.id(&key));
+                    let id = ConceptId::from_raw(self.id(&key));
                     let shared_concept = &self.system.base.concepts[&system_id];
                     let (repr, ordered) = (
                         shared_concept.representation.clone(),

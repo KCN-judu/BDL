@@ -247,7 +247,7 @@ pub fn output_values(
 mod tests {
     use super::*;
     use bdl_ir::{ConceptBinding, Declaration, Expr, Interface, OutputSpec, Prim, Scalar, Ty};
-    use bdl_model::{ClockId, Dim, SemanticId};
+    use bdl_model::{ClockId, ConceptId, Dim};
 
     fn d(n: u64) -> DeclId {
         DeclId::from_raw(n)
@@ -258,8 +258,8 @@ mod tests {
     fn c(n: u64) -> ClockId {
         ClockId::from_raw(n)
     }
-    fn s(n: u64) -> SemanticId {
-        SemanticId::from_raw(n)
+    fn s(n: u64) -> ConceptId {
+        ConceptId::from_raw(n)
     }
 
     /// Brightness (sem 0), MotorAngle (sem 1); light : Brightness @ c0, motor : MotorAngle @ c1.

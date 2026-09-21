@@ -299,7 +299,7 @@ fn edited_mapping(op: &EditOp) -> Option<DeclId> {
     }
 }
 
-fn edited_concept(op: &EditOp) -> Option<bdl_model::SemanticId> {
+fn edited_concept(op: &EditOp) -> Option<bdl_model::ConceptId> {
     match op {
         EditOp::RenameConcept { id, .. }
         | EditOp::SetConceptDescription { id, .. }

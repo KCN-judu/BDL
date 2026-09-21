@@ -4,7 +4,7 @@
 //! every dimension rule lives in [`Prim::ty`].
 
 use crate::ty::Ty;
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 use serde::{Deserialize, Serialize};
 
 /// A numeric literal.  The formal development uses `Nat`; the production
@@ -238,13 +238,13 @@ pub enum Expr {
     DeclRef {
         id: DeclId,
     },
-    /// Observe a semantic value's representation (free everywhere).
+    /// Observe a Sem value's representation (free everywhere).
     Rep {
         e: Box<Expr>,
     },
-    /// Construct a semantic value (only under a grant for `s`).
+    /// Construct a Sem value (only under a grant for `s`).
     Mk {
-        s: SemanticId,
+        s: ConceptId,
         e: Box<Expr>,
     },
     Prim {
@@ -294,7 +294,7 @@ impl Expr {
     pub fn rep(e: Expr) -> Expr {
         Expr::Rep { e: Box::new(e) }
     }
-    pub fn mk(s: SemanticId, e: Expr) -> Expr {
+    pub fn mk(s: ConceptId, e: Expr) -> Expr {
         Expr::Mk { s, e: Box::new(e) }
     }
     pub fn delay(init: Expr, e: Expr) -> Expr {

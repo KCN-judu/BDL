@@ -7,7 +7,7 @@ use bdl_layout::{metrics, place_missing, Node};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::layout::{GroupBox, Layout, Point};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim, OutputId};
 use bdl_system::{
     apply_system_edit, BehaviorSystem, BindingEnd, PortKind, SystemEditOp, SystemSnapshot,
 };
@@ -36,7 +36,7 @@ fn lamp() -> Design {
             description: String::new(),
             signature: Signature {
                 inputs: vec![],
-                output: SemanticId::from_raw(0),
+                output: ConceptId::from_raw(0),
             },
             definition: None,
             clock: None,
@@ -45,8 +45,8 @@ fn lamp() -> Design {
             name: "dimByTilt".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![SemanticId::from_raw(0)],
-                output: SemanticId::from_raw(1),
+                inputs: vec![ConceptId::from_raw(0)],
+                output: ConceptId::from_raw(1),
             },
             definition: None,
             clock: None,
@@ -60,7 +60,7 @@ fn lamp() -> Design {
         EditOp::CreateOutput {
             name: "light".into(),
             description: String::new(),
-            accepts: SemanticId::from_raw(1),
+            accepts: ConceptId::from_raw(1),
             clock: None,
         },
         EditOp::SetMappingDrive {
@@ -148,7 +148,7 @@ fn an_empty_layout_is_filled_left_to_right_and_the_same_way_twice() {
     let l = &a.layout;
     assert_no_overlap(&system, l);
     // columns: concepts, relationships, sinks
-    let tilt = l.concepts[&SemanticId::from_raw(0)];
+    let tilt = l.concepts[&ConceptId::from_raw(0)];
     let dim = l.mappings[&DeclId::from_raw(1)];
     let light = l.outputs[&OutputId::from_raw(0)];
     assert!(tilt.x < dim.x && dim.x < light.x);
@@ -169,7 +169,7 @@ fn positioned_nodes_never_move_and_new_ones_land_beside_what_they_read() {
     let mut layout = Layout::default();
     layout
         .concepts
-        .insert(SemanticId::from_raw(0), Point { x: 900.0, y: 700.0 });
+        .insert(ConceptId::from_raw(0), Point { x: 900.0, y: 700.0 });
     layout
         .mappings
         .insert(DeclId::from_raw(0), Point { x: 10.0, y: 10.0 });
@@ -185,7 +185,7 @@ fn positioned_nodes_never_move_and_new_ones_land_beside_what_they_read() {
     assert!(p
         .placed
         .iter()
-        .all(|x| x.node != Node::Concept(SemanticId::from_raw(0))
+        .all(|x| x.node != Node::Concept(ConceptId::from_raw(0))
             && x.node != Node::Mapping(DeclId::from_raw(0))));
     assert_no_overlap(&system, l);
     // dimByTilt reads Tilt, which the designer put far down: it follows
@@ -244,7 +244,7 @@ fn instances_and_component_bodies_are_placed_too() {
             description: String::new(),
             signature: Signature {
                 inputs: vec![],
-                output: SemanticId::from_raw(0),
+                output: ConceptId::from_raw(0),
             },
             definition: None,
             clock: None,
@@ -310,10 +310,13 @@ fn instances_and_component_bodies_are_placed_too() {
     let at = l.instances[&inst.raw()];
     assert!((at.y - 500.0).abs() < 200.0, "beside what feeds it: {at:?}");
     let body = &l.components[&cid.raw()];
-    assert!(body.concepts.contains_key(&SemanticId::from_raw(0)));
+    assert!(body.concepts.contains_key(&ConceptId::from_raw(0)));
     assert!(body.mappings.contains_key(&DeclId::from_raw(0)));
-    assert!(p.placed.iter().any(
-        |x| x.component == Some(cid.raw()) && x.node == Node::Concept(SemanticId::from_raw(0))
-    ));
+    assert!(
+        p.placed
+            .iter()
+            .any(|x| x.component == Some(cid.raw())
+                && x.node == Node::Concept(ConceptId::from_raw(0)))
+    );
     assert!(place_missing(&system.system, l).is_empty());
 }

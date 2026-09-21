@@ -171,6 +171,7 @@ version = "0.1.0"
 dependencies = [
  "bdl-model",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 /// A runtime value in the reference evaluator's shape (dimensions are
-/// static and not carried).  Semantic identity is the raw `SemanticId`.
+/// static and not carried).  Concept identity is the raw `ConceptId`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum DynValue {

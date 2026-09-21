@@ -10,7 +10,7 @@
 //! mirror image of the encoder (`realization`): typed under
 //! [`Grant::None`] it constructs nothing; the concept itself is constructed
 //! by the provision, under the Source's own grant (`Provision.one`:
-//! `s := mk c (tr r)`), so the design still owns every semantic value.
+//! `s := mk c (tr r)`), so the design still owns every Sem value.
 //!
 //! The judgments are the encoder's, mirrored, and kept apart for the same
 //! reason (each can fail alone):
@@ -37,7 +37,7 @@ use bdl_catalogue::{Catalogue, InputProfile, Transducer};
 use bdl_check::{infer, Grant};
 use bdl_ir::{DesignIr, Expr, Ty};
 use bdl_model::surface::{DeviceBinding, DeviceKind};
-use bdl_model::SemanticId;
+use bdl_model::ConceptId;
 use serde::{Deserialize, Serialize};
 
 /// Why a transducer is not well formed (`¬ Channel.WF`).
@@ -65,7 +65,7 @@ pub enum TransducerFault {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ProvisionFitFault {
     /// The Source produces a concept with no representation yet.
-    NoRepresentation { concept: SemanticId },
+    NoRepresentation { concept: ConceptId },
     /// The concept's representation differs from the transducer's codomain.
     Representation { carried: Ty, produced: Ty },
 }
@@ -149,8 +149,8 @@ pub fn well_formed(t: &Transducer) -> Result<(), TransducerFault> {
 
 /// `Fits Θ τ ch`: the Source's concept carries the transducer's codomain.
 pub fn fits(
-    produces: SemanticId,
-    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+    produces: ConceptId,
+    representation_of: impl Fn(ConceptId) -> Option<Ty>,
     t: &Transducer,
 ) -> Result<(), ProvisionFitFault> {
     let carried = representation_of(produces)
@@ -169,7 +169,7 @@ pub fn fits(
 /// Source produces, constructed from the transduced raw reading `r`.  Only
 /// this term constructs; it lives in the Source's domain under the
 /// Source's grant, so behaviour still owns the value.
-pub fn provision_body(produces: SemanticId, t: &Transducer, raw: Expr) -> Expr {
+pub fn provision_body(produces: ConceptId, t: &Transducer, raw: Expr) -> Expr {
     Expr::mk(produces, Expr::app(t.transduce.clone(), raw))
 }
 
@@ -180,8 +180,8 @@ pub fn provision_body(produces: SemanticId, t: &Transducer, raw: Expr) -> Expr {
 pub fn check_provider(
     catalogue: &Catalogue,
     binding: &DeviceBinding,
-    produces: Option<SemanticId>,
-    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+    produces: Option<ConceptId>,
+    representation_of: impl Fn(ConceptId) -> Option<Ty>,
 ) -> ProvisionCheck {
     let Some(id) = &binding.provider else {
         return ProvisionCheck {
@@ -223,10 +223,10 @@ mod tests {
     use bdl_model::{DeclId, DeviceId, Dim, InputProfileId};
     use std::collections::BTreeMap;
 
-    fn button() -> SemanticId {
-        SemanticId::from_raw(3)
+    fn button() -> ConceptId {
+        ConceptId::from_raw(3)
     }
-    fn theta(s: SemanticId) -> Option<Ty> {
+    fn theta(s: ConceptId) -> Option<Ty> {
         (s == button()).then_some(Ty::Bool)
     }
     fn binding(profile: &str, kind: DeviceKind) -> DeviceBinding {
@@ -266,7 +266,7 @@ mod tests {
     #[test]
     fn a_level_valued_source_does_not_fit_a_line() {
         let cat = Catalogue::builtin();
-        let level = |s: SemanticId| (s == button()).then_some(Ty::q(Dim::ZERO));
+        let level = |s: ConceptId| (s == button()).then_some(Ty::q(Dim::ZERO));
         let c = check_provider(
             &cat,
             &binding("gpio_level_in", DeviceKind::DigitalInput),

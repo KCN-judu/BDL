@@ -14,7 +14,7 @@ use bdl_ir::Ty;
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::quantity::{self, QuantityDef};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use bdl_reactive::eval::{step, State, TickInput};
 use bdl_reactive::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -24,7 +24,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// concept per case.
 struct Bench {
     s: ProjectSnapshot,
-    concepts: BTreeMap<&'static str, SemanticId>,
+    concepts: BTreeMap<&'static str, ConceptId>,
 }
 
 impl Bench {
@@ -47,7 +47,7 @@ impl Bench {
         Bench { s, concepts }
     }
 
-    fn concept(&mut self, name: &str, dim: Dim) -> SemanticId {
+    fn concept(&mut self, name: &str, dim: Dim) -> ConceptId {
         let a = apply_edit(
             &self.s,
             &EditOp::CreateConcept {
@@ -65,7 +65,7 @@ impl Bench {
     /// Core is re-typed by the checker and its result dimension returned.
     fn dim_of(&mut self, inputs: &[&str], formula: &str, dim: Dim) -> Dim {
         let out = self.concept("Result", dim);
-        let inputs: Vec<SemanticId> = inputs.iter().map(|n| self.concepts[n]).collect();
+        let inputs: Vec<ConceptId> = inputs.iter().map(|n| self.concepts[n]).collect();
         let a = apply_edit(
             &self.s,
             &EditOp::CreateMapping {

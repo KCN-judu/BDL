@@ -4,7 +4,7 @@
 //! by stable entity id, so that moving a node never touches the design and a
 //! design can be opened by a tool that has no canvas at all.
 
-use crate::ids::{DeclId, OutputId, SemanticId};
+use crate::ids::{ConceptId, DeclId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -17,7 +17,7 @@ pub struct Point {
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Layout {
     #[serde(default)]
-    pub concepts: BTreeMap<SemanticId, Point>,
+    pub concepts: BTreeMap<ConceptId, Point>,
     #[serde(default)]
     pub mappings: BTreeMap<DeclId, Point>,
     /// Physical outputs are canvas nodes too (sinks at the right edge).
@@ -29,7 +29,7 @@ pub struct Layout {
     pub instances: BTreeMap<u64, Point>,
     /// Behaviour groups, by raw group id: where the collapsed box stands,
     /// how large it is, and whether it is collapsed.  Membership is the
-    /// system's (semantic-free authoring metadata); this is the picture.
+    /// system's (concept-free authoring metadata); this is the picture.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub groups: BTreeMap<u64, GroupBox>,
     /// The canvas of each component's body (component-local ids), by raw

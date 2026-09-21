@@ -535,7 +535,7 @@ fn ids<'a, I: Ord + Copy + 'a>(
     v
 }
 
-fn concept_name(design: &bdl_model::surface::Design, id: bdl_model::SemanticId) -> String {
+fn concept_name(design: &bdl_model::surface::Design, id: bdl_model::ConceptId) -> String {
     design
         .concepts
         .get(&id)

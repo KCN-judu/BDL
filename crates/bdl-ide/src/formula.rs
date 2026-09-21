@@ -39,7 +39,7 @@ use bdl_ide_db::{
 };
 use bdl_ir::{DesignIr, Ty};
 use bdl_model::surface::{Definition, Design, MappingBlock, Representation};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use bdl_syntax::{BinaryOp, ExprKind, SurfaceExpr, UnaryOp};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -57,7 +57,7 @@ pub struct TypeView {
     pub dim: Option<Dim>,
     /// The concept, when the value is a concept value.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub concept: Option<SemanticId>,
+    pub concept: Option<ConceptId>,
     /// Only a value of *this* concept fits the position — a relationship's
     /// or an equation's argument bound to it — as opposed to the formula's
     /// result, where any value of the representation is observed and
@@ -202,7 +202,7 @@ impl TypeView {
             },
         }
     }
-    fn of_representation(ir: &DesignIr, design: &Design, concept: SemanticId) -> Option<TypeView> {
+    fn of_representation(ir: &DesignIr, design: &Design, concept: ConceptId) -> Option<TypeView> {
         let c = design.concepts.get(&concept)?;
         let rep = c.representation.as_ref()?;
         Some(match rep {
@@ -1639,7 +1639,7 @@ fn expects_truth_value(design: &Design, expected: Option<&TypeView>) -> bool {
 /// nothing is expected 50.
 fn fit(
     expected: Option<&TypeView>,
-    concept: Option<SemanticId>,
+    concept: Option<ConceptId>,
     rep: Option<&Representation>,
 ) -> Option<u8> {
     let Some(e) = expected else {

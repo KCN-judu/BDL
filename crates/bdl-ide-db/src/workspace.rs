@@ -16,7 +16,7 @@ use crate::text::{DocumentId, DocumentUri, TextRange};
 use crate::textual::{BindingFault, TextDocumentState};
 use bdl_elab::names::{InputEnv, Lookup};
 use bdl_model::surface::{Definition, ProjectSnapshot};
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, OutputId, Revision};
 use bdl_syntax::ast::{self, AstNode};
 use bdl_system::{
     flatten, BehaviorSystem, ComponentId, ComponentInstanceId, FlattenedSystem, LocalEntity,
@@ -402,7 +402,7 @@ pub fn flat_entities(system: &BehaviorSystem, e: TextEntity) -> Vec<EntityRef> {
             instances_of(c)
                 .into_iter()
                 .filter_map(|i| flat(i, LocalEntity::Sem(s)))
-                .map(|raw| EntityRef::Concept(SemanticId::from_raw(raw)))
+                .map(|raw| EntityRef::Concept(ConceptId::from_raw(raw)))
                 .collect()
         }
         TextEntity::BodyMapping(c, d) => instances_of(c)

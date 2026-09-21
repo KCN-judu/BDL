@@ -9262,6 +9262,8 @@ class Quantity extends $pb.GeneratedMessage {
   void clearValue() => $_clearField(2);
 }
 
+/// A Sem value: a value of concept `concept_id` (the instance level of the
+/// concept ladder; the concept itself is the type, ADR-0043).
 class SemanticValue extends $pb.GeneratedMessage {
   factory SemanticValue({
     $fixnum.Int64? conceptId,
@@ -15872,7 +15874,7 @@ class ConceptLibraryView extends $pb.GeneratedMessage {
 
 /// A template for creating an ordinary Concept.  Every field but `id` is a
 /// default the designer may change after instantiation; `id` is a library
-/// identity, never a SemanticId.
+/// identity, never a ConceptId.
 class ConceptTemplateView extends $pb.GeneratedMessage {
   factory ConceptTemplateView({
     $core.String? id,
@@ -16207,7 +16209,7 @@ class QuantityView extends $pb.GeneratedMessage {
 }
 
 /// A unit expression: a finite product of registered linear atoms with
-/// signed integer powers, normalised (0.27).  Never a semantic type: it
+/// signed integer powers, normalised (0.27).  Never a Sem type: it
 /// denotes a dimension and a scale from the authored coordinate to the
 /// canonical magnitude.
 class UnitExprView extends $pb.GeneratedMessage {

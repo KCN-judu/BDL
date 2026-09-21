@@ -8,7 +8,7 @@ use bdl_compiler::{compile_design_ir, CompileArtifact, CompileOptions};
 use bdl_ir::{
     ConceptBinding, Declaration, DesignIr, Expr, Interface, OutputSpec, Prim, Scalar, Ty,
 };
-use bdl_model::{ClockId, DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim, OutputId};
 use bdl_reactive::eval::{self, RuntimeError, State, TickInput};
 use bdl_reactive::{InputTrace, Schedule, Value};
 use bdl_runtime_host::harness::Cargo;
@@ -22,8 +22,8 @@ pub fn d(n: u64) -> DeclId {
 pub fn c(n: u64) -> ClockId {
     ClockId::from_raw(n)
 }
-pub fn s(n: u64) -> SemanticId {
-    SemanticId::from_raw(n)
+pub fn s(n: u64) -> ConceptId {
+    ConceptId::from_raw(n)
 }
 pub fn o(n: u64) -> OutputId {
     OutputId::from_raw(n)

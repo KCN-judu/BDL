@@ -468,7 +468,7 @@ class _ConceptInspector extends StatelessWidget {
         MacDisclosure(
           title: context.l10n.explain,
           children: [
-            ExplainLine('SemanticId ${concept.id}'),
+            ExplainLine('ConceptId ${concept.id}'),
             ExplainLine(
               'Θ(${concept.id}) = ${bound ? _tyNotation(concept.representation) : 'none'}',
             ),

@@ -11,7 +11,7 @@ use crate::ids::{
 };
 use bdl_ir::PropertyId;
 use bdl_model::surface::{Design, MappingBlock, Signature};
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, OutputId, Revision};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -154,7 +154,7 @@ pub struct BehaviorComponent {
     /// Body concepts that stand for a system concept (FV: not `internalSem`).
     /// Every other body concept is private and freshened per instance.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub shared_concepts: BTreeMap<SemanticId, SemanticId>,
+    pub shared_concepts: BTreeMap<ConceptId, ConceptId>,
     /// Body sinks that stand for a system sink (FV: not `internalOut`).
     /// Every other body sink is private and freshened per instance.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -170,7 +170,7 @@ pub struct BehaviorComponent {
 }
 
 impl BehaviorComponent {
-    pub fn is_private_concept(&self, s: SemanticId) -> bool {
+    pub fn is_private_concept(&self, s: ConceptId) -> bool {
         !self.shared_concepts.contains_key(&s)
     }
     pub fn is_private_output(&self, o: OutputId) -> bool {
@@ -286,7 +286,7 @@ pub struct Export {
 #[serde(tag = "sort", content = "id", rename_all = "snake_case")]
 pub enum LocalEntity {
     Decl(DeclId),
-    Sem(SemanticId),
+    Sem(ConceptId),
     Clock(ClockId),
     Output(OutputId),
     Device(DeviceId),

@@ -224,7 +224,7 @@ pub fn actions_for(snapshot: &AnalysisSnapshot, d: &SemanticDiagnostic) -> Vec<S
                 out.push(connect_driver(snapshot, o, code));
             }
         }
-        "semantic.unbound_representation" => {
+        "concept.unbound_representation" => {
             for c in d
                 .anchors()
                 .filter(|a| a.role == EntityRole::Representation)
@@ -468,7 +468,7 @@ fn apply_rule(snapshot: &AnalysisSnapshot, rule: DeclId, code: &str) -> Semantic
             explanation,
         );
     }
-    let concept_name = |c: bdl_model::SemanticId| name(snapshot, EntityRef::Concept(c));
+    let concept_name = |c: bdl_model::ConceptId| name(snapshot, EntityRef::Concept(c));
     // Per read concept, the values that produce it at this level (a
     // Source or a value; a rule has no value), in id order.
     let mut candidates: Vec<Vec<&bdl_model::surface::MappingBlock>> = Vec::new();
@@ -708,7 +708,7 @@ fn connect_driver(snapshot: &AnalysisSnapshot, o: OutputId, code: &str) -> Seman
 
 fn choose_representation(
     snapshot: &AnalysisSnapshot,
-    c: bdl_model::SemanticId,
+    c: bdl_model::ConceptId,
     code: &str,
 ) -> SemanticAction {
     let cname = name(snapshot, EntityRef::Concept(c));

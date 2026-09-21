@@ -10,7 +10,7 @@
 //! to anything by name: all references are by stable id.
 
 use crate::dim::Dim;
-use crate::ids::{ClockId, DeclId, DeviceId, IdAllocator, OutputId, Revision, SemanticId};
+use crate::ids::{ClockId, ConceptId, DeclId, DeviceId, IdAllocator, OutputId, Revision};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -36,7 +36,7 @@ impl ProjectSnapshot {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Design {
     pub name: String,
-    pub concepts: BTreeMap<SemanticId, Concept>,
+    pub concepts: BTreeMap<ConceptId, Concept>,
     pub mappings: BTreeMap<DeclId, MappingBlock>,
     /// Timing domains, by nominal identity ("interaction", "ambient").  A
     /// domain says which values are updated *together*; never a rate.
@@ -77,7 +77,7 @@ impl Design {
         }
     }
 
-    pub fn concept(&self, id: SemanticId) -> Option<&Concept> {
+    pub fn concept(&self, id: ConceptId) -> Option<&Concept> {
         self.concepts.get(&id)
     }
 
@@ -93,7 +93,7 @@ impl Design {
     }
 
     /// Mappings whose signature mentions `concept` (as input or output).
-    pub fn mappings_using(&self, concept: SemanticId) -> impl Iterator<Item = &MappingBlock> {
+    pub fn mappings_using(&self, concept: ConceptId) -> impl Iterator<Item = &MappingBlock> {
         self.mappings
             .values()
             .filter(move |m| m.signature.mentions(concept))
@@ -119,7 +119,7 @@ pub struct PhysicalOutput {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub description: String,
     /// The concept this sink accepts (`OutputSpec.accepts = sem concept`).
-    pub accepts: SemanticId,
+    pub accepts: ConceptId,
     /// The domain the sink updates in; `None` while still open.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clock: Option<ClockId>,
@@ -243,12 +243,12 @@ pub struct DeviceBinding {
 }
 
 /// A semantic property: `Tilt`, `Brightness`, `Held`.  Identity is the
-/// `SemanticId`; the name is mutable documentation.  The representation is a
+/// `ConceptId`; the name is mutable documentation.  The representation is a
 /// write-once binding (the kernel's `Θ s = some R`); a concept without one is
 /// a legal, still-open declaration of intent.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Concept {
-    pub id: SemanticId,
+    pub id: ConceptId,
     pub name: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub description: String,
@@ -280,7 +280,7 @@ impl Concept {
     }
 }
 
-/// What a concept is represented by.  Must be a semantic-free *data* type
+/// What a concept is represented by.  Must be a concept-free *data* type
 /// (kernel `ConceptEnv.WF`); the enum makes that unrepresentable otherwise.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -438,12 +438,12 @@ impl RelationshipRole {
 /// simulation input when unresolved.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Signature {
-    pub inputs: Vec<SemanticId>,
-    pub output: SemanticId,
+    pub inputs: Vec<ConceptId>,
+    pub output: ConceptId,
 }
 
 impl Signature {
-    pub fn mentions(&self, concept: SemanticId) -> bool {
+    pub fn mentions(&self, concept: ConceptId) -> bool {
         self.output == concept || self.inputs.contains(&concept)
     }
 
@@ -509,7 +509,7 @@ pub struct FormulaScope {
     pub mappings: BTreeMap<String, DeclId>,
     /// Concepts the formula may name (for the "not an input" diagnostic).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub concepts: BTreeMap<String, SemanticId>,
+    pub concepts: BTreeMap<String, ConceptId>,
 }
 
 /// Transport of a referenced value across timing domains: the kernel's

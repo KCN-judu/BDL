@@ -9,7 +9,7 @@ mod support;
 use bdl_ide::*;
 use bdl_model::edit::EditOp;
 use bdl_model::surface::{ProjectSnapshot, Representation};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use support::*;
 
 const FORCE: Dim = Dim {
@@ -34,7 +34,7 @@ struct Physics {
     snapshot: ProjectSnapshot,
     speed_of: DeclId,
     torque_of: DeclId,
-    length: SemanticId,
+    length: ConceptId,
 }
 
 /// `Length`, `Time`, `Force`, `Speed`, `Torque` and three length-valued
@@ -53,7 +53,7 @@ fn physics() -> Physics {
     let (s, speed) = mk(&s, "Speed", SPEED);
     let (s, torque) = mk(&s, "Torque", TORQUE);
     let (s, mass) = mk(&s, "Mass", Dim::MASS);
-    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<SemanticId>, out: SemanticId| {
+    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<ConceptId>, out: ConceptId| {
         let a = bdl_model::edit::apply_edit(s, &mapping(name, inputs, out)).expect("mapping");
         (a.snapshot, a.outcome.created_mapping.expect("id"))
     };
@@ -1119,8 +1119,8 @@ fn opaque_forms_keep_their_source_and_the_structure_around_them_stays_editable()
 struct AirConditioner {
     snapshot: ProjectSnapshot,
     ctrl: DeclId,
-    button_held: SemanticId,
-    switch_state: SemanticId,
+    button_held: ConceptId,
+    switch_state: ConceptId,
 }
 
 /// `RoomTemp` (a temperature), `ButtonHeld` and `SwitchState` (true or
@@ -1648,7 +1648,7 @@ struct Readings {
     snapshot: ProjectSnapshot,
     angles_ok: DeclId,
     normalized: DeclId,
-    tilt: SemanticId,
+    tilt: ConceptId,
 }
 
 /// `Tilt : q angle`, `Angles : List<q angle>`, `Ok : Bool`, `Levels :
@@ -1669,7 +1669,7 @@ fn readings() -> Readings {
         "Levels",
         Representation::list(Representation::Quantity { dim: Dim::ZERO }),
     );
-    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<SemanticId>, out: SemanticId| {
+    let m = |s: &ProjectSnapshot, name: &str, inputs: Vec<ConceptId>, out: ConceptId| {
         let a = bdl_model::edit::apply_edit(s, &mapping(name, inputs, out)).expect("mapping");
         (a.snapshot, a.outcome.created_mapping.expect("id"))
     };

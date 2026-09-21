@@ -7,7 +7,7 @@
 
 use crate::expr::Expr;
 use crate::ty::Ty;
-use bdl_model::{ClockId, DeclId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -59,7 +59,7 @@ impl Declaration {
 /// `Θ s = some R` together with the concept's display name.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConceptBinding {
-    pub id: SemanticId,
+    pub id: ConceptId,
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub representation: Option<Ty>,
@@ -86,7 +86,7 @@ pub type DriveEnv = BTreeMap<DeclId, OutputId>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct DesignIr {
-    pub concepts: BTreeMap<SemanticId, ConceptBinding>,
+    pub concepts: BTreeMap<ConceptId, ConceptBinding>,
     pub decls: BTreeMap<DeclId, Declaration>,
     pub clocks: ClockEnv,
     /// Display names of domains, for diagnostics only.
@@ -112,7 +112,7 @@ impl DesignIr {
     }
 
     /// `Θ s`.
-    pub fn representation_of(&self, s: SemanticId) -> Option<&Ty> {
+    pub fn representation_of(&self, s: ConceptId) -> Option<&Ty> {
         self.concepts
             .get(&s)
             .and_then(|c| c.representation.as_ref())

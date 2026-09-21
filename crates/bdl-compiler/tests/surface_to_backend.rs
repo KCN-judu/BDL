@@ -12,7 +12,7 @@ mod support;
 use bdl_compiler::{analyze, MappingStatus};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 use bdl_reactive::{InputTrace, Schedule, Value};
 use support::*;
 
@@ -31,7 +31,7 @@ impl Surface {
         self.s = a.snapshot;
         a.outcome
     }
-    fn concept(&mut self, name: &str, dim: Dim) -> SemanticId {
+    fn concept(&mut self, name: &str, dim: Dim) -> ConceptId {
         self.edit(EditOp::CreateConcept {
             name: name.into(),
             description: String::new(),
@@ -48,8 +48,8 @@ impl Surface {
     fn mapping(
         &mut self,
         name: &str,
-        inputs: Vec<SemanticId>,
-        output: SemanticId,
+        inputs: Vec<ConceptId>,
+        output: ConceptId,
         formula: Option<&str>,
         clock: Option<ClockId>,
     ) -> DeclId {
@@ -76,7 +76,7 @@ impl Surface {
     }
 }
 
-fn sem_scalar(concept: SemanticId, v: f64) -> Value {
+fn sem_scalar(concept: ConceptId, v: f64) -> Value {
     Value::sem(concept, Value::q(Dim::ZERO, v))
 }
 
@@ -249,7 +249,7 @@ fn reading_across_domains_without_sync_is_refused_and_sync_offers_the_way() {
 }
 
 /// Attach `src` to a fresh probe mapping, collect its codes, remove it.
-fn probe(d: &mut Surface, output: SemanticId, clock: ClockId, src: &str) -> Vec<String> {
+fn probe(d: &mut Surface, output: ConceptId, clock: ClockId, src: &str) -> Vec<String> {
     let m = d.mapping("probe", vec![], output, Some(src), Some(clock));
     let a = analyze(&d.s);
     let codes = a.mappings[&m]

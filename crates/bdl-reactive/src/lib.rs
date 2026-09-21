@@ -5,7 +5,7 @@
 //!   yields a deterministic evaluation order.
 //! * [`clocks`]    — the kernel's `Clocked` judgment: references stay in their
 //!   domain or are agnostic; `sync` is the only crossing.
-//! * [`value`]     — runtime values, keeping semantic identity and dimension.
+//! * [`value`]     — runtime values, keeping concept identity and dimension.
 //! * [`eval`]      — the reference evaluator (`MEv`) with explicit delay/sync
 //!   state cells, previous/next state, and per-domain published snapshots.
 //! * [`simulate`]  — schedules, input traces, ticks, and the resulting trace.

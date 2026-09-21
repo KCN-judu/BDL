@@ -7,7 +7,7 @@
 //! id, Studio's unit picker and the protocol read it, and the unit table in
 //! `bdl-elab` names its units against these dimensions.  A quantity name is
 //! *representation* vocabulary — what a value is measured as — never a
-//! semantic concept: `AmbientLight` is a concept, `Illuminance` is what it
+//! concept: `AmbientLight` is a concept, `Illuminance` is what it
 //! is represented by.
 //!
 //! Angle is a base dimension in BDL (`Dim::ANGLE`), so a steradian is

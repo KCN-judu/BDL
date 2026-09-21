@@ -87,7 +87,7 @@ fn author(root: &std::path::Path) -> Authored {
     )
     .created_clock
     .unwrap();
-    let mapping = |name: &str, inputs: Vec<bdl_model::SemanticId>, output, description: &str| {
+    let mapping = |name: &str, inputs: Vec<bdl_model::ConceptId>, output, description: &str| {
         EditOp::CreateMapping {
             name: name.into(),
             description: description.into(),

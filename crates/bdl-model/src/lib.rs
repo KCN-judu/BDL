@@ -2,7 +2,7 @@
 //!
 //! This crate owns what a BDL project *is* independently of any editor:
 //!
-//! * [`ids`] — strongly typed stable identities (`SemanticId`, `DeclId`, …).
+//! * [`ids`] — strongly typed stable identities (`ConceptId`, `DeclId`, …).
 //!   Identity is never a display name.
 //! * [`dim`] — physical dimensions as exponent vectors (the `q Dim` of the
 //!   kernel); [`quantity`] — the named quantities a designer writes
@@ -32,7 +32,7 @@ pub mod units;
 
 pub use dim::Dim;
 pub use edit::{apply_edit, Applied, EditError, EditKind, EditOp, EditOutcome, Invalidation};
-pub use ids::{ClockId, DeclId, DeviceId, OutputId, Revision, SemanticId};
+pub use ids::{ClockId, ConceptId, DeclId, DeviceId, OutputId, Revision};
 pub use surface::{
     Concept, Definition, Design, InputProfileId, MappingBlock, OutputProfileId, ProjectSnapshot,
     RelationshipRole, Representation, Signature,

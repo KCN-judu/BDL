@@ -15,7 +15,7 @@ use bdl_system::*;
 use std::collections::BTreeMap;
 use support::*;
 
-fn deg(tilt: bdl_model::SemanticId, x: f64) -> Value {
+fn deg(tilt: bdl_model::ConceptId, x: f64) -> Value {
     Value::sem(tilt, Value::q(Dim::ANGLE, x.to_radians()))
 }
 
@@ -24,7 +24,7 @@ fn deg(tilt: bdl_model::SemanticId, x: f64) -> Value {
 fn simulate(
     snapshot: &bdl_model::surface::ProjectSnapshot,
     raw: DeclId,
-    tilt: bdl_model::SemanticId,
+    tilt: bdl_model::ConceptId,
 ) -> (SimulationTrace, ProjectAnalysis) {
     let a = bdl_compiler::analyze(snapshot);
     assert!(a.causality.valid, "{:?}", a.diagnostics);
@@ -960,7 +960,7 @@ fn generated_programs_of_system_and_flat_agree_on_the_host() {
     let flat = hand_written_flat();
     let run = |snapshot: &bdl_model::surface::ProjectSnapshot,
                name: &str,
-               tilt: bdl_model::SemanticId|
+               tilt: bdl_model::ConceptId|
      -> Vec<Vec<Option<DynValue>>> {
         let art = bdl_compiler::compile(snapshot, &opts);
         assert!(art.succeeded(), "{name}: {:?}", art.diagnostics);

@@ -22,7 +22,7 @@ use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{
     Definition, Design, DeviceKind, ProjectSnapshot, Representation, Signature,
 };
-use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, Dim, OutputId, OutputProfileId};
 use bdl_runtime_adapter::{duty8, CommandFault};
 use bdl_runtime_host::{AdapterOp, DynValue, RunRequest, TickRequest};
 
@@ -41,7 +41,7 @@ impl Surface {
         self.s = a.snapshot;
         a.outcome
     }
-    fn concept(&mut self, name: &str, representation: Representation) -> SemanticId {
+    fn concept(&mut self, name: &str, representation: Representation) -> ConceptId {
         self.edit(EditOp::CreateConcept {
             name: name.into(),
             description: String::new(),
@@ -58,7 +58,7 @@ impl Surface {
     fn value(
         &mut self,
         name: &str,
-        output: SemanticId,
+        output: ConceptId,
         formula: Option<&str>,
         clock: ClockId,
     ) -> DeclId {
@@ -90,7 +90,7 @@ impl Surface {
     fn output(
         &mut self,
         name: &str,
-        accepts: SemanticId,
+        accepts: ConceptId,
         clock: ClockId,
         driver: DeclId,
     ) -> OutputId {

@@ -1,6 +1,6 @@
 //! Identity sorts of the system layer.  None of them is a kernel identity:
 //! a component, an instance, a port, a binding and an export are surface
-//! objects (D-64), and they never overload `DeclId` / `SemanticId` /
+//! objects (D-64), and they never overload `DeclId` / `ConceptId` /
 //! `ClockId` / `OutputId`.  Sequential, per project, persisted, never
 //! reused — the same contract as `bdl-model::IdAllocator`.
 

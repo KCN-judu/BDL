@@ -1,4 +1,4 @@
-//! Runtime values.  Semantic identity and dimension are kept at runtime so a
+//! Runtime values.  Concept identity and dimension are kept at runtime so a
 //! trace can be read in the design's own terms and so two values that merely
 //! share a number are never confused (`Tilt` 0.5 rad is not `MotorAngle`
 //! 0.5 rad).
@@ -10,7 +10,7 @@
 //! `f64` equality; serialization is the JSON number.
 
 use bdl_ir::{Expr, Prim};
-use bdl_model::{Dim, SemanticId};
+use bdl_model::{ConceptId, Dim};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -27,8 +27,10 @@ pub enum Value {
         dim: Dim,
         value: f64,
     },
+    /// A Sem value (`sem C v`): a value of concept `id`, the instance level
+    /// of the concept ladder — never the concept, which is a type.
     Semantic {
-        id: SemanticId,
+        id: ConceptId,
         repr: Box<Value>,
     },
     None,
@@ -206,7 +208,7 @@ impl Value {
     pub fn boolean(value: bool) -> Value {
         Value::Bool { value }
     }
-    pub fn sem(id: SemanticId, repr: Value) -> Value {
+    pub fn sem(id: ConceptId, repr: Value) -> Value {
         Value::Semantic {
             id,
             repr: Box::new(repr),
@@ -231,7 +233,7 @@ impl Value {
 
     /// `Value.beq` — structural equality on data values: truth values,
     /// numbers (exact `f64` equality, the numeric policy of `Eq` since
-    /// DI-15), semantic values by concept and representation, `none`/`some`,
+    /// DI-15), Sem values by concept and representation, `none`/`some`,
     /// pairs and lists componentwise.  Closures and partial primitives
     /// compare `false`; typing never asks.  There is *no* structural order
     /// on values (Phase 9c): ordering is a quantity comparison only.
@@ -268,7 +270,7 @@ impl Value {
         }
     }
 
-    /// The representation carried by a semantic value, one level down.
+    /// The representation carried by a Sem value, one level down.
     pub fn unwrap_semantic(&self) -> Option<&Value> {
         match self {
             Value::Semantic { repr, .. } => Some(repr),
@@ -282,7 +284,7 @@ impl Value {
     /// value is `on` / `off` — the value form is called *On / off* — and a
     /// number shows six significant digits, the serialised trace keeping
     /// the exact `f64`.  Every host shows this text as it is.
-    pub fn render(&self, concept_name: &dyn Fn(SemanticId) -> String) -> String {
+    pub fn render(&self, concept_name: &dyn Fn(ConceptId) -> String) -> String {
         match self {
             Value::Bool { value } => if *value { "on" } else { "off" }.into(),
             Value::Nat { value } => value.to_string(),
@@ -369,16 +371,16 @@ mod render_tests {
 
     #[test]
     fn truth_values_render_in_product_words() {
-        let name = |_: SemanticId| "Held".to_string();
+        let name = |_: ConceptId| "Held".to_string();
         assert_eq!(Value::boolean(true).render(&name), "on");
         assert_eq!(Value::boolean(false).render(&name), "off");
         assert_eq!(
-            Value::sem(SemanticId::from_raw(1), Value::boolean(true)).render(&name),
+            Value::sem(ConceptId::from_raw(1), Value::boolean(true)).render(&name),
             "Held(on)"
         );
         assert_eq!(
             Value::sem(
-                SemanticId::from_raw(1),
+                ConceptId::from_raw(1),
                 Value::q(Dim::ANGLE, std::f64::consts::FRAC_PI_4)
             )
             .render(&name),

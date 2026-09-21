@@ -44,10 +44,10 @@ pub fn describe(ir: &DesignIr, ty: &Ty) -> String {
 /// product; never the word "unit", which names a measurement unit here).
 pub fn mapping_type(
     ir: &DesignIr,
-    inputs: &[bdl_model::SemanticId],
-    output: bdl_model::SemanticId,
+    inputs: &[bdl_model::ConceptId],
+    output: bdl_model::ConceptId,
 ) -> String {
-    let name = |id: &bdl_model::SemanticId| {
+    let name = |id: &bdl_model::ConceptId| {
         ir.concepts
             .get(id)
             .map(|c| c.name.clone())

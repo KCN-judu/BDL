@@ -38,7 +38,7 @@ pub mod interp;
 
 use bdl_ir::{Scalar, Ty};
 use bdl_model::{
-    ClockId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId, SemanticId,
+    ClockId, ConceptId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId,
 };
 use bdl_reactive::StateCellId;
 use serde::{Deserialize, Serialize};
@@ -99,7 +99,7 @@ pub enum Activation {
 /// generated code keeps as a newtype over the representation.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConceptPlan {
-    pub id: SemanticId,
+    pub id: ConceptId,
     pub name: String,
     pub representation: Ty,
 }
@@ -220,7 +220,7 @@ pub struct ExecIr {
     /// Whether the design has any clock domain (decides when agnostic
     /// declarations run).
     pub has_domains: bool,
-    /// Every concept mentioned by a type below, in `SemanticId` order.
+    /// Every concept mentioned by a type below, in `ConceptId` order.
     pub concepts: Vec<ConceptPlan>,
     /// In `ClockId` order.
     pub clocks: Vec<ClockPlan>,
@@ -402,7 +402,7 @@ pub enum ExecExpr {
     },
     /// `mk s e`: the nominal boundary, kept.
     Wrap {
-        sem: SemanticId,
+        sem: ConceptId,
         e: Box<ExecExpr>,
     },
     /// `rep e`.
@@ -447,7 +447,7 @@ impl ExecExpr {
     pub fn read(decl: DeclIndex) -> ExecExpr {
         ExecExpr::ReadDecl { decl }
     }
-    pub fn wrap(sem: SemanticId, e: ExecExpr) -> ExecExpr {
+    pub fn wrap(sem: ConceptId, e: ExecExpr) -> ExecExpr {
         ExecExpr::Wrap {
             sem,
             e: Box::new(e),

@@ -31,7 +31,7 @@
 //! the one rule, represented — like every zero-argument function in the
 //! generated core — by its value at the unique point.
 
-use bdl_model::{Dim, SemanticId};
+use bdl_model::{ConceptId, Dim};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -48,10 +48,11 @@ pub enum Ty {
         dom: Box<Ty>,
         cod: Box<Ty>,
     },
-    /// Nominal semantic type: two distinct ids are distinct types regardless
-    /// of representation.
+    /// `sem C`, "a Sem of `C`": the nominal type a concept names — a
+    /// template; a Sem block is its instance.  Two distinct ids are
+    /// distinct types regardless of representation.
     Sem {
-        id: SemanticId,
+        id: ConceptId,
     },
     /// Physical quantity of dimension `dim`.
     Q {
@@ -97,7 +98,7 @@ impl Ty {
             snd: Box::new(snd),
         }
     }
-    pub fn sem(id: SemanticId) -> Ty {
+    pub fn sem(id: ConceptId) -> Ty {
         Ty::Sem { id }
     }
     pub fn q(dim: Dim) -> Ty {
@@ -115,7 +116,7 @@ impl Ty {
     /// The domain of a relationship over the concepts `inputs`: `()` for
     /// none, the concept for one, a right-nested product otherwise (module
     /// docs).
-    pub fn domain_of(inputs: &[SemanticId]) -> Ty {
+    pub fn domain_of(inputs: &[ConceptId]) -> Ty {
         match inputs {
             [] => Ty::Unit,
             [a] => Ty::sem(*a),
@@ -125,7 +126,7 @@ impl Ty {
 
     /// The canonical type of a relationship: `domain(inputs) -> output`.
     /// `mapping f : B` and `mapping f : () -> B` both give `() -> B`.
-    pub fn of_signature(inputs: &[SemanticId], output: SemanticId) -> Ty {
+    pub fn of_signature(inputs: &[ConceptId], output: ConceptId) -> Ty {
         Ty::arr(Ty::domain_of(inputs), Ty::sem(output))
     }
 
@@ -133,7 +134,7 @@ impl Ty {
     /// unit domain eliminated — `sem A₁ → … → sem Aₙ → sem B`, and `sem B`
     /// when there are no inputs.  Lean's `expectedType`; what a
     /// realization is checked against and what `declRef` has as a term.
-    pub fn kernel_of_signature(inputs: &[SemanticId], output: SemanticId) -> Ty {
+    pub fn kernel_of_signature(inputs: &[ConceptId], output: ConceptId) -> Ty {
         Ty::arrows(inputs.iter().map(|c| Ty::sem(*c)), Ty::sem(output))
     }
 
@@ -172,7 +173,7 @@ impl Ty {
         (inputs, t)
     }
 
-    /// `Ty.SemFree`: mentions no semantic concept.  Required of every
+    /// `Ty.SemFree`: mentions no concept.  Required of every
     /// concept representation.
     pub fn is_sem_free(&self) -> bool {
         match self {
@@ -194,9 +195,9 @@ impl Ty {
         }
     }
 
-    /// Every semantic concept the type mentions, in traversal order.
-    pub fn concepts(&self) -> Vec<SemanticId> {
-        fn go(t: &Ty, out: &mut Vec<SemanticId>) {
+    /// Every concept the type mentions, in traversal order.
+    pub fn concepts(&self) -> Vec<ConceptId> {
+        fn go(t: &Ty, out: &mut Vec<ConceptId>) {
             match t {
                 Ty::Sem { id } => out.push(*id),
                 Ty::Arr { dom, cod } => {
@@ -219,7 +220,7 @@ impl Ty {
     /// `Ty.grant`: the concepts in result position of a signature — exactly
     /// the concepts a realization of this type may construct with `mk`.
     /// Note `opt (sem s)` grants nothing, as in the Lean definition.
-    pub fn grant(&self) -> Vec<SemanticId> {
+    pub fn grant(&self) -> Vec<ConceptId> {
         match self {
             Ty::Sem { id } => vec![*id],
             Ty::Arr { cod, .. } => cod.grant(),
@@ -238,9 +239,9 @@ mod tests {
     #[test]
     fn a_relationship_without_inputs_has_the_unit_domain_and_the_encodings_are_inverse() {
         let (a, b, c) = (
-            SemanticId::from_raw(1),
-            SemanticId::from_raw(2),
-            SemanticId::from_raw(3),
+            ConceptId::from_raw(1),
+            ConceptId::from_raw(2),
+            ConceptId::from_raw(3),
         );
         assert_eq!(Ty::of_signature(&[], c), Ty::arr(Ty::Unit, Ty::sem(c)));
         assert_eq!(Ty::kernel_of_signature(&[], c), Ty::sem(c));
@@ -266,17 +267,17 @@ mod tests {
 
     #[test]
     fn grant_follows_result_position() {
-        let tilt = SemanticId::from_raw(1);
-        let bright = SemanticId::from_raw(2);
+        let tilt = ConceptId::from_raw(1);
+        let bright = ConceptId::from_raw(2);
         let sig = Ty::arrows([Ty::sem(tilt)], Ty::sem(bright));
         assert_eq!(sig.grant(), vec![bright]);
-        assert_eq!(Ty::opt(Ty::sem(bright)).grant(), Vec::<SemanticId>::new());
+        assert_eq!(Ty::opt(Ty::sem(bright)).grant(), Vec::<ConceptId>::new());
     }
 
     #[test]
     fn predicates() {
         assert!(Ty::q(Dim::ANGLE).is_sem_free());
-        assert!(!Ty::sem(SemanticId::from_raw(0)).is_sem_free());
+        assert!(!Ty::sem(ConceptId::from_raw(0)).is_sem_free());
         assert!(Ty::opt(Ty::Bool).is_data());
         assert!(!Ty::arr(Ty::Bool, Ty::Bool).is_data());
         // lists and pairs are data exactly when their parts are
@@ -285,11 +286,11 @@ mod tests {
         assert!(Ty::prod(Ty::Bool, Ty::opt(Ty::Nat)).is_data());
         assert!(!Ty::prod(Ty::Bool, Ty::arr(Ty::Bool, Ty::Bool)).is_data());
         assert!(Ty::list(Ty::q(Dim::ZERO)).is_sem_free());
-        assert!(!Ty::prod(Ty::Bool, Ty::sem(SemanticId::from_raw(0))).is_sem_free());
+        assert!(!Ty::prod(Ty::Bool, Ty::sem(ConceptId::from_raw(0))).is_sem_free());
         // a pair grants nothing: only result position of a signature does
         assert_eq!(
-            Ty::prod(Ty::sem(SemanticId::from_raw(1)), Ty::Bool).grant(),
-            Vec::<SemanticId>::new()
+            Ty::prod(Ty::sem(ConceptId::from_raw(1)), Ty::Bool).grant(),
+            Vec::<ConceptId>::new()
         );
     }
 

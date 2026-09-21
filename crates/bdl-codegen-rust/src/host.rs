@@ -7,13 +7,13 @@ use crate::emit::EmitError;
 use crate::names;
 use bdl_exec_ir::ExecIr;
 use bdl_ir::Ty;
-use bdl_model::SemanticId;
+use bdl_model::ConceptId;
 use std::collections::BTreeMap;
 
 /// Concept representations, from the exec IR's concept plans.
-type Reps = BTreeMap<SemanticId, Ty>;
+type Reps = BTreeMap<ConceptId, Ty>;
 
-fn representation(reps: &Reps, id: SemanticId) -> Result<&Ty, EmitError> {
+fn representation(reps: &Reps, id: ConceptId) -> Result<&Ty, EmitError> {
     reps.get(&id)
         .ok_or_else(|| EmitError(format!("concept {id} is not in the plan")))
 }

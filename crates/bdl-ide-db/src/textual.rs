@@ -30,7 +30,7 @@ use crate::entity::{EntityRef, EntityRole};
 use crate::projection::{ProjectionAnchor, ProjectionMap};
 use crate::text::{DocumentId, TextRange};
 use bdl_model::surface::{Concept, Definition, Design, MappingBlock, Representation, Signature};
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use bdl_syntax::ast::{self, AstNode};
 use bdl_syntax::{parse_module, SyntaxError};
 use serde::{Deserialize, Serialize};
@@ -217,7 +217,7 @@ impl Binder<'_> {
         let id = match self.design.concepts.values().find(|x| x.name == name_text) {
             Some(existing) => existing.id,
             None => {
-                let (id, ids) = self.design.ids.fresh_semantic();
+                let (id, ids) = self.design.ids.fresh_concept();
                 self.design.ids = ids;
                 self.design.concepts.insert(
                     id,
@@ -423,7 +423,7 @@ impl Binder<'_> {
         }
     }
 
-    fn concept_named(&self, t: &ast::Type) -> Option<SemanticId> {
+    fn concept_named(&self, t: &ast::Type) -> Option<ConceptId> {
         let n = named_type(t)?;
         let name = n.name()?.as_str();
         self.design
@@ -537,7 +537,7 @@ pub fn representation_names() -> Vec<&'static str> {
 /// same entity on both surfaces.
 pub fn render_module(design: &Design) -> String {
     let mut out = String::new();
-    let name = |id: SemanticId| {
+    let name = |id: ConceptId| {
         design
             .concepts
             .get(&id)
@@ -593,7 +593,7 @@ mod tests {
     #[test]
     fn binds_by_name_to_committed_ids_and_allocates_fresh_ones() {
         let mut design = Design::empty("lamp");
-        let (tilt, ids) = design.ids.fresh_semantic();
+        let (tilt, ids) = design.ids.fresh_concept();
         design.ids = ids;
         design.concepts.insert(
             tilt,
@@ -625,7 +625,7 @@ mod tests {
             state.declared,
             vec![
                 EntityRef::Concept(tilt),
-                EntityRef::Concept(SemanticId::from_raw(1)),
+                EntityRef::Concept(ConceptId::from_raw(1)),
                 EntityRef::Mapping(m.id)
             ]
         );

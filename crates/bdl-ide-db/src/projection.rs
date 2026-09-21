@@ -11,7 +11,7 @@
 
 use crate::entity::{EntityRef, EntityRole};
 use crate::text::{DocumentId, TextRange};
-use bdl_model::{DeclId, DeviceId, OutputId, SemanticId};
+use bdl_model::{ConceptId, DeclId, DeviceId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -32,7 +32,7 @@ pub enum ProjectionId {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "element", content = "id", rename_all = "snake_case")]
 pub enum VisualElementRef {
-    ConceptNode(SemanticId),
+    ConceptNode(ConceptId),
     MappingNode(DeclId),
     /// The `index`-th input socket of a mapping node.
     InputPort {
@@ -58,7 +58,7 @@ pub enum VisualElementRef {
     /// The inspector's signature editor of a mapping.
     SignatureField(DeclId),
     /// The inspector's representation chooser of a concept.
-    RepresentationField(SemanticId),
+    RepresentationField(ConceptId),
     /// The inspector's name field of any entity.
     NameField(EntityRef),
 }
@@ -252,7 +252,7 @@ mod tests {
     fn innermost_anchor_wins_at_a_position() {
         let doc = DocumentId(1);
         let m = EntityRef::Mapping(DeclId::from_raw(17));
-        let c = EntityRef::Concept(SemanticId::from_raw(2));
+        let c = EntityRef::Concept(ConceptId::from_raw(2));
         let mut map = ProjectionMap::default();
         map.insert(ProjectionAnchor::text(
             m,
@@ -275,7 +275,7 @@ mod tests {
         map.insert(ProjectionAnchor::visual(
             c,
             EntityRole::Declaration,
-            VisualElementRef::ConceptNode(SemanticId::from_raw(2)),
+            VisualElementRef::ConceptNode(ConceptId::from_raw(2)),
         ));
         map.finish();
         assert_eq!(

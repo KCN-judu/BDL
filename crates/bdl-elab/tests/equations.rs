@@ -12,7 +12,7 @@ use bdl_diagnostics::Diagnostic;
 use bdl_elab::{elaborate_design, RealizationOutcome};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use bdl_reactive::eval::{step, State, TickInput};
 use bdl_reactive::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -24,7 +24,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// MaybeTemp : Option<Temperature>.
 struct Fixture {
     s: ProjectSnapshot,
-    ids: BTreeMap<&'static str, SemanticId>,
+    ids: BTreeMap<&'static str, ConceptId>,
 }
 
 impl Fixture {
@@ -88,7 +88,7 @@ impl Fixture {
         Fixture { s, ids }
     }
 
-    fn c(&self, name: &str) -> SemanticId {
+    fn c(&self, name: &str) -> ConceptId {
         self.ids[name]
     }
 
@@ -224,7 +224,7 @@ fn a_clamp_brightness_keeps_the_concept_and_needs_the_order() {
     .unwrap()
     .snapshot;
     f.s = s;
-    assert_eq!(f.codes(out), vec!["semantic.no_order"]);
+    assert_eq!(f.codes(out), vec!["concept.no_order"]);
     assert!(
         f.message(out).contains("have no default order"),
         "{}",
@@ -403,7 +403,7 @@ fn i_min_preserves_dimensions_and_refuses_mixed_ones() {
     ]);
     assert_eq!(inner(&v[&shorter]), Value::q(Dim::LENGTH, 2.0));
     let mixed = f.mapping("mixed", &[], "Length", Some("min(len, dur)"));
-    assert_eq!(f.codes(mixed), vec!["semantic.concept_mismatch"]);
+    assert_eq!(f.codes(mixed), vec!["concept.mismatch"]);
     // a Length beside a plain time: the concept is named, the time refused
     let mixed2 = f.mapping("mixed2", &[], "Length", Some("min(len, 2 s)"));
     assert_eq!(f.codes(mixed2), vec!["formula.equation.argument"]);
@@ -437,14 +437,14 @@ fn j_min_at_brightness_keeps_brightness_and_refuses_opacity() {
     assert_eq!(v[&dimmer], sem(&f, "Brightness", q(0.4)));
     // Brightness and Opacity are both dimensionless, and never the same
     let mixed = f.mapping("mixed", &[], "Brightness", Some("min(b1, o)"));
-    assert_eq!(f.codes(mixed), vec!["semantic.concept_mismatch"]);
+    assert_eq!(f.codes(mixed), vec!["concept.mismatch"]);
     assert!(f
         .message(mixed)
         .contains("Brightness and Opacity are different concepts"));
     let eq = f.mapping("eq", &[], "Held", Some("b1 == o"));
-    assert_eq!(f.codes(eq), vec!["semantic.concept_mismatch"]);
+    assert_eq!(f.codes(eq), vec!["concept.mismatch"]);
     let member = f.mapping("member", &[], "Held", Some("o in [b1, b2]"));
-    assert_eq!(f.codes(member), vec!["semantic.concept_mismatch"]);
+    assert_eq!(f.codes(member), vec!["concept.mismatch"]);
     // a concept met by its plain representation is observed, as by `<`
     let half = f.mapping("half", &[], "Brightness", Some("min(b1, 0.5)"));
     f.ok(half);
@@ -500,12 +500,12 @@ fn m_n_equality_of_modes_accepted_ordering_rejected() {
     assert_eq!(inner(&v[&differ]), Value::boolean(false));
     // Mode < Mode, min(Mode, Mode): no default order, however it is encoded
     let less = f.mapping("less", &[], "Held", Some("m1 < m2"));
-    assert_eq!(f.codes(less), vec!["semantic.no_order"]);
+    assert_eq!(f.codes(less), vec!["concept.no_order"]);
     assert!(f
         .message(less)
         .contains("Mode values can be compared for equality, but they have no default order"));
     let smallest = f.mapping("smallest", &[], "Mode", Some("min(m1, m2)"));
-    assert_eq!(f.codes(smallest), vec!["semantic.no_order"]);
+    assert_eq!(f.codes(smallest), vec!["concept.no_order"]);
     // the comparator escape hatch needs no declaration
     let by_rule = f.mapping(
         "byRule",
@@ -588,7 +588,7 @@ fn equality_accepted_on_every_data_kind_ordering_rejected_off_quantities() {
         let id = f.mapping(name, &[], "Held", Some(src));
         assert_eq!(
             f.codes(id),
-            vec!["semantic.no_order"],
+            vec!["concept.no_order"],
             "{name}: {}",
             f.message(id)
         );
@@ -727,14 +727,14 @@ fn mixed_comparisons_over_overlapping_representations() {
         ),
         // unordered Opacity: equality and the comparator only
         ("oEq", "Held", "o1 == o2", None),
-        ("oLt", "Held", "o1 < o2", Some("semantic.no_order")),
-        ("oMin", "Opacity", "min(o1, o2)", Some("semantic.no_order")),
-        ("oMax", "Opacity", "max(o1, o2)", Some("semantic.no_order")),
+        ("oLt", "Held", "o1 < o2", Some("concept.no_order")),
+        ("oMin", "Opacity", "min(o1, o2)", Some("concept.no_order")),
+        ("oMax", "Opacity", "max(o1, o2)", Some("concept.no_order")),
         (
             "oClamp",
             "Opacity",
             "clamp(o1, o2, o2)",
-            Some("semantic.no_order"),
+            Some("concept.no_order"),
         ),
         (
             "oMinBy",
@@ -744,48 +744,38 @@ fn mixed_comparisons_over_overlapping_representations() {
         ),
         // unordered Mode (a count encoding): the same
         ("mEq", "Held", "m1 == m2", None),
-        ("mLt", "Held", "m1 < m2", Some("semantic.no_order")),
-        ("mMin", "Mode", "min(m1, m2)", Some("semantic.no_order")),
+        ("mLt", "Held", "m1 < m2", Some("concept.no_order")),
+        ("mMin", "Mode", "min(m1, m2)", Some("concept.no_order")),
         ("mMinBy", "Mode", "minBy(m1, m2, (x, y) => x == m2)", None),
         // ---- different concepts, same representation: never ----
-        (
-            "boEq",
-            "Held",
-            "b1 == o1",
-            Some("semantic.concept_mismatch"),
-        ),
-        ("boLt", "Held", "b1 < o1", Some("semantic.concept_mismatch")),
+        ("boEq", "Held", "b1 == o1", Some("concept.mismatch")),
+        ("boLt", "Held", "b1 < o1", Some("concept.mismatch")),
         (
             "boMin",
             "Brightness",
             "min(b1, o1)",
-            Some("semantic.concept_mismatch"),
+            Some("concept.mismatch"),
         ),
         (
             "boMax",
             "Brightness",
             "max(b1, o1)",
-            Some("semantic.concept_mismatch"),
+            Some("concept.mismatch"),
         ),
         (
             "boClamp",
             "Brightness",
             "clamp(b1, o1, o2)",
-            Some("semantic.concept_mismatch"),
+            Some("concept.mismatch"),
         ),
         (
             "boMinBy",
             "Brightness",
             "minBy(b1, o1, (x, y) => true)",
-            Some("semantic.concept_mismatch"),
+            Some("concept.mismatch"),
         ),
-        (
-            "bmEq",
-            "Held",
-            "b1 == m1",
-            Some("semantic.concept_mismatch"),
-        ),
-        ("btLt", "Held", "b1 < t1", Some("semantic.concept_mismatch")),
+        ("bmEq", "Held", "b1 == m1", Some("concept.mismatch")),
+        ("btLt", "Held", "b1 < t1", Some("concept.mismatch")),
         // ---- a concept beside its plain representation: observed ----
         ("bPlainEq", "Held", "b1 == 0.7", None),
         ("bPlainLt", "Held", "b1 < 0.5", None),
@@ -1122,7 +1112,7 @@ fn natural_form_mistakes_are_named_in_their_own_words() {
             "unordered",
             "Held",
             "m1 in m2 .. m2",
-            "semantic.no_order",
+            "concept.no_order",
             "no default order",
         ),
         (

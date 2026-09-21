@@ -37,7 +37,7 @@ use bdl_exec_ir::ExecIr;
 use bdl_ir::{DesignIr, Expr, Ty};
 use bdl_lower::{Provision, Provisions, Realization, Realizations};
 use bdl_model::surface::{Design, ProjectSnapshot};
-use bdl_model::{RelationshipRole, SemanticId};
+use bdl_model::{ConceptId, RelationshipRole};
 use bdl_output::provision::{check_provider, provision_body};
 use bdl_output::realization::{check_binding, encoder_body, Catalogue};
 use bdl_reactive::Schedule;
@@ -219,7 +219,7 @@ pub fn compile_design_ir(ir: DesignIr, name: &str, options: &CompileOptions) -> 
 /// design alone so the core can be generated with providers and no board.
 fn provisions_of(design: &Design, analysis: &ProjectAnalysis) -> (Provisions, Vec<Diagnostic>) {
     let ir = &analysis.ir;
-    let theta = |s: SemanticId| ir.representation_of(s).cloned();
+    let theta = |s: ConceptId| ir.representation_of(s).cloned();
     let catalogue = Catalogue::builtin();
     let mut provisions = Provisions::new();
     let mut refusals = Vec::new();
@@ -278,7 +278,7 @@ fn provisions_of(design: &Design, analysis: &ProjectAnalysis) -> (Provisions, Ve
 /// nothing to encode and lowers nothing either.
 fn realizations_of(design: &Design, analysis: &ProjectAnalysis) -> (Realizations, Vec<Diagnostic>) {
     let ir = &analysis.ir;
-    let theta = |s: SemanticId| ir.representation_of(s).cloned();
+    let theta = |s: ConceptId| ir.representation_of(s).cloned();
     let mut realizations = Realizations::new();
     let mut refusals = Vec::new();
     for d in design.devices.values() {

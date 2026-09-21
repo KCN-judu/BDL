@@ -4,12 +4,12 @@
 
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim, OutputId};
 
 pub struct Lamp {
     pub snapshot: ProjectSnapshot,
-    pub tilt: SemanticId,
-    pub brightness: SemanticId,
+    pub tilt: ConceptId,
+    pub brightness: ConceptId,
     pub dim_by_tilt: DeclId,
 }
 
@@ -17,7 +17,7 @@ pub fn edit(s: &ProjectSnapshot, op: EditOp) -> ProjectSnapshot {
     apply_edit(s, &op).expect("fixture edit applies").snapshot
 }
 
-fn created_concept(s: &ProjectSnapshot, op: EditOp) -> (ProjectSnapshot, SemanticId) {
+fn created_concept(s: &ProjectSnapshot, op: EditOp) -> (ProjectSnapshot, ConceptId) {
     let a = apply_edit(s, &op).expect("fixture edit applies");
     let id = a.outcome.created_concept.expect("a concept was created");
     (a.snapshot, id)
@@ -37,7 +37,7 @@ pub fn concept(name: &str, rep: Option<Representation>) -> EditOp {
     }
 }
 
-pub fn mapping(name: &str, inputs: Vec<SemanticId>, output: SemanticId) -> EditOp {
+pub fn mapping(name: &str, inputs: Vec<ConceptId>, output: ConceptId) -> EditOp {
     EditOp::CreateMapping {
         name: name.into(),
         description: String::new(),
@@ -82,7 +82,7 @@ pub fn lamp() -> Lamp {
 
 pub struct Contested {
     pub snapshot: ProjectSnapshot,
-    pub brightness: SemanticId,
+    pub brightness: ConceptId,
     pub light: OutputId,
     pub clock: ClockId,
     pub level_a: DeclId,

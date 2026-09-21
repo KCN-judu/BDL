@@ -27,7 +27,7 @@ use bdl_model::surface::{
     ClockDomain, Concept, Definition, DeviceBinding, FormulaScope, MappingBlock, PhysicalOutput,
     ProjectSnapshot, Signature, Transport,
 };
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, OutputId};
 use std::collections::BTreeMap;
 
 /// Where a flat entity came from.
@@ -44,7 +44,7 @@ pub struct Origin {
 #[derive(Clone, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct OriginMap {
     pub decls: BTreeMap<DeclId, Origin>,
-    pub sems: BTreeMap<SemanticId, Origin>,
+    pub sems: BTreeMap<ConceptId, Origin>,
     pub clocks: BTreeMap<ClockId, Origin>,
     pub outputs: BTreeMap<OutputId, Origin>,
     pub devices: BTreeMap<DeviceId, Origin>,
@@ -93,10 +93,10 @@ impl Ren<'_> {
     fn decl(&self, d: DeclId) -> Option<DeclId> {
         self.flat(LocalEntity::Decl(d)).map(DeclId::from_raw)
     }
-    fn sem(&self, s: SemanticId) -> Option<SemanticId> {
+    fn sem(&self, s: ConceptId) -> Option<ConceptId> {
         match self.component.shared_concepts.get(&s) {
             Some(g) => Some(*g),
-            None => self.flat(LocalEntity::Sem(s)).map(SemanticId::from_raw),
+            None => self.flat(LocalEntity::Sem(s)).map(ConceptId::from_raw),
         }
     }
     fn clock(&self, c: ClockId) -> Option<ClockId> {
@@ -307,12 +307,12 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
             .values()
             .filter_map(|m| ren.decl(m.id).map(|f| (m.name.clone(), f)))
             .collect();
-        let scope_concepts: BTreeMap<String, SemanticId> = body
+        let scope_concepts: BTreeMap<String, ConceptId> = body
             .concepts
             .values()
             .filter_map(|c| ren.sem(c.id).map(|f| (c.name.clone(), f)))
             .collect();
-        let concept_name = |id: SemanticId| {
+        let concept_name = |id: ConceptId| {
             body.concepts
                 .get(&id)
                 .map(|c| c.name.clone())
@@ -323,7 +323,7 @@ pub fn flatten(snapshot: &SystemSnapshot) -> FlattenedSystem {
                 diags.push(internal(format!("no flat id for {}.{}", inst.id, m.id)));
                 continue;
             };
-            let inputs: Option<Vec<SemanticId>> =
+            let inputs: Option<Vec<ConceptId>> =
                 m.signature.inputs.iter().map(|c| ren.sem(*c)).collect();
             let (Some(inputs), Some(output)) = (inputs, ren.sem(m.signature.output)) else {
                 diags.push(internal(format!(

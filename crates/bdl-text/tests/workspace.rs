@@ -399,7 +399,7 @@ fn write_back_splices_only_what_changed_and_keeps_comments() {
         .find(|m| m.name == "brightness")
         .unwrap();
     br.drives = None;
-    let (held, ids) = edited.base.ids.fresh_semantic();
+    let (held, ids) = edited.base.ids.fresh_concept();
     edited.base.ids = ids;
     edited.base.concepts.insert(
         held,

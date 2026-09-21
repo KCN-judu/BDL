@@ -122,7 +122,7 @@ pub fn hover(h: &SemanticHover) -> Hover {
             md.push_str(&format!("- **{}**: {}\n", d.label, d.value));
         }
     }
-    if let Some(t) = &h.semantic_type {
+    if let Some(t) = &h.concept_type {
         md.push_str(&format!("\n`{t}`\n"));
     }
     if let Some(e) = &h.explanation {

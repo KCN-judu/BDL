@@ -89,13 +89,13 @@ fn text_faults(session: &Session) -> Vec<(String, Diagnostic)> {
                         format!("{}:{line}:{col}", d.path),
                         if d.open {
                             Diagnostic::warning(
-                                Code(d.code.clone()),
+                                Code::new(&d.code),
                                 Entity::Project,
                                 d.message.clone(),
                             )
                         } else {
                             Diagnostic::error(
-                                Code(d.code.clone()),
+                                Code::new(&d.code),
                                 Entity::Project,
                                 d.message.clone(),
                             )
@@ -115,9 +115,9 @@ fn text_faults(session: &Session) -> Vec<(String, Diagnostic)> {
             bdl_text::TextFault::Load(l) => (
                 line_of(l.file, l.span.start),
                 if l.open {
-                    Diagnostic::warning(Code(l.code.clone()), Entity::Project, l.message.clone())
+                    Diagnostic::warning(Code::new(&l.code), Entity::Project, l.message.clone())
                 } else {
-                    Diagnostic::error(Code(l.code.clone()), Entity::Project, l.message.clone())
+                    Diagnostic::error(Code::new(&l.code), Entity::Project, l.message.clone())
                 },
             ),
         }))
@@ -550,8 +550,7 @@ pub fn simulate(
         .collect();
     let mut sim = bdl_reactive::Simulation::new(analysis.ir, &analysis.causality, schedule, trace)
         .map_err(|e| Failure::Open(e.to_string()))?;
-    let name =
-        |id: bdl_model::SemanticId| names.get(&id).cloned().unwrap_or_else(|| id.to_string());
+    let name = |id: bdl_model::ConceptId| names.get(&id).cloned().unwrap_or_else(|| id.to_string());
     for _ in 0..ticks {
         sim.step().map_err(|e| Failure::Open(e.to_string()))?;
     }

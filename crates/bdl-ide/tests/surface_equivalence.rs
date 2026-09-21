@@ -13,7 +13,7 @@ use bdl_ide_db::textual::render_module;
 use bdl_ide_db::DocumentUri;
 use bdl_model::edit::EditOp;
 use bdl_model::surface::{Definition, Representation};
-use bdl_model::{Dim, SemanticId};
+use bdl_model::{ConceptId, Dim};
 use support::*;
 
 /// (code, severity, primary entity, primary role) — what both surfaces
@@ -101,7 +101,7 @@ fn open_drafts_are_open_on_both_surfaces() {
     let lamp = lamp();
     let s = &lamp.snapshot;
     let a = bdl_model::edit::apply_edit(s, &concept("Warmth", None)).expect("edit");
-    let warmth: SemanticId = a.outcome.created_concept.expect("created");
+    let warmth: ConceptId = a.outcome.created_concept.expect("created");
     let s = edit(
         &a.snapshot,
         EditOp::SetMappingSignature {
@@ -123,7 +123,7 @@ fn open_drafts_are_open_on_both_surfaces() {
     assert!(verdict
         .diagnostics
         .iter()
-        .any(|d| d.code == "semantic.unbound_representation"));
+        .any(|d| d.code == "concept.unbound_representation"));
 }
 
 #[test]

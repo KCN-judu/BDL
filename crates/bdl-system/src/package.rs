@@ -6,7 +6,7 @@ use crate::analyze::analyze_system;
 use crate::ids::{ComponentId, PortId};
 use crate::model::*;
 use bdl_diagnostics::Diagnostic;
-use bdl_model::{ClockId, DeclId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, OutputId};
 use std::collections::BTreeMap;
 
 /// A port chosen for the package, by the flat declaration it exposes.
@@ -32,7 +32,7 @@ pub struct PackageInterface {
     /// Inner base clocks that become parameters of the package.
     pub clock_params: Vec<ClockId>,
     /// Inner base concept → the enclosing system's concept it stands for.
-    pub shared_concepts: BTreeMap<SemanticId, SemanticId>,
+    pub shared_concepts: BTreeMap<ConceptId, ConceptId>,
     /// Inner base sink → the enclosing system's sink it stands for.
     pub external_outputs: BTreeMap<OutputId, OutputId>,
 }

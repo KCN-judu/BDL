@@ -322,7 +322,7 @@ impl std::fmt::Debug for UnitFactor {
 ///
 /// The identity `U per U` is dimensionless with scale 1.  A unit
 /// expression denotes a dimension and a scale from the authored coordinate
-/// to the canonical magnitude — never a semantic type, a concept or a
+/// to the canonical magnitude — never a Sem type, a concept or a
 /// kernel primitive: a literal `9.81 m per s^2` elaborates to the same
 /// dimensioned literal `(9.81 · scale) : q[L T⁻²]` an atom would.
 #[derive(Clone, Debug, PartialEq, Eq)]

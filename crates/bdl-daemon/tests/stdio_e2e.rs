@@ -263,7 +263,7 @@ fn vertical_slice_steps_1_to_12() {
     let open = a
         .diagnostics
         .iter()
-        .find(|d| d.code == "semantic.unbound_representation")
+        .find(|d| d.code == "concept.unbound_representation")
         .expect("the open note");
     assert_eq!(open.severity(), pb::DiagnosticSeverity::Info);
     // the rule is applied by nothing yet: a note beside it, never an error
@@ -1430,7 +1430,7 @@ fn definition_drafts_over_stdio() {
     assert!(a
         .diagnostics
         .iter()
-        .any(|d| d.code == "semantic.unbound_representation"));
+        .any(|d| d.code == "concept.unbound_representation"));
 
     // discarding the draft: the mapping is judged by its committed
     // definition again (none: Declared) — and discarding twice is fine

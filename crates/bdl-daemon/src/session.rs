@@ -461,7 +461,7 @@ pub struct SimulationRun {
     pub revision: Revision,
     pub simulation: Simulation,
     /// Concept names at that revision, for rendering samples.
-    pub concept_names: std::collections::BTreeMap<bdl_model::SemanticId, String>,
+    pub concept_names: std::collections::BTreeMap<bdl_model::ConceptId, String>,
 }
 
 pub struct OpenProject {
@@ -900,7 +900,7 @@ impl Session {
                     return Err(SessionError::UnknownComponent(c));
                 }
             }
-            let mut created: BTreeMap<String, bdl_model::SemanticId> = BTreeMap::new();
+            let mut created: BTreeMap<String, bdl_model::ConceptId> = BTreeMap::new();
             for step in steps {
                 let op = match step {
                     bdl_library::PlannedStep::Concept { op, .. } => op.clone(),

@@ -59,7 +59,7 @@ pb.MappingView? currentDriver(pb.ProjectProjection p, pb.OutputView output) =>
 /// The relationships that could drive [output] under the output pass's own
 /// rule (DriveWF): a value or a Source — never a rule, whose type is an
 /// arrow — producing exactly the concept the sink accepts (nominal
-/// identity, the same `SemanticId`), updating in the sink's domain when the
+/// identity, the same `ConceptId`), updating in the sink's domain when the
 /// sink has one, and not the final target of another sink.  The current
 /// driver is left out: it is the sink's state, not a candidate.  Read off
 /// the projection the daemon sent (role, signature, domain, drives); the

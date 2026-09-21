@@ -49,7 +49,7 @@ pub fn clock(c: &ClockDomain) -> String {
     format!("clock {}", ident(&c.name))
 }
 
-fn concept_name(design: &Design, id: bdl_model::SemanticId) -> String {
+fn concept_name(design: &Design, id: bdl_model::ConceptId) -> String {
     design
         .concepts
         .get(&id)

@@ -101,7 +101,7 @@ pub struct SemanticHover {
     pub signature: Option<String>,
     /// The kernel type view (`sem Tilt → sem Brightness`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub semantic_type: Option<String>,
+    pub concept_type: Option<String>,
     /// The representation (a concept's, or what a mapping produces).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub representation: Option<String>,
@@ -180,7 +180,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                     ),
                     None => format!("concept {}", c.name),
                 }),
-                semantic_type: Some(format!("sem {}", c.name)),
+                concept_type: Some(format!("sem {}", c.name)),
                 representation: c.representation.as_ref().map(rep_name),
                 status: if c.representation.is_some() {
                     EntityStatus::Bound
@@ -305,7 +305,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 kind: EntityKind::Mapping,
                 title: m.name.clone(),
                 signature: Some(format!("mapping {} : {}", m.name, sig.join(" -> "))),
-                semantic_type: a.map(|a| pretty::kernel(&a.interface.expected_type)),
+                concept_type: a.map(|a| pretty::kernel(&a.interface.expected_type)),
                 representation: design
                     .concepts
                     .get(&m.signature.output)
@@ -349,7 +349,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 kind: EntityKind::Output,
                 title: o.name.clone(),
                 signature: Some(format!("output {} : {}", o.name, cname(o.accepts))),
-                semantic_type: Some(format!("Ω {id} accepts sem {}", cname(o.accepts))),
+                concept_type: Some(format!("Ω {id} accepts sem {}", cname(o.accepts))),
                 representation: None,
                 status,
                 details,
@@ -375,7 +375,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 kind: EntityKind::Clock,
                 title: c.name.clone(),
                 signature: Some(format!("clock {}", c.name)),
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details: vec![
@@ -405,7 +405,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 kind: EntityKind::Device,
                 title: d.name.clone(),
                 signature: None,
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details,
@@ -419,7 +419,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
                 kind: EntityKind::Requirement,
                 title: format!("{} / requirement {index}", d.name),
                 signature: None,
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details: d
@@ -435,7 +435,7 @@ pub fn hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<SemanticH
             kind: EntityKind::Project,
             title: design.name.clone(),
             signature: None,
-            semantic_type: None,
+            concept_type: None,
             representation: None,
             status: EntityStatus::Plain,
             details: vec![
@@ -504,7 +504,7 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
                 kind: EntityKind::Component,
                 title: c.name.clone(),
                 signature: None,
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details,
@@ -555,7 +555,7 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
                 kind: EntityKind::Port,
                 title: format!("{}.{}", c.name, p.name),
                 signature: Some(format!("{word} of {}", c.name)),
-                semantic_type: Some(concept),
+                concept_type: Some(concept),
                 representation: None,
                 status: EntityStatus::Plain,
                 details: vec![detail("timing", timing)],
@@ -608,7 +608,7 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
                 kind: EntityKind::Instance,
                 title: i.name.clone(),
                 signature: Some(format!("instance {} : {}", i.name, c.name)),
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details,
@@ -633,7 +633,7 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
                 kind: EntityKind::Binding,
                 title: format!("bind {} = {}", end(b.destination), end(b.source)),
                 signature: None,
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details,
@@ -653,7 +653,7 @@ fn system_hover(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Semant
                     "exported {}",
                     bdl_text::print::binding_end(system, bdl_system::BindingEnd::Port(e.port))
                 )),
-                semantic_type: None,
+                concept_type: None,
                 representation: None,
                 status: EntityStatus::Plain,
                 details: Vec::new(),

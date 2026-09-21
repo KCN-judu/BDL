@@ -1,7 +1,7 @@
 //! Shared fixtures for tests: small Design IRs built directly.
 
 use bdl_ir::{ConceptBinding, Declaration, DesignIr, Expr, Interface, Prim, Scalar, Ty};
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 
 pub fn d(n: u64) -> DeclId {
     DeclId::from_raw(n)
@@ -9,8 +9,8 @@ pub fn d(n: u64) -> DeclId {
 pub fn c(n: u64) -> ClockId {
     ClockId::from_raw(n)
 }
-pub fn s(n: u64) -> SemanticId {
-    SemanticId::from_raw(n)
+pub fn s(n: u64) -> ConceptId {
+    ConceptId::from_raw(n)
 }
 pub fn lit(v: f64) -> Expr {
     Expr::prim(Prim::Lit {

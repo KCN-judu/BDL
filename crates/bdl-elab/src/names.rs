@@ -1,6 +1,6 @@
 //! Formula names.
 //!
-//! A mapping's signature holds `SemanticId`s; the designer types names.  In
+//! A mapping's signature holds `ConceptId`s; the designer types names.  In
 //! v0 the name of an input *is the concept's display name* at elaboration
 //! time (ADR-0013): resolution yields an index into the signature, the Core
 //! term holds only de Bruijn indices, and renaming a concept simply changes
@@ -14,12 +14,12 @@
 //! this rule applies; they are lexical and never reach here.
 
 use bdl_model::surface::{Design, FormulaScope, MappingBlock};
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use std::collections::BTreeMap;
 
 pub struct InputEnv {
     /// (concept, display name) per signature input, in signature order.
-    pub inputs: Vec<(SemanticId, String)>,
+    pub inputs: Vec<(ConceptId, String)>,
     /// A pinned scope (`Definition::ScopedFormula`): relationships and
     /// concepts are looked up here by the names the component used, never
     /// in the design at large.
@@ -28,7 +28,7 @@ pub struct InputEnv {
 
 pub struct PinnedScope {
     pub mappings: BTreeMap<String, DeclId>,
-    pub concepts: BTreeMap<String, SemanticId>,
+    pub concepts: BTreeMap<String, ConceptId>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -40,12 +40,12 @@ pub enum Lookup {
     /// A mapping of the design (exact name, else unique case-insensitive).
     Mapping(DeclId),
     /// A concept of the project with this name that is not an input.
-    NotAnInput(SemanticId, String),
+    NotAnInput(ConceptId, String),
     Unknown,
 }
 
 impl InputEnv {
-    pub fn for_inputs(design: &Design, inputs: &[SemanticId]) -> InputEnv {
+    pub fn for_inputs(design: &Design, inputs: &[ConceptId]) -> InputEnv {
         InputEnv::with_parameters(design, inputs, &[])
     }
 
@@ -60,7 +60,7 @@ impl InputEnv {
     /// `i`; every other input is named after its concept.
     pub fn with_parameters(
         design: &Design,
-        inputs: &[SemanticId],
+        inputs: &[ConceptId],
         parameters: &[String],
     ) -> InputEnv {
         InputEnv {
@@ -87,7 +87,7 @@ impl InputEnv {
 
     /// The environment of a scoped formula: input names come from the
     /// scope (positionally), relationships and concepts from its tables.
-    pub fn scoped(inputs: &[SemanticId], scope: &FormulaScope) -> InputEnv {
+    pub fn scoped(inputs: &[ConceptId], scope: &FormulaScope) -> InputEnv {
         InputEnv {
             inputs: inputs
                 .iter()

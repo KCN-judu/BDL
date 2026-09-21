@@ -18,7 +18,7 @@ use crate::ids::{BehaviorGroupId, BindingId, ComponentId, ComponentInstanceId, E
 use crate::model::*;
 use bdl_model::edit::{apply_edit, EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::surface::{Design, ProjectSnapshot};
-use bdl_model::{ClockId, DeclId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -117,8 +117,8 @@ pub enum SystemEditOp {
     /// Make a body concept stand for a system concept (`None`: private again).
     ShareConcept {
         component: ComponentId,
-        local: SemanticId,
-        system: Option<SemanticId>,
+        local: ConceptId,
+        system: Option<ConceptId>,
     },
     /// Make a body sink stand for a system sink (`None`: private again).
     ExternalizeOutput {
@@ -233,11 +233,11 @@ pub enum SystemEditError {
         instances: Vec<ComponentInstanceId>,
     },
     #[error("concept {id} is not in the component body")]
-    NotABodyConcept { id: SemanticId },
+    NotABodyConcept { id: ConceptId },
     #[error("output {id} is not in the component body")]
     NotABodyOutput { id: OutputId },
     #[error("unknown system concept {id}")]
-    UnknownSystemConcept { id: SemanticId },
+    UnknownSystemConcept { id: ConceptId },
     #[error("unknown system output {id}")]
     UnknownSystemOutput { id: OutputId },
     #[error("unknown system timing domain {id}")]
@@ -431,7 +431,7 @@ pub fn ensure_flat_ids(s: &mut BehaviorSystem) {
                 id.raw()
             }
             LocalEntity::Sem(_) => {
-                let (id, ids) = s.base.ids.fresh_semantic();
+                let (id, ids) = s.base.ids.fresh_concept();
                 s.base.ids = ids;
                 id.raw()
             }

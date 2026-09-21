@@ -6,7 +6,7 @@
 
 #![allow(clippy::unwrap_used)]
 
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use bdl_text::{
     init_project, load_project, save_project_with, DefinitionDraftFile, Drafts, LoadedWorkspace,
 };
@@ -62,7 +62,7 @@ fn unbuilt_text_is_saved_as_typed_and_the_graph_keeps_its_identities() {
     assert_eq!(again.build.system.base.mappings.len(), 1);
     assert!(again.build.system.base.mappings.contains_key(&dim));
     assert_eq!(
-        again.build.system.base.concepts[&SemanticId::from_raw(0)].name,
+        again.build.system.base.concepts[&ConceptId::from_raw(0)].name,
         "Tilt"
     );
     assert_eq!(again.drafts.sources["src/main.bdl"], BROKEN);

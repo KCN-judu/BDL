@@ -10,7 +10,7 @@ mod support;
 use bdl_ide::*;
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 use support::*;
 
 /// `TempSensor : () -> RoomTemp`, `ButtonInput : () -> ButtonHeld`,
@@ -18,9 +18,9 @@ use support::*;
 /// and applied by nothing.
 struct Ac {
     snapshot: ProjectSnapshot,
-    room_temp: SemanticId,
-    button_held: SemanticId,
-    switch_state: SemanticId,
+    room_temp: ConceptId,
+    button_held: ConceptId,
+    switch_state: ConceptId,
     temp_sensor: DeclId,
     button_input: DeclId,
     ctrl: DeclId,
@@ -31,7 +31,7 @@ fn created_mapping(s: &ProjectSnapshot, op: EditOp) -> (ProjectSnapshot, DeclId)
     (a.snapshot, a.outcome.created_mapping.expect("a mapping"))
 }
 
-fn created_concept(s: &ProjectSnapshot, op: EditOp) -> (ProjectSnapshot, SemanticId) {
+fn created_concept(s: &ProjectSnapshot, op: EditOp) -> (ProjectSnapshot, ConceptId) {
     let a = apply_edit(s, &op).expect("fixture edit applies");
     (a.snapshot, a.outcome.created_concept.expect("a concept"))
 }

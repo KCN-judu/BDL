@@ -12,11 +12,11 @@
 
 use bdl_ide_db::index::formula_input_names;
 use bdl_model::surface::{Definition, Design};
-use bdl_model::{EditOp, SemanticId};
+use bdl_model::{ConceptId, EditOp};
 use bdl_system::{BehaviorSystem, ComponentId, SystemEditOp};
 
 /// The definition rewrites a design needs when `concept` becomes `name`.
-fn formula_rewrites(design: &Design, concept: SemanticId, name: &str) -> Vec<EditOp> {
+fn formula_rewrites(design: &Design, concept: ConceptId, name: &str) -> Vec<EditOp> {
     let mut ops = Vec::new();
     for m in design.mappings.values() {
         if !m.signature.inputs.contains(&concept) {
@@ -91,7 +91,7 @@ pub fn expand_system(system: &BehaviorSystem, op: &SystemEditOp) -> Vec<SystemEd
         .map(|op| SystemEditOp::Base { op })
         .collect();
     for c in system.components.values() {
-        let locals: Vec<SemanticId> = c
+        let locals: Vec<ConceptId> = c
             .shared_concepts
             .iter()
             .filter(|(_, s)| **s == sys)
@@ -130,10 +130,10 @@ mod tests {
     use bdl_model::surface::{Concept, MappingBlock, Representation, Signature};
     use bdl_model::Dim;
 
-    fn lamp() -> (Design, SemanticId) {
+    fn lamp() -> (Design, ConceptId) {
         let mut d = Design::empty("lamp");
-        let (tilt, ids) = d.ids.fresh_semantic();
-        let (bright, ids) = ids.fresh_semantic();
+        let (tilt, ids) = d.ids.fresh_concept();
+        let (bright, ids) = ids.fresh_concept();
         let (dim, ids) = ids.fresh_decl();
         let (by_param, ids) = ids.fresh_decl();
         d.ids = ids;

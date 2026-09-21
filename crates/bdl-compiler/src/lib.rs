@@ -54,8 +54,8 @@ use bdl_hardware::{
 use bdl_ir::{DesignIr, Expr, Interface, Ty};
 use bdl_model::surface::ProjectSnapshot;
 use bdl_model::{
-    DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId, RelationshipRole, Revision,
-    SemanticId,
+    ConceptId, DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId, RelationshipRole,
+    Revision,
 };
 use bdl_output::provision::{
     self, check_provider, ProvisionCheck, ProvisionFitFault, ProvisionStatus,
@@ -123,14 +123,14 @@ pub struct MappingAnalysis {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConceptAnalysis {
-    pub id: SemanticId,
+    pub id: ConceptId,
     pub representation: Option<Ty>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProjectAnalysis {
     pub revision: Revision,
-    pub concepts: BTreeMap<SemanticId, ConceptAnalysis>,
+    pub concepts: BTreeMap<ConceptId, ConceptAnalysis>,
     pub mappings: BTreeMap<DeclId, MappingAnalysis>,
     /// Every diagnostic of every entity, in the documented order.
     pub diagnostics: Vec<Diagnostic>,
@@ -581,7 +581,7 @@ impl DeploymentAnalysis {
 }
 
 /// The representation the surface concept carries, as the kernel type.
-fn representation_ty(design: &bdl_model::surface::Design, s: SemanticId) -> Option<Ty> {
+fn representation_ty(design: &bdl_model::surface::Design, s: ConceptId) -> Option<Ty> {
     design
         .concepts
         .get(&s)
@@ -596,7 +596,7 @@ fn judge_realizations(
     requirements: &[Requirement],
     assignment: Option<&Assignment>,
 ) -> BTreeMap<DeviceId, DeviceRealization> {
-    let theta = |s: SemanticId| representation_ty(design, s);
+    let theta = |s: ConceptId| representation_ty(design, s);
     let all = realization::profiles();
     design
         .devices
@@ -697,7 +697,7 @@ fn judge_provisions(
     assignment: Option<&Assignment>,
     providers: &BTreeMap<DeclId, DeviceId>,
 ) -> BTreeMap<DeclId, SourceProvision> {
-    let theta = |s: SemanticId| representation_ty(design, s);
+    let theta = |s: ConceptId| representation_ty(design, s);
     let catalogue = Catalogue::builtin();
     let entry = bdl_codegen_rust::targets::Entry::for_board(&target.family, &target.name);
     sources_of(design)
@@ -1072,7 +1072,7 @@ fn dead_end_diagnostic(
 /// this covers whatever reaches it.
 fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagnostic {
     let entity = Entity::Mapping { id };
-    let name = |s: SemanticId| {
+    let name = |s: ConceptId| {
         ir.concepts
             .get(&s)
             .map(|c| c.name.clone())
@@ -1086,7 +1086,7 @@ fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagno
         )
         .technical(format!("expected {}, found {}", pretty::kernel(expected), pretty::kernel(found))),
         TypeErrorKind::ConstructionNotGranted { concept } => d(
-            "semantic.construction_not_granted",
+            "concept.construction_not_granted",
             format!("This mapping may not produce {}: only the concept in its signature can be constructed here.", name(*concept)),
         )
         .explain("A value of a concept can only be made inside a relationship whose signature announces that concept.")
@@ -1097,7 +1097,7 @@ fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagno
         )
         .technical(format!("mk {concept}: expected {}, found {}", pretty::kernel(expected), pretty::kernel(found))),
         TypeErrorKind::UnboundRepresentation { concept } => Diagnostic::info(
-            "semantic.unbound_representation",
+            "concept.unbound_representation",
             entity,
             format!("{} has no representation yet.", name(*concept)),
         ),
@@ -1109,8 +1109,8 @@ fn checker_diagnostic(ir: &DesignIr, id: DeclId, kind: &TypeErrorKind) -> Diagno
         TypeErrorKind::ExpectedFunction { found } => {
             d("type.expected_function", format!("This is applied like a relationship, but it is {}.", pretty::describe(ir, found)))
         }
-        TypeErrorKind::RepOfNonSemantic { found } => {
-            d("type.rep_of_non_semantic", format!("Only a concept's value can be observed; this is {}.", pretty::describe(ir, found)))
+        TypeErrorKind::RepOfNonConcept { found } => {
+            d("type.rep_of_non_concept", format!("Only a concept's value can be observed; this is {}.", pretty::describe(ir, found)))
         }
         TypeErrorKind::UnboundVariable { index } => d("type.unbound_variable", format!("Internal: unbound variable {index}.")),
         TypeErrorKind::UnknownDeclaration { id } => d("type.unknown_declaration", format!("Refers to a relationship that no longer exists ({id}).")),

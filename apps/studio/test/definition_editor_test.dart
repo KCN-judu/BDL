@@ -220,7 +220,7 @@ void main() {
           status: pb.MappingStatus.MAPPING_STATUS_OPEN,
           diagnostics: [
             diag(
-              'semantic.unbound_representation',
+              'concept.unbound_representation',
               'Tilt has no representation yet.',
               severity: pb.DiagnosticSeverity.DIAGNOSTIC_SEVERITY_INFO,
             ),

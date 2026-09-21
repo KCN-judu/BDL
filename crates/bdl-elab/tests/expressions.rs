@@ -11,16 +11,16 @@ use bdl_elab::{elaborate_design, RealizationOutcome};
 use bdl_ir::Expr;
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 
 /// A lamp with a heater: concepts, one relationship with an input, two
 /// nullary relationships, one timing domain.
 struct Lamp {
     s: ProjectSnapshot,
-    tilt: SemanticId,
-    brightness: SemanticId,
-    held: SemanticId,
-    level: SemanticId,
+    tilt: ConceptId,
+    brightness: ConceptId,
+    held: ConceptId,
+    level: ConceptId,
     dim_by_tilt: DeclId,
     /// `level : Level`, unresolved (an input).
     level_in: DeclId,
@@ -79,8 +79,8 @@ impl Lamp {
     fn mapping(
         &mut self,
         name: &str,
-        inputs: Vec<SemanticId>,
-        output: SemanticId,
+        inputs: Vec<ConceptId>,
+        output: ConceptId,
         formula: Option<&str>,
     ) -> DeclId {
         let a = apply_edit(
@@ -305,7 +305,7 @@ fn let_is_a_beta_redex_and_scopes_lexically() {
         l.with_inputs("{ let tilt = Tilt / 2; tilt / (1 rad) }").core(),
         "λ(sem#0). λ(sem#2). (mk sem#1 (λ(q[rad]). (div[rad,rad] #0 1[rad]) (div[rad,1] (rep #1) 2[1])))"
     );
-    // a let-bound semantic value stays semantic: it can be passed on
+    // a let-bound Sem value stays a Sem value: it can be passed on
     assert_eq!(
         l.with_inputs("{ let t = Tilt; dimByTilt(t) }").core(),
         "λ(sem#0). λ(sem#2). (mk sem#1 (rep (λ(sem#0). (decl#0 #0) #1)))"
@@ -527,7 +527,7 @@ fn memory_is_allowed_outside_binders_only() {
             .core(),
         "(mk sem#3 (ite[q[1]] (lt[1] (rep decl#1) 1[1]) (delay 0[1] (rep decl#1)) (rep decl#1)))"
     );
-    // both operands the same concept: the delayed value stays semantic
+    // both operands the same concept: the delayed value stays a Sem value
     assert_eq!(
         l.nullary("delay(level, level)").core(),
         "(mk sem#3 (rep (delay decl#1 decl#1)))"

@@ -11,7 +11,7 @@
 
 #![forbid(unsafe_code)]
 
-use bdl_model::{DeclId, SemanticId};
+use bdl_model::{ConceptId, DeclId};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -55,19 +55,48 @@ pub enum Severity {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Entity {
     Project,
-    Concept { id: SemanticId },
+    Concept { id: ConceptId },
     Mapping { id: DeclId },
 }
 
 /// A stable machine-readable code such as `formula.parse.unexpected_token`.
 /// The set is closed per pass and documented in `docs/architecture/compiler-pipeline.md`.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+///
+/// A code that was renamed keeps decoding: [`Code::new`] and
+/// deserialization map every spelling in [`CODE_ALIASES`] to its current
+/// name, so an old log, fixture or client still names the same finding.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 #[serde(transparent)]
 pub struct Code(pub String);
 
+/// Former spellings of diagnostic codes and their current names
+/// (ADR-0043: the `semantic.` namespace named the concept level and now
+/// says so).  Old → new; the list only grows.
+pub const CODE_ALIASES: &[(&str, &str)] = &[
+    ("semantic.concept_mismatch", "concept.mismatch"),
+    ("semantic.no_order", "concept.no_order"),
+    (
+        "semantic.unbound_representation",
+        "concept.unbound_representation",
+    ),
+    (
+        "semantic.construction_not_granted",
+        "concept.construction_not_granted",
+    ),
+    ("type.rep_of_non_semantic", "type.rep_of_non_concept"),
+];
+
+/// The current name of a code: itself, or the name an old spelling maps to.
+pub fn canonical_code(code: &str) -> &str {
+    CODE_ALIASES
+        .iter()
+        .find(|(old, _)| *old == code)
+        .map_or(code, |(_, new)| new)
+}
+
 impl Code {
-    pub fn new(code: &'static str) -> Code {
-        Code(code.to_owned())
+    pub fn new(code: &str) -> Code {
+        Code(canonical_code(code).to_owned())
     }
     pub fn as_str(&self) -> &str {
         &self.0
@@ -77,6 +106,12 @@ impl Code {
 impl From<&'static str> for Code {
     fn from(c: &'static str) -> Code {
         Code::new(c)
+    }
+}
+
+impl<'de> Deserialize<'de> for Code {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Code, D::Error> {
+        String::deserialize(d).map(|s| Code::new(&s))
     }
 }
 
@@ -178,7 +213,7 @@ mod tests {
             id: DeclId::from_raw(1),
         };
         let c = Entity::Concept {
-            id: SemanticId::from_raw(9),
+            id: ConceptId::from_raw(9),
         };
         let mut v = vec![
             Diagnostic::error("z", m, "late").at(Span::new(5, 6)),
@@ -189,5 +224,22 @@ mod tests {
         sort_diagnostics(&mut v);
         let codes: Vec<&str> = v.iter().map(|d| d.code.as_str()).collect();
         assert_eq!(codes, vec!["k", "a", "b", "z"]);
+    }
+
+    #[test]
+    fn an_old_code_spelling_decodes_to_its_current_name() {
+        for (old, new) in CODE_ALIASES {
+            assert_eq!(Code::new(old), Code::new(new), "{old}");
+            let decoded: Code = serde_json::from_str(&format!("\"{old}\"")).expect("a string");
+            assert_eq!(decoded.as_str(), *new);
+            assert_eq!(
+                serde_json::to_string(&decoded).expect("json"),
+                format!("\"{new}\"")
+            );
+        }
+        assert_eq!(
+            canonical_code("formula.name.unknown"),
+            "formula.name.unknown"
+        );
     }
 }

@@ -892,7 +892,7 @@ fn entity_from_pb(e: Option<&pb::EntityRef>) -> Result<bdl_ide::EntityRef, pb::E
         .ok_or_else(|| error("protocol.missing_field", "entity is required"))?;
     Ok(match kind {
         Kind::Project(_) => bdl_ide::EntityRef::Project,
-        Kind::ConceptId(id) => bdl_ide::EntityRef::Concept(bdl_model::SemanticId::from_raw(*id)),
+        Kind::ConceptId(id) => bdl_ide::EntityRef::Concept(bdl_model::ConceptId::from_raw(*id)),
         Kind::MappingId(id) => bdl_ide::EntityRef::Mapping(bdl_model::DeclId::from_raw(*id)),
         Kind::ClockId(id) => bdl_ide::EntityRef::Clock(bdl_model::ClockId::from_raw(*id)),
         Kind::OutputId(id) => bdl_ide::EntityRef::Output(bdl_model::OutputId::from_raw(*id)),
@@ -1151,7 +1151,7 @@ fn create_source(session: &mut Session, r: &pb::CreateSourceRequest) -> (Resp, O
     let committed = match &r.concept {
         // an existing concept, by identity: one ordinary edit
         Some(pb::create_source_request::Concept::ExistingConcept(id)) => {
-            let id = bdl_model::SemanticId::from_raw(*id);
+            let id = bdl_model::ConceptId::from_raw(*id);
             if !design.concepts.contains_key(&id) {
                 return (
                     Resp::Error(error(
@@ -1583,7 +1583,7 @@ fn simulation_response(
 ) -> Resp {
     let names = run.concept_names.clone();
     let name =
-        move |id: bdl_model::SemanticId| names.get(&id).cloned().unwrap_or_else(|| id.to_string());
+        move |id: bdl_model::ConceptId| names.get(&id).cloned().unwrap_or_else(|| id.to_string());
     Resp::Simulation(pb::SimulationResponse {
         revision: run.revision.raw(),
         next_tick: run.simulation.tick(),

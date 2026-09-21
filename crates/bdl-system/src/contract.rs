@@ -13,18 +13,18 @@
 use crate::ids::{ComponentInstanceId, PortId};
 use crate::model::*;
 use bdl_diagnostics::{Diagnostic, Entity};
-use bdl_model::{ClockId, DeclId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId};
 use serde::{Deserialize, Serialize};
 
 /// A concept of a contract, resolved to what it *is* in the system.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ResolvedConcept {
     /// A system concept (through the component's sharing table).
-    Shared(SemanticId),
+    Shared(ConceptId),
     /// A concept private to one instance.
     Private {
         instance: ComponentInstanceId,
-        local: SemanticId,
+        local: ConceptId,
     },
 }
 
@@ -44,7 +44,7 @@ pub enum ResolvedClock {
 pub fn resolve_concept(
     c: &BehaviorComponent,
     instance: ComponentInstanceId,
-    local: SemanticId,
+    local: ConceptId,
 ) -> ResolvedConcept {
     match c.shared_concepts.get(&local) {
         Some(g) => ResolvedConcept::Shared(*g),
@@ -80,7 +80,7 @@ pub fn resolve_clock(inst: &ComponentInstance, clock: ClockContract) -> Resolved
     }
 }
 
-fn concept_name(c: &BehaviorComponent, s: SemanticId) -> String {
+fn concept_name(c: &BehaviorComponent, s: ConceptId) -> String {
     c.body
         .concepts
         .get(&s)
@@ -460,7 +460,7 @@ pub fn component_substitutable(
         }
         let same_concepts = |sig_o: &bdl_model::surface::Signature,
                              sig_n: &bdl_model::surface::Signature| {
-            let at = |c: &BehaviorComponent, s: SemanticId| match c.shared_concepts.get(&s) {
+            let at = |c: &BehaviorComponent, s: ConceptId| match c.shared_concepts.get(&s) {
                 Some(g) => ResolvedConcept::Shared(*g),
                 None => ResolvedConcept::Private {
                     instance: ComponentInstanceId::from_raw(0),

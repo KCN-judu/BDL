@@ -17,7 +17,7 @@
 //! * **Concept** — one concept (`Temperature`, `AmbientLight`, …), the
 //!   [`ConceptTemplate`] of the original concept library, kept as a view.
 //! * **Source** — an environment-provided value entering the behavior
-//!   model: a semantic concept and an unresolved relationship without
+//!   model: a concept and an unresolved relationship without
 //!   inputs, `mapping temperatureInput : () -> Temperature`.  Nothing about it is a
 //!   sensor primitive or an I/O operation: the relationship is ordinary,
 //!   normally left unresolved, and so a simulation input and, later, a
@@ -89,7 +89,7 @@ pub enum NamedRepresentation {
 #[serde(deny_unknown_fields)]
 pub struct ConceptTemplate {
     /// Stable library identity (`std.environment.temperature`).  Never a
-    /// `SemanticId`.
+    /// `ConceptId`.
     pub id: String,
     /// Shown in menus and panels (`Ambient Light`).
     pub display_name: String,
@@ -438,7 +438,7 @@ impl LibraryItem {
 /// first.  Authoring convenience only, never a rule.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SourceCandidate {
-    pub concept: bdl_model::SemanticId,
+    pub concept: bdl_model::ConceptId,
     pub preferred: bool,
 }
 

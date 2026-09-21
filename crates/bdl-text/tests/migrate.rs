@@ -5,7 +5,7 @@ use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::layout::{Layout, Point};
 use bdl_model::persist::{self, ProjectKind};
 use bdl_model::surface::{ProjectSnapshot, Representation};
-use bdl_model::{DeclId, Dim, OutputId, SemanticId, MANIFEST_SCHEMA_VERSION};
+use bdl_model::{ConceptId, DeclId, Dim, OutputId, MANIFEST_SCHEMA_VERSION};
 use bdl_system::{BehaviorGroup, BehaviorSystem, GroupScope, SystemSnapshot};
 use bdl_text::{load_project, migrate_legacy, MigrationReport};
 use std::path::Path;
@@ -32,7 +32,7 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
             description: String::new(),
             signature: bdl_model::surface::Signature {
                 inputs: vec![],
-                output: SemanticId::from_raw(0),
+                output: ConceptId::from_raw(0),
             },
             definition: None,
             clock: None,
@@ -41,8 +41,8 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
             name: "dimByTilt".into(),
             description: String::new(),
             signature: bdl_model::surface::Signature {
-                inputs: vec![SemanticId::from_raw(0)],
-                output: SemanticId::from_raw(1),
+                inputs: vec![ConceptId::from_raw(0)],
+                output: ConceptId::from_raw(1),
             },
             definition: None,
             clock: None,
@@ -59,7 +59,7 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
         EditOp::CreateOutput {
             name: "Light Output".into(),
             description: String::new(),
-            accepts: SemanticId::from_raw(1),
+            accepts: ConceptId::from_raw(1),
             clock: Some(bdl_model::ClockId::from_raw(0)),
         },
     ];
@@ -69,10 +69,10 @@ fn legacy_flat(root: &Path) -> (ProjectSnapshot, Layout) {
     let mut layout = Layout::default();
     layout
         .concepts
-        .insert(SemanticId::from_raw(0), Point { x: 10.0, y: 20.0 });
+        .insert(ConceptId::from_raw(0), Point { x: 10.0, y: 20.0 });
     layout
         .concepts
-        .insert(SemanticId::from_raw(1), Point { x: 400.0, y: 20.0 });
+        .insert(ConceptId::from_raw(1), Point { x: 400.0, y: 20.0 });
     layout
         .mappings
         .insert(DeclId::from_raw(1), Point { x: 200.0, y: 40.0 });
@@ -118,9 +118,9 @@ fn a_legacy_flat_project_migrates_once_and_keeps_ids_and_layout() {
     );
     let base = &loaded.build.system.base;
     assert_eq!(base.concepts.len(), 2);
-    assert_eq!(base.concepts[&SemanticId::from_raw(0)].name, "Tilt");
+    assert_eq!(base.concepts[&ConceptId::from_raw(0)].name, "Tilt");
     assert_eq!(
-        base.concepts[&SemanticId::from_raw(0)].description,
+        base.concepts[&ConceptId::from_raw(0)].description,
         "how far the head is tilted"
     );
     assert_eq!(base.mappings[&DeclId::from_raw(1)].name, "dimByTilt");

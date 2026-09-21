@@ -8,12 +8,12 @@ use bdl_ide_db::textual::render_module;
 use bdl_ide_db::DocumentUri;
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use std::time::{Duration, Instant};
 
 fn design(concepts: usize, mappings: usize, outputs: usize) -> (ProjectSnapshot, DeclId) {
     let mut s = ProjectSnapshot::new(Design::empty("perf"));
-    let mut ids: Vec<SemanticId> = Vec::new();
+    let mut ids: Vec<ConceptId> = Vec::new();
     let dims = [Dim::ANGLE, Dim::ZERO, Dim::TIME, Dim::LENGTH];
     for i in 0..concepts {
         let a = apply_edit(

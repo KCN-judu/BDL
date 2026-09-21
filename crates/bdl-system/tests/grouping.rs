@@ -8,7 +8,7 @@ mod support;
 
 use bdl_model::edit::EditOp;
 use bdl_model::surface::{Definition, DeviceKind};
-use bdl_model::{ClockId, DeclId, Dim, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim, OutputId};
 use bdl_reactive::{InputTrace, Schedule, Simulation, SimulationTrace, Value};
 use bdl_system::*;
 use support::*;
@@ -22,8 +22,8 @@ use support::*;
 /// ```
 struct Lamp {
     sys: Sys,
-    tilt: SemanticId,
-    level: SemanticId,
+    tilt: ConceptId,
+    level: ConceptId,
     main: ClockId,
     raw: DeclId,
     tilt_value: DeclId,
@@ -72,11 +72,11 @@ fn lamp() -> Lamp {
     }
 }
 
-fn deg(tilt: SemanticId, x: f64) -> Value {
+fn deg(tilt: ConceptId, x: f64) -> Value {
     Value::sem(tilt, Value::q(Dim::ANGLE, x.to_radians()))
 }
 
-fn simulate(snapshot: &SystemSnapshot, raw: DeclId, tilt: SemanticId) -> SimulationTrace {
+fn simulate(snapshot: &SystemSnapshot, raw: DeclId, tilt: ConceptId) -> SimulationTrace {
     let a = analyze_system(snapshot);
     assert!(a.analysis.causality.valid, "{:?}", a.analysis.diagnostics);
     let mut inputs = InputTrace::default();

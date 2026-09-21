@@ -12,7 +12,7 @@ use bdl_compiler::{analyze, CompileArtifact, MappingStatus};
 use bdl_exec_ir::interp::{self, CellState};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{ClockId, DeclId, Dim, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, Dim};
 use bdl_reactive::eval::{self, State, TickInput};
 use bdl_reactive::{InputTrace, Schedule, Value};
 use bdl_runtime_host::RunTrace;
@@ -75,7 +75,7 @@ impl Surface {
         self.s = a.snapshot;
         a.outcome
     }
-    fn concept(&mut self, name: &str, rep: Representation) -> SemanticId {
+    fn concept(&mut self, name: &str, rep: Representation) -> ConceptId {
         self.edit(EditOp::CreateConcept {
             name: name.into(),
             description: String::new(),
@@ -84,7 +84,7 @@ impl Surface {
         .created_concept
         .unwrap()
     }
-    fn level(&mut self, name: &str) -> SemanticId {
+    fn level(&mut self, name: &str) -> ConceptId {
         self.concept(name, Representation::Quantity { dim: Dim::ZERO })
     }
     fn clock(&mut self, name: &str) -> ClockId {
@@ -95,8 +95,8 @@ impl Surface {
     fn mapping(
         &mut self,
         name: &str,
-        inputs: Vec<SemanticId>,
-        output: SemanticId,
+        inputs: Vec<ConceptId>,
+        output: ConceptId,
         formula: Option<&str>,
         clock: Option<ClockId>,
     ) -> DeclId {
@@ -123,7 +123,7 @@ impl Surface {
     }
 }
 
-fn scalar(concept: SemanticId, v: f64) -> Value {
+fn scalar(concept: ConceptId, v: f64) -> Value {
     Value::sem(concept, Value::q(Dim::ZERO, v))
 }
 
@@ -154,7 +154,7 @@ fn case(name: &'static str, s: &ProjectSnapshot, ticks: u64) -> Case {
 }
 
 /// One-domain design with an input `x : Level` and `y : Level := formula`.
-fn xy(name: &str, formula: &str) -> (Surface, SemanticId, DeclId, DeclId) {
+fn xy(name: &str, formula: &str) -> (Surface, ConceptId, DeclId, DeclId) {
     let mut d = Surface::new(name);
     let level = d.level("Level");
     let main = d.clock("main");

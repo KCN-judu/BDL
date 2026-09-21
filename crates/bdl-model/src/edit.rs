@@ -12,7 +12,7 @@
 //! [`Invalidation`] record so that incremental analysis is a model, not UI
 //! folklore.
 
-use crate::ids::{ClockId, DeclId, DeviceId, OutputId, SemanticId};
+use crate::ids::{ClockId, ConceptId, DeclId, DeviceId, OutputId};
 use crate::surface::{
     ClockDomain, Concept, Definition, DeviceBinding, DeviceKind, MappingBlock, PhysicalOutput,
     ProjectSnapshot, Representation, Signature,
@@ -33,11 +33,11 @@ pub enum EditOp {
         representation: Option<Representation>,
     },
     RenameConcept {
-        id: SemanticId,
+        id: ConceptId,
         name: String,
     },
     SetConceptDescription {
-        id: SemanticId,
+        id: ConceptId,
         description: String,
     },
     /// Bind (write-once) or rebind a concept's representation.  Binding an
@@ -46,7 +46,7 @@ pub enum EditOp {
     /// is not a quantity (`EditError::OrderNeedsQuantity`): undeclare the
     /// order first.
     SetConceptRepresentation {
-        id: SemanticId,
+        id: ConceptId,
         representation: Option<Representation>,
     },
     /// Declare or undeclare the concept ordered (`Concept::ordered`).  An
@@ -54,12 +54,12 @@ pub enum EditOp {
     /// concept types only while it is ordered.  Refused unless the
     /// representation is a quantity (`EditError::OrderNeedsQuantity`).
     SetConceptOrdered {
-        id: SemanticId,
+        id: ConceptId,
         ordered: bool,
     },
     /// Refused while any mapping mentions the concept.
     DeleteConcept {
-        id: SemanticId,
+        id: ConceptId,
     },
     /// Create a mapping: declared, and — when `definition` is given —
     /// defined in the same step, in `clock` if one is named.  A creation
@@ -123,7 +123,7 @@ pub enum EditOp {
         name: String,
         #[serde(default)]
         description: String,
-        accepts: SemanticId,
+        accepts: ConceptId,
         #[serde(default)]
         clock: Option<ClockId>,
     },
@@ -134,7 +134,7 @@ pub enum EditOp {
     /// Changing what a sink accepts or when it updates invalidates its driver.
     SetOutputAccepts {
         id: OutputId,
-        accepts: SemanticId,
+        accepts: ConceptId,
     },
     SetOutputClock {
         id: OutputId,
@@ -250,7 +250,7 @@ pub struct EditOutcome {
     /// Declarations at which invalidation originates (dependents are
     /// computed by the analyses, not guessed here).
     pub origin_decls: BTreeSet<DeclId>,
-    pub created_concept: Option<SemanticId>,
+    pub created_concept: Option<ConceptId>,
     pub created_mapping: Option<DeclId>,
     pub created_clock: Option<ClockId>,
     pub created_output: Option<OutputId>,
@@ -298,16 +298,13 @@ pub enum EditError {
     #[error("a mapping named `{name}` already exists")]
     DuplicateMappingName { name: String },
     #[error("unknown concept {id}")]
-    UnknownConcept { id: SemanticId },
+    UnknownConcept { id: ConceptId },
     #[error("unknown mapping {id}")]
     UnknownMapping { id: DeclId },
     #[error("concept {id} can only be ordered while its value form is a quantity; clear the order before choosing another value form")]
-    OrderNeedsQuantity { id: SemanticId },
+    OrderNeedsQuantity { id: ConceptId },
     #[error("concept {id} is still used by {} mapping(s)", used_by.len())]
-    ConceptInUse {
-        id: SemanticId,
-        used_by: Vec<DeclId>,
-    },
+    ConceptInUse { id: ConceptId, used_by: Vec<DeclId> },
     #[error("mapping {id} already has a definition; replace it explicitly")]
     AlreadyDefined { id: DeclId },
     #[error("mapping {id} has no definition to replace")]
@@ -352,7 +349,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
             if design.concepts.values().any(|c| c.name == name) {
                 return Err(EditError::DuplicateConceptName { name });
             }
-            let (id, ids) = design.ids.fresh_semantic();
+            let (id, ids) = design.ids.fresh_concept();
             design.ids = ids;
             design.concepts.insert(
                 id,
@@ -869,7 +866,7 @@ fn valid_name(name: &str) -> Result<String, EditError> {
 
 fn concept_mut(
     design: &mut crate::surface::Design,
-    id: SemanticId,
+    id: ConceptId,
 ) -> Result<&mut Concept, EditError> {
     design
         .concepts
@@ -926,7 +923,7 @@ mod tests {
         ProjectSnapshot::new(Design::empty("lamp"))
     }
 
-    fn create_concept(s: &ProjectSnapshot, name: &str) -> (ProjectSnapshot, SemanticId) {
+    fn create_concept(s: &ProjectSnapshot, name: &str) -> (ProjectSnapshot, ConceptId) {
         let a = apply_edit(
             s,
             &EditOp::CreateConcept {
@@ -1069,7 +1066,7 @@ mod tests {
     #[test]
     fn signature_must_reference_existing_concepts() {
         let (s, tilt) = create_concept(&empty(), "Tilt");
-        let ghost = SemanticId::from_raw(99);
+        let ghost = ConceptId::from_raw(99);
         let err = apply_edit(
             &s,
             &EditOp::CreateMapping {
@@ -1205,8 +1202,8 @@ mod tests {
             name: "m".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![SemanticId::from_raw(0)],
-                output: SemanticId::from_raw(1),
+                inputs: vec![ConceptId::from_raw(0)],
+                output: ConceptId::from_raw(1),
             },
             definition: None,
             clock: None,

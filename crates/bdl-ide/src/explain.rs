@@ -60,7 +60,7 @@ pub fn explain(snapshot: &AnalysisSnapshot, entity: EntityRef) -> Option<Explana
     if let Some(sig) = &h.signature {
         identity = identity.line("surface", sig.clone());
     }
-    if let Some(t) = &h.semantic_type {
+    if let Some(t) = &h.concept_type {
         identity = identity.line("kernel type", t.clone());
     }
     if let Some(r) = &h.representation {

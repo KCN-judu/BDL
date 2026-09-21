@@ -3,9 +3,9 @@
 //! Display names appear in comments and in the manifest only.
 
 use bdl_exec_ir::{ClockSlot, LocalId, StateSlot};
-use bdl_model::{DeclId, DeviceId, OutputId, SemanticId};
+use bdl_model::{ConceptId, DeclId, DeviceId, OutputId};
 
-pub fn concept(s: SemanticId) -> String {
+pub fn concept(s: ConceptId) -> String {
     format!("Sem{}", s.raw())
 }
 pub fn decl(d: DeclId) -> String {
@@ -74,7 +74,7 @@ mod tests {
     #[test]
     fn symbols_come_from_ids_only() {
         assert_eq!(decl(DeclId::from_raw(17)), "decl_17");
-        assert_eq!(concept(SemanticId::from_raw(3)), "Sem3");
+        assert_eq!(concept(ConceptId::from_raw(3)), "Sem3");
         assert_eq!(cell(StateSlot(0)), "cell_0");
         assert_eq!(output(OutputId::from_raw(4)), "output_4");
         assert_eq!(command(DeviceId::from_raw(7)), "command_7");

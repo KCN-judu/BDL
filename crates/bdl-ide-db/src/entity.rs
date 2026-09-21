@@ -12,7 +12,7 @@
 //! canvas can highlight the right port without either re-deriving meaning.
 
 use bdl_diagnostics::Entity;
-use bdl_model::{ClockId, DeclId, DeviceId, OutputId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, OutputId};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -22,7 +22,7 @@ use std::fmt;
 pub enum EntityRef {
     /// The whole design (project-level notes such as a missing driver).
     Project,
-    Concept(SemanticId),
+    Concept(ConceptId),
     Mapping(DeclId),
     Clock(ClockId),
     Output(OutputId),
@@ -65,7 +65,7 @@ impl EntityRef {
         }
     }
 
-    pub fn as_concept(self) -> Option<SemanticId> {
+    pub fn as_concept(self) -> Option<ConceptId> {
         match self {
             EntityRef::Concept(s) => Some(s),
             _ => None,
@@ -176,7 +176,7 @@ mod tests {
     fn entity_refs_round_trip_through_json() {
         for e in [
             EntityRef::Project,
-            EntityRef::Concept(SemanticId::from_raw(2)),
+            EntityRef::Concept(ConceptId::from_raw(2)),
             EntityRef::Mapping(DeclId::from_raw(17)),
             EntityRef::Requirement {
                 device: DeviceId::from_raw(1),

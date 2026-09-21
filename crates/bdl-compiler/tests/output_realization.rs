@@ -16,7 +16,7 @@ use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::surface::{
     Definition, Design, DeviceKind, ProjectSnapshot, Representation, Signature,
 };
-use bdl_model::{ClockId, DeclId, DeviceId, Dim, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, Dim, OutputId, OutputProfileId};
 use bdl_reactive::Value;
 use bdl_runtime_host::{DynValue, RunRequest, TickRequest};
 use std::collections::BTreeMap;
@@ -36,7 +36,7 @@ impl Surface {
         self.s = a.snapshot;
         a.outcome
     }
-    fn concept(&mut self, name: &str, representation: Representation) -> SemanticId {
+    fn concept(&mut self, name: &str, representation: Representation) -> ConceptId {
         self.edit(EditOp::CreateConcept {
             name: name.into(),
             description: String::new(),
@@ -53,8 +53,8 @@ impl Surface {
     fn mapping(
         &mut self,
         name: &str,
-        inputs: Vec<SemanticId>,
-        output: SemanticId,
+        inputs: Vec<ConceptId>,
+        output: ConceptId,
         formula: Option<&str>,
         clock: Option<ClockId>,
     ) -> DeclId {
@@ -79,7 +79,7 @@ impl Surface {
         }
         id
     }
-    fn output(&mut self, name: &str, accepts: SemanticId, clock: ClockId) -> OutputId {
+    fn output(&mut self, name: &str, accepts: ConceptId, clock: ClockId) -> OutputId {
         self.edit(EditOp::CreateOutput {
             name: name.into(),
             description: String::new(),
@@ -117,7 +117,7 @@ impl Surface {
 /// `light : Brightness`; one PWM device `lamp` realises `light`.
 struct Lamp {
     d: Surface,
-    brightness: SemanticId,
+    brightness: ConceptId,
     level: DeclId,
     light: OutputId,
     lamp: DeviceId,
@@ -148,7 +148,7 @@ fn compiled(s: &ProjectSnapshot) -> ExecIr {
 
 /// Run the exec IR on `levels` fed to the single input, every domain
 /// active every tick.
-fn run(exec: &ExecIr, brightness: SemanticId, levels: &[f64]) -> Vec<interp::TickResult> {
+fn run(exec: &ExecIr, brightness: ConceptId, levels: &[f64]) -> Vec<interp::TickResult> {
     let active: Vec<_> = exec.clocks.iter().map(|c| c.slot).collect();
     let mut state = CellState::init(exec);
     let mut out = Vec::new();

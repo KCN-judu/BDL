@@ -9,7 +9,7 @@ use bdl_model::edit::{EditError, EditKind, EditOp, EditOutcome, Invalidation};
 use bdl_model::layout::{Layout, Point};
 use bdl_model::surface::{Definition, DeviceKind, ProjectSnapshot, Representation, Signature};
 use bdl_model::{
-    ClockId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId, SemanticId,
+    ClockId, ConceptId, DeclId, DeviceId, Dim, InputProfileId, OutputId, OutputProfileId,
 };
 use bdl_output::OutputState;
 
@@ -149,8 +149,8 @@ pub fn signature_to_pb(s: &Signature) -> pb::Signature {
 
 pub fn signature_from_pb(s: &pb::Signature) -> Signature {
     Signature {
-        inputs: s.inputs.iter().map(|i| SemanticId::from_raw(*i)).collect(),
-        output: SemanticId::from_raw(s.output),
+        inputs: s.inputs.iter().map(|i| ConceptId::from_raw(*i)).collect(),
+        output: ConceptId::from_raw(s.output),
     }
 }
 
@@ -160,7 +160,7 @@ pub fn signature_from_pb(s: &pb::Signature) -> Signature {
 
 pub fn edit_op_from_pb(op: &pb::EditOp) -> Result<EditOp, ConvertError> {
     use pb::edit_op::Op;
-    let sem = SemanticId::from_raw;
+    let sem = ConceptId::from_raw;
     let decl = DeclId::from_raw;
     let clock = ClockId::from_raw;
     let output = OutputId::from_raw;
@@ -660,7 +660,7 @@ pub fn layout_from_pb(l: &pb::Layout) -> Layout {
         concepts: l
             .concepts
             .iter()
-            .map(|n| (SemanticId::from_raw(n.id), Point { x: n.x, y: n.y }))
+            .map(|n| (ConceptId::from_raw(n.id), Point { x: n.x, y: n.y }))
             .collect(),
         mappings: l
             .mappings
@@ -1579,7 +1579,7 @@ pub fn value_from_pb(v: &pb::Value) -> Result<Value, ConvertError> {
                 value: q.value,
             },
             Kind::Semantic(s) => Value::Semantic {
-                id: SemanticId::from_raw(s.concept_id),
+                id: ConceptId::from_raw(s.concept_id),
                 repr: Box::new(value_from_pb(
                     s.repr
                         .as_ref()
@@ -1616,7 +1616,7 @@ pub fn value_from_pb(v: &pb::Value) -> Result<Value, ConvertError> {
 
 pub fn tick_sample_to_pb(
     t: &bdl_reactive::TickSample,
-    concept_name: &dyn Fn(SemanticId) -> String,
+    concept_name: &dyn Fn(ConceptId) -> String,
 ) -> pb::TickSample {
     pb::TickSample {
         tick: t.tick,
@@ -1649,7 +1649,7 @@ pub mod system {
     use std::collections::BTreeMap;
 
     pub fn contract_to_pb(c: &BehaviorComponent, k: &PortContract) -> pb::PortContractView {
-        let name = |s: SemanticId| {
+        let name = |s: ConceptId| {
             c.body
                 .concepts
                 .get(&s)
@@ -1926,8 +1926,8 @@ pub mod system {
                     clock_params: c.interface.clock_params.iter().map(|k| k.raw()).collect(),
                     shared_concepts: pairs(
                         c.shared_concepts.iter(),
-                        |a: SemanticId| a.raw(),
-                        |b: SemanticId| b.raw(),
+                        |a: ConceptId| a.raw(),
+                        |b: ConceptId| b.raw(),
                     ),
                     external_outputs: pairs(
                         c.external_outputs.iter(),
@@ -2215,8 +2215,8 @@ pub mod system {
                 },
                 Op::ShareConcept(m) => SystemEditOp::ShareConcept {
                     component: comp(m.component),
-                    local: SemanticId::from_raw(m.local),
-                    system: m.system.map(SemanticId::from_raw),
+                    local: ConceptId::from_raw(m.local),
+                    system: m.system.map(ConceptId::from_raw),
                 },
                 Op::ExternalizeOutput(m) => SystemEditOp::ExternalizeOutput {
                     component: comp(m.component),
@@ -2406,7 +2406,7 @@ mod tests {
     #[test]
     fn every_edit_op_round_trips_through_pb() {
         use bdl_model::surface::DeviceKind;
-        let sem = SemanticId::from_raw;
+        let sem = ConceptId::from_raw;
         let decl = DeclId::from_raw;
         let clock = ClockId::from_raw;
         let output = OutputId::from_raw;
@@ -2577,8 +2577,8 @@ mod tests {
                 name: "dimByTilt".into(),
                 description: String::new(),
                 signature: Signature {
-                    inputs: vec![SemanticId::from_raw(0)],
-                    output: SemanticId::from_raw(1)
+                    inputs: vec![ConceptId::from_raw(0)],
+                    output: ConceptId::from_raw(1)
                 },
                 definition: None,
                 clock: None,
@@ -2762,7 +2762,7 @@ mod tests {
             .created_concept
             .unwrap();
         let mapping =
-            |name: &str, inputs: Vec<bdl_model::SemanticId>, output| EditOp::CreateMapping {
+            |name: &str, inputs: Vec<bdl_model::ConceptId>, output| EditOp::CreateMapping {
                 name: name.into(),
                 description: String::new(),
                 signature: Signature { inputs, output },
@@ -3076,7 +3076,7 @@ mod tests {
         use bdl_model::surface::Signature;
         use bdl_system::{ClockContract, PortContract};
         use std::collections::BTreeMap;
-        let sem = SemanticId::from_raw;
+        let sem = ConceptId::from_raw;
         let mut c = bdl_system::BehaviorComponent {
             id: bdl_system::ComponentId::from_raw(0),
             name: "Lamp".into(),

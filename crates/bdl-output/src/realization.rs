@@ -1,12 +1,12 @@
 //! Output realization (`BDL_FV/BDL/Surface/OutputRealization.lean`, Phase 14).
 //!
-//! A physical output stays logical: it accepts a semantic value in a
+//! A physical output stays logical: it accepts a Sem value in a
 //! domain and nothing more.  *How* that value reaches a board is
 //! deployment data — a **realization profile** chosen per device binding —
 //! and the bridge between the two is an **encoder**: a closed, pure, typed
 //! Core term `rep → raw` that lowers the output value's representation
 //! into a machine-facing raw command.  The encoder is data (`Encoder.WF`),
-//! constructs no semantic value (`encoder_constructs_nothing`: it is typed
+//! constructs no Sem value (`encoder_constructs_nothing`: it is typed
 //! under [`Grant::None`]), and refers to no declaration and no domain, so
 //! it can only be evaluated where its argument is — in the output's own
 //! domain.
@@ -32,7 +32,7 @@ pub use bdl_catalogue::{
 use bdl_check::{infer, Grant};
 use bdl_ir::{DesignIr, Expr, Ty};
 use bdl_model::surface::{DeviceBinding, DeviceKind};
-use bdl_model::{DeclId, OutputProfileId, SemanticId};
+use bdl_model::{ConceptId, DeclId, OutputProfileId};
 use serde::{Deserialize, Serialize};
 
 /// Why an encoder is not pure: it reaches outside its argument.
@@ -45,8 +45,8 @@ pub enum Impurity {
     Delay,
     /// Reads another domain — an implicit clock crossing.
     Sync { src: bdl_model::ClockId },
-    /// Constructs a semantic value.
-    Constructs { concept: SemanticId },
+    /// Constructs a Sem value.
+    Constructs { concept: ConceptId },
 }
 
 /// Why an encoder is not well formed (`¬ Encoder.WF`).
@@ -75,7 +75,7 @@ pub enum EncoderFault {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum FitFault {
     /// The output accepts a concept with no representation yet.
-    NoRepresentation { concept: SemanticId },
+    NoRepresentation { concept: ConceptId },
     /// The concept's representation (or the accepted data type) differs
     /// from the encoder's domain.
     Representation { carried: Ty, expected: Ty },
@@ -188,7 +188,7 @@ pub fn well_formed(e: &Encoder) -> Result<(), EncoderFault> {
 /// is the encoder's domain; at a data output the type itself is.
 pub fn fits(
     accepts: &Ty,
-    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+    representation_of: impl Fn(ConceptId) -> Option<Ty>,
     e: &Encoder,
 ) -> Result<(), FitFault> {
     let carried = match accepts {
@@ -225,7 +225,7 @@ pub fn encoder_body(accepts: &Ty, e: &Encoder, driver: DeclId) -> Expr {
 pub fn check_binding(
     binding: &DeviceBinding,
     accepts: Option<&Ty>,
-    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+    representation_of: impl Fn(ConceptId) -> Option<Ty>,
 ) -> RealizationCheck {
     check_binding_in(&Catalogue::builtin(), binding, accepts, representation_of)
 }
@@ -236,7 +236,7 @@ pub fn check_binding_in(
     catalogue: &Catalogue,
     binding: &DeviceBinding,
     accepts: Option<&Ty>,
-    representation_of: impl Fn(SemanticId) -> Option<Ty>,
+    representation_of: impl Fn(ConceptId) -> Option<Ty>,
 ) -> RealizationCheck {
     let Some(id) = &binding.realization else {
         return RealizationCheck {
@@ -281,10 +281,10 @@ mod tests {
     fn level() -> Ty {
         Ty::q(Dim::ZERO)
     }
-    fn brightness() -> SemanticId {
-        SemanticId::from_raw(1)
+    fn brightness() -> ConceptId {
+        ConceptId::from_raw(1)
     }
-    fn theta(s: SemanticId) -> Option<Ty> {
+    fn theta(s: ConceptId) -> Option<Ty> {
         (s == brightness()).then(level)
     }
     fn binding(profile: &str, kind: DeviceKind) -> DeviceBinding {
@@ -345,9 +345,9 @@ mod tests {
             })
         );
         assert_eq!(
-            fits(&Ty::sem(SemanticId::from_raw(9)), theta, &gpio.encoder),
+            fits(&Ty::sem(ConceptId::from_raw(9)), theta, &gpio.encoder),
             Err(FitFault::NoRepresentation {
-                concept: SemanticId::from_raw(9)
+                concept: ConceptId::from_raw(9)
             })
         );
         // A data output fits by its own type.
@@ -396,7 +396,7 @@ mod tests {
     }
 
     #[test]
-    fn semantic_types_are_not_raw() {
+    fn concept_types_are_not_raw() {
         let e = Encoder {
             rep: level(),
             raw: Ty::sem(brightness()),

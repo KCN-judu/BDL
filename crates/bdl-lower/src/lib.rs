@@ -56,7 +56,7 @@ use bdl_exec_ir::{
     ProviderPlan, SinkPlan, SinkSlot, StateSlot, EXEC_IR_VERSION,
 };
 use bdl_ir::{DesignIr, Expr, Prim, Ty};
-use bdl_model::{ClockId, DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId, SemanticId};
+use bdl_model::{ClockId, ConceptId, DeclId, DeviceId, InputProfileId, OutputId, OutputProfileId};
 use bdl_reactive::StateCellId;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -529,7 +529,7 @@ impl<'a> Lowerer<'a> {
         }
         // Concepts: every one a carried type mentions, transitively through
         // representations.
-        let mut mentioned: BTreeSet<SemanticId> = BTreeSet::new();
+        let mut mentioned: BTreeSet<ConceptId> = BTreeSet::new();
         for t in decls
             .iter()
             .map(|d| &d.ty)
@@ -539,7 +539,7 @@ impl<'a> Lowerer<'a> {
             collect_sems(t, &mut mentioned);
         }
         let mut concepts = Vec::new();
-        let mut queue: Vec<SemanticId> = mentioned.iter().copied().collect();
+        let mut queue: Vec<ConceptId> = mentioned.iter().copied().collect();
         while let Some(s) = queue.pop() {
             let Some(rep) = ir.representation_of(s) else {
                 self.internal(None, format!("concept {s} has no representation"));
@@ -1185,7 +1185,7 @@ fn resolve_function(ir: &DesignIr, id: DeclId) -> Option<&Expr> {
     }
 }
 
-fn collect_sems(t: &Ty, out: &mut BTreeSet<SemanticId>) {
+fn collect_sems(t: &Ty, out: &mut BTreeSet<ConceptId>) {
     match t {
         Ty::Sem { id } => {
             out.insert(*id);

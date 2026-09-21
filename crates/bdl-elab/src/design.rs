@@ -14,7 +14,7 @@ use bdl_model::DeclId;
 use std::collections::BTreeMap;
 
 /// `Quantity dim → q dim`, `Boolean → bool`, `Count → nat`, `Optional →
-/// opt`, `List → list`, `Pair → prod`.  Every case is semantic-free data,
+/// opt`, `List → list`, `Pair → prod`.  Every case is concept-free data,
 /// as `ConceptEnv.WF` requires.
 pub fn representation_ty(r: &Representation) -> Ty {
     match r {
@@ -234,11 +234,11 @@ mod tests {
     use bdl_ir::{Expr, Prim};
     use bdl_model::edit::{apply_edit, EditOp};
     use bdl_model::surface::{ProjectSnapshot, Signature};
-    use bdl_model::{Dim, SemanticId};
+    use bdl_model::{ConceptId, Dim};
 
     /// Tilt : angle, Brightness : dimensionless, Held : boolean, Open : unbound,
     /// and dimByTilt : (Tilt, Held) -> Brightness with `formula`.
-    fn lamp(formula: Option<&str>) -> (Design, DeclId, [SemanticId; 4]) {
+    fn lamp(formula: Option<&str>) -> (Design, DeclId, [ConceptId; 4]) {
         let mut s = ProjectSnapshot::new(Design::empty("lamp"));
         let mut ids = Vec::new();
         for (name, rep) in [
@@ -448,7 +448,7 @@ mod tests {
         assert_eq!(m.outcome, RealizationOutcome::Failed);
         assert_eq!(
             codes(&m.diagnostics),
-            vec!["semantic.unbound_representation"]
+            vec!["concept.unbound_representation"]
         );
         assert!(!m.diagnostics[0].is_error());
     }

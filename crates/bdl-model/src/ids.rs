@@ -41,8 +41,12 @@ macro_rules! stable_id {
 }
 
 stable_id!(
-    /// Identity of a semantic concept (the kernel's `SemanticId`; a nominal type).
-    SemanticId,
+    /// Identity of a concept (the kernel's `ConceptId`): the nominal type
+    /// `sem C`, a *template*.  A Sem block is its instance (a unit-domain
+    /// declaration of type `sem C`, one value per tick), a value `sem C v`
+    /// the instance's state.  Several Sem blocks of one concept are
+    /// ordinary.
+    ConceptId,
     "sem#"
 );
 stable_id!(
@@ -103,7 +107,10 @@ impl fmt::Display for Revision {
 /// that identities are never reused, even after deletion.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IdAllocator {
-    next_semantic: u64,
+    /// The project file spells this counter `next_semantic` (ADR-0043:
+    /// the key predates the concept ladder; the bytes stay).
+    #[serde(rename = "next_semantic")]
+    next_concept: u64,
     next_decl: u64,
     next_clock: u64,
     next_output: u64,
@@ -113,12 +120,12 @@ pub struct IdAllocator {
 
 impl IdAllocator {
     #[must_use]
-    pub fn fresh_semantic(&self) -> (SemanticId, IdAllocator) {
-        let id = SemanticId(self.next_semantic);
+    pub fn fresh_concept(&self) -> (ConceptId, IdAllocator) {
+        let id = ConceptId(self.next_concept);
         (
             id,
             IdAllocator {
-                next_semantic: self.next_semantic + 1,
+                next_concept: self.next_concept + 1,
                 ..self.clone()
             },
         )
@@ -162,7 +169,7 @@ impl IdAllocator {
     #[must_use]
     pub fn covering(
         &self,
-        semantic: Option<u64>,
+        concept: Option<u64>,
         decl: Option<u64>,
         clock: Option<u64>,
         output: Option<u64>,
@@ -170,7 +177,7 @@ impl IdAllocator {
     ) -> IdAllocator {
         let above = |next: u64, used: Option<u64>| used.map_or(next, |u| next.max(u + 1));
         IdAllocator {
-            next_semantic: above(self.next_semantic, semantic),
+            next_concept: above(self.next_concept, concept),
             next_decl: above(self.next_decl, decl),
             next_clock: above(self.next_clock, clock),
             next_output: above(self.next_output, output),
@@ -197,8 +204,8 @@ mod tests {
     #[test]
     fn allocator_never_reuses() {
         let a = IdAllocator::default();
-        let (s0, a) = a.fresh_semantic();
-        let (s1, a) = a.fresh_semantic();
+        let (s0, a) = a.fresh_concept();
+        let (s1, a) = a.fresh_concept();
         let (d0, _) = a.fresh_decl();
         assert_ne!(s0, s1);
         assert_eq!(s0.raw(), 0);
@@ -208,9 +215,9 @@ mod tests {
 
     #[test]
     fn ids_serialize_transparently() {
-        let json = serde_json::to_string(&SemanticId(7)).unwrap();
+        let json = serde_json::to_string(&ConceptId(7)).unwrap();
         assert_eq!(json, "7");
-        let back: SemanticId = serde_json::from_str("7").unwrap();
-        assert_eq!(back, SemanticId(7));
+        let back: ConceptId = serde_json::from_str("7").unwrap();
+        assert_eq!(back, ConceptId(7));
     }
 }

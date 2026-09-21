@@ -13,7 +13,7 @@
 use bdl_check::pretty;
 use bdl_ide_db::{AnalysisSnapshot, DocumentId, EntityKind, EntityRef, EntityRole, TextRange};
 use bdl_model::surface::{Definition, Design, Representation};
-use bdl_model::{DeclId, Dim, SemanticId};
+use bdl_model::{ConceptId, DeclId, Dim};
 use serde::{Deserialize, Serialize};
 
 /// Where completion is asked.
@@ -885,7 +885,7 @@ fn visible_collections(
     block: &bdl_model::surface::MappingBlock,
     scope: Option<&bdl_model::surface::FormulaScope>,
 ) -> Vec<String> {
-    let is_list = |c: &SemanticId| {
+    let is_list = |c: &ConceptId| {
         design
             .concepts
             .get(c)

@@ -429,7 +429,7 @@ impl Out {
     /// System concepts a component may `use`, minus the ones it already
     /// shares.
     fn concepts_of_base(&mut self, system: &BehaviorSystem, scope: Option<ComponentId>) {
-        let shared: Vec<bdl_model::SemanticId> = scope
+        let shared: Vec<bdl_model::ConceptId> = scope
             .and_then(|c| system.components.get(&c))
             .map(|c| c.shared_concepts.values().copied().collect())
             .unwrap_or_default();

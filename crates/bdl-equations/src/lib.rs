@@ -31,7 +31,7 @@
 #![forbid(unsafe_code)]
 
 use bdl_ir::{Expr, Prim, Scalar, Ty};
-use bdl_model::{Dim, SemanticId};
+use bdl_model::{ConceptId, Dim};
 use std::collections::BTreeMap;
 
 /// A dimension pattern: a constant, or a dimension variable.
@@ -47,7 +47,7 @@ pub enum PTy {
     Var(u8),
     Bool,
     Nat,
-    Sem(SemanticId),
+    Sem(ConceptId),
     Q(PDim),
     Opt(Box<PTy>),
     List(Box<PTy>),
@@ -202,7 +202,7 @@ pub fn instantiate(p: &PTy, s: &Subst) -> Option<Ty> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ordered {
     Q(Dim),
-    Sem(SemanticId, Dim),
+    Sem(ConceptId, Dim),
 }
 
 impl Ordered {
@@ -1207,7 +1207,7 @@ mod tests {
     #[test]
     fn ordered_concepts_compare_through_their_representation() {
         let mut ir = DesignIr::default();
-        let bright = SemanticId::from_raw(7);
+        let bright = ConceptId::from_raw(7);
         ir.concepts.insert(
             bright,
             bdl_ir::ConceptBinding {

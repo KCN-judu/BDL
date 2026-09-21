@@ -801,7 +801,7 @@ mod tests {
         let o = run(&ir, &[(input(&[]), active(&[0]))]);
         let b = |n: u64| o[0].values[&d(n)].as_bool().unwrap();
         assert!(b(0) && !b(1) && b(2) && !b(3) && b(4) && !b(5) && b(6));
-        // semantic values compare by concept and representation
+        // Sem values compare by concept and representation
         assert!(Value::sem(s(0), Value::scalar(1.0))
             .structurally_equal(&Value::sem(s(0), Value::scalar(1.0))));
         assert!(!Value::sem(s(0), Value::scalar(1.0))
@@ -861,7 +861,7 @@ mod tests {
     }
 
     #[test]
-    fn closures_apply_and_keep_semantic_identity() {
+    fn closures_apply_and_keep_concept_identity() {
         let mut ir = ir_with_decls(&[(0, None)]);
         lamp_concepts(&mut ir);
         // dimByTilt = λx:Tilt. mk Brightness (div (rep x) 90deg);  brightness = dimByTilt tilt

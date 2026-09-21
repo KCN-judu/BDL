@@ -19,7 +19,7 @@
 
 use bdl_model::layout::{Layout, Point};
 use bdl_model::surface::Design;
-use bdl_model::{DeclId, OutputId, SemanticId};
+use bdl_model::{ConceptId, DeclId, OutputId};
 use bdl_system::{BehaviorSystem, BindingEnd};
 use std::collections::BTreeMap;
 
@@ -59,7 +59,7 @@ pub struct Placed {
 /// A canvas node the layout keys.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Node {
-    Concept(SemanticId),
+    Concept(ConceptId),
     Mapping(DeclId),
     Output(OutputId),
     /// A component instance, by raw id (the system canvas only).

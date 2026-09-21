@@ -9,7 +9,7 @@ use bdl_layout::{arrange, has_positions, metrics, place_missing, Node};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::layout::{GroupBox, Layout, Point};
 use bdl_model::surface::{Design, ProjectSnapshot, Representation, Signature};
-use bdl_model::{DeclId, OutputId, SemanticId};
+use bdl_model::{ConceptId, DeclId, OutputId};
 use bdl_system::{apply_group_edit, BehaviorSystem, GroupEditOp, GroupScope};
 
 /// Pressed → lit → Lit; lit → lamp (the demo: one relationship producing
@@ -37,7 +37,7 @@ fn button_lamp() -> Design {
             description: String::new(),
             signature: Signature {
                 inputs: vec![],
-                output: SemanticId::from_raw(0),
+                output: ConceptId::from_raw(0),
             },
             definition: None,
             clock: None,
@@ -46,8 +46,8 @@ fn button_lamp() -> Design {
             name: "lit".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![SemanticId::from_raw(0)],
-                output: SemanticId::from_raw(1),
+                inputs: vec![ConceptId::from_raw(0)],
+                output: ConceptId::from_raw(1),
             },
             definition: None,
             clock: None,
@@ -56,8 +56,8 @@ fn button_lamp() -> Design {
             name: "again".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![SemanticId::from_raw(1)],
-                output: SemanticId::from_raw(2),
+                inputs: vec![ConceptId::from_raw(1)],
+                output: ConceptId::from_raw(2),
             },
             definition: None,
             clock: None,
@@ -65,7 +65,7 @@ fn button_lamp() -> Design {
         EditOp::CreateOutput {
             name: "lamp".into(),
             description: String::new(),
-            accepts: SemanticId::from_raw(1),
+            accepts: ConceptId::from_raw(1),
             clock: None,
         },
         EditOp::SetMappingDrive {
@@ -133,9 +133,9 @@ fn the_demo_is_arranged_left_to_right_with_every_edge_forward_and_nothing_overla
     let system = BehaviorSystem::from_flat(button_lamp());
     let l = arrange(&system, &Layout::default());
     assert_no_overlap(&system, &l);
-    let pressed_c = l.concepts[&SemanticId::from_raw(0)];
-    let lit_c = l.concepts[&SemanticId::from_raw(1)];
-    let twice_c = l.concepts[&SemanticId::from_raw(2)];
+    let pressed_c = l.concepts[&ConceptId::from_raw(0)];
+    let lit_c = l.concepts[&ConceptId::from_raw(1)];
+    let twice_c = l.concepts[&ConceptId::from_raw(2)];
     let pressed = l.mappings[&DeclId::from_raw(0)];
     let lit = l.mappings[&DeclId::from_raw(1)];
     let again = l.mappings[&DeclId::from_raw(2)];
@@ -166,7 +166,7 @@ fn arranging_is_deterministic_and_moves_authored_positions() {
     let mut authored = Layout::default();
     authored
         .concepts
-        .insert(SemanticId::from_raw(0), Point { x: 900.0, y: 900.0 });
+        .insert(ConceptId::from_raw(0), Point { x: 900.0, y: 900.0 });
     authored
         .mappings
         .insert(DeclId::from_raw(1), Point { x: 5.0, y: 5.0 });
@@ -185,7 +185,7 @@ fn arranging_is_deterministic_and_moves_authored_positions() {
     );
     assert_eq!(a.mappings, c.mappings);
     assert_ne!(
-        a.concepts[&SemanticId::from_raw(0)],
+        a.concepts[&ConceptId::from_raw(0)],
         Point { x: 900.0, y: 900.0 }
     );
     assert_eq!(
@@ -233,8 +233,8 @@ fn a_collapsed_group_is_one_box_and_its_hidden_members_keep_their_places() {
     // the box moved into the flow, right of Pressed and left of Lit
     let g = l.groups[&gid];
     assert!(g.collapsed);
-    assert!(l.concepts[&SemanticId::from_raw(0)].x < g.x);
-    assert!(g.x < l.concepts[&SemanticId::from_raw(1)].x);
+    assert!(l.concepts[&ConceptId::from_raw(0)].x < g.x);
+    assert!(g.x < l.concepts[&ConceptId::from_raw(1)].x);
     // the members inside it were not touched
     assert_eq!(
         l.mappings[&DeclId::from_raw(1)],
@@ -270,8 +270,8 @@ fn a_cycle_through_memory_still_arranges() {
             name: "r".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![SemanticId::from_raw(0)],
-                output: SemanticId::from_raw(0),
+                inputs: vec![ConceptId::from_raw(0)],
+                output: ConceptId::from_raw(0),
             },
             definition: None,
             clock: None,
