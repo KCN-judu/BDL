@@ -2513,6 +2513,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readBy => '被读取于';
 
   @override
+  String get editInSheet => '编辑…';
+
+  @override
+  String get editInSheetTooltip => '在有足够空间的工作表中打开定义（⌘E）';
+
+  @override
+  String defineRelationship(Object name) {
+    return '定义 $name';
+  }
+
+  @override
+  String get formulaSheetSubtitle => '输入时定义会被即时读取；正确后再保存。';
+
+  @override
+  String get editingInSheet => '正在工作表中编辑。';
+
+  @override
+  String get thisPosition => '此位置';
+
+  @override
+  String get paletteEmptyState => '点击公式的某个部分或直接输入，即可看到该位置的期望与可放入的内容。';
+
+  @override
+  String canReadNames(Object names) {
+    return '可读取 $names';
+  }
+
+  @override
   String get libItem_std_value_boolean_name => '开 / 关';
 
   @override

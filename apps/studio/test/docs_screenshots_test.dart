@@ -435,6 +435,12 @@ class Scene {
       await act(FormulaModeChanged(formula), (s) => s.editor.composer.formulaMode == formula);
       return;
     }
+    if (step['sheet'] case final Map<String, dynamic> d) {
+      // open the formula sheet on a relationship (the Edit… of the inspector)
+      final id = mapping(d['mapping'] as String);
+      await act(FormulaSheetOpened(id), (s) => s.editor.formulaSheet == id);
+      return;
+    }
     if (step['slot'] case final Map<String, dynamic> d) {
       // select a component of the Formula Composer and wait for what fits
       final id = mapping(d['mapping'] as String);

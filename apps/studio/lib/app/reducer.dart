@@ -725,9 +725,16 @@ Transition reduce(AppState s, AppAction action) {
         ),
       ),
     ),
+    // (the formula sheet is the selected relationship's: another selection
+    // closes it)
     SelectionChanged(:final selection) => _selected(
       s.copyWith(
-        editor: withoutTooling(s.editor).copyWith(selection: selection, clearRenaming: true),
+        editor: withoutTooling(s.editor).copyWith(
+          selection: selection,
+          clearRenaming: true,
+          clearFormulaSheet:
+              s.editor.formulaSheet != null && selection != MappingSelected(s.editor.formulaSheet!),
+        ),
       ),
     ),
 
@@ -922,6 +929,22 @@ Transition reduce(AppState s, AppAction action) {
         t.effects,
       );
     }),
+    FormulaSheetOpened(:final mappingId) => _whenProject(s, () {
+      if (s.mapping(mappingId) == null) return Transition(s);
+      final t = reduce(s, SelectionChanged(MappingSelected(mappingId)));
+      return Transition(
+        t.state.copyWith(
+          editor: t.state.editor.copyWith(
+            formulaSheet: mappingId,
+            definitionFocus: t.state.editor.definitionFocus + 1,
+          ),
+        ),
+        t.effects,
+      );
+    }),
+    FormulaSheetDismissed() => Transition(
+      s.copyWith(editor: s.editor.copyWith(clearFormulaSheet: true)),
+    ),
     ErrorDismissed() => Transition(s.copyWith(editor: s.editor.copyWith(clearError: true))),
 
     // ---- responses ---------------------------------------------------------

@@ -87,6 +87,7 @@ class FormulaComposer extends StatefulWidget {
     this.onEditAsText,
     this.large = false,
     this.palette = true,
+    this.leading,
   });
 
   final int mappingId;
@@ -115,8 +116,12 @@ class FormulaComposer extends StatefulWidget {
   final bool large;
 
   /// Draw the slot panel under the field (the inspector); the sheet
-  /// places it in its own column (`FormulaComposer.slotPanel`).
+  /// places it in its own column (`FormulaPalette`).
   final bool palette;
+
+  /// What stands before the expression inside the field — the sheet's
+  /// `name =` — centred on the expression's axis.
+  final Widget? leading;
 
   @override
   State<FormulaComposer> createState() => _FormulaComposerState();
@@ -754,8 +759,10 @@ class _FormulaComposerState extends State<FormulaComposer> {
         final n = r(s.node);
         return n == null ? null : Rect.fromLTWH(n.right, n.top, 0, n.height);
       case StopSide.inSlot:
+        // just before the `?`, inside its frame: the caret never covers
+        // the glyph it will replace
         final n = r('${s.node}/text') ?? r(s.node);
-        return n == null ? null : Rect.fromLTWH(n.center.dx, n.top, 0, n.height);
+        return n == null ? null : Rect.fromLTWH(n.left - 2, n.top, 0, n.height);
       case StopSide.open:
         final n = r('${s.node}/inner') ?? r(s.node);
         return n == null ? null : Rect.fromLTWH(n.left, n.top, 0, n.height);
@@ -1042,7 +1049,16 @@ class _FormulaComposerState extends State<FormulaComposer> {
             ),
             child: Stack(
               children: [
-                content,
+                if (widget.leading case final lead?)
+                  Row(
+                    spacing: MacMetrics.gap,
+                    children: [
+                      lead,
+                      Flexible(child: content),
+                    ],
+                  )
+                else
+                  content,
                 if (caret != null && _focus.hasFocus)
                   Positioned(
                     left: caret.left - padding.left - 1,
@@ -1067,14 +1083,14 @@ class _FormulaComposerState extends State<FormulaComposer> {
 
     final completion = widget.completion;
     final slotPanel = selected != null && !stale
-        ? _SlotPanel(
+        ? FormulaPalette(
             key: ValueKey('slot-panel-$selected'),
             mappingId: widget.mappingId,
             nodeId: selected,
             node: selectedNode,
             slot: widget.composer.slot,
             pending: pending,
-            truthValued: _truthValued(selectedNode),
+            truthValued: truthValuedOf(selectedNode, widget.concepts),
             onCompose: _compose,
             onDeselect: _clear,
           )
@@ -1147,26 +1163,26 @@ class _FormulaComposerState extends State<FormulaComposer> {
       StopSide.open || StopSide.close || StopSide.inside => l10n.caretInside(what),
     };
   }
+}
 
-  /// Whether a component is a truth value, by what the compiler found it
-  /// to be: true or false, or a concept represented by one; `null` while
-  /// nothing is known.  Presentation only — it decides which actions are
-  /// offered, never whether they are right.
-  bool? _truthValued(pb.FormulaNode? n) {
-    if (n == null || !n.hasActual()) return null;
-    final a = n.actual;
-    switch (a.kind) {
-      case 'boolean':
-        return true;
-      case 'unknown':
-        return null;
-      case 'concept':
-        final c = a.hasConceptId() ? widget.concepts[a.conceptId.toInt()] : null;
-        if (c == null || !c.hasRepresentation()) return null;
-        return c.representation.hasBoolean();
-      default:
-        return false;
-    }
+/// Whether a component is a truth value, by what the compiler found it
+/// to be: true or false, or a concept represented by one; `null` while
+/// nothing is known.  Presentation only — it decides which actions are
+/// offered, never whether they are right.
+bool? truthValuedOf(pb.FormulaNode? n, Map<int, pb.ConceptView> concepts) {
+  if (n == null || !n.hasActual()) return null;
+  final a = n.actual;
+  switch (a.kind) {
+    case 'boolean':
+      return true;
+    case 'unknown':
+      return null;
+    case 'concept':
+      final c = a.hasConceptId() ? concepts[a.conceptId.toInt()] : null;
+      if (c == null || !c.hasRepresentation()) return null;
+      return c.representation.hasBoolean();
+    default:
+      return false;
   }
 }
 
@@ -1253,9 +1269,10 @@ class _DashedBorder extends CustomPainter {
 }
 
 /// What the selected position expects and what fits: the compiler's
-/// answer, with the actions on the selected component.
-class _SlotPanel extends StatefulWidget {
-  const _SlotPanel({
+/// answer, with the actions on the selected component.  Under the field
+/// in the inspector; its own column in the formula sheet.
+class FormulaPalette extends StatefulWidget {
+  const FormulaPalette({
     super.key,
     required this.mappingId,
     required this.nodeId,
@@ -1280,10 +1297,10 @@ class _SlotPanel extends StatefulWidget {
   final VoidCallback onDeselect;
 
   @override
-  State<_SlotPanel> createState() => _SlotPanelState();
+  State<FormulaPalette> createState() => _FormulaPaletteState();
 }
 
-class _SlotPanelState extends State<_SlotPanel> {
+class _FormulaPaletteState extends State<FormulaPalette> {
   final TextEditingController _number = TextEditingController();
   final FocusNode _numberFocus = FocusNode(debugLabel: 'slot-number');
   String? _unit;

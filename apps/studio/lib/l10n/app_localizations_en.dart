@@ -2687,6 +2687,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readBy => 'Read by';
 
   @override
+  String get editInSheet => 'Edit…';
+
+  @override
+  String get editInSheetTooltip => 'Open the definition in a sheet with room to work (⌘E)';
+
+  @override
+  String defineRelationship(Object name) {
+    return 'Define $name';
+  }
+
+  @override
+  String get formulaSheetSubtitle => 'The definition is read as you type; save when it is right.';
+
+  @override
+  String get editingInSheet => 'Editing in the sheet.';
+
+  @override
+  String get thisPosition => 'This position';
+
+  @override
+  String get paletteEmptyState =>
+      'Click a part of the formula, or type, to see what the position expects and what fits there.';
+
+  @override
+  String canReadNames(Object names) {
+    return 'Can read $names';
+  }
+
+  @override
   String get libItem_std_value_boolean_name => 'On / off';
 
   @override

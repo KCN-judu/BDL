@@ -2535,6 +2535,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readBy => '読み取り元';
 
   @override
+  String get editInSheet => '編集…';
+
+  @override
+  String get editInSheetTooltip => '余裕のあるシートで定義を開く（⌘E）';
+
+  @override
+  String defineRelationship(Object name) {
+    return '$name を定義';
+  }
+
+  @override
+  String get formulaSheetSubtitle => '入力すると定義はすぐに読み取られます。正しくなったら保存してください。';
+
+  @override
+  String get editingInSheet => 'シートで編集中です。';
+
+  @override
+  String get thisPosition => 'この位置';
+
+  @override
+  String get paletteEmptyState => '式の一部をクリックするか入力すると、その位置に期待されるものと当てはまるものが表示されます。';
+
+  @override
+  String canReadNames(Object names) {
+    return '$names を読めます';
+  }
+
+  @override
   String get libItem_std_value_boolean_name => 'オン / オフ';
 
   @override

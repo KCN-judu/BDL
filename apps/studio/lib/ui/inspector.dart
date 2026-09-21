@@ -86,6 +86,7 @@ class Inspector extends StatelessWidget {
           revision: project.revision.toInt(),
           outcome: state.editor.lastOutcome,
           definitionFocus: state.editor.definitionFocus,
+          sheetOpen: state.editor.formulaSheet == id,
           clocks: project.clocks,
           outputs: project.outputs,
           appliedBy: valuesApplying(state, id),
@@ -664,6 +665,7 @@ class _MappingInspector extends StatelessWidget {
     required this.revision,
     required this.outcome,
     this.definitionFocus = 0,
+    this.sheetOpen = false,
     required this.clocks,
     required this.outputs,
     this.appliedBy = const [],
@@ -735,6 +737,10 @@ class _MappingInspector extends StatelessWidget {
 
   /// *Edit Definition* bumps this: the definition editor takes focus.
   final int definitionFocus;
+
+  /// The formula sheet is open on this relationship: the section defers
+  /// to it.
+  final bool sheetOpen;
 
   /// The last change, for its formal classification in Explain.
   final pb.EditOutcome? outcome;
@@ -966,10 +972,17 @@ class _MappingInspector extends StatelessWidget {
               const SizedBox(height: 6),
               Text(context.l10n.disconnectItToDefineTheRelationshipYourself, style: small),
             ] else
-              // The editor shows formula-local findings under the text they
-              // point into.  What remains here is about the mapping's place
-              // in the design (causality, domains, outputs) — attached to the
-              // relationship, in product language; the rule is in Explain.
+            // The editor shows formula-local findings under the text they
+            // point into.  What remains here is about the mapping's place
+            // in the design (causality, domains, outputs) — attached to the
+            // relationship, in product language; the rule is in Explain.
+            if (sheetOpen)
+              Text(
+                context.l10n.editingInSheet,
+                key: const ValueKey('editing-in-sheet'),
+                style: small,
+              )
+            else
               DefinitionEditor(
                 mappingId: id,
                 committed: committed,

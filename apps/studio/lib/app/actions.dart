@@ -1052,6 +1052,18 @@ class EditDefinitionRequested extends UserAction {
   final int mappingId;
 }
 
+/// Open the formula sheet on a relationship: it is selected, the sheet
+/// shows its definition editor at display size and takes the keys.
+class FormulaSheetOpened extends UserAction {
+  const FormulaSheetOpened(this.mappingId);
+  final int mappingId;
+}
+
+/// Close the formula sheet; the draft stays as it is.
+class FormulaSheetDismissed extends UserAction {
+  const FormulaSheetDismissed();
+}
+
 /// A node finished being dragged; commit its position (layout, not semantics).
 class NodeMoved extends UserAction {
   const NodeMoved(this.node, this.position);

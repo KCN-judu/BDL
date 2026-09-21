@@ -32,8 +32,10 @@ import 'package:flutter/services.dart';
 import '../l10n/diagnostics.dart' show isPlacementNote;
 import '../l10n/l10n.dart';
 import '../app/actions.dart';
+import '../app/caret.dart' show findNode;
 import '../app/state.dart';
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
+import 'canvas/concept_glyphs.dart';
 import 'code/completion_popup.dart';
 import 'code/highlighting_controller.dart';
 import 'code/hover_card.dart';
@@ -202,6 +204,11 @@ class DefinitionEditorModel {
   }
 }
 
+/// Where the definition editor is: the inspector's section (one column,
+/// the palette under the field) or the formula sheet (the field at display
+/// size beside its name, the palette in a column of its own).
+enum DefinitionEditorLayout { inspector, sheet }
+
 class DefinitionEditor extends StatefulWidget {
   const DefinitionEditor({
     super.key,
@@ -219,12 +226,29 @@ class DefinitionEditor extends StatefulWidget {
     this.projection,
     this.concepts = const {},
     this.focusGeneration = 0,
+    this.layout = DefinitionEditorLayout.inspector,
+    this.produces,
+    this.name = '',
+    this.onDone,
   });
 
   final int mappingId;
 
+  /// The relationship's name (the sheet's equation).
+  final String name;
+
   /// Bumped by *Edit Definition*: the field takes focus once per bump.
   final int focusGeneration;
+
+  /// The inspector's column, or the formula sheet's two columns.
+  final DefinitionEditorLayout layout;
+
+  /// The concept the relationship produces (the sheet's equation reads
+  /// `name = …` with its socket glyph).
+  final pb.ConceptView? produces;
+
+  /// The sheet's *Done*: close, the draft kept as it is.
+  final VoidCallback? onDone;
 
   /// The IDE service's tokens over the text on screen, and the component
   /// whose body this relationship belongs to (the request's scope).
@@ -466,126 +490,166 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
     final emptyFormula = m.text.trim().isEmpty;
     final inSync =
         emptyFormula || (projection != null && projection.source == m.text && projection.parseOk);
-    return CallbackShortcuts(
-      bindings: {
-        // The pop-up takes the navigation keys only while it is open; Esc
-        // then closes it rather than reverting the draft.  In Formula mode
-        // the composer owns the pop-up's keys and its own completion.
-        if (_completionOpen && !formulaMode) ...{
-          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              widget.dispatch(const CompletionMoved(1)),
-          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-              widget.dispatch(const CompletionMoved(-1)),
-          const SingleActivator(LogicalKeyboardKey.enter): _accept,
-          const SingleActivator(LogicalKeyboardKey.tab): _accept,
-          const SingleActivator(LogicalKeyboardKey.escape): () =>
-              widget.dispatch(const CompletionDismissed()),
-        } else ...{
-          // (in Formula mode the composer clears its caret first; a second
-          // Esc reaches this)
-          if (m.canRevert) const SingleActivator(LogicalKeyboardKey.escape): _revert,
-        },
-        if (!formulaMode)
-          const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
-        if (m.canCommit) const SingleActivator(LogicalKeyboardKey.enter, meta: true): _commit,
-      },
-      child: Column(
+    final sheet = widget.layout == DefinitionEditorLayout.sheet;
+    final modeControl = SizedBox(
+      width: 132,
+      child: MacSegmented<bool>(
+        key: const ValueKey('definition-mode'),
+        value: formulaMode,
+        options: {true: context.l10n.formula, false: context.l10n.textMode},
+        onChanged: (v) => widget.dispatch(FormulaModeChanged(v)),
+      ),
+    );
+    // the sheet's equation: the socket glyph of what the relationship
+    // produces, its name, `=`, then the expression — one field
+    final produces = widget.produces;
+    final lhs = sheet && widget.name.isNotEmpty
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: MacMetrics.gap,
+            children: [
+              if (produces != null) SocketGlyph.of(produces, t, size: 12),
+              Text(
+                '${widget.name} =',
+                key: const ValueKey('sheet-equation-lhs'),
+                style: TextStyle(fontSize: MacType.display, color: t.textPrimary),
+              ),
+            ],
+          )
+        : null;
+    final field = formulaMode
+        ? FormulaComposer(
+            key: ValueKey('composer-${widget.mappingId}'),
+            leading: lhs,
+            mappingId: widget.mappingId,
+            source: m.text,
+            projection: projection,
+            composer: widget.composer,
+            concepts: widget.concepts,
+            dispatch: widget.dispatch,
+            completion: completion,
+            outOfSync: !inSync,
+            large: sheet,
+            palette: !sheet,
+            onEditAsText: () => widget.dispatch(const FormulaModeChanged(false)),
+          )
+        : Listener(
+            onPointerHover: _onHover,
+            child: MouseRegion(
+              onExit: (_) => _endHover(),
+              child: MacTextField(
+                key: const ValueKey('definition-field'),
+                controller: _controller,
+                focusNode: _focus,
+                maxLines: sheet ? 6 : 4,
+                monospace: true,
+                hint: m.hint,
+                onChanged: _onChanged,
+              ),
+            ),
+          );
+    final popups = <Widget>[
+      if (!formulaMode && completion != null && (completion.items.isNotEmpty || completion.pending))
+        CompletionPopup(
+          completion: completion,
+          onPick: (i) {
+            widget.dispatch(CompletionMoved(i - completion.selected));
+            _accept();
+          },
+        ),
+      if (!formulaMode && card != null && card.found) HoverCard(card: card),
+    ];
+    final Widget status = m.conflict
+        ? _ConflictNotice(
+            onReload: () => widget.dispatch(DefinitionDraftReloaded(widget.mappingId)),
+            onKeep: () => widget.dispatch(DefinitionDraftKept(widget.mappingId)),
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: MacMetrics.gap,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Icon(
+                  m.tone == VerdictTone.none ? Icons.circle_outlined : Icons.circle,
+                  size: 7,
+                  color: toneColor,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  m.statusText,
+                  key: const ValueKey('definition-status'),
+                  style: TextStyle(
+                    fontSize: MacType.secondary,
+                    color: m.tone == VerdictTone.none ? t.textSecondary : toneColor,
+                  ),
+                ),
+              ),
+            ],
+          );
+    final diagnostics = <Widget>[
+      if (m.diagnostics.isNotEmpty) ...[
+        const SizedBox(height: MacMetrics.gap),
+        // The status line already says the first message; its row adds
+        // the excerpt, explanation and fixes without repeating it.
+        for (final d in m.diagnostics)
+          DiagnosticCard(diagnostic: d, source: m.text, showMessage: d.message != m.statusText),
+      ],
+    ];
+    final actions = [
+      if (m.canRevert) MacButton(label: context.l10n.revert, onPressed: _revert),
+      MacButton.primary(
+        label: m.commitLabel,
+        onPressed: m.canCommit ? _commit : null,
+        tooltip: m.canCommit ? '⌘↩' : null,
+      ),
+    ];
+
+    final Widget body;
+    if (sheet) {
+      body = _SheetBody(
+        field: field,
+        popups: popups,
+        status: status,
+        diagnostics: diagnostics,
+        actions: [
+          if (m.canRevert) MacButton(label: context.l10n.revert, onPressed: _revert),
+          const Spacer(),
+          MacButton(label: context.l10n.done, onPressed: widget.onDone),
+          MacButton.primary(
+            label: m.commitLabel,
+            onPressed: m.canCommit ? _commitAndClose : null,
+            tooltip: m.canCommit ? '⌘↩' : null,
+          ),
+        ],
+        palette: _palette(context, m, projection, inSync),
+      );
+    } else {
+      body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Formula | Text: two projections of the one draft (§4b).  Local
-          // to this editor; never a project-level view.
+          // to this editor; never a project-level view.  Edit…: the same
+          // draft in the formula sheet, with room.
           Row(
             children: [
-              SizedBox(
-                width: 132,
-                child: MacSegmented<bool>(
-                  key: const ValueKey('definition-mode'),
-                  value: formulaMode,
-                  options: {true: context.l10n.formula, false: context.l10n.textMode},
-                  onChanged: (v) => widget.dispatch(FormulaModeChanged(v)),
-                ),
+              modeControl,
+              const Spacer(),
+              MacButton(
+                key: const ValueKey('edit-in-sheet'),
+                label: context.l10n.editInSheet,
+                tooltip: context.l10n.editInSheetTooltip,
+                onPressed: () => widget.dispatch(FormulaSheetOpened(widget.mappingId)),
               ),
             ],
           ),
           const SizedBox(height: MacMetrics.gapTight),
-          if (formulaMode)
-            FormulaComposer(
-              key: ValueKey('composer-${widget.mappingId}'),
-              mappingId: widget.mappingId,
-              source: m.text,
-              projection: projection,
-              composer: widget.composer,
-              concepts: widget.concepts,
-              dispatch: widget.dispatch,
-              completion: completion,
-              outOfSync: !inSync,
-              onEditAsText: () => widget.dispatch(const FormulaModeChanged(false)),
-            )
-          else
-            Listener(
-              onPointerHover: _onHover,
-              child: MouseRegion(
-                onExit: (_) => _endHover(),
-                child: MacTextField(
-                  key: const ValueKey('definition-field'),
-                  controller: _controller,
-                  focusNode: _focus,
-                  maxLines: 4,
-                  monospace: true,
-                  hint: m.hint,
-                  onChanged: _onChanged,
-                ),
-              ),
-            ),
-          if (!formulaMode &&
-              completion != null &&
-              (completion.items.isNotEmpty || completion.pending))
-            CompletionPopup(
-              completion: completion,
-              onPick: (i) {
-                widget.dispatch(CompletionMoved(i - completion.selected));
-                _accept();
-              },
-            ),
-          if (!formulaMode && card != null && card.found) HoverCard(card: card),
+          field,
+          ...popups,
           const SizedBox(height: MacMetrics.gapTight),
-          if (m.conflict)
-            _ConflictNotice(
-              onReload: () => widget.dispatch(DefinitionDraftReloaded(widget.mappingId)),
-              onKeep: () => widget.dispatch(DefinitionDraftKept(widget.mappingId)),
-            )
-          else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: MacMetrics.gap,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: Icon(
-                    m.tone == VerdictTone.none ? Icons.circle_outlined : Icons.circle,
-                    size: 7,
-                    color: toneColor,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    m.statusText,
-                    key: const ValueKey('definition-status'),
-                    style: TextStyle(
-                      fontSize: MacType.secondary,
-                      color: m.tone == VerdictTone.none ? t.textSecondary : toneColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          if (m.diagnostics.isNotEmpty) ...[
-            const SizedBox(height: MacMetrics.gap),
-            // The status line already says the first message; its row adds
-            // the excerpt, explanation and fixes without repeating it.
-            for (final d in m.diagnostics)
-              DiagnosticCard(diagnostic: d, source: m.text, showMessage: d.message != m.statusText),
-          ],
+          status,
+          ...diagnostics,
           if ((m.dirty || m.committed == null) && !m.conflict) ...[
             const SizedBox(height: MacMetrics.gap),
             // Primary action right, its alternative to its left (macOS);
@@ -594,14 +658,7 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
               alignment: WrapAlignment.end,
               spacing: MacMetrics.gap,
               runSpacing: MacMetrics.gap,
-              children: [
-                if (m.canRevert) MacButton(label: context.l10n.revert, onPressed: _revert),
-                MacButton.primary(
-                  label: m.commitLabel,
-                  onPressed: m.canCommit ? _commit : null,
-                  tooltip: m.canCommit ? '⌘↩' : null,
-                ),
-              ],
+              children: actions,
             ),
           ],
           const SizedBox(height: MacMetrics.gap),
@@ -627,7 +684,177 @@ class _DefinitionEditorState extends State<DefinitionEditor> {
             ),
           ],
         ],
-      ),
+      );
+    }
+
+    return CallbackShortcuts(
+      bindings: {
+        // The pop-up takes the navigation keys only while it is open; Esc
+        // then closes it rather than reverting the draft.  In Formula mode
+        // the composer owns the pop-up's keys and its own completion.
+        if (_completionOpen && !formulaMode) ...{
+          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+              widget.dispatch(const CompletionMoved(1)),
+          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+              widget.dispatch(const CompletionMoved(-1)),
+          const SingleActivator(LogicalKeyboardKey.enter): _accept,
+          const SingleActivator(LogicalKeyboardKey.tab): _accept,
+          const SingleActivator(LogicalKeyboardKey.escape): () =>
+              widget.dispatch(const CompletionDismissed()),
+        } else ...{
+          // (in Formula mode the composer clears its caret first; a second
+          // Esc reaches this: the inspector reverts, the sheet closes)
+          if (sheet && widget.onDone != null)
+            const SingleActivator(LogicalKeyboardKey.escape): widget.onDone!
+          else if (m.canRevert)
+            const SingleActivator(LogicalKeyboardKey.escape): _revert,
+        },
+        if (!formulaMode)
+          const SingleActivator(LogicalKeyboardKey.space, control: true): _requestCompletion,
+        // the sheet, from the inspector's field
+        if (!sheet)
+          const SingleActivator(LogicalKeyboardKey.keyE, meta: true): () =>
+              widget.dispatch(FormulaSheetOpened(widget.mappingId)),
+        if (m.canCommit)
+          const SingleActivator(LogicalKeyboardKey.enter, meta: true): sheet
+              ? _commitAndClose
+              : _commit,
+      },
+      child: body,
+    );
+  }
+
+  /// Save from the sheet: the commit goes out and the sheet closes; the
+  /// inspector shows the answer (a conflict, a refusal) as it always does.
+  void _commitAndClose() {
+    _commit();
+    widget.onDone?.call();
+  }
+
+  /// The sheet's palette column: what the selected position expects and
+  /// what fits, else how to get there.
+  Widget _palette(
+    BuildContext context,
+    DefinitionEditorModel m,
+    pb.FormulaProjection? projection,
+    bool inSync,
+  ) {
+    final t = MacTokens.of(context);
+    final c = widget.composer;
+    final selected = c.mappingId == widget.mappingId ? c.selectedNode : null;
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    if (selected == null || !inSync || !c.formulaMode) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: MacMetrics.gap,
+        children: [
+          Text(
+            c.formulaMode ? context.l10n.paletteEmptyState : context.l10n.typeToWrite,
+            key: const ValueKey('palette-empty'),
+            style: TextStyle(fontSize: MacType.body, color: t.textSecondary),
+          ),
+          if (widget.inputNames.isNotEmpty)
+            Text(context.l10n.canReadNames(widget.inputNames.join(', ')), style: small),
+        ],
+      );
+    }
+    final root = projection != null && projection.hasRoot() ? projection.root : null;
+    final node = findNode(root, selected);
+    return FormulaPalette(
+      key: ValueKey('slot-panel-$selected'),
+      mappingId: widget.mappingId,
+      nodeId: selected,
+      node: node,
+      slot: c.slot,
+      pending: c.pendingCompose,
+      truthValued: truthValuedOf(node, widget.concepts),
+      onCompose: (a) => widget.dispatch(ComposeRequested(mappingId: widget.mappingId, action: a)),
+      onDeselect: () {
+        widget.dispatch(FormulaCaretMoved(mappingId: widget.mappingId, caret: null));
+        widget.dispatch(FormulaNodeSelected(mappingId: widget.mappingId, nodeId: null));
+      },
+    );
+  }
+}
+
+/// The formula sheet's arrangement (docs/architecture/studio-ui.md §4b,
+/// *The formula sheet*): the equation — the relationship's socket glyph,
+/// its name, `=`, the field at display size — over its verdict and
+/// findings; beside it, in a column of its own, what the selected
+/// position expects and what fits.  The action row closes the sheet.
+class _SheetBody extends StatelessWidget {
+  const _SheetBody({
+    required this.field,
+    required this.popups,
+    required this.status,
+    required this.diagnostics,
+    required this.actions,
+    required this.palette,
+  });
+  final Widget field;
+  final List<Widget> popups;
+  final Widget status;
+  final List<Widget> diagnostics;
+  final List<Widget> actions;
+  final Widget palette;
+
+  static const double paletteWidth = 264;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      field,
+                      ...popups,
+                      const SizedBox(height: MacMetrics.gap),
+                      status,
+                      ...diagnostics,
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: MacMetrics.gapSection),
+              SizedBox(
+                width: paletteWidth,
+                child: SingleChildScrollView(
+                  child: Column(
+                    key: const ValueKey('sheet-palette'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: MacMetrics.gap),
+                        child: Text(
+                          context.l10n.thisPosition,
+                          style: TextStyle(
+                            fontSize: MacType.secondary,
+                            fontWeight: FontWeight.w600,
+                            color: t.textSecondary,
+                          ),
+                        ),
+                      ),
+                      palette,
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: MacMetrics.gapSection),
+        Row(spacing: MacMetrics.gap, children: actions),
+      ],
     );
   }
 }

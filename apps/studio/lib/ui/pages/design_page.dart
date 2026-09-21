@@ -14,6 +14,7 @@ import '../mac/widgets.dart';
 import 'code_pane.dart';
 import '../system_inspector.dart' show portKindWord;
 import '../concept_sheet.dart';
+import '../formula_sheet.dart';
 import '../source_sheet.dart';
 import '../system_sheets.dart';
 
@@ -149,6 +150,10 @@ class DesignPage extends StatelessWidget {
               // anything is created (ADR-0041).
               if (state.editor.conceptSheet case final c?)
                 ConceptSheet(state: state, sheet: c, dispatch: dispatch),
+              // The formula sheet: the selected relationship's definition
+              // editor, with room (§4b).
+              if (state.editor.formulaSheet case final id? when state.mapping(id) != null)
+                FormulaSheet(state: state, mappingId: id, dispatch: dispatch),
             ],
           ),
         ),

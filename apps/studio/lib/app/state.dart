@@ -1833,6 +1833,7 @@ class EditorState {
     this.pendingWire,
     this.sourceSheet,
     this.conceptSheet,
+    this.formulaSheet,
     this.expandedFormulas = const {},
     this.formulaPreviews = const {},
     this.renaming,
@@ -2019,6 +2020,12 @@ class EditorState {
   /// The concept sheet, while open (`null` otherwise).
   final ConceptSheetState? conceptSheet;
 
+  /// The formula sheet — the definition editor of one relationship, over
+  /// the design, at display size (docs/architecture/studio-ui.md §4b,
+  /// *The formula sheet*) — while open: the relationship's id.  It is a
+  /// view of the same draft the inspector edits; nothing is held in it.
+  final int? formulaSheet;
+
   /// The mappings whose saved formula is shown expanded on the canvas
   /// (docs/architecture/studio-ui.md §2, *Expanded formula*), each with
   /// the height of its picture — the initial height until the picture is
@@ -2078,6 +2085,8 @@ class EditorState {
     bool clearSourceSheet = false,
     ConceptSheetState? conceptSheet,
     bool clearConceptSheet = false,
+    int? formulaSheet,
+    bool clearFormulaSheet = false,
     Map<int, double>? expandedFormulas,
     Map<int, FormulaPreview>? formulaPreviews,
     NodeRef? renaming,
@@ -2143,6 +2152,7 @@ class EditorState {
       pendingWire: clearPendingWire ? null : (pendingWire ?? this.pendingWire),
       sourceSheet: clearSourceSheet ? null : (sourceSheet ?? this.sourceSheet),
       conceptSheet: clearConceptSheet ? null : (conceptSheet ?? this.conceptSheet),
+      formulaSheet: clearFormulaSheet ? null : (formulaSheet ?? this.formulaSheet),
       expandedFormulas: expandedFormulas ?? this.expandedFormulas,
       formulaPreviews: formulaPreviews ?? this.formulaPreviews,
       renaming: clearRenaming ? null : (renaming ?? this.renaming),
