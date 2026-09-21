@@ -35,11 +35,13 @@ intended way.
 ## What you see first
 
 Studio opens on the **project manager**: the wordmark on the left with _Start_
-actions under it, _Recent_ projects on the right.
+actions under it; _Recent_ projects on the right, and under them the _Demos_,
+each with a line saying what it is.
 
-![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
+![Studio's start screen with the wordmark, then New Project, Open Project and Preferences on the left; on the right an empty Recent list, then Demos — Button → Lamp and Button → Lamp, wired, each with a sentence saying what it is; the status line at the bottom says no project and names the compiler version.](../assets/getting-started/project-manager.png)
 
-_The project manager: Start actions on the left, Recent on the right._
+_The project manager: Start actions on the left; Recent and the Demos on the
+right._
 
 | Action            | What it does                                                                                                                                                                                            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

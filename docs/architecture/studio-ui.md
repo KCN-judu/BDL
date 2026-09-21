@@ -44,27 +44,34 @@ from)._
 │    │  ╲╱  ╱  ╲  ╱    ╲        │    ▸ rover    ~/Projects/rover  yesterday│
 │    │ Behavior                 │    ▸ cup      /Volumes/old/cup  not found│
 │    │ Designer                 │                                          │
-│    │ Product behavior as a    │                                          │
-│    │ design material.  0.1.0  │                                          │
-│    └──────────────────────────┘                                          │
-│    Start                                                                 │
-│    ⊕ New Project…  ⌘N                                                   │
+│    │ Product behavior as a    │    Demos                                 │
+│    │ design material.  0.1.0  │    ▣ Button → Lamp                       │
+│    └──────────────────────────┘      For the Raspberry Pi Pico: a push … │
+│    Start                           ▣ Button → Lamp, wired                │
+│    ⊕ New Project…  ⌘N                the same design with its deployment │
 │    ▭ Open Project… ⌘O                                                   │
+│    ⊕ Preferences…                                                        │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ no project                                        bdld 0.1.0 · protocol  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-Laid out like VS Code's welcome page (Start on the left, Recent on the right)
-rather than Resolve's thumbnail grid — BDL projects have no thumbnail yet. There
-is one _New Project…_ (ADR-0023): a project is sources under `src/` and a
-behaviour system, whatever it is later shown as; nothing asks for a kind.
-**Hero**: the wordmark _Behavior Designer_ set in Chakra Petch (a square sans
-with 45° chamfered corners, SIL OFL, bundled) over a field of 45°-routed traces
-drawn deterministically — PCB routing is the one visual idiom that belongs to
-both halves of the product. Recent projects are an app preference (`recent.json`
-in the per-user application support directory), never project data; missing
-directories are shown greyed with _not found_ and can be removed on hover.
+Laid out like VS Code's welcome page (Start on the left; Recent and, beneath it,
+the Demos on the right — where VS Code keeps its walkthroughs) rather than
+Resolve's thumbnail grid — BDL projects have no thumbnail yet. The left column
+never scrolls: the hero gives up height, within the page's 820 pt cap, before
+the Start list does; the right column is the one that scrolls when Recent is
+long. A demo row is its name and what it is (the template's description, read
+without hovering), in the Recent row's layout so the two lists read as one
+column. There is one _New Project…_ (ADR-0023): a project is sources under
+`src/` and a behaviour system, whatever it is later shown as; nothing asks for a
+kind. **Hero**: the wordmark _Behavior Designer_ set in Chakra Petch (a square
+sans with 45° chamfered corners, SIL OFL, bundled) over a field of 45°-routed
+traces drawn deterministically — PCB routing is the one visual idiom that
+belongs to both halves of the product. Recent projects are an app preference
+(`recent.json` in the per-user application support directory), never project
+data; missing directories are shown greyed with _not found_ and can be removed
+on hover.
 
 ## 1. Window structure (DaVinci)
 

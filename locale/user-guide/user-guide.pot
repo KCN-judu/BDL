@@ -1794,7 +1794,7 @@ msgstr ""
 #: docs/user-guide/getting-started/first-behavior.md:225
 #: docs/user-guide/getting-started/first-deployment.md:107
 #: docs/user-guide/getting-started/first-simulation.md:96
-#: docs/user-guide/getting-started/install-and-launch.md:72
+#: docs/user-guide/getting-started/install-and-launch.md:74
 #: docs/user-guide/getting-started/pico-demo.md:152
 #: docs/user-guide/getting-started/what-is-bdl.md:77
 #: docs/user-guide/textual/overview.md:124
@@ -2142,71 +2142,71 @@ msgid "What you see first"
 msgstr ""
 
 #: docs/user-guide/getting-started/install-and-launch.md:37
-msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it, _Recent_ projects on the right."
+msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it; _Recent_ projects on the right, and under them the _Demos_, each with a line saying what it is."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:42
-msgid "_The project manager: Start actions on the left, Recent on the right._"
+#: docs/user-guide/getting-started/install-and-launch.md:43
+msgid "_The project manager: Start actions on the left; Recent and the Demos on the right._"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 msgid "Action"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 #: docs/user-guide/reference/cli.md:8
 msgid "What it does"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "**New Project…**"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "asks for a folder name and location, creates a project there, opens the workspace"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "**Open Project…**"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "opens an existing project folder"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a _Demos_ row"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a new project that starts with a design in it: **Button → Lamp** (the design alone) and **Button → Lamp, wired** (with its devices and pins for a Raspberry Pi Pico) — [Your first board](pico-demo.md)"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "a _Recent_ row"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "reopens that project; rows whose folder is gone are greyed _not found_"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:51
+#: docs/user-guide/getting-started/install-and-launch.md:53
 msgid "A **project** is a folder. Everything in it is saved as plain files ([Project files](../reference/project-files.md)): the design as `.bdl` text you can also edit in a code editor, and the canvas layout beside it. There is one kind of project; behavior groups, components and instances ([System projects](../studio/system-projects.md)) and the **Code** view ([Design, Code and Split](../studio/code-view.md)) are available in every one."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:58
+#: docs/user-guide/getting-started/install-and-launch.md:60
 msgid "The bottom line of the window shows the connection to the compiler service: _Compiler 0.1.0_ when connected, _Connecting to the compiler_ while it starts, _Compiler not connected_ if it could not. Studio does nothing semantic on its own — every check, value and verdict in the guide comes from that service — so this line is the first thing to look at if the app seems inert."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:64
+#: docs/user-guide/getting-started/install-and-launch.md:66
 msgid "Try the finished example"
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:66
+#: docs/user-guide/getting-started/install-and-launch.md:68
 msgid "The repository ships one complete project, `examples/smart_lamp`. _Open Project…_ → choose that folder. It is the lamp the tutorials build, with an ambient-light sensor added: two inputs, three relationships, one required output, one PWM device. You can walk its Design, Simulate and Deploy pages before building your own."
 msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:74
+#: docs/user-guide/getting-started/install-and-launch.md:76
 msgid "[Your first behavior](first-behavior.md) — or, with a Raspberry Pi Pico at hand, [Your first board](pico-demo.md)."
 msgstr ""
 

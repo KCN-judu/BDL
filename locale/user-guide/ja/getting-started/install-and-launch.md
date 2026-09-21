@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/install-and-launch.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/install-and-launch.md) · [简体中文](../../zh_Hans/getting-started/install-and-launch.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # インストールと起動
 
@@ -30,11 +32,11 @@ just studio
 
 ## 最初に見えるもの
 
-Studio は**プロジェクトマネージャー**で開きます。左にワードマーク、その下に _開始_ の操作、右に _最近_ のプロジェクトです。
+Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it; _Recent_ projects on the right, and under them the _Demos_, each with a line saying what it is.
 
-![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
+![Studio's start screen with the wordmark, then New Project, Open Project and Preferences on the left; on the right an empty Recent list, then Demos — Button → Lamp and Button → Lamp, wired, each with a sentence saying what it is; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
 
-_プロジェクトマネージャー：左に開始の操作、右に最近のプロジェクト。_
+_The project manager: Start actions on the left; Recent and the Demos on the right._
 
 | 操作 | 動作 |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

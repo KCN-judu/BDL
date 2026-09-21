@@ -1795,7 +1795,7 @@ msgstr "**什么都不检查，底部一行显示 _编译器未连接_。** 见 
 #: docs/user-guide/getting-started/first-behavior.md:225
 #: docs/user-guide/getting-started/first-deployment.md:107
 #: docs/user-guide/getting-started/first-simulation.md:96
-#: docs/user-guide/getting-started/install-and-launch.md:72
+#: docs/user-guide/getting-started/install-and-launch.md:74
 #: docs/user-guide/getting-started/pico-demo.md:152
 #: docs/user-guide/getting-started/what-is-bdl.md:77
 #: docs/user-guide/textual/overview.md:124
@@ -2143,71 +2143,71 @@ msgid "What you see first"
 msgstr "你首先看到的"
 
 #: docs/user-guide/getting-started/install-and-launch.md:37
-msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it, _Recent_ projects on the right."
-msgstr "Studio 打开时显示**项目管理器**：左侧是标志字，下面是 _开始_ 操作，右侧是 _最近_ 项目。"
+msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it; _Recent_ projects on the right, and under them the _Demos_, each with a line saying what it is."
+msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:42
-msgid "_The project manager: Start actions on the left, Recent on the right._"
-msgstr "_项目管理器：左侧是开始操作，右侧是最近项目。_"
+#: docs/user-guide/getting-started/install-and-launch.md:43
+msgid "_The project manager: Start actions on the left; Recent and the Demos on the right._"
+msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 msgid "Action"
 msgstr "操作"
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 #: docs/user-guide/reference/cli.md:8
 msgid "What it does"
 msgstr "作用"
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "**New Project…**"
 msgstr "**新建项目…**"
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "asks for a folder name and location, creates a project there, opens the workspace"
 msgstr "询问文件夹名称和位置，在那里创建项目，并打开工作区"
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "**Open Project…**"
 msgstr "**打开项目…**"
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "opens an existing project folder"
 msgstr "打开一个已有的项目文件夹"
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a _Demos_ row"
 msgstr "_演示_ 中的一行"
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a new project that starts with a design in it: **Button → Lamp** (the design alone) and **Button → Lamp, wired** (with its devices and pins for a Raspberry Pi Pico) — [Your first board](pico-demo.md)"
 msgstr "一个开始就带有设计的新项目：**Button → Lamp**（只有设计）和 **Button → Lamp, wired**（带有 Raspberry Pi Pico 上的设备和引脚）——[你的第一块板子](pico-demo.md)"
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "a _Recent_ row"
 msgstr "一行 _最近_ 项目"
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "reopens that project; rows whose folder is gone are greyed _not found_"
 msgstr "重新打开该项目；文件夹已不存在的行会变灰并标为 _未找到_"
 
-#: docs/user-guide/getting-started/install-and-launch.md:51
+#: docs/user-guide/getting-started/install-and-launch.md:53
 msgid "A **project** is a folder. Everything in it is saved as plain files ([Project files](../reference/project-files.md)): the design as `.bdl` text you can also edit in a code editor, and the canvas layout beside it. There is one kind of project; behavior groups, components and instances ([System projects](../studio/system-projects.md)) and the **Code** view ([Design, Code and Split](../studio/code-view.md)) are available in every one."
 msgstr "**项目**就是一个文件夹。其中的一切都保存为普通文件（[项目文件](../reference/project-files.md)）：设计以 `.bdl` 文本保存，也可以在代码编辑器中编辑，画布布局保存在旁边。项目只有一种；行为组、组件和实例（[系统项目](../studio/system-projects.md)）以及**代码**视图（[设计、代码与分栏](../studio/code-view.md)）在每个项目中都可用。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:58
+#: docs/user-guide/getting-started/install-and-launch.md:60
 msgid "The bottom line of the window shows the connection to the compiler service: _Compiler 0.1.0_ when connected, _Connecting to the compiler_ while it starts, _Compiler not connected_ if it could not. Studio does nothing semantic on its own — every check, value and verdict in the guide comes from that service — so this line is the first thing to look at if the app seems inert."
 msgstr "窗口底部一行显示与编译器服务的连接：已连接时显示 _编译器 0.1.0_，启动中显示 _正在连接编译器_，失败时显示 _编译器未连接_。Studio 自身不做任何语义工作——指南中的每一次检查、每一个值和结论都来自该服务——所以如果应用看起来没有反应，先看这一行。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:64
+#: docs/user-guide/getting-started/install-and-launch.md:66
 msgid "Try the finished example"
 msgstr "试试完整示例"
 
-#: docs/user-guide/getting-started/install-and-launch.md:66
+#: docs/user-guide/getting-started/install-and-launch.md:68
 msgid "The repository ships one complete project, `examples/smart_lamp`. _Open Project…_ → choose that folder. It is the lamp the tutorials build, with an ambient-light sensor added: two inputs, three relationships, one required output, one PWM device. You can walk its Design, Simulate and Deploy pages before building your own."
 msgstr "仓库附带一个完整项目 `examples/smart_lamp`。_打开项目…_ → 选择该文件夹。它就是教程中搭建的那盏灯，加上了一个环境光传感器：两个输入、三个关系、一个必需输出、一个 PWM 设备。在搭建自己的项目之前，你可以先浏览它的设计、仿真和部署页面。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:74
+#: docs/user-guide/getting-started/install-and-launch.md:76
 msgid "[Your first behavior](first-behavior.md) — or, with a Raspberry Pi Pico at hand, [Your first board](pico-demo.md)."
 msgstr "[你的第一个行为](first-behavior.md)——或者，手边有 Raspberry Pi Pico 的话，[你的第一块板子](pico-demo.md)。"
 

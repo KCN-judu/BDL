@@ -1795,7 +1795,7 @@ msgstr "**何も検査されず、最下行に _コンパイラ未接続_ とあ
 #: docs/user-guide/getting-started/first-behavior.md:225
 #: docs/user-guide/getting-started/first-deployment.md:107
 #: docs/user-guide/getting-started/first-simulation.md:96
-#: docs/user-guide/getting-started/install-and-launch.md:72
+#: docs/user-guide/getting-started/install-and-launch.md:74
 #: docs/user-guide/getting-started/pico-demo.md:152
 #: docs/user-guide/getting-started/what-is-bdl.md:77
 #: docs/user-guide/textual/overview.md:124
@@ -2143,71 +2143,71 @@ msgid "What you see first"
 msgstr "最初に見えるもの"
 
 #: docs/user-guide/getting-started/install-and-launch.md:37
-msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it, _Recent_ projects on the right."
-msgstr "Studio は**プロジェクトマネージャー**で開きます。左にワードマーク、その下に _開始_ の操作、右に _最近_ のプロジェクトです。"
+msgid "Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it; _Recent_ projects on the right, and under them the _Demos_, each with a line saying what it is."
+msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:42
-msgid "_The project manager: Start actions on the left, Recent on the right._"
-msgstr "_プロジェクトマネージャー：左に開始の操作、右に最近のプロジェクト。_"
+#: docs/user-guide/getting-started/install-and-launch.md:43
+msgid "_The project manager: Start actions on the left; Recent and the Demos on the right._"
+msgstr ""
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 msgid "Action"
 msgstr "操作"
 
-#: docs/user-guide/getting-started/install-and-launch.md:44
+#: docs/user-guide/getting-started/install-and-launch.md:46
 #: docs/user-guide/reference/cli.md:8
 msgid "What it does"
 msgstr "動作"
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "**New Project…**"
 msgstr "**新規プロジェクト…**"
 
-#: docs/user-guide/getting-started/install-and-launch.md:46
+#: docs/user-guide/getting-started/install-and-launch.md:48
 msgid "asks for a folder name and location, creates a project there, opens the workspace"
 msgstr "フォルダ名と場所を尋ね、そこにプロジェクトを作成し、ワークスペースを開く"
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "**Open Project…**"
 msgstr "**プロジェクトを開く…**"
 
-#: docs/user-guide/getting-started/install-and-launch.md:47
+#: docs/user-guide/getting-started/install-and-launch.md:49
 msgid "opens an existing project folder"
 msgstr "既存のプロジェクトフォルダを開く"
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a _Demos_ row"
 msgstr "_デモ_ の行"
 
-#: docs/user-guide/getting-started/install-and-launch.md:48
+#: docs/user-guide/getting-started/install-and-launch.md:50
 msgid "a new project that starts with a design in it: **Button → Lamp** (the design alone) and **Button → Lamp, wired** (with its devices and pins for a Raspberry Pi Pico) — [Your first board](pico-demo.md)"
 msgstr "設計入りで始まる新しいプロジェクト：**Button → Lamp**（設計のみ）と **Button → Lamp, wired**（Raspberry Pi Pico 用のデバイスとピン付き）— [はじめてのボード](pico-demo.md)"
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "a _Recent_ row"
 msgstr "_最近_ の行"
 
-#: docs/user-guide/getting-started/install-and-launch.md:49
+#: docs/user-guide/getting-started/install-and-launch.md:51
 msgid "reopens that project; rows whose folder is gone are greyed _not found_"
 msgstr "そのプロジェクトを再び開く。フォルダがなくなった行はグレーで _見つかりません_ と表示される"
 
-#: docs/user-guide/getting-started/install-and-launch.md:51
+#: docs/user-guide/getting-started/install-and-launch.md:53
 msgid "A **project** is a folder. Everything in it is saved as plain files ([Project files](../reference/project-files.md)): the design as `.bdl` text you can also edit in a code editor, and the canvas layout beside it. There is one kind of project; behavior groups, components and instances ([System projects](../studio/system-projects.md)) and the **Code** view ([Design, Code and Split](../studio/code-view.md)) are available in every one."
 msgstr "**プロジェクト**はフォルダです。その中のすべてはプレーンなファイルとして保存されます（[プロジェクトファイル](../reference/project-files.md)）。設計はコードエディタでも編集できる `.bdl` テキストとして、その横にキャンバスのレイアウトが保存されます。プロジェクトの種類は 1 つだけで、振る舞いグループ、コンポーネント、インスタンス（[システムプロジェクト](../studio/system-projects.md)）と**コード**ビュー（[設計・コード・分割](../studio/code-view.md)）はどのプロジェクトでも使えます。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:58
+#: docs/user-guide/getting-started/install-and-launch.md:60
 msgid "The bottom line of the window shows the connection to the compiler service: _Compiler 0.1.0_ when connected, _Connecting to the compiler_ while it starts, _Compiler not connected_ if it could not. Studio does nothing semantic on its own — every check, value and verdict in the guide comes from that service — so this line is the first thing to look at if the app seems inert."
 msgstr "ウィンドウの最下行はコンパイラサービスとの接続を示します。接続中は _コンパイラ 0.1.0_、起動中は _コンパイラに接続中_、失敗した場合は _コンパイラ未接続_ です。Studio は自分では意味的な処理を何もしません——ガイドのすべての検査、値、判定はそのサービスから来ます——ので、アプリが反応しないように見えたら、まずこの行を見てください。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:64
+#: docs/user-guide/getting-started/install-and-launch.md:66
 msgid "Try the finished example"
 msgstr "完成した例を試す"
 
-#: docs/user-guide/getting-started/install-and-launch.md:66
+#: docs/user-guide/getting-started/install-and-launch.md:68
 msgid "The repository ships one complete project, `examples/smart_lamp`. _Open Project…_ → choose that folder. It is the lamp the tutorials build, with an ambient-light sensor added: two inputs, three relationships, one required output, one PWM device. You can walk its Design, Simulate and Deploy pages before building your own."
 msgstr "リポジトリには完成したプロジェクトが 1 つ、`examples/smart_lamp` として同梱されています。_プロジェクトを開く…_ → そのフォルダを選びます。これはチュートリアルで作るランプに環境光センサーを加えたもので、入力 2 つ、関係 3 つ、必須出力 1 つ、PWM デバイス 1 つです。自分のものを作る前に、その設計・シミュレート・デプロイの各ページを見て回れます。"
 
-#: docs/user-guide/getting-started/install-and-launch.md:74
+#: docs/user-guide/getting-started/install-and-launch.md:76
 msgid "[Your first behavior](first-behavior.md) — or, with a Raspberry Pi Pico at hand, [Your first board](pico-demo.md)."
 msgstr "[はじめての振る舞い](first-behavior.md) — あるいは、手元に Raspberry Pi Pico があれば [はじめてのボード](pico-demo.md)。"
 

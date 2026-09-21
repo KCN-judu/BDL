@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/install-and-launch.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/install-and-launch.md) · 简体中文 · [日本語](../../ja/getting-started/install-and-launch.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 安装与启动
 
@@ -30,11 +32,11 @@ just studio
 
 ## 你首先看到的
 
-Studio 打开时显示**项目管理器**：左侧是标志字，下面是 _开始_ 操作，右侧是 _最近_ 项目。
+Studio opens on the **project manager**: the wordmark on the left with _Start_ actions under it; _Recent_ projects on the right, and under them the _Demos_, each with a line saying what it is.
 
-![Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
+![Studio's start screen with the wordmark, then New Project, Open Project and Preferences on the left; on the right an empty Recent list, then Demos — Button → Lamp and Button → Lamp, wired, each with a sentence saying what it is; the status line at the bottom says no project and names the compiler version.](../../../../docs/user-guide/assets/getting-started/project-manager.png)
 
-_项目管理器：左侧是开始操作，右侧是最近项目。_
+_The project manager: Start actions on the left; Recent and the Demos on the right._
 
 | 操作 | 作用 |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
