@@ -1,19 +1,26 @@
-//! Whole-graph arrangement: deterministic, layout-only, left to right by
-//! rank, no overlaps, the topology as supplied (a relationship that
-//! produces a concept and drives a sink keeps both edges forward), nothing
-//! hidden or moved that should not be.
+//! Whole-graph arrangement (`bdl_layout::arrange`): left to right by rank
+//! over the picture the canvas draws (ADR-0044) — Sem blocks, their
+//! mapping blocks, sinks — deterministic, nothing overlapping.
 
 #![allow(clippy::unwrap_used)]
 
-use bdl_layout::{arrange, has_positions, metrics, place_missing, Node};
+use bdl_layout::{arrange, arrange_with, has_positions, metrics, place_missing, Node, References};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::layout::{GroupBox, Layout, Point};
-use bdl_model::surface::{Design, ProjectSnapshot, Representation, Signature};
+use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
 use bdl_model::{ConceptId, DeclId, OutputId};
 use bdl_system::{apply_group_edit, BehaviorSystem, GroupEditOp, GroupScope};
 
-/// Pressed → lit → Lit; lit → lamp (the demo: one relationship producing
-/// a concept and driving a sink), plus a second stage `again : Lit → Twice`.
+const PRESSED: DeclId = DeclId::from_raw(0);
+const LIT_RULE: DeclId = DeclId::from_raw(1);
+const LIT: DeclId = DeclId::from_raw(2);
+const TWICE: DeclId = DeclId::from_raw(3);
+const LAMP: OutputId = OutputId::from_raw(0);
+
+/// The demo in the ladder's words: `pressed : Pressed` a Source Sem block;
+/// `lit : Pressed -> Lit` a rule (a template, not drawn); `Lit :=
+/// lit(pressed)` a Sem block with its mapping block, driving `lamp`; and a
+/// second stage `twice : Twice := !lit` reading it.
 fn button_lamp() -> Design {
     let mut s = ProjectSnapshot::new(Design::empty("demo"));
     let ops = [
@@ -43,23 +50,39 @@ fn button_lamp() -> Design {
             clock: None,
         },
         EditOp::CreateMapping {
-            name: "lit".into(),
+            name: "litRule".into(),
             description: String::new(),
             signature: Signature {
                 inputs: vec![ConceptId::from_raw(0)],
                 output: ConceptId::from_raw(1),
             },
-            definition: None,
+            definition: Some(Definition::Formula {
+                source: "Pressed".into(),
+            }),
             clock: None,
         },
         EditOp::CreateMapping {
-            name: "again".into(),
+            name: "lit".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![ConceptId::from_raw(1)],
+                inputs: vec![],
+                output: ConceptId::from_raw(1),
+            },
+            definition: Some(Definition::Formula {
+                source: "litRule(pressed)".into(),
+            }),
+            clock: None,
+        },
+        EditOp::CreateMapping {
+            name: "twice".into(),
+            description: String::new(),
+            signature: Signature {
+                inputs: vec![],
                 output: ConceptId::from_raw(2),
             },
-            definition: None,
+            definition: Some(Definition::Formula {
+                source: "!lit".into(),
+            }),
             clock: None,
         },
         EditOp::CreateOutput {
@@ -69,8 +92,8 @@ fn button_lamp() -> Design {
             clock: None,
         },
         EditOp::SetMappingDrive {
-            id: DeclId::from_raw(1),
-            output: Some(OutputId::from_raw(0)),
+            id: LIT,
+            output: Some(LAMP),
         },
     ];
     for op in &ops {
@@ -79,27 +102,34 @@ fn button_lamp() -> Design {
     s.design
 }
 
-fn rect(system: &BehaviorSystem, layout: &Layout, node: Node) -> (f64, f64, f64, f64) {
+/// The read edges of [`button_lamp`], as the analysis reports them.
+fn demo_refs() -> References {
+    let mut refs = References::default();
+    refs.edges
+        .insert(None, vec![(LIT, PRESSED), (LIT, LIT_RULE), (TWICE, LIT)]);
+    refs
+}
+
+fn rect(layout: &Layout, node: Node) -> (f64, f64, f64, f64) {
     use metrics::*;
-    let rows = |n: usize| n.max(1) as f64;
     match node {
-        Node::Concept(id) => {
-            let p = layout.concepts[&id];
-            (p.x, p.y, CONCEPT_WIDTH, CONCEPT_HEIGHT)
-        }
         Node::Mapping(id) => {
             let p = layout.mappings[&id];
-            let inputs = system.base.mappings[&id].signature.inputs.len();
+            (p.x, p.y, SEM_WIDTH, SEM_HEIGHT)
+        }
+        Node::Definition(id) => {
+            let p = layout.definitions[&id];
+            // every mapping block of the demo reads one Sem block
             (
                 p.x,
                 p.y,
                 MAPPING_WIDTH,
-                HEADER_HEIGHT + rows(inputs) * ROW_HEIGHT + BODY_HEIGHT,
+                HEADER_HEIGHT + ROW_HEIGHT + BODY_HEIGHT,
             )
         }
         Node::Output(id) => {
             let p = layout.outputs[&id];
-            (p.x, p.y, CONCEPT_WIDTH, HEADER_HEIGHT + ROW_HEIGHT)
+            (p.x, p.y, SEM_WIDTH, HEADER_HEIGHT + ROW_HEIGHT)
         }
         Node::Instance(_) => unreachable!(),
     }
@@ -109,19 +139,24 @@ fn overlap(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> bool {
     a.0 < b.0 + b.2 && b.0 < a.0 + a.2 && a.1 < b.1 + b.3 && b.1 < a.1 + a.3
 }
 
-fn nodes(layout: &Layout) -> Vec<Node> {
-    let mut v: Vec<Node> = layout.concepts.keys().map(|c| Node::Concept(*c)).collect();
-    v.extend(layout.mappings.keys().map(|m| Node::Mapping(*m)));
+fn nodes(system: &BehaviorSystem, layout: &Layout) -> Vec<Node> {
+    let mut v: Vec<Node> = layout
+        .mappings
+        .keys()
+        .filter(|m| system.base.mappings[m].signature.is_unit_domain())
+        .map(|m| Node::Mapping(*m))
+        .collect();
+    v.extend(layout.definitions.keys().map(|m| Node::Definition(*m)));
     v.extend(layout.outputs.keys().map(|o| Node::Output(*o)));
     v
 }
 
 fn assert_no_overlap(system: &BehaviorSystem, layout: &Layout) {
-    let all = nodes(layout);
+    let all = nodes(system, layout);
     for (i, a) in all.iter().enumerate() {
         for b in &all[i + 1..] {
             assert!(
-                !overlap(rect(system, layout, *a), rect(system, layout, *b)),
+                !overlap(rect(layout, *a), rect(layout, *b)),
                 "{a:?} overlaps {b:?}"
             );
         }
@@ -131,33 +166,42 @@ fn assert_no_overlap(system: &BehaviorSystem, layout: &Layout) {
 #[test]
 fn the_demo_is_arranged_left_to_right_with_every_edge_forward_and_nothing_overlapping() {
     let system = BehaviorSystem::from_flat(button_lamp());
-    let l = arrange(&system, &Layout::default());
+    let l = arrange_with(&system, &Layout::default(), &demo_refs());
     assert_no_overlap(&system, &l);
-    let pressed_c = l.concepts[&ConceptId::from_raw(0)];
-    let lit_c = l.concepts[&ConceptId::from_raw(1)];
-    let twice_c = l.concepts[&ConceptId::from_raw(2)];
-    let pressed = l.mappings[&DeclId::from_raw(0)];
-    let lit = l.mappings[&DeclId::from_raw(1)];
-    let again = l.mappings[&DeclId::from_raw(2)];
-    let lamp = l.outputs[&OutputId::from_raw(0)];
-    // rank: pressed (0) → Pressed (1) → lit (2) → Lit, lamp (3) → again (4) → Twice (5)
-    assert!(pressed.x < pressed_c.x, "the source before its concept");
-    assert!(pressed_c.x < lit.x, "the concept before what reads it");
+    // no concept node, no rule node
+    assert!(l.concepts.is_empty());
+    assert!(!l.mappings.contains_key(&LIT_RULE));
+    assert!(!l.definitions.contains_key(&LIT_RULE));
+    let pressed = l.mappings[&PRESSED];
+    let lit_block = l.definitions[&LIT];
+    let lit = l.mappings[&LIT];
+    let twice_block = l.definitions[&TWICE];
+    let twice = l.mappings[&TWICE];
+    let lamp = l.outputs[&LAMP];
+    // rank: pressed (0) → lit's block (1) → lit (2) → twice's block, lamp (3) → twice (4)
     assert!(
-        lit.x < lit_c.x && lit.x < lamp.x,
+        pressed.x < lit_block.x,
+        "the read Sem block before the block"
+    );
+    assert!(
+        lit_block.x < lit.x,
+        "the block before the Sem block it produces"
+    );
+    assert!(
+        lit.x < twice_block.x && lit.x < lamp.x,
         "both of lit's edges go forward"
     );
     assert!(
-        (lit_c.x - lamp.x).abs() < 1e-9,
-        "the produced concept and the driven sink share the rank after lit"
+        (twice_block.x - lamp.x).abs() < 1e-9,
+        "the reading block and the driven sink share the rank after lit"
     );
-    assert!(lit_c.x < again.x && again.x < twice_c.x);
+    assert!(twice_block.x < twice.x);
     // what is fed sits beside what feeds it
     assert!(
-        (lit.y + 35.0 - (lit_c.y + 13.0)).abs() < 80.0,
-        "lit {lit:?} Lit {lit_c:?}"
+        (lit_block.y + 35.0 - (lit.y + 24.0)).abs() < 80.0,
+        "block {lit_block:?} lit {lit:?}"
     );
-    assert!(pressed_c.y >= metrics::ORIGIN_Y && pressed.y >= metrics::ORIGIN_Y);
+    assert!(pressed.y >= metrics::ORIGIN_Y);
 }
 
 #[test]
@@ -167,9 +211,7 @@ fn arranging_is_deterministic_and_moves_authored_positions() {
     authored
         .concepts
         .insert(ConceptId::from_raw(0), Point { x: 900.0, y: 900.0 });
-    authored
-        .mappings
-        .insert(DeclId::from_raw(1), Point { x: 5.0, y: 5.0 });
+    authored.mappings.insert(LIT, Point { x: 5.0, y: 5.0 });
     authored.viewport = Some(bdl_model::layout::Viewport {
         x: 1.0,
         y: 2.0,
@@ -180,11 +222,13 @@ fn arranging_is_deterministic_and_moves_authored_positions() {
     let c = arrange(&system, &Layout::default());
     assert_eq!(a, b, "deterministic");
     assert_eq!(
-        a.concepts, c.concepts,
+        a.mappings, c.mappings,
         "the authored positions do not steer the result"
     );
-    assert_eq!(a.mappings, c.mappings);
-    assert_ne!(
+    assert_eq!(a.definitions, c.definitions);
+    assert_ne!(a.mappings[&LIT], Point { x: 5.0, y: 5.0 });
+    // a concept's stored position is neither a node nor moved
+    assert_eq!(
         a.concepts[&ConceptId::from_raw(0)],
         Point { x: 900.0, y: 900.0 }
     );
@@ -207,18 +251,14 @@ fn a_collapsed_group_is_one_box_and_its_hidden_members_keep_their_places() {
             scope: GroupScope::SystemBase,
             name: "Lamp logic".into(),
             description: String::new(),
-            members: vec![DeclId::from_raw(1), DeclId::from_raw(2)],
+            members: vec![LIT],
         },
     )
     .unwrap();
     let gid = outcome.created_group.unwrap().raw();
     let mut before = Layout::default();
-    before
-        .mappings
-        .insert(DeclId::from_raw(1), Point { x: 777.0, y: 777.0 });
-    before
-        .mappings
-        .insert(DeclId::from_raw(2), Point { x: 778.0, y: 778.0 });
+    before.mappings.insert(LIT, Point { x: 777.0, y: 777.0 });
+    before.definitions.insert(LIT, Point { x: 700.0, y: 777.0 });
     before.groups.insert(
         gid,
         GroupBox {
@@ -229,36 +269,27 @@ fn a_collapsed_group_is_one_box_and_its_hidden_members_keep_their_places() {
             collapsed: true,
         },
     );
-    let l = arrange(&system, &before);
-    // the box moved into the flow, right of Pressed and left of Lit
+    let l = arrange_with(&system, &before, &demo_refs());
+    // the box moved into the flow: right of pressed, left of twice's block
     let g = l.groups[&gid];
     assert!(g.collapsed);
-    assert!(l.concepts[&ConceptId::from_raw(0)].x < g.x);
-    assert!(g.x < l.concepts[&ConceptId::from_raw(1)].x);
-    // the members inside it were not touched
-    assert_eq!(
-        l.mappings[&DeclId::from_raw(1)],
-        Point { x: 777.0, y: 777.0 }
-    );
-    assert_eq!(
-        l.mappings[&DeclId::from_raw(2)],
-        Point { x: 778.0, y: 778.0 }
-    );
+    assert!(l.mappings[&PRESSED].x < g.x);
+    assert!(g.x < l.definitions[&TWICE].x);
+    // the member and its mapping block inside it were not touched
+    assert_eq!(l.mappings[&LIT], Point { x: 777.0, y: 777.0 });
+    assert_eq!(l.definitions[&LIT], Point { x: 700.0, y: 777.0 });
     // an expanded group: its members are ordinary nodes, its box is derived
     let mut expanded = before.clone();
     expanded.groups.get_mut(&gid).unwrap().collapsed = false;
-    let l2 = arrange(&system, &expanded);
-    assert_ne!(
-        l2.mappings[&DeclId::from_raw(1)],
-        Point { x: 777.0, y: 777.0 }
-    );
+    let l2 = arrange_with(&system, &expanded, &demo_refs());
+    assert_ne!(l2.mappings[&LIT], Point { x: 777.0, y: 777.0 });
     assert_no_overlap(&system, &l2);
 }
 
 #[test]
 fn a_cycle_through_memory_still_arranges() {
-    // r reads Twice and produces Twice (a delay-like memory): a cycle the
-    // rank must not loop on.
+    // r reads itself (memory through `delay`): a cycle the rank must not
+    // loop on.
     let mut s = ProjectSnapshot::new(Design::empty("loop"));
     let ops = [
         EditOp::CreateConcept {
@@ -270,10 +301,12 @@ fn a_cycle_through_memory_still_arranges() {
             name: "r".into(),
             description: String::new(),
             signature: Signature {
-                inputs: vec![ConceptId::from_raw(0)],
+                inputs: vec![],
                 output: ConceptId::from_raw(0),
             },
-            definition: None,
+            definition: Some(Definition::Formula {
+                source: "delay(false, !r)".into(),
+            }),
             clock: None,
         },
     ];
@@ -281,8 +314,11 @@ fn a_cycle_through_memory_still_arranges() {
         s = apply_edit(&s, op).unwrap().snapshot;
     }
     let system = BehaviorSystem::from_flat(s.design);
-    let l = arrange(&system, &Layout::default());
+    let mut refs = References::default();
+    refs.edges
+        .insert(None, vec![(DeclId::from_raw(0), DeclId::from_raw(0))]);
+    let l = arrange_with(&system, &Layout::default(), &refs);
     assert_no_overlap(&system, &l);
-    assert_eq!(l.concepts.len(), 1);
     assert_eq!(l.mappings.len(), 1);
+    assert_eq!(l.definitions.len(), 1);
 }

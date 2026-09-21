@@ -450,6 +450,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     return Err(EditError::UnknownClock { id: *c });
                 }
             }
+            let parameters = derived_parameters(&design, signature, &[]);
             let (id, ids) = design.ids.fresh_decl();
             design.ids = ids;
             design.mappings.insert(
@@ -462,7 +463,7 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
                     definition: definition.clone(),
                     clock: *clock,
                     drives: None,
-                    parameters: Vec::new(),
+                    parameters,
                 },
             );
             let mut o = EditOutcome {
@@ -497,8 +498,11 @@ pub fn apply_edit(snapshot: &ProjectSnapshot, op: &EditOp) -> Result<Applied, Ed
         }
         EditOp::SetMappingSignature { id, signature } => {
             check_signature(&design, signature)?;
+            let current = mapping_mut(&mut design, *id)?.parameters.clone();
+            let parameters = derived_parameters(&design, signature, &current);
             let m = mapping_mut(&mut design, *id)?;
             m.signature = signature.clone();
+            m.parameters = parameters;
             let mut o =
                 EditOutcome::edit([Invalidation::Interface, Invalidation::Semantic]).at(*id);
             if m.definition.is_some() {
@@ -904,6 +908,61 @@ fn device_mut(
         .ok_or(EditError::UnknownDevice { id })
 }
 
+/// The parameter names a rule's inputs get from a structured edit
+/// (ADR-0044 amending ADR-0013).  A rule is a template over its inputs;
+/// an input is named after its concept unless the same concept is read
+/// twice, when the concept's name would be ambiguous
+/// (`bdl_elab::names::Lookup::Ambiguous`): those inputs are then named
+/// `tilt1`, `tilt2`, … — the concept's name with a lower-case initial
+/// and its ordinal among the repeats — and every other input keeps the
+/// empty entry that falls back to its concept's name.  Names the text
+/// gave (`f(t, held) = …`) are kept as long as they still cover the
+/// signature; a unit domain has none.
+fn derived_parameters(
+    design: &crate::surface::Design,
+    sig: &Signature,
+    current: &[String],
+) -> Vec<String> {
+    if sig.inputs.is_empty() {
+        return Vec::new();
+    }
+    let authored = current.iter().any(|p| !p.is_empty());
+    if authored && current.len() == sig.inputs.len() {
+        return current.to_vec();
+    }
+    let repeated: BTreeSet<ConceptId> = sig
+        .inputs
+        .iter()
+        .filter(|c| sig.inputs.iter().filter(|d| d == c).count() > 1)
+        .copied()
+        .collect();
+    if repeated.is_empty() {
+        return Vec::new();
+    }
+    let mut seen: BTreeMap<ConceptId, usize> = BTreeMap::new();
+    sig.inputs
+        .iter()
+        .map(|c| {
+            if !repeated.contains(c) {
+                return String::new();
+            }
+            let n = seen.entry(*c).or_insert(0);
+            *n += 1;
+            let name = design
+                .concepts
+                .get(c)
+                .map(|k| k.name.as_str())
+                .unwrap_or("input");
+            let mut chars = name.chars();
+            let head: String = chars
+                .next()
+                .map(|h| h.to_lowercase().collect())
+                .unwrap_or_default();
+            format!("{head}{}{n}", chars.as_str())
+        })
+        .collect()
+}
+
 fn check_signature(design: &crate::surface::Design, sig: &Signature) -> Result<(), EditError> {
     for c in sig.inputs.iter().chain(std::iter::once(&sig.output)) {
         if !design.concepts.contains_key(c) {
@@ -935,6 +994,83 @@ mod tests {
         .unwrap();
         let id = a.outcome.created_concept.unwrap();
         (a.snapshot, id)
+    }
+
+    /// The concept ladder (ADR-0044): a Sem block is a unit-domain
+    /// declaration and never has inputs or parameters; a rule is a
+    /// template whose inputs are named after their concepts unless one
+    /// concept is read twice, when the repeats get stable names so the
+    /// formula can tell them apart (`Lookup::Ambiguous` otherwise).
+    #[test]
+    fn a_sem_block_has_no_inputs_and_same_concept_inputs_get_parameter_names() {
+        let (s, tilt) = create_concept(&empty(), "Tilt");
+        let (s, held) = create_concept(&s, "Held");
+        let create = |s: &ProjectSnapshot, name: &str, inputs: Vec<ConceptId>| {
+            let a = apply_edit(
+                s,
+                &EditOp::CreateMapping {
+                    name: name.into(),
+                    description: String::new(),
+                    signature: Signature {
+                        inputs,
+                        output: tilt,
+                    },
+                    definition: None,
+                    clock: None,
+                },
+            )
+            .unwrap();
+            let id = a.outcome.created_mapping.unwrap();
+            (a.snapshot, id)
+        };
+        let (s, sem) = create(&s, "tilt", vec![]);
+        assert!(s.design.mappings[&sem].signature.is_unit_domain());
+        assert!(s.design.mappings[&sem].parameters.is_empty());
+        // one input per concept: named after the concept, nothing stored
+        let (s, rule) = create(&s, "dim", vec![tilt, held]);
+        assert!(s.design.mappings[&rule].parameters.is_empty());
+        // the same concept twice: the repeats are told apart
+        let (s, diff) = create(&s, "diff", vec![tilt, held, tilt]);
+        assert_eq!(
+            s.design.mappings[&diff].parameters,
+            vec!["tilt1".to_owned(), String::new(), "tilt2".to_owned()]
+        );
+        // the same through a signature change; names the text gave are
+        // kept while they still cover the inputs
+        let s = apply_edit(
+            &s,
+            &EditOp::SetMappingSignature {
+                id: rule,
+                signature: Signature {
+                    inputs: vec![tilt, tilt],
+                    output: tilt,
+                },
+            },
+        )
+        .unwrap()
+        .snapshot;
+        assert_eq!(
+            s.design.mappings[&rule].parameters,
+            vec!["tilt1".to_owned(), "tilt2".to_owned()]
+        );
+        let mut authored = s.clone();
+        authored.design.mappings.get_mut(&rule).unwrap().parameters = vec!["a".into(), "b".into()];
+        let kept = apply_edit(
+            &authored,
+            &EditOp::SetMappingSignature {
+                id: rule,
+                signature: Signature {
+                    inputs: vec![tilt, held],
+                    output: tilt,
+                },
+            },
+        )
+        .unwrap()
+        .snapshot;
+        assert_eq!(
+            kept.design.mappings[&rule].parameters,
+            vec!["a".to_owned(), "b".to_owned()]
+        );
     }
 
     #[test]

@@ -125,10 +125,6 @@ fn named(p: &pb::ProjectProjection, mapping: &str) -> u64 {
     p.mappings.iter().find(|m| m.name == mapping).unwrap().id
 }
 
-fn concept(p: &pb::ProjectProjection, name: &str) -> u64 {
-    p.concepts.iter().find(|c| c.name == name).unwrap().id
-}
-
 #[test]
 fn a_project_with_no_layout_opens_arranged_and_a_reopen_moves_nothing() {
     let dir = tempfile::tempdir().unwrap();
@@ -137,23 +133,19 @@ fn a_project_with_no_layout_opens_arranged_and_a_reopen_moves_nothing() {
     let p = c.init(&root, "button-lamp");
     let l = p.layout.as_ref().unwrap();
     // the template has no layout: arranged as a whole, every edge forward
+    // over the ladder's picture (ADR-0044) — the Source Sem block
+    // `pressed`, the mapping block of `lit` (which names `pressed`), the
+    // Sem block `lit`, the sink it drives; no concept node.
     let pressed = pos(&l.mappings, named(&p, "pressed"));
-    let pressed_c = pos(&l.concepts, concept(&p, "Pressed"));
+    let lit_block = pos(&l.definitions, named(&p, "lit"));
     let lit = pos(&l.mappings, named(&p, "lit"));
-    let lit_c = pos(&l.concepts, concept(&p, "Lit"));
     let lamp = pos(&l.outputs, p.outputs[0].id);
-    // `lit() = pressed` reads nothing by signature and names `pressed` in
-    // its formula: the reference edge orders it after `pressed`, beside
-    // the concept `pressed` produces.
+    assert!(l.concepts.is_empty(), "a concept is a template, not a node");
     assert!(
-        pressed.0 < pressed_c.0 && pressed.0 < lit.0,
-        "{pressed:?} {pressed_c:?} {lit:?}"
+        pressed.0 < lit_block.0 && lit_block.0 < lit.0,
+        "{pressed:?} {lit_block:?} {lit:?}"
     );
-    assert!(
-        lit.0 < lit_c.0 && lit.0 < lamp.0,
-        "lit's produce and drive edges go right"
-    );
-    assert_eq!(lit_c.0, lamp.0, "the two things lit feeds share a column");
+    assert!(lit.0 < lamp.0, "lit's drive edge goes right");
     let revision = p.revision;
     // saved: a reopen reads the same positions and arranges nothing
     let layout_file = root.join("ui/layout.json");
@@ -185,12 +177,18 @@ fn a_partial_layout_keeps_what_was_authored_and_fills_the_gaps() {
     let p = c.open(&root);
     let l = p.layout.as_ref().unwrap();
     assert_eq!(pos(&l.mappings, lit), (900.0, 700.0), "authored, untouched");
-    // everything else was placed by place_missing, beside what it reads
-    assert_eq!(l.concepts.len(), 2);
+    // everything else was placed by place_missing: the other Sem block,
+    // lit's mapping block attached to its left, the sink; no concept
+    assert!(l.concepts.is_empty());
     assert_eq!(l.mappings.len(), 2);
+    assert_eq!(l.definitions.len(), 1);
     assert_eq!(l.outputs.len(), 1);
-    let lit_c = pos(&l.concepts, concept(&p, "Lit"));
-    assert!((lit_c.1 - 700.0).abs() < 200.0, "Lit near lit: {lit_c:?}");
+    let lit_block = pos(&l.definitions, lit);
+    assert!(lit_block.0 < 900.0, "attached left of lit: {lit_block:?}");
+    assert!(
+        (lit_block.1 - 700.0).abs() < 60.0,
+        "beside lit: {lit_block:?}"
+    );
 }
 
 #[test]

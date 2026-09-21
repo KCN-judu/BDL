@@ -711,6 +711,11 @@ message Layout {
   repeated ComponentLayout components = 6;
   // Where the designer left this canvas.
   optional Viewport viewport = 7;
+  // Mapping blocks (0.30, ADR-0044): a Sem block's definition drawn as a
+  // node of its own, keyed by the Sem block's declaration id.  `mappings`
+  // keys the Sem blocks; `concepts` is kept as written and drawn by
+  // nothing (a concept is a template, not a node).
+  repeated NodePosition definitions = 8;
 }
 
 message Viewport {
@@ -1374,6 +1379,11 @@ message ComposeAction {
     // arity is the compiler's — `(` typed after a name in the Formula
     // view.  Refused on a value or a literal.
     Unit apply = 12;
+    // Unreference (0.30, ADR-0044): every reference to the declaration
+    // becomes a slot — the canvas's disconnect of a read edge, a text
+    // edit of the definition.  `node_id` is ignored.  Refused when the
+    // formula does not name the declaration.
+    uint64 unreference = 13;
   }
 }
 

@@ -267,6 +267,9 @@ pub fn action_from_pb(a: &pb::ComposeAction) -> Option<ComposeOp> {
             text: i.text.clone(),
         },
         Action::Apply(_) => ComposeOp::Apply { node },
+        Action::Unreference(decl) => ComposeOp::Unreference {
+            decl: bdl_model::DeclId::from_raw(*decl),
+        },
     })
 }
 

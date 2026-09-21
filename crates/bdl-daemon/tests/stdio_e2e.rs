@@ -2078,8 +2078,10 @@ fn a_library_transaction_is_all_or_nothing() {
     };
     let p = e.project.unwrap();
     assert_eq!(p.revision, before + 1, "one transaction, one revision");
+    // the concept is a template and gets no node; the Source Sem block is
+    // placed (ADR-0044)
     let layout = p.layout.as_ref().unwrap();
-    assert_eq!(layout.concepts.len(), 1);
+    assert_eq!(layout.concepts.len(), 0);
     assert_eq!(layout.mappings.len(), 1);
     let Resp::SystemEditApplied(u) = c.call(Req::Undo(pb::UndoRequest {}), &mut events) else {
         panic!("undo")

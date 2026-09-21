@@ -1,9 +1,11 @@
 //! The layout service places what has no position, deterministically,
-//! beside what it reads, without moving anything (ADR-0023 §7).
+//! beside what it reads, without moving anything (ADR-0023 §7).  The
+//! nodes are the concept ladder's (ADR-0044): Sem blocks, their mapping
+//! blocks, sinks and instances — never a concept, never a rule.
 
 #![allow(clippy::unwrap_used)]
 
-use bdl_layout::{metrics, place_missing, Node};
+use bdl_layout::{metrics, place_missing, place_missing_with, Node, References};
 use bdl_model::edit::{apply_edit, EditOp};
 use bdl_model::layout::{GroupBox, Layout, Point};
 use bdl_model::surface::{Definition, Design, ProjectSnapshot, Representation, Signature};
@@ -12,7 +14,15 @@ use bdl_system::{
     apply_system_edit, BehaviorSystem, BindingEnd, PortKind, SystemEditOp, SystemSnapshot,
 };
 
-/// Tilt → dimByTilt → Brightness → light, plus an unread concept.
+const TILT: DeclId = DeclId::from_raw(0);
+const DIM_BY_TILT: DeclId = DeclId::from_raw(1);
+const BRIGHTNESS: DeclId = DeclId::from_raw(2);
+const LIGHT: OutputId = OutputId::from_raw(0);
+
+/// `tilt : Tilt` (a Source Sem block), the rule `dimByTilt : Tilt ->
+/// Brightness` (a template, not drawn), `brightness : Brightness =
+/// dimByTilt(tilt)` (a Sem block with its mapping block) driving `light`;
+/// plus an unread concept.
 fn lamp() -> Design {
     let mut s = ProjectSnapshot::new(Design::empty("lamp"));
     let ops = [
@@ -48,14 +58,22 @@ fn lamp() -> Design {
                 inputs: vec![ConceptId::from_raw(0)],
                 output: ConceptId::from_raw(1),
             },
-            definition: None,
+            definition: Some(Definition::Formula {
+                source: "Tilt / 90 deg".into(),
+            }),
             clock: None,
         },
-        EditOp::AttachDefinition {
-            id: DeclId::from_raw(1),
-            definition: Definition::Formula {
-                source: "Tilt / 90 deg".into(),
+        EditOp::CreateMapping {
+            name: "brightness".into(),
+            description: String::new(),
+            signature: Signature {
+                inputs: vec![],
+                output: ConceptId::from_raw(1),
             },
+            definition: Some(Definition::Formula {
+                source: "dimByTilt(tilt)".into(),
+            }),
+            clock: None,
         },
         EditOp::CreateOutput {
             name: "light".into(),
@@ -64,8 +82,8 @@ fn lamp() -> Design {
             clock: None,
         },
         EditOp::SetMappingDrive {
-            id: DeclId::from_raw(1),
-            output: Some(OutputId::from_raw(0)),
+            id: BRIGHTNESS,
+            output: Some(LIGHT),
         },
     ];
     for op in &ops {
@@ -74,27 +92,36 @@ fn lamp() -> Design {
     s.design
 }
 
+/// The read edges the analysis would report for [`lamp`]: the mapping
+/// block of `brightness` names `tilt` and the rule.
+fn lamp_refs() -> References {
+    let mut refs = References::default();
+    refs.edges
+        .insert(None, vec![(BRIGHTNESS, TILT), (BRIGHTNESS, DIM_BY_TILT)]);
+    refs
+}
+
 fn rect(system: &BehaviorSystem, layout: &Layout, node: Node) -> (f64, f64, f64, f64) {
     use metrics::*;
     let rows = |n: usize| n.max(1) as f64;
     match node {
-        Node::Concept(id) => {
-            let p = layout.concepts[&id];
-            (p.x, p.y, CONCEPT_WIDTH, CONCEPT_HEIGHT)
-        }
         Node::Mapping(id) => {
             let p = layout.mappings[&id];
-            let inputs = system.base.mappings[&id].signature.inputs.len();
+            (p.x, p.y, SEM_WIDTH, SEM_HEIGHT)
+        }
+        Node::Definition(id) => {
+            let p = layout.definitions[&id];
+            // the lamp's one mapping block reads one Sem block
             (
                 p.x,
                 p.y,
                 MAPPING_WIDTH,
-                HEADER_HEIGHT + rows(inputs) * ROW_HEIGHT + BODY_HEIGHT,
+                HEADER_HEIGHT + rows(1) * ROW_HEIGHT + BODY_HEIGHT,
             )
         }
         Node::Output(id) => {
             let p = layout.outputs[&id];
-            (p.x, p.y, CONCEPT_WIDTH, HEADER_HEIGHT + ROW_HEIGHT)
+            (p.x, p.y, SEM_WIDTH, HEADER_HEIGHT + ROW_HEIGHT)
         }
         Node::Instance(raw) => {
             let p = layout.instances[&raw];
@@ -118,16 +145,23 @@ fn overlap(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> bool {
     a.0 < b.0 + b.2 && b.0 < a.0 + a.2 && a.1 < b.1 + b.3 && b.1 < a.1 + a.3
 }
 
-fn all_nodes(layout: &Layout) -> Vec<Node> {
-    let mut v: Vec<Node> = layout.concepts.keys().map(|c| Node::Concept(*c)).collect();
-    v.extend(layout.mappings.keys().map(|m| Node::Mapping(*m)));
+/// The nodes the canvas draws: Sem blocks (unit-domain declarations),
+/// their mapping blocks, sinks, instances.
+fn drawn_nodes(system: &BehaviorSystem, layout: &Layout) -> Vec<Node> {
+    let mut v: Vec<Node> = layout
+        .mappings
+        .keys()
+        .filter(|m| system.base.mappings[m].signature.is_unit_domain())
+        .map(|m| Node::Mapping(*m))
+        .collect();
+    v.extend(layout.definitions.keys().map(|m| Node::Definition(*m)));
     v.extend(layout.outputs.keys().map(|o| Node::Output(*o)));
     v.extend(layout.instances.keys().map(|i| Node::Instance(*i)));
     v
 }
 
 fn assert_no_overlap(system: &BehaviorSystem, layout: &Layout) {
-    let nodes = all_nodes(layout);
+    let nodes = drawn_nodes(system, layout);
     for (i, a) in nodes.iter().enumerate() {
         for b in &nodes[i + 1..] {
             assert!(
@@ -141,59 +175,97 @@ fn assert_no_overlap(system: &BehaviorSystem, layout: &Layout) {
 #[test]
 fn an_empty_layout_is_filled_left_to_right_and_the_same_way_twice() {
     let system = BehaviorSystem::from_flat(lamp());
-    let a = place_missing(&system, &Layout::default());
-    let b = place_missing(&system, &Layout::default());
+    let a = place_missing_with(&system, &Layout::default(), &lamp_refs());
+    let b = place_missing_with(&system, &Layout::default(), &lamp_refs());
     assert_eq!(a, b, "deterministic");
-    assert_eq!(a.placed.len(), 3 + 2 + 1);
+    // two Sem blocks, one mapping block, one sink — no concept, no rule
+    assert_eq!(a.placed.len(), 2 + 1 + 1);
     let l = &a.layout;
-    assert_no_overlap(&system, l);
-    // columns: concepts, relationships, sinks
-    let tilt = l.concepts[&ConceptId::from_raw(0)];
-    let dim = l.mappings[&DeclId::from_raw(1)];
-    let light = l.outputs[&OutputId::from_raw(0)];
-    assert!(tilt.x < dim.x && dim.x < light.x);
-    // the sink sits beside the relationship that drives it, which sits
-    // beside the concept it reads
+    assert!(l.concepts.is_empty(), "a concept is a template, not a node");
     assert!(
-        (light.y - dim.y).abs() < 60.0,
-        "light {light:?} dim {dim:?}"
+        !l.mappings.contains_key(&DIM_BY_TILT),
+        "a rule is a template, not a node"
     );
-    assert!((dim.y - tilt.y).abs() < 120.0, "dim {dim:?} tilt {tilt:?}");
+    assert_no_overlap(&system, l);
+    // the mapping block is attached left of the Sem block it produces,
+    // which sits left of the sink it drives
+    let block = l.definitions[&BRIGHTNESS];
+    let sem = l.mappings[&BRIGHTNESS];
+    let light = l.outputs[&LIGHT];
+    assert!(block.x < sem.x && sem.x < light.x);
+    assert!(
+        (block.x + metrics::MAPPING_WIDTH + 2.0 * metrics::GAP - sem.x).abs() < 1e-9,
+        "attached: block {block:?} sem {sem:?}"
+    );
+    assert!(
+        (light.y - sem.y).abs() < 60.0,
+        "light {light:?} sem {sem:?}"
+    );
     // a second pass places nothing
-    assert!(place_missing(&system, l).is_empty());
+    assert!(place_missing_with(&system, l, &lamp_refs()).is_empty());
 }
 
 #[test]
-fn positioned_nodes_never_move_and_new_ones_land_beside_what_they_read() {
+fn positioned_nodes_never_move_and_a_mapping_block_attaches_to_its_sem_block() {
     let system = BehaviorSystem::from_flat(lamp());
     let mut layout = Layout::default();
-    layout
-        .concepts
-        .insert(ConceptId::from_raw(0), Point { x: 900.0, y: 700.0 });
+    layout.mappings.insert(TILT, Point { x: 10.0, y: 10.0 });
     layout
         .mappings
-        .insert(DeclId::from_raw(0), Point { x: 10.0, y: 10.0 });
+        .insert(BRIGHTNESS, Point { x: 900.0, y: 700.0 });
     let before = layout.clone();
-    let p = place_missing(&system, &layout);
+    let p = place_missing_with(&system, &layout, &lamp_refs());
     let l = &p.layout;
-    for (id, at) in &before.concepts {
-        assert_eq!(l.concepts[id], *at);
-    }
     for (id, at) in &before.mappings {
         assert_eq!(l.mappings[id], *at);
     }
     assert!(p
         .placed
         .iter()
-        .all(|x| x.node != Node::Concept(ConceptId::from_raw(0))
-            && x.node != Node::Mapping(DeclId::from_raw(0))));
+        .all(|x| x.node != Node::Mapping(TILT) && x.node != Node::Mapping(BRIGHTNESS)));
     assert_no_overlap(&system, l);
-    // dimByTilt reads Tilt, which the designer put far down: it follows
-    let dim = l.mappings[&DeclId::from_raw(1)];
-    assert!((dim.y - 700.0).abs() < 80.0, "{dim:?}");
-    // and light follows dimByTilt
-    let light = l.outputs[&OutputId::from_raw(0)];
-    assert!((light.y - dim.y).abs() < 60.0, "{light:?}");
+    // the mapping block goes beside the Sem block the designer placed far
+    // down, centred on it
+    let block = l.definitions[&BRIGHTNESS];
+    assert!((block.x - (900.0 - metrics::MAPPING_WIDTH - 2.0 * metrics::GAP)).abs() < 1e-9);
+    assert!((block.y - 700.0).abs() < 40.0, "{block:?}");
+    // and light follows brightness (its column lies under the attached
+    // block here, so it steps below it)
+    let light = l.outputs[&LIGHT];
+    assert!((light.y - 700.0).abs() < 120.0, "{light:?}");
+}
+
+/// A project laid out before ADR-0044: relationships and concepts have
+/// positions, mapping blocks none.  Only the mapping blocks are placed;
+/// the stored concept and rule positions are kept as written.
+#[test]
+fn an_old_layout_gets_its_mapping_blocks_and_nothing_else_moves() {
+    let system = BehaviorSystem::from_flat(lamp());
+    let mut layout = Layout::default();
+    layout
+        .concepts
+        .insert(ConceptId::from_raw(0), Point { x: 48.0, y: 48.0 });
+    layout
+        .concepts
+        .insert(ConceptId::from_raw(1), Point { x: 48.0, y: 148.0 });
+    layout.mappings.insert(TILT, Point { x: 368.0, y: 48.0 });
+    layout
+        .mappings
+        .insert(DIM_BY_TILT, Point { x: 368.0, y: 148.0 });
+    layout
+        .mappings
+        .insert(BRIGHTNESS, Point { x: 368.0, y: 300.0 });
+    layout.outputs.insert(LIGHT, Point { x: 688.0, y: 300.0 });
+    let p = place_missing(&system, &layout);
+    assert_eq!(
+        p.placed.iter().map(|x| x.node).collect::<Vec<_>>(),
+        vec![Node::Definition(BRIGHTNESS)]
+    );
+    let l = &p.layout;
+    assert_eq!(l.concepts, layout.concepts);
+    assert_eq!(l.mappings, layout.mappings);
+    assert_eq!(l.outputs, layout.outputs);
+    assert_no_overlap(&system, l);
 }
 
 #[test]
@@ -210,9 +282,9 @@ fn a_collapsed_group_box_is_not_covered() {
             collapsed: true,
         },
     );
-    let l = place_missing(&system, &layout).layout;
+    let l = place_missing_with(&system, &layout, &lamp_refs()).layout;
     let boxr = (l.groups[&7].x, l.groups[&7].y, 208.0, 120.0);
-    for n in all_nodes(&l) {
+    for n in drawn_nodes(&system, &l) {
         assert!(
             !overlap(rect(&system, &l, n), boxr),
             "{n:?} covers the group box"
@@ -232,7 +304,7 @@ fn instances_and_component_bodies_are_placed_too() {
         system = apply_system_edit(&system, op).unwrap().snapshot;
     }
     let cid = *system.system.components.keys().next().unwrap();
-    // give the body a concept and a relationship, expose the relationship
+    // give the body a concept and a Sem block, expose the Sem block
     let body_ops = [
         EditOp::CreateConcept {
             name: "Level".into(),
@@ -286,13 +358,11 @@ fn instances_and_component_bodies_are_placed_too() {
         .keys()
         .next()
         .unwrap();
-    // dimByTilt (base) feeds the instance's required port
+    // brightness (base) feeds the instance's required port
     system = apply_system_edit(
         &system,
         &SystemEditOp::BindPorts {
-            source: BindingEnd::Base {
-                decl: DeclId::from_raw(1),
-            },
+            source: BindingEnd::Base { decl: BRIGHTNESS },
             destination: BindingEnd::port(inst, port),
             transport: None,
         },
@@ -303,20 +373,18 @@ fn instances_and_component_bodies_are_placed_too() {
     let mut layout = Layout::default();
     layout
         .mappings
-        .insert(DeclId::from_raw(1), Point { x: 368.0, y: 500.0 });
-    let p = place_missing(&system.system, &layout);
+        .insert(BRIGHTNESS, Point { x: 368.0, y: 500.0 });
+    let p = place_missing_with(&system.system, &layout, &lamp_refs());
     let l = &p.layout;
     assert_no_overlap(&system.system, l);
     let at = l.instances[&inst.raw()];
     assert!((at.y - 500.0).abs() < 200.0, "beside what feeds it: {at:?}");
     let body = &l.components[&cid.raw()];
-    assert!(body.concepts.contains_key(&ConceptId::from_raw(0)));
+    assert!(body.concepts.is_empty(), "no concept node in a body either");
     assert!(body.mappings.contains_key(&DeclId::from_raw(0)));
-    assert!(
-        p.placed
-            .iter()
-            .any(|x| x.component == Some(cid.raw())
-                && x.node == Node::Concept(ConceptId::from_raw(0)))
-    );
-    assert!(place_missing(&system.system, l).is_empty());
+    assert!(p
+        .placed
+        .iter()
+        .any(|x| x.component == Some(cid.raw()) && x.node == Node::Mapping(DeclId::from_raw(0))));
+    assert!(place_missing_with(&system.system, l, &lamp_refs()).is_empty());
 }

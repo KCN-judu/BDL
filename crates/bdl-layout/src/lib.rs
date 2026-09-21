@@ -19,7 +19,7 @@
 
 use bdl_model::layout::{Layout, Point};
 use bdl_model::surface::Design;
-use bdl_model::{ConceptId, DeclId, OutputId};
+use bdl_model::{DeclId, OutputId};
 use bdl_system::{BehaviorSystem, BindingEnd};
 use std::collections::BTreeMap;
 
@@ -27,16 +27,25 @@ use std::collections::BTreeMap;
 /// `apps/studio/lib/ui/canvas/canvas_geometry.dart`).  The service places
 /// rectangles of these sizes; a canvas that draws differently still gets
 /// non-overlapping, left-to-right positions.
+///
+/// The nodes are the concept ladder's (ADR-0044): a **Sem block** (a
+/// unit-domain declaration; `Node::Mapping`, one row with the name and its
+/// concept), its **mapping block** (`Node::Definition`, the definition
+/// drawn as a node to its left, with a row per Sem block it reads), sinks
+/// and instances.  A concept is a template and a rule a template: neither
+/// is a node.
 pub mod metrics {
-    pub const CONCEPT_WIDTH: f64 = 168.0;
-    pub const CONCEPT_HEIGHT: f64 = 26.0;
+    /// A Sem block: the header and its concept row.
+    pub const SEM_WIDTH: f64 = 168.0;
+    pub const SEM_HEIGHT: f64 = 48.0;
     pub const MAPPING_WIDTH: f64 = 200.0;
     pub const INSTANCE_WIDTH: f64 = 208.0;
     pub const HEADER_HEIGHT: f64 = 26.0;
     pub const ROW_HEIGHT: f64 = 22.0;
     pub const BODY_HEIGHT: f64 = 22.0;
-    /// The column of each kind of node: concepts read into relationships,
-    /// relationships (and instances) drive sinks.
+    /// The column of each kind of node: mapping blocks left of the Sem
+    /// blocks they produce, Sem blocks (and instances) left of the sinks
+    /// they drive.
     pub const COLUMN_GAP: f64 = 320.0;
     pub const ORIGIN_X: f64 = 48.0;
     pub const ORIGIN_Y: f64 = 48.0;
@@ -59,8 +68,11 @@ pub struct Placed {
 /// A canvas node the layout keys.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Node {
-    Concept(ConceptId),
+    /// A Sem block: a unit-domain declaration (`Layout::mappings`).
     Mapping(DeclId),
+    /// A Sem block's mapping block: its definition drawn as a node
+    /// (`Layout::definitions`), keyed by the same declaration.
+    Definition(DeclId),
     Output(OutputId),
     /// A component instance, by raw id (the system canvas only).
     Instance(u64),
@@ -86,12 +98,37 @@ impl Placement {
 /// viewports are untouched; positions of entities that no longer exist
 /// are kept (they may come back through undo).
 pub fn place_missing(system: &BehaviorSystem, layout: &Layout) -> Placement {
+    place_missing_with(system, layout, &References::default())
+}
+
+/// [`place_missing`] with the read edges known: a mapping block is sized
+/// by what it reads and placed beside it.
+pub fn place_missing_with(
+    system: &BehaviorSystem,
+    layout: &Layout,
+    refs: &References,
+) -> Placement {
     let mut out = layout.clone();
     let mut placed = Vec::new();
-    place_canvas(&system.base, Some(system), &mut out, None, &mut placed);
+    let none: Vec<(DeclId, DeclId)> = Vec::new();
+    place_canvas(
+        &system.base,
+        Some(system),
+        &mut out,
+        None,
+        refs.edges.get(&None).unwrap_or(&none),
+        &mut placed,
+    );
     for (cid, component) in &system.components {
         let body = out.components.entry(cid.raw()).or_default();
-        place_canvas(&component.body, None, body, Some(cid.raw()), &mut placed);
+        place_canvas(
+            &component.body,
+            None,
+            body,
+            Some(cid.raw()),
+            refs.edges.get(&Some(cid.raw())).unwrap_or(&none),
+            &mut placed,
+        );
         if body == &Layout::default() {
             out.components.remove(&cid.raw());
         }
@@ -127,28 +164,58 @@ impl Rect {
 struct Canvas<'a> {
     design: &'a Design,
     system: Option<&'a BehaviorSystem>,
+    /// The read edges, `referencing → referenced` (ADR-0034's
+    /// `dependsOn`): what a mapping block reads.
+    references: &'a [(DeclId, DeclId)],
     /// Rectangles of everything positioned so far, by node.
     rects: BTreeMap<Node, Rect>,
 }
 
+/// The Sem blocks of a design: its unit-domain declarations.  A rule
+/// (an arrow-typed declaration) is a template and is not drawn.
+fn is_sem(design: &Design, d: DeclId) -> bool {
+    design
+        .mappings
+        .get(&d)
+        .is_some_and(|m| m.signature.is_unit_domain())
+}
+
+/// Whether the Sem block has a mapping block: a definition of its own.
+fn has_definition(design: &Design, d: DeclId) -> bool {
+    design
+        .mappings
+        .get(&d)
+        .is_some_and(|m| m.signature.is_unit_domain() && m.definition.is_some())
+}
+
 impl Canvas<'_> {
+    /// The Sem blocks a mapping block reads, in id order: the referenced
+    /// declarations that are Sem blocks (a referenced rule is named in the
+    /// block's header and is no edge).
+    fn reads(&self, d: DeclId) -> Vec<DeclId> {
+        let mut out: Vec<DeclId> = self
+            .references
+            .iter()
+            .filter(|(from, to)| *from == d && *to != d && is_sem(self.design, *to))
+            .map(|(_, to)| *to)
+            .collect();
+        out.sort_unstable();
+        out.dedup();
+        out
+    }
+
     fn size(&self, node: Node) -> (f64, f64) {
         use metrics::*;
         match node {
-            Node::Concept(_) => (CONCEPT_WIDTH, CONCEPT_HEIGHT),
-            Node::Mapping(d) => {
-                let inputs = self
-                    .design
-                    .mappings
-                    .get(&d)
-                    .map_or(0, |m| m.signature.inputs.len());
-                let rows = inputs.max(1) as f64;
+            Node::Mapping(_) => (SEM_WIDTH, SEM_HEIGHT),
+            Node::Definition(d) => {
+                let rows = self.reads(d).len().max(1) as f64;
                 (
                     MAPPING_WIDTH,
                     HEADER_HEIGHT + rows * ROW_HEIGHT + BODY_HEIGHT,
                 )
             }
-            Node::Output(_) => (CONCEPT_WIDTH, HEADER_HEIGHT + ROW_HEIGHT),
+            Node::Output(_) => (SEM_WIDTH, HEADER_HEIGHT + ROW_HEIGHT),
             Node::Instance(raw) => {
                 let ports = self
                     .system
@@ -171,7 +238,7 @@ impl Canvas<'_> {
         ORIGIN_X
             + COLUMN_GAP
                 * match node {
-                    Node::Concept(_) => 0.0,
+                    Node::Definition(_) => 0.0,
                     Node::Mapping(_) | Node::Instance(_) => 1.0,
                     Node::Output(_) => 2.0,
                 }
@@ -183,25 +250,27 @@ impl Canvas<'_> {
     fn neighbours(&self, node: Node) -> Vec<Node> {
         let d = self.design;
         match node {
-            Node::Concept(c) => d
-                .mappings
-                .values()
-                .filter(|m| m.signature.inputs.contains(&c) || m.signature.output == c)
-                .map(|m| Node::Mapping(m.id))
-                .collect(),
+            // a mapping block sits beside the Sem blocks it reads and the
+            // one it produces
+            Node::Definition(id) => {
+                let mut out: Vec<Node> = self.reads(id).into_iter().map(Node::Mapping).collect();
+                out.push(Node::Mapping(id));
+                out
+            }
             Node::Mapping(id) => {
                 let Some(m) = d.mappings.get(&id) else {
                     return Vec::new();
                 };
-                let mut out: Vec<Node> = m
-                    .signature
-                    .inputs
-                    .iter()
-                    .map(|c| Node::Concept(*c))
-                    .collect();
-                if out.is_empty() {
-                    // a source reads nothing: it sits beside what it produces
-                    out.push(Node::Concept(m.signature.output));
+                // its own mapping block, the mapping blocks that read it,
+                // and the sink it drives
+                let mut out: Vec<Node> = Vec::new();
+                if has_definition(d, id) {
+                    out.push(Node::Definition(id));
+                }
+                for (from, to) in self.references {
+                    if *to == id && *from != id && has_definition(d, *from) {
+                        out.push(Node::Definition(*from));
+                    }
                 }
                 if let Some(o) = m.drives {
                     out.push(Node::Output(o));
@@ -266,12 +335,24 @@ impl Canvas<'_> {
     /// [`metrics::STEP`]s until it overlaps nothing.
     fn place(&mut self, node: Node) -> Point {
         let (w, h) = self.size(node);
-        let x = Self::column(node);
-        let centres: Vec<f64> = self
-            .neighbours(node)
-            .into_iter()
-            .filter_map(|n| self.rects.get(&n).map(Rect::center_y))
-            .collect();
+        // a mapping block is attached to its Sem block: directly to its
+        // left, centred on it, when the Sem block already has a place
+        let attached = match node {
+            Node::Definition(d) => self.rects.get(&Node::Mapping(d)).copied(),
+            _ => None,
+        };
+        let x = match attached {
+            Some(sem) => sem.x - w - 2.0 * metrics::GAP,
+            None => Self::column(node),
+        };
+        let centres: Vec<f64> = match attached {
+            Some(sem) => vec![sem.center_y()],
+            None => self
+                .neighbours(node)
+                .into_iter()
+                .filter_map(|n| self.rects.get(&n).map(Rect::center_y))
+                .collect(),
+        };
         let mut y = if centres.is_empty() {
             self.rects
                 .values()
@@ -298,23 +379,29 @@ fn place_canvas(
     system: Option<&BehaviorSystem>,
     layout: &mut Layout,
     component: Option<u64>,
+    references: &[(DeclId, DeclId)],
     placed: &mut Vec<Placed>,
 ) {
     let mut canvas = Canvas {
         design,
         system,
+        references,
         rects: BTreeMap::new(),
     };
-    // What is already positioned, at its drawn size.
+    // What is already positioned, at its drawn size — the nodes the
+    // canvas draws: a rule's or a concept's stored position takes no
+    // space, since neither is a node (ADR-0044).
     let known: Vec<(Node, Point)> = layout
-        .concepts
+        .mappings
         .iter()
-        .map(|(id, p)| (Node::Concept(*id), *p))
+        .filter(|(id, _)| is_sem(design, **id))
+        .map(|(id, p)| (Node::Mapping(*id), *p))
         .chain(
             layout
-                .mappings
+                .definitions
                 .iter()
-                .map(|(id, p)| (Node::Mapping(*id), *p)),
+                .filter(|(id, _)| has_definition(design, **id))
+                .map(|(id, p)| (Node::Definition(*id), *p)),
         )
         .chain(layout.outputs.iter().map(|(id, p)| (Node::Output(*id), *p)))
         .chain(
@@ -349,23 +436,23 @@ fn place_canvas(
         );
     }
 
-    // Concepts first (relationships are placed beside what they read),
-    // then relationships, then instances beside what they are bound to,
-    // then sinks beside what drives them — each in id order.
+    // Sem blocks first, then their mapping blocks (attached to them),
+    // then instances beside what they are bound to, then sinks beside
+    // what drives them — each in id order.
     let mut todo: Vec<Node> = Vec::new();
     todo.extend(
         design
-            .concepts
+            .mappings
             .keys()
-            .filter(|id| !layout.concepts.contains_key(id))
-            .map(|id| Node::Concept(*id)),
+            .filter(|id| is_sem(design, **id) && !layout.mappings.contains_key(id))
+            .map(|id| Node::Mapping(*id)),
     );
     todo.extend(
         design
             .mappings
             .keys()
-            .filter(|id| !layout.mappings.contains_key(id))
-            .map(|id| Node::Mapping(*id)),
+            .filter(|id| has_definition(design, **id) && !layout.definitions.contains_key(id))
+            .map(|id| Node::Definition(*id)),
     );
     if let Some(s) = system {
         todo.extend(
@@ -386,11 +473,11 @@ fn place_canvas(
     for node in todo {
         let at = canvas.place(node);
         match node {
-            Node::Concept(id) => {
-                layout.concepts.insert(id, at);
-            }
             Node::Mapping(id) => {
                 layout.mappings.insert(id, at);
+            }
+            Node::Definition(id) => {
+                layout.definitions.insert(id, at);
             }
             Node::Output(id) => {
                 layout.outputs.insert(id, at);
@@ -416,10 +503,13 @@ fn place_canvas(
 /// whose layout has no position at all.  Unlike [`place_missing`] this
 /// moves what is already positioned; like it, it is deterministic, reads
 /// the semantic graph only to order and align, and writes geometry only
-/// (ADR-0003).  The scene it arranges is the one the canvas draws: every
-/// concept, relationship, sink and instance, a collapsed group as one box
-/// standing for its hidden members, every signature, drive and binding
-/// edge as supplied — nothing is hidden, inserted or rerouted.
+/// (ADR-0003).  The scene it arranges is the one the canvas draws
+/// (ADR-0044): every Sem block, its mapping block, every sink and
+/// instance, a collapsed group as one box standing for its hidden
+/// members, every produce, read, drive and binding edge as supplied —
+/// nothing is hidden, inserted or rerouted.  A read edge is a reference
+/// edge, so an arrangement without [`References`] chains produce and
+/// drive edges alone.
 ///
 /// Left to right by rank (the longest path from a node nothing feeds:
 /// what reads follows what it reads, what is driven follows its driver);
@@ -473,6 +563,7 @@ pub fn arrange_with(system: &BehaviorSystem, layout: &Layout, refs: &References)
 pub fn has_positions(layout: &Layout) -> bool {
     !(layout.concepts.is_empty()
         && layout.mappings.is_empty()
+        && layout.definitions.is_empty()
         && layout.outputs.is_empty()
         && layout.instances.is_empty())
 }
@@ -521,21 +612,28 @@ fn arrange_canvas(
         Some(g) => Item::Group(*g),
         None => Item::Node(Node::Mapping(d)),
     };
+    // A hidden member's mapping block is hidden with it.
+    let block_of_decl = |d: DeclId| match hidden_by.get(&d) {
+        Some(g) => Item::Group(*g),
+        None => Item::Node(Node::Definition(d)),
+    };
 
-    // The items, in a stable order.
+    // The items, in a stable order: Sem blocks, their mapping blocks,
+    // then boxes, instances and sinks.
     let mut items: Vec<Item> = Vec::new();
     items.extend(
         design
-            .concepts
+            .mappings
             .keys()
-            .map(|c| Item::Node(Node::Concept(*c))),
+            .filter(|d| is_sem(design, **d) && !hidden_by.contains_key(d))
+            .map(|d| Item::Node(Node::Mapping(*d))),
     );
     items.extend(
         design
             .mappings
             .keys()
-            .filter(|d| !hidden_by.contains_key(d))
-            .map(|d| Item::Node(Node::Mapping(*d))),
+            .filter(|d| has_definition(design, **d) && !hidden_by.contains_key(d))
+            .map(|d| Item::Node(Node::Definition(*d))),
     );
     let mut groups: Vec<u64> = hidden_by.values().copied().collect();
     groups.sort_unstable();
@@ -565,19 +663,29 @@ fn arrange_canvas(
         }
     };
     for m in design.mappings.values() {
-        let me = item_of_decl(m.id);
-        for c in &m.signature.inputs {
-            push(Item::Node(Node::Concept(*c)), me);
+        if !is_sem(design, m.id) {
+            continue;
         }
-        push(me, Item::Node(Node::Concept(m.signature.output)));
+        let me = item_of_decl(m.id);
+        // the produce edge: a Sem block's mapping block into it
+        if has_definition(design, m.id) {
+            push(block_of_decl(m.id), me);
+        }
         if let Some(o) = m.drives {
             push(me, Item::Node(Node::Output(o)));
         }
     }
-    // A value's formula names another relationship: drawn as an edge from
-    // the referenced into the referencing (ADR-0034), so ordered the same.
+    // The read edges: a Sem block into the mapping block whose definition
+    // names it (the analysis's `dependsOn`, ADR-0034); a referenced rule
+    // is a template, named in the block's header, and is no edge.
     for (referencing, referenced) in references {
-        push(item_of_decl(*referenced), item_of_decl(*referencing));
+        if referencing == referenced
+            || !has_definition(design, *referencing)
+            || !is_sem(design, *referenced)
+        {
+            continue;
+        }
+        push(item_of_decl(*referenced), block_of_decl(*referencing));
     }
     if let Some(s) = system {
         let end_item = |e: BindingEnd| match e {
@@ -669,6 +777,7 @@ fn arrange_canvas(
     let measure = Canvas {
         design,
         system,
+        references,
         rects: BTreeMap::new(),
     };
     let sizes: Vec<(f64, f64)> = items
@@ -712,17 +821,17 @@ fn arrange_canvas(
             y[v] = top;
             floor = top + h + row_gap;
         }
-        col_x += widest.max(CONCEPT_WIDTH) + (COLUMN_GAP - MAPPING_WIDTH);
+        col_x += widest.max(SEM_WIDTH) + (COLUMN_GAP - MAPPING_WIDTH);
     }
 
     for (i, item) in items.iter().enumerate() {
         let at = Point { x: x[i], y: y[i] };
         match *item {
-            Item::Node(Node::Concept(id)) => {
-                layout.concepts.insert(id, at);
-            }
             Item::Node(Node::Mapping(id)) => {
                 layout.mappings.insert(id, at);
+            }
+            Item::Node(Node::Definition(id)) => {
+                layout.definitions.insert(id, at);
             }
             Item::Node(Node::Output(id)) => {
                 layout.outputs.insert(id, at);
@@ -743,7 +852,7 @@ fn arrange_canvas(
 /// A stable tie-break: kind, then id.
 fn index_key(item: Item) -> (u8, u64) {
     match item {
-        Item::Node(Node::Concept(c)) => (0, c.raw()),
+        Item::Node(Node::Definition(d)) => (0, d.raw()),
         Item::Node(Node::Mapping(d)) => (1, d.raw()),
         Item::Group(g) => (2, g),
         Item::Node(Node::Instance(i)) => (3, i),

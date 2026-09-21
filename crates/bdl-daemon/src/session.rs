@@ -199,7 +199,9 @@ fn place_on_open(
         }
         return Ok(arranged);
     }
-    let placement = bdl_layout::place_missing(system, layout);
+    // A project laid out before ADR-0044 has no mapping-block position:
+    // each is attached beside its Sem block, never asked about.
+    let placement = bdl_layout::place_missing_with(system, layout, &reference_edges(system));
     if !placement.is_empty() {
         tracing::info!(root = %root.display(), placed = placement.placed.len(), "placed unpositioned entities");
         persist::save_layout(root, &placement.layout)?;
@@ -247,11 +249,11 @@ fn place_on_commit(system: &BehaviorSystem, layout: &mut Layout, saved: &mut Lay
             Some(c) => saved.components.entry(c).or_default(),
         };
         match placed.node {
-            bdl_layout::Node::Concept(id) => {
-                canvas.concepts.entry(id).or_insert(placed.at);
-            }
             bdl_layout::Node::Mapping(id) => {
                 canvas.mappings.entry(id).or_insert(placed.at);
+            }
+            bdl_layout::Node::Definition(id) => {
+                canvas.definitions.entry(id).or_insert(placed.at);
             }
             bdl_layout::Node::Output(id) => {
                 canvas.outputs.entry(id).or_insert(placed.at);

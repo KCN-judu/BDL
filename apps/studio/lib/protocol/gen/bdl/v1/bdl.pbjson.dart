@@ -3136,6 +3136,7 @@ const Layout$json = {
       '10': 'viewport',
       '17': true
     },
+    {'1': 'definitions', '3': 8, '4': 3, '5': 11, '6': '.bdl.v1.NodePosition', '10': 'definitions'},
   ],
   '8': [
     {'1': '_viewport'},
@@ -3150,7 +3151,8 @@ final $typed_data.Uint8List layoutDescriptor = $convert
         'NlcxgEIAMoCzIULmJkbC52MS5Ob2RlUG9zaXRpb25SCWluc3RhbmNlcxIoCgZncm91cHMYBSAD'
         'KAsyEC5iZGwudjEuR3JvdXBCb3hSBmdyb3VwcxI3Cgpjb21wb25lbnRzGAYgAygLMhcuYmRsLn'
         'YxLkNvbXBvbmVudExheW91dFIKY29tcG9uZW50cxIxCgh2aWV3cG9ydBgHIAEoCzIQLmJkbC52'
-        'MS5WaWV3cG9ydEgAUgh2aWV3cG9ydIgBAUILCglfdmlld3BvcnQ=');
+        'MS5WaWV3cG9ydEgAUgh2aWV3cG9ydIgBARI2CgtkZWZpbml0aW9ucxgIIAMoCzIULmJkbC52MS'
+        '5Ob2RlUG9zaXRpb25SC2RlZmluaXRpb25zQgsKCV92aWV3cG9ydA==');
 
 @$core.Deprecated('Use viewportDescriptor instead')
 const Viewport$json = {
@@ -4338,6 +4340,7 @@ const ComposeAction$json = {
     {'1': 'choose', '3': 10, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'choose'},
     {'1': 'insert', '3': 11, '4': 1, '5': 11, '6': '.bdl.v1.ComposeInsert', '9': 0, '10': 'insert'},
     {'1': 'apply', '3': 12, '4': 1, '5': 11, '6': '.bdl.v1.Unit', '9': 0, '10': 'apply'},
+    {'1': 'unreference', '3': 13, '4': 1, '5': 4, '9': 0, '10': 'unreference'},
   ],
   '8': [
     {'1': 'action'},
@@ -4355,7 +4358,7 @@ final $typed_data.Uint8List composeActionDescriptor = $convert
         'SABSBmJpbmRlchIkCgVyYW5nZRgJIAEoCzIMLmJkbC52MS5Vbml0SABSBXJhbmdlEiYKBmNob2'
         '9zZRgKIAEoCzIMLmJkbC52MS5Vbml0SABSBmNob29zZRIvCgZpbnNlcnQYCyABKAsyFS5iZGwu'
         'djEuQ29tcG9zZUluc2VydEgAUgZpbnNlcnQSJAoFYXBwbHkYDCABKAsyDC5iZGwudjEuVW5pdE'
-        'gAUgVhcHBseUIICgZhY3Rpb24=');
+        'gAUgVhcHBseRIiCgt1bnJlZmVyZW5jZRgNIAEoBEgAUgt1bnJlZmVyZW5jZUIICgZhY3Rpb24=');
 
 @$core.Deprecated('Use composeBinderDescriptor instead')
 const ComposeBinder$json = {

@@ -8145,6 +8145,7 @@ class Layout extends $pb.GeneratedMessage {
     $core.Iterable<GroupBox>? groups,
     $core.Iterable<ComponentLayout>? components,
     Viewport? viewport,
+    $core.Iterable<NodePosition>? definitions,
   }) {
     final result = Layout._();
     if (concepts != null) result.concepts.addAll(concepts);
@@ -8154,6 +8155,7 @@ class Layout extends $pb.GeneratedMessage {
     if (groups != null) result.groups.addAll(groups);
     if (components != null) result.components.addAll(components);
     if (viewport != null) result.viewport = viewport;
+    if (definitions != null) result.definitions.addAll(definitions);
     return result;
   }
 
@@ -8181,6 +8183,8 @@ class Layout extends $pb.GeneratedMessage {
     ..pPM<ComponentLayout>(6, _omitFieldNames ? '' : 'components',
         subBuilder: ComponentLayout.$_createMessage)
     ..aOM<Viewport>(7, _omitFieldNames ? '' : 'viewport', subBuilder: Viewport.$_createMessage)
+    ..pPM<NodePosition>(8, _omitFieldNames ? '' : 'definitions',
+        subBuilder: NodePosition.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -8236,6 +8240,13 @@ class Layout extends $pb.GeneratedMessage {
   void clearViewport() => $_clearField(7);
   @$pb.TagNumber(7)
   Viewport ensureViewport() => $_ensure(6);
+
+  /// Mapping blocks (0.30, ADR-0044): a Sem block's definition drawn as a
+  /// node of its own, keyed by the Sem block's declaration id.  `mappings`
+  /// keys the Sem blocks; `concepts` is kept as written and drawn by
+  /// nothing (a concept is a template, not a node).
+  @$pb.TagNumber(8)
+  $pb.PbList<NodePosition> get definitions => $_getList(7);
 }
 
 class Viewport extends $pb.GeneratedMessage {
@@ -13473,6 +13484,7 @@ enum ComposeAction_Action {
   choose,
   insert,
   apply,
+  unreference,
   notSet
 }
 
@@ -13490,6 +13502,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     Unit? choose,
     ComposeInsert? insert,
     Unit? apply,
+    $fixnum.Int64? unreference,
   }) {
     final result = ComposeAction._();
     if (nodeId != null) result.nodeId = nodeId;
@@ -13504,6 +13517,7 @@ class ComposeAction extends $pb.GeneratedMessage {
     if (choose != null) result.choose = choose;
     if (insert != null) result.insert = insert;
     if (apply != null) result.apply = apply;
+    if (unreference != null) result.unreference = unreference;
     return result;
   }
 
@@ -13528,12 +13542,13 @@ class ComposeAction extends $pb.GeneratedMessage {
     10: ComposeAction_Action.choose,
     11: ComposeAction_Action.insert,
     12: ComposeAction_Action.apply,
+    13: ComposeAction_Action.unreference,
     0: ComposeAction_Action.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ComposeAction',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
       createEmptyInstance: ComposeAction.$_createMessage)
-    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    ..oo(0, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
     ..aOS(1, _omitFieldNames ? '' : 'nodeId')
     ..aOS(2, _omitFieldNames ? '' : 'fill')
     ..aOM<ComposeOperator>(3, _omitFieldNames ? '' : 'operator',
@@ -13550,6 +13565,8 @@ class ComposeAction extends $pb.GeneratedMessage {
     ..aOM<ComposeInsert>(11, _omitFieldNames ? '' : 'insert',
         subBuilder: ComposeInsert.$_createMessage)
     ..aOM<Unit>(12, _omitFieldNames ? '' : 'apply', subBuilder: Unit.$_createMessage)
+    ..a<$fixnum.Int64>(13, _omitFieldNames ? '' : 'unreference', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -13583,6 +13600,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
+  @$pb.TagNumber(13)
   ComposeAction_Action whichAction() => _ComposeAction_ActionByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(3)
@@ -13595,6 +13613,7 @@ class ComposeAction extends $pb.GeneratedMessage {
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
   @$pb.TagNumber(12)
+  @$pb.TagNumber(13)
   void clearAction() => $_clearField($_whichOneof(0));
 
   /// The node the action is on.
@@ -13740,6 +13759,19 @@ class ComposeAction extends $pb.GeneratedMessage {
   void clearApply() => $_clearField(12);
   @$pb.TagNumber(12)
   Unit ensureApply() => $_ensure(11);
+
+  /// Unreference (0.30, ADR-0044): every reference to the declaration
+  /// becomes a slot — the canvas's disconnect of a read edge, a text
+  /// edit of the definition.  `node_id` is ignored.  Refused when the
+  /// formula does not name the declaration.
+  @$pb.TagNumber(13)
+  $fixnum.Int64 get unreference => $_getI64(12);
+  @$pb.TagNumber(13)
+  set unreference($fixnum.Int64 value) => $_setInt64(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasUnreference() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearUnreference() => $_clearField(13);
 }
 
 class ComposeBinder extends $pb.GeneratedMessage {

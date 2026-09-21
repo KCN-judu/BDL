@@ -16,10 +16,23 @@ pub struct Point {
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Layout {
+    /// Positions of the concept nodes the canvas drew before ADR-0044.  A
+    /// concept is a template and no longer a node; the entries are kept as
+    /// written (a layout file is never rewritten for a vocabulary change)
+    /// and consulted by nothing.
     #[serde(default)]
     pub concepts: BTreeMap<ConceptId, Point>,
+    /// Sem blocks (unit-domain declarations) and, before ADR-0044, every
+    /// relationship: by declaration id.  A rule's entry, if any, is kept
+    /// and unused — a rule is a template, not a node of the value graph.
     #[serde(default)]
     pub mappings: BTreeMap<DeclId, Point>,
+    /// Mapping blocks: the definition of a Sem block drawn as its own node
+    /// (ADR-0044), keyed by the Sem block's declaration id — one object,
+    /// two nodes, two positions.  Absent for a Sem block without a
+    /// definition; filled by the layout service on first open.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub definitions: BTreeMap<DeclId, Point>,
     /// Physical outputs are canvas nodes too (sinks at the right edge).
     #[serde(default)]
     pub outputs: BTreeMap<OutputId, Point>,

@@ -1864,6 +1864,11 @@ pub enum ComposeOp {
         side: Side,
         text: String,
     },
+    /// Every reference to the declaration `decl` becomes a slot: the
+    /// canvas's disconnect of a read edge (ADR-0044) — a text edit of the
+    /// definition, never a signature edit.  Refused when the formula does
+    /// not name the declaration.
+    Unreference { decl: DeclId },
     /// A literal's coordinate: the same unit, another quantity.
     SetCoordinate { node: String, text: String },
     /// The node becomes a slot again; a slot that is an operand of `+ - *
@@ -2076,6 +2081,9 @@ pub fn compose(
         locals: Vec::new(),
     };
     let root = b.node(surface, "r".into());
+    if let ComposeOp::Unreference { decl } = op {
+        return unreference(&root, design, ir, block, source, &base, empty, *decl);
+    }
     let node_id = match op {
         ComposeOp::Fill { node, .. }
         | ComposeOp::Operator { node, .. }
@@ -2088,6 +2096,7 @@ pub fn compose(
         | ComposeOp::Insert { node, .. }
         | ComposeOp::Choose { node }
         | ComposeOp::Apply { node } => node.as_str(),
+        ComposeOp::Unreference { .. } => unreachable!("handled above"),
     };
     let Some(node) = root.find(node_id) else {
         return Err(QueryError::NotApplicable {
@@ -2129,6 +2138,7 @@ pub fn compose(
         }
     };
     let (range, new_text): (TextRange, String) = match op {
+        ComposeOp::Unreference { .. } => unreachable!("handled above"),
         ComposeOp::Fill { text, .. } => {
             let text = text.trim();
             (
@@ -2397,6 +2407,84 @@ pub fn compose(
             )]
         } else {
             vec![edit]
+        },
+        select,
+    })
+}
+
+/// Every reference to `decl` in the projection becomes `?`, last first so
+/// the earlier ranges stay valid; the first new slot is selected.
+#[allow(clippy::too_many_arguments)]
+fn unreference(
+    root: &FormulaNode,
+    design: &Design,
+    ir: &DesignIr,
+    block: &MappingBlock,
+    source: &str,
+    base: &str,
+    empty: bool,
+    decl: DeclId,
+) -> Result<ComposeResult, QueryError> {
+    fn collect(n: &FormulaNode, decl: DeclId, out: &mut Vec<TextRange>) {
+        if let NodeKind::Reference {
+            entity: Some(EntityRef::Mapping(d)),
+            local: false,
+            ..
+        } = &n.kind
+        {
+            if *d == decl {
+                out.push(n.range);
+                return;
+            }
+        }
+        for c in &n.children {
+            collect(c, decl, out);
+        }
+    }
+    let mut ranges = Vec::new();
+    collect(root, decl, &mut ranges);
+    if ranges.is_empty() {
+        return Err(QueryError::NotApplicable {
+            reason: "the formula does not name that Sem block".into(),
+        });
+    }
+    ranges.sort_by_key(|r| r.start);
+    let mut out = base.to_owned();
+    let mut edits = Vec::new();
+    for r in ranges.iter().rev() {
+        out.replace_range(r.start as usize..r.end as usize, "?");
+        edits.push(TextEdit::replace(*r, "?".to_owned()));
+    }
+    edits.reverse();
+    let select = bdl_syntax::formula(&out).ok().and_then(|e| {
+        let first = ranges[0].start;
+        // the slot that stands where the first reference was: the node
+        // whose range starts there, found by walking the new tree
+        fn find_at(n: &FormulaNode, at: u32) -> Option<String> {
+            if n.range.start == at && matches!(n.kind, NodeKind::Slot) {
+                return Some(n.id.clone());
+            }
+            n.children.iter().find_map(|c| find_at(c, at))
+        }
+        let mut b = Builder {
+            design,
+            ir,
+            block,
+            source: &out,
+            types: &BTreeMap::new(),
+            locals: Vec::new(),
+        };
+        find_at(&b.node(&e, "r".into()), first)
+    });
+    Ok(ComposeResult {
+        source: out,
+        edits: if empty {
+            vec![TextEdit::replace(
+                TextRange::new(0, source.len() as u32),
+                "?".to_owned(),
+            )]
+        } else {
+            edits
         },
         select,
     })

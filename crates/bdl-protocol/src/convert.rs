@@ -652,6 +652,15 @@ pub fn layout_to_pb(l: &Layout) -> pb::Layout {
             y: v.y,
             zoom: v.zoom,
         }),
+        definitions: l
+            .definitions
+            .iter()
+            .map(|(id, p)| pb::NodePosition {
+                id: id.raw(),
+                x: p.x,
+                y: p.y,
+            })
+            .collect(),
     }
 }
 
@@ -664,6 +673,11 @@ pub fn layout_from_pb(l: &pb::Layout) -> Layout {
             .collect(),
         mappings: l
             .mappings
+            .iter()
+            .map(|n| (DeclId::from_raw(n.id), Point { x: n.x, y: n.y }))
+            .collect(),
+        definitions: l
+            .definitions
             .iter()
             .map(|n| (DeclId::from_raw(n.id), Point { x: n.x, y: n.y }))
             .collect(),
