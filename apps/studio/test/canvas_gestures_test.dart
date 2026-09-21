@@ -242,12 +242,7 @@ void main() {
         actions.clear();
         final bHeader = scene.node(const NodeRef.mapping(b)).header.center;
         await drag(tester, bHeader, bHeader + const Offset(0, 500));
-        // B and its mapping block move as one declaration (ADR-0044)
-        final moved = actions.whereType<NodesMoved>().single;
-        expect(moved.positions.keys.toSet(), {
-          const NodeRef.mapping(b),
-          const NodeRef.definition(b),
-        });
+        expect(actions.whereType<NodeMoved>().single.node, const NodeRef.mapping(b));
         final removed = actions.whereType<RemoveGroupMemberRequested>().single;
         expect(removed.group, groupId);
         expect(removed.decl, b);

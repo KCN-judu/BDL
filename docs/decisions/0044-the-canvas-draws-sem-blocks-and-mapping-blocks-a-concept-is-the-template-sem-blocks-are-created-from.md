@@ -141,8 +141,9 @@ unchanged.
    template's parameter editor in the inspector; the canvas no longer dispatches
    them. The Concept → Output authoring gesture has no socket to start from and
    is withdrawn; the sink's inspector keeps `driveCandidates`. Selecting a
-   mapping block selects its Sem block (`asDeclaration`); dragging a Sem block
-   moves its mapping block with it, dragging the mapping block moves it alone.
+   mapping block selects its Sem block (`asDeclaration`); the two nodes have two
+   positions — the mapping block is placed beside the Sem block when it appears,
+   and from then on each moves alone.
 
 4. **Parameters are named where a concept repeats** (amends ADR-0013). A rule
    reading one concept twice gets a name per repeated input from the model

@@ -45,9 +45,10 @@
   `LinkMappingOutputToConcept` / `UnlinkMappingInput` are the rule template's
   parameter editor in the inspector, no longer reachable from the canvas.
 - **One declaration, two nodes.** Clicking a mapping block selects its Sem block
-  (one selection, one inspector, one menu); both wear the selection outline.
-  Dragging a Sem block moves its mapping block with it; dragging the mapping
-  block moves it alone. Renaming either renames the block.
+  (one selection, one inspector, one menu); both wear the selection outline. The
+  two nodes have two positions: the mapping block is placed beside the Sem block
+  when it appears, and from then on each moves alone. Renaming either renames
+  the block.
 - **Creation**: the canvas menu's **Add Block ▸ of C** makes a Sem block of an
   existing concept at the point (the Source path, `CreateSource`); **New Concept
   ▸** (the category items) makes the concept and a block of it in one

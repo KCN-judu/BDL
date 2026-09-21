@@ -348,8 +348,7 @@ void main() {
       final before1 = scene.node(m1).rect.topLeft;
       await drag(t, header(m0), header(m0) + const Offset(80, 60));
       final moved = actions.whereType<NodesMoved>().single;
-      expect(moved.positions.keys.toSet(), {m0, m1, d1}, reason: 'a block takes its mapping block');
-      expect(moved.positions[d1]! - layout[d1]!, moved.positions[m1]! - before1);
+      expect(moved.positions.keys.toSet(), {m0, m1}, reason: 'a mapping block is its own node');
       expect(moved.positions[m0]! - before0, moved.positions[m1]! - before1);
       expect(actions.whereType<NodeMoved>(), isEmpty, reason: 'one layout operation');
       expect(h.selection, MultiSelected({m0, m1}, active: m0), reason: 'the set stays');
@@ -360,9 +359,18 @@ void main() {
       await pumpCanvas(t, actions, selection: MultiSelected({m0, m1}, active: m0));
       await drag(t, header(m2), header(m2) + const Offset(0, 80));
       expect(lastSelection(actions), const MappingSelected(value));
-      final moved = actions.whereType<NodesMoved>().single;
-      expect(moved.positions.keys.toSet(), {m2, d2}, reason: 'one declaration, two nodes');
-      expect(actions.whereType<NodeMoved>(), isEmpty);
+      final moved = actions.whereType<NodeMoved>().single;
+      expect(moved.node, m2, reason: 'its mapping block stays where it is');
+      expect(actions.whereType<NodesMoved>(), isEmpty);
+      // the mapping block grabbed by itself moves alone, and selects the block
+      actions.clear();
+      await drag(t, header(d2), header(d2) + const Offset(0, 80));
+      expect(actions.whereType<NodeMoved>().single.node, d2);
+      expect(
+        actions.whereType<SelectionChanged>(),
+        isEmpty,
+        reason: 'its block is selected already',
+      );
     });
 
     testWidgets('a press on a node that does not move keeps the selection as it was', (t) async {

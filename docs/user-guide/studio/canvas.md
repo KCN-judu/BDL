@@ -45,9 +45,9 @@ _Formula_; one input socket on the left **per block the formula reads**,
 labelled with that block's name; an output socket on the right joined to the
 block it defines by a short link — the formula is the block's one definition,
 and that joint is never rerouted; and the formula on the line below. The mapping
-block sits to the left of its block, and moves with it when you drag the block
-(drag the mapping block alone to move only it). It carries a small chevron at
-its formula line: click it (or **Show Formula** in the menu) and the mapping
+block is placed to the left of its block when it appears; from then on it is a
+node of its own — drag either one and only it moves. It carries a small chevron
+at its formula line: click it (or **Show Formula** in the menu) and the mapping
 block unfolds to show the formula the way the
 [Formula editor](formula-editor.md) draws it — a fraction, a branch, the units —
 with its first finding beneath and **Edit formula**, which opens the inspector.

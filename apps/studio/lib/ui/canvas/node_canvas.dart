@@ -630,22 +630,16 @@ class _NodeCanvasState extends State<NodeCanvas> {
       case HitNode(:final node) || HitDisclosure(:final node):
         // Dragging a selected node moves the selected set; an unselected
         // one becomes the selection first (⌘/Ctrl adds it instead).  A
-        // Sem block takes its mapping block along; a mapping block grabbed
-        // by itself moves alone (its own position, ADR-0044).
+        // Sem block and its mapping block are two nodes with two positions
+        // (ADR-0044): what moves is the kind of node grabbed — the selected
+        // Sem blocks, or the one mapping block under the pointer.
         final decl = asDeclaration(node.ref);
         var set = _selectedSet;
         if (!set.contains(decl)) {
           set = _primaryModifier ? {...set, decl} : {decl};
           _setSelection(set, active: decl);
         }
-        final moving = node.ref.kind == NodeKind.definition
-            ? {node.ref}
-            : {
-                for (final r in set) ...[
-                  r,
-                  if (r.kind == NodeKind.mapping) NodeRef.definition(r.id),
-                ],
-              };
+        final moving = node.ref.kind == NodeKind.definition ? {node.ref} : set;
         final base = <NodeRef, Offset>{
           for (final n in scene.nodes)
             if (moving.contains(n.ref)) n.ref: n.rect.topLeft,
