@@ -11,12 +11,12 @@ _This change affects dimByTilt, warmPulse; they will be checked again._ — and
 
 ## Concept
 
-| Section           | Fields                                                                                                         | Notes                                                                                                                 |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Meaning**       | Name, Meaning                                                                                                  |                                                                                                                       |
-| **Value**         | Quantity / On / off / Count / Decide later; Unit (a list of quantity kinds, the symbol in its own column)      | choosing a value form the first time rechecks nothing; changing a chosen one says which relationships it rechecks     |
-| **Relationships** | _Produced by_ (every relationship whose output is this concept, rule or value), _Used by_ (those that read it) | names are links that select the relationship; which of them carries a value per tick is the Simulate probe's question |
-| **Delete …**      |                                                                                                                | disabled while used; the users are named under the button                                                             |
+| Section           | Fields                                                                                                                      | Notes                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Meaning**       | Name, Meaning                                                                                                               |                                                                                                                   |
+| **Value**         | Quantity / On / off / Count / Decide later; Unit (a list of quantity kinds, the symbol in its own column)                   | choosing a value form the first time rechecks nothing; changing a chosen one says which relationships it rechecks |
+| **Relationships** | _Blocks_ (the blocks of this concept — each one value of it on the canvas), _Rules_ (the rules whose signature mentions it) | names are links that select the block or rule; a concept with no block yet says how to add one                    |
+| **Delete …**      |                                                                                                                             | disabled while used; the users are named under the button                                                         |
 
 ## Relationship
 

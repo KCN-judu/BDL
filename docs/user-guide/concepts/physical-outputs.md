@@ -37,11 +37,11 @@ section and under the output's **Driver** section.
 ## On the canvas
 
 An output is a **sink node** at the right edge of the canvas: a boundary bar and
-one input socket in the accepted concept's colour. Drag from a value's output
+one input socket in the accepted concept's colour. Drag from a block's output
 socket onto the sink to connect; drag the link away from the sink and release on
-empty canvas to disconnect. Only a relationship's output socket can land on a
-sink; a concept row cannot drive the world by itself, and nothing reads from a
-sink.
+empty canvas to disconnect. Only a block of the accepted concept can land on a
+sink — a rule has no value to give, and a mapping block's output socket is its
+block's — and nothing reads from a sink.
 
 ## In the inspector
 

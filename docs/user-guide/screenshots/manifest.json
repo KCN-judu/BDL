@@ -68,7 +68,7 @@
       },
       "output": "studio/workspace.png",
       "caption": "The workspace with the tilt lamp open and brightness selected: toolbar, sidebar, canvas, inspector, status line and page bar.",
-      "alt": "The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.",
+      "alt": "The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's blocks — the Source tilt, the mapping block dimByTilt, the block brightness it defines, and the light sink — joined by links; the inspector on the right showing the selected block brightness with its Meaning, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.",
       "purpose": "The six regions of the workspace, on a real design."
     },
     {
@@ -126,8 +126,8 @@
         "pad": 32
       },
       "output": "getting-started/declared-relationship.png",
-      "caption": "A declared relationship: dashed outline and the word declared in its header.",
-      "alt": "Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.",
+      "caption": "Two blocks before the formula: tilt, and brightness still provided from outside.",
+      "alt": "Two blocks one above the other, each with a bar at its left edge, an entry arrow and the word Source in its header and one output socket on the right: tilt with a socket labelled Tilt, and brightness with a socket labelled Brightness; no link joins them yet.",
       "purpose": "The tutorial's step 3: what a relationship without a formula looks like."
     },
     {
@@ -263,8 +263,8 @@
         "pad": 40
       },
       "output": "getting-started/complete-lamp.png",
-      "caption": "The finished lamp: the Source tilt, the rule dimByTilt, the value brightness, and the driven light.",
-      "alt": "The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "caption": "The finished lamp: the Source tilt, the mapping block applying the rule dimByTilt, the block brightness it defines, and the driven light.",
+      "alt": "The canvas left to right: the Source block tilt (a bar at its left edge, an entry arrow and the word Source in its header, one output socket labelled Tilt), a link from it into the mapping block dimByTilt, whose left socket is labelled tilt and whose formula line reads dimByTilt(tilt), a short link from its output socket into the block brightness, whose socket is labelled Brightness, and a link from brightness to the light sink at the right; tilt, brightness and the output carry the domain name interaction.",
       "purpose": "What the tutorial's design looks like when it is executable."
     },
     {
@@ -297,8 +297,8 @@
         "pad": 40
       },
       "output": "studio/node-anatomy.png",
-      "caption": "Node anatomy on the tilt lamp: concept rows, relationship nodes (dimByTilt selected), and the light sink.",
-      "alt": "Concept rows Tilt and Brightness with a round socket at each end; relationship nodes with a name header, one input socket per concept read on the left, one output socket on the right and the formula in the body; dimByTilt, with the word rule in its header, outlined in the accent colour because it is selected; the Source tilt with a bar at its left edge, an entry arrow and the word Source in its header and no input socket; brightness with no input socket and two thin grey links arriving at its formula line from the output sockets of tilt and dimByTilt; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt, brightness and the output carry the domain name interaction at their right edge.",
+      "caption": "Node anatomy on the tilt lamp: the Source tilt, the mapping block dimByTilt with its read socket and its formula, the block brightness it defines (selected), and the light sink.",
+      "alt": "The Source block tilt with a bar at its left edge, an entry arrow and the word Source in its header, no input socket and one round output socket labelled Tilt; a link from it into the mapping block dimByTilt, with one input socket on the left labelled tilt — the block its formula reads — an output socket on the right and the formula dimByTilt(tilt) on the line below with a chevron at its end; a short link from that output socket into the block brightness, outlined in the accent colour because it is selected, with an input socket on the left, the domain name interaction beside it and one output socket on the right labelled Brightness; the light sink at the right with the word required in its header, a single input socket and a bar at its right edge; tilt and the output carry the domain name interaction too.",
       "purpose": "The parts of every node kind, on real nodes."
     },
     {
@@ -330,8 +330,8 @@
         "pad": 40
       },
       "output": "studio/formula-unfolded.png",
-      "caption": "dimByTilt unfolded: the chevron at its formula line turned down, and the saved formula Tilt / 90 deg drawn as a fraction inside the node, with Edit formula beneath.",
-      "alt": "The relationship node dimByTilt with its formula line Tilt / 90 deg and a downward chevron, extended below by a region showing Tilt over a rule over 90 deg and the link Edit formula.",
+      "caption": "brightness's mapping block unfolded: the chevron at its formula line turned down, and the saved formula dimByTilt(tilt) drawn inside it, with Edit formula beneath; the block brightness it defines to its right.",
+      "alt": "The mapping block dimByTilt with its read socket tilt, its formula line dimByTilt(tilt) and a downward chevron, extended below by a region showing dimByTilt applied to tilt and the link Edit formula; to its right, joined by a short link, the block brightness with its socket labelled Brightness.",
       "purpose": "A saved formula read on the canvas without opening the inspector."
     },
     {
@@ -503,8 +503,8 @@
         "pad": 40
       },
       "output": "getting-started/pico-design.png",
-      "caption": "The demo's design: the Source pressed, the value lit that follows it, and the lamp it drives.",
-      "alt": "The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.",
+      "caption": "The demo's design: the Source pressed, the mapping block of lit that follows it, the block lit, and the lamp it drives.",
+      "alt": "The canvas left to right: the Source block pressed with its entry arrow and the word Source at the left, a link from it into a mapping block headed Formula whose left socket is labelled pressed and whose formula line reads pressed, a short link from it into the block lit, and a link from lit to the lamp sink at the right; pressed, lit and the lamp carry the domain name main.",
       "purpose": "What the tester sees first: three objects, nothing about pins."
     },
     {
@@ -621,7 +621,7 @@
       },
       "output": "studio/instance-nodes.png",
       "caption": "Two instances of AdaptiveLamp, drawn from the component's promise, fed by one tiltValue and bound to brightness and mirror.",
-      "alt": "Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level tiltValue into both required sockets and from each provided socket to the top-level relationships brightness and mirror, whose bodies read = adaptiveLamp.brightness and = second.brightness.",
+      "alt": "Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level block tiltValue into both required sockets and from each provided socket into the filled left socket of the top-level blocks brightness and mirror, which the bindings define.",
       "purpose": "Instance node anatomy and bindings on a real system canvas."
     },
     {
@@ -663,7 +663,7 @@
       },
       "output": "studio/component-source.png",
       "caption": "A component's source: its own canvas, with the ports marked, and the bar that leads back to the system.",
-      "alt": "Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), the rule dimByTilt, and brightness with the word provides in its header.",
+      "alt": "Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), a link from it into the mapping block dimByTilt, and brightness with the word provides in its header, which that mapping block defines.",
       "purpose": "What opening an instance's source shows."
     },
     {
@@ -804,8 +804,8 @@
         "pad": 32
       },
       "output": "workflows/behavior-region.png",
-      "caption": "The expanded behavior Adaptive lamp: a region around dimByTilt and brightness, selected.",
-      "alt": "A titled region labelled Adaptive lamp enclosing the relationship nodes dimByTilt and brightness, outlined in the accent colour because it is selected; tiltValue to its left feeds into it and indicator and the light sink to its right read from it.",
+      "caption": "The expanded behavior Adaptive lamp: a region around brightness and its mapping block, selected.",
+      "alt": "A titled region labelled Adaptive lamp enclosing the mapping block dimByTilt and the block brightness it defines, outlined in the accent colour because it is selected; tiltValue to its left feeds into the mapping block, the light sink to its right and indicator's mapping block below read from brightness.",
       "purpose": "What a behavior group looks like when expanded."
     },
     {
@@ -841,7 +841,7 @@
       },
       "output": "workflows/behavior-collapsed.png",
       "caption": "The same behavior collapsed: one box with an aggregate socket for the member each link reaches.",
-      "alt": "A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to indicator and the light sink on the right.",
+      "alt": "A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to the light sink and to indicator's mapping block on the right.",
       "purpose": "The collapsed form of a behavior and what its sockets stand for."
     },
     {

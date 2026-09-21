@@ -39,8 +39,9 @@ values in the design.
 
 You can create `dimByTilt` before you know its formula. It is then _declared_:
 it exists, it has a signature, and everything that depends on it can be designed
-around it. The tool marks it as open work, not as an error. The same goes for a
-concept whose value form you have not chosen yet.
+around it. The tool marks it as open work, not as an error — as it marks a block
+that has no formula yet as a Source, provided from outside until you say
+otherwise. The same goes for a concept whose value form you have not chosen yet.
 [Incomplete designs](../concepts/incomplete-designs.md) explains the states a
 design can be in and why none of them stops you working.
 

@@ -23,7 +23,7 @@ whichever canvas is open.
 
 ## Instance nodes
 
-![Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level tiltValue into both required sockets and from each provided socket to the top-level relationships brightness and mirror, whose bodies read = adaptiveLamp.brightness and = second.brightness.](../assets/studio/instance-nodes.png)
+![Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level block tiltValue into both required sockets and from each provided socket into the filled left socket of the top-level blocks brightness and mirror, which the bindings define.](../assets/studio/instance-nodes.png)
 
 _Two instances of AdaptiveLamp, drawn from the component's promise, fed by one
 tiltValue and bound to brightness and mirror._
@@ -32,15 +32,17 @@ An instance node has the instance's name in a tinted header; one row per port �
 _requires_ ports and _parameters_ on the left, with a hollow socket while
 nothing is bound to them, _provides_ ports on the right; and in the body the
 component's name with its timing parameters, each shown with the system domain
-the instance gave it. A top-level relationship bound to a provided port shows
-the binding in its formula line: _= adaptiveLamp.brightness_.
+the instance gave it. A top-level block bound to a provided port has a filled
+socket on its left where the binding's link arrives, and no mapping block of its
+own — the binding is its definition; the inspector names it (_=
+adaptiveLamp.brightness_).
 
 Socket colours are the concepts the ports carry _in the system_: a shared
 concept's own hue, or the instance's private hue for a private concept — so two
 instances of one component have two colours for their private _Brightness_. A
 red mark on the component's name means the source no longer keeps its promise.
 
-![Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), the rule dimByTilt, and brightness with the word provides in its header.](../assets/studio/component-source.png)
+![Above the canvas a bar with a System back button and the words Editing AdaptiveLamp, used by 2 instances; on the canvas the component's own design: tiltValue with the word requires in its header (a required port is a Source the instance's binding provides), a link from it into the mapping block dimByTilt, and brightness with the word provides in its header, which that mapping block defines.](../assets/studio/component-source.png)
 
 _A component's source: its own canvas, with the ports marked, and the bar that
 leads back to the system._

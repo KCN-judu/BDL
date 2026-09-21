@@ -31,10 +31,10 @@ On the Welcome page, under **Demos**, choose **Button → Lamp, wired**. Studio
 asks where to put the project (it is an ordinary project: a folder with
 `src/main.bdl` in it) and opens it on the Design page.
 
-![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../assets/getting-started/pico-design.png)
+![The canvas left to right: the Source block pressed with its entry arrow and the word Source at the left, a link from it into a mapping block headed Formula whose left socket is labelled pressed and whose formula line reads pressed, a short link from it into the block lit, and a link from lit to the lamp sink at the right; pressed, lit and the lamp carry the domain name main.](../assets/getting-started/pico-design.png)
 
-_The demo's design: the Source pressed, the value lit that follows it, and the
-lamp it drives._
+_The demo's design: the Source pressed, the mapping block of lit that follows
+it, the block lit, and the lamp it drives._
 
 Three objects. **pressed** is a _Source_: a value the environment provides — the
 design does not say how, and the canvas shows no pin. **lit** is a relationship

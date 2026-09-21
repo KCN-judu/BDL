@@ -15,8 +15,9 @@ Creating a relationship only fixes its signature. That is enough for the rest of
 the design to be built around it: other relationships can apply it, an output
 can wait for it, the simulator can list what it still needs. The formula comes
 when you are ready, in the inspector's _Relationship_ section. Until then a
-relationship that reads something is dashed and _declared_; one that reads
-nothing is a **Source** — complete as it is, provided by the environment.
+relationship that reads something — a rule — is _declared_ (the inspector and
+the status line say so); one that reads nothing — a block on the canvas — is a
+**Source** — complete as it is, provided by the environment.
 
 The formula is checked against the signature as you type, and the check is in
 your own terms: _Brightness is a dimensionless quantity, but this formula
@@ -80,20 +81,18 @@ from other domains with `sync` — is in
 
 ## Links on the canvas
 
-Two kinds of link, told apart by colour and by where they end. A link in a
-concept's colour from a concept's output socket to a relationship's input socket
-means _this relationship reads that concept_; from a relationship's output
-socket to a concept's input socket, _this relationship produces that concept_.
-These are the **signature**: drawing one edits it; dragging one away from an
-input and dropping it on empty canvas removes the concept from the signature. A
-thin grey link from a relationship's output socket to the left end of another
-relationship's formula line means _that formula names this relationship_ —
-`brightness`'s line receives one from `dimByTilt` (applied) and one from `tilt`
-(named). These are the **dependency**, read off the analysis of the formula;
-they follow the formula and cannot be dragged. On the canvas a rule wears the
-word _rule_ in its header; a value wears no word. Neither kind of link shows the
-arithmetic or an order of execution: the canvas is a picture of the interface
-and of dependency, not a flowchart.
+Three kinds of link, all socket to socket in a concept's colour, told apart by
+where they end. From a block's output socket into a **mapping block**'s input
+socket: _this formula reads that block_ — `brightness`'s mapping block receives
+one from `tilt`. From a mapping block's output socket into the block beside it:
+_this formula defines that block_ — the one definition, drawn as a short joint.
+From a block's output socket into an output: _this block drives that output_.
+The read links are the **dependency**, read off the compiler's analysis of the
+formula, never off the text as you type it; they follow the formula. A rule
+(`dimByTilt`) is not on the canvas: the mapping block that applies it names it
+in its header, and the rule's own signature is edited in its inspector, in the
+sidebar. No link shows the arithmetic or an order of execution: the canvas is a
+picture of values and of dependency, not a flowchart.
 
 ## What the inspector shows
 
@@ -104,10 +103,11 @@ and of dependency, not a flowchart.
   relationships will be rechecked.
 - **Relationship** — the formula editor: _Add definition_ / _Save definition_ /
   _Revert_ / _Detach definition_, the verdict line, and any findings about the
-  formula; then _Depends on_ (the relationships the formula names) and _Named
-  in_ (the formulas that name this one) — the reference links, as names you can
-  click; then the findings about the relationship's place in the design — a rule
-  nothing applies, with its fix beside it.
+  formula; then, for a block, _Reads_ (the blocks the formula names — the
+  canvas's links into it), _Applies_ (the rules it applies) and _Read by_ (the
+  blocks whose formulas name it); for a rule, _Depends on_ and _Named in_ — as
+  names you can click; then the findings about the relationship's place in the
+  design — a rule nothing applies, with its fix beside it.
 - **Timing** — _Updates in_: the timing domain, or _Any timing domain_ for a
   pure rule. See [Timing](timing.md).
 - **Drives** — the physical output this value is the final target of, if any.
@@ -124,9 +124,9 @@ input ending in `mk` of the output). A declaration without a realization is the
 language's unresolved declaration, a first-class state.
 `docs/architecture/compiler-pipeline.md` passes 3–6;
 `docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the formula
-language's naming rule. The reference links are the kernel's `dependsOn`
+language's naming rule. The links on the canvas are the kernel's `dependsOn`
 (`docs/spec/kernel.md` §5) — `refs` of the realization, carried per relationship
-in the analysis (`MappingAnalysis.references`, ADR-0034).
+in the analysis (`MappingAnalysis.references`, ADR-0034, ADR-0043).
 
 ## Related
 

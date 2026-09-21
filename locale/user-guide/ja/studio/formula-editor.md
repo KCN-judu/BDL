@@ -28,7 +28,7 @@ The pointer works alongside: clicking a part places the caret there _and_ select
 
 ![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
-_The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._
+_分母のスロットを選択した式ビュー：商は分数として描かれ、コンパイラはそのスロットが角度を期待する理由を示し、角度の単位付きの数値、適合する参照、結果が適合する方程式を提示します。_
 
 空の数式は 1 つの**スロット**——`?` と書かれた破線の箱、値がまだ書かれていない場所——です。スロットをクリックすると、コンパイラはそこに何を期待するかを述べ、適合するものを提示します：
 

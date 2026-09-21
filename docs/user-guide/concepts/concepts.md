@@ -65,7 +65,8 @@ an edit, and the inspector names the relationships that will be checked again.
 - **Meaning** — the name and a free-text description of what the concept means
   to the product.
 - **Value** — the value form and unit.
-- **Relationships** — _Produced by_ and _Used by_, as links.
+- **Relationships** — _Blocks_ (the blocks of this concept) and _Rules_ (the
+  rules over it), as links.
 - **Delete** — disabled while a relationship uses the concept, with the users
   named.
 
@@ -74,11 +75,11 @@ an edit, and the inspector names the relationships that will be checked again.
 _For language implementers._ A concept is a nominal type — `sem C`, read "a Sem
 of _C_" — and so a template: each Source or value of that concept in a design is
 a _Sem block_, an instance holding one value per tick, and its formula is its
-_mapping block_; a rule is a template in the same way. Its value form is its
-_representation_, chosen once (a write-once binding). A formula reads a concept
-through `rep` and produces one through `mk`, and the dimension check is the
-representation's dimension algebra. `docs/spec/kernel.md` and
-`docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference;
+_mapping block_ — the node drawn beside it; a rule is a template in the same
+way. Its value form is its _representation_, chosen once (a write-once binding).
+A formula reads a concept through `rep` and produces one through `mk`, and the
+dimension check is the representation's dimension algebra. `docs/spec/kernel.md`
+and `docs/architecture/compiler-pipeline.md` (passes 3–7) are the reference;
 `docs/spec/concept-library.md` explains why a library item is not an identity.
 
 ## Related

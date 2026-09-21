@@ -24,9 +24,9 @@
 
 在欢迎页的**演示**下选择 **Button → Lamp, wired**。Studio 会问项目放在哪里（它是一个普通项目：一个含有 `src/main.bdl` 的文件夹），然后在设计页打开它。
 
-![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
+![The canvas left to right: the Source block pressed with its entry arrow and the word Source at the left, a link from it into a mapping block headed Formula whose left socket is labelled pressed and whose formula line reads pressed, a short link from it into the block lit, and a link from lit to the lamp sink at the right; pressed, lit and the lamp carry the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
 
-_演示的设计：来源 pressed、跟随它的值 lit，以及它驱动的 lamp。_
+_演示的设计：来源 pressed、跟随它的 lit 的映射块、块 lit，以及它驱动的灯。_
 
 三个对象。**pressed** 是一个 _来源_：环境提供的值——设计不说明如何提供，画布上也没有引脚。**lit** 是一个关系，公式就是 `pressed`。**lamp** 是物理输出，由 `lit` 驱动。这里没有任何东西与板子有关；那是下一页的事。
 

@@ -1,8 +1,6 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/inspector.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/inspector.md) · 简体中文 · [日本語](../../ja/studio/inspector.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 检查器
 
@@ -13,10 +11,10 @@
 ## 概念
 
 | 分区 | 字段 | 说明 |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **含义** | 名称、含义 |  |
 | **值** | 量 / 开/关 / 计数 / 稍后决定；单位（量的种类列表，符号在单独一列） | 第一次选择值形式不会重新检查任何东西；更改已选的值形式会说明它重新检查哪些关系 |
-| **关系** | _产出自_（输出为这个概念的每个关系，无论规则还是值）、_被使用于_（读取它的关系） | 名字是选中该关系的链接；其中哪些在每个刻度承载一个值，是模拟页探针回答的问题 |
+| **关系** | _块_（这个概念的块——每个都是画布上它的一个值）、_规则_（签名中提到它的规则） | 名字是可点击的链接，会选中该块或规则；还没有块的概念会说明如何添加一个 |
 | **删除 …** |  | 使用中时禁用；使用者列在按钮下方 |
 
 ## 关系
@@ -26,7 +24,7 @@
 | **含义** | 名称、含义、_角色_——_来源_、_规则_、_值_，或它所支撑的端口；下面有一句说明 | 角色从设计中读出，从不设置 |
 | **读取** | 带概念图形符号的标签，可移除；一个用于添加的弹出菜单 | 一次编辑；依赖项会被重新检查 |
 | **生成** | 带图形符号的弹出菜单——对于来源，标题为**提供** | 一次编辑 |
-| **关系** | the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field; for a Source, _Realization: Provided by the environment; no device is bound yet._ above the field — or, with a board chosen on the Deploy page, what that deployment says (_… no device on Raspberry Pi Pico yet._, _Provided by sensor as … on …_); _Depends on_ (what the formula names) and _Named in_ (whose formulas name this) as name links | 见[公式编辑器](formula-editor.md)；这两行就是画布上的引用连线 |
+| **关系** | 公式字段及其判定行；_添加定义_ / _保存定义_ / _还原_ / _分离定义_；字段下方的发现；对于来源，字段上方是 _实现方式：由环境提供；尚未绑定设备。_——或者，在部署页选择了板子后，该部署所说的内容（_… Raspberry Pi Pico 上尚无设备。_、_由 sensor 作为 … 在 … 上提供_）；_依赖于_（公式提到的）和 _被命名于_（哪些公式提到了它），以名字链接形式显示 | 见[公式编辑器](formula-editor.md)；这两行就是画布上的引用连线 |
 | **时序** | _更新于_——一个域，或 _任意时序域_；时序发现项 | 见 [时序](../../../../docs/user-guide/concepts/timing.md) |
 | **驱动** | 对于值：它驱动的输出，或无；对于规则：_规则不能驱动输出——请连接应用这条规则的值。_，当有一个值应用它时，显示该值的名字和 _显示_；连接发现项 | 只有值——没有输入的关系——才会提供弹出菜单 |
 | **修复** | 工具针对该关系的发现项提供的操作：就绪时是按钮，需要选择时是弹出菜单，受阻时显示原因 | 作为普通的、可撤销的编辑应用 |
@@ -34,7 +32,7 @@
 
 关系还可能显示 _属于组 …_ 及 _显示组_ 链接；绑定到端口时显示 _从 … 取值_ 及 _显示绑定_（附有 _断开它以自行定义该关系。_）；在组件的来源中，显示它支撑的端口（_requires_ / _provides_ / _parameter_）。端口在组件自己的检查器中声明。
 
-A **Source** — a relationship that reads nothing and has no formula — is inspected the same way. Its Role row says _Source_; its output section is _Provides_; its Relationship section's _Realization_ row says who provides the value — the environment, or, once a board is chosen on the [Deploy page](deploy.md), the device bound there (_Provided by sensor as GPIO input, active low on Raspberry Pi Pico._) — and keeps the formula field: add a formula and the same relationship is computed inside the design instead. Nothing here edits the binding; that is the Deploy page's, and the design does not change when it is made.
+**来源**——不读取任何东西且没有公式的关系——以同样方式检查。它的角色行写着 _来源_；它的输出区是 _提供_；它的关系区的 _实现方式_ 行说明由谁提供这个值——环境，或者在[部署页](deploy.md)选择了板子之后，绑定在那里的设备（_由 sensor 作为 GPIO 输入（低电平有效）在 Raspberry Pi Pico 上提供。_）——并保留公式字段：加上公式，同一个关系就改为在设计内部计算。这里不会编辑绑定；那是部署页的事，建立绑定时设计不会改变。
 
 ## 物理输出
 

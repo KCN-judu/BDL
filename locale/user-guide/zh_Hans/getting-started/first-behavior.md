@@ -1,12 +1,10 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-behavior.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · 简体中文 · [日本語](../../ja/getting-started/first-behavior.md)
->
-> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一个行为
 
-**目标。** 一盏台灯，亮度随灯头倾斜的角度变化：竖直时熄灭，放平时全亮。完成时你会得到一个包含两个概念、三个关系、一个时序域和一个物理输出的设计——已检查、已保存，可以 [仿真](first-simulation.md)。
+**目标。** 一盏台灯，亮度随灯头倾斜的角度变化：竖直时熄灭，放平时最亮。完成后你会得到一个设计，包含两个概念、两个由它们生成的块、一条规则、一个时序域和一个物理输出——已检查、已保存，可以[仿真](first-simulation.md)。
 
 **用时。** 大约二十分钟。
 
@@ -17,41 +15,49 @@
 1. 启动 Studio（[安装与启动](install-and-launch.md)）。
 2. 点击**新建项目…**，选择位置，把文件夹命名为 `lamp`。
 
-工作区在**设计**页打开：左侧是侧栏，中间是空画布，右侧是检查器，底部是状态行和页面栏。画布告诉你先做什么：从侧栏添加一个概念。
+工作区在**设计**页打开：左侧是侧栏，中间是空白画布，右侧是检查器，底部是状态行和页面栏。
 
 ## 2. 添加两个概念
 
-**概念**是有含义的值。这盏灯有两个：倾斜了多少，以及有多亮。
+**概念**是带有含义的值——也是一个模板：画布上的块由它生成。这盏灯有两个：倾斜了多少，以及有多亮。
 
 1. 在侧栏的**项目**标签页中，点击 _概念_ 旁的 **+**。
 2. 在 _新建概念_ 面板中：名称填 `Tilt`。在 _值_ 下选择**量**，单位选择**角度**（符号 `rad` 出现在它自己的一列）。点击**创建**。
 3. 再次点击 _概念_ 旁的 **+**：名称 `Brightness`，**量**，单位**无单位**。点击**创建**。
 
-每个概念在画布上是一行，两端各有一个圆形插口。圆形表示 _量_；颜色是该概念专属的，凡是用到 _这个_ 概念的地方都会出现。Brightness 是无单位的量：0 到 1 之间的一个水平。
+两个概念出现在侧栏里，而不是画布上：概念是模板，它的**块**才是持有值的东西。表单预览中的圆形表示 _物理量_；颜色是这个概念专属的，会标记每一个承载 _该_ 概念的插口。Brightness 是没有单位的物理量：0 到 1 之间的程度。
 
-> 面板会随你输入预览这一行。如果是空心环而不是实心插口，表示值形式尚未选择——这是允许的，指南稍后会回到这一点。
+> 如果插口不是实心而是空心圆环，表示值的形式尚未选择——这是允许的，指南后面会再谈到。
 
-**你做了什么。** 两个有名字的含义。还没涉及数字。侧栏的**库**标签页提供现成的概念（_Tilt_ 和 _Brightness_ 都在其中）；把一个拖到画布上等同于填写面板。
+**你做了什么。** 两个有名字的含义。还没有任何数字。侧栏的**库**标签页提供现成的概念（_Tilt_ 和 _Brightness_ 都在其中）。
 
-## 3. 添加关系
+## 3. 在画布上各放一个块
 
-**关系**说明一个概念如何由其他概念得出。
+**块**是某个概念的一个值，每个 tick 更新一次。这盏灯需要一个倾斜和一个亮度。
+
+1. 右键点击空白画布 → **添加块 ▸** → **Tilt 的块**。名为 `tilt` 的块落在你点击的位置。
+2. 再次右键 → **添加块 ▸** → **Brightness 的块**：得到块 `brightness`。
+
+每个块右侧有一个输出插口，颜色是其概念的颜色；标题带有 _来源_ 一词，左边缘有一条竖线：没有公式的块由**外部提供**——环境、传感器——直到你说明它如何计算为止。这不是错误。你可以在这里停下，保存，明天再来。
+
+![Two blocks one above the other, each with a bar at its left edge, an entry arrow and the word Source in its header and one output socket on the right: tilt with a socket labelled Tilt, and brightness with a socket labelled Brightness; no link joins them yet.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
+
+_公式写出之前的两个块：tilt，以及仍由外部提供的 brightness。_
+
+（右键点击画布并选择**添加块 ▸ 新概念 ▸**，会在你点击的位置一次创建一个概念 _以及_ 它的一个块；把库中的一行拖到画布上效果相同。）
+
+## 4. 写出规则
+
+亮度如何由倾斜得出？这是一条**规则**：读取一个概念并生成另一个概念的关系。规则也是模板——它在块的公式里被应用，本身并不是画布上的块。
 
 1. 点击侧栏中 _映射_ 旁的 **+**（面板标题是 _新建映射_；指南中说 _关系_——它们是同一回事）。
 2. 名称 `dimByTilt`。在 _读取_ 下打开 **Tilt**。在 _生成_ 下选择 **Brightness**。点击**创建**。
 
-出现一个节点，有一个输入插口（左侧的 Tilt）和一个输出插口（右侧的 Brightness）。它以**虚线**绘制，标题里写着 _已声明_：关系存在并有签名，但还没有公式。这不是错误。你可以就此停下、保存，明天再回来。
+`dimByTilt` 出现在侧栏的 _映射_ 列表中并被选中，检查器显示它：_规则_，读取 Tilt，生成 Brightness，尚无公式。
 
-![Two concept rows, Tilt and Brightness, and between them the relationship node dimByTilt drawn with a dashed outline and the word declared in its header; a link runs from Tilt into the node's input socket and from its hollow output socket to Brightness.](../../../../docs/user-guide/assets/getting-started/declared-relationship.png)
-
-_一个已声明的关系：虚线轮廓，标题中写着“已声明”。它的输出插口是空心的：在有值应用这条规则之前，规则不产生任何值。_
-
-## 4. 写公式
-
-1. 点击 `dimByTilt` 节点。检查器会显示它。
-2. 在**关系**区，编辑器以**公式**视图打开：一个空槽位 `?`，以及文字 _生成 Brightness_。点击槽位。它下方的 _引用_ 列出了 **Tilt**——点击它。槽位变为 `Tilt`。
-3. 点击 `Tilt` 并按 **÷**。公式显示为 `Tilt ÷ ?`，新槽位被选中：_期望：角度，因为角度 ÷ 角度 = 无量纲量。_
-4. 在数字输入框中输入 `90`，从单位弹出菜单中选择 **deg**（只提供角度单位），按回车。公式显示为 `Tilt ÷ 90 deg`，字段下方一行显示 _有效的定义_。
+1. 在**关系**区，编辑器以**公式**视图打开：一个空槽位 `?`，以及文字 _生成 Brightness_。点击槽位。它下方的 _引用_ 列出了 **Tilt**——点击它。槽位变为 `Tilt`。
+2. 点击 `Tilt` 并按 **÷**。公式显示为 `Tilt ÷ ?`，新槽位被选中：_期望：角度，因为角度 ÷ 角度 = 无量纲量。_
+3. 在数字输入框中输入 `90`，从单位弹出菜单中选择 **deg**（只提供角度单位），按回车。公式显示为 `Tilt ÷ 90 deg`，字段下方一行显示 _有效的定义_。
 
 如果你更愿意打字，切换到**文本**并以文本形式写：
 
@@ -63,11 +69,9 @@ _一个已声明的关系：虚线轮廓，标题中写着“已声明”。它�
 
 ![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
-_The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits._
+_选中分母槽位的公式视图：商画成分数；编译器说明该槽位需要一个角度以及原因，并提供带角度单位的数字、匹配的引用以及结果匹配的方程。_
 
-节点现在在主体中显示公式，并以实线绘制。
-
-**你做了什么。** 一条规则：亮度等于倾角除以九十度。在**文本**视图里试试：把 `90 deg` 改成 `90 s`，看字段下方那行变红：它说明 Brightness 是什么，以及公式实际生成的是什么——角度除以时间不是纯数。把 `deg` 改回来。每个公式都会这样检查单位和含义，无论你是打字还是拼装——而且在按下 _添加定义_ 之前，什么都不会保存到设计中。
+**你做了什么。** 一条规则：亮度等于倾斜除以九十度。在**文本**视图里试试：把 `90 deg` 改成 `90 s`，看字段下方那一行变红：它说明 Brightness 是什么、而公式实际生成的又是什么——角度除以时间不是一个普通数字。把 `deg` 改回来。每个公式都会这样检查单位和含义，无论是键入还是拼装——而在你按下 _添加定义_ 之前，什么都不会保存到设计中。
 
 ![The Relationship section of the inspector: the formula field containing Tilt / 90 s with an unsaved marker in the section header, and under it a red message saying Brightness is a dimensionless quantity but this formula produces an angular rate, the offending span quoted, the explanation that the mapping's signature promises Brightness, and Revert and Save definition buttons.](../../../../docs/user-guide/assets/studio/formula-verdict.png)
 
@@ -75,24 +79,22 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 
 > 在文本视图中，**⌃Space** 打开补全：此处可用的名字（_Tilt_）、数字后的单位、关键字。把鼠标在名字上停留片刻会显示它是什么。公式视图什么都不需要你记：每个槽位都列出适合的内容。
 
-## 5. 把倾角从环境引进来
+## 5. 倾斜来自环境
 
-`dimByTilt` 是规则，不是值：它需要一个倾角来处理。倾角从哪里来？来自环境——设计之外的一个传感器。在 BDL 中，由环境提供的值是一个**来源**：一个**不读取任何东西**、生成该概念、并且**没有公式**的关系。
-
-1. 点击 _映射_ 旁的 **+**：名称 `tilt`，不读取任何东西，生成 **Tilt**。创建。（右键点击画布 → **添加来源 ▸** → _新建来源…_ 会在你在那里选择的概念——Tilt——上做出同样的东西，也可以顺带新建一个概念。）
-
-节点的标题写着 _来源_，左边缘有一条竖条，没有输入插口。它不是虚线的：这里没有任何缺失。在仿真器中你将输入它的值；在设备上由传感器提供。
+倾斜从哪里来？来自环境——设计之外的传感器。在 BDL 中，环境提供的值是**来源**：**没有公式**的块。`tilt` 已经是一个来源：标题写着 _来源_，左边缘有竖线，没有输入插口。什么都不缺。在仿真器中你将键入它的值；在设备上由传感器提供。
 
 ## 6. 计算灯的亮度
 
-灯实际显示的值是把 `dimByTilt` 应用于 `tilt`。这又是一个不读取任何东西、生成 Brightness 的关系——这次带有公式。
+灯实际显示的值，是把规则应用到倾斜上得到的。这就是 `brightness` 的公式。
 
-1. 点击 _映射_ 旁的 **+**：名称 `brightness`，不读取任何东西，生成 **Brightness**。创建。
-2. 选中它并输入公式 `dimByTilt(tilt)`。_添加定义。_
+1. 点击 `brightness` 块。检查器显示它。
+2. 输入公式 `dimByTilt(tilt)`——在公式视图中点击槽位，在 _引用_ 下选择 **dimByTilt**（它变成 `dimByTilt(?)`），再点击新槽位并选择 **tilt**；或者在文本视图中键入。_添加定义。_
 
-补全会提供 `dimByTilt(`，因为它是带输入的关系；也会提供 `tilt`，因为它是值。公式字段是唯一组合关系的地方；画布上的连线显示关系读取 _哪些概念_，而不是算术。
+补全会提供 `dimByTilt(`，因为它是规则；也提供 `tilt`，因为它是块。画布上，`brightness` 旁出现一个**映射块**——公式画成的节点：标题写着它应用的规则（`dimByTilt`），左侧有一个标着 `tilt` 的输入插槽——公式读取的每个块各一个——一条连线从 `tilt` 的输出插槽接入；一条短连线把它接到它所定义的块 `brightness`。`brightness` 的标题不再写 _Source_：这个值是算出来的。规则名在公式里，在应用它的地方；规则本身留在侧栏。
 
-**你做了什么。** 三个关系：一个来源（`tilt`）、一条规则（`dimByTilt`）和一个计算值（`brightness`）。底部的状态行会计数。
+> 也可以拖拽连线：把 `tilt` 的输出插槽放到一个还没有公式的块上，或放到某个映射块中一个空缺位置的空心 `?` 插槽上，公式就得到这个名字。画布画的正是公式所说的——公式是把块组合起来的唯一地方。
+
+**你做了什么。** 两个块——一个来源（`tilt`）和一个计算值（`brightness`）——以及该值所应用的一条规则（`dimByTilt`）。底部的状态行计为三个关系和一个来源。
 
 ## 7. 给值一个节奏
 
@@ -102,7 +104,7 @@ _公式字段中有一个未通过检查的草稿：红色结论行说明 Bright
 2. 选中 `tilt`。在检查器的**时序**区，把**更新于**设为 _interaction_。
 3. 选中 `brightness`，做同样的事。
 
-`dimByTilt` 保持在 _任意时序域_：它是纯规则，跟随应用它的那一方的节奏。域的名字安静地出现在两个节点的右边缘。
+`dimByTilt` 保持在 _任意时序域_：它是纯规则，跟随应用它的那个块的节奏。域名会安静地出现在两个块的右边缘。
 
 **你做了什么。** 一个把“这个什么时候更新”作为显式决定的设计。域是名字，不是速率——_interaction_ 多久走一拍是在仿真或部署时选择的，不在这里。
 
@@ -114,34 +116,34 @@ Brightness 是设计内部的值。灯本身是一个**物理输出**：值离�
 
 画布右边缘出现一个汇节点，以虚线绘制：它有域，但还没有东西驱动它。状态行显示 _输出未完成_。
 
-1. 从 `brightness` 的输出插口拖到汇节点的插口上。（或者选中输出，在其检查器的**连接**弹出菜单中选择 `brightness`；弹出菜单会标记 _有输入_ 的关系，它们不能驱动输出。）
+1. 从 `brightness` 的输出插口拖到接收端的插口上。（或者选中输出，在其检查器的**连接**弹出菜单中选择 `brightness`；弹出菜单会标出规则——_有输入_ 的关系——它们不能驱动输出。）
 
-汇节点变为实线。只有 _不读取任何东西_、并在同一域中生成所接受概念的关系才能驱动输出。`brightness` 符合条件；如果改连 `dimByTilt`，编辑会被接受，然后在输出下方被报告为不合适的连接。
+接收端变为实线。只有在同一时序域中生成所接受概念的块才能驱动输出：`brightness` 符合，`tilt` 不符合（概念不对，插口会拒绝），而规则没有值可给。
 
 **你做了什么。** 一个完整的设计。状态行不再显示 _输出未完成_，也没有任何 _尚未定义_ 的项：来源 `tilt` 本来就应该没有公式，状态行把它计为 _1 个来源_。按 **⌘S** 保存。
 
 ## 你现在拥有的
 
-![The canvas with the concept rows Tilt and Brightness at the top, the Source node tilt (a bar at its left edge, an entry arrow and the word Source in its header, no input socket), the relationship nodes dimByTilt and brightness below them, and the light sink at the right, joined by links; tilt, brightness and the output carry the domain name interaction at their right edge.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
+![The canvas left to right: the Source block tilt (a bar at its left edge, an entry arrow and the word Source in its header, one output socket labelled Tilt), a link from it into the mapping block dimByTilt, whose left socket is labelled tilt and whose formula line reads dimByTilt(tilt), a short link from its output socket into the block brightness, whose socket is labelled Brightness, and a link from brightness to the light sink at the right; tilt, brightness and the output carry the domain name interaction.](../../../../docs/user-guide/assets/getting-started/complete-lamp.png)
 
-_完成的灯：来源 tilt、规则 dimByTilt、值 brightness，以及被驱动的 light。_
+_完成的灯：来源 tilt、应用规则 dimByTilt 的映射块、它定义的块 brightness，以及被驱动的 light。_
 
 | 对象 | 种类 | 公式 | 更新于 |
-| -------------- | -------------------------------------- | ----------------- | ------------- |
-| **Tilt** | 概念，角度 |  |  |
-| **Brightness** | 概念，纯数 |  |  |
-| **tilt** | 不读取任何东西的关系：来源 | _无_ | _interaction_ |
-| **dimByTilt** | 读取 Tilt 的关系：规则 | `Tilt / 90 deg` | 任意 |
-| **brightness** | 不读取任何东西的关系：值 | `dimByTilt(tilt)` | _interaction_ |
+| -------------- | ----------------------------------------------- | ----------------- | ------------- |
+| **Tilt** | 概念（模板），角度 |  |  |
+| **Brightness** | 概念（模板），普通数字 |  |  |
+| **tilt** | Tilt 的块，无公式：来源 | _无_ | _interaction_ |
+| **dimByTilt** | 读取 Tilt、生成 Brightness 的规则 | `Tilt / 90 deg` | 任意 |
+| **brightness** | Brightness 的块，计算得出：应用该规则 | `dimByTilt(tilt)` | _interaction_ |
 | **light** | 由 brightness 驱动的物理输出 |  | _interaction_ |
 
-这个设计是 _可执行的_：输出所依赖的每个关系要么已定义要么是来源，通过检查，有节奏，并且输出恰好有一个驱动方。
+这个设计是 _可执行的_：输出所依赖的每个块要么是计算得出、要么是来源，都通过检查、都有节奏，而输出恰好有一个驱动者。
 
 ## 如果有什么不对
 
 - **公式行是红色的。** 读一读：它用你的概念来说明问题（“这把角度除以了时间”）。见 [类型、单位与概念](../../../../docs/user-guide/troubleshooting/type-and-concept-errors.md)。
 - **`brightness` 连不上输出。** 检查它的 _更新于_ 是否与输出一致，以及它是否不读取任何东西。见 [连接](../../../../docs/user-guide/troubleshooting/connection-errors.md)。
-- **状态行显示 _N 个定义未添加_。** 公式已输入但未添加；选中节点，按 _添加定义_ 或 _还原_。
+- **状态行显示 _N 个定义未添加_。** 公式已键入但未添加；选中该块并按 _添加定义_ 或 _还原_。
 - **什么都不检查，底部一行显示 _编译器未连接_。** 见 [安装与启动](install-and-launch.md)。
 
 ## 下一步

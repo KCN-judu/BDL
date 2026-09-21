@@ -6,7 +6,7 @@
 
 Studio 有两个界面：**项目管理器**（没有打开项目）和**工作区**（打开了项目）。工作区是一个窗口，底部按工作流顺序排列着各个页面。
 
-![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
+![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's blocks — the Source tilt, the mapping block dimByTilt, the block brightness it defines, and the light sink — joined by links; the inspector on the right showing the selected block brightness with its Meaning, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../../../../docs/user-guide/assets/studio/workspace.png)
 
 _打开倾角灯并选中 brightness 的工作区：工具栏、侧栏、画布、检查器、状态行和页面栏。_
 

@@ -8,11 +8,12 @@ colour means *selected* and nothing else.
 
 | Mark | Meaning |
 | --- | --- |
-| dashed relationship node, word *declared* | no formula yet (a relationship that reads something) |
-| bar at a node's left edge, entry arrow, word *Source* | a Source: the environment provides the value; nothing is missing |
-| solid node with a hollow input socket | *open*: waits for that concept's value form |
-| red mark at the formula line | the formula does not check |
-| hollow ring socket on a concept | value form *decide later* |
+| *declared* (inspector, status line) | a rule with no formula yet — a rule is not a node of the canvas |
+| bar at a block's left edge, entry arrow, word *Source* | a Source: the environment provides the value; nothing is missing |
+| a block with no mapping block beside it | no formula: a Source (or, in a system, a block a binding realises — its left socket is filled) |
+| hollow socket labelled `?` on a mapping block | an open position in the formula: a block dropped there fills it |
+| red mark at a mapping block's formula line | the formula does not check |
+| hollow ring socket | the concept's value form is *decide later* |
 | dashed sink, *no domain* | the output has no timing domain |
 | dashed sink | the output has no driver |
 | solid sink | driven |

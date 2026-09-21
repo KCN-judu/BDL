@@ -24,9 +24,9 @@
 
 ようこそページの**デモ**で **Button → Lamp, wired** を選びます。Studio がプロジェクトの置き場所を尋ね（普通のプロジェクトです。`src/main.bdl` を含むフォルダです）、設計ページで開きます。
 
-![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
+![The canvas left to right: the Source block pressed with its entry arrow and the word Source at the left, a link from it into a mapping block headed Formula whose left socket is labelled pressed and whose formula line reads pressed, a short link from it into the block lit, and a link from lit to the lamp sink at the right; pressed, lit and the lamp carry the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
 
-_デモの設計：入力元 pressed、それに追従する値 lit、そしてそれが駆動する lamp。_
+_デモの設計：入力元 pressed、それに従う lit のマッピングブロック、ブロック lit、そしてそれが駆動するランプ。_
 
 3 つのオブジェクトです。**pressed** は _入力元_：環境が与える値で、設計はその方法を述べず、キャンバスにピンはありません。**lit** は数式が単に `pressed` である関係です。**lamp** は物理出力で、`lit` に駆動されます。ここにはボードに関するものは何もありません。それは次のページです。
 

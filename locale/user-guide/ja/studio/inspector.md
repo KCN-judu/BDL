@@ -1,8 +1,6 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/inspector.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/inspector.md) · [简体中文](../../zh_Hans/studio/inspector.md) · 日本語
->
-> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # インスペクター
 
@@ -13,10 +11,10 @@
 ## コンセプト
 
 | セクション | フィールド | 備考 |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **意味** | 名前、意味 |  |
 | **値** | 量 / オン/オフ / 個数 / 後で決める。単位（量の種類の一覧、記号は独自の列） | 値の形式を初めて選んでも何も再検査されない。選んだものを変えると、どの関係を再検査するかが示される |
-| **関係** | _生成元_（出力がこの概念であるすべての関係。ルールでも値でも）、_使用元_（これを読み取る関係） | 名前はその関係を選択するリンク。そのうちどれがティックごとに値を運ぶかは、シミュレートページのプローブが答える問い |
+| **関係** | _ブロック_（このコンセプトのブロック——それぞれがキャンバス上のその 1 つの値）、_規則_（シグネチャにそれを含むルール） | 名前はブロックやルールを選択するリンクです。まだブロックのないコンセプトは、追加の方法を示します |
 | **削除 …** |  | 使用中は無効。使用者はボタンの下に列挙される |
 
 ## 関係
@@ -26,7 +24,7 @@
 | **意味** | 名前、意味、_役割_——_入力元_、_ルール_、_値_、またはそれが支えるポート。その下に一文 | 役割は設計から読み取られ、設定されることはない |
 | **読み取り** | コンセプトのグリフ付きチップ、削除可能。追加用のポップアップ | 編集。依存するものは再検査される |
 | **生成** | グリフ付きのポップアップ——入力元では見出しが**提供** | 編集 |
-| **関係** | the formula field and its verdict line; _Add definition_ / _Save definition_ / _Revert_ / _Detach definition_; findings under the field; for a Source, _Realization: Provided by the environment; no device is bound yet._ above the field — or, with a board chosen on the Deploy page, what that deployment says (_… no device on Raspberry Pi Pico yet._, _Provided by sensor as … on …_); _Depends on_ (what the formula names) and _Named in_ (whose formulas name this) as name links | [数式エディター](formula-editor.md)を参照。この二つの行はキャンバスの参照リンクそのもの |
+| **関係** | 式フィールドとその判定行。_定義を追加_ / _定義を保存_ / _元に戻す_ / _定義を切り離す_。フィールドの下の指摘。入力元では、フィールドの上に _実現方式: 環境が提供。デバイスはまだバインドされていません。_——または、デプロイページでボードを選んでいれば、そのデプロイが言うこと（_… Raspberry Pi Pico 上にデバイスはまだありません。_、_sensor が … として … 上で提供_）。_依存先_（式が挙げるもの）と _名前を挙げる式_（どの式がこれを挙げるか）が名前のリンクとして表示されます | [数式エディター](formula-editor.md)を参照。この二つの行はキャンバスの参照リンクそのもの |
 | **タイミング** | _更新ドメイン_——ドメイン、または _任意のタイミングドメイン_。タイミングの検出項目 | [タイミング](../../../../docs/user-guide/concepts/timing.md) を参照 |
 | **駆動先** | 値なら：駆動する出力、またはなし。規則なら：_規則は出力を駆動できません — この規則を適用する値を接続してください。_ と、ある値がそれを適用しているときはその名前と _表示_。接続の検出項目 | ポップアップが提示されるのは値——入力のない関係——だけ |
 | **修正** | この関係の検出項目に対してツールが提供する操作。準備できていればボタン、選択が必要ならポップアップ、阻まれていればその理由 | 通常の、取り消し可能な編集として適用される |
@@ -34,7 +32,7 @@
 
 関係にはさらに、_グループ … に属しています_ と _グループを表示_ リンク、ポートにバインドされているときは _… から値を取ります_ と _バインディングを表示_（_切断すると、この関係を自分で定義できます。_ 付き）、そしてコンポーネントのソース内ではそれが裏付けるポート（_requires_ / _provides_ / _parameter_）が表示されることがあります。ポートはコンポーネント自身のインスペクターから宣言します。
 
-A **Source** — a relationship that reads nothing and has no formula — is inspected the same way. Its Role row says _Source_; its output section is _Provides_; its Relationship section's _Realization_ row says who provides the value — the environment, or, once a board is chosen on the [Deploy page](deploy.md), the device bound there (_Provided by sensor as GPIO input, active low on Raspberry Pi Pico._) — and keeps the formula field: add a formula and the same relationship is computed inside the design instead. Nothing here edits the binding; that is the Deploy page's, and the design does not change when it is made.
+**入力元**——何も読み取らず式もない関係——も同じように検査されます。ロール行は _入力元_、出力セクションは _提供_、関係セクションの _実現方式_ 行は値を提供するものを示します——環境か、[デプロイページ](deploy.md)でボードを選んだ後はそこでバインドされたデバイス（_sensor が Raspberry Pi Pico 上で GPIO 入力（アクティブロー）として提供。_）——そして式フィールドは残ります。式を追加すると、同じ関係が代わりに設計の中で計算されます。ここでバインディングを編集することはありません。それはデプロイページの役割で、バインディングを作っても設計は変わりません。
 
 ## 物理出力
 

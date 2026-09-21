@@ -34,11 +34,12 @@ their shortcuts but are reached by clicking today.
 | Esc | cancel the gesture in progress; then clear the selection |
 | ← → ↑ ↓ (⇧: one point) | nudge the selection |
 | drag a node | move the selection (layout only) |
-| drag a concept's output socket onto an output | connect the relationship that drives it |
-| drag socket → socket | link |
-| drag a connected input socket away → empty canvas | disconnect |
-| ⌫ / Delete | delete the selection (or disconnect a selected binding link) |
-| double-click a concept or relationship | rename in place |
+| drag a block's output socket onto an output | make it the driver |
+| drag a block's output socket onto a block with no formula, onto a `?` socket, or onto a mapping block with one | the formula gets the block's name (a text edit) |
+| drag socket → socket | link (a binding, a drive) |
+| drag a driven output's socket, or a mapping block's input socket, away → empty canvas | disconnect (a read link: the name becomes `?`) |
+| ⌫ / Delete | delete the selection (or disconnect a selected link) |
+| double-click a block or its mapping block | rename the block in place |
 | double-click an instance | open its component's source |
 | double-click a behavior's title | rename |
 | right-click · Control-click | context menu |

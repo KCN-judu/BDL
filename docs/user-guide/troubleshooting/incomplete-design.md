@@ -5,17 +5,17 @@ that is not decided yet; the tool tells you which, and works with everything
 else. The idea behind this is in
 [Incomplete designs](../concepts/incomplete-designs.md).
 
-## A dashed node with the word _declared_; the status line says _N not yet defined_
+## The inspector says _declared_; the status line says _N not yet defined_
 
-**What it is.** A relationship that reads something (or backs a port of the
-component you are editing) and has no formula yet. A relationship that reads
-nothing and has no formula is a Source — drawn with a bar at its left edge, not
-dashed, and counted as _N sources_, not as not yet defined: nothing is missing
-from it.
+**What it is.** A rule — a relationship that reads something (or backs a port of
+the component you are editing) — with no formula yet. It is in the sidebar's
+_Mappings_ list, not on the canvas. A block that has no formula is a Source —
+drawn with a bar at its left edge and counted as _N sources_, not as not yet
+defined: nothing is missing from it.
 
-**What to do.** Select it and write the formula in _Relationship_. If it was
-meant to be an input from outside, remove its reads instead: it becomes a
-Source.
+**What to do.** Select the rule in the sidebar and write the formula in
+_Relationship_. If it was meant to be an input from outside, remove its reads
+instead: it becomes a block, a Source.
 
 ## _tilt needs a value before simulation can step._ (Simulate)
 

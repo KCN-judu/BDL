@@ -34,14 +34,14 @@ _The Code view of the component system: the file as the project holds it,
 coloured by what each word is._
 
 The text is coloured by what each word _is_ to the project — not by how it is
-spelled. The colours are the canvas's: a **concept** name has the concept nodes'
-blue-grey, a **relationship** the relationship nodes' blue, a **Source** the
-green of a Source node, an **output** or a **device** the warm tone of an output
-node, an **instance** the teal of an instance node. Keywords, operators and
-units are grey; comments lighter grey. A name where it is _declared_ is heavier
-than where it is used; a name that exists only inside a formula — a rule's
-parameter, a binder's variable — is italic; a `?` left in a formula is orange,
-the same _still to decide_ colour as elsewhere.
+spelled. The colours are the canvas's: a **concept** name a blue-grey, a
+**relationship** the blocks' blue, a **Source** the green of a Source block, an
+**output** or a **device** the warm tone of an output node, an **instance** the
+teal of an instance node. Keywords, operators and units are grey; comments
+lighter grey. A name where it is _declared_ is heavier than where it is used; a
+name that exists only inside a formula — a rule's parameter, a binder's variable
+— is italic; a `?` left in a formula is orange, the same _still to decide_
+colour as elsewhere.
 
 Because the colours come from the project, they tell you things spelling cannot:
 `deg` after `90` is a unit, `deg` as a rule's parameter is not; `all` at the

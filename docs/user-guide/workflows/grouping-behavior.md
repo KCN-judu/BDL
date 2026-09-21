@@ -11,29 +11,31 @@ built in the [tests](../VERIFICATION.md): `raw` → `tiltValue` → `dimByTilt` 
 
 ## Steps
 
-1. **Select the members.** Drag a box, left to right, around `dimByTilt` and
-   `brightness` on the canvas. The inspector shows _2 selected_ and **Group 2
-   relationships as Behavior**, with a note that they read each other.
+1. **Select the members.** Drag a box, left to right, around `brightness` and
+   its mapping block on the canvas; then, in the Project sidebar, ⌘-click the
+   rule `dimByTilt` (a rule is a template with no node on the canvas). The
+   inspector shows _2 selected_ and **Group 2 relationships as Behavior**, with
+   a note that they read each other.
 2. **Group.** Click it (or right-click → **Group as Behavior**). A region named
-   _Behavior_ surrounds the two nodes and its name opens for editing: type
-   `Adaptive lamp`, Return.
+   _Behavior_ surrounds `brightness` and its mapping block and its name opens
+   for editing: type `Adaptive lamp`, Return.
 3. **Look at the boundary.** Select the region. The **Boundary** section lists
    _Inputs: tiltValue_ (what the members read from outside), _Outputs:
    brightness_ (what outside reads), _Physical outputs: light_ (driven by a
    member), _Internal: dimByTilt_. You did not choose any of this; it is read
    off the dependencies.
 
-   ![A titled region labelled Adaptive lamp enclosing the relationship nodes dimByTilt and brightness, outlined in the accent colour because it is selected; tiltValue to its left feeds into it and indicator and the light sink to its right read from it.](../assets/workflows/behavior-region.png)
+   ![A titled region labelled Adaptive lamp enclosing the mapping block dimByTilt and the block brightness it defines, outlined in the accent colour because it is selected; tiltValue to its left feeds into the mapping block, the light sink to its right and indicator's mapping block below read from brightness.](../assets/workflows/behavior-region.png)
 
-   _The expanded behavior Adaptive lamp: a region around dimByTilt and
-   brightness, selected._
+   _The expanded behavior Adaptive lamp: a region around brightness and its
+   mapping block, selected._
 
-4. **Collapse.** Right-click the region → **Collapse**. The two nodes become one
+4. **Collapse.** Right-click the region → **Collapse**. The region becomes one
    box with a socket _tiltValue_ on the left and _brightness_ on the right; the
    links that entered and left the members now enter and leave the box. Zoom
    out: below half size every behavior reads as its box anyway.
 
-   ![A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to indicator and the light sink on the right.](../assets/workflows/behavior-collapsed.png)
+   ![A single box labelled Adaptive lamp with a socket labelled tiltValue on its left and a socket labelled brightness on its right and the words 2 relationships in its body; the links that entered and left the members now enter and leave the box, from tiltValue on the left and to the light sink and to indicator's mapping block on the right.](../assets/workflows/behavior-collapsed.png)
 
    _The same behavior collapsed: one box with an aggregate socket for the member
    each link reaches._

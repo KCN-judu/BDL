@@ -4,7 +4,7 @@ Studio has two screens: the **project manager** (no project open) and the
 **workspace** (a project open). The workspace is one window with pages in
 workflow order along the bottom.
 
-![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's nodes; the inspector on the right showing the selected relationship brightness with its Meaning, Reads, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../assets/studio/workspace.png)
+![The Studio window at 1440 by 900: the toolbar with the project name tilt-lamp, undo, redo, Save and Close; the Project sidebar on the left listing Concepts, Mappings, Timing domains, Outputs, Contexts and Components; the canvas in the middle with the tilt lamp's blocks — the Source tilt, the mapping block dimByTilt, the block brightness it defines, and the light sink — joined by links; the inspector on the right showing the selected block brightness with its Meaning, Produces, Relationship, Timing and Drives sections; the status line reading Saved, 2 concepts, 3 mappings, 1 source, Compiler 0.1.0; and the page bar with Design, Simulate, Deploy and Monitor.](../assets/studio/workspace.png)
 
 _The workspace with the tilt lamp open and brightness selected: toolbar,
 sidebar, canvas, inspector, status line and page bar._
