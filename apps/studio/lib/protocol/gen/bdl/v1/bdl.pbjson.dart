@@ -1033,6 +1033,15 @@ const ClientMessage$json = {
       '9': 0,
       '10': 'getFormulaRender'
     },
+    {
+      '1': 'arrange_layout',
+      '3': 81,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.ArrangeLayoutRequest',
+      '9': 0,
+      '10': 'arrangeLayout'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1124,7 +1133,9 @@ final $typed_data.Uint8List clientMessageDescriptor = $convert
         'dEgAUhRjb21wbGV0ZUZvcm11bGFDYXJldBJYChVnZXRfZm9ybXVsYV9zaWduYXR1cmUYTyABKA'
         'syIi5iZGwudjEuR2V0Rm9ybXVsYVNpZ25hdHVyZVJlcXVlc3RIAFITZ2V0Rm9ybXVsYVNpZ25h'
         'dHVyZRJPChJnZXRfZm9ybXVsYV9yZW5kZXIYUCABKAsyHy5iZGwudjEuR2V0Rm9ybXVsYVJlbm'
-        'RlclJlcXVlc3RIAFIQZ2V0Rm9ybXVsYVJlbmRlckIJCgdwYXlsb2Fk');
+        'RlclJlcXVlc3RIAFIQZ2V0Rm9ybXVsYVJlbmRlchJFCg5hcnJhbmdlX2xheW91dBhRIAEoCzIc'
+        'LmJkbC52MS5BcnJhbmdlTGF5b3V0UmVxdWVzdEgAUg1hcnJhbmdlTGF5b3V0QgkKB3BheWxvYW'
+        'Q=');
 
 @$core.Deprecated('Use serverMessageDescriptor instead')
 const ServerMessage$json = {
@@ -1457,6 +1468,15 @@ const Response$json = {
       '9': 0,
       '10': 'formulaRender'
     },
+    {
+      '1': 'layout',
+      '3': 62,
+      '4': 1,
+      '5': 11,
+      '6': '.bdl.v1.LayoutResponse',
+      '9': 0,
+      '10': 'layout'
+    },
   ],
   '8': [
     {'1': 'payload'},
@@ -1509,8 +1529,8 @@ final $typed_data.Uint8List responseDescriptor = $convert
         'JtdWxhGDsgASgLMh8uYmRsLnYxLk5hdmlnYXRlRm9ybXVsYVJlc3BvbnNlSABSD25hdmlnYXRl'
         'Rm9ybXVsYRJPChFmb3JtdWxhX3NpZ25hdHVyZRg8IAEoCzIgLmJkbC52MS5Gb3JtdWxhU2lnbm'
         'F0dXJlUmVzcG9uc2VIAFIQZm9ybXVsYVNpZ25hdHVyZRJGCg5mb3JtdWxhX3JlbmRlchg9IAEo'
-        'CzIdLmJkbC52MS5Gb3JtdWxhUmVuZGVyUmVzcG9uc2VIAFINZm9ybXVsYVJlbmRlckIJCgdwYX'
-        'lsb2Fk');
+        'CzIdLmJkbC52MS5Gb3JtdWxhUmVuZGVyUmVzcG9uc2VIAFINZm9ybXVsYVJlbmRlchIwCgZsYX'
+        'lvdXQYPiABKAsyFi5iZGwudjEuTGF5b3V0UmVzcG9uc2VIAFIGbGF5b3V0QgkKB3BheWxvYWQ=');
 
 @$core.Deprecated('Use eventDescriptor instead')
 const Event$json = {
@@ -3207,6 +3227,28 @@ const SetLayoutRequest$json = {
 final $typed_data.Uint8List setLayoutRequestDescriptor = $convert
     .base64Decode('ChBTZXRMYXlvdXRSZXF1ZXN0EiYKBmxheW91dBgBIAEoCzIOLmJkbC52MS5MYXlvdXRSBmxheW'
         '91dA==');
+
+@$core.Deprecated('Use arrangeLayoutRequestDescriptor instead')
+const ArrangeLayoutRequest$json = {
+  '1': 'ArrangeLayoutRequest',
+};
+
+/// Descriptor for `ArrangeLayoutRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List arrangeLayoutRequestDescriptor =
+    $convert.base64Decode('ChRBcnJhbmdlTGF5b3V0UmVxdWVzdA==');
+
+@$core.Deprecated('Use layoutResponseDescriptor instead')
+const LayoutResponse$json = {
+  '1': 'LayoutResponse',
+  '2': [
+    {'1': 'layout', '3': 1, '4': 1, '5': 11, '6': '.bdl.v1.Layout', '10': 'layout'},
+  ],
+};
+
+/// Descriptor for `LayoutResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List layoutResponseDescriptor = $convert
+    .base64Decode('Cg5MYXlvdXRSZXNwb25zZRImCgZsYXlvdXQYASABKAsyDi5iZGwudjEuTGF5b3V0UgZsYXlvdX'
+        'Q=');
 
 @$core.Deprecated('Use projectChangedDescriptor instead')
 const ProjectChanged$json = {

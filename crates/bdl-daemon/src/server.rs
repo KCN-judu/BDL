@@ -408,6 +408,15 @@ fn handle(session: &mut Session, req: Req) -> (Resp, Option<Committed>) {
         }
         Req::Undo(_) => step_result(session, true),
         Req::Redo(_) => step_result(session, false),
+        Req::ArrangeLayout(_) => match session.arranged_layout() {
+            Ok(layout) => (
+                Resp::Layout(pb::LayoutResponse {
+                    layout: Some(convert::layout_to_pb(&layout)),
+                }),
+                None,
+            ),
+            Err(e) => (Resp::Error(session_error(&e)), None),
+        },
         Req::SetLayout(l) => {
             let layout = l
                 .layout
@@ -1904,6 +1913,7 @@ fn payload_name(p: &Req) -> &'static str {
         Req::Undo(_) => "undo",
         Req::Redo(_) => "redo",
         Req::SetLayout(_) => "set_layout",
+        Req::ArrangeLayout(_) => "arrange_layout",
         Req::SubscribeProject(_) => "subscribe_project",
         Req::RunAnalysis(_) => "run_analysis",
         Req::StartSimulation(_) => "start_simulation",

@@ -82,6 +82,7 @@ enum ClientMessage_Payload {
   completeFormulaCaret,
   getFormulaSignature,
   getFormulaRender,
+  arrangeLayout,
   notSet
 }
 
@@ -148,6 +149,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     CompleteFormulaCaretRequest? completeFormulaCaret,
     GetFormulaSignatureRequest? getFormulaSignature,
     GetFormulaRenderRequest? getFormulaRender,
+    ArrangeLayoutRequest? arrangeLayout,
   }) {
     final result = ClientMessage._();
     if (requestId != null) result.requestId = requestId;
@@ -213,6 +215,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     if (completeFormulaCaret != null) result.completeFormulaCaret = completeFormulaCaret;
     if (getFormulaSignature != null) result.getFormulaSignature = getFormulaSignature;
     if (getFormulaRender != null) result.getFormulaRender = getFormulaRender;
+    if (arrangeLayout != null) result.arrangeLayout = arrangeLayout;
     return result;
   }
 
@@ -286,6 +289,7 @@ class ClientMessage extends $pb.GeneratedMessage {
     78: ClientMessage_Payload.completeFormulaCaret,
     79: ClientMessage_Payload.getFormulaSignature,
     80: ClientMessage_Payload.getFormulaRender,
+    81: ClientMessage_Payload.arrangeLayout,
     0: ClientMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ClientMessage',
@@ -351,7 +355,8 @@ class ClientMessage extends $pb.GeneratedMessage {
       77,
       78,
       79,
-      80
+      80,
+      81
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -475,6 +480,8 @@ class ClientMessage extends $pb.GeneratedMessage {
         subBuilder: GetFormulaSignatureRequest.$_createMessage)
     ..aOM<GetFormulaRenderRequest>(80, _omitFieldNames ? '' : 'getFormulaRender',
         subBuilder: GetFormulaRenderRequest.$_createMessage)
+    ..aOM<ArrangeLayoutRequest>(81, _omitFieldNames ? '' : 'arrangeLayout',
+        subBuilder: ArrangeLayoutRequest.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -557,6 +564,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(78)
   @$pb.TagNumber(79)
   @$pb.TagNumber(80)
+  @$pb.TagNumber(81)
   ClientMessage_Payload whichPayload() => _ClientMessage_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(10)
   @$pb.TagNumber(11)
@@ -618,6 +626,7 @@ class ClientMessage extends $pb.GeneratedMessage {
   @$pb.TagNumber(78)
   @$pb.TagNumber(79)
   @$pb.TagNumber(80)
+  @$pb.TagNumber(81)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1305,6 +1314,18 @@ class ClientMessage extends $pb.GeneratedMessage {
   void clearGetFormulaRender() => $_clearField(80);
   @$pb.TagNumber(80)
   GetFormulaRenderRequest ensureGetFormulaRender() => $_ensure(60);
+
+  /// 0.29: whole-graph arrangement, the layout service's other command.
+  @$pb.TagNumber(81)
+  ArrangeLayoutRequest get arrangeLayout => $_getN(61);
+  @$pb.TagNumber(81)
+  set arrangeLayout(ArrangeLayoutRequest value) => $_setField(81, value);
+  @$pb.TagNumber(81)
+  $core.bool hasArrangeLayout() => $_has(61);
+  @$pb.TagNumber(81)
+  void clearArrangeLayout() => $_clearField(81);
+  @$pb.TagNumber(81)
+  ArrangeLayoutRequest ensureArrangeLayout() => $_ensure(61);
 }
 
 enum ServerMessage_Payload { response, event, notSet }
@@ -1429,6 +1450,7 @@ enum Response_Payload {
   navigateFormula,
   formulaSignature,
   formulaRender,
+  layout,
   notSet
 }
 
@@ -1471,6 +1493,7 @@ class Response extends $pb.GeneratedMessage {
     NavigateFormulaResponse? navigateFormula,
     FormulaSignatureResponse? formulaSignature,
     FormulaRenderResponse? formulaRender,
+    LayoutResponse? layout,
   }) {
     final result = Response._();
     if (requestId != null) result.requestId = requestId;
@@ -1510,6 +1533,7 @@ class Response extends $pb.GeneratedMessage {
     if (navigateFormula != null) result.navigateFormula = navigateFormula;
     if (formulaSignature != null) result.formulaSignature = formulaSignature;
     if (formulaRender != null) result.formulaRender = formulaRender;
+    if (layout != null) result.layout = layout;
     return result;
   }
 
@@ -1559,6 +1583,7 @@ class Response extends $pb.GeneratedMessage {
     59: Response_Payload.navigateFormula,
     60: Response_Payload.formulaSignature,
     61: Response_Payload.formulaRender,
+    62: Response_Payload.layout,
     0: Response_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Response',
@@ -1600,7 +1625,8 @@ class Response extends $pb.GeneratedMessage {
       58,
       59,
       60,
-      61
+      61,
+      62
     ])
     ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'requestId', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -1674,6 +1700,8 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: FormulaSignatureResponse.$_createMessage)
     ..aOM<FormulaRenderResponse>(61, _omitFieldNames ? '' : 'formulaRender',
         subBuilder: FormulaRenderResponse.$_createMessage)
+    ..aOM<LayoutResponse>(62, _omitFieldNames ? '' : 'layout',
+        subBuilder: LayoutResponse.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1732,6 +1760,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(59)
   @$pb.TagNumber(60)
   @$pb.TagNumber(61)
+  @$pb.TagNumber(62)
   Response_Payload whichPayload() => _Response_PayloadByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(2)
   @$pb.TagNumber(10)
@@ -1769,6 +1798,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(59)
   @$pb.TagNumber(60)
   @$pb.TagNumber(61)
+  @$pb.TagNumber(62)
   void clearPayload() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -2175,6 +2205,17 @@ class Response extends $pb.GeneratedMessage {
   void clearFormulaRender() => $_clearField(61);
   @$pb.TagNumber(61)
   FormulaRenderResponse ensureFormulaRender() => $_ensure(36);
+
+  @$pb.TagNumber(62)
+  LayoutResponse get layout => $_getN(37);
+  @$pb.TagNumber(62)
+  set layout(LayoutResponse value) => $_setField(62, value);
+  @$pb.TagNumber(62)
+  $core.bool hasLayout() => $_has(37);
+  @$pb.TagNumber(62)
+  void clearLayout() => $_clearField(62);
+  @$pb.TagNumber(62)
+  LayoutResponse ensureLayout() => $_ensure(37);
 }
 
 enum Event_Payload { projectChanged, log, analysisReady, buildProgress, flashProgress, notSet }
@@ -8581,6 +8622,105 @@ class SetLayoutRequest extends $pb.GeneratedMessage {
   static SetLayoutRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<SetLayoutRequest>(SetLayoutRequest.$_createMessage);
   static SetLayoutRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Layout get layout => $_getN(0);
+  @$pb.TagNumber(1)
+  set layout(Layout value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasLayout() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLayout() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Layout ensureLayout() => $_ensure(0);
+}
+
+/// Arrange every visible node of every canvas from scratch (0.29): the
+/// explicit *Arrange Automatically* command.  Answers the arranged layout
+/// and applies nothing — the client sets it with SetLayout, so one write
+/// path and one undo mechanism serve every layout change.  Layout only:
+/// no revision, the scene graph as it is (ADR-0003, `bdl-layout::arrange`).
+class ArrangeLayoutRequest extends $pb.GeneratedMessage {
+  factory ArrangeLayoutRequest() => ArrangeLayoutRequest._();
+
+  ArrangeLayoutRequest._();
+
+  factory ArrangeLayoutRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ArrangeLayoutRequest()..mergeFromBuffer(data, registry);
+  factory ArrangeLayoutRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ArrangeLayoutRequest()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ArrangeLayoutRequest',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: ArrangeLayoutRequest.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ArrangeLayoutRequest clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ArrangeLayoutRequest copyWith(void Function(ArrangeLayoutRequest) updates) =>
+      super.copyWith((message) => updates(message as ArrangeLayoutRequest)) as ArrangeLayoutRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use ArrangeLayoutRequest() / ArrangeLayoutRequest.new instead')
+  static ArrangeLayoutRequest create() => ArrangeLayoutRequest._();
+  static $pb.GeneratedMessage $_createMessage() => ArrangeLayoutRequest._();
+  @$core.override
+  ArrangeLayoutRequest createEmptyInstance() => ArrangeLayoutRequest._();
+  @$core.pragma('dart2js:noInline')
+  static ArrangeLayoutRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ArrangeLayoutRequest>(ArrangeLayoutRequest.$_createMessage);
+  static ArrangeLayoutRequest? _defaultInstance;
+}
+
+class LayoutResponse extends $pb.GeneratedMessage {
+  factory LayoutResponse({
+    Layout? layout,
+  }) {
+    final result = LayoutResponse._();
+    if (layout != null) result.layout = layout;
+    return result;
+  }
+
+  LayoutResponse._();
+
+  factory LayoutResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LayoutResponse()..mergeFromBuffer(data, registry);
+  factory LayoutResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LayoutResponse()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'LayoutResponse',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bdl.v1'),
+      createEmptyInstance: LayoutResponse.$_createMessage)
+    ..aOM<Layout>(1, _omitFieldNames ? '' : 'layout', subBuilder: Layout.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LayoutResponse clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LayoutResponse copyWith(void Function(LayoutResponse) updates) =>
+      super.copyWith((message) => updates(message as LayoutResponse)) as LayoutResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LayoutResponse() / LayoutResponse.new instead')
+  static LayoutResponse create() => LayoutResponse._();
+  static $pb.GeneratedMessage $_createMessage() => LayoutResponse._();
+  @$core.override
+  LayoutResponse createEmptyInstance() => LayoutResponse._();
+  @$core.pragma('dart2js:noInline')
+  static LayoutResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<LayoutResponse>(LayoutResponse.$_createMessage);
+  static LayoutResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   Layout get layout => $_getN(0);

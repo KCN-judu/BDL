@@ -10,8 +10,10 @@
 //! list of what was placed.  It reads no semantics into geometry and writes
 //! no geometry into semantics (ADR-0003).
 //!
-//! Whole-graph relayout is not this service: it happens only on explicit
-//! request and is not implemented here.
+//! Whole-graph arrangement is the other service here — [`arrange`]: the
+//! explicit *Arrange Automatically* command, and the first opening of a
+//! project with no position at all — deterministic and layout-only like
+//! [`place_missing`], and unlike it free to move everything.
 
 #![forbid(unsafe_code)]
 
@@ -402,5 +404,349 @@ fn place_canvas(
             node,
             at,
         });
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Whole-graph arrangement
+// ---------------------------------------------------------------------------
+
+/// Arrange every visible node of every canvas from scratch: the explicit
+/// *Arrange Automatically* command, and the first opening of a project
+/// whose layout has no position at all.  Unlike [`place_missing`] this
+/// moves what is already positioned; like it, it is deterministic, reads
+/// the semantic graph only to order and align, and writes geometry only
+/// (ADR-0003).  The scene it arranges is the one the canvas draws: every
+/// concept, relationship, sink and instance, a collapsed group as one box
+/// standing for its hidden members, every signature, drive and binding
+/// edge as supplied — nothing is hidden, inserted or rerouted.
+///
+/// Left to right by rank (the longest path from a node nothing feeds:
+/// what reads follows what it reads, what is driven follows its driver);
+/// within a rank, ordered by the mean position of what feeds it so edges
+/// cross as little as a few sweeps allow; then aligned to the centre of
+/// what feeds it and spread apart until nothing overlaps.  Viewports,
+/// expanded groups' boxes (they follow their members) and the positions
+/// of members hidden in a collapsed group are untouched.
+pub fn arrange(system: &BehaviorSystem, layout: &Layout) -> Layout {
+    arrange_with(system, layout, &References::default())
+}
+
+/// The reference edges of a design (ADR-0034): `referencing → referenced`,
+/// as the analysis reports `dependsOn` — a value's formula naming another
+/// relationship.  Not part of the model, so the caller supplies them; the
+/// arrangement then draws what references after what it references, as
+/// the canvas draws the edge.  Empty: signature edges alone.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct References {
+    /// Per canvas: `None` the system canvas, `Some(component)` a body.
+    pub edges: BTreeMap<Option<u64>, Vec<(DeclId, DeclId)>>,
+}
+
+/// [`arrange`] with the reference edges taken into account.
+pub fn arrange_with(system: &BehaviorSystem, layout: &Layout, refs: &References) -> Layout {
+    let mut out = layout.clone();
+    let none: Vec<(DeclId, DeclId)> = Vec::new();
+    arrange_canvas(
+        &system.base,
+        Some(system),
+        &mut out,
+        refs.edges.get(&None).unwrap_or(&none),
+    );
+    for (cid, component) in &system.components {
+        let body = out.components.entry(cid.raw()).or_default();
+        arrange_canvas(
+            &component.body,
+            None,
+            body,
+            refs.edges.get(&Some(cid.raw())).unwrap_or(&none),
+        );
+        if body == &Layout::default() {
+            out.components.remove(&cid.raw());
+        }
+    }
+    out
+}
+
+/// Whether a canvas has any position at all: the first-open policy
+/// arranges a canvas with none and only fills the gaps of one with some.
+pub fn has_positions(layout: &Layout) -> bool {
+    !(layout.concepts.is_empty()
+        && layout.mappings.is_empty()
+        && layout.outputs.is_empty()
+        && layout.instances.is_empty())
+}
+
+/// A node the arrangement moves: a canvas node, or a collapsed group's box
+/// standing for its members.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Item {
+    Node(Node),
+    Group(u64),
+}
+
+fn visit(v: usize, succ: &[Vec<usize>], state: &mut [u8], order: &mut Vec<usize>) {
+    state[v] = 1;
+    for &w in &succ[v] {
+        if state[w] == 0 {
+            visit(w, succ, state, order);
+        }
+    }
+    state[v] = 2;
+    order.push(v);
+}
+
+fn arrange_canvas(
+    design: &Design,
+    system: Option<&BehaviorSystem>,
+    layout: &mut Layout,
+    references: &[(DeclId, DeclId)],
+) {
+    use metrics::*;
+
+    // Hidden members: relationships inside a collapsed group are drawn as
+    // the group's box; the box is the item, the members keep their places.
+    let mut hidden_by: BTreeMap<DeclId, u64> = BTreeMap::new();
+    if let Some(s) = system {
+        for (gid, g) in &s.groups {
+            let collapsed = layout.groups.get(&gid.raw()).is_some_and(|b| b.collapsed);
+            if collapsed {
+                for m in &g.members {
+                    hidden_by.insert(*m, gid.raw());
+                }
+            }
+        }
+    }
+    let item_of_decl = |d: DeclId| match hidden_by.get(&d) {
+        Some(g) => Item::Group(*g),
+        None => Item::Node(Node::Mapping(d)),
+    };
+
+    // The items, in a stable order.
+    let mut items: Vec<Item> = Vec::new();
+    items.extend(
+        design
+            .concepts
+            .keys()
+            .map(|c| Item::Node(Node::Concept(*c))),
+    );
+    items.extend(
+        design
+            .mappings
+            .keys()
+            .filter(|d| !hidden_by.contains_key(d))
+            .map(|d| Item::Node(Node::Mapping(*d))),
+    );
+    let mut groups: Vec<u64> = hidden_by.values().copied().collect();
+    groups.sort_unstable();
+    groups.dedup();
+    items.extend(groups.iter().map(|g| Item::Group(*g)));
+    if let Some(s) = system {
+        items.extend(
+            s.instances
+                .keys()
+                .map(|i| Item::Node(Node::Instance(i.raw()))),
+        );
+    }
+    items.extend(design.outputs.keys().map(|o| Item::Node(Node::Output(*o))));
+    if items.is_empty() {
+        return;
+    }
+    let index: BTreeMap<Item, usize> = items.iter().enumerate().map(|(i, n)| (*n, i)).collect();
+    let n = items.len();
+
+    // Directed edges, left to right, as the canvas draws them.
+    let mut edges: Vec<(usize, usize)> = Vec::new();
+    let mut push = |a: Item, b: Item| {
+        if let (Some(&x), Some(&y)) = (index.get(&a), index.get(&b)) {
+            if x != y {
+                edges.push((x, y));
+            }
+        }
+    };
+    for m in design.mappings.values() {
+        let me = item_of_decl(m.id);
+        for c in &m.signature.inputs {
+            push(Item::Node(Node::Concept(*c)), me);
+        }
+        push(me, Item::Node(Node::Concept(m.signature.output)));
+        if let Some(o) = m.drives {
+            push(me, Item::Node(Node::Output(o)));
+        }
+    }
+    // A value's formula names another relationship: drawn as an edge from
+    // the referenced into the referencing (ADR-0034), so ordered the same.
+    for (referencing, referenced) in references {
+        push(item_of_decl(*referenced), item_of_decl(*referencing));
+    }
+    if let Some(s) = system {
+        let end_item = |e: BindingEnd| match e {
+            BindingEnd::Base { decl } => item_of_decl(decl),
+            BindingEnd::Port(p) => Item::Node(Node::Instance(p.instance.raw())),
+        };
+        for b in s.bindings.values() {
+            push(end_item(b.source), end_item(b.destination));
+        }
+    }
+    edges.sort_unstable();
+    edges.dedup();
+    let mut succ: Vec<Vec<usize>> = vec![Vec::new(); n];
+    let mut pred: Vec<Vec<usize>> = vec![Vec::new(); n];
+    for &(a, b) in &edges {
+        succ[a].push(b);
+        pred[b].push(a);
+    }
+
+    // Ranks: the longest path from a root; a back edge of a cycle (memory
+    // through `delay`: a relationship reading what it produces) is skipped
+    // in the depth-first order the items are listed in.
+    let mut state = vec![0u8; n]; // 0 new, 1 on the stack, 2 done
+    let mut post = Vec::with_capacity(n);
+    for v in 0..n {
+        if state[v] == 0 {
+            visit(v, &succ, &mut state, &mut post);
+        }
+    }
+    let topo: Vec<usize> = post.iter().rev().copied().collect();
+    let mut position = vec![0; n];
+    for (i, &v) in topo.iter().enumerate() {
+        position[v] = i;
+    }
+    let mut rank = vec![0usize; n];
+    for &v in &topo {
+        for &w in &succ[v] {
+            if position[w] > position[v] {
+                rank[w] = rank[w].max(rank[v] + 1);
+            }
+        }
+    }
+    let ranks = rank.iter().copied().max().unwrap_or(0) + 1;
+    let mut layers: Vec<Vec<usize>> = vec![Vec::new(); ranks];
+    for v in 0..n {
+        layers[rank[v]].push(v);
+    }
+
+    // Order within a rank by the mean order of what feeds it (then of what
+    // it feeds), a few sweeps each way; ties keep the listed order.
+    let mut order: Vec<f64> = (0..n).map(|v| v as f64).collect();
+    for sweep in 0..4 {
+        let down = sweep % 2 == 0;
+        let layer_order: Vec<usize> = if down {
+            (0..ranks).collect()
+        } else {
+            (0..ranks).rev().collect()
+        };
+        for r in layer_order {
+            let mut keyed: Vec<(f64, usize, (u8, u64))> = layers[r]
+                .iter()
+                .map(|&v| {
+                    let nb: Vec<usize> = if down {
+                        pred[v].iter().copied().filter(|&p| rank[p] < r).collect()
+                    } else {
+                        succ[v].iter().copied().filter(|&s| rank[s] > r).collect()
+                    };
+                    let key = if nb.is_empty() {
+                        order[v]
+                    } else {
+                        nb.iter().map(|&x| order[x]).sum::<f64>() / nb.len() as f64
+                    };
+                    (key, v, index_key(items[v]))
+                })
+                .collect();
+            keyed.sort_by(|a, b| {
+                a.0.partial_cmp(&b.0)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then(a.2.cmp(&b.2))
+            });
+            for (i, (_, v, _)) in keyed.iter().enumerate() {
+                order[*v] = i as f64;
+            }
+            layers[r] = keyed.into_iter().map(|(_, v, _)| v).collect();
+        }
+    }
+
+    // Sizes, as the canvas draws them.
+    let measure = Canvas {
+        design,
+        system,
+        rects: BTreeMap::new(),
+    };
+    let sizes: Vec<(f64, f64)> = items
+        .iter()
+        .map(|item| match *item {
+            Item::Node(node) => measure.size(node),
+            Item::Group(g) => {
+                let b = layout.groups.get(&g).copied().unwrap_or_default();
+                (
+                    b.width.max(INSTANCE_WIDTH),
+                    b.height.max(HEADER_HEIGHT + ROW_HEIGHT + BODY_HEIGHT),
+                )
+            }
+        })
+        .collect();
+
+    // Coordinates: a column per rank; within it, each node centred on what
+    // feeds it, in order, pushed down until it clears the one above.
+    let row_gap = 2.0 * GAP;
+    let mut x = vec![0.0; n];
+    let mut y = vec![0.0; n];
+    let mut col_x = ORIGIN_X;
+    for (r, layer) in layers.iter().enumerate() {
+        let widest = layer.iter().map(|&v| sizes[v].0).fold(0.0, f64::max);
+        let mut floor = ORIGIN_Y;
+        for &v in layer {
+            let (_, h) = sizes[v];
+            let feeders: Vec<usize> = pred[v].iter().copied().filter(|&p| rank[p] < r).collect();
+            let wanted = if feeders.is_empty() {
+                floor
+            } else {
+                let centre = feeders
+                    .iter()
+                    .map(|&p| y[p] + sizes[p].1 / 2.0)
+                    .sum::<f64>()
+                    / feeders.len() as f64;
+                (centre - h / 2.0).max(ORIGIN_Y)
+            };
+            let top = ((wanted.max(floor)) / STEP).round() * STEP;
+            x[v] = col_x;
+            y[v] = top;
+            floor = top + h + row_gap;
+        }
+        col_x += widest.max(CONCEPT_WIDTH) + (COLUMN_GAP - MAPPING_WIDTH);
+    }
+
+    for (i, item) in items.iter().enumerate() {
+        let at = Point { x: x[i], y: y[i] };
+        match *item {
+            Item::Node(Node::Concept(id)) => {
+                layout.concepts.insert(id, at);
+            }
+            Item::Node(Node::Mapping(id)) => {
+                layout.mappings.insert(id, at);
+            }
+            Item::Node(Node::Output(id)) => {
+                layout.outputs.insert(id, at);
+            }
+            Item::Node(Node::Instance(raw)) => {
+                layout.instances.insert(raw, at);
+            }
+            Item::Group(g) => {
+                let b = layout.groups.entry(g).or_default();
+                b.x = at.x;
+                b.y = at.y;
+                b.collapsed = true;
+            }
+        }
+    }
+}
+
+/// A stable tie-break: kind, then id.
+fn index_key(item: Item) -> (u8, u64) {
+    match item {
+        Item::Node(Node::Concept(c)) => (0, c.raw()),
+        Item::Node(Node::Mapping(d)) => (1, d.raw()),
+        Item::Group(g) => (2, g),
+        Item::Node(Node::Instance(i)) => (3, i),
+        Item::Node(Node::Output(o)) => (4, o.raw()),
     }
 }

@@ -103,6 +103,8 @@ message ClientMessage {
     CompleteFormulaCaretRequest complete_formula_caret = 78;
     GetFormulaSignatureRequest get_formula_signature = 79;
     GetFormulaRenderRequest get_formula_render = 80;
+    // 0.29: whole-graph arrangement, the layout service's other command.
+    ArrangeLayoutRequest arrange_layout = 81;
   }
 }
 
@@ -152,6 +154,7 @@ message Response {
     NavigateFormulaResponse navigate_formula = 59;
     FormulaSignatureResponse formula_signature = 60;
     FormulaRenderResponse formula_render = 61;
+    LayoutResponse layout = 62;
   }
 }
 
@@ -737,6 +740,17 @@ message NodePosition {
 }
 
 message SetLayoutRequest {
+  Layout layout = 1;
+}
+
+// Arrange every visible node of every canvas from scratch (0.29): the
+// explicit *Arrange Automatically* command.  Answers the arranged layout
+// and applies nothing — the client sets it with SetLayout, so one write
+// path and one undo mechanism serve every layout change.  Layout only:
+// no revision, the scene graph as it is (ADR-0003, `bdl-layout::arrange`).
+message ArrangeLayoutRequest {}
+
+message LayoutResponse {
   Layout layout = 1;
 }
 

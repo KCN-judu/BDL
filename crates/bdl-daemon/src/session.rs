@@ -181,12 +181,53 @@ fn place_on_open(
     system: &BehaviorSystem,
     layout: &Layout,
 ) -> Result<Layout, SessionError> {
+    // The first-open policy: a project with no position at all (a new
+    // project, a template, a hand-written project opened for the first
+    // time) is arranged as a whole; one with some positions keeps every
+    // authored one and only has its gaps filled.  Nothing is rearranged
+    // on any later open.
+    if !bdl_layout::has_positions(layout)
+        && layout
+            .components
+            .values()
+            .all(|c| !bdl_layout::has_positions(c))
+    {
+        let arranged = bdl_layout::arrange_with(system, layout, &reference_edges(system));
+        if arranged != *layout {
+            tracing::info!(root = %root.display(), "arranged a project with no layout");
+            persist::save_layout(root, &arranged)?;
+        }
+        return Ok(arranged);
+    }
     let placement = bdl_layout::place_missing(system, layout);
     if !placement.is_empty() {
         tracing::info!(root = %root.display(), placed = placement.placed.len(), "placed unpositioned entities");
         persist::save_layout(root, &placement.layout)?;
     }
     Ok(placement.layout)
+}
+
+/// The reference edges of every canvas (ADR-0034), as the analysis of
+/// each design reports `dependsOn`: what the arrangement orders by beside
+/// the signature edges.
+fn reference_edges(system: &BehaviorSystem) -> bdl_layout::References {
+    let mut refs = bdl_layout::References::default();
+    let edges_of = |design: &bdl_model::surface::Design| -> Vec<(DeclId, DeclId)> {
+        let snapshot = ProjectSnapshot::new(design.clone());
+        let analysis = bdl_compiler::analyze(&snapshot);
+        analysis
+            .dependencies
+            .all
+            .iter()
+            .flat_map(|(from, tos)| tos.iter().map(move |to| (*from, *to)))
+            .collect()
+    };
+    refs.edges.insert(None, edges_of(&system.base));
+    for (cid, component) in &system.components {
+        refs.edges
+            .insert(Some(cid.raw()), edges_of(&component.body));
+    }
+    refs
 }
 
 /// The layout service on commit: what an edit created and did not place
@@ -587,7 +628,9 @@ impl Session {
             None => bdl_text::init_project(root, name, &self.compiler_version)?,
         };
         let snapshot = SystemSnapshot::new(loaded.build.system.clone());
-        let layout = loaded.layout.clone();
+        // A new project is a first open: a template's design is arranged
+        // as a whole, an empty one has nothing to place.
+        let layout = place_on_open(root, &snapshot.system, &loaded.layout)?;
         self.install_system(root, snapshot, layout, Some(loaded));
         self.project()
     }
@@ -1699,6 +1742,23 @@ impl Session {
     pub fn set_layout(&mut self, layout: Layout) -> Result<(), SessionError> {
         self.project_mut()?.layout = layout;
         Ok(())
+    }
+
+    /// The whole-graph arrangement of the open project's canvases, as the
+    /// layout service computes it from the current layout — answered, not
+    /// applied: the client sets it like any layout change.
+    pub fn arranged_layout(&self) -> Result<Layout, SessionError> {
+        let p = self.project()?;
+        let system = p
+            .system
+            .as_ref()
+            .map(|s| s.current.system.clone())
+            .unwrap_or_else(|| BehaviorSystem::from_flat(p.current.design.clone()));
+        Ok(bdl_layout::arrange_with(
+            &system,
+            &p.layout,
+            &reference_edges(&system),
+        ))
     }
 }
 
