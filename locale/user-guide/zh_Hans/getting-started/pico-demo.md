@@ -24,7 +24,7 @@
 
 在欢迎页的**演示**下选择 **Button → Lamp, wired**。Studio 会问项目放在哪里（它是一个普通项目：一个含有 `src/main.bdl` 的文件夹），然后在设计页打开它。
 
-![The canvas with the concept rows Pressed and Lit at the top, the Source node pressed with its entry arrow and the word Source, the relationship node lit below it with the formula pressed, and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
+![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
 
 _演示的设计：来源 pressed、跟随它的值 lit，以及它驱动的 lamp。_
 

@@ -24,7 +24,7 @@
 
 ようこそページの**デモ**で **Button → Lamp, wired** を選びます。Studio がプロジェクトの置き場所を尋ね（普通のプロジェクトです。`src/main.bdl` を含むフォルダです）、設計ページで開きます。
 
-![The canvas with the concept rows Pressed and Lit at the top, the Source node pressed with its entry arrow and the word Source, the relationship node lit below it with the formula pressed, and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
+![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../../../../docs/user-guide/assets/getting-started/pico-design.png)
 
 _デモの設計：入力元 pressed、それに追従する値 lit、そしてそれが駆動する lamp。_
 

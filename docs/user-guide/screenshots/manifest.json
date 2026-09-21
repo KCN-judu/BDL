@@ -525,7 +525,7 @@
       },
       "output": "getting-started/pico-design.png",
       "caption": "The demo's design: the Source pressed, the value lit that follows it, and the lamp it drives.",
-      "alt": "The canvas with the concept rows Pressed and Lit at the top, the Source node pressed with its entry arrow and the word Source, the relationship node lit below it with the formula pressed, and the lamp sink at the right, joined by links; each carries the domain name main.",
+      "alt": "The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.",
       "purpose": "What the tester sees first: three objects, nothing about pins."
     },
     {

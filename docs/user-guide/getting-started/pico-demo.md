@@ -31,7 +31,7 @@ On the Welcome page, under **Demos**, choose **Button → Lamp, wired**. Studio
 asks where to put the project (it is an ordinary project: a folder with
 `src/main.bdl` in it) and opens it on the Design page.
 
-![The canvas with the concept rows Pressed and Lit at the top, the Source node pressed with its entry arrow and the word Source, the relationship node lit below it with the formula pressed, and the lamp sink at the right, joined by links; each carries the domain name main.](../assets/getting-started/pico-design.png)
+![The canvas arranged left to right: the Source node pressed with its entry arrow and the word Source at the left, the concept row Pressed and the relationship node lit with the formula pressed in the middle, the concept row Lit and the lamp sink at the right, joined by links; each carries the domain name main.](../assets/getting-started/pico-design.png)
 
 _The demo's design: the Source pressed, the value lit that follows it, and the
 lamp it drives._
